@@ -1,0 +1,8 @@
+{
+  "name": "校园智能积分兑换终端",
+  "description": "专为小学生设计的金融素养平台，包含人脸识别登录、积分兑换校园币、校园超市及校园银行储蓄功能。",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
