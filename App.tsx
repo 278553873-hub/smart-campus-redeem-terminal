@@ -11,8 +11,9 @@ import GrowthView from './components/GrowthView';
 import TeacherDashboard from './components/TeacherDashboard';
 import AdminApp from './components/AdminApp';
 import MobileApp from './mobile-app/App';
+import CompanionApp from './components/CompanionApp';
 import './mobile-app/index.css';
-import { ChevronLeft, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Loader2 } from 'lucide-react';
+import { ChevronLeft, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Loader2, Bot } from 'lucide-react';
 import { playSound } from './utils/sound';
 
 const INITIAL_STUDENT: Student = {
@@ -306,7 +307,7 @@ const TerminalApp: React.FC = () => {
 };
 
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'teacher' | 'admin'>('terminal');
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'teacher' | 'admin' | 'companion'>('terminal');
   const [isDemoOpen, setIsDemoOpen] = useState(false);
 
   return (
@@ -314,6 +315,7 @@ const AppSwitcher: React.FC = () => {
       {currentApp === 'terminal' && <TerminalApp />}
       {currentApp === 'teacher' && <TeacherDashboard />}
       {currentApp === 'admin' && <MobileApp />}
+      {currentApp === 'companion' && <CompanionApp />}
 
       {/* 侧边悬浮控制台 (抽屉效果，避免遮挡导航) */}
       <div
@@ -358,7 +360,15 @@ const AppSwitcher: React.FC = () => {
               title="管理端 - 手机控制"
             >
               <Smartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold">App</span>
+              <span className="text-[9px] font-bold">手机端</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('companion')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'companion' ? 'bg-orange-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+              title="学伴APP"
+            >
+              <Bot size={22} className="mb-1" />
+              <span className="text-[9px] font-bold">学伴APP</span>
             </button>
           </div>
         </div>

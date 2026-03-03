@@ -49,8 +49,10 @@ body {
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 h1,
@@ -89,16 +91,6 @@ h4,
       rgba(255, 255, 255, 0.2),
       transparent);
   transition: 0.5s;
-}
-
-.ai-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.1);
-  border-color: rgba(99, 102, 241, 0.3);
-}
-
-.ai-card:hover::before {
-  left: 100%;
 }
 
 /* 2. Liquid Button - 科技感按钮 */

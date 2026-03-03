@@ -85,7 +85,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                                 e.stopPropagation();
                                                 setActiveMenuId(activeMenuId === cls.id ? null : cls.id);
                                             }}
-                                            className="p-1.5 rounded-full text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors relative"
+                                            className="p-1.5 rounded-full text-slate-400  active:bg-slate-200 transition-colors relative"
                                         >
                                             <WechatMoreIcon className="w-5 h-5" />
                                             {cls.hasPendingRewards && (

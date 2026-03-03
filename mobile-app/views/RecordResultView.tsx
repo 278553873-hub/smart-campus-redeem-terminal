@@ -22,7 +22,7 @@ const RecordResultView: React.FC<RecordResultViewProps> = ({ initialResult, onSa
             <div className="px-4 py-3 bg-white border-b border-slate-100 flex justify-between items-center sticky top-0 z-10">
                 <button onClick={onCancel} className="text-slate-500 font-medium">取消</button>
                 <h1 className="text-lg font-bold text-slate-900">确认记录</h1>
-                <button onClick={onSave} className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md hover:bg-blue-700">提交</button>
+                <button onClick={onSave} className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md ">提交</button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -69,10 +69,10 @@ const RecordResultView: React.FC<RecordResultViewProps> = ({ initialResult, onSa
                             {(initialResult.mockStudents || ['1', '2']).map((id: string) => (
                                 <span key={id} className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
                                     {id === '1' ? '林小杰' : '林云溪'}
-                                    <button className="text-slate-400 hover:text-slate-600">×</button>
+                                    <button className="text-slate-400 ">×</button>
                                 </span>
                             ))}
-                            <button className="border border-dashed border-slate-300 text-slate-400 px-3 py-1 rounded-full text-sm hover:border-blue-400 hover:text-blue-500">+ 添加</button>
+                            <button className="border border-dashed border-slate-300 text-slate-400 px-3 py-1 rounded-full text-sm  ">+ 添加</button>
                         </div>
                     </div>
 
@@ -84,7 +84,7 @@ const RecordResultView: React.FC<RecordResultViewProps> = ({ initialResult, onSa
                             </button>
                         </div>
                         <div
-                            className="w-full p-3 bg-slate-50 rounded-lg text-sm text-slate-800 flex justify-between items-center cursor-pointer hover:bg-slate-100"
+                            className="w-full p-3 bg-slate-50 rounded-lg text-sm text-slate-800 flex justify-between items-center cursor-pointer "
                             onClick={() => {/* Open tree selector */ }}
                         >
                             <span>{selectedIndicator}</span>
@@ -97,14 +97,14 @@ const RecordResultView: React.FC<RecordResultViewProps> = ({ initialResult, onSa
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setScore(s => s - 1)}
-                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 "
                             >-</button>
                             <span className={`text-xl font-bold ${score > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                                 {score > 0 ? `+${score}` : score}
                             </span>
                             <button
                                 onClick={() => setScore(s => s + 1)}
-                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
+                                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 "
                             >+</button>
                         </div>
                     </div>

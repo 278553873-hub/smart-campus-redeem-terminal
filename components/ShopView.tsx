@@ -21,36 +21,15 @@ interface ShopViewProps {
 }
 
 const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
-  const [filter, setFilter] = useState<'standard' | 'special'>('standard');
   const [isHistory, setIsHistory] = useState(false);
   const [confirmingProduct, setConfirmingProduct] = useState<Product | null>(null);
-  const [showSuccess, setShowSuccess] = useState<{ show: boolean, type: 'standard' | 'special' }>({ show: false, type: 'standard' });
+  const [showSuccess, setShowSuccess] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 购买历史记录状态
   const [records, setRecords] = useState<PurchaseRecord[]>([
-    {
-      id: 'rec_1',
-      productId: '2',
-      name: '当一天的代理校长',
-      price: 500,
-      date: Date.now() - 86400000 * 2, // 2天前
-      type: 'special',
-      image: 'https://picsum.photos/seed/principal/300/300',
-      status: 'exchanged'
-    },
-    {
-      id: 'rec_2',
-      productId: '4',
-      name: '免作业卡（单科）',
-      price: 100,
-      date: new Date(2025, 0, 15).getTime(), // 1月份
-      type: 'special',
-      image: 'https://picsum.photos/seed/homework/300/300',
-      status: 'claimed'
-    },
     {
       id: 'rec_3',
       productId: '1',
@@ -91,7 +70,7 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
     return filtered;
   }, [records, selectedMonth]);
 
-  const filteredProducts = MOCK_PRODUCTS.filter(p => p.type === filter);
+  const filteredProducts = MOCK_PRODUCTS.filter(p => p.type === 'standard');
 
   const handleOpenConfirm = (product: Product) => {
     setConfirmingProduct(product);
@@ -120,8 +99,8 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
       }));
 
       setConfirmingProduct(null);
-      setShowSuccess({ show: true, type });
-      setTimeout(() => setShowSuccess({ show: false, type }), 3500);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3500);
     }
   };
 
@@ -213,12 +192,12 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
   }
 
   return (
-    <div
-      className="animate-in slide-in-from-right-8 duration-500 relative h-full bg-[#fcfdfe] flex flex-col pt-8 overflow-hidden"
-    >
-      <div className="px-8 flex flex-col shrink-0 relative transition-all duration-500">
-        <div className={`flex items-center justify-between shrink-0 bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.02)] border-2 border-slate-50 z-30 relative transition-all duration-500 origin-top overflow-hidden
-          ${isScrolled ? 'mb-0 max-h-0 opacity-0 py-0 px-5 scale-y-90 border-none blur-md' : 'mb-4 max-h-[200px] p-5 opacity-100 scale-y-100 blur-0'}
+    <div className="animate-in slide-in-from-right-8 duration-500 relative h-full bg-[#fcfdfe] flex flex-col pt-8 overflow-hidden">
+      {/* 头部固定停靠区 */}
+      <div className="shrink-0 relative z-30 flex flex-col transition-all duration-500 bg-[#fcfdfe]/95 backdrop-blur-md px-8 pb-3">
+        {/* 主要卡片 */}
+        <div className={`flex items-center justify-between bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.02)] border-2 border-slate-50 transition-all duration-500 origin-top overflow-hidden
+          ${isScrolled ? 'max-h-0 opacity-0 py-0 px-5 scale-y-90 border-none blur-sm' : 'max-h-[200px] p-5 opacity-100 scale-y-100 blur-0'}
         `}>
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-gradient-to-br from-yellow-100 to-orange-50 rounded-[1.2rem] flex items-center justify-center shadow-inner">
@@ -232,60 +211,44 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-b from-orange-50 to-orange-100/50 px-5 py-3 rounded-2xl border border-orange-200/50 flex flex-col items-end shadow-sm">
-            <span className="text-orange-500/80 font-black text-[9px] mb-0.5 tracking-wider">我的余额</span>
-            <div className="text-orange-600 font-[NumberFont] font-black text-2xl leading-none flex items-center gap-1">
-              <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] drop-shadow-sm -translate-y-0.5" alt="coin" />
-              {student.campusCoins}
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={() => { setIsHistory(true); setIsScrolled(false); }}
+              className="flex items-center justify-center gap-1.5 rounded-full transition-all font-black text-slate-500 bg-slate-50 py-1.5 px-3 active:scale-95 border border-slate-100"
+            >
+              <History size={12} className="shrink-0" />
+              <div className="text-[11px] leading-none">兑换明细</div>
+            </button>
+            <div className="bg-gradient-to-b from-orange-50 to-orange-100/50 px-4 py-2 rounded-2xl border border-orange-200/50 flex flex-col items-end shadow-sm">
+              <span className="text-orange-500/80 font-black text-[9px] mb-0.5 tracking-wider">我的余额</span>
+              <div className="text-orange-600 font-[NumberFont] font-black text-xl leading-none flex items-center gap-1">
+                <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] drop-shadow-sm -translate-y-0.5" alt="coin" />
+                {student.campusCoins}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 筛选分类栏 (改为普通固定元素) */}
-        <div className={`shrink-0 z-20 bg-[#fcfdfe]/95 backdrop-blur-md transition-all duration-300 flex flex-col pt-2 pb-3 mb-2 -mx-2 px-2`}>
-          <div className="flex items-center justify-between gap-3 transition-all duration-300">
-
-            {/* 滑动后简易版头部（缩小堆叠显示钱包余额） */}
-            <div className={`flex items-center justify-center bg-white shadow-sm border border-slate-100 rounded-2xl transition-all duration-500 overflow-hidden whitespace-nowrap
-              ${isScrolled ? 'opacity-100 w-[85px] px-3 py-1.5 translate-x-0' : 'opacity-0 w-0 px-0 py-1.5 -translate-x-10 border-none'}`}>
-              <div className="flex flex-col w-full gap-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-[9px] text-orange-400 font-black">钱包</span>
-                  <div className="flex items-center gap-0.5 text-orange-600 font-black font-[NumberFont] text-[13px] leading-none">
-                    <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {student.campusCoins}
-                  </div>
+        {/* 滚动后显示的精简栏，采用常规层级堆叠而非绝对定位 */}
+        <div className={`flex items-center justify-between transition-all duration-500 overflow-hidden
+          ${isScrolled ? 'max-h-[60px] opacity-100 mt-2 pointer-events-auto' : 'max-h-0 opacity-0 mt-0 pointer-events-none'}`}>
+          <div className="flex items-center justify-center bg-white shadow-sm border border-slate-100 rounded-2xl px-4 py-2">
+            <div className="flex flex-col w-full gap-1">
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[10px] text-orange-400 font-black">我的钱包</span>
+                <div className="flex items-center gap-0.5 text-orange-600 font-black font-[NumberFont] text-[13px] leading-none">
+                  <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {student.campusCoins}
                 </div>
               </div>
             </div>
-
-            <div className="flex bg-slate-100/80 p-1 rounded-2xl shadow-inner border border-slate-200/50 flex-1 overflow-hidden transition-all duration-300">
-              <FilterButton
-                isScrolled={isScrolled}
-                active={filter === 'standard'}
-                onClick={() => { setFilter('standard'); setIsScrolled(false); if (scrollRef.current) scrollRef.current.scrollTop = 0; }}
-                label="货柜商品"
-                icon={<div className={`transition-all duration-300 flex items-center justify-center ${isScrolled ? 'w-0 opacity-0 mr-0 scale-50' : 'w-4 opacity-100 mr-1.5 scale-100'}`}><Gift size={16} /></div>}
-              />
-              <FilterButton
-                isScrolled={isScrolled}
-                active={filter === 'special'}
-                onClick={() => { setFilter('special'); setIsScrolled(false); if (scrollRef.current) scrollRef.current.scrollTop = 0; }}
-                label="特殊商品"
-                icon={<div className={`transition-all duration-300 flex items-center justify-center ${isScrolled ? 'w-0 opacity-0 mr-0 scale-50' : 'w-4 opacity-100 mr-1.5 scale-100'}`}><Sparkles size={16} /></div>}
-              />
-            </div>
-
-            <button
-              onClick={() => { setIsHistory(true); setIsScrolled(false); }}
-              className={`flex items-center justify-center gap-1.5 rounded-[1rem] transition-all whitespace-nowrap overflow-hidden font-black text-slate-500 bg-transparent hover:bg-slate-100/80 hover:text-slate-600 ${isScrolled ? 'p-2.5 w-10' : 'py-3 px-4 w-auto bg-slate-100'}`}
-              title="兑换明细"
-            >
-              <History size={isScrolled ? 18 : 14} className="shrink-0" />
-              <div className={`transition-all duration-300 overflow-hidden ${isScrolled ? 'w-0 opacity-0 text-[0px]' : 'w-auto opacity-100 text-[11px]'}`}>
-                兑换明细
-              </div>
-            </button>
           </div>
+
+          <button
+            onClick={() => { setIsHistory(true); setIsScrolled(false); }}
+            className={`flex items-center justify-center gap-1.5 rounded-2xl transition-all font-black text-slate-500 bg-white shadow-sm border border-slate-100 px-3.5 py-2.5 active:scale-95`}
+          >
+            <History size={15} className="shrink-0" />
+          </button>
         </div>
       </div>
 
@@ -307,7 +270,7 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
           });
         }}
       >
-        <div key={filter} className="animate-in fade-in zoom-in-[0.98] duration-500 ease-out fill-mode-both flex-1 flex flex-col pt-2 pb-12">
+        <div className="animate-in fade-in zoom-in-[0.98] duration-500 ease-out fill-mode-both flex-1 flex flex-col pt-2 pb-12">
           <div className="flex flex-col gap-3">
             {filteredProducts.map(product => {
               const isSpecial = product.type === 'special';
@@ -331,19 +294,13 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
                   </div>
 
                   {/* 中间信息 */}
-                  <div className="flex-1 min-w-0 pr-2">
+                  <div className="flex-1 min-w-0 pr-2 self-start py-1">
                     <h3 className="text-base font-black text-slate-800 truncate mb-1">
                       {product.name}
                     </h3>
-                    <p className="text-[11px] text-slate-400 font-bold line-clamp-2 leading-snug mb-2">
+                    <p className="text-[11px] text-slate-400 font-bold line-clamp-3 leading-relaxed">
                       {product.description}
                     </p>
-                    <div className="flex gap-1.5">
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 ${isSpecial ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
-                        {isSpecial ? <Sparkles size={10} /> : <Gift size={10} />}
-                        {isSpecial ? '尊享特权' : '实体奖励'}
-                      </span>
-                    </div>
                   </div>
 
                   {/* 右侧兑换按钮 */}
@@ -419,15 +376,14 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
         </div>
       )}
 
-      {showSuccess.show && (
+      {showSuccess && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-full duration-700">
-          <div className={`text-white px-12 py-6 rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.3)] flex items-center space-x-5 border-4 border-white ${showSuccess.type === 'special' ? 'bg-indigo-600' : 'bg-green-500'
-            }`}>
+          <div className="text-white px-12 py-6 rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.3)] flex items-center space-x-5 border-4 border-white bg-green-500">
             <div className="bg-white/20 p-2 rounded-full">
               <CheckCircle2 size={40} />
             </div>
             <div className="font-black text-2xl tracking-tight">
-              {showSuccess.type === 'special' ? '兑换成功，请联系班主任核销' : '兑换成功，柜门已打开请取货'}
+              兑换成功，柜门已打开请取货
             </div>
           </div>
         </div>
@@ -448,16 +404,5 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
     </div>
   );
 };
-
-const FilterButton: React.FC<{ active: boolean, isScrolled?: boolean, onClick: () => void, label: string, icon?: React.ReactNode }> = ({ active, isScrolled, onClick, label, icon }) => (
-  <button
-    onClick={onClick}
-    className={`flex-1 overflow-hidden whitespace-nowrap my-0.5 mx-0.5 rounded-[1rem] font-black transition-all active:scale-95 flex items-center justify-center border ${isScrolled ? 'py-2.5 px-2 text-xs' : 'py-3 px-3 text-[13px]'} ${active ? 'bg-white text-blue-700 shadow-sm border-blue-50' : 'text-slate-500 border-transparent hover:text-slate-700'
-      }`}
-  >
-    {icon}
-    {label}
-  </button>
-);
 
 export default ShopView;

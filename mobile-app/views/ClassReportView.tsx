@@ -64,7 +64,7 @@ const DonutChart = ({ data }: { data: { label: string, value: number, color: str
                             stroke={item.color}
                             strokeWidth="12"
                             strokeLinecap="round"
-                            className="transition-all duration-500 ease-out hover:opacity-80"
+                            className="transition-all duration-500 ease-out "
                         />
                     );
                 })}
@@ -193,13 +193,13 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                         <div className="bg-slate-100 p-1 rounded-lg flex text-xs font-bold shrink-0">
                             <button
                                 onClick={() => setScope('mine')}
-                                className={`px-3 py-1.5 rounded-md transition-all duration-200 ${scope === 'mine' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`px-3 py-1.5 rounded-md transition-all duration-200 ${scope === 'mine' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 '}`}
                             >
                                 我的记录
                             </button>
                             <button
                                 onClick={() => setScope('all')}
-                                className={`px-3 py-1.5 rounded-md transition-all duration-200 ${scope === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`px-3 py-1.5 rounded-md transition-all duration-200 ${scope === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 '}`}
                             >
                                 全班汇总
                             </button>
@@ -212,7 +212,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                             <button
                                 key={t.key}
                                 onClick={() => setTimeRange(t.key)}
-                                className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${timeRange === t.key ? 'text-blue-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${timeRange === t.key ? 'text-blue-600 font-bold' : 'text-slate-400 '}`}
                             >
                                 {t.label}
                                 {timeRange === t.key && (
@@ -329,7 +329,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                                     <div
                                         key={idx}
                                         onClick={() => handleStudentClick(name)}
-                                        className="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm hover:border-blue-400 hover:text-blue-600 transition-colors cursor-pointer select-none active:bg-blue-50"
+                                        className="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm   transition-colors cursor-pointer select-none active:bg-blue-50"
                                     >
                                         {name}
                                     </div>
@@ -409,7 +409,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                                 <div
                                     key={i}
                                     onClick={() => handleStudentClick(stu.name)}
-                                    className="flex flex-col p-2 bg-emerald-50/50 rounded-lg border border-emerald-100/50 cursor-pointer hover:bg-emerald-100/50 transition-colors active:scale-95 transition-all"
+                                    className="flex flex-col p-2 bg-emerald-50/50 rounded-lg border border-emerald-100/50 cursor-pointer /50 transition-colors active:scale-95 transition-all"
                                 >
                                     <span className="text-xs font-bold text-slate-700">{stu.name}</span>
                                     <span className="text-[10px] font-bold text-emerald-600">+{stu.score}分</span>
@@ -427,7 +427,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                                 <div
                                     key={i}
                                     onClick={() => handleStudentClick(stu.name)}
-                                    className="flex flex-col p-2 bg-rose-50/50 rounded-lg border border-rose-100/50 cursor-pointer hover:bg-rose-100/50 transition-colors active:scale-95 transition-all"
+                                    className="flex flex-col p-2 bg-rose-50/50 rounded-lg border border-rose-100/50 cursor-pointer /50 transition-colors active:scale-95 transition-all"
                                 >
                                     <span className="text-xs font-bold text-slate-700">{stu.name}</span>
                                     <span className="text-[10px] font-bold text-rose-500">-{stu.score}分</span>

@@ -245,10 +245,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     scores,
     subjects,
     growthReports,
-    onViewReport,
     onViewTermReport
 }) => {
-    const [activeTab, setActiveTab] = useState<'growth' | 'evaluation'>('growth');
+    const [activeTab, setActiveTab] = useState<'growth' | 'evaluation' | 'redemption'>('growth');
 
     // Face Upload State
     const [isUploadingFace, setIsUploadingFace] = useState(false);
@@ -424,7 +423,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
             {/* 1. Filter Bar (Term Selector) - Sticky Top */}
             <div className="bg-white/90 backdrop-blur-md sticky top-0 z-30 px-4 py-2 border-b border-slate-100/60 shadow-sm flex items-center gap-3 safe-top transition-all">
-                <button className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all active:opacity-60">
+                <button className="flex items-center gap-1.5 bg-slate-100  text-slate-800 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all active:opacity-60">
                     <span>2025-2026学年 上学期</span>
                     <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
                 </button>
@@ -454,7 +453,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             <button
                                 onClick={handleUpdateFaceClick}
                                 disabled={isUploadingFace}
-                                className="absolute bottom-0 right-0 w-6 h-6 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm transition-colors z-20"
+                                className="absolute bottom-0 right-0 w-6 h-6 bg-blue-500  active:bg-blue-700 text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm transition-colors z-20"
                             >
                                 <CameraIcon className="w-3 h-3" />
                             </button>
@@ -472,7 +471,34 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                 </div>
 
-                {/* B. Radar Chart Card */}
+                {/* B. Points & Finance Summary Card */}
+                <div className="bg-white rounded-2xl p-5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100">
+                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2 mb-4">
+                        <img src="/assets/coin.png" className="w-[1.2em] h-[1.2em]" alt="coin" />
+                        财富与得分详情
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="bg-orange-50/50 rounded-xl p-3 border border-orange-100/50 flex flex-col justify-center">
+                            <div className="text-[11px] text-orange-600/70 font-bold mb-1">可用货币余额</div>
+                            <div className="text-2xl font-black text-orange-500">{(student as any).campusCoins || 350}</div>
+                        </div>
+                        <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100/50 flex flex-col justify-center">
+                            <div className="text-[11px] text-blue-600/70 font-bold mb-1">博学银行存款</div>
+                            <div className="text-2xl font-black text-blue-500">1,200</div>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <div className="text-[12px] text-slate-600 font-bold mb-2">本月得分结算预估 <span className="text-orange-500">+125</span></div>
+                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                            <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>基础表现 100</div>
+                            <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>排行榜 15</div>
+                            <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>班级额外 10</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* C. Radar Chart Card */}
                 <div className="bg-white rounded-2xl shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100 relative overflow-hidden">
                     {/* Header Controls */}
                     <div className="px-5 pt-4 pb-2 flex items-center justify-between z-10 relative">
@@ -507,28 +533,63 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     <div className="h-6"></div>
                 </div>
 
-                {/* C. Tabs */}
+                {/* D. Tabs */}
                 <div className="sticky top-14 z-30 bg-[#F7F9FC] pt-2 pb-1">
                     <div className="bg-slate-200/50 p-1 rounded-xl flex h-11">
                         <button
                             onClick={() => setActiveTab('growth')}
-                            className={`flex-1 text-sm font-bold rounded-lg transition-all shadow-sm ${activeTab === 'growth' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
+                            className={`flex-[1.2] text-[13px] font-bold rounded-lg transition-all shadow-sm ${activeTab === 'growth' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
                         >
                             成长报告
                         </button>
                         <button
                             onClick={() => setActiveTab('evaluation')}
-                            className={`flex-1 text-sm font-bold rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 ${activeTab === 'evaluation' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
+                            className={`flex-[1.2] text-[13px] font-bold rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 ${activeTab === 'evaluation' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
                         >
                             评价记录
-                            {MOCK_BEHAVIOR_RECORDS.length > 0 && <span className="bg-blue-600 text-white text-[9px] px-1.5 h-4 rounded-full flex items-center justify-center">{MOCK_BEHAVIOR_RECORDS.length}</span>}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('redemption')}
+                            className={`flex-1 text-[13px] font-bold rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 ${activeTab === 'redemption' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
+                        >
+                            兑换记录
                         </button>
                     </div>
                 </div>
 
-                {/* D. Content Area */}
+                {/* E. Content Area */}
                 <div className="min-h-[400px]">
-                    {activeTab === 'growth' ? renderGrowthTab() : renderEvaluationTab()}
+                    {activeTab === 'growth' && renderGrowthTab()}
+                    {activeTab === 'evaluation' && renderEvaluationTab()}
+                    {activeTab === 'redemption' && (
+                        <div className="space-y-3 pb-24 pt-2 animate-in fade-in duration-300">
+                            {[
+                                { id: '1', item: '得力中性笔 x 2', cost: 100, type: 'vending', time: '今天 12:30', location: '教学楼A区货柜' },
+                                { id: '2', item: '免除一次大扫除', cost: 120, type: 'manual', time: '昨天 15:40', location: '班主任手动兑换' },
+                                { id: '3', item: '指定优选座位一周', cost: 200, type: 'manual', time: '02-28 10:15', location: '班主任手动兑换' },
+                            ].map((rec) => (
+                                <div key={rec.id} className="bg-white rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg mr-3 shrink-0 ${rec.type === 'vending' ? 'bg-blue-50' : 'bg-purple-50'}`}>
+                                        {rec.type === 'vending' ? '🛒' : '👩‍🏫'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-bold text-slate-800 text-[14px] mb-1 truncate">{rec.item}</div>
+                                        <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                            <span>{rec.time}</span>
+                                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                            <span>{rec.location}</span>
+                                        </div>
+                                    </div>
+                                    <div className="font-black text-orange-500 flex items-center shrink-0 ml-2">
+                                        <span className="text-slate-400 text-xs mr-1">-</span> <img src="/assets/coin.png" className="w-[1.2em] h-[1.2em] mr-0.5" alt="coin" /> {rec.cost}
+                                    </div>
+                                </div>
+                            ))}
+                            <div className="text-center py-6 text-xs text-slate-300">
+                                - 仅展示最近30天的兑换记录 -
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

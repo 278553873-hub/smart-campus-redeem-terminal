@@ -27,7 +27,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({ student }) => {
           </div>
         </div>
         
-        <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl cursor-pointer hover:bg-white/20 transition-all shadow-sm">
+        <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl cursor-pointer /20 transition-all shadow-sm">
           <ReportIcon className="text-white mb-1" />
           <span className="text-xs font-medium text-white">期末报告</span>
         </div>

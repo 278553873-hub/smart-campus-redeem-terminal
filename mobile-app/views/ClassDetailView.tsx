@@ -104,7 +104,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         onClick={onToggleSelectionMode}
                         className={`text-xs font-bold px-4 py-1.5 rounded-full transition-all active:scale-95 shadow-sm border ${isSelectionMode
                                 ? 'bg-slate-800 text-white border-slate-800 shadow-md'
-                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                : 'bg-white border-slate-200 text-slate-700 '
                             }`}
                     >
                         {isSelectionMode ? '取消选择' : '批量点评'}
@@ -128,7 +128,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             relative rounded-xl p-3 flex flex-col items-center transition-all duration-200 cursor-pointer select-none group
                             ${isSelectionMode && isSelected
                                         ? 'bg-blue-50 ring-1.5 ring-blue-500 shadow-sm'
-                                        : 'bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md'
+                                        : 'bg-white border border-slate-100  '
                                     }
                         `}
                             >
@@ -144,7 +144,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
 
                                 {/* Top: Avatar */}
                                 <div className={`
-                            w-12 h-12 rounded-full mb-2.5 flex items-center justify-center text-lg font-black shadow-sm relative shrink-0 transition-transform group-hover:scale-105
+                            w-12 h-12 rounded-full mb-2.5 flex items-center justify-center text-lg font-black shadow-sm relative shrink-0 transition-transform group-
                             ${!student.avatar ? `${bgClass} ${textClass} border ${borderClass}` : 'bg-slate-50 border border-slate-100'}
                         `}>
                                     {student.avatar ? (

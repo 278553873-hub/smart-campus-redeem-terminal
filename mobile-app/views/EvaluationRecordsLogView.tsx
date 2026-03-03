@@ -107,7 +107,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ onB
                                 <button
                                     key={opt}
                                     onClick={() => { onChange(opt); setIsOpen(false); }}
-                                    className={`w-full text-left px-3 py-2 text-[12px] hover:bg-slate-50 font-medium
+                                    className={`w-full text-left px-3 py-2 text-[12px]  font-medium
                                         ${value === opt ? 'text-blue-600 bg-blue-50' : 'text-slate-600'}
                                     `}
                                 >

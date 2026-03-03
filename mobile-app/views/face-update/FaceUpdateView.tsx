@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BackIcon, CameraIcon, ImageIconIcon, CheckCircleIcon } from '../../components/Icons';
+import { BackIcon, CameraIcon, ImageIconIcon, CheckCircleIcon, WechatMoreIcon, WechatCloseIcon } from '../../components/Icons';
 import { MOCK_STUDENTS_CLASS_1 } from '../../constants';
 
 interface FaceUpdateViewProps {
@@ -32,11 +32,23 @@ export const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classId, onBack 
     return (
         <div className="flex flex-col h-full bg-slate-50 relative pb-20">
             {/* Header */}
-            <div className="pt-12 pb-4 px-4 bg-white sticky top-0 z-20 flex items-center shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
-                <button onClick={onBack} className="p-2 -ml-2 text-slate-600 active:bg-slate-100 rounded-full transition-colors">
-                    <BackIcon className="w-6 h-6" />
-                </button>
-                <div className="flex-1 text-center font-bold text-lg text-slate-800 mr-8">批量更新人脸库</div>
+            <div className="flex items-center justify-between px-4 py-2 bg-white sticky top-0 z-20 h-[44px] shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
+                <div className="flex-1 flex justify-start">
+                    <button onClick={onBack} className="p-1 -ml-2 text-slate-900 active:bg-slate-100 rounded-full transition-colors">
+                        <BackIcon className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="text-[17px] font-bold text-slate-900 flex-none">批量更新人脸库</div>
+
+                <div className="flex-1 flex justify-end">
+                    {/* Simulated WeChat Capsule */}
+                    <div className="flex items-center bg-white/50 border border-slate-200/80 rounded-full px-3 h-[30px] gap-3 shadow-sm">
+                        <div className="w-5 h-5 flex items-center justify-center text-slate-900"><WechatMoreIcon className="w-5 h-5" /></div>
+                        <div className="w-[1px] h-3.5 bg-slate-200"></div>
+                        <div className="w-5 h-5 flex items-center justify-center text-slate-900"><WechatCloseIcon className="w-4 h-4" /></div>
+                    </div>
+                </div>
             </div>
 
             {/* Progress Card */}
@@ -101,7 +113,7 @@ export const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classId, onBack 
                                     disabled={student.isUploading}
                                     className={`flex-1 py-2 flex items-center justify-center rounded-lg font-bold text-xs transition-colors
                                         ${student.hasFaceData
-                                            ? 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                                            ? 'bg-slate-50 text-slate-500 '
                                             : 'bg-blue-50 text-blue-600 active:bg-blue-100'}`}
                                 >
                                     <CameraIcon className="w-3.5 h-3.5 mr-1" />
@@ -112,7 +124,7 @@ export const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classId, onBack 
                                     disabled={student.isUploading}
                                     className={`flex-1 py-2 flex items-center justify-center rounded-lg font-bold text-xs transition-colors
                                         ${student.hasFaceData
-                                            ? 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                                            ? 'bg-slate-50 text-slate-500 '
                                             : 'bg-indigo-50 text-indigo-600 active:bg-indigo-100'}`}
                                 >
                                     <ImageIconIcon className="w-3.5 h-3.5 mr-1" />

@@ -221,7 +221,7 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
                             className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${
                                 isActive 
                                 ? 'bg-white text-slate-900 shadow-lg scale-105' 
-                                : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                                : 'bg-white/10 text-slate-300 /20'
                             }`}
                         >
                             {sub.subject}

@@ -103,7 +103,7 @@ const GradePicker = ({ selected, options, onSelect }: { selected: string, option
                                 key={opt}
                                 onClick={() => { onSelect(opt); setIsOpen(false); }}
                                 className={`w-full px-4 py-3 text-[14px] font-bold flex items-center justify-between gap-2
-                                    ${selected === opt ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}
+                                    ${selected === opt ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 '}
                                 `}
                             >
                                 {opt}
@@ -268,7 +268,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                         {/* Footer Action */}
                         {data.rankings.length > 5 && (
                             <div className="mt-4 pt-2 flex justify-center border-t border-slate-50">
-                                <button className="flex items-center gap-1 text-[12px] font-bold text-slate-400 py-2 hover:text-slate-600 transition-colors">
+                                <button className="flex items-center gap-1 text-[12px] font-bold text-slate-400 py-2  transition-colors">
                                     查看全部排名 <ChevronRightIcon className="w-3.5 h-3.5" />
                                 </button>
                             </div>

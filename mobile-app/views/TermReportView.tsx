@@ -685,7 +685,7 @@ const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mo
                 >
                     <div className="relative max-w-full max-h-full overflow-hidden flex flex-col items-center">
                         <button
-                            className="absolute top-4 right-4 text-white hover:bg-white/10 rounded-full p-2 transition-colors z-[10000]"
+                            className="absolute top-4 right-4 text-white /10 rounded-full p-2 transition-colors z-[10000]"
                             onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
                         >
                             <X className="w-8 h-8" />
@@ -1862,7 +1862,7 @@ const MobileAnchorBar = ({ activeSection, onNavigate, items }: { activeSection: 
                             onClick={() => onNavigate(item.id)}
                             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all whitespace-nowrap ${isActive
                                 ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                                : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                                : 'bg-slate-50 text-slate-500 '
                                 }`}
                         >
                             {item.label}
@@ -1998,7 +1998,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
                         <button
                             key={m}
                             onClick={() => setViewMode(m as any)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all uppercase ${viewMode === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all uppercase ${viewMode === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 '}`}
                         >
                             {m === 'mobile' ? <Smartphone className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
                             {m}
@@ -2008,9 +2008,9 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
 
                 {viewMode === 'a4' && (
                     <div className="flex items-center gap-2">
-                        <button onClick={handlePrev} disabled={currentPage === 0} className="p-1.5 hover:bg-white rounded-full text-slate-600 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
+                        <button onClick={handlePrev} disabled={currentPage === 0} className="p-1.5  rounded-full text-slate-600 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
                         <span className="text-[10px] font-mono font-bold text-slate-500">{currentPage + 1} / {totalPages}</span>
-                        <button onClick={handleNext} disabled={currentPage === totalPages - 1} className="p-1.5 hover:bg-white rounded-full text-slate-600 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+                        <button onClick={handleNext} disabled={currentPage === totalPages - 1} className="p-1.5  rounded-full text-slate-600 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
                     </div>
                 )}
 

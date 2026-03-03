@@ -12,6 +12,7 @@ import TermReportView from './views/TermReportView';
 import ClassLeaderboardView from './views/ClassLeaderboardView';
 import RewardVerificationView from './views/reward-verification/RewardVerificationView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
+import { VirtualKeyboard } from './components/VirtualKeyboard';
 import {
     HomeIcon, UserIcon, ActivityIcon, CameraIcon, VolumeIcon,
     PlusIcon, FileIcon, CloseIcon, ChevronDownIcon, AlertCircleIcon,
@@ -76,9 +77,9 @@ const App: React.FC = () => {
     const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
     const [multiSelectIds, setMultiSelectIds] = useState<Set<string>>(new Set());
 
-    // Data Passing State (Input -> Log)
     const [activeLogTab, setActiveLogTab] = useState<'student' | 'class'>('student');
     const [pendingRecordData, setPendingRecordData] = useState<any>(null);
+    const [recordMode, setRecordMode] = useState<'voice' | 'camera' | 'text'>('voice');
 
     // UI States
     const [showPlusMenu, setShowPlusMenu] = useState(false);
@@ -95,6 +96,10 @@ const App: React.FC = () => {
     const [showSubjectScopeSelect, setShowSubjectScopeSelect] = useState(false);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [isOverlayActive, setIsOverlayActive] = useState(false);
+
+    // Keyboard States
+    const [showKeyboard, setShowKeyboard] = useState(false);
+    const [inputText, setInputText] = useState('');
 
     // Close plus menu when clicking outside
     useEffect(() => {
@@ -176,8 +181,9 @@ const App: React.FC = () => {
         navigateTo('face_update');
     };
 
-    const handleStartRecord = (studentIds: string[]) => {
+    const handleStartRecord = (studentIds: string[], mode: 'voice' | 'camera' | 'text' = 'voice') => {
         setBatchStudentIds(studentIds);
+        setRecordMode(mode);
         navigateTo('record_input');
         setShowPlusMenu(false);
 
@@ -188,6 +194,10 @@ const App: React.FC = () => {
 
     const handleAnalysisComplete = (result: any) => {
         setPendingRecordData(result);
+        if (showKeyboard) {
+            setShowKeyboard(false);
+            setInputText('');
+        }
         setHistory([]);
         setCurrentView('home_log');
     };
@@ -316,6 +326,7 @@ const App: React.FC = () => {
             case 'me': return '';
             case 'my_files': return '我的文件';
             case 'class_leaderboard': return '排行榜';
+            case 'reward_verification': return '班级奖励兑换';
             default: return '';
         }
     };
@@ -340,58 +351,71 @@ const App: React.FC = () => {
         const showPlusButton = false;
 
         return (
-            <div className="absolute bottom-[90px] left-0 right-0 px-6 z-40 pointer-events-none max-w-md mx-auto">
+            <div className={`absolute left-0 right-0 px-4 z-[60] pointer-events-none max-w-md mx-auto transition-all duration-300 ${showKeyboard ? 'bottom-[310px]' : 'bottom-[90px]'}`}>
+                {/* Unified Input Container */}
+                <div className={`pointer-events-auto flex flex-col gap-2 rounded-[28px] border-2 transition-colors duration-500 backdrop-blur-3xl p-3
+                    ${activeLogTab === 'class'
+                        ? 'bg-gradient-to-b from-[#F0FDFA]/95 to-white border-teal-200/80 shadow-[0_-5px_40px_-5px_rgba(20,184,166,0.3),_0_20px_40px_-10px_rgba(20,184,166,0.4)]'
+                        : 'bg-gradient-to-b from-[#EEF2FF]/95 to-white border-indigo-200/80 shadow-[0_-5px_40px_-5px_rgba(79,70,229,0.3),_0_20px_40px_-10px_rgba(79,70,229,0.4)]'}`}>
 
-                {/* Plus Menu Popup - Refined Glass */}
-                {showPlusMenu && showPlusButton && (
-                    <div ref={plusMenuRef} className="pointer-events-auto absolute bottom-[80px] right-6 bg-white/80 backdrop-blur-2xl rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-white/60 p-2 w-64 animate-in slide-in-from-bottom-4 fade-in duration-300 origin-bottom-right">
+                    {/* Explicit Mode Indicator */}
+                    <div className="flex items-center px-1 mb-1">
+                        <div className={`text-[13px] font-black tracking-widest flex items-center gap-2 transition-colors duration-500
+                            ${activeLogTab === 'class' ? 'text-teal-600' : 'text-indigo-600'}`}>
+                            <div className={`w-2 h-2 rounded-full animate-pulse shadow-sm ${activeLogTab === 'class' ? 'bg-teal-500 shadow-teal-500' : 'bg-indigo-500 shadow-indigo-500'}`}></div>
+                            {activeLogTab === 'class' ? '当前：记录班级模式' : '当前：记录学生模式'}
+                        </div>
+                    </div>
+
+                    {/* The Input Actions */}
+                    <div className="flex items-center gap-2">
+                        {/* Camera Action */}
                         <button
-                            onClick={handleImportWeChat}
-                            className="w-full flex items-center gap-3 p-4 active:bg-indigo-50/50 rounded-2xl text-slate-700 transition-all group"
+                            onClick={() => handleStartRecord(targetIds, 'camera')}
+                            className={`transition-colors p-3 rounded-2xl flex shrink-0 shadow-sm border border-transparent active:scale-95
+                                ${activeLogTab === 'class' ? 'text-teal-600 bg-teal-50 active:border-teal-200' : 'text-indigo-600 bg-indigo-50 active:border-indigo-200'}`}
                         >
-                            <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 group-active:scale-90 transition-transform">
-                                <FileIcon className="w-5 h-5" />
-                            </div>
-                            <span className="text-sm font-bold">从微信聊天记录导入</span>
+                            <CameraIcon className="w-6 h-6" />
+                        </button>
+
+                        {/* Text Action */}
+                        <div
+                            onClick={() => setShowKeyboard(true)}
+                            className={`flex-1 transition-all rounded-xl h-[44px] px-4 flex items-center shadow-sm relative overflow-hidden
+                                ${activeLogTab === 'class'
+                                    ? 'bg-white/90 border-teal-100'
+                                    : 'bg-white/90 border-indigo-100'}
+                                ${isMultiSelectMode ? (activeLogTab === 'class' ? 'ring-1 ring-teal-400 bg-white' : 'ring-1 ring-indigo-400 bg-white') : ''}
+                                active:scale-[0.98] active:bg-slate-50`}
+                        >
+                            <span className={`text-[13px] truncate ${inputText ? 'text-slate-800 font-bold' : (isMultiSelectMode ? (activeLogTab === 'class' ? 'text-teal-600 font-bold' : 'text-indigo-600 font-bold') : 'text-slate-400 font-medium')}`}>
+                                {inputText || inputPlaceholder}
+                            </span>
+                            {/* Blinking cursor effect when keyboard is active */}
+                            {showKeyboard && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-blue-500 animate-pulse"></div>
+                            )}
+                        </div>
+
+                        {/* Voice Action */}
+                        <button
+                            onClick={() => handleStartRecord(targetIds, 'voice')}
+                            className={`transition-all p-2 rounded-xl flex shrink-0 items-center justify-center gap-1 min-w-[80px]
+                                ${activeLogTab === 'class'
+                                    ? 'bg-gradient-to-r from-teal-400 to-teal-500 text-white shadow-lg shadow-teal-500/40 active:scale-95 active:shadow-none'
+                                    : 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-lg shadow-indigo-500/40 active:scale-95 active:shadow-none'}`}
+                        >
+                            <VolumeIcon className="w-5 h-5" />
+                            <span className="text-[13px] font-bold pr-1">按住说</span>
                         </button>
                     </div>
-                )}
-
-                <div className={`ai-card p-2 pointer-events-auto flex items-center gap-3 ring-1 ring-white/60 bg-white/60 transition-colors duration-500 ${activeLogTab === 'class' ? 'shadow-[0_8px_30px_rgba(20,184,166,0.1)]' : 'shadow-[0_8px_30px_rgba(79,70,229,0.1)]'}`}>
-                    <button
-                        onClick={() => handleStartRecord(targetIds)}
-                        className={`transition-colors p-2.5 rounded-full ${activeLogTab === 'class' ? 'text-teal-400 active:text-teal-600 active:bg-teal-50' : 'text-slate-400 active:text-indigo-600 active:bg-indigo-50'}`}
-                    >
-                        <CameraIcon className="w-6 h-6" />
-                    </button>
-
-                    <div
-                        onClick={() => handleStartRecord(targetIds)}
-                        className={`flex-1 transition-all rounded-2xl h-[46px] px-4 flex items-center cursor-text border border-white/40 
-                            ${activeLogTab === 'class'
-                                ? 'bg-teal-50/30 hover:bg-teal-50/50 hover:border-teal-200/50'
-                                : 'bg-white/40 hover:bg-white/60 hover:border-indigo-200/50'} 
-                            ${isMultiSelectMode ? (activeLogTab === 'class' ? 'ring-2 ring-teal-400 bg-teal-50/40' : 'ring-2 ring-indigo-400 bg-indigo-50/30') : ''}`}
-                    >
-                        <span className={`text-[13px] ${isMultiSelectMode ? (activeLogTab === 'class' ? 'text-teal-600 font-bold' : 'text-indigo-600 font-bold') : 'text-slate-400 font-medium'}`}>
-                            {inputPlaceholder}
-                        </span>
-                    </div>
-
-                    <button
-                        onClick={() => handleStartRecord(targetIds)}
-                        className={`transition-colors p-2.5 rounded-full w-[40px] h-[40px] flex items-center justify-center 
-                            ${activeLogTab === 'class' ? 'text-teal-400 active:text-teal-600 active:bg-teal-50' : 'text-slate-400 active:text-indigo-600 active:bg-indigo-50'}`}
-                    >
-                        <VolumeIcon className="w-5 h-5" />
-                    </button>
                 </div>
             </div>
         );
     };
 
 
-    const showInputBar = ['home_log', 'class_list', 'class_detail'].includes(currentView);
+    const showInputBar = ['home_log', 'class_detail'].includes(currentView);
     const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView);
     const viewHandlesScroll = ['home_log', 'class_detail', 'report_detail'].includes(currentView);
 
@@ -411,7 +435,7 @@ const App: React.FC = () => {
                 <div className="flex-1 flex flex-col relative w-full h-full bg-white/40 overflow-hidden border-t border-white/60 backdrop-blur-3xl">
 
                     {/* Header Handling */}
-                    {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && (
+                    {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'face_update' && (
                         <div className="pt-0">
                             <Header
                                 title={getHeaderTitle()}
@@ -445,7 +469,7 @@ const App: React.FC = () => {
                                 onTabChange={setActiveLogTab}
                                 onBack={goBack}
                                 isMainView={true}
-                                onStartRecord={() => handleStartRecord([])}
+                                onStartRecord={() => handleStartRecord([], 'voice')}
                                 newRecordData={pendingRecordData}
                                 onClearNewRecord={() => setPendingRecordData(null)}
                                 onToggleModal={setIsOverlayActive}
@@ -548,10 +572,24 @@ const App: React.FC = () => {
                             <RecordInputView
                                 initialStudentIds={batchStudentIds}
                                 studentNameList={getActiveStudentNames()}
+                                initialMode={recordMode}
                                 onClose={goBack}
                                 onAnalysisComplete={handleAnalysisComplete}
                             />
                         </div>
+                    )}
+
+                    {/* Keyboard Overlay */}
+                    {showKeyboard && (
+                        <>
+                            <div className="absolute inset-0 z-[55] bg-black/5" onClick={() => setShowKeyboard(false)}></div>
+                            <VirtualKeyboard
+                                onClose={() => setShowKeyboard(false)}
+                                onKeyPress={(key) => setInputText(prev => prev + (key === 'space' ? ' ' : key))}
+                                onDelete={() => setInputText(prev => prev.slice(0, -1))}
+                                onSubmit={() => handleAnalysisComplete({ type: 'text', text: inputText, mockStudents: isMultiSelectMode ? Array.from(multiSelectIds) : [] })}
+                            />
+                        </>
                     )}
 
                     {/* AI Tech Tab Bar */}
@@ -761,7 +799,7 @@ const App: React.FC = () => {
                                 </p>
                                 <button
                                     onClick={() => setShowSuccessToast(false)}
-                                    className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-bold text-white transition-all active:scale-95 relative z-10"
+                                    className="w-full py-2.5 rounded-xl bg-white/10 /20 border border-white/10 text-sm font-bold text-white transition-all active:scale-95 relative z-10"
                                 >
                                     知道了
                                 </button>
