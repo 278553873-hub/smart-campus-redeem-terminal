@@ -42,11 +42,6 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
     }
   ]);
 
-  const [purchaseHistory, setPurchaseHistory] = useState<Record<string, number>>({
-    '2': 1,
-    '4': 1
-  });
-
   // 获取所有记录中包含的月份
   const availableMonths = useMemo(() => {
     const months = new Set<string>();
@@ -93,20 +88,10 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
       };
       setRecords(prev => [newRecord, ...prev]);
 
-      setPurchaseHistory(prev => ({
-        ...prev,
-        [confirmingProduct.id]: (prev[confirmingProduct.id] || 0) + 1
-      }));
-
       setConfirmingProduct(null);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3500);
     }
-  };
-
-  const isLimitReached = (product: Product) => {
-    const count = purchaseHistory[product.id] || 0;
-    return count >= product.stock;
   };
 
   const formatTime = (ts: number) => {
@@ -271,58 +256,42 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
         }}
       >
         <div className="animate-in fade-in zoom-in-[0.98] duration-500 ease-out fill-mode-both flex-1 flex flex-col pt-2 pb-12">
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-4">
             {filteredProducts.map(product => {
               const isSpecial = product.type === 'special';
               const canAfford = student.campusCoins >= product.price;
-              const limitReached = isLimitReached(product);
 
               return (
-                <div key={product.id} className={`p-4 rounded-[1.5rem] shadow-[0_2px_10px_rgb(0,0,0,0.02)] border-2 flex items-center gap-4 transition-all hover:shadow-md ${isSpecial ? 'bg-indigo-50/20 border-indigo-100' : 'bg-orange-50/20 border-orange-100/80'}`}>
-                  {/* 左侧商品图 */}
-                  <div className={`w-24 h-24 rounded-[1.2rem] flex items-center justify-center p-2 shrink-0 relative ${isSpecial ? 'bg-indigo-50/50' : 'bg-orange-50/50'}`}>
+                <div key={product.id} className={`p-4 rounded-[2rem] shadow-[0_4px_15px_rgb(0,0,0,0.02)] border-2 flex flex-col gap-4 transition-all active:scale-[0.98] ${isSpecial ? 'bg-indigo-50/20 border-indigo-100' : 'bg-orange-50/20 border-orange-100/80'}`}>
+                  {/* 商品图区域 */}
+                  <div className={`aspect-square rounded-[1.5rem] flex items-center justify-center p-4 relative ${isSpecial ? 'bg-indigo-50/50' : 'bg-orange-50/50'}`}>
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="max-w-full max-h-full object-contain drop-shadow-md mix-blend-multiply"
+                      className="w-full h-full object-contain drop-shadow-md mix-blend-multiply"
                     />
-                    {product.limitInfo && (
-                      <div className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black border border-white ${isSpecial ? 'bg-indigo-500 text-white' : 'bg-red-500 text-white'}`}>
-                        {product.limitInfo}
-                      </div>
-                    )}
                   </div>
 
-                  {/* 中间信息 */}
-                  <div className="flex-1 min-w-0 pr-2 self-start py-1">
-                    <h3 className="text-base font-black text-slate-800 truncate mb-1">
+                  {/* 信息区域 */}
+                  <div className="flex flex-col gap-3 mt-auto">
+                    <h3 className="text-base font-black text-slate-800 line-clamp-2 min-h-[2.5rem] leading-tight text-center">
                       {product.name}
                     </h3>
-                    <p className="text-[11px] text-slate-400 font-bold line-clamp-3 leading-relaxed">
-                      {product.description}
-                    </p>
-                  </div>
 
-                  {/* 右侧兑换按钮 */}
-                  <button
-                    onClick={() => handleOpenConfirm(product)}
-                    disabled={!canAfford || limitReached}
-                    className={`shrink-0 w-20 h-16 rounded-[1rem] flex flex-col items-center justify-center transition-all active:scale-[0.96] border shadow-sm ${limitReached
-                      ? 'bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                      : canAfford
-                        ? 'bg-blue-50 border-blue-100 text-blue-600 shadow-[0_2px_10px_rgba(59,130,246,0.1)] active:bg-blue-100'
-                        : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed shadow-none'
-                      }`}
-                  >
-                    {limitReached ? (
-                      <span className="text-xs font-black">已达限额</span>
-                    ) : (
-                      <div className={`font-[NumberFont] font-black text-[22px] leading-none flex items-center justify-center gap-1 ${canAfford ? 'text-orange-500' : 'text-slate-300'}`}>
+                    <button
+                      onClick={() => handleOpenConfirm(product)}
+                      disabled={!canAfford}
+                      className={`w-full py-4 rounded-[1.2rem] flex items-center justify-center transition-all border shadow-sm ${canAfford
+                        ? 'bg-blue-600 border-blue-500 text-white shadow-[0_4px_12px_rgba(37,99,235,0.2)] active:bg-blue-700 active:scale-95'
+                        : 'bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed shadow-none'
+                        }`}
+                    >
+                      <div className={`font-[NumberFont] font-black text-[22px] leading-none flex items-center gap-1.5`}>
                         <img src="/assets/coin.png" className={`w-[0.9em] h-[0.9em] -translate-y-[1px] ${canAfford ? '' : 'opacity-40 grayscale'}`} alt="coin" />
                         {product.price}
                       </div>
-                    )}
-                  </button>
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -337,7 +306,7 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
               }`}>
               {confirmingProduct.type === 'special' ? <Gift size={64} /> : <ShoppingBag size={64} />}
             </div>
-            <h2 className="text-4xl font-black text-slate-900 mb-6 tracking-tight">确认兑换？</h2>
+            <h2 className="text-4xl font-black text-slate-900 mb-10 tracking-tight">确认兑换？</h2>
 
             <div className="w-full space-y-4 mb-10">
               <div className="flex justify-between items-center bg-slate-50 p-5 rounded-2xl border border-slate-100">

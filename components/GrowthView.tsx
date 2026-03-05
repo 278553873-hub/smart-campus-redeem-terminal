@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import {
     Trophy, TrendingUp, Calendar, ArrowUpRight,
     ChevronRight, Sparkles, UserCheck, Clock, CheckCircle2,
-    AlertCircle, ArrowLeft, Medal
+    AlertCircle, ArrowLeft, Medal, Info
 } from 'lucide-react';
 import { Student, GrowthStatus, TierLevel } from '../types';
 
@@ -58,6 +58,7 @@ type DemoScenario = 'normal' | 'allZero' | 'rank5';
 const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
     const [activeTab, setActiveTab] = useState<'records' | 'leaderboard'>('records');
     const [demoScenario, setDemoScenario] = useState<DemoScenario>('normal');
+    const [showClassRewardModal, setShowClassRewardModal] = useState(false);
 
     const uiState = React.useMemo(() => {
         if (demoScenario === 'allZero') {
@@ -204,19 +205,19 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
 
                         <div className="flex justify-between items-center text-[10px] font-bold text-orange-800/60 pb-1 px-2">
                             <div className="flex flex-col items-center gap-0.5">
-                                <span className="opacity-80 text-orange-600/80">阳光成长</span>
+                                <span className="opacity-80 text-orange-600/80">成长奖励</span>
                                 <span className="text-orange-500 font-black text-base font-[NumberFont]">10</span>
                             </div>
                             <span className="text-orange-300 mx-2 text-lg leading-none">+</span>
                             <div className="flex flex-col items-center gap-0.5">
-                                <span className="opacity-80 text-orange-600/80">得分排位</span>
+                                <span className="opacity-80 text-orange-600/80">得分奖励</span>
                                 <span className="text-orange-500 font-black text-base font-[NumberFont]">{uiState.coinsBonus}</span>
                             </div>
                             <span className="text-orange-300 mx-2 text-lg leading-none">+</span>
-                            <div className="flex flex-col items-center gap-0.5 relative">
-                                <span className="text-red-400">流动红旗</span>
+                            <div className="flex flex-col items-center gap-0.5 relative cursor-pointer group" onClick={() => setShowClassRewardModal(true)}>
+                                <span className="text-red-400 flex items-center gap-0.5 cursor-pointer">班级奖励 <Info size={10} className="opacity-80 group-hover:opacity-100 transition-opacity" /></span>
                                 <span className="text-red-500 font-black text-base font-[NumberFont]">{uiState.coinsFlag}</span>
-                                <span className="absolute -top-1.5 -right-5 text-[8px] font-black text-white bg-red-400 px-1 rounded-sm scale-75 shadow-sm">班级</span>
+                                <span className="absolute -top-1.5 -right-5 text-[8px] font-black text-white bg-red-400 px-1 rounded-sm scale-75 shadow-sm pointer-events-none">班级</span>
                             </div>
                         </div>
                     </div>
@@ -378,6 +379,38 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                     </div>
                 )}
             </div>
+
+            {/* 班级奖励明细 Modal */}
+            {showClassRewardModal && (
+                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200" onClick={() => setShowClassRewardModal(false)}>
+                    <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <h3 className="font-black text-slate-800 flex items-center gap-2">
+                                <span className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+                                    <AlertCircle size={16} />
+                                </span>
+                                班级奖励明细
+                            </h3>
+                            <button onClick={() => setShowClassRewardModal(false)} className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 p-2 rounded-xl border border-slate-100 transition-colors">
+                                <ArrowLeft size={16} className="rotate-180" />
+                            </button>
+                        </div>
+                        <div className="p-5 space-y-3 pb-8">
+                            <div className="flex items-center justify-between p-3 rounded-xl bg-orange-50/50 border border-orange-100/50">
+                                <span className="text-sm font-bold text-slate-700">流动红旗</span>
+                                <span className="text-orange-500 font-black font-[NumberFont] flex items-center gap-1">+5 <span className="text-[10px] text-slate-400 font-sans mt-0.5">币</span></span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 rounded-xl bg-orange-50/50 border border-orange-100/50">
+                                <span className="text-sm font-bold text-slate-700">运动会拔河第一名</span>
+                                <span className="text-orange-500 font-black font-[NumberFont] flex items-center gap-1">+5 <span className="text-[10px] text-slate-400 font-sans mt-0.5">币</span></span>
+                            </div>
+                            <div className="text-center pt-2">
+                                <span className="text-xs text-slate-400 font-bold">由班主任分配发放</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
             .custom-scrollbar::-webkit-scrollbar { width: 0px; }

@@ -611,6 +611,7 @@ const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mo
         <ReportPageContainer mode={mode} id={id}>
             <ReportSectionHeader
                 title="高光时刻"
+                subTitle="Highlights"
                 icon={Star}
                 className="text-amber-500"
             />

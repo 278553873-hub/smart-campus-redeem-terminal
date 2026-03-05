@@ -270,9 +270,9 @@ const TerminalApp: React.FC = () => {
         </div>
 
         {view !== 'welcome' && view !== 'scanning' && (
-          <div className="absolute top-10 right-6 z-[90] bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 transform translate-y-2 pointer-events-none">
-            <div className={`w-2 h-2 rounded-full ${idleSecondsLeft <= 10 ? 'bg-red-500 animate-ping' : 'bg-green-400 animate-pulse'}`}></div>
-            <span className="text-white text-xs font-bold tracking-widest drop-shadow-sm">{idleSecondsLeft}s 后自动退出</span>
+          <div className="absolute z-[90] top-10 left-1/2 -translate-x-1/2 bg-slate-900/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 pointer-events-none shadow-sm transition-all duration-300">
+            <div className={`w-1.5 h-1.5 rounded-full ${idleSecondsLeft <= 10 ? 'bg-red-500 animate-ping' : 'bg-green-500 animate-pulse'}`}></div>
+            <span className="text-slate-700/80 text-[10px] font-bold tracking-widest">{idleSecondsLeft}s 后自动退出</span>
           </div>
         )}
 

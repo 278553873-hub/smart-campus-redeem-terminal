@@ -71,9 +71,8 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance 
             </div>
           </div>
 
-          <button
-            onClick={() => onNavigate('growth')}
-            className="col-span-5 bg-white rounded-3xl p-5 border-2 border-slate-100 shadow-sm relative overflow-hidden flex flex-col justify-center items-start text-left active:scale-[0.98] transition-all group"
+          <div
+            className="col-span-5 bg-white rounded-3xl p-5 border-2 border-slate-100 shadow-sm relative overflow-hidden flex flex-col justify-center items-start text-left"
           >
             <div className="relative z-10 w-full mb-2">
               <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest mb-1">当前成长阶段</p>
@@ -84,7 +83,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance 
               </div>
             </div>
             <Sparkles size={80} className="absolute -bottom-6 -right-6 text-slate-50 pointer-events-none" />
-          </button>
+          </div>
         </div>
       </div>
 
@@ -164,7 +163,7 @@ const ActionCard: React.FC<{
       <div className={`absolute right-12 -bottom-10 w-24 h-24 ${ctx.blob} rounded-full mix-blend-multiply opacity-40 transition-transform duration-500 group-active:-translate-x-4 pointer-events-none`}></div>
 
       {/* 左侧超大高定立体光影Icon区 */}
-      <div className={`relative z-10 w-20 h-20 rounded-[1.5rem] ${ctx.lightBg} ${ctx.text} flex items-center justify-center shadow-inner shrink-0 transition-transform duration-300 group-active:scale-95 group-active:-rotate-6 ring-4 ring-white overflow-hidden`}>
+      <div className={`relative z-10 w-20 h-20 rounded-[1.5rem] ${ctx.lightBg} ${ctx.text} flex items-center justify-center shadow-inner shrink-0 transition-transform duration-300 group-active:scale-95 ring-4 ring-white overflow-hidden`}>
         <img src={imageSrc} className="w-16 h-16 object-contain drop-shadow-sm transition-transform duration-500 group-active:scale-110" alt="" />
       </div>
 

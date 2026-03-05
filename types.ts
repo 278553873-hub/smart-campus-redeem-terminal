@@ -14,9 +14,7 @@ export interface Product {
   price: number;
   image: string;
   stock: number;
-  description: string;
   type: 'standard' | 'special'; // standard: 商品奖励, special: 特殊奖励
-  limitInfo?: string; // 限购说明，如 "每周限购1次"
 }
 
 export interface BankAccount {

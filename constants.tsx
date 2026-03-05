@@ -11,8 +11,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_badge.png',
     stock: 50,
     type: 'standard',
-    limitInfo: '每人限购3个',
-    description: '闪闪发光的校庆限量版徽章，兑换后直接从货柜领取。'
   },
   {
     id: '2',
@@ -21,8 +19,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_principal.png',
     stock: 1,
     type: 'special',
-    limitInfo: '每月限购1个',
-    description: '体验一天校长的日常工作，参与学校决策。兑换后请联系班主任预约时间。'
   },
   {
     id: '3',
@@ -31,8 +27,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_photo.png',
     stock: 10,
     type: 'special',
-    limitInfo: '每周限购2个',
-    description: '在校园荣誉墙前与校长合影留念。兑换后请联系班主任安排。'
   },
   {
     id: '4',
@@ -41,8 +35,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_homework.png',
     stock: 5,
     type: 'special',
-    limitInfo: '每学期限购1个',
-    description: '可抵消一次单科家庭作业。兑换后需班主任核销确认。'
   },
   {
     id: '5',
@@ -51,7 +43,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_notebook.png',
     stock: 20,
     type: 'standard',
-    description: '高品质纸张，记录奇思妙想。兑换后直接从货柜领取。'
   },
   {
     id: '6',
@@ -60,8 +51,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_pen.png',
     stock: 10,
     type: 'standard',
-    limitInfo: '每人限购1支',
-    description: '书写流畅的定制版钢笔。兑换后直接从货柜领取。'
   },
   {
     id: '7',
@@ -70,7 +59,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_pencilcase.png',
     stock: 30,
     type: 'standard',
-    description: '多功能太空主题文具盒。兑换后直接从货柜领取。'
   },
   {
     id: 's2',
@@ -79,8 +67,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_backpack.png',
     stock: 12,
     type: 'standard',
-    limitInfo: '每学期限购1个',
-    description: '大容量防水书包，护脊减负设计。兑换后直接从货柜领取。'
   },
   {
     id: 's3',
@@ -89,7 +75,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_colorpen.png',
     stock: 100,
     type: 'standard',
-    description: '书写顺滑不卡墨，记笔记好帮手。兑换后直接从货柜领取。'
   },
   {
     id: 's4',
@@ -98,7 +83,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_globe.png',
     stock: 8,
     type: 'standard',
-    description: '高清无缝印刷，带LED夜灯功能。兑换后直接从货柜领取。'
   },
   {
     id: '8',
@@ -107,8 +91,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_pe.png',
     stock: 2,
     type: 'special',
-    limitInfo: '每月限购2个',
-    description: '协助体育老师组织班级运动会。兑换后请联系体育老师。'
   },
   {
     id: '9',
@@ -117,8 +99,6 @@ export const MOCK_PRODUCTS: Product[] = [
     image: '/assets/shop/shop_seat.png',
     stock: 5,
     type: 'special',
-    limitInfo: '每学期限购1个',
-    description: '可以任意挑选自己的座位并保持一周。兑换后需班主任核销确认。'
   }
 ];
 
