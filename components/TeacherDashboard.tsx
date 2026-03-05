@@ -99,6 +99,44 @@ const TeacherDashboard: React.FC = () => {
         coinIconUrl: '/assets/coin.png'
     });
 
+    // 历次发币记录筛选状态
+    const [recordFilterMonthStart, setRecordFilterMonthStart] = useState('');
+    const [recordFilterMonthEnd, setRecordFilterMonthEnd] = useState('');
+    const [recordFilterType, setRecordFilterType] = useState('全部类型');
+
+    const allRecords = [
+        {
+            title: '2026年3月第2次', type: '自动发放', time: '2026-03-09',
+            cycle: '按周考核（2026-03-02～2026-03-08）', targets: '所有班级',
+            rateValue: '100', rateUnit: '班级', rateReason: '', total: 200000, operator: '系统'
+        },
+        {
+            title: '2026年3月第1次', type: '手动发放', time: '2026-03-05',
+            cycle: '-', targets: '2025级2班',
+            rateValue: '10', rateUnit: '学生', rateReason: '流动红旗', total: 450, operator: '周峰'
+        },
+        {
+            title: '2026年2月第1次', type: '自动发放', time: '2026-02-28',
+            cycle: '按月考核（2026-02-01～2026-02-28）', targets: '所有班级',
+            rateValue: '30', rateUnit: '班级', rateReason: '', total: 100000, operator: '系统'
+        },
+        {
+            title: '2026年1月第1次', type: '手动发放', time: '2026-01-15',
+            cycle: '-', targets: '2024级1班',
+            rateValue: '5', rateUnit: '学生', rateReason: '运动会奖励', total: 250, operator: '李老师'
+        }
+    ];
+
+    const filteredRecords = allRecords.filter(item => {
+        if (recordFilterType !== '全部类型' && item.type !== recordFilterType) return false;
+        if (recordFilterMonthStart || recordFilterMonthEnd) {
+            const itemMonth = item.time.substring(0, 7); // Extract YYYY-MM
+            if (recordFilterMonthStart && itemMonth < recordFilterMonthStart) return false;
+            if (recordFilterMonthEnd && itemMonth > recordFilterMonthEnd) return false;
+        }
+        return true;
+    });
+
     // 货柜商品管理状态
     const [shopActiveTab, setShopActiveTab] = useState<'products' | 'channels'>('channels');
     const [shopProducts, setShopProducts] = useState([
@@ -807,26 +845,37 @@ const TeacherDashboard: React.FC = () => {
                                         <Database size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-slate-800">历次发币任务记录</h3>
-                                        <p className="text-slate-500 text-sm mt-1">以发放任务（Task）为维度，展示系统历次执行的批量发币记录</p>
+                                        <p className="text-slate-600 font-medium tracking-wide">以发放任务（Task）为维度，展示系统历次执行的批量发币记录</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <select className="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-3 py-2 outline-none">
-                                        <option>全部年级</option>
-                                        <option>一年级</option>
-                                        <option>二年级</option>
+                                <div className="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+                                    <div className="flex items-center border border-slate-300 rounded-lg bg-white shadow-sm overflow-hidden hover:border-blue-400 focus-within:border-blue-500 focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.2)] transition-all">
+                                        <div className="flex items-center px-3 py-1.5 gap-2">
+                                            <span className="text-slate-400">
+                                                <svg viewBox="64 64 896 896" focusable="false" data-icon="calendar" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M880 184H712v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H384v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H144c-17.7 0-32 14.3-32 32v664c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V216c0-17.7-14.3-32-32-32zm-40 656H184V460h656v380zM184 392V256h128v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h256v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h128v136H184z"></path></svg>
+                                            </span>
+                                            <input
+                                                type="month"
+                                                value={recordFilterMonthStart}
+                                                onChange={e => setRecordFilterMonthStart(e.target.value)}
+                                                className="text-sm text-slate-700 outline-none bg-transparent w-28 cursor-pointer placeholder:text-slate-300"
+                                                placeholder="开始月份"
+                                            />
+                                            <span className="text-slate-300 px-1">~</span>
+                                            <input
+                                                type="month"
+                                                value={recordFilterMonthEnd}
+                                                onChange={e => setRecordFilterMonthEnd(e.target.value)}
+                                                className="text-sm text-slate-700 outline-none bg-transparent w-28 cursor-pointer placeholder:text-slate-300"
+                                                placeholder="结束月份"
+                                            />
+                                        </div>
+                                    </div>
+                                    <select value={recordFilterType} onChange={e => setRecordFilterType(e.target.value)} className="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-3 py-2 outline-none shadow-sm cursor-pointer hover:border-blue-400 transition-all">
+                                        <option value="全部类型">全部类型</option>
+                                        <option value="自动发放">自动发放</option>
+                                        <option value="手动发放">手动发放</option>
                                     </select>
-                                    <select className="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-3 py-2 outline-none">
-                                        <option>本月 (10月)</option>
-                                        <option>上月 (9月)</option>
-                                        <option>本周</option>
-                                        <option>上周</option>
-                                        <option>自定义时间...</option>
-                                    </select>
-                                    <button className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg text-sm hover:bg-indigo-700 transition-colors shadow-sm">
-                                        导出 Excel
-                                    </button>
                                 </div>
                             </div>
 
@@ -834,62 +883,48 @@ const TeacherDashboard: React.FC = () => {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left min-w-[1000px]">
                                     <thead>
-                                        <tr className="bg-slate-50 text-slate-500 text-[13px] font-bold">
-                                            <th className="py-4 px-6 border-b border-slate-200">发币任务 / 学期</th>
-                                            <th className="py-4 px-6 border-b border-slate-200">发币时间</th>
-                                            <th className="py-4 px-6 border-b border-slate-200">发币考评周期</th>
-                                            <th className="py-4 px-6 border-b border-slate-200 max-w-xs">发币对象</th>
-                                            <th className="py-4 px-6 border-b border-slate-200">发币标准</th>
-                                            <th className="py-4 px-6 border-b border-slate-200">发币总量</th>
-                                            <th className="py-4 px-6 border-b border-slate-200 text-right">操作</th>
+                                        <tr className="bg-slate-50 text-slate-500 text-[13px]">
+                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币任务</th>
+                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">类型</th>
+                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币时间</th>
+                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币考核方式</th>
+                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币对象</th>
+                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币标准</th>
+                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币总量</th>
+                                            <th className="py-4 px-6 border-b border-slate-200 text-right font-normal">操作人</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {[
-                                            {
-                                                term: '2025-2026年下学期', title: '第 1 次发币', time: '2026-03-09',
-                                                cycle: '2026-03-02～2026-03-08', targets: '2020级1班、2020级2班...',
-                                                rate: '100币 / 班级', total: 200000
-                                            },
-                                            {
-                                                term: '2025-2026年下学期', title: '配置测试发币', time: '2026-03-01',
-                                                cycle: '测试任务', targets: '全校所有班级',
-                                                rate: '100币 / 班级', total: 2000
-                                            },
-                                            {
-                                                term: '2025-2026年上学期', title: '第 20 次发币', time: '2026-01-15',
-                                                cycle: '2026-01-08～2026-01-14', targets: '2020级1班、2020级2班...',
-                                                rate: '保底30币+排位竞争', total: 100000
-                                            },
-                                            {
-                                                term: '2025-2026年上学期', title: '第 19 次发币', time: '2026-01-08',
-                                                cycle: '2026-01-01～2026-01-07', targets: '2020级1班、2020级2班...',
-                                                rate: '保底30币+排位竞争', total: 100000
-                                            }
-                                        ].map((item, index) => (
+                                        {filteredRecords.map((item, index) => (
                                             <tr key={index} className="hover:bg-slate-50 transition-colors">
                                                 <td className="py-4 px-6">
-                                                    <div className="font-bold text-slate-800">{item.title}</div>
-                                                    <div className="text-xs text-slate-400 mt-0.5">{item.term}</div>
+                                                    <div className="text-sm text-slate-700">{item.title}</div>
                                                 </td>
-                                                <td className="py-4 px-6 text-sm text-slate-600 font-medium">{item.time}</td>
-                                                <td className="py-4 px-6 text-sm text-slate-500">{item.cycle}</td>
-                                                <td className="py-4 px-6 text-sm text-slate-500 truncate max-w-[150px]" title={item.targets}>
+                                                <td className="py-4 px-6 text-sm text-slate-700">
+                                                    {item.type}
+                                                </td>
+                                                <td className="py-4 px-6 text-sm text-slate-700">{item.time}</td>
+                                                <td className="py-4 px-6 text-sm text-slate-700">{item.cycle}</td>
+                                                <td className="py-4 px-6 text-sm text-slate-700 truncate max-w-[150px]" title={item.targets}>
                                                     {item.targets}
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <div className="font-semibold text-slate-800">{item.rate}</div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-1.5 text-sm text-slate-700">
+                                                            <Coins size={16} className="text-indigo-400" />
+                                                            <span>{item.rateValue} / {item.rateUnit}</span>
+                                                        </div>
+                                                        {item.rateReason && <div className="text-xs text-slate-400">（原因：{item.rateReason}）</div>}
+                                                    </div>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <div className="font-black text-indigo-600 text-lg flex items-center gap-1.5">
+                                                    <div className="text-sm text-slate-700 flex items-center gap-1.5">
                                                         <Coins size={16} className="text-indigo-400" />
                                                         {item.total.toLocaleString()}
                                                     </div>
                                                 </td>
-                                                <td className="py-4 px-6 text-right">
-                                                    <button className="text-blue-600 hover:text-blue-800 text-sm font-semibold inline-flex items-center gap-1 transition-colors">
-                                                        <FileText size={16} /> 班级明细
-                                                    </button>
+                                                <td className="py-4 px-6 text-right text-sm text-slate-700">
+                                                    {item.operator}
                                                 </td>
                                             </tr>
                                         ))}
@@ -899,12 +934,11 @@ const TeacherDashboard: React.FC = () => {
 
                             {/* 分页区 */}
                             <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between text-sm text-slate-500">
-                                <div>共计 24 条记录</div>
+                                <div>共计 {filteredRecords.length} 条记录</div>
                                 <div className="flex items-center gap-2">
-                                    <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">上一页</button>
+                                    <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 opacity-50 cursor-not-allowed">上一页</button>
                                     <button className="px-3 py-1.5 border border-slate-300 rounded bg-blue-50 text-blue-600">1</button>
-                                    <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">2</button>
-                                    <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">下一页</button>
+                                    <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 opacity-50 cursor-not-allowed">下一页</button>
                                 </div>
                             </div>
                         </div>
