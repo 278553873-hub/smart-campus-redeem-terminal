@@ -255,11 +255,19 @@ const TerminalApp: React.FC = () => {
   };
 
   return (
-    <div className="w-screen h-screen bg-[#f0f9ff] flex items-center justify-center overflow-hidden py-4">
+    <div className="w-screen h-[100dvh] bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-6 md:p-8">
       {/* 21.5寸竖屏货柜机比例 (约 9:16) */}
       <div
         className="glass-panel overflow-hidden flex flex-col relative pt-8"
-        style={{ width: '100%', height: '100%', maxWidth: '540px', maxHeight: '960px', borderRadius: '3rem', boxShadow: '0 50px 100px -20px rgba(0,0,0,0.15)' }}
+        style={{
+          aspectRatio: '9/16',
+          width: '100%',
+          maxWidth: 'min(540px, calc((100vh - 48px) * (9 / 16)))',
+          height: 'auto',
+          maxHeight: '960px',
+          borderRadius: '3rem',
+          boxShadow: '0 50px 100px -20px rgba(0,0,0,0.15)'
+        }}
       >
         {/* 顶部硬件模拟 (摄像头区域) */}
         <div className="absolute top-0 left-0 w-full h-8 bg-black/5 z-[100] flex justify-center items-center pointer-events-none">

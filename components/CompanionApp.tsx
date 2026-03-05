@@ -77,9 +77,9 @@ const CompanionApp: React.FC = () => {
     };
 
     return (
-        <div className="w-screen h-screen bg-[#f0f9ff] flex items-center justify-center overflow-hidden py-4">
-            <div className="app-container" style={{ position: 'relative', width: '100%', height: '100%', maxWidth: '430px', maxHeight: '932px' }}>
-                <div className="phone-mockup" style={{ width: '100%', height: '100%', margin: 0 }}>
+        <div className="w-screen h-screen bg-[#f0f9ff] flex items-center justify-center overflow-hidden">
+            <div className="app-container" style={{ background: 'transparent' }}>
+                <div className="phone-mockup">
                     <div className="dynamic-island z-50"></div>
                     <div className="status-bar-mock text-white mix-blend-difference z-50">
                         <span>9:41</span>
