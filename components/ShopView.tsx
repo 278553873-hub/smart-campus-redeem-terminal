@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { ShoppingCart, Gift, CheckCircle2, Filter, Sparkles, ShoppingBag, History, Clock, ChevronDown, Calendar, ChevronLeft } from 'lucide-react';
 import { Student, Product } from '../types';
-import { MOCK_PRODUCTS } from '../constants';
 
 interface PurchaseRecord {
   id: string;
@@ -16,11 +15,12 @@ interface PurchaseRecord {
 
 interface ShopViewProps {
   student: Student;
+  products: Product[];
   onPurchase: (p: Product) => void;
   onBack: () => void;
 }
 
-const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
+const ShopView: React.FC<ShopViewProps> = ({ student, products, onPurchase }) => {
   const [isHistory, setIsHistory] = useState(false);
   const [confirmingProduct, setConfirmingProduct] = useState<Product | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -65,7 +65,7 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
     return filtered;
   }, [records, selectedMonth]);
 
-  const filteredProducts = MOCK_PRODUCTS.filter(p => p.type === 'standard');
+  const filteredProducts = products.filter(p => p.type === 'standard');
 
   const handleOpenConfirm = (product: Product) => {
     setConfirmingProduct(product);
@@ -259,7 +259,9 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
           <div className="grid grid-cols-2 gap-4">
             {filteredProducts.map(product => {
               const isSpecial = product.type === 'special';
+              const inStock = product.stock > 0;
               const canAfford = student.campusCoins >= product.price;
+              const canBuy = canAfford && inStock;
 
               return (
                 <div key={product.id} className={`p-4 rounded-[2rem] shadow-[0_4px_15px_rgb(0,0,0,0.02)] border-2 flex flex-col gap-4 transition-all active:scale-[0.98] ${isSpecial ? 'bg-indigo-50/20 border-indigo-100' : 'bg-orange-50/20 border-orange-100/80'}`}>
@@ -280,15 +282,21 @@ const ShopView: React.FC<ShopViewProps> = ({ student, onPurchase }) => {
 
                     <button
                       onClick={() => handleOpenConfirm(product)}
-                      disabled={!canAfford}
-                      className={`w-full py-4 rounded-[1.2rem] flex items-center justify-center transition-all border shadow-sm ${canAfford
+                      disabled={!canBuy}
+                      className={`w-full py-4 rounded-[1.2rem] flex items-center justify-center transition-all border shadow-sm ${canBuy
                         ? 'bg-blue-600 border-blue-500 text-white shadow-[0_4px_12px_rgba(37,99,235,0.2)] active:bg-blue-700 active:scale-95'
                         : 'bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed shadow-none'
                         }`}
                     >
                       <div className={`font-[NumberFont] font-black text-[22px] leading-none flex items-center gap-1.5`}>
-                        <img src="/assets/coin.png" className={`w-[0.9em] h-[0.9em] -translate-y-[1px] ${canAfford ? '' : 'opacity-40 grayscale'}`} alt="coin" />
-                        {product.price}
+                        {inStock ? (
+                          <>
+                            <img src="/assets/coin.png" className={`w-[0.9em] h-[0.9em] -translate-y-[1px] ${canBuy ? '' : 'opacity-40 grayscale'}`} alt="coin" />
+                            {product.price}
+                          </>
+                        ) : (
+                          <span className="text-base tracking-widest px-2">已售罄</span>
+                        )}
                       </div>
                     </button>
                   </div>

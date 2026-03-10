@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { DeviceWrapper } from './DeviceWrapper';
 
 const IDLE_1 = '/assets/panda/idle_panda_1.mp4';
 const IDLE_2 = '/assets/panda/idle_panda_2.mp4';
@@ -77,9 +78,9 @@ const CompanionApp: React.FC = () => {
     };
 
     return (
-        <div className="w-screen h-screen bg-[#f0f9ff] flex items-center justify-center overflow-hidden">
-            <div className="app-container" style={{ background: 'transparent' }}>
-                <div className="phone-mockup">
+        <div className="w-screen h-[100dvh] bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-4">
+            <DeviceWrapper width={393} height={852}>
+                <div className="phone-mockup w-full h-full">
                     <div className="dynamic-island z-50"></div>
                     <div className="status-bar-mock text-white mix-blend-difference z-50">
                         <span>9:41</span>
@@ -125,7 +126,7 @@ const CompanionApp: React.FC = () => {
                         )}
                     </div>
                 </div>
-            </div>
+            </DeviceWrapper>
         </div>
     );
 };

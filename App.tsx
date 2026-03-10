@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
 import { ViewState, Student, Product, BankAccount, Deposit } from './types';
-import { EXCHANGE_RATE, BANK_CONFIG } from './constants';
+import { EXCHANGE_RATE, BANK_CONFIG, MOCK_PRODUCTS } from './constants';
 import FaceScanner from './components/FaceScanner';
+import AccountLogin from './components/AccountLogin';
 import Dashboard from './components/Dashboard';
 import ExchangeView from './components/ExchangeView';
 import ShopView from './components/ShopView';
@@ -12,8 +13,10 @@ import TeacherDashboard from './components/TeacherDashboard';
 import AdminApp from './components/AdminApp';
 import MobileApp from './mobile-app/App';
 import CompanionApp from './components/CompanionApp';
+import VendingAdmin from './components/VendingAdmin';
+import { DeviceWrapper } from './components/DeviceWrapper';
 import './mobile-app/index.css';
-import { ChevronLeft, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Loader2, Bot } from 'lucide-react';
+import { ChevronLeft, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Loader2, Bot, Settings, ShieldCheck, Power } from 'lucide-react';
 import { playSound } from './utils/sound';
 
 const INITIAL_STUDENT: Student = {
@@ -51,12 +54,20 @@ const INITIAL_BANK: BankAccount = {
   ]
 };
 
-const TerminalApp: React.FC = () => {
-  const [view, setView] = useState<ViewState>('welcome');
+const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 'vending' }) => {
+  const isVending = mode === 'vending';
+  const [view, setView] = useState<ViewState>(isVending ? 'welcome' : 'scanning');
   const [student, setStudent] = useState<Student>(INITIAL_STUDENT);
   const [bank, setBank] = useState<BankAccount>(INITIAL_BANK);
+  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
   const [isLoading, setIsLoading] = useState(false);
   const [idleSecondsLeft, setIdleSecondsLeft] = useState(5000);
+
+  // admin login state
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminAction, setAdminAction] = useState<'restock' | 'restart' | null>(null);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [loginError, setLoginError] = useState(false);
 
   // 1. Idle Screensaver & Click Sound Feedback
   React.useEffect(() => {
@@ -68,13 +79,13 @@ const TerminalApp: React.FC = () => {
       clearInterval(intervalTimer);
       setIdleSecondsLeft(5000);
 
-      if (view !== 'welcome' && view !== 'scanning') {
+      if (view !== 'welcome' && view !== 'scanning' && view !== 'vending-admin') {
         intervalTimer = setInterval(() => {
           setIdleSecondsLeft(prev => prev > 0 ? prev - 1 : 0);
         }, 1000);
 
         idleTimer = setTimeout(() => {
-          setView('welcome');
+          setView(isVending ? 'welcome' : 'scanning');
           setStudent(INITIAL_STUDENT);
           setBank(INITIAL_BANK);
           setIsLoading(false);
@@ -83,7 +94,10 @@ const TerminalApp: React.FC = () => {
     };
 
     const handleInteraction = () => {
-      playSound('click');
+      // Don't play click sound in vending admin
+      if (view !== 'vending-admin') {
+        playSound('click');
+      }
       resetTimer();
     };
 
@@ -110,6 +124,23 @@ const TerminalApp: React.FC = () => {
     }, 1200);
   };
 
+  const handleAdminLogin = () => {
+    if (adminPassword === '123456') {
+      setShowAdminLogin(false);
+      setAdminPassword('');
+      setLoginError(false);
+
+      if (adminAction === 'restart') {
+        window.location.reload();
+      } else {
+        setView('vending-admin');
+      }
+    } else {
+      setLoginError(true);
+      setTimeout(() => setLoginError(false), 2000);
+    }
+  };
+
   const bankBalance = bank.deposits.reduce((s, d) => s + d.amount, 0);
 
   const handleExchange = (pointsToRedeem: number) => {
@@ -131,6 +162,13 @@ const TerminalApp: React.FC = () => {
           ...prev,
           campusCoins: prev.campusCoins - product.price
         }));
+
+        // 扣减实际库存
+        if (product.type === 'standard') {
+          setProducts(prev => prev.map(p =>
+            p.id === product.id ? { ...p, stock: Math.max(0, p.stock - 1) } : p
+          ));
+        }
       }
     }, 'success');
   };
@@ -203,7 +241,7 @@ const TerminalApp: React.FC = () => {
             <div className="space-y-4">
               <h1 className="text-6xl font-black text-blue-900 tracking-tighter leading-none">
                 校园星光<br />
-                <span className="text-blue-600 mt-2 block">货柜机</span>
+                <span className="text-blue-600 mt-2 block">{isVending ? '货柜机' : '班级一体机'}</span>
               </h1>
               <div className="text-xl text-slate-400 mt-5 font-bold flex items-center justify-center gap-3">
                 <div className="h-px w-6 bg-slate-200"></div>
@@ -225,20 +263,26 @@ const TerminalApp: React.FC = () => {
                 onMouseUp={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)'; }}
               >
-                <div className="flex items-center gap-3">开始刷脸 <ArrowRight size={28} /></div>
+                <div className="flex items-center gap-3">
+                  {isVending ? '开始刷脸' : '账号登录'} <ArrowRight size={28} />
+                </div>
               </button>
               <p className="text-slate-300 font-bold mt-8 text-sm uppercase tracking-widest">请靠近终端屏幕</p>
             </div>
           </div>
         );
       case 'scanning':
-        return <FaceScanner onSuccess={() => { playSound('success'); setView('dashboard'); }} />;
+        return isVending ? (
+          <FaceScanner onSuccess={() => { playSound('success'); setView('dashboard'); }} />
+        ) : (
+          <AccountLogin onSuccess={() => { setView('dashboard'); }} />
+        );
       case 'dashboard':
-        return <Dashboard student={student} onNavigate={setView} bankBalance={bankBalance} />;
+        return <Dashboard student={student} onNavigate={(v) => { if (v === 'welcome' && !isVending) setView('scanning'); else setView(v); }} bankBalance={bankBalance} layout={isVending ? 'mobile' : 'pc'} hideShop={!isVending} />;
       case 'exchange':
         return <ExchangeView student={student} onExchange={handleExchange} onBack={() => setView('dashboard')} />;
       case 'shop':
-        return <ShopView student={student} onPurchase={handlePurchase} onBack={() => setView('dashboard')} />;
+        return <ShopView student={student} products={products} onPurchase={handlePurchase} onBack={() => setView('dashboard')} />;
       case 'bank':
         return <BankView
           student={student}
@@ -249,78 +293,141 @@ const TerminalApp: React.FC = () => {
         />;
       case 'growth':
         return <GrowthView student={student} onBack={() => setView('dashboard')} />;
+      case 'vending-admin':
+        return <VendingAdmin products={products} setProducts={setProducts} onExit={() => setView(isVending ? 'welcome' : 'scanning')} />;
       default:
         return <div>错误状态</div>;
     }
   };
 
-  return (
-    <div className="w-screen h-[100dvh] bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-6 md:p-8">
-      {/* 21.5寸竖屏货柜机比例 (约 9:16) */}
-      <div
-        className="glass-panel overflow-hidden flex flex-col relative pt-8"
-        style={{
-          aspectRatio: '9/16',
-          width: '100%',
-          maxWidth: 'min(540px, calc((100vh - 48px) * (9 / 16)))',
-          height: 'auto',
-          maxHeight: '960px',
-          borderRadius: '3rem',
-          boxShadow: '0 50px 100px -20px rgba(0,0,0,0.15)'
-        }}
-      >
-        {/* 顶部硬件模拟 (摄像头区域) */}
+  const innerContent = (
+    <div
+      className={`glass-panel overflow-hidden flex flex-col relative w-full h-full ${isVending ? 'pt-8' : ''}`}
+      style={{
+        borderRadius: isVending ? '3rem' : '0',
+        boxShadow: isVending ? '0 50px 100px -20px rgba(0,0,0,0.15)' : 'none'
+      }}
+    >
+      {/* 顶部硬件模拟 (摄像头区域) */}
+      {isVending && (
         <div className="absolute top-0 left-0 w-full h-8 bg-black/5 z-[100] flex justify-center items-center pointer-events-none">
           <div className="w-24 h-4 bg-black/80 rounded-b-xl flex items-center justify-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-900/50"></div>
             <div className="w-1 h-1 rounded-full bg-green-400"></div>
           </div>
         </div>
+      )}
 
-        {view !== 'welcome' && view !== 'scanning' && (
-          <div className="absolute z-[90] top-10 left-1/2 -translate-x-1/2 bg-slate-900/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 pointer-events-none shadow-sm transition-all duration-300">
-            <div className={`w-1.5 h-1.5 rounded-full ${idleSecondsLeft <= 10 ? 'bg-red-500 animate-ping' : 'bg-green-500 animate-pulse'}`}></div>
-            <span className="text-slate-700/80 text-[10px] font-bold tracking-widest">{idleSecondsLeft}s 后自动退出</span>
-          </div>
-        )}
+      {/* 登录页管理员入口 */}
+      {view === 'welcome' && isVending && (
+        <div className="absolute top-6 right-6 z-[110] flex gap-3">
+          <button
+            onClick={() => { setAdminAction('restock'); setShowAdminLogin(true); }}
+            className="bg-white/50 backdrop-blur-md p-3 rounded-2xl flex items-center justify-center text-slate-400 active:scale-95 transition-all outline-none border border-white/60 shadow-sm"
+            title="设备维护"
+          >
+            <Settings size={24} className="text-slate-600 drop-shadow-sm" />
+          </button>
+          <button
+            onClick={() => { setAdminAction('restart'); setShowAdminLogin(true); }}
+            className="bg-white/50 backdrop-blur-md p-3 rounded-2xl flex items-center justify-center text-red-400 active:scale-95 transition-all outline-none border border-white/60 shadow-sm"
+            title="重启设备"
+          >
+            <Power size={24} className="text-red-600 drop-shadow-sm" />
+          </button>
+        </div>
+      )}
 
-        {view !== 'welcome' && view !== 'scanning' && view !== 'dashboard' && (
-          <div className="h-16 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-50">
-            <button
-              onClick={() => setView('dashboard')}
-              className="flex items-center space-x-1 text-blue-600 font-bold text-lg active:bg-blue-50 px-3 py-1.5 rounded-xl"
-            >
-              <ChevronLeft size={24} />
-              <span>返回首页</span>
-            </button>
-          </div>
-        )}
+      {/* 管理员登录弹窗 */}
+      {showAdminLogin && (
+        <div className="absolute inset-0 z-[200] bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center p-8 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] p-8 flex flex-col items-center shadow-2xl relative border-4 border-white/50">
+            <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-[1.5rem] flex items-center justify-center mb-5 shadow-inner">
+              <ShieldCheck size={40} />
+            </div>
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">管理员验证</h2>
+            <p className="text-slate-400 font-bold mb-6 text-xs mt-1 tracking-widest">{adminAction === 'restart' ? '重启设备需要密码授权' : '设备维护需要密码授权'}</p>
 
-        <main className="flex-1 overflow-hidden relative">
-          {renderView()}
-        </main>
-        {/* 全局 Loading 拦截层 */}
-        {isLoading && (
-          <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
-            <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center">
-              <Loader2 size={48} className="text-blue-500 animate-spin mb-4" />
-              <div className="text-lg font-black text-blue-900">处理中...</div>
+            <input
+              type="password"
+              value={adminPassword}
+              onChange={e => setAdminPassword(e.target.value)}
+              placeholder="密码 (演示: 123456)"
+              className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-center text-xl font-[NumberFont] font-black tracking-widest focus:border-blue-400 focus:bg-white focus:outline-none mb-1 shadow-inner transition-all placeholder:text-sm placeholder:font-sans placeholder:font-black placeholder:tracking-normal"
+            />
+
+            <div className="h-6 flex items-center justify-center mb-3">
+              {loginError && <p className="text-red-500 text-[11px] font-bold animate-in slide-in-from-top-1 bg-red-50 px-3 py-1 rounded-full border border-red-100">密码错误，请重试</p>}
+            </div>
+
+            <div className="flex w-full gap-3">
+              <button onClick={() => { setShowAdminLogin(false); setAdminPassword(''); setLoginError(false); setAdminAction(null); }} className="flex-1 py-3.5 bg-slate-100 text-slate-500 rounded-xl font-black active:bg-slate-200 transition-colors">取消</button>
+              <button onClick={handleAdminLogin} className="flex-1 py-3.5 bg-blue-600 text-white rounded-xl font-black shadow-lg shadow-blue-600/20 active:bg-blue-700 transition-colors">验证登录</button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
+      {view !== 'welcome' && view !== 'scanning' && view !== 'vending-admin' && (
+        <div className="absolute z-[90] top-10 left-1/2 -translate-x-1/2 bg-slate-900/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 pointer-events-none shadow-sm transition-all duration-300">
+          <div className={`w-1.5 h-1.5 rounded-full ${idleSecondsLeft <= 10 ? 'bg-red-500 animate-ping' : 'bg-green-500 animate-pulse'}`}></div>
+          <span className="text-slate-700/80 text-[10px] font-bold tracking-widest">{idleSecondsLeft}s 后自动退出</span>
+        </div>
+      )}
+
+      {view !== 'welcome' && view !== 'scanning' && view !== 'dashboard' && view !== 'vending-admin' && (
+        <div className="h-16 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-50">
+          <button
+            onClick={() => setView('dashboard')}
+            className="flex items-center space-x-1 text-blue-600 font-bold text-lg active:bg-blue-50 px-3 py-1.5 rounded-xl"
+          >
+            <ChevronLeft size={24} />
+            <span>返回首页</span>
+          </button>
+        </div>
+      )}
+
+      <main className="flex-1 overflow-hidden relative">
+        {renderView()}
+      </main>
+      {/* 全局 Loading 拦截层 */}
+      {isLoading && (
+        <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
+          <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center">
+            <Loader2 size={48} className="text-blue-500 animate-spin mb-4" />
+            <div className="text-lg font-black text-blue-900">处理中...</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  if (!isVending) {
+    return (
+      <div className="w-screen h-[100dvh] bg-[#f8fbff] flex items-center justify-center overflow-hidden relative">
+        {innerContent}
       </div>
+    );
+  }
+
+  return (
+    <div className="w-screen h-[100dvh] bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-6 md:p-8">
+      {/* 21.5寸竖屏货柜机比例 540x960 */}
+      <DeviceWrapper width={540} height={960}>
+        {innerContent}
+      </DeviceWrapper>
     </div>
   );
 };
 
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'teacher' | 'admin' | 'companion'>('terminal');
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'teacher' | 'admin' | 'companion' | 'all-in-one'>('terminal');
   const [isDemoOpen, setIsDemoOpen] = useState(false);
 
   return (
     <>
-      {currentApp === 'terminal' && <TerminalApp />}
+      {currentApp === 'terminal' && <TerminalApp mode="vending" />}
+      {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
       {currentApp === 'teacher' && <TeacherDashboard />}
       {currentApp === 'admin' && <MobileApp />}
       {currentApp === 'companion' && <CompanionApp />}
@@ -353,6 +460,14 @@ const AppSwitcher: React.FC = () => {
             >
               <MonitorSmartphone size={22} className="mb-1" />
               <span className="text-[9px] font-bold">货柜机</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('all-in-one')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'all-in-one' ? 'bg-teal-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+              title="班级一体机 - 学生端"
+            >
+              <Monitor size={22} className="mb-1" />
+              <span className="text-[9px] font-bold">一体机</span>
             </button>
             <button
               onClick={() => setCurrentApp('teacher')}

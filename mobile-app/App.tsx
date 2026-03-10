@@ -13,6 +13,7 @@ import ClassLeaderboardView from './views/ClassLeaderboardView';
 import RewardVerificationView from './views/reward-verification/RewardVerificationView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
+import { DeviceWrapper } from '../components/DeviceWrapper';
 import {
     HomeIcon, UserIcon, ActivityIcon, CameraIcon, VolumeIcon,
     PlusIcon, FileIcon, CloseIcon, ChevronDownIcon, AlertCircleIcon,
@@ -420,395 +421,395 @@ const App: React.FC = () => {
     const viewHandlesScroll = ['home_log', 'class_detail', 'report_detail'].includes(currentView);
 
     return (
-        <div className="app-container">
-            {/* Real App Mockup Frame */}
-            <div className="phone-mockup">
-                <div className="dynamic-island"></div>
-                <div className="status-bar-mock">
-                    <span>9:41</span>
-                    <div className="flex gap-1.5 items-center">
-                        <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 10.5h1.5v-1.5h-1.5v1.5zm3.5 0h1.5v-3.5h-1.5v3.5zm3.5 0h1.5v-5.5h-1.5v5.5zm3.5 0h1.5v-8.5h-1.5v8.5zm3.5 0h1.5v-10.5h-1.5v10.5z" /></svg>
-                        <svg width="18" height="10" viewBox="0 0 18 10" fill="currentColor"><path d="M15.333 1.667H1.333A1.333 1.333 0 0 0 0 3v4a1.333 1.333 0 0 0 1.333 1.333h14A1.333 1.333 0 0 0 16.667 7V3a1.333 1.333 0 0 0-1.334-1.333z" /><path d="M17.333 3.333v3.334" stroke="currentColor" strokeWidth="1.333" strokeLinecap="round" /></svg>
-                    </div>
-                </div>
-
-                <div className="flex-1 flex flex-col relative w-full h-full bg-white/40 overflow-hidden border-t border-white/60 backdrop-blur-3xl">
-
-                    {/* Header Handling */}
-                    {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'face_update' && (
-                        <div className="pt-0">
-                            <Header
-                                title={getHeaderTitle()}
-                                onBack={history.length > 0 ? goBack : undefined}
-                            />
+        <div className="w-screen h-[100dvh] bg-[#f1f5f9] flex items-center justify-center p-4">
+            <DeviceWrapper width={393} height={852}>
+                <div className="phone-mockup w-full h-full">
+                    <div className="dynamic-island z-50"></div>
+                    <div className="status-bar-mock text-slate-800 z-50">
+                        <span>9:41</span>
+                        <div className="flex gap-1.5 items-center">
+                            <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 10.5h1.5v-1.5h-1.5v1.5zm3.5 0h1.5v-3.5h-1.5v3.5zm3.5 0h1.5v-5.5h-1.5v5.5zm3.5 0h1.5v-8.5h-1.5v8.5zm3.5 0h1.5v-10.5h-1.5v10.5z" /></svg>
+                            <svg width="18" height="10" viewBox="0 0 18 10" fill="currentColor"><path d="M15.333 1.667H1.333A1.333 1.333 0 0 0 0 3v4a1.333 1.333 0 0 0 1.333 1.333h14A1.333 1.333 0 0 0 16.667 7V3a1.333 1.333 0 0 0-1.334-1.333z" /><path d="M17.333 3.333v3.334" stroke="currentColor" strokeWidth="1.333" strokeLinecap="round" /></svg>
                         </div>
-                    )}
+                    </div>
 
-                    {(currentView === 'home_log' || currentView === 'me' || currentView === 'my_files') && (
-                        <div className="h-0 bg-transparent shrink-0"></div>
-                    )}
+                    <div className="flex-1 flex flex-col relative w-full h-full bg-white/40 overflow-hidden border-t border-white/60 backdrop-blur-3xl">
 
-                    {currentView === 'report_detail' && (
-                        <button
-                            onClick={goBack}
-                            className="absolute top-4 left-4 z-50 p-2 bg-white/20 active:bg-white/30 backdrop-blur-md rounded-full text-white transition-colors border border-white/20"
-                        >
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-                        </button>
-                    )}
-
-
-                    <main
-                        key={currentView}
-                        id="main-scroll-container"
-                        className={`flex-1 relative animate-page-enter ${isOverlayActive ? 'z-[100]' : 'z-auto'} ${viewHandlesScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto no-scrollbar'}`}
-                    >
-                        {currentView === 'home_log' && (
-                            <ClassRecordLogView
-                                activeTab={activeLogTab}
-                                onTabChange={setActiveLogTab}
-                                onBack={goBack}
-                                isMainView={true}
-                                onStartRecord={() => handleStartRecord([], 'voice')}
-                                newRecordData={pendingRecordData}
-                                onClearNewRecord={() => setPendingRecordData(null)}
-                                onToggleModal={setIsOverlayActive}
-                            />
-                        )}
-
-                        {currentView === 'class_list' && (
-                            <ClassListView
-                                classes={MOCK_CLASSES}
-                                onSelectClass={handleSelectClass}
-                                onViewClassReport={handleViewClassReport}
-                                onOpenExportModal={handleOpenExportClassModal}
-                                onViewLeaderboard={handleViewLeaderboard}
-                                onViewRewardVerification={handleViewRewardVerification}
-                                onViewFaceUpdate={handleViewFaceUpdate}
-                            />
-                        )}
-
-                        {currentView === 'class_detail' && (
-                            <ClassDetailView
-                                classInfo={MOCK_CLASSES.find(c => c.id === selectedClassId)!}
-                                students={GET_MOCK_STUDENTS_FOR_CLASS(selectedClassId)}
-                                onSelectStudent={handleSelectStudent}
-                                // Use lifted props
-                                onStartRecord={handleStartRecord}
-                                onViewRecords={() => setCurrentView('home_log')}
-                                isSelectionMode={isMultiSelectMode}
-                                onToggleSelectionMode={handleToggleMultiSelect}
-                                selectedIds={multiSelectIds}
-                                onSelectionChange={handleMultiSelectionChange}
-                            />
-                        )}
-
-                        {currentView === 'class_report' && (
-                            <ClassReportView
-                                classInfo={MOCK_CLASSES.find(c => c.id === selectedClassId)!}
-                                students={GET_MOCK_STUDENTS_FOR_CLASS(selectedClassId)}
-                                onSelectStudent={handleSelectStudent}
-                                onGoToClassDetail={() => handleSelectClass(selectedClassId)}
-                            />
-                        )}
-
-                        {currentView === 'class_leaderboard' && (
-                            <ClassLeaderboardView
-                                onBack={goBack}
-                            />
-                        )}
-
-                        {currentView === 'reward_verification' && (
-                            <RewardVerificationView
-                                classId={selectedClassId}
-                                onBack={goBack}
-                            />
-                        )}
-
-                        {currentView === 'face_update' && (
-                            <FaceUpdateView
-                                classId={selectedClassId}
-                                onBack={goBack}
-                            />
-                        )}
-
-                        {currentView === 'student_detail' && (
-                            <DashboardView
-                                student={selectedStudent}
-                                scores={MOCK_SCORES}
-                                subjects={MOCK_SUBJECTS}
-                                growthReports={MOCK_GROWTH_REPORTS}
-                                onViewTermReport={handleViewTermReport}
-                            />
-                        )}
-
-
-                        {currentView === 'term_report' && (
-                            <div className="flex-1 overflow-y-auto no-scrollbar">
-                                <TermReportView
-                                    student={selectedStudent}
-                                    onBack={goBack}
+                        {/* Header Handling */}
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'face_update' && (
+                            <div className="pt-0">
+                                <Header
+                                    title={getHeaderTitle()}
+                                    onBack={history.length > 0 ? goBack : undefined}
                                 />
                             </div>
                         )}
 
-                        {currentView === 'me' && (
-                            <MeView
-                                onNavigateToFiles={() => navigateTo('my_files')}
-                                onOpenGenerateModal={handleOpenSubjectGenModal}
-                                onOpenTermGenerateModal={handleOpenTermGenModal}
-                            />
+                        {(currentView === 'home_log' || currentView === 'me' || currentView === 'my_files') && (
+                            <div className="h-0 bg-transparent shrink-0"></div>
                         )}
 
-                        {currentView === 'my_files' && (
-                            <MyFilesView onBack={goBack} />
+                        {currentView === 'report_detail' && (
+                            <button
+                                onClick={goBack}
+                                className="absolute top-4 left-4 z-50 p-2 bg-white/20 active:bg-white/30 backdrop-blur-md rounded-full text-white transition-colors border border-white/20"
+                            >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                            </button>
                         )}
-                    </main>
 
-                    {showInputBar && <GlobalInputBar />}
 
-                    {currentView === 'record_input' && (
-                        <div className="absolute inset-0 z-50 overflow-hidden">
-                            <RecordInputView
-                                initialStudentIds={batchStudentIds}
-                                studentNameList={getActiveStudentNames()}
-                                initialMode={recordMode}
-                                onClose={goBack}
-                                onAnalysisComplete={handleAnalysisComplete}
-                            />
-                        </div>
-                    )}
+                        <main
+                            key={currentView}
+                            id="main-scroll-container"
+                            className={`flex-1 relative animate-page-enter ${isOverlayActive ? 'z-[100]' : 'z-auto'} ${viewHandlesScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto no-scrollbar'}`}
+                        >
+                            {currentView === 'home_log' && (
+                                <ClassRecordLogView
+                                    activeTab={activeLogTab}
+                                    onTabChange={setActiveLogTab}
+                                    onBack={goBack}
+                                    isMainView={true}
+                                    onStartRecord={() => handleStartRecord([], 'voice')}
+                                    newRecordData={pendingRecordData}
+                                    onClearNewRecord={() => setPendingRecordData(null)}
+                                    onToggleModal={setIsOverlayActive}
+                                />
+                            )}
 
-                    {/* Keyboard Overlay */}
-                    {showKeyboard && (
-                        <>
-                            <div className="absolute inset-0 z-[55] bg-black/5" onClick={() => setShowKeyboard(false)}></div>
-                            <VirtualKeyboard
-                                onClose={() => setShowKeyboard(false)}
-                                onKeyPress={(key) => setInputText(prev => prev + (key === 'space' ? ' ' : key))}
-                                onDelete={() => setInputText(prev => prev.slice(0, -1))}
-                                onSubmit={() => handleAnalysisComplete({ type: 'text', text: inputText, mockStudents: isMultiSelectMode ? Array.from(multiSelectIds) : [] })}
-                            />
-                        </>
-                    )}
+                            {currentView === 'class_list' && (
+                                <ClassListView
+                                    classes={MOCK_CLASSES}
+                                    onSelectClass={handleSelectClass}
+                                    onViewClassReport={handleViewClassReport}
+                                    onOpenExportModal={handleOpenExportClassModal}
+                                    onViewLeaderboard={handleViewLeaderboard}
+                                    onViewRewardVerification={handleViewRewardVerification}
+                                    onViewFaceUpdate={handleViewFaceUpdate}
+                                />
+                            )}
 
-                    {/* AI Tech Tab Bar */}
-                    {showTabBar && (
-                        <div className="ai-tabbar flex justify-around items-end pb-4 h-[85px] safe-area-bottom sticky bottom-0 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
-                            <button
-                                onClick={() => switchTab('home_log')}
-                                className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'home_log' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
-                            >
-                                <div className={`p-1.5 rounded-xl transition-all ${currentView === 'home_log' ? 'bg-indigo-50 shadow-inner' : ''}`}>
-                                    <ActivityIcon className={`w-6 h-6 ${currentView === 'home_log' ? 'fill-indigo-200' : ''}`} />
+                            {currentView === 'class_detail' && (
+                                <ClassDetailView
+                                    classInfo={MOCK_CLASSES.find(c => c.id === selectedClassId)!}
+                                    students={GET_MOCK_STUDENTS_FOR_CLASS(selectedClassId)}
+                                    onSelectStudent={handleSelectStudent}
+                                    // Use lifted props
+                                    onStartRecord={handleStartRecord}
+                                    onViewRecords={() => setCurrentView('home_log')}
+                                    isSelectionMode={isMultiSelectMode}
+                                    onToggleSelectionMode={handleToggleMultiSelect}
+                                    selectedIds={multiSelectIds}
+                                    onSelectionChange={handleMultiSelectionChange}
+                                />
+                            )}
+
+                            {currentView === 'class_report' && (
+                                <ClassReportView
+                                    classInfo={MOCK_CLASSES.find(c => c.id === selectedClassId)!}
+                                    students={GET_MOCK_STUDENTS_FOR_CLASS(selectedClassId)}
+                                    onSelectStudent={handleSelectStudent}
+                                    onGoToClassDetail={() => handleSelectClass(selectedClassId)}
+                                />
+                            )}
+
+                            {currentView === 'class_leaderboard' && (
+                                <ClassLeaderboardView
+                                    onBack={goBack}
+                                />
+                            )}
+
+                            {currentView === 'reward_verification' && (
+                                <RewardVerificationView
+                                    classId={selectedClassId}
+                                    onBack={goBack}
+                                />
+                            )}
+
+                            {currentView === 'face_update' && (
+                                <FaceUpdateView
+                                    classId={selectedClassId}
+                                    onBack={goBack}
+                                />
+                            )}
+
+                            {currentView === 'student_detail' && (
+                                <DashboardView
+                                    student={selectedStudent}
+                                    scores={MOCK_SCORES}
+                                    subjects={MOCK_SUBJECTS}
+                                    growthReports={MOCK_GROWTH_REPORTS}
+                                    onViewTermReport={handleViewTermReport}
+                                />
+                            )}
+
+
+                            {currentView === 'term_report' && (
+                                <div className="flex-1 overflow-y-auto no-scrollbar">
+                                    <TermReportView
+                                        student={selectedStudent}
+                                        onBack={goBack}
+                                    />
                                 </div>
-                                <span className="text-[10px] font-bold tracking-wider">记录</span>
-                            </button>
+                            )}
 
-                            <button
-                                onClick={() => switchTab('class_list')}
-                                className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'class_list' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
-                            >
-                                <div className={`p-1.5 rounded-xl transition-all ${currentView === 'class_list' ? 'bg-indigo-50 shadow-inner' : ''}`}>
-                                    <HomeIcon className={`w-6 h-6 ${currentView === 'class_list' ? 'fill-indigo-200' : ''}`} />
-                                </div>
-                                <span className="text-[10px] font-bold tracking-wider">班级</span>
-                            </button>
+                            {currentView === 'me' && (
+                                <MeView
+                                    onNavigateToFiles={() => navigateTo('my_files')}
+                                    onOpenGenerateModal={handleOpenSubjectGenModal}
+                                    onOpenTermGenerateModal={handleOpenTermGenModal}
+                                />
+                            )}
 
-                            <button
-                                onClick={() => switchTab('me')}
-                                className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'me' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
-                            >
-                                <div className={`p-1.5 rounded-xl transition-all ${currentView === 'me' ? 'bg-indigo-50 shadow-inner' : ''}`}>
-                                    <UserIcon className={`w-6 h-6 ${currentView === 'me' ? 'fill-indigo-200' : ''}`} />
-                                </div>
-                                <span className="text-[10px] font-bold tracking-wider">我的</span>
-                            </button>
-                        </div>
-                    )}
+                            {currentView === 'my_files' && (
+                                <MyFilesView onBack={goBack} />
+                            )}
+                        </main>
 
+                        {showInputBar && <GlobalInputBar />}
 
-                    {/* ================= MODALS & OVERLAYS (GLASS) ================= */}
-
-                    {showGenModal && (
-                        <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-white/40 backdrop-blur-md animate-in fade-in duration-200">
-                            <div className="glass-dark w-full max-w-sm rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] p-6 relative animate-in zoom-in-95 duration-200 border border-white/50">
-
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-bold text-slate-800">
-                                        {genModalType === 'subject' ? '确认生成学科报告?' :
-                                            genModalType === 'term' ? '确认生成期末报告?' :
-                                                '确认导出全班报告?'}
-                                    </h3>
-                                    <button
-                                        onClick={handleCloseGenModal}
-                                        className="p-1 rounded-full text-slate-400 active:bg-slate-100"
-                                    >
-                                        <CloseIcon className="w-5 h-5" />
-                                    </button>
-                                </div>
-
-                                <div className="mb-5 relative">
-                                    <label className="text-xs font-bold text-slate-500 mb-1.5 block ml-1">报告所属学期</label>
-                                    <button
-                                        onClick={handleToggleTermSelect}
-                                        className="w-full flex items-center justify-between bg-white border border-slate-100 text-slate-800 text-sm font-bold px-4 py-3 rounded-xl shadow-sm active:bg-slate-50 transition-colors"
-                                    >
-                                        {selectedTerm}
-                                        <ChevronDownIcon className={`w-4 h-4 text-slate-400 transition-transform ${showTermSelect ? 'rotate-180' : ''}`} />
-                                    </button>
-
-                                    {showTermSelect && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-xl z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
-                                            {TERMS.map(term => (
-                                                <button
-                                                    key={term}
-                                                    onClick={() => {
-                                                        setSelectedTerm(term);
-                                                        setShowTermSelect(false);
-                                                    }}
-                                                    className={`w-full text-left px-4 py-3 text-sm font-medium active:bg-slate-50 flex items-center justify-between ${term === selectedTerm ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
-                                                >
-                                                    {term}
-                                                    {term === selectedTerm && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {(genModalType === 'subject' || genModalType === 'term') && (
-                                    <div className="mb-5 relative">
-                                        <label className="text-xs font-bold text-slate-500 mb-1.5 block ml-1">生成年级范围</label>
-                                        <button
-                                            onClick={handleToggleGradeSelect}
-                                            className="w-full flex items-center justify-between bg-white border border-slate-100 text-slate-800 text-sm font-bold px-4 py-3 rounded-xl shadow-sm active:bg-slate-50 transition-colors"
-                                        >
-                                            {selectedGradeScope}
-                                            <ChevronDownIcon className={`w-4 h-4 text-slate-400 transition-transform ${showGradeSelect ? 'rotate-180' : ''}`} />
-                                        </button>
-
-                                        {showGradeSelect && (
-                                            <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-xl z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
-                                                {GRADE_SCOPES.map(grade => (
-                                                    <button
-                                                        key={grade}
-                                                        onClick={() => {
-                                                            setSelectedGradeScope(grade);
-                                                            setShowGradeSelect(false);
-                                                        }}
-                                                        className={`w-full text-left px-4 py-3 text-sm font-medium active:bg-slate-50 flex items-center justify-between ${grade === selectedGradeScope ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
-                                                    >
-                                                        {grade}
-                                                        {grade === selectedGradeScope && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {genModalType === 'subject' && (
-                                    <div className="mb-5 relative">
-                                        <label className="text-xs font-bold text-slate-500 mb-1.5 block ml-1">学科范围</label>
-                                        <button
-                                            onClick={handleToggleSubjectScopeSelect}
-                                            className="w-full flex items-center justify-between bg-white border border-slate-100 text-slate-800 text-sm font-bold px-4 py-3 rounded-xl shadow-sm active:bg-slate-50 transition-colors"
-                                        >
-                                            {selectedSubjectScope}
-                                            <ChevronDownIcon className={`w-4 h-4 text-slate-400 transition-transform ${showSubjectScopeSelect ? 'rotate-180' : ''}`} />
-                                        </button>
-
-                                        {showSubjectScopeSelect && (
-                                            <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-xl z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
-                                                {SUBJECT_SCOPES.map(subject => (
-                                                    <button
-                                                        key={subject}
-                                                        onClick={() => {
-                                                            setSelectedSubjectScope(subject);
-                                                            setShowSubjectScopeSelect(false);
-                                                        }}
-                                                        className={`w-full text-left px-4 py-3 text-sm font-medium active:bg-slate-50 flex items-center justify-between ${subject === selectedSubjectScope ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
-                                                    >
-                                                        {subject}
-                                                        {subject === selectedSubjectScope && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="bg-orange-50/80 border border-orange-100 rounded-2xl p-4 flex gap-3 mb-6">
-                                    <div className="mt-0.5 shrink-0">
-                                        <AlertCircleIcon className="w-5 h-5 text-orange-500" />
-                                    </div>
-                                    <div className="text-xs leading-relaxed text-orange-800 opacity-90">
-                                        <span className="font-bold block mb-1 text-orange-900">操作提示</span>
-                                        {renderModalScopeMessage()}
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={handleCloseGenModal}
-                                        className="flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm active:bg-slate-50 transition-colors bg-white/50"
-                                    >
-                                        取消
-                                    </button>
-                                    <button
-                                        onClick={handleConfirmGenerate}
-                                        className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm shadow-lg shadow-blue-200 active:scale-[0.98] transition-all"
-                                    >
-                                        {genModalType === 'export_class' ? '确认导出' : '立即生成'}
-                                    </button>
-                                </div>
-
+                        {currentView === 'record_input' && (
+                            <div className="absolute inset-0 z-50 overflow-hidden">
+                                <RecordInputView
+                                    initialStudentIds={batchStudentIds}
+                                    studentNameList={getActiveStudentNames()}
+                                    initialMode={recordMode}
+                                    onClose={goBack}
+                                    onAnalysisComplete={handleAnalysisComplete}
+                                />
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {/* Success Toast Overlay */}
-                    {showSuccessToast && (
-                        <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-300">
-                            <div className="bg-slate-800/95 backdrop-blur-xl text-white p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col items-center text-center max-w-[280px] w-full animate-in zoom-in-95 duration-300 border border-white/10 relative overflow-hidden">
-                                {/* Shimmer effect */}
-                                <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none"></div>
+                        {/* Keyboard Overlay */}
+                        {showKeyboard && (
+                            <>
+                                <div className="absolute inset-0 z-[55] bg-black/5" onClick={() => setShowKeyboard(false)}></div>
+                                <VirtualKeyboard
+                                    onClose={() => setShowKeyboard(false)}
+                                    onKeyPress={(key) => setInputText(prev => prev + (key === 'space' ? ' ' : key))}
+                                    onDelete={() => setInputText(prev => prev.slice(0, -1))}
+                                    onSubmit={() => handleAnalysisComplete({ type: 'text', text: inputText, mockStudents: isMultiSelectMode ? Array.from(multiSelectIds) : [] })}
+                                />
+                            </>
+                        )}
 
-                                <div className="w-12 h-12 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30 ring-2 ring-white/10">
-                                    <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                </div>
-                                <h3 className="text-lg font-bold mb-2">
-                                    {genModalType === 'export_class' ? '正在导出...' : 'AI 生成中...'}
-                                </h3>
-                                <p className="text-xs text-slate-300 leading-relaxed mb-6">
-                                    {genModalType === 'export_class' ? (
-                                        <>
-                                            文件生成中...<br />
-                                            完成后将自动下载
-                                        </>
-                                    ) : (
-                                        <>
-                                            数据量较大，稍后可以在<br />
-                                            <span className="text-white font-medium">学生详情页</span> 进行查看
-                                        </>
-                                    )}
-                                </p>
+                        {/* AI Tech Tab Bar */}
+                        {showTabBar && (
+                            <div className="ai-tabbar flex justify-around items-end pb-4 h-[85px] safe-area-bottom sticky bottom-0 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
                                 <button
-                                    onClick={() => setShowSuccessToast(false)}
-                                    className="w-full py-2.5 rounded-xl bg-white/10 /20 border border-white/10 text-sm font-bold text-white transition-all active:scale-95 relative z-10"
+                                    onClick={() => switchTab('home_log')}
+                                    className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'home_log' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
                                 >
-                                    知道了
+                                    <div className={`p-1.5 rounded-xl transition-all ${currentView === 'home_log' ? 'bg-indigo-50 shadow-inner' : ''}`}>
+                                        <ActivityIcon className={`w-6 h-6 ${currentView === 'home_log' ? 'fill-indigo-200' : ''}`} />
+                                    </div>
+                                    <span className="text-[10px] font-bold tracking-wider">记录</span>
+                                </button>
+
+                                <button
+                                    onClick={() => switchTab('class_list')}
+                                    className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'class_list' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
+                                >
+                                    <div className={`p-1.5 rounded-xl transition-all ${currentView === 'class_list' ? 'bg-indigo-50 shadow-inner' : ''}`}>
+                                        <HomeIcon className={`w-6 h-6 ${currentView === 'class_list' ? 'fill-indigo-200' : ''}`} />
+                                    </div>
+                                    <span className="text-[10px] font-bold tracking-wider">班级</span>
+                                </button>
+
+                                <button
+                                    onClick={() => switchTab('me')}
+                                    className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'me' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
+                                >
+                                    <div className={`p-1.5 rounded-xl transition-all ${currentView === 'me' ? 'bg-indigo-50 shadow-inner' : ''}`}>
+                                        <UserIcon className={`w-6 h-6 ${currentView === 'me' ? 'fill-indigo-200' : ''}`} />
+                                    </div>
+                                    <span className="text-[10px] font-bold tracking-wider">我的</span>
                                 </button>
                             </div>
-                        </div>
-                    )}
+                        )}
 
+
+                        {/* ================= MODALS & OVERLAYS (GLASS) ================= */}
+
+                        {showGenModal && (
+                            <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-white/40 backdrop-blur-md animate-in fade-in duration-200">
+                                <div className="glass-dark w-full max-w-sm rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] p-6 relative animate-in zoom-in-95 duration-200 border border-white/50">
+
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-bold text-slate-800">
+                                            {genModalType === 'subject' ? '确认生成学科报告?' :
+                                                genModalType === 'term' ? '确认生成期末报告?' :
+                                                    '确认导出全班报告?'}
+                                        </h3>
+                                        <button
+                                            onClick={handleCloseGenModal}
+                                            className="p-1 rounded-full text-slate-400 active:bg-slate-100"
+                                        >
+                                            <CloseIcon className="w-5 h-5" />
+                                        </button>
+                                    </div>
+
+                                    <div className="mb-5 relative">
+                                        <label className="text-xs font-bold text-slate-500 mb-1.5 block ml-1">报告所属学期</label>
+                                        <button
+                                            onClick={handleToggleTermSelect}
+                                            className="w-full flex items-center justify-between bg-white border border-slate-100 text-slate-800 text-sm font-bold px-4 py-3 rounded-xl shadow-sm active:bg-slate-50 transition-colors"
+                                        >
+                                            {selectedTerm}
+                                            <ChevronDownIcon className={`w-4 h-4 text-slate-400 transition-transform ${showTermSelect ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        {showTermSelect && (
+                                            <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-xl z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
+                                                {TERMS.map(term => (
+                                                    <button
+                                                        key={term}
+                                                        onClick={() => {
+                                                            setSelectedTerm(term);
+                                                            setShowTermSelect(false);
+                                                        }}
+                                                        className={`w-full text-left px-4 py-3 text-sm font-medium active:bg-slate-50 flex items-center justify-between ${term === selectedTerm ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                                    >
+                                                        {term}
+                                                        {term === selectedTerm && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {(genModalType === 'subject' || genModalType === 'term') && (
+                                        <div className="mb-5 relative">
+                                            <label className="text-xs font-bold text-slate-500 mb-1.5 block ml-1">生成年级范围</label>
+                                            <button
+                                                onClick={handleToggleGradeSelect}
+                                                className="w-full flex items-center justify-between bg-white border border-slate-100 text-slate-800 text-sm font-bold px-4 py-3 rounded-xl shadow-sm active:bg-slate-50 transition-colors"
+                                            >
+                                                {selectedGradeScope}
+                                                <ChevronDownIcon className={`w-4 h-4 text-slate-400 transition-transform ${showGradeSelect ? 'rotate-180' : ''}`} />
+                                            </button>
+
+                                            {showGradeSelect && (
+                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-xl z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
+                                                    {GRADE_SCOPES.map(grade => (
+                                                        <button
+                                                            key={grade}
+                                                            onClick={() => {
+                                                                setSelectedGradeScope(grade);
+                                                                setShowGradeSelect(false);
+                                                            }}
+                                                            className={`w-full text-left px-4 py-3 text-sm font-medium active:bg-slate-50 flex items-center justify-between ${grade === selectedGradeScope ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                                        >
+                                                            {grade}
+                                                            {grade === selectedGradeScope && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {genModalType === 'subject' && (
+                                        <div className="mb-5 relative">
+                                            <label className="text-xs font-bold text-slate-500 mb-1.5 block ml-1">学科范围</label>
+                                            <button
+                                                onClick={handleToggleSubjectScopeSelect}
+                                                className="w-full flex items-center justify-between bg-white border border-slate-100 text-slate-800 text-sm font-bold px-4 py-3 rounded-xl shadow-sm active:bg-slate-50 transition-colors"
+                                            >
+                                                {selectedSubjectScope}
+                                                <ChevronDownIcon className={`w-4 h-4 text-slate-400 transition-transform ${showSubjectScopeSelect ? 'rotate-180' : ''}`} />
+                                            </button>
+
+                                            {showSubjectScopeSelect && (
+                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-xl z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
+                                                    {SUBJECT_SCOPES.map(subject => (
+                                                        <button
+                                                            key={subject}
+                                                            onClick={() => {
+                                                                setSelectedSubjectScope(subject);
+                                                                setShowSubjectScopeSelect(false);
+                                                            }}
+                                                            className={`w-full text-left px-4 py-3 text-sm font-medium active:bg-slate-50 flex items-center justify-between ${subject === selectedSubjectScope ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                                        >
+                                                            {subject}
+                                                            {subject === selectedSubjectScope && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="bg-orange-50/80 border border-orange-100 rounded-2xl p-4 flex gap-3 mb-6">
+                                        <div className="mt-0.5 shrink-0">
+                                            <AlertCircleIcon className="w-5 h-5 text-orange-500" />
+                                        </div>
+                                        <div className="text-xs leading-relaxed text-orange-800 opacity-90">
+                                            <span className="font-bold block mb-1 text-orange-900">操作提示</span>
+                                            {renderModalScopeMessage()}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={handleCloseGenModal}
+                                            className="flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm active:bg-slate-50 transition-colors bg-white/50"
+                                        >
+                                            取消
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmGenerate}
+                                            className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm shadow-lg shadow-blue-200 active:scale-[0.98] transition-all"
+                                        >
+                                            {genModalType === 'export_class' ? '确认导出' : '立即生成'}
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Success Toast Overlay */}
+                        {showSuccessToast && (
+                            <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-300">
+                                <div className="bg-slate-800/95 backdrop-blur-xl text-white p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col items-center text-center max-w-[280px] w-full animate-in zoom-in-95 duration-300 border border-white/10 relative overflow-hidden">
+                                    {/* Shimmer effect */}
+                                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none"></div>
+
+                                    <div className="w-12 h-12 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30 ring-2 ring-white/10">
+                                        <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-lg font-bold mb-2">
+                                        {genModalType === 'export_class' ? '正在导出...' : 'AI 生成中...'}
+                                    </h3>
+                                    <p className="text-xs text-slate-300 leading-relaxed mb-6">
+                                        {genModalType === 'export_class' ? (
+                                            <>
+                                                文件生成中...<br />
+                                                完成后将自动下载
+                                            </>
+                                        ) : (
+                                            <>
+                                                数据量较大，稍后可以在<br />
+                                                <span className="text-white font-medium">学生详情页</span> 进行查看
+                                            </>
+                                        )}
+                                    </p>
+                                    <button
+                                        onClick={() => setShowSuccessToast(false)}
+                                        className="w-full py-2.5 rounded-xl bg-white/10 /20 border border-white/10 text-sm font-bold text-white transition-all active:scale-95 relative z-10"
+                                    >
+                                        知道了
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            </DeviceWrapper>
         </div>
     );
 };

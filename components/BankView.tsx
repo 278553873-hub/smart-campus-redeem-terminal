@@ -182,7 +182,7 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
       {/* 视图内容区 - 正式滚动区 */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto pb-12 custom-scrollbar relative"
+        className="flex-1 overflow-y-auto pb-12 custom-scrollbar relative max-w-5xl mx-auto w-full"
         onScroll={(e) => {
           const target = e.target as HTMLDivElement;
           const st = target.scrollTop;

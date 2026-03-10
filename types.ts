@@ -51,7 +51,7 @@ export interface GrowthStatus {
   records: BehaviorRecord[];
 }
 
-export type ViewState = 'welcome' | 'scanning' | 'dashboard' | 'exchange' | 'shop' | 'bank' | 'growth' | 'success';
+export type ViewState = 'welcome' | 'scanning' | 'dashboard' | 'exchange' | 'shop' | 'bank' | 'growth' | 'success' | 'vending-admin';
 
 export enum TermType {
   CURRENT = 0,

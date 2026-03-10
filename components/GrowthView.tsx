@@ -167,7 +167,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
     return (
         <div className="h-full flex flex-col bg-[#f8fbff] animate-in slide-in-from-bottom duration-500 overflow-hidden relative">
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 max-w-5xl mx-auto w-full">
 
                 {/* 顶部总得分卡片（强化层级分离） */}
                 <div className="bg-white rounded-[2rem] p-6 shadow-sm border-2 border-slate-50 relative overflow-hidden flex flex-col">
