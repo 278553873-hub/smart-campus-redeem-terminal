@@ -15,8 +15,10 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance, layout = 'mobile', hideShop = false }) => {
+  const formatCoin = (val: number) => Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
+  
   return (
-    <div className={`h-full flex flex-col animate-in fade-in duration-700 bg-[#f8fbff] tracking-tight ${layout === 'pc' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+    <div className={`h-full flex flex-col animate-in fade-in slide-in-from-left-8 duration-300 ease-out bg-[#f8fbff] tracking-tight ${layout === 'pc' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
 
       {/* 顶部：用户信息与退出按钮 */}
       <div className={`w-full bg-white p-6 border-b-2 border-blue-50 shrink-0 ${layout === 'pc' ? 'shadow-sm z-10' : ''}`}>
@@ -45,22 +47,34 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
         <div className={`grid gap-4 ${layout === 'pc' ? 'grid-cols-2' : 'grid-cols-12'}`}>
 
           <div className={`${layout === 'pc' ? 'col-span-1' : 'col-span-7'} bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-5 text-white shadow-md relative overflow-hidden flex flex-col justify-center`}>
-            <div className="relative z-10 flex flex-col items-start w-full">
-              <p className="text-blue-100 font-black text-[10px] uppercase tracking-widest mb-1 opacity-90">我的总资产</p>
+            <div className="relative z-10 flex flex-col justify-between w-full h-full">
+              <div className="flex justify-between items-start w-full">
+                <div className="flex flex-col">
+                  <p className="text-blue-100 font-black text-[10px] uppercase tracking-widest opacity-90 mb-0.5">我的总资产</p>
+                  <h3 className="text-4xl font-black tracking-tighter leading-none mb-1 flex items-center">
+                    <img src="/assets/coin.png" className="inline-block w-[1em] h-[1em] drop-shadow-sm mr-1.5" alt="coin" /> 
+                    {formatCoin(student.campusCoins + bankBalance)}
+                  </h3>
+                </div>
+                <button onClick={() => onNavigate('transactions')} className="text-[11px] bg-white/20 active:bg-white/30 text-white px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors backdrop-blur-sm border border-white/10 font-bold shadow-sm whitespace-nowrap mt-1 -mr-2">
+                  流水明细 <ChevronRight size={12} strokeWidth={3} />
+                </button>
+              </div>
 
-              <div className="flex items-end gap-3 w-full mb-1">
-                <h3 className="text-4xl font-black tracking-tighter leading-none"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[2px]" alt="coin" /> {student.campusCoins + bankBalance}</h3>
-
-                {/* 拆解项跟随在总资产侧边 */}
-                <div className="flex flex-col gap-0.5 pb-0.5">
-                  <div className="flex items-center text-[10px] bg-white/10 rounded-full px-2 py-0.5 backdrop-blur-sm border border-white/10">
-                    <span className="opacity-70 font-bold mr-1">钱包</span>
-                    <span className="font-bold tracking-tight inline-flex items-center"><img src="/assets/coin.png" className="w-[1em] h-[1em] -mt-[1px] mr-0.5 opacity-80" alt="coin" /> {student.campusCoins}</span>
-                  </div>
-                  <div className="flex items-center text-[10px] bg-white/10 rounded-full px-2 py-0.5 backdrop-blur-sm border border-white/10">
-                    <span className="opacity-70 font-bold mr-1">存款</span>
-                    <span className="font-bold tracking-tight inline-flex items-center"><img src="/assets/coin.png" className="w-[1em] h-[1em] -mt-[1px] mr-0.5 opacity-80" alt="coin" /> {bankBalance}</span>
-                  </div>
+              <div className="flex items-center gap-2 w-full mt-3">
+                <div className="flex items-center text-xs bg-black/10 rounded-full px-3 py-1.5 backdrop-blur-sm border border-white/20 shadow-inner">
+                  <span className="opacity-80 font-bold mr-1.5 text-white">钱包</span>
+                  <span className="font-bold tracking-tight inline-flex items-center text-white">
+                    <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -mt-[1px] mr-1 opacity-90" alt="coin" />
+                    {formatCoin(student.campusCoins)}
+                  </span>
+                </div>
+                <div className="flex items-center text-xs bg-black/10 rounded-full px-3 py-1.5 backdrop-blur-sm border border-white/20 shadow-inner">
+                  <span className="opacity-80 font-bold mr-1.5 text-white">存款</span>
+                  <span className="font-bold tracking-tight inline-flex items-center text-white">
+                    <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -mt-[1px] mr-1 opacity-90" alt="coin" />
+                    {formatCoin(bankBalance)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -76,12 +90,19 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
           <div
             className={`${layout === 'pc' ? 'col-span-1' : 'col-span-5'} bg-white rounded-3xl p-5 border-2 border-slate-100 shadow-sm relative overflow-hidden flex flex-col justify-center items-start text-left`}
           >
-            <div className="relative z-10 w-full mb-2">
+            <div className="relative z-10 w-full mb-1">
               <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest mb-1">当前成长阶段</p>
-              <h3 className="text-xl font-black text-slate-900 tracking-tighter">🙂 稳步成长</h3>
-              <div className="mt-1 flex items-center gap-1.5 opacity-80">
-                <span className="text-[10px] font-bold text-slate-500">预估月度分红:</span>
-                <span className="text-xs font-black text-orange-500 inline-flex items-center"><img src="/assets/coin.png" className="w-[1em] h-[1em] mr-0.5 -mt-[1px]" alt="coin" /> 145 币</span>
+              <h3 className="text-xl font-black text-slate-900 tracking-tighter">稳步成长</h3>
+              <div className="flex items-center gap-4 mt-2 pt-2 border-t border-slate-100 opacity-90">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-tight">本月净得分</span>
+                  <span className="text-lg font-black text-blue-500 leading-none">45<span className="text-[10px] font-bold ml-1 text-slate-400">分</span></span>
+                </div>
+                <div className="w-px h-6 bg-slate-200 shrink-0"></div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-tight">预估月度分红</span>
+                  <span className="text-lg font-black text-orange-500 inline-flex items-center leading-none"><img src="/assets/coin.png" className="w-[1em] h-[1em] mr-1 -mt-[2px]" alt="coin" /> 90.88</span>
+                </div>
               </div>
             </div>
             <Sparkles size={80} className="absolute -bottom-6 -right-6 text-slate-50 pointer-events-none" />
@@ -164,15 +185,15 @@ const ActionCard: React.FC<{
   return (
     <button
       onClick={onClick}
-      className={`relative w-full overflow-hidden bg-white rounded-[2rem] p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border-2 border-slate-50 transition-all active:scale-[0.98] flex items-center text-left gap-5 group hover:border-slate-100 hover:-translate-y-1 hover:shadow-xl ${layout === 'pc' ? 'flex-col items-center justify-center p-10 h-72' : ''}`}
+      className={`relative w-full overflow-hidden bg-white rounded-[2rem] p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border-2 border-slate-50 transition-all active:scale-[0.98] active:border-slate-100 flex items-center text-left gap-5 group ${layout === 'pc' ? 'flex-col items-center justify-center p-10 h-72' : ''}`}
     >
       {/* 质感装饰玻璃球背景 */}
-      <div className={`absolute -right-8 -top-8 w-40 h-40 ${ctx.lightBg} rounded-full mix-blend-multiply opacity-50 transition-transform duration-500 group-active:scale-110 group-hover:scale-110 pointer-events-none`}></div>
-      <div className={`absolute right-12 -bottom-10 w-24 h-24 ${ctx.blob} rounded-full mix-blend-multiply opacity-40 transition-transform duration-500 group-active:-translate-x-4 group-hover:-translate-x-2 pointer-events-none`}></div>
+      <div className={`absolute -right-8 -top-8 w-40 h-40 ${ctx.lightBg} rounded-full mix-blend-multiply opacity-50 transition-transform duration-500 group-active:scale-110 pointer-events-none`}></div>
+      <div className={`absolute right-12 -bottom-10 w-24 h-24 ${ctx.blob} rounded-full mix-blend-multiply opacity-40 transition-transform duration-500 group-active:-translate-x-4 pointer-events-none`}></div>
 
       {/* 左侧超大高定立体光影Icon区 */}
-      <div className={`relative z-10 ${layout === 'pc' ? 'w-32 h-32 mb-4' : 'w-20 h-20'} rounded-[1.5rem] ${ctx.lightBg} ${ctx.text} flex items-center justify-center shadow-inner shrink-0 transition-transform duration-300 group-active:scale-95 group-hover:scale-105 ring-4 ring-white overflow-hidden`}>
-        <img src={imageSrc} className={`${layout === 'pc' ? 'w-24 h-24' : 'w-16 h-16'} object-contain drop-shadow-sm transition-transform duration-500 group-active:scale-110 group-hover:scale-110`} alt="" />
+      <div className={`relative z-10 ${layout === 'pc' ? 'w-32 h-32 mb-4' : 'w-20 h-20'} rounded-[1.5rem] ${ctx.lightBg} ${ctx.text} flex items-center justify-center shadow-inner shrink-0 transition-transform duration-300 group-active:scale-95 ring-4 ring-white overflow-hidden`}>
+        <img src={imageSrc} className={`${layout === 'pc' ? 'w-24 h-24' : 'w-16 h-16'} object-contain drop-shadow-sm transition-transform duration-500 group-active:scale-110`} alt="" />
       </div>
 
       {/* 文本内容区 */}

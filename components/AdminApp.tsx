@@ -70,7 +70,7 @@ const AdminMobileApp: React.FC = () => {
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <p className="font-bold text-sm text-slate-900">王小飞 (三年二班)</p>
-                                                <p className="text-xs text-slate-500 mt-0.5">申请奖励 <span className="text-blue-600 font-black">+100 币</span></p>
+                                                <p className="text-xs text-slate-500 mt-0.5 flex items-center">申请奖励 <span className="text-blue-600 font-black flex items-center gap-0.5 ml-1">+ <img src="/assets/coin.png" className="w-[1em] h-[1em]" alt="coin" /> 100</span></p>
                                             </div>
                                         </div>
                                         <p className="text-[10px] mt-1 text-slate-400 bg-white p-2 rounded-lg border border-slate-100">

@@ -401,13 +401,25 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     // --- Main Render ---
     return (
         <div className="flex flex-col h-full bg-[#FAFAFA] relative overflow-hidden">
-            {/* 1. Global Aurora Background (Fixed) */}
-            <div className={`absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-[#A5F3FC] via-[#DBEAFE] to-[#FAFAFA] z-0 pointer-events-none transition-all duration-700
-                ${activeTab === 'class' ? 'opacity-100 hue-rotate-[60deg] grayscale-[0.1]' : 'opacity-90'}`}></div>
+            {/* Record Student Background: 极光紫梦 (Aurora Lighter) */}
+            <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-1000 overflow-hidden ${activeTab === 'student' ? 'opacity-100' : 'opacity-0'}`}>
+                <div className="absolute inset-0 bg-white"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-pink-50/50"></div>
+                {/* Indigo Glow */}
+                <div className="absolute top-[-10%] left-[-10%] w-[100vw] h-[100vw] rounded-full animate-aurora" style={{ backgroundColor: '#6366F1', opacity: 0.08 }}></div>
+                {/* Pink Glow */}
+                <div className="absolute bottom-[0%] right-[-10%] w-[110vw] h-[110vw] rounded-full animate-aurora" style={{ backgroundColor: '#EC4899', opacity: 0.1, animationDelay: '-5s' }}></div>
+            </div>
 
-            {/* 2. Floating Orbs for "Atmosphere" */}
-            <div className={`absolute top-10 left-10 w-32 h-32 ${activeTab === 'class' ? 'bg-teal-300' : 'bg-cyan-300'} rounded-full blur-[60px] opacity-40 animate-pulse z-0 transition-colors duration-700`}></div>
-            <div className={`absolute top-20 right-10 w-40 h-40 ${activeTab === 'class' ? 'bg-emerald-300' : 'bg-purple-300'} rounded-full blur-[60px] opacity-40 animate-pulse delay-700 z-0 transition-colors duration-700`}></div>
+            {/* Record Class Background: 森海之息 (Forest Lighter) */}
+            <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-1000 overflow-hidden ${activeTab === 'class' ? 'opacity-100' : 'opacity-0'}`}>
+                <div className="absolute inset-0 bg-white"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-50/50 to-blue-50/50"></div>
+                {/* Cyan Glow */}
+                <div className="absolute top-[-10%] left-[-10%] w-[100vw] h-[100vw] rounded-full animate-aurora" style={{ backgroundColor: '#06B6D4', opacity: 0.08 }}></div>
+                {/* Blue Glow */}
+                <div className="absolute bottom-[0%] right-[-10%] w-[110vw] h-[110vw] rounded-full animate-aurora" style={{ backgroundColor: '#3B82F6', opacity: 0.1, animationDelay: '-5s' }}></div>
+            </div>
 
             {/* Header (Top-most Integration) */}
             <div className="sticky top-0 z-30 bg-white/10 backdrop-blur-xl border-b border-white/20">

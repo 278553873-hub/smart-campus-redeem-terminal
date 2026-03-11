@@ -403,8 +403,8 @@ const App: React.FC = () => {
                             onClick={() => handleStartRecord(targetIds, 'voice')}
                             className={`transition-all p-2 rounded-xl flex shrink-0 items-center justify-center gap-1 min-w-[80px]
                                 ${activeLogTab === 'class'
-                                    ? 'bg-gradient-to-r from-teal-400 to-teal-500 text-white shadow-lg shadow-teal-500/40 active:scale-95 active:shadow-none'
-                                    : 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-lg shadow-indigo-500/40 active:scale-95 active:shadow-none'}`}
+                                    ? 'bg-gradient-to-r from-[#00B19D] to-[#3B82F6] text-white shadow-lg shadow-teal-500/30 active:scale-95 active:shadow-none'
+                                    : 'bg-gradient-to-r from-[#7F56FF] to-[#E24CB0] text-white shadow-lg shadow-indigo-500/30 active:scale-95 active:shadow-none'}`}
                         >
                             <VolumeIcon className="w-5 h-5" />
                             <span className="text-[13px] font-bold pr-1">按住说</span>

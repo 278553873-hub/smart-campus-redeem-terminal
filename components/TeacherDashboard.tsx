@@ -53,7 +53,6 @@ const TeacherDashboard: React.FC = () => {
     const [issueCycle, setIssueCycle] = useState<'monthly' | 'weekly'>('monthly');
     const [guaranteedRate, setGuaranteedRate] = useState(30);
     const [competitiveRate, setCompetitiveRate] = useState(70);
-    const [showRank, setShowRank] = useState(true);
 
     // 发币配置页面内部 Tab
     const [issuanceTab, setIssuanceTab] = useState<'auto' | 'manual'>('auto');
@@ -477,37 +476,6 @@ const TeacherDashboard: React.FC = () => {
 
                                             </div>
 
-                                            {/* 高级设置区段 */}
-                                            <div>
-                                                <h4 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">高级展示设置</h4>
-
-                                                <div className="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="mt-1 text-slate-400">
-                                                            <Info size={20} />
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="text-base font-bold text-slate-700">在终端显示班级总排行榜</h4>
-                                                            <p className="text-sm text-slate-500 mt-1">关闭后，学生在终端只能看到自己前后的排名，避免分数焦虑。</p>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* 标准 Switch 开关 */}
-                                                    <label className="relative inline-flex items-center cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="sr-only peer"
-                                                            checked={showRank}
-                                                            onChange={() => setShowRank(!showRank)}
-                                                        />
-                                                        <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
-                                                        <span className="ml-3 text-sm font-medium text-slate-600 w-12 text-right">
-                                                            {showRank ? '已开启' : '已关闭'}
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-
                                             {/* 底部操作栏 */}
                                             <div className="pt-6 border-t border-slate-200 flex justify-end gap-4">
                                                 <button className="px-6 py-2.5 border border-slate-300 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors">
@@ -816,7 +784,7 @@ const TeacherDashboard: React.FC = () => {
                                                                     <img src={product.icon} alt="" className="w-10 h-10 object-contain drop-shadow-sm" />
                                                                     <div className="min-w-0">
                                                                         <div className="text-sm font-black text-slate-800 truncate">{product.name}</div>
-                                                                        <div className="text-orange-500 font-bold text-xs font-[NumberFont]">{product.price} 币</div>
+                                                                        <div className="text-orange-500 font-bold text-xs font-[NumberFont] flex items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em]" alt="coin" /> {product.price}</div>
                                                                     </div>
                                                                 </div>
                                                             ) : (
@@ -986,31 +954,31 @@ const TeacherDashboard: React.FC = () => {
                                             <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
                                                 <div className="text-xs text-slate-400 font-bold mb-1">一天</div>
                                                 <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600">{(1000 * (currentDailyRate / 100) * 1).toFixed(2)}</span> 币
+                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 1).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
                                                 <div className="text-xs text-slate-400 font-bold mb-1">一周</div>
                                                 <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600">{(1000 * (currentDailyRate / 100) * 7).toFixed(2)}</span> 币
+                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 7).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
                                                 <div className="text-xs text-slate-400 font-bold mb-1">一个月</div>
                                                 <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600">{(1000 * (currentDailyRate / 100) * 30).toFixed(2)}</span> 币
+                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 30).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
                                                 <div className="text-xs text-slate-400 font-bold mb-1">半年</div>
                                                 <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600">{(1000 * (currentDailyRate / 100) * 180).toFixed(2)}</span> 币
+                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 180).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
                                                 <div className="text-xs text-slate-400 font-bold mb-1">一年</div>
                                                 <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600">{(1000 * (currentDailyRate / 100) * 365).toFixed(2)}</span> 币
+                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 365).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1072,8 +1040,9 @@ const TeacherDashboard: React.FC = () => {
                                                     <div className={`flex flex-col justify-center px-4 py-2 rounded-xl border ${plan.active ? 'bg-emerald-50/50 border-emerald-100' : 'bg-slate-50 border-slate-100'} min-w-[130px]`}>
                                                         <span className="text-[10px] text-slate-500 font-bold mb-0.5">存1000币收益试算</span>
                                                         <div className="flex items-baseline gap-1">
-                                                            <span className={`text-lg font-black ${plan.active ? 'text-emerald-600' : 'text-slate-400'}`}>+{parseFloat((1000 * plan.rate).toFixed(2))}</span>
-                                                            <span className="text-[11px] text-slate-400 font-bold">币</span>
+                                                            <span className={`text-lg font-black ${plan.active ? 'text-emerald-600' : 'text-slate-400'}`}>+</span>
+                                                            <img src="/assets/coin.png" className="w-[1em] h-[1em] mb-[1px] opacity-80" alt="coin" />
+                                                            <span className={`text-lg font-black ${plan.active ? 'text-emerald-600' : 'text-slate-400'}`}>{parseFloat((1000 * plan.rate).toFixed(2))}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1412,7 +1381,7 @@ const TeacherDashboard: React.FC = () => {
                                         <select name="productId" defaultValue={editingChannel.productId || ''} className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-bold">
                                             <option value="">-- 置空货道 --</option>
                                             {shopProducts.map(p => (
-                                                <option key={p.id} value={p.id}>{p.name} (售价: {p.price}币)</option>
+                                                <option key={p.id} value={p.id}>{p.name} (售价: {p.price})</option>
                                             ))}
                                         </select>
                                     </div>

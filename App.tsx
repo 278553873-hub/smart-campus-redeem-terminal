@@ -9,6 +9,7 @@ import ExchangeView from './components/ExchangeView';
 import ShopView from './components/ShopView';
 import BankView from './components/BankView';
 import GrowthView from './components/GrowthView';
+import TransactionView from './components/TransactionView';
 import TeacherDashboard from './components/TeacherDashboard';
 import AdminApp from './components/AdminApp';
 import MobileApp from './mobile-app/App';
@@ -24,7 +25,7 @@ const INITIAL_STUDENT: Student = {
   name: '郑小磊',
   avatar: 'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&q=80&w=400&h=400',
   points: 1250,
-  campusCoins: 245,
+  campusCoins: 245.50,
   class: '四年级一班'
 };
 
@@ -68,6 +69,9 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
   const [adminAction, setAdminAction] = useState<'restock' | 'restart' | null>(null);
   const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
+
+  // student password modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // 1. Idle Screensaver & Click Sound Feedback
   React.useEffect(() => {
@@ -260,15 +264,31 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
                   transition: 'all 0.1s'
                 }}
                 onMouseDown={e => { e.currentTarget.style.transform = 'translateY(8px)'; e.currentTarget.style.boxShadow = '0 0px 0 #1e40af, 0 5px 10px rgba(0,0,0,0.1)'; }}
-                onMouseUp={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)'; }}
+                onTouchStart={e => { e.currentTarget.style.transform = 'translateY(8px)'; e.currentTarget.style.boxShadow = '0 0px 0 #1e40af, 0 5px 10px rgba(0,0,0,0.1)'; }}
+                onTouchEnd={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)'; }}
               >
                 <div className="flex items-center gap-3">
                   {isVending ? '开始刷脸' : '账号登录'} <ArrowRight size={28} />
                 </div>
               </button>
+
+              {isVending && (
+                <button
+                  onClick={() => setShowPasswordModal(true)}
+                  className="mt-6 w-full py-4 text-blue-600 font-bold bg-[#e8f2ff] active:bg-[#dbeafe] rounded-[2rem] transition-colors text-xl shadow-sm border-2 border-white"
+                >
+                  账号密码登录
+                </button>
+              )}
               <p className="text-slate-300 font-bold mt-8 text-sm uppercase tracking-widest">请靠近终端屏幕</p>
             </div>
+
+            {showPasswordModal && (
+              <div className="absolute inset-0 z-[200] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                <AccountLogin onSuccess={() => { setView('dashboard'); setShowPasswordModal(false); }} onBack={() => setShowPasswordModal(false)} layout="vertical" />
+              </div>
+            )}
           </div>
         );
       case 'scanning':
@@ -293,6 +313,8 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
         />;
       case 'growth':
         return <GrowthView student={student} onBack={() => setView('dashboard')} />;
+      case 'transactions':
+        return <TransactionView student={student} onBack={() => setView('dashboard')} />;
       case 'vending-admin':
         return <VendingAdmin products={products} setProducts={setProducts} onExit={() => setView(isVending ? 'welcome' : 'scanning')} />;
       default:

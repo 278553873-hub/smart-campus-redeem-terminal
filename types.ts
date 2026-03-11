@@ -51,7 +51,7 @@ export interface GrowthStatus {
   records: BehaviorRecord[];
 }
 
-export type ViewState = 'welcome' | 'scanning' | 'dashboard' | 'exchange' | 'shop' | 'bank' | 'growth' | 'success' | 'vending-admin';
+export type ViewState = 'welcome' | 'scanning' | 'password_login' | 'dashboard' | 'exchange' | 'shop' | 'bank' | 'growth' | 'success' | 'vending-admin' | 'transactions';
 
 export enum TermType {
   CURRENT = 0,
@@ -59,4 +59,13 @@ export enum TermType {
   ONE_MONTH = 30,
   HALF_YEAR = 180,
   ONE_YEAR = 365
+}
+
+export interface TransactionRecord {
+  id: string;
+  title: string;
+  amount: number;
+  type: 'income' | 'expense';
+  date: string;
+  category: string;
 }

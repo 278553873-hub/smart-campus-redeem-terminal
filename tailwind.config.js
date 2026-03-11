@@ -6,6 +6,9 @@ export default {
         "./components/**/*.{js,ts,jsx,tsx}",
         "./mobile-app/**/*.{js,ts,jsx,tsx}"
     ],
+    future: {
+        hoverOnlyWhenSupported: true,
+    },
     theme: {
         extend: {},
     },

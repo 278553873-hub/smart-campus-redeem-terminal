@@ -5,97 +5,47 @@
 @tailwind utilities;
 
 :root {
-  /* AI Tech Color System - Light Mode */
-  --ai-primary: #6366f1;
-  /* Indigo */
-  --ai-primary-glow: rgba(99, 102, 241, 0.15);
-  --ai-secondary: #06b6d4;
-  /* Cyan */
-  --ai-secondary-glow: rgba(6, 182, 212, 0.15);
-  --ai-accent: #a855f7;
-  /* Purple */
+  /* Student Mode Palette */
+  --student-primary: #6366F1;
+  --student-secondary: #A855F7;
+  --student-accent: #EC4899;
 
-  /* Backgrounds */
-  --ai-bg-main: #f8fafc;
-  --ai-bg-card: rgba(255, 255, 255, 0.85);
+  /* Class Mode Palette */
+  --class-primary: #00B19D;
+  --class-secondary: #3B82F6;
+  --class-accent: #10B981;
 
-  /* Glassmorphism 2.0 */
+  /* Glassmorphism 3.0 - Airy & Light */
   --ai-glass-bg: rgba(255, 255, 255, 0.7);
-  --ai-glass-border: rgba(255, 255, 255, 0.5);
-  --ai-glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-
-  /* Interactive */
-  --ai-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --ai-glass-border: rgba(255, 255, 255, 0.8);
+  --ai-card-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+  --ai-inner-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5);
 }
 
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
+/* ... existing reset styles ... */
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Inter', -apple-system, sans-serif;
-  background-color: var(--ai-bg-main);
-  background-image:
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.05) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(168, 85, 247, 0.02) 0px, transparent 50%);
-  color: #1e293b;
-  overflow-x: hidden;
-}
-
-/* Hide scrollbar for Chrome, Safari and Opera */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Hide scrollbar for IE, Edge and Firefox */
-.no-scrollbar {
-  -ms-overflow-style: none;
-  /* IE and Edge */
-  scrollbar-width: none;
-  /* Firefox */
-}
-
-h1,
-h2,
-h3,
-h4,
-.font-tech {
-  font-family: 'Outfit', sans-serif;
-  letter-spacing: -0.02em;
-}
-
-/* --- High-Tech AI Components --- */
-
-/* 1. The "Pulse" Card - 核心卡片样式 */
-.ai-card {
-  background: var(--ai-bg-card);
-  backdrop-filter: blur(12px) saturate(120%);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
+/* 1. The Airy Card - Matching Reference */
+.ai-card-premium {
+  background: var(--ai-glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--ai-glass-border);
-  border-radius: 24px;
-  box-shadow: var(--ai-glass-shadow);
-  transition: var(--ai-transition);
-  position: relative;
-  overflow: hidden;
+  border-radius: 32px;
+  box-shadow: var(--ai-card-shadow);
+  padding: 24px;
 }
 
-.ai-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg,
-      transparent,
-      rgba(255, 255, 255, 0.2),
-      transparent);
-  transition: 0.5s;
+/* 2. Neural Icon Wrapper */
+.neural-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
+
 
 /* 2. Liquid Button - 科技感按钮 */
 .ai-btn-primary {
@@ -295,4 +245,29 @@ h4,
   display: block;
   content: "";
   margin-top: 0.25rem;
+}
+
+/* --- Dynamic Background Animations --- */
+@keyframes aurora-breathe {
+  0% {
+    transform: translate(-15%, -15%) scale(1);
+    opacity: 0.15;
+  }
+
+  50% {
+    transform: translate(15%, 15%) scale(1.3);
+    opacity: 0.35;
+  }
+
+  100% {
+    transform: translate(-15%, -15%) scale(1);
+    opacity: 0.15;
+  }
+}
+
+.animate-aurora {
+  animation: aurora-breathe 10s infinite ease-in-out;
+  filter: blur(120px);
+  /* Increased blur for smoother blending */
+  will-change: transform, opacity;
 }

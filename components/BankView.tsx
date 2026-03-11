@@ -17,6 +17,7 @@ interface BankViewProps {
 }
 
 const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdrawDeposit }) => {
+  const formatCoin = (val: number) => Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
   const bankBalance = bank.deposits.reduce((acc, dep) => acc + dep.amount, 0);
   // 按照要求：进入校园存单中心，默认选中“签署新存单”
   const [activeTab, setActiveTab] = useState<'deposit' | 'list'>('deposit');
@@ -39,12 +40,12 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
   const calculateProjectedInterest = (amt: number, scheme: any) => {
     if (!scheme) return "0";
     const interest = amt * scheme.rate;
-    return interest < 1 ? interest.toFixed(2) : Math.floor(interest).toString();
+    return formatCoin(interest).toString();
   };
 
   const calculateFlexibleInterestForDays = (amt: number, days: number) => {
     const interest = amt * BANK_CONFIG.DAILY_RATE * days;
-    return interest < 1 ? interest.toFixed(2) : Math.floor(interest).toString();
+    return formatCoin(interest).toString();
   };
 
   const formatDate = (timestamp: number) => {
@@ -95,7 +96,7 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
   }, [selectedScheme, activeTab]);
 
   return (
-    <div className="flex flex-col h-full bg-[#f8fafc] p-6 !pb-0 animate-in slide-in-from-right-8 duration-500 overflow-hidden relative">
+    <div className="flex flex-col h-full bg-[#f8fafc] p-6 !pb-0 animate-in slide-in-from-right-12 fade-in duration-300 ease-out overflow-hidden relative">
       {/* 顶部简明与数据区 */}
       <div className={`shrink-0 flex items-center justify-between bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.02)] border-2 border-slate-50 z-30 relative transition-all duration-500 origin-top overflow-hidden
         ${isScrolled ? 'mb-0 max-h-0 opacity-0 py-0 px-5 scale-y-90 border-none blur-md' : 'mb-4 max-h-[200px] p-5 opacity-100 scale-y-100 blur-0'}
@@ -117,14 +118,14 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
             <span className="text-blue-500/80 font-black text-[9px] mb-0.5 tracking-wider">我的存款</span>
             <div className="text-blue-600 font-[NumberFont] font-black text-xl leading-none flex items-center gap-1">
               <img src="/assets/coin.png" className="w-[1em] h-[1em] drop-shadow-sm -translate-y-0.5" alt="coin" />
-              {Math.floor(bankBalance)}
+              {formatCoin(bankBalance)}
             </div>
           </div>
           <div className="bg-gradient-to-b from-orange-50 to-orange-100/50 px-4 py-2 rounded-2xl border border-orange-200/50 flex flex-col items-end shadow-sm">
             <span className="text-orange-500/80 font-black text-[9px] mb-0.5 tracking-wider">钱包余额</span>
             <div className="text-orange-600 font-[NumberFont] font-black text-xl leading-none flex items-center gap-1">
               <img src="/assets/coin.png" className="w-[1em] h-[1em] drop-shadow-sm -translate-y-0.5" alt="coin" />
-              {student.campusCoins}
+              {formatCoin(student.campusCoins)}
             </div>
           </div>
         </div>
@@ -140,13 +141,13 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
             <div className="flex justify-between items-center">
               <span className="text-[9px] text-blue-400 font-black">存款</span>
               <div className="flex items-center gap-0.5 text-blue-600 font-black font-[NumberFont] text-[13px] leading-none">
-                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {Math.floor(bankBalance)}
+                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {formatCoin(bankBalance)}
               </div>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[9px] text-orange-400 font-black">钱包</span>
               <div className="flex items-center gap-0.5 text-orange-600 font-black font-[NumberFont] text-[13px] leading-none">
-                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {student.campusCoins}
+                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {formatCoin(student.campusCoins)}
               </div>
             </div>
           </div>
@@ -271,14 +272,14 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
                         </div>
                         <div>
                           <input
-                            type="range" min="1" max={Math.max(1, student.campusCoins)} step="1"
+                            type="range" min="1" max={Math.max(1, Math.floor(student.campusCoins))} step="1"
                             value={depositAmount}
                             onChange={(e) => setDepositAmount(parseInt(e.target.value))}
                             className={`w-full h-3 rounded-full appearance-none cursor-pointer ${selectedScheme.type === 'current' ? 'bg-green-100 accent-green-500' : 'bg-indigo-100 accent-indigo-600'}`}
                           />
                           <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2">
                             <span>1</span>
-                            <span>最大可用 {Math.max(1, student.campusCoins)}</span>
+                            <span>最大可用 {Math.max(1, Math.floor(student.campusCoins))}</span>
                           </div>
                         </div>
                       </div>
@@ -562,7 +563,7 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
                 <div className="flex justify-between items-center">
                   <span className="text-xl font-black text-slate-900">到账总额</span>
                   <span className="text-4xl font-black text-indigo-600 tracking-tighter">
-                    <img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {Math.round(withdrawConfirmTarget.amount + details.interest)}
+                    <img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {formatCoin(withdrawConfirmTarget.amount + details.interest)}
                   </span>
                 </div>
               </div>
