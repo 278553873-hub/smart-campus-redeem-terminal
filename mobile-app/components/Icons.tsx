@@ -8,12 +8,15 @@ import {
   ArrowLeftRight, Trash2, RefreshCw, Settings, Volume2, FileSpreadsheet,
   Keyboard, StopCircle, AlertCircle, ChevronDown,
   Shield, Lock, LogOut, FileBarChart, MoreVertical, File,
-  Disc, GripHorizontal, Search, Filter, Bot, Calendar, Gift, ScanFace
+  Disc, GripHorizontal, Search, Filter, Bot, Calendar, Gift, ScanFace,
+  Eye, EyeOff
 } from 'lucide-react';
 
 
 export const BackIcon = ({ className }: { className?: string }) => <ChevronLeft className={`w-6 h-6 ${className || 'text-gray-800'}`} />;
 export const MenuIcon = ({ className }: { className?: string }) => <MoreHorizontal className={`w-6 h-6 ${className || 'text-gray-800'}`} />;
+export const EyeIcon = ({ className }: { className?: string }) => <Eye className={className} />;
+export const EyeOffIcon = ({ className }: { className?: string }) => <EyeOff className={className} />;
 export const FocusIcon = () => (
   <div className="w-6 h-6 rounded-full border-2 border-gray-800 flex items-center justify-center">
     <div className="w-2 h-2 bg-gray-800 rounded-full"></div>

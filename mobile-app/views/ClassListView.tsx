@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ClassInfo } from '../types';
-import { UsersIcon, ChartIcon, FileTextIcon, WechatMoreIcon, TrophyIcon, GiftIcon, ScanFaceIcon } from '../components/Icons';
+import { UsersIcon, ChartIcon, FileTextIcon, WechatMoreIcon, TrophyIcon, GiftIcon, ScanFaceIcon, ShieldIcon } from '../components/Icons';
 
 interface ClassListViewProps {
     classes: ClassInfo[];
@@ -10,6 +10,7 @@ interface ClassListViewProps {
     onViewLeaderboard: () => void;
     onViewRewardVerification: (classId: string) => void;
     onViewFaceUpdate: (classId: string) => void;
+    onViewBankPassword: (classId: string) => void;
 }
 
 const ClassListView: React.FC<ClassListViewProps> = ({
@@ -19,7 +20,8 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onOpenExportModal,
     onViewLeaderboard,
     onViewRewardVerification,
-    onViewFaceUpdate
+    onViewFaceUpdate,
+    onViewBankPassword
 }) => {
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
@@ -126,6 +128,19 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                                             <ScanFaceIcon className="w-3.5 h-3.5" />
                                                         </div>
                                                         <span>更新人脸数据</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setActiveMenuId(null);
+                                                            onViewBankPassword(cls.id);
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium text-slate-700 active:bg-slate-50 rounded-lg transition-colors text-left border-b border-slate-50"
+                                                    >
+                                                        <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
+                                                            <ShieldIcon className="w-3.5 h-3.5" />
+                                                        </div>
+                                                        <span>设置兑换密码</span>
                                                     </button>
                                                     <button
                                                         onClick={(e) => {

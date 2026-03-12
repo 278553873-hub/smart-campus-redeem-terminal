@@ -12,6 +12,7 @@ import TermReportView from './views/TermReportView';
 import ClassLeaderboardView from './views/ClassLeaderboardView';
 import RewardVerificationView from './views/reward-verification/RewardVerificationView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
+import { BankPasswordView } from './views/bank-password/BankPasswordView';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { DeviceWrapper } from '../components/DeviceWrapper';
 import {
@@ -61,7 +62,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'class_leaderboard' | 'reward_verification' | 'face_update';
+type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'class_leaderboard' | 'reward_verification' | 'face_update' | 'bank_password';
 
 const App: React.FC = () => {
     // Default view is now the Log (Stream)
@@ -180,6 +181,11 @@ const App: React.FC = () => {
     const handleViewFaceUpdate = (classId: string) => {
         setSelectedClassId(classId);
         navigateTo('face_update');
+    };
+
+    const handleViewBankPassword = (classId: string) => {
+        setSelectedClassId(classId);
+        navigateTo('bank_password');
     };
 
     const handleStartRecord = (studentIds: string[], mode: 'voice' | 'camera' | 'text' = 'voice') => {
@@ -328,6 +334,8 @@ const App: React.FC = () => {
             case 'my_files': return '我的文件';
             case 'class_leaderboard': return '排行榜';
             case 'reward_verification': return '班级奖励兑换';
+            case 'face_update': return '更新人脸数据';
+            case 'bank_password': return '设置兑换密码';
             default: return '';
         }
     };
@@ -436,7 +444,7 @@ const App: React.FC = () => {
                     <div className="flex-1 flex flex-col relative w-full h-full bg-white/40 overflow-hidden border-t border-white/60 backdrop-blur-3xl">
 
                         {/* Header Handling */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'face_update' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'face_update' && currentView !== 'bank_password' && (
                             <div className="pt-0">
                                 <Header
                                     title={getHeaderTitle()}
@@ -486,6 +494,7 @@ const App: React.FC = () => {
                                     onViewLeaderboard={handleViewLeaderboard}
                                     onViewRewardVerification={handleViewRewardVerification}
                                     onViewFaceUpdate={handleViewFaceUpdate}
+                                    onViewBankPassword={handleViewBankPassword}
                                 />
                             )}
 
@@ -528,6 +537,13 @@ const App: React.FC = () => {
 
                             {currentView === 'face_update' && (
                                 <FaceUpdateView
+                                    classId={selectedClassId}
+                                    onBack={goBack}
+                                />
+                            )}
+
+                            {currentView === 'bank_password' && (
+                                <BankPasswordView
                                     classId={selectedClassId}
                                     onBack={goBack}
                                 />

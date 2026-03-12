@@ -21,7 +21,7 @@ const MOCK_GROWTH: GrowthStatus = {
             id: '1',
             description: '你上课积极举手发言，展现了良好的课堂参与意识。',
             teacher: '李老师',
-            time: '2026-02-28',
+            time: '2026-03-11',
             type: 'positive',
             score: 2
         },
@@ -29,7 +29,7 @@ const MOCK_GROWTH: GrowthStatus = {
             id: '2',
             description: '你在周口市“新华杯”多文本阅读写作活动中荣获小学组特等奖，展现了出色的语文素养。',
             teacher: '张老师',
-            time: '2026-02-27',
+            time: '2026-03-10',
             type: 'positive',
             score: 5
         },
@@ -37,9 +37,97 @@ const MOCK_GROWTH: GrowthStatus = {
             id: '3',
             description: '走廊走动期间追逐打闹，缺乏基础的安全防范意识。',
             teacher: '王老师',
-            time: '2026-02-22',
+            time: '2026-03-08',
             type: 'negative',
             score: -2
+        },
+        {
+            id: '4',
+            description: '主动承担班级卫生清扫工作，并在“红领巾体验岗位”中表现优异。',
+            teacher: '李老师',
+            time: '2026-03-07',
+            type: 'positive',
+            score: 3
+        },
+        {
+            id: '5',
+            description: '体育课耐力跑训练中克服困难，坚持完成任务并取得优异成绩。',
+            teacher: '陈老师',
+            time: '2026-03-05',
+            type: 'positive',
+            score: 2
+        },
+        {
+            id: '6',
+            description: '在校内数学思维竞赛中表现突出，逻辑思维严密，获得优胜奖。',
+            teacher: '张老师',
+            time: '2026-03-03',
+            type: 'positive',
+            score: 10
+        },
+        {
+            id: '7',
+            description: '担任班级图书角管理员期间认真负责，图书摆放整齐。',
+            teacher: '李老师',
+            time: '2026-02-28',
+            type: 'positive',
+            score: 3
+        },
+        {
+            id: '8',
+            description: '课间休息文明有礼，能主动向老师问好，体现了良好的礼仪修养。',
+            teacher: '王老师',
+            time: '2026-02-27',
+            type: 'positive',
+            score: 2
+        },
+        {
+            id: '9',
+            description: '在校园垃圾分类实践活动中表现优异，被评为“环保标兵”。',
+            teacher: '李老师',
+            time: '2026-02-25',
+            type: 'positive',
+            score: 3
+        },
+        {
+            id: '10',
+            description: '早晨集体朗读课文声音洪亮，感情充沛，起到了良好的带头作用。',
+            teacher: '李老师',
+            time: '2026-02-23',
+            type: 'positive',
+            score: 2
+        },
+        {
+            id: '11',
+            description: '课后协助老师整理多媒体教具，爱护公物，值得大家学习。',
+            teacher: '张老师',
+            time: '2026-02-21',
+            type: 'positive',
+            score: 3
+        },
+        {
+            id: '12',
+            description: '在科学课实验观察中记录详尽准确，体现了严谨的学习态度。',
+            teacher: '周老师',
+            time: '2026-02-19',
+            type: 'positive',
+            score: 5
+        },
+        {
+            id: '13',
+            description: '放学路队集队速度快，行进中保持队形整齐，“快、静、齐”达标。',
+            teacher: '王老师',
+            time: '2026-02-17',
+            type: 'positive',
+            score: 2
+        },
+        {
+            id: '14',
+            description: '发现并劝阻了个别同学在走廊随地吐痰的行为，维护了校园环境卫生。',
+            teacher: '李老师',
+            time: '2026-02-15',
+            type: 'positive',
+            score: 5
         }
     ]
 };
@@ -47,10 +135,10 @@ const MOCK_GROWTH: GrowthStatus = {
 const MOCK_SHOW_LEADERBOARD = true;
 
 const TIER_CONFIG: Record<TierLevel, { label: string, bg: string, requirement: string, textColor: string, ring: string, emoji: string }> = {
-    star: { label: '星光榜样', bg: 'bg-yellow-50', requirement: '排名前 15%', textColor: 'text-yellow-700', ring: 'ring-yellow-100', emoji: '' },
-    active: { label: '活跃标兵', bg: 'bg-blue-50', requirement: '排名前 16%~40%', textColor: 'text-blue-700', ring: 'ring-blue-100', emoji: '' },
-    stable: { label: '稳步成长', bg: 'bg-green-50', requirement: '排名前 41%~85%', textColor: 'text-green-700', ring: 'ring-green-100', emoji: '' },
-    improve: { label: '萌芽蓄力', bg: 'bg-emerald-50/50', requirement: '全班后 15%', textColor: 'text-emerald-700', ring: 'ring-emerald-100', emoji: '' }
+    star: { label: '领航之星', bg: 'bg-yellow-50', requirement: '', textColor: 'text-yellow-700', ring: 'ring-yellow-100', emoji: '' },
+    active: { label: '卓越先锋', bg: 'bg-blue-50', requirement: '', textColor: 'text-blue-700', ring: 'ring-blue-100', emoji: '' },
+    stable: { label: '稳步成长', bg: 'bg-green-50', requirement: '', textColor: 'text-green-700', ring: 'ring-green-100', emoji: '' },
+    improve: { label: '潜力新星', bg: 'bg-emerald-50/50', requirement: '', textColor: 'text-emerald-700', ring: 'ring-emerald-100', emoji: '' }
 };
 
 type DemoScenario = 'normal' | 'allZero' | 'rank5';
@@ -117,7 +205,8 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                     { rank: 27, name: '李清照', score: 20, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
                     { rank: 28, name: '陆游', score: 15, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
                     { rank: 29, name: '司马迁', score: 10, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    { rank: 30, name: '苏轼', score: 5, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel }
+                    { rank: 30, name: '苏轼', score: 5, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
+                    ...Array.from({ length: 10 }).map((_, i) => ({ rank: 31 + i, name: `学生 ${31 + i}`, score: 0, coins: 0, isSelf: false, isTarget: false, tier: 'improve' as TierLevel }))
                 ]
             };
         } else {
@@ -160,7 +249,8 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                     { rank: 27, name: '辛弃疾', score: 12, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
                     { rank: 28, name: '李清照', score: 10, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
                     { rank: 29, name: '陆游', score: 8, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    { rank: 30, name: '苏轼', score: 5, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel }
+                    { rank: 30, name: '苏轼', score: 5, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
+                    ...Array.from({ length: 10 }).map((_, i) => ({ rank: 31 + i, name: `学生 ${31 + i}`, score: 0, coins: 0, isSelf: false, isTarget: false, tier: 'improve' as TierLevel }))
                 ]
             };
         }
@@ -216,7 +306,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
 
                         <div className="flex flex-col items-center justify-center flex-1 py-4">
                             <h3 className="text-[3.5rem] leading-none font-black text-orange-500 tracking-tighter flex items-center justify-center gap-3">
-                                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[2px]" alt="coin" /> 
+                                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[2px]" alt="coin" />
                                 <span className="font-[NumberFont]">{formatFixedCoin(uiState.coinsBase + uiState.coinsBonus)}</span>
                             </h3>
                         </div>
@@ -225,7 +315,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                             <div className="flex-1 h-full flex items-center justify-center flex-col bg-white/70 rounded-2xl py-1 px-2 border border-orange-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-transform hover:scale-105">
                                 <span className="text-[10px] text-orange-600/70 font-bold mb-0.5">成长奖励</span>
                                 <div className="text-orange-500 font-black text-sm font-[NumberFont] flex items-center justify-center gap-1">
-                                    <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -translate-y-[1px]" alt="coin" /> 
+                                    <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -translate-y-[1px]" alt="coin" />
                                     <span>{formatFixedCoin(uiState.coinsBase)}</span>
                                 </div>
                             </div>
@@ -233,7 +323,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                             <div className="flex-1 h-full flex items-center justify-center flex-col bg-white/70 rounded-2xl py-1 px-2 border border-orange-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-transform hover:scale-105">
                                 <span className="text-[10px] text-orange-600/70 font-bold mb-0.5">得分奖励</span>
                                 <div className="text-orange-500 font-black text-sm font-[NumberFont] flex items-center justify-center gap-1">
-                                    <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -translate-y-[1px]" alt="coin" /> 
+                                    <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -translate-y-[1px]" alt="coin" />
                                     <span>{formatFixedCoin(uiState.coinsBonus)}</span>
                                 </div>
                             </div>
@@ -257,7 +347,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                                 onClick={() => setActiveTab('leaderboard')}
                                 className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-1.5 ${activeTab === 'leaderboard' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                             >
-                                <Medal size={16} /> 班级成长
+                                <Medal size={16} /> 班级标杆
                             </button>
                         )}
                     </div>
@@ -268,9 +358,8 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                     <div className="bg-white rounded-[1.5rem] p-5 shadow-sm border-2 border-slate-50 relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="font-black text-slate-800 flex items-center gap-1.5 text-sm">
-                                <Medal size={18} className="text-yellow-500" /> 班级成长之星
+                                <Medal size={18} className="text-yellow-500" /> 班级标杆
                             </h4>
-                            <span className="text-[10px] font-bold text-slate-400">共 30 人</span>
                         </div>
 
 
@@ -284,94 +373,124 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                                     <h5 className="font-black text-slate-700 mb-1">大家都在同一起跑线</h5>
                                     <p className="text-xs text-slate-400 font-bold px-4">本班目前还没有同学得分，谁会成为本月榜一大哥？快去争取第一分吧！</p>
                                 </div>
-                            ) : (
-                                <>
-                                    {/* 山型排列 Top 3 */}
-                                    {uiState.leaderboard.length >= 3 && (
-                                        <div className="flex items-end justify-center gap-3 mb-8 mt-6">
-                                            {/* Rank 2 */}
-                                            <div className="flex flex-col items-center w-24 relative">
-                                                {uiState.leaderboard[1]?.isSelf && <div className="absolute -top-4 w-full text-center z-20"><span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded shadow-sm">我</span></div>}
-                                                <div className="relative mb-2">
-                                                    <div className="w-14 h-14 bg-slate-200 rounded-full overflow-hidden border-[3px] border-slate-200 shadow-sm relative z-10">
-                                                        <img src={`https://i.pravatar.cc/150?u=${uiState.leaderboard[1]?.name}`} className="w-full h-full object-cover" alt="" />
-                                                    </div>
-                                                    <div className="absolute -bottom-2 right-0 opacity-90"><Medal size={24} className="text-slate-400 fill-slate-200" /></div>
-                                                </div>
-                                                <span className={`font-bold text-sm truncate w-full text-center mb-1 ${uiState.leaderboard[1]?.isSelf ? 'text-blue-700' : 'text-slate-700'}`}>{uiState.leaderboard[1]?.name}</span>
-                                                <div className="text-blue-600 font-black font-[NumberFont] text-sm leading-none flex items-baseline gap-0.5 justify-center">{uiState.leaderboard[1]?.score} <span className="text-[9px] text-blue-400 font-sans font-bold">分</span></div>
-                                                <div className="text-orange-500 font-bold font-[NumberFont] text-xs flex items-center gap-0.5 justify-center mt-0.5"><span className="text-[10px] font-sans scale-90 translate-y-px opacity-80">预估</span><img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[1px]" alt="coin" /> {formatFixedCoin(uiState.leaderboard[1]?.coins || 0)}</div>
-                                            </div>
-                                            
-                                            {/* Rank 1 */}
-                                            <div className="flex flex-col items-center w-28 relative z-10">
-                                                {uiState.leaderboard[0]?.isSelf && <div className="absolute -top-7 w-full text-center z-20"><span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded shadow-sm">我</span></div>}
-                                                <div className="absolute -top-6 text-yellow-500">
-                                                    <Trophy size={24} className="drop-shadow-sm fill-yellow-400" />
-                                                </div>
-                                                <div className="relative mb-2 mt-2">
-                                                    <div className="w-16 h-16 bg-yellow-100 rounded-full overflow-hidden border-[4px] border-yellow-400 shadow-md relative z-10">
-                                                        <img src={`https://i.pravatar.cc/150?u=${uiState.leaderboard[0]?.name}`} className="w-full h-full object-cover" alt="" />
-                                                    </div>
-                                                </div>
-                                                <span className={`font-black truncate w-full text-center mb-1 ${uiState.leaderboard[0]?.isSelf ? 'text-blue-700 text-base' : 'text-slate-800 text-sm'}`}>{uiState.leaderboard[0]?.name}</span>
-                                                <div className="text-blue-600 font-black font-[NumberFont] text-lg leading-none flex items-baseline gap-0.5 justify-center">{uiState.leaderboard[0]?.score} <span className="text-[10px] text-blue-400 font-sans font-bold">分</span></div>
-                                                <div className="text-orange-500 font-bold font-[NumberFont] text-sm flex items-center gap-0.5 justify-center mt-0.5"><span className="text-[10px] font-sans scale-90 translate-y-px opacity-80">预估</span><img src="/assets/coin.png" className="w-[1em] h-[1em] -translate-y-[1px]" alt="coin" /> {formatFixedCoin(uiState.leaderboard[0]?.coins || 0)}</div>
-                                            </div>
+                            ) : (() => {
+                                // 计算分数分组
+                                const scoreMap = new Map<number, typeof uiState.leaderboard>();
+                                uiState.leaderboard.forEach(item => {
+                                    if (!scoreMap.has(item.score)) scoreMap.set(item.score, []);
+                                    scoreMap.get(item.score)!.push(item);
+                                });
+                                const sortedGroups = [...scoreMap.entries()]
+                                    .filter(([score]) => score > 0)
+                                    .sort((a, b) => b[0] - a[0]);
+                                // 只要有参与者就展示标杆，不以参与者内部是否同分作为判断
+                                const allSame = false; // 废弃此判断，改为始终展示
+                                // 取前3个正分数层作为标杆
+                                const benchmarkGroups = sortedGroups.slice(0, 3);
+                                const selfItem = uiState.leaderboard.find(item => item.isSelf);
+                                // 自己是否已在标杆层中
+                                const selfInBenchmark = benchmarkGroups.some(([, students]) => students.some(s => s.isSelf));
 
-                                            {/* Rank 3 */}
-                                            <div className="flex flex-col items-center w-24 relative">
-                                                {uiState.leaderboard[2]?.isSelf && <div className="absolute -top-4 w-full text-center z-20"><span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded shadow-sm">我</span></div>}
-                                                <div className="relative mb-2">
-                                                    <div className="w-14 h-14 bg-orange-50 rounded-full overflow-hidden border-[3px] border-orange-200 shadow-sm relative z-10">
-                                                        <img src={`https://i.pravatar.cc/150?u=${uiState.leaderboard[2]?.name}`} className="w-full h-full object-cover" alt="" />
-                                                    </div>
-                                                    <div className="absolute -bottom-2 right-0 opacity-90"><Medal size={24} className="text-orange-400 fill-orange-200" /></div>
-                                                </div>
-                                                <span className={`font-bold text-sm truncate w-full text-center mb-1 ${uiState.leaderboard[2]?.isSelf ? 'text-blue-700' : 'text-slate-700'}`}>{uiState.leaderboard[2]?.name}</span>
-                                                <div className="text-blue-600 font-black font-[NumberFont] text-sm leading-none flex items-baseline gap-0.5 justify-center">{uiState.leaderboard[2]?.score} <span className="text-[9px] text-blue-400 font-sans font-bold">分</span></div>
-                                                <div className="text-orange-500 font-bold font-[NumberFont] text-xs flex items-center gap-0.5 justify-center mt-0.5"><span className="text-[10px] font-sans scale-90 translate-y-px opacity-80">预估</span><img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[1px]" alt="coin" /> {formatFixedCoin(uiState.leaderboard[2]?.coins || 0)}</div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* 当前用户的排名记录（如果不在前3） */}
-                                    {uiState.leaderboard.filter(item => item.isSelf && item.rank > 3).map((item, index) => {
-                                        return (
-                                            <React.Fragment key={`self-${index}`}>
-                                                <div className="flex items-center gap-2 pt-3 pb-1 mb-2">
-                                                    <div className={`text-[11px] font-black text-slate-500 flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dashed border-slate-200 bg-slate-50 relative z-10`}>
-                                                        我的得分
-                                                    </div>
-                                                    <div className={`h-px flex-1 border-t border-dashed border-slate-200 opacity-60`}></div>
-                                                </div>
-
-                                                <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50 ring-1 ring-blue-200 shadow-sm relative">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-8 h-8 bg-slate-200 rounded-full overflow-hidden shrink-0">
-                                                                <img src={`https://i.pravatar.cc/150?u=${item.name}`} className="w-full h-full object-cover" alt="" />
+                                return (
+                                    <>
+                                        {/* 班级标杆：只要有参与者就展示 */}
+                                        {benchmarkGroups.length > 0 && (
+                                            <div>
+                                                <div className="space-y-1.5">
+                                                    {benchmarkGroups.map(([score, students], groupIdx) => {
+                                                        const isTop = groupIdx === 0;
+                                                        return (
+                                                            <div key={score} className="space-y-1">
+                                                                {students.map((item, idx) => (
+                                                                    <div key={idx} className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${item.isSelf ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
+                                                                            : isTop ? 'bg-amber-50 border-amber-100'
+                                                                                : 'bg-slate-50 border-slate-100'
+                                                                        }`}>
+                                                                        <div className="flex items-center gap-2.5">
+                                                                            <div className={`w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 ${item.isSelf ? 'border-blue-300' : isTop ? 'border-amber-300' : 'border-slate-200'}`}>
+                                                                                <img src={`https://i.pravatar.cc/150?u=${item.name}`} className="w-full h-full object-cover" alt="" />
+                                                                            </div>
+                                                                            <div className="flex flex-col">
+                                                                                <div className="flex items-center gap-1.5">
+                                                                                    <span className={`font-bold text-sm ${item.isSelf ? 'text-blue-700' : 'text-slate-700'}`}>
+                                                                                        {item.name}
+                                                                                    </span>
+                                                                                    {item.isSelf && <span className="text-[10px] bg-blue-100 text-blue-600 px-1 py-0.5 rounded font-bold">我</span>}
+                                                                                </div>
+                                                                                <div className={`mt-0.5 text-[10px] font-black uppercase tracking-wider ${TIER_CONFIG[item.tier].textColor}`}>
+                                                                                    {TIER_CONFIG[item.tier].label}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                            <div className="text-right shrink-0">
+                                                                                <div className={`font-black text-sm tabular-nums ${item.isSelf ? 'text-blue-600' : isTop ? 'text-amber-600' : 'text-slate-500'}`}>
+                                                                                    {item.score} <small className="text-slate-300 font-sans">分</small>
+                                                                                </div>
+                                                                                {item.coins > 0 ? (
+                                                                                    <div className="text-orange-500 font-bold text-xs flex items-center gap-0.5 justify-end">
+                                                                                        <span className="text-[10px] font-sans text-slate-400">预估</span>
+                                                                                        <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[1px]" alt="coin" />
+                                                                                        {formatFixedCoin(item.coins || 0)}
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="text-[10px] text-slate-400 font-bold pt-0.5">无奖励</div>
+                                                                                )}
+                                                                            </div>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                            <span className="font-bold text-sm text-blue-700">
-                                                                {item.name} <span className="text-[10px] bg-blue-100 text-blue-600 px-1 rounded ml-1">我</span>
-                                                            </span>
-                                                        </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* 分割线 */}
+                                        {!allSame && selfItem && !selfInBenchmark && (
+                                            <div className="flex items-center gap-2 py-1">
+                                                <div className="h-px flex-1 border-t border-dashed border-slate-200" />
+                                                <span className="text-[10px] font-black text-slate-400 shrink-0">我的得分</span>
+                                                <div className="h-px flex-1 border-t border-dashed border-slate-200" />
+                                            </div>
+                                        )}
+
+                                        {/* 自己（不在标杆层时单独展示） */}
+                                        {selfItem && !selfInBenchmark && (
+                                            <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50 border border-blue-200 ring-1 ring-blue-200">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-blue-300">
+                                                        <img src={`https://i.pravatar.cc/150?u=${selfItem.name}`} className="w-full h-full object-cover" alt="" />
                                                     </div>
-                                                    <div className="flex flex-col items-end gap-1">
-                                                        <div className="font-[NumberFont] font-black text-slate-700 flex items-center gap-1.5 text-base leading-none">
-                                                            {item.score} <span className="text-[10px] text-slate-400 font-sans">分</span>
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="font-bold text-sm text-blue-700">
+                                                                {selfItem.name}
+                                                            </span>
+                                                            <span className="text-[10px] bg-blue-100 text-blue-600 px-1 py-0.5 rounded font-bold">我</span>
                                                         </div>
-                                                        <div className="text-[10px] font-bold text-orange-600 bg-orange-50/80 border border-orange-100/50 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                                            <span className="opacity-80">预估</span>
-                                                            <span className="font-[NumberFont] font-black text-[12px] text-orange-500 flex items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em]" alt="coin" /> {formatFixedCoin(item.coins)}</span>
+                                                        {/* 等级标签：纯文字演示，更好对齐 */}
+                                                        <div className={`mt-0.5 text-[10px] font-black uppercase tracking-wider ${TIER_CONFIG[selfItem.tier].textColor}`}>
+                                                            {TIER_CONFIG[selfItem.tier].label}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </React.Fragment>
-                                        )
-                                    })}
-                                </>
-                            )}
+                                                <div className="text-right shrink-0">
+                                                    <div className="font-black text-blue-600 text-sm tabular-nums">{selfItem.score} <small className="text-blue-300 font-sans">分</small></div>
+                                                    {selfItem.coins > 0 ? (
+                                                        <div className="text-orange-500 font-bold text-xs flex items-center gap-0.5 justify-end">
+                                                            <span className="text-[10px] font-sans text-slate-400">预估</span>
+                                                            <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[1px]" alt="coin" />
+                                                            {formatFixedCoin(selfItem.coins || 0)}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-[10px] text-slate-400 font-bold pt-0.5 text-right">无奖励</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </div>
                         <Sparkles className="absolute -right-4 -top-4 w-24 h-24 text-slate-50 pointer-events-none opacity-50" />
                     </div>
