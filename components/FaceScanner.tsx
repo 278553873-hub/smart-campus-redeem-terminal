@@ -4,9 +4,11 @@ import { Camera, UserCheck } from 'lucide-react';
 
 interface FaceScannerProps {
   onSuccess: () => void;
+  onSwitch?: () => void;
+  isVending?: boolean;
 }
 
-const FaceScanner: React.FC<FaceScannerProps> = ({ onSuccess }) => {
+const FaceScanner: React.FC<FaceScannerProps> = ({ onSuccess, onSwitch, isVending = true }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [scanning, setScanning] = useState(true);
   const [identified, setIdentified] = useState(false);
@@ -86,7 +88,8 @@ const FaceScanner: React.FC<FaceScannerProps> = ({ onSuccess }) => {
         </div>
 
         {/* 关键修复层：这个环比容器大那么1个像素，颜色与父级大背景完全融合，利用原生的矢量边框裁掉里面的白边或像素噪点 */}
-        <div className="absolute -inset-[2px] pointer-events-none rounded-full border-[3px] border-[#f0f9ff] z-50"></div>
+        {/* 关键修复层：这个环比容器大那么1个像素，颜色与父级大背景完全融合，利用原生的矢量边框裁掉里面的白边或像素噪点 */}
+        <div className={`absolute -inset-[2px] pointer-events-none rounded-full border-[3px] z-50 ${isVending ? 'border-[#f0f9ff]' : 'border-[#f8fbff]'}`}></div>
         {/* 用一个透明度淡一点的蓝环再次勾勒边缘 */}
         <div className="absolute inset-0 pointer-events-none rounded-full border-[8px] border-blue-600/10 z-40"></div>
       </div>
@@ -100,12 +103,23 @@ const FaceScanner: React.FC<FaceScannerProps> = ({ onSuccess }) => {
         </p>
       </div>
 
-      <div className="flex gap-4 min-h-[42px]">
+      <div className="flex flex-col items-center gap-4 min-h-[42px]">
         {!identified && (
-          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm text-gray-400 border border-gray-100 animate-in fade-in duration-500">
-            <Camera size={20} />
-            <span>生物识别加密保护</span>
-          </div>
+          <>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm text-gray-400 border border-gray-100 animate-in fade-in duration-500">
+              <Camera size={20} />
+              <span>生物识别加密保护</span>
+            </div>
+            
+            {onSwitch && (
+              <button 
+                onClick={onSwitch}
+                className="text-blue-600 font-bold hover:underline py-2 px-4 transition-all active:scale-95"
+              >
+                切换到账号密码登录
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

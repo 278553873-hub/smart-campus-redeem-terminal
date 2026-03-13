@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { User, KeyRound, Loader2, ArrowRight, ChevronLeft } from 'lucide-react';
+import { User, KeyRound, Loader2, ArrowRight, ChevronLeft, Camera } from 'lucide-react';
 import { playSound } from '../utils/sound';
 
 interface AccountLoginProps {
     onSuccess: () => void;
     onBack?: () => void;
+    onFaceLogin?: () => void;
     layout?: 'horizontal' | 'vertical';
 }
 
-const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, layout = 'horizontal' }) => {
+const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLogin, layout = 'horizontal' }) => {
     const [studentId, setStudentId] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -149,6 +150,17 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, layout =
                                     </>
                                 )}
                             </button>
+
+                            {onFaceLogin && (
+                                <button
+                                    type="button"
+                                    onClick={onFaceLogin}
+                                    className="w-full mt-4 py-3 rounded-xl border-2 border-slate-100 flex items-center justify-center gap-2 text-slate-500 font-bold hover:bg-slate-50 transition-colors"
+                                >
+                                    <Camera size={20} />
+                                    <span>切换到人脸识别登录</span>
+                                </button>
+                            )}
                         </form>
                     </div>
                 </div>

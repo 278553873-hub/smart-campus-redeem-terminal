@@ -619,6 +619,7 @@ const INITIAL_BANK: BankAccount = {
 const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 'vending' }) => {
   const isVending = mode === 'vending';
   const [view, setView] = useState<ViewState>(isVending ? 'welcome' : 'scanning');
+  const [loginSubView, setLoginSubView] = useState<'face' | 'password'>(isVending ? 'face' : 'password');
   const [student, setStudent] = useState<Student>(INITIAL_STUDENT);
   const [bank, setBank] = useState<BankAccount>(INITIAL_BANK);
   const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
@@ -817,7 +818,7 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
 
             <div className="pt-8 w-full max-w-sm mt-auto">
               <button
-                onClick={() => setView('scanning')}
+                onClick={() => { setView('scanning'); setLoginSubView('face'); }}
                 className="w-full px-10 py-6 bg-blue-600 text-white text-3xl font-black rounded-[2.5rem] flex flex-col items-center justify-center gap-1"
                 style={{
                   boxShadow: '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)',
@@ -830,18 +831,23 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
                 onTouchEnd={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)'; }}
               >
                 <div className="flex items-center gap-3">
-                  {isVending ? '开始刷脸' : '账号登录'} <ArrowRight size={28} />
+                  开始刷脸 <ArrowRight size={28} />
                 </div>
               </button>
 
-              {isVending && (
-                <button
-                  onClick={() => setShowPasswordModal(true)}
-                  className="mt-6 w-full py-4 text-blue-600 font-bold bg-[#e8f2ff] active:bg-[#dbeafe] rounded-[2rem] transition-colors text-xl shadow-sm border-2 border-white"
-                >
-                  账号密码登录
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  if (isVending) {
+                    setShowPasswordModal(true);
+                  } else {
+                    setView('scanning');
+                    setLoginSubView('password');
+                  }
+                }}
+                className="mt-6 w-full py-4 text-blue-600 font-bold bg-[#e8f2ff] active:bg-[#dbeafe] rounded-[2rem] transition-colors text-xl shadow-sm border-2 border-white"
+              >
+                账号密码登录
+              </button>
               <p className="text-slate-300 font-bold mt-8 text-sm uppercase tracking-widest">请靠近终端屏幕</p>
             </div>
 
@@ -853,13 +859,29 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
           </div>
         );
       case 'scanning':
-        return isVending ? (
-          <FaceScanner onSuccess={() => { playSound('success'); setView('dashboard'); }} />
+        return loginSubView === 'face' ? (
+          <FaceScanner 
+            onSuccess={() => { playSound('success'); setView('dashboard'); }} 
+            onSwitch={isVending ? undefined : () => setLoginSubView('password')}
+            isVending={isVending}
+          />
         ) : (
-          <AccountLogin onSuccess={() => { setView('dashboard'); }} />
+          <AccountLogin 
+            onSuccess={() => { setView('dashboard'); }} 
+            onBack={undefined}
+            onFaceLogin={isVending ? undefined : () => setLoginSubView('face')}
+            layout={isVending ? 'vertical' : 'horizontal'}
+          />
         );
       case 'dashboard':
-        return <Dashboard student={student} onNavigate={(v) => { if (v === 'welcome' && !isVending) setView('scanning'); else setView(v); }} bankBalance={bankBalance} layout={isVending ? 'mobile' : 'pc'} hideShop={!isVending} />;
+        return <Dashboard student={student} onNavigate={(v) => { 
+          if (v === 'welcome') {
+            setView(isVending ? 'welcome' : 'scanning');
+            setLoginSubView(isVending ? 'face' : 'password');
+          } else {
+            setView(v);
+          }
+        }} bankBalance={bankBalance} layout={isVending ? 'mobile' : 'pc'} hideShop={!isVending} />;
       case 'exchange':
         return <ExchangeView student={student} onExchange={handleExchange} onBack={() => setView('dashboard')} />;
       case 'shop':
