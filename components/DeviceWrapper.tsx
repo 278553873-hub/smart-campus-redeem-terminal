@@ -14,13 +14,10 @@ export const DeviceWrapper: React.FC<DeviceWrapperProps> = ({ children, width, h
         const observer = new ResizeObserver((entries) => {
             for (let entry of entries) {
                 const { width: wrapperWidth, height: wrapperHeight } = entry.contentRect;
-                const scaleX = wrapperWidth / width;
-                const scaleY = wrapperHeight / height;
-                // Apply scaling. We allow scale down, and potentially scale up up to 1 (or allow slight scale up for 4K displays).
-                // For faithful pixel-perfect device mockup, keeping max scale at 1 is good, but let's allow up to 1 for perfect fit, or maybe larger if needed.
-                // Let's cap at scale=1 so it doesn't get ridiculously huge on ultra-wide web screens unless we want it to.
-                // Actually, if they are on a massive display, perhaps the mockup shouldn't scale infinitely. We cap at 1.2
-                setScale(Math.min(scaleX, scaleY, 1.2));
+                // Add a buffer for the physical phone bezels and shadows (approx 40px total)
+                const scaleX = (wrapperWidth - 40) / width;
+                const scaleY = (wrapperHeight - 40) / height;
+                setScale(Math.min(scaleX, scaleY, 1));
             }
         });
 
@@ -33,7 +30,7 @@ export const DeviceWrapper: React.FC<DeviceWrapperProps> = ({ children, width, h
     return (
         <div
             ref={containerRef}
-            className="w-full h-full flex items-center justify-center overflow-hidden"
+            className="w-full h-full flex items-center justify-center overflow-hidden p-8"
         >
             <div
                 style={{

@@ -451,28 +451,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         </div>
                     </div>
 
-                    {/* Right: Capsule */}
-                    <div className="w-24 flex justify-end relative">
-                        <div className="flex items-center bg-white/40 backdrop-blur-md border border-white/60 rounded-full px-3 h-[32px] gap-3 shadow-sm">
-                            <button
-                                onClick={() => setShowHeaderMenu(!showHeaderMenu)}
-                                className="w-5 h-5 flex items-center justify-center text-slate-800 active:opacity-50"
-                            >
-                                <WechatMoreIcon className="w-5 h-5" />
-                            </button>
-                            <div className="w-[1px] h-3.5 bg-slate-400/30"></div>
-                            <div className="w-5 h-5 flex items-center justify-center text-slate-800"><WechatCloseIcon className="w-4 h-4" /></div>
-                        </div>
-
-                        {showHeaderMenu && (
-                            <div className="absolute top-11 right-0 bg-white shadow-2xl border border-slate-100 rounded-2xl p-1.5 w-36 z-40 animate-in fade-in zoom-in duration-200 origin-top-right">
-                                <button className="flex items-center gap-2 text-xs font-bold text-slate-600 p-2.5  rounded-xl w-full text-left transition-colors">
-                                    <FileIcon className="w-3.5 h-3.5 text-cyan-500" /> 导出记录
-                                </button>
-                            </div>
-                        )}
-                        {showHeaderMenu && <div className="fixed inset-0 z-30" onClick={() => setShowHeaderMenu(false)}></div>}
-                    </div>
+                    <div className="w-10"></div>
                 </div>
             </div>
 

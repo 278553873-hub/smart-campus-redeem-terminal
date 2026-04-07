@@ -10,7 +10,12 @@ export default {
         hoverOnlyWhenSupported: true,
     },
     theme: {
-        extend: {},
+        extend: {
+            fontFamily: {
+                'heading': ['"Baloo 2"', 'cursive'],
+                'body': ['"Comic Neue"', 'cursive'],
+            }
+        },
     },
     plugins: [require("tailwindcss-animate")],
 }

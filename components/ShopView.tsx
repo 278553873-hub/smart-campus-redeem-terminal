@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ShoppingCart, Sparkles, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Sparkles, ShoppingBag, Gift, CheckCircle2 } from 'lucide-react';
 import { Student, Product } from '../types';
 
 interface ShopViewProps {
@@ -200,7 +200,7 @@ const ShopView: React.FC<ShopViewProps> = ({ student, products, onPurchase }) =>
               <CheckCircle2 size={40} />
             </div>
             <div className="font-black text-2xl tracking-tight">
-              兑换成功，柜门已打开请取货
+              兑换成功！请在货柜机出货栏领取商品
             </div>
           </div>
         </div>

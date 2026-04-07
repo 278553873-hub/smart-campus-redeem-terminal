@@ -137,7 +137,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
         <div className={`absolute inset-0 z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300 ${mode === 'camera' ? 'bg-black' : 'bg-[#F2F2F2]'}`}>
 
             {/* Top Bar */}
-            <div className={`flex justify-between items-center px-4 pt-safe safe-area-top z-20 h-[56px] transition-colors shadow-sm ${mode === 'camera' ? 'text-white border-b border-white/10' : 'text-slate-900 bg-white border-b border-slate-100'}`}>
+            <div className={`flex justify-between items-center px-4 z-20 h-[104px] pt-[54px] transition-colors shadow-sm ${mode === 'camera' ? 'text-white border-b border-white/10' : 'text-slate-900 bg-white border-b border-slate-100'}`}>
                 <div className="flex-1 flex justify-start">
                     <button
                         onClick={onClose}
@@ -158,13 +158,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
                     </div>
                 </div>
 
-                <div className="flex-1 flex justify-end">
-                    <div className={`flex items-center border rounded-full px-3 h-[30px] gap-3 backdrop-blur-md ${mode === 'camera' ? 'bg-white/10 border-white/20' : 'bg-white border-slate-200'}`}>
-                        <div className={`w-5 h-5 flex items-center justify-center ${mode === 'camera' ? 'text-white' : 'text-slate-900'}`}><WechatMoreIcon className="w-5 h-5" /></div>
-                        <div className={`w-[1px] h-3.5 ${mode === 'camera' ? 'bg-white/20' : 'bg-slate-200'}`}></div>
-                        <div className={`w-5 h-5 flex items-center justify-center ${mode === 'camera' ? 'text-white' : 'text-slate-900'}`}><WechatCloseIcon className="w-4 h-4" /></div>
-                    </div>
-                </div>
+                <div className="flex-1 w-10"></div>
             </div>
 
             {/* Main Content Area */}

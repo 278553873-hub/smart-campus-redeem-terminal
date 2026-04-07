@@ -14,6 +14,7 @@ import TeacherDashboard from './components/TeacherDashboard';
 import AdminApp from './components/AdminApp';
 import MobileApp from './mobile-app/App';
 import CompanionApp from './components/CompanionApp';
+import ParentApp from './components/ParentApp';
 import VendingAdmin from './components/VendingAdmin';
 import { DeviceWrapper } from './components/DeviceWrapper';
 import './mobile-app/index.css';
@@ -1053,16 +1054,19 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
 };
 
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'teacher' | 'admin' | 'companion' | 'all-in-one'>('terminal');
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'teacher' | 'admin' | 'companion' | 'all-in-one' | 'parent'>('terminal');
   const [isDemoOpen, setIsDemoOpen] = useState(false);
 
   return (
     <>
-      {currentApp === 'terminal' && <TerminalApp mode="vending" />}
-      {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
-      {currentApp === 'teacher' && <TeacherDashboard />}
-      {currentApp === 'admin' && <MobileApp />}
-      {currentApp === 'companion' && <CompanionApp />}
+      <div key={currentApp} className="animate-in fade-in duration-300">
+        {currentApp === 'terminal' && <TerminalApp mode="vending" />}
+        {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
+        {currentApp === 'teacher' && <TeacherDashboard />}
+        {currentApp === 'admin' && <MobileApp />}
+        {currentApp === 'companion' && <CompanionApp />}
+        {currentApp === 'parent' && <ParentApp />}
+      </div>
 
       {/* 侧边悬浮控制台 (抽屉效果，避免遮挡导航) */}
       <div
@@ -1112,10 +1116,18 @@ const AppSwitcher: React.FC = () => {
             <button
               onClick={() => setCurrentApp('admin')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'admin' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
-              title="管理端 - 手机控制"
+              title="管理端 - 教师手机控制"
             >
               <Smartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold">手机端</span>
+              <span className="text-[9px] font-bold">教师手机端</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('parent')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'parent' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+              title="家长端 - 智能批改小程序"
+            >
+              <Smartphone size={22} className="mb-1" />
+              <span className="text-[9px] font-bold">家长手机端</span>
             </button>
             <button
               onClick={() => setCurrentApp('companion')}

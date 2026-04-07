@@ -15,11 +15,27 @@ import FaceUpdateView from './views/face-update/FaceUpdateView';
 import { BankPasswordView } from './views/bank-password/BankPasswordView';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { DeviceWrapper } from '../components/DeviceWrapper';
+import PhoneMockup from '../components/PhoneMockup';
 import {
     HomeIcon, UserIcon, ActivityIcon, CameraIcon, VolumeIcon,
     PlusIcon, FileIcon, CloseIcon, ChevronDownIcon, AlertCircleIcon,
     CheckCircleIcon
 } from './components/Icons';
+
+import {
+    HomeIcon as Home, UserIcon as User, ActivityIcon as Activity, CameraIcon as Camera, VolumeIcon as Volume,
+    PlusIcon as Plus, FileIcon as File, CloseIcon as Close, ChevronDownIcon as ChevronDown, AlertCircleIcon as AlertCircle,
+    CheckCircleIcon as CheckCircle
+} from './components/Icons';
+
+import {
+    HomeIcon as HomeLucide, UserIcon as UserLucide, ActivityIcon as ActivityLucide, CameraIcon as CameraLucide, VolumeIcon as VolumeLucide,
+    AlertCircleIcon as AlertCircleLucide, BarChartIcon as BarChartLucide, CheckIcon as CheckLucide,
+    SearchIcon as SearchLucide, ClockIcon as ClockLucide, MapPinIcon as MapPinLucide, LogOutIcon as LogOutLucide,
+    BellIcon as BellLucide, ActivityIcon as ActivityBaseLucide, Camera as CameraLucideComponent, History as HistoryLucide, ChevronLeft as ChevronLeftLucide, ShieldCheck as ShieldCheckLucide,
+    Smartphone as SmartphoneLucide, FileText as FileTextLucide, BookOpen as BookOpenLucide, User as UserLucideComponent, MoreHorizontal as MoreHorizontalLucide, Activity as ActivityComponent
+} from 'lucide-react';
+
 
 import {
     MOCK_CLASSES,
@@ -423,34 +439,53 @@ const App: React.FC = () => {
         );
     };
 
+    const TabItem = ({ icon, label, active, onClick }: { icon: string; label: string; active: boolean; onClick: () => void }) => {
+        const Icon = icon === 'Activity' ? ActivityLucide : icon === 'Home' ? HomeLucide : UserLucide;
+        return (
+            <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-blue-600 scale-110' : 'text-slate-400 opacity-60'}`}>
+                <Icon size={24} />
+                <span className="text-[10px] font-bold">{label}</span>
+            </button>
+        );
+    };
+
+    const TabBar = ({ active, onChange }: { active: string; onChange: (v: string) => void }) => (
+        <div className="absolute bottom-0 left-0 w-full h-[83px] pb-[34px] flex items-center justify-between px-10 bg-white/80 backdrop-blur-md border-t border-slate-100/50 z-50">
+            <TabItem icon="Activity" label="记录" active={active === 'home_log'} onClick={() => onChange('home_log')} />
+            <TabItem icon="Home" label="班级" active={active === 'class_list' || active === 'class_detail' || active === 'class_report'} onClick={() => onChange('class_list')} />
+            <TabItem icon="User" label="我的" active={active === 'me' || active === 'my_files'} onClick={() => onChange('me')} />
+        </div>
+    );
+
 
     const showInputBar = ['home_log', 'class_detail'].includes(currentView);
     const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView);
     const viewHandlesScroll = ['home_log', 'class_detail', 'report_detail'].includes(currentView);
 
+    // Local Header component to replace the imported one's styling for specific views
+    const LocalHeader = ({ title, onBack }: { title: string; onBack?: () => void }) => (
+        <div className="h-14 flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-[45] border-b border-slate-100/30">
+            {onBack && (
+                <button onClick={onBack} className="p-1 rounded-full text-slate-400 active:bg-slate-100">
+                    <ChevronLeftLucide className="w-5 h-5" />
+                </button>
+            )}
+            <h2 className={`text-lg font-black text-slate-800 tracking-tight ${!onBack ? 'mx-auto' : ''}`}>{title}</h2>
+            {onBack && <div className="w-5 h-5"></div>} {/* Spacer for alignment */}
+        </div>
+    );
+
     return (
         <div className="w-screen h-[100dvh] bg-[#f1f5f9] flex items-center justify-center p-4">
-            <DeviceWrapper width={393} height={852}>
-                <div className="phone-mockup w-full h-full">
-                    <div className="dynamic-island z-50"></div>
-                    <div className="status-bar-mock text-slate-800 z-50">
-                        <span>9:41</span>
-                        <div className="flex gap-1.5 items-center">
-                            <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 10.5h1.5v-1.5h-1.5v1.5zm3.5 0h1.5v-3.5h-1.5v3.5zm3.5 0h1.5v-5.5h-1.5v5.5zm3.5 0h1.5v-8.5h-1.5v8.5zm3.5 0h1.5v-10.5h-1.5v10.5z" /></svg>
-                            <svg width="18" height="10" viewBox="0 0 18 10" fill="currentColor"><path d="M15.333 1.667H1.333A1.333 1.333 0 0 0 0 3v4a1.333 1.333 0 0 0 1.333 1.333h14A1.333 1.333 0 0 0 16.667 7V3a1.333 1.333 0 0 0-1.334-1.333z" /><path d="M17.333 3.333v3.334" stroke="currentColor" strokeWidth="1.333" strokeLinecap="round" /></svg>
-                        </div>
-                    </div>
+            <PhoneMockup>
 
-                    <div className="flex-1 flex flex-col relative w-full h-full bg-white/40 overflow-hidden border-t border-white/60 backdrop-blur-3xl">
-
-                        {/* Header Handling */}
+                    <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
+                        {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
                         {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'face_update' && currentView !== 'bank_password' && (
-                            <div className="pt-0">
-                                <Header
-                                    title={getHeaderTitle()}
-                                    onBack={history.length > 0 ? goBack : undefined}
-                                />
-                            </div>
+                            <LocalHeader
+                                title={getHeaderTitle()}
+                                onBack={history.length > 0 ? goBack : undefined}
+                            />
                         )}
 
                         {(currentView === 'home_log' || currentView === 'me' || currentView === 'my_files') && (
@@ -824,8 +859,7 @@ const App: React.FC = () => {
                             </div>
                         )}
                     </div>
-                </div>
-            </DeviceWrapper>
+            </PhoneMockup>
         </div>
     );
 };

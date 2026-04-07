@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { DeviceWrapper } from './DeviceWrapper';
+import PhoneMockup from './PhoneMockup';
 
 const IDLE_1 = '/assets/panda/idle_panda_1.mp4';
 const IDLE_2 = '/assets/panda/idle_panda_2.mp4';
@@ -78,27 +79,16 @@ const CompanionApp: React.FC = () => {
     };
 
     return (
-        <div className="w-screen h-[100dvh] bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-4">
-            <DeviceWrapper width={393} height={852}>
-                <div className="phone-mockup w-full h-full">
-                    <div className="dynamic-island z-50"></div>
-                    <div className="status-bar-mock text-white mix-blend-difference z-50">
-                        <span>9:41</span>
-                        <div className="flex gap-1.5 items-center">
-                            <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><path d="M1 10.5h1.5v-1.5h-1.5v1.5zm3.5 0h1.5v-3.5h-1.5v3.5zm3.5 0h1.5v-5.5h-1.5v5.5zm3.5 0h1.5v-8.5h-1.5v8.5zm3.5 0h1.5v-10.5h-1.5v10.5z" /></svg>
-                            <svg width="18" height="10" viewBox="0 0 18 10" fill="currentColor"><path d="M15.333 1.667H1.333A1.333 1.333 0 0 0 0 3v4a1.333 1.333 0 0 0 1.333 1.333h14A1.333 1.333 0 0 0 16.667 7V3a1.333 1.333 0 0 0-1.334-1.333z" /><path d="M17.333 3.333v3.334" stroke="currentColor" strokeWidth="1.333" strokeLinecap="round" /></svg>
-                        </div>
-                    </div>
+        <div className="w-screen h-[100dvh] bg-[#f1f5f9] flex items-center justify-center overflow-hidden p-4">
+            <PhoneMockup>
 
                     <div
-                        className="flex-1 flex flex-col relative w-full h-full bg-gradient-to-bl from-[#dcf5e7] to-[#a8e3c3] overflow-hidden cursor-pointer items-center justify-center"
+                        className="flex-1 flex flex-col relative bg-gradient-to-bl from-[#dcf5e7] to-[#a8e3c3] overflow-hidden cursor-pointer items-center justify-center"
                         onClick={handleScreenClick}
                     >
                         <div
                             className="w-[70%] max-w-[260px] relative rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_-15px_rgba(30,120,70,0.4)] border-[6px] border-white/90 bg-white"
                         >
-                            {/* Adding a pb-full or something for aspect ratio isn't necessary if video dictates height, but absolute needs aspect ratio. 
-                                We will use a standard 3:4 aspect ratio to prevent object-cover from zooming in too much. */}
                             <div className="relative w-full pb-[110%]">
                                 {ALL_VIDEOS.map((src) => (
                                     <video
@@ -119,14 +109,13 @@ const CompanionApp: React.FC = () => {
 
                         {isMuted && (
                             <div className="absolute bottom-24 w-full text-center pointer-events-none animate-bounce z-40">
-                                <span className="text-teal-900 tracking-widest text-sm bg-white/80 px-6 py-3 rounded-full backdrop-blur-md font-bold shadow-lg shadow-teal-900/10">
+                                <span className="text-teal-900 tracking-widest text-base bg-white/80 px-8 py-4 rounded-[1.5rem] backdrop-blur-md font-black font-heading shadow-xl shadow-teal-900/10 border-2 border-white">
                                     点击屏幕与我互动
                                 </span>
                             </div>
                         )}
                     </div>
-                </div>
-            </DeviceWrapper>
+            </PhoneMockup>
         </div>
     );
 };
