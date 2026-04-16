@@ -8,7 +8,11 @@ import {
     Check, Upload
 } from 'lucide-react';
 
-const TeacherDashboard: React.FC = () => {
+interface TeacherDashboardProps {
+    onNavigateBigScreen?: () => void;
+}
+
+const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen }) => {
     // 侧边栏菜单展开状态控制
     const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
         '货柜机配置中心': true,
@@ -269,6 +273,13 @@ const TeacherDashboard: React.FC = () => {
                         <span className="font-semibold text-slate-700">{activeMenu}</span>
                     </div>
                     <div className="flex items-center gap-4 text-[13px]">
+                        <button
+                            onClick={onNavigateBigScreen}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-sm shadow-blue-100"
+                        >
+                            <Monitor size={16} />
+                            <span>进入大屏展示</span>
+                        </button>
                         <span className="text-slate-600">欢迎，管理员 [成都七中初中附属小学]</span>
                         <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white cursor-pointer hover:opacity-90 shadow-sm">
                             <User size={16} />

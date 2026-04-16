@@ -11,6 +11,7 @@ import BankView from './components/BankView';
 import GrowthView from './components/GrowthView';
 import TransactionView from './components/TransactionView';
 import TeacherDashboard from './components/TeacherDashboard';
+import SmartBigScreen from './components/SmartBigScreen';
 import AdminApp from './components/AdminApp';
 import MobileApp from './mobile-app/App';
 import CompanionApp from './components/CompanionApp';
@@ -1054,7 +1055,7 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
 };
 
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'teacher' | 'admin' | 'companion' | 'all-in-one' | 'parent'>('terminal');
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'teacher' | 'admin' | 'companion' | 'all-in-one' | 'parent' | 'smart-big-screen'>('terminal');
   const [isDemoOpen, setIsDemoOpen] = useState(false);
 
   return (
@@ -1062,7 +1063,8 @@ const AppSwitcher: React.FC = () => {
       <div key={currentApp} className="animate-in fade-in duration-300">
         {currentApp === 'terminal' && <TerminalApp mode="vending" />}
         {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
-        {currentApp === 'teacher' && <TeacherDashboard />}
+        {currentApp === 'teacher' && <TeacherDashboard onNavigateBigScreen={() => setCurrentApp('smart-big-screen')} />}
+        {currentApp === 'smart-big-screen' && <SmartBigScreen onBack={() => setCurrentApp('teacher')} />}
         {currentApp === 'admin' && <MobileApp />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && <ParentApp />}
