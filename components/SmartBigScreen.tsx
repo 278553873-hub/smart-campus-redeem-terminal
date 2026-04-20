@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Users,
   ChevronDown,
@@ -130,6 +130,49 @@ const getNameGradient = (name: string) => {
   return gradients[Math.abs(hash) % gradients.length];
 };
 
+const StudentCard: React.FC<{
+  student: StudentData;
+  selected?: boolean;
+  isSelectable?: boolean;
+  isFocused?: boolean;
+  isRolling?: boolean;
+  onClick?: () => void;
+}> = ({
+  student,
+  selected = false,
+  isSelectable = false,
+  isFocused = false,
+  isRolling = false,
+  onClick
+}) => {
+  const genderIcon = student.gender === 'male'
+    ? <Mars size={12} className="text-[#4c8bf5]" strokeWidth={3} />
+    : <Venus size={12} className="text-[#f54c9b]" strokeWidth={3} />;
+
+  return (
+    <div
+      onClick={onClick}
+      className={`w-[160px] h-[180px] relative bg-white rounded-[2rem] p-5 pt-6 flex flex-col items-center gap-3.5 border-2 shadow-[0_8px_20px_rgba(0,0,0,0.03)] ${isFocused ? 'border-blue-400 bg-blue-50/30' : 'border-white hover:border-blue-500 hover:shadow-xl'} ${selected ? 'border-blue-500 shadow-lg z-10' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95 transition-all' : ''}`}
+    >
+      {isSelectable && (
+        <div className={`absolute top-3 right-3 w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${selected ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-200 bg-white/80 text-slate-300'}`}>
+          <Check size={14} strokeWidth={3} />
+        </div>
+      )}
+      <div className={`w-16 h-16 rounded-[1.25rem] flex items-center justify-center text-white text-2xl font-black shadow-lg bg-gradient-to-br shrink-0 ${getNameGradient(student.name)}`}>
+        {student.name.slice(0, 1) || '?'}
+      </div>
+      <div className="text-center w-full flex flex-col items-center gap-2">
+        <h3 className={`text-[17px] font-bold text-slate-800 tracking-tight leading-none truncate w-full ${isRolling ? 'opacity-80' : ''}`}>{student.name}</h3>
+        <div className="flex items-center justify-center gap-2 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50 w-full max-w-[120px]">
+          <span className="text-[11px] font-bold text-slate-400 font-mono tracking-tighter">{student.studentNo}</span>
+          {genderIcon}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
   const [currentClass, setCurrentClass] = useState(CLASSES[0]);
   const [isClassMenuOpen, setIsClassMenuOpen] = useState(false);
@@ -162,8 +205,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
   const [randomStudents, setRandomStudents] = useState<StudentData[]>([]);
   const [isRolling, setIsRolling] = useState(false);
   const [isRandomFanOpen, setIsRandomFanOpen] = useState(false);
+  const [randomCount, setRandomCount] = useState(1);
+  const [randomTick, setRandomTick] = useState(0);
+  const [rollingIndices, setRollingIndices] = useState<number[]>([]);
   const [evalRecords, setEvalRecords] = useState<{ id: string, studentNames: string[], optionLabel: string, type: 'positive' | 'negative', time: string }[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const randomRollTimerRef = useRef<number | null>(null);
+  const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
 
   const students = useMemo(() => GENERATE_MOCK_DATA(currentClass), [currentClass]);
 
@@ -174,6 +222,32 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
       script.async = true;
       document.body.appendChild(script);
     }
+    
+    // Preload audio and set initial volumes
+    const sounds = {
+      praise: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3',
+      rain: 'https://assets.mixkit.co/active_storage/sfx/731/731-preview.mp3',
+      finish: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3',
+      click: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'
+    };
+    
+    Object.entries(sounds).forEach(([key, url]) => {
+      const audio = new Audio(url);
+      audio.load();
+      if (key === 'finish') audio.volume = 0.25; 
+      else if (key === 'praise') audio.volume = 0.4;
+      else if (key === 'rain') audio.volume = 0.3;
+      else if (key === 'click') audio.volume = 0.2;
+      audioRefs.current[key] = audio;
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (randomRollTimerRef.current !== null) {
+        window.clearTimeout(randomRollTimerRef.current);
+      }
+    };
   }, []);
 
   const filteredStudents = useMemo(() => {
@@ -210,14 +284,16 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
         window.confetti({ ...defaults, particleCount: pc, angle: 50, origin: { x: 0, y: 1 } });
         window.confetti({ ...defaults, particleCount: pc, angle: 130, origin: { x: 1, y: 1 } });
       }, 200);
-      new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3').play().catch(() => { });
+      const audio = audioRefs.current['praise'];
+      if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
     }
   };
 
   const fireRaindropHint = (studentId: string) => {
     setFeedbackEffect({ id: studentId, type: 'negative', time: Date.now() });
     setIsGlobalRaining(true);
-    new Audio('https://assets.mixkit.co/active_storage/sfx/731/731-preview.mp3').play().catch(() => { });
+    const audio = audioRefs.current['rain'];
+    if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
     setTimeout(() => { setFeedbackEffect(null); setIsGlobalRaining(false); }, 1800);
   };
 
@@ -237,7 +313,8 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
     } else {
       if (isMultiSelect && selectedIds.length > 1) {
         setIsGlobalRaining(true);
-        new Audio('https://assets.mixkit.co/active_storage/sfx/731/731-preview.mp3').play().catch(() => { });
+        const audio = audioRefs.current['rain'];
+        if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
         setTimeout(() => setIsGlobalRaining(false), 1800);
       } else if (evalStudent) {
         fireRaindropHint(evalStudent.id);
@@ -263,39 +340,104 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
     resetFilters();
   };
 
+  const clearRandomRollTimer = () => {
+    if (randomRollTimerRef.current !== null) {
+      window.clearTimeout(randomRollTimerRef.current);
+      randomRollTimerRef.current = null;
+    }
+  };
+
+  const closeRandomModal = () => {
+    clearRandomRollTimer();
+    setIsRolling(false);
+    setRandomModalOpen(false);
+    setIsMultiSelect(false);
+    setSelectedIds([]);
+  };
+
   const handleRandomCall = (count = 1) => {
+    const pool = filteredStudents.length > 0 ? filteredStudents : students;
+    const safeCount = Math.min(count, pool.length);
+
+    if (safeCount === 0) {
+      setToastMsg('当前没有可点名的学生。');
+      setTimeout(() => setToastMsg(null), 3000);
+      return;
+    }
+
+    clearRandomRollTimer();
     setRandomModalOpen(true);
     setIsRolling(true);
-    setRandomStudents([]);
+    setRollingIndices([...Array(safeCount).keys()]);
+    setRandomCount(safeCount);
+    
+    const initialShuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, safeCount);
+    setRandomStudents(initialShuffled);
+    setRandomTick(0);
     setIsRandomFanOpen(false);
 
     let step = 0;
-    const totalSteps = 25;
+    const baseSteps = 12; 
+    const stagger = 6;    
+    const totalSteps = baseSteps + (safeCount - 1) * stagger;
 
     const roll = () => {
-      const shuffled = [...students].sort(() => 0.5 - Math.random());
-      setRandomStudents(shuffled.slice(0, count));
       step++;
+      setRandomTick(prev => prev + 1);
 
-      if (step < totalSteps) {
-        const delay = step < 15 ? 70 : 70 + (step - 15) * 40;
-        setTimeout(roll, delay);
-      } else {
+      let latestResults: StudentData[] = [];
+
+      setRandomStudents(prev => {
+        const next = [...prev];
+        const currentRollingIndices: number[] = [];
+        
+        for (let i = 0; i < safeCount; i++) {
+          const stopAt = baseSteps + i * stagger;
+          // 当达到步数时停止滚动
+          if (step < stopAt) {
+            currentRollingIndices.push(i);
+            const randomIdx = Math.floor(Math.random() * pool.length);
+            next[i] = pool[randomIdx];
+          }
+        }
+        
+        setRollingIndices(currentRollingIndices);
+        return next;
+      });
+
+      if (step >= totalSteps) {
+        clearRandomRollTimer();
         setIsRolling(false);
-        new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3').play().catch(() => { });
+        setRollingIndices([]);
+        const audio = audioRefs.current['finish'];
+        if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
+        
+        // 确保使用最新的随机结果进行多选
+        setIsMultiSelect(true);
+        // 直接从 currentResults (此处通过 Ref 或直接计算获取) 设置选中状态
+        // 实际上在最后一步，randomStudents 就是最终结果
+        setRandomStudents(final => {
+          setSelectedIds(final.map(s => s.id));
+          return final;
+        });
+        return;
       }
+
+      const delay = 60 + Math.min(step * 4, 150);
+      randomRollTimerRef.current = window.setTimeout(roll, delay);
     };
-    roll();
+    
+    randomRollTimerRef.current = window.setTimeout(roll, 100);
   };
 
   return (
     <div className="fixed inset-0 bg-[#f0f3f6] font-sans text-slate-800 overflow-hidden flex flex-col">
       {isGlobalRaining && (
         <div className="fixed inset-0 z-[110] pointer-events-none overflow-hidden animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-blue-600/5 backdrop-blur-[0.3px]" />
-          {[...Array(15)].map((_, i) => (<div key={`b-${i}`} className="absolute w-[1px] bg-blue-300/20 rounded-full animate-raindrop-layered" style={{ left: `${Math.random() * 100}%`, top: '-100px', height: '100px', animationDuration: '0.9s', animationDelay: `${Math.random()}s` }} />))}
-          {[...Array(12)].map((_, i) => (<div key={`m-${i}`} className="absolute w-[2px] bg-gradient-to-b from-blue-400/10 via-blue-400/50 to-blue-500/60 rounded-full animate-raindrop-layered shadow-[0_0_6px_rgba(59,130,246,0.2)]" style={{ left: `${Math.random() * 100}%`, top: '-100px', height: '60px', animationDuration: '0.6s', animationDelay: `${Math.random()}s` }} />))}
-          {[...Array(8)].map((_, i) => (<div key={`f-${i}`} className="absolute w-[3px] bg-gradient-to-b from-blue-300/40 via-blue-500 to-blue-600 rounded-full animate-raindrop-layered shadow-[0_0_10px_rgba(59,130,246,0.3)]" style={{ left: `${Math.random() * 100}%`, top: '-100px', height: '50px', animationDuration: '0.4s', animationDelay: `${Math.random()}s` }} />))}
+          <div className="absolute inset-0 bg-blue-600/5 backdrop-blur-[0.2px]" />
+          {[...Array(6)].map((_, i) => (<div key={`b-${i}`} className="absolute w-[1px] bg-blue-300/20 rounded-full animate-raindrop-layered will-change-transform" style={{ left: `${Math.random() * 100}%`, top: '-100px', height: '100px', animationDuration: '0.9s', animationDelay: `${Math.random()}s` }} />))}
+          {[...Array(5)].map((_, i) => (<div key={`m-${i}`} className="absolute w-[2px] bg-gradient-to-b from-blue-400/10 via-blue-400/50 to-blue-500/60 rounded-full animate-raindrop-layered shadow-[0_0_6px_rgba(59,130,246,0.2)] will-change-transform" style={{ left: `${Math.random() * 100}%`, top: '-100px', height: '60px', animationDuration: '0.6s', animationDelay: `${Math.random()}s` }} />))}
+          {[...Array(4)].map((_, i) => (<div key={`f-${i}`} className="absolute w-[3px] bg-gradient-to-b from-blue-300/40 via-blue-500 to-blue-600 rounded-full animate-raindrop-layered shadow-[0_0_10px_rgba(59,130,246,0.3)] will-change-transform" style={{ left: `${Math.random() * 100}%`, top: '-100px', height: '50px', animationDuration: '0.4s', animationDelay: `${Math.random()}s` }} />))}
         </div>
       )}
 
@@ -329,11 +471,14 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
               {filteredStudents.map(student => {
                 const isFocused = feedbackEffect?.id === student.id && feedbackEffect.type === 'negative';
                 return (
-                  <div key={student.id} onClick={() => handleCardClick(student)} className={`w-[160px] relative bg-white rounded-[1.5rem] p-5 pb-5 transition-all flex flex-col items-center gap-4 cursor-pointer border-2 shadow-[0_4px_15px_rgba(0,0,0,0.02)] active:scale-95 ${isFocused ? 'border-blue-400 bg-blue-50/30' : 'border-white hover:scale-105 hover:border-blue-500 hover:shadow-xl'} ${selectedIds.includes(student.id) ? 'border-blue-500 shadow-lg scale-105 z-10' : ''}`}>
-                    {isMultiSelect && (<div className={`absolute top-3 right-3 w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${selectedIds.includes(student.id) ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-200 bg-white/80 text-slate-300'}`}><Check size={14} strokeWidth={3} /></div>)}
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-black shadow-md bg-gradient-to-br shrink-0 ${getNameGradient(student.name)}`}>{student.name.slice(0, 1) || '?'}</div>
-                    <div className="text-center w-full flex flex-col items-center gap-2"><h3 className="text-[17px] font-bold text-slate-800 tracking-tight leading-none truncate w-full">{student.name}</h3><div className="flex items-center justify-center gap-2 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50 w-full hover:bg-blue-50 transition-colors"><span className="text-[11px] font-bold text-slate-400 font-mono tracking-tighter">{student.studentNo}</span>{student.gender === 'male' ? <Mars size={12} className="text-[#4c8bf5]" strokeWidth={3} /> : <Venus size={12} className="text-[#f54c9b]" strokeWidth={3} />}</div></div>
-                  </div>
+                  <StudentCard
+                    key={student.id}
+                    student={student}
+                    selected={selectedIds.includes(student.id)}
+                    isSelectable={isMultiSelect}
+                    isFocused={isFocused}
+                    onClick={() => handleCardClick(student)}
+                  />
                 );
               })}
             </div>
@@ -409,7 +554,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
         </aside>
       </div>
 
-      <div className={`fixed inset-0 z-[120] flex items-center justify-center transition-all duration-300 ${evaluationModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[120] flex items-center justify-center ${evaluationModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => { setEvaluationModalOpen(false); setIsManagerMode(false); }} />
         <div className={`w-[840px] bg-white rounded-[2.5rem] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.25)] overflow-hidden border border-white relative transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${evaluationModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`} onClick={e => e.stopPropagation()}>
           <div className="px-10 py-[24px] flex items-center justify-between border-b border-slate-100 bg-white min-h-[72px]">
@@ -472,55 +617,134 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
         </div>
       </div>
 
-      <div className={`fixed inset-0 z-[150] flex items-center justify-center transition-all duration-500 ${randomModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl" onClick={() => { if (!isRolling) setRandomModalOpen(false); }} />
-        <div className={`w-[580px] h-[640px] bg-[#f8faff] rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${randomModalOpen ? 'scale-100 translate-y-0' : 'scale-90 translate-y-12'}`}>
-          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none" />
-          <div className="absolute top-0 left-1/4 w-1/2 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_20px_rgba(59,130,246,0.5)]" />
-          <button onClick={() => setRandomModalOpen(false)} className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-white/50 backdrop-blur-md rounded-full text-slate-400 hover:text-blue-600 hover:scale-110 active:scale-95 transition-all z-20 border border-white"><X size={20} strokeWidth={3} /></button>
-          <div className="flex-1 flex flex-col items-center justify-center pt-8 gap-8 w-full relative">
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] rounded-full transition-all duration-1000 ${isRolling ? 'bg-blue-500/20 scale-110 blur-3xl opacity-100' : 'bg-amber-400/10 scale-100 blur-2xl opacity-60'}`} />
-            <div className={`w-full px-12 z-10 grid gap-6 transition-all duration-500 ${randomStudents.length === 1 ? 'grid-cols-1 justify-items-center' : randomStudents.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-              {randomStudents.map((student, idx) => (
-                <div key={student.id} className="flex flex-col items-center gap-3 animate-in zoom-in-50 duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
-                  <div className={`rounded-full flex items-center justify-center text-white font-black relative transition-all duration-300 ${isRolling ? 'scale-95 blur-[0.5px]' : 'scale-100 shadow-xl'} ${getNameGradient(student.name)} ${randomStudents.length === 1 ? 'w-44 h-44 text-7xl' : randomStudents.length <= 4 ? 'w-32 h-32 text-5xl' : 'w-24 h-24 text-3xl'}`}>
-                    {student.name.slice(0, 1)}
-                    {isRolling && idx === 0 && (<div className="absolute inset-[-8px] rounded-full border-[4px] border-blue-400/30 border-t-blue-500 animate-spin" style={{ animationDuration: '0.6s' }} />)}
-                  </div>
-                  <div className="text-center">
-                    <h3 className={`font-black text-slate-800 tracking-tight transition-all ${randomStudents.length === 1 ? 'text-[64px] leading-tight' : randomStudents.length <= 4 ? 'text-3xl' : 'text-xl'} ${isRolling ? 'blur-sm opacity-30' : 'blur-0 opacity-100'}`}>{student.name}</h3>
-                    {!isRolling && randomStudents.length > 1 && <span className="text-[10px] font-bold text-slate-400 font-mono tracking-widest">{student.studentNo}</span>}
-                  </div>
-                </div>
-              ))}
-              {randomStudents.length === 0 && isRolling && (<div className="col-span-full flex flex-col items-center gap-4"><div className="w-32 h-32 rounded-full bg-slate-100 animate-pulse flex items-center justify-center text-slate-300"><Dices size={48} /></div><span className="text-slate-400 font-black tracking-widest animate-pulse">正在筛选...</span></div>)}
+      <div className={`fixed inset-0 z-[150] flex items-center justify-center ${randomModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl" onClick={() => { if (!isRolling) closeRandomModal(); }} />
+        <div className={`w-[840px] min-h-[540px] bg-white rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)] border border-white relative overflow-hidden flex flex-col transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${randomModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
+          <button onClick={() => { if (!isRolling) closeRandomModal(); }} disabled={isRolling} className={`absolute top-7 right-7 w-10 h-10 flex items-center justify-center rounded-xl transition-all z-50 border ${isRolling ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed' : 'bg-white text-slate-400 border-slate-100 hover:text-blue-600 hover:border-blue-200 active:scale-95'}`}><X size={20} strokeWidth={3} /></button>
+          
+          <div className="px-10 pt-10 pb-4 shrink-0">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <h2 className="text-[30px] font-black text-slate-800 tracking-tight">随机点名</h2>
             </div>
-            {!isRolling && randomStudents.length === 1 && (<div className="z-10 animate-in fade-in slide-in-from-top-4 duration-700"><div className="flex items-center justify-center gap-3 py-2.5 px-6 bg-slate-100/50 rounded-2xl border border-white/50"><span className="text-slate-400 font-mono text-sm tracking-[0.2em] font-bold">{randomStudents[0].studentNo}</span><div className="w-1 h-1 rounded-full bg-slate-300" /><span className="text-slate-500 font-black text-sm">{currentClass}</span></div></div>)}
           </div>
-          <div className="h-44 w-full px-12 pb-12 flex flex-col gap-4 relative z-10">
+
+          <div className="flex-1 overflow-visible px-10 py-10 flex flex-col justify-center">
+            <div className={`grid justify-items-center content-center gap-x-12 gap-y-4 ${randomCount === 1 ? 'grid-cols-1' : randomCount <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                {[...Array(randomCount)].map((_, idx) => {
+                  const student = randomStudents[idx];
+                  const isSingle = randomCount === 1;
+                  const isItemRolling = rollingIndices.includes(idx);
+                  const isFinished = student && !isItemRolling;
+                  
+                  return (
+                    <div
+                      key={idx}
+                      className={`relative group transition-all duration-300 ${isSingle ? 'scale-[1.1]' : ''}`}
+                    >
+                      {/* 槽位标签：直接定位在槽位正上方 */}
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap z-30 pointer-events-none">
+                        <span className={`text-[12px] font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full border shadow-sm transition-all duration-500 ${isFinished ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>第 {idx + 1} 位</span>
+                      </div>
+
+                      {/* 槽位容器 (可见虚线框 -> 金色完成框) */}
+                      <div className={`w-[180px] h-[195px] rounded-[2rem] flex flex-col items-center justify-center transition-all duration-500 relative ${isFinished ? 'border-2 border-amber-400 bg-amber-50/20 animate-gold-finish-burst' : 'border-2 border-dashed border-slate-200 bg-white'}`}>
+                        {(!student || isItemRolling) && (
+                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-200">
+                            <User size={24} />
+                          </div>
+                        )}
+                        
+                        {student && (
+                          <div className="absolute inset-0 p-3 flex items-center justify-center animate-in fade-in duration-300">
+                            <StudentCard 
+                              student={student} 
+                              isRolling={false} 
+                              isSelectable={!isRolling}
+                              noScale={true}
+                              selected={selectedIds.includes(student.id)}
+                              onClick={() => {
+                                if (!isRolling && !isItemRolling) {
+                                  setSelectedIds(prev => prev.includes(student.id) ? prev.filter(id => id !== student.id) : [...prev, student.id]);
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+
+          <div className="px-10 py-4 h-[90px] flex items-center justify-center shrink-0 border-t border-slate-100/50 bg-white/50 backdrop-blur-sm">
             {!isRolling && randomStudents.length > 0 ? (
-              <div className="flex flex-col gap-5 animate-in slide-in-from-bottom-6 duration-700">
-                <button
-                  onClick={() => {
-                    const count = randomStudents.length;
-                    setRandomModalOpen(false);
-                    setTimeout(() => {
-                      if (count === 1) { setEvalStudent(randomStudents[0]); setEvaluationModalOpen(true); setEvalTab('positive'); setIsManagerMode(false); }
-                      else { setIsMultiSelect(true); setSelectedIds(randomStudents.map(s => s.id)); setEvalStudent(randomStudents[0]); setEvaluationModalOpen(true); setEvalTab('positive'); setIsManagerMode(false); }
-                    }, 400);
-                  }}
-                  className="w-full h-20 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-[2rem] font-black text-xl shadow-[0_20px_40px_rgba(37,99,235,0.4)] hover:shadow-[0_25px_50px_rgba(37,99,235,0.5)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 group"
-                >
-                  <div className="bg-white/20 p-2 rounded-xl group-hover:rotate-12 transition-transform"><Plus size={24} strokeWidth={3} /></div>
-                  立刻为{randomStudents.length > 1 ? `这 ${randomStudents.length} 位同学` : '他/她'}评价
-                </button>
-                <div className="text-center">
-                  <button onClick={() => handleRandomCall(randomStudents.length)} className="text-xs font-black text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-[0.2em] border-b-2 border-transparent hover:border-blue-200 pb-0.5">不满意？重来一次</button>
+              <div className="flex flex-col items-center gap-4 w-full animate-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center bg-slate-100/80 p-1 rounded-2xl gap-1.5 shadow-inner">
+                  {/* 全选 / 取消全选 */}
+                  <button 
+                    onClick={() => {
+                      const allIds = randomStudents.map(s => s.id);
+                      const currentSelectedFromRandom = selectedIds.filter(id => allIds.includes(id));
+                      if (currentSelectedFromRandom.length === allIds.length) {
+                        setSelectedIds(prev => prev.filter(id => !allIds.includes(id)));
+                      } else {
+                        const otherSelected = selectedIds.filter(id => !allIds.includes(id));
+                        setSelectedIds([...otherSelected, ...allIds]);
+                      }
+                    }} 
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all focus:outline-none ${randomStudents.every(s => selectedIds.includes(s.id)) ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:text-blue-600'}`}
+                  >
+                    <Check size={14} strokeWidth={3} />
+                    {randomStudents.every(s => selectedIds.includes(s.id)) ? '取消' : '全选'}
+                  </button>
+                  
+                  <div className="w-px h-5 bg-slate-200 mx-0.5" />
+                  
+                  {/* 批量点评 */}
+                  <button 
+                    onClick={() => {
+                      if (selectedIds.length > 0) {
+                        const firstSelectedId = selectedIds.find(id => randomStudents.some(rs => rs.id === id));
+                        const firstStudent = students.find(s => s.id === firstSelectedId) || randomStudents[0];
+                        closeRandomModal();
+                        setTimeout(() => {
+                          setEvalStudent(firstStudent); 
+                          setEvaluationModalOpen(true); 
+                          setEvalTab('positive'); 
+                          setIsManagerMode(false);
+                        }, 400);
+                      }
+                    }} 
+                    disabled={!randomStudents.some(s => selectedIds.includes(s.id))}
+                    className={`flex items-center gap-2 px-7 py-2.5 rounded-xl font-black text-sm transition-all focus:outline-none ${randomStudents.some(s => selectedIds.includes(s.id)) ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
+                  >
+                    批量点评
+                    {randomStudents.filter(s => selectedIds.includes(s.id)).length > 0 && (
+                      <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs ml-0.5">
+                        {randomStudents.filter(s => selectedIds.includes(s.id)).length}人
+                      </span>
+                    )}
+                  </button>
+                  
+                  <div className="w-px h-5 bg-slate-200 mx-0.5" />
+                  
+                  {/* 重抽一次 */}
+                  <button 
+                    onClick={() => handleRandomCall(randomStudents.length)} 
+                    className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-500 rounded-xl font-black text-sm border border-slate-100 shadow-sm hover:text-amber-500 active:scale-95 transition-all focus:outline-none"
+                  >
+                    <RotateCcw size={14} strokeWidth={3} />
+                    重抽
+                  </button>
                 </div>
               </div>
-            ) : (<div className="h-full flex items-center justify-center"><div className="flex gap-2 text-blue-300 animate-pulse font-black text-sm tracking-widest">正在挑选...</div></div>)}
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <div className="flex gap-2 text-slate-300 animate-pulse font-black text-sm tracking-[0.18em]">正在挑选...</div>
+              </div>
+            )}
           </div>
-          <div className="absolute inset-0 pointer-events-none opacity-[0.03]"><div className="absolute top-1/4 left-10 w-20 h-20 border-4 border-blue-500 rounded-full rotate-45" /><div className="absolute bottom-1/3 right-10 w-16 h-16 border-4 border-blue-500 rounded-lg -rotate-12" /></div>
         </div>
       </div>
 
@@ -553,27 +777,35 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
             </button>
 
             <div
-              className="relative"
+              className="relative flex items-end"
               onMouseEnter={() => setIsRandomFanOpen(true)}
               onMouseLeave={() => setIsRandomFanOpen(false)}
             >
-              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-6 w-64 h-64 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isRandomFanOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-50'}`}>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0 w-[260px] h-[180px] pointer-events-auto" />
+              <div
+                className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-[280px] h-[180px] pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isRandomFanOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-90 translate-y-4'}`}
+              >
                 {[1, 2, 3, 4, 5, 6, 7].map((num, i) => {
-                  const angle = -70 + (i * 23.3);
-                  const dist = 95;
-                  const x = Math.sin(angle * Math.PI / 180) * dist;
-                  const y = -Math.cos(angle * Math.PI / 180) * dist;
+                  // 使用圆形圆弧确保间距一致
+                  const angle = -90 + (i * 30); // 从 -90 到 90 度均匀分布
+                  const radius = 115;
+                  const x = Math.sin(angle * Math.PI / 180) * radius;
+                  const y = -Math.cos(angle * Math.PI / 180) * radius;
+                  
                   return (
                     <button
                       key={num}
-                      onClick={() => handleRandomCall(num)}
-                      className="absolute left-1/2 top-1/2 w-12 h-12 bg-white border-2 border-slate-100 rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(0,0,0,0.1)] hover:border-amber-400 hover:text-amber-500 hover:scale-110 active:scale-90 transition-all pointer-events-auto group z-20"
+                      onClick={(e) => { e.stopPropagation(); handleRandomCall(num); }}
+                      className="absolute left-1/2 top-[calc(100%-20px)] w-12 h-12 bg-white/95 border-2 border-slate-100 rounded-full flex flex-col items-center justify-center shadow-[0_12px_28px_rgba(15,23,42,0.12)] hover:border-amber-400 hover:text-amber-500 hover:scale-110 active:scale-90 transition-all pointer-events-auto z-20 group"
                       style={{
-                        transform: isRandomFanOpen ? `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))` : 'translate(-50%, -50%)',
-                        transitionDelay: `${i * 30}ms`
+                        transform: isRandomFanOpen 
+                          ? `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))` 
+                          : 'translate(-50%, 0)',
+                        transitionDelay: isRandomFanOpen ? `${i * 30}ms` : '0ms'
                       }}
                     >
-                      <span className="text-sm font-black">{num}<span className="text-[10px] ml-0.5">人</span></span>
+                      <span className="text-[13px] font-black leading-none">{num}</span>
+                      <span className="text-[8px] font-black opacity-30 mt-0.5 group-hover:opacity-100">人</span>
                     </button>
                   );
                 })}
@@ -612,6 +844,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
         .animate-raindrop-layered { animation: raindrop-layered linear infinite; }
         @keyframes toast-slide-down { 0% { opacity: 0; margin-top: -16px; } 100% { opacity: 1; margin-top: 0; } }
         .toast-slide-down { animation: toast-slide-down 0.3s ease-out; }
+        @keyframes random-card-shuffle { 0% { transform: translateY(0) scale(1); filter: blur(0px); } 35% { transform: translateY(-8px) scale(1.02); filter: blur(0.4px); } 70% { transform: translateY(6px) scale(0.99); filter: blur(0.6px); } 100% { transform: translateY(0) scale(1); filter: blur(0px); } }
+        .animate-random-card-shuffle { animation: random-card-shuffle 0.38s ease-in-out infinite; }
+        @keyframes random-scan { 0% { transform: translateX(-50%) translateY(-24px); opacity: 0; } 15% { opacity: 1; } 50% { transform: translateX(-50%) translateY(140px); opacity: 0.9; } 85% { opacity: 1; } 100% { transform: translateX(-50%) translateY(300px); opacity: 0; } }
+        .animate-random-scan { animation: random-scan 1.2s ease-in-out infinite; }
+        @keyframes gold-finish-burst { 0% { box-shadow: 0 0 0 0 rgba(251,191,36,0); } 30% { box-shadow: 0 0 0 20px rgba(251,191,36,0.4); } 60% { box-shadow: 0 0 0 40px rgba(251,191,36,0); } 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); } }
+        .animate-gold-finish-burst { animation: gold-finish-burst 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        .will-change-transform { will-change: transform; }
       `}</style>
     </div>
   );
