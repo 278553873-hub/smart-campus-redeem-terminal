@@ -16,7 +16,6 @@ import {
   Search,
   ChevronRight,
   ChevronLeft,
-  Filter,
   Plus,
   Trash2,
   ThumbsUp,
@@ -46,8 +45,30 @@ interface EvaluationOption {
   category: string;
 }
 
+interface GroupData {
+  id: string;
+  name: string;
+  memberCount: number;
+  memberIds: string[];
+  planId: string;
+  planName: string;
+  subject: string;
+  teacherName: string;
+}
+
+interface GroupPlan {
+  id: string;
+  className: string;
+  subject: string;
+  teacherName: string;
+  planName: string;
+  groupPrefix: string;
+  groups: GroupData[];
+}
+
 interface SmartBigScreenProps {
   onBack: () => void;
+  embedded?: boolean;
 }
 
 const CLASSES = ['2025级1班', '2025级2班', '2025级3班'];
@@ -130,6 +151,154 @@ const getNameGradient = (name: string) => {
   return gradients[Math.abs(hash) % gradients.length];
 };
 
+const shuffleItems = <T,>(items: T[]): T[] => {
+  const next = [...items];
+  for (let i = next.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+};
+
+const pickRandomUniqueItems = <T extends { id: string }>(
+  items: T[],
+  count: number,
+  excludeIds: string[] = []
+): T[] => {
+  const excludeSet = new Set(excludeIds);
+  return shuffleItems(items.filter(item => !excludeSet.has(item.id))).slice(0, count);
+};
+
+const buildRollingResults = <T extends { id: string }>(
+  prev: T[],
+  pool: T[],
+  safeCount: number,
+  step: number,
+  baseSteps: number,
+  stagger: number
+) => {
+  const next = [...prev];
+  const currentRollingIndices: number[] = [];
+  const lockedIds: string[] = [];
+
+  for (let i = 0; i < safeCount; i++) {
+    const stopAt = baseSteps + i * stagger;
+    if (step < stopAt) {
+      currentRollingIndices.push(i);
+    } else if (next[i]) {
+      lockedIds.push(next[i].id);
+    }
+  }
+
+  const replacements = pickRandomUniqueItems(pool, currentRollingIndices.length, lockedIds);
+  currentRollingIndices.forEach((slotIndex, replacementIndex) => {
+    if (replacements[replacementIndex]) {
+      next[slotIndex] = replacements[replacementIndex];
+    }
+  });
+
+  return { next, currentRollingIndices };
+};
+
+const getDeckWidth = (containerWidth: number, cardWidth: number, gap: number) => {
+  if (containerWidth <= 0) return 0;
+  const columns = Math.max(1, Math.floor((containerWidth + gap) / (cardWidth + gap)));
+  return columns * cardWidth + Math.max(0, columns - 1) * gap;
+};
+
+const GENERATE_MOCK_GROUP_PLANS = (className: string, students: StudentData[]): GroupPlan[] => {
+  const templates = [
+    { subject: '语文', teacherName: '王老师', planName: '朗读方案', groupPrefix: '朗读', groupCount: 20, membersPerGroup: 2, rotateOffset: 0 },
+    { subject: '语文', teacherName: '王老师', planName: '背诵方案', groupPrefix: '背诵', groupCount: 3, membersPerGroup: 4, rotateOffset: 7 },
+    { subject: '数学', teacherName: '周老师', planName: '口算方案', groupPrefix: '口算', groupCount: 4, membersPerGroup: 4, rotateOffset: 11 },
+    { subject: '英语', teacherName: '陈老师', planName: '对话方案', groupPrefix: '对话', groupCount: 4, membersPerGroup: 4, rotateOffset: 17 }
+  ];
+
+  if (students.length === 0) return [];
+
+  return templates.map((template, templateIndex) => {
+    const planId = `${className}-plan-${templateIndex + 1}`;
+    const groups: GroupData[] = Array.from({ length: template.groupCount }, (_, groupIndex) => {
+      const memberIds = Array.from({ length: template.membersPerGroup }, (_, memberIndex) => {
+        const studentIndex = (template.rotateOffset + groupIndex * template.membersPerGroup + memberIndex) % students.length;
+        return students[studentIndex].id;
+      });
+
+      return {
+        id: `${planId}-group-${groupIndex + 1}`,
+        name: `${template.groupPrefix} ${groupIndex + 1} 组`,
+        memberCount: memberIds.length,
+        memberIds,
+        planId,
+        planName: template.planName,
+        subject: template.subject,
+        teacherName: template.teacherName
+      };
+    });
+
+    return {
+      id: planId,
+      className,
+      subject: template.subject,
+      teacherName: template.teacherName,
+      planName: template.planName,
+      groupPrefix: template.groupPrefix,
+      groups
+    };
+  });
+};
+
+const GroupCard: React.FC<{
+  group: GroupData;
+  selected?: boolean;
+  isSelectable?: boolean;
+  isRolling?: boolean;
+  onClick?: () => void;
+  className?: string;
+  compact?: boolean;
+}> = ({
+  group,
+  selected = false,
+  isSelectable = false,
+  isRolling = false,
+  onClick,
+  className = '',
+  compact = false
+}) => {
+  const baseClassName = compact
+    ? 'w-[260px] h-[100px] rounded-[1.25rem] px-6 gap-5'
+    : 'w-full h-[112px] rounded-[1.5rem] px-6 gap-5';
+
+  const checkClassName = compact
+    ? 'top-3 right-3 w-5 h-5 rounded-md'
+    : 'top-4 right-4 w-5 h-5 rounded-md';
+
+  return (
+    <div
+      onClick={onClick}
+      className={`relative bg-white flex items-center border-2 shadow-[0_8px_20px_rgba(0,0,0,0.03)] transition-all ${baseClassName} ${selected ? 'border-blue-500 shadow-lg z-10' : 'border-white hover:border-blue-500 hover:shadow-xl'} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''} ${className}`}
+    >
+      {isSelectable && (
+        <div className={`absolute border flex items-center justify-center transition-all ${checkClassName} ${selected ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-200 bg-white/80 text-slate-300'}`}>
+          <Check size={12} strokeWidth={4} />
+        </div>
+      )}
+      <div className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-black shadow-md bg-gradient-to-br from-indigo-500 to-purple-600 shrink-0">
+        {group.name.slice(0, 1)}
+      </div>
+      <div className="flex flex-col gap-1.5 overflow-hidden min-w-0 flex-1">
+        <h3 className="text-[17px] font-bold text-slate-800 tracking-tight leading-none truncate">
+          {group.name}
+        </h3>
+        <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-50 rounded-md border border-slate-100 w-fit">
+          <Users size={10} className="text-slate-400" />
+          <span className="text-[11px] font-black text-slate-500">{group.memberCount}人</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const StudentCard: React.FC<{
   student: StudentData;
   selected?: boolean;
@@ -173,8 +342,9 @@ const StudentCard: React.FC<{
   );
 };
 
-const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
+const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = false }) => {
   const [currentClass, setCurrentClass] = useState(CLASSES[0]);
+  const [viewMode, setViewMode] = useState<'student' | 'group'>('student');
   const [isClassMenuOpen, setIsClassMenuOpen] = useState(false);
   const [isMultiSelect, setIsMultiSelect] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -182,9 +352,14 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
   const [filterType, setFilterType] = useState<'none' | 'initial' | 'surname'>('none');
   const [filterValue, setFilterValue] = useState<string | null>(null);
   const [filterGender, setFilterGender] = useState<'all' | 'male' | 'female'>('all');
+  const [selectedGroupPlanId, setSelectedGroupPlanId] = useState<string | null>(null);
+  const [isGroupPlanMenuOpen, setIsGroupPlanMenuOpen] = useState(false);
 
   const [evaluationModalOpen, setEvaluationModalOpen] = useState(false);
   const [evalStudent, setEvalStudent] = useState<StudentData | null>(null);
+  const [evalGroup, setEvalGroup] = useState<GroupData | null>(null);
+  const [groupDetailsModalOpen, setGroupDetailsModalOpen] = useState(false);
+  const [selectedGroupMemberIds, setSelectedGroupMemberIds] = useState<string[]>([]);
   const [evalTab, setEvalTab] = useState<'positive' | 'negative'>('positive');
   const [isManagerMode, setIsManagerMode] = useState(false);
   const [managerSelectedCategory, setManagerSelectedCategory] = useState('发言表达');
@@ -203,17 +378,26 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
   const [isGlobalRaining, setIsGlobalRaining] = useState(false);
   const [randomModalOpen, setRandomModalOpen] = useState(false);
   const [randomStudents, setRandomStudents] = useState<StudentData[]>([]);
+  const [randomGroups, setRandomGroups] = useState<GroupData[]>([]);
   const [isRolling, setIsRolling] = useState(false);
-  const [isRandomFanOpen, setIsRandomFanOpen] = useState(false);
   const [randomCount, setRandomCount] = useState(1);
+  const [isRandomPickerOpen, setIsRandomPickerOpen] = useState(false);
   const [randomTick, setRandomTick] = useState(0);
   const [rollingIndices, setRollingIndices] = useState<number[]>([]);
   const [evalRecords, setEvalRecords] = useState<{ id: string, studentNames: string[], optionLabel: string, type: 'positive' | 'negative', time: string }[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const randomRollTimerRef = useRef<number | null>(null);
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
+  const deckContainerRef = useRef<HTMLDivElement | null>(null);
+  const [deckContainerWidth, setDeckContainerWidth] = useState(0);
 
   const students = useMemo(() => GENERATE_MOCK_DATA(currentClass), [currentClass]);
+  const groupPlans = useMemo(() => GENERATE_MOCK_GROUP_PLANS(currentClass, students), [currentClass, students]);
+  const activeGroupPlan = useMemo(
+    () => groupPlans.find(plan => plan.id === selectedGroupPlanId) || groupPlans[0] || null,
+    [groupPlans, selectedGroupPlanId]
+  );
+  const groups = useMemo(() => activeGroupPlan?.groups || [], [activeGroupPlan]);
 
   useEffect(() => {
     if (!window.confetti) {
@@ -250,6 +434,45 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const node = deckContainerRef.current;
+    if (!node) return;
+
+    const updateWidth = () => {
+      setDeckContainerWidth(node.clientWidth);
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver(() => {
+      updateWidth();
+    });
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (groupPlans.length === 0) {
+      setSelectedGroupPlanId(null);
+      return;
+    }
+    if (!selectedGroupPlanId || !groupPlans.some(plan => plan.id === selectedGroupPlanId)) {
+      setSelectedGroupPlanId(groupPlans[0].id);
+    }
+  }, [groupPlans, selectedGroupPlanId]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+    setIsMultiSelect(false);
+    setEvalGroup(null);
+    setSelectedGroupMemberIds([]);
+    setIsGroupPlanMenuOpen(false);
+  }, [selectedGroupPlanId]);
+
   const filteredStudents = useMemo(() => {
     let result = students;
     if (filterType === 'initial') result = result.filter(s => s.initial === filterValue);
@@ -257,6 +480,37 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
     if (filterGender !== 'all') result = result.filter(s => s.gender === filterGender);
     return result;
   }, [students, filterType, filterValue, filterGender]);
+
+  const randomPool = useMemo(
+    () => viewMode === 'student' ? (filteredStudents.length > 0 ? filteredStudents : students) : groups,
+    [viewMode, filteredStudents, students, groups]
+  );
+
+  const sharedDeckWidth = useMemo(() => {
+    const width = getDeckWidth(deckContainerWidth, 160, 24);
+    return width > 0 ? width : 0;
+  }, [deckContainerWidth]);
+
+  const groupCardSpan = sharedDeckWidth >= 344 ? 2 : 1;
+
+  const maxRandomSelectableCount = useMemo(() => {
+    if (randomPool.length === 0) return 0;
+    if (randomPool.length === 1) return 1;
+    return Math.min(7, randomPool.length - 1);
+  }, [randomPool.length]);
+
+  const randomQuickCounts = useMemo(
+    () => Array.from({ length: maxRandomSelectableCount }, (_, index) => index + 1),
+    [maxRandomSelectableCount]
+  );
+
+  useEffect(() => {
+    if (maxRandomSelectableCount === 0) {
+      setRandomCount(1);
+      return;
+    }
+    setRandomCount(prev => Math.min(prev, maxRandomSelectableCount));
+  }, [maxRandomSelectableCount]);
 
   const groupedSurnameIndexes = useMemo(() => {
     const groups: Record<string, string[]> = {};
@@ -299,9 +553,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
 
   const handleEvaluationSelect = (option: EvaluationOption) => {
     const now = new Date();
+    const studentNames = viewMode === 'student' 
+      ? (isMultiSelect ? students.filter(s => selectedIds.includes(s.id)).map(s => s.name) : [evalStudent!.name])
+      : (isMultiSelect ? groups.filter(g => selectedIds.includes(g.id)).map(g => g.name) : [evalGroup!.name]);
+
     const newRecord = {
       id: Date.now().toString(),
-      studentNames: isMultiSelect ? students.filter(s => selectedIds.includes(s.id)).map(s => s.name) : [evalStudent!.name],
+      studentNames,
       optionLabel: option.label,
       type: option.type,
       time: `${now.getFullYear()}年${(now.getMonth() + 1).toString().padStart(2, '0')}月${now.getDate().toString().padStart(2, '0')}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
@@ -316,23 +574,46 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
         const audio = audioRefs.current['rain'];
         if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
         setTimeout(() => setIsGlobalRaining(false), 1800);
-      } else if (evalStudent) {
+      } else if (viewMode === 'student' && evalStudent) {
         fireRaindropHint(evalStudent.id);
+      } else if (viewMode === 'group' && evalGroup) {
+        setIsGlobalRaining(true);
+        const audio = audioRefs.current['rain'];
+        if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
+        setTimeout(() => setIsGlobalRaining(false), 1800);
       }
     }
 
     setTimeout(() => {
-      setEvaluationModalOpen(false);
-      if (isMultiSelect) {
-        setIsMultiSelect(false);
-        setSelectedIds([]);
-      }
+      handleCloseEvaluation();
     }, 200);
+  };
+
+  const handleCloseEvaluation = () => {
+    setEvaluationModalOpen(false);
+    setIsManagerMode(false);
+    setEvalStudent(null);
+    setEvalGroup(null);
+    setNewCategoryName(null);
+    setEditingId(null);
+    if (isMultiSelect) {
+      setIsMultiSelect(false);
+      setSelectedIds([]);
+    }
   };
 
   const handleCardClick = (student: StudentData) => {
     if (isMultiSelect) setSelectedIds(p => p.includes(student.id) ? p.filter(i => i !== student.id) : [...p, student.id]);
-    else { setEvalStudent(student); setEvaluationModalOpen(true); setEvalTab('positive'); setIsManagerMode(false); }
+    else { setEvalGroup(null); setEvalStudent(student); setEvaluationModalOpen(true); setEvalTab('positive'); setIsManagerMode(false); }
+  };
+
+  const handleGroupCardClick = (group: GroupData) => {
+    if (isMultiSelect) setSelectedIds(p => p.includes(group.id) ? p.filter(i => i !== group.id) : [...p, group.id]);
+    else { 
+      setEvalGroup(group); 
+      setSelectedGroupMemberIds([...group.memberIds]); 
+      setGroupDetailsModalOpen(true); 
+    }
   };
 
   const handleSidebarClose = () => {
@@ -347,20 +628,24 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
     }
   };
 
-  const closeRandomModal = () => {
+  const closeRandomModal = ({ preserveSelection = false }: { preserveSelection?: boolean } = {}) => {
     clearRandomRollTimer();
     setIsRolling(false);
     setRandomModalOpen(false);
-    setIsMultiSelect(false);
-    setSelectedIds([]);
+    setRandomCount(1);
+    setIsRandomPickerOpen(false);
+    if (!preserveSelection) {
+      setIsMultiSelect(false);
+      setSelectedIds([]);
+    }
   };
 
   const handleRandomCall = (count = 1) => {
-    const pool = filteredStudents.length > 0 ? filteredStudents : students;
-    const safeCount = Math.min(count, pool.length);
+    const pool = randomPool;
+    const safeCount = Math.min(count, maxRandomSelectableCount);
 
     if (safeCount === 0) {
-      setToastMsg('当前没有可点名的学生。');
+      setToastMsg(`当前没有可点名的${viewMode === 'student' ? '学生' : '小组'}。`);
       setTimeout(() => setToastMsg(null), 3000);
       return;
     }
@@ -370,11 +655,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
     setIsRolling(true);
     setRollingIndices([...Array(safeCount).keys()]);
     setRandomCount(safeCount);
+    setIsRandomPickerOpen(false);
     
-    const initialShuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, safeCount);
-    setRandomStudents(initialShuffled);
+    const initialShuffled = shuffleItems(pool).slice(0, safeCount);
+    if (viewMode === 'student') setRandomStudents(initialShuffled as StudentData[]);
+    else setRandomGroups(initialShuffled as GroupData[]);
+    
     setRandomTick(0);
-    setIsRandomFanOpen(false);
 
     let step = 0;
     const baseSteps = 12; 
@@ -385,25 +672,33 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
       step++;
       setRandomTick(prev => prev + 1);
 
-      let latestResults: StudentData[] = [];
-
-      setRandomStudents(prev => {
-        const next = [...prev];
-        const currentRollingIndices: number[] = [];
-        
-        for (let i = 0; i < safeCount; i++) {
-          const stopAt = baseSteps + i * stagger;
-          // 当达到步数时停止滚动
-          if (step < stopAt) {
-            currentRollingIndices.push(i);
-            const randomIdx = Math.floor(Math.random() * pool.length);
-            next[i] = pool[randomIdx];
-          }
-        }
-        
-        setRollingIndices(currentRollingIndices);
-        return next;
-      });
+      if (viewMode === 'student') {
+        setRandomStudents(prev => {
+          const { next, currentRollingIndices } = buildRollingResults(
+            prev,
+            pool as StudentData[],
+            safeCount,
+            step,
+            baseSteps,
+            stagger
+          );
+          setRollingIndices(currentRollingIndices);
+          return next;
+        });
+      } else {
+        setRandomGroups(prev => {
+          const { next, currentRollingIndices } = buildRollingResults(
+            prev,
+            pool as GroupData[],
+            safeCount,
+            step,
+            baseSteps,
+            stagger
+          );
+          setRollingIndices(currentRollingIndices);
+          return next;
+        });
+      }
 
       if (step >= totalSteps) {
         clearRandomRollTimer();
@@ -414,12 +709,17 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
         
         // 确保使用最新的随机结果进行多选
         setIsMultiSelect(true);
-        // 直接从 currentResults (此处通过 Ref 或直接计算获取) 设置选中状态
-        // 实际上在最后一步，randomStudents 就是最终结果
-        setRandomStudents(final => {
-          setSelectedIds(final.map(s => s.id));
-          return final;
-        });
+        if (viewMode === 'student') {
+          setRandomStudents(final => {
+            setSelectedIds(final.map(s => s.id));
+            return final;
+          });
+        } else {
+          setRandomGroups(final => {
+            setSelectedIds(final.map(g => g.id));
+            return final;
+          });
+        }
         return;
       }
 
@@ -430,8 +730,111 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
     randomRollTimerRef.current = window.setTimeout(roll, 100);
   };
 
+  const currentRandomIds = viewMode === 'student' ? randomStudents.map(student => student.id) : randomGroups.map(group => group.id);
+  const hasRandomResults = currentRandomIds.length > 0;
+  const allRandomSelected = hasRandomResults && currentRandomIds.every(id => selectedIds.includes(id));
+  const selectedRandomCount = currentRandomIds.filter(id => selectedIds.includes(id)).length;
+  const embeddedToolbarMinWidth = viewMode === 'group' ? 'min-w-[240px]' : 'min-w-[220px]';
+  const deckShellStyle = sharedDeckWidth > 0 ? { width: `${sharedDeckWidth}px`, maxWidth: '100%' } : { width: '100%', maxWidth: '100%' };
+
+  const classSwitcher = (
+    <div className="relative">
+      <button
+        onClick={() => setIsClassMenuOpen(!isClassMenuOpen)}
+        className={`h-11 min-w-[220px] max-w-[260px] flex items-center justify-between gap-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all active:scale-95 ${
+          isClassMenuOpen ? 'border-blue-300 bg-blue-50 text-blue-700' : 'hover:border-blue-300 hover:text-blue-600'
+        }`}
+      >
+        <span className="truncate text-sm font-black tracking-tight">{currentClass}</span>
+        <ChevronDown className={`w-4 h-4 shrink-0 text-slate-300 transition-transform ${isClassMenuOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isClassMenuOpen && (
+        <>
+          <div className="fixed inset-0 z-[60]" onClick={() => setIsClassMenuOpen(false)} />
+          <div className="absolute top-14 left-0 w-56 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-100 p-1.5 z-[70] animate-in slide-in-from-top-2 duration-200">
+            {CLASSES.map(cls => (
+              <button
+                key={cls}
+                onClick={() => {
+                  setCurrentClass(cls);
+                  setIsClassMenuOpen(false);
+                  setSelectedIds([]);
+                  setIsGroupPlanMenuOpen(false);
+                  resetFilters();
+                }}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all active:scale-95 ${
+                  currentClass === cls ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-50 font-bold'
+                }`}
+              >
+                <span className="text-sm">{cls}</span>
+                {currentClass === cls && <Check size={16} strokeWidth={3} />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const viewModeSwitcher = (
+    <div className="inline-flex bg-white/85 backdrop-blur-md p-1 rounded-2xl border border-slate-200 shadow-sm">
+      <button
+        onClick={() => { setViewMode('student'); setSelectedIds([]); setIsMultiSelect(false); setIsGroupPlanMenuOpen(false); }}
+        className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-black text-sm transition-all ${viewMode === 'student' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+      >
+        <User size={18} strokeWidth={2.5} />学生
+      </button>
+      <button
+        onClick={() => { setViewMode('group'); setSelectedIds([]); setIsMultiSelect(false); setIsSidebarOpen(false); resetFilters(); }}
+        className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-black text-sm transition-all ${viewMode === 'group' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+      >
+        <Users size={18} strokeWidth={2.5} />小组
+      </button>
+    </div>
+  );
+
+  const modeUtilityControl = (
+    <>
+      {!isSidebarOpen && viewMode === 'student' && (
+        <button onClick={() => setIsSidebarOpen(true)} className="h-10 min-w-[220px] flex items-center justify-center gap-2 px-6 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-all active:scale-95">
+          <Search size={16} /><span className="text-sm font-black tracking-tight">快速定位学生</span>
+        </button>
+      )}
+      {viewMode === 'group' && (
+        <div className="relative">
+          {isGroupPlanMenuOpen && <div className="fixed inset-0 z-[60]" onClick={() => setIsGroupPlanMenuOpen(false)} />}
+          <button
+            onClick={() => setIsGroupPlanMenuOpen(open => !open)}
+            className="h-10 min-w-[240px] max-w-[320px] px-4 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-all active:scale-95 flex items-center justify-between gap-3 relative z-[70]"
+          >
+            <span className="truncate text-sm font-black">{activeGroupPlan?.planName || '选择方案'}</span>
+            <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform ${isGroupPlanMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <div className={`absolute top-12 right-0 w-[320px] bg-white rounded-[1.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-slate-100 p-1.5 z-[70] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${isGroupPlanMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+            {groupPlans.map(plan => (
+              <button
+                key={plan.id}
+                onClick={() => {
+                  setSelectedGroupPlanId(plan.id);
+                  setIsGroupPlanMenuOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all active:scale-95 ${plan.id === activeGroupPlan?.id ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+              >
+                <span className="text-sm font-black truncate">{plan.planName}</span>
+                {plan.id === activeGroupPlan?.id ? <Check size={16} strokeWidth={3} /> : <span className="w-4 h-4" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {((isSidebarOpen && viewMode === 'student') || (!isSidebarOpen && viewMode !== 'student' && viewMode !== 'group')) && (
+        <div className={`h-10 ${embeddedToolbarMinWidth}`} />
+      )}
+    </>
+  );
+
   return (
-    <div className="fixed inset-0 bg-[#f0f3f6] font-sans text-slate-800 overflow-hidden flex flex-col">
+    <div className={`${embedded ? 'w-full h-full' : 'fixed inset-0'} bg-[#f0f3f6] font-sans text-slate-800 overflow-hidden flex flex-col`}>
       {isGlobalRaining && (
         <div className="fixed inset-0 z-[110] pointer-events-none overflow-hidden animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-blue-600/5 backdrop-blur-[0.2px]" />
@@ -441,49 +844,94 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
         </div>
       )}
 
-      <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-50">
-        <div className="flex items-center gap-4 relative">
-          <div className="bg-blue-600/5 p-1.5 rounded-lg text-blue-600"><Monitor size={18} /></div>
-          <div className="relative">
-            <button onClick={() => setIsClassMenuOpen(!isClassMenuOpen)} className={`flex items-center gap-2 transition-all px-2 py-1 rounded-lg ${isClassMenuOpen ? 'bg-blue-50' : 'hover:bg-slate-50'}`}><h1 className="text-xl font-black text-slate-800 tracking-tight leading-none">{currentClass}</h1><ChevronDown className={`w-5 h-5 text-slate-300 transition-transform ${isClassMenuOpen ? 'rotate-180' : ''}`} /></button>
-            {isClassMenuOpen && (
-              <><div className="fixed inset-0 z-[60]" onClick={() => setIsClassMenuOpen(false)} /><div className="absolute top-12 left-0 w-56 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-100 p-1.5 z-[70] animate-in slide-in-from-top-2 duration-200">
-                {CLASSES.map(cls => (<button key={cls} onClick={() => { setCurrentClass(cls); setIsClassMenuOpen(false); setSelectedIds([]); resetFilters(); }} className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all ${currentClass === cls ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-50 font-bold'}`}><span className="text-sm">{cls}</span>{currentClass === cls && <Check size={16} strokeWidth={3} />}</button>))}
-              </div></>
-            )}
+      {!embedded && (
+        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-50">
+          <div className="flex items-center gap-4 relative">
+            <div className="bg-blue-600/5 p-1.5 rounded-lg text-blue-600"><Monitor size={18} /></div>
+            {classSwitcher}
           </div>
-        </div>
-        <div className="flex items-center gap-4 text-[13px]"><button onClick={onBack} className="flex items-center gap-2 px-4 py-2 bg-[#2563eb] text-white rounded-lg font-bold shadow-sm hover:bg-[#1d4ed8] active:scale-95 transition-all"><ArrowLeft size={16} /><span>返回管理后台</span></button><div className="h-6 w-px bg-slate-200 mx-1" /><span className="text-slate-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">管理员 [成都七中初中附属小学]</span><div className="w-8 h-8 bg-[#4c8bf5] rounded-full flex items-center justify-center text-white shrink-0"><User size={16} strokeWidth={3} /></div></div>
-      </header>
+          <div className="flex items-center gap-4 text-[13px]">
+            <button onClick={onBack} className="flex items-center gap-2 px-4 py-2 bg-[#2563eb] text-white rounded-lg font-bold shadow-sm hover:bg-[#1d4ed8] active:scale-95 transition-all"><ArrowLeft size={16} /><span>返回管理后台</span></button>
+            <div className="h-6 w-px bg-slate-200 mx-1" />
+            <span className="text-slate-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">管理员 [成都七中初中附属小学]</span>
+            <div className="w-8 h-8 bg-[#4c8bf5] rounded-full flex items-center justify-center text-white shrink-0"><User size={16} strokeWidth={3} /></div>
+          </div>
+        </header>
+      )}
 
       <div className="flex-1 flex overflow-hidden relative">
         <section className={`flex-1 overflow-y-auto px-10 pb-10 custom-scrollbar flex flex-col items-center scroll-stable pt-6`}>
           <div className="max-w-[1920px] w-full flex flex-col items-center">
-            <div className="grid grid-cols-[repeat(auto-fill,160px)] justify-center gap-6 pb-20 w-full relative">
-              <div className="col-span-full h-10 flex items-center justify-end overflow-hidden">
-                {!isSidebarOpen && (
-                  <button onClick={() => setIsSidebarOpen(true)} className="h-10 flex items-center gap-2 px-6 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-all active:scale-95">
-                    <Search size={16} /><span className="text-sm font-black tracking-tight">快速定位学生</span>
-                  </button>
+            <div ref={deckContainerRef} className="w-full relative">
+              <div className={`mx-auto flex max-w-full flex-col ${embedded ? 'gap-6' : 'gap-0'}`} style={deckShellStyle}>
+                {embedded && (
+                  <div className="grid grid-cols-[minmax(220px,260px)_1fr_minmax(220px,320px)] items-center gap-6">
+                    <div className="flex justify-start">
+                      {classSwitcher}
+                    </div>
+                    <div className="flex justify-center">
+                      {viewModeSwitcher}
+                    </div>
+                    <div className="flex justify-end">
+                      {modeUtilityControl}
+                    </div>
+                  </div>
                 )}
-              </div>
+                <div className={`grid grid-cols-[repeat(auto-fill,var(--card-width))] ${viewMode === 'student' ? 'justify-center' : 'justify-start'} gap-6 pb-20 relative`} style={{ '--card-width': '160px' } as any}>
+                  {!embedded && (
+                    <div className="col-span-full relative h-[60px] mb-0">
+                      <div className="absolute inset-x-0 top-0 h-full">
+                        <div className="absolute left-1/2 top-0 -translate-x-1/2 z-10 scale-110">
+                          {viewModeSwitcher}
+                        </div>
 
-              {filteredStudents.map(student => {
-                const isFocused = feedbackEffect?.id === student.id && feedbackEffect.type === 'negative';
-                return (
-                  <StudentCard
-                    key={student.id}
-                    student={student}
-                    selected={selectedIds.includes(student.id)}
-                    isSelectable={isMultiSelect}
-                    isFocused={isFocused}
-                    onClick={() => handleCardClick(student)}
-                  />
-                );
-              })}
+                        <div className="absolute right-0 bottom-0 flex justify-end relative">
+                          {modeUtilityControl}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {viewMode === 'student' ? filteredStudents.map(student => {
+                    const isFocused = feedbackEffect?.id === student.id && feedbackEffect.type === 'negative';
+                    return (
+                      <StudentCard
+                        key={student.id}
+                        student={student}
+                        selected={selectedIds.includes(student.id)}
+                        isSelectable={isMultiSelect}
+                        isFocused={isFocused}
+                        onClick={() => handleCardClick(student)}
+                      />
+                    );
+                  }) : groups.length > 0 ? groups.map(group => (
+                    <div key={group.id} className={groupCardSpan === 2 ? 'col-span-2' : 'col-span-1'}>
+                      <GroupCard
+                        group={group}
+                        selected={selectedIds.includes(group.id)}
+                        isSelectable={isMultiSelect}
+                        compact={groupCardSpan === 1}
+                        onClick={() => handleGroupCardClick(group)}
+                      />
+                    </div>
+                  )) : (
+                    <div className="col-span-full flex justify-center py-24">
+                      <div className="w-full max-w-[680px] rounded-[2rem] border border-dashed border-slate-200 bg-white/70 px-10 py-14 text-center shadow-[0_12px_36px_rgba(15,23,42,0.03)]">
+                        <div className="w-16 h-16 mx-auto rounded-[1.5rem] bg-slate-100 text-slate-300 flex items-center justify-center">
+                          <Users size={28} strokeWidth={2.2} />
+                        </div>
+                        <h3 className="text-[24px] font-black text-slate-700 tracking-tight mt-5">当前方案下暂无小组</h3>
+                        <p className="text-[13px] font-bold text-slate-400 mt-2">
+                          {activeGroupPlan ? `请在「${activeGroupPlan.planName}」下补充小组后再进行点评或随机点名。` : '请先选择一个小组方案。'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
         {isSidebarOpen && (
           <button onClick={handleSidebarClose} className="absolute right-[320px] top-1/2 -translate-y-1/2 h-24 w-8 bg-white rounded-l-2xl shadow-[-10px_0_30px_rgba(0,0,0,0.05)] border border-r-0 border-slate-100 flex items-center justify-center text-slate-200 hover:text-blue-500 transition-all z-[90] animate-in fade-in slide-in-from-right-2 duration-300"><ChevronRight size={20} /></button>
@@ -555,15 +1003,38 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
       </div>
 
       <div className={`fixed inset-0 z-[120] flex items-center justify-center ${evaluationModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => { setEvaluationModalOpen(false); setIsManagerMode(false); }} />
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={handleCloseEvaluation} />
         <div className={`w-[840px] bg-white rounded-[2.5rem] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.25)] overflow-hidden border border-white relative transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${evaluationModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`} onClick={e => e.stopPropagation()}>
           <div className="px-10 py-[24px] flex items-center justify-between border-b border-slate-100 bg-white min-h-[72px]">
             <div className="flex items-center gap-3 flex-1">
-              {isManagerMode ? (<div className="bg-slate-50 p-2 rounded-xl text-slate-400 border border-slate-100 flex items-center justify-center w-11 h-11"><Settings size={20} strokeWidth={1.5} /></div>) : (isMultiSelect && selectedIds.length > 1) ? (<div className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br from-blue-500 to-blue-700"><Users size={20} strokeWidth={2.5} /></div>) : (<div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br from-green-400 to-green-600`}>{evalStudent?.name.slice(0, 1) || '?'}</div>)}
-              <div className="flex flex-col justify-center"><div className="flex items-center gap-1.5 translate-y-0.5"><h2 className="text-lg font-black text-slate-700 tracking-tight leading-none">{isManagerMode ? '管理选项' : (isMultiSelect && selectedIds.length > 1 ? '批量点评' : evalStudent?.name)}</h2>{!isManagerMode && (!isMultiSelect || selectedIds.length <= 1) && (evalStudent?.gender === 'male' ? <Mars size={14} className="text-blue-500" strokeWidth={3} /> : <Venus size={14} className="text-pink-500" strokeWidth={3} />)}</div>{!isManagerMode && (!isMultiSelect || selectedIds.length <= 1) && (<span className="text-[10px] font-bold text-slate-300 font-mono tracking-tighter uppercase mt-1">{evalStudent?.studentNo}</span>)}{!isManagerMode && isMultiSelect && selectedIds.length > 1 && (<span className="text-[12px] font-bold text-blue-500 mt-1">已选择 {selectedIds.length} 位学生</span>)}</div>
+              {isManagerMode ? (
+                <div className="bg-slate-50 p-2 rounded-xl text-slate-400 border border-slate-100 flex items-center justify-center w-11 h-11"><Settings size={20} strokeWidth={1.5} /></div>
+              ) : (isMultiSelect && selectedIds.length > 1) ? (
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br from-blue-500 to-blue-700">
+                  <Users size={20} strokeWidth={2.5} />
+                </div>
+              ) : viewMode === 'student' || evalStudent ? (
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br ${getNameGradient(evalStudent?.name || '')}`}>
+                  {evalStudent?.name.slice(0, 1) || '?'}
+                </div>
+              ) : (
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br from-indigo-500 to-purple-600">
+                  <Users size={20} strokeWidth={2.5} />
+                </div>
+              )}
+              <div className="flex flex-col justify-center">
+                <div className="flex items-center gap-1.5 translate-y-0.5">
+                  <h2 className="text-lg font-black text-slate-700 tracking-tight leading-none">
+                    {isManagerMode ? '管理选项' : (isMultiSelect && selectedIds.length > 1 ? `批量点评 (${(viewMode === 'student' || (selectedIds.length > 0 && students.some(s => s.id === selectedIds[0]))) ? '学生' : '小组'})` : (evalStudent ? evalStudent.name : evalGroup?.name))}
+                  </h2>
+                  {!isManagerMode && evalStudent && (!isMultiSelect || selectedIds.length <= 1) && (evalStudent?.gender === 'male' ? <Mars size={14} className="text-blue-500" strokeWidth={3} /> : <Venus size={14} className="text-pink-500" strokeWidth={3} />)}
+                </div>
+                {!isManagerMode && evalStudent && (!isMultiSelect || selectedIds.length <= 1) && (<span className="text-[10px] font-bold text-slate-300 font-mono tracking-tighter uppercase mt-1">{evalStudent?.studentNo}</span>)}
+                {!isManagerMode && isMultiSelect && selectedIds.length > 1 && (<span className="text-[12px] font-bold text-blue-500 mt-1">已选择 {selectedIds.length} 位{(viewMode === 'student' || (selectedIds.length > 0 && students.some(s => s.id === selectedIds[0]))) ? '学生' : '小组'}</span>)}
+              </div>
             </div>
             <div className="flex-1 flex justify-center"><div className="flex bg-slate-100 p-1 rounded-xl gap-0.5 w-[220px]"><button onClick={() => setEvalTab('positive')} className={`flex-1 py-2 rounded-lg font-black text-sm transition-all ${evalTab === 'positive' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}>表扬</button><button onClick={() => setEvalTab('negative')} className={`flex-1 py-2 rounded-lg font-black text-sm transition-all ${evalTab === 'negative' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}>待改进</button></div></div>
-            <div className="flex-1 flex items-center justify-end gap-2 text-slate-400">{isManagerMode ? (<button onClick={() => { setIsManagerMode(false); setNewCategoryName(null); setEditingCategoryName(null); }} className="w-9 h-9 flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90"><ArrowLeft size={20} strokeWidth={2} /></button>) : (<button onClick={() => { setIsManagerMode(true); setManagerSelectedCategory(categories[0]); }} className="w-9 h-9 flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90"><Settings size={20} strokeWidth={2} /></button>)}<button onClick={() => { setEvaluationModalOpen(false); setIsManagerMode(false); setNewCategoryName(null); }} className="w-9 h-9 flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90"><X size={22} strokeWidth={2} /></button></div>
+            <div className="flex-1 flex items-center justify-end gap-2 text-slate-400">{isManagerMode ? (<button onClick={() => { setIsManagerMode(false); setNewCategoryName(null); setEditingCategoryName(null); }} className="w-9 h-9 flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90"><ArrowLeft size={20} strokeWidth={2} /></button>) : (<button onClick={() => { setIsManagerMode(true); setManagerSelectedCategory(categories[0]); }} className="w-9 h-9 flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90"><Settings size={20} strokeWidth={2} /></button>)}<button onClick={handleCloseEvaluation} className="w-9 h-9 flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90"><X size={22} strokeWidth={2} /></button></div>
           </div>
           <div className="overflow-hidden bg-[#f8fafc]">
             {!isManagerMode ? (
@@ -617,6 +1088,69 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
         </div>
       </div>
 
+      <div className={`fixed inset-0 z-[140] flex items-center justify-center ${groupDetailsModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setGroupDetailsModalOpen(false)} />
+        <div className={`w-[840px] bg-white rounded-[2.5rem] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.25)] overflow-hidden border border-white relative transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${groupDetailsModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
+          <div className="px-10 py-6 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                <Users size={24} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-slate-800 tracking-tight">{evalGroup?.name}</h2>
+                <p className="text-[12px] font-bold text-slate-400 mt-1">共有 {evalGroup?.memberCount} 名组员</p>
+              </div>
+            </div>
+            <button onClick={() => setGroupDetailsModalOpen(false)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 rounded-xl text-slate-400 transition-all"><X size={24} /></button>
+          </div>
+          <div className="p-10 bg-slate-50/50">
+            <div className="flex flex-wrap justify-center gap-6 max-h-[400px] overflow-y-auto custom-scrollbar py-4">
+              {evalGroup?.memberIds.map(id => {
+                const student = students.find(s => s.id === id);
+                if (!student) return null;
+                return (
+                  <StudentCard 
+                    key={id}
+                    student={student}
+                    selected={selectedGroupMemberIds.includes(id)}
+                    isSelectable={true}
+                    onClick={() => {
+                      setSelectedGroupMemberIds(prev => prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+          <div className="px-10 py-6 border-t border-slate-100 bg-white flex items-center justify-between">
+            <button 
+              onClick={() => {
+                if (selectedGroupMemberIds.length === evalGroup?.memberIds.length) setSelectedGroupMemberIds([]);
+                else setSelectedGroupMemberIds([...(evalGroup?.memberIds || [])]);
+              }}
+              className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-black text-sm hover:bg-slate-200 transition-all"
+            >
+              {selectedGroupMemberIds.length === evalGroup?.memberIds.length ? '取消全选' : '全选组员'}
+            </button>
+            <button 
+              disabled={selectedGroupMemberIds.length === 0}
+              onClick={() => {
+                setGroupDetailsModalOpen(false);
+                setTimeout(() => {
+                  setIsMultiSelect(true);
+                  setSelectedIds([...selectedGroupMemberIds]);
+                  setEvalStudent(students.find(s => s.id === selectedGroupMemberIds[0]) || null);
+                  setEvaluationModalOpen(true);
+                }, 300);
+              }}
+              className={`px-10 py-3 rounded-xl font-black text-base transition-all ${selectedGroupMemberIds.length > 0 ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
+            >
+              评价所选成员 ({selectedGroupMemberIds.length})
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className={`fixed inset-0 z-[150] flex items-center justify-center ${randomModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl" onClick={() => { if (!isRolling) closeRandomModal(); }} />
         <div className={`w-[840px] min-h-[540px] bg-white rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)] border border-white relative overflow-hidden flex flex-col transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${randomModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
@@ -643,31 +1177,47 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
                     >
                       {/* 槽位标签：直接定位在槽位正上方 */}
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap z-30 pointer-events-none">
-                        <span className={`text-[12px] font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full border shadow-sm transition-all duration-500 ${isFinished ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>第 {idx + 1} 位</span>
+                        <span className={`text-[12px] font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full border shadow-sm transition-all duration-500 ${isFinished ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>第 {idx + 1} {viewMode === 'student' ? '位' : '组'}</span>
                       </div>
 
                       {/* 槽位容器 (可见虚线框 -> 金色完成框) */}
-                      <div className={`w-[180px] h-[195px] rounded-[2rem] flex flex-col items-center justify-center transition-all duration-500 relative ${isFinished ? 'border-2 border-amber-400 bg-amber-50/20 animate-gold-finish-burst' : 'border-2 border-dashed border-slate-200 bg-white'}`}>
-                        {(!student || isItemRolling) && (
-                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-200">
-                            <User size={24} />
+                      <div className={`${viewMode === 'student' ? 'w-[180px] h-[195px]' : 'w-[300px] h-[140px]'} rounded-[2rem] flex flex-col items-center justify-center transition-all duration-500 relative`}>
+                        <div className={`absolute inset-0 rounded-[2rem] transition-all duration-500 ${isFinished ? 'border-2 border-amber-400 bg-amber-50/20 animate-gold-finish-burst' : 'border-2 border-dashed border-slate-200 bg-white'}`} />
+                        {(!student && !randomGroups[idx] || isItemRolling) && (
+                          <div className="relative z-10 w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-200">
+                            {viewMode === 'student' ? <User size={24} /> : <Users size={24} />}
                           </div>
                         )}
                         
-                        {student && (
-                          <div className="absolute inset-0 p-3 flex items-center justify-center animate-in fade-in duration-300">
-                            <StudentCard 
-                              student={student} 
-                              isRolling={false} 
-                              isSelectable={!isRolling}
-                              noScale={true}
-                              selected={selectedIds.includes(student.id)}
-                              onClick={() => {
-                                if (!isRolling && !isItemRolling) {
-                                  setSelectedIds(prev => prev.includes(student.id) ? prev.filter(id => id !== student.id) : [...prev, student.id]);
-                                }
-                              }}
-                            />
+                        {(viewMode === 'student' ? student : randomGroups[idx]) && (
+                          <div className="absolute inset-0 p-3 flex items-center justify-center animate-in fade-in duration-300 z-10">
+                            {viewMode === 'student' ? (
+                              <StudentCard 
+                                student={student} 
+                                isRolling={false} 
+                                isSelectable={!isRolling}
+                                selected={selectedIds.includes(student.id)}
+                                onClick={() => {
+                                  if (!isRolling && !isItemRolling) {
+                                    setSelectedIds(prev => prev.includes(student.id) ? prev.filter(id => id !== student.id) : [...prev, student.id]);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <GroupCard
+                                group={randomGroups[idx]}
+                                isRolling={false}
+                                isSelectable={!isRolling}
+                                compact={true}
+                                selected={selectedIds.includes(randomGroups[idx].id)}
+                                onClick={() => {
+                                  if (!isRolling && !isItemRolling) {
+                                    const gId = randomGroups[idx].id;
+                                    setSelectedIds(prev => prev.includes(gId) ? prev.filter(id => id !== gId) : [...prev, gId]);
+                                  }
+                                }}
+                              />
+                            )}
                           </div>
                         )}
                       </div>
@@ -678,25 +1228,23 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
           </div>
 
           <div className="px-10 py-4 h-[90px] flex items-center justify-center shrink-0 border-t border-slate-100/50 bg-white/50 backdrop-blur-sm">
-            {!isRolling && randomStudents.length > 0 ? (
+            {!isRolling && hasRandomResults ? (
               <div className="flex flex-col items-center gap-4 w-full animate-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center bg-slate-100/80 p-1 rounded-2xl gap-1.5 shadow-inner">
                   {/* 全选 / 取消全选 */}
                   <button 
                     onClick={() => {
-                      const allIds = randomStudents.map(s => s.id);
-                      const currentSelectedFromRandom = selectedIds.filter(id => allIds.includes(id));
-                      if (currentSelectedFromRandom.length === allIds.length) {
-                        setSelectedIds(prev => prev.filter(id => !allIds.includes(id)));
+                      if (allRandomSelected) {
+                        setSelectedIds(prev => prev.filter(id => !currentRandomIds.includes(id)));
                       } else {
-                        const otherSelected = selectedIds.filter(id => !allIds.includes(id));
-                        setSelectedIds([...otherSelected, ...allIds]);
+                        const otherSelected = selectedIds.filter(id => !currentRandomIds.includes(id));
+                        setSelectedIds([...otherSelected, ...currentRandomIds]);
                       }
                     }} 
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all focus:outline-none ${randomStudents.every(s => selectedIds.includes(s.id)) ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:text-blue-600'}`}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all focus:outline-none ${allRandomSelected ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:text-blue-600'}`}
                   >
                     <Check size={14} strokeWidth={3} />
-                    {randomStudents.every(s => selectedIds.includes(s.id)) ? '取消' : '全选'}
+                    {allRandomSelected ? '取消' : '全选'}
                   </button>
                   
                   <div className="w-px h-5 bg-slate-200 mx-0.5" />
@@ -704,25 +1252,42 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
                   {/* 批量点评 */}
                   <button 
                     onClick={() => {
-                      if (selectedIds.length > 0) {
-                        const firstSelectedId = selectedIds.find(id => randomStudents.some(rs => rs.id === id));
-                        const firstStudent = students.find(s => s.id === firstSelectedId) || randomStudents[0];
-                        closeRandomModal();
+                      const batchSelectedIds = currentRandomIds.filter(id => selectedIds.includes(id));
+                      if (batchSelectedIds.length > 0) {
+                        const firstSelectedId = batchSelectedIds[0];
+                        const firstItem = viewMode === 'student' 
+                          ? (students.find(s => s.id === firstSelectedId) || randomStudents[0])
+                          : (groups.find(g => g.id === firstSelectedId) || randomGroups[0]);
+                        
+                        closeRandomModal({ preserveSelection: true });
                         setTimeout(() => {
-                          setEvalStudent(firstStudent); 
+                          setIsMultiSelect(true);
+                          setSelectedIds(batchSelectedIds);
+                          if (viewMode === 'student') {
+                            setEvalStudent(firstItem as StudentData);
+                            setEvalGroup(null);
+                          } else {
+                            setEvalGroup(firstItem as GroupData);
+                            setEvalStudent(null);
+                          }
                           setEvaluationModalOpen(true); 
                           setEvalTab('positive'); 
                           setIsManagerMode(false);
                         }, 400);
                       }
                     }} 
-                    disabled={!randomStudents.some(s => selectedIds.includes(s.id))}
-                    className={`flex items-center gap-2 px-7 py-2.5 rounded-xl font-black text-sm transition-all focus:outline-none ${randomStudents.some(s => selectedIds.includes(s.id)) ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
+                    disabled={selectedRandomCount === 0}
+                    className={`flex items-center gap-2 px-7 py-2.5 rounded-xl font-black text-sm transition-all focus:outline-none ${selectedRandomCount > 0 ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
                   >
                     批量点评
-                    {randomStudents.filter(s => selectedIds.includes(s.id)).length > 0 && (
+                    {selectedRandomCount > 0 && viewMode === 'student' && (
                       <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs ml-0.5">
-                        {randomStudents.filter(s => selectedIds.includes(s.id)).length}人
+                        {selectedRandomCount}人
+                      </span>
+                    )}
+                    {selectedRandomCount > 0 && viewMode === 'group' && (
+                      <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs ml-0.5">
+                        {selectedRandomCount}组
                       </span>
                     )}
                   </button>
@@ -731,7 +1296,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
                   
                   {/* 重抽一次 */}
                   <button 
-                    onClick={() => handleRandomCall(randomStudents.length)} 
+                    onClick={() => handleRandomCall(viewMode === 'student' ? randomStudents.length : randomGroups.length)} 
                     className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-500 rounded-xl font-black text-sm border border-slate-100 shadow-sm hover:text-amber-500 active:scale-95 transition-all focus:outline-none"
                   >
                     <RotateCcw size={14} strokeWidth={3} />
@@ -759,9 +1324,38 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
         {isMultiSelect ? (
           <div className="flex items-center gap-4">
             <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl gap-2 shadow-inner">
-              <button onClick={() => { if (selectedIds.length === filteredStudents.length) setSelectedIds([]); else setSelectedIds(filteredStudents.map(s => s.id)); }} className={`flex items-center gap-2 px-6 py-3.5 rounded-xl font-black text-sm transition-all focus:outline-none ${selectedIds.length === filteredStudents.length && filteredStudents.length > 0 ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:text-blue-600'}`}><Check size={16} strokeWidth={3} />全选</button>
+              <button 
+                onClick={() => { 
+                  const pool = viewMode === 'student' ? filteredStudents : groups;
+                  if (selectedIds.length === pool.length) setSelectedIds([]); 
+                  else setSelectedIds(pool.map(item => item.id)); 
+                }} 
+                className={`flex items-center gap-2 px-6 py-3.5 rounded-xl font-black text-sm transition-all focus:outline-none ${((viewMode === 'student' && selectedIds.length === filteredStudents.length && filteredStudents.length > 0) || (viewMode === 'group' && selectedIds.length === groups.length && groups.length > 0)) ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:text-blue-600'}`}
+              >
+                <Check size={16} strokeWidth={3} />全选
+              </button>
               <div className="w-px h-6 bg-slate-200" />
-              <button onClick={() => { if (selectedIds.length > 0) { const firstStudent = students.find(s => s.id === selectedIds[0]); if (firstStudent) { setEvalStudent(firstStudent); setEvaluationModalOpen(true); setEvalTab('positive'); setIsManagerMode(false); } } }} disabled={selectedIds.length === 0} className={`flex items-center gap-2 px-8 py-3.5 rounded-xl font-black text-sm transition-all focus:outline-none ${selectedIds.length > 0 ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}>点评{selectedIds.length > 0 && <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs ml-1">{selectedIds.length}人</span>}</button>
+              <button 
+                onClick={() => { 
+                  if (selectedIds.length > 0) { 
+                    const isStudentSelection = students.some(s => s.id === selectedIds[0]);
+                    const firstItem = isStudentSelection
+                      ? students.find(s => s.id === selectedIds[0])
+                      : groups.find(g => g.id === selectedIds[0]);
+                    if (firstItem) { 
+                      if (isStudentSelection) { setEvalStudent(firstItem as StudentData); setEvalGroup(null); }
+                      else { setEvalGroup(firstItem as GroupData); setEvalStudent(null); }
+                      setEvaluationModalOpen(true); 
+                      setEvalTab('positive'); 
+                      setIsManagerMode(false); 
+                    } 
+                  } 
+                }} 
+                disabled={selectedIds.length === 0} 
+                className={`flex items-center gap-2 px-8 py-3.5 rounded-xl font-black text-sm transition-all focus:outline-none ${selectedIds.length > 0 ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
+              >
+                点评{selectedIds.length > 0 && <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs ml-1">{selectedIds.length}{(viewMode === 'student' || students.some(s => s.id === selectedIds[0])) ? '人' : '组'}</span>}
+              </button>
               <div className="w-px h-6 bg-slate-200" />
               <button onClick={() => { setIsMultiSelect(false); setSelectedIds([]); }} className="flex items-center gap-2 px-6 py-3.5 bg-white text-slate-500 rounded-xl font-black text-sm border border-slate-100 shadow-sm hover:text-rose-500 active:scale-95 transition-all focus:outline-none"><X size={16} strokeWidth={2.5} />取消</button>
             </div>
@@ -777,44 +1371,48 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack }) => {
             </button>
 
             <div
-              className="relative flex items-end"
-              onMouseEnter={() => setIsRandomFanOpen(true)}
-              onMouseLeave={() => setIsRandomFanOpen(false)}
+              className="relative"
+              onMouseEnter={() => setIsRandomPickerOpen(true)}
+              onMouseLeave={() => setIsRandomPickerOpen(false)}
             >
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0 w-[260px] h-[180px] pointer-events-auto" />
+              <div className="absolute bottom-full right-0 mb-0 h-4 w-[360px]" />
               <div
-                className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-[280px] h-[180px] pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isRandomFanOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-90 translate-y-4'}`}
+                className={`absolute bottom-full right-0 mb-3 inline-flex rounded-[1.6rem] border border-amber-100 bg-white/95 backdrop-blur-md px-3 py-3 shadow-[0_18px_40px_rgba(15,23,42,0.12)] transition-all duration-300 ease-out ${isRandomPickerOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}
               >
-                {[1, 2, 3, 4, 5, 6, 7].map((num, i) => {
-                  // 使用圆形圆弧确保间距一致
-                  const angle = -90 + (i * 30); // 从 -90 到 90 度均匀分布
-                  const radius = 115;
-                  const x = Math.sin(angle * Math.PI / 180) * radius;
-                  const y = -Math.cos(angle * Math.PI / 180) * radius;
-                  
-                  return (
-                    <button
-                      key={num}
-                      onClick={(e) => { e.stopPropagation(); handleRandomCall(num); }}
-                      className="absolute left-1/2 top-[calc(100%-20px)] w-12 h-12 bg-white/95 border-2 border-slate-100 rounded-full flex flex-col items-center justify-center shadow-[0_12px_28px_rgba(15,23,42,0.12)] hover:border-amber-400 hover:text-amber-500 hover:scale-110 active:scale-90 transition-all pointer-events-auto z-20 group"
-                      style={{
-                        transform: isRandomFanOpen 
-                          ? `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))` 
-                          : 'translate(-50%, 0)',
-                        transitionDelay: isRandomFanOpen ? `${i * 30}ms` : '0ms'
-                      }}
-                    >
-                      <span className="text-[13px] font-black leading-none">{num}</span>
-                      <span className="text-[8px] font-black opacity-30 mt-0.5 group-hover:opacity-100">人</span>
-                    </button>
-                  );
-                })}
+                <div className="flex items-center gap-2">
+                  {randomQuickCounts.map(num => {
+                    const isAvailable = num <= maxRandomSelectableCount;
+                    const isActive = randomCount === num;
+
+                    return (
+                      <button
+                        key={num}
+                        onClick={() => {
+                          setRandomCount(num);
+                          handleRandomCall(num);
+                        }}
+                        disabled={!isAvailable}
+                        aria-pressed={isActive}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black transition-all border active:scale-95 ${isAvailable ? (isActive ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-200/70' : 'bg-white text-slate-500 border-slate-200 hover:text-amber-600 hover:border-amber-300 hover:-translate-y-0.5') : 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'}`}
+                      >
+                        {num}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
               <button
-                onClick={() => handleRandomCall(1)}
-                className={`flex items-center gap-2.5 px-8 py-3.5 rounded-2xl font-black text-[15px] border-2 transition-all focus:outline-none ${isRandomFanOpen ? 'bg-amber-50 border-amber-300 text-amber-500 shadow-xl -translate-y-0.5' : 'bg-white border-slate-100 text-slate-600 hover:text-amber-500 hover:border-amber-200 hover:shadow-lg hover:-translate-y-0.5'}`}
+                onClick={() => handleRandomCall(randomCount)}
+                onFocus={() => setIsRandomPickerOpen(true)}
+                disabled={maxRandomSelectableCount === 0}
+                className={`flex items-center gap-2.5 px-8 py-3.5 rounded-2xl font-black text-[15px] border-2 transition-all focus:outline-none ${isRandomPickerOpen ? 'bg-amber-50 border-amber-300 text-amber-600 shadow-xl -translate-y-0.5' : maxRandomSelectableCount > 0 ? 'bg-white border-slate-100 text-slate-600 hover:text-amber-500 hover:border-amber-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95' : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'}`}
               >
-                <Dices size={18} />随机点名
+                <Dices size={18} />
+                随机点{viewMode === 'student' ? '名' : '组'}
+                <span className={`px-2.5 py-1 rounded-xl text-xs font-black ${maxRandomSelectableCount > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400'}`}>
+                  {randomCount}{viewMode === 'student' ? '人' : '组'}
+                </span>
               </button>
             </div>
           </div>
