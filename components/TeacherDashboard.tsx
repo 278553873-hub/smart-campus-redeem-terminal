@@ -10,9 +10,10 @@ import {
 
 interface TeacherDashboardProps {
     onNavigateBigScreen?: () => void;
+    embedded?: boolean;
 }
 
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen }) => {
+const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen, embedded = false }) => {
     // 侧边栏菜单展开状态控制
     const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
         '货柜机配置中心': true,
@@ -221,13 +222,15 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     };
 
     return (
-        <div className="min-h-screen bg-[#f0f2f5] flex font-sans text-slate-800">
+        <div className={`${embedded ? 'h-full min-h-0' : 'min-h-screen'} bg-[#f0f2f5] flex font-sans text-slate-800`}>
             {/* 左侧侧边栏 - 极致还原原本菜单样式 */}
-            <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen overflow-hidden shrink-0">
-                <div className="h-14 flex items-center justify-center border-b border-slate-200 shrink-0">
-                    <h1 className="text-blue-600 font-bold text-lg tracking-wide">乐途AI智慧教育管理平台</h1>
-                </div>
-                <div className="flex-1 overflow-y-auto custom-scrollbar py-4">
+            <aside className={`w-64 bg-white border-r border-slate-200 flex flex-col overflow-hidden shrink-0 ${embedded ? 'h-full' : 'h-screen'}`}>
+                {embedded ? null : (
+                    <div className="h-14 border-b border-slate-200 shrink-0 flex items-center justify-center">
+                        <h1 className="text-blue-600 font-bold text-lg tracking-wide">乐途AI智慧教育平台</h1>
+                    </div>
+                )}
+                <div className={`flex-1 overflow-y-auto custom-scrollbar ${embedded ? 'pt-2 pb-3' : 'py-4'}`}>
                     {menus.map((menu, idx) => (
                         <div key={idx} className="mb-2">
                             <div
@@ -262,38 +265,49 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             </aside>
 
             {/* 右侧主体区 */}
-            <div className="flex-1 flex flex-col h-screen overflow-hidden">
+            <div className={`flex-1 flex flex-col overflow-hidden ${embedded ? 'h-full min-h-0' : 'h-screen'}`}>
                 {/* 顶栏 - 还原样式 */}
-                <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
-                    <div className="flex items-center gap-4 text-slate-500 text-[13px]">
-                        <Menu size={18} className="cursor-pointer hover:text-blue-600 transition-colors" />
-                        <span className="text-slate-200">/</span>
-                        <span className="font-semibold text-slate-700">货柜机配置中心</span>
-                        <span className="text-slate-200">/</span>
-                        <span className="font-semibold text-slate-700">{activeMenu}</span>
-                    </div>
-                    <div className="flex items-center gap-4 text-[13px]">
-                        <button
-                            onClick={onNavigateBigScreen}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-sm shadow-blue-100"
-                        >
-                            <Monitor size={16} />
-                            <span>进入大屏展示</span>
-                        </button>
-                        <span className="text-slate-600">欢迎，管理员 [成都七中初中附属小学]</span>
-                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white cursor-pointer hover:opacity-90 shadow-sm">
-                            <User size={16} />
+                {!embedded && (
+                    <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
+                        <div className="flex items-center gap-4 text-slate-500 text-[13px]">
+                            <Menu size={18} className="cursor-pointer hover:text-blue-600 transition-colors" />
+                            <span className="text-slate-200">/</span>
+                            <span className="font-semibold text-slate-700">货柜机配置中心</span>
+                            <span className="text-slate-200">/</span>
+                            <span className="font-semibold text-slate-700">{activeMenu}</span>
                         </div>
-                    </div>
-                </header>
+                        <div className="flex items-center gap-4 text-[13px]">
+                            <button
+                                onClick={onNavigateBigScreen}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-sm shadow-blue-100"
+                            >
+                                <Monitor size={16} />
+                                <span>进入大屏展示</span>
+                            </button>
+                            <span className="text-slate-600">欢迎，管理员 [成都七中初中附属小学]</span>
+                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white cursor-pointer hover:opacity-90 shadow-sm">
+                                <User size={16} />
+                            </div>
+                        </div>
+                    </header>
+                )}
 
                 {/* 内容区 - 采用精致的高端设计 */}
-                <main className="flex-1 overflow-y-auto p-8 bg-[#f5f7fa] custom-scrollbar">
+                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
 
                     {/* 页面主标题 */}
-                    <div className="mb-8 transform animate-in fade-in slide-in-from-left-4 duration-500">
-                        <h2 className="text-2xl font-[900] text-slate-800 tracking-tight">{activeMenu}</h2>
-                        <div className="h-1 w-12 bg-blue-600 rounded-full mt-2"></div>
+                    <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${embedded ? 'mb-5' : 'mb-8'}`}>
+                        <div>
+                            {embedded && (
+                                <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold mb-1.5">
+                                    <span>货柜机配置中心</span>
+                                    <span>/</span>
+                                    <span className="text-slate-500">{activeMenu}</span>
+                                </div>
+                            )}
+                            <h2 className={`${embedded ? 'text-[20px]' : 'text-2xl'} font-[900] text-slate-800 tracking-tight`}>{activeMenu}</h2>
+                            <div className="h-1 w-12 bg-blue-600 rounded-full mt-1.5"></div>
+                        </div>
                     </div>
 
                     {/* 货币发放管理 - 增加标签页切换以分离自动模型和手动发币 */}

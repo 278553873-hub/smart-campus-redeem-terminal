@@ -17,9 +17,11 @@ import MobileApp from './mobile-app/App';
 import CompanionApp from './components/CompanionApp';
 import ParentApp from './components/ParentApp';
 import VendingAdmin from './components/VendingAdmin';
+import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
+import PlatformBrandMark from './components/PlatformBrandMark';
 import { DeviceWrapper } from './components/DeviceWrapper';
 import './mobile-app/index.css';
-import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Loader2, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Loader2, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, X } from 'lucide-react';
 import { playSound } from './utils/sound';
 
 // ============================================================
@@ -34,6 +36,26 @@ const GROWTH_TIER_CONFIG: Record<TierLevel, { label: string; weight: number; col
 
 interface ScoreConfig { score: number; count: number; }
 interface SimStudent { name: string; score: number; tier: TierLevel; reward: number; }
+interface TeacherProfile { name: string; role: string; school: string; }
+
+const DEMO_TEACHER_PROFILES: TeacherProfile[] = [
+  { name: '郭老师', role: '学校管理员', school: '成都七中初中附属小学' },
+  { name: '周老师', role: '学校管理员', school: '成都七中初中附属小学' },
+  { name: '王老师', role: '学校管理员', school: '成都七中初中附属小学' },
+  { name: '曹老师', role: '学校管理员', school: '成都七中初中附属小学' },
+];
+
+const resolveTeacherProfile = (loginId: string): TeacherProfile => {
+  const trimmed = loginId.trim();
+  if (/[一-龥]/.test(trimmed)) {
+    const normalizedName = trimmed.endsWith('老师') ? trimmed : `${trimmed}老师`;
+    return { ...DEMO_TEACHER_PROFILES[0], name: normalizedName };
+  }
+
+  const digits = trimmed.replace(/\D/g, '');
+  const seed = digits.split('').reduce((sum, char) => sum + Number(char), 0);
+  return DEMO_TEACHER_PROFILES[seed % DEMO_TEACHER_PROFILES.length];
+};
 
 function computeLeaderboard(bonusPool: number, configs: ScoreConfig[]): SimStudent[] {
   const valid = configs.filter(c => c.score > 0 && c.count > 0);
@@ -618,7 +640,7 @@ const INITIAL_BANK: BankAccount = {
   ]
 };
 
-const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 'vending' }) => {
+const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolean }> = ({ mode = 'vending', embedded = false }) => {
   const isVending = mode === 'vending';
   const [view, setView] = useState<ViewState>(isVending ? 'welcome' : 'scanning');
   const [loginSubView, setLoginSubView] = useState<'face' | 'password'>(isVending ? 'face' : 'password');
@@ -1011,7 +1033,7 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
 
   if (!isVending) {
     return (
-      <div className="w-screen h-[100dvh] bg-[#f8fbff] flex items-center justify-center overflow-hidden relative">
+      <div className={`${embedded ? 'w-full h-full' : 'w-screen h-[100dvh]'} bg-[#f8fbff] flex items-center justify-center overflow-hidden relative`}>
         {innerContent}
       </div>
     );
@@ -1022,7 +1044,7 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
     // 设备在 960px 高度时 scale = min(vh/960, 1.2)，渲染宽 = scale * 540
     // 面板宽度与设备渲染宽度保持一致（用 CSS calc 近似）
     return (
-      <div className="w-screen h-[100dvh] bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-6 md:p-8 relative">
+      <div className={`${embedded ? 'w-full h-full' : 'w-screen h-[100dvh]'} bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-6 md:p-8 relative`}>
         {/* 货柜机：与其他页面完全相同的居中布局，位置不变 */}
         <DeviceWrapper width={540} height={960}>
           {innerContent}
@@ -1045,7 +1067,7 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
 
 
   return (
-    <div className="w-screen h-[100dvh] bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-6 md:p-8">
+    <div className={`${embedded ? 'w-full h-full' : 'w-screen h-[100dvh]'} bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-6 md:p-8`}>
       {/* 21.5寸竖屏货柜机比例 540x960 */}
       <DeviceWrapper width={540} height={960}>
         {innerContent}
@@ -1054,8 +1076,167 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one' }> = ({ mode = 've
   );
 };
 
+type PcWorkspaceTab = 'home' | PcPortalApp;
+
+const PcWorkspace: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [openTabs, setOpenTabs] = useState<PcWorkspaceTab[]>(['home']);
+  const [activeTab, setActiveTab] = useState<PcWorkspaceTab>('home');
+  const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(DEMO_TEACHER_PROFILES[0]);
+
+  const tabMeta: Record<PcWorkspaceTab, { label: string; icon: React.ReactNode }> = {
+    home: { label: '首页', icon: <LayoutGrid size={15} /> },
+    teacher: { label: '学校管理后台', icon: <Settings size={15} /> },
+    'all-in-one': { label: '积分银行（一体机）', icon: <MonitorSmartphone size={15} /> },
+    'smart-big-screen': { label: '课堂大屏', icon: <Monitor size={15} /> },
+  };
+
+  const openTab = (tab: PcPortalApp) => {
+    setOpenTabs((prev) => (prev.includes(tab) ? prev : [...prev, tab]));
+    setActiveTab(tab);
+  };
+
+  const closeTab = (tab: PcPortalApp) => {
+    setOpenTabs((prev) => prev.filter((item) => item !== tab));
+    setActiveTab((prev) => {
+      if (prev !== tab) return prev;
+      const nextTabs = openTabs.filter((item) => item !== tab);
+      return nextTabs[nextTabs.length - 1] ?? 'home';
+    });
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setOpenTabs(['home']);
+    setActiveTab('home');
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return (
+          <SaaSPortal
+            isLoggedIn
+            teacherProfile={teacherProfile}
+            onLoginSuccess={(profile) => {
+              setTeacherProfile(profile);
+              setIsLoggedIn(true);
+            }}
+            onLogout={handleLogout}
+            onNavigate={openTab}
+          />
+        );
+      case 'teacher':
+        return <TeacherDashboard embedded onNavigateBigScreen={() => openTab('smart-big-screen')} />;
+      case 'all-in-one':
+        return <TerminalApp mode="all-in-one" embedded />;
+      case 'smart-big-screen':
+        return (
+          <SmartBigScreen
+            embedded
+            onBack={() => setActiveTab(openTabs.includes('teacher') ? 'teacher' : 'home')}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <SaaSPortal
+        isLoggedIn={false}
+        teacherProfile={teacherProfile}
+        onLoginSuccess={(profile) => {
+          setTeacherProfile(profile);
+          setIsLoggedIn(true);
+        }}
+        onLogout={handleLogout}
+        onNavigate={openTab}
+      />
+    );
+  }
+
+  return (
+    <div className="w-screen h-[100dvh] bg-[#edf3f8] flex flex-col overflow-hidden">
+      <header className="h-14 bg-white border-b border-slate-200 flex items-center shrink-0 shadow-sm">
+        <div className="flex items-center gap-3 min-w-0 pl-5 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#2a68ff] text-white flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
+            <PlatformBrandMark size={20} />
+          </div>
+          <div
+            className="min-w-0 text-[18px] font-black text-slate-800 tracking-[0.01em] leading-none"
+            style={{ fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif' }}
+          >
+            乐途 AI 智慧教育平台
+          </div>
+        </div>
+
+        <div className="flex-1 min-w-0 px-5">
+          <div className="flex items-center gap-2 min-w-max overflow-x-auto scrollbar-hide">
+            {openTabs.map((tab) => {
+              const active = activeTab === tab;
+              return (
+                <div
+                  key={tab}
+                  className={`h-9 rounded-xl border flex items-center gap-2 pl-3.5 pr-2.5 transition-all shrink-0 ${
+                    active ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <button
+                    onClick={() => setActiveTab(tab)}
+                    className="h-full flex items-center gap-2 text-sm font-bold"
+                  >
+                    {tabMeta[tab].icon}
+                    <span>{tabMeta[tab].label}</span>
+                  </button>
+                  {tab !== 'home' && (
+                    <button
+                      onClick={() => closeTab(tab)}
+                      className="w-6 h-6 rounded-lg hover:bg-white/80 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center"
+                      title={`关闭${tabMeta[tab].label}`}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 pr-5">
+          <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+              <span className="text-[13px] font-black">{teacherProfile.name.slice(0, 1)}</span>
+            </div>
+            <div className="hidden md:block text-[13px] font-bold text-slate-700 leading-none">{teacherProfile.name}</div>
+            <button
+              onClick={handleLogout}
+              className="h-9 px-3 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5 active:scale-95"
+              title="退出登录"
+            >
+              <LogOut size={16} />
+              <span className="text-sm font-bold">退出</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 min-h-0 overflow-hidden">{renderContent()}</main>
+    </div>
+  );
+};
+
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'teacher' | 'admin' | 'companion' | 'all-in-one' | 'parent' | 'smart-big-screen'>('terminal');
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const app = params.get('app');
+    if (app === 'terminal' || app === 'admin' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace') {
+      return app;
+    }
+    return 'terminal'; // default
+  });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
 
   return (
@@ -1063,8 +1244,7 @@ const AppSwitcher: React.FC = () => {
       <div key={currentApp} className="animate-in fade-in duration-300">
         {currentApp === 'terminal' && <TerminalApp mode="vending" />}
         {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
-        {currentApp === 'teacher' && <TeacherDashboard onNavigateBigScreen={() => setCurrentApp('smart-big-screen')} />}
-        {currentApp === 'smart-big-screen' && <SmartBigScreen onBack={() => setCurrentApp('teacher')} />}
+        {currentApp === 'pc-workspace' && <PcWorkspace />}
         {currentApp === 'admin' && <MobileApp />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && <ParentApp />}
@@ -1100,17 +1280,9 @@ const AppSwitcher: React.FC = () => {
               <span className="text-[9px] font-bold">货柜机</span>
             </button>
             <button
-              onClick={() => setCurrentApp('all-in-one')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'all-in-one' ? 'bg-teal-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
-              title="班级一体机 - 学生端"
-            >
-              <Monitor size={22} className="mb-1" />
-              <span className="text-[9px] font-bold">一体机</span>
-            </button>
-            <button
-              onClick={() => setCurrentApp('teacher')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
-              title="教师端 - 办公室大屏"
+              onClick={() => setCurrentApp('pc-workspace')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'pc-workspace' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+              title="统一SaaS平台 - PC端"
             >
               <Monitor size={22} className="mb-1" />
               <span className="text-[9px] font-bold">PC端</span>
@@ -1122,22 +1294,6 @@ const AppSwitcher: React.FC = () => {
             >
               <Smartphone size={22} className="mb-1" />
               <span className="text-[9px] font-bold">教师手机端</span>
-            </button>
-            <button
-              onClick={() => setCurrentApp('parent')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'parent' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
-              title="家长端 - 智能批改小程序"
-            >
-              <Smartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold">家长手机端</span>
-            </button>
-            <button
-              onClick={() => setCurrentApp('companion')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'companion' ? 'bg-orange-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
-              title="学伴APP"
-            >
-              <Bot size={22} className="mb-1" />
-              <span className="text-[9px] font-bold">学伴APP</span>
             </button>
           </div>
         </div>
