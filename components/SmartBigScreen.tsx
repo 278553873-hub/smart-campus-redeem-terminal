@@ -1700,10 +1700,11 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           <div className="flex-1 overflow-visible px-10 py-10 flex flex-col justify-center">
             <div className={`grid justify-items-center content-center gap-x-12 gap-y-4 ${randomCount === 1 ? 'grid-cols-1' : randomCount <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                 {[...Array(randomCount)].map((_, idx) => {
-                  const student = randomStudents[idx];
+                  const student = viewMode === 'student' ? randomStudents[idx] : null;
+                  const group = viewMode === 'group' ? randomGroups[idx] : null;
                   const isSingle = randomCount === 1;
                   const isItemRolling = rollingIndices.includes(idx);
-                  const isFinished = student && !isItemRolling;
+                  const isFinished = !!(viewMode === 'student' ? student : group) && !isItemRolling;
                   
                   return (
                     <div
@@ -1718,37 +1719,37 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                       {/* 槽位容器 (可见虚线框 -> 金色完成框) */}
                       <div className={`${viewMode === 'student' ? 'w-[180px] h-[195px]' : 'w-[300px] h-[140px]'} rounded-[2rem] flex flex-col items-center justify-center transition-all duration-500 relative`}>
                         <div className={`absolute inset-0 rounded-[2rem] transition-all duration-500 ${isFinished ? 'border-2 border-amber-400 bg-amber-50/20 animate-gold-finish-burst' : 'border-2 border-dashed border-slate-200 bg-white'}`} />
-                        {(!student && !randomGroups[idx] || isItemRolling) && (
+                        {(!student && !group || isItemRolling) && (
                           <div className="relative z-10 w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-200">
                             {viewMode === 'student' ? <User size={24} /> : <Users size={24} />}
                           </div>
                         )}
                         
-                        {(viewMode === 'student' ? student : randomGroups[idx]) && (
+                        {(viewMode === 'student' ? student : group) && (
                           <div className="absolute inset-0 p-3 flex items-center justify-center animate-in fade-in duration-300 z-10">
                             {viewMode === 'student' ? (
                               <StudentCard 
-                                student={student} 
+                                student={student!} 
                                 isRolling={false} 
                                 isSelectable={!isRolling}
-                                selected={selectedIds.includes(student.id)}
+                                selected={selectedIds.includes(student!.id)}
                                 onClick={() => {
                                   if (!isRolling && !isItemRolling) {
-                                    setSelectedIds(prev => prev.includes(student.id) ? prev.filter(id => id !== student.id) : [...prev, student.id]);
+                                    setSelectedIds(prev => prev.includes(student!.id) ? prev.filter(id => id !== student!.id) : [...prev, student!.id]);
                                   }
                                 }}
                               />
                             ) : (
                               <GroupCard
-                                group={randomGroups[idx]}
-                                memberNames={getGroupMemberNames(randomGroups[idx])}
+                                group={group!}
+                                memberNames={getGroupMemberNames(group!)}
                                 isRolling={false}
                                 isSelectable={!isRolling}
                                 compact={true}
-                                selected={selectedIds.includes(randomGroups[idx].id)}
+                                selected={selectedIds.includes(group!.id)}
                                 onClick={() => {
                                   if (!isRolling && !isItemRolling) {
-                                    const gId = randomGroups[idx].id;
+                                    const gId = group!.id;
                                     setSelectedIds(prev => prev.includes(gId) ? prev.filter(id => id !== gId) : [...prev, gId]);
                                   }
                                 }}
