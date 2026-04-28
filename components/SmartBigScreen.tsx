@@ -72,6 +72,9 @@ interface SmartBigScreenProps {
 }
 
 const CLASSES = ['2025级1班', '2025级2班', '2025级3班'];
+const CARD_WIDTH = 160;
+const CARD_GAP = 24;
+const FILTER_SIDEBAR_WIDTH = 320;
 
 const INITIALS_MAP: Record<string, string> = {
   '林': 'L', '王': 'W', '陈': 'C', '蔡': 'C', '周': 'Z', '赵': 'Z', '孙': 'S', '李': 'L',
@@ -437,9 +440,18 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   useEffect(() => {
     const node = deckContainerRef.current;
     if (!node) return;
+    let frameId: number | null = null;
 
     const updateWidth = () => {
-      setDeckContainerWidth(node.clientWidth);
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      frameId = window.requestAnimationFrame(() => {
+        const nextWidth = getDeckWidth(node.clientWidth, CARD_WIDTH, CARD_GAP);
+        setDeckContainerWidth(prev => (prev === nextWidth ? prev : nextWidth));
+        frameId = null;
+      });
     };
 
     updateWidth();
@@ -451,6 +463,9 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     observer.observe(node);
 
     return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
       observer.disconnect();
     };
   }, []);
@@ -486,10 +501,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     [viewMode, filteredStudents, students, groups]
   );
 
-  const sharedDeckWidth = useMemo(() => {
-    const width = getDeckWidth(deckContainerWidth, 160, 24);
-    return width > 0 ? width : 0;
-  }, [deckContainerWidth]);
+  const sharedDeckWidth = deckContainerWidth;
 
   const groupCardSpan = sharedDeckWidth >= 344 ? 2 : 1;
 
@@ -736,6 +748,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const selectedRandomCount = currentRandomIds.filter(id => selectedIds.includes(id)).length;
   const embeddedToolbarMinWidth = viewMode === 'group' ? 'min-w-[240px]' : 'min-w-[220px]';
   const deckShellStyle = sharedDeckWidth > 0 ? { width: `${sharedDeckWidth}px`, maxWidth: '100%' } : { width: '100%', maxWidth: '100%' };
+  const sidebarTiming = { transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' } as const;
 
   const classSwitcher = (
     <div className="relative">
@@ -877,7 +890,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     </div>
                   </div>
                 )}
-                <div className={`grid grid-cols-[repeat(auto-fill,var(--card-width))] ${viewMode === 'student' ? 'justify-center' : 'justify-start'} gap-6 pb-20 relative`} style={{ '--card-width': '160px' } as any}>
+                <div className={`grid grid-cols-[repeat(auto-fill,var(--card-width))] ${viewMode === 'student' ? 'justify-center' : 'justify-start'} gap-6 pb-20 relative`} style={{ '--card-width': `${CARD_WIDTH}px` } as any}>
                   {!embedded && (
                     <div className="col-span-full relative h-[60px] mb-0">
                       <div className="absolute inset-x-0 top-0 h-full">
@@ -933,32 +946,44 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
             </div>
           </section>
 
-        {isSidebarOpen && (
-          <button onClick={handleSidebarClose} className="absolute right-[320px] top-1/2 -translate-y-1/2 h-24 w-8 bg-white rounded-l-2xl shadow-[-10px_0_30px_rgba(0,0,0,0.05)] border border-r-0 border-slate-100 flex items-center justify-center text-slate-200 hover:text-blue-500 transition-all z-[90] animate-in fade-in slide-in-from-right-2 duration-300"><ChevronRight size={20} /></button>
-        )}
+        <button
+          onClick={handleSidebarClose}
+          className={`absolute top-1/2 z-[90] h-24 w-8 -translate-y-1/2 rounded-l-2xl border border-r-0 border-slate-100 bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.05)] flex items-center justify-center text-slate-200 transition-[transform,opacity,color] duration-500 hover:text-blue-500 ${isSidebarOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-full opacity-0 pointer-events-none'}`}
+          style={{ ...sidebarTiming, right: `${FILTER_SIDEBAR_WIDTH}px`, willChange: 'transform' }}
+        >
+          <ChevronRight size={20} />
+        </button>
 
-        <aside className={`bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.01)] relative transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${isSidebarOpen ? 'w-[320px] opacity-100 border-l border-slate-100' : 'w-0 opacity-0 border-l-0'}`}>
-          <div className="w-[320px] flex-1 overflow-y-auto px-6 pt-10 pb-10 custom-scrollbar shrink-0">
-            <div className="flex flex-col items-center gap-8">
-              <div className="flex gap-4">
-                <button onClick={() => setFilterGender('all')} className={`w-24 h-14 rounded-full flex items-center justify-center text-[17px] font-bold transition-all ${filterGender === 'all' ? 'bg-[#4c8bf5] text-white shadow-lg' : 'bg-slate-50 text-slate-400 border border-slate-100 hover:border-blue-400'}`}>全部</button>
-                <button onClick={() => setFilterGender(filterGender === 'male' ? 'all' : 'male')} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${filterGender === 'male' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-blue-500 border border-blue-50 hover:border-blue-200'}`}><Mars size={24} strokeWidth={3} /></button>
-                <button onClick={() => setFilterGender(filterGender === 'female' ? 'all' : 'female')} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${filterGender === 'female' ? 'bg-pink-600 text-white shadow-lg' : 'bg-white text-pink-500 border border-pink-50 hover:border-pink-200'}`}><Venus size={24} strokeWidth={3} /></button>
-              </div>
-              <div className="w-full h-px bg-slate-100" />
-              <div className="flex flex-col gap-6 w-full px-2">
-                {groupedSurnameIndexes.map(item => (
-                  <div key={item.initial} className="flex items-start gap-4">
-                    <button onClick={() => { if (filterType === 'initial' && filterValue === item.initial) { setFilterType('none'); setFilterValue(null); } else { setFilterType('initial'); setFilterValue(item.initial); } }} className={`w-14 h-14 rounded-full flex items-center justify-center text-[17px] font-bold border transition-all shrink-0 ${filterType === 'initial' && filterValue === item.initial ? 'bg-[#4c8bf5] border-blue-500 text-white' : 'bg-[#eef8ff] text-blue-600 border-transparent hover:border-blue-500'}`}>{item.initial}</button>
-                    <div className="flex flex-wrap gap-3">{item.surnames.map(sur => (
-                      <button key={sur} onClick={() => { if (filterType === 'surname' && filterValue === sur) { setFilterType('none'); setFilterValue(null); } else { setFilterType('surname'); setFilterValue(sur); } }} className={`w-14 h-14 rounded-full flex items-center justify-center text-[17px] font-bold border transition-all ${filterType === 'surname' && filterValue === sur ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-500'}`}>{sur}</button>
-                    ))}</div>
-                  </div>
-                ))}
+        <div
+          className={`relative shrink-0 overflow-hidden transition-[width] duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-100'}`}
+          style={{ ...sidebarTiming, width: isSidebarOpen ? `${FILTER_SIDEBAR_WIDTH}px` : '0px' }}
+        >
+          <aside
+            className={`absolute inset-y-0 right-0 w-[320px] bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.01)] flex flex-col overflow-hidden border-l border-slate-100 transition-[transform,opacity] duration-500 ${isSidebarOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-full opacity-0 pointer-events-none'}`}
+            style={{ ...sidebarTiming, willChange: 'transform' }}
+          >
+            <div className="w-[320px] flex-1 overflow-y-auto px-6 pt-10 pb-10 custom-scrollbar shrink-0">
+              <div className="flex flex-col items-center gap-8">
+                <div className="flex gap-4">
+                  <button onClick={() => setFilterGender('all')} className={`w-24 h-14 rounded-full flex items-center justify-center text-[17px] font-bold transition-all ${filterGender === 'all' ? 'bg-[#4c8bf5] text-white shadow-lg' : 'bg-slate-50 text-slate-400 border border-slate-100 hover:border-blue-400'}`}>全部</button>
+                  <button onClick={() => setFilterGender(filterGender === 'male' ? 'all' : 'male')} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${filterGender === 'male' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-blue-500 border border-blue-50 hover:border-blue-200'}`}><Mars size={24} strokeWidth={3} /></button>
+                  <button onClick={() => setFilterGender(filterGender === 'female' ? 'all' : 'female')} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${filterGender === 'female' ? 'bg-pink-600 text-white shadow-lg' : 'bg-white text-pink-500 border border-pink-50 hover:border-pink-200'}`}><Venus size={24} strokeWidth={3} /></button>
+                </div>
+                <div className="w-full h-px bg-slate-100" />
+                <div className="flex flex-col gap-6 w-full px-2">
+                  {groupedSurnameIndexes.map(item => (
+                    <div key={item.initial} className="flex items-start gap-4">
+                      <button onClick={() => { if (filterType === 'initial' && filterValue === item.initial) { setFilterType('none'); setFilterValue(null); } else { setFilterType('initial'); setFilterValue(item.initial); } }} className={`w-14 h-14 rounded-full flex items-center justify-center text-[17px] font-bold border transition-all shrink-0 ${filterType === 'initial' && filterValue === item.initial ? 'bg-[#4c8bf5] border-blue-500 text-white' : 'bg-[#eef8ff] text-blue-600 border-transparent hover:border-blue-500'}`}>{item.initial}</button>
+                      <div className="flex flex-wrap gap-3">{item.surnames.map(sur => (
+                        <button key={sur} onClick={() => { if (filterType === 'surname' && filterValue === sur) { setFilterType('none'); setFilterValue(null); } else { setFilterType('surname'); setFilterValue(sur); } }} className={`w-14 h-14 rounded-full flex items-center justify-center text-[17px] font-bold border transition-all ${filterType === 'surname' && filterValue === sur ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-500'}`}>{sur}</button>
+                      ))}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+        </div>
 
         <div className={`fixed inset-0 z-[100] bg-slate-900/10 backdrop-blur-sm transition-opacity duration-300 ${historyOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setHistoryOpen(false)} />
         <aside className={`fixed right-0 top-0 bottom-0 w-[360px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[101] flex flex-col border-l border-slate-100 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${historyOpen ? 'translate-x-0' : 'translate-x-full'}`}>

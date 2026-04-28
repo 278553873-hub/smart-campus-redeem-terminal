@@ -3,7 +3,6 @@ import {
   Settings,
   User,
   Zap,
-  Heart,
   Monitor,
   MonitorSmartphone,
   ShieldCheck,
@@ -100,6 +99,7 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
       arrowClass: 'border-blue-200/80 bg-white text-blue-500 shadow-[0_12px_24px_rgba(59,130,246,0.16)]',
       target: 'teacher' as const,
       meta: '有效期至：2027-09-01',
+      studentsCount: '开通学生：2530',
     },
     {
       id: 'smart-big-screen',
@@ -127,16 +127,6 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
       desc: 'AI 美育产品，将学生的手绘作品生成视频',
       price: '按 token 计费',
       ctaLabel: '了解更多',
-    },
-    {
-      id: 'psychology',
-      name: '心理测评',
-      icon: Heart,
-      color: 'from-[#f43f5e] to-[#fb7185]',
-      shadow: 'shadow-rose-400/40',
-      desc: '全方位的诊断学生的心理情况',
-      price: '10元/人/年',
-      ctaLabel: '敬请期待',
     },
   ];
 
@@ -388,16 +378,37 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
 
           {/* ── 顶部欢迎横幅 ── */}
           <section className="relative overflow-hidden rounded-lg bg-white px-8 py-6 shadow-sm border border-slate-100">
-            {/* 右侧装饰插图（云朵+小人） */}
-            <div className="absolute right-8 top-0 bottom-0 hidden xl:flex items-center">
-              <div className="relative w-48 h-20">
-                <div className="absolute right-0 top-0 w-20 h-10 rounded-full bg-sky-100/80" />
-                <div className="absolute right-16 top-3 w-14 h-8 rounded-full bg-blue-100/80" />
-                <div className="absolute right-6 top-8 w-10 h-14 rounded-t-full bg-blue-200/70" />
-                <div className="absolute right-20 top-5 w-8 h-12 rounded-t-full bg-cyan-100/80" />
+            {/* 右侧品牌化轻插画区 */}
+            <div className="pointer-events-none absolute inset-y-0 right-6 hidden w-[340px] xl:block">
+              <div className="relative h-full w-full">
+                <div className="absolute right-8 top-1/2 h-28 w-28 -translate-y-1/2 rounded-full bg-sky-100/70 blur-3xl" />
+                <div className="absolute right-0 top-10 h-24 w-24 rounded-full bg-cyan-100/65 blur-2xl" />
+                <div className="absolute left-20 bottom-5 h-20 w-20 rounded-full bg-blue-100/60 blur-2xl" />
+
+                <div className="absolute right-8 top-1/2 h-[126px] w-[220px] -translate-y-1/2 rounded-[2rem] border border-sky-100/80 bg-[linear-gradient(135deg,rgba(239,246,255,0.92)_0%,rgba(255,255,255,0.96)_54%,rgba(236,254,255,0.92)_100%)] shadow-[0_24px_52px_rgba(148,163,184,0.14)]">
+                  <div className="absolute inset-x-0 top-0 h-12 rounded-t-[2rem] bg-gradient-to-r from-blue-100/55 via-white/20 to-cyan-100/55" />
+                  <div className="absolute left-5 top-6 h-2 w-16 rounded-full bg-blue-100/90" />
+                  <div className="absolute left-5 top-12 h-2 w-11 rounded-full bg-slate-100" />
+                  <div className="absolute left-5 bottom-6 flex gap-2">
+                    <span className="h-9 w-9 rounded-2xl bg-blue-50 shadow-sm" />
+                    <span className="h-9 w-9 rounded-2xl bg-cyan-50 shadow-sm" />
+                    <span className="h-9 w-9 rounded-2xl bg-emerald-50 shadow-sm" />
+                  </div>
+                  <PlatformBrandMark className="absolute right-5 top-1/2 -translate-y-1/2 text-blue-200/75" size={54} />
+                </div>
+
+                <div className="absolute left-4 top-7 flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-blue-100/80 bg-white/90 text-blue-500 shadow-[0_18px_34px_rgba(59,130,246,0.12)]">
+                  <Settings size={26} strokeWidth={2.1} />
+                </div>
+                <div className="absolute left-14 bottom-5 flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-violet-100/80 bg-white/92 text-violet-500 shadow-[0_18px_34px_rgba(139,92,246,0.10)]">
+                  <BookOpen size={22} strokeWidth={2.1} />
+                </div>
+                <div className="absolute right-28 bottom-7 flex h-12 w-12 items-center justify-center rounded-[1.1rem] border border-emerald-100/80 bg-white/92 text-emerald-500 shadow-[0_16px_28px_rgba(16,185,129,0.10)]">
+                  <Monitor size={19} strokeWidth={2.1} />
+                </div>
               </div>
             </div>
-            <div className="relative">
+            <div className="relative xl:max-w-[calc(100%-360px)]">
               <h1 className="text-[28px] font-black text-slate-800 tracking-tight leading-tight">
                 {teacherProfile.name}，您好！ 👏
               </h1>
@@ -440,7 +451,12 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                           <div className="mt-2 text-[14px] font-semibold leading-6 text-slate-500">{app.desc}</div>
                         </div>
                         <div className="mt-auto flex items-end justify-between gap-4 pt-7">
-                          <span className="text-[14px] font-semibold tracking-[0.01em] text-slate-400">{app.meta}</span>
+                          <div className="flex flex-col gap-0.5">
+                            {(app as any).studentsCount && (
+                              <span className="text-[14px] font-semibold tracking-[0.01em] text-slate-400">{(app as any).studentsCount}</span>
+                            )}
+                            <span className="text-[14px] font-semibold tracking-[0.01em] text-slate-400">{app.meta}</span>
+                          </div>
                           <div className={`flex h-12 w-12 items-center justify-center rounded-full border transition-all duration-300 group-hover:translate-x-0.5 ${app.arrowClass}`}>
                             <ChevronRight size={20} strokeWidth={2.2} />
                           </div>
