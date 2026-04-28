@@ -45,6 +45,18 @@ interface EvaluationOption {
   category: string;
 }
 
+interface EvalRecord {
+  id: string;
+  studentNames: string[];
+  optionLabel: string;
+  type: 'positive' | 'negative';
+  time: string;
+  source: 'manual' | 'voice';
+  originalInput: string;
+  aiScorePath: string;
+  aiScoreValue: string;
+}
+
 interface GroupData {
   id: string;
   name: string;
@@ -70,6 +82,34 @@ interface SmartBigScreenProps {
   onBack: () => void;
   embedded?: boolean;
 }
+
+const VoiceMicGlyph: React.FC<{ muted?: boolean; className?: string }> = ({ muted = false, className = '' }) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+    <path d="M5 11a7 7 0 0 0 14 0" />
+    <path d="M12 18v3" />
+    <path d="M8 21h8" />
+    {muted && <path d="M4 4l16 16" />}
+  </svg>
+);
+
+const VoiceWaveGlyph: React.FC<{ level: number }> = ({ level }) => {
+  const bars = [0.35, 0.65, 1, 0.78, 0.48];
+  return (
+    <div className="relative z-10 flex h-8 w-9 items-center justify-center gap-1">
+      {bars.map((weight, index) => {
+        const height = 8 + Math.round(level * weight * 22);
+        return (
+          <span
+            key={index}
+            className="w-1.5 rounded-full bg-white transition-[height] duration-75 ease-out"
+            style={{ height: `${height}px` }}
+          />
+        );
+      })}
+    </div>
+  );
+};
 
 const CLASSES = ['2025级1班', '2025级2班', '2025级3班'];
 const CARD_WIDTH = 160;
@@ -253,6 +293,7 @@ const GENERATE_MOCK_GROUP_PLANS = (className: string, students: StudentData[]): 
 
 const GroupCard: React.FC<{
   group: GroupData;
+  memberNames?: string[];
   selected?: boolean;
   isSelectable?: boolean;
   isRolling?: boolean;
@@ -261,6 +302,7 @@ const GroupCard: React.FC<{
   compact?: boolean;
 }> = ({
   group,
+  memberNames = [],
   selected = false,
   isSelectable = false,
   isRolling = false,
@@ -268,9 +310,15 @@ const GroupCard: React.FC<{
   className = '',
   compact = false
 }) => {
+  const visibleNameCount = compact ? 2 : 3;
+  const visibleNames = memberNames.slice(0, visibleNameCount);
+  const memberSummary = visibleNames.length > 0
+    ? `${visibleNames.join('、')}${memberNames.length > visibleNames.length ? `等${group.memberCount}人` : ` 共${group.memberCount}人`}`
+    : `共${group.memberCount}人`;
+
   const baseClassName = compact
-    ? 'w-[260px] h-[100px] rounded-[1.25rem] px-6 gap-5'
-    : 'w-full h-[112px] rounded-[1.5rem] px-6 gap-5';
+    ? 'w-[260px] h-[112px] rounded-[1.25rem] px-5 gap-4'
+    : 'w-full h-[120px] rounded-[1.5rem] px-6 gap-5';
 
   const checkClassName = compact
     ? 'top-3 right-3 w-5 h-5 rounded-md'
@@ -289,13 +337,20 @@ const GroupCard: React.FC<{
       <div className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-black shadow-md bg-gradient-to-br from-indigo-500 to-purple-600 shrink-0">
         {group.name.slice(0, 1)}
       </div>
-      <div className="flex flex-col gap-1.5 overflow-hidden min-w-0 flex-1">
-        <h3 className="text-[17px] font-bold text-slate-800 tracking-tight leading-none truncate">
-          {group.name}
-        </h3>
-        <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-50 rounded-md border border-slate-100 w-fit">
-          <Users size={10} className="text-slate-400" />
-          <span className="text-[11px] font-black text-slate-500">{group.memberCount}人</span>
+      <div className="flex flex-col gap-2 overflow-hidden min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 pr-5">
+          <h3 className="text-[17px] font-bold text-slate-800 tracking-tight leading-none truncate">
+            {group.name}
+          </h3>
+          <span className="shrink-0 rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-black text-blue-600 border border-blue-100">
+            {group.memberCount}人
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 min-w-0 rounded-lg border border-slate-100 bg-slate-50/80 px-2.5 py-1.5">
+          <Users size={12} className="shrink-0 text-slate-400" strokeWidth={2.6} />
+          <span className="truncate text-[12px] font-bold leading-none text-slate-600" title={memberNames.join('、')}>
+            {memberSummary}
+          </span>
         </div>
       </div>
     </div>
@@ -387,20 +442,83 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [isRandomPickerOpen, setIsRandomPickerOpen] = useState(false);
   const [randomTick, setRandomTick] = useState(0);
   const [rollingIndices, setRollingIndices] = useState<number[]>([]);
-  const [evalRecords, setEvalRecords] = useState<{ id: string, studentNames: string[], optionLabel: string, type: 'positive' | 'negative', time: string }[]>([]);
+  const [evalRecords, setEvalRecords] = useState<EvalRecord[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [voiceLevel, setVoiceLevel] = useState(0);
+  const [voiceDockPosition, setVoiceDockPosition] = useState<{ x: number; y: number } | null>(null);
   const randomRollTimerRef = useRef<number | null>(null);
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
+  const speechRecognitionRef = useRef<any | null>(null);
+  const voiceFinalizedRef = useRef(false);
+  const voiceTranscriptRef = useRef('');
+  const voiceListeningRef = useRef(false);
+  const voiceStreamRef = useRef<MediaStream | null>(null);
+  const voiceAudioContextRef = useRef<AudioContext | null>(null);
+  const voiceLevelFrameRef = useRef<number | null>(null);
+  const demoRecordClassRef = useRef<string | null>(null);
+  const voiceDockRef = useRef<HTMLDivElement | null>(null);
+  const voiceDragRef = useRef({
+    active: false,
+    pointerId: -1,
+    startX: 0,
+    startY: 0,
+    originX: 0,
+    originY: 0,
+    width: 64,
+    height: 64,
+    moved: false
+  });
   const deckContainerRef = useRef<HTMLDivElement | null>(null);
   const [deckContainerWidth, setDeckContainerWidth] = useState(0);
 
   const students = useMemo(() => GENERATE_MOCK_DATA(currentClass), [currentClass]);
+  const studentNameById = useMemo(() => new Map(students.map(student => [student.id, student.name])), [students]);
   const groupPlans = useMemo(() => GENERATE_MOCK_GROUP_PLANS(currentClass, students), [currentClass, students]);
   const activeGroupPlan = useMemo(
     () => groupPlans.find(plan => plan.id === selectedGroupPlanId) || groupPlans[0] || null,
     [groupPlans, selectedGroupPlanId]
   );
   const groups = useMemo(() => activeGroupPlan?.groups || [], [activeGroupPlan]);
+  const getGroupMemberNames = (group: GroupData) => group.memberIds
+    .map(id => studentNameById.get(id))
+    .filter((name): name is string => Boolean(name));
+
+  useEffect(() => {
+    if (demoRecordClassRef.current === currentClass || students.length < 3) return;
+    demoRecordClassRef.current = currentClass;
+    const now = new Date();
+    const formatDemoTime = (offsetMinutes: number) => {
+      const time = new Date(now.getTime() - offsetMinutes * 60 * 1000);
+      return `${time.getFullYear()}年${(time.getMonth() + 1).toString().padStart(2, '0')}月${time.getDate().toString().padStart(2, '0')}日 ${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+    };
+    const [firstStudent, secondStudent, thirdStudent] = students;
+    setEvalRecords([
+      {
+        id: `demo-voice-${currentClass}`,
+        studentNames: [firstStudent.name, secondStudent.name],
+        optionLabel: '积极举手',
+        type: 'positive',
+        time: formatDemoTime(2),
+        source: 'voice',
+        originalInput: `${firstStudent.name}和${secondStudent.name}这节课主动举手发言，表达也很清楚`,
+        aiScorePath: '智育-课堂表现-积极参与',
+        aiScoreValue: '+1'
+      },
+      {
+        id: `demo-manual-${currentClass}`,
+        studentNames: [thirdStudent.name],
+        optionLabel: '专注听讲',
+        type: 'positive',
+        time: formatDemoTime(6),
+        source: 'manual',
+        originalInput: `${thirdStudent.name}｜专注听讲`,
+        aiScorePath: '智育-课堂表现-积极参与',
+        aiScoreValue: '+1'
+      }
+    ]);
+  }, [currentClass, students]);
 
   useEffect(() => {
     if (!window.confetti) {
@@ -434,6 +552,14 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       if (randomRollTimerRef.current !== null) {
         window.clearTimeout(randomRollTimerRef.current);
       }
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.stop();
+      }
+      if (voiceLevelFrameRef.current !== null) {
+        window.cancelAnimationFrame(voiceLevelFrameRef.current);
+      }
+      voiceStreamRef.current?.getTracks().forEach(track => track.stop());
+      voiceAudioContextRef.current?.close().catch(() => { });
     };
   }, []);
 
@@ -574,7 +700,11 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       studentNames,
       optionLabel: option.label,
       type: option.type,
-      time: `${now.getFullYear()}年${(now.getMonth() + 1).toString().padStart(2, '0')}月${now.getDate().toString().padStart(2, '0')}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+      time: `${now.getFullYear()}年${(now.getMonth() + 1).toString().padStart(2, '0')}月${now.getDate().toString().padStart(2, '0')}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`,
+      source: 'manual' as const,
+      originalInput: `${studentNames.join('、')}｜${option.label}`,
+      aiScorePath: '智育-课堂表现-积极参与',
+      aiScoreValue: option.type === 'positive' ? '+1' : '-1'
     };
     setEvalRecords(prev => [newRecord, ...prev].slice(0, 15));
 
@@ -601,7 +731,326 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     }, 200);
   };
 
+  const getSpeechRecognitionCtor = () => {
+    const speechWindow = window as any;
+    return speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+  };
+
+  const getMicrophoneErrorMessage = (error: unknown) => {
+    const errorName = error instanceof DOMException ? error.name : '';
+    if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') return '麦克风权限被浏览器或系统拒绝';
+    if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') return '未检测到可用麦克风设备';
+    if (errorName === 'NotReadableError' || errorName === 'TrackStartError') return '麦克风可能被其他应用占用';
+    if (errorName === 'OverconstrainedError') return '当前麦克风设备不满足采集条件';
+    if (errorName === 'SecurityError') return '当前页面不允许使用麦克风';
+    return '语音采集未成功，请检查浏览器和系统麦克风权限';
+  };
+
+  const formatRecordTime = () => {
+    const now = new Date();
+    return `${now.getFullYear()}年${(now.getMonth() + 1).toString().padStart(2, '0')}月${now.getDate().toString().padStart(2, '0')}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  const splitSpokenNames = (value: string) => value
+    .split(/[、和与及,，]/)
+    .map(name => name.trim())
+    .filter(Boolean);
+
+  const inferVoiceOption = (text: string) => {
+    const normalized = text.replace(/\s/g, '');
+    const matchedOption = options.find(option => normalized.includes(option.label.replace(/\s/g, '')));
+    if (matchedOption) return { label: matchedOption.label, type: matchedOption.type };
+
+    const negativeRules = [
+      { keywords: ['吵架', '争吵', '冲突'], label: '上课吵架', type: 'negative' as const },
+      { keywords: ['说话', '讲话', '聊天', '交头接耳'], label: '交头耳语', type: 'negative' as const },
+      { keywords: ['不认真', '走神', '注意力不集中'], label: '注意力涣散', type: 'negative' as const },
+      { keywords: ['插话', '抢话'], label: '随意插话', type: 'negative' as const }
+    ];
+    const positiveRules = [
+      { keywords: ['积极举手', '举手发言', '主动发言'], label: '积极举手', type: 'positive' as const },
+      { keywords: ['表现优异', '表现优秀', '表现很好', '表现很棒'], label: '表现优异', type: 'positive' as const },
+      { keywords: ['合作', '协作'], label: '合作积极', type: 'positive' as const },
+      { keywords: ['声音响亮'], label: '声音响亮', type: 'positive' as const },
+      { keywords: ['表达清楚', '表达清晰'], label: '表达清晰', type: 'positive' as const },
+      { keywords: ['认真听讲', '专注'], label: '专注听讲', type: 'positive' as const }
+    ];
+    const rule = [...negativeRules, ...positiveRules].find(item => item.keywords.some(keyword => normalized.includes(keyword)));
+    return rule ? { label: rule.label, type: rule.type } : { label: text.trim(), type: evalTab };
+  };
+
+  const inferVoiceTargets = (text: string) => {
+    const normalized = text.replace(/\s/g, '');
+    const matchedGroup = groups.find(group => {
+      const groupName = group.name.replace(/\s/g, '');
+      const compactGroupName = groupName.replace(/(\D+?)0?(\d+)组/, '$1$2组');
+      return normalized.includes(groupName) || normalized.includes(compactGroupName);
+    });
+    if (matchedGroup) return { names: [matchedGroup.name], studentIds: matchedGroup.memberIds };
+
+    const matchedStudents = students.filter(student => normalized.includes(student.name));
+    const excludeMatch = normalized.match(/(?:除了|除)(.+?)(?:以外|外)/);
+    const excludeNames = excludeMatch ? splitSpokenNames(excludeMatch[1]) : [];
+    const excludedIds = students
+      .filter(student => excludeNames.some(name => student.name.includes(name) || student.surname === name))
+      .map(student => student.id);
+    const isClassWide = normalized.includes(currentClass) || normalized.includes('全班') || normalized.includes('其余学生') || normalized.includes('其他学生') || normalized.includes('全体学生');
+
+    if (isClassWide) {
+      const targets = students.filter(student => !excludedIds.includes(student.id));
+      return { names: targets.map(student => student.name), studentIds: targets.map(student => student.id) };
+    }
+
+    if (matchedStudents.length > 0) {
+      return { names: matchedStudents.map(student => student.name), studentIds: matchedStudents.map(student => student.id) };
+    }
+
+    const spokenNameMatch = normalized.match(/^(.+?)(?:上课|课堂|表现|积极|都|均|一起|的时候)/);
+    const spokenNames = spokenNameMatch ? splitSpokenNames(spokenNameMatch[1]) : [];
+    if (spokenNames.length > 0 && spokenNames.length <= 6) return { names: spokenNames, studentIds: [] };
+
+    return { names: [], studentIds: [] };
+  };
+
+  const handleVoiceEvaluation = (text: string) => {
+    const label = text.trim().replace(/[，。,.\s]+$/g, '');
+    if (!label) {
+      setToastMsg('没有识别到有效点评内容，请再试一次');
+      setTimeout(() => setToastMsg(null), 3000);
+      return;
+    }
+
+    const targets = inferVoiceTargets(label);
+    if (targets.names.length === 0) {
+      setToastMsg('AI 未识别到明确评价对象，请说出学生姓名、小组名或班级范围');
+      setTimeout(() => setToastMsg(null), 3000);
+      return;
+    }
+
+    const option = inferVoiceOption(label);
+    setEvalRecords(prev => [{
+      id: `voice-${Date.now()}`,
+      studentNames: targets.names,
+      optionLabel: option.label,
+      type: option.type,
+      time: formatRecordTime(),
+      source: 'voice',
+      originalInput: label,
+      aiScorePath: '智育-课堂表现-积极参与',
+      aiScoreValue: option.type === 'positive' ? '+1' : '-1'
+    }, ...prev].slice(0, 15));
+
+    if (option.type === 'positive') {
+      fireCelebration();
+    } else if (targets.studentIds.length === 1) {
+      fireRaindropHint(targets.studentIds[0]);
+    } else {
+      setIsGlobalRaining(true);
+      const audio = audioRefs.current['rain'];
+      if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
+      setTimeout(() => setIsGlobalRaining(false), 1800);
+    }
+
+    const targetText = targets.names.length > 3 ? `${targets.names.slice(0, 3).join('、')}等${targets.names.length}人` : targets.names.join('、');
+    setToastMsg(`AI 已识别：${targetText}｜${option.label}`);
+    setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const stopVoiceLevelMeter = () => {
+    if (voiceLevelFrameRef.current !== null) {
+      window.cancelAnimationFrame(voiceLevelFrameRef.current);
+      voiceLevelFrameRef.current = null;
+    }
+    voiceStreamRef.current?.getTracks().forEach(track => track.stop());
+    voiceStreamRef.current = null;
+    voiceAudioContextRef.current?.close().catch(() => { });
+    voiceAudioContextRef.current = null;
+    setVoiceLevel(0);
+  };
+
+  const startVoiceLevelMeter = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) return;
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    voiceStreamRef.current = stream;
+    const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextCtor) return;
+
+    const audioContext = new AudioContextCtor();
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.72;
+    const source = audioContext.createMediaStreamSource(stream);
+    const data = new Uint8Array(analyser.fftSize);
+    source.connect(analyser);
+    voiceAudioContextRef.current = audioContext;
+
+    const updateLevel = () => {
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let index = 0; index < data.length; index += 1) {
+        const normalized = (data[index] - 128) / 128;
+        sum += normalized * normalized;
+      }
+      const rms = Math.sqrt(sum / data.length);
+      setVoiceLevel(Math.min(1, rms * 5));
+      voiceLevelFrameRef.current = window.requestAnimationFrame(updateLevel);
+    };
+
+    updateLevel();
+  };
+
+  const stopVoiceCapture = (submitCurrent = false) => {
+    if (submitCurrent && voiceTranscriptRef.current.trim() && !voiceFinalizedRef.current) {
+      voiceFinalizedRef.current = true;
+      handleVoiceEvaluation(voiceTranscriptRef.current);
+    }
+    if (speechRecognitionRef.current) {
+      speechRecognitionRef.current.stop();
+    }
+    voiceListeningRef.current = false;
+    stopVoiceLevelMeter();
+    setIsVoiceListening(false);
+  };
+
+  const startVoiceCapture = async () => {
+    const SpeechRecognitionCtor = getSpeechRecognitionCtor();
+    if (!SpeechRecognitionCtor) {
+      setToastMsg('当前浏览器不支持语音识别，请使用最新版 Chrome 浏览器访问本地地址');
+      setTimeout(() => setToastMsg(null), 3000);
+      return;
+    }
+
+    voiceFinalizedRef.current = false;
+    voiceTranscriptRef.current = '';
+    setVoiceTranscript('');
+
+    try {
+      await startVoiceLevelMeter();
+    } catch (error) {
+      stopVoiceLevelMeter();
+      console.warn('麦克风权限获取失败', error);
+      setToastMsg(getMicrophoneErrorMessage(error));
+      setTimeout(() => setToastMsg(null), 3000);
+      return;
+    }
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'zh-CN';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      voiceListeningRef.current = true;
+      setIsVoiceListening(true);
+    };
+    recognition.onresult = (event: any) => {
+      let nextTranscript = '';
+      for (let index = 0; index < event.results.length; index += 1) {
+        nextTranscript += event.results[index][0]?.transcript || '';
+      }
+      voiceTranscriptRef.current = nextTranscript.trim();
+      setVoiceTranscript(nextTranscript.trim());
+    };
+    recognition.onerror = (event: any) => {
+      voiceListeningRef.current = false;
+      stopVoiceLevelMeter();
+      setIsVoiceListening(false);
+      console.warn('语音识别失败', event);
+      setToastMsg('语音识别未成功，请检查浏览器麦克风权限后重试');
+      setTimeout(() => setToastMsg(null), 3000);
+    };
+    recognition.onend = () => {
+      if (voiceListeningRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch {
+          voiceListeningRef.current = false;
+        }
+      }
+      stopVoiceLevelMeter();
+      setIsVoiceListening(false);
+    };
+
+    speechRecognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const toggleVoiceCapture = () => {
+    if (isVoiceListening) stopVoiceCapture(true);
+    else startVoiceCapture();
+  };
+
+  const clampVoiceDockPosition = (x: number, y: number, width: number, height: number) => ({
+    x: Math.min(Math.max(12, x), Math.max(12, window.innerWidth - width - 12)),
+    y: Math.min(Math.max(12, y), Math.max(12, window.innerHeight - height - 12))
+  });
+
+  const handleVoiceDockPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+    const rect = voiceDockRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    voiceDragRef.current = {
+      active: true,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: rect.left,
+      originY: rect.top,
+      width: rect.width,
+      height: rect.height,
+      moved: false
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleVoiceDockPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = voiceDragRef.current;
+    if (!drag.active || drag.pointerId !== event.pointerId) return;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) drag.moved = true;
+    setVoiceDockPosition(clampVoiceDockPosition(drag.originX + dx, drag.originY + dy, drag.width, drag.height));
+  };
+
+  const handleVoiceDockPointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = voiceDragRef.current;
+    if (!drag.active || drag.pointerId !== event.pointerId) return;
+    voiceDragRef.current = { ...drag, active: false };
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (!drag.moved) toggleVoiceCapture();
+  };
+
+  const handleVoiceDockPointerCancel = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = voiceDragRef.current;
+    if (drag.pointerId === event.pointerId) {
+      voiceDragRef.current = { ...drag, active: false };
+    }
+  };
+
+  useEffect(() => {
+    if ((evaluationModalOpen || groupDetailsModalOpen || randomModalOpen) && isVoiceListening) {
+      stopVoiceCapture(false);
+    }
+  }, [evaluationModalOpen, groupDetailsModalOpen, randomModalOpen, isVoiceListening]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setVoiceDockPosition(prev => {
+        if (!prev) return prev;
+        const rect = voiceDockRef.current?.getBoundingClientRect();
+        return clampVoiceDockPosition(prev.x, prev.y, rect?.width || 64, rect?.height || 64);
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleCloseEvaluation = () => {
+    stopVoiceCapture(false);
+    setVoiceTranscript('');
     setEvaluationModalOpen(false);
     setIsManagerMode(false);
     setEvalStudent(null);
@@ -846,6 +1295,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     </>
   );
 
+  const showPageVoiceButton = !evaluationModalOpen && !groupDetailsModalOpen && !randomModalOpen && !historyOpen;
   return (
     <div className={`${embedded ? 'w-full h-full' : 'fixed inset-0'} bg-[#f0f3f6] font-sans text-slate-800 overflow-hidden flex flex-col`}>
       {isGlobalRaining && (
@@ -921,6 +1371,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     <div key={group.id} className={groupCardSpan === 2 ? 'col-span-2' : 'col-span-1'}>
                       <GroupCard
                         group={group}
+                        memberNames={getGroupMemberNames(group)}
                         selected={selectedIds.includes(group.id)}
                         isSelectable={isMultiSelect}
                         compact={groupCardSpan === 1}
@@ -986,44 +1437,73 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         </div>
 
         <div className={`fixed inset-0 z-[100] bg-slate-900/10 backdrop-blur-sm transition-opacity duration-300 ${historyOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setHistoryOpen(false)} />
-        <aside className={`fixed right-0 top-0 bottom-0 w-[360px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[101] flex flex-col border-l border-slate-100 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${historyOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-          <div className="px-6 py-8 flex flex-col gap-1 border-b border-slate-50 shrink-0">
+        <aside className={`fixed right-0 top-0 bottom-0 w-[400px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[101] flex flex-col border-l border-slate-100 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${historyOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="px-6 py-6 flex flex-col gap-1 border-b border-slate-50 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 bg-blue-600/5 rounded-xl flex items-center justify-center text-blue-600"><History size={18} strokeWidth={2.5} /></div>
-                <h3 className="text-lg font-black text-slate-700 tracking-tight">近期点评记录</h3>
+                <h3 className="text-lg font-black text-slate-700 tracking-tight">点评记录</h3>
               </div>
               <button onClick={() => setHistoryOpen(false)} className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-xl text-slate-400 transition-all"><X size={20} /></button>
             </div>
-            <p className="text-[11px] font-bold text-slate-400 mt-2 px-0.5 leading-relaxed">仅显示您在此班级 ({currentClass}) 的最近 15 条点评记录。误评后可点击“撤回”删除。</p>
+            <p className="text-[11px] font-bold text-slate-400 mt-1 px-0.5 leading-relaxed">最近 15 条，展示原始录入与 AI 分析结果。</p>
           </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-3 bg-slate-50/30">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-slate-50/40">
             {evalRecords.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-300 gap-4">
                 <div className="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center"><History size={32} strokeWidth={1.5} /></div>
                 <span className="text-sm font-bold">暂无点评记录</span>
               </div>
             ) : (
-              evalRecords.map((record, idx) => (
-                <div key={record.id} className="group p-4 rounded-2xl border border-slate-100 bg-white hover:border-blue-500 hover:shadow-xl hover:scale-[1.02] transition-all relative animate-in fade-in slide-in-from-bottom-1 duration-300" style={{ animationDelay: `${idx * 40}ms` }}>
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span className="text-[11px] font-bold text-slate-300 font-mono tracking-tight">{record.time}</span>
-                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider ${record.type === 'positive' ? 'bg-green-50 text-green-600' : 'bg-rose-50 text-rose-600'}`}>{record.type === 'positive' ? '表扬' : '待改进'}</span>
+              evalRecords.map((record, idx) => {
+                const visibleNames = record.studentNames.slice(0, 4);
+                const hiddenNameCount = Math.max(0, record.studentNames.length - visibleNames.length);
+                return (
+                  <div key={record.id} className="group rounded-2xl border border-slate-100 bg-white p-3 shadow-[0_4px_12px_rgba(0,0,0,0.02)] transition-all hover:border-blue-500 hover:shadow-xl hover:scale-[1.01] animate-in fade-in slide-in-from-bottom-1 duration-300" style={{ animationDelay: `${idx * 32}ms` }}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className={`shrink-0 rounded-lg px-2 py-1 text-[10px] font-black ${record.source === 'voice' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>{record.source === 'voice' ? '语音录入' : '点选录入'}</span>
+                        <span className="truncate text-[11px] font-bold text-slate-300 font-mono tracking-tight">{record.time}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setEvalRecords(prev => prev.filter(r => r.id !== record.id));
+                          setToastMsg(`已撤销点评「${record.optionLabel}」`);
+                          setTimeout(() => setToastMsg(null), 3000);
+                        }}
+                        className="shrink-0 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[11px] font-black text-slate-400 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-500 active:scale-95"
+                      >
+                        撤销
+                      </button>
+                    </div>
+
+                    <div className="mt-2 rounded-xl bg-slate-50 px-3 py-2">
+                      <div className="text-[10px] font-black tracking-widest text-slate-400">原始录入</div>
+                      <p className="mt-1 line-clamp-2 text-[13px] font-bold leading-snug text-slate-700">{record.originalInput}</p>
+                    </div>
+
+                    <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/40 px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[10px] font-black tracking-widest text-blue-400">AI 分析</div>
+                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-black ${record.type === 'positive' ? 'bg-green-50 text-green-600' : 'bg-rose-50 text-rose-600'}`}>{record.type === 'positive' ? '表扬' : '待改进'}</span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className="mr-0.5 text-[11px] font-black text-slate-400">对象</span>
+                        {visibleNames.map(name => (
+                          <span key={name} className="rounded-full border border-blue-100 bg-white px-2 py-0.5 text-[12px] font-black text-blue-600 shadow-sm">{name}</span>
+                        ))}
+                        {hiddenNameCount > 0 && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[12px] font-black text-blue-600">等{record.studentNames.length}人</span>}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-3 rounded-lg bg-white px-2.5 py-1.5 border border-blue-100">
+                        <span className="truncate text-[12px] font-black text-slate-700">详细分数：{record.aiScorePath}</span>
+                        <span className={`shrink-0 rounded-md px-2 py-0.5 text-[12px] font-black ${record.aiScoreValue.startsWith('+') ? 'bg-green-50 text-green-600' : 'bg-rose-50 text-rose-600'}`}>{record.aiScoreValue}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-1.5">{record.studentNames.map(name => (<span key={name} className="text-xs font-bold text-slate-500">@{name}</span>))}</div>
-                    <p className="text-[15px] font-black text-slate-800 leading-tight pr-10">{record.optionLabel}</p>
-                  </div>
-                  <button onClick={() => { setEvalRecords(prev => prev.filter(r => r.id !== record.id)); setToastMsg(`已撤回点评「${record.optionLabel}」`); setTimeout(() => setToastMsg(null), 3000); }} className="absolute bottom-4 right-3.5 flex items-center gap-1 text-[11px] font-bold text-slate-300 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"><RotateCcw size={12} strokeWidth={3} />撤回</button>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
-          {evalRecords.length > 0 && (
-            <div className="p-5 border-t border-slate-50 bg-white">
-              <button onClick={() => { setEvalRecords(prev => prev.slice(1)); setToastMsg(`已撤回最近一次点评`); setTimeout(() => setToastMsg(null), 3000); }} className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-50 text-slate-500 rounded-xl font-bold text-sm hover:bg-rose-50 hover:text-rose-600 transition-all active:scale-[0.98]"><RotateCcw size={14} strokeWidth={3} />撤回最近一次点评</button>
-            </div>
-          )}
         </aside>
       </div>
 
@@ -1112,6 +1592,36 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           </div>
         </div>
       </div>
+
+      {showPageVoiceButton && (
+        <div
+          ref={voiceDockRef}
+          className={`fixed z-[80] flex items-end gap-3 ${voiceDockPosition ? '' : 'right-10 bottom-28'}`}
+          style={voiceDockPosition ? { left: `${voiceDockPosition.x}px`, top: `${voiceDockPosition.y}px` } : undefined}
+        >
+          <div className={`max-w-[320px] rounded-2xl border border-blue-100 bg-white px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.10)] transition-all ${isVoiceListening ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0 pointer-events-none'}`}>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+              <span className="text-[12px] font-black text-slate-500">录音采集中</span>
+            </div>
+            <p className="mt-1.5 text-[16px] font-black leading-snug text-slate-800">
+              点击结束
+            </p>
+          </div>
+          <button
+            onPointerDown={handleVoiceDockPointerDown}
+            onPointerMove={handleVoiceDockPointerMove}
+            onPointerUp={handleVoiceDockPointerUp}
+            onPointerCancel={handleVoiceDockPointerCancel}
+            className={`relative flex h-16 w-16 touch-none select-none items-center justify-center rounded-full bg-blue-600 text-white shadow-[0_20px_40px_rgba(37,99,235,0.34)] transition-all hover:bg-blue-700 active:scale-95 cursor-grab active:cursor-grabbing ${isVoiceListening ? 'ring-8 ring-blue-500/15' : ''}`}
+            title={isVoiceListening ? '停止语音录入' : '开始语音录入'}
+            aria-label={isVoiceListening ? '停止语音录入' : '开始语音录入'}
+          >
+            {isVoiceListening && <span className="absolute inset-0 rounded-full bg-blue-400/30 animate-ping" />}
+            {isVoiceListening ? <VoiceWaveGlyph level={voiceLevel} /> : <VoiceMicGlyph className="relative z-10 h-7 w-7" />}
+          </button>
+        </div>
+      )}
 
       <div className={`fixed inset-0 z-[140] flex items-center justify-center ${groupDetailsModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setGroupDetailsModalOpen(false)} />
@@ -1231,6 +1741,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                             ) : (
                               <GroupCard
                                 group={randomGroups[idx]}
+                                memberNames={getGroupMemberNames(randomGroups[idx])}
                                 isRolling={false}
                                 isSelectable={!isRolling}
                                 compact={true}
@@ -1450,9 +1961,9 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
               className="flex flex-col items-center justify-center gap-1 text-slate-300 hover:text-slate-500 transition-all active:scale-95 group"
             >
               <div className="w-10 h-10 bg-slate-50 group-hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors">
-                <RotateCcw size={16} strokeWidth={2.5} />
+                <History size={16} strokeWidth={2.5} />
               </div>
-              <span className="text-[10px] font-bold">撤销点评</span>
+              <span className="text-[10px] font-bold">点评记录</span>
             </button>
           )}
         </div>
