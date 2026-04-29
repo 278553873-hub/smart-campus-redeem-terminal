@@ -5,7 +5,7 @@ import {
     Menu, User, ChevronDown, ChevronRight, Package,
     Landmark, ArrowLeftRight, Coins, Monitor, AlertCircle,
     Info, Search, Plus, MonitorSmartphone, Sparkles,
-    Check, Upload
+    Check, Upload, KeyRound
 } from 'lucide-react';
 
 interface TeacherDashboardProps {
@@ -41,7 +41,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         {
             title: '基础信息配置', icon: <Settings size={18} />,
-            children: ['学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '学生管理', '学生成绩管理']
+            children: ['学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '角色管理', '学生管理', '学生成绩管理']
         },
         {
             title: '报告配置', icon: <FileText size={18} />,
@@ -52,6 +52,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             children: ['资料文件']
         }
     ];
+    const activeMenuGroup = menus.find(menu => menu.children.includes(activeMenu))?.title || '货柜机配置中心';
 
     // 发币模型配置状态
     const [budgetPool, setBudgetPool] = useState(10000);
@@ -140,6 +141,161 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         }
         return true;
     });
+
+    const [roleModalOpen, setRoleModalOpen] = useState(false);
+    const [editingRole, setEditingRole] = useState<any>(null);
+    const [roleModalMode, setRoleModalMode] = useState<'create' | 'editName' | 'config'>('create');
+    const [assignRole, setAssignRole] = useState<any>(null);
+    const [roleConfigTab, setRoleConfigTab] = useState<'feature' | 'data'>('feature');
+    const [expandedPermissionMenus, setExpandedPermissionMenus] = useState<Record<string, boolean>>({ '报表中心': true, '货柜机配置中心': true, '基础信息配置': true });
+    const [selectedPermissionValues, setSelectedPermissionValues] = useState<string[]>([]);
+    const [assignSearch, setAssignSearch] = useState('');
+    const [assignedTeacherPhones, setAssignedTeacherPhones] = useState<string[]>([]);
+    const [assignedPage, setAssignedPage] = useState(1);
+    const [assignSearchResults, setAssignSearchResults] = useState<any[]>([]);
+    const [assignSearchPage, setAssignSearchPage] = useState(1);
+    const assignPageSize = 5;
+    const [roleRows, setRoleRows] = useState([
+        {
+            name: '系统管理员',
+            type: '默认',
+            users: 1,
+            featureScope: '全部功能',
+            dataPolicy: '全校数据',
+            status: '启用',
+            deletable: false,
+            desc: '负责教师账号、角色、设备与基础配置'
+        },
+        {
+            name: '学校高层',
+            type: '默认',
+            users: 1,
+            featureScope: '报表中心、学校驾驶舱、学校驾驶舱-查看、学校驾驶舱-导出、评价记录明细表、评价记录明细表-查看、评价记录明细表-导出',
+            dataPolicy: '全校数据',
+            status: '启用',
+            deletable: false,
+            desc: '用于校级经营与使用数据查看'
+        },
+        {
+            name: '教师',
+            type: '默认',
+            users: 48,
+            featureScope: '货柜机配置中心、货币发放管理、货币发放管理-查看、历次发币记录、历次发币记录-查看、基础信息配置、学生管理、学生管理-查看',
+            dataPolicy: '任教与管理范围',
+            status: '启用',
+            deletable: false,
+            desc: '普通教师与年级组长共用功能'
+        }
+    ]);
+
+    const permissionTree = menus.map(menu => ({
+        menu: menu.title,
+        pages: menu.children.map(page => ({
+            page,
+            buttons: ['查看', '新增', '编辑', '删除', '导出']
+        }))
+    }));
+
+    const teacherAccounts = [
+        { name: '郭老师', phone: '13800000000', dept: '教务处', role: '系统管理员' },
+        { name: '王校长', phone: '13800000001', dept: '校长室', role: '学校高层' },
+        { name: '张三', phone: '13800000002', dept: '体育组', role: '教师' },
+        { name: '李四', phone: '13800000003', dept: '学生发展中心', role: '教师' },
+        { name: '周老师', phone: '13800000004', dept: '语文组', role: '教师' }
+    ];
+
+    const allPermissionValues = permissionTree.flatMap(menu => [
+        menu.menu,
+        ...menu.pages.flatMap(page => [page.page, ...page.buttons.map(button => `${page.page}-${button}`)])
+    ]);
+
+    const getMenuValues = (menu: typeof permissionTree[number]) => [
+        menu.menu,
+        ...menu.pages.flatMap(page => [page.page, ...page.buttons.map(button => `${page.page}-${button}`)])
+    ];
+
+    const getPageValues = (page: typeof permissionTree[number]['pages'][number]) => [
+        page.page,
+        ...page.buttons.map(button => `${page.page}-${button}`)
+    ];
+
+    const togglePermissionValues = (values: string[], checked: boolean) => {
+        setSelectedPermissionValues(prev => checked ? Array.from(new Set([...prev, ...values])) : prev.filter(item => !values.includes(item)));
+    };
+
+    const formatFeatureScope = (featureScope: string) => {
+        if (!featureScope || featureScope === '未配置') return '未配置';
+        const pageNames = permissionTree.flatMap(menu => menu.pages.map(page => page.page));
+        const values = featureScope === '全部功能' ? allPermissionValues : featureScope.split('、').filter(Boolean);
+        const selectedPages = pageNames.filter(page => values.includes(page) || values.some(value => value.startsWith(`${page}-`)));
+        if (selectedPages.length === 0) return featureScope === '全部功能' ? '全部功能' : '未配置页面';
+        const previewPages = selectedPages.slice(0, 5).join('、');
+        return selectedPages.length > 5 ? `${previewPages} 等 ${selectedPages.length} 个页面` : previewPages;
+    };
+
+    const handleOpenRoleModal = (role: any = null, mode: 'create' | 'editName' | 'config' = role ? 'editName' : 'create') => {
+        setEditingRole(role);
+        setRoleModalMode(mode);
+        setRoleConfigTab('feature');
+        if (mode === 'config') {
+            setSelectedPermissionValues(role?.featureScope === '全部功能' ? allPermissionValues : (role?.featureScope || '').split('、').filter(Boolean));
+        } else if (mode === 'create') {
+            setSelectedPermissionValues([]);
+        }
+        setRoleModalOpen(true);
+    };
+
+    const handleSaveRole = (roleData: any) => {
+        if (editingRole) {
+            setRoleRows(roleRows.map(role => role.name === editingRole.name ? { ...role, ...roleData } : role));
+        } else {
+            setRoleRows([{ ...roleData, type: '自定义', users: 0, status: roleData.status || '启用', deletable: true, desc: '' }, ...roleRows]);
+        }
+        setRoleModalOpen(false);
+        setEditingRole(null);
+    };
+
+    const handleToggleRoleStatus = (roleName: string) => {
+        const targetRole = roleRows.find(role => role.name === roleName);
+        if (!targetRole || targetRole.type === '默认') return;
+        if (targetRole.status === '启用' && targetRole.users > 0) {
+            const confirmed = window.confirm(`该角色已分配给 ${targetRole.users} 名教师。禁用后，这些教师将暂时失去该角色对应权限。是否继续？`);
+            if (!confirmed) return;
+        }
+        setRoleRows(roleRows.map(role => role.name === roleName ? { ...role, status: role.status === '启用' ? '禁用' : '启用' } : role));
+    };
+
+    const handleDeleteRole = (roleName: string) => {
+        const targetRole = roleRows.find(role => role.name === roleName);
+        if (!targetRole || targetRole.type === '默认' || targetRole.users > 0) return;
+        setRoleRows(roleRows.filter(role => role.name !== roleName));
+    };
+
+    const handleOpenAssignRole = (role: any) => {
+        setAssignRole(role);
+        setAssignSearch('');
+        setAssignedPage(1);
+        setAssignSearchPage(1);
+        setAssignSearchResults([]);
+        setAssignedTeacherPhones(teacherAccounts.filter(teacher => teacher.role === role.name).map(teacher => teacher.phone));
+    };
+
+    const handleSearchAssignableTeachers = () => {
+        const keyword = assignSearch.trim();
+        setAssignSearchPage(1);
+        setAssignSearchResults(teacherAccounts.filter(teacher => {
+            if (assignedTeacherPhones.includes(teacher.phone)) return false;
+            if (!keyword) return true;
+            return [teacher.name, teacher.phone, teacher.dept].some(value => value.includes(keyword));
+        }));
+    };
+
+    const handleSaveAssignedTeachers = (roleName: string, selectedCount: number) => {
+        setRoleRows(roleRows.map(role => role.name === roleName ? { ...role, users: selectedCount } : role));
+        setAssignRole(null);
+        setAssignSearch('');
+        setAssignSearchResults([]);
+    };
 
     // 货柜商品管理状态
     const [shopActiveTab, setShopActiveTab] = useState<'products' | 'channels'>('channels');
@@ -272,7 +428,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         <div className="flex items-center gap-4 text-slate-500 text-[13px]">
                             <Menu size={18} className="cursor-pointer hover:text-blue-600 transition-colors" />
                             <span className="text-slate-200">/</span>
-                            <span className="font-semibold text-slate-700">货柜机配置中心</span>
+                            <span className="font-semibold text-slate-700">{activeMenuGroup}</span>
                             <span className="text-slate-200">/</span>
                             <span className="font-semibold text-slate-700">{activeMenu}</span>
                         </div>
@@ -300,7 +456,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         <div>
                             {embedded && (
                                 <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold mb-1.5">
-                                    <span>货柜机配置中心</span>
+                                    <span>{activeMenuGroup}</span>
                                     <span>/</span>
                                     <span className="text-slate-500">{activeMenu}</span>
                                 </div>
@@ -1257,6 +1413,114 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         </div>
                     )}
 
+                    {/* 角色管理 */}
+                    {activeMenu === '角色管理' && (
+                        <div className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden transform animate-in fade-in slide-in-from-bottom-6 duration-700">
+                            <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center gap-3">
+                                <div className="relative w-64">
+                                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input className="w-full bg-white border border-slate-100 rounded-xl pl-11 pr-4 py-2.5 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="搜索角色" />
+                                </div>
+                                <select className="bg-white border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" defaultValue="全部类型">
+                                    <option>全部类型</option>
+                                    <option>默认</option>
+                                    <option>自定义</option>
+                                </select>
+                                <select className="bg-white border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" defaultValue="全部数据权限">
+                                    <option>全部数据权限</option>
+                                    <option>全校数据</option>
+                                    <option>任教与管理范围</option>
+                                </select>
+                                <select className="bg-white border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" defaultValue="全部状态">
+                                    <option>全部状态</option>
+                                    <option>启用</option>
+                                    <option>禁用</option>
+                                </select>
+                                <button
+                                    onClick={() => handleOpenRoleModal()}
+                                    className="ml-auto px-5 py-2.5 bg-blue-600 text-white rounded-xl font-black text-sm hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95 flex items-center gap-2"
+                                >
+                                    <Plus size={18} />
+                                    新增角色
+                                </button>
+                            </div>
+
+                            <div className="overflow-x-auto custom-scrollbar">
+                                <table className="w-full text-left border-separate border-spacing-0">
+                                    <thead>
+                                        <tr className="text-slate-400 text-[11px] font-black tracking-[0.12em] bg-white">
+                                            <th className="py-5 px-6">角色名称</th>
+                                            <th className="py-5 px-6">角色类型</th>
+                                            <th className="py-5 px-6">功能权限</th>
+                                            <th className="py-5 px-6">数据权限</th>
+                                            <th className="py-5 px-6">已分配</th>
+                                            <th className="py-5 px-6">状态</th>
+                                            <th className="py-5 px-6 text-right">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {roleRows.map(role => (
+                                            <tr key={role.name} className="hover:bg-slate-50/80 transition-colors">
+                                                <td className="py-5 px-6">
+                                                    <div className="font-black text-slate-800">{role.name}</div>
+                                                </td>
+                                                <td className="py-5 px-6">
+                                                    <span className={`px-3 py-1.5 rounded-xl text-xs font-black ${role.type === '默认' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                        {role.type}
+                                                    </span>
+                                                </td>
+                                                <td className="py-5 px-6 text-sm font-bold text-slate-700 whitespace-nowrap">{formatFeatureScope(role.featureScope)}</td>
+                                                <td className="py-5 px-6 text-sm font-bold text-slate-600 max-w-[260px]">{role.dataPolicy}</td>
+                                                <td className="py-5 px-6 text-sm font-black text-slate-700">{role.users} 人</td>
+                                                <td className="py-5 px-6">
+                                                    <button
+                                                        onClick={() => handleToggleRoleStatus(role.name)}
+                                                        disabled={role.type === '默认'}
+                                                        className={`relative w-12 h-7 rounded-full transition-all ${role.type === '默认' ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'} ${role.status === '启用' ? 'bg-blue-600' : 'bg-slate-200'}`}
+                                                        aria-label={`${role.status === '启用' ? '禁用' : '启用'}${role.name}`}
+                                                    >
+                                                        <span className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm transition-all ${role.status === '启用' ? 'left-6' : 'left-1'}`}></span>
+                                                    </button>
+                                                </td>
+                                                <td className="py-5 px-6 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleOpenRoleModal(role, 'config')}
+                                                            disabled={role.name === '系统管理员'}
+                                                            className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${role.name === '系统管理员' ? 'border-slate-100 text-slate-300 cursor-not-allowed' : 'border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 active:scale-95'} flex items-center gap-1.5`}
+                                                        >
+                                                            配置权限
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleOpenAssignRole(role)}
+                                                            disabled={role.name === '系统管理员'}
+                                                            className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${role.name === '系统管理员' ? 'border-slate-100 text-slate-300 cursor-not-allowed' : 'border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 active:scale-95'}`}
+                                                        >
+                                                            分配人员
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleOpenRoleModal(role, 'editName')}
+                                                            className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-bold hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all active:scale-95 flex items-center gap-1.5"
+                                                        >
+                                                            <PenTool size={14} /> 编辑
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteRole(role.name)}
+                                                            disabled={!role.deletable || role.users > 0}
+                                                            className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${role.deletable && role.users === 0 ? 'border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 active:scale-95' : 'border-slate-100 text-slate-300 cursor-not-allowed'}`}
+                                                        >
+                                                            删除
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
                     {/* 其它待开发 */}
                     {['学校驾驶舱', '评价指标管理'].includes(activeMenu) && (
                         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-20 flex flex-col items-center justify-center text-slate-400 animate-in zoom-in-95">
@@ -1269,6 +1533,318 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     )}
                 </main>
             </div >
+
+            {/* Role Modal */}
+            {roleModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[100] animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+                        <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+                            <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+                                <KeyRound size={20} className="text-blue-600" />
+                                {roleModalMode === 'config' ? '配置权限' : roleModalMode === 'editName' ? '编辑角色' : '新增角色'}
+                            </h3>
+                            <button onClick={() => { setRoleModalOpen(false); setEditingRole(null); }} className="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors active:scale-95">
+                                <Plus size={20} className="rotate-45" />
+                            </button>
+                        </div>
+
+                        <form
+                            className="p-8 space-y-6 overflow-y-auto custom-scrollbar"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                const formData = new FormData(e.currentTarget);
+                                if (roleModalMode === 'config') {
+                                    handleSaveRole({
+                                        featureScope: selectedPermissionValues.length > 0 ? selectedPermissionValues.join('、') : '未配置',
+                                        dataPolicy: formData.get('dataPolicy') as string
+                                    });
+                                    return;
+                                }
+                                handleSaveRole({
+                                    name: formData.get('name') as string,
+                                    status: roleModalMode === 'create' ? (formData.get('status') as string) : editingRole?.status,
+                                    featureScope: roleModalMode === 'create' ? (selectedPermissionValues.length > 0 ? selectedPermissionValues.join('、') : '未配置') : (editingRole?.featureScope || '未配置'),
+                                    dataPolicy: roleModalMode === 'create' ? (formData.get('dataPolicy') as string) : (editingRole?.dataPolicy || '任教与管理范围')
+                                });
+                            }}
+                        >
+                            {roleModalMode !== 'config' && (
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">角色名称</label>
+                                    <input
+                                        name="name"
+                                        defaultValue={editingRole?.name || ''}
+                                        required
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                        placeholder="例如：德育主任"
+                                    />
+                                </div>
+                            )}
+
+                            {roleModalMode === 'create' && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">状态</label>
+                                        <select name="status" defaultValue="启用" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                            <option>启用</option>
+                                            <option>禁用</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex bg-slate-100 rounded-xl p-1 self-start">
+                                        <button type="button" onClick={() => setRoleConfigTab('feature')} className={`px-5 py-2 rounded-lg text-sm font-black transition-all ${roleConfigTab === 'feature' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>功能权限</button>
+                                        <button type="button" onClick={() => setRoleConfigTab('data')} className={`px-5 py-2 rounded-lg text-sm font-black transition-all ${roleConfigTab === 'data' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>数据权限</button>
+                                    </div>
+                                    {roleConfigTab === 'feature' && (
+                                        <div className="border border-slate-100 rounded-2xl overflow-hidden">
+                                            {permissionTree.map(menu => {
+                                                const menuValues = getMenuValues(menu);
+                                                const menuChecked = menuValues.every(value => selectedPermissionValues.includes(value));
+                                                return (
+                                                    <div key={menu.menu} className="border-b border-slate-100 last:border-0">
+                                                        <div className="h-11 px-4 bg-slate-50 flex items-center gap-3">
+                                                            <button type="button" onClick={() => setExpandedPermissionMenus(prev => ({ ...prev, [menu.menu]: !prev[menu.menu] }))} className="w-6 h-6 rounded-lg bg-white border border-slate-100 text-slate-400 flex items-center justify-center active:scale-95">
+                                                                {expandedPermissionMenus[menu.menu] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                                            </button>
+                                                            <input type="checkbox" checked={menuChecked} onChange={(e) => togglePermissionValues(menuValues, e.target.checked)} className="accent-blue-600" />
+                                                            <span className="font-black text-sm text-slate-800">{menu.menu}</span>
+                                                        </div>
+                                                        {expandedPermissionMenus[menu.menu] && (
+                                                            <div>
+                                                                {menu.pages.map(page => {
+                                                                    const pageValues = getPageValues(page);
+                                                                    const pageChecked = pageValues.every(value => selectedPermissionValues.includes(value));
+                                                                    return (
+                                                                        <div key={page.page} className="min-h-11 px-4 pl-12 border-t border-slate-50 flex items-center gap-4">
+                                                                            <label className="w-36 shrink-0 flex items-center gap-2 text-sm font-bold text-slate-700">
+                                                                                <input type="checkbox" checked={pageChecked} onChange={(e) => togglePermissionValues(pageValues, e.target.checked)} className="accent-blue-600" />
+                                                                                {page.page}
+                                                                            </label>
+                                                                            <div className="flex flex-wrap gap-2 py-2">
+                                                                                {page.buttons.map(button => {
+                                                                                    const value = `${page.page}-${button}`;
+                                                                                    return (
+                                                                                        <label key={value} className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 cursor-pointer hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                                                                            <input type="checkbox" checked={selectedPermissionValues.includes(value)} onChange={(e) => togglePermissionValues([value], e.target.checked)} className="accent-blue-600 mr-1.5" />
+                                                                                            {button}
+                                                                                        </label>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    {roleConfigTab === 'data' && (
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">数据权限</label>
+                                            <select name="dataPolicy" defaultValue="任教与管理范围" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                                <option>全校数据</option>
+                                                <option>任教与管理范围</option>
+                                            </select>
+                                        </div>
+                                    )}
+                                    {roleConfigTab === 'feature' && <input type="hidden" name="dataPolicy" value="任教与管理范围" />}
+                                </>
+                            )}
+
+                            {roleModalMode === 'config' && (
+                                <>
+                                    <div className="flex bg-slate-100 rounded-xl p-1 self-start">
+                                        <button type="button" onClick={() => setRoleConfigTab('feature')} className={`px-5 py-2 rounded-lg text-sm font-black transition-all ${roleConfigTab === 'feature' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>功能权限</button>
+                                        <button type="button" onClick={() => setRoleConfigTab('data')} className={`px-5 py-2 rounded-lg text-sm font-black transition-all ${roleConfigTab === 'data' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>数据权限</button>
+                                    </div>
+
+                                    {roleConfigTab === 'feature' && (
+                                        <div className="border border-slate-100 rounded-2xl overflow-hidden">
+                                            {permissionTree.map(menu => {
+                                                const menuValues = getMenuValues(menu);
+                                                const menuChecked = menuValues.every(value => selectedPermissionValues.includes(value));
+                                                return (
+                                                    <div key={menu.menu} className="border-b border-slate-100 last:border-0">
+                                                        <div className="h-11 px-4 bg-slate-50 flex items-center gap-3">
+                                                            <button type="button" onClick={() => setExpandedPermissionMenus(prev => ({ ...prev, [menu.menu]: !prev[menu.menu] }))} className="w-6 h-6 rounded-lg bg-white border border-slate-100 text-slate-400 flex items-center justify-center active:scale-95">
+                                                                {expandedPermissionMenus[menu.menu] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                                            </button>
+                                                            <input type="checkbox" checked={menuChecked} onChange={(e) => togglePermissionValues(menuValues, e.target.checked)} className="accent-blue-600" />
+                                                            <span className="font-black text-sm text-slate-800">{menu.menu}</span>
+                                                        </div>
+                                                        {expandedPermissionMenus[menu.menu] && (
+                                                            <div>
+                                                                {menu.pages.map(page => {
+                                                                    const pageValues = getPageValues(page);
+                                                                    const pageChecked = pageValues.every(value => selectedPermissionValues.includes(value));
+                                                                    return (
+                                                                        <div key={page.page} className="min-h-11 px-4 pl-12 border-t border-slate-50 flex items-center gap-4">
+                                                                            <label className="w-36 shrink-0 flex items-center gap-2 text-sm font-bold text-slate-700">
+                                                                                <input type="checkbox" checked={pageChecked} onChange={(e) => togglePermissionValues(pageValues, e.target.checked)} className="accent-blue-600" />
+                                                                                {page.page}
+                                                                            </label>
+                                                                            <div className="flex flex-wrap gap-2 py-2">
+                                                                                {page.buttons.map(button => {
+                                                                                    const value = `${page.page}-${button}`;
+                                                                                    return (
+                                                                                        <label key={value} className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 cursor-pointer hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                                                                            <input type="checkbox" checked={selectedPermissionValues.includes(value)} onChange={(e) => togglePermissionValues([value], e.target.checked)} className="accent-blue-600 mr-1.5" />
+                                                                                            {button}
+                                                                                        </label>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {roleConfigTab === 'data' && (
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">数据权限</label>
+                                            <select name="dataPolicy" defaultValue={editingRole?.dataPolicy || '任教与管理范围'} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                                <option>全校数据</option>
+                                                <option>任教与管理范围</option>
+                                            </select>
+                                        </div>
+                                    )}
+                                    {roleConfigTab === 'feature' && <input type="hidden" name="dataPolicy" value={editingRole?.dataPolicy || '任教与管理范围'} />}
+                                </>
+                            )}
+
+                            <div className="pt-5 border-t border-slate-100 flex justify-end gap-3">
+                                <button type="button" onClick={() => { setRoleModalOpen(false); setEditingRole(null); }} className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-all active:scale-95">
+                                    取消
+                                </button>
+                                <button type="submit" className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95">
+                                    保存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Assign Teachers Modal */}
+            {assignRole && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[100] animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+                            <h3 className="font-black text-slate-800 text-lg">分配人员</h3>
+                            <button onClick={() => setAssignRole(null)} className="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors active:scale-95">
+                                <Plus size={20} className="rotate-45" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+                            <div className="border border-slate-100 rounded-2xl overflow-hidden">
+                                <div className="h-11 px-4 bg-slate-50 flex items-center justify-between">
+                                    <span className="text-sm font-black text-slate-800">已分配成员</span>
+                                    <span className="text-xs font-black text-slate-400">{assignedTeacherPhones.length} 人</span>
+                                </div>
+                                <div className="max-h-52 overflow-y-auto custom-scrollbar">
+                                    {teacherAccounts
+                                        .filter(teacher => assignedTeacherPhones.includes(teacher.phone))
+                                        .slice((assignedPage - 1) * assignPageSize, assignedPage * assignPageSize)
+                                        .map(teacher => (
+                                            <div key={teacher.phone} className="grid grid-cols-[1fr_150px_130px_80px] items-center px-4 py-3 border-t border-slate-50">
+                                                <div className="font-black text-slate-800">{teacher.name}</div>
+                                                <div className="text-sm font-bold text-slate-500">{teacher.phone}</div>
+                                                <div className="text-sm font-bold text-slate-500">{teacher.dept}</div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAssignedTeacherPhones(prev => {
+                                                        const next = prev.filter(phone => phone !== teacher.phone);
+                                                        setAssignedPage(Math.min(assignedPage, Math.max(1, Math.ceil(next.length / assignPageSize))));
+                                                        return next;
+                                                    })}
+                                                    className="justify-self-end px-3 py-1.5 rounded-lg border border-red-100 text-xs font-black text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+                                                >
+                                                    取消
+                                                </button>
+                                            </div>
+                                        ))}
+                                    {assignedTeacherPhones.length === 0 && (
+                                        <div className="px-4 py-8 text-center text-sm font-bold text-slate-300 border-t border-slate-50">暂无成员</div>
+                                    )}
+                                </div>
+                                {assignedTeacherPhones.length > assignPageSize && (
+                                    <div className="px-4 py-3 border-t border-slate-50 flex items-center justify-end gap-2 text-xs font-bold text-slate-500">
+                                        <button type="button" disabled={assignedPage === 1} onClick={() => setAssignedPage(prev => Math.max(1, prev - 1))} className="px-3 py-1.5 rounded-lg border border-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed active:scale-95">上一页</button>
+                                        <span>{assignedPage} / {Math.ceil(assignedTeacherPhones.length / assignPageSize)}</span>
+                                        <button type="button" disabled={assignedPage >= Math.ceil(assignedTeacherPhones.length / assignPageSize)} onClick={() => setAssignedPage(prev => Math.min(Math.ceil(assignedTeacherPhones.length / assignPageSize), prev + 1))} className="px-3 py-1.5 rounded-lg border border-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed active:scale-95">下一页</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex gap-3">
+                                <div className="relative flex-1">
+                                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input value={assignSearch} onChange={(e) => setAssignSearch(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="搜索教师姓名、手机号、部门" />
+                                </div>
+                                <button type="button" onClick={handleSearchAssignableTeachers} className="px-6 py-3 bg-blue-600 text-white rounded-2xl text-sm font-black hover:bg-blue-700 active:scale-95 transition-all">搜索</button>
+                            </div>
+
+                            <div className="border border-slate-100 rounded-2xl overflow-hidden">
+                                <div className="grid grid-cols-[1fr_150px_130px_80px] px-4 py-3 bg-slate-50 text-[11px] font-black text-slate-400 tracking-[0.12em]">
+                                    <div>搜索结果</div>
+                                    <div>手机号</div>
+                                    <div>部门</div>
+                                    <div className="text-right">操作</div>
+                                </div>
+                                <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                                    {assignSearchResults
+                                        .filter(teacher => !assignedTeacherPhones.includes(teacher.phone))
+                                        .slice((assignSearchPage - 1) * assignPageSize, assignSearchPage * assignPageSize)
+                                        .map(teacher => (
+                                            <div key={teacher.phone} className="grid grid-cols-[1fr_150px_130px_80px] items-center px-4 py-3 border-t border-slate-50 hover:bg-slate-50">
+                                                <div className="font-black text-slate-800">{teacher.name}</div>
+                                                <div className="text-sm font-bold text-slate-500">{teacher.phone}</div>
+                                                <div className="text-sm font-bold text-slate-500">{teacher.dept}</div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setAssignedTeacherPhones(prev => [...prev, teacher.phone]);
+                                                        setAssignSearchResults(prev => prev.filter(item => item.phone !== teacher.phone));
+                                                    }}
+                                                    className="justify-self-end px-3 py-1.5 rounded-lg border border-blue-100 text-xs font-black text-blue-600 hover:bg-blue-50 active:scale-95 transition-all"
+                                                >
+                                                    分配
+                                                </button>
+                                            </div>
+                                        ))}
+                                    {assignSearchResults.length === 0 && (
+                                        <div className="px-4 py-8 text-center text-sm font-bold text-slate-300 border-t border-slate-50">点击搜索后展示结果</div>
+                                    )}
+                                </div>
+                                {assignSearchResults.length > assignPageSize && (
+                                    <div className="px-4 py-3 border-t border-slate-50 flex items-center justify-end gap-2 text-xs font-bold text-slate-500">
+                                        <button type="button" disabled={assignSearchPage === 1} onClick={() => setAssignSearchPage(prev => Math.max(1, prev - 1))} className="px-3 py-1.5 rounded-lg border border-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed active:scale-95">上一页</button>
+                                        <span>{assignSearchPage} / {Math.ceil(assignSearchResults.length / assignPageSize)}</span>
+                                        <button type="button" disabled={assignSearchPage >= Math.ceil(assignSearchResults.length / assignPageSize)} onClick={() => setAssignSearchPage(prev => Math.min(Math.ceil(assignSearchResults.length / assignPageSize), prev + 1))} className="px-3 py-1.5 rounded-lg border border-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed active:scale-95">下一页</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                                <button type="button" onClick={() => setAssignRole(null)} className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-all active:scale-95">
+                                    取消
+                                </button>
+                                <button type="button" onClick={() => handleSaveAssignedTeachers(assignRole.name, assignedTeacherPhones.length)} className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95">
+                                    保存
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Shop Product Modal */}
             {
