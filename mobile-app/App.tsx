@@ -19,7 +19,7 @@ import PhoneMockup from '../components/PhoneMockup';
 import {
     HomeIcon, UserIcon, ActivityIcon, CameraIcon, VolumeIcon,
     PlusIcon, FileIcon, CloseIcon, ChevronDownIcon, AlertCircleIcon,
-    CheckCircleIcon
+    CheckCircleIcon, KeyboardIcon
 } from './components/Icons';
 
 import {
@@ -363,75 +363,58 @@ const App: React.FC = () => {
             .join('、');
     };
 
-    // Floating Input Bar Component - AI Tech Style
+    // Floating Input Bar Component - icon-first quick record actions.
     const GlobalInputBar = () => {
-        const inputPlaceholder = isMultiSelectMode
-            ? `已选${multiSelectIds.size}人，发消息或按住说话...`
-            : "发消息或按住说话...";
-
         // Determine target IDs based on mode
         const targetIds: string[] = isMultiSelectMode ? Array.from(multiSelectIds) : [];
-
-        // Disable file upload as requested
-        const showPlusButton = false;
+        const theme = activeLogTab === 'class'
+            ? {
+                shell: 'from-teal-50/90 via-white/95 to-cyan-50/90 border-teal-100/80 shadow-[0_18px_48px_-22px_rgba(20,184,166,0.65)]',
+                primary: 'from-[#00B19D] to-[#3B82F6] shadow-teal-500/25',
+                soft: 'text-teal-600 bg-teal-50/95 border-teal-100',
+                dot: 'bg-teal-500 shadow-teal-400/80',
+            }
+            : {
+                shell: 'from-indigo-50/90 via-white/95 to-pink-50/90 border-indigo-100/80 shadow-[0_18px_48px_-22px_rgba(99,102,241,0.65)]',
+                primary: 'from-[#7F56FF] to-[#E24CB0] shadow-indigo-500/25',
+                soft: 'text-indigo-600 bg-indigo-50/95 border-indigo-100',
+                dot: 'bg-indigo-500 shadow-indigo-400/80',
+            };
 
         return (
-            <div className={`absolute left-0 right-0 px-4 z-[60] pointer-events-none max-w-md mx-auto transition-all duration-300 ${showKeyboard ? 'bottom-[310px]' : 'bottom-[90px]'}`}>
-                {/* Unified Input Container */}
-                <div className={`pointer-events-auto flex flex-col gap-2 rounded-[28px] border-2 transition-colors duration-500 backdrop-blur-3xl p-3
-                    ${activeLogTab === 'class'
-                        ? 'bg-gradient-to-b from-[#F0FDFA]/95 to-white border-teal-200/80 shadow-[0_-5px_40px_-5px_rgba(20,184,166,0.3),_0_20px_40px_-10px_rgba(20,184,166,0.4)]'
-                        : 'bg-gradient-to-b from-[#EEF2FF]/95 to-white border-indigo-200/80 shadow-[0_-5px_40px_-5px_rgba(79,70,229,0.3),_0_20px_40px_-10px_rgba(79,70,229,0.4)]'}`}>
+            <div className={`absolute left-0 right-0 px-5 z-[60] pointer-events-none max-w-md mx-auto transition-all duration-300 ${showKeyboard ? 'bottom-[310px]' : 'bottom-[96px]'}`}>
+                <div className={`pointer-events-auto relative mx-auto flex w-fit items-center gap-2 rounded-full border bg-gradient-to-r ${theme.shell} backdrop-blur-3xl px-2.5 py-2 transition-colors duration-500`}>
+                    <div className={`absolute -top-1 right-5 h-2.5 w-2.5 rounded-full ${theme.dot} shadow-lg ring-4 ring-white/80`}></div>
 
-                    {/* Explicit Mode Indicator */}
-                    <div className="flex items-center px-1 mb-1">
-                        <div className={`text-[13px] font-black tracking-widest flex items-center gap-2 transition-colors duration-500
-                            ${activeLogTab === 'class' ? 'text-teal-600' : 'text-indigo-600'}`}>
-                            <div className={`w-2 h-2 rounded-full animate-pulse shadow-sm ${activeLogTab === 'class' ? 'bg-teal-500 shadow-teal-500' : 'bg-indigo-500 shadow-indigo-500'}`}></div>
-                            {activeLogTab === 'class' ? '当前：记录班级模式' : '当前：记录学生模式'}
-                        </div>
-                    </div>
-
-                    {/* The Input Actions */}
                     <div className="flex items-center gap-2">
-                        {/* Camera Action */}
                         <button
                             onClick={() => handleStartRecord(targetIds, 'camera')}
-                            className={`transition-colors p-3 rounded-2xl flex shrink-0 shadow-sm border border-transparent active:scale-95
-                                ${activeLogTab === 'class' ? 'text-teal-600 bg-teal-50 active:border-teal-200' : 'text-indigo-600 bg-indigo-50 active:border-indigo-200'}`}
+                            aria-label="拍照记录"
+                            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border shadow-sm transition-all active:scale-95 ${theme.soft}`}
                         >
-                            <CameraIcon className="w-6 h-6" />
+                            <CameraIcon className="h-5 w-5" />
                         </button>
 
-                        {/* Text Action */}
-                        <div
+                        <button
                             onClick={() => setShowKeyboard(true)}
-                            className={`flex-1 transition-all rounded-xl h-[44px] px-4 flex items-center shadow-sm relative overflow-hidden
-                                ${activeLogTab === 'class'
-                                    ? 'bg-white/90 border-teal-100'
-                                    : 'bg-white/90 border-indigo-100'}
-                                ${isMultiSelectMode ? (activeLogTab === 'class' ? 'ring-1 ring-teal-400 bg-white' : 'ring-1 ring-indigo-400 bg-white') : ''}
-                                active:scale-[0.98] active:bg-slate-50`}
+                            aria-label={isMultiSelectMode ? `已选${multiSelectIds.size}人，文字记录` : '文字记录'}
+                            className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-white/95 shadow-sm transition-all active:scale-95
+                                ${isMultiSelectMode
+                                    ? (activeLogTab === 'class' ? 'border-teal-300 ring-2 ring-teal-100 text-teal-600' : 'border-indigo-300 ring-2 ring-indigo-100 text-indigo-600')
+                                    : 'border-white/80 text-slate-500'}`}
                         >
-                            <span className={`text-[13px] truncate ${inputText ? 'text-slate-800 font-bold' : (isMultiSelectMode ? (activeLogTab === 'class' ? 'text-teal-600 font-bold' : 'text-indigo-600 font-bold') : 'text-slate-400 font-medium')}`}>
-                                {inputText || inputPlaceholder}
-                            </span>
-                            {/* Blinking cursor effect when keyboard is active */}
+                            <KeyboardIcon className="h-5 w-5" />
                             {showKeyboard && (
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-blue-500 animate-pulse"></div>
+                                <div className="absolute -bottom-1 left-1/2 h-1 w-5 -translate-x-1/2 rounded-full bg-current"></div>
                             )}
-                        </div>
+                        </button>
 
-                        {/* Voice Action */}
                         <button
                             onClick={() => handleStartRecord(targetIds, 'voice')}
-                            className={`transition-all p-2 rounded-xl flex shrink-0 items-center justify-center gap-1 min-w-[80px]
-                                ${activeLogTab === 'class'
-                                    ? 'bg-gradient-to-r from-[#00B19D] to-[#3B82F6] text-white shadow-lg shadow-teal-500/30 active:scale-95 active:shadow-none'
-                                    : 'bg-gradient-to-r from-[#7F56FF] to-[#E24CB0] text-white shadow-lg shadow-indigo-500/30 active:scale-95 active:shadow-none'}`}
+                            aria-label="语音记录"
+                            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-r ${theme.primary} text-white shadow-xl transition-all active:scale-95 active:shadow-none`}
                         >
-                            <VolumeIcon className="w-5 h-5" />
-                            <span className="text-[13px] font-bold pr-1">按住说</span>
+                            <VolumeIcon className="h-6 w-6" />
                         </button>
                     </div>
                 </div>
