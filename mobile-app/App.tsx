@@ -477,7 +477,23 @@ const App: React.FC = () => {
 
     return (
         <div className="w-screen h-[100dvh] bg-[#f1f5f9] flex items-center justify-center p-4">
-            <PhoneMockup>
+            <PhoneMockup
+                screenBackground={currentView === 'home_log' ? (
+                    <div className="absolute inset-0 overflow-hidden">
+                        <div className="absolute inset-0 bg-white"></div>
+                        <div className={`absolute inset-0 transition-opacity duration-1000 ${activeLogTab === 'student' ? 'opacity-100' : 'opacity-0'}`}>
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/60 via-white/40 to-pink-50/60"></div>
+                            <div className="absolute top-[-28%] left-[-34%] w-[150vw] h-[150vw] rounded-full animate-aurora" style={{ backgroundColor: '#6366F1', opacity: 0.07 }}></div>
+                            <div className="absolute bottom-[-28%] right-[-36%] w-[160vw] h-[160vw] rounded-full animate-aurora" style={{ backgroundColor: '#EC4899', opacity: 0.085, animationDelay: '-9s' }}></div>
+                        </div>
+                        <div className={`absolute inset-0 transition-opacity duration-1000 ${activeLogTab === 'class' ? 'opacity-100' : 'opacity-0'}`}>
+                            <div className="absolute inset-0 bg-gradient-to-br from-teal-50/60 via-white/40 to-blue-50/60"></div>
+                            <div className="absolute top-[-28%] left-[-34%] w-[150vw] h-[150vw] rounded-full animate-aurora" style={{ backgroundColor: '#06B6D4', opacity: 0.07 }}></div>
+                            <div className="absolute bottom-[-28%] right-[-36%] w-[160vw] h-[160vw] rounded-full animate-aurora" style={{ backgroundColor: '#3B82F6', opacity: 0.085, animationDelay: '-9s' }}></div>
+                        </div>
+                    </div>
+                ) : undefined}
+            >
 
                     <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}

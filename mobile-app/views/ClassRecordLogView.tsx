@@ -404,37 +404,37 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             {/* Record Student Background: 极光紫梦 (Aurora Lighter) */}
             <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-1000 overflow-hidden ${activeTab === 'student' ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="absolute inset-0 bg-white"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-pink-50/50"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/60 via-white/40 to-pink-50/60"></div>
                 {/* Indigo Glow */}
-                <div className="absolute top-[-10%] left-[-10%] w-[100vw] h-[100vw] rounded-full animate-aurora" style={{ backgroundColor: '#6366F1', opacity: 0.08 }}></div>
+                <div className="absolute top-[-28%] left-[-34%] w-[150vw] h-[150vw] rounded-full animate-aurora" style={{ backgroundColor: '#6366F1', opacity: 0.07 }}></div>
                 {/* Pink Glow */}
-                <div className="absolute bottom-[0%] right-[-10%] w-[110vw] h-[110vw] rounded-full animate-aurora" style={{ backgroundColor: '#EC4899', opacity: 0.1, animationDelay: '-5s' }}></div>
+                <div className="absolute bottom-[-28%] right-[-36%] w-[160vw] h-[160vw] rounded-full animate-aurora" style={{ backgroundColor: '#EC4899', opacity: 0.085, animationDelay: '-9s' }}></div>
             </div>
 
             {/* Record Class Background: 森海之息 (Forest Lighter) */}
             <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-1000 overflow-hidden ${activeTab === 'class' ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="absolute inset-0 bg-white"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-50/50 to-blue-50/50"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-50/60 via-white/40 to-blue-50/60"></div>
                 {/* Cyan Glow */}
-                <div className="absolute top-[-10%] left-[-10%] w-[100vw] h-[100vw] rounded-full animate-aurora" style={{ backgroundColor: '#06B6D4', opacity: 0.08 }}></div>
+                <div className="absolute top-[-28%] left-[-34%] w-[150vw] h-[150vw] rounded-full animate-aurora" style={{ backgroundColor: '#06B6D4', opacity: 0.07 }}></div>
                 {/* Blue Glow */}
-                <div className="absolute bottom-[0%] right-[-10%] w-[110vw] h-[110vw] rounded-full animate-aurora" style={{ backgroundColor: '#3B82F6', opacity: 0.1, animationDelay: '-5s' }}></div>
+                <div className="absolute bottom-[-28%] right-[-36%] w-[160vw] h-[160vw] rounded-full animate-aurora" style={{ backgroundColor: '#3B82F6', opacity: 0.085, animationDelay: '-9s' }}></div>
             </div>
 
             {/* Header (Top-most Integration) */}
-            <div className="sticky top-0 z-30 bg-white/10 backdrop-blur-xl border-b border-white/20">
-                <div className="px-4 h-[50px] flex items-center justify-between">
+            <div className="sticky top-0 z-30">
+                <div className="h-[50px] flex items-center gap-2 pl-4 pr-[132px]">
                     {/* Left: Back (if needed) */}
-                    <div className="w-10">
-                        {!isMainView && (
+                    {!isMainView && (
+                        <div className="w-10 shrink-0">
                             <button onClick={onBack} className="p-2 -ml-2 rounded-full active:bg-black/5 text-slate-700 transition-colors">
                                 <BackIcon className="w-5 h-5" />
                             </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
-                    {/* Middle: Integrated Tabs (Moved Up) */}
-                    <div className="flex-1 max-w-[240px]">
+                    {/* Middle: Integrated Tabs - reserve the right side for the native WeChat capsule. */}
+                    <div className="w-full max-w-[232px]">
                         <div className="flex bg-slate-200/40 p-1 rounded-full border border-white/50 shadow-sm ring-1 ring-black/5">
                             <button
                                 onClick={() => onTabChange('student')}
@@ -450,8 +450,6 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             </button>
                         </div>
                     </div>
-
-                    <div className="w-10"></div>
                 </div>
             </div>
 

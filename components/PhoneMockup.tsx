@@ -6,12 +6,14 @@ interface PhoneMockupProps {
   children: React.ReactNode;
   isAnalyzing?: boolean;
   safeAreaTop?: boolean;
+  screenBackground?: React.ReactNode;
 }
 
 const PhoneMockup: React.FC<PhoneMockupProps> = ({ 
   children, 
   isAnalyzing = false,
   safeAreaTop = true,
+  screenBackground,
 }) => {
   const width = 393;
   const height = 852;
@@ -83,9 +85,14 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
 
             {/* 屏幕内容区 - 采用 absolute 撑满 */}
             <div className="w-full h-full bg-white relative overflow-hidden rounded-[50px]">
+                {screenBackground && (
+                  <div className="absolute inset-0 z-0 pointer-events-none">
+                    {screenBackground}
+                  </div>
+                )}
                 
                 {/* 页面主内容 - 这里的 pt-[54px] 保证了应用内容默认不在状态栏/灵动岛区域 */}
-                <div className={`absolute inset-0 flex flex-col ${safeAreaTop ? 'pt-[54px]' : ''}`}>
+                <div className={`absolute inset-0 z-10 flex flex-col ${safeAreaTop ? 'pt-[54px]' : ''}`}>
                   {children}
                 </div>
 
