@@ -86,13 +86,13 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-full px-1.5 py-0.5">
                         <button
                             onClick={() => setSortMode('id')}
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition ${sortMode === 'id' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}
+                            className={`text-[11px] font-medium px-2 py-0.5 rounded-full transition ${sortMode === 'id' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}
                         >
                             按学号
                         </button>
                         <button
                             onClick={() => setSortMode('pinyin')}
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition ${sortMode === 'pinyin' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}
+                            className={`text-[11px] font-medium px-2 py-0.5 rounded-full transition ${sortMode === 'pinyin' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}
                         >
                             按拼音
                         </button>
@@ -144,7 +144,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
 
                                 {/* Top: Avatar */}
                                 <div className={`
-                            w-12 h-12 rounded-full mb-2.5 flex items-center justify-center text-lg font-black shadow-sm relative shrink-0 transition-transform group-
+                            w-12 h-12 rounded-full mb-2.5 flex items-center justify-center text-lg font-semibold shadow-sm relative shrink-0 transition-transform group-
                             ${!student.avatar ? `${bgClass} ${textClass} border ${borderClass}` : 'bg-slate-50 border border-slate-100'}
                         `}>
                                     {student.avatar ? (
@@ -187,7 +187,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
 
                 {/* Footer */}
                 <div className="h-10 text-center mt-8">
-                    <span className="text-[10px] text-slate-300 uppercase tracking-widest opacity-60">- {students.length} Students -</span>
+                    <span className="text-xs text-slate-300 tracking-wide opacity-60">- {students.length} Students -</span>
                 </div>
             </div>
 

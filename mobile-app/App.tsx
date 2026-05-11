@@ -10,6 +10,7 @@ import MeView from './views/MeView';
 import MyFilesView from './views/MyFilesView';
 import TermReportView from './views/TermReportView';
 import ClassLeaderboardView from './views/ClassLeaderboardView';
+import LeaderReportView from './views/LeaderReportView';
 import RewardVerificationView from './views/reward-verification/RewardVerificationView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
 import { BankPasswordView } from './views/bank-password/BankPasswordView';
@@ -78,9 +79,13 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'class_leaderboard' | 'reward_verification' | 'face_update' | 'bank_password';
+type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password';
 
-const App: React.FC = () => {
+interface MobileAppProps {
+    showPhoneShell?: boolean;
+}
+
+const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     // Default view is now the Log (Stream)
     const [currentView, setCurrentView] = useState<ViewState>('home_log');
     const [history, setHistory] = useState<ViewState[]>([]);
@@ -178,6 +183,10 @@ const App: React.FC = () => {
 
     const handleViewLeaderboard = () => {
         navigateTo('class_leaderboard');
+    };
+
+    const handleViewLeaderReport = () => {
+        navigateTo('leader_report');
     };
 
     const handleSelectStudent = (student: Student) => {
@@ -349,6 +358,7 @@ const App: React.FC = () => {
             case 'me': return '';
             case 'my_files': return '我的文件';
             case 'class_leaderboard': return '排行榜';
+            case 'leader_report': return '学校数据报表';
             case 'reward_verification': return '班级奖励兑换';
             case 'face_update': return '更新人脸数据';
             case 'bank_password': return '设置兑换密码';
@@ -412,7 +422,7 @@ const App: React.FC = () => {
                         <button
                             onClick={() => handleStartRecord(targetIds, 'voice')}
                             aria-label="语音记录"
-                            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-r ${theme.primary} text-white shadow-xl transition-all active:scale-95 active:shadow-none`}
+                            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-r ${theme.primary} text-white shadow-lg transition-all active:scale-95 active:shadow-none`}
                         >
                             <VolumeIcon className="h-6 w-6" />
                         </button>
@@ -427,7 +437,7 @@ const App: React.FC = () => {
         return (
             <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-blue-600 scale-110' : 'text-slate-400 opacity-60'}`}>
                 <Icon size={24} />
-                <span className="text-[10px] font-bold">{label}</span>
+                <span className="text-xs font-medium">{label}</span>
             </button>
         );
     };
@@ -447,20 +457,22 @@ const App: React.FC = () => {
 
     // Local Header component to replace the imported one's styling for specific views
     const LocalHeader = ({ title, onBack }: { title: string; onBack?: () => void }) => (
-        <div className="h-14 flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-[45] border-b border-slate-100/30">
+        <div className="h-11 flex items-center justify-between px-4 bg-white/80 backdrop-blur-md sticky top-0 z-[45] border-b border-slate-100/30">
             {onBack && (
-                <button onClick={onBack} className="p-1 rounded-full text-slate-400 active:bg-slate-100">
+                <button onClick={onBack} className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-slate-500 transition-colors active:bg-slate-100">
                     <ChevronLeftLucide className="w-5 h-5" />
                 </button>
             )}
-            <h2 className={`text-lg font-black text-slate-800 tracking-tight ${!onBack ? 'mx-auto' : ''}`}>{title}</h2>
-            {onBack && <div className="w-5 h-5"></div>} {/* Spacer for alignment */}
+            <h2 className={`text-[17px] font-bold text-slate-800 tracking-tight ${!onBack ? 'mx-auto' : ''}`}>{title}</h2>
+            {onBack && <div className="w-10" aria-hidden="true"></div>}
         </div>
     );
 
     return (
         <div className="w-screen h-[100dvh] bg-[#f1f5f9] flex items-center justify-center p-4">
             <PhoneMockup
+                showDeviceFrame={showPhoneShell}
+                contentTopInsetMode="status-bar"
                 screenBackground={currentView === 'home_log' ? (
                     <div className="absolute inset-0 overflow-hidden">
                         <div className="absolute inset-0 bg-white"></div>
@@ -480,7 +492,7 @@ const App: React.FC = () => {
 
                     <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'face_update' && currentView !== 'bank_password' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -516,6 +528,7 @@ const App: React.FC = () => {
                                     newRecordData={pendingRecordData}
                                     onClearNewRecord={() => setPendingRecordData(null)}
                                     onToggleModal={setIsOverlayActive}
+                                    addDemoTopBreathingSpace={!showPhoneShell}
                                 />
                             )}
 
@@ -558,6 +571,12 @@ const App: React.FC = () => {
 
                             {currentView === 'class_leaderboard' && (
                                 <ClassLeaderboardView
+                                    onBack={goBack}
+                                />
+                            )}
+
+                            {currentView === 'leader_report' && (
+                                <LeaderReportView
                                     onBack={goBack}
                                 />
                             )}
@@ -608,6 +627,7 @@ const App: React.FC = () => {
                                     onNavigateToFiles={() => navigateTo('my_files')}
                                     onOpenGenerateModal={handleOpenSubjectGenModal}
                                     onOpenTermGenerateModal={handleOpenTermGenModal}
+                                    onViewLeaderReport={handleViewLeaderReport}
                                 />
                             )}
 
@@ -645,7 +665,7 @@ const App: React.FC = () => {
 
                         {/* AI Tech Tab Bar */}
                         {showTabBar && (
-                            <div className="ai-tabbar flex justify-around items-end pb-4 h-[85px] safe-area-bottom sticky bottom-0 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
+                            <div className="ai-tabbar flex justify-around items-end pb-4 h-[85px] safe-area-bottom sticky bottom-0 z-50 shadow-sm">
                                 <button
                                     onClick={() => switchTab('home_log')}
                                     className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'home_log' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
@@ -653,7 +673,7 @@ const App: React.FC = () => {
                                     <div className={`p-1.5 rounded-xl transition-all ${currentView === 'home_log' ? 'bg-indigo-50 shadow-inner' : ''}`}>
                                         <ActivityIcon className={`w-6 h-6 ${currentView === 'home_log' ? 'fill-indigo-200' : ''}`} />
                                     </div>
-                                    <span className="text-[10px] font-bold tracking-wider">记录</span>
+                                    <span className="text-xs font-medium tracking-wider">记录</span>
                                 </button>
 
                                 <button
@@ -663,7 +683,7 @@ const App: React.FC = () => {
                                     <div className={`p-1.5 rounded-xl transition-all ${currentView === 'class_list' ? 'bg-indigo-50 shadow-inner' : ''}`}>
                                         <HomeIcon className={`w-6 h-6 ${currentView === 'class_list' ? 'fill-indigo-200' : ''}`} />
                                     </div>
-                                    <span className="text-[10px] font-bold tracking-wider">班级</span>
+                                    <span className="text-xs font-medium tracking-wider">班级</span>
                                 </button>
 
                                 <button
@@ -673,7 +693,7 @@ const App: React.FC = () => {
                                     <div className={`p-1.5 rounded-xl transition-all ${currentView === 'me' ? 'bg-indigo-50 shadow-inner' : ''}`}>
                                         <UserIcon className={`w-6 h-6 ${currentView === 'me' ? 'fill-indigo-200' : ''}`} />
                                     </div>
-                                    <span className="text-[10px] font-bold tracking-wider">我的</span>
+                                    <span className="text-xs font-medium tracking-wider">我的</span>
                                 </button>
                             </div>
                         )}
@@ -710,7 +730,7 @@ const App: React.FC = () => {
                                         </button>
 
                                         {showTermSelect && (
-                                            <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-xl z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
+                                            <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-lg z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
                                                 {TERMS.map(term => (
                                                     <button
                                                         key={term}
@@ -740,7 +760,7 @@ const App: React.FC = () => {
                                             </button>
 
                                             {showGradeSelect && (
-                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-xl z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
+                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-lg z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
                                                     {GRADE_SCOPES.map(grade => (
                                                         <button
                                                             key={grade}
@@ -771,7 +791,7 @@ const App: React.FC = () => {
                                             </button>
 
                                             {showSubjectScopeSelect && (
-                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-xl z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
+                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-lg z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
                                                     {SUBJECT_SCOPES.map(subject => (
                                                         <button
                                                             key={subject}

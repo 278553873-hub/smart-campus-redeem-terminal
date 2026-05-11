@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { 
+import {
     BackIcon, FileIcon,
     DeleteIcon, GenericFileIcon, MoreVerticalIcon,
-    WechatMoreIcon, WechatCloseIcon
 } from '../components/Icons';
 
 interface MyFilesViewProps {
@@ -137,7 +136,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
     }, [filteredFiles]);
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
+        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
             {/* Header (WeChat Style) */}
             <div className="px-4 py-2 bg-white sticky top-0 z-10 border-b border-slate-100 flex items-center justify-between h-[44px]">
                 <div className="flex-1 flex justify-start">
@@ -148,24 +147,17 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
                 
                 <h1 className="text-[17px] font-bold text-slate-900 flex-none">我的文件</h1>
                 
-                <div className="flex-1 flex justify-end">
-                    {/* WeChat Capsule */}
-                    <div className="flex items-center bg-white/50 border border-slate-200/80 rounded-full px-3 h-[30px] gap-3 shadow-sm">
-                        <div className="w-5 h-5 flex items-center justify-center text-slate-900"><WechatMoreIcon className="w-5 h-5" /></div>
-                        <div className="w-[1px] h-3.5 bg-slate-200"></div>
-                        <div className="w-5 h-5 flex items-center justify-center text-slate-900"><WechatCloseIcon className="w-4 h-4" /></div>
-                    </div>
-                </div>
+<div className="flex-1" aria-hidden="true"></div>
             </div>
 
             {/* Month Filter */}
             <div className="px-4 py-3 bg-white border-b border-slate-100">
-                <div className="text-[11px] font-bold text-slate-400 mb-1">按上传月份筛选</div>
+                <div className="text-[11px] font-semibold text-slate-400 mb-1">按上传月份筛选</div>
                 <div className="relative">
                     <select 
                         value={activeMonth}
                         onChange={(e) => setActiveMonth(e.target.value as 'all' | string)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-medium text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-100"
                     >
                         <option value="all">全部月份</option>
                         {monthOptions.map(option => (
@@ -186,10 +178,10 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
                 ) : (
                     groupedFiles.map(group => (
                         <div key={group.key}>
-                            <div className="text-[11px] font-bold text-slate-400 mb-2 px-1">{group.label}</div>
+                            <div className="text-[11px] font-semibold text-slate-400 mb-2 px-1">{group.label}</div>
                             <div className="space-y-3">
                             {group.files.map(file => (
-                        <div key={file.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 relative group">
+                        <div key={file.id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 relative group">
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3 overflow-hidden">
                                     {/* File Icon */}
@@ -200,7 +192,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
                                                 return (
                                                     <>
                                                         <FileIcon className={`w-7 h-7 ${color}`} />
-                                                        <div className={`absolute -bottom-0.5 -right-0.5 ${badgeColor} text-white text-[8px] font-bold px-0.5 rounded leading-none`}>
+                                                        <div className={`absolute -bottom-0.5 -right-0.5 ${badgeColor} text-white text-xs font-semibold px-0.5 rounded leading-none`}>
                                                             {badge}
                                                         </div>
                                                     </>
@@ -209,7 +201,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
                                         </div>
                                     </div>
                                     <div className="min-w-0">
-                                        <h3 className="text-sm font-bold text-slate-800 truncate pr-4">{file.name}</h3>
+                                        <h3 className="text-sm font-medium text-slate-800 truncate pr-4">{file.name}</h3>
                                         <p className="text-xs text-slate-400 mt-0.5 font-mono">{file.date}  <span className="ml-2">{file.size}</span></p>
                                     </div>
                                 </div>
@@ -240,10 +232,10 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
                             {activeMenuId === file.id && (
                                 <>
                                     <div className="fixed inset-0 z-20" onClick={() => setActiveMenuId(null)}></div>
-                                    <div className="absolute top-10 right-4 z-30 bg-white rounded-lg shadow-xl border border-slate-100 p-1 w-24 animate-in fade-in zoom-in duration-100 origin-top-right">
+                                    <div className="absolute top-10 right-4 z-30 bg-white rounded-xl shadow-lg border border-slate-100 p-1 w-24 animate-in fade-in zoom-in duration-100 origin-top-right">
                                         <button 
                                             onClick={() => handleDelete(file.id)}
-                                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-500 active:bg-red-50 rounded-md transition-colors"
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-500 active:bg-red-50 rounded-md transition-colors"
                                         >
                                             <DeleteIcon className="w-3.5 h-3.5" />
                                             删除

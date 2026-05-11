@@ -621,20 +621,20 @@ const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mo
                         <div className="flex flex-col sm:flex-row h-full">
                             {/* 图片容器 */}
                             <div
-                                className={`w-full sm:w-1/3 aspect-[4/3] bg-slate-50 relative overflow-hidden cursor-pointer ${item.isAward ? 'p-2.5' : ''}`}
+                                className={`w-full sm:w-1/3 aspect-[4/3] bg-slate-50 relative overflow-hidden active:scale-[0.99] transition-transform ${item.isAward ? 'p-2.5' : ''}`}
                                 onClick={() => item.isAward && setPreviewImage(item.imageUrl)}
                             >
                                 <div className={`w-full h-full overflow-hidden rounded-2xl relative ${item.isAward ? 'ring-1 ring-amber-100 shadow-sm' : ''}`}>
                                     <img
                                         src={item.imageUrl || "/api/placeholder/400/300"}
                                         alt="高光时刻"
-                                        className="w-full h-full object-cover transition-all duration-1000 group-hover/card:scale-110"
+                                        className="w-full h-full object-cover transition-transform duration-300 active:scale-105"
                                     />
                                     {/* 为证书添加光泽效果 */}
                                     {item.isAward && (
                                         <>
-                                            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-1000 -translate-x-full group-hover/card:translate-x-full" />
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity bg-black/10">
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-60 transition-opacity duration-300" />
+                                            <div className="absolute inset-x-0 bottom-3 flex items-center justify-center transition-opacity">
                                                 <div className="px-3 py-1.5 rounded-full bg-white/90 text-amber-600 text-[10px] font-bold shadow-sm backdrop-blur-sm">点击查看大图</div>
                                             </div>
                                         </>

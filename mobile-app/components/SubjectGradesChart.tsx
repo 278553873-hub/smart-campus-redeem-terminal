@@ -40,10 +40,10 @@ const SubjectGradesChart: React.FC<SubjectGradesChartProps> = ({ subjects, onSub
               `}
               style={{ backgroundColor: mapping.bgColor }}
             >
-              <div className="text-[13px] font-bold mb-1" style={{ color: '#334155' }}>
+              <div className="text-sm font-medium mb-1" style={{ color: '#334155' }}>
                 {sub.subject}
               </div>
-              <div className="text-[13px] font-black" style={{ color: mapping.color }}>
+              <div className="text-sm font-semibold" style={{ color: mapping.color }}>
                 {sub.grade}
               </div>
             </button>
@@ -54,7 +54,7 @@ const SubjectGradesChart: React.FC<SubjectGradesChartProps> = ({ subjects, onSub
       {/* 查看详情提示 */}
       {onSubjectClick && showClickHint && (
         <div className="mt-4 text-center">
-          <span className="text-[10px] text-slate-400 font-medium">
+          <span className="text-xs text-slate-400 font-normal">
             💡 点击学科方块查看详细学科分析报告
           </span>
         </div>

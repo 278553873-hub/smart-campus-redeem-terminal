@@ -134,11 +134,11 @@ const FiveEducationRadarSimple: React.FC<FiveEducationRadarSimpleProps> = ({ dim
       <div className="flex gap-4 mt-2">
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-          <span className="text-[10px] font-bold text-slate-400">期末评价</span>
+          <span className="text-xs font-medium text-slate-400">期末评价</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-0.5 bg-orange-500 border-t border-dashed border-orange-500"></div>
-          <span className="text-[10px] font-bold text-slate-400">期初评价</span>
+          <span className="text-xs font-medium text-slate-400">期初评价</span>
         </div>
       </div>
     </div>

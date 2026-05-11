@@ -191,7 +191,7 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
     <div className="pb-10 min-h-screen bg-[#F8FAFC]">
       
       {/* 1. Header Area with Gradient & Switcher */}
-      <div className="bg-slate-900 pt-safe pb-6 rounded-b-[2rem] shadow-2xl relative overflow-hidden">
+      <div className="bg-slate-900 pt-safe pb-6 rounded-b-[2rem] shadow-xl relative overflow-hidden">
          
          {/* Abstract Tech Background */}
          <div className="absolute inset-0 opacity-20">
@@ -340,7 +340,7 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
         ))}
 
         <div className="pt-4 pb-8 text-center">
-            <span className="text-[10px] text-slate-400">内容由AI生成</span>
+            <span className="text-xs text-slate-400">内容由AI生成</span>
         </div>
       </div>
     </div>

@@ -97,7 +97,7 @@ const GradePicker = ({ selected, options, onSelect }: { selected: string, option
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 overflow-hidden text-left">
+                    <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-2xl shadow-lg border border-slate-100 py-2 z-50 overflow-hidden text-left">
                         {options.map(opt => (
                             <button
                                 key={opt}
@@ -125,7 +125,7 @@ interface TabItemProps {
 const TabItem: React.FC<TabItemProps> = ({ label, active, onClick }) => (
     <button
         onClick={onClick}
-        className={`relative px-4 py-3 text-[13px] font-bold transition-all flex-shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`}
+        className={`relative px-4 py-3 text-sm font-medium transition-all flex-shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`}
     >
         {label}
         {active && (
@@ -142,7 +142,7 @@ interface DimensionPillProps {
 const DimensionPill: React.FC<DimensionPillProps> = ({ label, active, onClick }) => (
     <button
         onClick={onClick}
-        className={`px-4 py-2 rounded-xl text-[12px] font-black transition-all border whitespace-nowrap flex-shrink-0
+        className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap flex-shrink-0
             ${active
                 ? 'bg-[#5B50F6] text-white border-[#5B50F6] shadow-md shadow-indigo-200'
                 : 'bg-white text-slate-500 border-slate-200'}
@@ -185,7 +185,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
             <div className="w-full max-w-md min-h-screen relative flex flex-col">
 
                 {/* 1. Top Navigation Logic (Dropdown + Tabs) */}
-                <div className="bg-white sticky top-0 z-40 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                <div className="bg-white sticky top-0 z-40 shadow-sm">
 
                     {/* Row 1: Grade Dropdown (Left Aligned) */}
                     <div className="flex items-center px-4 py-3 border-b border-slate-50">
@@ -213,11 +213,11 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                 <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
 
                     {/* Module 1: Class Rankings Card */}
-                    <div className="bg-white rounded-[20px] p-5 shadow-sm">
+                    <div className="bg-white rounded-3xl p-5 shadow-sm">
 
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[16px] font-black text-slate-800 flex items-center gap-2">
+                            <h3 className="text-[17px] font-semibold text-slate-800 flex items-center gap-2">
                                 <span className="text-yellow-500">🏆</span>
                                 班级排行榜
                             </h3>
@@ -241,11 +241,11 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                             {data.rankings.slice(0, 5).map((cls, idx) => (
                                 <div
                                     key={cls.id}
-                                    className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+                                    className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl shadow-sm"
                                 >
                                     {/* Rank & Name */}
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-[14px] font-black
+                                        <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-semibold
                                             ${idx === 0 ? 'bg-[#FFC107] text-white shadow-[#FFC107]/40 shadow-lg' :
                                                 idx === 1 ? 'bg-[#B0BEC5] text-white' :
                                                     idx === 2 ? 'bg-[#FFAB91] text-white' : 'bg-slate-100 text-slate-400'}
@@ -257,7 +257,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
 
                                     {/* Score Only (Trend Removed) */}
                                     <div className="flex items-center gap-2">
-                                        <span className="font-mono font-black text-[16px] text-[#5B50F6]">
+                                        <span className="font-mono font-black text-[17px] text-[#5B50F6]">
                                             {cls.score}
                                         </span>
                                     </div>
@@ -276,9 +276,9 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                     </div>
 
                     {/* Module 2: Evaluation Records Card */}
-                    <div className="bg-white rounded-[20px] p-5 shadow-sm">
+                    <div className="bg-white rounded-3xl p-5 shadow-sm">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[16px] font-black text-slate-800 flex items-center gap-2">
+                            <h3 className="text-[17px] font-semibold text-slate-800 flex items-center gap-2">
                                 <ActivityIcon className="w-5 h-5 text-blue-500" />
                                 评价记录
                             </h3>
@@ -297,14 +297,14 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
 
                                     <div className="flex-1 min-w-0 pb-3 border-b border-slate-50 last:border-0 last:pb-0">
                                         <div className="flex items-center justify-between mb-1.5">
-                                            <span className="text-[13px] font-bold text-slate-800">{record.className}</span>
+                                            <span className="text-sm font-medium text-slate-800">{record.className}</span>
                                             <span className="text-[11px] font-medium text-slate-400">{record.time}</span>
                                         </div>
                                         <div className="flex justify-between items-start gap-4">
                                             <div className="text-[12px] text-slate-500 leading-snug">
                                                 {record.indicator}
                                             </div>
-                                            <div className={`text-[13px] font-black font-mono flex-shrink-0 ${record.score > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                            <div className={`text-sm font-semibold font-mono flex-shrink-0 ${record.score > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                                                 {record.score > 0 ? '+' : ''}{record.score}
                                             </div>
                                         </div>

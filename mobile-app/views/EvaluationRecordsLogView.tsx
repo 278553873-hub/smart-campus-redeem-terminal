@@ -102,7 +102,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ onB
                 {isOpen && (
                     <>
                         <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                        <div className="absolute top-full left-0 w-full mt-1 bg-white rounded-xl shadow-xl border border-slate-100 max-h-48 overflow-y-auto z-50">
+                        <div className="absolute top-full left-0 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 max-h-48 overflow-y-auto z-50">
                             {options.map(opt => (
                                 <button
                                     key={opt}
@@ -129,7 +129,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ onB
                     <button onClick={onBack} className="p-2 -ml-2 rounded-full active:bg-slate-50">
                         <ArrowLeft className="w-5 h-5 text-slate-700" />
                     </button>
-                    <h1 className="text-[16px] font-black text-slate-800">评价记录明细</h1>
+                    <h1 className="text-[17px] font-semibold text-slate-800">评价记录明细</h1>
                 </div>
 
                 {/* Filters */}
@@ -162,10 +162,10 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ onB
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 <div className="text-[12px] text-slate-400 font-bold px-1">共找到 {filteredLogs.length} 条记录</div>
                 {filteredLogs.map(log => (
-                    <div key={log.id} className="bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] border border-slate-100">
+                    <div key={log.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                         <div className="flex justify-between items-start mb-2">
-                            <span className="text-[15px] font-black text-slate-800">{log.className}</span>
-                            <span className={`font-mono font-black text-[16px] ${log.score > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                            <span className="text-[15px] font-semibold text-slate-800">{log.className}</span>
+                            <span className={`font-mono font-semibold text-[17px] ${log.score > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                                 {log.score > 0 ? '+' : ''}{log.score}
                             </span>
                         </div>

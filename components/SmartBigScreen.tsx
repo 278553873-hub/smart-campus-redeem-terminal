@@ -1272,7 +1272,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
             <span className="truncate text-sm font-black">{activeGroupPlan?.planName || '选择方案'}</span>
             <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform ${isGroupPlanMenuOpen ? 'rotate-180' : ''}`} />
           </button>
-          <div className={`absolute top-12 right-0 w-[320px] bg-white rounded-[1.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-slate-100 p-1.5 z-[70] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${isGroupPlanMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+          <div
+            className={`absolute top-12 right-0 w-[320px] bg-white rounded-[1.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-slate-100 p-1.5 z-[70] transition-all duration-300 ${isGroupPlanMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
+            style={sidebarTiming}
+          >
             {groupPlans.map(plan => (
               <button
                 key={plan.id}
@@ -1437,7 +1440,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         </div>
 
         <div className={`fixed inset-0 z-[100] bg-slate-900/10 backdrop-blur-sm transition-opacity duration-300 ${historyOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setHistoryOpen(false)} />
-        <aside className={`fixed right-0 top-0 bottom-0 w-[400px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[101] flex flex-col border-l border-slate-100 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${historyOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <aside
+          className={`fixed right-0 top-0 bottom-0 w-[400px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[101] flex flex-col border-l border-slate-100 transition-transform duration-500 ${historyOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          style={sidebarTiming}
+        >
           <div className="px-6 py-6 flex flex-col gap-1 border-b border-slate-50 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -1509,7 +1515,11 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
       <div className={`fixed inset-0 z-[120] flex items-center justify-center ${evaluationModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={handleCloseEvaluation} />
-        <div className={`w-[840px] bg-white rounded-[2.5rem] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.25)] overflow-hidden border border-white relative transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${evaluationModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`} onClick={e => e.stopPropagation()}>
+        <div
+          className={`w-[840px] bg-white rounded-[2.5rem] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.25)] overflow-hidden border border-white relative transition-all duration-500 ${evaluationModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+          style={sidebarTiming}
+          onClick={e => e.stopPropagation()}
+        >
           <div className="px-10 py-[24px] flex items-center justify-between border-b border-slate-100 bg-white min-h-[72px]">
             <div className="flex items-center gap-3 flex-1">
               {isManagerMode ? (
@@ -1625,7 +1635,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
       <div className={`fixed inset-0 z-[140] flex items-center justify-center ${groupDetailsModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setGroupDetailsModalOpen(false)} />
-        <div className={`w-[840px] bg-white rounded-[2.5rem] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.25)] overflow-hidden border border-white relative transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${groupDetailsModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
+        <div
+          className={`w-[840px] bg-white rounded-[2.5rem] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.25)] overflow-hidden border border-white relative transition-all duration-500 ${groupDetailsModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+          style={sidebarTiming}
+        >
           <div className="px-10 py-6 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
@@ -1688,7 +1701,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
       <div className={`fixed inset-0 z-[150] flex items-center justify-center ${randomModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl" onClick={() => { if (!isRolling) closeRandomModal(); }} />
-        <div className={`w-[840px] min-h-[540px] bg-white rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)] border border-white relative overflow-hidden flex flex-col transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${randomModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
+        <div
+          className={`w-[840px] min-h-[540px] bg-white rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)] border border-white relative overflow-hidden flex flex-col transition-all duration-500 ${randomModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+          style={sidebarTiming}
+        >
           <button onClick={() => { if (!isRolling) closeRandomModal(); }} disabled={isRolling} className={`absolute top-7 right-7 w-10 h-10 flex items-center justify-center rounded-xl transition-all z-50 border ${isRolling ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed' : 'bg-white text-slate-400 border-slate-100 hover:text-blue-600 hover:border-blue-200 active:scale-95'}`}><X size={20} strokeWidth={3} /></button>
           
           <div className="px-10 pt-10 pb-4 shrink-0">

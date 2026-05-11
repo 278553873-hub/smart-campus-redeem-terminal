@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BackIcon, CameraIcon, ImageIconIcon, CheckCircleIcon, WechatMoreIcon, WechatCloseIcon } from '../../components/Icons';
+import { BackIcon, CameraIcon, ImageIconIcon, CheckCircleIcon } from '../../components/Icons';
 import { MOCK_STUDENTS_CLASS_1 } from '../../constants';
 
 interface FaceUpdateViewProps {
@@ -32,7 +32,7 @@ export const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classId, onBack 
     return (
         <div className="flex flex-col h-full bg-slate-50 relative pb-20">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-2 bg-white sticky top-0 z-20 h-[44px] shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center justify-between px-4 py-2 bg-white sticky top-0 z-20 h-[44px] border-b border-slate-100">
                 <div className="flex-1 flex justify-start">
                     <button onClick={onBack} className="p-1 -ml-2 text-slate-900 active:bg-slate-100 rounded-full transition-colors">
                         <BackIcon className="w-5 h-5" />
@@ -41,21 +41,14 @@ export const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classId, onBack 
 
                 <div className="text-[17px] font-bold text-slate-900 flex-none">批量更新人脸库</div>
 
-                <div className="flex-1 flex justify-end">
-                    {/* Simulated WeChat Capsule */}
-                    <div className="flex items-center bg-white/50 border border-slate-200/80 rounded-full px-3 h-[30px] gap-3 shadow-sm">
-                        <div className="w-5 h-5 flex items-center justify-center text-slate-900"><WechatMoreIcon className="w-5 h-5" /></div>
-                        <div className="w-[1px] h-3.5 bg-slate-200"></div>
-                        <div className="w-5 h-5 flex items-center justify-center text-slate-900"><WechatCloseIcon className="w-4 h-4" /></div>
-                    </div>
-                </div>
+<div className="flex-1" aria-hidden="true"></div>
             </div>
 
             {/* Progress Card */}
             <div className="bg-white p-5 m-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-3">
                 <div className="flex justify-between items-end">
                     <div>
-                        <div className="text-3xl font-black text-slate-800 tracking-tight">{countHasData}<span className="text-base text-slate-400 font-bold ml-1">/ {students.length}</span></div>
+                        <div className="text-3xl font-extrabold text-slate-800 tracking-tight">{countHasData}<span className="text-base text-slate-400 font-medium ml-1">/ {students.length}</span></div>
                         <div className="text-sm font-bold text-slate-500 mt-0.5">人脸数据已录入</div>
                     </div>
                 </div>
@@ -84,7 +77,7 @@ export const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classId, onBack 
                                 {student.isUploading ? (
                                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-10 flex flex-col items-center justify-center animate-in fade-in">
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mb-2" />
-                                        <span className="text-[10px] text-white font-bold">处理中</span>
+                                        <span className="text-[11px] text-white font-semibold">处理中</span>
                                     </div>
                                 ) : null}
 

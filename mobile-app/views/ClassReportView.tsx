@@ -71,7 +71,7 @@ const DonutChart = ({ data }: { data: { label: string, value: number, color: str
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-3xl font-bold text-slate-800">{total}</span>
-                <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-1">总记录</span>
+                <span className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">总记录</span>
             </div>
         </div>
     );
@@ -252,16 +252,16 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">正面评价</span>
+                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">正面评价</span>
                             </div>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-black text-slate-800 tracking-tight">{reportData.positiveEntries}</span>
-                                <span className="text-[10px] text-slate-400 font-bold">次</span>
+                                <span className="text-2xl font-extrabold text-slate-800 tracking-tight">{reportData.positiveEntries}</span>
+                                <span className="text-xs text-slate-400 font-bold">次</span>
                             </div>
                         </div>
                         <div className="pt-2 border-t border-slate-50 space-y-0.5">
-                            <div className="text-[10px] text-slate-400 font-medium">覆盖人数</div>
-                            <div className="text-xs font-bold text-emerald-600">{reportData.positiveCoverage} <span className="text-[10px] text-slate-300 font-normal">人</span></div>
+                            <div className="text-xs text-slate-400 font-medium">覆盖人数</div>
+                            <div className="text-xs font-bold text-emerald-600">{reportData.positiveCoverage} <span className="text-xs text-slate-300 font-normal">人</span></div>
                         </div>
                     </div>
 
@@ -271,16 +271,16 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">改进建议</span>
+                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">改进建议</span>
                             </div>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-black text-slate-800 tracking-tight">{reportData.negativeEntries}</span>
-                                <span className="text-[10px] text-slate-400 font-bold">次</span>
+                                <span className="text-2xl font-extrabold text-slate-800 tracking-tight">{reportData.negativeEntries}</span>
+                                <span className="text-xs text-slate-400 font-bold">次</span>
                             </div>
                         </div>
                         <div className="pt-2 border-t border-slate-50 space-y-0.5">
-                            <div className="text-[10px] text-slate-400 font-medium">覆盖人数</div>
-                            <div className="text-xs font-bold text-rose-500">{reportData.negativeCoverage} <span className="text-[10px] text-slate-300 font-normal">人</span></div>
+                            <div className="text-xs text-slate-400 font-medium">覆盖人数</div>
+                            <div className="text-xs font-bold text-rose-500">{reportData.negativeCoverage} <span className="text-xs text-slate-300 font-normal">人</span></div>
                         </div>
                     </div>
                 </div>
@@ -289,9 +289,9 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-4 shadow-lg shadow-blue-200 flex items-center justify-between text-white overflow-hidden relative">
                     <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
                     <div className="relative z-10 w-2/3">
-                        <div className="text-[10px] font-bold opacity-70 mb-1 uppercase tracking-widest">总体学生覆盖率</div>
+                        <div className="text-xs font-bold opacity-70 mb-1 uppercase tracking-widest">总体学生覆盖率</div>
                         <div className="flex items-baseline gap-2 mb-2">
-                            <span className="text-3xl font-black">{reportData.coverageRate}</span>
+                            <span className="text-3xl font-extrabold">{reportData.coverageRate}</span>
                             <span className="text-xs font-bold opacity-80">%</span>
                         </div>
                         <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
@@ -299,9 +299,9 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                         </div>
                     </div>
                     <div className="text-right relative z-10">
-                        <div className="text-[10px] font-bold opacity-70 mb-1">评价总计</div>
-                        <div className="text-xl font-black">{reportData.totalEntries}</div>
-                        <div className="text-[9px] font-bold bg-white/20 px-1.5 py-0.5 rounded-md mt-1 inline-block">条记录</div>
+                        <div className="text-xs font-bold opacity-70 mb-1">评价总计</div>
+                        <div className="text-xl font-extrabold">{reportData.totalEntries}</div>
+                        <div className="text-xs font-bold bg-white/20 px-1.5 py-0.5 rounded-md mt-1 inline-block">条记录</div>
                     </div>
                 </div>
 
@@ -342,7 +342,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                                 onClick={onGoToClassDetail}
                                 className="text-xs font-bold text-blue-600 flex items-center gap-1 active:opacity-70"
                             >
-                                去点评 <span className="text-[10px]">➜</span>
+                                去点评 <span className="text-xs">➜</span>
                             </button>
                         </div>
                     </div>
@@ -390,7 +390,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                                 <button
                                     key={d}
                                     onClick={() => setActiveRankDim(d)}
-                                    className={`px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap transition-all ${activeRankDim === d ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}
+                                    className={`px-2 py-1 rounded text-xs font-bold whitespace-nowrap transition-all ${activeRankDim === d ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}
                                 >
                                     {d}
                                 </button>
@@ -412,7 +412,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                                     className="flex flex-col p-2 bg-emerald-50/50 rounded-lg border border-emerald-100/50 cursor-pointer /50 transition-colors active:scale-95 transition-all"
                                 >
                                     <span className="text-xs font-bold text-slate-700">{stu.name}</span>
-                                    <span className="text-[10px] font-bold text-emerald-600">+{stu.score}分</span>
+                                    <span className="text-xs font-bold text-emerald-600">+{stu.score}分</span>
                                 </div>
                             ))}
                         </div>
@@ -430,7 +430,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                                     className="flex flex-col p-2 bg-rose-50/50 rounded-lg border border-rose-100/50 cursor-pointer /50 transition-colors active:scale-95 transition-all"
                                 >
                                     <span className="text-xs font-bold text-slate-700">{stu.name}</span>
-                                    <span className="text-[10px] font-bold text-rose-500">-{stu.score}分</span>
+                                    <span className="text-xs font-bold text-rose-500">-{stu.score}分</span>
                                 </div>
                             ))}
                         </div>

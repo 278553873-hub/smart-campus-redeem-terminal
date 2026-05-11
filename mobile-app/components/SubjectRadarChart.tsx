@@ -197,7 +197,7 @@ const SubjectRadarChart: React.FC<SubjectRadarChartProps> = ({ dimensions }) => 
                   y={scorePos.y}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  className="text-[13px] font-bold"
+                  className="text-sm font-medium"
                   fill={item.color}
                 >
                   {item.normalizedScore}
@@ -249,7 +249,7 @@ const SubjectRadarChart: React.FC<SubjectRadarChartProps> = ({ dimensions }) => 
                 y={pos.y + 12}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="text-[10px]"
+                className="text-xs"
                 fill={labelColor}
               >
                 {icon}

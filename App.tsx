@@ -20,6 +20,7 @@ import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import PlatformBrandMark from './components/PlatformBrandMark';
 import { DeviceWrapper } from './components/DeviceWrapper';
+import { ASSETS as MOBILE_ASSETS } from './mobile-app/assets/images';
 import './mobile-app/index.css';
 import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Loader2, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, X } from 'lucide-react';
 import { playSound } from './utils/sound';
@@ -36,13 +37,13 @@ const GROWTH_TIER_CONFIG: Record<TierLevel, { label: string; weight: number; col
 
 interface ScoreConfig { score: number; count: number; }
 interface SimStudent { name: string; score: number; tier: TierLevel; reward: number; }
-interface TeacherProfile { name: string; role: string; school: string; }
+interface TeacherProfile { name: string; role: string; school: string; avatar?: string; }
 
 const DEMO_TEACHER_PROFILES: TeacherProfile[] = [
-  { name: '郭老师', role: '学校管理员', school: '成都七中初中附属小学' },
-  { name: '周老师', role: '学校管理员', school: '成都七中初中附属小学' },
-  { name: '王老师', role: '学校管理员', school: '成都七中初中附属小学' },
-  { name: '曹老师', role: '学校管理员', school: '成都七中初中附属小学' },
+  { name: '郭老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_LIU },
+  { name: '周老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_LIU },
+  { name: '王老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_LIU },
+  { name: '曹老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_LIU },
 ];
 
 const resolveTeacherProfile = (loginId: string): TeacherProfile => {
@@ -1238,6 +1239,7 @@ const AppSwitcher: React.FC = () => {
     return 'terminal'; // default
   });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
+  const [showPhoneShell, setShowPhoneShell] = useState(false);
 
   return (
     <>
@@ -1245,26 +1247,46 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'terminal' && <TerminalApp mode="vending" />}
         {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
         {currentApp === 'pc-workspace' && <PcWorkspace />}
-        {currentApp === 'admin' && <MobileApp />}
+        {currentApp === 'admin' && <MobileApp showPhoneShell={showPhoneShell} />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && <ParentApp />}
       </div>
 
+      {currentApp === 'admin' && (
+        <div className="fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
+          <button
+            type="button"
+            onClick={() => setShowPhoneShell(prev => !prev)}
+            className="flex min-h-11 items-center gap-3 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl active:bg-slate-50 transition-colors"
+            aria-pressed={showPhoneShell}
+          >
+            <span className="text-[12px] font-black text-slate-700">模拟真实手机效果</span>
+            <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${showPhoneShell ? 'bg-slate-900' : 'bg-slate-200'}`}>
+              <span className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${showPhoneShell ? 'translate-x-5' : 'translate-x-0'}`}></span>
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* 侧边悬浮控制台 (抽屉效果，避免遮挡导航) */}
       <div
-        className={`fixed right-0 top-1/2 -translate-y-1/2 z-[9999] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isDemoOpen ? 'translate-x-0' : 'translate-x-[calc(100%-32px)]'}`}
-        onMouseEnter={() => setIsDemoOpen(true)}
-        onMouseLeave={() => setIsDemoOpen(false)}
+        className={`fixed right-0 top-1/2 -translate-y-1/2 z-[9999] transition-transform duration-300 ${isDemoOpen ? 'translate-x-0' : 'translate-x-[calc(100%-32px)]'}`}
+        style={{ transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
       >
-        <div className="flex bg-white/95 backdrop-blur-md rounded-l-2xl border border-r-0 border-slate-200 shadow-[-10px_0_30px_-10px_rgba(0,0,0,0.15)] overflow-hidden items-center group cursor-pointer">
+        <div className="flex bg-white/95 backdrop-blur-md rounded-l-2xl border border-r-0 border-slate-200 shadow-[-10px_0_30px_-10px_rgba(0,0,0,0.15)] overflow-hidden items-center">
 
           {/* 触发把手 (固定 32px 宽) */}
-          <div className="w-8 shrink-0 flex flex-col gap-1 items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors py-6 border-r border-slate-100 bg-slate-50/50 self-stretch">
+          <button
+            type="button"
+            onClick={() => setIsDemoOpen(prev => !prev)}
+            className={`w-8 shrink-0 flex flex-col gap-1 items-center justify-center transition-colors py-6 border-r border-slate-100 bg-slate-50/50 self-stretch active:bg-slate-100 ${isDemoOpen ? 'text-blue-600' : 'text-slate-400'}`}
+            aria-label={isDemoOpen ? '收起环境切换' : '展开环境切换'}
+          >
             <span className="text-[10px] font-black">D</span>
             <span className="text-[10px] font-black">E</span>
             <span className="text-[10px] font-black">M</span>
             <span className="text-[10px] font-black">O</span>
-          </div>
+          </button>
 
           {/* 控制面板 */}
           <div className="flex flex-col gap-2 p-3 bg-white">
@@ -1273,7 +1295,7 @@ const AppSwitcher: React.FC = () => {
             </div>
             <button
               onClick={() => setCurrentApp('terminal')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'terminal' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'terminal' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
               title="货柜机 - 学生端"
             >
               <MonitorSmartphone size={22} className="mb-1" />
@@ -1281,7 +1303,7 @@ const AppSwitcher: React.FC = () => {
             </button>
             <button
               onClick={() => setCurrentApp('pc-workspace')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'pc-workspace' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'pc-workspace' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
               title="统一SaaS平台 - PC端"
             >
               <Monitor size={22} className="mb-1" />
@@ -1289,7 +1311,7 @@ const AppSwitcher: React.FC = () => {
             </button>
             <button
               onClick={() => setCurrentApp('admin')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'admin' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'admin' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
               title="管理端 - 教师手机控制"
             >
               <Smartphone size={22} className="mb-1" />

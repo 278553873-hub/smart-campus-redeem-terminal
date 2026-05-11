@@ -639,10 +639,14 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
         </div>
       </main>
 
-      <div className={`fixed inset-0 z-[120] flex items-start justify-center px-8 py-8 transition-opacity duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${storyWorkshopOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div
+        className={`fixed inset-0 z-[120] flex items-start justify-center px-8 py-8 transition-opacity duration-300 ${storyWorkshopOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
+      >
         <div className="absolute inset-0 bg-slate-900/35 backdrop-blur-md" onClick={() => setStoryWorkshopOpen(false)} />
         <div
-          className={`relative flex max-h-[calc(100vh-64px)] w-full max-w-[1040px] flex-col overflow-hidden rounded-[2.5rem] border border-white bg-white shadow-[0_60px_120px_-20px_rgba(0,0,0,0.18)] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${storyWorkshopOpen ? 'scale-100 opacity-100' : 'scale-[0.97] opacity-0'}`}
+          className={`relative flex max-h-[calc(100vh-64px)] w-full max-w-[1040px] flex-col overflow-hidden rounded-[2.5rem] border border-white bg-white shadow-[0_60px_120px_-20px_rgba(0,0,0,0.18)] transition-all duration-300 ${storyWorkshopOpen ? 'scale-100 opacity-100' : 'scale-[0.97] opacity-0'}`}
+          style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/92 px-8 py-4 backdrop-blur-xl">

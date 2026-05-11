@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     CameraIcon, MicIcon, ImageIconIcon,
-    ChevronRightIcon, WechatMoreIcon, WechatCloseIcon,
+    ChevronRightIcon,
     ArrowRightIcon
 } from '../components/Icons';
 
@@ -151,7 +151,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
                     <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${mode === 'camera' ? 'bg-black/40 backdrop-blur-md border border-white/10' : ''}`}>
                         <span className={`text-sm font-bold max-w-[150px] truncate ${mode === 'camera' ? 'text-white' : 'text-slate-800'}`}>{studentNameList || "未选择学生"}</span>
                         {initialStudentIds.length > 0 && (
-                            <span className={`text-[10px] px-1.5 rounded-sm font-bold ${mode === 'camera' ? 'bg-white text-black' : 'bg-blue-600 text-white'}`}>
+                            <span className={`text-[11px] px-1.5 rounded-md font-semibold ${mode === 'camera' ? 'bg-white text-black' : 'bg-blue-600 text-white'}`}>
                                 {initialStudentIds.length}
                             </span>
                         )}
@@ -238,7 +238,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
                                         mockStudents: initialStudentIds
                                     });
                                 }}
-                                className={`px-8 py-3.5 rounded-2xl font-black text-white shadow-lg transition-all active:scale-95 flex items-center gap-2
+                                className={`px-8 py-3.5 rounded-2xl font-semibold text-white shadow-md transition-all active:scale-95 flex items-center gap-2
                                ${inputText.trim() ? 'bg-indigo-600 shadow-indigo-200 ' : 'bg-slate-300'}`}
                             >
                                 发送识别

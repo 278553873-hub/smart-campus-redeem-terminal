@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     BackIcon, VolumeIcon, ActivityIcon,
     SwapIcon, FileIcon, DeleteIcon, RetryIcon, ChevronRightIcon,
-    CloseIcon, WechatMoreIcon, WechatCloseIcon
+    CloseIcon, WechatMoreIcon
 } from '../components/Icons';
 import { MOCK_STUDENTS_CLASS_1, MOCK_CLASS_RECORD_LOGS } from '../constants';
 import { ASSETS } from '../assets/images';
@@ -16,6 +16,7 @@ interface ClassRecordLogViewProps {
     newRecordData?: any;
     onClearNewRecord?: () => void;
     onToggleModal?: (isOpen: boolean) => void;
+    addDemoTopBreathingSpace?: boolean;
     activeTab: 'student' | 'class';
     onTabChange: (tab: 'student' | 'class') => void;
 }
@@ -81,7 +82,7 @@ const INITIAL_LOGS: LogItem[] = [
 
 const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     classNameStr, onBack, onStartRecord, isMainView = false, newRecordData, onClearNewRecord, onToggleModal,
-    activeTab, onTabChange
+    addDemoTopBreathingSpace = false, activeTab, onTabChange
 }) => {
     // State
     const [logs, setLogs] = useState<LogItem[]>(INITIAL_LOGS);
@@ -197,7 +198,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
             {/* Menu Dropdown */}
             {activeCardMenu === id && (
-                <div className="absolute top-8 right-0 bg-white shadow-xl border border-slate-100 rounded-xl p-1 w-32 animate-in fade-in zoom-in duration-200 origin-top-right ring-1 ring-black/5 z-30">
+                <div className="absolute top-8 right-0 bg-white shadow-lg border border-slate-100 rounded-xl p-1 w-32 animate-in fade-in zoom-in duration-200 origin-top-right ring-1 ring-black/5 z-30">
                     <button className="flex items-center gap-2 text-xs font-medium text-slate-700 p-2 active:bg-slate-50 rounded-lg w-full text-left" onClick={() => setActiveCardMenu(null)}>
                         <RetryIcon className="w-3.5 h-3.5" /> 重新识别
                     </button>
@@ -230,7 +231,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         // 1. PROCESSING STATE - Candy Shimmer
         if (log.status === 'processing') {
             return (
-                <div key={log.id} className="bg-white/80 backdrop-blur-md rounded-[20px] p-5 shadow-lg shadow-blue-100/50 border border-white relative overflow-hidden animate-in fade-in slide-in-from-top-5 duration-500">
+                <div key={log.id} className="bg-white/80 backdrop-blur-md rounded-3xl p-5 shadow-lg shadow-blue-100/50 border border-white relative overflow-hidden animate-in fade-in slide-in-from-top-5 duration-500">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-100/40 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
                     <div className="flex justify-between items-center mb-4 relative z-10">
                         <div className="flex items-center gap-2.5 text-blue-600">
@@ -238,7 +239,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                 <div className="absolute inset-0 bg-blue-400 rounded-full blur animate-ping opacity-20"></div>
                                 <Loader2 className="w-5 h-5 animate-spin relative z-10" />
                             </div>
-                            <span className="text-sm font-black tracking-wide">AI 正在思考中...</span>
+                            <span className="text-sm font-semibold tracking-wide">AI 正在思考中...</span>
                         </div>
                         <span className="text-xs text-slate-400 font-bold bg-slate-50 px-2 py-0.5 rounded-full">{log.time.split(' ')[1]}</span>
                     </div>
@@ -253,7 +254,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         // 2. DONE STATE - FILE (Clean Glass)
         if (log.type === 'file') {
             return (
-                <div key={log.id} className="bg-white rounded-[24px] p-5 shadow-[0_8px_20px_-6px_rgba(0,0,0,0.05)] border border-white relative">
+                <div key={log.id} className="bg-white rounded-3xl p-5 shadow-sm border border-white relative">
                     <TeacherRecordHeader id={log.id} time={log.time} />
                     <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-3.5 flex items-center gap-4 mb-4">
                         <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center border border-slate-50 shrink-0">
@@ -272,7 +273,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         const isNegative = log.theme === 'negative';
 
         // Base Container - Floating White Card
-        const containerClass = "bg-white rounded-[24px] shadow-[0_10px_30px_-10px_rgba(14,165,233,0.15)] border border-white/60 relative group animate-in fade-in duration-500 overflow-hidden";
+        const containerClass = "bg-white rounded-3xl shadow-sm border border-white/60 relative group animate-in fade-in duration-500 overflow-hidden";
 
         // AI Result Background - Scope based distinctions
         const isClass = log.scope === 'class';
@@ -287,14 +288,14 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
         const resultBorder = isNegative ? "border-rose-100" : (isClass ? "border-teal-100/50" : "border-white/50");
         const accentColor = isNegative ? "text-rose-500" : (isClass ? "text-teal-600" : "text-cyan-600");
-        const buttonBaseClass = "backdrop-blur-sm border shadow-sm transition-all active:scale-95 text-[12px] font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5";
+        const buttonBaseClass = "backdrop-blur-sm border shadow-sm transition-all active:scale-95 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5";
 
         return (
             <div key={log.id} className={containerClass}>
                 {/* Top Section: User Input */}
                 <div className="p-5 pb-3 bg-white relative z-20">
                     <TeacherRecordHeader id={log.id} time={log.time} isAudio={log.type === 'voice'} />
-                    <p className="text-[16px] text-slate-700 font-medium leading-relaxed tracking-wide mb-1">
+                    <p className="text-base text-slate-700 font-medium leading-relaxed tracking-wide mb-1">
                         {log.content}
                     </p>
                 </div>
@@ -317,7 +318,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             alt="AI Bot"
                             className="w-10 h-10 object-contain"
                         />
-                        <span className={`text-sm font-black tracking-tight ${isNegative ? 'text-rose-600' : 'text-slate-700'}`}>AI 智能分析</span>
+                        <span className={`text-sm font-semibold tracking-tight ${isNegative ? 'text-rose-600' : 'text-slate-700'}`}>AI 智能分析</span>
                     </div>
 
                     <div className="space-y-4 relative z-10">
@@ -341,7 +342,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                     <button
                                         key={stu.id}
                                         onClick={() => { setEditingLog(log); setShowClassSelect(true); }}
-                                        className={`bg-white border text-slate-700 text-[12px] px-3 py-1.5 rounded-xl font-bold shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center gap-1.5 active:scale-95 transition-all
+                                        className={`bg-white border text-slate-700 text-xs px-3 py-1.5 rounded-xl font-bold shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center gap-1.5 active:scale-95 transition-all
                                             ${isClass ? 'border-teal-100/50 ' : 'border-blue-50/50 '}`}
                                     >
                                         <div className={`w-1.5 h-1.5 rounded-full ${isClass ? 'bg-teal-400' : 'bg-cyan-400'}`}></div>
@@ -351,7 +352,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                 {log.students && log.students.length > 5 && (
                                     <button
                                         onClick={() => setShowStudentListModal(true)}
-                                        className={`text-white text-[12px] px-3 py-1.5 rounded-xl font-bold shadow-lg flex items-center gap-1 active:scale-95 transition-transform
+                                        className={`text-white text-xs px-3 py-1.5 rounded-xl font-bold shadow-lg flex items-center gap-1 active:scale-95 transition-transform
                                             ${isClass ? 'bg-teal-500 shadow-teal-200' : 'bg-blue-500 shadow-blue-200'}`}
                                     >
                                         +{log.students.length - 1} 人
@@ -384,7 +385,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         )}
 
                         {/* 4. Comment Box */}
-                        <div className={`mt-2 p-4 rounded-2xl text-[13px] leading-relaxed text-slate-600 text-justify relative
+                        <div className={`mt-2 p-4 rounded-2xl text-sm leading-relaxed text-slate-600 text-justify relative
                             ${isNegative ? 'bg-rose-50 border border-rose-100' : 'bg-white/70 border border-white shadow-sm'}
                          `}>
                             {/* Quote Icon Decoration */}
@@ -422,8 +423,8 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             </div>
 
             {/* Header (Top-most Integration) */}
-            <div className="sticky top-0 z-30">
-                <div className="h-[50px] flex items-center gap-2 pl-4 pr-[132px]">
+            <div className={`sticky top-0 z-30 ${addDemoTopBreathingSpace ? 'pt-2' : ''}`}>
+                <div className="h-11 flex items-center gap-2 pl-4 pr-[132px]">
                     {/* Left: Back (if needed) */}
                     {!isMainView && (
                         <div className="w-10 shrink-0">
@@ -438,13 +439,13 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         <div className="flex bg-slate-200/40 p-1 rounded-full border border-white/50 shadow-sm ring-1 ring-black/5">
                             <button
                                 onClick={() => onTabChange('student')}
-                                className={`flex-1 py-1.5 text-[13px] font-bold rounded-full transition-all duration-300 ${activeTab === 'student' ? 'bg-white text-indigo-600 shadow-sm scale-[1.05]' : 'text-slate-500'}`}
+                                className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all duration-300 ${activeTab === 'student' ? 'bg-white text-indigo-600 shadow-sm scale-[1.05]' : 'text-slate-500'}`}
                             >
                                 记录学生
                             </button>
                             <button
                                 onClick={() => onTabChange('class')}
-                                className={`flex-1 py-1.5 text-[13px] font-bold rounded-full transition-all duration-300 ${activeTab === 'class' ? 'bg-white text-teal-600 shadow-sm scale-[1.05]' : 'text-slate-500'}`}
+                                className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all duration-300 ${activeTab === 'class' ? 'bg-white text-teal-600 shadow-sm scale-[1.05]' : 'text-slate-500'}`}
                             >
                                 记录班级
                             </button>
@@ -457,7 +458,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-40 no-scrollbar relative z-10">
                 {/* "View Metrics" button relocated here (above cards) */}
                 <div className="flex justify-start px-2 -mb-2">
-                    <button className={`bg-white/80 backdrop-blur-md border border-white/60 text-[12px] px-4 py-2 rounded-full font-bold shadow-sm active:scale-95 transition-all flex items-center gap-1.5 border-indigo-100/30
+                    <button className={`bg-white/80 backdrop-blur-md border border-white/60 text-xs px-4 py-2 rounded-full font-bold shadow-sm active:scale-95 transition-all flex items-center gap-1.5 border-indigo-100/30
                         ${activeTab === 'class' ? 'text-teal-600 ' : 'text-indigo-600 '}`}>
                         <ActivityIcon className="w-3.5 h-3.5" />
                         <span>查看指标</span>
@@ -481,9 +482,9 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             {/* Mobile Style Date Picker */}
             {showDatePicker && editingLog && (
                 <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDatePicker(false)}>
-                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-lg flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-50 flex items-center justify-between">
-                            <h3 className="text-lg font-black text-slate-800">选择日期</h3>
+                            <h3 className="text-lg font-semibold text-slate-800">选择日期</h3>
                             <div className="flex items-center gap-3">
                                 <button onClick={() => setShowDatePicker(false)} className="text-sm font-bold text-slate-400">取消</button>
                                 <button onClick={() => setShowDatePicker(false)} className="text-sm font-bold text-indigo-600">完成</button>
@@ -495,17 +496,17 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                 {/* Simulated Wheels */}
                                 <div className="text-center">
                                     <div className="text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-tighter">Year</div>
-                                    <div className="text-xl font-black text-slate-800">2025</div>
+                                    <div className="text-xl font-semibold text-slate-800">2025</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-tighter">Month</div>
-                                    <div className="text-xl font-black text-slate-800">11</div>
+                                    <div className="text-xl font-semibold text-slate-800">11</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-tighter">Day</div>
-                                    <div className="text-xl font-black text-slate-700 opacity-40">11</div>
-                                    <div className="text-xl font-black text-slate-800 py-2">12</div>
-                                    <div className="text-xl font-black text-slate-700 opacity-40">13</div>
+                                    <div className="text-xl font-semibold text-slate-700 opacity-40">11</div>
+                                    <div className="text-xl font-semibold text-slate-800 py-2">12</div>
+                                    <div className="text-xl font-semibold text-slate-700 opacity-40">13</div>
                                 </div>
                             </div>
                             <input
@@ -519,7 +520,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             />
                         </div>
                         <div className="p-4 safe-area-bottom">
-                            <button onClick={() => setShowDatePicker(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black">确认日期</button>
+                            <button onClick={() => setShowDatePicker(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-semibold">确认日期</button>
                         </div>
                     </div>
                 </div>
@@ -528,10 +529,10 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             {/* Class Select Modal with Grade Filter */}
             {showClassSelect && editingLog && (
                 <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowClassSelect(false)}>
-                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-2xl h-[75vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-lg h-[75vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-50">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-black text-slate-800">选择班级</h3>
+                                <h3 className="text-lg font-semibold text-slate-800">选择班级</h3>
                                 <button onClick={() => setShowClassSelect(false)} className="p-2 bg-slate-50 rounded-full text-slate-400"><CloseIcon className="w-5 h-5" /></button>
                             </div>
                             {/* Grade Filter Tabs */}
@@ -540,7 +541,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                     <button
                                         key={grade}
                                         onClick={() => setSelectedGradeFilter(grade)}
-                                        className={`px-4 py-2 rounded-xl text-[12px] font-bold whitespace-nowrap transition-all border
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border
                                             ${selectedGradeFilter === grade
                                                 ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100'
                                                 : 'bg-slate-50 border-transparent text-slate-500 '}`}
@@ -583,9 +584,9 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             {/* Score Edit Modal */}
             {showScoreEdit && editingLog && (
                 <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowScoreEdit(false)}>
-                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-2xl h-[70vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-lg h-[70vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-50 flex items-center justify-between">
-                            <h3 className="text-lg font-black text-slate-800">修改得分项</h3>
+                            <h3 className="text-lg font-semibold text-slate-800">修改得分项</h3>
                             <button onClick={() => setShowScoreEdit(false)} className="p-2 bg-slate-50 rounded-full text-slate-400"><CloseIcon className="w-5 h-5" /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -613,7 +614,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                         <button
                                             key={v}
                                             onClick={() => handleUpdateLogScore(editingLog.id, editingLog.score?.label || '', v)}
-                                            className={`flex-1 h-12 rounded-xl font-mono font-black flex items-center justify-center transition-all ${editingLog.score?.value === v ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-110' : 'bg-white text-slate-400'}`}
+                                            className={`flex-1 h-12 rounded-xl font-mono font-semibold flex items-center justify-center transition-all ${editingLog.score?.value === v ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-110' : 'bg-white text-slate-400'}`}
                                         >
                                             {v > 0 ? `+${v}` : v}
                                         </button>
@@ -622,7 +623,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             </div>
                         </div>
                         <div className="p-4 safe-area-bottom">
-                            <button onClick={() => setShowScoreEdit(false)} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 active:scale-95 transition-all">确认修改</button>
+                            <button onClick={() => setShowScoreEdit(false)} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-semibold shadow-xl shadow-indigo-100 active:scale-95 transition-all">确认修改</button>
                         </div>
                     </div>
                 </div>
@@ -630,16 +631,16 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             {/* Student List Modal (Reused) */}
             {showStudentListModal && (
                 <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowStudentListModal(false)}>
-                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-[0_-10px_40px_-5px_rgba(0,0,0,0.1)] h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-lg h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-50 flex items-center justify-between">
-                            <h3 className="text-lg font-black text-slate-800">涉及学生</h3>
+                            <h3 className="text-lg font-semibold text-slate-800">涉及学生</h3>
                             <button onClick={() => setShowStudentListModal(false)} className="p-2 bg-slate-50 rounded-full active:bg-slate-100 text-slate-400  transition-colors"><CloseIcon className="w-6 h-6" /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-3">
                             {MOCK_STUDENTS_CLASS_1.slice(0, 15).map((student, idx) => (
                                 <div key={student.id} className="flex items-center justify-between p-3.5 bg-slate-50/50  rounded-2xl border border-slate-100/50 transition-colors">
                                     <div className="flex items-center gap-3.5">
-                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-cyan-50 flex items-center justify-center text-xs font-black text-blue-600 shadow-inner">{idx + 1}</div>
+                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-cyan-50 flex items-center justify-center text-xs font-semibold text-blue-600 shadow-inner">{idx + 1}</div>
                                         <div>
                                             <div className="text-sm font-bold text-slate-800">{student.name}</div>
                                             <div className="text-[11px] text-slate-400 font-medium">{student.id}</div>
@@ -650,7 +651,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             ))}
                         </div>
                         <div className="p-4 safe-area-bottom bg-white border-t border-slate-50">
-                            <button onClick={() => setShowStudentListModal(false)} className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-2xl font-black text-base shadow-xl shadow-blue-200 active:scale-[0.98] transition-all">
+                            <button onClick={() => setShowStudentListModal(false)} className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-2xl font-semibold text-base shadow-lg shadow-blue-200 active:scale-[0.98] transition-all">
                                 确认列表
                             </button>
                         </div>

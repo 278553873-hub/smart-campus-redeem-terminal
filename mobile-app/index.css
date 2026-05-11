@@ -5,6 +5,12 @@
 @tailwind utilities;
 
 :root {
+  --ai-primary: #6366f1;
+  --ai-secondary: #06b6d4;
+  --ai-accent: #ec4899;
+  --ai-bg-main: #f8fafc;
+  --ai-transition: all 150ms ease;
+
   /* Student Mode Palette */
   --student-primary: #6366F1;
   --student-secondary: #A855F7;

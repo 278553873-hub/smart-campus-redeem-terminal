@@ -186,7 +186,7 @@ const FiveEducationRadar = ({
                                         y={labelCoords.y}
                                         textAnchor="middle"
                                         dominantBaseline="middle"
-                                        className="text-[13px] font-bold fill-slate-500"
+                                        className="text-sm font-medium fill-slate-500"
                                     >
                                         {s.label}
                                     </text>
@@ -196,7 +196,7 @@ const FiveEducationRadar = ({
                                         x={coords.x}
                                         y={coords.y - 14} // Pushed slightly higher
                                         textAnchor="middle"
-                                        className="text-[15px] font-black"
+                                        className="text-[15px] font-semibold"
                                         fill={getCategoryColor(s.category)}
                                         style={{
                                             paintOrder: 'stroke',
@@ -298,7 +298,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     const renderGrowthTab = () => (
         <div className="space-y-3 pb-24 animate-in fade-in duration-300">
             {/* Term Report */}
-            <div className="bg-white rounded-xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
                 <button
                     onClick={() => toggleSection('term_report')}
                     className="w-full flex items-center justify-between px-4 py-3.5 text-slate-800 font-bold text-sm active:bg-slate-50 transition-colors"
@@ -324,7 +324,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
             {/* Monthly Growth Reports */}
             {growthReports.map((report) => (
-                <div key={report.id} className="bg-white rounded-xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
+                <div key={report.id} className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
                     <button
                         onClick={() => toggleSection(`growth_${report.id}`)}
                         className="w-full flex items-center justify-between px-4 py-3.5 text-slate-800 font-bold text-sm active:bg-slate-50 transition-colors"
@@ -423,7 +423,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
             {/* 1. Filter Bar (Term Selector) - Sticky Top */}
             <div className="bg-white/90 backdrop-blur-md sticky top-0 z-30 px-4 py-2 border-b border-slate-100/60 shadow-sm flex items-center gap-3 safe-top transition-all">
-                <button className="flex items-center gap-1.5 bg-slate-100  text-slate-800 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all active:opacity-60">
+                <button className="flex items-center gap-1.5 bg-slate-100  text-slate-800 px-3 py-1.5 rounded-full text-sm font-medium transition-all active:opacity-60">
                     <span>2025-2026学年 上学期</span>
                     <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
                 </button>
@@ -433,7 +433,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="p-4 space-y-4">
 
                 {/* A. Separate Student Profile Card */}
-                <div className="bg-white rounded-2xl p-5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100 flex items-center justify-between relative overflow-hidden">
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-32 h-32 bg-gradient-to-br from-blue-50 to-transparent rounded-bl-full opacity-60 pointer-events-none"></div>
 
                     <div className="relative z-10 flex items-center gap-4">
@@ -459,21 +459,21 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             </button>
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
                                 {student.name}
                                 {student.gender === 'male' ? <MaleIcon className="w-4 h-4 text-blue-400" /> : <FemaleIcon className="w-4 h-4 text-pink-400" />}
                             </h2>
                             <div className="flex items-center gap-2 mt-1.5">
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">{student.grade}{student.class}</span>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-600">ID: {student.id}</span>
+                                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-500">{student.grade}{student.class}</span>
+                                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-600">ID: {student.id}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* B. Points & Finance Summary Card */}
-                <div className="bg-white rounded-2xl p-5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100">
-                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2 mb-4">
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-4">
                         <img src="/assets/coin.png" className="w-[1.2em] h-[1.2em]" alt="coin" />
                         财富与得分详情
                     </h3>
@@ -499,10 +499,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
 
                 {/* C. Radar Chart Card */}
-                <div className="bg-white rounded-2xl shadow-[0_4px_16px_rgba(0,0,0,0.03)] border border-slate-100 relative overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
                     {/* Header Controls */}
                     <div className="px-5 pt-4 pb-2 flex items-center justify-between z-10 relative">
-                        <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                        <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                             <AwardIcon className="w-4 h-4 text-amber-500" />
                             五育能力模型
                         </h3>
@@ -538,19 +538,19 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     <div className="bg-slate-200/50 p-1 rounded-xl flex h-11">
                         <button
                             onClick={() => setActiveTab('growth')}
-                            className={`flex-[1.2] text-[13px] font-bold rounded-lg transition-all shadow-sm ${activeTab === 'growth' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
+                            className={`flex-[1.2] text-sm font-medium rounded-lg transition-all shadow-sm ${activeTab === 'growth' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
                         >
                             成长报告
                         </button>
                         <button
                             onClick={() => setActiveTab('evaluation')}
-                            className={`flex-[1.2] text-[13px] font-bold rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 ${activeTab === 'evaluation' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
+                            className={`flex-[1.2] text-sm font-medium rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 ${activeTab === 'evaluation' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
                         >
                             评价记录
                         </button>
                         <button
                             onClick={() => setActiveTab('redemption')}
-                            className={`flex-1 text-[13px] font-bold rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 ${activeTab === 'redemption' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
+                            className={`flex-1 text-sm font-medium rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 ${activeTab === 'redemption' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
                         >
                             兑换记录
                         </button>
@@ -568,7 +568,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                 { id: '2', item: '免除一次大扫除', cost: 120, type: 'manual', time: '昨天 15:40', location: '班主任手动兑换' },
                                 { id: '3', item: '指定优选座位一周', cost: 200, type: 'manual', time: '02-28 10:15', location: '班主任手动兑换' },
                             ].map((rec) => (
-                                <div key={rec.id} className="bg-white rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center">
+                                <div key={rec.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg mr-3 shrink-0 ${rec.type === 'vending' ? 'bg-blue-50' : 'bg-purple-50'}`}>
                                         {rec.type === 'vending' ? '🛒' : '👩‍🏫'}
                                     </div>
@@ -601,7 +601,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         onClick={() => setShowAvatarActionSheet(false)}
                     ></div>
                     <div className="fixed bottom-0 left-0 right-0 z-[110] px-4 pb-safe animate-in slide-in-from-bottom flex flex-col gap-2">
-                        <div className="bg-white/90 backdrop-blur-md rounded-2xl overflow-hidden shadow-xl mb-2 flex flex-col">
+                        <div className="bg-white/90 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg mb-2 flex flex-col">
                             <div className="p-3 text-center text-xs text-slate-400 font-medium border-b border-slate-100/50">
                                 选择人脸更新方式
                             </div>
@@ -619,7 +619,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             </button>
                         </div>
                         <button
-                            className="w-full bg-white rounded-2xl py-4 text-center text-slate-800 font-bold active:bg-slate-100 transition-colors shadow-xl mb-4"
+                            className="w-full bg-white rounded-2xl py-4 text-center text-slate-800 font-bold active:bg-slate-100 transition-colors shadow-lg mb-4"
                             onClick={() => setShowAvatarActionSheet(false)}
                         >
                             取消

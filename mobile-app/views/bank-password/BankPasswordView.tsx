@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BackIcon, CheckCircleIcon, WechatMoreIcon, WechatCloseIcon, LockIcon, ShieldIcon, SearchIcon, EyeIcon, EyeOffIcon, EditIcon } from '../../components/Icons';
+import { BackIcon, CheckCircleIcon, LockIcon, ShieldIcon, SearchIcon, EyeIcon, EyeOffIcon, EditIcon } from '../../components/Icons';
 import { MOCK_STUDENTS_CLASS_1 } from '../../constants';
 
 // 模拟自动生成 6 位随机数字密码
@@ -50,20 +50,14 @@ export const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classId, onB
     return (
         <div className="flex flex-col h-full bg-slate-50 relative">
             {/* Header - Fixed */}
-            <div className="flex items-center justify-between px-4 py-2 bg-white sticky top-0 z-30 h-[44px] shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center justify-between px-4 py-2 bg-white sticky top-0 z-30 h-[44px] border-b border-slate-100">
                 <div className="flex-1 flex justify-start">
                     <button onClick={onBack} className="p-1 -ml-2 text-slate-900 active:bg-slate-100 rounded-full transition-colors">
                         <BackIcon className="w-5 h-5" />
                     </button>
                 </div>
                 <div className="text-[17px] font-bold text-slate-900 flex-none">设置兑换密码</div>
-                <div className="flex-1 flex justify-end">
-                    <div className="flex items-center bg-white/50 border border-slate-200/80 rounded-full px-3 h-[30px] gap-3 shadow-sm">
-                        <div className="w-5 h-5 flex items-center justify-center text-slate-900"><WechatMoreIcon className="w-5 h-5" /></div>
-                        <div className="w-[1px] h-3.5 bg-slate-200"></div>
-                        <div className="w-5 h-5 flex items-center justify-center text-slate-900"><WechatCloseIcon className="w-4 h-4" /></div>
-                    </div>
-                </div>
+<div className="flex-1" aria-hidden="true"></div>
             </div>
 
             {/* Scrollable Container */}
@@ -73,7 +67,7 @@ export const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classId, onB
                     <div className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-100">
                         <div className="flex justify-between items-start mb-2">
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-blue-100/60 text-[9px] font-black uppercase tracking-widest">Security</span>
+                                <span className="text-blue-100/70 text-[11px] font-semibold tracking-wide">Security</span>
                                 <h2 className="text-lg font-bold">兑换认证密码</h2>
                             </div>
                             <div className="p-2 bg-white/10 rounded-xl backdrop-blur-md">
@@ -82,7 +76,7 @@ export const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classId, onB
                         </div>
                         
                         <div className="bg-black/10 rounded-xl p-2.5 border border-white/10">
-                            <p className="text-[10px] leading-relaxed text-blue-50/70">
+                            <p className="text-xs leading-relaxed text-blue-50/75">
                                 该密码用于货柜机兑换身份认证。系统已自动初始化。您可以点击眼睛图标查看，或点击编辑图标进行调整。
                             </p>
                         </div>
@@ -119,9 +113,9 @@ export const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classId, onB
                                         />
                                     </div>
                                     <div className="flex flex-col">
-                                        <div className="font-bold text-sm leading-tight">{student.name}</div>
+                                        <div className="font-medium text-sm leading-tight">{student.name}</div>
                                         {/* 学号字体调整为与货柜机一致的 Baloo 2 */}
-                                        <div className="text-[11px] font-bold opacity-60 mt-0.5" style={{ fontFamily: '"Baloo 2", cursive' }}>
+                                        <div className="text-[11px] font-normal opacity-60 mt-0.5" style={{ fontFamily: '"Baloo 2", cursive' }}>
                                             {student.id}
                                         </div>
                                     </div>
@@ -137,7 +131,7 @@ export const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classId, onB
                                                 maxLength={6}
                                                 value={tempPassword}
                                                 onChange={(e) => setTempPassword(e.target.value.replace(/\D/g, ''))}
-                                                className="w-[80px] bg-slate-50 border-2 border-blue-400 rounded-lg px-2 py-1 text-center font-black text-blue-600 focus:outline-none text-sm shadow-sm"
+                                                className="w-[80px] bg-slate-50 border-2 border-blue-400 rounded-lg px-2 py-1 text-center font-semibold text-blue-600 focus:outline-none text-sm shadow-sm"
                                                 style={{ fontFamily: '"Baloo 2", cursive' }}
                                             />
                                             <button
@@ -152,7 +146,7 @@ export const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classId, onB
                                             <div className="flex items-center gap-1">
                                                 {/* 密码字体也同步调整，且密文改为更纤细的样式 */}
                                                 <div 
-                                                    className={`text-lg font-black text-slate-800 italic tracking-[0.05em] flex items-center`}
+                                                    className={`text-lg font-semibold text-slate-800 italic tracking-[0.05em] flex items-center`}
                                                     style={{ fontFamily: student.showPassword ? '"Baloo 2", cursive' : 'inherit' }}
                                                 >
                                                     {student.showPassword ? student.password : (

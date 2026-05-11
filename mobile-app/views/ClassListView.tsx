@@ -31,7 +31,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             {/* Top Action Area: Leaderboard & Summary */}
             <div className="flex items-center justify-between px-1">
                 <button
-                    className="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-white px-4 py-2.5 rounded-2xl text-[13px] font-black shadow-lg shadow-amber-200 active:scale-95 transition-all border border-amber-300/30"
+                    className="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-white px-4 py-2.5 rounded-2xl text-sm font-semibold shadow-md shadow-amber-100 active:scale-95 transition-all border border-amber-300/30"
                     onClick={onViewLeaderboard}
                 >
                     <div className="p-1 bg-white/20 rounded-lg">
@@ -61,18 +61,18 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex flex-col gap-2">
                                     <div>
-                                        <h3 className="text-xl font-bold text-slate-800 mb-1">{cls.name}</h3>
+                                        <h3 className="text-xl font-semibold text-slate-800 mb-1">{cls.name}</h3>
                                         <p className="text-sm text-slate-500">{cls.gradeLevel} · 共{cls.studentCount}人</p>
                                     </div>
                                     {/* Tags Display - Aligned to the left info block */}
                                     <div className="flex gap-1.5 flex-wrap">
                                         {isHeadTeacher && (
-                                            <span className="text-[10px] px-2 py-0.5 bg-indigo-600 text-white rounded-md whitespace-nowrap font-bold shadow-sm shadow-indigo-200">
+                                            <span className="text-[11px] px-2 py-0.5 bg-indigo-600 text-white rounded-lg whitespace-nowrap font-semibold shadow-sm shadow-indigo-100">
                                                 班主任
                                             </span>
                                         )}
                                         {subjectTags.map(tag => (
-                                            <span key={tag} className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded-md whitespace-nowrap font-medium">
+                                            <span key={tag} className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded-lg whitespace-nowrap font-normal">
                                                 {tag}
                                             </span>
                                         ))}
@@ -87,7 +87,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                                 e.stopPropagation();
                                                 setActiveMenuId(activeMenuId === cls.id ? null : cls.id);
                                             }}
-                                            className="p-1.5 rounded-full text-slate-400  active:bg-slate-200 transition-colors relative"
+                                            className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-slate-400 active:bg-slate-200 transition-colors relative"
                                         >
                                             <WechatMoreIcon className="w-5 h-5" />
                                             {cls.hasPendingRewards && (
@@ -99,7 +99,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         {activeMenuId === cls.id && (
                                             <>
                                                 <div className="fixed inset-0 z-20 cursor-default" onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); }}></div>
-                                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-100 p-1.5 z-30 animate-in fade-in zoom-in duration-200 origin-top-right">
+                                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-100 p-1.5 z-30 animate-in fade-in zoom-in duration-200 origin-top-right">
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
