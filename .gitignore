@@ -29,3 +29,7 @@ ssh_keys/
 
 # Local agent workspace
 .superpowers/
+
+# Local generated artifacts
+output/
+tmp/
