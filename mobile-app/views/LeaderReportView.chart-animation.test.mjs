@@ -45,3 +45,17 @@ for (const chartName of chartNames) {
     }
   }
 }
+
+const classChartStart = source.indexOf('const ClassCoverageChart');
+const classChartEnd = source.indexOf('const LeaderReportView', classChartStart);
+const classChartSource = source.slice(classChartStart, classChartEnd);
+for (const required of [
+  'const sortedClasses = useMemo(() =>',
+  'const displayedProgress = useAnimatedProgress(dataAnimationKey)',
+  'Math.round(rate(item.covered, item.total) * displayedProgress)',
+  '[classes]',
+]) {
+  if (!classChartSource.includes(required)) {
+    throw new Error(`班级覆盖率弹窗的柱体和柱上文字必须由页面侧进度从 0 驱动，缺少：${required}`);
+  }
+}

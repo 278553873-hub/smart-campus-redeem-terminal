@@ -109,8 +109,8 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
                                             setStudentId(e.target.value);
                                             setError('');
                                         }}
-                                        className={`w-full bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] py-4 pl-14 pr-5 text-slate-800 font-bold focus:border-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner font-[NumberFont] ${layout === 'vertical' ? 'text-lg py-3.5 pl-12' : 'text-xl tracking-wider'}`}
-                                        placeholder="2026xxxx"
+                                        className={`w-full bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] py-4 pl-14 pr-5 text-slate-800 font-bold focus:border-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner placeholder:font-sans placeholder:text-[17px] placeholder:font-bold placeholder:tracking-normal placeholder:text-slate-400 ${layout === 'vertical' ? 'text-lg py-3.5 pl-12' : 'text-xl tracking-wider'}`}
+                                        placeholder="请输入：20250101"
                                         disabled={loading}
                                     />
                                 </div>
@@ -126,8 +126,8 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
                                             setPassword(val);
                                             setError('');
                                         }}
-                                        className={`w-full bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] py-4 pl-14 pr-5 text-left text-slate-800 font-black tracking-[0.5em] focus:border-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner placeholder:text-base placeholder:font-sans placeholder:font-bold placeholder:tracking-normal placeholder:text-left ${layout === 'vertical' ? 'text-2xl py-3.5 pl-12' : 'text-3xl'}`}
-                                        placeholder="6位身份识别码"
+                                        className={`w-full bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] py-4 pl-14 pr-5 text-left text-slate-800 font-black tracking-[0.5em] focus:border-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner placeholder:font-sans placeholder:text-[17px] placeholder:font-bold placeholder:tracking-normal placeholder:text-left placeholder:text-slate-400 ${layout === 'vertical' ? 'text-2xl py-3.5 pl-12' : 'text-3xl'}`}
+                                        placeholder="请输入：123456"
                                         disabled={loading}
                                     />
                                 </div>

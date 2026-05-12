@@ -48,13 +48,20 @@ const leaderViewStart = source.indexOf('const LeaderReportView');
 const classChartSource = source.slice(classChartStart, leaderViewStart);
 for (const required of [
   "triggerOn: 'click'",
-  'alwaysShowContent: true',
-  'const defaultClassDataIndex = 0',
-  "chart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: defaultClassDataIndex })",
+  'alwaysShowContent: false',
   "chart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: params.dataIndex })",
 ]) {
   if (!classChartSource.includes(required)) {
     throw new Error(`班级覆盖率图缺少点击浮层逻辑：${required}`);
+  }
+}
+
+for (const forbidden of [
+  'const defaultClassDataIndex = 0',
+  "chart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: defaultClassDataIndex })",
+]) {
+  if (classChartSource.includes(forbidden)) {
+    throw new Error(`班级覆盖率图不应默认显示第一个柱子的浮层：${forbidden}`);
   }
 }
 

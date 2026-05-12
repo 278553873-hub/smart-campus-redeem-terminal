@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { ShoppingCart, Sparkles, ShoppingBag, Gift, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ShoppingBag, Gift, CheckCircle2 } from 'lucide-react';
 import { Student, Product } from '../types';
 
 interface ShopViewProps {
   student: Student;
   products: Product[];
-  onPurchase: (p: Product) => void;
+  onPurchase: (p: Product) => Promise<boolean>;
   onBack: () => void;
 }
 
@@ -21,12 +21,17 @@ const ShopView: React.FC<ShopViewProps> = ({ student, products, onPurchase }) =>
     setConfirmingProduct(product);
   };
 
-  const handleConfirmPurchase = () => {
+  const handleConfirmPurchase = async () => {
     if (confirmingProduct) {
-      onPurchase(confirmingProduct);
+      const productToPurchase = confirmingProduct;
+      setShowSuccess(false);
       setConfirmingProduct(null);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3500);
+
+      const purchaseSucceeded = await onPurchase(productToPurchase);
+      if (purchaseSucceeded) {
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2000);
+      }
     }
   };
 
@@ -194,13 +199,13 @@ const ShopView: React.FC<ShopViewProps> = ({ student, products, onPurchase }) =>
       )}
 
       {showSuccess && (
-        <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-full duration-700">
-          <div className="text-white px-12 py-6 rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.3)] flex items-center space-x-5 border-4 border-white bg-green-500">
-            <div className="bg-white/20 p-2 rounded-full">
-              <CheckCircle2 size={40} />
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none success-toast">
+          <div className="text-white px-5 py-3 rounded-[1.4rem] shadow-[0_14px_30px_rgba(34,197,94,0.28)] flex items-center gap-2.5 border-2 border-white/90 bg-green-500">
+            <div className="bg-white/20 p-1.5 rounded-full">
+              <CheckCircle2 size={22} strokeWidth={3} />
             </div>
-            <div className="font-black text-2xl tracking-tight">
-              兑换成功！请在货柜机出货栏领取商品
+            <div className="font-black text-lg tracking-tight leading-none">
+              兑换成功
             </div>
           </div>
         </div>
@@ -216,6 +221,27 @@ const ShopView: React.FC<ShopViewProps> = ({ student, products, onPurchase }) =>
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: #e2e8f0;
           border-radius: 10px;
+        }
+        .success-toast {
+          animation: success-toast-drop-fade 2s ease both;
+        }
+        @keyframes success-toast-drop-fade {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -18px);
+          }
+          18% {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+          78% {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, 8px);
+          }
         }
       `}</style>
     </div>

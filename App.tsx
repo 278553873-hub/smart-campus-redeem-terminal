@@ -705,14 +705,19 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
   }, [view]);
 
   // Loading wrapper for actions
-  const withLoading = (action: () => void, successSound: 'coin' | 'success' = 'success') => {
-    if (isLoading) return;
+  const withLoading = <T,>(action: () => T, successSound: 'coin' | 'success' = 'success'): Promise<T | undefined> => {
+    if (isLoading) return Promise.resolve(undefined);
     setIsLoading(true);
-    setTimeout(() => {
-      action();
-      playSound(successSound);
-      setIsLoading(false);
-    }, 1200);
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const result = action();
+        if (result !== false) {
+          playSound(successSound);
+        }
+        setIsLoading(false);
+        resolve(result);
+      }, 1200);
+    });
   };
 
   const handleAdminLogin = () => {
@@ -746,8 +751,8 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
     }, 'coin');
   };
 
-  const handlePurchase = (product: Product) => {
-    withLoading(() => {
+  const handlePurchase = async (product: Product): Promise<boolean> => {
+    return await withLoading(() => {
       if (student.campusCoins >= product.price) {
         setStudent(prev => ({
           ...prev,
@@ -760,8 +765,10 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
             p.id === product.id ? { ...p, stock: Math.max(0, p.stock - 1) } : p
           ));
         }
+        return true;
       }
-    }, 'success');
+      return false;
+    }, 'success') === true;
   };
 
   const handleCreateDeposit = (amount: number, days: number, rate: number, label: string, type: 'fixed' | 'current') => {
