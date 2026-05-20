@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     LayoutDashboard, FileText, ClipboardList, PenTool,
     Settings, Users, BookOpen, Database, FolderOpen,
     Menu, User, ChevronDown, ChevronRight, Package,
     Landmark, ArrowLeftRight, Coins, Monitor, AlertCircle,
     Info, Search, Plus, MonitorSmartphone, Sparkles,
-    Check, Upload, KeyRound
+    Check, Upload, KeyRound, Eye
 } from 'lucide-react';
 
 interface TeacherDashboardProps {
@@ -13,11 +13,28 @@ interface TeacherDashboardProps {
     embedded?: boolean;
 }
 
+interface GradeExamRow {
+    id: number;
+    term: string;
+    type: string;
+    subjects: string[];
+    className: string;
+    creator: string;
+}
+
+interface GradeStudentRow {
+    id: string;
+    studentNo: string;
+    name: string;
+    scores: Record<string, string>;
+}
+
 const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen, embedded = false }) => {
     // 侧边栏菜单展开状态控制
     const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
         '货柜机配置中心': true,
         '基础信息配置': false,
+        '数据中心': true,
     });
 
     const [activeMenu, setActiveMenu] = useState('货币发放管理');
@@ -49,7 +66,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         {
             title: '数据中心', icon: <Database size={18} />,
-            children: ['资料文件']
+            children: ['资料文件', '成绩管理']
         }
     ];
     const activeMenuGroup = menus.find(menu => menu.children.includes(activeMenu))?.title || '货柜机配置中心';
@@ -141,6 +158,519 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         }
         return true;
     });
+
+    // 成绩管理 demo 数据：仅用于前端静态展示，后续再接入真实考试与成绩流程。
+    const currentGradeTerm = '2025-2026学年 下学期';
+    const gradeTermOptions = ['2025-2026学年 下学期', '2025-2026学年 上学期', '2024-2025学年 下学期', '2024-2025学年 上学期'];
+    const gradeExamTypeOptions = ['期中', '期末', '单元测评'];
+    const gradeLevelOptions = ['2020级', '2021级', '2022级', '2023级', '2024级', '2025级'];
+    const gradeClassCountMap: Record<string, number> = { '2020级': 5, '2021级': 6, '2022级': 7, '2023级': 8, '2024级': 6, '2025级': 8 };
+    const getClassOptionsByLevel = (level: string) => Array.from({ length: gradeClassCountMap[level] || 0 }, (_, index) => `${level}${index + 1}班`);
+    const gradeSubjectOptions = ['语文', '数学', '英语', '科学', '道德与法治', '自然', '历史', '地理', '物理', '化学', '生物', '体育', '音乐', '美术', '信息科技', '劳动', '书法', '心理健康', '综合实践', '阅读', '口语表达', '项目学习', '班本课程', '社团课程'];
+    const gradeScorePresetOptions = ['优', '良', '合格', '待合格', '缺考'];
+    const gradeScoreColorClassMap: Record<string, string> = {
+        '优': 'bg-[#EAF8EF] text-[#16A34A]',
+        '良': 'bg-[#EAF2FF] text-[#2563EB]',
+        '合格': 'bg-[#EAF7F6] text-[#0F766E]',
+        '待合格': 'bg-[#FFF7E6] text-[#D97706]',
+        '缺考': 'bg-[#F5F5F5] text-[#8A8F99]'
+    };
+    const getGradeScoreColorClass = (value: string) => gradeScoreColorClassMap[value.trim()] || 'bg-transparent text-[#333333]';
+    const createBlankGradeStudent = (subjects: string[], id = `manual-${Date.now()}`): GradeStudentRow => ({
+        id,
+        studentNo: '',
+        name: '',
+        scores: subjects.reduce<Record<string, string>>((scores, subject) => {
+            scores[subject] = '';
+            return scores;
+        }, {})
+    });
+    const [gradeTermFilter, setGradeTermFilter] = useState('全部学期');
+    const [gradeExamTypeFilter, setGradeExamTypeFilter] = useState('全部类型');
+    const [gradeCreatorSearch, setGradeCreatorSearch] = useState('');
+    const [gradePageMode, setGradePageMode] = useState<'list' | 'create' | 'view' | 'edit'>('list');
+    const [selectedGradeExam, setSelectedGradeExam] = useState<GradeExamRow | null>(null);
+    const [newGradeTerm, setNewGradeTerm] = useState(currentGradeTerm);
+    const [newGradeExamType, setNewGradeExamType] = useState('');
+    const [newGradeLevel, setNewGradeLevel] = useState('');
+    const [newGradeClass, setNewGradeClass] = useState('');
+    const [newGradeSubjects, setNewGradeSubjects] = useState<string[]>([]);
+    const [newGradeStudents, setNewGradeStudents] = useState<GradeStudentRow[]>(() => [createBlankGradeStudent([], 'manual-1')]);
+    const [gradeColumnFillValues, setGradeColumnFillValues] = useState<Record<string, string>>({});
+    const [selectedGradeCells, setSelectedGradeCells] = useState<string[]>([]);
+    const [gradeSelectionAnchor, setGradeSelectionAnchor] = useState<{ row: number; column: number } | null>(null);
+    const [isDraggingGradeCells, setIsDraggingGradeCells] = useState(false);
+    const [draggedGradeSubject, setDraggedGradeSubject] = useState<string | null>(null);
+    
+    const [gradeExamRows, setGradeExamRows] = useState<GradeExamRow[]>([
+        {
+            id: 1,
+            term: '2025-2026学年 下学期',
+            type: '期中',
+            subjects: ['语文', '数学', '英语'],
+            className: '2025级1班',
+            creator: '林萧'
+        },
+        {
+            id: 2,
+            term: '2025-2026学年 下学期',
+            type: '期末',
+            subjects: ['语文', '数学', '英语', '科学'],
+            className: '2025级2班',
+            creator: '周峰'
+        },
+        {
+            id: 3,
+            term: '2025-2026学年 上学期',
+            type: '期中',
+            subjects: ['语文', '数学'],
+            className: '2024级1班',
+            creator: '李文'
+        },
+        {
+            id: 4,
+            term: '2024-2025学年 下学期',
+            type: '单元测评',
+            subjects: ['英语', '科学'],
+            className: '2024级3班',
+            creator: '林萧'
+        },
+        {
+            id: 5,
+            term: '2024-2025学年 上学期',
+            type: '期末',
+            subjects: ['语文', '数学', '英语', '道德与法治'],
+            className: '2023级1班',
+            creator: '王婷'
+        }
+    ]);
+
+    const [gradeExamScoresMap, setGradeExamScoresMap] = useState<Record<number, GradeStudentRow[]>>(() => {
+        const initialMap: Record<number, GradeStudentRow[]> = {};
+        const defaultExams = [
+            { id: 1, className: '2025级1班', subjects: ['语文', '数学', '英语'] },
+            { id: 2, className: '2025级2班', subjects: ['语文', '数学', '英语', '科学'] },
+            { id: 3, className: '2024级1班', subjects: ['语文', '数学'] },
+            { id: 4, className: '2024级3班', subjects: ['英语', '科学'] },
+            { id: 5, className: '2023级1班', subjects: ['语文', '数学', '英语', '道德与法治'] }
+        ];
+        
+        const mockNames = ['林一诺', '周明轩', '陈雨桐', '李思远', '王若溪', '赵子涵', '吴昊然', '郑可欣', '孙嘉泽', '黄芷晴', '何宇航', '郭诗涵', '马梓豪', '罗语晨', '胡安琪', '高铭宇'];
+        const presetScores = ['优', '良', '合格', '待合格', '缺考'];
+        
+        defaultExams.forEach(exam => {
+            const classNumber = exam.className.match(/(\d+)班/)?.[1] || '1';
+            initialMap[exam.id] = mockNames.map((name, index) => {
+                const scores: Record<string, string> = {};
+                exam.subjects.forEach((subj, sIdx) => {
+                    const scoreIndex = (index + sIdx + exam.id) % presetScores.length;
+                    scores[subj] = presetScores[scoreIndex];
+                });
+                return {
+                    id: `${exam.className}-${index + 1}`,
+                    studentNo: `2025${classNumber.padStart(2, '0')}${(index + 1).toString().padStart(2, '0')}`,
+                    name,
+                    scores
+                };
+            });
+        });
+        return initialMap;
+    });
+
+    const gradeTerms = Array.from(new Set([...gradeTermOptions, ...gradeExamRows.map(row => row.term)]));
+    const gradeExamTypes = Array.from(new Set([...gradeExamTypeOptions, ...gradeExamRows.map(row => row.type)]));
+    const filteredGradeExamRows = gradeExamRows.filter(row => {
+        if (gradeTermFilter !== '全部学期' && row.term !== gradeTermFilter) return false;
+        if (gradeExamTypeFilter !== '全部类型' && row.type !== gradeExamTypeFilter) return false;
+        const keyword = gradeCreatorSearch.trim();
+        if (keyword && !row.creator.includes(keyword)) return false;
+        return true;
+    });
+
+    const handleViewGradeExam = (exam: GradeExamRow) => {
+        setSelectedGradeExam(exam);
+        setNewGradeTerm(exam.term);
+        setNewGradeExamType(exam.type);
+        const levelMatch = exam.className.match(/^(\d+级)/);
+        const level = levelMatch ? levelMatch[1] : '';
+        setNewGradeLevel(level);
+        setNewGradeClass(exam.className);
+        setNewGradeSubjects(exam.subjects);
+        setNewGradeStudents(gradeExamScoresMap[exam.id] || buildEmptyGradeRowsForClass(exam.className));
+        setGradePageMode('view');
+    };
+
+    const handleEditGradeExam = (exam: GradeExamRow) => {
+        setSelectedGradeExam(exam);
+        setNewGradeTerm(exam.term);
+        setNewGradeExamType(exam.type);
+        const levelMatch = exam.className.match(/^(\d+级)/);
+        const level = levelMatch ? levelMatch[1] : '';
+        setNewGradeLevel(level);
+        setNewGradeClass(exam.className);
+        setNewGradeSubjects(exam.subjects);
+        setNewGradeStudents(gradeExamScoresMap[exam.id] || buildEmptyGradeRowsForClass(exam.className));
+        setGradePageMode('edit');
+    };
+
+    const formatGradeExamLabel = (row: typeof gradeExamRows[number]) => `${row.term} ${row.type} ${row.className}`;
+    const resetGradeCreateForm = () => {
+        setNewGradeTerm(currentGradeTerm);
+        setNewGradeExamType('');
+        setNewGradeLevel('');
+        setNewGradeClass('');
+        setNewGradeSubjects([]);
+        setNewGradeStudents([createBlankGradeStudent([], 'manual-1')]);
+        setGradeColumnFillValues({});
+        setSelectedGradeCells([]);
+        setGradeSelectionAnchor(null);
+        setIsDraggingGradeCells(false);
+    };
+    const openGradeCreatePage = () => {
+        resetGradeCreateForm();
+        setGradePageMode('create');
+    };
+    const toggleNewGradeSubject = (subject: string) => {
+        setNewGradeSubjects(prev => {
+            const nextSubjects = prev.includes(subject) ? prev.filter(item => item !== subject) : [...prev, subject];
+            setNewGradeStudents(students => students.map(student => {
+                const nextScores = nextSubjects.reduce<Record<string, string>>((scores, item) => {
+                    scores[item] = student.scores[item] || '';
+                    return scores;
+                }, {});
+                return { ...student, scores: nextScores };
+            }));
+            setGradeColumnFillValues(values => nextSubjects.reduce<Record<string, string>>((nextValues, item) => {
+                nextValues[item] = values[item] || '';
+                return nextValues;
+            }, {}));
+            return nextSubjects;
+        });
+    };
+    const buildMockStudentsForClass = (className: string): GradeStudentRow[] => {
+        const names = ['林一诺', '周明轩', '陈雨桐', '李思远', '王若溪', '赵子涵', '吴昊然', '郑可欣', '孙嘉泽', '黄芷晴', '何宇航', '郭诗涵', '马梓豪', '罗语晨', '胡安琪', '高铭宇'];
+        const classNumber = className.match(/(\d+)班/)?.[1] || '1';
+        return names.map((name, index) => ({
+            id: `${className}-${index + 1}`,
+            studentNo: `2025${classNumber.padStart(2, '0')}${(index + 1).toString().padStart(2, '0')}`,
+            name,
+            scores: newGradeSubjects.reduce<Record<string, string>>((scores, subject) => {
+                scores[subject] = '';
+                return scores;
+            }, {})
+        })).sort((a, b) => a.studentNo.localeCompare(b.studentNo));
+    };
+    const buildEmptyGradeRowsForClass = (className: string): GradeStudentRow[] => (
+        buildMockStudentsForClass(className).map(student => ({
+            ...student,
+            studentNo: '',
+            name: ''
+        }))
+    );
+    const handleFillGradeStudents = () => {
+        if (!newGradeClass) {
+            window.alert('请先选择班级。');
+            return;
+        }
+        setNewGradeStudents(buildMockStudentsForClass(newGradeClass));
+        setSelectedGradeCells([]);
+        setGradeSelectionAnchor(null);
+        setIsDraggingGradeCells(false);
+    };
+    const handleChangeStudentIdentity = (studentId: string, field: 'name', value: string) => {
+        setNewGradeStudents(students => students.map(student => (
+            student.id === studentId ? { ...student, [field]: value } : student
+        )));
+    };
+    const handleChangeStudentGrade = (studentId: string, subject: string, value: string) => {
+        setNewGradeStudents(students => students.map(student => (
+            student.id === studentId
+                ? { ...student, scores: { ...student.scores, [subject]: value } }
+                : student
+        )));
+    };
+    const getGradeCellKey = (rowIndex: number, columnIndex: number) => `${rowIndex}-${columnIndex}`;
+    const selectedGradeCellSet = new Set(selectedGradeCells);
+    const getGradeCellValue = (student: GradeStudentRow, columnIndex: number) => {
+        if (columnIndex === 0) return student.name;
+        const subject = newGradeSubjects[columnIndex - 1];
+        return subject ? (student.scores[subject] || '') : '';
+    };
+    const pasteGradeCellsAt = (studentIndex: number, columnIndex: number, cells: string[][]) => {
+        setNewGradeStudents(students => {
+            const nextStudents = [...students];
+            const requiredRows = studentIndex + cells.length;
+            while (nextStudents.length < requiredRows) {
+                nextStudents.push(createBlankGradeStudent(newGradeSubjects, `manual-${Date.now()}-${nextStudents.length}`));
+            }
+            cells.forEach((rowCells, rowOffset) => {
+                const rowIndex = studentIndex + rowOffset;
+                const student = nextStudents[rowIndex];
+                if (!student) return;
+                const nextStudent: GradeStudentRow = { ...student, scores: { ...student.scores } };
+                rowCells.forEach((cellValue, cellOffset) => {
+                    const targetColumn = columnIndex + cellOffset;
+                    const value = cellValue.trim();
+                    if (targetColumn === 0) nextStudent.name = value;
+                    if (targetColumn >= 1) {
+                        const subject = newGradeSubjects[targetColumn - 1];
+                        if (subject) nextStudent.scores[subject] = value;
+                    }
+                });
+                nextStudents[rowIndex] = nextStudent;
+            });
+            return nextStudents;
+        });
+    };
+    const parseGradeClipboard = (text: string) => text
+        .replace(/\r/g, '')
+        .split('\n')
+        .filter((row, index, list) => row !== '' || index < list.length - 1)
+        .map(row => row.split('\t'));
+    const getGradeRangeCellKeys = (start: { row: number; column: number }, end: { row: number; column: number }) => {
+        const rowStart = Math.min(start.row, end.row);
+        const rowEnd = Math.max(start.row, end.row);
+        const columnStart = Math.min(start.column, end.column);
+        const columnEnd = Math.max(start.column, end.column);
+        const rangeKeys: string[] = [];
+        for (let row = rowStart; row <= rowEnd; row += 1) {
+            for (let column = columnStart; column <= columnEnd; column += 1) {
+                rangeKeys.push(getGradeCellKey(row, column));
+            }
+        }
+        return rangeKeys;
+    };
+    const handleGradeCellMouseDown = (rowIndex: number, columnIndex: number, event: React.MouseEvent<HTMLInputElement>) => {
+        event.currentTarget.focus();
+        event.currentTarget.select();
+        const key = getGradeCellKey(rowIndex, columnIndex);
+        if (event.shiftKey && gradeSelectionAnchor) {
+            setSelectedGradeCells(getGradeRangeCellKeys(gradeSelectionAnchor, { row: rowIndex, column: columnIndex }));
+            setIsDraggingGradeCells(false);
+            return;
+        }
+        if (event.metaKey || event.ctrlKey) {
+            setSelectedGradeCells(prev => prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key]);
+            setGradeSelectionAnchor({ row: rowIndex, column: columnIndex });
+            setIsDraggingGradeCells(false);
+            return;
+        }
+        const anchor = { row: rowIndex, column: columnIndex };
+        setGradeSelectionAnchor(anchor);
+        setSelectedGradeCells([key]);
+        setIsDraggingGradeCells(true);
+    };
+    const handleGradeCellMouseEnter = (rowIndex: number, columnIndex: number) => {
+        if (!isDraggingGradeCells || !gradeSelectionAnchor) return;
+        setSelectedGradeCells(getGradeRangeCellKeys(gradeSelectionAnchor, { row: rowIndex, column: columnIndex }));
+    };
+    const stopGradeCellDrag = () => {
+        setIsDraggingGradeCells(false);
+    };
+    const handleClearSelectedGradeCells = () => {
+        if (selectedGradeCells.length === 0) return;
+        setNewGradeStudents(students => students.map((student, rowIndex) => {
+            const nextStudent: GradeStudentRow = { ...student, scores: { ...student.scores } };
+            selectedGradeCells.forEach(cellKey => {
+                const [selectedRow, selectedColumn] = cellKey.split('-').map(Number);
+                if (selectedRow !== rowIndex) return;
+                if (selectedColumn === 0) nextStudent.name = '';
+                if (selectedColumn >= 1) {
+                    const subject = newGradeSubjects[selectedColumn - 1];
+                    if (subject) nextStudent.scores[subject] = '';
+                }
+            });
+            return nextStudent;
+        }));
+        setSelectedGradeCells([]);
+        setGradeSelectionAnchor(null);
+        setIsDraggingGradeCells(false);
+    };
+    useEffect(() => {
+        if (gradePageMode !== 'create' || selectedGradeCells.length === 0) return;
+        const handleDocumentKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== 'Backspace' && event.key !== 'Delete') return;
+            event.preventDefault();
+            handleClearSelectedGradeCells();
+        };
+        document.addEventListener('keydown', handleDocumentKeyDown);
+        return () => document.removeEventListener('keydown', handleDocumentKeyDown);
+    }, [gradePageMode, selectedGradeCells, newGradeSubjects]);
+
+    useEffect(() => {
+        if (gradePageMode !== 'create' || selectedGradeCells.length === 0) return;
+        const handleDocumentCopy = (event: ClipboardEvent) => {
+            const positions = selectedGradeCells.map(cellKey => {
+                const [row, column] = cellKey.split('-').map(Number);
+                return { row, column };
+            });
+            const rowStart = Math.min(...positions.map(item => item.row));
+            const rowEnd = Math.max(...positions.map(item => item.row));
+            const columnStart = Math.min(...positions.map(item => item.column));
+            const columnEnd = Math.max(...positions.map(item => item.column));
+            const copiedRows: string[] = [];
+            for (let row = rowStart; row <= rowEnd; row += 1) {
+                const copiedCells: string[] = [];
+                for (let column = columnStart; column <= columnEnd; column += 1) {
+                    copiedCells.push(selectedGradeCellSet.has(getGradeCellKey(row, column)) ? getGradeCellValue(newGradeStudents[row], column) : '');
+                }
+                copiedRows.push(copiedCells.join('\t'));
+            }
+            event.preventDefault();
+            event.clipboardData?.setData('text/plain', copiedRows.join('\n'));
+        };
+        const handleDocumentPaste = (event: ClipboardEvent) => {
+            const clipboardText = event.clipboardData?.getData('text/plain') || '';
+            if (!clipboardText) return;
+            const positions = selectedGradeCells.map(cellKey => {
+                const [row, column] = cellKey.split('-').map(Number);
+                return { row, column };
+            });
+            event.preventDefault();
+            pasteGradeCellsAt(
+                Math.min(...positions.map(item => item.row)),
+                Math.min(...positions.map(item => item.column)),
+                parseGradeClipboard(clipboardText)
+            );
+        };
+        document.addEventListener('copy', handleDocumentCopy);
+        document.addEventListener('paste', handleDocumentPaste);
+        return () => {
+            document.removeEventListener('copy', handleDocumentCopy);
+            document.removeEventListener('paste', handleDocumentPaste);
+        };
+    }, [gradePageMode, selectedGradeCells, newGradeStudents, newGradeSubjects]);
+
+    const handlePasteGradeTable = (studentIndex: number, columnIndex: number, event: React.ClipboardEvent<HTMLInputElement>) => {
+        const clipboardText = event.clipboardData.getData('text');
+        if (!clipboardText) return;
+        const cells = parseGradeClipboard(clipboardText);
+        if (cells.length <= 1 && cells[0]?.length <= 1) return;
+        event.preventDefault();
+        pasteGradeCellsAt(studentIndex, columnIndex, cells);
+    };
+    const focusGradeCell = (rowIndex: number, columnIndex: number) => {
+        const nextInput = document.querySelector<HTMLInputElement>(`[data-grade-cell="${rowIndex}-${columnIndex}"]`);
+        nextInput?.focus();
+        nextInput?.select();
+    };
+    const handleGradeCellKeyDown = (rowIndex: number, columnIndex: number, event: React.KeyboardEvent<HTMLInputElement>) => {
+        const maxRowIndex = newGradeStudents.length - 1;
+        const maxColumnIndex = newGradeSubjects.length;
+        if ((event.key === 'Backspace' || event.key === 'Delete') && selectedGradeCells.length > 0) {
+            event.preventDefault();
+            handleClearSelectedGradeCells();
+        } else if (event.key === 'Enter') {
+            event.preventDefault();
+            focusGradeCell(Math.min(rowIndex + 1, maxRowIndex), columnIndex);
+        } else if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            focusGradeCell(Math.min(rowIndex + 1, maxRowIndex), columnIndex);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            focusGradeCell(Math.max(rowIndex - 1, 0), columnIndex);
+        } else if (event.key === 'ArrowRight' && event.currentTarget.selectionStart === event.currentTarget.value.length) {
+            event.preventDefault();
+            focusGradeCell(rowIndex, Math.min(columnIndex + 1, maxColumnIndex));
+        } else if (event.key === 'ArrowLeft' && event.currentTarget.selectionStart === 0) {
+            event.preventDefault();
+            focusGradeCell(rowIndex, Math.max(columnIndex - 1, 0));
+        }
+    };
+    const handleDropGradeSubject = (targetSubject: string) => {
+        if (!draggedGradeSubject || draggedGradeSubject === targetSubject) return;
+        setNewGradeSubjects(subjects => {
+            const nextSubjects = [...subjects];
+            const fromIndex = nextSubjects.indexOf(draggedGradeSubject);
+            const toIndex = nextSubjects.indexOf(targetSubject);
+            if (fromIndex < 0 || toIndex < 0) return subjects;
+            const [movedSubject] = nextSubjects.splice(fromIndex, 1);
+            nextSubjects.splice(toIndex, 0, movedSubject);
+            return nextSubjects;
+        });
+        setDraggedGradeSubject(null);
+    };
+    const handleFillGradeColumn = (subject: string) => {
+        const value = (gradeColumnFillValues[subject] || '').trim();
+        if (!value) {
+            window.alert(`请先输入${subject}要统一填充的等级或内容。`);
+            return;
+        }
+        setNewGradeStudents(students => {
+            const source = students.length > 0 ? students : [createBlankGradeStudent(newGradeSubjects, 'manual-1')];
+            return source.map(student => ({
+                ...student,
+                scores: { ...student.scores, [subject]: value }
+            }));
+        });
+    };
+    const handleSaveGradeExam = () => {
+        const hasStudentInfo = newGradeStudents.some(student => student.name.trim());
+        if (!newGradeTerm || !newGradeExamType || !newGradeClass || newGradeSubjects.length === 0 || !hasStudentInfo) {
+            window.alert('请补全学年-学期、考试类型、班级、科目，并至少填写一名学生姓名。');
+            return;
+        }
+        if (gradePageMode === 'edit' && selectedGradeExam) {
+            const updatedRow: GradeExamRow = {
+                ...selectedGradeExam,
+                term: newGradeTerm,
+                type: newGradeExamType,
+                subjects: newGradeSubjects,
+                className: newGradeClass
+            };
+            setGradeExamRows(prev => prev.map(row => row.id === selectedGradeExam.id ? updatedRow : row));
+            setGradeExamScoresMap(prev => ({
+                ...prev,
+                [selectedGradeExam.id]: newGradeStudents
+            }));
+            window.alert('修改的考试记录已保存。');
+        } else {
+            const newId = Date.now();
+            const newRow: GradeExamRow = {
+                id: newId,
+                term: newGradeTerm,
+                type: newGradeExamType,
+                subjects: newGradeSubjects,
+                className: newGradeClass,
+                creator: '林萧'
+            };
+            setGradeExamRows(prev => [newRow, ...prev]);
+            setGradeExamScoresMap(prev => ({
+                ...prev,
+                [newId]: newGradeStudents
+            }));
+            window.alert('考试记录已保存到当前 demo 列表。');
+        }
+        setGradeTermFilter('全部学期');
+        setGradeExamTypeFilter('全部类型');
+        setGradeCreatorSearch('');
+        resetGradeCreateForm();
+        setGradePageMode('list');
+    };
+
+    const handleExportExcel = () => {
+        if (!newGradeClass || newGradeSubjects.length === 0) {
+            window.alert('没有数据可导出。');
+            return;
+        }
+        const headers = ['序号', '姓名', ...newGradeSubjects];
+        const rows = newGradeStudents.map((student, index) => [
+            index + 1,
+            student.name,
+            ...newGradeSubjects.map(sub => student.scores[sub] || '')
+        ]);
+        const csvContent = [headers, ...rows]
+            .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${newGradeTerm}_${newGradeExamType}_${newGradeClass}_成绩表.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const [roleModalOpen, setRoleModalOpen] = useState(false);
     const [editingRole, setEditingRole] = useState<any>(null);
@@ -449,22 +979,38 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 )}
 
                 {/* 内容区 - 采用精致的高端设计 */}
-                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
+                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '成绩管理' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
 
                     {/* 页面主标题 */}
-                    <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${embedded ? 'mb-5' : 'mb-8'}`}>
+                    {activeMenu !== '成绩管理' && (
+                    <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '成绩管理' ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
                         <div>
-                            {embedded && (
+                            {activeMenu === '成绩管理' ? (
+                                <div className="mb-2 flex items-center gap-2 font-['PingFang_SC'] text-[14px] font-normal leading-none">
+                                    <span className="text-[#AAAAAA]">数据中心</span>
+                                    <span className="text-[#AAAAAA]">/</span>
+                                    <span className={gradePageMode === 'create' ? 'text-[#AAAAAA]' : 'text-[#333333]'}>成绩管理</span>
+                                    {gradePageMode === 'create' && (
+                                        <>
+                                            <span className="text-[#AAAAAA]">/</span>
+                                            <span className="text-[#333333]">新建考试</span>
+                                        </>
+                                    )}
+                                </div>
+                            ) : embedded && (
                                 <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold mb-1.5">
                                     <span>{activeMenuGroup}</span>
                                     <span>/</span>
                                     <span className="text-slate-500">{activeMenu}</span>
                                 </div>
                             )}
-                            <h2 className={`${embedded ? 'text-[20px]' : 'text-2xl'} font-[900] text-slate-800 tracking-tight`}>{activeMenu}</h2>
-                            <div className="h-1 w-12 bg-blue-600 rounded-full mt-1.5"></div>
+                            <h2 className={activeMenu === '成绩管理' ? "font-['PingFang_SC'] text-[18px] font-semibold leading-none text-[#333333]" : `${embedded ? 'text-[20px]' : 'text-2xl'} font-[900] text-slate-800 tracking-tight`}>
+                                {activeMenu === '成绩管理' && gradePageMode === 'create' ? '新建考试' : activeMenu}
+                            </h2>
+                            {activeMenu !== '成绩管理' && <div className="h-1 w-12 bg-blue-600 rounded-full mt-1.5"></div>}
                         </div>
                     </div>
+                    )}
 
                     {/* 货币发放管理 - 增加标签页切换以分离自动模型和手动发币 */}
                     {activeMenu === '货币发放管理' && (
@@ -1519,6 +2065,420 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 </table>
                             </div>
                         </div>
+                    )}
+
+                    {/* 成绩管理 */}
+                    {activeMenu === '成绩管理' && (
+                        gradePageMode === 'list' ? (
+                            <div className="w-full font-sans text-sm text-[#4E5969] px-6 py-5 flex flex-col gap-4">
+                                <div className="flex h-5 items-center text-[13px] leading-[20px] text-[#86909C] mb-1">
+                                    <span className="hover:text-[#1D2129] cursor-pointer">数据中心</span>
+                                    <span className="mx-2 text-[#C9CDD4]">/</span>
+                                    <span className="text-[#1D2129]">成绩管理</span>
+                                </div>
+
+                                <div className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-6 shadow-[0_4px_10px_rgba(0,0,0,0.02)] flex flex-col">
+                                    <h2 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129] mb-5">成绩管理</h2>
+
+                                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                                        <select
+                                            value={gradeTermFilter}
+                                            onChange={(event) => setGradeTermFilter(event.target.value)}
+                                            className="h-8 w-[200px] rounded border border-[#E5E6EB] bg-white px-2 text-sm font-normal text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                            aria-label="学年学期筛选"
+                                        >
+                                            <option>全部学期</option>
+                                            {gradeTerms.map(term => (
+                                                <option key={term} className="text-[#1D2129]">{term}</option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            value={gradeExamTypeFilter}
+                                            onChange={(event) => setGradeExamTypeFilter(event.target.value)}
+                                            className="h-8 w-[160px] rounded border border-[#E5E6EB] bg-white px-2 text-sm font-normal text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                            aria-label="考试类型筛选"
+                                        >
+                                            <option>全部类型</option>
+                                            {gradeExamTypes.map(type => (
+                                                <option key={type} className="text-[#1D2129]">{type}</option>
+                                            ))}
+                                        </select>
+                                        <div className="relative w-[240px]">
+                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#86909C]" />
+                                            <input
+                                                value={gradeCreatorSearch}
+                                                onChange={(event) => setGradeCreatorSearch(event.target.value)}
+                                                className="h-8 w-full rounded border border-[#E5E6EB] bg-white pl-9 pr-3 text-sm font-normal text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                                placeholder="搜索创建人"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => {}} 
+                                            className="h-8 rounded border-0 bg-[#165DFF] px-4 text-sm font-normal text-white hover:bg-[#4080FF] active:bg-[#0E42D2] transition-colors focus:outline-none"
+                                        >
+                                            查询
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setGradeTermFilter('全部学期');
+                                                setGradeExamTypeFilter('全部类型');
+                                                setGradeCreatorSearch('');
+                                            }}
+                                            className="h-8 rounded border border-[#E5E6EB] bg-white px-4 text-sm font-normal text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-all focus:outline-none"
+                                        >
+                                            重置
+                                        </button>
+                                    </div>
+
+                                    <div className="border-t border-[#F2F3F5] mb-5 w-full"></div>
+
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={openGradeCreatePage}
+                                                    className="h-8 rounded border-0 bg-[#165DFF] px-4 text-sm font-normal text-white hover:bg-[#4080FF] active:bg-[#0E42D2] transition-colors flex items-center gap-1 focus:outline-none"
+                                                >
+                                                    <Plus size={14} />
+                                                    新建考试
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="overflow-x-auto border border-[#E5E6EB] rounded">
+                                            <table className="w-full border-collapse text-left text-sm font-normal text-[#4E5969]">
+                                                <thead>
+                                                    <tr className="bg-[#F7F8FA] text-[#1D2129]">
+                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[160px]">学年-学期</th>
+                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[120px]">考试类型</th>
+                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[200px]">科目</th>
+                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[140px]">班级</th>
+                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[100px]">创建人</th>
+                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[120px]">操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {filteredGradeExamRows.map(row => (
+                                                        <tr key={row.id} className="hover:bg-[#F2F3F5] transition-colors border-b border-[#F2F3F5] last:border-b-0">
+                                                            <td className="h-12 px-4 text-[#1D2129]">{row.term}</td>
+                                                            <td className="h-12 px-4">
+                                                                <span className="px-2 py-0.5 rounded text-xs font-normal bg-[#E8F3FF] text-[#165DFF]">
+                                                                    {row.type}
+                                                                </span>
+                                                            </td>
+                                                            <td className="h-12 px-4 py-1.5">
+                                                                <div className="flex flex-wrap gap-1.5">
+                                                                    {row.subjects.map(subject => (
+                                                                        <span key={subject} className="h-6 rounded-full px-3 border border-[#E5E6EB] bg-white text-[#4E5969] text-xs flex items-center justify-center font-normal">
+                                                                            {subject}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </td>
+                                                            <td className="h-12 px-4 text-[#1D2129]">{row.className}</td>
+                                                            <td className="h-12 px-4 text-[#4E5969]">{row.creator}</td>
+                                                            <td className="h-12 px-4">
+                                                                <div className="flex justify-start gap-4">
+                                                                    <button
+                                                                        onClick={() => handleViewGradeExam(row)}
+                                                                        className="text-[#165DFF] hover:text-[#4080FF] active:text-[#0E42D2] text-sm font-normal flex items-center gap-1 focus:outline-none"
+                                                                    >
+                                                                        <Eye size={14} /> 查看
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleEditGradeExam(row)}
+                                                                        className="text-[#165DFF] hover:text-[#4080FF] active:text-[#0E42D2] text-sm font-normal flex items-center gap-1 focus:outline-none"
+                                                                    >
+                                                                        <PenTool size={14} /> 编辑
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                    {filteredGradeExamRows.length === 0 && (
+                                                        <tr>
+                                                            <td className="h-28 text-center text-sm font-normal text-[#86909C] border-b border-[#F2F3F5]" colSpan={6}>
+                                                                暂无符合条件的考试记录
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                             <div className="w-full font-sans text-sm text-[#4E5969] px-6 py-5 flex flex-col gap-4">
+                                <div className="flex h-5 items-center text-[13px] leading-[20px] text-[#86909C] mb-1">
+                                    <span className="hover:text-[#1D2129] cursor-pointer">数据中心</span>
+                                    <span className="mx-2 text-[#C9CDD4]">/</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setGradePageMode('list')}
+                                        className="cursor-pointer text-[#86909C] hover:text-[#1D2129] focus:outline-none bg-transparent border-0 p-0"
+                                        aria-label="返回成绩管理列表"
+                                    >
+                                        成绩管理
+                                    </button>
+                                    <span className="mx-2 text-[#C9CDD4]">/</span>
+                                    <span className="text-[#1D2129]">{gradePageMode === 'create' ? '新建考试' : gradePageMode === 'view' ? '查看考试' : '编辑考试'}</span>
+                                </div>
+
+                                <section className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-5 shadow-[0_4px_10px_rgba(0,0,0,0.02)]">
+                                    <div className="flex items-center h-6 mb-6">
+                                        <div className="h-[18px] w-[5px] bg-[#165DFF] rounded-[1px]" />
+                                        <h3 className="ml-2 m-0 text-base font-semibold leading-none text-[#1D2129]">基本信息</h3>
+                                    </div>
+
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center min-h-[32px]">
+                                            <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0">
+                                                <span className="text-[#F53F3F] mr-1">*</span>学年-学期：
+                                            </span>
+                                            <select
+                                                value={newGradeTerm}
+                                                onChange={(event) => setNewGradeTerm(event.target.value)}
+                                                disabled={gradePageMode === 'view'}
+                                                className={`h-8 w-[417px] rounded border border-[#E5E6EB] px-2 text-sm font-normal outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all ${gradePageMode === 'view' ? 'bg-[#F7F8FA] text-[#C9CDD4]' : 'bg-white text-[#1D2129]'}`}
+                                            >
+                                                {gradeTermOptions.map(term => <option key={term} className="text-[#1D2129]">{term}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex items-center min-h-[32px]">
+                                            <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0">
+                                                <span className="text-[#F53F3F] mr-1">*</span>考试类型：
+                                            </span>
+                                            <select
+                                                value={newGradeExamType}
+                                                onChange={(event) => setNewGradeExamType(event.target.value)}
+                                                disabled={gradePageMode === 'view'}
+                                                className={`h-8 w-[417px] rounded border border-[#E5E6EB] px-2 text-sm font-normal outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all ${gradePageMode === 'view' ? 'bg-[#F7F8FA] text-[#C9CDD4]' : 'bg-white'} ${newGradeExamType ? 'text-[#1D2129]' : 'text-[#86909C]'}`}
+                                            >
+                                                <option value="" className="text-[#86909C]">请选择考试类型</option>
+                                                {gradeExamTypeOptions.map(type => <option key={type} className="text-[#1D2129]">{type}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex items-center min-h-[32px]">
+                                            <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0">
+                                                <span className="text-[#F53F3F] mr-1">*</span>班级：
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <select
+                                                    value={newGradeLevel}
+                                                    onChange={(event) => {
+                                                        const level = event.target.value;
+                                                        setNewGradeLevel(level);
+                                                        setNewGradeClass('');
+                                                        setNewGradeStudents([createBlankGradeStudent(newGradeSubjects, 'manual-1')]);
+                                                        setSelectedGradeCells([]);
+                                                        setGradeSelectionAnchor(null);
+                                                        setIsDraggingGradeCells(false);
+                                                    }}
+                                                    disabled={gradePageMode === 'view'}
+                                                    className={`h-8 w-[160px] rounded border border-[#E5E6EB] px-2 text-sm font-normal outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all ${gradePageMode === 'view' ? 'bg-[#F7F8FA] text-[#C9CDD4]' : 'bg-white'} ${newGradeLevel ? 'text-[#1D2129]' : 'text-[#86909C]'}`}
+                                                >
+                                                    <option value="" className="text-[#86909C]">请选择年级</option>
+                                                    {gradeLevelOptions.map(level => <option key={level} value={level} className="text-[#1D2129]">{level}</option>)}
+                                                </select>
+                                                <select
+                                                    value={newGradeClass}
+                                                    onChange={(event) => {
+                                                        const className = event.target.value;
+                                                        setNewGradeClass(className);
+                                                        setNewGradeStudents(className ? buildEmptyGradeRowsForClass(className) : [createBlankGradeStudent(newGradeSubjects, 'manual-1')]);
+                                                        setSelectedGradeCells([]);
+                                                        setGradeSelectionAnchor(null);
+                                                        setIsDraggingGradeCells(false);
+                                                    }}
+                                                    disabled={!newGradeLevel || gradePageMode === 'view'}
+                                                    className={`h-8 w-[249px] rounded border border-[#E5E6EB] px-2 text-sm font-normal outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all ${(!newGradeLevel || gradePageMode === 'view') ? 'bg-[#F7F8FA] text-[#C9CDD4]' : 'bg-white'} ${newGradeClass ? 'text-[#1D2129]' : 'text-[#86909C]'}`}
+                                                >
+                                                    <option value="" className="text-[#86909C]">请选择班级</option>
+                                                    {getClassOptionsByLevel(newGradeLevel).map(className => <option key={className} value={className} className="text-[#1D2129]">{className}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start min-h-[32px]">
+                                            <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0 pt-1">
+                                                <span className="text-[#F53F3F] mr-1">*</span>选择科目：
+                                            </span>
+                                            <div className="flex max-w-[760px] flex-wrap gap-x-3 gap-y-2">
+                                                {gradeSubjectOptions.map(subject => {
+                                                    const selected = newGradeSubjects.includes(subject);
+                                                    return (
+                                                        <button
+                                                            key={subject}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (gradePageMode !== 'view') {
+                                                                    toggleNewGradeSubject(subject);
+                                                                }
+                                                            }}
+                                                            disabled={gradePageMode === 'view'}
+                                                            className={`h-7 min-w-[64px] rounded-full px-4 text-center text-sm font-normal leading-none transition-all ${selected ? 'border border-[#165DFF] bg-[#165DFF] text-white' : 'border border-[#E5E6EB] bg-white text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF]'} ${gradePageMode === 'view' ? 'cursor-default opacity-80' : 'cursor-pointer'}`}
+                                                        >
+                                                            {subject}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                 <section className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-5 shadow-[0_4px_10px_rgba(0,0,0,0.02)] relative min-h-[274px]">
+                                    <div className="absolute left-5 top-5 flex items-center h-6">
+                                        <div className="h-[18px] w-[5px] bg-[#165DFF] rounded-[1px]" />
+                                        <h3 className="ml-2 m-0 text-base font-semibold leading-none text-[#1D2129]">考试成绩</h3>
+                                    </div>
+
+                                    <div className="absolute left-5 top-[60px] flex h-8 items-center">
+                                        <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0">
+                                            {gradePageMode === 'view' ? '成绩导出：' : '快捷操作：'}
+                                        </span>
+                                        {gradePageMode === 'view' ? (
+                                            <button
+                                                type="button"
+                                                onClick={handleExportExcel}
+                                                className="h-8 px-4 rounded border border-[#E5E6EB] bg-white text-sm font-normal text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] active:border-[#0E42D2] flex items-center justify-center gap-1.5 focus:outline-none transition-all"
+                                            >
+                                                <FolderOpen size={14} />
+                                                导出 Excel
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={handleFillGradeStudents}
+                                                className="h-8 px-4 rounded border-0 bg-[#165DFF] text-sm font-normal text-white hover:bg-[#4080FF] active:bg-[#0E42D2] transition-colors focus:outline-none"
+                                            >
+                                                自动填充学生姓名
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    {gradePageMode !== 'view' && (
+                                        <div className="absolute left-[140px] top-[108px] flex items-center gap-4 text-xs font-normal text-[#86909C]">
+                                            <span>1、支持从 Excel 复制粘贴</span>
+                                            <span>2、拖动带 ↔ 的科目表头可调整排序</span>
+                                        </div>
+                                    )}
+
+                                    <div className="pt-[136px] pl-[140px] pr-0 overflow-x-auto overflow-y-visible" onMouseLeave={stopGradeCellDrag} onMouseUp={stopGradeCellDrag}>
+                                        {(!newGradeClass || newGradeSubjects.length === 0) ? (
+                                            <div className="flex h-24 w-[420px] items-center justify-center border border-[#E5E6EB] bg-white text-sm font-normal text-[#86909C] rounded">请选择班级和科目</div>
+                                        ) : (
+                                        <table className="border-collapse text-center text-sm font-normal text-[#4E5969] border border-[#E5E6EB] rounded">
+                                            <thead>
+                                                <tr className="bg-[#F7F8FA] text-[#1D2129]">
+                                                    <th className="h-12 w-[60px] border border-[#E5E6EB] px-2 text-[#86909C] font-semibold bg-[#F7F8FA]">序号</th>
+                                                    <th className="h-12 w-[120px] border border-[#E5E6EB] px-2 font-semibold bg-[#F7F8FA]">姓名</th>
+                                                    {newGradeSubjects.map(subject => (
+                                                        <th
+                                                            key={subject}
+                                                            draggable={gradePageMode !== 'view'}
+                                                            onDragStart={() => gradePageMode !== 'view' && setDraggedGradeSubject(subject)}
+                                                            onDragOver={(event) => event.preventDefault()}
+                                                            onDrop={() => gradePageMode !== 'view' && handleDropGradeSubject(subject)}
+                                                            onDragEnd={() => setDraggedGradeSubject(null)}
+                                                            className={`h-16 w-[168px] border border-[#E5E6EB] px-2 font-semibold ${gradePageMode !== 'view' ? 'cursor-move' : ''} ${draggedGradeSubject === subject ? 'bg-[#E8F3FF] text-[#165DFF]' : 'bg-[#F7F8FA]'}`}
+                                                            title={gradePageMode !== 'view' ? "拖动可调整科目列顺序" : undefined}
+                                                        >
+                                                            <div className="flex flex-col items-center gap-1">
+                                                                <div className="flex items-center gap-1 text-[#1D2129]">
+                                                                    {gradePageMode !== 'view' && <span className="text-[12px] text-[#86909C]">↔</span>}
+                                                                    <span>{subject}</span>
+                                                                </div>
+                                                                {gradePageMode !== 'view' && (
+                                                                    <div className="flex h-6 items-center gap-1 mt-1">
+                                                                        <select
+                                                                            value={gradeColumnFillValues[subject] || ''}
+                                                                            onChange={(event) => setGradeColumnFillValues(values => ({ ...values, [subject]: event.target.value }))}
+                                                                            className={`h-6 w-[72px] rounded border border-[#E5E6EB] px-1 text-[12px] font-normal outline-none focus:border-[#165DFF] ${gradeColumnFillValues[subject] ? getGradeScoreColorClass(gradeColumnFillValues[subject]) : 'bg-white text-[#86909C]'}`}
+                                                                        >
+                                                                            <option value="" className="text-[#86909C]">等级</option>
+                                                                            {gradeScorePresetOptions.map(option => <option key={option} value={option} className="text-[#1D2129]">{option}</option>)}
+                                                                        </select>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleFillGradeColumn(subject)}
+                                                                            className="h-6 w-[68px] rounded border border-[#E5E6EB] bg-white text-[12px] text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-all"
+                                                                        >
+                                                                            批量设置
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {newGradeStudents.map((student, index) => (
+                                                    <tr key={student.id}>
+                                                        <td className="h-8 w-[60px] border border-[#E5E6EB] bg-[#F7F8FA] px-2 text-[#86909C]">{index + 1}</td>
+                                                        <td className="h-8 w-[120px] border border-[#E5E6EB] bg-white p-0">
+                                                            <input
+                                                                value={student.name}
+                                                                onChange={(event) => handleChangeStudentIdentity(student.id, 'name', event.target.value)}
+                                                                onMouseDown={(event) => gradePageMode !== 'view' && handleGradeCellMouseDown(index, 0, event)}
+                                                                onMouseEnter={() => gradePageMode !== 'view' && handleGradeCellMouseEnter(index, 0)}
+                                                                onMouseUp={stopGradeCellDrag}
+                                                                onKeyDown={(event) => gradePageMode !== 'view' && handleGradeCellKeyDown(index, 0, event)}
+                                                                onPaste={(event) => gradePageMode !== 'view' && handlePasteGradeTable(index, 0, event)}
+                                                                readOnly={gradePageMode === 'view'}
+                                                                data-grade-cell={`${index}-0`}
+                                                                className={`h-[32px] w-[120px] border-0 bg-transparent px-[6px] text-center text-[14px] font-normal text-[#333333] outline-none focus:bg-[#E8F3FF] focus:ring-1 focus:ring-inset focus:ring-[#165DFF] ${selectedGradeCellSet.has(getGradeCellKey(index, 0)) && gradePageMode !== 'view' ? 'bg-[#E8F3FF] ring-1 ring-inset ring-[#165DFF]' : ''}`}
+                                                                aria-label={`第${index + 1}行姓名`}
+                                                            />
+                                                        </td>
+                                                        {newGradeSubjects.map((subject, subjectIndex) => (
+                                                            <td key={subject} className="h-[32px] w-[168px] border border-[#DADCE0] bg-white p-0">
+                                                                <input
+                                                                    value={student.scores[subject] || ''}
+                                                                    onChange={(event) => handleChangeStudentGrade(student.id, subject, event.target.value)}
+                                                                    onMouseDown={(event) => gradePageMode !== 'view' && handleGradeCellMouseDown(index, subjectIndex + 1, event)}
+                                                                    onMouseEnter={() => gradePageMode !== 'view' && handleGradeCellMouseEnter(index, subjectIndex + 1)}
+                                                                    onMouseUp={stopGradeCellDrag}
+                                                                    onKeyDown={(event) => gradePageMode !== 'view' && handleGradeCellKeyDown(index, subjectIndex + 1, event)}
+                                                                    onPaste={(event) => gradePageMode !== 'view' && handlePasteGradeTable(index, subjectIndex + 1, event)}
+                                                                    readOnly={gradePageMode === 'view'}
+                                                                    data-grade-cell={`${index}-${subjectIndex + 1}`}
+                                                                    className={`h-[32px] w-[168px] border-0 px-[6px] text-center text-[14px] font-normal outline-none focus:bg-[#E8F3FF] focus:ring-1 focus:ring-inset focus:ring-[#165DFF] ${getGradeScoreColorClass(student.scores[subject] || '')} ${selectedGradeCellSet.has(getGradeCellKey(index, subjectIndex + 1)) && gradePageMode !== 'view' ? 'bg-[#E8F3FF] ring-1 ring-inset ring-[#165DFF]' : ''}`}
+                                                                    aria-label={`${student.name || `第${index + 1}行`}${subject}成绩`}
+                                                                />
+                                                             </td>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        )}
+                                    </div>
+                                </section>
+
+                                <div className="mt-4 flex justify-center gap-3 py-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setGradePageMode('list')}
+                                        className="h-8 w-[78px] rounded border border-[#E5E6EB] bg-white text-sm font-normal text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] active:border-[#0E42D2] transition-colors focus:outline-none"
+                                    >
+                                        返回
+                                    </button>
+                                    {gradePageMode !== 'view' && (
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveGradeExam}
+                                            className="h-8 w-[78px] rounded border-0 bg-[#165DFF] text-sm font-normal text-white hover:bg-[#4080FF] active:bg-[#0E42D2] transition-colors focus:outline-none"
+                                        >
+                                            确定
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )
                     )}
 
                     {/* 其它待开发 */}
