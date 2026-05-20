@@ -570,7 +570,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             ].map((rec) => (
                                 <div key={rec.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg mr-3 shrink-0 ${rec.type === 'vending' ? 'bg-blue-50' : 'bg-purple-50'}`}>
-                                        {rec.type === 'vending' ? '🛒' : '👩‍🏫'}
+                                        {rec.type === 'vending' ? '柜' : '师'}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="font-bold text-slate-800 text-[14px] mb-1 truncate">{rec.item}</div>

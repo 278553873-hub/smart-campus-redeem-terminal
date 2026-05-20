@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 
 interface DimensionData {
   label: string;
@@ -8,13 +8,18 @@ interface DimensionData {
 interface FiveEducationRadarSimpleProps {
   dimensions: DimensionData[];
   startDimensions?: DimensionData[]; // 期初数据
+  classAverageDimensions?: DimensionData[]; // 班级平均数据
 }
 
-const FiveEducationRadarSimple: React.FC<FiveEducationRadarSimpleProps> = ({ dimensions, startDimensions }) => {
+const FiveEducationRadarSimple: React.FC<FiveEducationRadarSimpleProps> = ({ dimensions, startDimensions, classAverageDimensions }) => {
   const size = 280;
   const center = size / 2;
   const radius = 95;
   const levels = 4;
+
+  const [showEnd, setShowEnd] = useState(true);
+  const [showStart, setShowStart] = useState(true);
+  const [showAvg, setShowAvg] = useState(true);
 
   const getCoordinates = (value: number, index: number, total: number) => {
     const angle = (Math.PI * 2 * index) / total - Math.PI / 2;
@@ -34,9 +39,10 @@ const FiveEducationRadarSimple: React.FC<FiveEducationRadarSimpleProps> = ({ dim
 
   const endPoints = generatePoints(dimensions);
   const startPoints = startDimensions ? generatePoints(startDimensions) : '';
+  const avgPoints = classAverageDimensions ? generatePoints(classAverageDimensions) : '';
 
   return (
-    <div className="flex flex-col items-center justify-center relative">
+    <div className="flex flex-col items-center justify-center relative w-full">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
         {/* 1. 背景网格 */}
         {[...Array(levels)].map((_, i) => (
@@ -68,8 +74,34 @@ const FiveEducationRadarSimple: React.FC<FiveEducationRadarSimpleProps> = ({ dim
           );
         })}
 
-        {/* 3. 期初数据层 (橙色虚线框) */}
-        {startDimensions && (
+        {/* 3. 班级平均数据层 (灰色线框) */}
+        {classAverageDimensions && showAvg && (
+          <g>
+            <polygon
+              points={avgPoints}
+              fill="transparent"
+              stroke="#94A3B8"
+              strokeWidth="2"
+              strokeDasharray="2 2"
+              className="opacity-60 transition-opacity duration-300"
+            />
+            {classAverageDimensions.map((s, i) => {
+              const coords = getCoordinates(s.score, i, classAverageDimensions.length);
+              return (
+                <circle
+                  key={i}
+                  cx={coords.x} cy={coords.y}
+                  r="2.5"
+                  fill="#94A3B8"
+                  className="opacity-60"
+                />
+              );
+            })}
+          </g>
+        )}
+
+        {/* 4. 期初数据层 (橙色虚线框) */}
+        {startDimensions && showStart && (
           <g>
             <polygon
               points={startPoints}
@@ -77,7 +109,7 @@ const FiveEducationRadarSimple: React.FC<FiveEducationRadarSimpleProps> = ({ dim
               stroke="#F97316"
               strokeWidth="2"
               strokeDasharray="4 2"
-              className="opacity-40"
+              className="opacity-60 transition-opacity duration-300"
             />
             {startDimensions.map((s, i) => {
               const coords = getCoordinates(s.score, i, startDimensions.length);
@@ -87,63 +119,88 @@ const FiveEducationRadarSimple: React.FC<FiveEducationRadarSimpleProps> = ({ dim
                   cx={coords.x} cy={coords.y}
                   r="3"
                   fill="#F97316"
-                  className="opacity-40"
+                  className="opacity-60"
                 />
               );
             })}
           </g>
         )}
 
-        {/* 4. 期末数据层 (蓝色填充) */}
-        <g>
-          <polygon
-            points={endPoints}
-            fill="rgba(59, 130, 246, 0.2)"
-            stroke="#3B82F6"
-            strokeWidth="2.5"
-          />
-          {dimensions.map((s, i) => {
-            const coords = getCoordinates(s.score, i, dimensions.length);
-            const labelCoords = getCoordinates(115, i, dimensions.length);
-
-            return (
-              <g key={i}>
+        {/* 5. 期末数据层 (蓝色填充) */}
+        {showEnd && (
+          <g className="transition-opacity duration-300">
+            <polygon
+              points={endPoints}
+              fill="rgba(59, 130, 246, 0.2)"
+              stroke="#3B82F6"
+              strokeWidth="2.5"
+            />
+            {dimensions.map((s, i) => {
+              const coords = getCoordinates(s.score, i, dimensions.length);
+              return (
                 <circle
+                  key={i}
                   cx={coords.x} cy={coords.y}
                   r="4"
                   fill="white"
                   stroke="#3B82F6"
                   strokeWidth="2"
                 />
-                <text
-                  x={labelCoords.x}
-                  y={labelCoords.y}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  className="text-[12px] font-bold fill-slate-500"
-                >
-                  {s.label}
-                </text>
-              </g>
-            );
-          })}
-        </g>
+              );
+            })}
+          </g>
+        )}
+
+        {/* 6. 维度文字 (永远显示在最上层) */}
+        {dimensions.map((s, i) => {
+          const labelCoords = getCoordinates(115, i, dimensions.length);
+          return (
+            <text
+              key={i}
+              x={labelCoords.x}
+              y={labelCoords.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="text-[12px] font-bold fill-slate-500"
+            >
+              {s.label}
+            </text>
+          );
+        })}
       </svg>
 
-      {/* 图例 */}
+      {/* 图例区 (支持点击切换显示隐藏) */}
       <div className="flex gap-4 mt-2">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-          <span className="text-xs font-medium text-slate-400">期末评价</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-0.5 bg-orange-500 border-t border-dashed border-orange-500"></div>
-          <span className="text-xs font-medium text-slate-400">期初评价</span>
-        </div>
+        <button 
+          onClick={() => setShowEnd(!showEnd)}
+          className={`flex items-center gap-1.5 transition-opacity ${!showEnd ? 'opacity-30 grayscale' : 'opacity-100 hover:opacity-80'}`}
+        >
+          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+          <span className="text-xs font-medium text-slate-500">期末评价</span>
+        </button>
+
+        {startDimensions && (
+          <button 
+            onClick={() => setShowStart(!showStart)}
+            className={`flex items-center gap-1.5 transition-opacity ${!showStart ? 'opacity-30 grayscale' : 'opacity-100 hover:opacity-80'}`}
+          >
+            <div className="w-3 h-0.5 bg-orange-500 border-t-2 border-dashed border-orange-500"></div>
+            <span className="text-xs font-medium text-slate-500">期初评价</span>
+          </button>
+        )}
+
+        {classAverageDimensions && (
+          <button 
+            onClick={() => setShowAvg(!showAvg)}
+            className={`flex items-center gap-1.5 transition-opacity ${!showAvg ? 'opacity-30 grayscale' : 'opacity-100 hover:opacity-80'}`}
+          >
+            <div className="w-3 h-0.5 bg-slate-400 border-t-2 border-dashed border-slate-400"></div>
+            <span className="text-xs font-medium text-slate-500">班级平均</span>
+          </button>
+        )}
       </div>
     </div>
   );
 };
-
 
 export default FiveEducationRadarSimple;

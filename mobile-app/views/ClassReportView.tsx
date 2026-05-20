@@ -342,7 +342,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, 
                                 onClick={onGoToClassDetail}
                                 className="text-xs font-bold text-blue-600 flex items-center gap-1 active:opacity-70"
                             >
-                                去点评 <span className="text-xs">➜</span>
+                                去点评 <span className="text-xs">-&gt;</span>
                             </button>
                         </div>
                     </div>

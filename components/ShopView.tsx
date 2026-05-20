@@ -51,7 +51,7 @@ const ShopView: React.FC<ShopViewProps> = ({ student, products, onPurchase }) =>
               <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
                 星光超市 <Sparkles className="text-yellow-400" size={20} />
               </h2>
-              <p className="text-slate-400 font-bold text-[11px] mt-0.5">努力沉淀，兑现心愿 ✨</p>
+              <p className="text-slate-400 font-bold text-[11px] mt-0.5">努力沉淀，兑现心愿</p>
             </div>
           </div>
 

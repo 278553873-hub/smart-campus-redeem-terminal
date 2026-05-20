@@ -18,6 +18,8 @@
 
 ## 设计与规范
 - 涉及界面、交互、视觉层级、信息密度、文案删减、布局调整等设计类任务时，必须先明确目标页面、设备场景和影响范围，再开始设计或改代码。
+- 涉及选择或调用全局 skill 时，先查看 `/Users/mayday/.codex/skills/INSTALLED_SKILLS_INDEX.md`，按其中的来源、用途和使用场景路由选择合适 skill，避免同时调用多个理念冲突的 skill。
+- 遇到多种 UI/产品 skill 都可能适用时，先判断任务场景，再选择一个主 skill 和必要的辅助 skill；例如 iOS 高定风格优先 Apple HIG + `ui-ux-pro-max`，B 端/SaaS 后台优先 PM skills + `shadcn`，高视觉官网/落地页优先 `ui-ux-pro-max` + ibelick UI skills。
 - 已安装专业 UI skill 时，应先使用专业 UI skill 做独立评审，再对照项目 UI 规范判断是否采纳；项目规范不是不可挑战的绝对审美标准。
 - 手机端、智能终端相关设计，优先使用 `frontend-design-review` 审视字号体系、图标体系、触控热区、视觉层级、组件状态和无障碍，再读取并对照 `UI_GUIDELINES.md`。
 - PC 后台与大屏相关设计，优先阅读 `PC_UI_GUIDELINES.md`。

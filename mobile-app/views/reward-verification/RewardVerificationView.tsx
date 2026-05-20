@@ -8,18 +8,18 @@ interface RewardVerificationViewProps {
 }
 
 // default icons for class goods
-const DEFAULT_ICONS = ['🎒', '📝', '🍪', '🎟️', '🏅', '📚', '⚽', '🎨', '🪑', '🧹', '🍱'];
+const DEFAULT_ICONS = ['包', '笔', '点', '券', '章', '书', '球', '画', '座', '扫', '餐'];
 
 // initial class goods
 const initialClassGoods = [
-    { id: 'g1', name: '免写一次语文作业', price: 100, icon: '🎟️' },
-    { id: 'g2', name: '做一天班长体验券', price: 300, icon: '🏅' },
-    { id: 'g3', name: '与校长共进午餐1次', price: 500, icon: '🍱' },
-    { id: 'g4', name: '精美笔记本一本', price: 150, icon: '📚' },
-    { id: 'g5', name: '黑色中性笔一支', price: 50, icon: '📝' },
-    { id: 'g6', name: '老师手作小饼干一份', price: 80, icon: '🍪' },
-    { id: 'g7', name: '指定优选座位一周', price: 200, icon: '🪑' },
-    { id: 'g8', name: '免除一次大扫除', price: 120, icon: '🧹' },
+    { id: 'g1', name: '免写一次语文作业', price: 100, icon: '券' },
+    { id: 'g2', name: '做一天班长体验券', price: 300, icon: '章' },
+    { id: 'g3', name: '与校长共进午餐1次', price: 500, icon: '餐' },
+    { id: 'g4', name: '精美笔记本一本', price: 150, icon: '书' },
+    { id: 'g5', name: '黑色中性笔一支', price: 50, icon: '笔' },
+    { id: 'g6', name: '老师手作小饼干一份', price: 80, icon: '点' },
+    { id: 'g7', name: '指定优选座位一周', price: 200, icon: '座' },
+    { id: 'g8', name: '免除一次大扫除', price: 120, icon: '扫' },
 ];
 
 export const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({ classId, onBack }) => {

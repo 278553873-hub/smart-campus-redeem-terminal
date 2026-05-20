@@ -66,6 +66,35 @@ for (const forbidden of [
 }
 
 
+for (const required of [
+  '年级评价数',
+  'aria-label="查看年级评价数统计口径"',
+  '按住查看统计口径',
+  'showEvaluationRecordsHelp',
+  '按学生明细记录统计，即如果老师记录“2023级1班全体同学积极参加运动会”，且2023级1班有30名学生。那么评价数是30。',
+  'getEvaluationRecordsAxis',
+  'interval: evaluationAxis.interval',
+  'GradeEvaluationRecordsChart',
+  'ClassEvaluationRecordsChart',
+  '班级评价数明细',
+  'evaluationRecords',
+  '评价记录：${grade.evaluationRecords}条',
+]) {
+  if (!source.includes(required)) {
+    throw new Error(`年级评价数图表缺少结构或口径说明入口：${required}`);
+  }
+}
+
+for (const repeatedCopy of [
+  '一次全班评价会按学生人数生成多条记录',
+  '说明：按学生明细记录统计',
+]) {
+  if (source.includes(repeatedCopy)) {
+    throw new Error(`年级评价数点击浮层不应反复展示说明文案：${repeatedCopy}`);
+  }
+}
+
+
 const teacherUsageSectionStart = source.indexOf('教师使用排行榜');
 const teacherScoreSectionStart = source.indexOf('<TeacherScoreRankingCard', teacherUsageSectionStart);
 const teacherUsageSection = source.slice(teacherUsageSectionStart, teacherScoreSectionStart);

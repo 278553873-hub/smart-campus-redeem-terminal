@@ -410,7 +410,7 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
             </div>
             <div className="relative xl:max-w-[calc(100%-360px)]">
               <h1 className="text-[28px] font-black text-slate-800 tracking-tight leading-tight">
-                {teacherProfile.name}，您好！ 👏
+                {teacherProfile.name}，您好！
               </h1>
               <p className="mt-1.5 text-[15px] font-medium text-slate-500">{emotionalMessage}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">

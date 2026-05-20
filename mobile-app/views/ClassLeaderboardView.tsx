@@ -20,6 +20,38 @@ type Dimension = 'total' | '诗意中队' | '安全班级' | '健体班级' | '�
 const dimensions: Dimension[] = ['total', '诗意中队', '安全班级', '健体班级', '文雅班级', '美净班级'];
 const GRADES = ['2025级', '2024级', '2023级', '2022级', '2021级', '2020级'];
 
+type ClassRankingItem = {
+    id: string;
+    name: string;
+    score: number;
+    rank?: number;
+};
+
+const getRankedClasses = (items: ClassRankingItem[]) => {
+    const sortedItems = [...items].sort((left, right) => right.score - left.score || left.name.localeCompare(right.name, 'zh-Hans-CN'));
+
+    let previousScore: number | null = null;
+    let previousRank = 0;
+
+    return sortedItems.map((item, index) => {
+        const rank = previousScore === item.score ? previousRank : index + 1;
+        previousScore = item.score;
+        previousRank = rank;
+
+        return {
+            ...item,
+            rank,
+        };
+    });
+};
+
+const rankBadgeClassName = (rank?: number) => {
+    if (rank === 1) return 'bg-[#FFC107] text-white shadow-[#FFC107]/40 shadow-lg';
+    if (rank === 2) return 'bg-[#B0BEC5] text-white';
+    if (rank === 3) return 'bg-[#FFAB91] text-white';
+    return 'bg-slate-100 text-slate-400';
+};
+
 // --- Mock Data Generator ---
 const getGradeStats = (grade: string, timeRange: TimeRange, activeDim: Dimension) => {
     // 1. Grade Overview Stats
@@ -59,7 +91,6 @@ const getGradeStats = (grade: string, timeRange: TimeRange, activeDim: Dimension
             id: `c_${i}`,
             name: `${displayGrade}${i + 1}班`,
             score: Math.max(0, score), // Ensure no negative scores
-            rank: i + 1,
             // trend removed
         };
     });
@@ -78,7 +109,7 @@ const getGradeStats = (grade: string, timeRange: TimeRange, activeDim: Dimension
         };
     });
 
-    return { gradeAvg, gradeTrend, pillarScores, topIssue, rankings, recentRecords };
+    return { gradeAvg, gradeTrend, pillarScores, topIssue, rankings: getRankedClasses(rankings), recentRecords };
 };
 
 // --- Components ---
@@ -159,6 +190,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
     const [timeRange, setTimeRange] = useState<TimeRange>('week');
     const [activeDim, setActiveDim] = useState<Dimension>('total');
     const [showRecordsLog, setShowRecordsLog] = useState(false);
+    const [showFullRanking, setShowFullRanking] = useState(false);
 
     if (showRecordsLog) {
         return <EvaluationRecordsLogView onBack={() => setShowRecordsLog(false)} />;
@@ -218,7 +250,6 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[17px] font-semibold text-slate-800 flex items-center gap-2">
-                                <span className="text-yellow-500">🏆</span>
                                 班级排行榜
                             </h3>
                             <span className="text-[11px] font-bold text-slate-400">Top 5</span>
@@ -238,18 +269,14 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
 
                         {/* List */}
                         <div className="space-y-3">
-                            {data.rankings.slice(0, 5).map((cls, idx) => (
+                            {data.rankings.slice(0, 5).map((cls) => (
                                 <div
                                     key={cls.id}
                                     className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl shadow-sm"
                                 >
                                     {/* Rank & Name */}
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-semibold
-                                            ${idx === 0 ? 'bg-[#FFC107] text-white shadow-[#FFC107]/40 shadow-lg' :
-                                                idx === 1 ? 'bg-[#B0BEC5] text-white' :
-                                                    idx === 2 ? 'bg-[#FFAB91] text-white' : 'bg-slate-100 text-slate-400'}
-                                        `}>
+                                        <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-semibold ${rankBadgeClassName(cls.rank)}`}>
                                             {cls.rank}
                                         </div>
                                         <span className="text-[14px] font-bold text-slate-800">{cls.name}</span>
@@ -268,7 +295,10 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                         {/* Footer Action */}
                         {data.rankings.length > 5 && (
                             <div className="mt-4 pt-2 flex justify-center border-t border-slate-50">
-                                <button className="flex items-center gap-1 text-[12px] font-bold text-slate-400 py-2  transition-colors">
+                                <button
+                                    onClick={() => setShowFullRanking(true)}
+                                    className="flex min-h-11 items-center gap-1 text-[12px] font-bold text-slate-400 py-2 transition-colors active:text-[#5B50F6]"
+                                >
                                     查看全部排名 <ChevronRightIcon className="w-3.5 h-3.5" />
                                 </button>
                             </div>
@@ -314,6 +344,46 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                         </div>
                     </div>
                 </div>
+
+                {showFullRanking && (
+                    <div className="absolute inset-0 z-[120] flex items-end bg-black/40 backdrop-blur-sm" onClick={() => setShowFullRanking(false)}>
+                        <div className="max-h-[82%] w-full rounded-t-[32px] bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                                <div>
+                                    <h3 className="text-[17px] font-semibold text-slate-900">全部班级排名</h3>
+                                    <p className="mt-1 text-[12px] font-medium text-slate-400">{activeGrade} · {activeDim === 'total' ? '综合评价' : activeDim}</p>
+                                </div>
+                                <button
+                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-500 active:bg-slate-100"
+                                    onClick={() => setShowFullRanking(false)}
+                                    aria-label="关闭全部班级排名"
+                                >
+                                    <CloseIcon className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <div className="max-h-[calc(82vh-76px)] overflow-y-auto p-4">
+                                <div className="space-y-3">
+                                    {data.rankings.map((cls) => (
+                                        <div
+                                            key={cls.id}
+                                            className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
+                                        >
+                                            <div className="flex min-w-0 items-center gap-4">
+                                                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${rankBadgeClassName(cls.rank)}`}>
+                                                    {cls.rank}
+                                                </div>
+                                                <span className="truncate text-[14px] font-bold text-slate-800">{cls.name}</span>
+                                            </div>
+                                            <span className="font-mono text-[17px] font-black text-[#5B50F6]">
+                                                {cls.score}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Student } from '../types';
 import {
     MOCK_SUBJECTS,
@@ -15,11 +15,11 @@ import SubjectRadarChart from '../components/SubjectRadarChart';
 import SubjectGradesChart from '../components/SubjectGradesChart';
 import FiveEducationRadarSimple from '../components/FiveEducationRadarSimple';
 import {
-    Printer, ChevronLeft, ChevronRight, CornerDownLeft,
+    CornerDownLeft,
     BookOpen, Calendar, TrendingUp, Home, Palmtree,
     PenTool, Star, MapPin, BrainCircuit, HeartHandshake, Map, Clock, Target,
     Calculator, Languages, FlaskConical, Monitor, Palette, Smile, Dumbbell,
-    Award, Quote, Sparkles, Smartphone, FileText, Compass, Megaphone, Layout, Users,
+    Award, Quote, Sparkles, Compass, Megaphone, Layout, Users,
     Sun, MessageSquare, PenLine, Edit3, ArrowUpRight, Anchor, Lightbulb, X, Layers
 } from 'lucide-react';
 import { BackIcon } from '../components/Icons';
@@ -400,20 +400,24 @@ const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFull
             {/* 双图表区域 */}
             <div className="grid grid-cols-1 gap-4 mb-4">
                 {/* 六维度雷达图 */}
-                <ReportCard className="bg-white">
+                <ReportCard className="bg-white pb-6">
                     <div className="text-[13px] font-black text-slate-700 mb-6 text-center tracking-tight">5维度发展对比图</div>
                     <div className="flex flex-col items-center">
                         <FiveEducationRadarSimple
                             dimensions={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.dimensionScores : MOCK_TERM_REPORT_AI_DATA.dimensionScores}
                             startDimensions={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.startDimensionScores : MOCK_TERM_REPORT_AI_DATA.startDimensionScores}
+                            classAverageDimensions={[
+                                { label: '崇德', score: 82 },
+                                { label: '求知', score: 78 },
+                                { label: '向阳', score: 85 },
+                                { label: '尚美', score: 75 },
+                                { label: '躬行', score: 80 }
+                            ]}
                         />
-                    </div>
-                    <div className="mt-6 text-[11px] text-slate-400 text-center font-medium leading-relaxed">
-                        对比学期初与学期末的数据表现<br />全方位呈现核心素养的拔节生长
                     </div>
                 </ReportCard>
 
-                {/* 学科成绩分布（点击查看详细报告） */}
+                {/* 学科成绩分布 */}
                 <ReportCard className="bg-gradient-to-br from-slate-50/30 to-white">
                     <SubjectGradesChart subjects={MOCK_SUBJECTS} onSubjectClick={onSubjectClick} showClickHint={true} />
 
@@ -604,8 +608,36 @@ const PageSimpleParentChildActivities = ({ mode = 'a4', id, student }: { mode?: 
 // 新增：高光时刻板块
 const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mobile', id?: string, student: Student, key?: any }) => {
     const data = student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE : MOCK_TERM_REPORT_AI_DATA;
-    const highlights = (data as any).highlights || [];
+    // 使用 state 管理列表，支持增删改
+    const [highlights, setHighlights] = useState<any[]>((data as any).highlights || []);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+
+    // 新增高光时刻
+    const handleAdd = () => {
+        setHighlights([
+            ...highlights,
+            {
+                achievement: "这里是新增的高光时刻，请修改为您想对学生说的话...",
+                imageUrl: "",
+                isAward: false
+            }
+        ]);
+    };
+
+    // 删除高光时刻
+    const handleDelete = (index: number) => {
+        const newList = [...highlights];
+        newList.splice(index, 1);
+        setHighlights(newList);
+    };
+
+    // 修改内容
+    const handleChange = (index: number, field: string, value: any) => {
+        const newList = [...highlights];
+        newList[index] = { ...newList[index], [field]: value };
+        setHighlights(newList);
+    };
 
     return (
         <ReportPageContainer mode={mode} id={id}>
@@ -614,69 +646,105 @@ const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mo
                 subTitle="Highlights"
                 icon={Star}
                 className="text-amber-500"
+                rightElement={
+                    <button 
+                        onClick={() => setIsEditing(!isEditing)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white shadow-lg active:scale-95 transition-all ${isEditing ? 'bg-amber-500 shadow-amber-200' : 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-200'}`}
+                    >
+                        <PenLine className="w-3.5 h-3.5" />
+                        <span className="text-[12px] font-bold">{isEditing ? '完成' : '编辑'}</span>
+                    </button>
+                }
             />
             <div className="grid grid-cols-1 gap-5">
                 {highlights.map((item: any, idx: number) => (
                     <ReportCard key={idx} className="overflow-hidden p-0 border-none shadow-xl shadow-slate-200/40 relative group/card rounded-3xl bg-white ring-1 ring-slate-100">
-                        <div className="flex flex-col sm:flex-row h-full">
-                            {/* 图片容器 */}
-                            <div
-                                className={`w-full sm:w-1/3 aspect-[4/3] bg-slate-50 relative overflow-hidden active:scale-[0.99] transition-transform ${item.isAward ? 'p-2.5' : ''}`}
-                                onClick={() => item.isAward && setPreviewImage(item.imageUrl)}
+                        {isEditing && (
+                            <button 
+                                onClick={() => handleDelete(idx)}
+                                className="absolute top-3 right-3 z-20 bg-red-500 text-white p-2 rounded-full shadow-md active:scale-95 hover:bg-red-600 transition-colors"
                             >
-                                <div className={`w-full h-full overflow-hidden rounded-2xl relative ${item.isAward ? 'ring-1 ring-amber-100 shadow-sm' : ''}`}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                            {/* 图片容器 (Top) */}
+                            <div
+                                className={`w-full h-48 bg-slate-100 relative overflow-hidden transition-transform ${(!isEditing && item.imageUrl) ? 'cursor-pointer active:scale-[0.99]' : ''}`}
+                                onClick={() => (!isEditing && item.imageUrl) && setPreviewImage(item.imageUrl)}
+                            >
+                                {item.imageUrl ? (
                                     <img
-                                        src={item.imageUrl || "/api/placeholder/400/300"}
+                                        src={item.imageUrl}
                                         alt="高光时刻"
-                                        className="w-full h-full object-cover transition-transform duration-300 active:scale-105"
+                                        className={`w-full h-full object-cover transition-transform duration-300 ${!isEditing ? 'active:scale-105' : ''}`}
                                     />
-                                    {/* 为证书添加光泽效果 */}
-                                    {item.isAward && (
-                                        <>
-                                            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-60 transition-opacity duration-300" />
-                                            <div className="absolute inset-x-0 bottom-3 flex items-center justify-center transition-opacity">
-                                                <div className="px-3 py-1.5 rounded-full bg-white/90 text-amber-600 text-[10px] font-bold shadow-sm backdrop-blur-sm">点击查看大图</div>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-
-                                {item.isAward && (
-                                    <div className="absolute top-5 left-5 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black shadow-lg z-10">
-                                        <Award className="w-3.5 h-3.5" />
-                                        <span className="tracking-widest">荣誉证书</span>
+                                ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400">
+                                        <svg className="w-10 h-10 mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        <span className="text-xs font-medium">暂无配图</span>
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+                                
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent pointer-events-none"></div>
+
+                                {isEditing ? (
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm z-10">
+                                        <button 
+                                            onClick={() => {
+                                                // 模拟更换图片，实际项目中这里会唤起本地相册/相机
+                                                const defaultImg = "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop";
+                                                const newImg = prompt("请在此输入新的图片URL (留空取消):", item.imageUrl || defaultImg);
+                                                if (newImg !== null && newImg.trim() !== '') {
+                                                    handleChange(idx, 'imageUrl', newImg);
+                                                }
+                                            }}
+                                            className="bg-white text-slate-800 px-4 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-transform"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                            {item.imageUrl ? '更换图片' : '添加图片'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    item.imageUrl && (
+                                        <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1 shadow-sm">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                                            点击查看大图
+                                        </div>
+                                    )
+                                )}
                             </div>
 
-                            {/* 内容文字 */}
-                            <div className="flex-1 p-8 flex flex-col justify-center bg-gradient-to-br from-white to-slate-50/30 relative">
-                                <div className="relative z-10">
-                                    <Quote className={`absolute -left-3 -top-3 w-8 h-8 ${item.isAward ? 'text-amber-500/10' : 'text-emerald-500/10'} pointer-events-none`} />
-                                    <div className={`
-                                        pl-5 pr-2 py-1 text-[14px] leading-[1.8] font-normal transition-all duration-300 text-justify tracking-wide
-                                        ${item.isAward
-                                            ? 'text-slate-700 border-l-3 border-amber-400/50'
-                                            : 'text-slate-700 border-l-3 border-emerald-400/50'
-                                        }
-                                    `}>
+                            {/* 内容文字 (Bottom) */}
+                            <div className="p-5 relative bg-white flex-1">
+                                <div className="absolute top-2 left-4 text-4xl font-serif opacity-30 text-amber-500 pointer-events-none">"</div>
+                                {isEditing ? (
+                                    <textarea
+                                        className="w-full min-h-[120px] text-[15px] leading-[1.8] relative z-10 pt-1 text-slate-700 bg-slate-50 border border-amber-200/60 rounded-xl p-3 outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none shadow-inner"
+                                        value={item.achievement}
+                                        onChange={(e) => handleChange(idx, 'achievement', e.target.value)}
+                                        placeholder="请输入你想对学生说的话..."
+                                    />
+                                ) : (
+                                    <div className="text-[15px] leading-[1.8] relative z-10 pt-1 text-slate-700 text-justify tracking-wide">
                                         {item.achievement}
                                     </div>
-                                    <Quote className={`absolute -right-1 -bottom-3 w-8 h-8 ${item.isAward ? 'text-amber-500/10' : 'text-emerald-500/10'} rotate-180 pointer-events-none`} />
-                                </div>
-
-                                {/* 装饰性背景 */}
-                                {item.isAward ? (
-                                    <Award className="absolute -bottom-6 -right-4 w-32 h-32 text-amber-500/[0.03] rotate-12 pointer-events-none" />
-                                ) : (
-                                    <TrendingUp className="absolute -bottom-6 -right-4 w-32 h-32 text-emerald-500/[0.03] rotate-12 pointer-events-none" />
                                 )}
                             </div>
                         </div>
                     </ReportCard>
                 ))}
             </div>
+
+            {isEditing && (
+                <button
+                    onClick={handleAdd}
+                    className="w-full mt-5 py-4 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center gap-2 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-all active:scale-[0.98]"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    <span className="font-bold text-sm">新增一条高光时刻</span>
+                </button>
+            )}
 
             {/* 预览模态框 */}
             {previewImage && (
@@ -686,7 +754,7 @@ const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mo
                 >
                     <div className="relative max-w-full max-h-full overflow-hidden flex flex-col items-center">
                         <button
-                            className="absolute top-4 right-4 text-white /10 rounded-full p-2 transition-colors z-[10000]"
+                            className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/20 rounded-full p-2 transition-colors z-[10000]"
                             onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
                         >
                             <X className="w-8 h-8" />
@@ -698,7 +766,7 @@ const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mo
                             onClick={(e) => e.stopPropagation()}
                         />
                         <div className="mt-6 text-white text-lg font-bold tracking-widest bg-white/10 px-6 py-2 rounded-full border border-white/20">
-                            荣誉证书预览
+                            大图预览
                         </div>
                     </div>
                 </div>
@@ -827,11 +895,11 @@ const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }
 
     return (
         <ReportPageContainer mode={mode} id={id}>
-            <ReportSectionHeader title={`${subject}学科`} subTitle="Subject Report" icon={getIcon(subject)} />
+            <ReportSectionHeader title={`${subject}学科`} subTitle="" icon={getIcon(subject)} />
 
             <div className="flex justify-between items-end mb-6 px-2">
                 <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Semester Grade</div>
+                    <div className="text-[10px] text-slate-400 font-bold mb-1">学期等级</div>
                     <div className="text-4xl font-black text-slate-900 tracking-tight">{calculatedGrade}</div>
                 </div>
                 <div className="flex gap-2">
@@ -920,7 +988,7 @@ const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }
 };
 
 // 6. Subject Reports with Tab Switcher (学科报告-Tab切换版本)
-const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject, onBack }: { student: Student, mode?: 'a4' | 'mobile', id?: string, initialSubject?: string, onBack?: () => void }) => {
+const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }: { student: Student, mode?: 'a4' | 'mobile', id?: string, initialSubject?: string }) => {
     const [activeSubject, setActiveSubject] = useState(initialSubject || MOCK_SUBJECTS[0].subject);
 
     const getIcon = (name: string) => {
@@ -931,9 +999,6 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject, 
         };
         return map[name] || Award;
     };
-
-    // 当前选中学科的数据
-    const currentSubjectData = MOCK_SUBJECTS.find(s => s.subject === activeSubject) || MOCK_SUBJECTS[0];
 
     // Get report content
     const gradeTemplates = MOCK_GRADE_SUBJECT_REPORT_TEMPLATES[student.grade];
@@ -1042,18 +1107,8 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject, 
         else return '待提升';
     }, [parsedDimensions]);
 
-    const CurrentIcon = getIcon(activeSubject);
-
     return (
         <ReportPageContainer mode={mode} id={id}>
-            <div className="flex items-center justify-between mb-4">
-                <ReportSectionHeader title="学科详情" subTitle="Subject Details" icon={FileText} className="mb-0" />
-                {onBack && (
-                    <button onClick={onBack} className="p-2 bg-slate-100 rounded-full active:bg-slate-200">
-                        <X className="w-4 h-4 text-slate-500" />
-                    </button>
-                )}
-            </div>
 
             {/* Tab导航 */}
             <div className="mb-4 -mx-5 px-5 overflow-x-auto no-scrollbar">
@@ -1081,12 +1136,12 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject, 
                 </div>
             </div>
 
-            {/* 学科详情内容 */}
+            {/* 学科报告内容 */}
             <div>
                 {/* 等级显示 */}
                 <div className="flex justify-between items-end mb-6 px-2">
                     <div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Semester Grade</div>
+                        <div className="text-[10px] text-slate-400 font-bold mb-1">学期等级</div>
                         <div className="text-4xl font-black text-slate-900 tracking-tight">{calculatedGrade}</div>
                     </div>
                     <div className="flex gap-2">
@@ -1853,7 +1908,7 @@ const PageActivity = ({ activity, mode = 'a4', id }: { activity: any, mode?: 'a4
 
 const MobileAnchorBar = ({ activeSection, onNavigate, items }: { activeSection: string, onNavigate: (id: string) => void, items: { id: string, label: string }[] }) => {
     return (
-        <div className="sticky top-[48px] z-30 bg-white/95 backdrop-blur border-b border-slate-100 print:hidden overflow-x-auto no-scrollbar py-2 pl-4 pr-4 shadow-sm">
+        <div className="sticky top-[44px] z-30 bg-white/95 backdrop-blur print:hidden overflow-x-auto no-scrollbar py-2 pl-4 pr-4">
             <div className="flex gap-2">
                 {items.map((item) => {
                     const isActive = activeSection === item.id;
@@ -1879,12 +1934,9 @@ const MobileAnchorBar = ({ activeSection, onNavigate, items }: { activeSection: 
 // --- MAIN WRAPPER ---
 
 const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
-    const [currentPage, setCurrentPage] = useState(0);
-    const [viewMode, setViewMode] = useState<'a4' | 'mobile'>('mobile');
     const [activeSection, setActiveSection] = useState('cover');
     const [showSubjectSubPage, setShowSubjectSubPage] = useState(false);
     const [currentSubjectName, setCurrentSubjectName] = useState('');
-    const contentStartRef = useRef<HTMLDivElement>(null);
     const isMale = student.gender === 'male';
 
     const mobileAnchorItems = isMale ? [
@@ -1899,19 +1951,12 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
         { id: 'section-holiday', label: '寒假须知' },
         { id: 'section-parent', label: '家长反馈' },
         { id: 'section-student', label: '学生自评' }
-    ] : [
-        { id: 'section-highlights', label: '高光时刻' },
-        { id: 'section-growth', label: '成长概览' },
-        { id: 'section-advice', label: '成长建议' },
-        { id: 'section-activities', label: '亲子活动' }
-    ];
+    ] : [];
 
     const firstAnchorId = mobileAnchorItems[0]?.id;
 
     const handleStartReading = () => {
-        if (viewMode === 'a4') {
-            handleNext();
-        } else if (firstAnchorId) {
+        if (firstAnchorId) {
             scrollToSection(firstAnchorId);
         }
     };
@@ -1924,33 +1969,12 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
         }
     };
 
-    // 处理学科选择 - 跳转到独立的子页面
+    // 处理学科选择 - 跳转到学科报告页
     const handleSubjectClick = (subject: string) => {
-        console.log('打开学科详情子页面:', subject);
+        console.log('打开学科报告页:', subject);
         setCurrentSubjectName(subject);
         setShowSubjectSubPage(true);
     };
-
-    const a4Pages = isMale ? [
-        <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
-        <PageTeacherAttention key="teacher" mode="a4" />,
-        <PageHighbrightMoments key="highlights" student={student} mode="a4" />,
-        <PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={true} />,
-        <PageFuturePotential key="future" mode="a4" />,
-        <PageFutureGrowthSuggestions key="future-suggestions" mode="a4" />,
-        <PageStrengthsEnhancement key="strengths" mode="a4" />,
-        <PageWeaknessImprovement key="weakness" mode="a4" />,
-        <PageParentChildActivities key="activities" mode="a4" />,
-        <PageHolidayNotice key="holiday" mode="a4" />,
-        <PageParentFeedback key="parent" mode="a4" />,
-        <PageStudentFeedback key="student" mode="a4" />
-    ] : [
-        <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
-        <PageHighbrightMoments key="highlights" student={student} mode="a4" />,
-        <PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={false} />,
-        <PageComprehensiveGrowthAdvice key="advice" student={student} mode="a4" />,
-        <PageSimpleParentChildActivities key="activities" student={student} mode="a4" />
-    ];
 
     const mobilePages = isMale ? [
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
@@ -1973,91 +1997,44 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
         <PageSimpleParentChildActivities key="activities" student={student} mode="mobile" id="section-activities" />
     ];
 
-    const totalPages = a4Pages.length;
-    const handleNext = () => currentPage < totalPages - 1 && setCurrentPage(p => p + 1);
-    const handlePrev = () => currentPage > 0 && setCurrentPage(p => p - 1);
-    const handlePrint = () => window.print();
 
     return (
         <div className="h-full w-full bg-[#2A2A2A] sm:bg-[#E5E5E5] flex flex-col relative overflow-hidden print:bg-white print:h-auto print:overflow-visible font-sans">
 
             {/* Header */}
-            <div className="bg-white px-4 py-2 flex items-center justify-between shadow-sm z-50 print:hidden h-[44px] shrink-0 border-b border-slate-100">
+            <div className="bg-white px-4 py-2 flex items-center justify-between z-50 print:hidden h-[44px] shrink-0">
                 <div className="flex-1 flex justify-start">
-                    <button onClick={onBack} className="p-2 -ml-2 rounded-full active:bg-slate-100 text-slate-700 transition-all">
+                    <button onClick={showSubjectSubPage ? () => setShowSubjectSubPage(false) : onBack} className="p-2 -ml-2 rounded-full active:bg-slate-100 text-slate-700 transition-all">
                         <BackIcon className="w-5 h-5" />
                     </button>
                 </div>
-                <div className="font-bold text-slate-900 text-base">学期报告</div>
+                <div className="font-bold text-slate-900 text-base">{showSubjectSubPage ? '学科报告' : '学期报告'}</div>
                 <div className="flex-1"></div>
             </div>
 
-            {/* Toolbar (View Mode) */}
-            <div className="bg-[#F8FAFC] px-4 py-2 flex items-center justify-between border-b border-slate-200 z-40 print:hidden h-[48px] shrink-0 gap-2 sticky top-[44px]">
-                <div className="flex bg-slate-200/50 rounded-lg p-0.5 shrink-0">
-                    {['mobile', 'a4'].map((m) => (
-                        <button
-                            key={m}
-                            onClick={() => setViewMode(m as any)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all uppercase ${viewMode === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 '}`}
-                        >
-                            {m === 'mobile' ? <Smartphone className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
-                            {m}
-                        </button>
-                    ))}
-                </div>
-
-                {viewMode === 'a4' && (
-                    <div className="flex items-center gap-2">
-                        <button onClick={handlePrev} disabled={currentPage === 0} className="p-1.5  rounded-full text-slate-600 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
-                        <span className="text-[10px] font-mono font-bold text-slate-500">{currentPage + 1} / {totalPages}</span>
-                        <button onClick={handleNext} disabled={currentPage === totalPages - 1} className="p-1.5  rounded-full text-slate-600 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
-                    </div>
-                )}
-
-                <button onClick={handlePrint} className="p-2 bg-blue-50 text-blue-600 rounded-lg shadow-sm active:scale-95">
-                    <Printer className="w-4 h-4" />
-                </button>
-            </div>
-
             {/* Mobile Anchor Navigation (Only in Mobile Mode) */}
-            {viewMode === 'mobile' && mobileAnchorItems.length > 0 && (
+            {isMale && mobileAnchorItems.length > 0 && (
                 <MobileAnchorBar activeSection={activeSection} onNavigate={scrollToSection} items={mobileAnchorItems} />
             )}
 
             {/* Main Viewport */}
             <div className="flex-1 overflow-y-auto print:overflow-visible px-0 pb-10 pt-0 print:p-0 flex justify-center items-start bg-white scroll-smooth" id="report-scroll-container">
 
-                {/* 学科详情子页面叠加层 */}
+                {/* 学科报告页叠加层 */}
                 {showSubjectSubPage ? (
                     <div className="w-full h-full bg-white z-[60] flex flex-col sticky top-0 animate-in slide-in-from-right duration-300">
                         <PageSubjectReportsWithTabs
                             student={student}
                             mode="mobile"
                             initialSubject={currentSubjectName}
-                            onBack={() => setShowSubjectSubPage(false)}
                         />
                     </div>
                 ) : (
-                    <>
-                        {viewMode === 'mobile' && (
-                            <div className="w-full bg-white overflow-hidden pb-10 print:hidden">
-                                {mobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
-                                <div className="p-8 text-center text-[10px] text-slate-300 uppercase tracking-widest font-bold">- End of Report -</div>
-                            </div>
-                        )}
-
-                        {viewMode === 'a4' && (
-                            <div className="print:hidden w-full relative">
-                                {a4Pages[currentPage]}
-                            </div>
-                        )}
-                    </>
+                    <div className="w-full bg-white overflow-hidden pb-10">
+                        {mobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
+                        <div className="p-8 text-center text-[10px] text-slate-300 uppercase tracking-widest font-bold">- End of Report -</div>
+                    </div>
                 )}
-
-                <div className="hidden print:block w-full">
-                    {a4Pages.map((P, i) => <div key={i} className="print-page-container">{P}</div>)}
-                </div>
             </div>
         </div>
     );

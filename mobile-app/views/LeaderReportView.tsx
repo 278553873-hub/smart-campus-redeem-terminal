@@ -3,6 +3,7 @@ import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import {
     ChevronLeft,
     ClipboardList,
+    Info,
     Trophy,
     UserCheck,
     Users,
@@ -537,6 +538,22 @@ const getCoverageHex = (percent: number) => {
     if (percent >= 60) return gradeChartColors.normal;
     if (percent >= 40) return gradeChartColors.warning;
     return gradeChartColors.danger;
+};
+
+const getEvaluationRecordsAxis = (values: number[]) => {
+    const maxValue = Math.max(0, ...values);
+    if (maxValue <= 0) return { max: 10, interval: 2 };
+
+    const roughInterval = maxValue / 4;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(roughInterval)));
+    const normalized = roughInterval / magnitude;
+    const step = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+    const interval = step * magnitude;
+
+    return {
+        max: Math.ceil(maxValue / interval) * interval,
+        interval,
+    };
 };
 
 const fiveEducationColors: Record<LeaderReportFiveEducationStat['key'], string> = {
@@ -1370,6 +1387,188 @@ const ClassCoverageRow: React.FC<{ item: LeaderReportClassCoverage }> = ({ item 
     );
 };
 
+const GradeEvaluationRecordsChart = ({
+    grades,
+    selectedGradeId,
+    onSelect,
+    tooltipEnabled = true,
+    animationKey,
+}: {
+    grades: LeaderReportGradeCoverage[];
+    selectedGradeId: string | null;
+    onSelect: (gradeId: string) => void;
+    tooltipEnabled?: boolean;
+    animationKey: string;
+}) => {
+    const chartRef = useRef<HTMLDivElement | null>(null);
+    const chartInstanceRef = useRef<EChartsType | null>(null);
+    const chartCoreRef = useRef<typeof import('echarts/core') | null>(null);
+    const lastAnimationKeyRef = useRef<string | null>(null);
+    const [chartReady, setChartReady] = useState(false);
+
+    useEffect(() => {
+        if (!chartRef.current) return;
+
+        let disposed = false;
+        let resizeObserver: ResizeObserver | null = null;
+
+        const loadChart = async () => {
+            const echartsCore = await loadReportChartsRuntime();
+
+            if (disposed || !chartRef.current) return;
+
+            const chart = echartsCore.init(chartRef.current, undefined, { renderer: 'canvas' });
+            chartCoreRef.current = echartsCore;
+            chartInstanceRef.current = chart;
+            setChartReady(true);
+
+            const handleResize = () => chart.resize();
+            resizeObserver = new ResizeObserver(handleResize);
+            resizeObserver.observe(chartRef.current);
+            window.addEventListener('resize', handleResize);
+            requestAnimationFrame(handleResize);
+
+            chartInstanceRef.current?.on('finished', handleResize);
+        };
+
+        loadChart();
+
+        return () => {
+            disposed = true;
+            resizeObserver?.disconnect();
+            chartInstanceRef.current?.dispose();
+            chartInstanceRef.current = null;
+            chartCoreRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        const chart = chartInstanceRef.current;
+        const echartsCore = chartCoreRef.current;
+        if (!chart || !echartsCore) return;
+
+        const evaluationAxis = getEvaluationRecordsAxis(grades.map(grade => grade.evaluationRecords));
+
+        const option: EChartsCoreOption = {
+            backgroundColor: 'transparent',
+            animationDuration: 650,
+            animationEasing: 'cubicOut',
+            animationDurationUpdate: 650,
+            animationEasingUpdate: 'cubicOut',
+            grid: { left: 34, right: 8, top: 34, bottom: 56, containLabel: false },
+            tooltip: {
+                show: tooltipEnabled,
+                trigger: 'axis',
+                triggerOn: 'click',
+                alwaysShowContent: false,
+                axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(15, 23, 42, 0.06)' } },
+                confine: true,
+                backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                borderWidth: 0,
+                borderRadius: 12,
+                padding: [8, 10],
+                textStyle: { color: '#fff', fontSize: 12 },
+                formatter: (params: unknown) => {
+                    const first = Array.isArray(params) ? params[0] as { dataIndex?: number } : params as { dataIndex?: number };
+                    if (typeof first?.dataIndex !== 'number') return '';
+                    const grade = grades[first.dataIndex];
+                    if (!grade) return '';
+                    return `${grade.name}<br/>评价记录：${grade.evaluationRecords}条`;
+                },
+            },
+            xAxis: {
+                type: 'category',
+                data: grades.map(grade => grade.name),
+                axisLine: { show: false },
+                axisTick: { show: false },
+                axisLabel: {
+                    color: '#64748b',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    interval: 0,
+                    margin: 12,
+                },
+            },
+            yAxis: {
+                type: 'value',
+                min: 0,
+                max: evaluationAxis.max,
+                interval: evaluationAxis.interval,
+                axisLabel: {
+                    color: '#94a3b8',
+                    fontSize: 10,
+                    formatter: '{value}条',
+                },
+                axisLine: { show: false },
+                axisTick: { show: false },
+                splitLine: { lineStyle: { color: '#e2e8f0', type: 'dashed' } },
+            },
+            series: [
+                {
+                    type: 'bar',
+                    data: grades.map(grade => ({
+                        value: grade.evaluationRecords,
+                        itemStyle: {
+                            color: new echartsCore.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#14b8a6' },
+                                { offset: 1, color: '#10b981cc' },
+                            ]),
+                            borderRadius: [10, 10, 4, 4],
+                            opacity: 0.96,
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: '{c}条',
+                            color: '#0f766e',
+                            fontSize: 12,
+                            fontWeight: 800,
+                            valueAnimation: true,
+                            precision: 0,
+                            distance: 6,
+                        },
+                    })),
+                    barWidth: 22,
+                    barGap: '40%',
+                    emphasis: { disabled: true },
+                },
+            ],
+        };
+
+        setBarChartOptionWithReplay(chart, option, animationKey, lastAnimationKeyRef, () => {
+            if (!tooltipEnabled) {
+                chart.dispatchAction({ type: 'hideTip' });
+            }
+        });
+
+        const handleClick = (params: { dataIndex?: number }) => {
+            if (typeof params.dataIndex !== 'number') return;
+            const grade = grades[params.dataIndex];
+            if (!grade) return;
+            onSelect(grade.id);
+            if (tooltipEnabled) {
+                chart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: params.dataIndex });
+            }
+        };
+
+        chart.off('click');
+        chart.on('click', handleClick);
+
+        return () => {
+            chart.off('click', handleClick);
+        };
+    }, [animationKey, chartReady, grades, onSelect, selectedGradeId, tooltipEnabled]);
+
+    return (
+        <div className="rounded-3xl bg-slate-50/90 px-2 pb-2 pt-3">
+            <div ref={chartRef} className="h-56 w-full" />
+            {!chartReady && (
+                <div className="-mt-56 flex h-56 items-center justify-center text-xs text-slate-400">图表加载中...</div>
+            )}
+        </div>
+    );
+};
+
 const getClassShortName = (name: string) => {
     const match = name.match(/(\d+班)$/);
     return match ? match[1] : name;
@@ -1538,6 +1737,161 @@ const ClassCoverageChart = ({ classes, animationKey }: { classes: LeaderReportCl
     );
 };
 
+const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: LeaderReportClassCoverage[]; animationKey: string }) => {
+    const chartRef = useRef<HTMLDivElement | null>(null);
+    const chartInstanceRef = useRef<EChartsType | null>(null);
+    const chartCoreRef = useRef<typeof import('echarts/core') | null>(null);
+    const lastAnimationKeyRef = useRef<string | null>(null);
+    const [chartReady, setChartReady] = useState(false);
+    const sortedClasses = useMemo(() => (
+        [...classes].sort((a, b) => getClassOrder(a.name) - getClassOrder(b.name) || a.name.localeCompare(b.name, 'zh-Hans-CN'))
+    ), [classes]);
+    const dataAnimationKey = `${animationKey}-${sortedClasses.map(item => `${item.id}:${item.evaluationRecords}`).join('|')}`;
+    const displayedProgress = useAnimatedProgress(dataAnimationKey);
+    const shouldScroll = sortedClasses.length > 6;
+    const chartWidth = shouldScroll ? sortedClasses.length * 34 : 320;
+
+    useEffect(() => {
+        if (!chartRef.current) return;
+
+        let disposed = false;
+        let resizeObserver: ResizeObserver | null = null;
+
+        const loadChart = async () => {
+            const echartsCore = await loadReportChartsRuntime();
+            if (disposed || !chartRef.current) return;
+
+            const chart = echartsCore.init(chartRef.current, undefined, { renderer: 'canvas' });
+            chartCoreRef.current = echartsCore;
+            chartInstanceRef.current = chart;
+            setChartReady(true);
+
+            const handleResize = () => chart.resize();
+            resizeObserver = new ResizeObserver(handleResize);
+            resizeObserver.observe(chartRef.current);
+            requestAnimationFrame(handleResize);
+        };
+
+        loadChart();
+
+        return () => {
+            disposed = true;
+            resizeObserver?.disconnect();
+            chartInstanceRef.current?.dispose();
+            chartInstanceRef.current = null;
+            chartCoreRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        const chart = chartInstanceRef.current;
+        const echartsCore = chartCoreRef.current;
+        if (!chart || !echartsCore) return;
+
+        const evaluationAxis = getEvaluationRecordsAxis(sortedClasses.map(item => item.evaluationRecords));
+
+        const option: EChartsCoreOption = {
+            backgroundColor: 'transparent',
+            animationDuration: 650,
+            animationEasing: 'cubicOut',
+            animationDurationUpdate: 650,
+            animationEasingUpdate: 'cubicOut',
+            grid: { left: 34, right: 10, top: 30, bottom: 34, containLabel: false },
+            tooltip: {
+                trigger: 'axis',
+                triggerOn: 'click',
+                alwaysShowContent: false,
+                axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(15, 23, 42, 0.06)' } },
+                confine: true,
+                backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                borderWidth: 0,
+                borderRadius: 12,
+                padding: [8, 10],
+                textStyle: { color: '#fff', fontSize: 12 },
+                formatter: (params: unknown) => {
+                    const first = Array.isArray(params) ? params[0] as { dataIndex?: number } : params as { dataIndex?: number };
+                    if (typeof first?.dataIndex !== 'number') return '';
+                    const item = sortedClasses[first.dataIndex];
+                    if (!item) return '';
+                    return `${item.name}<br/>评价记录：${item.evaluationRecords}条`;
+                },
+            },
+            xAxis: {
+                type: 'category',
+                data: sortedClasses.map(item => getClassShortName(item.name)),
+                axisLine: { show: false },
+                axisTick: { show: false },
+                axisLabel: { color: '#64748b', fontSize: 11, fontWeight: 700, interval: 0, margin: 10 },
+            },
+            yAxis: {
+                type: 'value',
+                min: 0,
+                max: evaluationAxis.max,
+                interval: evaluationAxis.interval,
+                axisLabel: { color: '#94a3b8', fontSize: 10, formatter: '{value}条' },
+                axisLine: { show: false },
+                axisTick: { show: false },
+                splitLine: { lineStyle: { color: '#e2e8f0', type: 'dashed' } },
+            },
+            series: [
+                {
+                    type: 'bar',
+                    data: sortedClasses.map(item => ({
+                        value: Math.round(item.evaluationRecords * displayedProgress),
+                        itemStyle: {
+                            color: new echartsCore.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#14b8a6' },
+                                { offset: 1, color: '#10b981cc' },
+                            ]),
+                            borderRadius: [8, 8, 3, 3],
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: '{c}条',
+                            color: '#0f766e',
+                            fontSize: 12,
+                            fontWeight: 800,
+                            valueAnimation: true,
+                            precision: 0,
+                            distance: 5,
+                        },
+                    })),
+                    barWidth: 18,
+                    barCategoryGap: '8%',
+                    animation: false,
+                    emphasis: { disabled: true },
+                },
+            ],
+        };
+
+        setBarChartOptionWithReplay(chart, option, dataAnimationKey, lastAnimationKeyRef, () => {
+            chart.resize();
+        });
+
+        const handleClick = (params: { dataIndex?: number }) => {
+            if (typeof params.dataIndex !== 'number') return;
+            chart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: params.dataIndex });
+        };
+
+        chart.off('click');
+        chart.on('click', handleClick);
+
+        return () => {
+            chart.off('click', handleClick);
+        };
+    }, [dataAnimationKey, displayedProgress, chartReady, sortedClasses]);
+
+    return (
+        <div className={`rounded-3xl bg-slate-50/90 px-2 pb-2 pt-3 ${shouldScroll ? 'overflow-x-auto no-scrollbar' : 'overflow-hidden'}`}>
+            <div ref={chartRef} className="h-56" style={{ width: shouldScroll ? `${chartWidth}px` : '100%' }} />
+            {!chartReady && (
+                <div className="flex h-56 items-center justify-center text-xs text-slate-400">图表加载中...</div>
+            )}
+        </div>
+    );
+};
+
 const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
     const [activeReportTab, setActiveReportTab] = useState<ReportTab>('teacher');
     const [activePeriod, setActivePeriod] = useState<LeaderReportPeriod>('week');
@@ -1553,6 +1907,9 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
     const [indicatorGroupFilter, setIndicatorGroupFilter] = useState<IndicatorGroupFilter>('virtue');
     const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
     const [showClassCoverageSheet, setShowClassCoverageSheet] = useState(false);
+    const [selectedEvaluationGradeId, setSelectedEvaluationGradeId] = useState<string | null>(null);
+    const [showClassEvaluationRecordsSheet, setShowClassEvaluationRecordsSheet] = useState(false);
+    const [showEvaluationRecordsHelp, setShowEvaluationRecordsHelp] = useState(false);
     const [isFilterPinned, setIsFilterPinned] = useState(false);
     const [snapshot, setSnapshot] = useState<LeaderReportSnapshot | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -1566,6 +1923,11 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                 if (disposed) return;
                 setSnapshot(data);
                 setSelectedGradeId(current => (
+                    data.gradeCoverages.some(grade => grade.id === current)
+                        ? current
+                        : getDefaultCoverageGradeId(data.gradeCoverages)
+                ));
+                setSelectedEvaluationGradeId(current => (
                     data.gradeCoverages.some(grade => grade.id === current)
                         ? current
                         : getDefaultCoverageGradeId(data.gradeCoverages)
@@ -1586,6 +1948,9 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
     const selectedGrade = snapshot?.gradeCoverages.find(grade => grade.id === selectedGradeId)
         ?? snapshot?.gradeCoverages.find(grade => grade.id === getDefaultCoverageGradeId(snapshot.gradeCoverages))
         ?? null;
+    const selectedEvaluationGrade = snapshot?.gradeCoverages.find(grade => grade.id === selectedEvaluationGradeId)
+        ?? snapshot?.gradeCoverages.find(grade => grade.id === getDefaultCoverageGradeId(snapshot.gradeCoverages))
+        ?? null;
     const reportAnimationKey = `${activeReportTab}-${activePeriod}-${isLoading ? 'loading' : 'ready'}`;
 
     const openClassCoverageSheet = (gradeId?: string) => {
@@ -1594,6 +1959,13 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
         const fallbackGrade = snapshot.gradeCoverages.find(grade => grade.id === fallbackGradeId) ?? snapshot.gradeCoverages[0];
         setSelectedGradeId(gradeId ?? selectedGradeId ?? fallbackGrade.id);
         setShowClassCoverageSheet(true);
+    };
+    const openClassEvaluationRecordsSheet = (gradeId?: string) => {
+        if (!snapshot?.gradeCoverages.length) return;
+        const fallbackGradeId = getDefaultCoverageGradeId(snapshot.gradeCoverages);
+        const fallbackGrade = snapshot.gradeCoverages.find(grade => grade.id === fallbackGradeId) ?? snapshot.gradeCoverages[0];
+        setSelectedEvaluationGradeId(gradeId ?? selectedEvaluationGradeId ?? fallbackGrade.id);
+        setShowClassEvaluationRecordsSheet(true);
     };
     const handleReportScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
         const nextPinned = event.currentTarget.scrollTop > 12;
@@ -1720,6 +2092,47 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                         onSelect={setSelectedGradeId}
                         tooltipEnabled={!showClassCoverageSheet}
                         animationKey={`${reportAnimationKey}-grade-coverage`}
+                    />
+                </section>
+
+                <section className="rounded-3xl border border-white/80 bg-white p-4 shadow-sm">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="relative flex min-w-0 items-center gap-1.5">
+                            <h2 className="text-[17px] font-semibold text-slate-900">年级评价数</h2>
+                            <button
+                                type="button"
+                                aria-label="查看年级评价数统计口径"
+                                title="按住查看统计口径"
+                                onMouseDown={() => setShowEvaluationRecordsHelp(true)}
+                                onMouseUp={() => setShowEvaluationRecordsHelp(false)}
+                                onMouseLeave={() => setShowEvaluationRecordsHelp(false)}
+                                onTouchStart={() => setShowEvaluationRecordsHelp(true)}
+                                onTouchEnd={() => setShowEvaluationRecordsHelp(false)}
+                                onTouchCancel={() => setShowEvaluationRecordsHelp(false)}
+                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors active:bg-slate-100 active:text-emerald-600"
+                            >
+                                <Info className="h-4 w-4" />
+                            </button>
+                            {showEvaluationRecordsHelp && (
+                                <div className="pointer-events-none absolute left-0 top-9 z-20 w-56 rounded-2xl bg-slate-950 px-3 py-2 text-xs font-medium leading-relaxed text-white shadow-xl">
+                                    按学生明细记录统计，即如果老师记录“2023级1班全体同学积极参加运动会”，且2023级1班有30名学生。那么评价数是30。
+                                </div>
+                            )}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => openClassEvaluationRecordsSheet()}
+                            className="rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 active:bg-emerald-100"
+                        >
+                            查看班级明细
+                        </button>
+                    </div>
+                    <GradeEvaluationRecordsChart
+                        grades={snapshot?.gradeCoverages ?? []}
+                        selectedGradeId={selectedEvaluationGrade?.id ?? selectedEvaluationGradeId}
+                        onSelect={setSelectedEvaluationGradeId}
+                        tooltipEnabled={!showClassEvaluationRecordsSheet}
+                        animationKey={`${reportAnimationKey}-grade-evaluation-records`}
                     />
                 </section>
 
@@ -1853,6 +2266,49 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                                 </div>
                             </div>
                             <ClassCoverageChart classes={selectedGrade.classes} animationKey={`${selectedGrade.id}-${selectedGrade.covered}/${selectedGrade.total}`} />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showClassEvaluationRecordsSheet && selectedEvaluationGrade && snapshot && (
+                <div className="absolute inset-0 z-[116] flex items-end bg-black/40 backdrop-blur-sm" onClick={() => setShowClassEvaluationRecordsSheet(false)}>
+                    <div className="max-h-[76%] w-full rounded-t-[32px] bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900">班级评价数明细</h3>
+                            </div>
+                            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-500 active:bg-slate-100" onClick={() => setShowClassEvaluationRecordsSheet(false)}>
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="border-b border-slate-100 px-5 py-3">
+                            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                                {snapshot.gradeCoverages.map(grade => {
+                                    const selected = selectedEvaluationGradeId === grade.id;
+                                    return (
+                                        <button
+                                            key={grade.id}
+                                            type="button"
+                                            onClick={() => setSelectedEvaluationGradeId(grade.id)}
+                                            className={`min-h-[36px] shrink-0 rounded-full px-3 text-sm font-semibold transition-all ${selected ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500'}`}
+                                        >
+                                            {grade.name}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div className="max-h-[46vh] overflow-y-auto p-4 pb-8">
+                            <div className="mb-2 flex items-center justify-between px-1">
+                                <div className="text-base font-semibold text-slate-900">{selectedEvaluationGrade.name}班级评价数</div>
+                                <div className="text-right">
+                                    <span className="text-xl font-black leading-none text-emerald-700">
+                                        <AnimatedNumber value={selectedEvaluationGrade.evaluationRecords} replayKey={`${selectedEvaluationGrade.id}-${selectedEvaluationGrade.evaluationRecords}-summary`} />条
+                                    </span>
+                                </div>
+                            </div>
+                            <ClassEvaluationRecordsChart classes={selectedEvaluationGrade.classes} animationKey={`${selectedEvaluationGrade.id}-${selectedEvaluationGrade.evaluationRecords}`} />
                         </div>
                     </div>
                 </div>

@@ -109,7 +109,7 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
             <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
               储蓄银行 <Sparkles className="text-blue-400" size={20} />
             </h2>
-            <p className="text-slate-400 font-bold text-[11px] mt-0.5 whitespace-nowrap">聪明理财，财富复利 📈</p>
+            <p className="text-slate-400 font-bold text-[11px] mt-0.5 whitespace-nowrap">聪明理财，财富复利</p>
           </div>
         </div>
 
@@ -350,7 +350,7 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
                     onClick={() => switchTab('deposit')}
                     className="mt-8 px-10 py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-lg active:scale-95 transition-all"
                   >
-                    去签署第一份存单 ✍️
+                    去签署第一份存单
                   </button>
                 </div>
               ) : (

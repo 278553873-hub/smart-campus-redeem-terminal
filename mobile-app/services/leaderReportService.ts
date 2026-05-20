@@ -13,6 +13,7 @@ export interface LeaderReportClassCoverage {
   name: string;
   covered: number;
   total: number;
+  evaluationRecords: number;
 }
 
 export interface LeaderReportGradeCoverage {
@@ -21,6 +22,7 @@ export interface LeaderReportGradeCoverage {
   shortName: string;
   covered: number;
   total: number;
+  evaluationRecords: number;
   classes: LeaderReportClassCoverage[];
 }
 
@@ -136,69 +138,69 @@ const demoTeacherUsageBase: LeaderReportTeacherUsage[] = [
 
 const demoGradeCoverages: LeaderReportGradeCoverage[] = [
   {
-    id: 'g1', name: '一年级', shortName: '一', covered: 118, total: 136,
+    id: 'g1', evaluationRecords: 150, name: '一年级', shortName: '一', covered: 118, total: 136,
     classes: [
-      { id: 'g1c1', name: '一年级1班', covered: 39, total: 45 },
-      { id: 'g1c2', name: '一年级2班', covered: 42, total: 46 },
-      { id: 'g1c3', name: '一年级3班', covered: 37, total: 45 },
+      { id: 'g1c1', evaluationRecords: 48, name: '一年级1班', covered: 39, total: 45 },
+      { id: 'g1c2', evaluationRecords: 54, name: '一年级2班', covered: 42, total: 46 },
+      { id: 'g1c3', evaluationRecords: 48, name: '一年级3班', covered: 37, total: 45 },
     ],
   },
   {
-    id: 'g2', name: '二年级', shortName: '二', covered: 106, total: 128,
+    id: 'g2', evaluationRecords: 132, name: '二年级', shortName: '二', covered: 106, total: 128,
     classes: [
-      { id: 'g2c1', name: '二年级1班', covered: 36, total: 42 },
-      { id: 'g2c2', name: '二年级2班', covered: 31, total: 43 },
-      { id: 'g2c3', name: '二年级3班', covered: 39, total: 43 },
+      { id: 'g2c1', evaluationRecords: 44, name: '二年级1班', covered: 36, total: 42 },
+      { id: 'g2c2', evaluationRecords: 39, name: '二年级2班', covered: 31, total: 43 },
+      { id: 'g2c3', evaluationRecords: 49, name: '二年级3班', covered: 39, total: 43 },
     ],
   },
   {
-    id: 'g3', name: '三年级', shortName: '三', covered: 315, total: 450,
+    id: 'g3', evaluationRecords: 426, name: '三年级', shortName: '三', covered: 315, total: 450,
     classes: [
-      { id: 'g3c1', name: '三年级1班', covered: 31, total: 38 },
-      { id: 'g3c2', name: '三年级2班', covered: 24, total: 39 },
-      { id: 'g3c3', name: '三年级3班', covered: 36, total: 40 },
-      { id: 'g3c4', name: '三年级4班', covered: 22, total: 37 },
-      { id: 'g3c5', name: '三年级5班', covered: 29, total: 38 },
-      { id: 'g3c6', name: '三年级6班', covered: 27, total: 39 },
-      { id: 'g3c7', name: '三年级7班', covered: 35, total: 41 },
-      { id: 'g3c8', name: '三年级8班', covered: 20, total: 36 },
-      { id: 'g3c9', name: '三年级9班', covered: 26, total: 38 },
-      { id: 'g3c10', name: '三年级10班', covered: 28, total: 37 },
-      { id: 'g3c11', name: '三年级11班', covered: 33, total: 39 },
-      { id: 'g3c12', name: '三年级12班', covered: 34, total: 48 },
+      { id: 'g3c1', evaluationRecords: 43, name: '三年级1班', covered: 31, total: 38 },
+      { id: 'g3c2', evaluationRecords: 36, name: '三年级2班', covered: 24, total: 39 },
+      { id: 'g3c3', evaluationRecords: 52, name: '三年级3班', covered: 36, total: 40 },
+      { id: 'g3c4', evaluationRecords: 31, name: '三年级4班', covered: 22, total: 37 },
+      { id: 'g3c5', evaluationRecords: 39, name: '三年级5班', covered: 29, total: 38 },
+      { id: 'g3c6', evaluationRecords: 37, name: '三年级6班', covered: 27, total: 39 },
+      { id: 'g3c7', evaluationRecords: 48, name: '三年级7班', covered: 35, total: 41 },
+      { id: 'g3c8', evaluationRecords: 29, name: '三年级8班', covered: 20, total: 36 },
+      { id: 'g3c9', evaluationRecords: 34, name: '三年级9班', covered: 26, total: 38 },
+      { id: 'g3c10', evaluationRecords: 38, name: '三年级10班', covered: 28, total: 37 },
+      { id: 'g3c11', evaluationRecords: 45, name: '三年级11班', covered: 33, total: 39 },
+      { id: 'g3c12', evaluationRecords: 54, name: '三年级12班', covered: 34, total: 48 },
     ],
   },
   {
-    id: 'g4', name: '四年级', shortName: '四', covered: 94, total: 130,
+    id: 'g4', evaluationRecords: 118, name: '四年级', shortName: '四', covered: 94, total: 130,
     classes: [
-      { id: 'g4c1', name: '四年级1班', covered: 29, total: 43 },
-      { id: 'g4c2', name: '四年级2班', covered: 30, total: 44 },
-      { id: 'g4c3', name: '四年级3班', covered: 35, total: 43 },
+      { id: 'g4c1', evaluationRecords: 36, name: '四年级1班', covered: 29, total: 43 },
+      { id: 'g4c2', evaluationRecords: 41, name: '四年级2班', covered: 30, total: 44 },
+      { id: 'g4c3', evaluationRecords: 41, name: '四年级3班', covered: 35, total: 43 },
     ],
   },
   {
-    id: 'g5', name: '五年级', shortName: '五', covered: 396, total: 468,
+    id: 'g5', evaluationRecords: 512, name: '五年级', shortName: '五', covered: 396, total: 468,
     classes: [
-      { id: 'g5c1', name: '五年级1班', covered: 33, total: 39 },
-      { id: 'g5c2', name: '五年级2班', covered: 30, total: 40 },
-      { id: 'g5c3', name: '五年级3班', covered: 36, total: 39 },
-      { id: 'g5c4', name: '五年级4班', covered: 32, total: 38 },
-      { id: 'g5c5', name: '五年级5班', covered: 34, total: 40 },
-      { id: 'g5c6', name: '五年级6班', covered: 29, total: 39 },
-      { id: 'g5c7', name: '五年级7班', covered: 37, total: 41 },
-      { id: 'g5c8', name: '五年级8班', covered: 31, total: 38 },
-      { id: 'g5c9', name: '五年级9班', covered: 35, total: 40 },
-      { id: 'g5c10', name: '五年级10班', covered: 28, total: 37 },
-      { id: 'g5c11', name: '五年级11班', covered: 36, total: 39 },
-      { id: 'g5c12', name: '五年级12班', covered: 35, total: 38 },
+      { id: 'g5c1', evaluationRecords: 44, name: '五年级1班', covered: 33, total: 39 },
+      { id: 'g5c2', evaluationRecords: 41, name: '五年级2班', covered: 30, total: 40 },
+      { id: 'g5c3', evaluationRecords: 47, name: '五年级3班', covered: 36, total: 39 },
+      { id: 'g5c4', evaluationRecords: 39, name: '五年级4班', covered: 32, total: 38 },
+      { id: 'g5c5', evaluationRecords: 45, name: '五年级5班', covered: 34, total: 40 },
+      { id: 'g5c6', evaluationRecords: 38, name: '五年级6班', covered: 29, total: 39 },
+      { id: 'g5c7', evaluationRecords: 50, name: '五年级7班', covered: 37, total: 41 },
+      { id: 'g5c8', evaluationRecords: 40, name: '五年级8班', covered: 31, total: 38 },
+      { id: 'g5c9', evaluationRecords: 46, name: '五年级9班', covered: 35, total: 40 },
+      { id: 'g5c10', evaluationRecords: 36, name: '五年级10班', covered: 28, total: 37 },
+      { id: 'g5c11', evaluationRecords: 47, name: '五年级11班', covered: 36, total: 39 },
+      { id: 'g5c12', evaluationRecords: 39, name: '五年级12班', covered: 35, total: 38 },
     ],
   },
   {
-    id: 'g6', name: '六年级', shortName: '六', covered: 111, total: 126,
+    id: 'g6', evaluationRecords: 168, name: '六年级', shortName: '六', covered: 111, total: 126,
     classes: [
-      { id: 'g6c1', name: '六年级1班', covered: 38, total: 42 },
-      { id: 'g6c2', name: '六年级2班', covered: 35, total: 42 },
-      { id: 'g6c3', name: '六年级3班', covered: 38, total: 42 },
+      { id: 'g6c1', evaluationRecords: 58, name: '六年级1班', covered: 38, total: 42 },
+      { id: 'g6c2', evaluationRecords: 53, name: '六年级2班', covered: 35, total: 42 },
+      { id: 'g6c3', evaluationRecords: 57, name: '六年级3班', covered: 38, total: 42 },
     ],
   },
 ];
@@ -333,6 +335,17 @@ const demoIndicatorUsage: LeaderReportIndicatorGroupUsage[] = [
   },
 ];
 
+const scaleEvaluationRecords = (records: number, scale: number) => Math.max(records === 0 ? 0 : 1, Math.round(records * scale));
+
+const scaleDemoGradeCoverage = (grade: LeaderReportGradeCoverage, scale: number): LeaderReportGradeCoverage => ({
+  ...grade,
+  evaluationRecords: scaleEvaluationRecords(grade.evaluationRecords, scale),
+  classes: grade.classes.map(item => ({
+    ...item,
+    evaluationRecords: scaleEvaluationRecords(item.evaluationRecords, scale),
+  })),
+});
+
 const scaleDemoTeacher = (teacher: LeaderReportTeacherUsage, scale: number): LeaderReportTeacherUsage => {
   if (scale === 1) return teacher;
   const records = Math.max(teacher.records === 0 ? 0 : 1, Math.round(teacher.records * scale));
@@ -390,10 +403,12 @@ export const createLeaderReportSnapshot = ({
     ...grade,
     covered: Math.min(toSafeCount(grade.covered), toSafeCount(grade.total)),
     total: toSafeCount(grade.total),
+    evaluationRecords: toSafeCount(grade.evaluationRecords),
     classes: grade.classes.map(item => ({
       ...item,
       covered: Math.min(toSafeCount(item.covered), toSafeCount(item.total)),
       total: toSafeCount(item.total),
+      evaluationRecords: toSafeCount(item.evaluationRecords),
     })),
   }));
   const normalizedFiveEducationStats = fiveEducationStats.map(item => {
@@ -459,7 +474,7 @@ export const getLeaderReportSnapshot = async (period: LeaderReportPeriod) => {
   return createLeaderReportSnapshot({
     period,
     teachers: demoTeacherUsageBase.map(teacher => scaleDemoTeacher(teacher, scale)),
-    gradeCoverages: demoGradeCoverages,
+    gradeCoverages: demoGradeCoverages.map(grade => scaleDemoGradeCoverage(grade, scale)),
     inputSources: demoInputSources,
     fiveEducationStats: demoFiveEducationStats.map(item => {
       const plusScore = Math.round(item.plusScore * scale);

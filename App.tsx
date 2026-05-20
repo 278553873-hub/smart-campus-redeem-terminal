@@ -19,10 +19,11 @@ import ParentApp from './components/ParentApp';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import PlatformBrandMark from './components/PlatformBrandMark';
+import Loader from './components/Loader';
 import { DeviceWrapper } from './components/DeviceWrapper';
 import { ASSETS as MOBILE_ASSETS } from './mobile-app/assets/images';
 import './mobile-app/index.css';
-import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Loader2, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, X } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, X } from 'lucide-react';
 import { playSound } from './utils/sound';
 
 // ============================================================
@@ -226,11 +227,11 @@ const GrowthSidePanel: React.FC = () => {
         {rulesOpen && (
           <div className="px-4 pb-4 space-y-2 border-t border-slate-50 pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
             {[
-              { icon: '🏆', title: '只奖正分', desc: '净得分 > 0 才参与奖励金瓜分，0分或负分不参与。' },
-              { icon: '📊', title: '分值定档位', desc: '最高分 → 领航之星（×4）；其余按分值高低依次归入卓越先锋（×2.5）、稳步成长（×1.5）、潜力新星（×1）。' },
-              { icon: '⚖️', title: '同分同奖', desc: '分数相同的学生，档位相同，奖励完全一致。' },
-              { icon: '💰', title: '奖励计算', desc: '每份金额 = 总奖励金 ÷ 全班总份数。每人奖励 = 档位系数 × 每份金额。' },
-              { icon: '🔒', title: '保护隐私', desc: '学生只看"领航之星"标杆 + 自己的档位/得分/预估分红。不显示具体名次和他人金额。' },
+              { icon: '奖', title: '只奖正分', desc: '净得分 > 0 才参与奖励金瓜分，0分或负分不参与。' },
+              { icon: '档', title: '分值定档位', desc: '最高分 → 领航之星（×4）；其余按分值高低依次归入卓越先锋（×2.5）、稳步成长（×1.5）、潜力新星（×1）。' },
+              { icon: '同', title: '同分同奖', desc: '分数相同的学生，档位相同，奖励完全一致。' },
+              { icon: '算', title: '奖励计算', desc: '每份金额 = 总奖励金 ÷ 全班总份数。每人奖励 = 档位系数 × 每份金额。' },
+              { icon: '隐', title: '保护隐私', desc: '学生只看"领航之星"标杆 + 自己的档位/得分/预估分红。不显示具体名次和他人金额。' },
             ].map((item, i) => (
               <div key={i} className="flex gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                 <span className="text-base shrink-0">{item.icon}</span>
@@ -321,7 +322,7 @@ const GrowthSidePanel: React.FC = () => {
 
             {/* 我属于哪个分段 —— 实时预览（允许输入负数和 0） */}
             <div className="mt-3 bg-slate-50 rounded-2xl border border-slate-100 p-3">
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">📍 我属于哪个分段？</div>
+              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">我属于哪个分段？</div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-black text-slate-500 shrink-0">我的得分</span>
                 <div className="flex-1 relative">
@@ -351,7 +352,7 @@ const GrowthSidePanel: React.FC = () => {
                 }`}>
                   <div className="flex items-center gap-2">
                     <span className="text-sm">
-                      {myTierPreview.tier === 'star' ? '🌟' : myTierPreview.tier === 'active' ? '🚀' : myTierPreview.tier === 'stable' ? '🌱' : '💡'}
+                      {GROWTH_TIER_CONFIG[myTierPreview.tier].label.slice(0, 1)}
                     </span>
                     <div>
                       <div className={`text-xs font-black ${GROWTH_TIER_CONFIG[myTierPreview.tier].color}`}>
@@ -372,7 +373,7 @@ const GrowthSidePanel: React.FC = () => {
               {/* 态 2：得分 ≤ 0，显示不参与提示 */}
               {myTierPreview && !myTierPreview.eligible && (
                 <div className="mt-2 flex items-center gap-2 px-3 py-2.5 bg-slate-100 rounded-xl border border-slate-200">
-                  <span className="text-base">🚫</span>
+                  <span className="text-base font-black">!</span>
                   <div>
                     <div className="text-xs font-black text-slate-500">不参与奖励分配</div>
                     <div className="text-[10px] text-slate-400 font-medium">净得分 ≤ 0，根据规则不能获得奖励分红</div>
@@ -417,7 +418,7 @@ const GrowthSidePanel: React.FC = () => {
                     : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
-                📋 完整排行榜
+                完整排行榜
                 <span className="ml-1.5 text-[10px] opacity-60">({leaderboard.length}人)</span>
               </button>
               <button
@@ -428,7 +429,7 @@ const GrowthSidePanel: React.FC = () => {
                     : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
-                👁️ 仅展示部分学生的排行榜
+                仅展示部分学生的排行榜
               </button>
             </div>
 
@@ -473,14 +474,14 @@ const GrowthSidePanel: React.FC = () => {
                 {/* ── 没有任何参与者：全班无人参与 ── */}
                 {leaderboard.length === 0 && (
                   <div className="px-3 py-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-bold text-slate-400 text-center">
-                    💭 本月暂无同学参与奖励分配
+                    本月暂无同学参与奖励分配
                   </div>
                 )}
 
                 {/* ── 标杆展示：前3个分数段全员个人展示 ── */}
                 {benchmarkGroups.length > 0 && (
                   <div>
-                    <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2 pl-1">🏆 班级标杆榜</div>
+                    <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2 pl-1">班级标杆榜</div>
                     <div className="space-y-1">
                       {benchmarkGroups.map(([score, students], groupIdx) => {
                         const isTop = groupIdx === 0;
@@ -560,7 +561,7 @@ const GrowthSidePanel: React.FC = () => {
                               </div>
                             )}
                             {isIneligible && (
-                              <div className="text-[10px] font-black mt-0.5 text-slate-400">🚫 不参与奖励分配</div>
+                              <div className="text-[10px] font-black mt-0.5 text-slate-400">不参与奖励分配</div>
                             )}
                           </div>
                         </div>
@@ -1029,10 +1030,15 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
       </main>
       {/* 全局 Loading 拦截层 */}
       {isLoading && (
-        <div className="absolute inset-0 z-[100] bg-white/40 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
+        <div
+          className="absolute inset-0 z-[100] bg-white/45 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
+          role="status"
+          aria-live="polite"
+          aria-label="处理中"
+        >
           <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center">
-            <Loader2 size={48} className="text-blue-500 animate-spin mb-4" />
-            <div className="text-lg font-black text-blue-900">处理中...</div>
+            <Loader />
+            <div className="-mt-2 text-lg font-black text-orange-950">处理中...</div>
           </div>
         </div>
       )}
@@ -1247,6 +1253,7 @@ const AppSwitcher: React.FC = () => {
   });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const [showPhoneShell, setShowPhoneShell] = useState(false);
+  const [showParentPhoneShell, setShowParentPhoneShell] = useState(false);
 
   return (
     <>
@@ -1256,22 +1263,28 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'pc-workspace' && <PcWorkspace />}
         {currentApp === 'admin' && <MobileApp showPhoneShell={showPhoneShell} />}
         {currentApp === 'companion' && <CompanionApp />}
-        {currentApp === 'parent' && <ParentApp />}
+        {currentApp === 'parent' && <ParentApp showPhoneShell={showParentPhoneShell} />}
       </div>
 
-      {currentApp === 'admin' && (
+      {(currentApp === 'admin' || currentApp === 'parent') && (
         <div className="fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
-          <button
-            type="button"
-            onClick={() => setShowPhoneShell(prev => !prev)}
-            className="flex min-h-11 items-center gap-3 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl active:bg-slate-50 transition-colors"
-            aria-pressed={showPhoneShell}
-          >
-            <span className="text-[12px] font-black text-slate-700">模拟真实手机效果</span>
-            <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${showPhoneShell ? 'bg-slate-900' : 'bg-slate-200'}`}>
-              <span className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${showPhoneShell ? 'translate-x-5' : 'translate-x-0'}`}></span>
-            </span>
-          </button>
+          {(() => {
+            const phoneShellEnabled = currentApp === 'parent' ? showParentPhoneShell : showPhoneShell;
+            const togglePhoneShell = currentApp === 'parent' ? setShowParentPhoneShell : setShowPhoneShell;
+            return (
+              <button
+                type="button"
+                onClick={() => togglePhoneShell(prev => !prev)}
+                className="flex min-h-11 items-center gap-3 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl active:bg-slate-50 transition-colors"
+                aria-pressed={phoneShellEnabled}
+              >
+                <span className="text-[12px] font-black text-slate-700">模拟真实手机效果</span>
+                <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${phoneShellEnabled ? 'bg-slate-900' : 'bg-slate-200'}`}>
+                  <span className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${phoneShellEnabled ? 'translate-x-5' : 'translate-x-0'}`}></span>
+                </span>
+              </button>
+            );
+          })()}
         </div>
       )}
 
@@ -1323,6 +1336,14 @@ const AppSwitcher: React.FC = () => {
             >
               <Smartphone size={22} className="mb-1" />
               <span className="text-[9px] font-bold">教师手机端</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('parent')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'parent' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="家长手机端 - 微信小程序"
+            >
+              <Smartphone size={22} className="mb-1" />
+              <span className="text-[9px] font-bold leading-tight">家长手机端</span>
             </button>
           </div>
         </div>

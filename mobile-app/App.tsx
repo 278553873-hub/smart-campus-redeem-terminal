@@ -110,7 +110,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     // --- Modal States (Lifted from MeView) ---
     const [showGenModal, setShowGenModal] = useState(false);
-    const [genModalType, setGenModalType] = useState<'subject' | 'term' | 'export_class'>('subject'); // Track which report type
+    const [genModalType, setGenModalType] = useState<'subject' | 'term'>('subject'); // Track which report type
     const [selectedTerm, setSelectedTerm] = useState(DEFAULT_TERM);
     const [selectedGradeScope, setSelectedGradeScope] = useState(DEFAULT_GRADE_SCOPE);
     const [selectedSubjectScope, setSelectedSubjectScope] = useState(DEFAULT_SUBJECT_SCOPE);
@@ -298,11 +298,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                 </>
             );
         }
-        return (
-            <>
-                是否导出<span className="font-bold underline decoration-orange-300">全班的学期报告</span>？<br />文件生成后将自动下载到您的手机。
-            </>
-        );
+        return null;
     };
 
     const handleConfirmGenerate = () => {
@@ -337,12 +333,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         resetScopeSelections();
         closeAllSelectDropdowns();
         setGenModalType('term');
-        setShowGenModal(true);
-    };
-
-    const handleOpenExportClassModal = () => {
-        closeAllSelectDropdowns();
-        setGenModalType('export_class');
         setShowGenModal(true);
     };
 
@@ -537,7 +527,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     classes={MOCK_CLASSES}
                                     onSelectClass={handleSelectClass}
                                     onViewClassReport={handleViewClassReport}
-                                    onOpenExportModal={handleOpenExportClassModal}
                                     onViewLeaderboard={handleViewLeaderboard}
                                     onViewRewardVerification={handleViewRewardVerification}
                                     onViewFaceUpdate={handleViewFaceUpdate}
@@ -708,8 +697,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-lg font-bold text-slate-800">
                                             {genModalType === 'subject' ? '确认生成学科报告?' :
-                                                genModalType === 'term' ? '确认生成期末报告?' :
-                                                    '确认导出全班报告?'}
+                                                '确认生成期末报告?'}
                                         </h3>
                                         <button
                                             onClick={handleCloseGenModal}
@@ -831,7 +819,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                             onClick={handleConfirmGenerate}
                                             className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm shadow-lg shadow-blue-200 active:scale-[0.98] transition-all"
                                         >
-                                            {genModalType === 'export_class' ? '确认导出' : '立即生成'}
+                                            立即生成
                                         </button>
                                     </div>
 
@@ -853,20 +841,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                         </svg>
                                     </div>
                                     <h3 className="text-lg font-bold mb-2">
-                                        {genModalType === 'export_class' ? '正在导出...' : 'AI 生成中...'}
+                                        AI 生成中...
                                     </h3>
                                     <p className="text-xs text-slate-300 leading-relaxed mb-6">
-                                        {genModalType === 'export_class' ? (
-                                            <>
-                                                文件生成中...<br />
-                                                完成后将自动下载
-                                            </>
-                                        ) : (
-                                            <>
-                                                数据量较大，稍后可以在<br />
-                                                <span className="text-white font-medium">学生详情页</span> 进行查看
-                                            </>
-                                        )}
+                                        数据量较大，稍后可以在<br />
+                                        <span className="text-white font-medium">学生详情页</span> 进行查看
                                     </p>
                                     <button
                                         onClick={() => setShowSuccessToast(false)}

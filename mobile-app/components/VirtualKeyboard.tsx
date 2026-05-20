@@ -46,7 +46,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({ onClose, onKey
                     123
                 </button>
                 <button className="flex-[2] h-11 bg-[#BFC3CE] rounded-lg shadow-sm flex items-center justify-center active:bg-gray-400">
-                    🌐
+                    中/英
                 </button>
                 <button onClick={() => onKeyPress(' ')} className="flex-[6] h-11 bg-white rounded-lg shadow-sm text-black font-medium text-xl active:bg-gray-300">
                     space

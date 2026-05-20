@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { ClassInfo } from '../types';
-import { UsersIcon, ChartIcon, FileTextIcon, WechatMoreIcon, TrophyIcon, GiftIcon, ScanFaceIcon, ShieldIcon } from '../components/Icons';
+import { UsersIcon, ChartIcon, WechatMoreIcon, TrophyIcon, GiftIcon, ScanFaceIcon, ShieldIcon } from '../components/Icons';
 
 interface ClassListViewProps {
     classes: ClassInfo[];
     onSelectClass: (classId: string) => void;
     onViewClassReport: (classId: string) => void;
-    onOpenExportModal: () => void;
     onViewLeaderboard: () => void;
     onViewRewardVerification: (classId: string) => void;
     onViewFaceUpdate: (classId: string) => void;
@@ -17,7 +16,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     classes,
     onSelectClass,
     onViewClassReport,
-    onOpenExportModal,
     onViewLeaderboard,
     onViewRewardVerification,
     onViewFaceUpdate,
@@ -98,8 +96,8 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         {/* Dropdown Menu */}
                                         {activeMenuId === cls.id && (
                                             <>
-                                                <div className="fixed inset-0 z-20 cursor-default" onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); }}></div>
-                                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-100 p-1.5 z-30 animate-in fade-in zoom-in duration-200 origin-top-right">
+                                                <div className="fixed inset-0 z-[110] cursor-default" onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); }}></div>
+                                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-100 p-1.5 z-[120] animate-in fade-in zoom-in duration-200 origin-top-right">
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -141,19 +139,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                                             <ShieldIcon className="w-3.5 h-3.5" />
                                                         </div>
                                                         <span>设置兑换密码</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setActiveMenuId(null);
-                                                            onOpenExportModal();
-                                                        }}
-                                                        className="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium text-slate-700 active:bg-slate-50 rounded-lg transition-colors text-left"
-                                                    >
-                                                        <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
-                                                            <FileTextIcon className="w-3.5 h-3.5" />
-                                                        </div>
-                                                        <span>导出期末报告</span>
                                                     </button>
                                                 </div>
                                             </>
