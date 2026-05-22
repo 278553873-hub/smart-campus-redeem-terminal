@@ -3,11 +3,11 @@ import {
     BarChart3,
     BookOpen,
     BriefcaseBusiness,
+    Camera,
     FileText,
     Info,
     KeyRound,
     Landmark,
-    PenTool,
     ShieldCheck,
     Smartphone,
     Sparkles,
@@ -15,15 +15,17 @@ import {
     Users,
     type LucideIcon,
 } from 'lucide-react';
-import { ASSETS } from '../assets/images';
 import { IconBadge } from '../components/ui/IconBadge';
 import { MenuItem } from '../components/ui/MenuItem';
 import { MenuSection } from '../components/ui/MenuSection';
 import { MobileCard } from '../components/ui/MobileCard';
-import { phoneText, phoneTone, type PhoneTone } from '../styles/phoneTokens';
+import { phoneText, type PhoneTone } from '../styles/phoneTokens';
+import type { TeacherProfile } from '../types';
 
 interface MeViewProps {
+    teacherProfile: TeacherProfile;
     onNavigateToFiles: () => void;
+    onEditTeacherProfile: () => void;
     onOpenGenerateModal: () => void;
     onOpenTermGenerateModal: () => void;
     onViewLeaderReport: () => void;
@@ -32,7 +34,7 @@ interface MeViewProps {
 interface ProfileTag {
     label: string;
     icon: LucideIcon;
-    tone: Extract<PhoneTone, 'brand' | 'violet' | 'blue'>;
+    tone: Extract<PhoneTone, 'brand' | 'violet' | 'blue' | 'success'>;
 }
 
 interface MenuEntry {
@@ -51,22 +53,21 @@ interface MenuGroup {
     items: MenuEntry[];
 }
 
-const profileTags: ProfileTag[] = [
-    { label: '学发中心', icon: Landmark, tone: 'brand' },
-    { label: '年级组长', icon: Users, tone: 'violet' },
-    { label: '班主任', icon: Sparkles, tone: 'violet' },
-    { label: '物理', icon: BookOpen, tone: 'blue' },
-];
+const buildProfileTags = (teacherProfile: TeacherProfile): ProfileTag[] => {
+    const subjectTags = Array.from(new Set(teacherProfile.teachingAssignments.map(item => item.subject)))
+        .slice(0, 2)
+        .map(subject => ({ label: subject, icon: BookOpen, tone: 'blue' as const }));
 
-const ProfileTagChip: React.FC<ProfileTag> = ({ label, icon: Icon, tone }) => (
-    <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 ${phoneText.label} ${phoneTone[tone].soft}`}>
-        <Icon className="h-3.5 w-3.5" strokeWidth={2.2} />
-        {label}
-    </span>
-);
+    return [
+        { label: teacherProfile.departmentName || '未设置部门', icon: Landmark, tone: 'brand' },
+        ...(teacherProfile.gradeLeaderGrades.length > 0 ? [{ label: '年级组长', icon: Users, tone: 'violet' as const }] : []),
+        ...(teacherProfile.homeroomClassIds.length > 0 ? [{ label: '班主任', icon: Sparkles, tone: 'success' as const }] : []),
+        ...subjectTags,
+    ];
+};
 
-const MeView: React.FC<MeViewProps> = ({ onNavigateToFiles, onViewLeaderReport }) => {
-    const teacherAvatarUrl = ASSETS.AVATAR.TEACHER_LIU;
+const MeView: React.FC<MeViewProps> = ({ teacherProfile, onNavigateToFiles, onEditTeacherProfile, onViewLeaderReport }) => {
+    const profileTags = buildProfileTags(teacherProfile);
 
     const menuGroups: MenuGroup[] = [
         {
@@ -131,26 +132,36 @@ const MeView: React.FC<MeViewProps> = ({ onNavigateToFiles, onViewLeaderReport }
     return (
         <div className="min-h-screen bg-slate-50 pb-24 font-sans text-slate-900">
             <div className="px-5 pt-4">
-                <MobileCard variant="hero" padding="lg" className="overflow-hidden">
+                <MobileCard variant="hero" padding="lg" className="overflow-hidden border-blue-200/40 bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-200/70">
                     <div className="flex items-center gap-5">
-                        <div className="relative shrink-0">
-                            <div className="h-[92px] w-[92px] rounded-full bg-blue-50 p-1.5 shadow-inner">
+                        <button
+                            type="button"
+                            onClick={onEditTeacherProfile}
+                            className="relative shrink-0 rounded-full text-left transition-transform active:scale-95"
+                            aria-label="编辑教师信息"
+                        >
+                            <div className="h-[92px] w-[92px] rounded-full bg-white/18 p-1.5 shadow-inner backdrop-blur">
                                 <img
-                                    src={teacherAvatarUrl}
+                                    src={teacherProfile.avatar}
                                     alt="刘飞飞老师头像"
-                                    className="h-full w-full rounded-full bg-slate-50 object-cover"
+                                    className="h-full w-full rounded-full bg-slate-50 object-cover ring-2 ring-white/80"
                                 />
                             </div>
                             <div className="absolute bottom-0 right-0">
-                                <IconBadge icon={PenTool} size="sm" tone="brand" shape="circle" className="border-[3px] border-white bg-indigo-600 text-white" />
+                                <IconBadge icon={Camera} size="sm" tone="brand" shape="circle" className="border-[3px] border-white bg-white text-blue-600" />
                             </div>
-                        </div>
+                        </button>
 
                         <div className="min-w-0 flex-1">
-                            <h2 className={`${phoneText.pageTitle} text-slate-900`}>刘飞飞老师</h2>
-                            <p className={`mt-2 text-slate-400 ${phoneText.itemTitle}`}>成都七中初中附属小学</p>
+                            <h2 className={`${phoneText.pageTitle} text-white`}>刘飞飞老师</h2>
+                            <p className={`mt-2 text-white/78 ${phoneText.itemTitle}`}>成都七中初中附属小学</p>
                             <div className="mt-4 flex flex-wrap gap-2">
-                                {profileTags.map(tag => <ProfileTagChip key={tag.label} {...tag} />)}
+                                {profileTags.map(tag => (
+                                    <span key={tag.label} className={`inline-flex items-center gap-1.5 rounded-lg border border-white/24 bg-white/16 px-2.5 py-1.5 text-white backdrop-blur ${phoneText.label}`}>
+                                        <tag.icon className="h-3.5 w-3.5" strokeWidth={2.2} />
+                                        {tag.label}
+                                    </span>
+                                ))}
                             </div>
                         </div>
                     </div>

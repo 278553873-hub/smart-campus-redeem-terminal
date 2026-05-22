@@ -19,7 +19,6 @@ import ParentApp from './components/ParentApp';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import PlatformBrandMark from './components/PlatformBrandMark';
-import DemoMiniProgramFluidGlass from './components/DemoMiniProgramFluidGlass';
 import Loader from './components/Loader';
 import { DeviceWrapper } from './components/DeviceWrapper';
 import { ASSETS as MOBILE_ASSETS } from './mobile-app/assets/images';
@@ -1244,10 +1243,10 @@ const PcWorkspace: React.FC = () => {
 };
 
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'mini-fluid-demo'>(() => {
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'terminal' || app === 'admin' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'mini-fluid-demo') {
+    if (app === 'terminal' || app === 'admin' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace') {
       return app;
     }
     return 'terminal'; // default
@@ -1265,7 +1264,6 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'admin' && <MobileApp showPhoneShell={showPhoneShell} />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && <ParentApp showPhoneShell={showParentPhoneShell} />}
-        {currentApp === 'mini-fluid-demo' && <DemoMiniProgramFluidGlass />}
       </div>
 
       {(currentApp === 'admin' || currentApp === 'parent') && (
@@ -1346,14 +1344,6 @@ const AppSwitcher: React.FC = () => {
             >
               <Smartphone size={22} className="mb-1" />
               <span className="text-[9px] font-bold leading-tight">家长手机端</span>
-            </button>
-            <button
-              onClick={() => setCurrentApp('mini-fluid-demo')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'mini-fluid-demo' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="演示小程序端 - Fluid Glass 导航"
-            >
-              <Sparkles size={22} className="mb-1" />
-              <span className="text-[9px] font-bold leading-tight">演示小程序</span>
             </button>
           </div>
         </div>

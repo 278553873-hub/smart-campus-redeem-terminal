@@ -11,7 +11,7 @@ const GENERATE_MOCK_CLASSES = (): ClassInfo[] => {
     { year: 2020, level: '六年级' },
   ];
   const classes: ClassInfo[] = [];
-  const classNames = ['一班', '二班', '三班', '四班', '五班'];
+  const classNames = ['一班', '二班', '三班', '四班', '五班', '六班', '七班', '八班', '九班', '十班'];
 
   grades.forEach(g => {
     classNames.forEach((name, idx) => {
@@ -20,7 +20,7 @@ const GENERATE_MOCK_CLASSES = (): ClassInfo[] => {
         id,
         name: `${g.year}级${name}`,
         gradeLevel: g.level,
-        studentCount: Math.floor(35 + Math.random() * 10),
+        studentCount: 60,
         tags: idx === 0 ? ['班主任', '数学', '劳动'] : (idx % 2 === 0 ? ['数学'] : ['劳动'])
       });
     });
@@ -61,6 +61,8 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
   // Use a simple hash of classId to pick names consistently
   const seed = classId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
+  const classNumber = cls.id.split('_')[2] || '1';
+
   return Array.from({ length: count }).map((_, i) => {
     const nameObj = BASE_REALISTIC_NAMES[(seed + i) % BASE_REALISTIC_NAMES.length];
 
@@ -69,6 +71,7 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
 
     return {
       id: `${cls.id.replace('c_', '').replace('_', '')}${(i + 1).toString().padStart(2, '0')}`,
+      studentNo: `${cls.id.split('_')[1]}${classNumber.padStart(2, '0')}${(i + 1).toString().padStart(2, '0')}`,
       name: nameObj.n,
       gender: nameObj.g as 'male' | 'female',
       grade: cls.gradeLevel,

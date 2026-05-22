@@ -5,6 +5,7 @@ export interface Student {
   grade: string;
   class: string;
   avatar?: string;
+  studentNo?: string;
 }
 
 export interface ClassInfo {
@@ -14,6 +15,25 @@ export interface ClassInfo {
   studentCount: number;
   tags: string[]; // e.g. "班主任", "数学"
   hasPendingRewards?: boolean;
+}
+
+export interface TeacherTeachingAssignment {
+  classId: string;
+  subject: string;
+}
+
+export interface TeacherDepartment {
+  id: string;
+  name: string;
+}
+
+export interface TeacherProfile {
+  avatar: string;
+  departmentId: string;
+  departmentName: string;
+  teachingAssignments: TeacherTeachingAssignment[];
+  homeroomClassIds: string[];
+  gradeLeaderGrades: string[];
 }
 
 export interface ScoreItem {

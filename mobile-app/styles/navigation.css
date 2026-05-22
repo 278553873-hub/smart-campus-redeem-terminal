@@ -22,27 +22,95 @@
     overflow: visible;
 }
 
-/* 整个底栏的物理果冻回弹 (Jelly Wobble) */
-@keyframes container-jelly-wobble {
+/* 整个底栏的物理果冻回弹 (Jelly Wobble) 变体 A - 适当减弱幅度 */
+@keyframes container-jelly-wobble-a {
     0% {
         transform: scale(1) translateY(0);
     }
     30% {
-        transform: scale(0.96, 1.04) translateY(1.5px); /* 纵向拉伸，压向底部 */
+        transform: scale(0.98, 1.02) translateY(0.8px); /* 减弱：纵向压扁幅度与位移 */
     }
     55% {
-        transform: scale(1.03, 0.97) translateY(-1px); /* 反弹，横向稍微拉宽 */
+        transform: scale(1.01, 0.99) translateY(-0.4px); /* 减弱：反弹幅度 */
     }
     75% {
-        transform: scale(0.99, 1.01) translateY(0); /* 微震 */
+        transform: scale(0.997, 1.003) translateY(0); /* 微震 */
     }
     100% {
         transform: scale(1) translateY(0);
     }
 }
 
-.tabbar-jelly-active {
-    animation: container-jelly-wobble 450ms cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards;
+/* 整个底栏的物理果冻回弹 (Jelly Wobble) 变体 B - 适当减弱幅度 */
+@keyframes container-jelly-wobble-b {
+    0% {
+        transform: scale(1) translateY(0);
+    }
+    30% {
+        transform: scale(0.98, 1.02) translateY(0.8px);
+    }
+    55% {
+        transform: scale(1.01, 0.99) translateY(-0.4px);
+    }
+    75% {
+        transform: scale(0.997, 1.003) translateY(0);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+    }
+}
+
+.tabbar-jelly-active-a {
+    animation: container-jelly-wobble-a 450ms cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards;
+}
+
+.tabbar-jelly-active-b {
+    animation: container-jelly-wobble-b 450ms cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards;
+}
+
+/* ================= 滑块本身横向移动时的物理果冻形变 (拉伸与回收) ================= */
+@keyframes slider-jelly-wobble-a {
+    0% {
+        transform: scale(1, 1);
+    }
+    25% {
+        transform: scale(1.20, 0.80); /* 移动中途：惯性更长更扁 */
+    }
+    60% {
+        transform: scale(0.88, 1.12); /* 冲出终点撞击回弹：瞬间压扁变高，溢出底栏 */
+    }
+    82% {
+        transform: scale(1.03, 0.97); /* 回弹微震 */
+    }
+    100% {
+        transform: scale(1, 1);
+    }
+}
+
+@keyframes slider-jelly-wobble-b {
+    0% {
+        transform: scale(1, 1);
+    }
+    25% {
+        transform: scale(1.20, 0.80);
+    }
+    60% {
+        transform: scale(0.88, 1.12);
+    }
+    82% {
+        transform: scale(1.03, 0.97);
+    }
+    100% {
+        transform: scale(1, 1);
+    }
+}
+
+.slider-jelly-active-a {
+    animation: slider-jelly-wobble-a 420ms cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
+}
+
+.slider-jelly-active-b {
+    animation: slider-jelly-wobble-b 420ms cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
 }
 
 /* ================= 3D 物理液态玻璃画布容器 (TeacherFluidGlassNav) ================= */
@@ -54,7 +122,7 @@
     pointer-events: none !important;
     z-index: 5 !important;
     border-radius: 9999px;
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* ================= 按钮单元项与排版 (保证底层原图文绝对静止) ================= */

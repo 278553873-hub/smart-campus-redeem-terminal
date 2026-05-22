@@ -14,9 +14,12 @@ import LeaderReportView from './views/LeaderReportView';
 import RewardVerificationView from './views/reward-verification/RewardVerificationView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
 import { BankPasswordView } from './views/bank-password/BankPasswordView';
+import HomeworkEntryView from './views/HomeworkEntryView';
+import TeacherProfileEditView from './views/TeacherProfileEditView';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { DeviceWrapper } from '../components/DeviceWrapper';
 import PhoneMockup from '../components/PhoneMockup';
+import { ASSETS } from './assets/images';
 import {
     HomeIcon, UserIcon, ActivityIcon, CameraIcon, VolumeIcon,
     PlusIcon, FileIcon, CloseIcon, ChevronDownIcon, AlertCircleIcon,
@@ -49,7 +52,7 @@ import {
     MOCK_PE_REPORT_DETAILS,
     GET_MOCK_STUDENTS_FOR_CLASS,
 } from './constants';
-import { Student } from './types';
+import { Student, TeacherDepartment, TeacherProfile } from './types';
 
 const TERMS = [
     "2025-2026学年 上学期",
@@ -76,12 +79,36 @@ const SUBJECT_SCOPES = [
 const DEFAULT_TERM = TERMS[0];
 const DEFAULT_GRADE_SCOPE = GRADE_SCOPES[0];
 const DEFAULT_SUBJECT_SCOPE = SUBJECT_SCOPES[0];
+const TEACHER_PROFILE_SUBJECTS = Array.from(new Set(MOCK_SUBJECTS.map(subject => subject.subject)));
+const TEACHER_PROFILE_DEPARTMENTS: TeacherDepartment[] = [
+    { id: 'student-development', name: '学发中心' },
+    { id: 'moral-education', name: '德育处' },
+    { id: 'academic-affairs', name: '教务处' },
+    { id: 'physical-education', name: '艺体组' },
+    { id: 'grade-office', name: '年级办公室' },
+];
+
+const createTeachingAssignments = (classIds: string[], subject: string) => (
+    classIds.map(classId => ({ classId, subject }))
+);
+
+const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
+    avatar: ASSETS.AVATAR.TEACHER_LIU,
+    departmentId: 'student-development',
+    departmentName: '学发中心',
+    teachingAssignments: [
+        ...createTeachingAssignments(['c_2025_1', 'c_2025_2', 'c_2025_3', 'c_2025_4', 'c_2025_5', 'c_2025_6', 'c_2025_7'], '体育'),
+        ...createTeachingAssignments(['c_2024_1', 'c_2024_2', 'c_2024_3', 'c_2024_4', 'c_2024_5', 'c_2024_6', 'c_2024_7', 'c_2024_8', 'c_2024_9', 'c_2024_10'], '体育'),
+    ],
+    homeroomClassIds: ['c_2025_1'],
+    gradeLeaderGrades: ['2025级'],
+};
 
 const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '全校学生' : `${grade}学生`;
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password';
+type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
 
 interface MobileAppProps {
     showPhoneShell?: boolean;
@@ -94,6 +121,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     const [activeIndex, setActiveIndex] = useState(0);
     const [slideDirection, setSlideDirection] = useState<'left' | 'right' | 'none'>('none');
+    // 交替状态用于触发底栏 CSS 抖动果冻动画的重新播放
+    const [jellyToggle, setJellyToggle] = useState<'a' | 'b' | 'none'>('none');
 
     // 测量底栏物理尺寸以供滑块镜头克隆层完全对齐
     const tabbarRef = useRef<HTMLDivElement>(null);
@@ -122,8 +151,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'record_input') return 0;
-        if (view === 'class_list' || view === 'class_detail' || view === 'class_report' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password') return 1;
-        if (view === 'me' || view === 'my_files') return 2;
+        if (view === 'class_list' || view === 'class_detail' || view === 'class_report' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
+        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit') return 2;
         return 0;
     };
 
@@ -136,6 +165,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                 setSlideDirection('left');
             }
             setActiveIndex(nextIndex);
+            
+            // 每次点击切换 Tab 时，交替改变 jellyToggle 状态，强制浏览器重新渲染并播放 CSS 动画
+            setJellyToggle(prev => {
+                if (prev === 'none') return 'a';
+                return prev === 'a' ? 'b' : 'a';
+            });
 
             const timer = setTimeout(() => {
                 setSlideDirection('none');
@@ -149,6 +184,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [selectedStudent, setSelectedStudent] = useState<Student>(MOCK_STUDENTS_CLASS_1[0]);
     const [selectedSubject, setSelectedSubject] = useState<string>('');
     const [batchStudentIds, setBatchStudentIds] = useState<string[]>([]);
+    const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(DEFAULT_TEACHER_PROFILE);
 
     // Multi-Selection State for Class Detail
     const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
@@ -265,6 +301,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const handleViewBankPassword = (classId: string) => {
         setSelectedClassId(classId);
         navigateTo('bank_password');
+    };
+
+    const handleViewHomeworkEntry = (classId: string) => {
+        setSelectedClassId(classId);
+        navigateTo('homework_entry');
     };
 
     const handleStartRecord = (studentIds: string[], mode: 'voice' | 'camera' | 'text' = 'voice') => {
@@ -401,11 +442,13 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'term_report': return '';
             case 'me': return '';
             case 'my_files': return '我的文件';
+            case 'teacher_profile_edit': return '编辑教师信息';
             case 'class_leaderboard': return '排行榜';
             case 'leader_report': return '学校数据报表';
             case 'reward_verification': return '班级奖励兑换';
             case 'face_update': return '更新人脸数据';
             case 'bank_password': return '设置兑换密码';
+            case 'homework_entry': return MOCK_CLASSES.find(c => c.id === selectedClassId)?.name || '作业录入';
             default: return '';
         }
     };
@@ -536,7 +579,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                     <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -585,6 +628,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onViewRewardVerification={handleViewRewardVerification}
                                     onViewFaceUpdate={handleViewFaceUpdate}
                                     onViewBankPassword={handleViewBankPassword}
+                                    onViewHomeworkEntry={handleViewHomeworkEntry}
                                 />
                             )}
 
@@ -645,6 +689,14 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 />
                             )}
 
+                            {currentView === 'homework_entry' && selectedClassId && (
+                                <HomeworkEntryView
+                                    classInfo={MOCK_CLASSES.find(c => c.id === selectedClassId)!}
+                                    students={GET_MOCK_STUDENTS_FOR_CLASS(selectedClassId)}
+                                    onBack={goBack}
+                                />
+                            )}
+
                             {currentView === 'student_detail' && (
                                 <DashboardView
                                     student={selectedStudent}
@@ -667,10 +719,26 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                             {currentView === 'me' && (
                                 <MeView
+                                    teacherProfile={teacherProfile}
                                     onNavigateToFiles={() => navigateTo('my_files')}
+                                    onEditTeacherProfile={() => navigateTo('teacher_profile_edit')}
                                     onOpenGenerateModal={handleOpenSubjectGenModal}
                                     onOpenTermGenerateModal={handleOpenTermGenModal}
                                     onViewLeaderReport={handleViewLeaderReport}
+                                />
+                            )}
+
+                            {currentView === 'teacher_profile_edit' && (
+                                <TeacherProfileEditView
+                                    profile={teacherProfile}
+                                    classes={MOCK_CLASSES}
+                                    subjects={TEACHER_PROFILE_SUBJECTS}
+                                    departments={TEACHER_PROFILE_DEPARTMENTS}
+                                    onBack={goBack}
+                                    onSave={(nextProfile) => {
+                                        setTeacherProfile(nextProfile);
+                                        goBack();
+                                    }}
                                 />
                             )}
 
@@ -710,10 +778,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                         {showTabBar && (
                             <div 
                                 ref={tabbarRef}
-                                className={`ai-tabbar-container ${slideDirection !== 'none' ? 'tabbar-jelly-active' : ''}`}
+                                className={`ai-tabbar-container ${jellyToggle !== 'none' ? `tabbar-jelly-active-${jellyToggle}` : ''}`}
                             >
                                 {/* 3D 物理液态玻璃渲染背景层 */}
-                                <TeacherFluidGlassNav activeIndex={activeIndex} itemCount={3} />
+                                <TeacherFluidGlassNav activeIndex={activeIndex} itemCount={3} jellyToggle={jellyToggle} />
 
                                 {/* 顶层 HTML 按钮交互与极清字显层 (文字完全脱离 3D WebGL 折射以 100% 保障清晰度与 0 重影) */}
                                 {/* Tab 0: 记录 (ActivityIcon) */}
@@ -723,7 +791,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 >
                                     <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${activeIndex === 0 ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
                                         <div className="tabbar-icon-wrap">
-                                            <ActivityIcon className="w-5 h-5" />
+                                            <ActivityIcon className="w-5 h-5" fill="currentColor" />
                                         </div>
                                         <span className="tabbar-item-label">记录</span>
                                     </div>
@@ -736,7 +804,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 >
                                     <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${activeIndex === 1 ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
                                         <div className="tabbar-icon-wrap">
-                                            <HomeIcon className="w-5 h-5" />
+                                            <HomeIcon className="w-5 h-5" fill="currentColor" />
                                         </div>
                                         <span className="tabbar-item-label">班级</span>
                                     </div>
@@ -749,7 +817,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 >
                                     <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${activeIndex === 2 ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
                                         <div className="tabbar-icon-wrap">
-                                            <UserIcon className="w-5 h-5" />
+                                            <UserIcon className="w-5 h-5" fill="currentColor" />
                                         </div>
                                         <span className="tabbar-item-label">我的</span>
                                     </div>

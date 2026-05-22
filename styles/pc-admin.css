@@ -1,0 +1,80 @@
+/* PC 后台列表页筛选区：收敛 Arco 控件默认态，避免空值 placeholder 被误看成禁用。 */
+.pc-filter-bar .arco-picker,
+.pc-filter-bar .arco-select-view,
+.pc-filter-bar .arco-cascader-view,
+.pc-filter-bar .arco-input-inner-wrapper {
+  background: #fff !important;
+  border-color: #e5e6eb !important;
+}
+
+.pc-filter-bar .arco-picker:hover,
+.pc-filter-bar .arco-select-view:hover,
+.pc-filter-bar .arco-cascader-view:hover,
+.pc-filter-bar .arco-input-inner-wrapper:hover {
+  border-color: #165dff !important;
+}
+
+.pc-filter-bar .arco-picker-focused,
+.pc-filter-bar .arco-select-view-focus,
+.pc-filter-bar .arco-cascader-view-focus,
+.pc-filter-bar .arco-input-inner-wrapper-focus {
+  border-color: #165dff !important;
+  box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.12) !important;
+}
+
+.pc-filter-bar .arco-input,
+.pc-filter-bar .arco-select-view-value,
+.pc-filter-bar .arco-cascader-view-value,
+.pc-filter-bar .arco-picker-input input {
+  color: #1d2129 !important;
+}
+
+.pc-filter-bar .arco-input::placeholder,
+.pc-filter-bar .arco-select-view-placeholder,
+.pc-filter-bar .arco-cascader-view-placeholder,
+.pc-filter-bar .arco-picker-input input::placeholder {
+  color: #86909c !important;
+}
+
+.pc-filter-bar .arco-btn:not(.arco-btn-primary) {
+  background: #fff !important;
+  border-color: #e5e6eb !important;
+  color: #4e5969 !important;
+}
+
+.pc-filter-bar .arco-btn:not(.arco-btn-primary):hover {
+  border-color: #165dff !important;
+  color: #165dff !important;
+}
+
+/* Arco Cascader 多选回显统一保持单行，选中值过长时由 tag 自身省略，不撑高控件。 */
+.arco-cascader-multiple .arco-cascader-view {
+  overflow: hidden;
+}
+
+.arco-cascader-multiple .arco-input-tag-inner {
+  flex-wrap: nowrap !important;
+  align-items: center;
+  min-width: 0;
+}
+
+.arco-cascader-multiple .arco-input-tag-tag {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.arco-cascader-multiple .arco-input-tag-tag-ellipsis {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.arco-cascader-multiple .arco-input-tag:not(.arco-input-tag-has-placeholder) .arco-input-tag-input {
+  flex: 0 0 4px;
+  min-width: 0;
+}
+
+.arco-cascader-multiple .arco-input-tag-has-placeholder .arco-input-tag-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}

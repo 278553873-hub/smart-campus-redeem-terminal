@@ -1,9 +1,14 @@
 import fs from 'node:fs';
 
 const source = fs.readFileSync(new URL('./TeacherDashboard.tsx', import.meta.url), 'utf8');
+const pcAdminCss = fs.readFileSync(new URL('../styles/pc-admin.css', import.meta.url), 'utf8');
 
 const requireText = (needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
+};
+
+const requireCss = (needle, message) => {
+  if (!pcAdminCss.includes(needle)) throw new Error(message);
 };
 
 const forbidText = (needle, message) => {
@@ -73,3 +78,33 @@ requireText('checkedStrategy="child"', '班级 Cascader 应按 Arco checkedStrat
 requireText('ArcoSelect', '科目筛选应使用 Arco Select。');
 requireText('allowClear', 'Arco 筛选器应支持 allowClear 清空。');
 requireText('mode="multiple"', '班级和科目筛选应使用多选模式。');
+
+requireText('gradeClassTableColumns', '考试数据班级视角列表应使用 Arco Table columns。');
+requireText('gradeExamAggregateTableColumns', '考试数据考试视角列表应使用 Arco Table columns。');
+requireText("columns={gradeListViewMode === 'class' ? gradeClassTableColumns : gradeExamAggregateTableColumns}", '考试数据列表应使用 Arco Table 渲染。');
+requireText('className="pc-filter-bar mb-6 flex flex-wrap items-center gap-3"', '考试数据筛选区应使用统一 pc-filter-bar 默认态。');
+requireText("value={gradeTermFilter === '全部学期' ? undefined : gradeTermFilter}", '考试数据学期筛选不应把全部学期作为真实选中值。');
+requireText("value={gradeExamTypeFilter === '全部类型' ? undefined : gradeExamTypeFilter}", '考试数据类型筛选不应把全部类型作为真实选中值。');
+requireText('<Input\n                                                value={gradeCreatorSearch}', '考试数据创建人筛选应使用 Arco Input。');
+requireText('<Button type="primary" onClick={() => {}}>查询</Button>', '考试数据查询按钮应使用 Arco 主按钮。');
+requireText('<Button type="primary" onClick={openGradeCreatePage}>', '考试数据新建考试应使用 Arco 主按钮。');
+
+const examListSectionStart = source.indexOf("{/* 考试数据 */}");
+const examListSectionEnd = source.indexOf('aria-label="返回考试数据列表"', examListSectionStart);
+const examListSection = examListSectionStart >= 0 && examListSectionEnd > examListSectionStart
+  ? source.slice(examListSectionStart, examListSectionEnd)
+  : '';
+if (examListSection.includes('<select')) {
+  throw new Error('考试数据列表筛选区不应继续使用原生 select。');
+}
+if (examListSection.includes('<input')) {
+  throw new Error('考试数据列表筛选区不应继续使用原生 input。');
+}
+
+requireText('<Button type="primary" onClick={openGradeCreatePage}>新建考试</Button>', '考试数据新建考试按钮应只展示文案，不显示加号。');
+forbidText("<Plus size={14} />\n                                                    新建考试", '考试数据新建考试按钮不应保留加号图标。');
+requireCss('.arco-cascader-multiple .arco-input-tag-inner', '级联多选应有统一单行回显规则。');
+requireCss('flex-wrap: nowrap !important;', '级联多选 Tag 不应换行撑高控件。');
+requireCss('.arco-cascader-multiple .arco-input-tag-tag-ellipsis', '级联多选数量汇总 Tag 应保持同一行。');
+requireCss('.arco-cascader-multiple .arco-input-tag-has-placeholder .arco-input-tag-input', '空值态 placeholder 不应被单行规则压缩。');
+requireText('className="!px-0" onClick={() => handleViewGradeExam(row)}>查看</Button>', '考试数据操作列文字按钮应去掉默认横向内边距。');

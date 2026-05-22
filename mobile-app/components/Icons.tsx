@@ -52,13 +52,13 @@ export const CheckCircleIcon = ({ className }: { className?: string }) => <Check
 export const CircleIcon = ({ className }: { className?: string }) => <Circle className={className} />;
 export const UsersIcon = ({ className }: { className?: string }) => <Users className={className} />;
 export const ChartIcon = ({ className }: { className?: string }) => <BarChart3 className={className} />;
-export const HomeIcon = ({ className }: { className?: string }) => <Home className={className} />;
-export const UserIcon = ({ className }: { className?: string }) => <User className={className} />;
+export const HomeIcon = ({ className, fill }: { className?: string; fill?: string }) => <Home className={className} fill={fill} />;
+export const UserIcon = ({ className, fill }: { className?: string; fill?: string }) => <User className={className} fill={fill} />;
 export const PlusIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => <Plus className={className} style={style} />;
 export const CloseIcon = ({ className }: { className?: string }) => <X className={className} />;
 export const EditIcon = ({ className }: { className?: string }) => <Edit3 className={className} />;
 export const HelpIcon = ({ className }: { className?: string }) => <HelpCircle className={className} />;
-export const ActivityIcon = ({ className }: { className?: string }) => <Activity className={className} />;
+export const ActivityIcon = ({ className, fill }: { className?: string; fill?: string }) => <FileText className={className} fill={fill} />;
 export const AlertCircleIcon = ({ className }: { className?: string }) => <AlertCircle className={className} />;
 export const ShieldIcon = ({ className }: { className?: string }) => <Shield className={className} />;
 export const LockIcon = ({ className }: { className?: string }) => <Lock className={className} />;

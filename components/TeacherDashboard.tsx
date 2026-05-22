@@ -320,6 +320,64 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         ).sort(([levelA], [levelB]) => levelA.localeCompare(levelB, 'zh-Hans'))
         : [];
 
+    const gradeClassTableColumns = [
+        { title: '学年-学期', dataIndex: 'term', width: 170 },
+        {
+            title: '考试类型',
+            dataIndex: 'type',
+            width: 120,
+            render: (value: string) => <span className="rounded bg-[#E8F3FF] px-2 py-0.5 text-xs font-normal text-[#165DFF]">{value}</span>
+        },
+        {
+            title: '科目',
+            dataIndex: 'subjects',
+            width: 240,
+            render: (subjects: string[]) => (
+                <div className="flex flex-wrap gap-1.5">
+                    {subjects.map(subject => (
+                        <span key={subject} className="flex h-6 items-center justify-center rounded-full border border-[#E5E6EB] bg-white px-3 text-xs font-normal text-[#4E5969]">
+                            {subject}
+                        </span>
+                    ))}
+                </div>
+            )
+        },
+        { title: '班级', dataIndex: 'className', width: 140 },
+        { title: '创建人', dataIndex: 'creator', width: 120 },
+        {
+            title: '操作',
+            dataIndex: 'operation',
+            width: 128,
+            align: 'right' as const,
+            render: (_: unknown, row: GradeExamRow) => (
+                <div className="flex justify-end gap-4">
+                    <Button type="text" size="small" className="!px-0" onClick={() => handleViewGradeExam(row)}>查看</Button>
+                    <Button type="text" size="small" className="!px-0" onClick={() => handleEditGradeExam(row)}>编辑</Button>
+                </div>
+            )
+        }
+    ];
+    const gradeExamAggregateTableColumns = [
+        { title: '学年-学期', dataIndex: 'term', width: 220 },
+        {
+            title: '考试类型',
+            dataIndex: 'type',
+            width: 160,
+            render: (value: string) => <span className="rounded bg-[#E8F3FF] px-2 py-0.5 text-xs font-normal text-[#165DFF]">{value}</span>
+        },
+        {
+            title: '操作',
+            dataIndex: 'operation',
+            width: 120,
+            align: 'right' as const,
+            render: (_: unknown, row: GradeExamAggregateRow) => (
+                <div className="flex justify-end">
+                    <Button type="text" size="small" className="!px-0" onClick={() => handleViewGradeExamAggregate(row)}>查看</Button>
+                </div>
+            )
+        }
+    ];
+
     const handleViewGradeExam = (exam: GradeExamRow) => {
         setSelectedGradeExam(exam);
         setSelectedGradeExamAggregate(null);
@@ -909,6 +967,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [newHomeworkDate, setNewHomeworkDate] = useState('2026-05-22');
     const [newHomeworkLevel, setNewHomeworkLevel] = useState('');
     const [newHomeworkClass, setNewHomeworkClass] = useState('');
+    const [newHomeworkClasses, setNewHomeworkClasses] = useState<string[]>([]);
+    const [activeHomeworkClassSheet, setActiveHomeworkClassSheet] = useState('');
+    const [homeworkStudentsByClass, setHomeworkStudentsByClass] = useState<Record<string, HomeworkStudentRow[]>>({});
+    const [homeworkColumnFillStatus, setHomeworkColumnFillStatus] = useState('');
     const [newHomeworkSubject, setNewHomeworkSubject] = useState('');
     const [newHomeworkName, setNewHomeworkName] = useState('');
     const [newHomeworkStudents, setNewHomeworkStudents] = useState<HomeworkStudentRow[]>([]);
@@ -924,8 +986,11 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             status: homeworkStatusOptions[(index + seed) % homeworkStatusOptions.length]
         }));
     };
-    const buildBlankHomeworkStudents = (className: string): HomeworkStudentRow[] => (
+    const buildHomeworkStudentsWithNames = (className: string): HomeworkStudentRow[] => (
         buildMockHomeworkStudents(className).map(student => ({ ...student, status: '' }))
+    );
+    const buildBlankHomeworkStudents = (className: string): HomeworkStudentRow[] => (
+        buildMockHomeworkStudents(className).map(student => ({ ...student, studentNo: '', name: '', status: '' }))
     );
     const [homeworkRows, setHomeworkRows] = useState<HomeworkRecordRow[]>([
         { id: 1, date: '2026-05-22', subject: '语文', name: '阅读理解', className: '2023级4班', creator: '林萧', updatedAt: '2026-05-22 16:30', students: buildMockHomeworkStudents('2023级4班', 0) },
@@ -960,20 +1025,6 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             width: 160,
             render: (value: string) => value || '-'
         },
-        {
-            title: '已录入',
-            dataIndex: 'students',
-            width: 130,
-            render: (_: HomeworkStudentRow[], row: HomeworkRecordRow) => `${row.students.filter(student => student.status).length}/${row.students.length}名学生`
-        },
-        {
-            title: '未交',
-            dataIndex: 'students',
-            width: 100,
-            render: (_: HomeworkStudentRow[], row: HomeworkRecordRow) => (
-                <span className="text-[#F53F3F]">{row.students.filter(student => student.status === '未交').length}人</span>
-            )
-        },
         { title: '录入人', dataIndex: 'creator', width: 120 },
         { title: '更新时间', dataIndex: 'updatedAt', width: 160 },
         {
@@ -982,29 +1033,47 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             width: 128,
             align: 'right' as const,
             render: (_: unknown, row: HomeworkRecordRow) => (
-                <div className="flex justify-end gap-3">
-                    <Button type="text" size="small" onClick={() => handleViewHomeworkRecord(row)}>查看</Button>
-                    <Button type="text" size="small" onClick={() => handleEditHomeworkRecord(row)}>编辑</Button>
+                <div className="flex justify-end gap-4">
+                    <Button type="text" size="small" className="!px-0" onClick={() => handleViewHomeworkRecord(row)}>查看</Button>
+                    <Button type="text" size="small" className="!px-0" onClick={() => handleEditHomeworkRecord(row)}>编辑</Button>
                 </div>
             )
         }
     ];
+    const getHomeworkClassProgress = (className: string) => {
+        const students = className === activeHomeworkClassSheet
+            ? newHomeworkStudents
+            : (homeworkStudentsByClass[className] || []);
+        const total = students.length;
+        const completed = students.filter(student => student.status.trim()).length;
+        return { completed, total, isComplete: total > 0 && completed === total };
+    };
+    const homeworkClassProgressRows = newHomeworkClasses.map(className => ({
+        className,
+        ...getHomeworkClassProgress(className)
+    }));
+    const completedHomeworkStudentCount = homeworkClassProgressRows.reduce((sum, row) => sum + row.completed, 0);
+    const totalHomeworkStudentCount = homeworkClassProgressRows.reduce((sum, row) => sum + row.total, 0);
+    const homeworkProgressPercent = totalHomeworkStudentCount > 0
+        ? Math.round((completedHomeworkStudentCount / totalHomeworkStudentCount) * 100)
+        : 0;
     const homeworkStatusCounts = homeworkStatusOptions.reduce<Record<string, number>>((counts, status) => {
-        counts[status] = newHomeworkStudents.filter(student => student.status === status).length;
+        const activeStudents = activeHomeworkClassSheet ? (homeworkStudentsByClass[activeHomeworkClassSheet] || newHomeworkStudents) : newHomeworkStudents;
+        counts[status] = activeStudents.filter(student => student.status === status).length;
         return counts;
     }, {});
-    const completedHomeworkStudentCount = newHomeworkStudents.filter(student => student.status.trim()).length;
-    const homeworkProgressPercent = newHomeworkStudents.length > 0
-        ? Math.round((completedHomeworkStudentCount / newHomeworkStudents.length) * 100)
-        : 0;
     const resetHomeworkForm = () => {
         setNewHomeworkDate('2026-05-22');
         setNewHomeworkLevel('');
         setNewHomeworkClass('');
+        setNewHomeworkClasses([]);
+        setActiveHomeworkClassSheet('');
+        setHomeworkStudentsByClass({});
         setNewHomeworkSubject('');
         setNewHomeworkName('');
         setNewHomeworkStudents([]);
         setHomeworkBatchStatus('');
+        setHomeworkColumnFillStatus('');
     };
     const openHomeworkCreatePage = () => {
         resetHomeworkForm();
@@ -1017,8 +1086,11 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setNewHomeworkSubject(record.subject);
         setNewHomeworkName(record.name === '-' ? '' : record.name);
         setNewHomeworkClass(record.className);
+        setNewHomeworkClasses([record.className]);
+        setActiveHomeworkClassSheet(record.className);
         setNewHomeworkLevel(getGradeLevelFromClassName(record.className));
         setNewHomeworkStudents(record.students);
+        setHomeworkStudentsByClass({ [record.className]: record.students });
         setHomeworkBatchStatus('');
         setHomeworkPageMode('view');
     };
@@ -1026,50 +1098,114 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         handleViewHomeworkRecord(record);
         setHomeworkPageMode('edit');
     };
-    const handleSelectHomeworkClass = (className: string) => {
+    const syncActiveHomeworkStudents = (className: string, students: HomeworkStudentRow[]) => {
+        setNewHomeworkStudents(students);
+        if (!className) return;
+        setHomeworkStudentsByClass(prev => ({ ...prev, [className]: students }));
+    };
+    const updateActiveHomeworkStudents = (updater: (students: HomeworkStudentRow[]) => HomeworkStudentRow[]) => {
+        setNewHomeworkStudents(prevStudents => {
+            const nextStudents = updater(prevStudents);
+            if (activeHomeworkClassSheet) {
+                setHomeworkStudentsByClass(prev => ({ ...prev, [activeHomeworkClassSheet]: nextStudents }));
+            }
+            return nextStudents;
+        });
+    };
+    const handleSwitchHomeworkClassSheet = (className: string) => {
         setNewHomeworkClass(className);
-        setNewHomeworkStudents(buildBlankHomeworkStudents(className));
+        setActiveHomeworkClassSheet(className);
+        setNewHomeworkStudents(homeworkStudentsByClass[className] || buildBlankHomeworkStudents(className));
+    };
+    const handleToggleHomeworkClass = (className: string) => {
+        if (!className || homeworkPageMode === 'view') return;
+        setNewHomeworkClasses(prevClasses => {
+            if (prevClasses.includes(className)) {
+                const nextClasses = prevClasses.filter(item => item !== className);
+                setHomeworkStudentsByClass(prevMap => {
+                    const nextMap = { ...prevMap };
+                    delete nextMap[className];
+                    return nextMap;
+                });
+                if (activeHomeworkClassSheet === className) {
+                    const nextActiveClass = nextClasses[0] || '';
+                    setActiveHomeworkClassSheet(nextActiveClass);
+                    setNewHomeworkClass(nextActiveClass);
+                    setNewHomeworkStudents(nextActiveClass ? (homeworkStudentsByClass[nextActiveClass] || buildBlankHomeworkStudents(nextActiveClass)) : []);
+                }
+                return nextClasses;
+            }
+
+            const nextClasses = [...prevClasses, className];
+            const classStudents = homeworkStudentsByClass[className] || buildBlankHomeworkStudents(className);
+            setHomeworkStudentsByClass(prevMap => ({ ...prevMap, [className]: prevMap[className] || classStudents }));
+            if (!activeHomeworkClassSheet) {
+                setActiveHomeworkClassSheet(className);
+                setNewHomeworkClass(className);
+                setNewHomeworkStudents(classStudents);
+            }
+            return nextClasses;
+        });
+    };
+    const handleSelectHomeworkClass = (className: string) => {
+        handleToggleHomeworkClass(className);
     };
     const handleFillHomeworkStudents = () => {
-        if (!newHomeworkClass) {
+        if (!activeHomeworkClassSheet) {
             window.alert('请先选择班级。');
             return;
         }
-        setNewHomeworkStudents(buildBlankHomeworkStudents(newHomeworkClass));
+        syncActiveHomeworkStudents(activeHomeworkClassSheet, buildHomeworkStudentsWithNames(activeHomeworkClassSheet));
+    };
+    const handleChangeHomeworkName = (studentId: string, value: string) => {
+        updateActiveHomeworkStudents(students => students.map(student => (
+            student.id === studentId ? { ...student, name: value } : student
+        )));
     };
     const handleChangeHomeworkStatus = (studentId: string, status: string) => {
-        setNewHomeworkStudents(students => students.map(student => (
+        updateActiveHomeworkStudents(students => students.map(student => (
             student.id === studentId ? { ...student, status } : student
         )));
     };
     const handleBatchSetHomeworkStatus = () => {
-        if (!homeworkBatchStatus) {
+        const value = (homeworkColumnFillStatus || homeworkBatchStatus).trim();
+        if (!value) {
             window.alert('请先选择要批量设置的作业完成情况。');
             return;
         }
-        setNewHomeworkStudents(students => students.map(student => ({ ...student, status: homeworkBatchStatus })));
+        updateActiveHomeworkStudents(students => students.map(student => ({ ...student, status: value })));
     };
     const handleSaveHomeworkRecord = () => {
-        const hasStudentInfo = newHomeworkStudents.some(student => student.name.trim());
-        if (!newHomeworkDate || !newHomeworkClass || !newHomeworkSubject || !hasStudentInfo) {
-            window.alert('请补全日期、班级、科目，并确保至少有一名学生。作业名称可不填写。');
+        const selectedClasses = newHomeworkClasses;
+        const classStudentsMap = {
+            ...homeworkStudentsByClass,
+            ...(activeHomeworkClassSheet ? { [activeHomeworkClassSheet]: newHomeworkStudents } : {})
+        };
+        const hasStudentInfo = selectedClasses.every(className => (
+            (classStudentsMap[className] || []).some(student => student.name.trim())
+        ));
+        if (!newHomeworkDate || selectedClasses.length === 0 || !newHomeworkSubject || !hasStudentInfo) {
+            window.alert('请补全日期、班级、科目，并确保每个班级 sheet 至少填写一名学生。作业名称可不填写。');
             return;
         }
-        const payload: HomeworkRecordRow = {
-            id: selectedHomeworkRecord?.id || Date.now(),
+        const now = Date.now();
+        const rowsPayload = selectedClasses.map((className, index) => ({
+            id: homeworkPageMode === 'edit' && selectedHomeworkRecord && index === 0 ? selectedHomeworkRecord.id : now + index,
             date: newHomeworkDate,
             subject: newHomeworkSubject,
             name: newHomeworkName.trim() || '-',
-            className: newHomeworkClass,
-            creator: selectedHomeworkRecord?.creator || '林萧',
+            className,
+            creator: index === 0 ? (selectedHomeworkRecord?.creator || '林萧') : '林萧',
             updatedAt: `${newHomeworkDate} 17:00`,
-            students: newHomeworkStudents
-        };
-        setHomeworkRows(rows => (
-            homeworkPageMode === 'edit' && selectedHomeworkRecord
-                ? rows.map(row => row.id === selectedHomeworkRecord.id ? payload : row)
-                : [payload, ...rows]
-        ));
+            students: classStudentsMap[className] || buildBlankHomeworkStudents(className)
+        }));
+        setHomeworkRows(rows => {
+            if (homeworkPageMode === 'edit' && selectedHomeworkRecord) {
+                const extraRows = rowsPayload.slice(1);
+                return [...extraRows, ...rows.map(row => row.id === selectedHomeworkRecord.id ? rowsPayload[0] : row)];
+            }
+            return [...rowsPayload, ...rows];
+        });
         setHomeworkDateFilter('');
         setHomeworkClassFilter('');
         setHomeworkSubjectFilter('全部科目');
@@ -1079,6 +1215,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setHomeworkPageMode('list');
         window.alert('作业记录已保存到当前 demo 列表。');
     };
+
 
 
     const gradeScoreStatisticColumns = Array.from(new Set(newGradeStudents.flatMap(student => (
@@ -2480,7 +2617,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 <div className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-6 shadow-[0_4px_10px_rgba(0,0,0,0.02)] flex flex-col">
                                     <h2 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129] mb-5">作业数据</h2>
 
-                                    <div className="mb-6 flex flex-wrap items-center gap-3 [&_.arco-cascader-view]:!border-[#E5E6EB] [&_.arco-cascader-view]:!bg-white [&_.arco-input-inner-wrapper]:!border-[#E5E6EB] [&_.arco-input-inner-wrapper]:!bg-white [&_.arco-picker]:!border-[#E5E6EB] [&_.arco-picker]:!bg-white [&_.arco-select-view]:!border-[#E5E6EB] [&_.arco-select-view]:!bg-white">
+                                    <div className="pc-filter-bar mb-6 flex flex-wrap items-center gap-3">
                                         <DatePicker
                                             value={homeworkDateFilter}
                                             onChange={(dateString) => setHomeworkDateFilter(dateString)}
@@ -2528,7 +2665,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             aria-label="录入人筛选"
                                         />
                                         <Button type="primary" onClick={() => {}}>查询</Button>
-                                        <Button className="!border-[#E5E6EB] !bg-white !text-[#4E5969]" onClick={resetHomeworkListFilters}>重置</Button>
+                                        <Button onClick={resetHomeworkListFilters}>重置</Button>
                                     </div>
 
                                     <div className="border-t border-[#F2F3F5] mb-5 w-full"></div>
@@ -2572,65 +2709,90 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         <h3 className="ml-2 m-0 text-base font-semibold leading-none text-[#1D2129]">基本信息</h3>
                                     </div>
 
-                                    <div className="grid max-w-[980px] grid-cols-2 gap-x-12 gap-y-5">
-                                        <label className="flex min-h-[32px] items-center">
-                                            <span className="w-[120px] shrink-0 text-right font-medium text-[#4E5969]"><span className="text-[#F53F3F] mr-1">*</span>作业日期：</span>
-                                            <input
-                                                type="date"
-                                                value={newHomeworkDate}
-                                                onChange={(event) => setNewHomeworkDate(event.target.value)}
-                                                readOnly={homeworkPageMode === 'view'}
-                                                className="ml-3 h-8 w-[220px] rounded border border-[#E5E6EB] bg-white px-2 text-sm text-[#1D2129] outline-none focus:border-[#165DFF] disabled:bg-[#F7F8FA]"
-                                            />
-                                        </label>
-                                        <label className="flex min-h-[32px] items-center">
-                                            <span className="w-[120px] shrink-0 text-right font-medium text-[#4E5969]"><span className="text-[#F53F3F] mr-1">*</span>科目：</span>
-                                            <select
-                                                value={newHomeworkSubject}
-                                                onChange={(event) => setNewHomeworkSubject(event.target.value)}
-                                                disabled={homeworkPageMode === 'view'}
-                                                className="ml-3 h-8 w-[220px] rounded border border-[#E5E6EB] bg-white px-2 text-sm text-[#1D2129] outline-none focus:border-[#165DFF] disabled:bg-[#F7F8FA]"
-                                            >
-                                                <option value="" hidden disabled>请选择科目</option>
-                                                {gradeSubjectOptions.map(subject => <option key={subject}>{subject}</option>)}
-                                            </select>
-                                        </label>
-                                        <label className="flex min-h-[32px] items-center">
-                                            <span className="w-[120px] shrink-0 text-right font-medium text-[#4E5969]"><span className="text-[#F53F3F] mr-1">*</span>班级：</span>
-                                            <select
-                                                value={newHomeworkLevel}
-                                                onChange={(event) => {
-                                                    setNewHomeworkLevel(event.target.value);
-                                                    setNewHomeworkClass('');
-                                                    setNewHomeworkStudents([]);
-                                                }}
-                                                disabled={homeworkPageMode === 'view'}
-                                                className="ml-3 h-8 w-[132px] rounded border border-[#E5E6EB] bg-white px-2 text-sm text-[#1D2129] outline-none focus:border-[#165DFF] disabled:bg-[#F7F8FA]"
-                                            >
-                                                <option value="" hidden disabled>请选择年级</option>
-                                                {gradeLevelOptions.map(level => <option key={level}>{level}</option>)}
-                                            </select>
-                                            <select
-                                                value={newHomeworkClass}
-                                                onChange={(event) => handleSelectHomeworkClass(event.target.value)}
-                                                disabled={homeworkPageMode === 'view' || !newHomeworkLevel}
-                                                className="ml-2 h-8 w-[132px] rounded border border-[#E5E6EB] bg-white px-2 text-sm text-[#1D2129] outline-none focus:border-[#165DFF] disabled:bg-[#F7F8FA]"
-                                            >
-                                                <option value="" hidden disabled>请选择班级</option>
-                                                {newHomeworkLevel && getClassOptionsByLevel(newHomeworkLevel).map(className => <option key={className}>{className}</option>)}
-                                            </select>
-                                        </label>
-                                        <label className="flex min-h-[32px] items-center">
-                                            <span className="w-[120px] shrink-0 text-right font-medium text-[#4E5969]">作业名称：</span>
-                                            <input
-                                                value={newHomeworkName}
-                                                onChange={(event) => setNewHomeworkName(event.target.value)}
-                                                readOnly={homeworkPageMode === 'view'}
-                                                placeholder="例如：阅读理解"
-                                                className="ml-3 h-8 w-[280px] rounded border border-[#E5E6EB] bg-white px-2 text-sm text-[#1D2129] outline-none focus:border-[#165DFF] disabled:bg-[#F7F8FA]"
-                                            />
-                                        </label>
-                                    </div>
+                                    {homeworkPageMode === 'view' ? (
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex min-h-[24px] items-start">
+                                                <span className="w-[120px] shrink-0 text-right font-medium text-[#4E5969]">作业日期：</span>
+                                                <span className="ml-3 text-[#1D2129]">{newHomeworkDate || '-'}</span>
+                                            </div>
+                                            <div className="flex min-h-[24px] items-start">
+                                                <span className="w-[120px] shrink-0 text-right font-medium text-[#4E5969]">科目：</span>
+                                                <span className="ml-3 text-[#1D2129]">{newHomeworkSubject || '-'}</span>
+                                            </div>
+                                            <div className="flex min-h-[24px] items-start">
+                                                <span className="w-[120px] shrink-0 text-right font-medium text-[#4E5969]">班级：</span>
+                                                <span className="ml-3 text-[#1D2129]">{newHomeworkClasses.join('、') || '-'}</span>
+                                            </div>
+                                            <div className="flex min-h-[24px] items-start">
+                                                <span className="w-[120px] shrink-0 text-right font-medium text-[#4E5969]">作业名称：</span>
+                                                <span className="ml-3 text-[#1D2129]">{newHomeworkName || '-'}</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-4">
+                                            <label className="flex min-h-[32px] items-center">
+                                                <span className="w-[120px] shrink-0 text-right font-medium text-[#1D2129]"><span className="text-[#F53F3F] mr-1">*</span>作业日期：</span>
+                                                <input
+                                                    type="date"
+                                                    value={newHomeworkDate}
+                                                    onChange={(event) => setNewHomeworkDate(event.target.value)}
+                                                    className="ml-3 h-8 w-[417px] rounded border border-[#E5E6EB] bg-white px-2 text-sm font-normal text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                                />
+                                            </label>
+                                            <label className="flex min-h-[32px] items-center">
+                                                <span className="w-[120px] shrink-0 text-right font-medium text-[#1D2129]"><span className="text-[#F53F3F] mr-1">*</span>科目：</span>
+                                                <select
+                                                    value={newHomeworkSubject}
+                                                    onChange={(event) => setNewHomeworkSubject(event.target.value)}
+                                                    className={`ml-3 h-8 w-[417px] rounded border border-[#E5E6EB] bg-white px-2 text-sm font-normal outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all ${newHomeworkSubject ? 'text-[#1D2129]' : 'text-[#86909C]'}`}
+                                                >
+                                                    <option value="" hidden disabled>请选择科目</option>
+                                                    {gradeSubjectOptions.map(subject => <option key={subject} className="text-[#1D2129]">{subject}</option>)}
+                                                </select>
+                                            </label>
+                                            <div className="flex items-start min-h-[32px]">
+                                                <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0">
+                                                    <span className="text-[#F53F3F] mr-1">*</span>班级：
+                                                </span>
+                                                <div className="min-w-0 flex-1 rounded border border-[#E5E6EB] bg-white px-3 py-2 transition-all hover:border-[#165DFF]">
+                                                    <div className="space-y-2">
+                                                        {gradeLevelOptions.map(level => (
+                                                            <div key={level} className="grid grid-cols-[112px_minmax(0,1fr)] gap-2">
+                                                                <div className="flex h-7 items-center whitespace-nowrap text-[13px] font-medium text-[#1D2129]">
+                                                                    {formatGradeLevelLabel(level)}
+                                                                </div>
+                                                                <div className="flex min-w-0 flex-wrap gap-1.5">
+                                                                    {getClassOptionsByLevel(level).map(className => {
+                                                                        const selected = newHomeworkClasses.includes(className);
+                                                                        return (
+                                                                            <button
+                                                                                key={className}
+                                                                                type="button"
+                                                                                onClick={() => handleToggleHomeworkClass(className)}
+                                                                                className={`flex h-7 items-center rounded px-2 text-[13px] transition-all ${selected ? 'bg-[#165DFF] text-white' : 'bg-[#F7F8FA] text-[#4E5969] hover:bg-[#E8F3FF] hover:text-[#165DFF]'}`}
+                                                                                aria-pressed={selected}
+                                                                            >
+                                                                                {className}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <label className="flex min-h-[32px] items-center">
+                                                <span className="w-[120px] shrink-0 text-right font-medium text-[#1D2129]">作业名称：</span>
+                                                <input
+                                                    value={newHomeworkName}
+                                                    onChange={(event) => setNewHomeworkName(event.target.value)}
+                                                    placeholder="例如：阅读理解"
+                                                    className="ml-3 h-8 w-[417px] rounded border border-[#E5E6EB] bg-white px-2 text-sm font-normal text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                                />
+                                            </label>
+                                        </div>
+                                    )}
                                 </section>
 
                                 {homeworkPageMode === 'view' && (
@@ -2650,79 +2812,142 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     </section>
                                 )}
 
-                                <section className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-5 shadow-[0_4px_10px_rgba(0,0,0,0.02)]">
-                                    <div className="flex items-center justify-between h-8 mb-5">
-                                        <div className="flex items-center h-6">
-                                            <div className="h-[18px] w-[5px] bg-[#165DFF] rounded-[1px]" />
-                                            <h3 className="ml-2 m-0 text-base font-semibold leading-none text-[#1D2129]">作业完成情况</h3>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-[12px] text-[#4E5969]">
-                                            <span>录入进度：{completedHomeworkStudentCount}/{newHomeworkStudents.length}名学生</span>
-                                            <div className="h-2 w-[220px] overflow-hidden rounded-full bg-[#F2F3F5]">
-                                                <div className="h-full rounded-full bg-[#165DFF] transition-all" style={{ width: `${homeworkProgressPercent}%` }} />
-                                            </div>
-                                        </div>
+                                <section className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-5 shadow-[0_4px_10px_rgba(0,0,0,0.02)] relative min-h-[274px]">
+                                    <div className="absolute left-5 top-5 flex items-center h-6">
+                                        <div className="h-[18px] w-[5px] bg-[#165DFF] rounded-[1px]" />
+                                        <h3 className="ml-2 m-0 text-base font-semibold leading-none text-[#1D2129]">作业完成情况</h3>
                                     </div>
 
                                     {homeworkPageMode !== 'view' && (
-                                        <div className="mb-4 flex min-w-[520px] items-center">
-                                            <span className="w-[120px] shrink-0 text-right text-sm font-medium text-[#1D2129]">快捷操作：</span>
-                                            <button
-                                                type="button"
-                                                onClick={handleFillHomeworkStudents}
-                                                className="ml-3 h-8 rounded border-0 bg-[#165DFF] px-4 text-sm font-normal text-white transition-colors hover:bg-[#4080FF] active:bg-[#0E42D2] focus:outline-none"
-                                            >
-                                                填充本班学生姓名
-                                            </button>
-                                            <select
-                                                value={homeworkBatchStatus}
-                                                onChange={(event) => setHomeworkBatchStatus(event.target.value)}
-                                                className="ml-3 h-8 w-[160px] rounded border border-[#E5E6EB] bg-white px-2 text-sm text-[#1D2129] outline-none focus:border-[#165DFF]"
-                                            >
-                                                <option value="" hidden disabled>选择完成情况</option>
-                                                {homeworkStatusOptions.map(status => <option key={status}>{status}</option>)}
-                                            </select>
-                                            <button
-                                                type="button"
-                                                onClick={handleBatchSetHomeworkStatus}
-                                                className="ml-2 h-8 rounded border border-[#E5E6EB] bg-white px-4 text-sm font-normal text-[#4E5969] transition-colors hover:border-[#165DFF] hover:text-[#165DFF] focus:outline-none"
-                                            >
-                                                批量设置
-                                            </button>
+                                        <div className="absolute left-5 top-[60px] flex min-h-8 w-3/4 max-w-[1280px] items-start rounded border border-[#BEDAFF] bg-[#E8F3FF] px-3 py-1.5 text-[13px] leading-5 text-[#4E5969]">
+                                            <Info size={14} className="mr-2 mt-[3px] shrink-0 text-[#165DFF]" />
+                                            <ol className="m-0 list-none p-0">
+                                                <li>1、可以从 Excel 直接复制粘贴学生姓名和完成情况</li>
+                                                <li>2、可以手动填写表格，并批量设置作业完成情况</li>
+                                            </ol>
                                         </div>
                                     )}
 
-                                    <div className="overflow-x-auto">
-                                        {newHomeworkStudents.length === 0 ? (
-                                            <div className="ml-[132px] flex h-24 w-[420px] items-center justify-center rounded border border-[#E5E6EB] bg-white text-sm text-[#86909C]">请选择班级后录入作业完成情况</div>
+                                    {newHomeworkClasses.length > 0 && (
+                                        <div className={`absolute left-5 right-5 ${homeworkPageMode === 'view' ? 'top-[60px]' : 'top-[132px]'} flex items-center`}>
+                                            <span className="w-[120px] shrink-0 text-right text-sm font-medium text-[#1D2129]">录入进度：</span>
+                                            <div className="ml-3 h-2 w-[420px] shrink-0 overflow-hidden rounded-full bg-[#F2F3F5]">
+                                                <div
+                                                    className="h-full rounded-full bg-[#165DFF] transition-all"
+                                                    style={{ width: `${homeworkProgressPercent}%` }}
+                                                />
+                                            </div>
+                                            <span className="ml-3 shrink-0 text-[12px] font-medium text-[#4E5969]">
+                                                {completedHomeworkStudentCount}/{totalHomeworkStudentCount}名学生
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className={`${homeworkPageMode === 'view' ? 'pt-[92px]' : newHomeworkClasses.length > 0 ? 'pt-[172px]' : 'pt-[144px]'} pr-0 pb-8 overflow-x-auto overflow-y-visible`}>
+                                        {newHomeworkClasses.length > 0 && (
+                                            <div className="mb-4 ml-[132px] max-w-[calc(100%-132px)] overflow-x-auto custom-scrollbar">
+                                                <div className="flex w-max min-w-full items-center gap-2 rounded border border-[#E5E6EB] bg-[#F7F8FA] p-1">
+                                                    {newHomeworkClasses.map(className => {
+                                                        const active = activeHomeworkClassSheet === className;
+                                                        const progress = getHomeworkClassProgress(className);
+                                                        return (
+                                                            <button
+                                                                key={className}
+                                                                type="button"
+                                                                onClick={() => handleSwitchHomeworkClassSheet(className)}
+                                                                className={`h-[46px] min-w-[124px] rounded px-3 text-left text-sm transition-colors duration-150 ${active ? 'bg-[#165DFF] text-white shadow-[0_2px_6px_rgba(22,93,255,0.18)]' : 'bg-transparent text-[#4E5969] hover:bg-white hover:text-[#165DFF]'}`}
+                                                            >
+                                                                <div className="whitespace-nowrap font-medium leading-5">{className}</div>
+                                                                <div className={`mt-0.5 whitespace-nowrap text-[12px] leading-4 ${active ? 'text-white/85' : progress.isComplete ? 'text-[#00B42A]' : 'text-[#FF7D00]'}`}>
+                                                                    {progress.isComplete ? '已完成' : '未完成'} {progress.completed}/{progress.total}
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {homeworkPageMode !== 'view' && activeHomeworkClassSheet && (
+                                            <div className="mb-4 flex min-w-[420px] items-center">
+                                                <span className="w-[120px] shrink-0 text-right text-sm font-medium text-[#1D2129]">快捷操作：</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleFillHomeworkStudents}
+                                                    className="ml-3 h-8 rounded border-0 bg-[#165DFF] px-4 text-sm font-normal text-white transition-colors hover:bg-[#4080FF] active:bg-[#0E42D2] focus:outline-none"
+                                                >
+                                                    填充本班学生姓名
+                                                </button>
+                                            </div>
+                                        )}
+                                        {!activeHomeworkClassSheet ? (
+                                            <div className="ml-[132px] flex h-24 w-[420px] items-center justify-center border border-[#E5E6EB] bg-white text-sm font-normal text-[#86909C] rounded">请选择班级</div>
                                         ) : (
-                                            <table className="ml-[132px] border-collapse text-center text-sm font-normal text-[#4E5969] border border-[#E5E6EB]">
+                                            <table className="ml-[132px] border-collapse text-center text-sm font-normal text-[#4E5969] border border-[#E5E6EB] rounded">
                                                 <thead>
                                                     <tr className="bg-[#F7F8FA] text-[#1D2129]">
                                                         <th className="h-12 w-[60px] whitespace-nowrap border border-[#E5E6EB] px-2 text-[#86909C] font-semibold bg-[#F7F8FA]">序号</th>
                                                         <th className="h-12 w-[120px] border border-[#E5E6EB] px-2 font-semibold bg-[#F7F8FA]">姓名</th>
-                                                        <th className="h-12 w-[180px] border border-[#E5E6EB] px-2 font-semibold bg-[#F7F8FA]">作业完成情况</th>
+                                                        <th className="h-16 w-[168px] border border-[#E5E6EB] px-2 font-semibold bg-[#F7F8FA]">
+                                                            <div className="flex flex-col items-center gap-1">
+                                                                <div className="text-[#1D2129]">作业完成情况</div>
+                                                                {homeworkPageMode !== 'view' && (
+                                                                    <div className="flex h-6 items-center gap-1 mt-1">
+                                                                        <div className="group relative w-[86px]">
+                                                                            <select
+                                                                                value={homeworkColumnFillStatus}
+                                                                                onChange={(event) => setHomeworkColumnFillStatus(event.target.value)}
+                                                                                className={`h-6 w-full appearance-none rounded border border-[#E5E6EB] py-0 pl-1 pr-5 text-[12px] font-normal outline-none focus:border-[#165DFF] ${homeworkColumnFillStatus ? getHomeworkStatusColorClass(homeworkColumnFillStatus) : 'bg-white text-[#86909C]'}`}
+                                                                            >
+                                                                                <option value="" hidden disabled>等级</option>
+                                                                                {homeworkStatusOptions.map(status => <option key={status} value={status} className="text-[#1D2129]">{status}</option>)}
+                                                                            </select>
+                                                                            <ChevronDown size={12} className={`pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[#86909C] ${homeworkColumnFillStatus ? 'group-hover:hidden group-focus-within:hidden' : ''}`} />
+                                                                            {homeworkColumnFillStatus && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onMouseDown={(event) => event.preventDefault()}
+                                                                                    onClick={() => setHomeworkColumnFillStatus('')}
+                                                                                    className="absolute right-1 top-1/2 hidden h-3.5 w-3.5 -translate-y-1/2 items-center justify-center rounded-full text-[12px] leading-none text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#4E5969] group-hover:flex group-focus-within:flex"
+                                                                                    aria-label="清除作业完成情况批量设置等级"
+                                                                                >
+                                                                                    ×
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={handleBatchSetHomeworkStatus}
+                                                                            className="h-6 w-[68px] rounded border border-[#E5E6EB] bg-white text-[12px] text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-all"
+                                                                        >
+                                                                            批量设置
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {newHomeworkStudents.map((student, index) => (
                                                         <tr key={student.id}>
                                                             <td className="h-8 w-[60px] whitespace-nowrap border border-[#E5E6EB] bg-[#F7F8FA] px-2 text-[#86909C]">{index + 1}</td>
-                                                            <td className="h-8 w-[120px] border border-[#E5E6EB] bg-white px-2 text-[#1D2129]">{student.name}</td>
-                                                            <td className={`h-8 w-[180px] border border-[#E5E6EB] p-0 ${getHomeworkStatusColorClass(student.status)}`}>
-                                                                {homeworkPageMode === 'view' ? (
-                                                                    <span>{student.status || '-'}</span>
-                                                                ) : (
-                                                                    <select
-                                                                        value={student.status}
-                                                                        onChange={(event) => handleChangeHomeworkStatus(student.id, event.target.value)}
-                                                                        className={`h-8 w-full border-0 px-2 text-center text-sm outline-none ${getHomeworkStatusColorClass(student.status)}`}
-                                                                        aria-label={`${student.name}作业完成情况`}
-                                                                    >
-                                                                        <option value="">请选择</option>
-                                                                        {homeworkStatusOptions.map(status => <option key={status}>{status}</option>)}
-                                                                    </select>
-                                                                )}
+                                                            <td className="h-8 w-[120px] border border-[#E5E6EB] bg-white p-0">
+                                                                <input
+                                                                    value={student.name}
+                                                                    onChange={(event) => handleChangeHomeworkName(student.id, event.target.value)}
+                                                                    readOnly={homeworkPageMode === 'view'}
+                                                                    className="h-[32px] w-[120px] border-0 bg-transparent px-[6px] text-center text-[14px] font-normal text-[#333333] outline-none focus:bg-[#E8F3FF] focus:ring-1 focus:ring-inset focus:ring-[#165DFF]"
+                                                                    aria-label={`第${index + 1}行姓名`}
+                                                                />
+                                                            </td>
+                                                            <td className="h-[32px] w-[168px] border border-[#DADCE0] bg-white p-0">
+                                                                <input
+                                                                    value={student.status || ''}
+                                                                    onChange={(event) => handleChangeHomeworkStatus(student.id, event.target.value)}
+                                                                    readOnly={homeworkPageMode === 'view'}
+                                                                    className={`h-[32px] w-[168px] border-0 px-[6px] text-center text-[14px] font-normal outline-none focus:bg-[#E8F3FF] focus:ring-1 focus:ring-inset focus:ring-[#165DFF] ${getHomeworkStatusColorClass(student.status || '')}`}
+                                                                    aria-label={`${student.name || `第${index + 1}行`}作业完成情况`}
+                                                                />
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -2788,29 +3013,27 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         ))}
                                     </div>
 
-                                    <div className="flex flex-wrap items-center gap-3 mb-6">
-                                        <select
-                                            value={gradeTermFilter}
-                                            onChange={(event) => setGradeTermFilter(event.target.value)}
-                                            className="h-8 w-[200px] rounded border border-[#E5E6EB] bg-white px-2 text-sm font-normal text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                    <div className="pc-filter-bar mb-6 flex flex-wrap items-center gap-3">
+                                        <ArcoSelect
+                                            allowClear
+                                            showSearch
+                                            placeholder="全部学期"
+                                            value={gradeTermFilter === '全部学期' ? undefined : gradeTermFilter}
+                                            options={gradeTerms.map(term => ({ label: term, value: term }))}
+                                            onChange={(value) => setGradeTermFilter(value ? String(value) : '全部学期')}
+                                            style={{ width: 200 }}
                                             aria-label="学年学期筛选"
-                                        >
-                                            <option>全部学期</option>
-                                            {gradeTerms.map(term => (
-                                                <option key={term} className="text-[#1D2129]">{term}</option>
-                                            ))}
-                                        </select>
-                                        <select
-                                            value={gradeExamTypeFilter}
-                                            onChange={(event) => setGradeExamTypeFilter(event.target.value)}
-                                            className="h-8 w-[160px] rounded border border-[#E5E6EB] bg-white px-2 text-sm font-normal text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                        />
+                                        <ArcoSelect
+                                            allowClear
+                                            showSearch
+                                            placeholder="全部类型"
+                                            value={gradeExamTypeFilter === '全部类型' ? undefined : gradeExamTypeFilter}
+                                            options={gradeExamTypes.map(type => ({ label: type, value: type }))}
+                                            onChange={(value) => setGradeExamTypeFilter(value ? String(value) : '全部类型')}
+                                            style={{ width: 160 }}
                                             aria-label="考试类型筛选"
-                                        >
-                                            <option>全部类型</option>
-                                            {gradeExamTypes.map(type => (
-                                                <option key={type} className="text-[#1D2129]">{type}</option>
-                                            ))}
-                                        </select>
+                                        />
                                         {gradeListViewMode === 'class' && (
                                             <>
                                             <Cascader
@@ -2846,24 +3069,19 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 style={{ width: 220 }}
                                                 aria-label="科目筛选"
                                             />
-                                            <div className="relative w-[240px]">
-                                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#86909C]" />
-                                                <input
-                                                    value={gradeCreatorSearch}
-                                                    onChange={(event) => setGradeCreatorSearch(event.target.value)}
-                                                    className="h-8 w-full rounded border border-[#E5E6EB] bg-white pl-9 pr-3 text-sm font-normal text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
-                                                    placeholder="搜索创建人"
-                                                />
-                                            </div>
+                                            <Input
+                                                value={gradeCreatorSearch}
+                                                onChange={setGradeCreatorSearch}
+                                                prefix={<Search size={14} className="text-[#86909C]" />}
+                                                placeholder="搜索创建人"
+                                                allowClear
+                                                style={{ width: 240 }}
+                                                aria-label="创建人筛选"
+                                            />
                                             </>
                                         )}
-                                        <button
-                                            onClick={() => {}} 
-                                            className="h-8 rounded border-0 bg-[#165DFF] px-4 text-sm font-normal text-white hover:bg-[#4080FF] active:bg-[#0E42D2] transition-colors focus:outline-none"
-                                        >
-                                            查询
-                                        </button>
-                                        <button
+                                        <Button type="primary" onClick={() => {}}>查询</Button>
+                                        <Button
                                             onClick={() => {
                                                 setGradeTermFilter('全部学期');
                                                 setGradeExamTypeFilter('全部类型');
@@ -2871,10 +3089,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 setGradeSubjectFilters([]);
                                                 setGradeCreatorSearch('');
                                             }}
-                                            className="h-8 rounded border border-[#E5E6EB] bg-white px-4 text-sm font-normal text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-all focus:outline-none"
                                         >
                                             重置
-                                        </button>
+                                        </Button>
                                     </div>
 
                                     <div className="border-t border-[#F2F3F5] mb-5 w-full"></div>
@@ -2882,114 +3099,19 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     <div className="flex flex-col gap-4">
                                         {gradeListViewMode === 'class' && (
                                             <div className="flex items-center justify-between">
-                                                <button
-                                                    onClick={openGradeCreatePage}
-                                                    className="h-8 rounded border-0 bg-[#165DFF] px-4 text-sm font-normal text-white hover:bg-[#4080FF] active:bg-[#0E42D2] transition-colors flex items-center gap-1 focus:outline-none"
-                                                >
-                                                    <Plus size={14} />
-                                                    新建考试
-                                                </button>
+                                                <Button type="primary" onClick={openGradeCreatePage}>新建考试</Button>
                                             </div>
                                         )}
 
-                                        <div className="overflow-x-auto border border-[#E5E6EB] rounded">
-                                            {gradeListViewMode === 'class' ? (
-                                            <table className="w-full border-collapse text-left text-sm font-normal text-[#4E5969]">
-                                                <thead>
-                                                    <tr className="bg-[#F7F8FA] text-[#1D2129]">
-                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[160px]">学年-学期</th>
-                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[120px]">考试类型</th>
-                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[200px]">科目</th>
-                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[140px]">班级</th>
-                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[100px]">创建人</th>
-                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[120px]">操作</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {filteredGradeExamRows.map(row => (
-                                                        <tr key={row.id} className="hover:bg-[#F2F3F5] transition-colors border-b border-[#F2F3F5] last:border-b-0">
-                                                            <td className="h-12 px-4 text-[#1D2129]">{row.term}</td>
-                                                            <td className="h-12 px-4">
-                                                                <span className="px-2 py-0.5 rounded text-xs font-normal bg-[#E8F3FF] text-[#165DFF]">
-                                                                    {row.type}
-                                                                </span>
-                                                            </td>
-                                                            <td className="h-12 px-4 py-1.5">
-                                                                <div className="flex flex-wrap gap-1.5">
-                                                                    {row.subjects.map(subject => (
-                                                                        <span key={subject} className="h-6 rounded-full px-3 border border-[#E5E6EB] bg-white text-[#4E5969] text-xs flex items-center justify-center font-normal">
-                                                                            {subject}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </td>
-                                                            <td className="h-12 px-4 text-[#1D2129]">{row.className}</td>
-                                                            <td className="h-12 px-4 text-[#4E5969]">{row.creator}</td>
-                                                            <td className="h-12 px-4">
-                                                                <div className="flex justify-start gap-4">
-                                                                    <button
-                                                                        onClick={() => handleViewGradeExam(row)}
-                                                                        className="text-[#165DFF] hover:text-[#4080FF] active:text-[#0E42D2] text-sm font-normal flex items-center gap-1 focus:outline-none"
-                                                                    >
-                                                                        <Eye size={14} /> 查看
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleEditGradeExam(row)}
-                                                                        className="text-[#165DFF] hover:text-[#4080FF] active:text-[#0E42D2] text-sm font-normal flex items-center gap-1 focus:outline-none"
-                                                                    >
-                                                                        <PenTool size={14} /> 编辑
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                    {filteredGradeExamRows.length === 0 && (
-                                                        <tr>
-                                                            <td className="h-28 text-center text-sm font-normal text-[#86909C] border-b border-[#F2F3F5]" colSpan={6}>
-                                                                暂无符合条件的考试记录
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                            ) : (
-                                            <table className="w-full border-collapse text-left text-sm font-normal text-[#4E5969]">
-                                                <thead>
-                                                    <tr className="bg-[#F7F8FA] text-[#1D2129]">
-                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[220px]">学年-学期</th>
-                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[160px]">考试类型</th>
-                                                        <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[120px]">操作</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {gradeExamAggregateRows.map(row => (
-                                                        <tr key={row.id} className="hover:bg-[#F2F3F5] transition-colors border-b border-[#F2F3F5] last:border-b-0">
-                                                            <td className="h-12 px-4 text-[#1D2129]">{row.term}</td>
-                                                            <td className="h-12 px-4">
-                                                                <span className="px-2 py-0.5 rounded text-xs font-normal bg-[#E8F3FF] text-[#165DFF]">
-                                                                    {row.type}
-                                                                </span>
-                                                            </td>
-                                                            <td className="h-12 px-4">
-                                                                <button
-                                                                    onClick={() => handleViewGradeExamAggregate(row)}
-                                                                    className="text-[#165DFF] hover:text-[#4080FF] active:text-[#0E42D2] text-sm font-normal flex items-center gap-1 focus:outline-none"
-                                                                >
-                                                                    <Eye size={14} /> 查看
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                    {gradeExamAggregateRows.length === 0 && (
-                                                        <tr>
-                                                            <td className="h-28 text-center text-sm font-normal text-[#86909C] border-b border-[#F2F3F5]" colSpan={3}>
-                                                                暂无符合条件的考试记录
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                            )}
+                                        <div className="overflow-x-auto">
+                                            <Table
+                                                rowKey="id"
+                                                columns={gradeListViewMode === 'class' ? gradeClassTableColumns : gradeExamAggregateTableColumns}
+                                                data={gradeListViewMode === 'class' ? filteredGradeExamRows : gradeExamAggregateRows}
+                                                pagination={false}
+                                                border={false}
+                                                noDataElement="暂无符合条件的考试记录"
+                                            />
                                         </div>
                                     </div>
                                 </div>
