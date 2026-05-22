@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import {
+    Calendar,
     ChevronLeft,
     ClipboardList,
     Info,
@@ -16,6 +17,7 @@ import {
     leaderReportPeriods,
     rate,
     type LeaderReportClassCoverage,
+    type LeaderReportDateRange,
     type LeaderReportGradeCoverage,
     type LeaderReportFiveEducationStat,
     type LeaderReportIndicatorGroupUsage,
@@ -306,8 +308,68 @@ const formatMinusScore = (value: number) => value === 0 ? '0' : `-${value}`;
 const formatNetScore = (value: number) => value > 0 ? `+${value}` : `${value}`;
 const netScoreTone = (value: number) => value > 0 ? 'text-emerald-600' : value < 0 ? 'text-rose-600' : 'text-slate-500';
 
+const toDateInputValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const getTodayValue = () => toDateInputValue(new Date());
+
+const getDateRangeTime = (dateValue: string) => {
+    const time = new Date(`${dateValue}T00:00:00`).getTime();
+    return Number.isFinite(time) ? time : NaN;
+};
+
+const getPresetDateRange = (period: Exclude<LeaderReportPeriod, 'custom'>): LeaderReportDateRange => {
+    const today = new Date();
+    const endDate = toDateInputValue(today);
+    const start = new Date(today);
+
+    if (period === 'today') return { startDate: endDate, endDate };
+    if (period === 'week') {
+        const day = today.getDay() || 7;
+        start.setDate(today.getDate() - day + 1);
+        return { startDate: toDateInputValue(start), endDate };
+    }
+    if (period === 'month') {
+        start.setDate(1);
+        return { startDate: toDateInputValue(start), endDate };
+    }
+
+    const month = today.getMonth();
+    const termStart = month >= 7
+        ? new Date(today.getFullYear(), 8, 1)
+        : month <= 1
+            ? new Date(today.getFullYear() - 1, 8, 1)
+            : new Date(today.getFullYear(), 1, 1);
+    return { startDate: toDateInputValue(termStart), endDate };
+};
+
+const getCustomRangeCompactLabel = (range: LeaderReportDateRange | null) => {
+    if (!range?.startDate || !range.endDate) return '自定义';
+    const format = (value: string) => {
+        const [, month, day] = value.split('-');
+        return `${Number(month)}/${Number(day)}`;
+    };
+    return `${format(range.startDate)}-${format(range.endDate)}`;
+};
+
+const getDateRangeError = (range: LeaderReportDateRange) => {
+    if (!range.startDate || !range.endDate) return '请选择开始日期和结束日期';
+    const startTime = getDateRangeTime(range.startDate);
+    const endTime = getDateRangeTime(range.endDate);
+    const todayTime = getDateRangeTime(getTodayValue());
+    if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) return '日期格式不正确';
+    if (startTime > endTime) return '开始日期不能晚于结束日期';
+    if (endTime > todayTime) return '不能选择未来日期';
+    return '';
+};
+
 const getIndicatorCount = (item: LeaderReportIndicatorThirdUsage, period: LeaderReportPeriod) => {
     if (period === 'today') return Math.round(item.weekCount * 0.18);
+    if (period === 'custom') return item.weekCount;
     if (period === 'week') return item.weekCount;
     if (period === 'month') return item.monthCount;
     return item.termCount;
@@ -1911,14 +1973,22 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
     const [showClassEvaluationRecordsSheet, setShowClassEvaluationRecordsSheet] = useState(false);
     const [showEvaluationRecordsHelp, setShowEvaluationRecordsHelp] = useState(false);
     const [isFilterPinned, setIsFilterPinned] = useState(false);
+    const [showCustomDateSheet, setShowCustomDateSheet] = useState(false);
+    const [draftDateRange, setDraftDateRange] = useState<LeaderReportDateRange>(() => getPresetDateRange('week'));
+    const [confirmedDateRange, setConfirmedDateRange] = useState<LeaderReportDateRange | null>(null);
     const [snapshot, setSnapshot] = useState<LeaderReportSnapshot | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const dateRangeError = getDateRangeError(draftDateRange);
+    const periodQuery = activePeriod === 'custom' && confirmedDateRange
+        ? { period: 'custom' as const, ...confirmedDateRange }
+        : { period: activePeriod === 'custom' ? 'week' as const : activePeriod };
+    const customCompactLabel = getCustomRangeCompactLabel(confirmedDateRange);
 
     useEffect(() => {
         let disposed = false;
         setIsLoading(true);
 
-        getLeaderReportSnapshot(activePeriod)
+        getLeaderReportSnapshot(periodQuery)
             .then(data => {
                 if (disposed) return;
                 setSnapshot(data);
@@ -1940,7 +2010,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
         return () => {
             disposed = true;
         };
-    }, [activePeriod]);
+    }, [periodQuery.period, 'startDate' in periodQuery ? periodQuery.startDate : '', 'endDate' in periodQuery ? periodQuery.endDate : '']);
 
     const visibleRanking = snapshot ? (rankingTab === 'active' ? snapshot.activeRanking : snapshot.lowRanking) : [];
     const fullRanking = snapshot ? (fullRankingType === 'active' ? snapshot.activeRanking : snapshot.lowRanking) : [];
@@ -1971,6 +2041,19 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
         const nextPinned = event.currentTarget.scrollTop > 12;
         setIsFilterPinned(current => (current === nextPinned ? current : nextPinned));
     }, []);
+    const handlePresetPeriodChange = (period: Exclude<LeaderReportPeriod, 'custom'>) => {
+        setActivePeriod(period);
+    };
+    const openCustomDateSheet = () => {
+        setDraftDateRange(confirmedDateRange ?? getPresetDateRange(activePeriod === 'custom' ? 'week' : activePeriod));
+        setShowCustomDateSheet(true);
+    };
+    const applyCustomDateRange = () => {
+        if (dateRangeError) return;
+        setConfirmedDateRange(draftDateRange);
+        setActivePeriod('custom');
+        setShowCustomDateSheet(false);
+    };
 
     return (
         <div className="relative flex h-full min-h-full flex-col overflow-hidden bg-[#eef7f3] text-slate-900">
@@ -1989,7 +2072,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                 )}
                 <div className={`sticky top-0 z-50 -mx-4 px-4 transition-all duration-300 ease-out ${isFilterPinned
                     ? 'h-[108px] bg-white pb-0 pt-0 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.46)]'
-                    : 'h-[148px] bg-transparent pb-0 pt-4'}`}
+                    : 'h-[202px] bg-transparent pb-0 pt-4'}`}
                 >
                     {/* 完整筛选：首屏保留两层完整信息，滚动后收起 */}
                     <div className={`space-y-3 transition-all duration-300 ease-out ${isFilterPinned ? 'pointer-events-none -translate-y-4 scale-[0.94] opacity-0 blur-[2px]' : 'translate-y-0 scale-100 opacity-100 blur-0'}`}>
@@ -2021,7 +2104,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                                 {leaderReportPeriods.map(period => (
                                     <button
                                         key={period.key}
-                                        onClick={() => setActivePeriod(period.key)}
+                                        onClick={() => handlePresetPeriodChange(period.key)}
                                         className={`rounded-[16px] border text-[14px] font-semibold transition-all active:scale-95 ${isFilterPinned ? 'min-h-[34px]' : 'min-h-[38px]'} ${activePeriod === period.key
                                             ? 'border-transparent bg-emerald-500 text-white shadow-sm'
                                             : 'border-transparent bg-emerald-50/70 text-emerald-800 shadow-[0_4px_14px_-12px_rgba(15,23,42,0.45)] active:bg-emerald-100'}`}
@@ -2030,12 +2113,32 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                                     </button>
                                 ))}
                             </div>
+                            <button
+                                type="button"
+                                onClick={openCustomDateSheet}
+                                aria-label="打开自定义时间段选择"
+                                className={`mt-2 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-2xl border px-3.5 text-left transition-all active:scale-[0.98] ${activePeriod === 'custom'
+                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 shadow-[0_10px_24px_-18px_rgba(5,150,105,0.8)]'
+                                    : 'border-slate-100 bg-slate-50/80 text-slate-700 active:bg-slate-100'}`}
+                            >
+                                <span className="flex min-w-0 items-center gap-2">
+                                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${activePeriod === 'custom' ? 'bg-emerald-500 text-white' : 'bg-white text-emerald-600'}`}>
+                                        <Calendar className="h-4 w-4" />
+                                    </span>
+                                    <span className="block text-[14px] font-semibold">自定义时间段</span>
+                                </span>
+                                {activePeriod === 'custom' && (
+                                    <span className="shrink-0 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                                        {customCompactLabel}
+                                    </span>
+                                )}
+                            </button>
                         </section>
                     </div>
 
                     {/* 紧凑筛选：吸顶后压缩成单条胶囊，类似货柜机入口卡片收束后的操作区 */}
                     <div className={`pointer-events-none absolute inset-x-0 top-0 transition-all duration-300 ease-out ${isFilterPinned ? 'opacity-100 translate-y-0 scale-100 blur-0' : 'opacity-0 translate-y-4 scale-[1.04] blur-[2px]'}`}>
-                        <div className="pointer-events-auto flex flex-col gap-1.5 rounded-b-none border-b border-slate-100/80 bg-white px-4 pb-2 pt-3 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.45)]">
+                        <div className={`${isFilterPinned ? 'pointer-events-auto' : 'pointer-events-none'} flex flex-col gap-1.5 rounded-b-none border-b border-slate-100/80 bg-white px-4 pb-2 pt-3 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.45)]`}>
                             <div className="grid h-12 grid-cols-2 rounded-[22px] bg-emerald-50/90 p-1">
                                 <button
                                     type="button"
@@ -2054,18 +2157,28 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                                     事件分布
                                 </button>
                             </div>
-                            <div className="grid h-9 min-w-0 grid-cols-4 gap-1 rounded-[18px] bg-white p-0.5">
-                                {leaderReportPeriods.map(period => (
-                                    <button
-                                        key={period.key}
-                                        onClick={() => setActivePeriod(period.key)}
-                                        className={`rounded-[14px] text-[14px] font-semibold transition-all active:scale-95 ${activePeriod === period.key
-                                            ? 'bg-emerald-500 text-white shadow-sm'
-                                            : 'text-emerald-800 active:bg-emerald-50'}`}
-                                    >
-                                        {period.label.replace('本学期', '学期')}
-                                    </button>
-                                ))}
+                            <div className="flex min-w-0 gap-1">
+                                <div className="grid h-9 min-w-0 grid-cols-4 gap-1 rounded-[18px] bg-white p-0.5 flex-1">
+                                    {leaderReportPeriods.map(period => (
+                                        <button
+                                            key={period.key}
+                                            onClick={() => handlePresetPeriodChange(period.key)}
+                                            className={`rounded-[14px] text-[14px] font-semibold transition-all active:scale-95 ${activePeriod === period.key
+                                                ? 'bg-emerald-500 text-white shadow-sm'
+                                                : 'text-emerald-800 active:bg-emerald-50'}`}
+                                        >
+                                            {period.label.replace('本学期', '学期')}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={openCustomDateSheet}
+                                    aria-label="打开自定义时间段选择"
+                                    className={`h-9 min-w-[70px] shrink-0 rounded-[18px] px-2 text-[13px] font-semibold transition-all active:scale-95 ${activePeriod === 'custom' ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white text-emerald-800 active:bg-emerald-50'}`}
+                                >
+                                    {activePeriod === 'custom' ? customCompactLabel : '自定义'}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -2226,6 +2339,75 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                     </section>
                 )}
             </div>
+
+            {showCustomDateSheet && (
+                <div className="absolute inset-0 z-[114] flex items-end bg-black/40 backdrop-blur-sm" onClick={() => setShowCustomDateSheet(false)}>
+                    <div className="flex max-h-[82%] w-full flex-col rounded-t-[32px] bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4">
+                            <h3 className="text-lg font-semibold text-slate-900">选择统计时间</h3>
+                            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-500 active:bg-slate-100" onClick={() => setShowCustomDateSheet(false)}>
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-5 py-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <label className="block">
+                                    <span className="mb-1.5 block text-xs font-semibold text-slate-500">开始日期</span>
+                                    <input
+                                        type="date"
+                                        value={draftDateRange.startDate}
+                                        max={getTodayValue()}
+                                        onChange={(event) => setDraftDateRange(current => ({ ...current, startDate: event.target.value }))}
+                                        className="min-h-[44px] w-full rounded-2xl border border-slate-100 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none transition-colors focus:border-emerald-300 focus:bg-white"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <span className="mb-1.5 block text-xs font-semibold text-slate-500">结束日期</span>
+                                    <input
+                                        type="date"
+                                        value={draftDateRange.endDate}
+                                        max={getTodayValue()}
+                                        onChange={(event) => setDraftDateRange(current => ({ ...current, endDate: event.target.value }))}
+                                        className="min-h-[44px] w-full rounded-2xl border border-slate-100 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none transition-colors focus:border-emerald-300 focus:bg-white"
+                                    />
+                                </label>
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-3 gap-2">
+                                {leaderReportPeriods.slice(0, 3).map(period => {
+                                    const range = getPresetDateRange(period.key);
+                                    return (
+                                        <button
+                                            key={period.key}
+                                            type="button"
+                                            onClick={() => setDraftDateRange(range)}
+                                            className="min-h-[40px] rounded-2xl bg-slate-100 px-2 text-xs font-semibold text-slate-600 transition-all active:scale-95 active:bg-slate-200"
+                                        >
+                                            设为{period.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {dateRangeError && (
+                                <div className="mt-3 rounded-2xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600">
+                                    {dateRangeError}
+                                </div>
+                            )}
+                        </div>
+                        <div className="shrink-0 border-t border-slate-100 px-5 pb-6 pt-3">
+                            <button
+                                type="button"
+                                disabled={Boolean(dateRangeError)}
+                                onClick={applyCustomDateRange}
+                                className="min-h-[44px] w-full rounded-2xl bg-emerald-600 px-4 text-[15px] font-semibold text-white shadow-[0_14px_28px_-18px_rgba(5,150,105,0.9)] transition-all active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:active:scale-100"
+                            >
+                                确认使用
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {showClassCoverageSheet && selectedGrade && snapshot && (
                 <div className="absolute inset-0 z-[115] flex items-end bg-black/40 backdrop-blur-sm" onClick={() => setShowClassCoverageSheet(false)}>

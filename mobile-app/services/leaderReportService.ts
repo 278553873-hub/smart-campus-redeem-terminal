@@ -1,4 +1,13 @@
-export type LeaderReportPeriod = 'today' | 'week' | 'month' | 'term';
+export type LeaderReportPeriod = 'today' | 'week' | 'month' | 'term' | 'custom';
+
+export interface LeaderReportDateRange {
+  startDate: string;
+  endDate: string;
+}
+
+export type LeaderReportQuery =
+  | { period: Exclude<LeaderReportPeriod, 'custom'> }
+  | ({ period: 'custom' } & LeaderReportDateRange);
 
 export interface LeaderReportTeacherUsage {
   id: string;
@@ -93,14 +102,14 @@ export interface LeaderReportSnapshot {
   };
 }
 
-export const leaderReportPeriods: { key: LeaderReportPeriod; label: string }[] = [
+export const leaderReportPeriods: { key: Exclude<LeaderReportPeriod, 'custom'>; label: string }[] = [
   { key: 'today', label: '今日' },
   { key: 'week', label: '本周' },
   { key: 'month', label: '本月' },
   { key: 'term', label: '本学期' },
 ];
 
-const demoPeriodScale: Record<LeaderReportPeriod, number> = {
+const demoPeriodScale: Record<Exclude<LeaderReportPeriod, 'custom'>, number> = {
   today: 0.18,
   week: 1,
   month: 2.8,
@@ -358,6 +367,42 @@ const scaleDemoTeacher = (teacher: LeaderReportTeacherUsage, scale: number): Lea
   };
 };
 
+const getDateTime = (dateValue: string) => {
+  const time = new Date(`${dateValue}T00:00:00`).getTime();
+  return Number.isFinite(time) ? time : NaN;
+};
+
+const getCustomPeriodScale = (range: LeaderReportDateRange) => {
+  const startTime = getDateTime(range.startDate);
+  const endTime = getDateTime(range.endDate);
+  if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || startTime > endTime) {
+    return demoPeriodScale.week;
+  }
+
+  const days = Math.floor((endTime - startTime) / 86400000) + 1;
+  const weekBasedScale = days / 7;
+  return Math.max(0.18, Math.min(demoPeriodScale.term, weekBasedScale));
+};
+
+const scaleDemoIndicatorUsage = (
+  groups: LeaderReportIndicatorGroupUsage[],
+  scale: number,
+): LeaderReportIndicatorGroupUsage[] => groups.map(group => ({
+  ...group,
+  children: group.children.map(second => ({
+    ...second,
+    children: second.children.map(third => {
+      const count = Math.round(third.weekCount * scale);
+      return {
+        ...third,
+        weekCount: count,
+        monthCount: count,
+        termCount: count,
+      };
+    }),
+  })),
+}));
+
 const normalizeInputSources = (sources: LeaderReportInputSource[]) => {
   const total = sources.reduce((sum, source) => sum + toSafeCount(source.percent), 0);
   if (total === 0) return sources.map(source => ({ ...source, percent: 0 }));
@@ -468,9 +513,12 @@ export const createLeaderReportSnapshot = ({
   };
 };
 
-export const getLeaderReportSnapshot = async (period: LeaderReportPeriod) => {
+export const getLeaderReportSnapshot = async (query: LeaderReportQuery) => {
   // 后续接入真实后端时，只需要在这里替换为 fetch/API client，并继续返回 LeaderReportSnapshot。
-  const scale = demoPeriodScale[period];
+  const { period } = query;
+  const scale = period === 'custom' ? getCustomPeriodScale(query) : demoPeriodScale[period];
+  const indicatorUsage = period === 'custom' ? scaleDemoIndicatorUsage(demoIndicatorUsage, scale) : demoIndicatorUsage;
+
   return createLeaderReportSnapshot({
     period,
     teachers: demoTeacherUsageBase.map(teacher => scaleDemoTeacher(teacher, scale)),
@@ -503,6 +551,6 @@ export const getLeaderReportSnapshot = async (period: LeaderReportPeriod) => {
         netScore: plusScore - minusScore,
       };
     }),
-    indicatorUsage: demoIndicatorUsage,
+    indicatorUsage,
   });
 };

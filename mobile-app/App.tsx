@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ClassListView from './views/ClassListView';
@@ -37,6 +37,8 @@ import {
     Smartphone as SmartphoneLucide, FileText as FileTextLucide, BookOpen as BookOpenLucide, User as UserLucideComponent, MoreHorizontal as MoreHorizontalLucide, Activity as ActivityComponent
 } from 'lucide-react';
 
+import './styles/navigation.css';
+import TeacherFluidGlassNav from './components/TeacherFluidGlassNav';
 
 import {
     MOCK_CLASSES,
@@ -89,6 +91,58 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     // Default view is now the Log (Stream)
     const [currentView, setCurrentView] = useState<ViewState>('home_log');
     const [history, setHistory] = useState<ViewState[]>([]);
+
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [slideDirection, setSlideDirection] = useState<'left' | 'right' | 'none'>('none');
+
+    // 测量底栏物理尺寸以供滑块镜头克隆层完全对齐
+    const tabbarRef = useRef<HTMLDivElement>(null);
+    const [tabbarWidth, setTabbarWidth] = useState(320);
+
+    useLayoutEffect(() => {
+        if (tabbarRef.current) {
+            setTabbarWidth(tabbarRef.current.offsetWidth);
+        }
+        const handleResize = () => {
+            if (tabbarRef.current) {
+                setTabbarWidth(tabbarRef.current.offsetWidth);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        const timer = setTimeout(() => {
+            if (tabbarRef.current) {
+                setTabbarWidth(tabbarRef.current.offsetWidth);
+            }
+        }, 50);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            clearTimeout(timer);
+        };
+    }, [currentView]);
+
+    const getActiveTabIndex = (view: ViewState): number => {
+        if (view === 'home_log' || view === 'record_input') return 0;
+        if (view === 'class_list' || view === 'class_detail' || view === 'class_report' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password') return 1;
+        if (view === 'me' || view === 'my_files') return 2;
+        return 0;
+    };
+
+    useEffect(() => {
+        const nextIndex = getActiveTabIndex(currentView);
+        if (nextIndex !== activeIndex) {
+            if (nextIndex > activeIndex) {
+                setSlideDirection('right');
+            } else if (nextIndex < activeIndex) {
+                setSlideDirection('left');
+            }
+            setActiveIndex(nextIndex);
+
+            const timer = setTimeout(() => {
+                setSlideDirection('none');
+            }, 350);
+            return () => clearTimeout(timer);
+        }
+    }, [currentView, activeIndex]);
 
     // Selection States
     const [selectedClassId, setSelectedClassId] = useState<string>('');
@@ -654,35 +708,51 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                         {/* AI Tech Tab Bar */}
                         {showTabBar && (
-                            <div className="ai-tabbar flex justify-around items-end pb-4 h-[85px] safe-area-bottom sticky bottom-0 z-50 shadow-sm">
+                            <div 
+                                ref={tabbarRef}
+                                className={`ai-tabbar-container ${slideDirection !== 'none' ? 'tabbar-jelly-active' : ''}`}
+                            >
+                                {/* 3D 物理液态玻璃渲染背景层 */}
+                                <TeacherFluidGlassNav activeIndex={activeIndex} itemCount={3} />
+
+                                {/* 顶层 HTML 按钮交互与极清字显层 (文字完全脱离 3D WebGL 折射以 100% 保障清晰度与 0 重影) */}
+                                {/* Tab 0: 记录 (ActivityIcon) */}
                                 <button
                                     onClick={() => switchTab('home_log')}
-                                    className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'home_log' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
+                                    className="tabbar-item-btn"
                                 >
-                                    <div className={`p-1.5 rounded-xl transition-all ${currentView === 'home_log' ? 'bg-indigo-50 shadow-inner' : ''}`}>
-                                        <ActivityIcon className={`w-6 h-6 ${currentView === 'home_log' ? 'fill-indigo-200' : ''}`} />
+                                    <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${activeIndex === 0 ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
+                                        <div className="tabbar-icon-wrap">
+                                            <ActivityIcon className="w-5 h-5" />
+                                        </div>
+                                        <span className="tabbar-item-label">记录</span>
                                     </div>
-                                    <span className="text-xs font-medium tracking-wider">记录</span>
                                 </button>
 
+                                {/* Tab 1: 班级 (HomeIcon) */}
                                 <button
                                     onClick={() => switchTab('class_list')}
-                                    className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'class_list' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
+                                    className="tabbar-item-btn"
                                 >
-                                    <div className={`p-1.5 rounded-xl transition-all ${currentView === 'class_list' ? 'bg-indigo-50 shadow-inner' : ''}`}>
-                                        <HomeIcon className={`w-6 h-6 ${currentView === 'class_list' ? 'fill-indigo-200' : ''}`} />
+                                    <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${activeIndex === 1 ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
+                                        <div className="tabbar-icon-wrap">
+                                            <HomeIcon className="w-5 h-5" />
+                                        </div>
+                                        <span className="tabbar-item-label">班级</span>
                                     </div>
-                                    <span className="text-xs font-medium tracking-wider">班级</span>
                                 </button>
 
+                                {/* Tab 2: 我的 (UserIcon) */}
                                 <button
                                     onClick={() => switchTab('me')}
-                                    className={`flex flex-col items-center gap-1.5 mb-1 w-16 transition-all duration-300 ${currentView === 'me' ? 'text-indigo-600 scale-110' : 'text-slate-400 active:text-indigo-400'}`}
+                                    className="tabbar-item-btn"
                                 >
-                                    <div className={`p-1.5 rounded-xl transition-all ${currentView === 'me' ? 'bg-indigo-50 shadow-inner' : ''}`}>
-                                        <UserIcon className={`w-6 h-6 ${currentView === 'me' ? 'fill-indigo-200' : ''}`} />
+                                    <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${activeIndex === 2 ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
+                                        <div className="tabbar-icon-wrap">
+                                            <UserIcon className="w-5 h-5" />
+                                        </div>
+                                        <span className="tabbar-item-label">我的</span>
                                     </div>
-                                    <span className="text-xs font-medium tracking-wider">我的</span>
                                 </button>
                             </div>
                         )}

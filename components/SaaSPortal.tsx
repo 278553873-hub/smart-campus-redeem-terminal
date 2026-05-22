@@ -57,7 +57,7 @@ const PortalSectionHeader: React.FC<PortalSectionHeaderProps> = ({ title, icon: 
 const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onLoginSuccess, onLogout, onNavigate }) => {
   const [username, setUsername] = useState('');
   const [credential, setCredential] = useState('');
-  const [loginError, setLoginError] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginTab, setLoginTab] = useState<'password' | 'code'>('password');
@@ -65,11 +65,19 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (credential === '123456') {
+    const trimmedCredential = credential.trim();
+
+    if (!trimmedCredential) {
+      setLoginError(loginTab === 'password' ? '请输入密码' : '请输入验证码');
+      setTimeout(() => setLoginError(''), 2000);
+      return;
+    }
+
+    if (loginTab === 'password' || trimmedCredential === '123456') {
       setIsLoading(true);
       setTimeout(() => {
         setIsLoading(false);
-        setLoginError(false);
+        setLoginError('');
         const trimmed = username.trim();
         const loginProfile = /[一-龥]/.test(trimmed)
           ? {
@@ -81,8 +89,8 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
       }, 800);
       return;
     }
-    setLoginError(true);
-    setTimeout(() => setLoginError(false), 2000);
+    setLoginError('验证码错误，请重试');
+    setTimeout(() => setLoginError(''), 2000);
   };
 
   const activeApps = [
@@ -294,7 +302,7 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                     type={showPassword ? 'text' : 'password'}
                     value={credential}
                     onChange={(e) => setCredential(e.target.value)}
-                    placeholder="请输入密码（演示密码：123456）"
+                    placeholder="请输入密码（演示环境任意输入）"
                     className="w-full h-[42px] pl-9 pr-10 py-2.5 bg-white border border-slate-200 rounded text-sm font-medium text-slate-800 focus:outline-none focus:border-[#2a68ff] focus:ring-1 focus:ring-[#2a68ff] transition-all"
                   />
                   <button
@@ -335,7 +343,7 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
             )}
 
             <div className="h-4 flex items-center">
-              {loginError && <span className="text-red-500 text-[11px] font-bold animate-in slide-in-from-top-1">账号或密码错误，请重试</span>}
+              {loginError && <span className="text-red-500 text-[11px] font-bold animate-in slide-in-from-top-1">{loginError}</span>}
             </div>
 
             <button

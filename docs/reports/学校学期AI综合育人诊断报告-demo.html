@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>未来实验小学 2025-2026学年上学期综合育人诊断报告</title>
+  <style>
+    :root {
+      --ink: #172b25;
+      --ink-2: #3f5b53;
+      --muted: #71847e;
+      --paper: #fbf7ec;
+      --card: rgba(255, 255, 255, 0.78);
+      --line: rgba(23, 43, 37, 0.13);
+      --green: #0d8c70;
+      --green-deep: #075a49;
+      --blue: #2d78a8;
+      --gold: #d99c2e;
+      --orange: #d76b3f;
+      --red: #bd4a4a;
+      --purple: #7059a8;
+      --shadow: 0 20px 58px rgba(30, 43, 36, 0.12);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 6%, rgba(13, 140, 112, 0.18), transparent 26rem),
+        radial-gradient(circle at 90% 0%, rgba(217, 156, 46, 0.18), transparent 25rem),
+        linear-gradient(135deg, #fbf7ec 0%, #f4efe2 52%, #edf5ef 100%);
+      font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+      line-height: 1.58;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.16;
+      background-image: linear-gradient(rgba(23,43,37,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(23,43,37,.08) 1px, transparent 1px);
+      background-size: 46px 46px;
+      mask-image: linear-gradient(to bottom, #000 0%, transparent 78%);
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    button { font: inherit; }
+    .page { width: min(1160px, calc(100vw - 40px)); margin: 0 auto; padding: 26px 0 64px; }
+
+    .toolbar {
+      position: sticky;
+      top: 14px;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+      padding: 10px 12px 10px 18px;
+      border: 1px solid rgba(255,255,255,.82);
+      border-radius: 999px;
+      background: rgba(251,247,236,.78);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 14px 40px rgba(23,43,37,.10);
+      font-family: "Avenir Next", "PingFang SC", sans-serif;
+    }
+    .toolbar strong { letter-spacing: -0.02em; }
+    .toolbar span { color: var(--muted); font-size: 13px; }
+    .toolbar .save-image {
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 14px;
+      color: white;
+      background: var(--ink);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .cover {
+      position: relative;
+      overflow: hidden;
+      min-height: 520px;
+      padding: clamp(34px, 6vw, 70px);
+      border: 1px solid rgba(255,255,255,.86);
+      border-radius: 44px;
+      background:
+        linear-gradient(120deg, rgba(255,255,255,.80), rgba(255,255,255,.34)),
+        radial-gradient(circle at 80% 18%, rgba(201,220,91,.32), transparent 22rem),
+        linear-gradient(135deg, rgba(13,140,112,.16), rgba(217,156,46,.13));
+      box-shadow: var(--shadow);
+    }
+    .cover::after {
+      content: "";
+      position: absolute;
+      right: -90px;
+      bottom: -120px;
+      width: 430px;
+      height: 430px;
+      border-radius: 999px;
+      background: repeating-conic-gradient(from 15deg, rgba(13,140,112,.20) 0deg 10deg, rgba(255,255,255,.38) 10deg 18deg);
+    }
+    .report-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(13,140,112,.22);
+      background: rgba(255,255,255,.58);
+      color: var(--green-deep);
+      font-family: "Avenir Next", "PingFang SC", sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .report-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px rgba(13,140,112,.14); }
+    .cover h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 840px;
+      margin-top: 22px;
+      font-size: clamp(42px, 6.4vw, 78px);
+      line-height: 1.02;
+      letter-spacing: -0.065em;
+      font-weight: 1000;
+    }
+    .cover-subtitle {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin-top: 22px;
+      color: var(--ink-2);
+      font-size: clamp(17px, 2vw, 22px);
+      font-weight: 700;
+    }
+    .cover-info {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 42px;
+    }
+    .info-card {
+      min-height: 110px;
+      padding: 18px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,.76);
+      background: rgba(255,255,255,.62);
+    }
+    .info-card label { display: block; color: var(--muted); font-size: 12px; font-weight: 800; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+    .info-card b { display: block; margin-top: 8px; font-size: 30px; line-height: 1; letter-spacing: -0.04em; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+    .info-card span { display: block; margin-top: 9px; color: var(--ink-2); font-size: 13px; }
+
+    .section { margin-top: 28px; }
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin: 38px 4px 16px;
+    }
+    .section-title h2 { font-size: clamp(27px, 4vw, 42px); line-height: 1.08; letter-spacing: -0.055em; font-weight: 1000; }
+    .section-title p { max-width: 520px; color: var(--ink-2); font-size: 15px; }
+
+    .grid { display: grid; gap: 16px; }
+    .two { grid-template-columns: 1.05fr .95fr; }
+    .three { grid-template-columns: repeat(3, 1fr); }
+    .four { grid-template-columns: repeat(4, 1fr); }
+    .five { grid-template-columns: repeat(5, 1fr); }
+
+    .card {
+      padding: 24px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.82);
+      background: var(--card);
+      box-shadow: 0 16px 45px rgba(23,43,37,.08);
+    }
+    .card.dark { color: #fffaf0; background: linear-gradient(135deg, #172b25, #075a49); }
+    .card-title { font-size: 22px; line-height: 1.22; letter-spacing: -0.035em; font-weight: 1000; }
+    .text { margin-top: 12px; color: var(--ink-2); font-size: 15px; }
+    .dark .text { color: rgba(255,250,240,.78); }
+
+    .kpi {
+      min-height: 150px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi::after {
+      content: attr(data-rank);
+      position: absolute;
+      right: 14px;
+      bottom: -18px;
+      color: rgba(23,43,37,.06);
+      font-size: 86px;
+      font-weight: 1000;
+      font-family: "Avenir Next", sans-serif;
+    }
+    .kpi label { color: var(--muted); font-size: 12px; font-weight: 900; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+    .kpi b { display: block; margin-top: 8px; font-size: 40px; line-height: 1; letter-spacing: -0.05em; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+    .kpi p { margin-top: 10px; color: var(--ink-2); font-size: 13px; }
+
+    .summary-main {
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .summary-main h3 { font-size: clamp(28px, 4vw, 46px); line-height: 1.12; letter-spacing: -0.06em; font-weight: 1000; }
+    .summary-main p { margin-top: 16px; color: rgba(255,250,240,.82); font-size: 18px; font-weight: 700; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .tag { padding: 7px 10px; border-radius: 999px; background: rgba(13,140,112,.10); color: var(--green-deep); font-size: 12px; font-weight: 900; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+    .dark .tag { color: #fff; background: rgba(255,255,255,.15); }
+
+    .rank-list { display: grid; gap: 10px; margin-top: 15px; }
+    .rank-item {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px;
+      border: 1px solid rgba(23,43,37,.08);
+      border-radius: 18px;
+      background: rgba(255,255,255,.58);
+    }
+    .rank-no { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #fff; background: var(--green); font-weight: 1000; font-family: "Avenir Next", sans-serif; }
+    .rank-item strong { display: block; font-size: 15px; line-height: 1.25; }
+    .rank-item span { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .rank-item b { font-size: 18px; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+
+    .dimension {
+      position: relative;
+      overflow: hidden;
+      min-height: 258px;
+      padding-top: 22px;
+    }
+    .dimension::before { content: ""; position: absolute; inset: 0 0 auto; height: 7px; background: var(--accent); }
+    .dimension-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .dimension h3 { font-size: 25px; letter-spacing: -0.045em; }
+    .score { color: var(--accent); font-size: 38px; line-height: 1; font-weight: 1000; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+    .bar { height: 10px; margin: 16px 0 12px; border-radius: 999px; background: rgba(23,43,37,.08); overflow: hidden; }
+    .bar i { display: block; height: 100%; width: var(--value); border-radius: 999px; background: var(--accent); }
+    .dimension small { color: var(--muted); font-weight: 900; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+    .dimension p { margin-top: 10px; color: var(--ink-2); font-size: 14px; }
+    .dimension .risk { margin-top: 12px; padding: 10px; border-radius: 15px; color: #8d3d20; background: rgba(215,107,63,.11); font-size: 13px; }
+
+    .table-card { padding: 0; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 16px 18px; border-bottom: 1px solid rgba(23,43,37,.10); text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; letter-spacing: .04em; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+    td { font-size: 14px; }
+    tr:last-child td { border-bottom: 0; }
+    .pill { display: inline-block; padding: 5px 9px; border-radius: 999px; color: var(--green-deep); background: rgba(13,140,112,.10); font-size: 12px; font-weight: 900; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+    .pill.warn { color: #925119; background: rgba(217,156,46,.18); }
+    .pill.red { color: #973232; background: rgba(189,74,74,.14); }
+    .pill.blue { color: #245e86; background: rgba(45,120,168,.14); }
+
+    .split-metric { display: grid; grid-template-columns: 240px 1fr; gap: 22px; align-items: center; }
+    .donut {
+      width: 222px;
+      height: 222px;
+      border-radius: 50%;
+      background: conic-gradient(var(--green) 0 46%, var(--blue) 46% 82.5%, var(--gold) 82.5% 94.7%, var(--orange) 94.7% 100%);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 0 0 17px rgba(255,255,255,.42), 0 20px 45px rgba(23,43,37,.13);
+    }
+    .donut-inner { width: 130px; height: 130px; border-radius: 50%; display: grid; place-items: center; text-align: center; background: var(--paper); }
+    .donut-inner b { display: block; font-size: 32px; line-height: 1; font-family: "Avenir Next", sans-serif; }
+    .donut-inner span { color: var(--muted); font-size: 12px; font-weight: 900; }
+    .legend { display: grid; gap: 10px; }
+    .legend-item { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: center; font-size: 14px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+    .legend-item b { font-family: "Avenir Next", sans-serif; }
+
+    .problem-card { display: flex; flex-direction: column; min-height: 285px; }
+    .problem-card .evidence { margin-top: 14px; padding: 12px; border-radius: 16px; background: rgba(23,43,37,.06); color: var(--ink-2); font-size: 13px; }
+    .problem-card .solution { margin-top: auto; padding-top: 14px; color: var(--green-deep); font-weight: 900; font-size: 14px; }
+
+    .action {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .priority { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 18px; color: #fff; background: var(--ink); font-weight: 1000; font-family: "Avenir Next", sans-serif; }
+    .action h3 { font-size: 21px; line-height: 1.2; letter-spacing: -0.035em; }
+    .action p { margin-top: 8px; color: var(--ink-2); font-size: 14px; }
+    .metrics { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .metrics span { padding: 6px 9px; border-radius: 999px; background: rgba(23,43,37,.07); color: var(--ink-2); font-size: 12px; font-weight: 800; font-family: "Avenir Next", "PingFang SC", sans-serif; }
+
+    .conclusion {
+      padding: 34px;
+      border-radius: 36px;
+      color: #fffaf0;
+      background: linear-gradient(135deg, #172b25, #075a49);
+      box-shadow: var(--shadow);
+    }
+    .conclusion h2 { max-width: 900px; font-size: clamp(26px, 4vw, 43px); line-height: 1.25; letter-spacing: -0.055em; }
+    .conclusion .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+    .conclusion .cols div { padding: 16px; border-radius: 20px; background: rgba(255,255,255,.12); }
+    .conclusion strong { display: block; font-size: 16px; }
+    .conclusion span { display: block; margin-top: 6px; color: rgba(255,250,240,.75); font-size: 13px; }
+
+    .footer { margin-top: 34px; color: var(--muted); text-align: center; font-size: 13px; }
+
+    @media (max-width: 920px) {
+      .page { width: min(100vw - 24px, 700px); padding-top: 14px; }
+      .toolbar { align-items: flex-start; flex-direction: column; border-radius: 26px; }
+      .cover-info, .two, .three, .four, .five, .split-metric, .conclusion .cols { grid-template-columns: 1fr; }
+      .donut { margin: 0 auto; }
+      .section-title { display: block; }
+      .section-title p { margin-top: 8px; }
+      .table-card { overflow-x: auto; }
+      table { min-width: 760px; }
+    }
+
+    @media print {
+      body { background: white; }
+      body::before, .toolbar { display: none; }
+      .page { width: 100%; padding: 0; }
+      .cover, .card, .conclusion { box-shadow: none; break-inside: avoid; }
+      .section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="toolbar">
+      <div><strong>未来实验小学综合育人诊断报告</strong> <span>2025-2026学年上学期</span></div>
+      <a class="save-image" href="./assets/未来实验小学-2025-2026上学期综合育人诊断报告.png" download="未来实验小学-2025-2026上学期综合育人诊断报告.png">保存长图</a>
+    </div>
+
+    <section class="cover">
+      <span class="report-badge">学期末 AI 综合分析报告</span>
+      <h1>未来实验小学综合育人诊断报告</h1>
+      <p class="cover-subtitle">2025-2026学年上学期｜基于日常行为记录、三级指标匹配、奖状识别与过程性评价数据生成</p>
+      <div class="cover-info">
+        <div class="info-card"><label>报告周期</label><b>2025.09-2026.01</b><span>覆盖完整上学期</span></div>
+        <div class="info-card"><label>有效评价记录</label><b>12,842</b><span>剔除重复与无效记录 444 条</span></div>
+        <div class="info-card"><label>覆盖学生</label><b>1,260</b><span>全校学生覆盖率 87.6%</span></div>
+        <div class="info-card"><label>覆盖教师</label><b>56</b><span>教师活跃率 82.4%</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="grid four">
+        <article class="card kpi" data-rank="01"><label>学生覆盖率</label><b>87.6%</b><p>已形成较完整的学生过程性数据基础。</p></article>
+        <article class="card kpi" data-rank="02"><label>正向事件占比</label><b>79.0%</b><p>全校整体行为表现以正向积累为主。</p></article>
+        <article class="card kpi" data-rank="03"><label>三级指标覆盖率</label><b>76.9%</b><p>仍有部分指标缺少真实场景支撑。</p></article>
+        <article class="card kpi" data-rank="04"><label>奖状识别数量</label><b>326</b><p>体育、艺术、学科竞赛成果较突出。</p></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="grid two">
+        <article class="card dark summary-main">
+          <div>
+            <h3>总体判断：学校育人基础稳定，学习与体育优势明显，美育和劳动过程证据不足。</h3>
+            <p>本学期全校学生日常表现以正向记录为主，求知、健体两个维度形成较强优势；明礼维度基础稳定；尚美、劳行两个维度不是简单“表现弱”，而是日常记录场景不足、过程证据沉淀不够。</p>
+          </div>
+          <div class="tag-row"><span class="tag">求知优势</span><span class="tag">健体特色</span><span class="tag">明礼稳定</span><span class="tag">尚美缺过程</span><span class="tag">劳行缺场景</span></div>
+        </article>
+        <article class="card">
+          <h3 class="card-title">本学期最重要的 4 个结论</h3>
+          <div class="rank-list">
+            <div class="rank-item"><span class="rank-no">1</span><div><strong>学习习惯是当前最稳定优势</strong><span>认真作业、勤奋学习、课堂专注记录最充分。</span></div><b>91分</b></div>
+            <div class="rank-item"><span class="rank-no">2</span><div><strong>体育特色已有数据支撑</strong><span>体育竞赛奖项和健体日常记录相互印证。</span></div><b>88分</b></div>
+            <div class="rank-item"><span class="rank-no">3</span><div><strong>美育成果突出但过程不足</strong><span>艺术奖项较多，日常审美与创作过程记录偏少。</span></div><b>66分</b></div>
+            <div class="rank-item"><span class="rank-no">4</span><div><strong>劳动实践需要系统补齐</strong><span>校外劳动、家庭劳动、劳动成果类记录明显不足。</span></div><b>61分</b></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>一、数据质量评估</h2>
+        <p>本报告具备学校整体趋势判断价值；对少数班级和低覆盖指标的结论，应结合实际管理情况复核。</p>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <h3 class="card-title">数据来源</h3>
+          <div class="split-metric" style="margin-top:18px;">
+            <div class="donut"><div class="donut-inner"><b>12,842</b><span>有效记录</span></div></div>
+            <div class="legend">
+              <div class="legend-item"><span class="dot" style="--c:var(--green)"></span><span>文字录入</span><b>46.0%</b></div>
+              <div class="legend-item"><span class="dot" style="--c:var(--blue)"></span><span>语音录入</span><b>36.5%</b></div>
+              <div class="legend-item"><span class="dot" style="--c:var(--gold)"></span><span>拍照/奖状识别</span><b>12.2%</b></div>
+              <div class="legend-item"><span class="dot" style="--c:var(--orange)"></span><span>文件导入</span><b>5.3%</b></div>
+            </div>
+          </div>
+        </article>
+        <article class="card">
+          <h3 class="card-title">数据风险</h3>
+          <div class="rank-list">
+            <div class="rank-item"><span class="rank-no" style="background:var(--gold)">!</span><div><strong>少数班级覆盖不足</strong><span>三年级8班、五年级10班低于同年级平均水平。</span></div><span class="pill warn">需复核</span></div>
+            <div class="rank-item"><span class="rank-no" style="background:var(--orange)">!</span><div><strong>期末集中补录</strong><span>18.7% 记录集中在期末两周，影响过程连续性。</span></div><span class="pill warn">中风险</span></div>
+            <div class="rank-item"><span class="rank-no" style="background:var(--red)">!</span><div><strong>部分指标零覆盖</strong><span>9 个三级指标本学期没有形成有效记录。</span></div><span class="pill red">高关注</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>二、五育发展诊断</h2>
+        <p>分值反映数据中的综合表现与记录充分度，不等同于对学生群体的简单排名。</p>
+      </div>
+      <div class="grid five">
+        <article class="card dimension" style="--accent:var(--green);--value:82%;"><div class="dimension-head"><h3>明礼</h3><span class="score">82</span></div><div class="bar"><i></i></div><small>基础稳定</small><p>文明礼貌、遵守纪律记录充分，低年级常规建立较好。</p><div class="risk">短板：社会责任、自律自省类记录偏少。</div></article>
+        <article class="card dimension" style="--accent:var(--blue);--value:91%;"><div class="dimension-head"><h3>求知</h3><span class="score">91</span></div><div class="bar"><i></i></div><small>优势突出</small><p>认真作业、课堂专注、勤奋学习为全校高频正向行为。</p><div class="risk">短板：挑战难题、探索尝试类记录不足。</div></article>
+        <article class="card dimension" style="--accent:var(--gold);--value:88%;"><div class="dimension-head"><h3>健体</h3><span class="score">88</span></div><div class="bar"><i></i></div><small>特色明显</small><p>课内锻炼、运动会、体育竞赛数据充分，奖状成果突出。</p><div class="risk">短板：体育精神和情绪调节记录不足。</div></article>
+        <article class="card dimension" style="--accent:var(--orange);--value:66%;"><div class="dimension-head"><h3>尚美</h3><span class="score">66</span></div><div class="bar"><i></i></div><small>成果有，过程少</small><p>艺术展演和书画奖项较多，但审美体验过程沉淀不足。</p><div class="risk">短板：文化浸润、学校特色类指标覆盖不足。</div></article>
+        <article class="card dimension" style="--accent:var(--red);--value:61%;"><div class="dimension-head"><h3>劳行</h3><span class="score">61</span></div><div class="bar"><i></i></div><small>需要补齐</small><p>值日和卫生习惯有基础，家庭劳动、校外劳动记录不足。</p><div class="risk">短板：劳动实践场景没有形成稳定采集机制。</div></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>三、年级与班级关注点</h2>
+        <p>以下对象不是“问题排名”，而是需要管理层优先核查和支持的对象。</p>
+      </div>
+      <article class="card table-card">
+        <table>
+          <thead><tr><th>对象</th><th>关键发现</th><th>判断</th><th>建议</th></tr></thead>
+          <tbody>
+            <tr><td><strong>一年级</strong><br><span class="pill">覆盖较好</span></td><td>覆盖率 92.6%，明礼记录突出。</td><td>入学适应和规则建立较稳定。</td><td>增加整理书包、课桌清洁、值日任务等劳动记录。</td></tr>
+            <tr><td><strong>三年级</strong><br><span class="pill warn">班级差异大</span></td><td>整体记录量高，但三年级8班覆盖率仅 62.5%。</td><td>需要先排查数据采集不足，避免误判班级表现。</td><td>年级组统一记录要求，重点支持低覆盖班级。</td></tr>
+            <tr><td><strong>五年级</strong><br><span class="pill warn">期末补录明显</span></td><td>学习记录丰富，但五年级10班 42% 记录集中在期末两周。</td><td>过程性评价连续性不足。</td><td>设置每周记录提醒，减少期末集中补录。</td></tr>
+            <tr><td><strong>六年级</strong><br><span class="pill blue">覆盖最高</span></td><td>学生覆盖率 100%，健体和求知表现稳定。</td><td>毕业年级可沉淀榜样引领和校园服务案例。</td><td>补充毕业课程、校园服务、综合实践记录。</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>四、荣誉成果分析</h2>
+        <p>奖状识别数据表明，学校已具备可对外呈现的体育、艺术和学科成果基础。</p>
+      </div>
+      <div class="grid three">
+        <article class="card kpi" data-rank="体"><label>体育竞赛</label><b>96项</b><p>占奖项总数 29.4%，与健体维度日常记录相互印证。</p></article>
+        <article class="card kpi" data-rank="美"><label>艺术展演</label><b>72项</b><p>占奖项总数 22.1%，成果突出但过程记录仍需加强。</p></article>
+        <article class="card kpi" data-rank="科"><label>科技创新</label><b>38项</b><p>占奖项总数 11.7%，可作为下学期特色增长方向。</p></article>
+      </div>
+      <article class="card" style="margin-top:16px;">
+        <h3 class="card-title">荣誉成果判断</h3>
+        <p class="text">本学期学校在体育竞赛和艺术展演方面已形成较明显成果。后续应将获奖结果与日常成长过程打通，例如在学生获得体育奖项后，同步沉淀其平时训练、团队协作、坚持锻炼、体育精神等证据；在艺术获奖后，同步沉淀创作过程、审美表达和作品展示记录。</p>
+      </article>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>五、教师使用质量</h2>
+        <p>教师使用情况直接影响报告可信度。下学期重点不是增加教师负担，而是降低记录成本。</p>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <h3 class="card-title">教师使用分布</h3>
+          <div class="rank-list">
+            <div class="rank-item"><span class="rank-no">31</span><div><strong>持续记录型</strong><span>每周稳定记录，数据连续性较好。</span></div><span class="pill">45.6%</span></div>
+            <div class="rank-item"><span class="rank-no" style="background:var(--blue)">18</span><div><strong>活动集中型</strong><span>主要在运动会、评比、期末总结等节点记录。</span></div><span class="pill blue">26.5%</span></div>
+            <div class="rank-item"><span class="rank-no" style="background:var(--gold)">9</span><div><strong>期末补录型</strong><span>大量记录集中在期末两周。</span></div><span class="pill warn">13.2%</span></div>
+            <div class="rank-item"><span class="rank-no" style="background:var(--red)">10</span><div><strong>低频观望型</strong><span>偶尔使用或基本未使用。</span></div><span class="pill red">14.7%</span></div>
+          </div>
+        </article>
+        <article class="card">
+          <h3 class="card-title">使用质量判断</h3>
+          <p class="text">当前教师参与面已经具备基础，但不同教师之间的数据质量差异明显。持续记录型教师的数据最适合用于学生成长分析；活动集中型和期末补录型教师的数据更适合用于成果汇总，不适合单独判断过程趋势。</p>
+          <div class="tag-row"><span class="tag">语音录入应继续推广</span><span class="tag">低频教师需培训</span><span class="tag">期末补录需控制</span><span class="tag">优秀记录可做案例库</span></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>六、指标体系健康度</h2>
+        <p>三级指标不是越多越好，关键是教师能理解、场景能发生、数据能沉淀。</p>
+      </div>
+      <div class="grid two">
+        <article class="card table-card">
+          <table>
+            <thead><tr><th>类型</th><th>指标路径</th><th>本学期记录</th><th>处理建议</th></tr></thead>
+            <tbody>
+              <tr><td><span class="pill">高频</span></td><td>求知-勤奋治学-认真作业</td><td>1,186</td><td>保留，作为学习习惯核心指标。</td></tr>
+              <tr><td><span class="pill">高频</span></td><td>健体-运动习惯-课内锻炼</td><td>926</td><td>保留，并补充课外运动记录。</td></tr>
+              <tr><td><span class="pill warn">低频</span></td><td>健体-竞赛精神-公平比赛</td><td>18</td><td>补充体育精神类典型案例。</td></tr>
+              <tr><td><span class="pill red">零覆盖</span></td><td>尚美-文化浸润-学校特色</td><td>0</td><td>明确校园特色活动对应场景。</td></tr>
+              <tr><td><span class="pill red">零覆盖</span></td><td>劳行-劳动实践-校外活动</td><td>0</td><td>增加家校协同和校外劳动入口。</td></tr>
+            </tbody>
+          </table>
+        </article>
+        <article class="card">
+          <h3 class="card-title">指标体系判断</h3>
+          <p class="text">本学期二级指标覆盖率为 94.1%，三级指标覆盖率为 76.9%。说明一级、二级结构基本可用，但部分三级指标过于抽象或缺少稳定发生场景。下学期应优先优化零覆盖和低频指标，而不是继续扩充新指标。</p>
+          <div class="rank-list">
+            <div class="rank-item"><span class="rank-no">1</span><div><strong>补示例</strong><span>为低频指标补充教师看得懂的典型行为。</span></div><span class="pill">优先</span></div>
+            <div class="rank-item"><span class="rank-no">2</span><div><strong>绑场景</strong><span>把抽象指标绑定升旗、社团、值日、作品展示等场景。</span></div><span class="pill">优先</span></div>
+            <div class="rank-item"><span class="rank-no">3</span><div><strong>看修改率</strong><span>复盘教师频繁修改 AI 匹配结果的指标。</span></div><span class="pill blue">持续</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>七、重点问题诊断</h2>
+        <p>以下问题建议纳入下学期德育处、年级组和产品使用推进计划。</p>
+      </div>
+      <div class="grid three">
+        <article class="card problem-card"><span class="pill red">高优先级</span><h3 class="card-title" style="margin-top:12px;">劳动实践数据不足</h3><p class="text">劳行维度记录仅占有效记录 6.7%，校外劳动、家庭劳动、劳动成果展示基本未覆盖。</p><div class="evidence">证据：劳动实践类奖项仅 18 项；“劳行-劳动实践-校外活动”记录为 0。</div><div class="solution">解决方向：校园服务岗 + 家庭劳动反馈 + 劳动成果展示。</div></article>
+        <article class="card problem-card"><span class="pill warn">中优先级</span><h3 class="card-title" style="margin-top:12px;">美育过程记录不足</h3><p class="text">艺术展演奖项较多，但审美体验、作品创作过程、校园文化参与没有持续沉淀。</p><div class="evidence">证据：艺术展演 72 项；尚美维度记录量低于求知和健体。</div><div class="solution">解决方向：作品墙、艺术节、社团展示纳入日常记录。</div></article>
+        <article class="card problem-card"><span class="pill warn">中优先级</span><h3 class="card-title" style="margin-top:12px;">部分班级数据不连续</h3><p class="text">少数班级覆盖不足或期末集中补录，影响局部班级与学生成长趋势判断。</p><div class="evidence">证据：三年级8班覆盖率 62.5%；五年级10班 42% 记录集中在期末两周。</div><div class="solution">解决方向：每周记录提醒 + 低覆盖班级专项辅导。</div></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        <h2>八、下学期行动计划</h2>
+        <p>建议按 P0、P1 分级推进，并在下学期月度报表中持续追踪。</p>
+      </div>
+      <div class="grid two">
+        <article class="card action"><div class="priority">P0</div><div><h3>建立每周轻量记录机制</h3><p>每个班级每周至少产生 8 条有效过程性评价记录，覆盖不少于 60% 学生。</p><div class="metrics"><span>责任：德育处 + 年级组</span><span>学生覆盖率 ≥ 92%</span><span>期末补录 ≤ 10%</span></div></div></article>
+        <article class="card action"><div class="priority">P0</div><div><h3>补齐劳动实践与美育过程</h3><p>将校园服务岗、班级值日、家庭劳动、作品墙、社团展示纳入固定记录场景。</p><div class="metrics"><span>责任：德育处 + 艺体组</span><span>劳行记录 +80%</span><span>尚美记录 +60%</span></div></div></article>
+        <article class="card action"><div class="priority">P1</div><div><h3>优化三级指标解释与 AI 匹配</h3><p>针对低频、零覆盖、高修改率指标补充示例，优化 AI 匹配规则。</p><div class="metrics"><span>责任：评价负责人 + 产品团队</span><span>AI 确认率 ≥ 85%</span><span>零覆盖指标 ≤ 3</span></div></div></article>
+        <article class="card action"><div class="priority">P1</div><div><h3>开展低频教师快速培训</h3><p>用 20 分钟讲清语音记录、奖状识别和指标确认，降低老师使用负担。</p><div class="metrics"><span>责任：教务处 + 信息化负责人</span><span>教师活跃率 ≥ 90%</span><span>低频教师减少 50%</span></div></div></article>
+      </div>
+    </section>
+
+    <section class="section conclusion">
+      <h2>本学期学校已经具备过程性评价数据基础。下学期的重点不是“收集更多数据”，而是让数据更均衡、更连续、更能支撑育人改进。</h2>
+      <div class="cols">
+        <div><strong>管理重点</strong><span>低覆盖班级、期末补录、低频教师使用需要纳入月度追踪。</span></div>
+        <div><strong>育人重点</strong><span>劳动实践、美育过程、社会责任是下学期五育补齐方向。</span></div>
+        <div><strong>产品重点</strong><span>降低教师记录成本，优化三级指标解释与 AI 匹配准确度。</span></div>
+      </div>
+    </section>
+
+    <footer class="footer">未来实验小学｜2025-2026学年上学期综合育人诊断报告｜生成时间：2026-01-18</footer>
+  </main>
+
+</body>
+</html>

@@ -27,6 +27,7 @@ import {
   X,
 } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
+import ParentFluidGlassNav from './parent-app/ParentFluidGlassNav';
 import { BANK_CONFIG } from '../constants';
 
 interface ParentAppProps {
@@ -185,6 +186,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   const [selectedBankScheme, setSelectedBankScheme] = useState<(typeof BANK_CONFIG.TERMS)[number] | null>(BANK_CONFIG.TERMS[0]);
   const [showDepositConfirm, setShowDepositConfirm] = useState(false);
   const [withdrawTarget, setWithdrawTarget] = useState<ParentDeposit | null>(null);
+  const [navTransition, setNavTransition] = useState({ id: 0, direction: 1, fromIndex: 0 });
 
   const activeChild = useMemo(
     () => childrenList.find(child => child.id === activeChildId) ?? childrenList[0] ?? null,
@@ -806,6 +808,232 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   ];
 
   const showTabs = activeChild && screen !== 'login' && screen !== 'binding';
+  const ParentBottomNav = () => {
+    const activeIndex = Math.max(0, tabItems.findIndex(item => screen === item.key || (screen === 'reportDetail' && item.key === 'reports')));
+    const goTab = (item: (typeof tabItems)[number], nextIndex: number) => {
+      if (nextIndex === activeIndex && screen === item.key) return;
+      setNavTransition(prev => ({
+        id: prev.id + 1,
+        direction: nextIndex >= activeIndex ? 1 : -1,
+        fromIndex: activeIndex,
+      }));
+      setScreen(item.key);
+    };
+
+    return (
+      <div className="parent-bottom-nav-wrap absolute bottom-0 left-0 right-0 z-50 px-4 pb-7 pt-5 bg-gradient-to-t from-white/70 via-white/34 to-transparent">
+        <style>{`
+          .parent-bottom-nav-wrap {
+            --active-x: 0%;
+            --from-x: 0%;
+          }
+
+          .parent-bottom-nav-shell {
+            isolation: isolate;
+            background:
+              radial-gradient(circle at 18% 16%, rgba(255,255,255,0.96), transparent 26%),
+              radial-gradient(circle at 82% 10%, rgba(255,255,255,0.84), transparent 28%),
+              linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.72));
+            backdrop-filter: blur(26px) saturate(1.72) brightness(1.06);
+            -webkit-backdrop-filter: blur(26px) saturate(1.72) brightness(1.06);
+            box-shadow:
+              inset 0 1px 1px rgba(255,255,255,0.96),
+              inset 0 -18px 26px rgba(203,213,225,0.18),
+              0 22px 52px -30px rgba(15,23,42,0.28),
+              0 8px 22px -18px rgba(15,23,42,0.26);
+          }
+
+          .parent-bottom-nav-shell::before,
+          .parent-bottom-nav-shell::after {
+            content: "";
+            position: absolute;
+            pointer-events: none;
+            border-radius: inherit;
+          }
+
+          .parent-bottom-nav-shell::before {
+            inset: 0;
+            z-index: 1;
+            border: 1px solid rgba(255,255,255,0.82);
+            background:
+              linear-gradient(180deg, rgba(255,255,255,0.86), transparent 40%),
+              linear-gradient(90deg, rgba(255,255,255,0.46), transparent 18%, transparent 82%, rgba(255,255,255,0.52));
+            box-shadow:
+              inset 0 0 0 0.5px rgba(255,255,255,0.68),
+              inset 12px 0 18px rgba(255,255,255,0.20),
+              inset -12px 0 18px rgba(148,163,184,0.10);
+          }
+
+          .parent-bottom-nav-shell::after {
+            inset: -18px -12px;
+            z-index: 0;
+            background:
+              radial-gradient(circle at 20% 18%, rgba(255,255,255,0.92), transparent 24%),
+              radial-gradient(circle at 80% 16%, rgba(255,255,255,0.72), transparent 32%),
+              radial-gradient(circle at 50% 108%, rgba(148,163,184,0.14), transparent 34%);
+            filter: blur(16px);
+            opacity: 0.74;
+          }
+
+          .parent-bottom-nav-indicator {
+            background:
+              radial-gradient(circle at 68% 20%, rgba(255,255,255,0.98) 0 14%, transparent 36%),
+              radial-gradient(circle at 28% 76%, rgba(255,255,255,0.78) 0 16%, transparent 44%),
+              linear-gradient(145deg, rgba(255,255,255,0.86), rgba(255,255,255,0.48) 54%, rgba(241,245,249,0.62));
+            border: 1px solid rgba(255,255,255,0.92);
+            backdrop-filter: blur(18px) saturate(1.85) brightness(1.06);
+            -webkit-backdrop-filter: blur(18px) saturate(1.85) brightness(1.06);
+            box-shadow:
+              inset 8px 9px 18px rgba(255,255,255,0.78),
+              inset -12px -12px 22px rgba(148,163,184,0.16),
+              0 14px 26px -20px rgba(15,23,42,0.42);
+            filter: url("#parent-liquid-glass-filter") drop-shadow(0 10px 14px rgba(15,23,42,0.08));
+          }
+
+          .parent-bottom-nav-indicator::before {
+            content: "";
+            position: absolute;
+            inset: 6px 14px 52% 14px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.96), transparent);
+            opacity: 0.9;
+          }
+
+          .parent-bottom-nav-indicator::after {
+            content: "";
+            position: absolute;
+            right: 12px;
+            top: 9px;
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.82);
+            filter: blur(7px);
+            opacity: 0.72;
+          }
+
+          .parent-bottom-nav-ripple {
+            background:
+              radial-gradient(circle at 28% 44%, rgba(255,255,255,0.92) 0 12%, rgba(74,222,255,0.36) 18%, rgba(255,138,76,0.24) 30%, transparent 44%),
+              radial-gradient(circle at 72% 68%, rgba(255,255,255,0.74) 0 10%, rgba(96,165,250,0.24) 18%, rgba(251,146,60,0.20) 27%, transparent 40%),
+              linear-gradient(96deg, transparent 8%, rgba(255,255,255,0.46) 48%, transparent 78%);
+            mix-blend-mode: screen;
+            filter: blur(2px) saturate(1.85) contrast(1.08);
+            animation: parentNavRipple 640ms cubic-bezier(0.16,1,0.3,1) both;
+          }
+
+          .parent-bottom-nav-button {
+            text-shadow: 0 1px 0 rgba(255,255,255,0.74);
+          }
+
+          .parent-fluid-glass-canvas {
+            position: absolute !important;
+            inset: -18px -16px !important;
+            z-index: 1;
+            pointer-events: none;
+            filter: drop-shadow(0 22px 26px rgba(15,23,42,0.12));
+          }
+
+          .parent-bottom-nav-button--active .parent-bottom-nav-label {
+            text-shadow:
+              -0.8px 1.2px 0 rgba(0,210,255,0.30),
+              0.8px 1.6px 0 rgba(255,122,64,0.26),
+              0 1px 0 rgba(255,255,255,0.92);
+          }
+
+          .parent-bottom-nav-button--active .parent-bottom-nav-icon {
+            filter:
+              drop-shadow(-0.7px 1px 0 rgba(0,210,255,0.22))
+              drop-shadow(0.8px 1.3px 0 rgba(255,122,64,0.18));
+          }
+
+          @keyframes parentNavRipple {
+            0% {
+              opacity: 0;
+              clip-path: inset(24% 34% 24% 34% round 999px);
+              transform: translateX(var(--from-x)) scaleX(0.62) scaleY(0.72);
+            }
+            42% {
+              opacity: 0.74;
+              clip-path: inset(4% 4% 4% 4% round 999px);
+              transform: translateX(var(--active-x)) scaleX(1.44) scaleY(1.08);
+            }
+            100% {
+              opacity: 0;
+              clip-path: inset(16% 22% 16% 22% round 999px);
+              transform: translateX(var(--active-x)) scaleX(0.9) scaleY(0.86);
+            }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .parent-bottom-nav-indicator,
+            .parent-bottom-nav-ripple,
+            .parent-bottom-nav-button,
+            .parent-bottom-nav-button * {
+              animation: none !important;
+              transition-duration: 0ms !important;
+            }
+          }
+        `}</style>
+        <svg className="absolute h-0 w-0" aria-hidden="true" focusable="false">
+          <filter id="parent-liquid-glass-filter" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.032" numOctaves="1" seed="11" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.45" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </svg>
+        <nav
+          className="parent-bottom-nav-shell relative h-[74px] overflow-hidden rounded-full border border-white/80 p-1.5 ring-1 ring-white/70"
+          aria-label="家长端底部导航"
+          style={{
+            ['--nav-dir' as string]: navTransition.direction,
+            ['--from-x' as string]: `${navTransition.fromIndex * 100}%`,
+            ['--active-x' as string]: `${activeIndex * 100}%`,
+          }}
+        >
+          <ParentFluidGlassNav activeIndex={activeIndex} itemCount={tabItems.length} />
+          <div
+            className="parent-bottom-nav-indicator absolute bottom-1 top-1 z-[2] rounded-full transition-transform [transition-duration:640ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
+            style={{
+              left: '4px',
+              width: `calc((100% - 8px) / ${tabItems.length})`,
+              transform: `translateX(${activeIndex * 100}%)`,
+            }}
+            aria-hidden="true"
+          />
+          <div
+            key={`ripple-${navTransition.id}`}
+            className="parent-bottom-nav-ripple pointer-events-none absolute bottom-1 top-1 z-[3] rounded-full"
+            style={{
+              left: '4px',
+              width: `calc((100% - 8px) / ${tabItems.length})`,
+            }}
+            aria-hidden="true"
+          />
+          <div className="relative z-10 grid h-full" style={{ gridTemplateColumns: `repeat(${tabItems.length}, minmax(0, 1fr))` }}>
+            {tabItems.map(item => {
+              const Icon = item.icon;
+              const active = screen === item.key || (screen === 'reportDetail' && item.key === 'reports');
+              const nextIndex = tabItems.findIndex(tab => tab.key === item.key);
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => goTab(item, nextIndex)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`parent-bottom-nav-button relative flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-full transition-[color,transform,opacity,text-shadow] [transition-duration:420ms] ease-out active:scale-[0.94] ${active ? 'parent-bottom-nav-button--active text-slate-950' : 'text-slate-500/70'}`}
+                >
+                  <Icon size={24} strokeWidth={active ? 2.65 : 2.25} className={`parent-bottom-nav-icon transition-transform [transition-duration:420ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${active ? '-translate-y-0.5 scale-105' : 'scale-100'}`} />
+                  <span className={`parent-bottom-nav-label text-[12px] leading-none tracking-[-0.03em] transition-all [transition-duration:420ms] ${active ? 'font-black text-slate-950' : 'font-bold text-slate-400'}`}>
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
+    );
+  };
 
   return (
     <div className="w-screen h-[100dvh] bg-[#EEF2F6] flex items-center justify-center p-4">
@@ -813,22 +1041,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
         <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent font-sans">
           <ParentDiffuseBackdrop />
           {renderScreen()}
-          {showTabs && (
-            <div className="absolute bottom-0 left-0 right-0 z-50 px-5 pb-8 pt-3 bg-gradient-to-t from-[#F7FBF4] via-[#F7FBF4]/92 to-transparent">
-              <div className="h-16 rounded-[26px] bg-white/94 backdrop-blur-xl border border-white shadow-[0_18px_46px_-24px_rgba(15,23,42,0.45)] flex items-center justify-around">
-                {tabItems.map(item => {
-                  const Icon = item.icon;
-                  const active = screen === item.key || (screen === 'reportDetail' && item.key === 'reports');
-                  return (
-                    <button key={item.key} type="button" onClick={() => setScreen(item.key)} className={`w-20 h-12 rounded-[18px] flex flex-col items-center justify-center gap-0.5 transition-all ${active ? 'text-[#653C16] bg-[#FFC210]/30' : 'text-slate-400 active:bg-slate-50'}`}>
-                      <Icon size={19} strokeWidth={active ? 2.5 : 2} />
-                      <span className="text-[10px] font-black">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {showTabs && <ParentBottomNav />}
           <ChildSwitcherSheet />
         </div>
       </PhoneMockup>
