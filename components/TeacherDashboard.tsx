@@ -37,6 +37,25 @@ interface GradeStudentRow {
     scores: Record<string, string>;
 }
 
+interface ExamLevelOption {
+    id: number;
+    name: string;
+    color: string;
+}
+
+const defaultExamLevelOptions: ExamLevelOption[] = [
+    { id: 1, name: '优', color: '#16A34A' },
+    { id: 2, name: '良', color: '#2563EB' },
+    { id: 3, name: '合格', color: '#0F766E' },
+    { id: 4, name: '待合格', color: '#D97706' },
+    { id: 5, name: '缺考', color: '#8A8F99' }
+];
+
+const buildExamLevelColorStyle = (color: string): React.CSSProperties => ({
+    color,
+    backgroundColor: `${color}14`
+});
+
 interface HomeworkStudentRow {
     id: string;
     studentNo: string;
@@ -84,7 +103,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         {
             title: '基础信息配置', icon: <Settings size={18} />,
-            children: ['学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '角色管理', '学生管理', '学生成绩管理']
+            children: ['学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '角色管理', '学生管理', '学生成绩管理', '考试等级管理']
         },
         {
             title: '报告配置', icon: <FileText size={18} />,
@@ -202,15 +221,16 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const gradeClassCountMap: Record<string, number> = { '2020级': 5, '2021级': 6, '2022级': 7, '2023级': 15, '2024级': 6, '2025级': 8 };
     const getClassOptionsByLevel = (level: string) => Array.from({ length: gradeClassCountMap[level] || 0 }, (_, index) => `${level}${index + 1}班`);
     const gradeSubjectOptions = ['语文', '数学', '英语', '科学', '道德与法治', '自然', '历史', '地理', '物理', '化学', '生物', '体育', '音乐', '美术', '信息科技', '劳动', '书法', '心理健康', '综合实践', '阅读', '口语表达', '项目学习', '班本课程', '社团课程'];
-    const gradeScorePresetOptions = ['优', '良', '合格', '待合格', '缺考'];
-    const gradeScoreColorClassMap: Record<string, string> = {
-        '优': 'bg-[#EAF8EF] text-[#16A34A]',
-        '良': 'bg-[#EAF2FF] text-[#2563EB]',
-        '合格': 'bg-[#EAF7F6] text-[#0F766E]',
-        '待合格': 'bg-[#FFF7E6] text-[#D97706]',
-        '缺考': 'bg-[#F5F5F5] text-[#8A8F99]'
+    const [examLevelOptions, setExamLevelOptions] = useState<ExamLevelOption[]>(defaultExamLevelOptions);
+    const [examLevelModalOpen, setExamLevelModalOpen] = useState(false);
+    const [editingExamLevel, setEditingExamLevel] = useState<ExamLevelOption | null>(null);
+    const [examLevelForm, setExamLevelForm] = useState({ name: '', color: '#165DFF' });
+    const gradeScoreSelectOptions = examLevelOptions.map(option => ({ label: option.name, value: option.name }));
+    const getExamLevelColorStyle = (value: string): React.CSSProperties => {
+        const level = examLevelOptions.find(option => option.name === value.trim());
+        return level ? buildExamLevelColorStyle(level.color) : {};
     };
-    const getGradeScoreColorClass = (value: string) => gradeScoreColorClassMap[value.trim()] || 'bg-transparent text-[#333333]';
+    const getGradeScoreColorClass = (value: string) => value.trim() ? '' : 'bg-transparent text-[#333333]';
     const createBlankGradeStudent = (subjects: string[], id = `manual-${Date.now()}`): GradeStudentRow => ({
         id,
         studentNo: '',
@@ -261,7 +281,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [gradeExamScoresMap, setGradeExamScoresMap] = useState<Record<number, GradeStudentRow[]>>(() => {
         const initialMap: Record<number, GradeStudentRow[]> = {};
         const mockNames = ['林一诺', '周明轩', '陈雨桐', '李思远', '王若溪', '赵子涵', '吴昊然', '郑可欣', '孙嘉泽', '黄芷晴', '何宇航', '郭诗涵', '马梓豪', '罗语晨', '胡安琪', '高铭宇'];
-        const presetScores = ['优', '良', '合格', '待合格', '缺考'];
+        const presetScores = defaultExamLevelOptions.map(option => option.name);
 
         demoGradeExamRows.forEach(exam => {
             const levelNumber = exam.className.match(/^(\d+)级/)?.[1] || '2025';
@@ -377,6 +397,79 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             )
         }
     ];
+
+    const examLevelTableColumns = [
+        {
+            title: '等级名称',
+            dataIndex: 'name',
+            width: 240,
+            render: (name: string, row: ExamLevelOption) => (
+                <span className="inline-flex h-6 items-center rounded px-2 text-xs font-medium" style={buildExamLevelColorStyle(row.color)}>{name}</span>
+            )
+        },
+        {
+            title: '颜色',
+            dataIndex: 'color',
+            width: 220,
+            render: (color: string) => (
+                <div className="flex items-center gap-2">
+                    <span className="h-5 w-5 rounded border border-[#E5E6EB]" style={{ backgroundColor: color }} />
+                    <span className="font-mono text-xs text-[#4E5969]">{color}</span>
+                </div>
+            )
+        },
+        {
+            title: '操作',
+            dataIndex: 'operation',
+            width: 140,
+            align: 'right' as const,
+            render: (_: unknown, row: ExamLevelOption) => (
+                <div className="flex justify-end gap-4">
+                    <Button type="text" size="small" className="!px-0" onClick={() => handleOpenExamLevelModal(row)}>编辑</Button>
+                    <Button type="text" status="danger" size="small" className="!px-0" onClick={() => handleDeleteExamLevel(row)}>删除</Button>
+                </div>
+            )
+        }
+    ];
+
+    const handleOpenExamLevelModal = (level: ExamLevelOption | null = null) => {
+        setEditingExamLevel(level);
+        setExamLevelForm(level ? { name: level.name, color: level.color } : { name: '', color: '#165DFF' });
+        setExamLevelModalOpen(true);
+    };
+
+    const handleSaveExamLevel = () => {
+        const name = examLevelForm.name.trim();
+        if (!name) {
+            window.alert('请输入等级名称。');
+            return;
+        }
+        const hasSameName = examLevelOptions.some(option => option.name === name && option.id !== editingExamLevel?.id);
+        if (hasSameName) {
+            window.alert('等级名称不能重复。');
+            return;
+        }
+        if (editingExamLevel) {
+            setExamLevelOptions(options => options.map(option => (
+                option.id === editingExamLevel.id ? { ...option, name, color: examLevelForm.color } : option
+            )));
+        } else {
+            setExamLevelOptions(options => [
+                ...options,
+                { id: Date.now(), name, color: examLevelForm.color }
+            ]);
+        }
+        setExamLevelModalOpen(false);
+        setEditingExamLevel(null);
+    };
+
+    const handleDeleteExamLevel = (level: ExamLevelOption) => {
+        if (!window.confirm(`确认删除考试等级“${level.name}”吗？`)) return;
+        setExamLevelOptions(options => options.filter(option => option.id !== level.id));
+        setGradeColumnFillValues(values => Object.fromEntries(
+            Object.entries(values).map(([subject, value]) => [subject, value === level.name ? '' : value])
+        ));
+    };
 
     const handleViewGradeExam = (exam: GradeExamRow) => {
         setSelectedGradeExam(exam);
@@ -1221,8 +1314,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const gradeScoreStatisticColumns = Array.from(new Set(newGradeStudents.flatMap(student => (
         newGradeSubjects.map(subject => (student.scores[subject] || '').trim()).filter(Boolean)
     )))).sort((a, b) => {
-        const presetIndexA = gradeScorePresetOptions.indexOf(a);
-        const presetIndexB = gradeScorePresetOptions.indexOf(b);
+        const presetOrder = examLevelOptions.map(option => option.name);
+        const presetIndexA = presetOrder.indexOf(a);
+        const presetIndexB = presetOrder.indexOf(b);
         if (presetIndexA !== -1 || presetIndexB !== -1) {
             return (presetIndexA === -1 ? Number.MAX_SAFE_INTEGER : presetIndexA) - (presetIndexB === -1 ? Number.MAX_SAFE_INTEGER : presetIndexB);
         }
@@ -1553,10 +1647,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 )}
 
                 {/* 内容区 - 采用精致的高端设计 */}
-                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '设备基础配置' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
+                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
 
                     {/* 页面主标题 */}
-                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && (
+                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && (
                     <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
                         <div>
                             {activeMenu === '考试数据' ? (
@@ -2979,6 +3073,36 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         )
                     )}
 
+
+                    {/* 考试等级管理 */}
+                    {activeMenu === '考试等级管理' && (
+                        <div className="w-full font-sans text-sm text-[#4E5969] px-6 py-5 flex flex-col gap-4">
+                            <div className="flex h-5 items-center text-[13px] leading-[20px] text-[#86909C] mb-1">
+                                <span className="hover:text-[#1D2129] cursor-pointer">基础信息配置</span>
+                                <span className="mx-2 text-[#C9CDD4]">/</span>
+                                <span className="text-[#1D2129]">考试等级管理</span>
+                            </div>
+
+                            <div className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-6 shadow-[0_4px_10px_rgba(0,0,0,0.02)] flex flex-col">
+                                <div className="mb-5 flex items-center justify-between">
+                                    <div>
+                                        <h2 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">考试等级管理</h2>
+                                        <p className="m-0 mt-1 text-[13px] leading-5 text-[#86909C]">考试等级将作为考试数据批量设置的可选值。</p>
+                                    </div>
+                                    <Button type="primary" onClick={() => handleOpenExamLevelModal()}>新增等级</Button>
+                                </div>
+                                <Table
+                                    rowKey="id"
+                                    columns={examLevelTableColumns}
+                                    data={examLevelOptions}
+                                    pagination={false}
+                                    border={false}
+                                    noDataElement={<div className="py-12 text-[#86909C]">暂无考试等级，请新增等级后再录入考试数据。</div>}
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     {/* 考试数据 */}
                     {activeMenu === '考试数据' && (
                         gradePageMode === 'list' ? (
@@ -3505,9 +3629,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                                                 value={gradeColumnFillValues[subject] || ''}
                                                                                 onChange={(event) => setGradeColumnFillValues(values => ({ ...values, [subject]: event.target.value }))}
                                                                                 className={`h-6 w-full appearance-none rounded border border-[#E5E6EB] py-0 pl-1 pr-5 text-[12px] font-normal outline-none focus:border-[#165DFF] ${gradeColumnFillValues[subject] ? getGradeScoreColorClass(gradeColumnFillValues[subject]) : 'bg-white text-[#86909C]'}`}
+                                                                                style={gradeColumnFillValues[subject] ? getExamLevelColorStyle(gradeColumnFillValues[subject]) : undefined}
                                                                             >
                                                                                 <option value="" hidden disabled>等级</option>
-                                                                                {gradeScorePresetOptions.map(option => <option key={option} value={option} className="text-[#1D2129]">{option}</option>)}
+                                                                                {gradeScoreSelectOptions.map(option => <option key={option.value} value={option.value} className="text-[#1D2129]">{option.label}</option>)}
                                                                             </select>
                                                                             <ChevronDown size={12} className={`pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[#86909C] ${gradeColumnFillValues[subject] ? 'group-hover:hidden group-focus-within:hidden' : ''}`} />
                                                                             {gradeColumnFillValues[subject] && (
@@ -3568,6 +3693,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                                     readOnly={gradePageMode === 'view'}
                                                                     data-grade-cell={`${index}-${subjectIndex + 1}`}
                                                                     className={`h-[32px] w-[168px] border-0 px-[6px] text-center text-[14px] font-normal outline-none focus:bg-[#E8F3FF] focus:ring-1 focus:ring-inset focus:ring-[#165DFF] ${getGradeScoreColorClass(student.scores[subject] || '')} ${selectedGradeCellSet.has(getGradeCellKey(index, subjectIndex + 1)) && gradePageMode !== 'view' ? 'bg-[#E8F3FF] ring-1 ring-inset ring-[#165DFF]' : ''}`}
+                                                                    style={getExamLevelColorStyle(student.scores[subject] || '')}
                                                                     aria-label={`${student.name || `第${index + 1}行`}${subject}成绩`}
                                                                 />
                                                              </td>
@@ -3615,6 +3741,52 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     )}
                 </main>
             </div >
+
+
+            {/* Exam Level Modal */}
+            {examLevelModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="w-[420px] rounded bg-white shadow-xl border border-[#E5E6EB]">
+                        <div className="flex h-14 items-center justify-between border-b border-[#E5E6EB] px-6">
+                            <h3 className="m-0 text-base font-semibold text-[#1D2129]">{editingExamLevel ? '编辑考试等级' : '新增考试等级'}</h3>
+                            <button type="button" onClick={() => setExamLevelModalOpen(false)} className="text-[#86909C] hover:text-[#4E5969]" aria-label="关闭考试等级弹窗">×</button>
+                        </div>
+                        <div className="px-6 py-5">
+                            <label className="mb-2 block text-sm font-medium text-[#1D2129]">等级名称</label>
+                            <Input
+                                value={examLevelForm.name}
+                                onChange={(value) => setExamLevelForm(form => ({ ...form, name: value }))}
+                                placeholder="请输入等级名称"
+                                maxLength={12}
+                                showWordLimit
+                            />
+                            <label className="mb-2 mt-5 block text-sm font-medium text-[#1D2129]">颜色</label>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="color"
+                                    value={examLevelForm.color}
+                                    onChange={(event) => setExamLevelForm(form => ({ ...form, color: event.target.value }))}
+                                    className="h-8 w-12 cursor-pointer rounded border border-[#E5E6EB] bg-white p-0.5"
+                                    aria-label="选择考试等级颜色"
+                                />
+                                <Input
+                                    value={examLevelForm.color}
+                                    onChange={(value) => setExamLevelForm(form => ({ ...form, color: value }))}
+                                    placeholder="#165DFF"
+                                    style={{ width: 160 }}
+                                />
+                                <span className="inline-flex h-6 items-center rounded px-2 text-xs font-medium" style={buildExamLevelColorStyle(examLevelForm.color)}>
+                                    {examLevelForm.name || '预览'}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
+                            <Button onClick={() => setExamLevelModalOpen(false)}>取消</Button>
+                            <Button type="primary" onClick={handleSaveExamLevel}>确定</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Role Modal */}
             {roleModalOpen && (
