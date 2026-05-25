@@ -18,6 +18,7 @@ interface GradeExamRow {
     id: number;
     term: string;
     type: string;
+    month?: string;
     subjects: string[];
     className: string;
     creator: string;
@@ -207,7 +208,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     // 考试数据 demo 数据：仅用于前端静态展示，后续再接入真实考试与成绩流程。
     const currentGradeTerm = '2025-2026学年 下学期';
     const gradeTermOptions = ['2025-2026学年 下学期', '2025-2026学年 上学期', '2024-2025学年 下学期', '2024-2025学年 上学期'];
-    const gradeExamTypeOptions = ['期中', '期末', '单元测评'];
+    const gradeExamTypeOptions = ['期中', '期末', '月考', '单元测评'];
+    const gradeMonthOptions = Array.from({ length: 12 }, (_, index) => `${index + 1}月`);
     const gradeLevelOptions = ['2020级', '2021级', '2022级', '2023级', '2024级', '2025级'];
     const gradeLevelLabelMap: Record<string, string> = {
         '2020级': '2020级（六年级）',
@@ -252,6 +254,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [activeAggregateClassByLevel, setActiveAggregateClassByLevel] = useState<Record<string, string>>({});
     const [newGradeTerm, setNewGradeTerm] = useState(currentGradeTerm);
     const [newGradeExamType, setNewGradeExamType] = useState('');
+    const [newGradeExamMonth, setNewGradeExamMonth] = useState('');
     const [newGradeLevel, setNewGradeLevel] = useState('');
     const [newGradeClass, setNewGradeClass] = useState('');
     const [newGradeClasses, setNewGradeClasses] = useState<string[]>([]);
@@ -306,6 +309,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const gradeTerms = Array.from(new Set([...gradeTermOptions, ...gradeExamRows.map(row => row.term)]));
     const gradeExamTypes = Array.from(new Set([...gradeExamTypeOptions, ...gradeExamRows.map(row => row.type)]));
     const gradeFilterSubjects = Array.from(new Set([...gradeSubjectOptions, ...gradeExamRows.flatMap(row => row.subjects)]));
+    const formatGradeExamTypeLabel = (row: Pick<GradeExamRow, 'type' | 'month'>) => (
+        row.type === '月考' && row.month ? `${row.type}（${row.month}）` : row.type
+    );
     const filteredGradeExamRows = gradeExamRows.filter(row => {
         if (gradeTermFilter !== '全部学期' && row.term !== gradeTermFilter) return false;
         if (gradeExamTypeFilter !== '全部类型' && row.type !== gradeExamTypeFilter) return false;
@@ -320,7 +326,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         gradeExamRows.reduce<Map<string, GradeExamAggregateRow>>((map, row) => {
             if (gradeTermFilter !== '全部学期' && row.term !== gradeTermFilter) return map;
             if (gradeExamTypeFilter !== '全部类型' && row.type !== gradeExamTypeFilter) return map;
-            const id = `${row.term}__${row.type}`;
+            const id = `${row.term}__${row.type}__${row.month || ''}`;
             const current = map.get(id);
             if (current) {
                 current.rows.push(row);
@@ -346,7 +352,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             title: '考试类型',
             dataIndex: 'type',
             width: 120,
-            render: (value: string) => <span className="rounded bg-[#E8F3FF] px-2 py-0.5 text-xs font-normal text-[#165DFF]">{value}</span>
+            render: (_: string, row: GradeExamRow) => <span className="rounded bg-[#E8F3FF] px-2 py-0.5 text-xs font-normal text-[#165DFF]">{formatGradeExamTypeLabel(row)}</span>
         },
         {
             title: '科目',
@@ -383,7 +389,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             title: '考试类型',
             dataIndex: 'type',
             width: 160,
-            render: (value: string) => <span className="rounded bg-[#E8F3FF] px-2 py-0.5 text-xs font-normal text-[#165DFF]">{value}</span>
+            render: (_: string, row: GradeExamAggregateRow) => <span className="rounded bg-[#E8F3FF] px-2 py-0.5 text-xs font-normal text-[#165DFF]">{formatGradeExamTypeLabel(row.rows[0] || row)}</span>
         },
         {
             title: '操作',
@@ -476,6 +482,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setSelectedGradeExamAggregate(null);
         setNewGradeTerm(exam.term);
         setNewGradeExamType(exam.type);
+        setNewGradeExamMonth(exam.month || '');
         const levelMatch = exam.className.match(/^(\d+级)/);
         const level = levelMatch ? levelMatch[1] : '';
         setNewGradeLevel(level);
@@ -494,6 +501,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setSelectedGradeExamAggregate(aggregate);
         setNewGradeTerm(aggregate.term);
         setNewGradeExamType(aggregate.type);
+        setNewGradeExamMonth(aggregate.rows[0]?.month || '');
         const classMap = aggregate.rows.reduce<Record<string, GradeStudentRow[]>>((map, row) => {
             map[row.className] = gradeExamScoresMap[row.id] || buildEmptyGradeRowsForClass(row.className);
             return map;
@@ -513,6 +521,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setSelectedGradeExamAggregate(null);
         setNewGradeTerm(exam.term);
         setNewGradeExamType(exam.type);
+        setNewGradeExamMonth(exam.month || '');
         const levelMatch = exam.className.match(/^(\d+级)/);
         const level = levelMatch ? levelMatch[1] : '';
         setNewGradeLevel(level);
@@ -530,6 +539,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const resetGradeCreateForm = () => {
         setNewGradeTerm(currentGradeTerm);
         setNewGradeExamType('');
+        setNewGradeExamMonth('');
         setNewGradeLevel('');
         setNewGradeClass('');
         setNewGradeClasses([]);
@@ -904,6 +914,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             window.alert('请补全学年-学期、考试类型、班级、科目，并确保每个班级 sheet 至少填写一名学生姓名。');
             return;
         }
+        if (newGradeExamType === '月考' && !newGradeExamMonth) {
+            window.alert('请补全月考月份。');
+            return;
+        }
         if (gradePageMode === 'edit' && selectedGradeExam) {
             const editClassName = selectedClasses[0];
             const editStudents = classStudentsMap[editClassName] || newGradeStudents;
@@ -911,6 +925,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 ...selectedGradeExam,
                 term: newGradeTerm,
                 type: newGradeExamType,
+                month: newGradeExamType === '月考' ? newGradeExamMonth : undefined,
                 subjects: newGradeSubjects,
                 className: editClassName
             };
@@ -926,6 +941,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 id: now + index,
                 term: newGradeTerm,
                 type: newGradeExamType,
+                month: newGradeExamType === '月考' ? newGradeExamMonth : undefined,
                 subjects: newGradeSubjects,
                 className,
                 creator: '林萧'
@@ -2844,6 +2860,36 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     {gradeSubjectOptions.map(subject => <option key={subject} className="text-[#1D2129]">{subject}</option>)}
                                                 </select>
                                             </label>
+                                            {newGradeExamType === '月考' && (
+                                                <div className="flex items-center min-h-[32px]">
+                                                    <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0">
+                                                        <span className="text-[#F53F3F] mr-1">*</span>月份：
+                                                    </span>
+                                                    <div className="group relative w-[417px]">
+                                                        <select
+                                                            value={newGradeExamMonth}
+                                                            onChange={(event) => setNewGradeExamMonth(event.target.value)}
+                                                            className={`h-8 w-full appearance-none rounded border border-[#E5E6EB] bg-white py-0 pl-2 pr-8 text-sm font-normal outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all ${newGradeExamMonth ? 'text-[#1D2129]' : 'text-[#86909C]'}`}
+                                                        >
+                                                            <option value="" hidden disabled>请选择月份</option>
+                                                            {gradeMonthOptions.map(month => <option key={month} className="text-[#1D2129]">{month}</option>)}
+                                                        </select>
+                                                        <ChevronDown size={14} className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#86909C] ${newGradeExamMonth ? 'group-hover:hidden group-focus-within:hidden' : ''}`} />
+                                                        {newGradeExamMonth && (
+                                                            <button
+                                                                type="button"
+                                                                onMouseDown={(event) => event.preventDefault()}
+                                                                onClick={() => setNewGradeExamMonth('')}
+                                                                className="absolute right-2 top-1/2 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-[14px] leading-none text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#4E5969] group-hover:flex group-focus-within:flex"
+                                                                aria-label="清除月考月份"
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             <div className="flex items-start min-h-[32px]">
                                                 <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0">
                                                     <span className="text-[#F53F3F] mr-1">*</span>班级：
@@ -3271,7 +3317,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             </div>
                                             <div className="flex min-h-[24px] items-start">
                                                 <span className="w-[120px] shrink-0 text-right font-medium text-[#4E5969]">考试类型：</span>
-                                                <span className="ml-3 text-[#1D2129]">{newGradeExamType || '-'}</span>
+                                                <span className="ml-3 text-[#1D2129]">{newGradeExamType === '月考' && newGradeExamMonth ? `月考（${newGradeExamMonth}）` : (newGradeExamType || '-')}</span>
                                             </div>
                                             {gradePageMode === 'view' && (
                                                 <>
@@ -3322,7 +3368,11 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 <div className="group relative w-[417px]">
                                                     <select
                                                         value={newGradeExamType}
-                                                        onChange={(event) => setNewGradeExamType(event.target.value)}
+                                                        onChange={(event) => {
+                                                            const nextType = event.target.value;
+                                                            setNewGradeExamType(nextType);
+                                                            if (nextType !== '月考') setNewGradeExamMonth('');
+                                                        }}
                                                         className={`h-8 w-full appearance-none rounded border border-[#E5E6EB] bg-white py-0 pl-2 pr-8 text-sm font-normal outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all ${newGradeExamType ? 'text-[#1D2129]' : 'text-[#86909C]'}`}
                                                     >
                                                         <option value="" hidden disabled>请选择考试类型</option>
@@ -3333,7 +3383,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                         <button
                                                             type="button"
                                                             onMouseDown={(event) => event.preventDefault()}
-                                                            onClick={() => setNewGradeExamType('')}
+                                                            onClick={() => { setNewGradeExamType(''); setNewGradeExamMonth(''); }}
                                                             className="absolute right-2 top-1/2 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-[14px] leading-none text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#4E5969] group-hover:flex group-focus-within:flex"
                                                             aria-label="清除考试类型"
                                                         >
@@ -3342,6 +3392,36 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     )}
                                                 </div>
                                             </div>
+
+                                            {newGradeExamType === '月考' && (
+                                                <div className="flex items-center min-h-[32px]">
+                                                    <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0">
+                                                        <span className="text-[#F53F3F] mr-1">*</span>月份：
+                                                    </span>
+                                                    <div className="group relative w-[417px]">
+                                                        <select
+                                                            value={newGradeExamMonth}
+                                                            onChange={(event) => setNewGradeExamMonth(event.target.value)}
+                                                            className={`h-8 w-full appearance-none rounded border border-[#E5E6EB] bg-white py-0 pl-2 pr-8 text-sm font-normal outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all ${newGradeExamMonth ? 'text-[#1D2129]' : 'text-[#86909C]'}`}
+                                                        >
+                                                            <option value="" hidden disabled>请选择月份</option>
+                                                            {gradeMonthOptions.map(month => <option key={month} className="text-[#1D2129]">{month}</option>)}
+                                                        </select>
+                                                        <ChevronDown size={14} className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#86909C] ${newGradeExamMonth ? 'group-hover:hidden group-focus-within:hidden' : ''}`} />
+                                                        {newGradeExamMonth && (
+                                                            <button
+                                                                type="button"
+                                                                onMouseDown={(event) => event.preventDefault()}
+                                                                onClick={() => setNewGradeExamMonth('')}
+                                                                className="absolute right-2 top-1/2 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-[14px] leading-none text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#4E5969] group-hover:flex group-focus-within:flex"
+                                                                aria-label="清除月考月份"
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             <div className="flex items-start min-h-[32px]">
                                                 <span className="w-[120px] text-right font-medium text-[#1D2129] shrink-0">
