@@ -7,6 +7,7 @@ import {
 import { MOCK_STUDENTS_CLASS_1, MOCK_CLASS_RECORD_LOGS } from '../constants';
 import { ASSETS } from '../assets/images';
 import { Loader2, Sparkles } from 'lucide-react'; // Import directly if needed for icons not in components
+import TeacherRecordAuroraBackground from '../components/TeacherRecordAuroraBackground';
 
 interface ClassRecordLogViewProps {
     classNameStr?: string;
@@ -402,24 +403,9 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     // --- Main Render ---
     return (
         <div className="flex flex-col h-full bg-[#FAFAFA] relative overflow-hidden">
-            {/* Record Student Background: 极光紫梦 (Aurora Lighter) */}
-            <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-1000 overflow-hidden ${activeTab === 'student' ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="absolute inset-0 bg-white"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/60 via-white/40 to-pink-50/60"></div>
-                {/* Indigo Glow */}
-                <div className="absolute top-[-28%] left-[-34%] w-[150vw] h-[150vw] rounded-full animate-aurora" style={{ backgroundColor: '#6366F1', opacity: 0.07 }}></div>
-                {/* Pink Glow */}
-                <div className="absolute bottom-[-28%] right-[-36%] w-[160vw] h-[160vw] rounded-full animate-aurora" style={{ backgroundColor: '#EC4899', opacity: 0.085, animationDelay: '-9s' }}></div>
-            </div>
-
-            {/* Record Class Background: 森海之息 (Forest Lighter) */}
-            <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-1000 overflow-hidden ${activeTab === 'class' ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="absolute inset-0 bg-white"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-50/60 via-white/40 to-blue-50/60"></div>
-                {/* Cyan Glow */}
-                <div className="absolute top-[-28%] left-[-34%] w-[150vw] h-[150vw] rounded-full animate-aurora" style={{ backgroundColor: '#06B6D4', opacity: 0.07 }}></div>
-                {/* Blue Glow */}
-                <div className="absolute bottom-[-28%] right-[-36%] w-[160vw] h-[160vw] rounded-full animate-aurora" style={{ backgroundColor: '#3B82F6', opacity: 0.085, animationDelay: '-9s' }}></div>
+            {/* Multi-color tech aurora background for the record page. */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <TeacherRecordAuroraBackground activeTab={activeTab} />
             </div>
 
             {/* Header (Top-most Integration) */}
@@ -455,7 +441,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             </div>
 
             {/* List Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-40 no-scrollbar relative z-10">
+            <div className="h-[600px] max-h-full overflow-y-auto p-4 space-y-6 pb-40 no-scrollbar relative z-10">
                 {/* "View Metrics" button relocated here (above cards) */}
                 <div className="flex justify-start px-2 -mb-2">
                     <button className={`bg-white/80 backdrop-blur-md border border-white/60 text-xs px-4 py-2 rounded-full font-bold shadow-sm active:scale-95 transition-all flex items-center gap-1.5 border-indigo-100/30

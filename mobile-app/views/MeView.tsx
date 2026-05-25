@@ -1,26 +1,21 @@
 import React from 'react';
 import {
     BarChart3,
-    BookOpen,
     BriefcaseBusiness,
     Camera,
     FileText,
     Info,
     KeyRound,
-    Landmark,
     ShieldCheck,
     Smartphone,
-    Sparkles,
     UserRound,
-    Users,
     type LucideIcon,
 } from 'lucide-react';
-import { IconBadge } from '../components/ui/IconBadge';
 import { MenuItem } from '../components/ui/MenuItem';
 import { MenuSection } from '../components/ui/MenuSection';
-import { MobileCard } from '../components/ui/MobileCard';
 import { phoneText, type PhoneTone } from '../styles/phoneTokens';
 import type { TeacherProfile } from '../types';
+import { ASSETS } from '../assets/images';
 
 interface MeViewProps {
     teacherProfile: TeacherProfile;
@@ -29,12 +24,6 @@ interface MeViewProps {
     onOpenGenerateModal: () => void;
     onOpenTermGenerateModal: () => void;
     onViewLeaderReport: () => void;
-}
-
-interface ProfileTag {
-    label: string;
-    icon: LucideIcon;
-    tone: Extract<PhoneTone, 'brand' | 'violet' | 'blue' | 'success'>;
 }
 
 interface MenuEntry {
@@ -53,22 +42,7 @@ interface MenuGroup {
     items: MenuEntry[];
 }
 
-const buildProfileTags = (teacherProfile: TeacherProfile): ProfileTag[] => {
-    const subjectTags = Array.from(new Set(teacherProfile.teachingAssignments.map(item => item.subject)))
-        .slice(0, 2)
-        .map(subject => ({ label: subject, icon: BookOpen, tone: 'blue' as const }));
-
-    return [
-        { label: teacherProfile.departmentName || '未设置部门', icon: Landmark, tone: 'brand' },
-        ...(teacherProfile.gradeLeaderGrades.length > 0 ? [{ label: '年级组长', icon: Users, tone: 'violet' as const }] : []),
-        ...(teacherProfile.homeroomClassIds.length > 0 ? [{ label: '班主任', icon: Sparkles, tone: 'success' as const }] : []),
-        ...subjectTags,
-    ];
-};
-
 const MeView: React.FC<MeViewProps> = ({ teacherProfile, onNavigateToFiles, onEditTeacherProfile, onViewLeaderReport }) => {
-    const profileTags = buildProfileTags(teacherProfile);
-
     const menuGroups: MenuGroup[] = [
         {
             title: '管理工具',
@@ -130,45 +104,65 @@ const MeView: React.FC<MeViewProps> = ({ teacherProfile, onNavigateToFiles, onEd
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 font-sans text-slate-900">
-            <div className="px-5 pt-4">
-                <MobileCard variant="hero" padding="lg" className="overflow-hidden border-blue-200/40 bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-200/70">
-                    <div className="flex items-center gap-5">
+        <div className="relative min-h-screen overflow-hidden bg-[#F4FCFF] pb-24 font-sans text-slate-900">
+            <div className="pointer-events-none absolute -left-24 -right-28 top-0 h-[420px] opacity-75 blur-[30px]" aria-hidden="true">
+                <img
+                    src={ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG}
+                    alt=""
+                    className="h-full w-full scale-125 object-cover object-right-top"
+                />
+            </div>
+            <div className="pointer-events-none absolute inset-x-0 top-[190px] h-[360px] opacity-60" aria-hidden="true">
+                <img
+                    src={ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG}
+                    alt=""
+                    className="h-full w-full scale-150 object-cover object-right-bottom blur-2xl"
+                />
+            </div>
+
+            <div className="relative px-5 pt-4">
+                <div className="relative z-10 min-h-[173px] overflow-hidden rounded-[32px] border border-white/80 bg-white shadow-[0_24px_70px_-38px_rgba(14,116,144,0.5)] ring-1 ring-cyan-100/70">
+                    <img
+                        src={ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 h-full w-full object-cover object-right-center"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/55 via-white/14 to-white/4" aria-hidden="true" />
+
+                    <div className="relative z-10 flex min-h-[173px] items-center gap-4 px-5 py-5">
                         <button
                             type="button"
                             onClick={onEditTeacherProfile}
                             className="relative shrink-0 rounded-full text-left transition-transform active:scale-95"
                             aria-label="编辑教师信息"
                         >
-                            <div className="h-[92px] w-[92px] rounded-full bg-white/18 p-1.5 shadow-inner backdrop-blur">
+                            <div className="h-[92px] w-[92px] rounded-full bg-white/86 p-1.5 shadow-[0_18px_42px_-24px_rgba(15,23,42,0.45)] backdrop-blur">
                                 <img
                                     src={teacherProfile.avatar}
                                     alt="刘飞飞老师头像"
-                                    className="h-full w-full rounded-full bg-slate-50 object-cover ring-2 ring-white/80"
+                                    className="h-full w-full rounded-full bg-slate-50 object-cover ring-2 ring-white"
                                 />
-                            </div>
-                            <div className="absolute bottom-0 right-0">
-                                <IconBadge icon={Camera} size="sm" tone="brand" shape="circle" className="border-[3px] border-white bg-white text-blue-600" />
                             </div>
                         </button>
 
                         <div className="min-w-0 flex-1">
-                            <h2 className={`${phoneText.pageTitle} text-white`}>刘飞飞老师</h2>
-                            <p className={`mt-2 text-white/78 ${phoneText.itemTitle}`}>成都七中初中附属小学</p>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                {profileTags.map(tag => (
-                                    <span key={tag.label} className={`inline-flex items-center gap-1.5 rounded-lg border border-white/24 bg-white/16 px-2.5 py-1.5 text-white backdrop-blur ${phoneText.label}`}>
-                                        <tag.icon className="h-3.5 w-3.5" strokeWidth={2.2} />
-                                        {tag.label}
-                                    </span>
-                                ))}
-                            </div>
+                            <h2 className={`${phoneText.pageTitle} text-slate-950`}>刘飞飞老师</h2>
+                            <p className={`mt-2 text-slate-600 ${phoneText.itemTitle}`}>成都七中初中附属小学</p>
+                            <button
+                                type="button"
+                                onClick={onEditTeacherProfile}
+                                className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-white/90 bg-white/88 px-4 text-sm font-extrabold text-blue-600 shadow-[0_14px_28px_-18px_rgba(37,99,235,0.8)] backdrop-blur-xl transition-transform active:scale-[0.98]"
+                            >
+                                <Camera className="h-4 w-4" strokeWidth={2.4} />
+                                编辑教师信息
+                            </button>
                         </div>
                     </div>
-                </MobileCard>
+                </div>
             </div>
 
-            <div className="space-y-3 px-5 pt-4">
+            <div className="relative z-10 space-y-3 px-5 pt-4">
                 {menuGroups.map(group => (
                     <MenuSection key={group.title} title={group.title} icon={group.icon} tone={group.tone}>
                         {group.items.map(item => <MenuItem key={item.title} {...item} />)}

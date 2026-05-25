@@ -51,9 +51,9 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 const subjectTags = cls.tags.filter(t => t !== '班主任');
 
                 return (
-                    <div key={cls.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 relative group transition-all">
+                    <div key={cls.id} className="bg-white rounded px-5 py-3.5 shadow-sm border border-slate-100 relative group transition-all">
                         {/* Background decoration */}
-                        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                        <div className="absolute inset-0 rounded overflow-hidden pointer-events-none">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full opacity-50 -mr-4 -mt-4"></div>
                         </div>
 

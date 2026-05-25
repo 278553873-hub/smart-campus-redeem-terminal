@@ -9,6 +9,8 @@ import certificateImg from './resources/certificate.png';
 import genericGrowthImg from './resources/generic_growth.png';
 import pingpongCertImg from './resources/pingpong_cert.png';
 import aiBotImg from './resources/ai-bot.png';
+import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
+import teacherLiuAvatarImg from './resources/teacher-liu-avatar.png';
 
 import avatarBoy1 from './resources/avatar_boy_1.png';
 import avatarBoy2 from './resources/avatar_boy_2.png';
@@ -135,7 +137,7 @@ export const ASSETS = {
     GIRLS: [avatarGirl1, avatarGirl2, avatarGirl3, avatarGirl4, avatarGirl5, avatarGirl6, avatarGirl7, avatarGirl],
     TEACHER_WANG: encodeSVG(teacherWangSVG),
     TEACHER_LIN: encodeSVG(teacherLinSVG),
-    TEACHER_LIU: encodeSVG(teacherLiuSVG),
+    TEACHER_LIU: teacherLiuAvatarImg,
   },
   COVER: {
     BOY: coverBoy,
@@ -150,6 +152,7 @@ export const ASSETS = {
     SUBJECT: subjectReportIcon,
     TERM: termReportIcon,
     AI_BOT: aiBotImg,
+    TEACHER_ME_HERO_BG: teacherMeHeroBg,
   },
   HIGHLIGHTS: {
     CERTIFICATE: certificateImg,
