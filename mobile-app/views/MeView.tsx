@@ -104,22 +104,7 @@ const MeView: React.FC<MeViewProps> = ({ teacherProfile, onNavigateToFiles, onEd
     ];
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-[#F4FCFF] pb-24 font-sans text-slate-900">
-            <div className="pointer-events-none absolute -left-24 -right-28 top-0 h-[420px] opacity-75 blur-[30px]" aria-hidden="true">
-                <img
-                    src={ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG}
-                    alt=""
-                    className="h-full w-full scale-125 object-cover object-right-top"
-                />
-            </div>
-            <div className="pointer-events-none absolute inset-x-0 top-[190px] h-[360px] opacity-60" aria-hidden="true">
-                <img
-                    src={ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG}
-                    alt=""
-                    className="h-full w-full scale-150 object-cover object-right-bottom blur-2xl"
-                />
-            </div>
-
+        <div className="relative min-h-screen overflow-hidden pb-24 font-sans text-slate-900">
             <div className="relative px-5 pt-4">
                 <div className="relative z-10 min-h-[173px] overflow-hidden rounded-[32px] border border-white/80 bg-white shadow-[0_24px_70px_-38px_rgba(14,116,144,0.5)] ring-1 ring-cyan-100/70">
                     <img

@@ -542,6 +542,40 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const showInputBar = ['home_log', 'class_detail'].includes(currentView);
     const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView);
     const viewHandlesScroll = ['home_log', 'class_detail', 'report_detail'].includes(currentView);
+    const hasScreenLevelBackground = ['home_log', 'class_list', 'me'].includes(currentView);
+
+    const getPhoneScreenBackground = () => {
+        if (currentView === 'home_log') {
+            return <TeacherRecordAuroraBackground activeTab={activeLogTab} />;
+        }
+
+        if (currentView === 'class_list') {
+            return <div className="h-full w-full teacher-mobile-phone-gradient" aria-hidden="true"></div>;
+        }
+
+        if (currentView === 'me') {
+            return (
+                <div className="relative h-full w-full overflow-hidden bg-[#F4FCFF]" aria-hidden="true">
+                    <div className="pointer-events-none absolute -left-24 -right-28 top-0 h-[420px] opacity-75 blur-[30px]">
+                        <img
+                            src={ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG}
+                            alt=""
+                            className="h-full w-full scale-125 object-cover object-right-top"
+                        />
+                    </div>
+                    <div className="pointer-events-none absolute inset-x-0 top-[190px] h-[360px] opacity-60">
+                        <img
+                            src={ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG}
+                            alt=""
+                            className="h-full w-full scale-150 object-cover object-right-bottom blur-2xl"
+                        />
+                    </div>
+                </div>
+            );
+        }
+
+        return undefined;
+    };
 
     // Local Header component to replace the imported one's styling for specific views
     const LocalHeader = ({ title, onBack }: { title: string; onBack?: () => void }) => (
@@ -561,14 +595,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             <PhoneMockup
                 showDeviceFrame={showPhoneShell}
                 contentTopInsetMode="status-bar"
-                screenBackground={currentView === 'home_log' ? (
-                    <TeacherRecordAuroraBackground activeTab={activeLogTab} />
-                ) : undefined}
+                screenBackground={getPhoneScreenBackground()}
             >
 
-                    <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
+                    <div className={`flex-1 flex flex-col relative overflow-hidden ${hasScreenLevelBackground ? 'bg-transparent' : 'bg-white'}`}>
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}

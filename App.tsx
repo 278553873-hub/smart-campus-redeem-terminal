@@ -1252,8 +1252,8 @@ const AppSwitcher: React.FC = () => {
     return 'terminal'; // default
   });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
-  const [showPhoneShell, setShowPhoneShell] = useState(false);
-  const [showParentPhoneShell, setShowParentPhoneShell] = useState(false);
+  const [showPhoneShell, setShowPhoneShell] = useState(true);
+  const [showParentPhoneShell, setShowParentPhoneShell] = useState(true);
 
   return (
     <>
