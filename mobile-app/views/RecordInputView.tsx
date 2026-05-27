@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     CameraIcon, MicIcon, ImageIconIcon,
     ChevronRightIcon,
-    ArrowRightIcon
+    ArrowRightIcon,
+    KeyboardIcon
 } from '../components/Icons';
 import { VoiceSiriOrbCanvas } from '../components/VoiceSiriOrbCanvas';
 
@@ -217,14 +218,14 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
     const visualVoiceLevel = Math.max(voiceLevel, micState === 'listening' ? 0.24 : 0.34);
 
     return (
-        <div className={`absolute inset-0 z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300 ${mode === 'camera' ? 'bg-black' : 'bg-[#F2F2F2]'}`}>
+        <div className={`absolute inset-0 z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300 ${mode === 'camera' ? 'bg-black' : 'teacher-record-soft-page'}`}>
 
             {/* Top Bar */}
-            <div className={`flex justify-between items-center px-4 z-20 h-[104px] pt-[54px] transition-colors shadow-sm ${mode === 'camera' ? 'text-white border-b border-white/10' : 'text-slate-900 bg-white border-b border-slate-100'}`}>
+            <div className={`flex justify-between items-center px-4 z-20 h-[104px] pt-[54px] transition-colors shadow-sm ${mode === 'camera' ? 'text-white border-b border-white/10' : 'text-slate-900 bg-white/82 backdrop-blur-xl border-b border-white/70'}`}>
                 <div className="flex-1 flex justify-start">
                     <button
                         onClick={onClose}
-                        className={`p-2 rounded-full transition-colors ${mode === 'camera' ? 'bg-white/10 /20' : 'bg-slate-100 '}`}
+                        className={`p-2 rounded-full transition-colors ${mode === 'camera' ? 'bg-white/10 /20' : 'bg-white/80 shadow-sm border border-white/80 '}`}
                     >
                         <div className="rotate-90"><ChevronRightIcon className={`w-5 h-5 ${mode === 'camera' ? 'text-white' : 'text-slate-600'}`} /></div>
                     </button>
@@ -249,25 +250,24 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
 
                 {mode === 'voice' && (
                     <div
-                        className="absolute inset-0 flex flex-col overflow-hidden bg-[#F7FAFF]"
+                        className="absolute inset-0 flex flex-col overflow-hidden teacher-record-soft-page"
                         onTouchStart={handleGestureStart}
                         onTouchMove={handlePressMove}
                         onMouseDown={handleGestureStart}
                         onMouseMove={handlePressMove}
                     >
                         <div className="pointer-events-none absolute inset-0">
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_12%,rgba(255,138,0,0.14),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(59,130,246,0.16),transparent_34%),linear-gradient(180deg,#FFFFFF_0%,#F7FAFF_52%,#EDF6FF_100%)]" />
                             <div
-                                className="absolute left-1/2 top-[38%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#7C3AED]/15 blur-3xl transition-transform duration-150"
+                                className="absolute left-1/2 top-[36%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#7C3AED]/12 blur-3xl transition-transform duration-150"
                                 style={{ transform: `translate(-50%, -50%) scale(${1 + voiceLevel * 0.42})` }}
                             />
                             <div
-                                className="absolute left-1/2 top-[52%] h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0EA5E9]/12 blur-3xl transition-transform duration-150"
+                                className="absolute left-1/2 top-[50%] h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0EA5E9]/10 blur-3xl transition-transform duration-150"
                                 style={{ transform: `translate(-50%, -50%) scale(${1 + voiceLevel * 0.36})` }}
                             />
                         </div>
 
-                        <div className="relative flex flex-1 flex-col items-center justify-center px-8 text-center">
+                        <div className="relative flex flex-1 flex-col items-center justify-center px-8 pb-28 text-center">
                             <div className="mb-8">
                                 <p className={`text-[13px] font-bold tracking-[0.28em] ${cancelThreshold ? 'text-orange-600' : 'text-blue-500'}`}>
                                     {cancelThreshold ? '松开取消' : '正在聆听'}
@@ -294,6 +294,43 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
                                 </p>
                             </div>
                         </div>
+
+                        <div className="relative z-10 px-4 pb-safe pb-6">
+                            <div className="teacher-record-soft-dock flex items-center gap-4 px-3 py-3">
+                                <button
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSwitchMode('camera');
+                                    }}
+                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/92 text-[#8A7BFF] shadow-[0_14px_28px_rgba(97,119,163,0.14)] active:scale-95 transition-transform"
+                                    aria-label="切换到拍照录入"
+                                >
+                                    <CameraIcon className="h-7 w-7" />
+                                </button>
+
+                                <div className="teacher-record-voice-pill flex h-16 min-w-0 flex-1 items-center justify-center gap-3 text-white select-none active:scale-[0.99] transition-transform">
+                                    <MicIcon className="h-6 w-6" />
+                                    <span className="text-[18px] font-bold tracking-wide">
+                                        {cancelThreshold ? '松开 取消' : '按住 说话'}
+                                    </span>
+                                </div>
+
+                                <button
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSwitchMode('text');
+                                    }}
+                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/92 text-[#9B6DFF] shadow-[0_14px_28px_rgba(97,119,163,0.14)] active:scale-95 transition-transform"
+                                    aria-label="切换到文字录入"
+                                >
+                                    <KeyboardIcon className="h-7 w-7" />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -315,7 +352,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
                 )}
 
                 {mode === 'text' && (
-                    <div className="absolute inset-0 bg-slate-50 flex flex-col p-4 animate-in fade-in">
+                    <div className="absolute inset-0 teacher-record-soft-page flex flex-col p-4 animate-in fade-in">
                         <textarea
                             ref={inputRef}
                             value={inputText}

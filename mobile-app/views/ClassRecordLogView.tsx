@@ -441,7 +441,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             </div>
 
             {/* List Content */}
-            <div className="h-[600px] max-h-full overflow-y-auto p-4 space-y-6 pb-40 no-scrollbar relative z-10">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6 pb-28 no-scrollbar relative z-10">
                 {/* "View Metrics" button relocated here (above cards) */}
                 <div className="flex justify-start px-2 -mb-2">
                     <button className={`bg-white/80 backdrop-blur-md border border-white/60 text-xs px-4 py-2 rounded-full font-bold shadow-sm active:scale-95 transition-all flex items-center gap-1.5 border-indigo-100/30

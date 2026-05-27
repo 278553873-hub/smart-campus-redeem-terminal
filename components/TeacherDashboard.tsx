@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Cascader, DatePicker, Input, Select as ArcoSelect, Table } from '@arco-design/web-react';
+import { Button, Cascader, DatePicker, Input, Select as ArcoSelect, Table, Popconfirm } from '@arco-design/web-react';
 import {
     LayoutDashboard, FileText, ClipboardList, PenTool,
     Settings, Users, BookOpen, Database, Download,
     Menu, User, ChevronDown, ChevronRight, Package,
     Landmark, ArrowLeftRight, Coins, Monitor, AlertCircle,
     Info, Search, Plus, Sparkles,
-    Check, Upload, KeyRound, Eye
+    Check, Upload, KeyRound, Eye, Move
 } from 'lucide-react';
 
 interface TeacherDashboardProps {
@@ -44,12 +44,28 @@ interface ExamLevelOption {
     color: string;
 }
 
+interface TermReportModuleConfig {
+    id: string;
+    name: string;
+    enabled: boolean;
+    description: string;
+}
+
 const defaultExamLevelOptions: ExamLevelOption[] = [
-    { id: 1, name: '优', color: '#16A34A' },
-    { id: 2, name: '良', color: '#2563EB' },
-    { id: 3, name: '合格', color: '#0F766E' },
-    { id: 4, name: '待合格', color: '#D97706' },
-    { id: 5, name: '缺考', color: '#8A8F99' }
+    { id: 1, name: '优', color: '#00994C' },
+    { id: 2, name: '良', color: '#2962FF' },
+    { id: 3, name: '合格', color: '#CC8800' },
+    { id: 4, name: '待合格', color: '#E64A19' },
+    { id: 5, name: '缺考', color: '#666666' }
+];
+
+const defaultTermReportModules: TermReportModuleConfig[] = [
+    { id: 'fiveEducationRadar', name: '五育雷达图', enabled: true, description: '展示德智体美劳综合发展画像。' },
+    { id: 'subjectGradeDistribution', name: '学科成绩分布', enabled: true, description: '展示各学科等级或成绩分布情况。' },
+    { id: 'highlightMoments', name: '高光时刻', enabled: false, description: '展示学生本学期代表性成长片段。' },
+    { id: 'overallEvaluation', name: '总体评价', enabled: true, description: '汇总学生本学期综合表现。' },
+    { id: 'growthSuggestions', name: '成长建议', enabled: true, description: '给出下一阶段可执行提升建议。' },
+    { id: 'parentChildActivityGuide', name: '亲子活动指南', enabled: true, description: '提供家庭共育活动方向。' }
 ];
 
 const buildExamLevelColorStyle = (color: string): React.CSSProperties => ({
@@ -104,7 +120,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         {
             title: '基础信息配置', icon: <Settings size={18} />,
-            children: ['学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '角色管理', '学生管理', '学生成绩管理', '考试等级管理']
+            children: ['学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '角色管理', '学生管理', '学生成绩管理', '考试等级管理', '期末报告配置']
         },
         {
             title: '报告配置', icon: <FileText size={18} />,
@@ -267,6 +283,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [gradeSelectionAnchor, setGradeSelectionAnchor] = useState<{ row: number; column: number } | null>(null);
     const [isDraggingGradeCells, setIsDraggingGradeCells] = useState(false);
     const [draggedGradeSubject, setDraggedGradeSubject] = useState<string | null>(null);
+    const [termReportModules, setTermReportModules] = useState<TermReportModuleConfig[]>(defaultTermReportModules);
+    const [draggedTermReportModuleId, setDraggedTermReportModuleId] = useState<string | null>(null);
     
     const demoGradeExamSubjects = ['语文', '数学', '英语', '科学', '道德与法治', '体育', '音乐', '美术', '信息科技', '劳动'];
     const demoGradeExamRows: GradeExamRow[] = gradeLevelOptions.flatMap((level, levelIndex) => (
@@ -373,12 +391,22 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         {
             title: '操作',
             dataIndex: 'operation',
-            width: 128,
+            width: 176,
             align: 'right' as const,
             render: (_: unknown, row: GradeExamRow) => (
                 <div className="flex justify-end gap-4">
                     <Button type="text" size="small" className="!px-0" onClick={() => handleViewGradeExam(row)}>查看</Button>
                     <Button type="text" size="small" className="!px-0" onClick={() => handleEditGradeExam(row)}>编辑</Button>
+                    <Popconfirm
+                        title="确认删除这条考试记录？"
+                        content={`删除后将移除「${formatGradeExamLabel(row)}」及对应成绩明细。`}
+                        okText="删除记录"
+                        cancelText="取消"
+                        okButtonProps={{ status: 'danger' }}
+                        onOk={() => handleDeleteGradeExam(row)}
+                    >
+                        <Button type="text" status="danger" size="small" className="!px-0">删除</Button>
+                    </Popconfirm>
                 </div>
             )
         }
@@ -477,6 +505,26 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         ));
     };
 
+    const handleToggleTermReportModule = (moduleId: string) => {
+        setTermReportModules(modules => modules.map(module => (
+            module.id === moduleId ? { ...module, enabled: !module.enabled } : module
+        )));
+    };
+
+    const handleDropTermReportModule = (targetModuleId: string) => {
+        if (!draggedTermReportModuleId || draggedTermReportModuleId === targetModuleId) return;
+        setTermReportModules(modules => {
+            const nextModules = [...modules];
+            const fromIndex = nextModules.findIndex(module => module.id === draggedTermReportModuleId);
+            const toIndex = nextModules.findIndex(module => module.id === targetModuleId);
+            if (fromIndex < 0 || toIndex < 0) return modules;
+            const [movedModule] = nextModules.splice(fromIndex, 1);
+            nextModules.splice(toIndex, 0, movedModule);
+            return nextModules;
+        });
+        setDraggedTermReportModuleId(null);
+    };
+
     const handleViewGradeExam = (exam: GradeExamRow) => {
         setSelectedGradeExam(exam);
         setSelectedGradeExamAggregate(null);
@@ -536,6 +584,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     };
 
     const formatGradeExamLabel = (row: typeof gradeExamRows[number]) => `${row.term} ${row.type} ${row.className}`;
+    const handleDeleteGradeExam = (exam: GradeExamRow) => {
+        setGradeExamRows(prev => prev.filter(row => row.id !== exam.id));
+        setGradeExamScoresMap(prev => {
+            const nextMap = { ...prev };
+            delete nextMap[exam.id];
+            return nextMap;
+        });
+    };
     const resetGradeCreateForm = () => {
         setNewGradeTerm(currentGradeTerm);
         setNewGradeExamType('');
@@ -1663,10 +1719,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 )}
 
                 {/* 内容区 - 采用精致的高端设计 */}
-                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
+                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
 
                     {/* 页面主标题 */}
-                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && (
+                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && (
                     <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
                         <div>
                             {activeMenu === '考试数据' ? (
@@ -3119,6 +3175,66 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         )
                     )}
 
+
+                    {/* 期末报告配置 */}
+                    {activeMenu === '期末报告配置' && (
+                        <div className="w-full font-sans text-sm text-[#4E5969] px-6 py-5 flex flex-col gap-4">
+                            <div className="flex h-5 items-center text-[13px] leading-[20px] text-[#86909C] mb-1">
+                                <span className="hover:text-[#1D2129] cursor-pointer">基础信息配置</span>
+                                <span className="mx-2 text-[#C9CDD4]">/</span>
+                                <span className="text-[#1D2129]">期末报告配置</span>
+                            </div>
+
+                            <div className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-6 shadow-[0_4px_10px_rgba(0,0,0,0.02)] flex flex-col">
+                                <h2 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">期末报告配置</h2>
+                                <div className="mt-3 w-full max-w-[720px]">
+                                    <div className="mb-5 flex min-h-8 w-full items-start rounded border border-[#BEDAFF] bg-[#E8F3FF] px-3 py-1.5 text-[13px] leading-5 text-[#4E5969]">
+                                        <Info size={14} className="mr-2 mt-[3px] shrink-0 text-[#165DFF]" />
+                                        <ol className="m-0 list-none p-0">
+                                            <li>1、拖动排序标记进行板块调整排序</li>
+                                        </ol>
+                                    </div>
+
+                                    <div className="flex flex-col gap-3">
+                                    {termReportModules.map((module, index) => (
+                                        <div
+                                            key={module.id}
+                                            draggable
+                                            onDragStart={() => setDraggedTermReportModuleId(module.id)}
+                                            onDragOver={(event) => event.preventDefault()}
+                                            onDrop={() => handleDropTermReportModule(module.id)}
+                                            onDragEnd={() => setDraggedTermReportModuleId(null)}
+                                            className={`flex min-h-[56px] items-center gap-4 rounded border px-4 py-3 transition-all ${draggedTermReportModuleId === module.id ? 'border-[#165DFF] bg-[#E8F3FF]' : 'border-[#E5E6EB] bg-white hover:border-[#B8C7E8]'}`}
+                                            title="拖拽排序"
+                                        >
+                                            <div className="w-8 shrink-0 text-center text-[13px] font-semibold text-[#86909C]">
+                                                {String(index + 1).padStart(2, '0')}
+                                            </div>
+                                            <div className="flex h-9 w-9 shrink-0 cursor-move items-center justify-center rounded border border-[#C9CDD4] bg-[#F7F8FA] text-[#4E5969]" aria-label="拖拽排序">
+                                                <Move size={18} strokeWidth={2.2} />
+                                            </div>
+                                            <div className="flex min-w-0 flex-1 items-center gap-2">
+                                                <span className="text-sm font-semibold leading-[22px] text-[#1D2129]">{module.name}</span>
+                                                {!module.enabled && (
+                                                    <span className="rounded bg-[#F2F3F5] px-2 py-0.5 text-xs font-normal text-[#86909C]">未展示</span>
+                                                )}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={module.enabled}
+                                                onClick={() => handleToggleTermReportModule(module.id)}
+                                                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 ${module.enabled ? 'bg-[#165DFF]' : 'bg-[#C9CDD4]'}`}
+                                            >
+                                                <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform ${module.enabled ? 'translate-x-[20px]' : 'translate-x-0'}`} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* 考试等级管理 */}
                     {activeMenu === '考试等级管理' && (

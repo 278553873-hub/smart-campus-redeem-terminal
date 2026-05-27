@@ -26,7 +26,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
     return (
-        <div className="p-4 space-y-4 pb-40">
+        <div className="min-h-full teacher-mobile-soft-page p-4 space-y-4 pb-40">
 
             {/* Top Action Area: Leaderboard & Summary */}
             <div className="flex items-center justify-between px-1">

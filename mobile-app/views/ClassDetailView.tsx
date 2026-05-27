@@ -74,9 +74,9 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#F8FAFC]">
+        <div className="flex flex-col h-full teacher-mobile-soft-page">
             {/* Top Bar Actions - Simplified (Name removed, Search removed) */}
-            <div className="px-4 py-2 bg-white border-b border-slate-100 flex justify-between items-center sticky top-0 z-10 shadow-sm h-[52px]">
+            <div className="px-4 py-2 bg-white/84 backdrop-blur-xl border-b border-white/70 flex justify-between items-center sticky top-0 z-10 shadow-sm h-[52px]">
                 <div className="flex items-center gap-2">
                     {/* Student Count Badge */}
                     <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">

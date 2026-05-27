@@ -17,6 +17,7 @@ const slice = (startMarker, endMarker) => {
 const anchorBar = slice('const MobileAnchorBar', '// --- MAIN WRAPPER ---');
 const headerBlock = slice('{/* Header */}', '{/* Mobile Anchor Navigation');
 const subjectReportPage = slice('const PageSubjectReportsWithTabs', 'const PageFuturePotential');
+const growthOverview = slice('const PageGrowthOverview', '// 新增：高光时刻板块');
 
 for (const forbidden of [
   'viewMode',
@@ -80,6 +81,13 @@ for (const required of [
   if (!subjectReportPage.includes(required)) {
     throw new Error(`学科报告页缺少中文化或返回逻辑配套结构：${required}`);
   }
+}
+
+const subjectIndex = growthOverview.indexOf('<SubjectGradesChart');
+const highlightsIndex = growthOverview.indexOf('<HighbrightMomentsContent');
+const overallIndex = growthOverview.indexOf('title="总体评价"');
+if (!(subjectIndex >= 0 && subjectIndex < highlightsIndex && highlightsIndex < overallIndex)) {
+  throw new Error('高光时刻应位于学科成绩分布之后、总体评价之前');
 }
 
 console.log('term report mobile-only assertions passed');
