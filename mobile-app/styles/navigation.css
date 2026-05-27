@@ -1,116 +1,56 @@
+:root {
+    --teacher-tabbar-height: 66px;
+    --teacher-tabbar-bottom: max(16px, env(safe-area-inset-bottom));
+    --teacher-tabbar-content-gap: 24px;
+}
+
+#main-scroll-container.has-floating-tabbar {
+    padding-bottom: calc(var(--teacher-tabbar-height) + var(--teacher-tabbar-bottom) + var(--teacher-tabbar-content-gap));
+    scroll-padding-bottom: calc(var(--teacher-tabbar-height) + var(--teacher-tabbar-bottom) + var(--teacher-tabbar-content-gap));
+}
+
 /* 悬浮毛玻璃底栏主容器 */
 .ai-tabbar-container {
     position: absolute;
     left: 20px;
     right: 20px;
-    bottom: max(16px, env(safe-area-inset-bottom));
-    height: 66px;
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border-radius: 9999px; /* 完美的圆角药丸 */
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 
-        0 12px 40px rgba(0, 0, 0, 0.05),
-        0 2px 6px rgba(0, 0, 0, 0.02),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    bottom: var(--teacher-tabbar-bottom);
+    height: var(--teacher-tabbar-height);
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    box-shadow:
+        0 10px 28px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
     display: flex;
     justify-content: space-around;
     align-items: center;
     padding: 0 8px;
     z-index: 50;
     overflow: visible;
+    isolation: isolate;
 }
 
-/* 整个底栏的物理果冻回弹 (Jelly Wobble) 变体 A - 适当减弱幅度 */
-@keyframes container-jelly-wobble-a {
-    0% {
-        transform: scale(1) translateY(0);
-    }
-    30% {
-        transform: scale(0.98, 1.02) translateY(0.8px); /* 减弱：纵向压扁幅度与位移 */
-    }
-    55% {
-        transform: scale(1.01, 0.99) translateY(-0.4px); /* 减弱：反弹幅度 */
-    }
-    75% {
-        transform: scale(0.997, 1.003) translateY(0); /* 微震 */
-    }
-    100% {
-        transform: scale(1) translateY(0);
-    }
+.ai-tabbar-container::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12));
+    pointer-events: none;
+    z-index: 1;
 }
 
-/* 整个底栏的物理果冻回弹 (Jelly Wobble) 变体 B - 适当减弱幅度 */
-@keyframes container-jelly-wobble-b {
-    0% {
-        transform: scale(1) translateY(0);
-    }
-    30% {
-        transform: scale(0.98, 1.02) translateY(0.8px);
-    }
-    55% {
-        transform: scale(1.01, 0.99) translateY(-0.4px);
-    }
-    75% {
-        transform: scale(0.997, 1.003) translateY(0);
-    }
-    100% {
-        transform: scale(1) translateY(0);
-    }
-}
-
-.tabbar-jelly-active-a {
-    animation: container-jelly-wobble-a 450ms cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards;
-}
-
-.tabbar-jelly-active-b {
-    animation: container-jelly-wobble-b 450ms cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards;
-}
-
-/* ================= 滑块本身横向移动时的物理果冻形变 (拉伸与回收) ================= */
-@keyframes slider-jelly-wobble-a {
-    0% {
-        transform: scale(1, 1);
-    }
-    25% {
-        transform: scale(1.20, 0.80); /* 移动中途：惯性更长更扁 */
-    }
-    60% {
-        transform: scale(0.88, 1.12); /* 冲出终点撞击回弹：瞬间压扁变高，溢出底栏 */
-    }
-    82% {
-        transform: scale(1.03, 0.97); /* 回弹微震 */
-    }
-    100% {
-        transform: scale(1, 1);
-    }
-}
-
-@keyframes slider-jelly-wobble-b {
-    0% {
-        transform: scale(1, 1);
-    }
-    25% {
-        transform: scale(1.20, 0.80);
-    }
-    60% {
-        transform: scale(0.88, 1.12);
-    }
-    82% {
-        transform: scale(1.03, 0.97);
-    }
-    100% {
-        transform: scale(1, 1);
-    }
-}
-
-.slider-jelly-active-a {
-    animation: slider-jelly-wobble-a 420ms cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
-}
-
-.slider-jelly-active-b {
-    animation: slider-jelly-wobble-b 420ms cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
+.ai-tabbar-container::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid rgba(226, 232, 240, 0.42);
+    pointer-events: none;
+    z-index: 2;
 }
 
 /* ================= 3D 物理液态玻璃画布容器 (TeacherFluidGlassNav) ================= */
@@ -123,6 +63,47 @@
     z-index: 5 !important;
     border-radius: 9999px;
     overflow: visible;
+}
+
+.teacher-liquid-dom-root {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 8;
+    overflow: visible;
+    border-radius: 9999px;
+}
+
+.teacher-liquid-dom-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none;
+    border-radius: 9999px;
+    filter: saturate(1.08) contrast(1.02);
+    mix-blend-mode: screen;
+}
+
+.teacher-fluid-css-fallback {
+    z-index: 6;
+}
+
+.teacher-fluid-css-fallback.is-liquid-dom-enhanced {
+    opacity: 0.62;
+    mix-blend-mode: soft-light;
+}
+
+.tabbar-liquid-indicator {
+    background: rgba(255, 255, 255, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    box-shadow:
+        0 6px 18px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
 }
 
 /* ================= 按钮单元项与排版 (保证底层原图文绝对静止) ================= */
@@ -155,4 +136,27 @@
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.03em;
+}
+
+/* 仅保留选中滑块的 Q 弹反馈，底板本身不做 3D/果冻形变。 */
+@keyframes slider-jelly-wobble-a {
+    0% { transform: scale(1, 1); }
+    25% { transform: scale(1.14, 0.88); }
+    62% { transform: scale(0.94, 1.06); }
+    100% { transform: scale(1, 1); }
+}
+
+@keyframes slider-jelly-wobble-b {
+    0% { transform: scale(1, 1); }
+    25% { transform: scale(1.14, 0.88); }
+    62% { transform: scale(0.94, 1.06); }
+    100% { transform: scale(1, 1); }
+}
+
+.slider-jelly-active-a {
+    animation: slider-jelly-wobble-a 360ms cubic-bezier(0.25, 0.8, 0.25, 1.12) forwards;
+}
+
+.slider-jelly-active-b {
+    animation: slider-jelly-wobble-b 360ms cubic-bezier(0.25, 0.8, 0.25, 1.12) forwards;
 }

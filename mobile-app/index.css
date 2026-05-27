@@ -26,6 +26,44 @@
   --ai-glass-border: rgba(255, 255, 255, 0.8);
   --ai-card-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
   --ai-inner-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5);
+
+  /* Teacher mobile soft page background */
+  --page-bg: #F8FBFF;
+  --page-glow-blue: #EDF5FF;
+  --page-glow-pink: #FFF3FA;
+  --page-glow-purple: #F4F0FF;
+}
+
+.teacher-mobile-soft-page {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 232, 248, 0.9), transparent 28%),
+    radial-gradient(circle at 82% 4%, rgba(226, 241, 255, 0.95), transparent 32%),
+    linear-gradient(180deg, #F9FBFF 0%, #FFFFFF 72%);
+}
+
+.teacher-record-soft-page {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 232, 248, 0.9), transparent 28%),
+    radial-gradient(circle at 82% 4%, rgba(226, 241, 255, 0.95), transparent 32%),
+    radial-gradient(circle at 50% 58%, rgba(244, 240, 255, 0.68), transparent 38%),
+    linear-gradient(180deg, #F9FBFF 0%, #FFFFFF 72%);
+}
+
+.teacher-record-soft-dock {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 32px;
+  box-shadow: 0 18px 48px rgba(95, 128, 178, 0.14);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.teacher-record-voice-pill {
+  background: linear-gradient(100deg, #F3A5EA 0%, #CFA5FF 45%, #8BD5FF 100%);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 14px 34px rgba(122, 162, 231, 0.28);
 }
 
 /* ... existing reset styles ... */
@@ -187,6 +225,35 @@
 
 .animate-page-enter {
   animation: page-enter-right 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.highlight-preview-backdrop {
+  animation: highlight-preview-fade 180ms ease-out both;
+}
+
+.highlight-preview-image {
+  animation: highlight-preview-scale 220ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  transform-origin: center center;
+}
+
+@keyframes highlight-preview-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes highlight-preview-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 

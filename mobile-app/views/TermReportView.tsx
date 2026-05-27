@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Student } from '../types';
 import {
     MOCK_SUBJECTS,
@@ -424,6 +425,8 @@ const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFull
                 </ReportCard>
             </div>
 
+            <HighbrightMomentsContent student={student} id="section-highlights" className="mb-4" />
+
             {/* 六育亮点（仅男生版显示） */}
             {showFullContent && (
                 <ReportCard className="mb-4">
@@ -606,48 +609,224 @@ const PageSimpleParentChildActivities = ({ mode = 'a4', id, student }: { mode?: 
 };
 
 // 新增：高光时刻板块
-const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mobile', id?: string, student: Student, key?: any }) => {
+type HighlightImageKey =
+    | 'award-certificate-default'
+    | 'daily-default-growth'
+    | 'daily-kindness-collaboration'
+    | 'daily-classroom-thinking'
+    | 'daily-labor-service'
+    | 'daily-sports-vitality'
+    | 'daily-art-creativity';
+
+type HighlightMoment = {
+    type: 'award' | 'dailyRecord';
+    description: string;
+    imageUrl: string;
+    defaultImageKey: HighlightImageKey | '';
+};
+
+const HIGHLIGHT_DEFAULT_OPTIONS: Array<{ key: HighlightImageKey }> = [
+    { key: 'award-certificate-default' },
+    { key: 'daily-default-growth' },
+    { key: 'daily-kindness-collaboration' },
+    { key: 'daily-classroom-thinking' },
+    { key: 'daily-labor-service' },
+    { key: 'daily-sports-vitality' },
+    { key: 'daily-art-creativity' },
+];
+
+const getHighlightImage = (item: HighlightMoment) => {
+    if (item.imageUrl) return item.imageUrl;
+    const fallbackKey = item.defaultImageKey || (item.type === 'award' ? 'award-certificate-default' : 'daily-default-growth');
+    return (ASSETS.HIGHLIGHT_DEFAULTS as Record<string, string>)[fallbackKey] || ASSETS.HIGHLIGHT_DEFAULTS['daily-default-growth'];
+};
+
+const normalizeHighlightMoments = (data: any): HighlightMoment[] => {
+    if (Array.isArray(data.highlightMoments)) return data.highlightMoments;
+    return (data.highlights || []).map((item: any) => ({
+        type: item.isAward ? 'award' : 'dailyRecord',
+        description: item.description || item.achievement || '',
+        imageUrl: item.imageUrl || '',
+        defaultImageKey: item.isAward ? 'award-certificate-default' : 'daily-default-growth',
+    }));
+};
+
+const HighlightImagePreview = ({ image, onClose }: { image: string; onClose: () => void }) => {
+    const [previewBounds, setPreviewBounds] = useState({ left: 0, top: 0, width: 393, height: window.innerHeight });
+
+    useEffect(() => {
+        const updateBounds = () => {
+            const target = document.getElementById('main-scroll-container') || document.getElementById('report-scroll-container');
+            const rect = target?.getBoundingClientRect();
+            setPreviewBounds({
+                left: rect?.left ?? 0,
+                top: rect?.top ?? 0,
+                width: rect?.width ?? window.innerWidth,
+                height: rect?.height ?? window.innerHeight,
+            });
+        };
+
+        updateBounds();
+        window.addEventListener('resize', updateBounds);
+        window.addEventListener('scroll', updateBounds, true);
+        return () => {
+            window.removeEventListener('resize', updateBounds);
+            window.removeEventListener('scroll', updateBounds, true);
+        };
+    }, []);
+
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div
+            className="fixed z-[9999] flex items-center justify-center bg-black/90 p-3 backdrop-blur-md highlight-preview-backdrop"
+            style={{
+                left: previewBounds.left,
+                top: previewBounds.top,
+                width: previewBounds.width,
+                height: previewBounds.height,
+            }}
+            onClick={onClose}
+        >
+            <div className="absolute left-0 right-0 top-3 z-[10000] flex items-start justify-end px-4">
+                <button
+                    className="text-white/90 hover:text-white bg-white/10 rounded-full p-2 transition-colors border border-white/20 backdrop-blur-md"
+                    onClick={(e) => { e.stopPropagation(); onClose(); }}
+                    aria-label="关闭大图预览"
+                >
+                    <X className="w-8 h-8" />
+                </button>
+            </div>
+            <div className="relative max-w-full max-h-full overflow-hidden flex flex-col items-center pt-14">
+                <img
+                    src={image}
+                    className="highlight-preview-image object-contain rounded-lg shadow-2xl"
+                    style={{
+                        width: `calc(${previewBounds.width}px - 24px)`,
+                        maxHeight: `calc(${previewBounds.height}px - 152px)`,
+                    }}
+                    alt="预览"
+                    onClick={onClose}
+                />
+            </div>
+        </div>,
+        document.body
+    );
+};
+
+const HighbrightMomentsContent = ({ id, student, className = "" }: { id?: string, student: Student, className?: string, key?: any }) => {
     const data = student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE : MOCK_TERM_REPORT_AI_DATA;
-    // 使用 state 管理列表，支持增删改
-    const [highlights, setHighlights] = useState<any[]>((data as any).highlights || []);
+    const [highlights, setHighlights] = useState<HighlightMoment[]>(normalizeHighlightMoments(data));
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [imagePickerIndex, setImagePickerIndex] = useState<number | null>(null);
+    const [uploadSheetIndex, setUploadSheetIndex] = useState<number | null>(null);
+    const [sheetBounds, setSheetBounds] = useState({
+        left: 0,
+        top: 0,
+        width: 393,
+        height: typeof window !== 'undefined' ? window.innerHeight : 852,
+    });
 
-    // 新增高光时刻
+    useEffect(() => {
+        if (imagePickerIndex === null && uploadSheetIndex === null) return;
+
+        const updateBounds = () => {
+            const target = document.getElementById('main-scroll-container') || document.getElementById('report-scroll-container');
+            const rect = target?.getBoundingClientRect();
+            setSheetBounds({
+                left: rect?.left ?? 0,
+                top: rect?.top ?? 0,
+                width: rect?.width ?? window.innerWidth,
+                height: rect?.height ?? window.innerHeight,
+            });
+        };
+
+        updateBounds();
+        window.addEventListener('resize', updateBounds);
+        window.addEventListener('scroll', updateBounds, true);
+        return () => {
+            window.removeEventListener('resize', updateBounds);
+            window.removeEventListener('scroll', updateBounds, true);
+        };
+    }, [imagePickerIndex, uploadSheetIndex]);
+
     const handleAdd = () => {
+        setIsEditing(true);
         setHighlights([
             ...highlights,
             {
-                achievement: "这里是新增的高光时刻，请修改为您想对学生说的话...",
-                imageUrl: "",
-                isAward: false
+                type: 'dailyRecord',
+                description: '请填写这个学期里真实、具体、值得被看见的高光时刻。',
+                imageUrl: '',
+                defaultImageKey: 'daily-default-growth'
             }
         ]);
     };
 
-    // 删除高光时刻
     const handleDelete = (index: number) => {
         const newList = [...highlights];
         newList.splice(index, 1);
         setHighlights(newList);
     };
 
-    // 修改内容
-    const handleChange = (index: number, field: string, value: any) => {
+    const handleChange = (index: number, field: keyof HighlightMoment, value: any) => {
         const newList = [...highlights];
         newList[index] = { ...newList[index], [field]: value };
         setHighlights(newList);
     };
 
+    const handleDefaultImageSelect = (index: number, key: HighlightImageKey) => {
+        const nextType = key === 'award-certificate-default' ? 'award' : highlights[index].type;
+        const newList = [...highlights];
+        newList[index] = { ...newList[index], type: nextType, imageUrl: '', defaultImageKey: key };
+        setHighlights(newList);
+        setImagePickerIndex(null);
+    };
+
+    const handleFileChange = (index: number, file?: File) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === 'string') {
+                handleChange(index, 'imageUrl', reader.result);
+                setImagePickerIndex(null);
+                setUploadSheetIndex(null);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const renderPhoneSheet = (content: React.ReactNode, zIndex: number, onClose: () => void) => {
+        if (typeof document === 'undefined') return null;
+
+        return createPortal(
+            <div
+                className="fixed flex items-end justify-center bg-black/35 p-4 backdrop-blur-sm"
+                style={{
+                    left: sheetBounds.left,
+                    top: sheetBounds.top,
+                    width: sheetBounds.width,
+                    height: sheetBounds.height,
+                    zIndex,
+                }}
+                onClick={onClose}
+            >
+                {content}
+            </div>,
+            document.body
+        );
+    };
+
     return (
-        <ReportPageContainer mode={mode} id={id}>
+        <div id={id} className={`scroll-mt-[100px] ${className}`}>
             <ReportSectionHeader
                 title="高光时刻"
                 subTitle="Highlights"
                 icon={Star}
                 className="text-amber-500"
                 rightElement={
-                    <button 
+                    <button
                         onClick={() => setIsEditing(!isEditing)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white shadow-lg active:scale-95 transition-all ${isEditing ? 'bg-amber-500 shadow-amber-200' : 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-200'}`}
                     >
@@ -656,87 +835,81 @@ const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mo
                     </button>
                 }
             />
-            <div className="grid grid-cols-1 gap-5">
-                {highlights.map((item: any, idx: number) => (
-                    <ReportCard key={idx} className="overflow-hidden p-0 border-none shadow-xl shadow-slate-200/40 relative group/card rounded-3xl bg-white ring-1 ring-slate-100">
-                        {isEditing && (
-                            <button 
-                                onClick={() => handleDelete(idx)}
-                                className="absolute top-3 right-3 z-20 bg-red-500 text-white p-2 rounded-full shadow-md active:scale-95 hover:bg-red-600 transition-colors"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
-                        )}
-                        <div className="flex flex-col h-full">
-                            {/* 图片容器 (Top) */}
-                            <div
-                                className={`w-full h-48 bg-slate-100 relative overflow-hidden transition-transform ${(!isEditing && item.imageUrl) ? 'cursor-pointer active:scale-[0.99]' : ''}`}
-                                onClick={() => (!isEditing && item.imageUrl) && setPreviewImage(item.imageUrl)}
-                            >
-                                {item.imageUrl ? (
-                                    <img
-                                        src={item.imageUrl}
-                                        alt="高光时刻"
-                                        className={`w-full h-full object-cover transition-transform duration-300 ${!isEditing ? 'active:scale-105' : ''}`}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400">
-                                        <svg className="w-10 h-10 mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                        <span className="text-xs font-medium">暂无配图</span>
-                                    </div>
-                                )}
-                                
-                                <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent pointer-events-none"></div>
 
-                                {isEditing ? (
-                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm z-10">
-                                        <button 
-                                            onClick={() => {
-                                                // 模拟更换图片，实际项目中这里会唤起本地相册/相机
-                                                const defaultImg = "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop";
-                                                const newImg = prompt("请在此输入新的图片URL (留空取消):", item.imageUrl || defaultImg);
-                                                if (newImg !== null && newImg.trim() !== '') {
-                                                    handleChange(idx, 'imageUrl', newImg);
-                                                }
-                                            }}
-                                            className="bg-white text-slate-800 px-4 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-transform"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                            {item.imageUrl ? '更换图片' : '添加图片'}
-                                        </button>
-                                    </div>
-                                ) : (
-                                    item.imageUrl && (
+            <div className="grid grid-cols-1 gap-5">
+                {highlights.map((item, idx) => {
+                    const resolvedImage = getHighlightImage(item);
+                    const canPreview = Boolean(item.imageUrl);
+                    return (
+                        <ReportCard key={idx} className="overflow-visible p-0 border-none shadow-xl shadow-slate-200/40 relative group/card rounded-3xl bg-white ring-1 ring-slate-100">
+                            {isEditing && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleDelete(idx)}
+                                    className="absolute right-2 top-2 z-30 flex h-8 w-8 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-red-500 text-white shadow-md shadow-red-100 active:scale-95"
+                                    aria-label="删除这条高光时刻"
+                                >
+                                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                            )}
+                            <div className="flex flex-col h-full">
+                                <div
+                                    className={`w-full h-48 bg-slate-100 relative overflow-hidden transition-transform ${!isEditing && canPreview ? 'cursor-pointer active:scale-[0.99]' : ''}`}
+                                    onClick={() => !isEditing && canPreview && setPreviewImage(resolvedImage)}
+                                >
+                                    <img
+                                        src={resolvedImage}
+                                        alt="高光时刻"
+                                        className={`w-full h-full object-cover transition-transform duration-300 ${!isEditing && canPreview ? 'active:scale-105' : ''}`}
+                                    />
+
+                                    <div className="absolute inset-0 bg-gradient-to-b from-black/15 to-transparent pointer-events-none"></div>
+                                    {isEditing ? (
+                                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/35 backdrop-blur-[2px]">
+                                            <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    setImagePickerIndex(idx);
+                                                }}
+                                                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-base font-black text-slate-800 shadow-xl active:scale-95"
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                                更换图片
+                                            </button>
+                                        </div>
+                                    ) : canPreview ? (
                                         <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1 shadow-sm">
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
                                             点击查看大图
                                         </div>
-                                    )
-                                )}
-                            </div>
+                                    ) : null}
+                                </div>
 
-                            {/* 内容文字 (Bottom) */}
-                            <div className="p-5 relative bg-white flex-1">
-                                <div className="absolute top-2 left-4 text-4xl font-serif opacity-30 text-amber-500 pointer-events-none">"</div>
-                                {isEditing ? (
-                                    <textarea
-                                        className="w-full min-h-[120px] text-[15px] leading-[1.8] relative z-10 pt-1 text-slate-700 bg-slate-50 border border-amber-200/60 rounded-xl p-3 outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none shadow-inner"
-                                        value={item.achievement}
-                                        onChange={(e) => handleChange(idx, 'achievement', e.target.value)}
-                                        placeholder="请输入你想对学生说的话..."
-                                    />
-                                ) : (
-                                    <div className="text-[15px] leading-[1.8] relative z-10 pt-1 text-slate-700 text-justify tracking-wide">
-                                        {item.achievement}
-                                    </div>
-                                )}
+                                <div className="p-5 relative bg-white flex-1">
+                                    <div className="absolute top-2 left-4 text-4xl font-serif opacity-30 text-amber-500 pointer-events-none">"</div>
+                                    {isEditing ? (
+                                        <div className="space-y-4">
+                                            <textarea
+                                                className="w-full min-h-[120px] text-[15px] leading-[1.8] relative z-10 pt-1 text-slate-700 bg-slate-50 border border-amber-200/60 rounded-xl p-3 outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none shadow-inner"
+                                                value={item.description}
+                                                onChange={(e) => handleChange(idx, 'description', e.target.value)}
+                                                placeholder="请输入真实、具体、适合展示给学生和家长的高光时刻..."
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="text-[15px] leading-[1.8] relative z-10 pt-1 text-slate-700 text-justify tracking-wide">
+                                            {item.description}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </ReportCard>
-                ))}
+                        </ReportCard>
+                    );
+                })}
             </div>
 
-            {isEditing && (
+            {(isEditing || highlights.length === 0) && (
                 <button
                     onClick={handleAdd}
                     className="w-full mt-5 py-4 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center gap-2 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-all active:scale-[0.98]"
@@ -746,32 +919,105 @@ const PageHighbrightMoments = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mo
                 </button>
             )}
 
-            {/* 预览模态框 */}
-            {previewImage && (
-                <div
-                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-300"
-                    onClick={() => setPreviewImage(null)}
-                >
-                    <div className="relative max-w-full max-h-full overflow-hidden flex flex-col items-center">
-                        <button
-                            className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/20 rounded-full p-2 transition-colors z-[10000]"
-                            onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
-                        >
-                            <X className="w-8 h-8" />
-                        </button>
-                        <img
-                            src={previewImage}
-                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-500"
-                            alt="预览"
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                        <div className="mt-6 text-white text-lg font-bold tracking-widest bg-white/10 px-6 py-2 rounded-full border border-white/20">
-                            大图预览
+            {imagePickerIndex !== null && renderPhoneSheet(
+                    <div
+                        className="w-full max-w-[360px] rounded-3xl bg-white p-4 shadow-2xl"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="mb-3 flex items-center justify-between">
+                            <div className="text-sm font-black text-slate-800">更换图片</div>
+                            <button
+                                type="button"
+                                className="rounded-full bg-slate-100 p-1.5 text-slate-500 active:scale-95"
+                                onClick={() => setImagePickerIndex(null)}
+                                aria-label="关闭图片选择"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
                         </div>
-                    </div>
-                </div>
+                        <button
+                            type="button"
+                            onClick={() => setUploadSheetIndex(imagePickerIndex)}
+                            className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white active:scale-[0.98]"
+                        >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16" /></svg>
+                            上传图片
+                        </button>
+                        <div className="grid grid-cols-4 gap-2">
+                            {HIGHLIGHT_DEFAULT_OPTIONS.map(option => (
+                                <button
+                                    key={option.key}
+                                    type="button"
+                                    onClick={() => handleDefaultImageSelect(imagePickerIndex, option.key)}
+                                    aria-label="选择内置高光图片"
+                                    className={`overflow-hidden rounded-xl border bg-white shadow-sm active:scale-95 transition-all ${highlights[imagePickerIndex]?.defaultImageKey === option.key && !highlights[imagePickerIndex]?.imageUrl ? 'border-amber-400 ring-2 ring-amber-200' : 'border-slate-100'}`}
+                                >
+                                    <img src={(ASSETS.HIGHLIGHT_DEFAULTS as Record<string, string>)[option.key]} alt="内置高光图片" className="h-14 w-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>,
+                9998,
+                () => setImagePickerIndex(null)
             )}
-        </ReportPageContainer>
+
+            {uploadSheetIndex !== null && renderPhoneSheet(
+                    <div
+                        className="w-full max-w-[360px] rounded-3xl bg-white p-4 shadow-2xl"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="mb-3 text-center text-sm font-black text-slate-800">上传图片</div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <input
+                                    id={`highlight-camera-${uploadSheetIndex}`}
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    className="hidden"
+                                    onChange={(event) => handleFileChange(uploadSheetIndex, event.target.files?.[0])}
+                                />
+                                <label
+                                    htmlFor={`highlight-camera-${uploadSheetIndex}`}
+                                    className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-50 px-4 py-5 text-sm font-bold text-slate-700 ring-1 ring-slate-100 active:scale-95"
+                                >
+                                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    拍照
+                                </label>
+                            </div>
+                            <div>
+                                <input
+                                    id={`highlight-upload-${uploadSheetIndex}`}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(event) => handleFileChange(uploadSheetIndex, event.target.files?.[0])}
+                                />
+                                <label
+                                    htmlFor={`highlight-upload-${uploadSheetIndex}`}
+                                    className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-50 px-4 py-5 text-sm font-bold text-slate-700 ring-1 ring-slate-100 active:scale-95"
+                                >
+                                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    相册选择
+                                </label>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setUploadSheetIndex(null)}
+                            className="mt-3 w-full rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 active:scale-[0.98]"
+                        >
+                            取消
+                        </button>
+                    </div>,
+                9999,
+                () => setUploadSheetIndex(null)
+            )}
+
+            {previewImage && (
+                <HighlightImagePreview image={previewImage} onClose={() => setPreviewImage(null)} />
+            )}
+        </div>
     );
 };
 
@@ -1941,8 +2187,8 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
 
     const mobileAnchorItems = isMale ? [
         { id: 'section-teacher', label: '教师关注' },
-        { id: 'section-highlights', label: '高光时刻' },
         { id: 'section-growth', label: '成长概览' },
+        { id: 'section-highlights', label: '高光时刻' },
         { id: 'section-future', label: '未来潜力' },
         { id: 'section-future-suggestions', label: '成长建议' },
         { id: 'section-strengths', label: '优势强化' },
@@ -1979,7 +2225,6 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
     const mobilePages = isMale ? [
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
         <PageTeacherAttention key="teacher" mode="mobile" id="section-teacher" />,
-        <PageHighbrightMoments key="highlights" student={student} mode="mobile" id="section-highlights" />,
         <PageGrowthOverview key="growth" student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={true} />,
         <PageFuturePotential key="future" mode="mobile" id="section-future" />,
         <PageFutureGrowthSuggestions key="future-suggestions" mode="mobile" id="section-future-suggestions" />,
@@ -1991,7 +2236,6 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
         <PageStudentFeedback key="student" mode="mobile" id="section-student" />
     ] : [
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
-        <PageHighbrightMoments key="highlights" student={student} mode="mobile" id="section-highlights" />,
         <PageGrowthOverview student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={false} />,
         <PageComprehensiveGrowthAdvice key="advice" student={student} mode="mobile" id="section-advice" />,
         <PageSimpleParentChildActivities key="activities" student={student} mode="mobile" id="section-activities" />

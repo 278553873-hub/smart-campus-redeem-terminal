@@ -593,24 +593,24 @@ export const MOCK_TERM_REPORT_AI_DATA = {
   "overallAssessment": "<p>亲爱的{name}，翻开你这学期的成长记录，老师仿佛看到了一个像小松树一样挺拔、向上的身影。你在语文、数学、英语等学科上表现出了极佳的专注力和学习习惯，特别是在听写全对和课堂积极互动上的表现，更是令人欣喜；在体育锻炼和劳动实践中，你也从不动后，展现出了满满的活力与责任感。</p><p>最让老师感动的是那些藏在细节里的美好：你是那个坐姿最端正的孩子，是那个会耐心等待的孩子，也是那个学具收拾得最利落的孩子。这些“润物细无声”的好习惯，是你送给自己一年级生活最珍贵的礼物。愿你继续保持这份笃定与认真，在未来的日子里，向着阳光，快乐生长！</p>",
   "growthAdvice": "<p>针对你目前的成长阶段，老师为你准备了几个生活中的小锦囊：</p><p><strong>表达的小巨人</strong></p><p>你已经很会“听”了，不妨尝试多“说”。每天找一个机会，大声地把你的想法或观察到的趣事讲给身边的人听，让大家听到你自信的声音。</p><p><strong>阅读的探险家</strong></p><p>建议每天睡前坚持15分钟的亲子阅读时光。不用拘泥于绘本的世界里探险吧，那里的故事会给你的想象力插上翅膀。</p>",
   "parentActivityGuide": "<p>为了呵护孩子这份宝贵的专注与自律，我们建议家长在碎片化时间里尝试以下活动：</p><p><strong>角色互换游戏</strong></p><p>周末时，请孩子当一次“小老师”，教家长一个他在学校学到的新单词或新规矩。这能极大地增强孩子的自信心，巩固他的学习成果。</p><p><strong>户外“撒野”</strong></p><p>既然孩子在学校坐姿端正、非常自律，假期建议多带孩子去大自然中奔跑、攀爬。动静结合，能让孩子释放天性，保持身心的平衡与健康。</p>",
-  "highlights": [
+  "highlightMoments": [
     {
-      "date": "2025年12月",
-      "achievement": "2025年12月，你的书法作品《毛主席语录》在2025年“高新学子活力成长嘉年华”系列活动暨成都市高新区中小学校师生艺术作品展演评审活动中荣获一等奖。",
-      "isAward": true,
-      "imageUrl": ASSETS.HIGHLIGHTS.CERTIFICATE
+      type: "award",
+      description: "2025年12月，你的书法作品在“高新学子活力成长嘉年华”系列活动暨成都市高新区中小学校师生艺术作品展演评审活动中荣获一等奖。",
+      imageUrl: ASSETS.HIGHLIGHTS.CERTIFICATE,
+      defaultImageKey: ""
     },
     {
-      "date": "2026年1月",
-      "achievement": "2026年1月，你在语文检测中进步巨大，得到了语文老师的高度赞扬。",
-      "isAward": false,
-      "imageUrl": ASSETS.HIGHLIGHTS.GENERIC_GROWTH
+      type: "dailyRecord",
+      description: "2026年1月，你在语文课堂分享中主动表达阅读感受，清晰又真诚，得到了语文老师的肯定。",
+      imageUrl: "",
+      defaultImageKey: "daily-classroom-thinking"
     },
     {
-      "date": "2026年1月",
-      "achievement": "2026年1月，你在“希望之星”2025年成都市青少年(学生)运动会乒乓球比赛中中荣获第三名。",
-      "isAward": true,
-      "imageUrl": ASSETS.HIGHLIGHTS.PINGPONG_CERT
+      type: "award",
+      description: "2026年1月，你在“希望之星”成都市青少年运动会乒乓球比赛中荣获第三名。",
+      imageUrl: ASSETS.HIGHLIGHTS.PINGPONG_CERT,
+      defaultImageKey: ""
     }
   ]
 };
@@ -647,24 +647,24 @@ export const MOCK_TERM_REPORT_AI_DATA_FEMALE = {
   "overallAssessment": "<p>亲爱的{name}，翻开你这学期的成长记录，老师仿佛看到了一个像小松树一样挺拔、向上的身影。你在语文、数学、英语等学科上表现出了极佳的专注力和学习习惯，特别是在听写全对和课堂积极互动上的表现，更是令人欣喜；在体育锻炼和劳动实践中，你也从不动后，展现出了满满的活力与责任感。</p><p>最让老师感动的是那些藏在细节里的美好：你是那个坐姿最端正的孩子，是那个会耐心等待的孩子，也是那个学具收拾得最利落的孩子。这些“润物细无声”的好习惯，是你送给自己一年级生活最珍贵的礼物。愿你继续保持这份笃定与认真，在未来的日子里，向着阳光，快乐生长！</p>",
   "growthAdvice": "<p>针对你目前的成长阶段，老师为你准备了几个生活中的小锦囊：</p><p><strong>表达的小巨人</strong></p><p>你已经很会“听”了，不妨尝试多“说”。每天找一个机会，大声地把你的想法或观察到的趣事讲给身边的人听，让大家听到你自信的声音。</p><p><strong>阅读的探险家</strong></p><p>建议每天睡前坚持15分钟的亲子阅读时光。不用拘泥于绘本的世界里探险吧，那里的故事会给你的想象力插上翅膀。</p>",
   "parentActivityGuide": "<p>为了呵护孩子这份宝贵的专注与自律，我们建议家长在碎片化时间里尝试以下活动：</p><p><strong>角色互换游戏</strong></p><p>周末时，请孩子当一次“小老师”，教家长一个他在学校学到的新单词或新规矩。这能极大地增强孩子的自信心，巩固他的学习成果。</p><p><strong>户外“撒野”</strong></p><p>既然孩子在学校坐姿端正、非常自律，假期建议多带孩子去大自然中奔跑、攀爬。动静结合，能让孩子释放天性，保持身心的平衡与健康。</p>",
-  "highlights": [
+  "highlightMoments": [
     {
-      "date": "2025年12月",
-      "achievement": "2025年12月，你的书法作品《毛主席语录》在2025年“高新学子活力成长嘉年华”系列活动暨成都市高新区中小学校师生艺术作品展演评审活动中荣获一等奖。",
-      "isAward": true,
-      "imageUrl": ASSETS.HIGHLIGHTS.CERTIFICATE
+      type: "award",
+      description: "2025年12月，你的书法作品在“高新学子活力成长嘉年华”系列活动暨成都市高新区中小学校师生艺术作品展演评审活动中荣获一等奖。",
+      imageUrl: ASSETS.HIGHLIGHTS.CERTIFICATE,
+      defaultImageKey: ""
     },
     {
-      "date": "2026年1月",
-      "achievement": "2026年1月，你在语文检测中进步巨大，得到了语文老师的高度赞扬。",
-      "isAward": false,
-      "imageUrl": ASSETS.HIGHLIGHTS.GENERIC_GROWTH
+      type: "dailyRecord",
+      description: "2026年1月，你在班级劳动整理中主动承担收纳任务，动作细致有序，让图书角很快恢复整洁。",
+      imageUrl: "",
+      defaultImageKey: "daily-labor-service"
     },
     {
-      "date": "2026年1月",
-      "achievement": "2026年1月，你在“希望之星”2025年成都市青少年(学生)运动会乒乓球比赛中中荣获第三名。",
-      "isAward": true,
-      "imageUrl": ASSETS.HIGHLIGHTS.PINGPONG_CERT
+      type: "dailyRecord",
+      description: "2026年1月，你在美术作品展示中大胆使用色彩，画面充满想象力，给同学们留下了很深的印象。",
+      imageUrl: "",
+      defaultImageKey: "daily-art-creativity"
     }
   ]
 };

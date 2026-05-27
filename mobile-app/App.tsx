@@ -592,7 +592,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                         <main
                             key={currentView}
                             id="main-scroll-container"
-                            className={`flex-1 relative animate-page-enter ${isOverlayActive ? 'z-[100]' : 'z-auto'} ${viewHandlesScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto no-scrollbar'}`}
+                            className={`flex-1 relative animate-page-enter ${showTabBar && !viewHandlesScroll ? 'has-floating-tabbar' : ''} ${isOverlayActive ? 'z-[100]' : 'z-auto'} ${viewHandlesScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto no-scrollbar'}`}
                         >
                             {currentView === 'home_log' && (
                                 <ClassRecordLogView
@@ -767,10 +767,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                         {showTabBar && (
                             <div 
                                 ref={tabbarRef}
-                                className={`ai-tabbar-container ${jellyToggle !== 'none' ? `tabbar-jelly-active-${jellyToggle}` : ''}`}
+                                className="ai-tabbar-container"
                             >
                                 {/* 3D 物理液态玻璃渲染背景层 */}
-                                <TeacherFluidGlassNav activeIndex={activeIndex} itemCount={3} jellyToggle={jellyToggle} />
+                                <TeacherFluidGlassNav activeIndex={activeIndex} itemCount={3} jellyToggle={jellyToggle} tabbarWidth={tabbarWidth} />
 
                                 {/* 顶层 HTML 按钮交互与极清字显层 (文字完全脱离 3D WebGL 折射以 100% 保障清晰度与 0 重影) */}
                                 {/* Tab 0: 记录 (ActivityIcon) */}

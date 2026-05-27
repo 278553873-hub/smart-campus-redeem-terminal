@@ -11,6 +11,13 @@ import pingpongCertImg from './resources/pingpong_cert.png';
 import aiBotImg from './resources/ai-bot.png';
 import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
 import teacherLiuAvatarImg from './resources/teacher-liu-avatar.png';
+import awardCertificateDefaultMobileImg from './resources/highlight-defaults/award-certificate-default-mobile.png';
+import dailyDefaultGrowthMobileImg from './resources/highlight-defaults/daily-default-growth-mobile.png';
+import dailyKindnessCollaborationMobileImg from './resources/highlight-defaults/daily-kindness-collaboration-mobile.png';
+import dailyClassroomThinkingMobileImg from './resources/highlight-defaults/daily-classroom-thinking-mobile.png';
+import dailyLaborServiceMobileImg from './resources/highlight-defaults/daily-labor-service-mobile.png';
+import dailySportsVitalityMobileImg from './resources/highlight-defaults/daily-sports-vitality-mobile.png';
+import dailyArtCreativityMobileImg from './resources/highlight-defaults/daily-art-creativity-mobile.png';
 
 import avatarBoy1 from './resources/avatar_boy_1.png';
 import avatarBoy2 from './resources/avatar_boy_2.png';
@@ -158,5 +165,14 @@ export const ASSETS = {
     CERTIFICATE: certificateImg,
     GENERIC_GROWTH: genericGrowthImg,
     PINGPONG_CERT: pingpongCertImg,
+  },
+  HIGHLIGHT_DEFAULTS: {
+    'award-certificate-default': awardCertificateDefaultMobileImg,
+    'daily-default-growth': dailyDefaultGrowthMobileImg,
+    'daily-kindness-collaboration': dailyKindnessCollaborationMobileImg,
+    'daily-classroom-thinking': dailyClassroomThinkingMobileImg,
+    'daily-labor-service': dailyLaborServiceMobileImg,
+    'daily-sports-vitality': dailySportsVitalityMobileImg,
+    'daily-art-creativity': dailyArtCreativityMobileImg,
   }
 };
