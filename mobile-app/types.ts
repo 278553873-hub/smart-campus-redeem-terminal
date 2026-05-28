@@ -6,6 +6,56 @@ export interface Student {
   class: string;
   avatar?: string;
   studentNo?: string;
+  status?: 'active' | 'left';
+  reservedPhones?: string[];
+}
+
+
+export interface StudentGroup {
+  id: string;
+  name: string;
+  memberIds: string[];
+}
+
+export interface GroupPlan {
+  id: string;
+  name: string;
+  subject: string;
+  ownerName: string;
+  groups: StudentGroup[];
+}
+
+export interface CampusCoinIssueRecord {
+  id: string;
+  source: string;
+  amount: number;
+  time: string;
+  description: string;
+  operator: string;
+}
+
+export interface CampusCoinConsumeRecord {
+  id: string;
+  item: string;
+  amount: number;
+  time: string;
+  scene: string;
+}
+
+export interface CampusCoinMonthlyEstimate {
+  basePerformance: number;
+  rankingReward: number;
+  classBonus: number;
+  deductions: number;
+  estimatedTotal: number;
+}
+
+export interface CampusCoinDetail {
+  balance: number;
+  bankDeposit: number;
+  issueRecords: CampusCoinIssueRecord[];
+  consumeRecords: CampusCoinConsumeRecord[];
+  monthlyEstimate: CampusCoinMonthlyEstimate;
 }
 
 export interface ClassInfo {

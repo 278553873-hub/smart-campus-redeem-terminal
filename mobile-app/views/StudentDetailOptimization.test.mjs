@@ -1,0 +1,185 @@
+import fs from 'node:fs';
+
+const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
+const appSource = read('../App.tsx');
+const typesSource = read('../types.ts');
+const constantsSource = read('../constants.ts');
+const dashboardSource = read('./DashboardView.tsx');
+const basicEditSource = read('./StudentBasicEditView.tsx');
+const coinDetailSource = read('./StudentCoinDetailView.tsx');
+const coinFormatSource = read('../utils/coinFormat.ts');
+
+const requireText = (source, needle, message) => {
+  if (!source.includes(needle)) throw new Error(message);
+};
+
+requireText(typesSource, "status?: 'active' | 'left';", 'Student 类型应包含在校/离校状态。');
+requireText(typesSource, 'reservedPhones?: string[];', 'Student 类型应包含多个预留手机。');
+requireText(typesSource, 'CampusCoinIssueRecord', '类型层应定义校园币发放记录。');
+requireText(typesSource, 'CampusCoinConsumeRecord', '类型层应定义校园币消耗记录。');
+requireText(typesSource, 'CampusCoinMonthlyEstimate', '类型层应定义本月校园币结算预估。');
+
+requireText(constantsSource, 'GET_MOCK_CAMPUS_COIN_DETAIL', 'Mock 数据应提供按学生生成校园币详情的方法。');
+requireText(constantsSource, 'issueRecords', '校园币 Mock 应包含发放情况。');
+requireText(constantsSource, 'consumeRecords', '校园币 Mock 应包含消耗情况。');
+requireText(constantsSource, 'monthlyEstimate', '校园币 Mock 应包含本月结算预估。');
+
+requireText(appSource, "'student_basic_edit'", 'App 路由应包含学生基础信息编辑子页面。');
+requireText(appSource, "'student_coin_detail'", 'App 路由应包含校园币详情子页面。');
+requireText(appSource, 'studentOverrides', 'App 应维护本次会话内的学生资料覆盖状态。');
+requireText(appSource, 'handleSaveStudentBasicInfo', 'App 应提供学生基础信息保存处理。');
+requireText(appSource, '<StudentBasicEditView', 'App 应渲染学生基础信息编辑页。');
+requireText(appSource, '<StudentCoinDetailView', 'App 应渲染校园币详情页。');
+requireText(appSource, 'onEditBasicInfo={() => navigateTo(\'student_basic_edit\')}', '学生详情页应能进入基础信息编辑页。');
+requireText(appSource, 'onViewCampusCoins={() => navigateTo(\'student_coin_detail\')}', '学生详情页资产区应能进入校园币详情页。');
+requireText(appSource, 'currentView !== \'student_detail\'', '学生详情页不应再显示独立页面标题栏。');
+requireText(appSource, 'onBack={goBack}', '学生详情页返回入口应并入首个学生信息卡。');
+requireText(appSource, "'student_detail'", '学生详情页应具备独立沉浸背景判断。');
+requireText(appSource, 'radial-gradient(circle_at_18%_18%', '学生详情页状态栏区域应使用首卡同款淡雅弥散渐变背景。');
+
+requireText(dashboardSource, 'onEditBasicInfo', '学生详情总览应接收基础信息编辑入口。');
+requireText(dashboardSource, 'aria-label="编辑基础信息"', '顶部学生身份卡应使用图标按钮并保留无障碍标签。');
+requireText(dashboardSource, '<Pencil', '顶部学生身份卡编辑入口应改为图标按钮。');
+if (dashboardSource.includes('>编辑基础信息<')) {
+  throw new Error('学生详情页编辑基础信息按钮不应显示文字，应改为图标。');
+}
+if (dashboardSource.includes('handleUpdateFaceClick') || dashboardSource.includes('选择人脸更新方式')) {
+  throw new Error('学生详情页头像不应保留独立编辑功能，应合并到基础信息编辑页。');
+}
+requireText(dashboardSource, 'formatCompactClassName', '学生详情页班级标签应格式化为 2025级1班。');
+if (dashboardSource.includes('{student.grade}{student.class}')) {
+  throw new Error('学生详情页班级标签不应显示年级学段和完整中文班名，只显示 2025级1班。');
+}
+requireText(dashboardSource, '钱包', '顶部学生信息卡应整合钱包金额。');
+requireText(dashboardSource, '存款', '顶部学生信息卡应整合存款金额。');
+requireText(dashboardSource, 'src="/assets/coin.png"', '钱包和存款金额应使用货柜机同款金币图标。');
+if (dashboardSource.includes('发放、消耗与本月结算预估') || dashboardSource.includes('最近发放') || dashboardSource.includes('本月预估')) {
+  throw new Error('学生详情总览页不应再展示校园币发放、消耗或月预估信息。');
+}
+requireText(dashboardSource, 'onViewCampusCoins', '学生详情顶部资产区应保留查看明细入口回调。');
+requireText(dashboardSource, '查看明细', '钱包和存款应放在同一资产区域并提供查看明细按钮。');
+requireText(dashboardSource, 'text-slate-400 active:bg-slate-50', '查看明细操作应弱化为低视觉权重样式。');
+if (dashboardSource.includes('bg-blue-50 px-3 text-[11px] font-bold text-blue-600')) {
+  throw new Error('查看明细操作不应使用蓝色强调按钮样式。');
+}
+requireText(dashboardSource, 'formatCoinAmount', '学生详情页金额应使用统一校园币格式化函数。');
+requireText(dashboardSource, 'A. Student Profile Card', '学生信息卡应独立置顶。');
+requireText(dashboardSource, 'aria-label="返回"', '学生详情页返回按钮应并入首个学生信息卡。');
+requireText(dashboardSource, '<ChevronLeft', '学生详情页首个卡片应包含返回图标。');
+requireText(dashboardSource, 'radial-gradient(circle_at_16%_8%', '首个学生信息卡应使用淡雅浅色弥散渐变背景。');
+requireText(dashboardSource, 'rounded-b-3xl border-b border-slate-100', '首个学生信息卡底部应保留卡片边框和圆角。');
+if (dashboardSource.includes('mt-4 text-xs font-medium text-slate-500')) {
+  throw new Error('学生状态不应单独占一行，应移动到姓名下方的信息标签组。');
+}
+requireText(dashboardSource, 'BadgeCheck className="h-3 w-3"', '学生状态应作为姓名下方的小标签展示。');
+if (dashboardSource.includes('w-full bg-white px-5 pb-5 pt-3')) {
+  throw new Error('首个学生信息卡不应继续使用纯白背景。');
+}
+requireText(dashboardSource, 'B. Assets Card', '资产展示应独立为第二张卡片。');
+if (dashboardSource.includes('总资产') || dashboardSource.includes('totalCampusAssets')) {
+  throw new Error('资产卡不应展示总资产，只展示钱包、存款和查看明细。');
+}
+requireText(dashboardSource, 'flex items-center justify-between gap-2', '资产卡应压缩为单行展示。');
+requireText(dashboardSource, 'C. Term Selector', '当前学期筛选应移动到五育能力模型上方。');
+if (dashboardSource.indexOf('C. Term Selector') > dashboardSource.indexOf('D. Radar Chart Card')) {
+  throw new Error('当前学期筛选应位于五育能力模型上方。');
+}
+if (dashboardSource.includes('Filter Bar (Term Selector)') || dashboardSource.includes('merged basic info')) {
+  throw new Error('学生信息、资产和学期筛选不应继续使用旧的混合布局。');
+}
+if (dashboardSource.includes('<School className="mb-1 h-4 w-4 text-slate-400" />{student.class}')) {
+  throw new Error('顶部学生身份卡下方不应重复展示所在班级，小标签已包含该信息。');
+}
+if (dashboardSource.includes('学号<br /><span className="text-slate-900">{student.studentNo || student.id}</span>')) {
+  throw new Error('顶部学生身份卡下方不应重复展示学号，上方 ID 标签已包含该信息。');
+}
+if (dashboardSource.includes('预留手机 {reservedPhoneCount} 个')) {
+  throw new Error('学生详情页不应展示预留手机摘要，该信息只在基础信息编辑页维护。');
+}
+if (dashboardSource.includes('姓名、学号、班级和预留手机')) {
+  throw new Error('基础信息不应再作为独立入口卡，应合并到顶部学生身份卡。');
+}
+requireText(dashboardSource, '班级平均', '五育能力模型应展示班级平均对比。');
+requireText(dashboardSource, 'classAvgData.map', '五育能力模型应在图像上展示班级平均具体数值。');
+requireText(dashboardSource, 'text-[12px] font-medium', '五育雷达图数值应使用 12px 常规字重。');
+requireText(dashboardSource, 'text-[12px] font-medium fill-violet-400', '五育雷达图班级平均分值应使用弱化颜色的 12px 常规字重。');
+requireText(dashboardSource, 'width="28"', '当前分值应增加底色标签以提升可读性。');
+requireText(dashboardSource, 'showCurrent', '五育能力模型当前标签应可点击隐藏/显示当前分值。');
+requireText(dashboardSource, 'onToggleCurrent', '五育能力模型当前图例标签应承担开关功能。');
+requireText(dashboardSource, 'onToggleClassAvg', '五育能力模型班级平均图例标签应承担开关功能。');
+requireText(dashboardSource, 'h-[360px] w-[360px]', '五育雷达图应继续放大展示。');
+requireText(dashboardSource, 'stroke="#A78BFA"', '班级平均应使用更弱化的浅色实线展示。');
+requireText(dashboardSource, 'border-violet-300', '班级平均图例应使用弱化后的同色实线标签。');
+requireText(dashboardSource, 'fill={getCategoryColor(s.category)}', '当前分值标签应使用类别颜色填充。');
+if (dashboardSource.includes('fill="#F5F3FF"')) {
+  throw new Error('班级平均数值不应再使用背景填充。');
+}
+if (dashboardSource.includes('text-[17px] font-black') || dashboardSource.includes('text-[15px] font-black fill-violet-600')) {
+  throw new Error('五育雷达图数值不应加粗显示。');
+}
+if (dashboardSource.includes('stroke="#C4B5FD"') || dashboardSource.includes('strokeWidth="1.2"')) {
+  throw new Error('当前值和班级平均数值标签不应继续使用边框描边样式。');
+}
+if (dashboardSource.includes('strokeDasharray="6 4"') || dashboardSource.includes('scale-[0.9]')) {
+  throw new Error('班级平均不应使用虚线，雷达图也不应继续缩小显示。');
+}
+requireText(dashboardSource, 'showClassAvg', '五育能力模型应保留班级平均开关。');
+if (dashboardSource.includes('上月对比') || dashboardSource.includes('showLastMonth') || dashboardSource.includes('年级平均')) {
+  throw new Error('五育能力模型不应再展示上月对比或年级平均，应改为当前与班级平均。');
+}
+requireText(dashboardSource, 'renderRecordTab', '学生详情总览应保留成长/评价记录内容。');
+if (dashboardSource.includes("'redemption'")) {
+  throw new Error('学生详情页不应再把兑换记录作为与成长报告同级的主要 Tab。');
+}
+if (dashboardSource.includes('兑换记录')) {
+  throw new Error('学生详情页兑换记录应收敛到校园币详情页的消耗情况中。');
+}
+
+for (const required of ['头像', '更换头像', '姓名', '性别', '学号', '学生状态', '所在班级', '预留手机']) {
+  requireText(basicEditSource, required, `基础信息编辑页缺少字段：${required}`);
+}
+requireText(basicEditSource, 'classPickerYear', '所在班级选择应采用左侧年份、右侧班级的级联状态。');
+requireText(basicEditSource, 'yearOptions.map', '所在班级选择左侧应展示 2020级、2021级等年份选项。');
+requireText(basicEditSource, 'classOptions.map', '所在班级选择右侧应根据年份展示班级选项。');
+requireText(basicEditSource, 'grid-cols-[92px_1fr]', '班级级联应采用左右两栏布局。');
+requireText(basicEditSource, 'aria-label="左侧先选入学年级"', '班级级联左侧应先选入学年级。');
+requireText(basicEditSource, 'aria-label="右侧再选该年级下的班级"', '班级级联右侧应展示该年级下的班级。');
+requireText(basicEditSource, 'formatCompactClassName(item.name)', '右侧班级应展示 2020级1班 这样的紧凑班级名。');
+requireText(basicEditSource, '添加预留手机', '基础信息编辑页应支持新增多个预留手机。');
+requireText(basicEditSource, 'removePhone', '基础信息编辑页应支持删除预留手机。');
+requireText(basicEditSource, 'saveAvatarFromAlbum', '基础信息编辑页应把头像更换合并到保存流程。');
+requireText(basicEditSource, '保存基础信息', '基础信息编辑页应提供明确保存按钮。');
+requireText(basicEditSource, 'h-full min-h-0 overflow-hidden', '基础信息编辑子页面应使用手机壳内高度，避免底部按钮裁切。');
+requireText(basicEditSource, 'StudentBasicEditView', '基础信息编辑页应独立封装。');
+if (basicEditSource.includes('学生基础资料') || basicEditSource.includes('本次 Demo 保存后在当前会话内生效') || basicEditSource.includes('UserRound')) {
+  throw new Error('基础信息编辑页不应展示顶部说明卡，应直接进入表单。');
+}
+if (basicEditSource.includes('学生头像</div>') || basicEditSource.includes('与基础信息一起保存')) {
+  throw new Error('头像区域不应展示多余说明文案，只保留头像和更换头像操作。');
+}
+requireText(basicEditSource, 'showAvatarSheet', '点击更换头像后应展示头像操作蒙层。');
+requireText(basicEditSource, '拍照', '头像操作蒙层应提供拍照入口。');
+requireText(basicEditSource, '从相册选择', '头像操作蒙层应提供从相册选择入口。');
+requireText(basicEditSource, 'cameraInputRef', '头像操作应复用拍照文件入口。');
+requireText(basicEditSource, 'albumInputRef', '头像操作应复用相册文件入口。');
+
+for (const required of ['发币记录', '兑换记录', '预估分红总额']) {
+  requireText(coinDetailSource, required, `校园币详情页缺少区块：${required}`);
+}
+requireText(coinDetailSource, 'CampusCoinDetail', '校园币详情页应使用校园币详情类型。');
+requireText(coinDetailSource, 'issueRecords.map', '校园币详情页应展示发放流水列表。');
+requireText(coinDetailSource, 'consumeRecords.map', '校园币详情页应展示消耗流水列表。');
+requireText(coinDetailSource, 'estimatedTotal', '校园币详情页应展示本月预计结算合计。');
+requireText(coinDetailSource, '只读', '校园币详情页应明确为只读详情，不提供发币扣币操作。');
+requireText(coinDetailSource, 'activeFilter', '校园币详情页应参考货柜机流水明细提供收支筛选。');
+requireText(coinDetailSource, 'activeCategory', '校园币详情页应参考货柜机流水明细提供类型筛选。');
+requireText(coinDetailSource, 'formatCoinAmount', '校园币详情页金额应使用统一校园币格式化函数。');
+requireText(coinDetailSource, 'estimateBonusItems', '预估分红总额应按货柜机样式展示构成项。');
+requireText(coinDetailSource, '成长奖励', '预估分红总额应展示成长奖励构成。');
+requireText(coinDetailSource, '得分奖励', '预估分红总额应展示得分奖励构成。');
+if (coinDetailSource.includes('本月预估可得金额') || coinDetailSource.includes('月底按规则统一入账')) {
+  throw new Error('校园币详情页预估板块应复刻货柜机预估分红总额，不应继续使用旧说明文案。');
+}
+
+requireText(coinFormatSource, 'maximumFractionDigits: 2', '校园币金额最多保留 2 位小数。');
+requireText(coinFormatSource, 'minimumFractionDigits: 0', '校园币金额小数为 0 时不应展示小数位。');

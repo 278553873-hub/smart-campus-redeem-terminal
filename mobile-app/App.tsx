@@ -16,6 +16,8 @@ import FaceUpdateView from './views/face-update/FaceUpdateView';
 import { BankPasswordView } from './views/bank-password/BankPasswordView';
 import HomeworkEntryView from './views/HomeworkEntryView';
 import TeacherProfileEditView from './views/TeacherProfileEditView';
+import StudentBasicEditView from './views/StudentBasicEditView';
+import StudentCoinDetailView from './views/StudentCoinDetailView';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import TeacherRecordAuroraBackground from './components/TeacherRecordAuroraBackground';
 import { DeviceWrapper } from '../components/DeviceWrapper';
@@ -52,6 +54,7 @@ import {
     MOCK_GROWTH_REPORTS,
     MOCK_PE_REPORT_DETAILS,
     GET_MOCK_STUDENTS_FOR_CLASS,
+    GET_MOCK_CAMPUS_COIN_DETAIL,
 } from './constants';
 import { Student, TeacherDepartment, TeacherProfile } from './types';
 
@@ -109,7 +112,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
 
 interface MobileAppProps {
     showPhoneShell?: boolean;
@@ -152,7 +155,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'record_input') return 0;
-        if (view === 'class_list' || view === 'class_detail' || view === 'class_report' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
+        if (view === 'class_list' || view === 'class_detail' || view === 'class_report' || view === 'student_detail' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
         if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit') return 2;
         return 0;
     };
@@ -183,6 +186,9 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     // Selection States
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [selectedStudent, setSelectedStudent] = useState<Student>(MOCK_STUDENTS_CLASS_1[0]);
+    const [studentOverrides, setStudentOverrides] = useState<Record<string, Student>>({});
+    const activeStudent = studentOverrides[selectedStudent.id] ?? selectedStudent;
+    const activeCampusCoinDetail = GET_MOCK_CAMPUS_COIN_DETAIL(activeStudent);
     const [selectedSubject, setSelectedSubject] = useState<string>('');
     const [batchStudentIds, setBatchStudentIds] = useState<string[]>([]);
     const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(DEFAULT_TEACHER_PROFILE);
@@ -281,8 +287,14 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     };
 
     const handleSelectStudent = (student: Student) => {
-        setSelectedStudent(student);
+        setSelectedStudent(studentOverrides[student.id] ?? student);
         navigateTo('student_detail');
+    };
+
+    const handleSaveStudentBasicInfo = (student: Student) => {
+        setStudentOverrides(prev => ({ ...prev, [student.id]: student }));
+        setSelectedStudent(student);
+        goBack();
     };
 
     const handleViewTermReport = () => {
@@ -436,9 +448,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         switch (currentView) {
             case 'home_log': return '老师记录';
             case 'class_list': return '我的班级';
-            case 'class_detail': return MOCK_CLASSES.find(c => c.id === selectedClassId)?.name || '班级详情';
             case 'class_report': return '班级报告';
             case 'student_detail': return '学生详情';
+            case 'student_basic_edit': return '基础信息编辑';
+            case 'student_coin_detail': return '校园币详情';
             case 'report_detail': return `${selectedSubject}报告`;
             case 'term_report': return '';
             case 'me': return '';
@@ -541,16 +554,24 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     const showInputBar = ['home_log', 'class_detail'].includes(currentView);
     const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView);
-    const viewHandlesScroll = ['home_log', 'class_detail', 'report_detail'].includes(currentView);
-    const hasScreenLevelBackground = ['home_log', 'class_list', 'me'].includes(currentView);
+    const viewHandlesScroll = ['home_log', 'class_detail', 'student_basic_edit', 'student_coin_detail', 'report_detail'].includes(currentView);
+    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_detail', 'student_detail', 'me'].includes(currentView);
 
     const getPhoneScreenBackground = () => {
         if (currentView === 'home_log') {
             return <TeacherRecordAuroraBackground activeTab={activeLogTab} />;
         }
 
-        if (currentView === 'class_list') {
+        if (currentView === 'class_list' || currentView === 'class_detail') {
             return <div className="h-full w-full teacher-mobile-phone-gradient" aria-hidden="true"></div>;
+        }
+
+        if (currentView === 'student_detail') {
+            return (
+                <div className="relative h-full w-full overflow-hidden bg-[#F7F9FC]" aria-hidden="true">
+                    <div className="absolute inset-x-0 top-0 h-[245px] bg-[radial-gradient(circle_at_18%_18%,rgba(219,234,254,0.92),transparent_34%),radial-gradient(circle_at_78%_8%,rgba(254,243,199,0.74),transparent_30%),radial-gradient(circle_at_58%_64%,rgba(220,252,231,0.64),transparent_34%),linear-gradient(180deg,#F8FBFF_0%,#FFFFFF_62%,#F7F9FC_100%)]" />
+                </div>
+            );
         }
 
         if (currentView === 'me') {
@@ -579,7 +600,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     // Local Header component to replace the imported one's styling for specific views
     const LocalHeader = ({ title, onBack }: { title: string; onBack?: () => void }) => (
-        <div className="h-11 flex items-center justify-between px-4 bg-white/80 backdrop-blur-md sticky top-0 z-[45] border-b border-slate-100/30">
+        <div className={`h-11 flex items-center justify-between px-4 sticky top-0 z-[45] backdrop-blur-md ${hasScreenLevelBackground ? 'bg-white/38 border-b border-white/40' : 'bg-white/80 border-b border-slate-100/30'}`}>
             {onBack && (
                 <button onClick={onBack} className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-slate-500 transition-colors active:bg-slate-100">
                     <ChevronLeftLucide className="w-5 h-5" />
@@ -600,7 +621,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                     <div className={`flex-1 flex flex-col relative overflow-hidden ${hasScreenLevelBackground ? 'bg-transparent' : 'bg-white'}`}>
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_detail' && currentView !== 'student_detail' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -643,6 +664,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'class_list' && (
                                 <ClassListView
                                     classes={MOCK_CLASSES}
+                                    teacherProfile={teacherProfile}
                                     onSelectClass={handleSelectClass}
                                     onViewClassReport={handleViewClassReport}
                                     onViewLeaderboard={handleViewLeaderboard}
@@ -665,6 +687,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onToggleSelectionMode={handleToggleMultiSelect}
                                     selectedIds={multiSelectIds}
                                     onSelectionChange={handleMultiSelectionChange}
+                                    onBack={goBack}
                                 />
                             )}
 
@@ -720,11 +743,31 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                             {currentView === 'student_detail' && (
                                 <DashboardView
-                                    student={selectedStudent}
+                                    student={activeStudent}
                                     scores={MOCK_SCORES}
-                                    subjects={MOCK_SUBJECTS}
                                     growthReports={MOCK_GROWTH_REPORTS}
                                     onViewTermReport={handleViewTermReport}
+                                    onBack={goBack}
+                                    onEditBasicInfo={() => navigateTo('student_basic_edit')}
+                                    onViewCampusCoins={() => navigateTo('student_coin_detail')}
+                                    campusCoinDetail={activeCampusCoinDetail}
+                                />
+                            )}
+
+                            {currentView === 'student_basic_edit' && (
+                                <StudentBasicEditView
+                                    student={activeStudent}
+                                    classes={MOCK_CLASSES}
+                                    onBack={goBack}
+                                    onSave={handleSaveStudentBasicInfo}
+                                />
+                            )}
+
+                            {currentView === 'student_coin_detail' && (
+                                <StudentCoinDetailView
+                                    student={activeStudent}
+                                    coinDetail={activeCampusCoinDetail}
+                                    onBack={goBack}
                                 />
                             )}
 
@@ -732,7 +775,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'term_report' && (
                                 <div className="flex-1 overflow-y-auto no-scrollbar">
                                     <TermReportView
-                                        student={selectedStudent}
+                                        student={activeStudent}
                                         onBack={goBack}
                                     />
                                 </div>
