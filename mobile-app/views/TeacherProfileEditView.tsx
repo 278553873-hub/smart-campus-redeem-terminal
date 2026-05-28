@@ -451,6 +451,51 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     const roleSummary = (ids: string[]) => ids.length > 0 ? summarizeClassIds(ids, classes) : '暂未选择';
     const gradeLeaderSummary = draft.gradeLeaderGrades.length > 0 ? draft.gradeLeaderGrades.join('、') : '暂未选择';
 
+    const renderBasicInfoSettingRows = () => {
+        const rows = [
+            {
+                key: 'homeroom',
+                icon: Sparkles,
+                tone: 'violet' as const,
+                title: '担任班主任的班级',
+                summary: roleSummary(draft.homeroomClassIds),
+                onClick: () => openRoleSelector('homeroom', draft.homeroomClassIds),
+                buttonTone: 'text-violet-600 bg-violet-50 active:bg-violet-100',
+            },
+            {
+                key: 'gradeLeader',
+                icon: Users,
+                tone: 'brand' as const,
+                title: '担任年级组长的年级',
+                summary: gradeLeaderSummary,
+                onClick: openGradeLeaderSelector,
+                buttonTone: 'text-indigo-600 bg-indigo-50 active:bg-indigo-100',
+            },
+            {
+                key: 'department',
+                icon: Landmark,
+                tone: 'brand' as const,
+                title: '部门设置',
+                summary: draft.departmentName || '暂未选择',
+                onClick: () => setMode('department'),
+                buttonTone: 'text-blue-600 bg-blue-50 active:bg-blue-100',
+            },
+        ];
+
+        return rows.map((row, index) => (
+            <div key={row.key} className={`flex items-center justify-between gap-3 py-3 ${index > 0 ? 'border-t border-slate-100' : ''}`}>
+                <div className="flex min-w-0 items-center gap-3">
+                    <IconBadge icon={row.icon} size="md" tone={row.tone} />
+                    <div className="min-w-0">
+                        <h3 className={`${phoneText.itemTitle} truncate text-slate-900`}>{row.title}</h3>
+                        <p className="mt-1 truncate text-xs text-slate-400">{row.summary}</p>
+                    </div>
+                </div>
+                <button type="button" onClick={row.onClick} className={`shrink-0 rounded-full px-3 py-2 text-xs font-extrabold ${row.buttonTone}`}>修改</button>
+            </div>
+        ));
+    };
+
     if (mode === 'teachingClasses' || mode === 'homeroom') return renderClassSelectorPage();
     if (mode === 'teachingSubject') return renderSubjectSelectorPage();
     if (mode === 'gradeLeader') return renderGradeLeaderSelectorPage();
@@ -521,43 +566,12 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     )}
                 </MobileCard>
 
-                <MobileCard variant="card" padding="md">
-                    <div className="mb-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <IconBadge icon={Sparkles} size="md" tone="violet" />
-                            <div>
-                                <h2 className={`${phoneText.sectionTitle} text-slate-900`}>担任班主任的班级</h2>
-                                <p className="mt-1 text-xs text-slate-400">{roleSummary(draft.homeroomClassIds)}</p>
-                            </div>
-                        </div>
-                        <button type="button" onClick={() => openRoleSelector('homeroom', draft.homeroomClassIds)} className="rounded-full bg-violet-50 px-3 py-2 text-xs font-extrabold text-violet-600 active:bg-violet-100">修改</button>
+                <MobileCard variant="card" padding="md" className="teacher-basic-info-card">
+                    <div className="mb-1 flex items-center gap-3">
+                        <IconBadge icon={Landmark} size="md" tone="brand" />
+                        <h2 className={`${phoneText.sectionTitle} text-slate-900`}>基本信息</h2>
                     </div>
-                </MobileCard>
-
-                <MobileCard variant="card" padding="md">
-                    <div className="mb-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <IconBadge icon={Users} size="md" tone="brand" />
-                            <div>
-                                <h2 className={`${phoneText.sectionTitle} text-slate-900`}>担任年级组长的年级</h2>
-                                <p className="mt-1 text-xs text-slate-400">{gradeLeaderSummary}</p>
-                            </div>
-                        </div>
-                        <button type="button" onClick={openGradeLeaderSelector} className="rounded-full bg-indigo-50 px-3 py-2 text-xs font-extrabold text-indigo-600 active:bg-indigo-100">修改</button>
-                    </div>
-                </MobileCard>
-
-                <MobileCard variant="card" padding="md">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <IconBadge icon={Landmark} size="md" tone="brand" />
-                            <div>
-                                <h2 className={`${phoneText.sectionTitle} text-slate-900`}>部门设置</h2>
-                                <p className="mt-1 text-xs text-slate-400">{draft.departmentName || '暂未选择'}</p>
-                            </div>
-                        </div>
-                        <button type="button" onClick={() => setMode('department')} className="rounded-full bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 active:bg-blue-100">修改</button>
-                    </div>
+                    <div>{renderBasicInfoSettingRows()}</div>
                 </MobileCard>
             </div>
 

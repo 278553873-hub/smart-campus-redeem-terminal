@@ -132,7 +132,7 @@ const MeView: React.FC<MeViewProps> = ({ teacherProfile, onNavigateToFiles, onEd
                         </button>
 
                         <div className="min-w-0 flex-1">
-                            <h2 className={`${phoneText.pageTitle} text-slate-950`}>刘飞飞老师</h2>
+                            <h2 className="text-xl font-extrabold leading-tight tracking-tight text-slate-950">刘飞飞老师</h2>
                             <p className={`mt-2 text-slate-600 ${phoneText.itemTitle}`}>成都七中初中附属小学</p>
                             <button
                                 type="button"

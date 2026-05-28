@@ -1,4 +1,4 @@
-import { Student, ScoreItem, SubjectGrade, GrowthReportItem, DetailedReportSection, ClassInfo } from './types';
+import { Student, ScoreItem, SubjectGrade, GrowthReportItem, DetailedReportSection, ClassInfo, CampusCoinDetail, GroupPlan } from './types';
 import { ASSETS } from './assets/images';
 
 const GENERATE_MOCK_CLASSES = (): ClassInfo[] => {
@@ -72,6 +72,8 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
     return {
       id: `${cls.id.replace('c_', '').replace('_', '')}${(i + 1).toString().padStart(2, '0')}`,
       studentNo: `${cls.id.split('_')[1]}${classNumber.padStart(2, '0')}${(i + 1).toString().padStart(2, '0')}`,
+      status: i === count - 1 ? 'left' : 'active',
+      reservedPhones: i % 4 === 0 ? ['13800001001', '13900002002'] : ['13800001001'],
       name: nameObj.n,
       gender: nameObj.g as 'male' | 'female',
       grade: cls.gradeLevel,
@@ -85,7 +87,113 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
   });
 };
 
+
+export const GET_MOCK_GROUP_PLANS_FOR_CLASS = (classId: string, students: Student[]): GroupPlan[] => {
+  const cls = MOCK_CLASSES.find(c => c.id === classId);
+  if (!cls || students.length === 0) return [];
+
+  const templates = [
+    { subject: '语文', name: '语文方案', ownerName: '周杰伦', prefix: '语文', groupCount: 5, offset: 0 },
+    { subject: '数学', name: '数学方案', ownerName: '周杰伦', prefix: '数学', groupCount: 5, offset: 3 },
+    { subject: '英语', name: '英语-阅读', ownerName: '林俊杰', prefix: '阅读', groupCount: 5, offset: 6 },
+  ];
+
+  return templates.map((template, planIndex) => {
+    const groupCount = Math.min(template.groupCount, Math.max(1, Math.ceil(students.length / 8)));
+    const groups = Array.from({ length: groupCount }).map((_, groupIndex) => {
+      const memberIds = students
+        .filter((_, studentIndex) => ((studentIndex + template.offset) % groupCount) === groupIndex)
+        .map(student => student.id);
+
+      return {
+        id: `${classId}-${template.subject}-group-${groupIndex + 1}`,
+        name: `${template.prefix}${groupIndex + 1}组`,
+        memberIds,
+      };
+    });
+
+    return {
+      id: `${classId}-plan-${planIndex + 1}`,
+      name: template.name,
+      subject: template.subject,
+      ownerName: template.ownerName,
+      groups,
+    };
+  });
+};
+
 export const MOCK_STUDENTS_CLASS_1: Student[] = GET_MOCK_STUDENTS_FOR_CLASS(MOCK_CLASSES[0]?.id || 'c_2025_1');
+
+export const GET_MOCK_CAMPUS_COIN_DETAIL = (student: Student): CampusCoinDetail => {
+  const seed = student.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const balance = 320 + (seed % 80);
+  const basePerformance = 100 + (seed % 25);
+  const rankingReward = 12 + (seed % 9);
+  const classBonus = 8 + (seed % 6);
+  const deductions = seed % 2 === 0 ? 0 : 5;
+
+  return {
+    balance,
+    bankDeposit: 1200 + (seed % 5) * 100,
+    issueRecords: [
+      {
+        id: `${student.id}-issue-1`,
+        source: '月度综合表现结算',
+        amount: basePerformance,
+        time: '2026-02-01 09:00',
+        description: '根据上月五育评价记录自动发放基础校园币',
+        operator: '系统规则',
+      },
+      {
+        id: `${student.id}-issue-2`,
+        source: '班级排行榜奖励',
+        amount: rankingReward,
+        time: '2026-02-03 10:30',
+        description: '班级积分榜前列奖励',
+        operator: '班主任刘老师',
+      },
+      {
+        id: `${student.id}-issue-3`,
+        source: '劳动服务加币',
+        amount: classBonus,
+        time: '2026-02-05 16:20',
+        description: '主动协助整理班级图书角',
+        operator: '劳动老师',
+      },
+    ],
+    consumeRecords: [
+      {
+        id: `${student.id}-consume-1`,
+        item: '得力中性笔 x 2',
+        amount: 100,
+        time: '2026-02-06 12:30',
+        scene: '教学楼A区货柜',
+      },
+      {
+        id: `${student.id}-consume-2`,
+        item: '免除一次大扫除',
+        amount: 120,
+        time: '2026-02-04 15:40',
+        scene: '班主任手动兑换',
+      },
+      {
+        id: `${student.id}-consume-3`,
+        item: '指定优选座位一周',
+        amount: 200,
+        time: '2026-01-28 10:15',
+        scene: '班级奖励兑换',
+      },
+    ],
+    monthlyEstimate: {
+      basePerformance,
+      rankingReward,
+      classBonus,
+      deductions,
+      estimatedTotal: basePerformance + rankingReward + classBonus - deductions,
+    },
+  };
+};
+
 
 export const MOCK_SCORES: ScoreItem[] = [
   { label: '德育', score: 75, category: 'moral' },

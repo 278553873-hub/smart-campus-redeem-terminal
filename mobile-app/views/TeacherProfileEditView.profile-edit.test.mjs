@@ -48,6 +48,12 @@ requireText(editSource, 'saveGradeLeaderGrades', '年级组长年级选择应保
 requireText(editSource, '部门设置', '编辑页应新增部门设置。');
 requireText(editSource, 'renderDepartmentSelectorPage', '部门应从后端返回的部门列表中选择。');
 
+requireText(editSource, 'teacher-basic-info-card', '班主任班级、年级组长年级、部门设置应合并到同一个基本信息卡片。');
+requireText(editSource, 'renderBasicInfoSettingRows', '基本信息卡片内应集中渲染身份与部门设置行。');
+if (editSource.includes('role-homeroom-card') || editSource.includes('role-grade-leader-card') || editSource.includes('department-setting-card')) {
+  throw new Error('班主任、年级组长、部门设置不应再拆成独立卡片。');
+}
+
 if (editSource.includes('年级组长按年级维护')) {
   throw new Error('年级组长设置页不应出现解释性对话文案。');
 }
