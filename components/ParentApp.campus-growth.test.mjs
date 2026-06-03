@@ -19,6 +19,7 @@ for (const required of [
   "const [screen, setScreen] = useState<Screen>('binding')",
   'showPhoneShell?: boolean',
   'showDeviceFrame={showPhoneShell}',
+  'contentTopInsetMode="status-bar"',
   '绑定孩子',
   '学校编号',
   '学生姓名',
@@ -106,6 +107,9 @@ for (const required of [
   'setShowDepositReview(false);',
   'withdrawTarget &&',
   'withdrawDeposit',
+  "const bankTopSpacing = showPhoneShell ? 'mt-14' : 'mt-5'",
+  'hasParentOverlay',
+  "screen !== 'binding' && !hasParentOverlay",
 ]) {
   requireText(parentSource, required, `家长端银行流程边界被破坏：${required}`);
 }
@@ -140,6 +144,7 @@ for (const forbiddenStyle of [
   'parent-teacher-token-primary-button',
   'bg-slate-900 text-white',
   'bg-slate-950 text-white',
+  'contentTopInsetMode="full-chrome"',
 ]) {
   forbidText(parentSource, forbiddenStyle, `家长端新视觉不应继续使用旧冲突样式：${forbiddenStyle}`);
 }

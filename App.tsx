@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { ViewState, Student, Product, BankAccount, Deposit, TierLevel } from './types';
 import { EXCHANGE_RATE, BANK_CONFIG, MOCK_PRODUCTS } from './constants';
 import FaceScanner from './components/FaceScanner';
@@ -18,6 +18,7 @@ import CompanionApp from './components/CompanionApp';
 import ParentApp from './components/ParentApp';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
+import RegionalPcAdmin from './components/RegionalPcAdmin';
 import PlatformBrandMark from './components/PlatformBrandMark';
 import Loader from './components/Loader';
 import { DeviceWrapper } from './components/DeviceWrapper';
@@ -1243,10 +1244,10 @@ const PcWorkspace: React.FC = () => {
 };
 
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace'>(() => {
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'terminal' || app === 'admin' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace') {
+    if (app === 'terminal' || app === 'admin' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen') {
       return app;
     }
     return 'terminal'; // default
@@ -1254,6 +1255,173 @@ const AppSwitcher: React.FC = () => {
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const [showPhoneShell, setShowPhoneShell] = useState(true);
   const [showParentPhoneShell, setShowParentPhoneShell] = useState(true);
+  const [demoPanelPosition, setDemoPanelPosition] = useState<{ left: number; top: number } | null>(null);
+  const [demoPanelSide, setDemoPanelSide] = useState<'left' | 'right' | 'top' | 'bottom'>('right');
+  const [isDemoPanelSnapped, setIsDemoPanelSnapped] = useState(false);
+  const demoPanelRef = useRef<HTMLDivElement | null>(null);
+  const demoDragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startLeft: number;
+    startTop: number;
+    moved: boolean;
+  } | null>(null);
+  const skipDemoToggleRef = useRef(false);
+
+  const handleRegionalPcLogout = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('app', 'terminal');
+    window.history.replaceState(null, '', url.toString());
+    setCurrentApp('terminal');
+  };
+
+  const clampDemoPanelPosition = (left: number, top: number) => {
+    const panel = demoPanelRef.current;
+    const width = panel?.offsetWidth ?? 104;
+    const height = panel?.offsetHeight ?? 320;
+    const maxLeft = Math.max(0, window.innerWidth - width);
+    const maxTop = Math.max(0, window.innerHeight - height);
+
+    return {
+      left: Math.min(Math.max(0, left), maxLeft),
+      top: Math.min(Math.max(0, top), maxTop),
+    };
+  };
+
+  const snapDemoPanelToEdge = (left: number, top: number) => {
+    const panel = demoPanelRef.current;
+    const width = panel?.offsetWidth ?? 104;
+    const height = panel?.offsetHeight ?? 320;
+    const maxLeft = Math.max(0, window.innerWidth - width);
+    const maxTop = Math.max(0, window.innerHeight - height);
+    const clamped = clampDemoPanelPosition(left, top);
+    const edgeDistances = [
+      { side: 'left' as const, distance: clamped.left },
+      { side: 'right' as const, distance: maxLeft - clamped.left },
+      { side: 'top' as const, distance: clamped.top },
+      { side: 'bottom' as const, distance: maxTop - clamped.top },
+    ];
+    const nearestEdge = edgeDistances.reduce((nearest, item) => (
+      item.distance < nearest.distance ? item : nearest
+    ));
+
+    setDemoPanelSide(nearestEdge.side);
+    setIsDemoPanelSnapped(true);
+    setDemoPanelPosition({
+      left: nearestEdge.side === 'left' ? 0 : nearestEdge.side === 'right' ? maxLeft : clamped.left,
+      top: nearestEdge.side === 'top' ? 0 : nearestEdge.side === 'bottom' ? maxTop : clamped.top,
+    });
+  };
+
+  const handleDemoDragStart = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const panel = demoPanelRef.current;
+    if (!panel) return;
+
+    const rect = panel.getBoundingClientRect();
+    const currentLeft = demoPanelPosition?.left ?? (
+      isDemoOpen
+        ? rect.left
+        : demoPanelSide === 'left'
+          ? rect.left + rect.width - 32
+          : demoPanelSide === 'right'
+            ? rect.left - rect.width + 32
+            : rect.left
+    );
+    const currentTop = demoPanelPosition?.top ?? (
+      isDemoOpen
+        ? rect.top
+        : demoPanelSide === 'top'
+          ? rect.top + rect.height - 32
+          : demoPanelSide === 'bottom'
+            ? rect.top - rect.height + 32
+            : rect.top
+    );
+
+    demoDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: currentLeft,
+      startTop: currentTop,
+      moved: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleDemoDragMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = demoDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - drag.startX;
+    const deltaY = event.clientY - drag.startY;
+    if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+      drag.moved = true;
+      skipDemoToggleRef.current = true;
+    }
+
+    if (!drag.moved) return;
+    event.preventDefault();
+    setIsDemoPanelSnapped(false);
+    setDemoPanelPosition(clampDemoPanelPosition(drag.startLeft + deltaX, drag.startTop + deltaY));
+  };
+
+  const handleDemoDragEnd = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = demoDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    if (drag.moved) {
+      snapDemoPanelToEdge(drag.startLeft + event.clientX - drag.startX, drag.startTop + event.clientY - drag.startY);
+      window.setTimeout(() => {
+        skipDemoToggleRef.current = false;
+      }, 0);
+    }
+    demoDragRef.current = null;
+  };
+
+  const handleDemoToggle = () => {
+    if (skipDemoToggleRef.current) {
+      skipDemoToggleRef.current = false;
+      return;
+    }
+    setIsDemoOpen(prev => !prev);
+  };
+  const demoPanelClosedClass = demoPanelSide === 'left'
+    ? '-translate-x-[calc(100%-32px)]'
+    : demoPanelSide === 'top'
+      ? '-translate-y-[calc(100%-32px)]'
+      : demoPanelSide === 'bottom'
+        ? 'translate-y-[calc(100%-32px)]'
+        : 'translate-x-[calc(100%-32px)]';
+  const demoPanelOpenClass = demoPanelSide === 'top' || demoPanelSide === 'bottom'
+    ? 'translate-y-0'
+    : 'translate-x-0';
+  const demoPanelShapeClass = demoPanelSide === 'left'
+    ? 'flex-row-reverse rounded-r-2xl border-l-0'
+    : demoPanelSide === 'top'
+      ? 'flex-col-reverse rounded-b-2xl border-t-0'
+      : demoPanelSide === 'bottom'
+        ? 'flex-col rounded-t-2xl border-b-0'
+        : 'rounded-l-2xl border-r-0';
+  const demoHandleClass = demoPanelSide === 'top' || demoPanelSide === 'bottom'
+    ? `h-8 w-full cursor-grab flex-row px-6 ${demoPanelSide === 'top' ? 'border-t' : 'border-b'}`
+    : `w-8 cursor-grab flex-col py-6 ${demoPanelSide === 'left' ? 'border-l' : 'border-r'}`;
+  const demoPanelStyle = {
+    ...(demoPanelPosition
+      ? isDemoPanelSnapped
+        ? demoPanelSide === 'right'
+          ? { right: 0, top: demoPanelPosition.top }
+          : demoPanelSide === 'bottom'
+            ? { left: demoPanelPosition.left, bottom: 0 }
+            : { left: demoPanelPosition.left, top: demoPanelPosition.top }
+        : { left: demoPanelPosition.left, top: demoPanelPosition.top }
+      : {}),
+    transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)',
+  };
 
   return (
     <>
@@ -1261,6 +1429,8 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'terminal' && <TerminalApp mode="vending" />}
         {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
         {currentApp === 'pc-workspace' && <PcWorkspace />}
+        {currentApp === 'region-pc' && <RegionalPcAdmin onLogout={handleRegionalPcLogout} />}
+        {currentApp === 'region-pc-screen' && <RegionalPcAdmin screenOnly />}
         {currentApp === 'admin' && <MobileApp showPhoneShell={showPhoneShell} />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && <ParentApp showPhoneShell={showParentPhoneShell} />}
@@ -1288,18 +1458,24 @@ const AppSwitcher: React.FC = () => {
         </div>
       )}
 
-      {/* 侧边悬浮控制台 (抽屉效果，避免遮挡导航) */}
-      <div
-        className={`fixed right-0 top-1/2 -translate-y-1/2 z-[9999] transition-transform duration-300 ${isDemoOpen ? 'translate-x-0' : 'translate-x-[calc(100%-32px)]'}`}
-        style={{ transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
-      >
-        <div className="flex bg-white/95 backdrop-blur-md rounded-l-2xl border border-r-0 border-slate-200 shadow-[-10px_0_30px_-10px_rgba(0,0,0,0.15)] overflow-hidden items-center">
+      {/* 区域纯屏汇报模式需要保持正式呈现，不显示内部环境切换浮层。 */}
+      {currentApp !== 'region-pc-screen' && (
+        <div
+          ref={demoPanelRef}
+          className={`fixed z-[9999] touch-none select-none transition-[left,right,top,bottom,transform] duration-300 ${demoPanelPosition ? '' : 'right-0 top-1/2 -translate-y-1/2'} ${isDemoOpen ? demoPanelOpenClass : demoPanelClosedClass}`}
+          style={demoPanelStyle}
+        >
+          <div className={`flex bg-white/95 backdrop-blur-md border border-slate-200 shadow-[-10px_0_30px_-10px_rgba(0,0,0,0.15)] overflow-hidden items-center ${demoPanelShapeClass}`}>
 
           {/* 触发把手 (固定 32px 宽) */}
           <button
             type="button"
-            onClick={() => setIsDemoOpen(prev => !prev)}
-            className={`w-8 shrink-0 flex flex-col gap-1 items-center justify-center transition-colors py-6 border-r border-slate-100 bg-slate-50/50 self-stretch active:bg-slate-100 ${isDemoOpen ? 'text-blue-600' : 'text-slate-400'}`}
+            onPointerDown={handleDemoDragStart}
+            onPointerMove={handleDemoDragMove}
+            onPointerUp={handleDemoDragEnd}
+            onPointerCancel={handleDemoDragEnd}
+            onClick={handleDemoToggle}
+            className={`shrink-0 flex gap-1 items-center justify-center transition-colors bg-slate-50/50 self-stretch active:cursor-grabbing active:bg-slate-100 border-slate-100 ${demoHandleClass} ${isDemoOpen ? 'text-blue-600' : 'text-slate-400'}`}
             aria-label={isDemoOpen ? '收起环境切换' : '展开环境切换'}
           >
             <span className="text-[10px] font-black">D</span>
@@ -1324,30 +1500,39 @@ const AppSwitcher: React.FC = () => {
             <button
               onClick={() => setCurrentApp('pc-workspace')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'pc-workspace' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="统一SaaS平台 - PC端"
+              title="统一SaaS平台 - 学校-PC端"
             >
               <Monitor size={22} className="mb-1" />
-              <span className="text-[9px] font-bold">PC端</span>
+              <span className="text-[9px] font-bold leading-tight">学校-PC端</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('region-pc')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'region-pc' ? 'bg-blue-700 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="区级-PC端 - 区教育局"
+            >
+              <ShieldCheck size={22} className="mb-1" />
+              <span className="text-[9px] font-bold leading-tight">区级-PC端</span>
             </button>
             <button
               onClick={() => setCurrentApp('admin')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'admin' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="管理端 - 教师手机控制"
+              title="管理端 - 教师-手机端"
             >
               <Smartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold">教师手机端</span>
+              <span className="text-[9px] font-bold leading-tight">教师-手机端</span>
             </button>
             <button
               onClick={() => setCurrentApp('parent')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'parent' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="家长手机端 - 微信小程序"
+              title="家长-手机端 - 微信小程序"
             >
               <Smartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold leading-tight">家长手机端</span>
+              <span className="text-[9px] font-bold leading-tight">家长-手机端</span>
             </button>
           </div>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 };

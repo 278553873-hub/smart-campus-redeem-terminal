@@ -566,10 +566,11 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
     if (!activeChild) return <Binding />;
     const amount = Math.max(1, Math.min(Number(depositAmount) || 1, activeChild.availableCoins));
     const projectedInterest = calculateProjectedInterest(amount, selectedBankScheme);
+    const bankTopSpacing = showPhoneShell ? 'mt-14' : 'mt-5';
 
     return (
       <ParentPageShell className="pb-28">
-        <ParentCard as="section" className="parent-bank-balance-strip sticky top-0 z-30 mx-5 px-4 py-2 backdrop-blur-xl">
+        <ParentCard as="section" className={`parent-bank-balance-strip sticky top-0 z-30 mx-5 px-4 py-2 backdrop-blur-xl ${bankTopSpacing}`}>
           <div className="flex min-h-10 items-center text-slate-600">
             <div className="flex flex-1 items-center justify-center gap-1.5">
               <span className="text-[14px] font-black">钱包</span>
@@ -845,7 +846,8 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
     { key: 'bank', label: '银行', icon: Landmark },
   ];
 
-  const showTabs = activeChild && screen !== 'binding';
+  const hasParentOverlay = showChildSwitcher || showDepositConfirm || showDepositReview || Boolean(withdrawTarget);
+  const showTabs = activeChild && screen !== 'binding' && !hasParentOverlay;
   const renderParentBottomNav = () => {
     const goTab = (item: (typeof tabItems)[number], nextIndex: number) => {
       if (nextIndex === parentNavActiveIndex && screen === item.key) return;
@@ -887,7 +889,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
 
   return (
     <div className="w-screen h-[100dvh] bg-[#EEF2F6] flex items-center justify-center p-4">
-      <PhoneMockup showDeviceFrame={showPhoneShell} contentTopInsetMode="full-chrome" screenBackground={<ParentDiffuseBackdrop />}>
+      <PhoneMockup showDeviceFrame={showPhoneShell} contentTopInsetMode="status-bar" screenBackground={<ParentDiffuseBackdrop />}>
         <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent font-sans">
           {renderScreen()}
           {showTabs && renderParentBottomNav()}

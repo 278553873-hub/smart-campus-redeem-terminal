@@ -78,3 +78,23 @@
   min-width: 0;
   width: 100%;
 }
+
+/* 区域大屏页面：body 全局禁滚动时，由大屏根容器承接纵向滚动。 */
+.regional-screen-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(103, 232, 249, 0.45) rgba(8, 35, 75, 0.28);
+}
+
+.regional-screen-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.regional-screen-scroll::-webkit-scrollbar-track {
+  background: rgba(8, 35, 75, 0.28);
+}
+
+.regional-screen-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(103, 232, 249, 0.78), rgba(22, 93, 255, 0.58));
+  border: 2px solid rgba(3, 11, 31, 0.9);
+  border-radius: 999px;
+}

@@ -1,0 +1,125 @@
+:root {
+  --tm-indigo-500: #6366F1;
+  --tm-indigo-600: #4F46E5;
+  --tm-blue-500: #3B82F6;
+  --tm-blue-600: #2563EB;
+  --tm-cyan-500: #06B6D4;
+  --tm-cyan-600: #0891B2;
+  --tm-pink-500: #EC4899;
+  --tm-white: #FFFFFF;
+  --tm-slate-50: #F8FAFC;
+  --tm-slate-100: #F1F5F9;
+  --tm-slate-200: #E2E8F0;
+  --tm-slate-300: #CBD5E1;
+  --tm-slate-400: #94A3B8;
+  --tm-slate-500: #64748B;
+  --tm-slate-600: #475569;
+  --tm-slate-700: #334155;
+  --tm-slate-900: #0F172A;
+  --tm-slate-950: #020617;
+
+  --tm-color-primary: var(--tm-indigo-500);
+  --tm-color-secondary: var(--tm-cyan-500);
+  --tm-text-primary: var(--tm-slate-950);
+  --tm-text-muted: var(--tm-slate-500);
+  --tm-text-inverse: var(--tm-white);
+  --tm-mask-bg: rgba(15, 23, 42, 0.35);
+  --tm-glass-bg-strong: var(--tm-white);
+  --tm-glass-border: rgba(255, 255, 255, 0.74);
+  --tm-bg-page-gradient: linear-gradient(180deg, #F9FBFF 0%, #FFFFFF 72%);
+  --tm-bg-card: var(--tm-white);
+  --tm-bg-card-subtle: var(--tm-slate-50);
+  --tm-border-subtle: var(--tm-slate-100);
+  --tm-input-bg: var(--tm-slate-50);
+  --tm-input-bg-focus: var(--tm-white);
+  --tm-input-border: var(--tm-slate-100);
+  --tm-input-border-focus: var(--tm-color-primary);
+  --tm-input-text: var(--tm-text-primary);
+  --tm-input-placeholder: var(--tm-slate-400);
+  --tm-button-primary-bg: linear-gradient(135deg, var(--tm-color-primary), var(--tm-color-secondary));
+  --tm-button-primary-text: var(--tm-text-inverse);
+  --tm-button-primary-shadow: 0 14px 28px -18px rgba(37, 99, 235, 0.8);
+  --tm-button-secondary-bg: var(--tm-slate-100);
+  --tm-button-secondary-text: var(--tm-slate-600);
+  --tm-button-disabled-bg: var(--tm-slate-200);
+  --tm-button-disabled-text: var(--tm-slate-400);
+  --tm-card-shadow: 0 14px 38px -28px rgba(15, 23, 42, 0.38);
+  --tm-sheet-shadow: 0 -24px 70px -38px rgba(15, 23, 42, 0.7);
+}
+
+.parent-teacher-token-backdrop {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 232, 248, 0.9), transparent 28%),
+    radial-gradient(circle at 82% 4%, rgba(226, 241, 255, 0.95), transparent 32%),
+    var(--tm-bg-page-gradient);
+}
+
+.parent-teacher-token-card {
+  background: var(--tm-bg-card);
+  box-shadow: var(--tm-card-shadow);
+}
+
+.parent-teacher-token-input {
+  background: var(--tm-input-bg);
+  border-color: var(--tm-input-border);
+  color: var(--tm-input-text);
+}
+
+.parent-teacher-token-input::placeholder {
+  color: var(--tm-input-placeholder);
+}
+
+.parent-teacher-token-input:focus {
+  background: var(--tm-input-bg-focus);
+  border-color: var(--tm-input-border-focus);
+}
+
+.parent-teacher-token-primary-button {
+  background: var(--tm-button-primary-bg);
+  color: var(--tm-button-primary-text);
+  box-shadow: var(--tm-button-primary-shadow);
+}
+
+.parent-teacher-token-primary-button:disabled {
+  background: var(--tm-button-disabled-bg);
+  color: var(--tm-button-disabled-text);
+  box-shadow: none;
+}
+
+.parent-teacher-token-secondary-button {
+  background: var(--tm-button-secondary-bg);
+  color: var(--tm-button-secondary-text);
+  box-shadow: none;
+}
+
+.parent-teacher-token-sheet-mask {
+  background: var(--tm-mask-bg);
+}
+
+.parent-teacher-token-sheet {
+  background: var(--tm-glass-bg-strong);
+  border: 1px solid var(--tm-glass-border);
+  border-bottom: 0;
+  box-shadow: var(--tm-sheet-shadow);
+  backdrop-filter: blur(22px);
+}
+
+.parent-teacher-token-icon-button {
+  background: var(--tm-bg-card);
+  color: var(--tm-text-muted);
+  box-shadow: 0 10px 24px -18px rgba(15, 23, 42, 0.45);
+}
+
+.parent-teacher-token-switcher-card {
+  background: var(--tm-bg-card);
+  border-color: var(--tm-glass-border);
+  color: var(--tm-text-primary);
+  box-shadow: var(--tm-card-shadow);
+}
+
+.parent-teacher-token-switcher-card-active {
+  border-color: rgba(99, 102, 241, 0.38);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.10), transparent 36%),
+    var(--tm-bg-card);
+}

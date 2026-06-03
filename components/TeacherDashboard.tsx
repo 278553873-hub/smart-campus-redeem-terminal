@@ -51,6 +51,24 @@ interface TermReportModuleConfig {
     description: string;
 }
 
+interface StudentScoreDetailRow {
+    id: string;
+    term: string;
+    scoreDate: string;
+    studentNo: string;
+    name: string;
+    grade: string;
+    className: string;
+    totalNetScore: number;
+    moralityScore: number;
+    intelligenceScore: number;
+    sportsScore: number;
+    artScore: number;
+    laborScore: number;
+}
+
+type StudentScoreQuickRange = '本周' | '本月' | '本学期';
+
 const defaultExamLevelOptions: ExamLevelOption[] = [
     { id: 1, name: '优', color: '#00994C' },
     { id: 2, name: '良', color: '#2962FF' },
@@ -112,7 +130,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         {
             title: '报表中心', icon: <FileText size={18} />,
-            children: ['学校驾驶舱', '评价记录明细表', '学期报告']
+            children: ['学校驾驶舱', '评价记录明细表', '学生得分明细表', '学期报告']
         },
         {
             title: '播报中心', icon: <PenTool size={18} />,
@@ -323,6 +341,99 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         });
         return initialMap;
     });
+
+    const currentStudentScoreTerm = currentGradeTerm;
+    const currentStudentScoreTermStart = '2026-02-17';
+    const currentStudentScoreTermEnd = '2026-07-05';
+    const studentScoreQuickRanges: Record<StudentScoreQuickRange, string[]> = {
+        '本周': ['2026-05-25', '2026-05-31'],
+        '本月': ['2026-05-01', '2026-05-29'],
+        '本学期': [currentStudentScoreTermStart, currentStudentScoreTermEnd]
+    };
+    const studentScoreDetailRows: StudentScoreDetailRow[] = [
+        { id: 'score-1', term: currentStudentScoreTerm, scoreDate: '2026-05-27', studentNo: '20250101', name: '林一诺', grade: '2025级', className: '2025级1班', totalNetScore: 128, moralityScore: 32, intelligenceScore: 28, sportsScore: 24, artScore: 18, laborScore: 26 },
+        { id: 'score-2', term: currentStudentScoreTerm, scoreDate: '2026-05-20', studentNo: '20250102', name: '周明轩', grade: '2025级', className: '2025级1班', totalNetScore: 116, moralityScore: 25, intelligenceScore: 31, sportsScore: 20, artScore: 17, laborScore: 23 },
+        { id: 'score-3', term: currentStudentScoreTerm, scoreDate: '2026-04-18', studentNo: '20250201', name: '陈雨桐', grade: '2025级', className: '2025级2班', totalNetScore: 109, moralityScore: 24, intelligenceScore: 26, sportsScore: 21, artScore: 20, laborScore: 18 },
+        { id: 'score-4', term: currentStudentScoreTerm, scoreDate: '2026-03-12', studentNo: '20240208', name: '李思远', grade: '2024级', className: '2024级2班', totalNetScore: 134, moralityScore: 35, intelligenceScore: 30, sportsScore: 26, artScore: 19, laborScore: 24 },
+        { id: 'score-5', term: currentStudentScoreTerm, scoreDate: '2026-02-28', studentNo: '20230312', name: '王若溪', grade: '2023级', className: '2023级3班', totalNetScore: 97, moralityScore: 22, intelligenceScore: 24, sportsScore: 16, artScore: 17, laborScore: 18 },
+        { id: 'score-6', term: currentStudentScoreTerm, scoreDate: '2026-05-26', studentNo: '20240109', name: '赵子涵', grade: '2024级', className: '2024级1班', totalNetScore: 121, moralityScore: 29, intelligenceScore: 27, sportsScore: 23, artScore: 18, laborScore: 24 },
+        { id: 'score-7', term: currentStudentScoreTerm, scoreDate: '2026-05-14', studentNo: '20230206', name: '吴昊然', grade: '2023级', className: '2023级2班', totalNetScore: 105, moralityScore: 21, intelligenceScore: 29, sportsScore: 20, artScore: 15, laborScore: 20 },
+        { id: 'score-8', term: currentStudentScoreTerm, scoreDate: '2026-04-30', studentNo: '20220311', name: '郑可欣', grade: '2022级', className: '2022级3班', totalNetScore: 118, moralityScore: 28, intelligenceScore: 25, sportsScore: 22, artScore: 21, laborScore: 22 },
+        { id: 'score-9', term: currentStudentScoreTerm, scoreDate: '2026-03-28', studentNo: '20210508', name: '孙嘉泽', grade: '2021级', className: '2021级5班', totalNetScore: 92, moralityScore: 19, intelligenceScore: 24, sportsScore: 18, artScore: 14, laborScore: 17 },
+        { id: 'score-10', term: currentStudentScoreTerm, scoreDate: '2026-02-24', studentNo: '20200403', name: '黄芷晴', grade: '2020级', className: '2020级4班', totalNetScore: 111, moralityScore: 26, intelligenceScore: 26, sportsScore: 19, artScore: 20, laborScore: 20 },
+        { id: 'score-11', term: currentStudentScoreTerm, scoreDate: '2026-05-11', studentNo: '20220112', name: '何宇航', grade: '2022级', className: '2022级1班', totalNetScore: 101, moralityScore: 23, intelligenceScore: 23, sportsScore: 21, artScore: 16, laborScore: 18 },
+        { id: 'score-12', term: currentStudentScoreTerm, scoreDate: '2026-04-09', studentNo: '20210614', name: '郭诗涵', grade: '2021级', className: '2021级6班', totalNetScore: 126, moralityScore: 31, intelligenceScore: 27, sportsScore: 24, artScore: 19, laborScore: 25 }
+    ];
+    const [studentScoreQuickRange, setStudentScoreQuickRange] = useState<StudentScoreQuickRange>('本学期');
+    const [studentScoreDateRange, setStudentScoreDateRange] = useState<string[]>(studentScoreQuickRanges.本学期);
+    const [studentScoreGradeClassFilters, setStudentScoreGradeClassFilters] = useState<string[][]>([]);
+    const [studentScoreNameSearch, setStudentScoreNameSearch] = useState('');
+    const [appliedStudentScoreQuickRange, setAppliedStudentScoreQuickRange] = useState<StudentScoreQuickRange>('本学期');
+    const [appliedStudentScoreDateRange, setAppliedStudentScoreDateRange] = useState<string[]>(studentScoreQuickRanges.本学期);
+    const [appliedStudentScoreGradeClassFilters, setAppliedStudentScoreGradeClassFilters] = useState<string[][]>([]);
+    const [appliedStudentScoreNameSearch, setAppliedStudentScoreNameSearch] = useState('');
+    const handleSelectStudentScoreQuickRange = (range: StudentScoreQuickRange) => {
+        setStudentScoreQuickRange(range);
+        setStudentScoreDateRange(studentScoreQuickRanges[range]);
+    };
+    const handleApplyStudentScoreFilters = () => {
+        setAppliedStudentScoreQuickRange(studentScoreQuickRange);
+        setAppliedStudentScoreDateRange(studentScoreDateRange);
+        setAppliedStudentScoreGradeClassFilters(studentScoreGradeClassFilters);
+        setAppliedStudentScoreNameSearch(studentScoreNameSearch);
+    };
+    const handleResetStudentScoreFilters = () => {
+        setStudentScoreQuickRange('本学期');
+        setStudentScoreDateRange(studentScoreQuickRanges.本学期);
+        setStudentScoreGradeClassFilters([]);
+        setStudentScoreNameSearch('');
+        setAppliedStudentScoreQuickRange('本学期');
+        setAppliedStudentScoreDateRange(studentScoreQuickRanges.本学期);
+        setAppliedStudentScoreGradeClassFilters([]);
+        setAppliedStudentScoreNameSearch('');
+    };
+    const isStudentScoreDateDisabled = (current: { format: (format: string) => string }) => {
+        const date = current.format('YYYY-MM-DD');
+        return date < currentStudentScoreTermStart || date > currentStudentScoreTermEnd;
+    };
+    const filteredStudentScoreDetailRows = studentScoreDetailRows.filter(row => {
+        const [startDate, endDate] = appliedStudentScoreDateRange;
+        if (startDate && row.scoreDate < startDate) return false;
+        if (endDate && row.scoreDate > endDate) return false;
+        if (appliedStudentScoreGradeClassFilters.length > 0) {
+            const selectedLevels = new Set(appliedStudentScoreGradeClassFilters.map(path => path[0]).filter(Boolean));
+            const selectedClasses = new Set(appliedStudentScoreGradeClassFilters.filter(path => path.length > 1).map(path => path[path.length - 1]));
+            if (selectedClasses.size > 0) {
+                if (!selectedClasses.has(row.className)) return false;
+            } else if (!selectedLevels.has(row.grade)) {
+                return false;
+            }
+        }
+        const keyword = appliedStudentScoreNameSearch.trim();
+        if (keyword && !row.name.includes(keyword)) return false;
+        return true;
+    });
+    const renderStudentScoreValue = (value: number) => (
+        <span className={value < 0 ? 'text-[#F53F3F]' : 'text-[#1D2129]'}>{value}</span>
+    );
+    const studentScoreDetailColumns = [
+        {
+            title: '日期时间段',
+            dataIndex: 'dateRange',
+            width: 220,
+            render: () => `${appliedStudentScoreDateRange[0]} 至 ${appliedStudentScoreDateRange[1]}`
+        },
+        { title: '学号', dataIndex: 'studentNo', width: 120 },
+        { title: '姓名', dataIndex: 'name', width: 110 },
+        { title: '年级', dataIndex: 'grade', width: 120 },
+        { title: '班级', dataIndex: 'className', width: 130 },
+        { title: '总净得分', dataIndex: 'totalNetScore', width: 120, align: 'right' as const, render: renderStudentScoreValue },
+        { title: '德', dataIndex: 'moralityScore', width: 90, align: 'right' as const, render: renderStudentScoreValue },
+        { title: '智', dataIndex: 'intelligenceScore', width: 90, align: 'right' as const, render: renderStudentScoreValue },
+        { title: '体', dataIndex: 'sportsScore', width: 90, align: 'right' as const, render: renderStudentScoreValue },
+        { title: '美', dataIndex: 'artScore', width: 90, align: 'right' as const, render: renderStudentScoreValue },
+        { title: '劳', dataIndex: 'laborScore', width: 90, align: 'right' as const, render: renderStudentScoreValue }
+    ];
 
     const gradeTerms = Array.from(new Set([...gradeTermOptions, ...gradeExamRows.map(row => row.term)]));
     const gradeExamTypes = Array.from(new Set([...gradeExamTypeOptions, ...gradeExamRows.map(row => row.type)]));
@@ -1719,10 +1830,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 )}
 
                 {/* 内容区 - 采用精致的高端设计 */}
-                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
+                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' || activeMenu === '学生得分明细表' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
 
                     {/* 页面主标题 */}
-                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && (
+                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
                     <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
                         <div>
                             {activeMenu === '考试数据' ? (
@@ -3923,6 +4034,105 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 </div>
                             </div>
                         )
+                    )}
+
+                    {/* 学生得分明细表 */}
+                    {activeMenu === '学生得分明细表' && (
+                        <div className="w-full font-sans text-sm text-[#4E5969] px-6 py-5 flex flex-col gap-4">
+                            <div className="flex h-5 items-center text-[13px] leading-[20px] text-[#86909C] mb-1">
+                                <span className="hover:text-[#1D2129] cursor-pointer">报表中心</span>
+                                <span className="mx-2 text-[#C9CDD4]">/</span>
+                                <span className="text-[#1D2129]">学生得分明细表</span>
+                            </div>
+
+                            <div className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-6 shadow-[0_4px_10px_rgba(0,0,0,0.02)] flex flex-col">
+                                <h2 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129] mb-5">学生得分明细表</h2>
+
+                                <div className="pc-filter-bar mb-6 flex flex-wrap items-center gap-3">
+                                    <div className="inline-flex h-8 overflow-hidden rounded border border-[#E5E6EB] bg-white" aria-label="学生得分快捷时间">
+                                        {(['本周', '本月', '本学期'] as StudentScoreQuickRange[]).map(range => (
+                                            <button
+                                                key={range}
+                                                type="button"
+                                                onClick={() => handleSelectStudentScoreQuickRange(range)}
+                                                className={`h-full border-r border-[#E5E6EB] px-4 text-sm transition-colors last:border-r-0 ${studentScoreQuickRange === range ? 'bg-[#E8F3FF] text-[#165DFF]' : 'bg-white text-[#4E5969] hover:bg-[#F7F8FA] hover:text-[#1D2129]'}`}
+                                            >
+                                                {range}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <DatePicker.RangePicker
+                                        value={studentScoreDateRange}
+                                        onChange={(dateString) => {
+                                            setStudentScoreQuickRange('本学期');
+                                            setStudentScoreDateRange(dateString);
+                                        }}
+                                        placeholder={['开始日期', '结束日期']}
+                                        disabledDate={isStudentScoreDateDisabled}
+                                        allowClear={false}
+                                        style={{ width: 280 }}
+                                        aria-label="学生得分日期范围"
+                                    />
+                                    <Cascader
+                                        mode="multiple"
+                                        allowClear
+                                        showSearch
+                                        checkedStrategy="all"
+                                        maxTagCount={{ count: 1, render: (invisibleTagCount) => `+${invisibleTagCount}` }}
+                                        placeholder="全部年级 / 班级"
+                                        value={studentScoreGradeClassFilters}
+                                        options={gradeLevelOptions.map(level => ({
+                                            label: level,
+                                            value: level,
+                                            children: getClassOptionsByLevel(level).map(className => ({ label: className, value: className }))
+                                        }))}
+                                        onChange={(value) => {
+                                            const paths = Array.isArray(value) ? value : [];
+                                            setStudentScoreGradeClassFilters(paths.filter(Array.isArray).map(path => path.map(String)));
+                                        }}
+                                        dropdownMenuColumnStyle={{ width: 180 }}
+                                        style={{ width: 280 }}
+                                        aria-label="学生得分年级班级筛选"
+                                    />
+                                    <Input
+                                        value={studentScoreNameSearch}
+                                        onChange={setStudentScoreNameSearch}
+                                        prefix={<Search size={14} className="text-[#86909C]" />}
+                                        placeholder="搜索学生姓名"
+                                        allowClear
+                                        style={{ width: 220 }}
+                                        aria-label="学生姓名搜索"
+                                    />
+                                    <Button type="primary" onClick={handleApplyStudentScoreFilters}>查询</Button>
+                                    <Button onClick={handleResetStudentScoreFilters}>重置</Button>
+                                </div>
+
+                                <div className="border-t border-[#F2F3F5] mb-5 w-full"></div>
+
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex items-center justify-end">
+                                        <button
+                                            type="button"
+                                            className="flex h-8 items-center gap-1.5 rounded px-2 text-sm font-normal text-[#165DFF] transition-colors hover:bg-[#E8F3FF] hover:text-[#4080FF] active:text-[#0E42D2] focus:outline-none"
+                                        >
+                                            <Download size={14} />
+                                            导出excel
+                                        </button>
+                                    </div>
+
+                                    <div className="overflow-x-auto">
+                                        <Table
+                                            rowKey="id"
+                                            columns={studentScoreDetailColumns}
+                                            data={filteredStudentScoreDetailRows}
+                                            pagination={{ pageSize: 6, total: filteredStudentScoreDetailRows.length, showTotal: true }}
+                                            border={false}
+                                            noDataElement="暂无符合条件的学生得分记录"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     )}
 
                     {/* 其它待开发 */}
