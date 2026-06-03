@@ -1091,7 +1091,7 @@ Expected: commit succeeds.
 - Modify: `PARENT_APP_UI_GUIDELINES.md`
 - Test: manual review
 
-- [ ] **Step 1: 在规范中新增视觉系统章节**
+- [x] **Step 1: 在规范中新增视觉系统章节**
 
 Append to `PARENT_APP_UI_GUIDELINES.md` after `## 2. 视觉基础规范`:
 
@@ -1111,7 +1111,7 @@ Append to `PARENT_APP_UI_GUIDELINES.md` after `## 2. 视觉基础规范`:
 - 学生头像真实上传优先，未上传时显示姓名姓氏第一个字。
 ```
 
-- [ ] **Step 2: 运行文档检查**
+- [x] **Step 2: 运行文档检查**
 
 Run:
 
@@ -1121,7 +1121,7 @@ rg -n "极淡粉蓝|渐变 icon|姓氏第一个字|纯黑" PARENT_APP_UI_GUIDELI
 
 Expected: shows the newly added guideline lines.
 
-- [ ] **Step 3: Commit guideline update**
+- [x] **Step 3: Commit guideline update**
 
 Run:
 
