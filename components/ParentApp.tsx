@@ -17,7 +17,14 @@ import {
   X,
 } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
-import { ParentCard, ParentGradientIcon, ParentPageShell, ParentPrimaryButton } from './parent-app/ParentUI';
+import {
+  ParentCard,
+  ParentChildAvatar,
+  ParentGradientIcon,
+  ParentPageShell,
+  ParentPrimaryButton,
+  ParentSecondaryButton,
+} from './parent-app/ParentUI';
 import TeacherFluidGlassNav from '../mobile-app/components/TeacherFluidGlassNav';
 import '../mobile-app/styles/navigation.css';
 import '../mobile-app/styles/teacherMobileTokens.css';
@@ -360,15 +367,13 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   const GrowthChildProfileCard = () => {
     if (!activeChild) return null;
     return (
-      <section className="mx-5 mt-4 rounded-[28px] border border-white p-4 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl bg-white">
+      <ParentCard as="section" className="mx-5 mt-4 p-4">
         <div className="flex items-center gap-3.5">
-          <img
+          <ParentChildAvatar
+            name={activeChild.name}
             src={activeChild.avatar}
             alt={`${activeChild.name}头像`}
-            onError={event => {
-              event.currentTarget.src = activeChild.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.GENERIC_GIRL;
-            }}
-            className="h-[68px] w-[68px] shrink-0 rounded-[24px] border-2 border-white bg-slate-50 object-cover shadow-[0_14px_28px_-18px_rgba(15,23,42,0.55)]"
+            className="h-[68px] w-[68px] rounded-[24px] border-2 border-white bg-slate-50 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.55)]"
           />
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-[18px] font-black leading-tight tracking-tight text-slate-950">{activeChild.name}</h2>
@@ -377,16 +382,16 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
               <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-600">{activeChild.studentNo}</span>
             </div>
           </div>
-          <button
+          <ParentSecondaryButton
             type="button"
             onClick={() => setShowChildSwitcher(true)}
-            className="h-9 shrink-0 rounded-full border border-blue-100 bg-blue-50 px-3 text-[13px] font-black text-blue-600 shadow-[0_12px_24px_-18px_rgba(37,99,235,0.45)] transition-transform active:scale-95"
+            className="min-h-9 shrink-0 px-3 text-[13px]"
             aria-label="切换孩子"
           >
             切换
-          </button>
+          </ParentSecondaryButton>
         </div>
-      </section>
+      </ParentCard>
     );
   };
 
@@ -400,7 +405,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
 
     return (
       <section className="mx-5 mt-4 flex flex-col gap-3">
-        <article className="min-h-[154px] rounded-[28px] border border-white bg-white p-4 shadow-[0_18px_46px_-36px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+        <ParentCard as="article" className="min-h-[154px] p-4">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[13px] font-black text-slate-400">本月净得分</span>
             <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[12px] font-black text-emerald-600">稳步成长</span>
@@ -410,18 +415,28 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
             <span className="ml-2 text-[18px] font-black text-slate-300">分</span>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <div className="rounded-[18px] border border-emerald-100 bg-emerald-50/80 px-2 py-2 text-center">
-              <div className="text-[11px] font-black text-emerald-500">表扬</div>
-              <div className="mt-1 text-[17px] font-black text-emerald-600">{positiveCount}<span className="ml-0.5 text-[11px]">次</span></div>
+            <div className="flex items-center justify-center gap-2 rounded-[18px] border border-emerald-100 bg-emerald-50/80 px-2 py-2">
+              <ParentGradientIcon tone="green" size="sm">
+                <CheckCircle2 size={16} />
+              </ParentGradientIcon>
+              <div className="text-left">
+                <div className="text-[11px] font-black text-emerald-500">表扬</div>
+                <div className="mt-0.5 text-[17px] font-black text-emerald-600">{positiveCount}<span className="ml-0.5 text-[11px]">次</span></div>
+              </div>
             </div>
-            <div className="rounded-[18px] border border-rose-100 bg-rose-50/70 px-2 py-2 text-center">
-              <div className="text-[11px] font-black text-rose-500">待改进</div>
-              <div className="mt-1 text-[17px] font-black text-rose-500">{improveCount}<span className="ml-0.5 text-[11px]">次</span></div>
+            <div className="flex items-center justify-center gap-2 rounded-[18px] border border-orange-100 bg-orange-50/75 px-2 py-2">
+              <ParentGradientIcon tone="orange" size="sm">
+                <Clock size={16} />
+              </ParentGradientIcon>
+              <div className="text-left">
+                <div className="text-[11px] font-black text-orange-500">待改进</div>
+                <div className="mt-0.5 text-[17px] font-black text-orange-500">{improveCount}<span className="ml-0.5 text-[11px]">次</span></div>
+              </div>
             </div>
           </div>
-        </article>
+        </ParentCard>
 
-        <article className="min-h-[154px] rounded-[28px] border border-white bg-white p-4 shadow-[0_18px_46px_-36px_rgba(249,115,22,0.55)] backdrop-blur-xl">
+        <ParentCard as="article" className="min-h-[154px] p-4 shadow-[0_18px_46px_-36px_rgba(249,115,22,0.55)]">
           <div className="text-[13px] font-black text-orange-500">预估分红总额</div>
           <div className="mt-5 flex items-center justify-center gap-2">
             <img src="/assets/coin.png" alt="" className="h-9 w-9 shrink-0" />
@@ -442,7 +457,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
               </div>
             </div>
           </div>
-        </article>
+        </ParentCard>
       </section>
     );
   };
@@ -486,10 +501,10 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   const Growth = () => {
     if (!activeChild) return <Binding />;
     return (
-      <div className={`${PARENT_SCREEN_CLASS} pb-28`}>
+      <ParentPageShell className="pb-28">
         <GrowthChildProfileCard />
         <GrowthSummaryCards />
-      </div>
+      </ParentPageShell>
     );
   };
 
