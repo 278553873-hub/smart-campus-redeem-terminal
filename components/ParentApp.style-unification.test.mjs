@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 const parentSource = readFileSync(new URL('./ParentApp.tsx', import.meta.url), 'utf8');
+const tokenSource = readFileSync(new URL('./parent-app/ParentStyleTokens.tsx', import.meta.url), 'utf8');
 const failures = [];
 
 const requireText = (source, text, message) => {
@@ -9,6 +10,13 @@ const requireText = (source, text, message) => {
 
 const forbidText = (source, text, message) => {
   if (source.includes(text)) failures.push(message ?? `不应出现：${text}`);
+};
+
+const requireToken = (source, objectName, propertyName) => {
+  requireText(source, `export const ${objectName}`, `家长端 token 缺少导出：${objectName}`);
+  if (!source.includes(`${propertyName}:`)) {
+    failures.push(`家长端 token 缺少：${objectName}.${propertyName}`);
+  }
 };
 
 for (const required of [
@@ -66,6 +74,19 @@ for (const requiredStyle of [
   'ParentBottomSheet',
 ]) {
   requireText(parentSource, requiredStyle, `家长端应使用新的通用组件：${requiredStyle}`);
+}
+
+for (const [objectName, propertyName] of [
+  ['parentSurface', 'background'],
+  ['parentSurface', 'card'],
+  ['parentIconTone', 'blue'],
+  ['parentIconTone', 'green'],
+  ['parentIconTone', 'orange'],
+  ['parentButtonTone', 'primary'],
+  ['parentRadius', 'card'],
+  ['parentShadow', 'card'],
+]) {
+  requireToken(tokenSource, objectName, propertyName);
 }
 
 if (failures.length > 0) {
