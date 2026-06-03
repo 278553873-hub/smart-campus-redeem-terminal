@@ -39,7 +39,7 @@ run_expect() {
   expect <<EOF_EXPECT
 set timeout 120
 set cmd \$env(DEPLOY_REMOTE_COMMAND)
-spawn ssh -p $DEPLOY_SSH_PORT -o StrictHostKeyChecking=accept-new $DEPLOY_USER@$DEPLOY_HOST \$cmd
+spawn ssh -p $DEPLOY_SSH_PORT -o PubkeyAuthentication=no -o PreferredAuthentications=password -o StrictHostKeyChecking=accept-new $DEPLOY_USER@$DEPLOY_HOST \$cmd
 expect {
   -re "(?i)password:" { send "\$env(DEPLOY_PASSWORD)\r"; exp_continue }
   eof
@@ -54,7 +54,8 @@ rsync_with_password() {
   local target_path="$2"
   DEPLOY_PASSWORD="$DEPLOY_PASSWORD" expect <<EOF_EXPECT
 set timeout -1
-spawn rsync -az --delete --partial -e "ssh -p $DEPLOY_SSH_PORT -o StrictHostKeyChecking=accept-new" $source_path $DEPLOY_USER@$DEPLOY_HOST:$target_path
+set ssh_cmd "ssh -p $DEPLOY_SSH_PORT -o PubkeyAuthentication=no -o PreferredAuthentications=password -o StrictHostKeyChecking=accept-new"
+spawn rsync -az --delete --partial -e \$ssh_cmd $source_path $DEPLOY_USER@$DEPLOY_HOST:$target_path
 expect {
   -re "(?i)password:" { send "\$env(DEPLOY_PASSWORD)\r"; exp_continue }
   eof
