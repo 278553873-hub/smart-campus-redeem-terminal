@@ -185,7 +185,7 @@ Expected: commit succeeds.
 - Create: `components/parent-app/ParentStyleTokens.tsx`
 - Test: `components/ParentApp.style-unification.test.mjs`
 
-- [ ] **Step 1: 写失败断言，要求 token 文件存在并包含核心 tone**
+- [x] **Step 1: 写失败断言，要求 token 文件存在并包含核心 tone**
 
 Append to `components/ParentApp.style-unification.test.mjs` after reading `parentSource`:
 
@@ -210,7 +210,7 @@ for (const requiredToken of [
 }
 ```
 
-- [ ] **Step 2: 运行测试，确认 token 文件缺失导致失败**
+- [x] **Step 2: 运行测试，确认 token 文件缺失导致失败**
 
 Run:
 
@@ -220,7 +220,7 @@ node components/ParentApp.style-unification.test.mjs
 
 Expected: FAIL with file read error for `ParentStyleTokens.tsx` or token missing.
 
-- [ ] **Step 3: 创建 token 文件**
+- [x] **Step 3: 创建 token 文件**
 
 Create `components/parent-app/ParentStyleTokens.tsx`:
 
@@ -271,7 +271,7 @@ export const parentShadow = {
 };
 ```
 
-- [ ] **Step 4: 运行 token 测试**
+- [x] **Step 4: 运行 token 测试**
 
 Run:
 
@@ -281,7 +281,7 @@ node components/ParentApp.style-unification.test.mjs
 
 Expected: FAIL only because `ParentApp.tsx` has not yet imported or used new components.
 
-- [ ] **Step 5: Commit token**
+- [x] **Step 5: Commit token**
 
 Run:
 
