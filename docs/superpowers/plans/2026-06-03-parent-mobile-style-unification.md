@@ -1008,7 +1008,7 @@ Expected: commit succeeds.
 - Modify: `mobile-app/styles/navigation.css` if needed
 - Test: `components/ParentApp.style-unification.test.mjs`, `components/ParentApp.campus-growth.test.mjs`
 
-- [ ] **Step 1: 迁移 ChildSwitcherSheet 为 ParentBottomSheet**
+- [x] **Step 1: 迁移 ChildSwitcherSheet 为 ParentBottomSheet**
 
 Replace outer sheet wrapper with:
 
@@ -1044,7 +1044,7 @@ return (
 );
 ```
 
-- [ ] **Step 2: 更新底部导航选中态颜色，不改入口和状态逻辑**
+- [x] **Step 2: 更新底部导航选中态颜色，不改入口和状态逻辑**
 
 In `renderParentBottomNav`, replace active text class:
 
@@ -1060,7 +1060,7 @@ active ? 'text-emerald-600 font-bold scale-105 opacity-100' : 'text-slate-400 fo
 
 Keep `TeacherFluidGlassNav`, `parentNavActiveIndex`, `parentTabbarWidth`, and `tabItems` unchanged unless user later approves a deeper nav redesign.
 
-- [ ] **Step 3: 运行测试**
+- [x] **Step 3: 运行测试**
 
 Run:
 
@@ -1072,7 +1072,7 @@ npm run build
 
 Expected: both tests PASS and build PASS.
 
-- [ ] **Step 4: Commit switcher/nav migration**
+- [x] **Step 4: Commit switcher/nav migration**
 
 Run:
 
