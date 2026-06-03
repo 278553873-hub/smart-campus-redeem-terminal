@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const parentSource = readFileSync(new URL('./ParentApp.tsx', import.meta.url), 'utf8');
 const tokenSource = readFileSync(new URL('./parent-app/ParentStyleTokens.tsx', import.meta.url), 'utf8');
+const uiSource = readFileSync(new URL('./parent-app/ParentUI.tsx', import.meta.url), 'utf8');
 const failures = [];
 
 const requireText = (source, text, message) => {
@@ -87,6 +88,18 @@ for (const [objectName, propertyName] of [
   ['parentShadow', 'card'],
 ]) {
   requireToken(tokenSource, objectName, propertyName);
+}
+
+for (const requiredExport of [
+  'export const ParentPageShell',
+  'export const ParentCard',
+  'export const ParentGradientIcon',
+  'export const ParentChildAvatar',
+  'export const ParentPrimaryButton',
+  'export const ParentSecondaryButton',
+  'export const ParentBottomSheet',
+]) {
+  requireText(uiSource, requiredExport, `家长端通用 UI 组件缺少导出：${requiredExport}`);
 }
 
 if (failures.length > 0) {
