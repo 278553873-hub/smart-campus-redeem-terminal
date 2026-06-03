@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 import {
+  ParentBottomSheet,
   ParentCard,
   ParentChildAvatar,
   ParentGradientIcon,
@@ -567,9 +568,9 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
     const projectedInterest = calculateProjectedInterest(amount, selectedBankScheme);
 
     return (
-      <div className={`${PARENT_SCREEN_CLASS} pb-28`}>
-        <section className="parent-bank-balance-strip sticky top-0 z-30 px-5 bg-white/70 backdrop-blur-xl">
-          <div className="flex h-10 items-center px-1 text-slate-600">
+      <ParentPageShell className="pb-28">
+        <ParentCard as="section" className="parent-bank-balance-strip sticky top-0 z-30 mx-5 px-4 py-2 backdrop-blur-xl">
+          <div className="flex min-h-10 items-center text-slate-600">
             <div className="flex flex-1 items-center justify-center gap-1.5">
               <span className="text-[14px] font-black">钱包</span>
               <img src="/assets/coin.png" alt="" className="h-4 w-4 shrink-0" />
@@ -582,7 +583,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
               <span className="text-[16px] font-black leading-none">{formatCoin(activeChild.bankBalance)}</span>
             </div>
           </div>
-        </section>
+        </ParentCard>
 
         <section className="parent-bank-action-tabs mx-5 mt-3 grid grid-cols-2 gap-3">
           {[
@@ -591,156 +592,155 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
           ].map(item => {
             const Icon = item.icon;
             const active = activeBankTab === item.key;
+            const TabButton = active ? ParentPrimaryButton : ParentSecondaryButton;
             return (
-              <button key={item.key} type="button" onClick={() => setActiveBankTab(item.key)} className={`flex h-12 items-center justify-center gap-1.5 rounded-full border text-[14px] font-black transition-all active:scale-[0.98] ${active ? 'border-transparent bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-[0_14px_30px_-22px_rgba(37,99,235,0.75)]' : 'border-white bg-white text-slate-500 shadow-[0_12px_30px_-26px_rgba(15,23,42,0.35)] backdrop-blur-xl'}`}>
+              <TabButton key={item.key} type="button" onClick={() => setActiveBankTab(item.key)} className="h-12 rounded-full text-[14px]">
                 <Icon size={16} /> {item.label}
-              </button>
+              </TabButton>
             );
           })}
         </section>
 
         {activeBankTab === 'deposit' ? (
           <section className="mx-5 mt-4 space-y-4">
-            <div className="rounded-[28px] bg-white border border-white p-4 shadow-[0_18px_50px_-34px_rgba(15,23,42,0.45)]">
-              <h2 className="text-[17px] font-black text-slate-900 mb-3">存钱计划</h2>
+            <ParentCard as="section" className="p-4">
+              <h2 className="mb-3 text-[17px] font-black text-slate-900">存钱计划</h2>
               <div className="space-y-2">
                 {PARENT_BANK_TERMS.map(scheme => {
                   const active = selectedBankScheme?.label === scheme.label;
                   const isCurrent = scheme.type === 'current';
                   return (
-                    <button key={scheme.label} type="button" onClick={() => { setSelectedBankScheme(scheme); setShowDepositConfirm(true); }} className={`flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition-colors ${active ? (isCurrent ? 'border-emerald-500 bg-emerald-50' : 'border-[#5886EF] bg-[#EEF3FF]') : 'border-slate-100 bg-slate-50'}`}>
+                    <button key={scheme.label} type="button" onClick={() => { setSelectedBankScheme(scheme); setShowDepositConfirm(true); }} className={`flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition-colors active:scale-[0.99] ${active ? (isCurrent ? 'border-emerald-300 bg-emerald-50/90' : 'border-sky-300 bg-sky-50/90') : 'border-slate-100 bg-slate-50/80'}`}>
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-[15px] font-black text-slate-900">{scheme.productName}</div>
                         <div className="mt-2 grid grid-cols-2 gap-2 text-[12px] font-bold">
-                          <span className={`rounded-full bg-white/76 px-2.5 py-1 ${isCurrent ? 'text-emerald-600' : 'text-slate-500'}`}>存期 {scheme.termLabel}</span>
-                          <span className={`rounded-full px-2.5 py-1 ${isCurrent ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>日利率 {formatDailyRate(scheme.dailyRate)}</span>
+                          <span className={`rounded-full bg-white/80 px-2.5 py-1 ${isCurrent ? 'text-emerald-600' : 'text-slate-500'}`}>存期 {scheme.termLabel}</span>
+                          <span className={`rounded-full px-2.5 py-1 ${isCurrent ? 'bg-emerald-100/80 text-emerald-600' : 'bg-sky-100/80 text-sky-600'}`}>日利率 {formatDailyRate(scheme.dailyRate)}</span>
                         </div>
                       </div>
-                      <div className={`h-5 w-5 rounded-full border-2 ${active ? (isCurrent ? 'border-emerald-500 bg-emerald-500' : 'border-[#5886EF] bg-[#5886EF]') : 'border-slate-200 bg-white'} shadow-[inset_0_0_0_4px_white]`} aria-hidden="true" />
+                      <div className={`h-5 w-5 rounded-full border-2 ${active ? (isCurrent ? 'border-emerald-500 bg-emerald-500' : 'border-sky-500 bg-sky-500') : 'border-slate-200 bg-white'} shadow-[inset_0_0_0_4px_white]`} aria-hidden="true" />
                     </button>
                   );
                 })}
               </div>
-            </div>
+            </ParentCard>
           </section>
         ) : (
           <section className="mx-5 mt-4 space-y-3">
             {activeChild.deposits.length === 0 ? (
-              <div className="rounded-[28px] bg-white border border-white p-8 text-center shadow-[0_18px_50px_-34px_rgba(15,23,42,0.45)]">
-                <Clock size={38} className="mx-auto text-slate-300 mb-3" />
+              <ParentCard as="section" className="p-8 text-center">
+                <ParentGradientIcon tone="softBlue" size="lg" className="mx-auto mb-3">
+                  <Clock size={24} />
+                </ParentGradientIcon>
                 <div className="text-[17px] font-black text-slate-700">还没有存单</div>
-                <button type="button" onClick={() => setActiveBankTab('deposit')} className="mt-5 h-12 px-6 rounded-[18px] bg-[#FFC210] text-[#653C16] text-[15px] font-bold">签署新存单</button>
-              </div>
+                <ParentPrimaryButton type="button" onClick={() => setActiveBankTab('deposit')} className="mt-5 h-12 px-6">
+                  签署新存单
+                </ParentPrimaryButton>
+              </ParentCard>
             ) : activeChild.deposits.map(deposit => {
               const details = getDepositInterest(deposit);
               const progress = deposit.type === 'current' ? 100 : Math.min(100, Math.floor((details.elapsedDays / deposit.termDays) * 100));
               return (
-                <article key={deposit.id} className="rounded-[28px] bg-white border border-white p-4 shadow-[0_18px_50px_-34px_rgba(15,23,42,0.45)]">
+                <ParentCard key={deposit.id} as="article" className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-[11px] font-bold text-blue-500 mb-1">{deposit.type === 'current' ? '活期存单' : '定期存单'}</div>
+                      <div className="mb-1 text-[11px] font-bold text-sky-500">{deposit.type === 'current' ? '活期存单' : '定期存单'}</div>
                       <h3 className="text-[17px] font-black text-slate-900">{deposit.label}</h3>
                     </div>
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${details.matured ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
+                    <ParentGradientIcon tone={details.matured ? 'green' : 'softBlue'} size="md">
                       {details.matured ? <BadgeCheck size={19} /> : <Clock size={19} />}
-                    </div>
+                    </ParentGradientIcon>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-[18px] bg-slate-50 p-3">
+                    <div className="rounded-[18px] bg-slate-50/90 p-3">
                       <div className="text-[11px] font-bold text-slate-400">本金</div>
                       <div className="mt-1 flex items-center gap-1.5 text-[22px] font-black text-slate-900">
                         <img src="/assets/coin.png" alt="" className="h-5 w-5 shrink-0" />
                         <span>{deposit.amount}</span>
                       </div>
                     </div>
-                    <div className="rounded-[18px] bg-emerald-50 p-3">
+                    <div className="rounded-[18px] bg-emerald-50/90 p-3">
                       <div className="text-[11px] font-bold text-emerald-600/70">已得利息</div>
                       <div className="mt-1 text-[22px] font-black text-emerald-600">+{details.interest}</div>
                     </div>
                   </div>
                   {deposit.type === 'fixed' && (
                     <div className="mt-4">
-                      <div className="flex justify-between text-[11px] font-bold text-slate-400 mb-2">
+                      <div className="mb-2 flex justify-between text-[11px] font-bold text-slate-400">
                         <span>进度</span><span>{progress}%</span>
                       </div>
-                      <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div className="h-full rounded-full bg-[#5886EF]" style={{ width: `${progress}%` }} />
+                      <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                        <div className="h-full rounded-full bg-gradient-to-r from-[#0DB4F1] to-[#18D0A8]" style={{ width: `${progress}%` }} />
                       </div>
                     </div>
                   )}
-                  <button type="button" onClick={() => setWithdrawTarget(deposit)} className={`mt-4 w-full h-12 rounded-[18px] text-[15px] font-bold text-white active:scale-[0.98] transition-transform ${deposit.type === 'current' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 shadow-[0_14px_30px_-22px_rgba(5,150,105,0.75)]' : 'bg-gradient-to-r from-indigo-600 to-blue-600 shadow-[0_14px_30px_-22px_rgba(37,99,235,0.75)]'}`}>
+                  <ParentPrimaryButton type="button" onClick={() => setWithdrawTarget(deposit)} fullWidth className="mt-4 h-12">
                     取出
-                  </button>
-                </article>
+                  </ParentPrimaryButton>
+                </ParentCard>
               );
             })}
           </section>
         )}
 
         {showDepositConfirm && selectedBankScheme && (
-          <div className="absolute inset-0 z-[90] bg-slate-950/35 backdrop-blur-sm flex items-end" onClick={() => { setShowDepositConfirm(false); setShowDepositReview(false); }}>
-            <div className="w-full rounded-t-[32px] bg-white p-5 pb-8 shadow-[0_-24px_70px_-38px_rgba(15,23,42,0.7)]" onClick={event => event.stopPropagation()}>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-[19px] font-black text-slate-950">存入金额</h2>
-                  <p className="mt-1 text-[12px] font-bold text-slate-400">{selectedBankScheme.productName} · 存期 {selectedBankScheme.termLabel} · 日利率 {formatDailyRate(selectedBankScheme.dailyRate)}</p>
-                </div>
-                <button type="button" onClick={() => { setShowDepositConfirm(false); setShowDepositReview(false); }} className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><X size={18} /></button>
+          <ParentBottomSheet title="存入金额" onClose={() => { setShowDepositConfirm(false); setShowDepositReview(false); }} className="pb-8">
+            <p className="mb-4 text-[12px] font-bold text-slate-400">{selectedBankScheme.productName} · 存期 {selectedBankScheme.termLabel} · 日利率 {formatDailyRate(selectedBankScheme.dailyRate)}</p>
+            <div className="rounded-[20px] bg-slate-50/90 p-4">
+              <div className="mb-3 flex items-end justify-between">
+                <span className="text-[12px] font-bold text-slate-500">存入金额</span>
+                <span className="text-[30px] font-black leading-none text-slate-900">{amount}</span>
               </div>
-              <div className="rounded-[24px] bg-slate-50 p-4">
-                <div className="flex items-end justify-between mb-3">
-                  <span className="text-[12px] font-bold text-slate-500">存入金额</span>
-                  <span className="text-[30px] leading-none font-black text-slate-900">{amount}</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max={Math.max(1, Math.floor(activeChild.availableCoins))}
-                  step="1"
-                  value={amount}
-                  onChange={event => setDepositAmount(event.target.value)}
-                  className="w-full h-3 rounded-full accent-[#5886EF]"
-                />
-                <div className="mt-2 flex justify-between text-[11px] font-bold text-slate-400">
-                  <span>1</span>
-                  <span>最多 {Math.max(1, Math.floor(activeChild.availableCoins))}</span>
-                </div>
+              <input
+                type="range"
+                min="1"
+                max={Math.max(1, Math.floor(activeChild.availableCoins))}
+                step="1"
+                value={amount}
+                onChange={event => setDepositAmount(event.target.value)}
+                className="h-3 w-full rounded-full accent-[#0DB4F1]"
+              />
+              <div className="mt-2 flex justify-between text-[11px] font-bold text-slate-400">
+                <span>1</span>
+                <span>最多 {Math.max(1, Math.floor(activeChild.availableCoins))}</span>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <div className="rounded-[18px] bg-blue-50 p-3">
-                  <div className="text-[11px] font-bold text-blue-500/80">{selectedBankScheme.type === 'current' ? '单日利息' : '到期利息'}</div>
-                  <div className="mt-1 text-[20px] font-black text-blue-600">+{projectedInterest}</div>
-                </div>
-                <div className="rounded-[18px] bg-slate-50 p-3">
-                  <div className="text-[11px] font-bold text-slate-400">到期时间</div>
-                  <div className="mt-1 text-[15px] font-black text-slate-700">{selectedBankScheme.type === 'current' ? '随时取出' : formatDate(Date.now() + selectedBankScheme.days * 86400000)}</div>
-                </div>
-              </div>
-              {selectedBankScheme.type === 'current' && (
-                <div className="mt-3 rounded-[20px] bg-emerald-50 p-3">
-                  <div className="text-[12px] font-black text-emerald-700">活期收益预估</div>
-                  <div className="mt-3 grid grid-cols-4 gap-2">
-                    {CURRENT_DEPOSIT_PROJECTION_DAYS.map(days => (
-                      <div key={days} className="rounded-[14px] bg-white/80 px-2 py-2 text-center">
-                        <div className="text-[11px] font-bold text-slate-400">{days}天后</div>
-                        <div className="mt-1 text-[13px] font-black text-emerald-600">+{(amount * BANK_CONFIG.DAILY_RATE * days).toFixed(2)}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <button type="button" onClick={() => setShowDepositReview(true)} className={`mt-4 w-full h-[52px] rounded-[18px] text-white text-[16px] font-bold shadow-[0_14px_30px_-22px_rgba(37,99,235,0.75)] active:scale-[0.98] transition-transform ${selectedBankScheme.type === 'current' ? 'bg-emerald-600' : 'bg-gradient-to-r from-indigo-600 to-blue-600'}`}>签署存单</button>
             </div>
-          </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="rounded-[18px] bg-sky-50 p-3">
+                <div className="text-[11px] font-bold text-sky-500/80">{selectedBankScheme.type === 'current' ? '单日利息' : '到期利息'}</div>
+                <div className="mt-1 text-[20px] font-black text-sky-600">+{projectedInterest}</div>
+              </div>
+              <div className="rounded-[18px] bg-slate-50 p-3">
+                <div className="text-[11px] font-bold text-slate-400">到期时间</div>
+                <div className="mt-1 text-[15px] font-black text-slate-700">{selectedBankScheme.type === 'current' ? '随时取出' : formatDate(Date.now() + selectedBankScheme.days * 86400000)}</div>
+              </div>
+            </div>
+            {selectedBankScheme.type === 'current' && (
+              <div className="mt-3 rounded-[20px] bg-emerald-50 p-3">
+                <div className="text-[12px] font-black text-emerald-700">活期收益预估</div>
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {CURRENT_DEPOSIT_PROJECTION_DAYS.map(days => (
+                    <div key={days} className="rounded-[14px] bg-white/80 px-2 py-2 text-center">
+                      <div className="text-[11px] font-bold text-slate-400">{days}天后</div>
+                      <div className="mt-1 text-[13px] font-black text-emerald-600">+{(amount * BANK_CONFIG.DAILY_RATE * days).toFixed(2)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <ParentPrimaryButton type="button" onClick={() => setShowDepositReview(true)} fullWidth className="mt-4 h-[52px] text-[16px]">
+              签署存单
+            </ParentPrimaryButton>
+          </ParentBottomSheet>
         )}
 
         {showDepositReview && selectedBankScheme && (
           <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-950/55 px-6 backdrop-blur-md" onClick={() => setShowDepositReview(false)}>
             <div className="w-full rounded-[34px] bg-white p-6 shadow-[0_28px_90px_-42px_rgba(15,23,42,0.85)]" onClick={event => event.stopPropagation()}>
               <div className="flex items-start justify-between gap-4">
-                <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] ${selectedBankScheme.type === 'current' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'} shadow-[0_18px_36px_-24px_rgba(79,70,229,0.7)]`}>
+                <ParentGradientIcon tone={selectedBankScheme.type === 'current' ? 'green' : 'blue'} size="lg" className="h-16 w-16 rounded-[22px]">
                   <FileText size={30} strokeWidth={2.4} />
-                </div>
+                </ParentGradientIcon>
                 <button type="button" onClick={() => setShowDepositReview(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400">
                   <X size={20} />
                 </button>
@@ -749,7 +749,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
               <div className="mt-5 rounded-[26px] bg-slate-50 p-4">
                 <div className="flex items-center justify-between gap-3 py-2 text-[14px] font-bold">
                   <span className="text-slate-400">签署计划</span>
-                  <span className={`rounded-full px-3 py-1 text-[14px] font-black ${selectedBankScheme.type === 'current' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-600'}`}>{selectedBankScheme.label}</span>
+                  <span className={`rounded-full px-3 py-1 text-[14px] font-black ${selectedBankScheme.type === 'current' ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-600'}`}>{selectedBankScheme.label}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 py-2 text-[14px] font-bold">
                   <span className="text-slate-400">投入本金</span>
@@ -757,36 +757,36 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
                 </div>
                 <div className="flex items-center justify-between gap-3 py-2 text-[14px] font-bold">
                   <span className="text-slate-400">预期利息</span>
-                  <span className="flex items-center gap-1 text-[20px] font-black text-indigo-600"><img src="/assets/coin.png" alt="" className="h-5 w-5" />+{projectedInterest}</span>
+                  <span className="flex items-center gap-1 text-[20px] font-black text-sky-600"><img src="/assets/coin.png" alt="" className="h-5 w-5" />+{projectedInterest}</span>
                 </div>
-                <div className="mt-2 border-t border-dashed border-slate-200 pt-3 text-[13px] font-black text-indigo-600">
+                <div className="mt-2 border-t border-dashed border-slate-200 pt-3 text-[13px] font-black text-sky-600">
                   到期时间：{selectedBankScheme.type === 'current' ? '随时取出' : formatDate(Date.now() + selectedBankScheme.days * 86400000)}
                 </div>
               </div>
               <div className="mt-5 grid grid-cols-2 gap-3">
-                <button type="button" onClick={() => setShowDepositReview(false)} className="h-[52px] rounded-[18px] bg-slate-100 text-[16px] font-black text-slate-600 transition-transform active:scale-[0.98]">我再想想</button>
-                <button type="button" onClick={submitDeposit} className={`h-[52px] rounded-[18px] text-[16px] font-black text-white shadow-[0_14px_30px_-22px_rgba(37,99,235,0.75)] transition-transform active:scale-[0.98] ${selectedBankScheme.type === 'current' ? 'bg-emerald-600' : 'bg-gradient-to-r from-indigo-600 to-blue-600'}`}>确认签署</button>
+                <ParentSecondaryButton type="button" onClick={() => setShowDepositReview(false)} className="h-[52px] text-[16px]">
+                  我再想想
+                </ParentSecondaryButton>
+                <ParentPrimaryButton type="button" onClick={submitDeposit} className="h-[52px] text-[16px]">
+                  确认签署
+                </ParentPrimaryButton>
               </div>
             </div>
           </div>
         )}
 
         {withdrawTarget && (
-          <div className="absolute inset-0 z-[90] bg-slate-950/35 backdrop-blur-sm flex items-end" onClick={() => setWithdrawTarget(null)}>
-            <div className="w-full rounded-t-[32px] bg-white p-5 pb-8 shadow-[0_-24px_70px_-38px_rgba(15,23,42,0.7)]" onClick={event => event.stopPropagation()}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[19px] font-black text-slate-950">确认取出</h2>
-                <button type="button" onClick={() => setWithdrawTarget(null)} className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><X size={18} /></button>
-              </div>
-              <div className="rounded-[24px] bg-slate-50 p-4 space-y-3">
-                <div className="flex justify-between text-[14px] font-bold"><span className="text-slate-500">本金</span><span className="text-slate-900">{withdrawTarget.amount}</span></div>
-                <div className="flex justify-between text-[14px] font-bold"><span className="text-slate-500">利息</span><span className="text-emerald-600">+{getDepositInterest(withdrawTarget).interest}</span></div>
-              </div>
-              <button type="button" onClick={() => withdrawDeposit(withdrawTarget)} className="mt-4 w-full h-[52px] rounded-[18px] bg-[#FFC210] text-[#653C16] text-[16px] font-bold active:scale-[0.98] transition-transform">确认取出</button>
+          <ParentBottomSheet title="确认取出" onClose={() => setWithdrawTarget(null)} className="pb-8">
+            <div className="space-y-3 rounded-[20px] bg-slate-50/90 p-4">
+              <div className="flex justify-between text-[14px] font-bold"><span className="text-slate-500">本金</span><span className="text-slate-900">{withdrawTarget.amount}</span></div>
+              <div className="flex justify-between text-[14px] font-bold"><span className="text-slate-500">利息</span><span className="text-emerald-600">+{getDepositInterest(withdrawTarget).interest}</span></div>
             </div>
-          </div>
+            <ParentPrimaryButton type="button" onClick={() => withdrawDeposit(withdrawTarget)} fullWidth className="mt-4 h-[52px] text-[16px]">
+              确认取出
+            </ParentPrimaryButton>
+          </ParentBottomSheet>
         )}
-      </div>
+      </ParentPageShell>
     );
   };
 
