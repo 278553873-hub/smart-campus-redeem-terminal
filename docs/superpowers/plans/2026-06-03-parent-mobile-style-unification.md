@@ -502,7 +502,7 @@ Expected: commit succeeds.
 - Modify: `components/ParentApp.tsx`
 - Test: `components/ParentApp.style-unification.test.mjs`, `components/ParentApp.campus-growth.test.mjs`
 
-- [ ] **Step 1: 添加组件导入**
+- [x] **Step 1: 添加组件导入**
 
 Modify `components/ParentApp.tsx` imports:
 
@@ -520,7 +520,7 @@ import {
 
 Remove no business imports in this step.
 
-- [ ] **Step 2: 更新页面容器常量**
+- [x] **Step 2: 更新页面容器常量**
 
 Replace:
 
@@ -535,7 +535,7 @@ with:
 const BINDING_INPUT_CLASS = 'h-[52px] w-full rounded-[14px] border border-slate-100 bg-slate-50/80 px-4 text-[16px] font-bold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:bg-white';
 ```
 
-- [ ] **Step 3: 迁移 Binding 函数**
+- [x] **Step 3: 迁移 Binding 函数**
 
 Replace the outer wrapper and card in `Binding` with:
 
@@ -577,7 +577,7 @@ const Binding = () => (
 );
 ```
 
-- [ ] **Step 4: 迁移 Reports 函数**
+- [x] **Step 4: 迁移 Reports 函数**
 
 Replace `Reports` return block with:
 
@@ -607,7 +607,7 @@ const Reports = () => {
 };
 ```
 
-- [ ] **Step 5: 运行测试**
+- [x] **Step 5: 运行测试**
 
 Run:
 
@@ -619,7 +619,7 @@ npm run build
 
 Expected: style test may still fail for other pages not migrated; campus-growth should not fail on binding/report functional behavior; build should PASS.
 
-- [ ] **Step 6: Commit binding/report migration**
+- [x] **Step 6: Commit binding/report migration**
 
 Run:
 
