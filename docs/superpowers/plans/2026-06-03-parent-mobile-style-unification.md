@@ -766,7 +766,7 @@ Expected: commit succeeds.
 - Modify: `components/ParentApp.tsx`
 - Test: `components/ParentApp.style-unification.test.mjs`, `components/ParentApp.campus-growth.test.mjs`
 
-- [ ] **Step 1: 迁移 ReportDetail 容器和图标**
+- [x] **Step 1: 迁移 ReportDetail 容器和图标**
 
 Replace the `ReportDetail` return block with:
 
@@ -797,7 +797,7 @@ const ReportDetail = () => {
 };
 ```
 
-- [ ] **Step 2: 运行测试**
+- [x] **Step 2: 运行测试**
 
 Run:
 
@@ -809,7 +809,7 @@ npm run build
 
 Expected: report detail content assertions PASS; build PASS.
 
-- [ ] **Step 3: Commit report detail migration**
+- [x] **Step 3: Commit report detail migration**
 
 Run:
 
