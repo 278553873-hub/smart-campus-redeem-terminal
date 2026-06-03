@@ -1343,7 +1343,7 @@ const AppSwitcher: React.FC = () => {
               title="家长手机端 - 微信小程序"
             >
               <Smartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold leading-tight">家长手机端</span>
+              <span className="text-[9px] font-bold leading-tight">家长-手机端</span>
             </button>
           </div>
         </div>
