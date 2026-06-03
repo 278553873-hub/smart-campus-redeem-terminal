@@ -539,23 +539,25 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   const ReportDetail = () => {
     if (!activeChild || !activeReport) return <Reports />;
     return (
-      <div className={`${PARENT_SCREEN_CLASS} pb-28`}>
+      <ParentPageShell className="pb-28">
         <Header title="报告详情" subtitle={`${activeReport.title} · ${activeReport.period}`} showBack />
-        <section className="mx-5 mt-5 rounded-[30px] bg-white border border-white p-5 shadow-[0_20px_58px_-36px_rgba(15,23,42,0.5)]">
-          <div className="w-14 h-14 rounded-[22px] bg-slate-900 text-white flex items-center justify-center mb-5"><FileText size={26} /></div>
+        <ParentCard className="mx-5 mt-5 p-5" as="section">
+          <ParentGradientIcon tone={activeReport.type === 'month' ? 'blue' : 'green'} size="lg" className="mb-5">
+            {activeReport.type === 'month' ? <CalendarDays size={24} /> : <BookOpenCheck size={24} />}
+          </ParentGradientIcon>
           <h2 className="text-[24px] font-black text-slate-950">{activeReport.title}</h2>
           <p className="mt-1 text-[13px] font-bold text-emerald-600">{activeChild.name} · {activeReport.period}</p>
           <p className="mt-5 text-[15px] leading-relaxed text-slate-600">{activeReport.summary}</p>
           <div className="mt-5 space-y-2">
             {activeReport.highlights.map(item => (
-              <div key={item} className="flex items-start gap-2 rounded-2xl bg-slate-50 p-3">
+              <div key={item} className="flex items-start gap-2 rounded-[18px] bg-emerald-50/70 p-3">
                 <CheckCircle2 size={17} className="mt-0.5 text-emerald-600 shrink-0" />
                 <span className="text-[13px] leading-relaxed font-medium text-slate-600">{item}</span>
               </div>
             ))}
           </div>
-        </section>
-      </div>
+        </ParentCard>
+      </ParentPageShell>
     );
   };
 
