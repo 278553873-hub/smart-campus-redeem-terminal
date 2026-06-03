@@ -36,7 +36,7 @@
 - Create: `components/ParentApp.style-unification.test.mjs`
 - Modify: `components/ParentApp.campus-growth.test.mjs`
 
-- [ ] **Step 1: 新增失败测试，禁止再引入真实方案外功能**
+- [x] **Step 1: 新增失败测试，禁止再引入真实方案外功能**
 
 Create `components/ParentApp.style-unification.test.mjs` with this content:
 
@@ -119,7 +119,7 @@ if (failures.length > 0) {
 console.log('parent style unification assertions passed');
 ```
 
-- [ ] **Step 2: 运行新增测试，确认当前会失败**
+- [x] **Step 2: 运行新增测试，确认当前会失败**
 
 Run:
 
@@ -129,7 +129,7 @@ node components/ParentApp.style-unification.test.mjs
 
 Expected: FAIL，至少包含 `家长端应使用新的通用组件：ParentPageShell`，因为组件尚未创建和接入。
 
-- [ ] **Step 3: 修正旧测试中和新设计冲突的样式断言**
+- [x] **Step 3: 修正旧测试中和新设计冲突的样式断言**
 
 Modify `components/ParentApp.campus-growth.test.mjs`:
 
@@ -156,7 +156,7 @@ forbidText(parentSource, 'parent-teacher-token-primary-button', '家长端新视
 
 Keep functional assertions such as `shouldShowStudentBindFields`, `activeChild.reports.map`, `PARENT_BANK_TERMS`, `CURRENT_DEPOSIT_PROJECTION_DAYS`, and `showDepositReview`.
 
-- [ ] **Step 4: 运行旧测试，确认旧测试现在只约束真实功能与新组件边界**
+- [x] **Step 4: 运行旧测试，确认旧测试现在只约束真实功能与新组件边界**
 
 Run:
 
@@ -166,7 +166,7 @@ node components/ParentApp.campus-growth.test.mjs
 
 Expected: FAIL is acceptable at this point only for missing new components or old code still using旧样式；不应出现因真实功能断言缺失导致的失败。
 
-- [ ] **Step 5: Commit tests**
+- [x] **Step 5: Commit tests**
 
 Run:
 
