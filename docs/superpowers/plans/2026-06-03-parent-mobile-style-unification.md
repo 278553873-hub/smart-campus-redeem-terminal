@@ -638,7 +638,7 @@ Expected: commit succeeds.
 - Modify: `components/ParentApp.tsx`
 - Test: `components/ParentApp.style-unification.test.mjs`, `components/ParentApp.campus-growth.test.mjs`
 
-- [ ] **Step 1: 迁移 GrowthChildProfileCard，保留班级、学号、切换**
+- [x] **Step 1: 迁移 GrowthChildProfileCard，保留班级、学号、切换**
 
 Replace `GrowthChildProfileCard` body with:
 
@@ -665,7 +665,7 @@ const GrowthChildProfileCard = () => {
 };
 ```
 
-- [ ] **Step 2: 迁移 GrowthSummaryCards，保留净得分/表扬/待改进/分红结构**
+- [x] **Step 2: 迁移 GrowthSummaryCards，保留净得分/表扬/待改进/分红结构**
 
 Replace the two `article` blocks inside `GrowthSummaryCards` with `ParentCard` while keeping constants and labels:
 
@@ -719,7 +719,7 @@ return (
 );
 ```
 
-- [ ] **Step 3: 迁移 Growth 页面容器**
+- [x] **Step 3: 迁移 Growth 页面容器**
 
 Replace:
 
@@ -735,7 +735,7 @@ inside `Growth` with:
 
 and close with `</ParentPageShell>`.
 
-- [ ] **Step 4: 运行测试**
+- [x] **Step 4: 运行测试**
 
 Run:
 
@@ -747,7 +747,7 @@ npm run build
 
 Expected: no growth functional assertions fail; build PASS.
 
-- [ ] **Step 5: Commit growth migration**
+- [x] **Step 5: Commit growth migration**
 
 Run:
 
