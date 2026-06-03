@@ -793,47 +793,41 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   const ChildSwitcherSheet = () => {
     if (!showChildSwitcher) return null;
     return (
-      <div className="parent-teacher-token-sheet-mask absolute inset-0 z-[80] flex items-end backdrop-blur-sm" onClick={() => setShowChildSwitcher(false)}>
-        <div className="parent-teacher-token-sheet w-full rounded-t-[32px] p-5 pb-8" onClick={event => event.stopPropagation()}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-[19px] font-black text-slate-950">切换孩子</h2>
-            </div>
-            <button type="button" onClick={() => setShowChildSwitcher(false)} className="parent-teacher-token-icon-button flex h-9 w-9 items-center justify-center rounded-full"><X size={18} /></button>
-          </div>
-          <div className="space-y-2">
-            {childrenList.map(child => (
-              <article key={child.id} className={`student-switcher-card parent-teacher-token-switcher-card w-full rounded-[22px] border p-4 ${child.id === activeChildId ? 'parent-teacher-token-switcher-card-active' : ''}`}>
-                <div className="flex items-center gap-3">
-                  <img
-                    src={child.avatar}
-                    alt={`${child.name}头像`}
-                    onError={event => {
-                      event.currentTarget.src = child.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.GENERIC_GIRL;
-                    }}
-                    className="h-11 w-11 shrink-0 rounded-[17px] border-2 border-white object-cover shadow-[0_12px_26px_-18px_rgba(15,23,42,0.55)]"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[16px] font-black leading-tight text-slate-950">{child.name}</div>
-                    <div className="mt-2 flex min-w-0 items-center gap-2 whitespace-nowrap text-[12px] font-bold text-slate-500">
-                      <span className="shrink-0 text-slate-300">所在班级</span>
-                      <span className="max-w-[92px] truncate text-slate-700">{child.className}</span>
-                      <span className="shrink-0 text-slate-300">学号</span>
-                      <span className="max-w-[54px] truncate text-slate-700">{child.studentNo}</span>
-                    </div>
+      <ParentBottomSheet title="切换孩子" onClose={() => setShowChildSwitcher(false)} className="pb-8">
+        <div className="space-y-2">
+          {childrenList.map(child => (
+            <ParentCard
+              key={child.id}
+              as="article"
+              className={`student-switcher-card w-full p-4 ${child.id === activeChildId ? 'border-emerald-200 bg-emerald-50/40' : ''}`}
+            >
+              <div className="flex items-center gap-3">
+                <ParentChildAvatar name={child.name} src={child.avatar} alt={`${child.name}头像`} className="h-11 w-11 rounded-[14px]" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[16px] font-black leading-tight text-slate-950">{child.name}</div>
+                  <div className="mt-2 flex min-w-0 items-center gap-2 whitespace-nowrap text-[12px] font-bold text-slate-500">
+                    <span className="shrink-0 text-slate-300">所在班级</span>
+                    <span className="max-w-[92px] truncate text-slate-700">{child.className}</span>
+                    <span className="shrink-0 text-slate-300">学号</span>
+                    <span className="max-w-[54px] truncate text-slate-700">{child.studentNo}</span>
                   </div>
-                  <button type="button" onClick={() => { setActiveChildId(child.id); setShowChildSwitcher(false); }} disabled={child.id === activeChildId} className={`h-9 min-w-[58px] shrink-0 rounded-full px-3 text-[13px] font-black transition-transform active:scale-95 disabled:active:scale-100 ${child.id === activeChildId ? 'parent-teacher-token-secondary-button' : 'parent-teacher-token-primary-button'}`}>
-                    {child.id === activeChildId ? '当前' : '切换'}
-                  </button>
                 </div>
-              </article>
-            ))}
-          </div>
-          <button type="button" onClick={() => openBinding('switcher')} className="parent-teacher-token-primary-button mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-bold transition-transform active:scale-[0.98]">
-            <Plus size={18} /> 新增绑定
-          </button>
+                <ParentSecondaryButton
+                  type="button"
+                  onClick={() => { setActiveChildId(child.id); setShowChildSwitcher(false); }}
+                  disabled={child.id === activeChildId}
+                  className="h-9 min-h-9 min-w-[58px] shrink-0 px-3 text-[13px]"
+                >
+                  {child.id === activeChildId ? '当前' : '切换'}
+                </ParentSecondaryButton>
+              </div>
+            </ParentCard>
+          ))}
         </div>
-      </div>
+        <ParentPrimaryButton type="button" onClick={() => openBinding('switcher')} fullWidth className="mt-4 h-[52px] text-[16px]">
+          <Plus size={18} /> 新增绑定
+        </ParentPrimaryButton>
+      </ParentBottomSheet>
     );
   };
 
@@ -878,7 +872,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
               aria-current={active ? 'page' : undefined}
               className="tabbar-item-btn"
             >
-              <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${active ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
+              <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${active ? 'text-emerald-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
                 <div className="tabbar-icon-wrap">
                   <Icon className="w-5 h-5" strokeWidth={active ? 2.65 : 2.25} />
                 </div>
