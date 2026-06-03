@@ -163,10 +163,11 @@ export const ParentBottomSheet: React.FC<ParentBottomSheetProps> = ({
   children,
   className = '',
 }) => (
-  <div className="absolute inset-0 z-50 flex items-end bg-slate-900/18 backdrop-blur-[2px]">
+  <div className="absolute inset-0 z-50 flex items-end bg-slate-900/18 backdrop-blur-[2px]" onClick={onClose}>
     <section
       className={cx('w-full border border-white/90 bg-white px-5 pb-6 pt-4', parentRadius.sheet, parentShadow.sheet, className)}
       role="dialog"
+      onClick={event => event.stopPropagation()}
       aria-modal="true"
       aria-labelledby="parent-bottom-sheet-title"
     >
