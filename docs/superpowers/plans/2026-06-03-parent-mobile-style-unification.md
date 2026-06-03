@@ -1139,7 +1139,7 @@ Expected: commit succeeds.
 **Files:**
 - No source edits expected unless a verification issue is found.
 
-- [ ] **Step 1: Run all relevant static tests**
+- [x] **Step 1: Run all relevant static tests**
 
 Run:
 
@@ -1152,7 +1152,7 @@ npm run build
 
 Expected: all Node tests print success; `npm run build` exits 0.
 
-- [ ] **Step 2: Start local dev server**
+- [x] **Step 2: Start local dev server**
 
 Run:
 
@@ -1162,7 +1162,7 @@ npm run dev
 
 Expected: Vite prints a local URL such as `http://localhost:5173/`.
 
-- [ ] **Step 3: Browser preview with real flow**
+- [x] **Step 3: Browser preview with real flow**
 
 Open the local URL in the in-app browser and verify these flows manually:
 
@@ -1183,7 +1183,7 @@ Open the local URL in the in-app browser and verify these flows manually:
 
 Expected: all flows work; no new入口出现；页面风格统一。
 
-- [ ] **Step 4: Capture verification notes**
+- [x] **Step 4: Capture verification notes**
 
 Append a short note to `logs/agent_detail/parent-mobile-style-brainstorming.md`:
 
@@ -1195,7 +1195,7 @@ Append a short note to `logs/agent_detail/parent-mobile-style-brainstorming.md`:
 - 结果：功能边界未变化，样式已统一为极淡背景、白卡片、小面积渐变 icon。
 ```
 
-- [ ] **Step 5: Final commit if verification note is the only change**
+- [x] **Step 5: Final commit if verification note is the only change**
 
 Do not commit `logs/agent_detail` because project rules say logs must never be submitted. If no source changes remain, do not create an empty commit.
 
