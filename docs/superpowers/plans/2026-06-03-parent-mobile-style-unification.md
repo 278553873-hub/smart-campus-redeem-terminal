@@ -300,7 +300,7 @@ Expected: commit succeeds.
 - Create: `components/parent-app/ParentUI.tsx`
 - Test: `components/ParentApp.style-unification.test.mjs`
 
-- [ ] **Step 1: 写失败断言，要求组件导出**
+- [x] **Step 1: 写失败断言，要求组件导出**
 
 Append to `components/ParentApp.style-unification.test.mjs` after `tokenSource`:
 
@@ -324,7 +324,7 @@ for (const componentName of [
 }
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run:
 
@@ -334,7 +334,7 @@ node components/ParentApp.style-unification.test.mjs
 
 Expected: FAIL with missing `ParentUI.tsx`.
 
-- [ ] **Step 3: 创建通用组件文件**
+- [x] **Step 3: 创建通用组件文件**
 
 Create `components/parent-app/ParentUI.tsx`:
 
@@ -473,7 +473,7 @@ export const ParentBottomSheet: React.FC<ParentBottomSheetProps> = ({ title, chi
 );
 ```
 
-- [ ] **Step 4: 运行测试，确认组件导出通过**
+- [x] **Step 4: 运行测试，确认组件导出通过**
 
 Run:
 
@@ -483,7 +483,7 @@ node components/ParentApp.style-unification.test.mjs
 
 Expected: FAIL only because `ParentApp.tsx` has not been migrated to use the components.
 
-- [ ] **Step 5: Commit components**
+- [x] **Step 5: Commit components**
 
 Run:
 
