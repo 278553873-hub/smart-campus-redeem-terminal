@@ -54,8 +54,8 @@ rsync_with_password() {
   local target_path="$2"
   DEPLOY_PASSWORD="$DEPLOY_PASSWORD" expect <<EOF_EXPECT
 set timeout -1
-set ssh_cmd "ssh -p $DEPLOY_SSH_PORT -o PubkeyAuthentication=no -o PreferredAuthentications=password -o StrictHostKeyChecking=accept-new"
-spawn rsync -az --delete --partial -e \$ssh_cmd $source_path $DEPLOY_USER@$DEPLOY_HOST:$target_path
+set env(RSYNC_RSH) "ssh -p $DEPLOY_SSH_PORT -o PubkeyAuthentication=no -o PreferredAuthentications=password -o StrictHostKeyChecking=accept-new"
+spawn rsync -az --delete --partial $source_path $DEPLOY_USER@$DEPLOY_HOST:$target_path
 expect {
   -re "(?i)password:" { send "\$env(DEPLOY_PASSWORD)\r"; exp_continue }
   eof
@@ -145,7 +145,7 @@ log "[4/7] 推送到 GitHub..."
 git push origin "$CURRENT_BRANCH"
 
 log "[5/7] 同步构建产物到服务器..."
-TMP_REMOTE_DEPLOY_FILE="$(mktemp /tmp/campus-smart-points-remote-deploy.XXXXXX.sh)"
+TMP_REMOTE_DEPLOY_FILE="/tmp/campus-smart-points-remote-deploy-$$.sh"
 cat > "$TMP_REMOTE_DEPLOY_FILE" <<EOF_REMOTE_DEPLOY
 #!/bin/bash
 set -euo pipefail
@@ -172,7 +172,7 @@ rsync_with_password "$TMP_REMOTE_DEPLOY_FILE" "/home/$DEPLOY_USER/campus-smart-p
 run_expect "bash /home/$DEPLOY_USER/campus-smart-points-remote-deploy.sh prepare"
 rsync_with_password "dist/" "$DEPLOY_APP_DIR/dist/"
 
-TMP_SERVER_FILE="$(mktemp /tmp/campus-smart-points-server.XXXXXX.mjs)"
+TMP_SERVER_FILE="/tmp/campus-smart-points-server-$$.mjs"
 cat > "$TMP_SERVER_FILE" <<'EOF_SERVER'
 import http from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
