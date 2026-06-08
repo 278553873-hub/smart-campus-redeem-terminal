@@ -5,7 +5,7 @@ import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
     AwardIcon, GrowthIcon
 } from '../components/Icons';
-import { BadgeCheck, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 
@@ -16,6 +16,7 @@ interface DashboardViewProps {
     onViewTermReport?: () => void; // New optional prop
     onBack?: () => void;
     onEditBasicInfo: () => void;
+    onUpdateStudentStatus: (student: Student, status: Student['status']) => void;
     onViewCampusCoins: () => void;
     campusCoinDetail: CampusCoinDetail;
 }
@@ -217,6 +218,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onViewTermReport,
     onBack,
     onEditBasicInfo,
+    onUpdateStudentStatus,
     onViewCampusCoins,
     campusCoinDetail
 }) => {
@@ -228,6 +230,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
     const [showCurrent, setShowCurrent] = useState(true);
     const [showClassAvg, setShowClassAvg] = useState(true);
+    const [showStatusActionSheet, setShowStatusActionSheet] = useState(false);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
     const toggleSection = (id: string) => {
         const newSet = new Set(expandedSections);
@@ -422,10 +426,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
                                     <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-500">{formatCompactClassName(student.class)}</span>
                                     <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-600">ID: {student.id}</span>
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-                                        <BadgeCheck className="h-3 w-3" />
-                                        {studentStatusLabel}
-                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -443,6 +443,21 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
             {/* 2. Scrollable Content */}
             <div className="p-4 space-y-4">
+                <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                    <div>
+                        <div className="text-[15px] font-black text-slate-800">学籍状态</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className={`rounded-full px-3 py-1 text-xs font-black ${student.status === 'left' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                            {studentStatusLabel}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setShowStatusActionSheet(true)}
+                            className="h-9 rounded-full border border-blue-100 bg-blue-50 px-4 text-xs font-black text-blue-600 active:scale-95 active:bg-blue-100"
+                        >管理</button>
+                    </div>
+                </div>
 
                 {/* B. Assets Card */}
                 <div className="rounded-2xl border border-blue-100/70 bg-white p-3 shadow-sm">
@@ -526,6 +541,65 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     {activeTab === 'evaluation' && renderRecordTab()}
                 </div>
             </div>
+
+            {showStatusActionSheet && (
+                <div className="absolute inset-0 z-[120] flex items-end bg-slate-950/35 px-4 pb-5" onClick={() => setShowStatusActionSheet(false)}>
+                    <div className="w-full rounded-[32px] bg-white p-4 shadow-2xl" onClick={event => event.stopPropagation()}>
+                        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200" />
+                        <div className="mb-4 flex items-center gap-3">
+                            <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${student.status === 'left' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                {student.status === 'left' ? <AlertTriangle className="h-5 w-5" /> : <BadgeCheck className="h-5 w-5" />}
+                            </span>
+                            <div>
+                                <h3 className="text-lg font-extrabold text-slate-900">学籍状态</h3>
+                                <p className="mt-0.5 text-xs font-semibold text-slate-400">当前：{studentStatusLabel}</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowLeaveConfirm(true)}
+                            className="h-12 w-full rounded-2xl border border-amber-200 bg-amber-50 text-sm font-bold text-amber-700 active:scale-[0.98]"
+                        >
+                            设为离校
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {showLeaveConfirm && (
+                <div className="absolute inset-0 z-[140] flex items-end bg-slate-950/45 px-4 pb-5" onClick={() => setShowLeaveConfirm(false)}>
+                    <div className="w-full rounded-[32px] bg-white p-4 shadow-2xl" onClick={event => event.stopPropagation()}>
+                        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200" />
+                        <div className="rounded-3xl bg-amber-50 p-4">
+                            <h3 className="text-lg font-extrabold text-slate-900">确认设为离校？</h3>
+                            <p className="mt-2 text-sm font-medium leading-relaxed text-amber-800">
+                                设置离校后，该学生将不在学生列表展示。可在班级卡片更多操作中恢复。
+                            </p>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowLeaveConfirm(false)}
+                                className="h-12 rounded-2xl bg-slate-100 text-sm font-bold text-slate-600 active:scale-[0.98]"
+                            >
+                                取消
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onUpdateStudentStatus(student, 'left');
+                                    setShowLeaveConfirm(false);
+                                    setShowStatusActionSheet(false);
+                                    onBack?.();
+                                }}
+                                className="h-12 rounded-2xl bg-amber-500 text-sm font-bold text-white shadow-lg shadow-amber-100 active:scale-[0.98]"
+                            >
+                                确认离校
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

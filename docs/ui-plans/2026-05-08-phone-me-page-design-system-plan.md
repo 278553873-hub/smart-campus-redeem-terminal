@@ -2,7 +2,7 @@
 
 ## 目标
 
-以“我的页面”为第一批样板页面，将 `PHONE_UI_GUIDELINES.md` 中的手机端视觉系统落到可复用组件结构中，验证字体、圆角、阴影、图标、间距、触控反馈是否能在真实业务页面中稳定复用。
+以“我的页面”为第一批样板页面，将 `design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md` 中的手机端视觉系统落到可复用组件结构中，验证字体、圆角、阴影、图标、间距、触控反馈是否能在真实业务页面中稳定复用。
 
 本阶段只建议改手机端“我的页面”及其必要的通用组件，不扩散到记录流、报表页、文件页等复杂页面。
 
@@ -30,7 +30,7 @@
 - 菜单主标题：`text-[18px] font-black`。
 - 手机号：`text-[16px] font-black`。
 
-这与 `PHONE_UI_GUIDELINES.md` 中的角色不一致。菜单项应使用 `text.itemTitle`，辅助说明应使用 `text.helper`，强字重只保留给页面主标题和核心数字。
+这与 `design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md` 中的角色不一致。菜单项应使用 `text.itemTitle`，辅助说明应使用 `text.helper`，强字重只保留给页面主标题和核心数字。
 
 ### 3. 圆角和阴影未语义化
 
@@ -76,7 +76,7 @@
 
 ### 1. phoneTokens
 
-职责：把 `PHONE_UI_GUIDELINES.md` 的核心 token 转成可复用 class 字符串。
+职责：把 `design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md` 的核心 token 转成可复用 class 字符串。
 
 要求：
 

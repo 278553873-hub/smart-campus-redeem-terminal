@@ -4,8 +4,7 @@ interface TeacherRecordAuroraBackgroundProps {
     activeTab: 'student' | 'class';
 }
 
-const panelBase = 'absolute inset-0 transition-opacity duration-1000';
-const auroraBlob = 'absolute rounded-full animate-aurora mix-blend-multiply';
+const panelBase = 'absolute inset-0 transition-opacity duration-500';
 
 const TeacherRecordAuroraBackground: React.FC<TeacherRecordAuroraBackgroundProps> = ({ activeTab }) => (
     <div className="absolute inset-0 overflow-hidden bg-white">
@@ -13,22 +12,16 @@ const TeacherRecordAuroraBackground: React.FC<TeacherRecordAuroraBackgroundProps
             className={`${panelBase} ${activeTab === 'student' ? 'opacity-100' : 'opacity-0'}`}
             aria-hidden="true"
         >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(34,211,238,0.16),transparent_28%),radial-gradient(circle_at_84%_10%,rgba(129,140,248,0.15),transparent_30%),radial-gradient(circle_at_48%_54%,rgba(16,185,129,0.08),transparent_30%),radial-gradient(circle_at_12%_58%,rgba(251,191,36,0.06),transparent_26%),linear-gradient(145deg,#FFFFFF_0%,#F8FCFF_42%,#F5F8FF_100%)]" />
-            <div className="absolute inset-0 bg-[linear-gradient(115deg,transparent_0%,rgba(255,255,255,0.72)_34%,transparent_58%)] opacity-60" />
-            <div className={`${auroraBlob} left-[-34%] top-[-30%] h-[142vw] w-[142vw] bg-cyan-300/20`} />
-            <div className={`${auroraBlob} right-[-42%] top-[-24%] h-[138vw] w-[138vw] bg-violet-300/18`} style={{ animationDelay: '-6s' }} />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,rgba(255,255,255,0.82)_72%,rgba(255,255,255,0.96)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_-5%,rgba(207,250,254,0.42),transparent_36%),radial-gradient(circle_at_96%_0%,rgba(224,231,255,0.34),transparent_34%),linear-gradient(180deg,#FCFEFF_0%,#F9FCFF_58%,#FFFFFF_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-white/0 via-white/92 to-white" />
         </div>
 
         <div
             className={`${panelBase} ${activeTab === 'class' ? 'opacity-100' : 'opacity-0'}`}
             aria-hidden="true"
         >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(45,212,191,0.17),transparent_30%),radial-gradient(circle_at_82%_16%,rgba(56,189,248,0.15),transparent_30%),radial-gradient(circle_at_58%_54%,rgba(99,102,241,0.08),transparent_30%),radial-gradient(circle_at_10%_58%,rgba(132,204,22,0.06),transparent_26%),linear-gradient(145deg,#FFFFFF_0%,#F5FFFC_43%,#F5F8FF_100%)]" />
-            <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.76)_36%,transparent_62%)] opacity-60" />
-            <div className={`${auroraBlob} left-[-36%] top-[-30%] h-[146vw] w-[146vw] bg-teal-300/20`} />
-            <div className={`${auroraBlob} right-[-40%] top-[-24%] h-[138vw] w-[138vw] bg-sky-300/18`} style={{ animationDelay: '-7s' }} />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,rgba(255,255,255,0.82)_72%,rgba(255,255,255,0.96)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_-5%,rgba(237,233,254,0.42),transparent_36%),radial-gradient(circle_at_96%_0%,rgba(250,232,255,0.30),transparent_34%),linear-gradient(180deg,#FEFDFF_0%,#FBFAFF_58%,#FFFFFF_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-white/0 via-white/92 to-white" />
         </div>
     </div>
 );

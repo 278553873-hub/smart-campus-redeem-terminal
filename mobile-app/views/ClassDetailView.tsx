@@ -58,9 +58,10 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     const [showGroupPlanSheet, setShowGroupPlanSheet] = useState(false);
     const [isGroupSelectionMode, setIsGroupSelectionMode] = useState(false);
     const [groupSelectionIds, setGroupSelectionIds] = useState<Set<string>>(new Set());
+    const activeStudents = useMemo(() => students.filter(student => (student.status ?? 'active') === 'active'), [students]);
 
     useEffect(() => {
-        const nextPlans = GET_MOCK_GROUP_PLANS_FOR_CLASS(classInfo.id, students);
+        const nextPlans = GET_MOCK_GROUP_PLANS_FOR_CLASS(classInfo.id, activeStudents);
         setGroupPlans(nextPlans);
         setActiveGroupPlanId(nextPlans[0]?.id || '');
         setShowGroupPlanSheet(false);
@@ -68,7 +69,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         setGroupSelectionIds(new Set());
         setSearchQuery('');
         setSelectionGenderFilter('all');
-    }, [classInfo.id, students]);
+    }, [activeStudents, classInfo.id]);
 
     useEffect(() => {
         if (!activeGroupPlanId && groupPlans.length > 0) {
@@ -80,11 +81,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         return groupPlans.find(plan => plan.id === activeGroupPlanId) || groupPlans[0] || null;
     }, [activeGroupPlanId, groupPlans]);
 
-    const studentById = useMemo(() => new Map(students.map(student => [student.id, student])), [students]);
+    const studentById = useMemo(() => new Map(activeStudents.map(student => [student.id, student])), [activeStudents]);
 
     const visibleStudents = useMemo(() => {
         const normalizedSearchQuery = searchQuery.trim().replace(/\s+/g, '').toLowerCase();
-        return students.filter(student => {
+        return activeStudents.filter(student => {
             const matchesSearch = !normalizedSearchQuery
                 || student.name.includes(normalizedSearchQuery)
                 || student.id.toLowerCase().includes(normalizedSearchQuery)
@@ -94,7 +95,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 || student.gender === selectionGenderFilter;
             return matchesSearch && matchesGender;
         });
-    }, [isSelectionMode, searchQuery, selectionGenderFilter, students]);
+    }, [activeStudents, isSelectionMode, searchQuery, selectionGenderFilter]);
 
     const isAllVisibleSelected = useMemo(() => {
         return visibleStudents.length > 0 && visibleStudents.every(student => selectedIds.has(student.id));
@@ -154,7 +155,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
 
     const handleCreateGroupPlan = () => {
         const index = groupPlans.length + 1;
-        const firstStudentIds = students.slice(0, 6).map(student => student.id);
+        const firstStudentIds = activeStudents.slice(0, 6).map(student => student.id);
         const nextPlan: GroupPlan = {
             id: `${classInfo.id}-custom-plan-${Date.now()}`,
             name: `新分组方案${index}`,
@@ -218,7 +219,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             >
                                 {isAllVisibleSelected ? '取消全选' : '全选'}
                             </button>
-                            <button onClick={() => setSelectionGenderFilter('male')} className={`flex h-8 min-w-10 items-center justify-center rounded-full border px-2.5 shadow-sm transition active:scale-95 ${selectionGenderFilter === 'male' ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-200 bg-white text-blue-500'}`}><MaleIcon className="h-4 w-4" /></button>
+                            <button onClick={() => setSelectionGenderFilter('male')} className={`flex h-8 min-w-10 items-center justify-center rounded-full border px-2.5 shadow-sm transition active:scale-95 ${selectionGenderFilter === 'male' ? 'border-cyan-600 bg-cyan-600 text-white' : 'border-slate-200 bg-white text-cyan-600'}`}><MaleIcon className="h-4 w-4" /></button>
                             <button onClick={() => setSelectionGenderFilter('female')} className={`flex h-8 min-w-10 items-center justify-center rounded-full border px-2.5 shadow-sm transition active:scale-95 ${selectionGenderFilter === 'female' ? 'border-rose-400 bg-rose-400 text-white' : 'border-slate-200 bg-white text-rose-500'}`}><FemaleIcon className="h-4 w-4" /></button>
                         </>
                     )}
@@ -232,7 +233,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             }
                             onToggleSelectionMode();
                         }}
-                        className={`h-9 shrink-0 rounded-full px-3.5 text-[13px] font-bold transition-all active:scale-95 ${isSelectionMode ? 'border border-slate-200 bg-white text-slate-600 shadow-sm' : 'bg-slate-900 text-white shadow-sm shadow-slate-300/50'}`}
+                        className={`h-9 shrink-0 rounded-full px-3.5 text-[13px] font-bold transition-all active:scale-95 ${isSelectionMode ? 'border border-slate-200 bg-white text-slate-600 shadow-sm' : 'bg-cyan-700 text-white shadow-sm shadow-cyan-100'}`}
                     >
                         {isSelectionMode ? '取消' : '多选'}
                     </button>
@@ -253,12 +254,12 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         <div
                             key={student.id}
                             onClick={() => handleStudentClick(student)}
-                            className={`relative rounded-xl p-3 flex flex-col items-center transition-all duration-200 cursor-pointer select-none group ${isSelectionMode && isSelected ? 'bg-blue-50 ring-1.5 ring-blue-500 shadow-sm' : 'bg-white border border-slate-100'}`}
+                            className={`relative rounded-[16px] p-3 flex flex-col items-center transition-all duration-200 cursor-pointer select-none group ${isSelectionMode && isSelected ? 'bg-cyan-50 ring-1.5 ring-cyan-600 shadow-sm' : 'bg-white/95 border border-slate-100/80'}`}
                         >
                             {isSelectionMode && (
                                 <div className="absolute top-2 right-2 z-10 animate-in fade-in zoom-in duration-200">
                                     {isSelected
-                                        ? <CheckCircleIcon className="w-5 h-5 text-blue-500 fill-white" />
+                                        ? <CheckCircleIcon className="w-5 h-5 text-cyan-600 fill-white" />
                                         : <CircleIcon className="w-5 h-5 text-slate-200 fill-white" />
                                     }
                                 </div>
@@ -280,10 +281,10 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             </div>
 
                             <div className="w-full text-center flex flex-col items-center">
-                                <div className={`text-[14px] font-bold leading-tight mb-1.5 w-full break-words ${isSelected ? 'text-blue-700' : 'text-slate-800'}`}>
+                                <div className={`text-[14px] font-bold leading-tight mb-1.5 w-full break-words ${isSelected ? 'text-cyan-800' : 'text-slate-800'}`}>
                                     {student.name}
                                 </div>
-                                <div className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md tracking-tight w-fit max-w-full ${isSelected ? 'bg-blue-100 text-blue-600' : 'bg-slate-50 text-slate-400'}`}>
+                                <div className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md tracking-tight w-fit max-w-full ${isSelected ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-50 text-slate-400'}`}>
                                     {student.studentNo || student.id}
                                 </div>
                             </div>
@@ -315,7 +316,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     </button>
                 </div>
                 <div className="flex items-center justify-between">
-                    <button onClick={handleCreateGroup} className="flex h-11 min-w-[120px] items-center justify-center gap-1 rounded-xl border border-amber-300 bg-white px-4 text-sm font-bold text-amber-500 active:scale-95">
+                    <button onClick={handleCreateGroup} className="flex h-11 min-w-[120px] items-center justify-center gap-1 rounded-[14px] border border-cyan-100 bg-white px-4 text-sm font-bold text-cyan-700 active:scale-95">
                         <PlusIcon className="h-4 w-4" />
                         + 新增分组
                     </button>
@@ -324,7 +325,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             setIsGroupSelectionMode(prev => !prev);
                             setGroupSelectionIds(new Set());
                         }}
-                        className={`h-10 rounded-full px-4 text-sm font-bold active:scale-95 ${isGroupSelectionMode ? 'bg-slate-800 text-white' : 'bg-slate-900 text-white'}`}
+                        className={`h-10 rounded-full px-4 text-sm font-bold active:scale-95 ${isGroupSelectionMode ? 'bg-slate-700 text-white' : 'bg-cyan-700 text-white'}`}
                     >
                         {isGroupSelectionMode ? '取消' : '多选分组'}
                     </button>
@@ -382,11 +383,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 <div className="grid w-40 grid-cols-2 text-center text-[15px] font-bold text-slate-800">
                     <button onClick={() => handleSwitchView('student')} className="relative h-9 active:scale-95">
                         学生
-                        {activeView === 'student' && <span className="absolute bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-slate-900" />}
+                        {activeView === 'student' && <span className="absolute bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-cyan-700" />}
                     </button>
                     <button onClick={() => handleSwitchView('group')} className="relative h-9 active:scale-95">
                         分组
-                        {activeView === 'group' && <span className="absolute bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-slate-900" />}
+                        {activeView === 'group' && <span className="absolute bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-cyan-700" />}
                     </button>
                 </div>
                 <div className="w-10" aria-hidden="true" />
@@ -424,7 +425,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-500">{plan.ownerName}</span>
                                             <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-500">{plan.groups.length}个小组</span>
-                                            <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-500">{students.length}名学生</span>
+                                            <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-500">{activeStudents.length}名学生</span>
                                         </div>
                                     </div>
                                     <EditIcon className="h-5 w-5 shrink-0 text-amber-500" />
@@ -432,12 +433,13 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             ))}
                         </div>
                         <button onClick={handleCreateGroupPlan} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white text-[16px] font-black text-slate-800 active:scale-95">
-                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white"><PlusIcon className="h-5 w-5" /></span>
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-700 text-white"><PlusIcon className="h-5 w-5" /></span>
                             添加分组方案
                         </button>
                     </div>
                 </div>
             )}
+
         </div>
     );
 };

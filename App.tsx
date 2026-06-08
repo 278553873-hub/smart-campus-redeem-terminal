@@ -16,6 +16,7 @@ import AdminApp from './components/AdminApp';
 import MobileApp from './mobile-app/App';
 import CompanionApp from './components/CompanionApp';
 import ParentApp from './components/ParentApp';
+import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import RegionalPcAdmin from './components/RegionalPcAdmin';
@@ -1244,17 +1245,18 @@ const PcWorkspace: React.FC = () => {
 };
 
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen'>(() => {
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'terminal' || app === 'admin' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen') {
+    if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen') {
       return app;
     }
     return 'terminal'; // default
   });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
-  const [showPhoneShell, setShowPhoneShell] = useState(true);
-  const [showParentPhoneShell, setShowParentPhoneShell] = useState(true);
+  const [showPhoneShell, setShowPhoneShell] = useState(false);
+  const [showParentPhoneShell, setShowParentPhoneShell] = useState(false);
+  const [showPhoneShellToggle, setShowPhoneShellToggle] = useState(false);
   const [demoPanelPosition, setDemoPanelPosition] = useState<{ left: number; top: number } | null>(null);
   const [demoPanelSide, setDemoPanelSide] = useState<'left' | 'right' | 'top' | 'bottom'>('right');
   const [isDemoPanelSnapped, setIsDemoPanelSnapped] = useState(false);
@@ -1268,6 +1270,7 @@ const AppSwitcher: React.FC = () => {
     moved: boolean;
   } | null>(null);
   const skipDemoToggleRef = useRef(false);
+  const environmentTitleClickCountRef = useRef(0);
 
   const handleRegionalPcLogout = () => {
     const url = new URL(window.location.href);
@@ -1390,6 +1393,14 @@ const AppSwitcher: React.FC = () => {
     }
     setIsDemoOpen(prev => !prev);
   };
+
+  const handleEnvironmentTitleClick = () => {
+    environmentTitleClickCountRef.current += 1;
+    if (environmentTitleClickCountRef.current >= 5) {
+      environmentTitleClickCountRef.current = 0;
+      setShowPhoneShellToggle(prev => !prev);
+    }
+  };
   const demoPanelClosedClass = demoPanelSide === 'left'
     ? '-translate-x-[calc(100%-32px)]'
     : demoPanelSide === 'top'
@@ -1432,11 +1443,12 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'region-pc' && <RegionalPcAdmin onLogout={handleRegionalPcLogout} />}
         {currentApp === 'region-pc-screen' && <RegionalPcAdmin screenOnly />}
         {currentApp === 'admin' && <MobileApp showPhoneShell={showPhoneShell} />}
+        {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && <ParentApp showPhoneShell={showParentPhoneShell} />}
       </div>
 
-      {(currentApp === 'admin' || currentApp === 'parent') && (
+      {showPhoneShellToggle && (currentApp === 'admin' || currentApp === 'parent') && (
         <div className="fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
           {(() => {
             const phoneShellEnabled = currentApp === 'parent' ? showParentPhoneShell : showPhoneShell;
@@ -1486,9 +1498,14 @@ const AppSwitcher: React.FC = () => {
 
           {/* 控制面板 */}
           <div className="flex flex-col gap-2 p-3 bg-white">
-            <div className="text-[10px] font-black text-slate-400 text-center uppercase tracking-widest mb-1">
+            <button
+              type="button"
+              onClick={handleEnvironmentTitleClick}
+              className="mb-1 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors active:text-slate-600"
+              aria-label="环境切换"
+            >
               环境切换
-            </div>
+            </button>
             <button
               onClick={() => setCurrentApp('terminal')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'terminal' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
@@ -1520,6 +1537,14 @@ const AppSwitcher: React.FC = () => {
             >
               <Smartphone size={22} className="mb-1" />
               <span className="text-[9px] font-bold leading-tight">教师-手机端</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('teacher-c-mobile')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-c-mobile' ? 'bg-black text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="教师-手机端（C端版本）- 低保真原型"
+            >
+              <Smartphone size={22} className="mb-1" />
+              <span className="text-[9px] font-bold leading-tight">教师-C端</span>
             </button>
             <button
               onClick={() => setCurrentApp('parent')}

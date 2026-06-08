@@ -6,6 +6,7 @@ import {
   BookOpenCheck,
   CalendarDays,
   CheckCircle2,
+  ChevronRight,
   Clock,
   FileText,
   Landmark,
@@ -34,11 +35,14 @@ import { ASSETS } from '../mobile-app/assets/images';
 
 interface ParentAppProps {
   showPhoneShell?: boolean;
+  defaultHasBoundChild?: boolean;
 }
 
-type Screen = 'binding' | 'growth' | 'reports' | 'reportDetail' | 'bank';
+type Screen = 'binding' | 'growth' | 'reports' | 'reportDetail' | 'bank' | 'growthRecords';
 type ReportType = 'month' | 'term';
 type BankTab = 'deposit' | 'list';
+type GrowthRangeMode = 'day' | 'week' | 'month' | 'term';
+type GrowthTermKey = 'first' | 'second';
 
 interface EvaluationRecord {
   id: string;
@@ -127,6 +131,7 @@ const createDemoChild = (name: string, schoolCode: string, studentNo: string, in
     records: [
       { id: `record-${index}-1`, title: '主动整理班级图书角', dimension: '德育', indicatorPath: ['崇德', '仪容仪表', '举止得体'], teacher: '张林老师', time: '今天 10:20', createdAt: dayAgo(0), score: 3, content: '你坐姿端正，展现了良好的形象。' },
       { id: `record-${index}-2`, title: '科学实验记录完整', dimension: '智育', indicatorPath: ['启智', '科学探究', '记录完整'], teacher: '周老师', time: '昨天 15:35', createdAt: dayAgo(1), score: 5, content: '观察记录清晰，能用自己的语言解释实验现象。' },
+      { id: `record-${index}-2b`, title: '课前物品整理提醒', dimension: '智育', indicatorPath: ['启智', '学习准备', '材料整理'], teacher: '周老师', time: '昨天 08:25', createdAt: dayAgo(1), score: -1, content: '课前材料整理稍慢，提醒后已完成。' },
       { id: `record-${index}-3`, title: '课间奔跑提醒后已改正', dimension: '体育', indicatorPath: ['健体', '安全习惯', '课间有序'], teacher: '陈老师', time: '本周三 09:12', createdAt: dayAgo(2), score: -1, content: '课间活动安全意识需要加强，提醒后能及时调整。' },
       { id: `record-${index}-4`, title: '红领巾岗位认真负责', dimension: '劳动', indicatorPath: ['乐劳', '岗位责任', '主动服务'], teacher: '王老师', time: '本周二 14:10', createdAt: dayAgo(3), score: 4, content: '值日流程熟练，能主动帮助同学完成公共任务。' },
       { id: `record-${index}-5`, title: '晨跑坚持完成目标', dimension: '体育', indicatorPath: ['健体', '运动习惯', '坚持锻炼'], teacher: '陈老师', time: '本周一 08:05', createdAt: dayAgo(4), score: 2, content: '能按节奏完成晨跑，并主动鼓励同伴。' },
@@ -177,15 +182,23 @@ const PARENT_BANK_TERMS: ParentBankScheme[] = [
 ];
 
 const CURRENT_DEPOSIT_PROJECTION_DAYS = [7, 30, 60, 90];
+const GROWTH_RANGE_TABS: Array<[GrowthRangeMode, string]> = [
+  ['day', '日'],
+  ['week', '周'],
+  ['month', '月'],
+  ['term', '学期'],
+];
 const formatDailyRate = (rate: number) => `${Number((rate * 100).toFixed(2))}%`;
 
 const ParentDiffuseBackdrop = () => (
   <div aria-hidden="true" className="parent-teacher-token-backdrop pointer-events-none absolute inset-0 overflow-hidden" />
 );
 
-const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
-  const [screen, setScreen] = useState<Screen>('binding');
-  const [childrenList, setChildrenList] = useState<ChildProfile[]>([]);
+const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHasBoundChild = true }) => {
+  const [screen, setScreen] = useState<Screen>(() => defaultHasBoundChild ? 'growth' : 'binding');
+  const [childrenList, setChildrenList] = useState<ChildProfile[]>(() => (
+    defaultHasBoundChild ? [createDemoChild('郑小磊', 'BS2024', '20250101', 0)] : []
+  ));
   const [activeChildId, setActiveChildId] = useState('');
   const [showChildSwitcher, setShowChildSwitcher] = useState(false);
   const [activeReportId, setActiveReportId] = useState('');
@@ -198,6 +211,8 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   const [showDepositConfirm, setShowDepositConfirm] = useState(false);
   const [showDepositReview, setShowDepositReview] = useState(false);
   const [withdrawTarget, setWithdrawTarget] = useState<ParentDeposit | null>(null);
+  const [selectedGrowthDate, setSelectedGrowthDate] = useState(() => new Date());
+  const [growthRangeMode, setGrowthRangeMode] = useState<GrowthRangeMode>('day');
   const [parentNavActiveIndex, setParentNavActiveIndex] = useState(0);
   const [, setParentNavSlideDirection] = useState<'left' | 'right' | 'none'>('none');
   const [parentNavJellyToggle, setParentNavJellyToggle] = useState<'a' | 'b' | 'none'>('none');
@@ -210,6 +225,92 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   );
 
   const activeReport = activeChild?.reports.find(report => report.id === activeReportId) ?? activeChild?.reports[0] ?? null;
+  const getDayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const getWeekStartDate = (date: Date) => {
+    const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const mondayOffset = (day.getDay() + 6) % 7;
+    day.setDate(day.getDate() - mondayOffset);
+    return day;
+  };
+  const getGrowthMonthWeekRanges = (year: number, month: number) => {
+    const monthStart = new Date(year, month, 1);
+    const rangeStart = getWeekStartDate(monthStart);
+    const monthEnd = new Date(year, month + 1, 0);
+    const ranges: Array<{ start: Date; end: Date }> = [];
+    const cursor = new Date(rangeStart);
+    while (cursor <= monthEnd) {
+      const start = new Date(cursor);
+      const end = new Date(cursor);
+      end.setDate(start.getDate() + 6);
+      ranges.push({ start, end });
+      cursor.setDate(cursor.getDate() + 7);
+    }
+    return ranges;
+  };
+  const getGrowthTermInfo = (date: Date) => {
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    const schoolYearStart = month >= 8 ? year : year - 1;
+    const term: GrowthTermKey = month >= 8 || month === 0 ? 'first' : 'second';
+    return {
+      schoolYearStart,
+      schoolYearEnd: schoolYearStart + 1,
+      term,
+      label: `${schoolYearStart}-${schoolYearStart + 1}学年`,
+    };
+  };
+  const getGrowthTermRanges = (schoolYearStart: number): Array<{ key: GrowthTermKey; label: string; start: number; end: number }> => ([
+    {
+      key: 'first',
+      label: '上学期',
+      start: new Date(schoolYearStart, 8, 1).getTime(),
+      end: new Date(schoolYearStart + 1, 1, 1).getTime() - 1,
+    },
+    {
+      key: 'second',
+      label: '下学期',
+      start: new Date(schoolYearStart + 1, 1, 1).getTime(),
+      end: new Date(schoolYearStart + 1, 7, 1).getTime() - 1,
+    },
+  ]);
+  const getGrowthRangeRecords = (date: Date, mode: GrowthRangeMode) => {
+    if (!activeChild) return [];
+    let start = getDayStart(date);
+    let end = start + 86400000 - 1;
+    if (mode === 'week') {
+      start = getWeekStartDate(date).getTime();
+      end = start + 86400000 * 7 - 1;
+    }
+    if (mode === 'month') {
+      start = new Date(date.getFullYear(), date.getMonth(), 1).getTime();
+      end = new Date(date.getFullYear(), date.getMonth() + 1, 1).getTime() - 1;
+    }
+    if (mode === 'term') {
+      const termInfo = getGrowthTermInfo(date);
+      const termRange = getGrowthTermRanges(termInfo.schoolYearStart).find(range => range.key === termInfo.term);
+      if (termRange) {
+        start = termRange.start;
+        end = termRange.end;
+      }
+    }
+    return activeChild.records.filter(record => record.createdAt >= start && record.createdAt <= end);
+  };
+  const getGrowthDayRecords = (date: Date) => {
+    if (!activeChild) return [];
+    const start = getDayStart(date);
+    const end = start + 86400000 - 1;
+    return activeChild.records.filter(record => record.createdAt >= start && record.createdAt <= end);
+  };
+  const selectedDateRecords = useMemo(
+    () => getGrowthDayRecords(selectedGrowthDate),
+    [activeChild, selectedGrowthDate]
+  );
+  const selectedGrowthRangeRecords = useMemo(
+    () => getGrowthRangeRecords(selectedGrowthDate, growthRangeMode),
+    [activeChild, selectedGrowthDate, growthRangeMode]
+  );
+  const selectedPraiseCount = selectedGrowthRangeRecords.filter(record => record.score > 0).length;
+  const selectedImproveCount = selectedGrowthRangeRecords.filter(record => record.score < 0).length;
 
   const getParentActiveTabIndex = (nextScreen: Screen) => {
     if (nextScreen === 'reports' || nextScreen === 'reportDetail') return 1;
@@ -314,6 +415,10 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
     return `${date.getMonth() + 1}月${date.getDate()}日`;
+  };
+  const formatWeekRange = (start: Date, end: Date) => {
+    const pad = (value: number) => String(value).padStart(2, '0');
+    return `${pad(start.getMonth() + 1)}.${pad(start.getDate())}-${pad(end.getMonth() + 1)}.${pad(end.getDate())}`;
   };
 
   const submitDeposit = () => {
@@ -435,6 +540,14 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
               </div>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setScreen('growthRecords')}
+            className="mx-auto mt-3 flex min-h-8 items-center justify-center rounded-full px-3 text-[13px] font-black text-emerald-700 transition-colors active:bg-emerald-50"
+          >
+            <span>全部记录</span>
+            <ChevronRight size={14} strokeWidth={3} aria-hidden="true" />
+          </button>
         </ParentCard>
 
         <ParentCard as="article" className="min-h-[154px] p-4 shadow-[0_18px_46px_-36px_rgba(249,115,22,0.55)]">
@@ -460,6 +573,290 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
           </div>
         </ParentCard>
       </section>
+    );
+  };
+
+  const GrowthCalendar = () => {
+    const year = selectedGrowthDate.getFullYear();
+    const month = selectedGrowthDate.getMonth();
+    const today = new Date();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const leadingBlankCount = (new Date(year, month, 1).getDay() + 6) % 7;
+    const calendarCells = [
+      ...Array.from({ length: leadingBlankCount }, (_, index) => ({ key: `blank-${index}`, day: 0 })),
+      ...Array.from({ length: daysInMonth }, (_, index) => ({ key: `day-${index + 1}`, day: index + 1 })),
+    ];
+
+    const changeMonth = (offset: number) => {
+      setSelectedGrowthDate(new Date(year, month + offset, 1));
+    };
+
+    return (
+      <ParentCard as="section" className="mx-5 mt-3 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <button type="button" onClick={() => changeMonth(-1)} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-300 active:bg-slate-50" aria-label="上个月">
+            <ArrowLeft size={18} />
+          </button>
+          <div className="text-[20px] font-medium tracking-tight text-slate-900">{year}年 {month + 1}月</div>
+          <button type="button" onClick={() => changeMonth(1)} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-300 active:bg-slate-50" aria-label="下个月">
+            <ArrowRight size={18} />
+          </button>
+          <button type="button" onClick={() => setSelectedGrowthDate(new Date())} className="ml-2 h-10 rounded-full border border-emerald-200 px-4 text-[16px] font-bold text-emerald-600 active:bg-emerald-50">
+            今天
+          </button>
+        </div>
+        <div className="grid grid-cols-7 gap-y-2 text-center text-[15px] font-bold">
+          {['一', '二', '三', '四', '五', '六', '日'].map(week => (
+            <div key={week} className="pb-2 text-slate-400">{week}</div>
+          ))}
+          {calendarCells.map(cell => {
+            if (!cell.day) return <div key={cell.key} className="h-[48px]" aria-hidden="true" />;
+            const date = new Date(year, month, cell.day);
+            const dayRecords = getGrowthDayRecords(date);
+            const hasPraise = dayRecords.some(record => record.score > 0);
+            const hasImprove = dayRecords.some(record => record.score < 0);
+            const selected = date.getFullYear() === selectedGrowthDate.getFullYear()
+              && date.getMonth() === selectedGrowthDate.getMonth()
+              && date.getDate() === selectedGrowthDate.getDate();
+            const isToday = date.getFullYear() === today.getFullYear()
+              && date.getMonth() === today.getMonth()
+              && date.getDate() === today.getDate();
+
+            return (
+              <button
+                key={cell.key}
+                type="button"
+                onClick={() => setSelectedGrowthDate(date)}
+                className="flex h-[48px] flex-col items-center justify-start rounded-[16px] pt-1 text-[15px] font-bold text-slate-900 transition-transform active:scale-95"
+                aria-label={`${month + 1}月${cell.day}日`}
+              >
+                <span className={`flex h-9 w-9 items-center justify-center rounded-full ${selected ? 'bg-emerald-600 text-white' : isToday ? 'bg-emerald-50 text-emerald-700' : ''}`}>
+                  {cell.day}
+                </span>
+                <span className="mt-1 flex h-2 items-center justify-center gap-1">
+                  {hasPraise && <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />}
+                  {hasImprove && <span className="h-2 w-2 rounded-full bg-orange-400" aria-hidden="true" />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </ParentCard>
+    );
+  };
+
+  const GrowthRangeTabs = () => (
+    <div className="mx-5 mt-4 grid grid-cols-4 rounded-[18px] border border-white/70 bg-white/75 p-1 shadow-[0_18px_38px_-30px_rgba(37,99,235,0.45)]">
+      {GROWTH_RANGE_TABS.map(([mode, label]) => (
+        <button
+          key={mode}
+          type="button"
+          onClick={() => setGrowthRangeMode(mode)}
+          className={`h-10 rounded-[14px] text-[15px] font-black transition-all ${growthRangeMode === mode ? 'bg-emerald-600 text-white shadow-[0_12px_24px_-18px_rgba(5,150,105,0.9)]' : 'text-slate-500 active:bg-slate-50'}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const GrowthWeekStrip = () => {
+    const year = selectedGrowthDate.getFullYear();
+    const month = selectedGrowthDate.getMonth();
+    const weekRanges = getGrowthMonthWeekRanges(year, month);
+    const changeMonth = (offset: number) => {
+      setSelectedGrowthDate(new Date(year, month + offset, 1));
+    };
+
+    return (
+      <ParentCard as="section" className="mx-5 mt-3 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <button type="button" onClick={() => changeMonth(-1)} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-300 active:bg-slate-50" aria-label="上个月">
+            <ArrowLeft size={18} />
+          </button>
+          <div className="text-[20px] font-medium tracking-tight text-slate-900">{year}年 {month + 1}月</div>
+          <button type="button" onClick={() => changeMonth(1)} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-300 active:bg-slate-50" aria-label="下个月">
+            <ArrowRight size={18} />
+          </button>
+          <button type="button" onClick={() => setSelectedGrowthDate(new Date())} className="ml-2 h-10 rounded-full border border-emerald-200 px-4 text-[16px] font-bold text-emerald-600 active:bg-emerald-50">
+            本周
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {weekRanges.map(({ start, end }) => {
+            const monthStart = new Date(year, month, 1);
+            const selectedWeekStart = getWeekStartDate(selectedGrowthDate);
+            const selected = start.getTime() === selectedWeekStart.getTime();
+            const weekRecords = activeChild?.records.filter(record => record.createdAt >= start.getTime() && record.createdAt <= end.getTime() + 86400000 - 1) ?? [];
+            const hasPraise = weekRecords.some(record => record.score > 0);
+            const hasImprove = weekRecords.some(record => record.score < 0);
+            const representativeDate = start < monthStart ? monthStart : start;
+
+            return (
+              <button
+                key={start.getTime()}
+                type="button"
+                onClick={() => setSelectedGrowthDate(representativeDate)}
+                className={`flex h-[58px] flex-col items-center justify-center rounded-[18px] px-3 text-[15px] font-bold transition-transform active:scale-95 ${selected ? 'bg-emerald-600 text-white shadow-[0_14px_28px_-20px_rgba(5,150,105,0.9)]' : 'bg-slate-50 text-slate-700'}`}
+                aria-label={formatWeekRange(start, end)}
+              >
+                <span>{formatWeekRange(start, end)}</span>
+                <span className="mt-1 flex h-2 items-center justify-center gap-1">
+                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-emerald-500'}`} aria-hidden="true" />}
+                  {hasImprove && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-orange-200' : 'bg-orange-400'}`} aria-hidden="true" />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </ParentCard>
+    );
+  };
+
+  const GrowthMonthSummary = () => {
+    const year = selectedGrowthDate.getFullYear();
+    const monthCells = Array.from({ length: 12 }, (_, index) => index);
+    const changeYear = (offset: number) => {
+      setSelectedGrowthDate(new Date(year + offset, selectedGrowthDate.getMonth(), 1));
+    };
+
+    return (
+      <ParentCard as="section" className="mx-5 mt-3 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <button type="button" onClick={() => changeYear(-1)} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-300 active:bg-slate-50" aria-label="上一年">
+            <ArrowLeft size={18} />
+          </button>
+          <div className="text-[20px] font-medium tracking-tight text-slate-900">{year}年</div>
+          <button type="button" onClick={() => changeYear(1)} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-300 active:bg-slate-50" aria-label="下一年">
+            <ArrowRight size={18} />
+          </button>
+          <button type="button" onClick={() => setSelectedGrowthDate(new Date())} className="ml-2 h-10 rounded-full border border-emerald-200 px-4 text-[16px] font-bold text-emerald-600 active:bg-emerald-50">
+            本月
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {monthCells.map(monthIndex => {
+            const selected = year === selectedGrowthDate.getFullYear() && monthIndex === selectedGrowthDate.getMonth();
+            const monthStart = new Date(year, monthIndex, 1).getTime();
+            const monthEnd = new Date(year, monthIndex + 1, 1).getTime() - 1;
+            const monthRecords = activeChild?.records.filter(record => record.createdAt >= monthStart && record.createdAt <= monthEnd) ?? [];
+            const hasPraise = monthRecords.some(record => record.score > 0);
+            const hasImprove = monthRecords.some(record => record.score < 0);
+
+            return (
+              <button
+                key={monthIndex}
+                type="button"
+                onClick={() => setSelectedGrowthDate(new Date(year, monthIndex, 1))}
+                className={`flex h-[58px] flex-col items-center justify-center rounded-[18px] px-3 text-[15px] font-bold transition-transform active:scale-95 ${selected ? 'bg-emerald-600 text-white shadow-[0_14px_28px_-20px_rgba(5,150,105,0.9)]' : 'bg-slate-50 text-slate-700'}`}
+                aria-label={`${monthIndex + 1}月`}
+              >
+                <span>{monthIndex + 1}月</span>
+                <span className="mt-1 flex h-2 items-center justify-center gap-1">
+                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-emerald-500'}`} aria-hidden="true" />}
+                  {hasImprove && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-orange-200' : 'bg-orange-400'}`} aria-hidden="true" />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </ParentCard>
+    );
+  };
+
+  const GrowthTermSummary = () => {
+    const termInfo = getGrowthTermInfo(selectedGrowthDate);
+    const termRanges = getGrowthTermRanges(termInfo.schoolYearStart);
+    const changeSchoolYear = (offset: number) => {
+      const nextSchoolYearStart = termInfo.schoolYearStart + offset;
+      const activeRange = getGrowthTermRanges(nextSchoolYearStart).find(range => range.key === termInfo.term) ?? getGrowthTermRanges(nextSchoolYearStart)[0];
+      setSelectedGrowthDate(new Date(activeRange.start));
+    };
+
+    return (
+      <ParentCard as="section" className="mx-5 mt-3 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <button type="button" onClick={() => changeSchoolYear(-1)} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-300 active:bg-slate-50" aria-label="上一学年">
+            <ArrowLeft size={18} />
+          </button>
+          <div className="text-[20px] font-medium tracking-tight text-slate-900">{termInfo.label}</div>
+          <button type="button" onClick={() => changeSchoolYear(1)} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-300 active:bg-slate-50" aria-label="下一学年">
+            <ArrowRight size={18} />
+          </button>
+          <button type="button" onClick={() => setSelectedGrowthDate(new Date())} className="ml-2 h-10 rounded-full border border-emerald-200 px-4 text-[16px] font-bold text-emerald-600 active:bg-emerald-50">
+            本学期
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {termRanges.map(range => {
+            const selected = range.key === termInfo.term;
+            const termRecords = activeChild?.records.filter(record => record.createdAt >= range.start && record.createdAt <= range.end) ?? [];
+            const hasPraise = termRecords.some(record => record.score > 0);
+            const hasImprove = termRecords.some(record => record.score < 0);
+
+            return (
+              <button
+                key={range.key}
+                type="button"
+                onClick={() => setSelectedGrowthDate(new Date(range.start))}
+                className={`flex h-[72px] flex-col items-center justify-center rounded-[18px] px-3 text-[16px] font-bold transition-transform active:scale-95 ${selected ? 'bg-emerald-600 text-white shadow-[0_14px_28px_-20px_rgba(5,150,105,0.9)]' : 'bg-slate-50 text-slate-700'}`}
+                aria-label={range.label}
+              >
+                <span>{range.label}</span>
+                <span className="mt-1 flex h-2 items-center justify-center gap-1">
+                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-emerald-500'}`} aria-hidden="true" />}
+                  {hasImprove && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-orange-200' : 'bg-orange-400'}`} aria-hidden="true" />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </ParentCard>
+    );
+  };
+
+  const GrowthRecords = () => {
+    if (!activeChild) return <Binding />;
+    const selectedNetScore = selectedGrowthRangeRecords.reduce((sum, record) => sum + record.score, 0);
+    const selectedTermInfo = getGrowthTermInfo(selectedGrowthDate);
+    const selectedTermLabel = getGrowthTermRanges(selectedTermInfo.schoolYearStart).find(range => range.key === selectedTermInfo.term)?.label ?? '上学期';
+    const statisticTitle = growthRangeMode === 'day' ? '当天统计' : growthRangeMode === 'week' ? '本周统计' : growthRangeMode === 'month' ? '本月统计' : '本学期统计';
+    const statisticDate = growthRangeMode === 'day'
+      ? formatDate(selectedGrowthDate.getTime())
+      : growthRangeMode === 'week'
+        ? `${formatDate(getWeekStartDate(selectedGrowthDate).getTime())} - ${formatDate(getWeekStartDate(selectedGrowthDate).getTime() + 86400000 * 6)}`
+        : growthRangeMode === 'month'
+          ? `${selectedGrowthDate.getFullYear()}年${selectedGrowthDate.getMonth() + 1}月`
+          : `${selectedTermInfo.label} ${selectedTermLabel}`;
+    return (
+      <ParentPageShell className="pb-8">
+        <Header title="成长数据" showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />
+        <GrowthRangeTabs />
+        {growthRangeMode === 'day' && <GrowthCalendar />}
+        {growthRangeMode === 'week' && <GrowthWeekStrip />}
+        {growthRangeMode === 'month' && <GrowthMonthSummary />}
+        {growthRangeMode === 'term' && <GrowthTermSummary />}
+        <ParentCard as="section" className="mx-5 mt-3 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-[17px] font-black text-slate-900">{statisticTitle}</h2>
+            <span className="text-[12px] font-bold text-slate-400">{statisticDate}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-[18px] bg-blue-50 px-3 py-3 text-center">
+              <div className="text-[11px] font-black text-blue-500">净得分</div>
+              <div className="mt-1 text-[22px] font-black text-blue-600">{selectedNetScore}</div>
+            </div>
+            <div className="rounded-[18px] bg-emerald-50 px-3 py-3 text-center">
+              <div className="text-[11px] font-black text-emerald-500">表扬</div>
+              <div className="mt-1 text-[22px] font-black text-emerald-600">{selectedPraiseCount}<span className="ml-0.5 text-[11px]">次</span></div>
+            </div>
+            <div className="rounded-[18px] bg-orange-50 px-3 py-3 text-center">
+              <div className="text-[11px] font-black text-orange-500">待改进</div>
+              <div className="mt-1 text-[22px] font-black text-orange-500">{selectedImproveCount}<span className="ml-0.5 text-[11px]">次</span></div>
+            </div>
+          </div>
+        </ParentCard>
+      </ParentPageShell>
     );
   };
 
@@ -834,6 +1231,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
 
   const renderScreen = () => {
     if (screen === 'binding') return Binding();
+    if (screen === 'growthRecords') return GrowthRecords();
     if (screen === 'reports') return Reports();
     if (screen === 'reportDetail') return ReportDetail();
     if (screen === 'bank') return Bank();
@@ -847,7 +1245,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true }) => {
   ];
 
   const hasParentOverlay = showChildSwitcher || showDepositConfirm || showDepositReview || Boolean(withdrawTarget);
-  const showTabs = activeChild && screen !== 'binding' && !hasParentOverlay;
+  const showTabs = activeChild && screen !== 'binding' && screen !== 'growthRecords' && !hasParentOverlay;
   const renderParentBottomNav = () => {
     const goTab = (item: (typeof tabItems)[number], nextIndex: number) => {
       if (nextIndex === parentNavActiveIndex && screen === item.key) return;

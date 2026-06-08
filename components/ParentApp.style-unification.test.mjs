@@ -21,8 +21,8 @@ const requireToken = (source, objectName, propertyName) => {
 };
 
 for (const required of [
-  "type Screen = 'binding' | 'growth' | 'reports' | 'reportDetail' | 'bank'",
-  "const [screen, setScreen] = useState<Screen>('binding')",
+  "type Screen = 'binding' | 'growth' | 'reports' | 'reportDetail' | 'bank' | 'growthRecords'",
+  "useState<Screen>(() => defaultHasBoundChild ? 'growth' : 'binding')",
   'shouldShowStudentBindFields',
   'canSubmitBinding',
   'submitBinding',

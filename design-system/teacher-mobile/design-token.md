@@ -86,8 +86,8 @@ Primitive 原始值 → Semantic 语义值 → Component 组件值
 
 | Token | 色值 | 用途 |
 |---|---:|---|
-| `--tm-glass-bg` | `rgba(255,255,255,0.62)` | 教师端悬浮底部导航背景 |
-| `--tm-glass-bg-strong` | `rgba(255,255,255,0.72)` | 悬浮输入区、语音操作区背景 |
+| `--tm-glass-bg` | `rgba(255,255,255,0.62)` | 教师端通用浮层背景，不用于底部导航主容器 |
+| `--tm-glass-bg-strong` | `rgba(255,255,255,0.72)` | 通用浮层背景；悬浮输入区优先使用高不透明白底 |
 | `--tm-glass-border` | `rgba(255,255,255,0.74)` | 毛玻璃边框 |
 | `--tm-glass-highlight` | `rgba(255,255,255,0.72)` | 玻璃高光线 |
 | `--tm-mask-bg` | `rgba(15,23,42,0.35)` | 弹窗遮罩 |
@@ -246,6 +246,30 @@ Primitive 原始值 → Semantic 语义值 → Component 组件值
 | `rose` | `#FFF1F2` | `var(--tm-rose-500)` | `#FFE4E6` | 错误、负反馈 |
 | `neutral` | `var(--tm-slate-50)` | `var(--tm-slate-600)` | `var(--tm-slate-100)` | 默认弱标签 |
 
+### 4.7 教师记录 AI 解读卡
+
+| 组件 Token | 值 | 使用场景 |
+|---|---|---|
+| `--tm-record-student-primary` | `#12B8CB` | 记录学生模式主色、AI 正向边框 |
+| `--tm-record-student-secondary` | `#6577F5` | 记录学生模式渐变终点 |
+| `--tm-record-class-primary` | `#7C3AED` | 记录班级模式主色 |
+| `--tm-record-class-secondary` | `#C026D3` | 记录班级模式渐变终点 |
+| `--tm-record-positive-bg` | `rgba(236,253,245,0.82)` | 正向总分摘要背景 |
+| `--tm-record-positive-border` | `rgba(20,184,166,0.30)` | 正向 AI 解读边框和总分边框 |
+| `--tm-record-positive-text` | `#0F766E` | 正向分值文字 |
+| `--tm-record-negative-bg` | `rgba(255,241,244,0.84)` | 扣分总分摘要背景 |
+| `--tm-record-negative-border` | `rgba(224,82,104,0.30)` | 扣分 AI 解读边框和总分边框 |
+| `--tm-record-negative-text` | `#E05268` | 扣分分值文字 |
+
+使用规则：
+
+- AI 解读卡只在教师记录流中使用，不复制到班级列表、我的页面、报表页等普通卡片。
+- 整块 AI 解读卡可点击编辑时，字段内不放编辑图标。
+- 总分使用标题右侧摘要块，不使用圆形装饰章，不使用字段胶囊样式。
+- 指标行固定为“名称左对齐、分值右对齐”，支持多指标。
+- 记录学生和记录班级是模式色，正向和扣分是语义色，两者不得混用。
+- 底部导航使用固定干净青蓝 `#1E9AAA`，不跟随记录模式色切换。
+
 ---
 
 ## 5. CSS 变量建议
@@ -363,7 +387,7 @@ Primitive 原始值 → Semantic 语义值 → Component 组件值
 
 本文件基于以下现有实现提炼：
 
-- `PHONE_UI_GUIDELINES.md`：手机端整体规范，包含字号、圆角、阴影、组件分层要求。
+- `design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md`：教师手机端新规范，包含字号、圆角、阴影、组件分层要求。
 - `mobile-app/index.css`：教师端 AI 主色、学生/班级模式色、手机端柔和背景、毛玻璃底栏基础色。
 - `mobile-app/styles/phoneTokens.ts`：已有文字、圆角、阴影、间距、tone 类型。
 - `mobile-app/styles/navigation.css`：教师端底部悬浮毛玻璃导航颜色、阴影和透明度。

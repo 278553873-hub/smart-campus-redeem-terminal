@@ -32,6 +32,19 @@
   --page-glow-blue: #EDF5FF;
   --page-glow-pink: #FFF3FA;
   --page-glow-purple: #F4F0FF;
+
+  /* Teacher record v19 */
+  --tm-record-student-primary: #12B8CB;
+  --tm-record-student-secondary: #6577F5;
+  --tm-record-class-primary: #7C3AED;
+  --tm-record-class-secondary: #C026D3;
+  --tm-record-positive-bg: rgba(236, 253, 245, 0.82);
+  --tm-record-positive-border: rgba(20, 184, 166, 0.30);
+  --tm-record-positive-text: #0F766E;
+  --tm-record-negative-bg: rgba(255, 241, 244, 0.84);
+  --tm-record-negative-border: rgba(224, 82, 104, 0.30);
+  --tm-record-negative-text: #E05268;
+  --tm-record-nav-active: #1E9AAA;
 }
 
 .teacher-mobile-soft-page {

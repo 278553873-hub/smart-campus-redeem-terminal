@@ -184,25 +184,6 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
             </label>
 
             <div>
-              <span className={labelClass}>学生状态</span>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {[
-                  { value: 'active', label: '在校' },
-                  { value: 'left', label: '离校' },
-                ].map(option => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setDraft(prev => ({ ...prev, status: option.value as Student['status'] }))}
-                    className={`h-12 rounded-2xl border text-sm font-semibold transition-all active:scale-[0.98] ${draft.status === option.value ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-100 bg-slate-50 text-slate-500'}`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
               <span className={labelClass}>所在班级</span>
               <button
                 type="button"

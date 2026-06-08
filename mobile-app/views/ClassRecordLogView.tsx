@@ -36,7 +36,9 @@ interface LogItem {
     aiSummary?: string;
     students?: { id: string, name: string }[];
     score?: { label: string, value: number };
+    scores?: { label: string, value: number }[];
     theme?: 'neutral' | 'negative' | 'positive';
+    audioDuration?: string;
     rawDate?: string; // For the editable field
     scope: 'student' | 'class';
 }
@@ -47,26 +49,71 @@ const INITIAL_LOGS: LogItem[] = [
         id: 'rec_s1',
         type: 'voice',
         status: 'done',
-        time: '2026-02-05 10:20',
-        content: '林大辉在操场上主动帮助低年级同学搬器材。',
-        aiSummary: '林大辉表现出了极强的集体荣誉感和助人为乐的精神。',
+        time: '2026-06-03 14:55',
+        content: '2025级4班全体同学积极参加大扫除。',
+        aiSummary: '全体同学积极参与劳动，体现出良好的集体意识和责任感。',
         theme: 'positive',
-        students: [{ id: 's2', name: '林大辉 (2025级一班)' }],
-        score: { label: '德育-文明礼貌-助人为乐', value: 3 },
-        rawDate: '2026-02-05',
+        students: [
+            { id: 's2', name: '林小杰 (2025级1班)' },
+            { id: 's3', name: '赵小美 (2025级1班)' },
+            { id: 's4', name: '王一鸣 (2025级1班)' },
+            { id: 's5', name: '周雨晴 (2025级1班)' },
+            { id: 's6', name: '陈子涵 (2025级1班)' },
+            { id: 's7', name: '刘浩然 (2025级1班)' },
+            { id: 's8', name: '黄思思 (2025级1班)' },
+            { id: 's9', name: '何嘉乐 (2025级1班)' },
+            { id: 's10', name: '唐心怡 (2025级1班)' },
+            { id: 's11', name: '马宇航 (2025级1班)' },
+            { id: 's12', name: '宋佳宁 (2025级1班)' },
+            { id: 's13', name: '冯子墨 (2025级1班)' },
+            { id: 's14', name: '罗诗涵 (2025级1班)' },
+            { id: 's15', name: '邓博文 (2025级1班)' },
+            { id: 's16', name: '高若曦 (2025级1班)' },
+            { id: 's17', name: '谢一诺 (2025级1班)' },
+            { id: 's18', name: '蒋明轩 (2025级1班)' },
+            { id: 's19', name: '曹艺菲 (2025级1班)' },
+            { id: 's20', name: '彭俊熙 (2025级1班)' },
+            { id: 's21', name: '叶梓萱 (2025级1班)' },
+            { id: 's22', name: '余昊天 (2025级1班)' },
+            { id: 's23', name: '潘思源 (2025级1班)' },
+            { id: 's24', name: '钟雅琪 (2025级1班)' },
+            { id: 's25', name: '戴睿哲 (2025级1班)' },
+            { id: 's26', name: '袁欣怡 (2025级1班)' },
+            { id: 's27', name: '夏知远 (2025级1班)' },
+            { id: 's28', name: '许梦瑶 (2025级1班)' },
+            { id: 's29', name: '邱泽宇 (2025级1班)' },
+            { id: 's30', name: '魏思齐 (2025级1班)' },
+            { id: 's31', name: '曾沐阳 (2025级1班)' },
+            { id: 's32', name: '苏语桐 (2025级1班)' },
+            { id: 's33', name: '卢嘉懿 (2025级1班)' },
+            { id: 's34', name: '丁睿轩 (2025级1班)' },
+            { id: 's35', name: '乔芷晴 (2025级1班)' },
+            { id: 's36', name: '韩子昂 (2025级1班)' },
+            { id: 's37', name: '程若琳 (2025级1班)' },
+            { id: 's38', name: '田宇辰 (2025级1班)' },
+            { id: 's39', name: '傅安然 (2025级1班)' },
+            { id: 's40', name: '顾星辰 (2025级1班)' },
+        ],
+        score: { label: '德育-责任担当-集体劳动', value: 3 },
+        scores: [
+            { label: '德育-责任担当-集体劳动', value: 2 },
+            { label: '劳育-劳动习惯-环境维护', value: 1 }
+        ],
+        audioDuration: '12s',
+        rawDate: '2026-06-02',
         scope: 'student'
     },
     {
         id: 'rec_s2',
         type: 'text',
         status: 'done',
-        time: '2026-02-05 14:00',
-        content: '张子轩今天课堂小测全对，表现非常专注。',
-        aiSummary: '张子轩在课堂测试中展现了扎实的基础和高度的专注力。',
+        time: '2026-06-03 10:12',
+        content: '张子轩获得四川省青少年编程竞赛图形化编程组二等奖。',
+        aiSummary: '张子轩在科技创新活动中表现突出，体现出较强的问题解决能力。',
         theme: 'positive',
         students: [{ id: 's3', name: '张子轩 (2025级一班)' }],
         score: { label: '智育-专注有序-课堂专注', value: 2 },
-        rawDate: '2026-02-05',
+        rawDate: '2026-06-03',
         scope: 'student'
     },
     {
@@ -144,6 +191,8 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                     { id: 's1', name: '林小杰 (2025级1班)' }
                                 ],
                                 score: { label: '智育-专注有序-课堂专注', value: 2 },
+                                scores: [{ label: '智育-专注有序-课堂专注', value: 2 }],
+                                audioDuration: '8s',
                                 rawDate: now.toISOString().split('T')[0],
                                 scope: 'student'
                             };
@@ -174,32 +223,22 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
     // --- Components ---
 
-    const TeacherRecordHeader = ({ id, time, isAudio = false }: { id: string, time: string, isAudio?: boolean }) => (
-        <div className="flex justify-between items-center mb-3 relative z-20">
-            <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-slate-900">老师记录</span>
-                {isAudio && (
-                    <div className="bg-slate-500 text-white rounded px-1.5 py-0.5 flex items-center justify-center h-5 w-6">
-                        <VolumeIcon className="w-3 h-3" />
-                    </div>
-                )}
-            </div>
-            <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 font-medium font-mono">{time}</span>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveCardMenu(activeCardMenu === id ? null : id);
-                    }}
-                    className={`text-slate-300 active:text-slate-500 p-1 -mr-1 rounded-full transition-colors ${activeCardMenu === id ? 'bg-slate-100 text-slate-500' : ''}`}
-                >
-                    <WechatMoreIcon className="w-4 h-4" />
-                </button>
-            </div>
+    const TeacherRecordHeader = ({ id, time }: { id: string, time: string }) => (
+        <div className="mb-3.5 flex items-center justify-between relative z-20">
+            <span className="text-[15px] font-bold text-slate-400 tracking-tight">{time}</span>
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveCardMenu(activeCardMenu === id ? null : id);
+                }}
+                className={`flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition-colors active:bg-slate-100 active:text-slate-600 ${activeCardMenu === id ? 'bg-slate-100 text-slate-500' : ''}`}
+                aria-label="更多操作"
+            >
+                <WechatMoreIcon className="w-4.5 h-4.5" />
+            </button>
 
-            {/* Menu Dropdown */}
             {activeCardMenu === id && (
-                <div className="absolute top-8 right-0 bg-white shadow-lg border border-slate-100 rounded-xl p-1 w-32 animate-in fade-in zoom-in duration-200 origin-top-right ring-1 ring-black/5 z-30">
+                <div className="absolute top-9 right-0 bg-white shadow-lg border border-slate-100 rounded-xl p-1 w-32 animate-in fade-in zoom-in duration-200 origin-top-right ring-1 ring-black/5 z-30">
                     <button className="flex items-center gap-2 text-xs font-medium text-slate-700 p-2 active:bg-slate-50 rounded-lg w-full text-left" onClick={() => setActiveCardMenu(null)}>
                         <RetryIcon className="w-3.5 h-3.5" /> 重新识别
                     </button>
@@ -213,18 +252,28 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         </div>
     );
 
-    const Label = ({ text }: { text: string }) => (
-        <span className="text-xs font-bold text-slate-900 w-16 pt-1.5 flex-shrink-0">{text}</span>
-    );
-
-    const SwapButton = ({ onClick, isActive }: { onClick?: () => void, isActive?: boolean }) => (
+    const VoicePlayback = ({ active, duration }: { active: 'student' | 'class'; duration?: string }) => (
         <button
-            onClick={onClick}
-            className={`p-1 rounded transition-colors ${isActive ? 'bg-blue-100 text-blue-600' : 'active:bg-black/5 text-slate-400 active:text-slate-600'}`}
+            type="button"
+            className={`mb-3 inline-flex h-9 items-center gap-2 rounded-full border px-3.5 text-[13px] font-bold transition active:scale-95 ${active === 'class' ? 'border-[#EEE2FF] bg-[#FDFCFF] text-[#7C3AED]' : 'border-[#D4F4F8] bg-[#FAFEFF] text-[#128698]'}`}
+            aria-label="播放原始语音"
         >
-            <SwapIcon className="w-4 h-4" />
+            <span className="h-0 w-0 border-y-[5px] border-y-transparent border-l-[7px] border-l-current" aria-hidden="true" />
+            <span>原始语音</span>
+            <span className="flex items-center gap-0.5" aria-hidden="true">
+                {[8, 14, 10, 16, 7].map((height, index) => (
+                    <i key={index} className="w-0.5 rounded-full bg-current opacity-70" style={{ height }} />
+                ))}
+            </span>
+            <span className="ml-1 text-slate-500">{duration || '10s'}</span>
         </button>
     );
+
+    const FieldLabel = ({ text }: { text: string }) => (
+        <div className="pt-1.5 text-[13px] font-bold text-slate-500">{text}</div>
+    );
+
+    const formatScoreValue = (value: number) => value > 0 ? `+${value}` : `${value}`;
 
     // --- Render Log Item Logic ---
     // --- Render Log Item Logic ---
@@ -270,132 +319,90 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             );
         }
 
-        // 3. DONE STATE - INTERACTIVE (Voice/Text/Camera) - THE MAIN CANDY CARD
-        const isNegative = log.theme === 'negative';
-
-        // Base Container - Floating White Card
-        const containerClass = "bg-white rounded-3xl shadow-sm border border-white/60 relative group animate-in fade-in duration-500 overflow-hidden";
-
-        // AI Result Background - Scope based distinctions
+        // 3. DONE STATE - INTERACTIVE (Voice/Text/Camera)
+        const isNegative = log.theme === 'negative' || (log.score?.value ?? 0) < 0;
         const isClass = log.scope === 'class';
-
-        let resultBg = isNegative
-            ? "bg-gradient-to-br from-[#FFF0F0] via-[#FFF5F5] to-white"
-            : "bg-gradient-to-br from-[#E0F7FA] via-[#E3F2FD] to-[#F0F4FF]"; // Cyan -> Blue -> Soft Indigo
-
-        if (isClass && !isNegative) {
-            resultBg = "bg-gradient-to-br from-[#F0FDFA] via-[#CCFBF1] to-[#F0FDFA]"; // Teal/Aqua
-        }
-
-        const resultBorder = isNegative ? "border-rose-100" : (isClass ? "border-teal-100/50" : "border-white/50");
-        const accentColor = isNegative ? "text-rose-500" : (isClass ? "text-teal-600" : "text-cyan-600");
-        const buttonBaseClass = "backdrop-blur-sm border shadow-sm transition-all active:scale-95 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5";
+        const scoreItems = log.scores && log.scores.length > 0 ? log.scores : (log.score ? [log.score] : []);
+        const totalScore = scoreItems.reduce((sum, item) => sum + item.value, 0);
+        const scoreTone = isNegative ? 'negative' : 'positive';
+        const aiBlockClass = isNegative
+            ? 'border-[#F7BCC8] bg-gradient-to-b from-[#FFF7F9] to-white shadow-[0_8px_20px_rgba(224,82,104,0.045)]'
+            : 'border-[#9BEAF1] bg-gradient-to-b from-[#F7FEFF] to-white shadow-[0_8px_20px_rgba(18,184,203,0.045)]';
+        const modeTextClass = isClass ? 'text-[#7C3AED] border-[#EAD8FF] bg-[#FDFCFF]' : 'text-[#128698] border-[#D4F4F8] bg-[#FAFEFF]';
+        const totalClass = scoreTone === 'negative'
+            ? 'border-[var(--tm-record-negative-border)] bg-[var(--tm-record-negative-bg)] text-[var(--tm-record-negative-text)]'
+            : 'border-[var(--tm-record-positive-border)] bg-[var(--tm-record-positive-bg)] text-[var(--tm-record-positive-text)]';
 
         return (
-            <div key={log.id} className={containerClass}>
-                {/* Top Section: User Input */}
-                <div className="p-5 pb-3 bg-white relative z-20">
-                    <TeacherRecordHeader id={log.id} time={log.time} isAudio={log.type === 'voice'} />
-                    <p className="text-base text-slate-700 font-medium leading-relaxed tracking-wide mb-1">
-                        {log.content}
-                    </p>
-                </div>
+            <div key={log.id} className="relative overflow-hidden rounded-[26px] border border-[#EDF3F7] bg-white p-4 shadow-[0_10px_26px_rgba(48,76,105,0.045)] animate-in fade-in duration-500">
+                <TeacherRecordHeader id={log.id} time={log.time} />
 
-                {/* Bottom Section: AI Result (The Candy Part) */}
-                <div className={`${resultBg} p-5 pt-6 pb-6 relative z-10 border-t ${resultBorder}`}>
+                {log.type === 'voice' && <VoicePlayback active={log.scope} duration={log.audioDuration} />}
 
-                    {/* Decorative Background Blobs */}
-                    {!isNegative && (
-                        <>
-                            <div className={`absolute top-0 right-0 w-32 h-32 ${isClass ? 'bg-purple-200/30' : 'bg-cyan-200/30'} rounded-full blur-[40px] pointer-events-none`}></div>
-                            <div className={`absolute bottom-0 left-0 w-32 h-32 ${isClass ? 'bg-pink-200/30' : 'bg-blue-200/30'} rounded-full blur-[40px] pointer-events-none`}></div>
-                        </>
-                    )}
+                <p className="mb-3.5 text-[15px] font-bold leading-[1.45] text-slate-900">
+                    {log.content}
+                </p>
 
-                    {/* AI Header Line */}
-                    <div className="flex items-center gap-2 mb-4">
+                <button
+                    type="button"
+                    onClick={() => { setEditingLog(log); setShowScoreEdit(true); }}
+                    className={`block w-full rounded-[24px] border-[1.5px] p-3.5 text-left transition active:scale-[0.995] ${aiBlockClass}`}
+                    aria-label="编辑 AI 智能解读结果"
+                >
+                    <div className="mb-3 grid grid-cols-[28px_auto_1fr_auto] items-center gap-2">
                         <img
                             src={ASSETS.MANAGEMENT.AI_BOT}
                             alt="AI Bot"
-                            className="w-10 h-10 object-contain"
+                            className="h-[28px] w-[28px] object-contain"
                         />
-                        <span className={`text-sm font-semibold tracking-tight ${isNegative ? 'text-rose-600' : 'text-slate-700'}`}>AI 智能分析</span>
-                    </div>
-
-                    <div className="space-y-4 relative z-10">
-                        <div className="flex items-center gap-3">
-                            <div className="w-16 text-xs font-bold text-slate-400 pl-1">时间</div>
-                            <div className="flex-1 flex gap-2">
-                                <button
-                                    onClick={() => { setEditingLog(log); setShowDatePicker(true); }}
-                                    className={`${buttonBaseClass} ${isNegative ? 'bg-white/60 border-rose-100 text-rose-600' : (isClass ? 'bg-white/60 border-purple-100 text-purple-600' : 'bg-white/60 border-white/60 text-slate-600  ')} active:scale-95 transition-all`}
-                                >
-                                    {log.rawDate || '2025-09-10'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* 2. Students / Classes */}
-                        <div className="flex items-center gap-3">
-                            <div className="w-16 text-xs font-bold text-slate-400 pl-1">对象</div>
-                            <div className="flex-1 flex flex-wrap gap-2">
-                                {log.students?.map(stu => (
-                                    <button
-                                        key={stu.id}
-                                        onClick={() => { setEditingLog(log); setShowClassSelect(true); }}
-                                        className={`bg-white border text-slate-700 text-xs px-3 py-1.5 rounded-xl font-bold shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center gap-1.5 active:scale-95 transition-all
-                                            ${isClass ? 'border-teal-100/50 ' : 'border-blue-50/50 '}`}
-                                    >
-                                        <div className={`w-1.5 h-1.5 rounded-full ${isClass ? 'bg-teal-400' : 'bg-cyan-400'}`}></div>
-                                        {stu.name}
-                                    </button>
-                                ))}
-                                {log.students && log.students.length > 5 && (
-                                    <button
-                                        onClick={() => setShowStudentListModal(true)}
-                                        className={`text-white text-xs px-3 py-1.5 rounded-xl font-bold shadow-lg flex items-center gap-1 active:scale-95 transition-transform
-                                            ${isClass ? 'bg-teal-500 shadow-teal-200' : 'bg-blue-500 shadow-blue-200'}`}
-                                    >
-                                        +{log.students.length - 1} 人
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 3. Score (Jelly Button Style) */}
-                        {log.score && (
-                            <div className="flex items-center gap-3">
-                                <div className="w-16 text-xs font-bold text-slate-400 pl-1">得分</div>
-                                <button
-                                    onClick={() => { setEditingLog(log); setShowScoreEdit(true); }}
-                                    className={`flex items-center gap-3 px-4 py-2 rounded-2xl border shadow-sm backdrop-blur-md transition-all active:scale-95 
-                                    ${isNegative
-                                            ? 'bg-rose-50/50 border-rose-100'
-                                            : (isClass
-                                                ? 'bg-gradient-to-r from-teal-50/80 to-emerald-50/80 border-teal-100/60'
-                                                : 'bg-gradient-to-r from-cyan-50/80 to-blue-50/80 border-white/60')}
-                                 `}>
-                                    <span className={`text-xs font-bold ${isNegative ? 'text-rose-600' : (isClass ? 'text-teal-600' : 'text-slate-600')}`}>{log.score.label}</span>
-                                    <div className="w-[1px] h-3 bg-slate-300/50"></div>
-                                    <span className={`text-base font-black font-mono
-                                        ${isNegative ? 'text-rose-500' : (isClass ? 'text-teal-600' : 'text-blue-600 drop-shadow-sm')}`}>
-                                        {log.score.value > 0 ? `+${log.score.value}` : log.score.value}
-                                    </span>
-                                </button>
+                        <span className="text-[15px] font-extrabold text-slate-900">AI 智能解读</span>
+                        <span className={`h-1 w-8 rounded-full opacity-55 ${isClass ? 'bg-gradient-to-r from-[#D8B4FE] to-[#F0ABFC]' : 'bg-gradient-to-r from-[#7DDDE7] to-[#B8C4FF]'}`} />
+                        {scoreItems.length > 0 && (
+                            <div className={`grid h-[43px] min-w-[78px] grid-cols-[auto_auto] items-center justify-center gap-1 rounded-[16px] border px-2.5 ${totalClass}`}>
+                                <span className="text-[26px] font-black leading-none">{formatScoreValue(totalScore)}</span>
+                                <span className="text-[11px] font-bold leading-none text-slate-500">总分</span>
                             </div>
                         )}
+                    </div>
 
-                        {/* 4. Comment Box */}
-                        <div className={`mt-2 p-4 rounded-2xl text-sm leading-relaxed text-slate-600 text-justify relative
-                            ${isNegative ? 'bg-rose-50 border border-rose-100' : 'bg-white/70 border border-white shadow-sm'}
-                         `}>
-                            {/* Quote Icon Decoration */}
-                            <div className={`absolute -top-2 -left-1 text-4xl font-serif opacity-20 ${isNegative ? 'text-rose-300' : (isClass ? 'text-teal-300' : 'text-blue-300')}`}>“</div>
-                            {log.aiSummary}
+                    <div className="grid grid-cols-[38px_minmax(0,1fr)] gap-x-2 gap-y-2">
+                        <FieldLabel text="时间" />
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                            <span className="inline-flex min-h-[30px] items-center rounded-full border border-[#EAF1F6] bg-white px-3 text-[14px] font-bold text-slate-800 shadow-[0_2px_8px_rgba(48,76,105,0.018)]">
+                                {log.rawDate || log.time.split(' ')[0]}
+                            </span>
+                        </div>
+
+                        <FieldLabel text="对象" />
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                            {(log.students || []).slice(0, 1).map(stu => (
+                                <span key={stu.id} className={`inline-flex min-h-[30px] max-w-full items-center rounded-full border px-2.5 text-[12px] font-extrabold ${modeTextClass}`}>
+                                    {stu.name.replace(/ /g, '')}
+                                </span>
+                            ))}
+                            {log.students && log.students.length > 1 && (
+                                <span className={`inline-flex min-h-[30px] items-center rounded-full border px-2.5 text-[12px] font-extrabold ${modeTextClass}`}>+{log.students.length - 1}人</span>
+                            )}
+                        </div>
+
+                        <FieldLabel text="指标" />
+                        <div className="min-w-0 space-y-1.5">
+                            {scoreItems.map((item, index) => (
+                                <div key={`${item.label}-${index}`} className={`grid min-h-[29px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[11px] border bg-white/90 px-2.5 text-[11.5px] font-bold ${isNegative ? 'border-[#F9D8DF] text-slate-700' : 'border-[#E5EFF4] text-slate-700'}`}>
+                                    <span className="min-w-0 truncate">{item.label}</span>
+                                    <span className={`text-[13px] font-black ${item.value < 0 ? 'text-[#E05268]' : 'text-[#0F8F83]'}`}>{formatScoreValue(item.value)}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-            </div >
+
+                    {log.aiSummary && (
+                        <div className="mt-3 rounded-[18px] bg-white/74 px-3.5 py-3 text-[14px] font-bold leading-[1.48] text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.74)]">
+                            {log.aiSummary}
+                        </div>
+                    )}
+                </button>
+            </div>
         );
     };
 
@@ -410,47 +417,47 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
             {/* Header (Top-most Integration) */}
             <div className={`sticky top-0 z-30 ${addDemoTopBreathingSpace ? 'pt-2' : ''}`}>
-                <div className="h-11 flex items-center gap-2 pl-4 pr-[132px]">
+                <div className="px-5 pt-3">
                     {/* Left: Back (if needed) */}
                     {!isMainView && (
-                        <div className="w-10 shrink-0">
+                        <div className="mb-2 w-10 shrink-0">
                             <button onClick={onBack} className="p-2 -ml-2 rounded-full active:bg-black/5 text-slate-700 transition-colors">
                                 <BackIcon className="w-5 h-5" />
                             </button>
                         </div>
                     )}
 
-                    {/* Middle: Integrated Tabs - reserve the right side for the native WeChat capsule. */}
-                    <div className="w-full max-w-[232px]">
-                        <div className="flex bg-slate-200/40 p-1 rounded-full border border-white/50 shadow-sm ring-1 ring-black/5">
+                    <div className="pr-[116px]">
+                        <div className="flex rounded-[23px] border border-white/95 bg-white/82 p-1 shadow-[0_8px_20px_rgba(60,85,120,0.055)] ring-1 ring-[#EAF1F6]/80">
                             <button
                                 onClick={() => onTabChange('student')}
-                                className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all duration-300 ${activeTab === 'student' ? 'bg-white text-indigo-600 shadow-sm scale-[1.05]' : 'text-slate-500'}`}
+                                className={`flex-1 py-3 text-[15px] font-extrabold rounded-[19px] transition-all duration-300 ${activeTab === 'student' ? 'bg-gradient-to-r from-[#19B8C8] to-[#6679F2] text-white shadow-[0_8px_16px_rgba(18,184,203,0.16)]' : 'text-[#66768A]'}`}
                             >
                                 记录学生
                             </button>
                             <button
                                 onClick={() => onTabChange('class')}
-                                className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all duration-300 ${activeTab === 'class' ? 'bg-white text-teal-600 shadow-sm scale-[1.05]' : 'text-slate-500'}`}
+                                className={`flex-1 py-3 text-[15px] font-extrabold rounded-[19px] transition-all duration-300 ${activeTab === 'class' ? 'bg-gradient-to-r from-[#7C3AED] to-[#B832D2] text-white shadow-[0_8px_16px_rgba(124,58,237,0.15)]' : 'text-[#66768A]'}`}
                             >
                                 记录班级
                             </button>
                         </div>
                     </div>
                 </div>
+
+                <div className="px-6 pb-4 pt-2">
+                    <button className="text-left text-[#7B8796] active:scale-[0.99] transition">
+                        <div className="flex items-center gap-1 text-[15px] font-bold">
+                            <span>查看指标</span>
+                            <ChevronRightIcon className="w-4 h-4 opacity-60" />
+                        </div>
+                        <div className="mt-0.5 text-[12px] font-bold text-[#9AA8B8]">内容由 AI 生成</div>
+                    </button>
+                </div>
             </div>
 
             {/* List Content */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6 pb-28 no-scrollbar relative z-10">
-                {/* "View Metrics" button relocated here (above cards) */}
-                <div className="flex justify-start px-2 -mb-2">
-                    <button className={`bg-white/80 backdrop-blur-md border border-white/60 text-xs px-4 py-2 rounded-full font-bold shadow-sm active:scale-95 transition-all flex items-center gap-1.5 border-indigo-100/30
-                        ${activeTab === 'class' ? 'text-teal-600 ' : 'text-indigo-600 '}`}>
-                        <ActivityIcon className="w-3.5 h-3.5" />
-                        <span>查看指标</span>
-                        <ChevronRightIcon className="w-3.5 h-3.5 opacity-60" />
-                    </button>
-                </div>
+            <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-0 space-y-4 pb-44 no-scrollbar relative z-10">
                 {logs
                     .filter(log => log.scope === activeTab)
                     .map(log => renderLogItem(log))}
@@ -473,7 +480,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             <h3 className="text-lg font-semibold text-slate-800">选择日期</h3>
                             <div className="flex items-center gap-3">
                                 <button onClick={() => setShowDatePicker(false)} className="text-sm font-bold text-slate-400">取消</button>
-                                <button onClick={() => setShowDatePicker(false)} className="text-sm font-bold text-indigo-600">完成</button>
+                                <button onClick={() => setShowDatePicker(false)} className="text-sm font-bold text-cyan-700">完成</button>
                             </div>
                         </div>
                         <div className="h-64 overflow-hidden relative flex items-center justify-center p-6">
@@ -586,7 +593,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                         <button
                                             key={label}
                                             onClick={() => handleUpdateLogScore(editingLog.id, label, editingLog.score?.value || 0)}
-                                            className={`p-3.5 rounded-xl border text-xs font-bold text-left transition-all ${editingLog.score?.label === label ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-100 text-slate-600'}`}
+                                            className={`p-3.5 rounded-xl border text-xs font-bold text-left transition-all ${editingLog.score?.label === label ? 'bg-indigo-50 border-indigo-200 text-cyan-700' : 'bg-white border-slate-100 text-slate-600'}`}
                                         >
                                             {label}
                                         </button>

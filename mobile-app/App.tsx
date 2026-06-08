@@ -44,7 +44,6 @@ import {
 } from 'lucide-react';
 
 import './styles/navigation.css';
-import TeacherFluidGlassNav from './components/TeacherFluidGlassNav';
 
 import {
     MOCK_CLASSES,
@@ -291,10 +290,26 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         navigateTo('student_detail');
     };
 
+    const getMergedStudentsForClass = (classId: string) => (
+        GET_MOCK_STUDENTS_FOR_CLASS(classId).map(student => studentOverrides[student.id] ?? student)
+    );
+
     const handleSaveStudentBasicInfo = (student: Student) => {
         setStudentOverrides(prev => ({ ...prev, [student.id]: student }));
         setSelectedStudent(student);
         goBack();
+    };
+
+    const handleRestoreStudentStatus = (student: Student) => {
+        const nextStudent = { ...student, status: 'active' as const };
+        setStudentOverrides(prev => ({ ...prev, [student.id]: nextStudent }));
+        setSelectedStudent(prev => prev.id === student.id ? nextStudent : prev);
+    };
+
+    const handleUpdateStudentStatus = (student: Student, status: Student['status']) => {
+        const nextStudent = { ...student, status };
+        setStudentOverrides(prev => ({ ...prev, [student.id]: nextStudent }));
+        setSelectedStudent(nextStudent);
     };
 
     const handleViewTermReport = () => {
@@ -474,60 +489,50 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             .join('、');
     };
 
-    // Floating Input Bar Component - icon-first quick record actions.
+    // Floating Input Bar Component - solid light island, so it stays readable over record cards.
     const GlobalInputBar = () => {
-        // Determine target IDs based on mode
         const targetIds: string[] = isMultiSelectMode ? Array.from(multiSelectIds) : [];
-        const theme = activeLogTab === 'class'
+        const isClassMode = activeLogTab === 'class';
+        const tone = isClassMode
             ? {
-                shell: 'from-teal-50/90 via-white/95 to-cyan-50/90 border-teal-100/80 shadow-[0_18px_48px_-22px_rgba(20,184,166,0.65)]',
-                primary: 'from-[#00B19D] to-[#3B82F6] shadow-teal-500/25',
-                soft: 'text-teal-600 bg-teal-50/95 border-teal-100',
-                dot: 'bg-teal-500 shadow-teal-400/80',
+                shell: 'bg-white border-[#EEE2FF] shadow-[0_10px_22px_rgba(124,58,237,0.09)] ring-[#F7F0FF]',
+                main: 'from-[#FAF6FF] to-[#F4F7FF] text-[#7C3AED] border-[#EEE2FF]',
+                icon: 'bg-[#FDFCFF] text-[#7C3AED] border-[#EEE2FF]',
             }
             : {
-                shell: 'from-indigo-50/90 via-white/95 to-pink-50/90 border-indigo-100/80 shadow-[0_18px_48px_-22px_rgba(99,102,241,0.65)]',
-                primary: 'from-[#7F56FF] to-[#E24CB0] shadow-indigo-500/25',
-                soft: 'text-indigo-600 bg-indigo-50/95 border-indigo-100',
-                dot: 'bg-indigo-500 shadow-indigo-400/80',
+                shell: 'bg-white border-[#D4F4F8] shadow-[0_10px_22px_rgba(18,184,203,0.10)] ring-[#EFFBFC]',
+                main: 'from-[#F0FCFE] to-[#F2F6FF] text-[#128698] border-[#D4F4F8]',
+                icon: 'bg-[#FBFEFF] text-[#128698] border-[#D4F4F8]',
             };
 
         return (
-            <div className={`absolute left-0 right-0 px-5 z-[60] pointer-events-none max-w-md mx-auto transition-all duration-300 ${showKeyboard ? 'bottom-[310px]' : 'bottom-[96px]'}`}>
-                <div className={`pointer-events-auto relative mx-auto flex w-fit items-center gap-2 rounded-full border bg-gradient-to-r ${theme.shell} backdrop-blur-3xl px-2.5 py-2 transition-colors duration-500`}>
-                    <div className={`absolute -top-1 right-5 h-2.5 w-2.5 rounded-full ${theme.dot} shadow-lg ring-4 ring-white/80`}></div>
+            <div className={`absolute left-0 right-0 z-[60] mx-auto max-w-md px-5 pointer-events-none transition-all duration-300 ${showKeyboard ? 'bottom-[310px]' : 'bottom-[82px]'}`}>
+                <div className={`pointer-events-auto mx-auto grid h-[60px] max-w-[350px] grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2.5 rounded-full border px-3 ring-1 ${tone.shell}`}>
+                    <button
+                        onClick={() => handleStartRecord(targetIds, 'camera')}
+                        aria-label="拍照记录"
+                        className={`flex h-10 w-10 items-center justify-center rounded-[18px] border transition active:scale-95 ${tone.icon}`}
+                    >
+                        <CameraIcon className="h-5 w-5" />
+                    </button>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => handleStartRecord(targetIds, 'camera')}
-                            aria-label="拍照记录"
-                            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border shadow-sm transition-all active:scale-95 ${theme.soft}`}
-                        >
-                            <CameraIcon className="h-5 w-5" />
-                        </button>
+                    <button
+                        onClick={() => handleStartRecord(targetIds, 'voice')}
+                        aria-label="语音记录"
+                        className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-full border bg-gradient-to-r px-4 text-[14px] font-bold tracking-normal transition active:scale-[0.98] ${tone.main}`}
+                    >
+                        <VolumeIcon className="h-4.5 w-4.5" />
+                        <span>按住 说话</span>
+                    </button>
 
-                        <button
-                            onClick={() => setShowKeyboard(true)}
-                            aria-label={isMultiSelectMode ? `已选${multiSelectIds.size}人，文字记录` : '文字记录'}
-                            className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-white/95 shadow-sm transition-all active:scale-95
-                                ${isMultiSelectMode
-                                    ? (activeLogTab === 'class' ? 'border-teal-300 ring-2 ring-teal-100 text-teal-600' : 'border-indigo-300 ring-2 ring-indigo-100 text-indigo-600')
-                                    : 'border-white/80 text-slate-500'}`}
-                        >
-                            <KeyboardIcon className="h-5 w-5" />
-                            {showKeyboard && (
-                                <div className="absolute -bottom-1 left-1/2 h-1 w-5 -translate-x-1/2 rounded-full bg-current"></div>
-                            )}
-                        </button>
-
-                        <button
-                            onClick={() => handleStartRecord(targetIds, 'voice')}
-                            aria-label="语音记录"
-                            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-r ${theme.primary} text-white shadow-lg transition-all active:scale-95 active:shadow-none`}
-                        >
-                            <VolumeIcon className="h-6 w-6" />
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => setShowKeyboard(true)}
+                        aria-label={isMultiSelectMode ? `已选${multiSelectIds.size}人，文字记录` : '文字记录'}
+                        className={`relative flex h-10 w-10 items-center justify-center rounded-[18px] border transition active:scale-95 ${tone.icon}`}
+                    >
+                        <KeyboardIcon className="h-5 w-5" />
+                        {showKeyboard && <span className="absolute -bottom-1 h-1 w-5 rounded-full bg-current" />}
+                    </button>
                 </div>
             </div>
         );
@@ -666,6 +671,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     classes={MOCK_CLASSES}
                                     teacherProfile={teacherProfile}
                                     onSelectClass={handleSelectClass}
+                                    getStudentsForClass={getMergedStudentsForClass}
+                                    onRestoreStudentStatus={handleRestoreStudentStatus}
                                     onViewClassReport={handleViewClassReport}
                                     onViewLeaderboard={handleViewLeaderboard}
                                     onViewRewardVerification={handleViewRewardVerification}
@@ -678,7 +685,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'class_detail' && (
                                 <ClassDetailView
                                     classInfo={MOCK_CLASSES.find(c => c.id === selectedClassId)!}
-                                    students={GET_MOCK_STUDENTS_FOR_CLASS(selectedClassId)}
+                                    students={getMergedStudentsForClass(selectedClassId)}
                                     onSelectStudent={handleSelectStudent}
                                     // Use lifted props
                                     onStartRecord={handleStartRecord}
@@ -694,7 +701,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'class_report' && (
                                 <ClassReportView
                                     classInfo={MOCK_CLASSES.find(c => c.id === selectedClassId)!}
-                                    students={GET_MOCK_STUDENTS_FOR_CLASS(selectedClassId)}
+                                    students={getMergedStudentsForClass(selectedClassId).filter(student => (student.status ?? 'active') === 'active')}
                                     onSelectStudent={handleSelectStudent}
                                     onGoToClassDetail={() => handleSelectClass(selectedClassId)}
                                 />
@@ -736,7 +743,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'homework_entry' && selectedClassId && (
                                 <HomeworkEntryView
                                     classInfo={MOCK_CLASSES.find(c => c.id === selectedClassId)!}
-                                    students={GET_MOCK_STUDENTS_FOR_CLASS(selectedClassId)}
+                                    students={getMergedStudentsForClass(selectedClassId).filter(student => (student.status ?? 'active') === 'active')}
                                     onBack={goBack}
                                 />
                             )}
@@ -749,6 +756,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onViewTermReport={handleViewTermReport}
                                     onBack={goBack}
                                     onEditBasicInfo={() => navigateTo('student_basic_edit')}
+                                    onUpdateStudentStatus={handleUpdateStudentStatus}
                                     onViewCampusCoins={() => navigateTo('student_coin_detail')}
                                     campusCoinDetail={activeCampusCoinDetail}
                                 />
@@ -811,6 +819,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             )}
                         </main>
 
+                        {showInputBar && <div className="pointer-events-none absolute bottom-16 left-0 right-0 z-[55] h-28 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.9)_46%,#FFFFFF_100%)]" />}
                         {showInputBar && <GlobalInputBar />}
 
                         {currentView === 'record_input' && (
@@ -838,55 +847,24 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             </>
                         )}
 
-                        {/* AI Tech Tab Bar */}
+                        {/* Teacher mobile bottom navigation - fixed global color, independent from record mode. */}
                         {showTabBar && (
-                            <div 
-                                ref={tabbarRef}
-                                className="ai-tabbar-container"
-                            >
-                                {/* 3D 物理液态玻璃渲染背景层 */}
-                                <TeacherFluidGlassNav activeIndex={activeIndex} itemCount={3} jellyToggle={jellyToggle} tabbarWidth={tabbarWidth} />
-
-                                {/* 顶层 HTML 按钮交互与极清字显层 (文字完全脱离 3D WebGL 折射以 100% 保障清晰度与 0 重影) */}
-                                {/* Tab 0: 记录 (ActivityIcon) */}
-                                <button
-                                    onClick={() => switchTab('home_log')}
-                                    className="tabbar-item-btn"
-                                >
-                                    <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${activeIndex === 0 ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
-                                        <div className="tabbar-icon-wrap">
-                                            <ActivityIcon className="w-5 h-5" fill="currentColor" />
-                                        </div>
-                                        <span className="tabbar-item-label">记录</span>
-                                    </div>
-                                </button>
-
-                                {/* Tab 1: 班级 (HomeIcon) */}
-                                <button
-                                    onClick={() => switchTab('class_list')}
-                                    className="tabbar-item-btn"
-                                >
-                                    <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${activeIndex === 1 ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
-                                        <div className="tabbar-icon-wrap">
-                                            <HomeIcon className="w-5 h-5" fill="currentColor" />
-                                        </div>
-                                        <span className="tabbar-item-label">班级</span>
-                                    </div>
-                                </button>
-
-                                {/* Tab 2: 我的 (UserIcon) */}
-                                <button
-                                    onClick={() => switchTab('me')}
-                                    className="tabbar-item-btn"
-                                >
-                                    <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-95 ${activeIndex === 2 ? 'text-indigo-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
-                                        <div className="tabbar-icon-wrap">
-                                            <UserIcon className="w-5 h-5" fill="currentColor" />
-                                        </div>
-                                        <span className="tabbar-item-label">我的</span>
-                                    </div>
-                                </button>
-                            </div>
+                            <nav className="absolute bottom-0 left-0 right-0 z-50 h-16 border-t border-[#EEF4F8] bg-white shadow-[0_-6px_18px_rgba(60,85,120,0.035)]">
+                                <div className="grid h-full grid-cols-3 items-center text-center">
+                                    <button onClick={() => switchTab('home_log')} className="flex h-full flex-col items-center justify-center gap-1 active:scale-95 transition">
+                                        <ActivityIcon className={`h-5 w-5 ${activeIndex === 0 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`} fill="none" />
+                                        <span className={`text-xs font-semibold ${activeIndex === 0 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`}>首页</span>
+                                    </button>
+                                    <button onClick={() => switchTab('class_list')} className="flex h-full flex-col items-center justify-center gap-1 active:scale-95 transition">
+                                        <HomeIcon className={`h-5 w-5 ${activeIndex === 1 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`} fill="none" />
+                                        <span className={`text-xs font-semibold ${activeIndex === 1 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`}>班级</span>
+                                    </button>
+                                    <button onClick={() => switchTab('me')} className="flex h-full flex-col items-center justify-center gap-1 active:scale-95 transition">
+                                        <UserIcon className={`h-5 w-5 ${activeIndex === 2 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`} fill="none" />
+                                        <span className={`text-xs font-semibold ${activeIndex === 2 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`}>我的</span>
+                                    </button>
+                                </div>
+                            </nav>
                         )}
 
 
