@@ -16,6 +16,7 @@ import AdminApp from './components/AdminApp';
 import MobileApp from './mobile-app/App';
 import CompanionApp from './components/CompanionApp';
 import ParentApp from './components/ParentApp';
+import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import PlatformBrandMark from './components/PlatformBrandMark';
@@ -1243,10 +1244,10 @@ const PcWorkspace: React.FC = () => {
 };
 
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace'>(() => {
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'terminal' || app === 'admin' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace') {
+    if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace') {
       return app;
     }
     return 'terminal'; // default
@@ -1262,6 +1263,7 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
         {currentApp === 'pc-workspace' && <PcWorkspace />}
         {currentApp === 'admin' && <MobileApp showPhoneShell={showPhoneShell} />}
+        {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && <ParentApp showPhoneShell={showParentPhoneShell} />}
       </div>
@@ -1336,6 +1338,14 @@ const AppSwitcher: React.FC = () => {
             >
               <Smartphone size={22} className="mb-1" />
               <span className="text-[9px] font-bold">教师手机端</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('teacher-c-mobile')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-c-mobile' ? 'bg-black text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="教师-手机端（C端版本）- 低保真原型"
+            >
+              <Smartphone size={22} className="mb-1" />
+              <span className="text-[9px] font-bold leading-tight">教师-C端</span>
             </button>
             <button
               onClick={() => setCurrentApp('parent')}
