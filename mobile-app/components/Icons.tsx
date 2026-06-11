@@ -9,7 +9,7 @@ import {
   Keyboard, StopCircle, AlertCircle, ChevronDown,
   Shield, Lock, LogOut, FileBarChart, MoreVertical, File,
   Disc, GripHorizontal, Search, Filter, Bot, Calendar, Gift, ScanFace,
-  Eye, EyeOff
+  Eye, EyeOff, UserPlus
 } from 'lucide-react';
 
 
@@ -70,6 +70,7 @@ export const SearchIcon = ({ className }: { className?: string }) => <Search cla
 export const FilterIcon = ({ className }: { className?: string }) => <Filter className={className} />;
 export const GiftIcon = ({ className }: { className?: string }) => <Gift className={className} />;
 export const ScanFaceIcon = ({ className }: { className?: string }) => <ScanFace className={className} />;
+export const UserPlusIcon = ({ className }: { className?: string }) => <UserPlus className={className} />;
 
 // Log Specific
 export const SwapIcon = ({ className }: { className?: string }) => <ArrowLeftRight className={className} />;

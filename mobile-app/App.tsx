@@ -336,6 +336,16 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         navigateTo('homework_entry');
     };
 
+    const handleInviteTeacher = (classId: string) => {
+        const className = MOCK_CLASSES.find(c => c.id === classId)?.name || '当前班级';
+        alert(`已生成${className}老师邀请链接`);
+    };
+
+    const handleEditClassInfo = (classId: string) => {
+        const className = MOCK_CLASSES.find(c => c.id === classId)?.name || '当前班级';
+        alert(`${className}班级信息编辑功能演示中`);
+    };
+
     const handleStartRecord = (studentIds: string[], mode: 'voice' | 'camera' | 'text' = 'voice') => {
         setBatchStudentIds(studentIds);
         setRecordMode(mode);
@@ -679,6 +689,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onViewFaceUpdate={handleViewFaceUpdate}
                                     onViewBankPassword={handleViewBankPassword}
                                     onViewHomeworkEntry={handleViewHomeworkEntry}
+                                    onInviteTeacher={handleInviteTeacher}
+                                    onEditClassInfo={handleEditClassInfo}
                                 />
                             )}
 

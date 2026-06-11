@@ -10,15 +10,30 @@ const requireText = (source, needle, message) => {
 };
 
 requireText(classListSource, 'onViewHomeworkEntry: (classId: string) => void;', '班级列表应暴露作业录入回调。');
-requireText(classListSource, '<span>作业录入</span>', '班级卡片更多操作应新增作业录入。');
-requireText(classListSource, 'onViewHomeworkEntry(cls.id);', '作业录入应携带当前班级 id。');
-requireText(classListSource, 'FileTextIcon className="w-3.5 h-3.5"', '作业录入应使用轻量图标入口。');
+requireText(classListSource, "title: '日常操作'", '班级更多操作应按日常操作归类。');
+requireText(classListSource, "label: '作业录入'", '班级更多操作应新增作业录入。');
+requireText(classListSource, 'runClassAction(onViewHomeworkEntry)', '作业录入应携带当前班级 id。');
+requireText(classListSource, 'FileTextIcon', '作业录入应使用轻量图标入口。');
+requireText(classListSource, 'activeActionClass', '班级更多操作应使用底部弹窗承载当前班级操作。');
+requireText(classListSource, 'rounded-t-[30px] bg-white', '班级更多操作应展示为底部弹窗。');
+requireText(classListSource, "title: '班级维护'", '班级更多操作应把维护类能力独立分组。');
+requireText(classListSource, "title: '协同管理'", '班级更多操作应把邀请老师归入协同管理。');
+requireText(classListSource, "label: '兑换奖励'", '底部弹窗应展示兑换奖励入口。');
+requireText(classListSource, "label: '设置兑换密码'", '底部弹窗应展示设置兑换密码入口。');
+requireText(classListSource, "label: '更新人脸数据'", '底部弹窗应展示更新人脸数据入口。');
+requireText(classListSource, "label: '离校学生'", '底部弹窗应展示离校学生入口。');
+requireText(classListSource, "label: '邀请老师加入'", '底部弹窗应展示邀请老师加入入口。');
+requireText(classListSource, "label: '编辑班级信息'", '底部弹窗应展示编辑班级信息入口。');
+requireText(classListSource, 'onInviteTeacher: (classId: string) => void;', '班级列表应暴露邀请老师回调。');
+requireText(classListSource, 'onEditClassInfo: (classId: string) => void;', '班级列表应暴露编辑班级信息回调。');
 
 requireText(appSource, "'homework_entry'", '手机端应新增作业录入页面状态。');
 requireText(appSource, "case 'homework_entry': return MOCK_CLASSES.find(c => c.id === selectedClassId)?.name || '作业录入';", '作业录入页面标题应优先显示当前班级名。');
 requireText(appSource, 'const handleViewHomeworkEntry = (classId: string)', 'App 应提供作业录入导航处理。');
+requireText(appSource, 'const handleInviteTeacher = (classId: string)', 'App 应提供邀请老师演示处理。');
+requireText(appSource, 'const handleEditClassInfo = (classId: string)', 'App 应提供编辑班级信息演示处理。');
 requireText(appSource, '<HomeworkEntryView', 'App 应渲染作业录入页面。');
-requireText(appSource, 'students={GET_MOCK_STUDENTS_FOR_CLASS(selectedClassId)}', '作业录入应按当前班级加载学生。');
+requireText(appSource, 'students={getMergedStudentsForClass(selectedClassId).filter', '作业录入应按当前班级加载学生。');
 
 requireText(homeworkEntrySource, 'subjectOptions', '作业录入应按科目区分。');
 requireText(homeworkEntrySource, "const statusOptions = ['优', '良', '合格', '待合格', '未交'];", '作业录入状态应包含优良合格待合格未交。');

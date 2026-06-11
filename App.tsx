@@ -1541,10 +1541,10 @@ const AppSwitcher: React.FC = () => {
             <button
               onClick={() => setCurrentApp('teacher-c-mobile')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-c-mobile' ? 'bg-black text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="教师-手机端（C端版本）- 低保真原型"
+              title="C端改造 - 低保真原型"
             >
               <Smartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold leading-tight">教师-C端</span>
+              <span className="text-[9px] font-bold leading-tight">C端改造</span>
             </button>
             <button
               onClick={() => setCurrentApp('parent')}

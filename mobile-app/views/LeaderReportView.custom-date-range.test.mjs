@@ -25,6 +25,12 @@ for (const required of [
   'applyCustomDateRange',
   'getDateRangeError',
   'getCustomRangeCompactLabel',
+  'getCustomQuickDateRange',
+  'customDateQuickRanges',
+  "{ key: 'yesterday', label: '昨天' }",
+  "{ key: 'lastWeek', label: '上周' }",
+  "{ key: 'lastMonth', label: '上月' }",
+  '设为{quickRange.label}',
   '选择统计时间',
   '开始日期',
   '结束日期',
@@ -52,6 +58,20 @@ for (const forbidden of [
 ]) {
   if (viewSource.includes(forbidden)) {
     throw new Error(`自定义时间段界面不应出现低价值说明文案：${forbidden}`);
+  }
+}
+
+const customDateSheetStart = viewSource.indexOf('{showCustomDateSheet && (');
+const classCoverageSheetStart = viewSource.indexOf('{showClassCoverageSheet', customDateSheetStart);
+const customDateSheetSource = viewSource.slice(customDateSheetStart, classCoverageSheetStart);
+
+if (customDateSheetSource.includes('leaderReportPeriods.slice(0, 3)')) {
+  throw new Error('自定义时间段快捷操作不应继续复用今日/本周/本月，应使用昨天/上周/上月');
+}
+
+for (const forbidden of ['设为今日', '设为本周', '设为本月']) {
+  if (customDateSheetSource.includes(forbidden)) {
+    throw new Error(`自定义时间段快捷操作不应出现低价值选项：${forbidden}`);
   }
 }
 

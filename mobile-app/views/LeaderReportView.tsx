@@ -37,6 +37,7 @@ type FiveEducationChartValueKey = 'plusScore' | 'minusScore' | 'netScore' | 'sco
 type IndicatorUsageLevel = 'second' | 'third';
 type IndicatorUsageSort = 'asc' | 'desc';
 type IndicatorGroupFilter = LeaderReportFiveEducationStat['key'];
+type CustomDateQuickRange = 'yesterday' | 'lastWeek' | 'lastMonth';
 
 interface LeaderReportViewProps {
     onBack: () => void;
@@ -346,6 +347,36 @@ const getPresetDateRange = (period: Exclude<LeaderReportPeriod, 'custom'>): Lead
             : new Date(today.getFullYear(), 1, 1);
     return { startDate: toDateInputValue(termStart), endDate };
 };
+
+const getCustomQuickDateRange = (range: CustomDateQuickRange): LeaderReportDateRange => {
+    const today = new Date();
+
+    if (range === 'yesterday') {
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const dateValue = toDateInputValue(yesterday);
+        return { startDate: dateValue, endDate: dateValue };
+    }
+
+    if (range === 'lastWeek') {
+        const day = today.getDay() || 7;
+        const end = new Date(today);
+        end.setDate(today.getDate() - day);
+        const start = new Date(end);
+        start.setDate(end.getDate() - 6);
+        return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
+    }
+
+    const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const end = new Date(today.getFullYear(), today.getMonth(), 0);
+    return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
+};
+
+const customDateQuickRanges: { key: CustomDateQuickRange; label: string }[] = [
+    { key: 'yesterday', label: '昨天' },
+    { key: 'lastWeek', label: '上周' },
+    { key: 'lastMonth', label: '上月' },
+];
 
 const getCustomRangeCompactLabel = (range: LeaderReportDateRange | null) => {
     if (!range?.startDate || !range.endDate) return '自定义';
@@ -2374,16 +2405,16 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                             </div>
 
                             <div className="mt-4 grid grid-cols-3 gap-2">
-                                {leaderReportPeriods.slice(0, 3).map(period => {
-                                    const range = getPresetDateRange(period.key);
+                                {customDateQuickRanges.map(quickRange => {
+                                    const range = getCustomQuickDateRange(quickRange.key);
                                     return (
                                         <button
-                                            key={period.key}
+                                            key={quickRange.key}
                                             type="button"
                                             onClick={() => setDraftDateRange(range)}
                                             className="min-h-[40px] rounded-2xl bg-slate-100 px-2 text-xs font-semibold text-slate-600 transition-all active:scale-95 active:bg-slate-200"
                                         >
-                                            设为{period.label}
+                                            设为{quickRange.label}
                                         </button>
                                     );
                                 })}
