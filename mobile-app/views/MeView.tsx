@@ -125,14 +125,14 @@ const MeView: React.FC<MeViewProps> = ({ teacherProfile, onNavigateToFiles, onEd
                             <div className="h-[92px] w-[92px] rounded-full bg-white/86 p-1.5 shadow-[0_18px_42px_-24px_rgba(15,23,42,0.45)] backdrop-blur">
                                 <img
                                     src={teacherProfile.avatar}
-                                    alt="刘飞飞老师头像"
+                                    alt={`${teacherProfile.name}头像`}
                                     className="h-full w-full rounded-full bg-slate-50 object-cover ring-2 ring-white"
                                 />
                             </div>
                         </button>
 
                         <div className="min-w-0 flex-1">
-                            <h2 className="text-xl font-extrabold leading-tight tracking-tight text-slate-950">刘飞飞老师</h2>
+                            <h2 className="text-xl font-extrabold leading-tight tracking-tight text-slate-950">{teacherProfile.name}</h2>
                             <p className={`mt-2 text-slate-600 ${phoneText.itemTitle}`}>成都七中初中附属小学</p>
                             <button
                                 type="button"

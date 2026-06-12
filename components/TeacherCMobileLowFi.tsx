@@ -2769,7 +2769,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                 type="button"
                 onClick={() => setShowSchoolAdminSpaceMenu((open) => !open)}
                 className="flex h-11 min-w-[184px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 text-left active:bg-gray-50"
-                aria-label="切换版本"
+                aria-label="切换空间"
                 aria-expanded={showSchoolAdminSpaceMenu}
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-black">{currentSpace.type === 'personal' ? '个' : '管'}</span>

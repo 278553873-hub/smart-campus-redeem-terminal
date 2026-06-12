@@ -233,7 +233,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             }
                             onToggleSelectionMode();
                         }}
-                        className={`h-9 shrink-0 rounded-full px-3.5 text-[13px] font-bold transition-all active:scale-95 ${isSelectionMode ? 'border border-slate-200 bg-white text-slate-600 shadow-sm' : 'bg-cyan-700 text-white shadow-sm shadow-cyan-100'}`}
+                        className={`h-9 shrink-0 rounded-full px-3.5 text-[13px] font-bold transition-all active:scale-95 ${isSelectionMode ? 'border border-slate-200 bg-white text-slate-600 shadow-sm' : 'bg-slate-900 text-white shadow-sm shadow-slate-100'}`}
                     >
                         {isSelectionMode ? '取消' : '多选'}
                     </button>
@@ -325,7 +325,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             setIsGroupSelectionMode(prev => !prev);
                             setGroupSelectionIds(new Set());
                         }}
-                        className={`h-10 rounded-full px-4 text-sm font-bold active:scale-95 ${isGroupSelectionMode ? 'bg-slate-700 text-white' : 'bg-cyan-700 text-white'}`}
+                        className={`h-10 rounded-full px-4 text-sm font-bold active:scale-95 ${isGroupSelectionMode ? 'bg-slate-700 text-white' : 'bg-slate-900 text-white'}`}
                     >
                         {isGroupSelectionMode ? '取消' : '多选分组'}
                     </button>

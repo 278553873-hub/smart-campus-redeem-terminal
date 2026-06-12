@@ -78,6 +78,7 @@ export interface TeacherDepartment {
 }
 
 export interface TeacherProfile {
+  name: string;
   avatar: string;
   departmentId: string;
   departmentName: string;

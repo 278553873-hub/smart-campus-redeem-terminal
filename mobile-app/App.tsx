@@ -96,6 +96,7 @@ const createTeachingAssignments = (classIds: string[], subject: string) => (
 );
 
 const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
+    name: '刘飞飞老师',
     avatar: ASSETS.AVATAR.TEACHER_LIU,
     departmentId: 'student-development',
     departmentName: '学发中心',
@@ -819,10 +820,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     subjects={TEACHER_PROFILE_SUBJECTS}
                                     departments={TEACHER_PROFILE_DEPARTMENTS}
                                     onBack={goBack}
-                                    onSave={(nextProfile) => {
-                                        setTeacherProfile(nextProfile);
-                                        goBack();
-                                    }}
+                                    onChange={setTeacherProfile}
                                 />
                             )}
 

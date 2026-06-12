@@ -5,7 +5,7 @@ import {
     ChevronLeft,
     Image,
     Landmark,
-    Plus,
+    Pencil,
     Sparkles,
     Trash2,
     Users,
@@ -21,10 +21,10 @@ interface TeacherProfileEditViewProps {
     subjects: string[];
     departments: TeacherDepartment[];
     onBack: () => void;
-    onSave: (profile: TeacherProfile) => void;
+    onChange: (profile: TeacherProfile) => void;
 }
 
-type EditorMode = 'idle' | 'avatar' | 'teachingClasses' | 'teachingSubject' | 'homeroom' | 'gradeLeader' | 'department';
+type EditorMode = 'idle' | 'avatar' | 'name' | 'teachingClasses' | 'homeroom' | 'gradeLeader' | 'department';
 
 interface TeachingGroup {
     subject: string;
@@ -99,11 +99,14 @@ export const groupTeachingAssignmentsBySubject = (assignments: TeacherTeachingAs
     }));
 };
 
-const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile, classes, subjects, departments, onBack, onSave }) => {
+const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile, classes, subjects, departments, onBack, onChange }) => {
     const [draft, setDraft] = useState<TeacherProfile>(profile);
+    const [nameDraft, setNameDraft] = useState(profile.name);
     const [mode, setMode] = useState<EditorMode>('idle');
     const [selectedClassIds, setSelectedClassIds] = useState<Set<string>>(new Set());
     const [selectedGrades, setSelectedGrades] = useState<Set<string>>(new Set());
+    const [selectedSubject, setSelectedSubject] = useState('');
+    const [activeGrade, setActiveGrade] = useState('');
     const cameraInputRef = useRef<HTMLInputElement>(null);
     const albumInputRef = useRef<HTMLInputElement>(null);
 
@@ -111,7 +114,19 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     const gradeOptions = useMemo(() => Object.keys(classesByGrade), [classesByGrade]);
     const teachingGroups = useMemo(() => groupTeachingAssignmentsBySubject(draft.teachingAssignments, classes), [draft.teachingAssignments, classes]);
 
+    const applyProfileChange = (updater: (current: TeacherProfile) => TeacherProfile) => {
+        const next = updater(draft);
+        setDraft(next);
+        onChange(next);
+    };
+
     const resetSelection = () => setSelectedClassIds(new Set());
+
+    const resetCascadeSelection = (ids: string[] = []) => {
+        setSelectedClassIds(new Set(ids));
+        const firstSelectedClass = ids.map(id => classes.find(classInfo => classInfo.id === id)).find(Boolean);
+        setActiveGrade(firstSelectedClass ? getGradeLabel(firstSelectedClass) : gradeOptions[0] || '');
+    };
 
     const toggleClass = (classId: string) => {
         setSelectedClassIds(prev => {
@@ -122,7 +137,8 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         });
     };
 
-    const toggleGradeClasses = (gradeClasses: ClassInfo[]) => {
+    const toggleActiveGradeClasses = () => {
+        const gradeClasses = classesByGrade[activeGrade] || [];
         setSelectedClassIds(prev => {
             const next = new Set(prev);
             const allSelected = gradeClasses.every(classInfo => next.has(classInfo.id));
@@ -135,19 +151,19 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     };
 
     const openRoleSelector = (targetMode: Extract<EditorMode, 'homeroom'>, ids: string[]) => {
-        setSelectedClassIds(new Set(ids));
+        resetCascadeSelection(ids);
         setMode(targetMode);
     };
 
     const saveRoleClasses = () => {
         const ids = Array.from(selectedClassIds);
-        setDraft(prev => ({ ...prev, homeroomClassIds: ids }));
+        applyProfileChange(prev => ({ ...prev, homeroomClassIds: ids }));
         resetSelection();
         setMode('idle');
     };
 
     const clearHomeroomClasses = () => {
-        setDraft(prev => ({ ...prev, homeroomClassIds: [] }));
+        applyProfileChange(prev => ({ ...prev, homeroomClassIds: [] }));
         resetSelection();
         setMode('idle');
     };
@@ -167,32 +183,40 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     };
 
     const saveGradeLeaderGrades = () => {
-        setDraft(prev => ({ ...prev, gradeLeaderGrades: Array.from(selectedGrades) }));
+        applyProfileChange(prev => ({ ...prev, gradeLeaderGrades: Array.from(selectedGrades) }));
+        setSelectedGrades(new Set());
+        setMode('idle');
+    };
+
+    const clearGradeLeaderGrades = () => {
+        applyProfileChange(prev => ({ ...prev, gradeLeaderGrades: [] }));
         setSelectedGrades(new Set());
         setMode('idle');
     };
 
     const saveDepartment = (department: TeacherDepartment) => {
-        setDraft(prev => ({ ...prev, departmentId: department.id, departmentName: department.name }));
+        applyProfileChange(prev => ({ ...prev, departmentId: department.id, departmentName: department.name }));
         setMode('idle');
     };
 
-    const addTeachingAssignments = (subject: string) => {
+    const saveTeachingAssignments = () => {
+        if (!selectedSubject || selectedClassIds.size === 0) return;
         const selectedIds = Array.from(selectedClassIds);
-        setDraft(prev => {
+        applyProfileChange(prev => {
             const existingKeys = new Set(prev.teachingAssignments.map(item => `${item.classId}-${item.subject}`));
             const additions = selectedIds
-                .map(classId => ({ classId, subject }))
+                .map(classId => ({ classId, subject: selectedSubject }))
                 .filter(item => !existingKeys.has(`${item.classId}-${item.subject}`));
             return { ...prev, teachingAssignments: [...prev.teachingAssignments, ...additions] };
         });
         resetSelection();
+        setSelectedSubject('');
         setMode('idle');
     };
 
     const removeTeachingGroup = (group: TeachingGroup) => {
         const classSet = new Set(group.classIds);
-        setDraft(prev => ({
+        applyProfileChange(prev => ({
             ...prev,
             teachingAssignments: prev.teachingAssignments.filter(item => item.subject !== group.subject || !classSet.has(item.classId)),
         }));
@@ -204,7 +228,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         const reader = new FileReader();
         reader.onload = () => {
             if (typeof reader.result === 'string') {
-                setDraft(prev => ({ ...prev, avatar: reader.result as string }));
+                applyProfileChange(prev => ({ ...prev, avatar: reader.result as string }));
             }
             setMode('idle');
         };
@@ -214,74 +238,110 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
 
     const renderClassSelectorPage = () => {
         const isTeaching = mode === 'teachingClasses';
-        const title = isTeaching ? '选择任教班级' : '选择班主任班级';
-        const primaryText = isTeaching ? '下一步：选择学科' : '保存班主任班级';
-        const onPrimary = isTeaching ? () => setMode('teachingSubject') : saveRoleClasses;
+        const isHomeroom = mode === 'homeroom';
+        const title = isTeaching ? '新增任教信息' : '选择班主任班级';
+        const primaryText = isTeaching ? '保存任教信息' : '保存班主任班级';
+        const onPrimary = isTeaching ? saveTeachingAssignments : saveRoleClasses;
+        const primaryDisabled = selectedClassIds.size === 0 || (isTeaching && !selectedSubject);
+        const activeGradeClasses = classesByGrade[activeGrade] || [];
+        const activeSelectedCount = activeGradeClasses.filter(classInfo => selectedClassIds.has(classInfo.id)).length;
+        const activeAllSelected = activeGradeClasses.length > 0 && activeGradeClasses.every(classInfo => selectedClassIds.has(classInfo.id));
 
         return (
             <div className="flex h-full min-h-0 overflow-hidden flex-col bg-slate-50 font-sans text-slate-900">
                 <div className="flex h-12 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4">
-                    <button onClick={() => setMode('idle')} className="flex h-11 w-11 -ml-3 items-center justify-center rounded-full text-slate-500 active:bg-slate-100">
+                    <button onClick={() => setMode('idle')} className="flex h-11 w-11 -ml-3 items-center justify-center rounded-full text-slate-500 active:bg-slate-100" aria-label="返回">
                         <ChevronLeft className="h-5 w-5" />
                     </button>
                     <h2 className={`${phoneText.navTitle} text-slate-900`}>{title}</h2>
                     <div className="w-11" />
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-5 py-4">
-                    <div className="mb-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium leading-relaxed text-blue-700">
-                        {isTeaching ? '先选择一个或多个班级，下一步再为这些班级选择同一任教学科。' : '可按年级批量选择，也可以单独选择具体班级。'}
-                    </div>
-
-                    <div className="space-y-3">
-                        {Object.entries(classesByGrade).map(([grade, gradeClasses]) => {
-                            const allSelected = gradeClasses.every(classInfo => selectedClassIds.has(classInfo.id));
-                            const selectedCount = gradeClasses.filter(classInfo => selectedClassIds.has(classInfo.id)).length;
-
-                            return (
-                                <MobileCard key={grade} variant="card" padding="md">
-                                    <div className="mb-3 flex items-center justify-between">
-                                        <div>
-                                            <h3 className={`${phoneText.sectionTitle} text-slate-900`}>{grade}</h3>
-                                            <p className="mt-1 text-xs text-slate-400">已选 {selectedCount} / {gradeClasses.length} 个班</p>
+                <div className="flex-1 overflow-hidden px-5 py-4">
+                    <div className="flex h-full min-h-0 flex-col gap-3">
+                        <div className="min-h-0 flex-1 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+                            <div className="grid h-full min-h-0 grid-cols-[92px_1fr]" aria-label="班级级联选择">
+                                <div className="overflow-y-auto border-r border-slate-100 bg-slate-50/80 p-2 no-scrollbar" aria-label="左侧先选年级">
+                                    {gradeOptions.map(grade => {
+                                        const selectedCount = (classesByGrade[grade] || []).filter(classInfo => selectedClassIds.has(classInfo.id)).length;
+                                        return (
+                                            <button
+                                                key={grade}
+                                                type="button"
+                                                onClick={() => setActiveGrade(grade)}
+                                                className={`mb-2 flex min-h-11 w-full flex-col items-center justify-center rounded-2xl text-xs font-extrabold transition-all last:mb-0 active:scale-95 ${activeGrade === grade ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-slate-500 active:bg-blue-50 active:text-blue-600'}`}
+                                            >
+                                                <span>{grade}</span>
+                                                {selectedCount > 0 && <span className={`mt-0.5 text-[10px] ${activeGrade === grade ? 'text-blue-100' : 'text-blue-500'}`}>{selectedCount}个</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex min-w-0 flex-col p-3" aria-label="右侧再选该年级下的班级">
+                                    <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <h3 className={`${phoneText.sectionTitle} truncate text-slate-900`}>{activeGrade || '选择年级'}</h3>
+                                            <p className="mt-1 text-xs text-slate-400">已选 {activeSelectedCount} / {activeGradeClasses.length} 个班</p>
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => toggleGradeClasses(gradeClasses)}
-                                            className={`rounded-full px-3 py-2 text-xs font-bold transition-colors ${allSelected ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 active:bg-blue-100'}`}
+                                            disabled={activeGradeClasses.length === 0}
+                                            onClick={toggleActiveGradeClasses}
+                                            className={`shrink-0 rounded-full px-3 py-2 text-xs font-extrabold transition-colors disabled:bg-slate-100 disabled:text-slate-300 ${activeAllSelected ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 active:bg-blue-100'}`}
                                         >
-                                            {allSelected ? '取消全选' : '全选本年级'}
+                                            {activeAllSelected ? '取消全选' : '全选本年级'}
                                         </button>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {gradeClasses.map(classInfo => {
+                                    <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 no-scrollbar">
+                                        {activeGradeClasses.map(classInfo => {
                                             const selected = selectedClassIds.has(classInfo.id);
                                             return (
                                                 <button
                                                     key={classInfo.id}
                                                     type="button"
                                                     onClick={() => toggleClass(classInfo.id)}
-                                                    className={`min-h-11 rounded-xl border text-sm font-bold transition-all active:scale-95 ${selected ? 'border-blue-200 bg-blue-50 text-blue-600 shadow-sm' : 'border-slate-100 bg-slate-50 text-slate-500'}`}
+                                                    aria-pressed={selected}
+                                                    aria-label={`${selected ? '取消选择' : '选择'}${activeGrade}${getClassShortLabel(classInfo)}`}
+                                                    className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border px-3 text-left text-sm font-bold transition-all active:scale-[0.99] ${selected ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-600 active:bg-white'}`}
                                                 >
-                                                    {getClassShortLabel(classInfo)}
+                                                    <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-black ${selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-transparent'}`}>✓</span>
+                                                    <span className="min-w-0 flex-1 truncate">{getClassShortLabel(classInfo)}</span>
                                                 </button>
                                             );
                                         })}
                                     </div>
-                                </MobileCard>
-                            );
-                        })}
+                                </div>
+                            </div>
+                        </div>
+                        {isTeaching && (
+                            <div className="shrink-0 rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
+                                <h3 className={`${phoneText.sectionTitle} text-slate-900`}>选择任教学科</h3>
+                                <div className="mt-3 grid grid-cols-4 gap-2">
+                                    {subjects.map(subject => (
+                                        <button
+                                            key={subject}
+                                            type="button"
+                                            onClick={() => setSelectedSubject(subject)}
+                                            aria-pressed={selectedSubject === subject}
+                                            className={`flex min-h-11 items-center justify-center rounded-2xl border px-2 text-xs font-extrabold transition-all active:scale-95 ${selectedSubject === subject ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-600 active:bg-white'}`}
+                                        >
+                                            {subject}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 <div className="shrink-0 space-y-2 border-t border-slate-100 bg-white px-5 pb-6 pt-3">
                     <button
                         type="button"
-                        disabled={selectedClassIds.size === 0}
+                        disabled={primaryDisabled}
                         onClick={onPrimary}
                         className="flex h-12 w-full items-center justify-center rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
                     >
-                        {selectedClassIds.size > 0 ? `${primaryText}（已选 ${selectedClassIds.size} 个班）` : '请先选择班级'}
+                        {selectedClassIds.size === 0 ? '请先选择班级' : (isTeaching && !selectedSubject ? '请先选择学科' : `${primaryText}（已选 ${selectedClassIds.size} 个班）`)}
                     </button>
                     {!isTeaching && (
                         <button
@@ -297,44 +357,10 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         );
     };
 
-    const renderSubjectSelectorPage = () => (
-        <div className="flex h-full min-h-0 overflow-hidden flex-col bg-slate-50 font-sans text-slate-900">
-            <div className="flex h-12 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4">
-                <button onClick={() => setMode('teachingClasses')} className="flex h-11 w-11 -ml-3 items-center justify-center rounded-full text-slate-500 active:bg-slate-100">
-                    <ChevronLeft className="h-5 w-5" />
-                </button>
-                <h2 className={`${phoneText.navTitle} text-slate-900`}>选择任教学科</h2>
-                <div className="w-11" />
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-                <MobileCard variant="card" padding="md">
-                    <p className="text-xs font-medium text-slate-400">将学科应用到</p>
-                    <h3 className="mt-2 text-base font-bold leading-relaxed text-slate-900">
-                        {summarizeClassIds(Array.from(selectedClassIds), classes)}
-                    </h3>
-                </MobileCard>
-
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                    {subjects.map(subject => (
-                        <button
-                            key={subject}
-                            type="button"
-                            onClick={() => addTeachingAssignments(subject)}
-                            className="flex min-h-14 items-center justify-center rounded-2xl border border-slate-100 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm transition-all active:scale-95 active:border-blue-200 active:bg-blue-50 active:text-blue-600"
-                        >
-                            {subject}
-                        </button>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-
     const renderGradeLeaderSelectorPage = () => (
         <div className="flex h-full min-h-0 overflow-hidden flex-col bg-slate-50 font-sans text-slate-900">
             <div className="flex h-12 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4">
-                <button onClick={() => setMode('idle')} className="flex h-11 w-11 -ml-3 items-center justify-center rounded-full text-slate-500 active:bg-slate-100">
+                <button onClick={() => setMode('idle')} className="flex h-11 w-11 -ml-3 items-center justify-center rounded-full text-slate-500 active:bg-slate-100" aria-label="返回">
                     <ChevronLeft className="h-5 w-5" />
                 </button>
                 <h2 className={`${phoneText.navTitle} text-slate-900`}>选择年级组长年级</h2>
@@ -350,6 +376,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                 key={grade}
                                 type="button"
                                 onClick={() => toggleGrade(grade)}
+                                aria-pressed={selected}
                                 className={`flex min-h-14 items-center justify-center rounded-2xl border px-3 text-sm font-bold transition-all active:scale-95 ${selected ? 'border-indigo-200 bg-indigo-50 text-indigo-600 shadow-sm' : 'border-slate-100 bg-white text-slate-600 shadow-sm'}`}
                             >
                                 {grade}
@@ -369,11 +396,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 </button>
                 <button
                     type="button"
-                    onClick={() => {
-                        setDraft(prev => ({ ...prev, gradeLeaderGrades: [] }));
-                        setSelectedGrades(new Set());
-                        setMode('idle');
-                    }}
+                    onClick={clearGradeLeaderGrades}
                     className="flex h-11 w-full items-center justify-center rounded-2xl text-sm font-bold text-rose-500 active:bg-rose-50"
                 >
                     清除年级组长年级
@@ -385,7 +408,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     const renderDepartmentSelectorPage = () => (
         <div className="flex h-full min-h-0 overflow-hidden flex-col bg-slate-50 font-sans text-slate-900">
             <div className="flex h-12 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4">
-                <button onClick={() => setMode('idle')} className="flex h-11 w-11 -ml-3 items-center justify-center rounded-full text-slate-500 active:bg-slate-100">
+                <button onClick={() => setMode('idle')} className="flex h-11 w-11 -ml-3 items-center justify-center rounded-full text-slate-500 active:bg-slate-100" aria-label="返回">
                     <ChevronLeft className="h-5 w-5" />
                 </button>
                 <h2 className={`${phoneText.navTitle} text-slate-900`}>选择部门</h2>
@@ -415,7 +438,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <button
                     type="button"
                     onClick={() => {
-                        setDraft(prev => ({ ...prev, departmentId: '', departmentName: '' }));
+                        applyProfileChange(prev => ({ ...prev, departmentId: '', departmentName: '' }));
                         setMode('idle');
                     }}
                     className="flex h-11 w-full items-center justify-center rounded-2xl text-sm font-bold text-rose-500 active:bg-rose-50"
@@ -448,56 +471,40 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         </div>
     );
 
+    const saveName = () => {
+        const normalizedName = nameDraft.trim();
+        if (!normalizedName) return;
+        applyProfileChange(prev => ({ ...prev, name: normalizedName }));
+        setMode('idle');
+    };
+
+    const renderNameDialog = () => (
+        <div className="absolute inset-0 z-[130] flex items-center bg-slate-950/30 px-5" onClick={() => setMode('idle')}>
+            <div className="w-full rounded-3xl bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}>
+                <h3 className="text-center text-lg font-extrabold text-slate-900">修改姓名</h3>
+                <input
+                    value={nameDraft}
+                    onChange={event => setNameDraft(event.target.value)}
+                    onKeyDown={event => {
+                        if (event.key === 'Enter') saveName();
+                    }}
+                    autoFocus
+                    maxLength={20}
+                    className="mt-5 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-900 outline-none focus:border-blue-400 focus:bg-white"
+                    aria-label="教师姓名"
+                />
+                <div className="mt-4 flex gap-3">
+                    <button type="button" onClick={() => setMode('idle')} className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-slate-100 text-sm font-bold text-slate-600">取消</button>
+                    <button type="button" disabled={!nameDraft.trim()} onClick={saveName} className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-blue-600 text-sm font-extrabold text-white disabled:bg-slate-200 disabled:text-slate-400">确定</button>
+                </div>
+            </div>
+        </div>
+    );
+
     const roleSummary = (ids: string[]) => ids.length > 0 ? summarizeClassIds(ids, classes) : '暂未选择';
     const gradeLeaderSummary = draft.gradeLeaderGrades.length > 0 ? draft.gradeLeaderGrades.join('、') : '暂未选择';
 
-    const renderBasicInfoSettingRows = () => {
-        const rows = [
-            {
-                key: 'homeroom',
-                icon: Sparkles,
-                tone: 'violet' as const,
-                title: '担任班主任的班级',
-                summary: roleSummary(draft.homeroomClassIds),
-                onClick: () => openRoleSelector('homeroom', draft.homeroomClassIds),
-                buttonTone: 'text-violet-600 bg-violet-50 active:bg-violet-100',
-            },
-            {
-                key: 'gradeLeader',
-                icon: Users,
-                tone: 'brand' as const,
-                title: '担任年级组长的年级',
-                summary: gradeLeaderSummary,
-                onClick: openGradeLeaderSelector,
-                buttonTone: 'text-indigo-600 bg-indigo-50 active:bg-indigo-100',
-            },
-            {
-                key: 'department',
-                icon: Landmark,
-                tone: 'brand' as const,
-                title: '部门设置',
-                summary: draft.departmentName || '暂未选择',
-                onClick: () => setMode('department'),
-                buttonTone: 'text-blue-600 bg-blue-50 active:bg-blue-100',
-            },
-        ];
-
-        return rows.map((row, index) => (
-            <div key={row.key} className={`flex items-center justify-between gap-3 py-3 ${index > 0 ? 'border-t border-slate-100' : ''}`}>
-                <div className="flex min-w-0 items-center gap-3">
-                    <IconBadge icon={row.icon} size="md" tone={row.tone} />
-                    <div className="min-w-0">
-                        <h3 className={`${phoneText.itemTitle} truncate text-slate-900`}>{row.title}</h3>
-                        <p className="mt-1 truncate text-xs text-slate-400">{row.summary}</p>
-                    </div>
-                </div>
-                <button type="button" onClick={row.onClick} className={`shrink-0 rounded-full px-3 py-2 text-xs font-extrabold ${row.buttonTone}`}>修改</button>
-            </div>
-        ));
-    };
-
     if (mode === 'teachingClasses' || mode === 'homeroom') return renderClassSelectorPage();
-    if (mode === 'teachingSubject') return renderSubjectSelectorPage();
     if (mode === 'gradeLeader') return renderGradeLeaderSelectorPage();
     if (mode === 'department') return renderDepartmentSelectorPage();
 
@@ -511,13 +518,11 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     <ChevronLeft className="h-5 w-5" />
                 </button>
                 <h1 className={`${phoneText.navTitle} text-slate-900`}>编辑教师信息</h1>
-                <button onClick={() => onSave(draft)} className="text-sm font-extrabold text-blue-600 active:text-blue-700">
-                    保存
-                </button>
+                <div className="w-11" />
             </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4 pb-8">
-                <MobileCard variant="hero" padding="lg" className="text-center">
+            <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4 pb-8">
+                <MobileCard variant="hero" padding="lg" className="teacher-avatar-card text-center">
                     <button type="button" onClick={() => setMode('avatar')} className="group mx-auto block" aria-label="更换头像">
                         <div className="relative mx-auto h-24 w-24 rounded-full bg-blue-50 p-1.5 shadow-inner">
                             <img src={draft.avatar} alt="老师头像" className="h-full w-full rounded-full object-cover ring-2 ring-white" />
@@ -529,24 +534,38 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     </button>
                 </MobileCard>
 
-                <MobileCard variant="card" padding="md">
-                    <div className="mb-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <IconBadge icon={BookOpen} size="md" tone="blue" />
-                            <div>
-                                <h2 className={`${phoneText.sectionTitle} text-slate-900`}>任教班级与学科</h2>
-                                <p className="mt-1 text-xs text-slate-400">先选班级，再选学科</p>
+                <MobileCard variant="card" padding="md" className="teacher-name-card">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <IconBadge icon={Pencil} size="md" tone="brand" />
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-400">姓名</p>
+                                <h2 className="mt-1 truncate text-base font-extrabold text-slate-900">{draft.name}</h2>
                             </div>
                         </div>
-                        <button type="button" onClick={() => { resetSelection(); setMode('teachingClasses'); }} className="flex h-10 items-center gap-1 rounded-full bg-blue-50 px-3 text-xs font-extrabold text-blue-600 active:bg-blue-100">
-                            <Plus className="h-4 w-4" />
-                            添加
+                        <button
+                            type="button"
+                            onClick={() => { setNameDraft(draft.name); setMode('name'); }}
+                            className="shrink-0 rounded-full bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 active:bg-blue-100"
+                            aria-label="修改姓名"
+                        >
+                            修改
                         </button>
                     </div>
+                </MobileCard>
 
-                    {teachingGroups.length === 0 ? (
-                        <div className="rounded-2xl bg-slate-50 px-4 py-5 text-center text-sm font-medium text-slate-400">暂未配置任教范围</div>
-                    ) : (
+                <MobileCard variant="card" padding="md" className="teacher-teaching-card">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <IconBadge icon={BookOpen} size="md" tone="blue" />
+                            <div className="min-w-0">
+                                <h3 className={`${phoneText.itemTitle} truncate text-slate-900`}>任教信息</h3>
+                                <p className="mt-1 truncate text-xs text-slate-400">{teachingGroups.length > 0 ? `${teachingGroups.length} 个学科 · ${draft.teachingAssignments.length} 个班级关系` : '暂未配置'}</p>
+                            </div>
+                        </div>
+                        <button type="button" onClick={() => { resetCascadeSelection(); setMode('teachingClasses'); }} className="shrink-0 rounded-full bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 active:bg-blue-100">添加</button>
+                    </div>
+                    {teachingGroups.length > 0 && (
                         <div className="space-y-2">
                             {teachingGroups.map(group => (
                                 <div key={group.subject} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
@@ -566,16 +585,49 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     )}
                 </MobileCard>
 
-                <MobileCard variant="card" padding="md" className="teacher-basic-info-card">
-                    <div className="mb-1 flex items-center gap-3">
-                        <IconBadge icon={Landmark} size="md" tone="brand" />
-                        <h2 className={`${phoneText.sectionTitle} text-slate-900`}>基本信息</h2>
+                <MobileCard variant="card" padding="md" className="teacher-homeroom-card">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <IconBadge icon={Sparkles} size="md" tone="violet" />
+                            <div className="min-w-0">
+                                <h3 className={`${phoneText.itemTitle} truncate text-slate-900`}>担任班主任的班级</h3>
+                                <p className="mt-1 truncate text-xs text-slate-400">{roleSummary(draft.homeroomClassIds)}</p>
+                            </div>
+                        </div>
+                        <button type="button" onClick={() => openRoleSelector('homeroom', draft.homeroomClassIds)} className="shrink-0 rounded-full bg-violet-50 px-3 py-2 text-xs font-extrabold text-violet-600 active:bg-violet-100">修改</button>
                     </div>
-                    <div>{renderBasicInfoSettingRows()}</div>
                 </MobileCard>
+
+                <MobileCard variant="card" padding="md" className="teacher-grade-leader-card">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <IconBadge icon={Users} size="md" tone="brand" />
+                            <div className="min-w-0">
+                                <h3 className={`${phoneText.itemTitle} truncate text-slate-900`}>担任年级组长的年级</h3>
+                                <p className="mt-1 truncate text-xs text-slate-400">{gradeLeaderSummary}</p>
+                            </div>
+                        </div>
+                        <button type="button" onClick={openGradeLeaderSelector} className="shrink-0 rounded-full bg-indigo-50 px-3 py-2 text-xs font-extrabold text-indigo-600 active:bg-indigo-100">修改</button>
+                    </div>
+                </MobileCard>
+
+                <MobileCard variant="card" padding="md" className="teacher-department-card">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <IconBadge icon={Landmark} size="md" tone="brand" />
+                            <div className="min-w-0">
+                                <h3 className={`${phoneText.itemTitle} truncate text-slate-900`}>部门设置</h3>
+                                <p className="mt-1 truncate text-xs text-slate-400">{draft.departmentName || '暂未选择'}</p>
+                            </div>
+                        </div>
+                        <button type="button" onClick={() => setMode('department')} className="shrink-0 rounded-full bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 active:bg-blue-100">修改</button>
+                    </div>
+                </MobileCard>
+
             </div>
 
             {mode === 'avatar' && renderAvatarSheet()}
+            {mode === 'name' && renderNameDialog()}
         </div>
     );
 };
