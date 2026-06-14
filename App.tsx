@@ -20,12 +20,13 @@ import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import RegionalPcAdmin from './components/RegionalPcAdmin';
+import GroupPcAdmin from './components/GroupPcAdmin';
 import PlatformBrandMark from './components/PlatformBrandMark';
 import Loader from './components/Loader';
 import { DeviceWrapper } from './components/DeviceWrapper';
 import { ASSETS as MOBILE_ASSETS } from './mobile-app/assets/images';
 import './mobile-app/index.css';
-import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, X } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, X, Building2 } from 'lucide-react';
 import { playSound } from './utils/sound';
 
 // ============================================================
@@ -1245,10 +1246,10 @@ const PcWorkspace: React.FC = () => {
 };
 
 const AppSwitcher: React.FC = () => {
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen'>(() => {
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'group-pc' | 'group-pc-screen'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen') {
+    if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen' || app === 'group-pc' || app === 'group-pc-screen') {
       return app;
     }
     return 'terminal'; // default
@@ -1273,6 +1274,13 @@ const AppSwitcher: React.FC = () => {
   const environmentTitleClickCountRef = useRef(0);
 
   const handleRegionalPcLogout = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('app', 'terminal');
+    window.history.replaceState(null, '', url.toString());
+    setCurrentApp('terminal');
+  };
+
+  const handleGroupPcLogout = () => {
     const url = new URL(window.location.href);
     url.searchParams.set('app', 'terminal');
     window.history.replaceState(null, '', url.toString());
@@ -1442,6 +1450,8 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'pc-workspace' && <PcWorkspace />}
         {currentApp === 'region-pc' && <RegionalPcAdmin onLogout={handleRegionalPcLogout} />}
         {currentApp === 'region-pc-screen' && <RegionalPcAdmin screenOnly />}
+        {currentApp === 'group-pc' && <GroupPcAdmin onLogout={handleGroupPcLogout} />}
+        {currentApp === 'group-pc-screen' && <GroupPcAdmin screenOnly />}
         {currentApp === 'admin' && <MobileApp showPhoneShell={showPhoneShell} />}
         {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
@@ -1471,7 +1481,7 @@ const AppSwitcher: React.FC = () => {
       )}
 
       {/* 区域纯屏汇报模式需要保持正式呈现，不显示内部环境切换浮层。 */}
-      {currentApp !== 'region-pc-screen' && (
+      {currentApp !== 'region-pc-screen' && currentApp !== 'group-pc-screen' && (
         <div
           ref={demoPanelRef}
           className={`fixed z-[9999] touch-none select-none transition-[left,right,top,bottom,transform] duration-300 ${demoPanelPosition ? '' : 'right-0 top-1/2 -translate-y-1/2'} ${isDemoOpen ? demoPanelOpenClass : demoPanelClosedClass}`}
@@ -1529,6 +1539,14 @@ const AppSwitcher: React.FC = () => {
             >
               <ShieldCheck size={22} className="mb-1" />
               <span className="text-[9px] font-bold leading-tight">区级-PC端</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('group-pc')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'group-pc' ? 'bg-blue-800 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="集团-PC端 - 集团总部"
+            >
+              <Building2 size={22} className="mb-1" />
+              <span className="text-[9px] font-bold leading-tight">集团-PC端</span>
             </button>
             <button
               onClick={() => setCurrentApp('admin')}

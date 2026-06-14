@@ -1,0 +1,69 @@
+import fs from 'node:fs';
+
+const source = fs.readFileSync(new URL('./TeacherCMobileLowFi.tsx', import.meta.url), 'utf8');
+
+function requireText(text, message) {
+  if (!source.includes(text)) {
+    throw new Error(message);
+  }
+}
+
+function forbidText(text, message) {
+  if (source.includes(text)) {
+    throw new Error(message);
+  }
+}
+
+forbidText("| 'profileEdit'", '教师端页面枚举不应再包含 15 个人信息页。');
+forbidText("if (pageKey === 'profileEdit') return '15';", '15 不应再是个人信息页。');
+requireText("| 'termManagement'", '教师端页面枚举应新增学期管理页。');
+requireText("| 'subjectManagement'", '教师端页面枚举应新增科目管理页。');
+requireText("| 'departmentManagement'", '教师端页面枚举应新增部门管理页。');
+requireText("if (pageKey === 'termManagement') return '15';", '学期管理页应编号为 15。');
+requireText("if (pageKey === 'subjectManagement') return '16';", '科目管理页应编号为 16。');
+requireText("if (pageKey === 'departmentManagement') return '17';", '部门管理页应编号为 17。');
+requireText("pages: ['minePersonal', 'mineSchool', 'termManagement', 'subjectManagement', 'departmentManagement']", '我的流程应包含学期、科目、部门管理页。');
+requireText('<PageNodeButton item="termManagement" lane={lane.title} />', '页面导航图应展示学期管理节点。');
+requireText('<PageNodeButton item="subjectManagement" lane={lane.title} />', '页面导航图应展示科目管理节点。');
+requireText('<PageNodeButton item="departmentManagement" lane={lane.title} />', '页面导航图应展示部门管理节点。');
+requireText("'学校基础信息'", '我的学校版应展示学校基础信息入口。');
+requireText("hasSchoolSpace &&", '学校基础信息入口应只在学校版空间展示。');
+requireText("openSchoolBasicInfo(item.key)", '我的页学校基础信息卡片应通过分类入口进入具体管理页。');
+requireText("setActiveBasicInfoTab(tab)", '点击学期/科目/部门入口应先设置对应分类。');
+requireText("term: 'termManagement'", '学期入口应直达 15 学期管理。');
+requireText("subject: 'subjectManagement'", '科目入口应直达 16 科目管理。');
+requireText("department: 'departmentManagement'", '部门入口应直达 17 部门管理。');
+for (const icon of ['icon: CalendarDays', 'icon: BookOpen', 'icon: Building2']) {
+  requireText(icon, `学校基础信息卡片应配置 ${icon} 图标。`);
+}
+requireText('{item.label}管理</span>', '学校基础信息卡片应展示学期/科目/部门管理入口文案。');
+requireText("type SchoolBasicInfoTab = 'term' | 'subject' | 'department';", '快捷维护页应聚焦学期、科目、部门三个首期模块。');
+requireText("const schoolBasicInfoTabs", '应有学期、科目、部门分段配置。');
+requireText("const schoolTermItems", '学期管理应使用系统内置学期列表。');
+requireText("schoolYear: '2025-2026学年'", '学期数据应拆分学年字段。');
+requireText("schoolYear: '2026-2027学年'", '系统应内置 2026-2027 学年。');
+requireText("termType: '下学期'", '学期数据应拆分学期类型字段。');
+requireText("termType: '上学期'", '学期数据应支持上学期。');
+requireText("const formatTermName", '列表展示应由学年和学期类型组合生成。');
+requireText('学年', '新增/编辑学期弹窗应包含学年字段。');
+requireText('学期类型', '新增/编辑学期弹窗应包含学期类型字段。');
+requireText('设为当前学期', '新增/编辑学期弹窗应包含设为当前学期开关。');
+requireText("const [currentTermId, setCurrentTermId] = useState('term-2025-2026-2');", '学期管理应支持设置当前学期。');
+requireText("const [activeTermAction, setActiveTermAction] = useState<SchoolTermItem | null>(null);", '学期管理应通过单个操作菜单承载行操作。');
+requireText("const [deletedTermIds, setDeletedTermIds] = useState<string[]>([]);", '学期管理应支持删除学期。');
+requireText("onClick={() => openTermEditSheet()}", '学期管理应支持新增学期。');
+requireText("openTermEditSheet(activeTermAction)", '学期操作菜单应支持编辑。');
+requireText("setCurrentTermId(activeTermAction.id)", '学期操作菜单应支持设为当前。');
+requireText("setDeletedTermIds((ids) => [...ids, activeTermAction.id])", '学期操作菜单应支持删除。');
+requireText("setActiveTermAction(item)", '点击学期行应打开操作菜单。');
+requireText("renderTermEditSheet()", '原型应挂载学期时间编辑弹窗。');
+requireText("renderTermActionSheet()", '原型应挂载学期操作菜单。');
+requireText("openBasicInfoEditSheet", '应通过底部弹窗做轻量编辑。');
+requireText("renderSchoolBasicInfoEditSheet()", '原型应挂载基础信息编辑底部弹窗。');
+forbidText('className={cx(\'h-10 rounded-xl border border-gray-200 text-xs font-black\', isCurrent ? \'bg-gray-100 text-gray-400\' : \'bg-gray-900 text-white\')}', '学期卡片上不应直接铺设设为当前按钮。');
+forbidText('移动端只处理新增、改名、启停、排序', '原型页面不应出现移动端边界说明备注。');
+forbidText('复杂批量维护到 PC 后台处理', '原型页面不应出现 PC 后台处理说明备注。');
+forbidText('删除历史学期', '原型页面不应出现风险动作备注。');
+forbidText('批量导入学生基础信息', '移动端基础信息页不应承载批量导入学生这类 PC 后台能力。');
+
+console.log('TeacherCMobileLowFi 学校基础信息快捷维护结构测试通过');

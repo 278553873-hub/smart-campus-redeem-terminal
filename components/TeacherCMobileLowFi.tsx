@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BarChart3, Camera, CheckCircle2, ChevronDown, ChevronRight, Clock, Copy, Edit3, FileText, Gift, ImagePlus, LogIn, MessageCircle, Mic, MoreHorizontal, Plus, ScanFace, Shield, Trash2, Type, UserPlus, Users, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, BarChart3, BookOpen, Building2, CalendarDays, Camera, CheckCircle2, ChevronDown, ChevronRight, Clock, Copy, Edit3, FileText, Gift, ImagePlus, LogIn, MessageCircle, Mic, MoreHorizontal, Plus, ScanFace, Shield, Trash2, Type, UserPlus, Users, Sparkles } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 
 type PageKey =
@@ -26,7 +26,9 @@ type PageKey =
   | 'termReport'
   | 'minePersonal'
   | 'mineSchool'
-  | 'profileEdit'
+  | 'termManagement'
+  | 'subjectManagement'
+  | 'departmentManagement'
   | 'advisor';
 
 type ViewState = 'normal' | 'loading' | 'empty' | 'network' | 'denied';
@@ -37,10 +39,11 @@ type ClassActionKey = 'reward' | 'password' | 'face' | 'homework' | 'leftStudent
 type TeachingGrade = '2025级' | '2024级' | '2023级';
 type WechatInviteMode = 'select' | 'confirm' | 'received';
 type InviteAudience = 'teacher' | 'parent';
-type CEndSurface = 'summary' | 'teacher' | 'parent' | 'schoolAdmin' | 'ops';
+type CEndSurface = 'summary' | 'teacher' | 'parent' | 'versionCompare' | 'schoolAdmin' | 'ops';
 type ParentPageKey = 'wechatCard' | 'login' | 'bindSelf' | 'bindInvite' | 'landing';
 type ParentBindMode = 'school' | 'class';
 type TeacherSpaceId = 'personal' | 'schoolA' | 'schoolB';
+type SchoolBasicInfoTab = 'term' | 'subject' | 'department';
 type TeacherSpaceProfile = {
   id: TeacherSpaceId;
   title: string;
@@ -67,6 +70,26 @@ type ParentBindingProfile = {
   gender: '男' | '女';
   bound: boolean;
   bindingCount: number;
+};
+type StudentInputRow = {
+  id: number;
+  name: string;
+  no: string;
+  gender: '男' | '女';
+};
+type SchoolBasicInfoItem = {
+  id: string;
+  name: string;
+  desc: string;
+  status: 'enabled' | 'disabled' | 'current' | 'draft';
+};
+type SchoolTermItem = {
+  id: string;
+  schoolYear: string;
+  termType: '上学期' | '下学期';
+  start: string;
+  end: string;
+  status: 'current' | 'draft';
 };
 
 interface PageMeta {
@@ -99,14 +122,16 @@ const pageOrder: PageKey[] = [
   'record',
   'minePersonal',
   'mineSchool',
-  'profileEdit',
+  'termManagement',
+  'subjectManagement',
+  'departmentManagement',
 ];
 
 const flowLanes: Array<{ title: string; pages: PageKey[] }> = [
   { title: '首次进入', pages: ['login', 'profile', 'home', 'classCreate', 'classJoin', 'studentAdd', 'record'] },
   { title: '老用户', pages: ['login', 'record'] },
   { title: '班级', pages: ['classList', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList'] },
-  { title: '我的', pages: ['minePersonal', 'mineSchool', 'profileEdit'] },
+  { title: '我的', pages: ['minePersonal', 'mineSchool', 'termManagement', 'subjectManagement', 'departmentManagement'] },
 ];
 
 const pageNumberLabel = (pageKey: PageKey) => {
@@ -121,7 +146,9 @@ const pageNumberLabel = (pageKey: PageKey) => {
   if (pageKey === 'record') return '13';
   if (pageKey === 'minePersonal') return '14A';
   if (pageKey === 'mineSchool') return '14B';
-  if (pageKey === 'profileEdit') return '15';
+  if (pageKey === 'termManagement') return '15';
+  if (pageKey === 'subjectManagement') return '16';
+  if (pageKey === 'departmentManagement') return '17';
   const pageIndex = pageOrder.indexOf(pageKey) + 1;
   return String(pageIndex).padStart(2, '0');
 };
@@ -174,6 +201,7 @@ const surfaceTabs: Array<{ key: CEndSurface; label: string }> = [
   { key: 'summary', label: '改造点整理' },
   { key: 'teacher', label: '教师端' },
   { key: 'parent', label: '家长端' },
+  { key: 'versionCompare', label: '版本对比' },
   { key: 'schoolAdmin', label: '学校后台端' },
   { key: 'ops', label: '运营端' },
 ];
@@ -182,6 +210,67 @@ const teacherSpaces: TeacherSpaceProfile[] = [
   { id: 'personal', title: '个人版', type: 'personal' },
   { id: 'schoolA', title: '成都七中初中附属小学', type: 'school' },
   { id: 'schoolB', title: '星河实验小学', type: 'school' },
+];
+
+const schoolBasicInfoTabs: Array<{ key: SchoolBasicInfoTab; label: string; icon: React.ElementType; summary: string }> = [
+  { key: 'term', label: '学期', icon: CalendarDays, summary: '当前学期、下学期时间' },
+  { key: 'subject', label: '科目', icon: BookOpen, summary: '任教与成绩常用科目' },
+  { key: 'department', label: '部门', icon: Building2, summary: '校内组织与管理分组' },
+];
+
+const formatTermName = (term: Pick<SchoolTermItem, 'schoolYear' | 'termType'>) => `${term.schoolYear} ${term.termType}`;
+const schoolYearOptions = ['2025-2026学年', '2026-2027学年', '2027-2028学年', '2028-2029学年'];
+const termTypeOptions: SchoolTermItem['termType'][] = ['上学期', '下学期'];
+
+const schoolTermItems: SchoolTermItem[] = [
+  { id: 'term-2025-2026-2', schoolYear: '2025-2026学年', termType: '下学期', start: '2026.02.17', end: '2026.07.10', status: 'current' },
+  { id: 'term-2026-2027-1', schoolYear: '2026-2027学年', termType: '上学期', start: '2026.09.01', end: '2027.01.23', status: 'draft' },
+  { id: 'term-2026-2027-2', schoolYear: '2026-2027学年', termType: '下学期', start: '2027.02.22', end: '2027.07.09', status: 'draft' },
+  { id: 'term-2027-2028-1', schoolYear: '2027-2028学年', termType: '上学期', start: '2027.09.01', end: '2028.01.21', status: 'draft' },
+  { id: 'term-2027-2028-2', schoolYear: '2027-2028学年', termType: '下学期', start: '2028.02.21', end: '2028.07.07', status: 'draft' },
+];
+
+const schoolSubjectItems: SchoolBasicInfoItem[] = [
+    { id: 'subject-cn', name: '语文', desc: '任教、成绩、报告可选', status: 'enabled' },
+    { id: 'subject-math', name: '数学', desc: '任教、成绩、报告可选', status: 'enabled' },
+    { id: 'subject-en', name: '英语', desc: '任教、成绩、报告可选', status: 'enabled' },
+    { id: 'subject-calligraphy', name: '书法', desc: '停用后不再作为新增选项', status: 'disabled' },
+];
+
+const schoolDepartmentItems: SchoolBasicInfoItem[] = [
+    { id: 'department-moral', name: '德育处', desc: '3 位老师', status: 'enabled' },
+    { id: 'department-grade', name: '一年级组', desc: '8 位老师', status: 'enabled' },
+    { id: 'department-art', name: '艺体组', desc: '5 位老师', status: 'enabled' },
+];
+
+const schoolBasicInfoStatusLabels: Record<SchoolBasicInfoItem['status'], string> = {
+  current: '当前',
+  draft: '未生效',
+  enabled: '启用',
+  disabled: '停用',
+};
+
+const versionCompareRows: Array<{ feature: string; personal: string; school: string }> = [
+  { feature: '微信登录', personal: '✓', school: '✓' },
+  { feature: '创建班级', personal: '✓', school: '✓' },
+  { feature: '加入班级', personal: '✓', school: '✓' },
+  { feature: '添加学生', personal: '✓', school: '✓' },
+  { feature: 'AI日常记录', personal: '✓', school: '✓' },
+  { feature: '拍照识别奖状', personal: '✓', school: '✓' },
+  { feature: '默认指标', personal: '✓', school: '✓' },
+  { feature: '自定义指标', personal: '×', school: '✓' },
+  { feature: '月度报告', personal: '×', school: '✓' },
+  { feature: '期末报告', personal: '×', school: '✓' },
+  { feature: '班级统计', personal: '✓', school: '✓' },
+  { feature: '学校报告', personal: '×', school: '✓' },
+  { feature: '邀请老师', personal: '×', school: '✓' },
+  { feature: '邀请家长', personal: '×', school: '✓' },
+  { feature: '家长端', personal: '×', school: '✓' },
+  { feature: '批量导入', personal: '×', school: '✓' },
+  { feature: '学校组织管理', personal: '×', school: '✓' },
+  { feature: '运营转学校版', personal: '✓', school: '✓' },
+  { feature: '货柜机/终端', personal: '×', school: '✓' },
+  { feature: '区域统计', personal: '×', school: '✓' },
 ];
 
 const summaryPrdBlocks: PrdBlock[] = [
@@ -318,6 +407,20 @@ const schoolAdminPrdBlocks: PrdBlock[] = [
   ] },
 ];
 
+const versionComparePrdBlocks: PrdBlock[] = [
+  { type: 'h1', text: '个人版 / 学校版功能对比' },
+  { type: 'p', text: '顶部导航新增“版本对比”，用于快速判断哪些能力属于个人体验入口，哪些能力必须进入学校版承接。页面只用表格呈现，不增加解释型长文案。' },
+  { type: 'h2', text: '展示规则' },
+  { type: 'list', items: [
+    '表头固定为“功能、个人版、学校版”。',
+    '个人版和学校版只展示 ✓ / ×，不在单元格内写说明。',
+    '功能点按老师体验、报告、协同、学校管理、硬件/区域能力排序。',
+    '个人版保留核心 AI 体验能力，关闭学校统一管理、家长端和硬件区域能力。',
+  ] },
+  { type: 'h2', text: '功能点' },
+  { type: 'list', items: versionCompareRows.map((row) => `${row.feature}：个人版 ${row.personal}｜学校版 ${row.school}`) },
+];
+
 const pageMeta: Record<PageKey, PageMeta> = {
   login: {
     title: '登录页',
@@ -407,6 +510,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
     ctas: [
       { label: '完成', priority: 'P0', position: '页面底部主按钮' },
       { label: '添加一名', priority: 'P1', position: '录入表单下方' },
+      { label: '清除该学生', priority: 'P2', position: '多行录入时学生行右侧留白区' },
     ],
     states: {
       normal: '展示一行学生输入，性别默认男，可新增输入行。',
@@ -525,6 +629,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
       { label: '邀请老师', priority: 'P0', position: '老师列表卡片内' },
       { label: '更多老师', priority: 'P1', position: '老师列表卡片右上角' },
       { label: '更多家长绑定情况', priority: 'P1', position: '家长绑定列表卡片右上角' },
+      { label: '转移班级管理员', priority: 'P2', position: '页面底部，解散班级上方' },
       { label: '解散班级/退出班级', priority: 'P3', position: '页面底部，按当前账号权限展示' },
     ],
     states: {
@@ -670,14 +775,13 @@ const pageMeta: Record<PageKey, PageMeta> = {
     modules: ['教师卡片', '头像', '姓名', '编辑按钮', '了解学校版', '学校版功能弹窗', '顾问微信二维码', '修改密码', '隐私协议', '用户协议', '退出登录'],
     ctas: [
       { label: '了解学校版', priority: 'P1', position: '教师卡片下方按钮，点击打开底部弹窗' },
-      { label: '编辑', priority: 'P1', position: '教师卡片右侧' },
       { label: '修改密码', priority: 'P1', position: '账号设置列表' },
       { label: '退出登录', priority: 'P3', position: '页面底部' },
     ],
     states: {
       normal: '展示教师卡片、了解学校版入口和账号设置。',
-      loading: '个人信息加载中。',
-      empty: '个人信息缺失时可进入个人信息页补全。',
+      loading: '账号信息加载中。',
+      empty: '账号信息缺失。',
       network: '加载失败，提供重试。',
       denied: '登录失效，提示重新登录。',
     },
@@ -685,37 +789,71 @@ const pageMeta: Record<PageKey, PageMeta> = {
   mineSchool: {
     title: '我的（拥有学校版）',
     subtitle: '查看账号、当前版本、协议和账号设置。',
-    modules: ['教师卡片', '头像', '姓名', '当前版本入口', '编辑按钮', '切换版本弹窗', '修改密码', '隐私协议', '用户协议', '退出登录'],
+    modules: ['教师卡片', '头像', '姓名', '编辑按钮', '当前版本入口', '学校基础信息', '切换版本弹窗', '修改密码', '隐私协议', '用户协议', '退出登录'],
     ctas: [
-      { label: '切换版本', priority: 'P0', position: '教师卡片下方当前版本入口，点击打开底部弹窗' },
-      { label: '编辑', priority: 'P1', position: '教师卡片右侧' },
+      { label: '切换版本', priority: 'P0', position: '教师卡片头像姓名学校行右侧操作组，点击打开底部弹窗' },
+      { label: '编辑资料', priority: 'P1', position: '教师卡片头像姓名学校行右侧操作组' },
       { label: '修改密码', priority: 'P1', position: '账号设置列表' },
       { label: '退出登录', priority: 'P3', position: '页面底部' },
     ],
     states: {
       normal: '展示教师卡片、当前版本入口和账号设置，不展示了解学校版按钮。',
-      loading: '个人信息加载中。',
-      empty: '个人信息缺失时可进入个人信息页补全。',
+      loading: '账号信息加载中。',
+      empty: '账号信息缺失。',
       network: '加载失败，提供重试。',
       denied: '登录失效，提示重新登录。',
     },
   },
-  profileEdit: {
-    title: '个人信息',
-    subtitle: '编辑头像、姓名和任教信息。',
-    modules: ['头像展示', '更换头像 icon', '姓名结果行', '姓名编辑弹窗', '任教信息结果卡片', '删除任教信息', '头像操作弹窗', '任教信息级联多选弹窗'],
+  termManagement: {
+    title: '学期管理',
+    subtitle: '维护系统内置学期时间并设置当前学期。',
+    modules: ['系统内置学期', '学期起止时间', '当前学期标签', '新增入口', '更多操作菜单', '编辑学期弹窗'],
     ctas: [
-      { label: '编辑姓名', priority: 'P1', position: '姓名行' },
-      { label: '新增任教信息', priority: 'P1', position: '任教信息标题右侧' },
-      { label: '编辑任教信息', priority: 'P1', position: '任教信息结果卡片' },
-      { label: '更换头像', priority: 'P1', position: '头像右下角 icon' },
+      { label: '新增', priority: 'P0', position: '列表标题右侧' },
+      { label: '编辑', priority: 'P1', position: '更多操作菜单' },
+      { label: '设为当前', priority: 'P1', position: '更多操作菜单' },
+      { label: '删除', priority: 'P3', position: '更多操作菜单底部' },
     ],
     states: {
-      normal: '展示可编辑个人信息。',
-      loading: '局部保存中。',
-      empty: '姓名或任教信息为空时提示。',
-      network: '局部保存失败，保留原信息。',
+      normal: '展示系统内置学期列表。',
+      loading: '学期加载中。',
+      empty: '暂无学期时展示空列表。',
+      network: '加载失败，提供重试。',
       denied: '登录失效，提示重新登录。',
+    },
+  },
+  subjectManagement: {
+    title: '科目管理',
+    subtitle: '维护学校常用科目。',
+    modules: ['科目列表', '状态标签', '新增入口', '编辑底部弹窗'],
+    ctas: [
+      { label: '新增科目', priority: 'P0', position: '页面顶部右侧' },
+      { label: '编辑科目', priority: 'P1', position: '列表行点击' },
+      { label: '启用/停用', priority: 'P1', position: '编辑底部弹窗' },
+    ],
+    states: {
+      normal: '展示科目列表。',
+      loading: '科目加载中。',
+      empty: '暂无科目时保留新增入口。',
+      network: '加载失败，提供重试。',
+      denied: '无学校管理权限时隐藏入口并返回我的页。',
+    },
+  },
+  departmentManagement: {
+    title: '部门管理',
+    subtitle: '维护学校部门。',
+    modules: ['部门列表', '状态标签', '新增入口', '编辑底部弹窗'],
+    ctas: [
+      { label: '新增部门', priority: 'P0', position: '页面顶部右侧' },
+      { label: '编辑部门', priority: 'P1', position: '列表行点击' },
+      { label: '启用/停用', priority: 'P1', position: '编辑底部弹窗' },
+    ],
+    states: {
+      normal: '展示部门列表。',
+      loading: '部门加载中。',
+      empty: '暂无部门时保留新增入口。',
+      network: '加载失败，提供重试。',
+      denied: '无学校管理权限时隐藏入口并返回我的页。',
     },
   },
   advisor: {
@@ -788,7 +926,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     { type: 'h2', text: '14B 拥有学校版' },
     { type: 'list', items: [
       '14B 用于老师已经拥有学校版的状态。',
-      '教师卡片下方展示当前版本入口，点击后从底部上滑展示“切换版本”。',
+      '教师卡片头像姓名学校行右侧展示同组操作按钮：编辑资料和切换版本。切换版本点击后从底部上滑展示“切换版本”。',
       '切换版本弹窗只展示版本名称和当前标签，不展示“个人体验数据”“学校统一数据”等备注文案。',
       '14B 不展示“了解学校版”按钮。',
     ] },
@@ -853,6 +991,8 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '班级详情和完整家长绑定列表均提供“邀请家长绑定”按钮，层级同老师列表板块的邀请老师。',
       '邀请家长绑定流程完成后回到发起邀请的当前页面。',
       '点击邀请老师复用班级邀请流程。',
+      '08A 管理员可点击“转移班级管理员”，从底部老师列表弹窗中选择一位非管理员老师。',
+      '选中老师后必须展示二次确认弹窗；确认后管理员身份转移给该老师，原管理员不再拥有班级管理员身份。',
       '页面底部按权限展示危险操作：创建人显示解散班级，非创建人显示退出班级。',
       '解散班级需要二次确认，并输入 delete 后才可点击确认解散。',
       '退出班级同样需要二次确认，但不需要输入 delete。',
@@ -878,6 +1018,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '老师列表内容区可滚动，邀请老师按钮固定在页面底部。',
       '管理员和班主任下方用一条横线分隔其余老师；班主任只是标签，不代表管理权限。',
       '管理员点击老师卡片右侧更多 icon，可设置一个或多个老师为班主任，也可取消班主任或移除老师。',
+      '点击移除老师后必须展示二次确认弹窗；确认后该老师不再管理当前班级。',
     ] },
   ],
   teacherListMember: [
@@ -918,22 +1059,18 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '点击添加一名后再新增一行。',
       '每行包含姓名、较短学号输入框、男/女点选。',
       '性别默认男，且每行可独立切换。',
+      '每一行的姓名、学号、性别均填写完成后，底部完成按钮才可点击。',
+      '当存在多行时，每个学生行右侧留白区展示清除 icon，用于删除误添加的整条学生数据；不展示学生序号文案。',
       '不提供批量粘贴入口。',
     ] },
   ],
-  profileEdit: [
-    { type: 'h2', text: '个人信息编辑' },
+  termManagement: [
+    { type: 'h2', text: '学期管理规则' },
     { type: 'list', items: [
-      '头像区只展示当前头像和右下角更换 icon；上传图片、拍照通过底部弹窗选择。',
-      '姓名以结果行展示，点击姓名行后从底部弹出编辑弹窗。',
-      '姓名弹窗内为空时禁用完成；点击完成后自动生效并关闭弹窗。',
-      '页面不提供统一保存按钮，头像、姓名、任教信息均为编辑后局部生效。',
-      '任教信息在页面中按学科、班级数量、班级列表展示，并支持删除。',
-      '新增或编辑任教信息时，底部弹窗使用级联选择器：左侧选择年级，右侧展示对应班级并支持多选。',
-      '当一个年级班级较多时，右侧班级区使用独立纵向滚动列表展示，避免双列按钮挤压信息。',
-      '班级列表只保留班级名称和选中态，不展示人数、已选数量或重复标题。',
-      '学科在班级选择后单独点选，所有选择项均有可点击选中态。',
-      '提交后关闭弹窗，并将配置结果回显到任教信息列表。',
+      '学期列表优先展示名称、时间和当前状态，不在卡片上平铺操作按钮。',
+      '新增放在列表标题右侧；编辑、设为当前、删除收进单个更多操作菜单。',
+      '每个学期维护学期名称、开始日期和结束日期。',
+      '当前学期用于默认筛选、报告周期和本学期统计口径。',
     ] },
   ],
   aiResult: [
@@ -994,8 +1131,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [studentSelectionMode, setStudentSelectionMode] = useState(false);
   const [selectedStudentNos, setSelectedStudentNos] = useState<string[]>([]);
   const [studentListMode, setStudentListMode] = useState<'student' | 'group'>('student');
-  const [studentInputRows, setStudentInputRows] = useState(1);
-  const [studentInputGenders, setStudentInputGenders] = useState<Array<'男' | '女'>>(['男']);
+  const [studentInputRows, setStudentInputRows] = useState<StudentInputRow[]>([{ id: 1, name: '', no: '', gender: '男' }]);
   const [teachingRows, setTeachingRows] = useState(2);
   const [showPhoneLoginSheet, setShowPhoneLoginSheet] = useState(false);
   const [phoneLoginTab, setPhoneLoginTab] = useState<PhoneLoginTab>('sms');
@@ -1006,6 +1142,14 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [showSpaceSelectSheet, setShowSpaceSelectSheet] = useState(false);
   const [currentSpaceId, setCurrentSpaceId] = useState<TeacherSpaceId>('personal');
   const [showSchoolAdminSpaceMenu, setShowSchoolAdminSpaceMenu] = useState(true);
+  const [activeBasicInfoTab, setActiveBasicInfoTab] = useState<SchoolBasicInfoTab>('term');
+  const [editingBasicInfoItem, setEditingBasicInfoItem] = useState<SchoolBasicInfoItem | null>(null);
+  const [editingTermItem, setEditingTermItem] = useState<SchoolTermItem | null>(null);
+  const [activeTermAction, setActiveTermAction] = useState<SchoolTermItem | null>(null);
+  const [deletedTermIds, setDeletedTermIds] = useState<string[]>([]);
+  const [showBasicInfoEditSheet, setShowBasicInfoEditSheet] = useState(false);
+  const [showTermEditSheet, setShowTermEditSheet] = useState(false);
+  const [currentTermId, setCurrentTermId] = useState('term-2025-2026-2');
   const [showTeachingSheet, setShowTeachingSheet] = useState(false);
   const [showInviteOptionsSheet, setShowInviteOptionsSheet] = useState(false);
   const [showWechatChatSheet, setShowWechatChatSheet] = useState(false);
@@ -1040,6 +1184,10 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [draftClassEntryYear, setDraftClassEntryYear] = useState(2025);
   const [classDeleteConfirmText, setClassDeleteConfirmText] = useState('');
   const [activeTeacherAction, setActiveTeacherAction] = useState<ClassTeacherProfile | null>(null);
+  const [removeTeacherCandidate, setRemoveTeacherCandidate] = useState<ClassTeacherProfile | null>(null);
+  const [showTransferAdminTeacherSheet, setShowTransferAdminTeacherSheet] = useState(false);
+  const [transferAdminCandidate, setTransferAdminCandidate] = useState<ClassTeacherProfile | null>(null);
+  const [classAdminTeacherName, setClassAdminTeacherName] = useState('郭老师');
   const [classActionToast, setClassActionToast] = useState('');
   const classActionToastTimerRef = useRef<number | null>(null);
   const [parentPage, setParentPage] = useState<ParentPageKey>('wechatCard');
@@ -1081,8 +1229,10 @@ const TeacherCMobileLowFi: React.FC = () => {
     { name: '陈一诺', no: '20250103', gender: '女' as const },
     { name: '周子航', no: '20250104', gender: '男' as const },
   ];
+  const currentTeacherDisplayName = teacherName.trim() || '郭老师';
+  const activeAdminTeacherName = classAdminTeacherName === '郭老师' ? currentTeacherDisplayName : classAdminTeacherName;
   const classTeachers: ClassTeacherProfile[] = [
-    { name: teacherName.trim() || '郭老师', subjects: ['语文', '道德与法治'], isHomeroom: false, isAdmin: true },
+    { name: currentTeacherDisplayName, subjects: ['语文', '道德与法治'], isHomeroom: false, isAdmin: false },
     { name: '陈老师', subjects: ['语文', '书法'], isHomeroom: true, isAdmin: false },
     { name: '李老师', subjects: ['数学', '科学'], isHomeroom: false, isAdmin: false },
     { name: '王老师', subjects: ['英语'], isHomeroom: false, isAdmin: false },
@@ -1090,7 +1240,11 @@ const TeacherCMobileLowFi: React.FC = () => {
     { name: '刘老师', subjects: ['美术'], isHomeroom: false, isAdmin: false },
     { name: '马老师', subjects: ['信息科技'], isHomeroom: false, isAdmin: false },
     { name: '高老师', subjects: ['综合实践'], isHomeroom: false, isAdmin: false },
-  ];
+  ].map((teacher) => ({
+    ...teacher,
+    isAdmin: teacher.name === activeAdminTeacherName,
+  }));
+  const transferAdminCandidates = classTeachers.filter((teacher) => !teacher.isAdmin);
   const primaryClassTeachers = classTeachers.filter((teacher) => teacher.isAdmin || teacher.isHomeroom);
   const otherClassTeachers = classTeachers.filter((teacher) => !teacher.isAdmin && !teacher.isHomeroom);
   const parentBindingRows: ParentBindingProfile[] = [
@@ -1163,6 +1317,9 @@ const TeacherCMobileLowFi: React.FC = () => {
     setShowNameSheet(false);
     setShowSchoolUpgradeSheet(false);
     setShowSpaceSelectSheet(false);
+    setShowBasicInfoEditSheet(false);
+    setShowTermEditSheet(false);
+    setActiveTermAction(null);
     setShowTeachingSheet(false);
     setShowInviteOptionsSheet(false);
     setShowWechatChatSheet(false);
@@ -1188,6 +1345,9 @@ const TeacherCMobileLowFi: React.FC = () => {
     setShowNameSheet(false);
     setShowSchoolUpgradeSheet(false);
     setShowSpaceSelectSheet(false);
+    setShowBasicInfoEditSheet(false);
+    setShowTermEditSheet(false);
+    setActiveTermAction(null);
     setShowTeachingSheet(false);
     setShowInviteOptionsSheet(false);
     setShowWechatChatSheet(false);
@@ -1235,8 +1395,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       setPendingInviteAfterLogin(false);
       setInviteeLoggedIn(false);
       setInviteeAlreadyJoined(false);
-      setStudentInputRows(1);
-      setStudentInputGenders(['男']);
+      setStudentInputRows([{ id: 1, name: '', no: '', gender: '男' }]);
       return;
     }
     if (next === 'home') {
@@ -1246,8 +1405,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       setStudentCount(0);
       setRecordCount(0);
       setShowMultiResult(false);
-      setStudentInputRows(1);
-      setStudentInputGenders(['男']);
+      setStudentInputRows([{ id: 1, name: '', no: '', gender: '男' }]);
       return;
     }
     if (!teacherName.trim()) setTeacherName('郭');
@@ -1260,8 +1418,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       setStudentCount((count) => Math.max(count, 2));
     }
     if (next === 'studentAdd') {
-      setStudentInputRows(1);
-      setStudentInputGenders(['男']);
+      setStudentInputRows([{ id: 1, name: '', no: '', gender: '男' }]);
     }
   };
 
@@ -1341,18 +1498,20 @@ const TeacherCMobileLowFi: React.FC = () => {
   };
 
   const openStudentAdd = () => {
-    setStudentInputRows(1);
-    setStudentInputGenders(['男']);
+    setStudentInputRows([{ id: 1, name: '', no: '', gender: '男' }]);
     navigate('studentAdd');
   };
 
   const addStudentInputRow = () => {
-    setStudentInputRows((count) => count + 1);
-    setStudentInputGenders((items) => [...items, '男']);
+    setStudentInputRows((rows) => [...rows, { id: Math.max(...rows.map((row) => row.id)) + 1, name: '', no: '', gender: '男' }]);
   };
 
-  const updateStudentInputGender = (index: number, gender: '男' | '女') => {
-    setStudentInputGenders((items) => items.map((item, itemIndex) => itemIndex === index ? gender : item));
+  const updateStudentInputRow = (id: number, patch: Partial<Omit<StudentInputRow, 'id'>>) => {
+    setStudentInputRows((rows) => rows.map((row) => row.id === id ? { ...row, ...patch } : row));
+  };
+
+  const removeStudentInputRow = (id: number) => {
+    setStudentInputRows((rows) => rows.length > 1 ? rows.filter((row) => row.id !== id) : rows);
   };
 
   const openNameSheet = () => {
@@ -1546,6 +1705,38 @@ const TeacherCMobileLowFi: React.FC = () => {
     </button>
   );
 
+  const openBasicInfoEditSheet = (item?: SchoolBasicInfoItem) => {
+    setEditingBasicInfoItem(item ?? null);
+    setShowBasicInfoEditSheet(true);
+  };
+
+  const openSchoolBasicInfo = (tab: SchoolBasicInfoTab) => {
+    setActiveBasicInfoTab(tab);
+    const pageMap: Record<SchoolBasicInfoTab, PageKey> = {
+      term: 'termManagement',
+      subject: 'subjectManagement',
+      department: 'departmentManagement',
+    };
+    navigate(pageMap[tab]);
+  };
+
+  const openTermEditSheet = (item?: SchoolTermItem) => {
+    setEditingTermItem(item ?? null);
+    setShowTermEditSheet(true);
+  };
+
+  const BasicInfoStatusBadge = ({ status }: { status: SchoolBasicInfoItem['status'] }) => (
+    <span className={cx(
+      'shrink-0 rounded-lg px-2 py-1 text-[11px] font-black',
+      status === 'current' && 'bg-teal-50 text-teal-700',
+      status === 'draft' && 'bg-blue-50 text-blue-700',
+      status === 'enabled' && 'bg-gray-900 text-white',
+      status === 'disabled' && 'bg-gray-100 text-gray-500'
+    )}>
+      {schoolBasicInfoStatusLabels[status]}
+    </span>
+  );
+
   const openInviteForClass = (audience: InviteAudience, returnPage: PageKey, classInfo?: { name: string; code: string }) => {
     setInviteClass({ ...(classInfo ?? { name: activeClassProfile.name, code: activeClassProfile.code }), inviter: teacherName.trim() || '郭老师' });
     setInviteAudience(audience);
@@ -1735,13 +1926,114 @@ const TeacherCMobileLowFi: React.FC = () => {
             <button
               type="button"
               onClick={() => {
-                showClassActionToast(`已移除${activeTeacherAction.name}`);
+                setRemoveTeacherCandidate(activeTeacherAction);
                 setActiveTeacherAction(null);
               }}
               className="flex h-12 w-full items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 text-sm font-black text-gray-950 active:bg-gray-100"
             >
               <span>移除老师</span>
               <Trash2 size={16} />
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  };
+
+  const renderRemoveTeacherConfirmSheet = () => {
+    if (!removeTeacherCandidate) return null;
+    const close = () => setRemoveTeacherCandidate(null);
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[130] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="确认移除老师">
+        <button type="button" aria-label="关闭移除老师确认弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">确认移除老师</h3>
+          <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
+            移除后，{removeTeacherCandidate.name}将不再管理「{activeClassProfile.name}」。
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
+            <button
+              type="button"
+              onClick={() => {
+                showClassActionToast(`已移除${removeTeacherCandidate.name}`);
+                close();
+              }}
+              className="h-12 rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white"
+            >
+              确认移除
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  };
+
+  const renderTransferAdminTeacherSheet = () => {
+    if (!showTransferAdminTeacherSheet) return null;
+    const close = () => setShowTransferAdminTeacherSheet(false);
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="选择新管理员">
+        <button type="button" aria-label="关闭选择新管理员弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'flex max-h-[82%] flex-col rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="text-base font-black">转移班级管理员</h3>
+            <button type="button" onClick={close} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-lg font-black active:bg-gray-100">×</button>
+          </div>
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+            {transferAdminCandidates.map((teacher) => (
+              <button
+                key={teacher.name}
+                type="button"
+                onClick={() => {
+                  setShowTransferAdminTeacherSheet(false);
+                  setTransferAdminCandidate(teacher);
+                }}
+                className="flex min-h-[74px] w-full items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-3 text-left active:bg-gray-100"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black">{teacher.name.slice(0, 1)}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-black">{teacher.name}</div>
+                  <TeacherRoleTags teacher={teacher} />
+                </div>
+                <ChevronRight size={16} className="shrink-0 text-gray-400" />
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  };
+
+  const renderTransferAdminConfirmSheet = () => {
+    if (!transferAdminCandidate) return null;
+    const close = () => setTransferAdminCandidate(null);
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[130] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="确认转移班级管理员">
+        <button type="button" aria-label="关闭转移管理员确认弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">确认转移管理员</h3>
+          <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
+            将「{activeClassProfile.name}」管理员转移给{transferAdminCandidate.name}。确认后，你不再拥有该班级管理员身份。
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
+            <button
+              type="button"
+              onClick={() => {
+                setClassAdminTeacherName(transferAdminCandidate.name);
+                showClassActionToast(`管理员已转移给${transferAdminCandidate.name}`);
+                close();
+              }}
+              className="h-12 rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white"
+            >
+              确认转移
             </button>
           </div>
         </section>
@@ -2276,7 +2568,11 @@ const TeacherCMobileLowFi: React.FC = () => {
                   <PageNodeButton item="mineSchool" lane={lane.title} />
                 </div>
                 <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="profileEdit" lane={lane.title} />
+                <div className="grid shrink-0 grid-rows-3 gap-2">
+                  <PageNodeButton item="termManagement" lane={lane.title} />
+                  <PageNodeButton item="subjectManagement" lane={lane.title} />
+                  <PageNodeButton item="departmentManagement" lane={lane.title} />
+                </div>
               </div>
             ) : (
               <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
@@ -2780,26 +3076,26 @@ const TeacherCMobileLowFi: React.FC = () => {
                 <ChevronDown size={14} className="shrink-0 text-gray-400" />
               </button>
               {showSchoolAdminSpaceMenu && (
-              <div className="absolute right-0 top-[52px] z-10 w-[224px] rounded-2xl border border-gray-200 bg-white p-2 shadow-[0_16px_36px_rgba(15,23,42,0.12)]">
-                {teacherSpaces.map((space) => {
-                  const active = currentSpaceId === space.id;
-                  return (
-                  <button
-                    key={space.id}
-                    type="button"
-                    onClick={() => selectSchoolAdminSpace(space.id)}
-                    className={cx(
-                      'flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 text-left text-sm font-black transition-colors',
-                      active ? 'bg-gray-950 text-white' : 'text-gray-700 active:bg-gray-100'
-                    )}
-                    aria-pressed={active}
-                  >
-                    <span className="min-w-0 truncate">{space.title}</span>
-                    <span className={cx('shrink-0 rounded-lg px-2 py-1 text-[10px] font-black', active ? 'bg-white text-gray-950' : 'bg-gray-100 text-gray-500')}>{space.type === 'personal' ? '个人' : '学校'}</span>
-                  </button>
-                );
-              })}
-              </div>
+                <div className="absolute right-0 top-[52px] z-10 w-[224px] rounded-2xl border border-gray-200 bg-white p-2 shadow-[0_16px_36px_rgba(15,23,42,0.12)]">
+                  {teacherSpaces.map((space) => {
+                    const active = currentSpaceId === space.id;
+                    return (
+                      <button
+                        key={space.id}
+                        type="button"
+                        onClick={() => selectSchoolAdminSpace(space.id)}
+                        className={cx(
+                          'flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 text-left text-sm font-black transition-colors',
+                          active ? 'bg-gray-950 text-white' : 'text-gray-700 active:bg-gray-100'
+                        )}
+                        aria-pressed={active}
+                      >
+                        <span className="min-w-0 truncate">{space.title}</span>
+                        <span className={cx('shrink-0 rounded-lg px-2 py-1 text-[10px] font-black', active ? 'bg-white text-gray-950' : 'bg-gray-100 text-gray-500')}>{space.type === 'personal' ? '个人' : '学校'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </div>
             <button type="button" className="h-10 rounded-2xl px-3 text-sm font-black text-gray-500">退出</button>
@@ -2822,6 +3118,30 @@ const TeacherCMobileLowFi: React.FC = () => {
       </div>
     );
   };
+
+  const renderVersionComparePrototype = () => (
+    <div className="h-full w-full max-w-[760px] overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-950">
+      <div className="border-b border-gray-200 px-5 py-4">
+        <div className="text-base font-black">个人版 / 学校版</div>
+      </div>
+      <div className="h-[calc(100%-57px)] overflow-y-auto p-5">
+        <div className="overflow-hidden rounded-2xl border border-gray-200">
+          <div className="grid grid-cols-[1.45fr_0.8fr_0.8fr] border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-black text-gray-500">
+            <div>功能</div>
+            <div className="text-center">个人版</div>
+            <div className="text-center">学校版</div>
+          </div>
+          {versionCompareRows.map((row, index) => (
+            <div key={row.feature} className={cx('grid grid-cols-[1.45fr_0.8fr_0.8fr] items-center px-4 py-3 text-sm', index > 0 && 'border-t border-gray-100')}>
+              <div className="truncate pr-3 font-black text-gray-800">{row.feature}</div>
+              <div className={cx('text-center text-base font-black', row.personal === '✓' ? 'text-gray-950' : 'text-gray-300')}>{row.personal}</div>
+              <div className={cx('text-center text-base font-black', row.school === '✓' ? 'text-gray-950' : 'text-gray-300')}>{row.school}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   const renderSummaryPrototype = () => (
     <div className="h-full w-full max-w-[760px] overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-950">
@@ -2871,6 +3191,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const renderPrototypePanel = () => {
     if (surface === 'summary') return renderSummaryPrototype();
     if (surface === 'parent') return renderParentPrototype();
+    if (surface === 'versionCompare') return renderVersionComparePrototype();
     if (surface === 'schoolAdmin') return renderSchoolAdminPrototype();
     if (surface === 'ops') return renderOpsPrototype();
     return (
@@ -2886,6 +3207,9 @@ const TeacherCMobileLowFi: React.FC = () => {
           {renderWechatPhoneSheet()}
           {renderPhoneLoginSheet()}
           {renderSpaceSelectSheet()}
+          {renderSchoolBasicInfoEditSheet()}
+          {renderTermEditSheet()}
+          {renderTermActionSheet()}
           {renderAvatarSheet()}
           {renderNameSheet()}
           {renderSchoolUpgradeSheet()}
@@ -2896,6 +3220,9 @@ const TeacherCMobileLowFi: React.FC = () => {
           {renderInviteConfirmSheet()}
           {renderClassEditSheet()}
           {renderClassExitSheet()}
+          {renderRemoveTeacherConfirmSheet()}
+          {renderTransferAdminTeacherSheet()}
+          {renderTransferAdminConfirmSheet()}
           {renderClassActionSheet()}
           {renderTeacherActionSheet()}
         </div>
@@ -2906,6 +3233,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const renderPrdPanel = () => {
     if (surface === 'summary') return renderStaticPrdPanel(summaryPrdBlocks);
     if (surface === 'parent') return renderParentPrdPanel();
+    if (surface === 'versionCompare') return renderStaticPrdPanel(versionComparePrdBlocks);
     if (surface === 'schoolAdmin') return renderStaticPrdPanel(schoolAdminPrdBlocks);
     if (surface === 'ops') return renderStaticPrdPanel(opsPrdBlocks);
 
@@ -3190,6 +3518,172 @@ const TeacherCMobileLowFi: React.FC = () => {
                 </button>
               );
             })}
+          </div>
+        </section>
+      </div>
+    );
+  };
+
+  const renderSchoolBasicInfoEditSheet = () => {
+    if (!showBasicInfoEditSheet) return null;
+    const close = () => setShowBasicInfoEditSheet(false);
+    const tabLabel = schoolBasicInfoTabs.find((item) => item.key === activeBasicInfoTab)?.label ?? '基础信息';
+    const isEditing = Boolean(editingBasicInfoItem);
+    const title = `${isEditing ? '编辑' : '新增'}${tabLabel}`;
+    const currentName = editingBasicInfoItem?.name ?? '';
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label={title}>
+        <button type="button" aria-label="关闭基础信息编辑弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">{title}</h3>
+
+          <label className="mt-4 block text-xs font-black text-gray-600">
+            名称
+            <input
+              className="mt-2 h-12 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-base font-normal text-gray-950 outline-none focus:border-gray-900"
+              defaultValue={currentName}
+              placeholder={`请输入${tabLabel}名称`}
+            />
+          </label>
+
+          {activeBasicInfoTab === 'term' && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <label className="block text-xs font-black text-gray-600">
+                开始日期
+                <input className="mt-2 h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal" defaultValue="2026-09-01" />
+              </label>
+              <label className="block text-xs font-black text-gray-600">
+                结束日期
+                <input className="mt-2 h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal" defaultValue="2027-01-23" />
+              </label>
+            </div>
+          )}
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" className="h-11 rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">启用</button>
+            <button type="button" className="h-11 rounded-2xl border border-gray-200 bg-white text-sm font-black">停用</button>
+          </div>
+
+          <button type="button" onClick={close} className="mt-4 h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">
+            完成
+          </button>
+        </section>
+      </div>
+    );
+  };
+
+  const renderTermEditSheet = () => {
+    if (!showTermEditSheet) return null;
+    const close = () => {
+      setShowTermEditSheet(false);
+      setEditingTermItem(null);
+    };
+    const isEditing = Boolean(editingTermItem);
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label={isEditing ? '编辑学期' : '新增学期'}>
+        <button type="button" aria-label="关闭学期时间编辑弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">{isEditing ? '编辑学期' : '新增学期'}</h3>
+          <label className="mt-4 block text-xs font-black text-gray-600">
+            学年
+            <select className="mt-2 h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal" defaultValue={editingTermItem?.schoolYear ?? schoolYearOptions[0]}>
+              {schoolYearOptions.map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+          </label>
+          <label className="mt-3 block text-xs font-black text-gray-600">
+            学期类型
+            <select className="mt-2 h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal" defaultValue={editingTermItem?.termType ?? '上学期'}>
+              {termTypeOptions.map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+          </label>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <label className="block text-xs font-black text-gray-600">
+              开始日期
+              <input className="mt-2 h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal" defaultValue={editingTermItem?.start ?? ''} placeholder="YYYY.MM.DD" />
+            </label>
+            <label className="block text-xs font-black text-gray-600">
+              结束日期
+              <input className="mt-2 h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal" defaultValue={editingTermItem?.end ?? ''} placeholder="YYYY.MM.DD" />
+            </label>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (editingTermItem) setCurrentTermId(editingTermItem.id);
+            }}
+            className="mt-4 flex h-12 w-full items-center justify-between rounded-2xl bg-gray-50 px-4 text-left text-sm font-black active:bg-gray-100"
+          >
+            设为当前学期
+            <span className={cx('h-7 w-12 rounded-full p-1', editingTermItem?.id === currentTermId ? 'bg-gray-900' : 'bg-gray-300')}>
+              <span className={cx('block h-5 w-5 rounded-full bg-white transition-transform', editingTermItem?.id === currentTermId && 'translate-x-5')} />
+            </span>
+          </button>
+          <button type="button" onClick={close} className="mt-5 h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">
+            完成
+          </button>
+        </section>
+      </div>
+    );
+  };
+
+  const renderTermActionSheet = () => {
+    if (!activeTermAction) return null;
+    const close = () => setActiveTermAction(null);
+    const isCurrent = activeTermAction.id === currentTermId;
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="学期操作">
+        <button type="button" aria-label="关闭学期操作菜单" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">{formatTermName(activeTermAction)}</h3>
+          <div className="mt-4 overflow-hidden rounded-2xl bg-gray-50">
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                openTermEditSheet(activeTermAction);
+              }}
+              className="flex h-12 w-full items-center justify-between border-b border-white px-4 text-left text-sm font-black active:bg-gray-100"
+            >
+              编辑
+              <ChevronRight size={16} />
+            </button>
+            <button
+              type="button"
+              disabled={isCurrent}
+              onClick={() => {
+                setCurrentTermId(activeTermAction.id);
+                close();
+              }}
+              className={cx('flex h-12 w-full items-center justify-between border-b border-white px-4 text-left text-sm font-black', isCurrent ? 'text-gray-400' : 'active:bg-gray-100')}
+            >
+              设为当前
+              {isCurrent && <span className="text-xs font-black">当前</span>}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDeletedTermIds((ids) => [...ids, activeTermAction.id]);
+                if (activeTermAction.id === currentTermId) {
+                  const nextTerm = schoolTermItems.find((item) => item.id !== activeTermAction.id && !deletedTermIds.includes(item.id));
+                  if (nextTerm) setCurrentTermId(nextTerm.id);
+                }
+                close();
+              }}
+              className="flex h-12 w-full items-center justify-between px-4 text-left text-sm font-black text-rose-600 active:bg-rose-50"
+            >
+              删除
+              <Trash2 size={16} />
+            </button>
           </div>
         </section>
       </div>
@@ -3557,24 +4051,45 @@ const TeacherCMobileLowFi: React.FC = () => {
     }
 
     if (page === 'studentAdd') {
+      const canSubmitStudents = studentInputRows.every((row) => row.name.trim() && row.no.trim() && row.gender);
+
       return (
         <>
           <ScreenHeader title="添加学生" />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
             <div className="flex-1 space-y-3 overflow-y-auto pb-4">
-              {Array.from({ length: studentInputRows }).map((_, index) => {
-                const selectedGender = studentInputGenders[index] || '男';
+              {studentInputRows.map((row) => {
+                const selectedGender = row.gender;
                 return (
-                <div key={index} className="rounded-2xl bg-gray-50 p-3 text-xs font-black">
-                  <div className="flex items-center gap-2">
-                    <input className="h-11 min-w-0 flex-1 border border-gray-200 bg-white px-2 text-sm font-normal" placeholder="姓名" />
-                    <input className="h-11 w-20 shrink-0 border border-gray-200 bg-white px-2 text-sm font-normal" placeholder="学号" />
-                    <div className="grid h-11 w-20 shrink-0 grid-cols-2 gap-1 text-xs font-black">
-                      <button type="button" onClick={() => updateStudentInputGender(index, '男')} className={cx('rounded-xl border border-gray-200', selectedGender === '男' ? 'bg-gray-900 text-white' : 'bg-white')}>男</button>
-                      <button type="button" onClick={() => updateStudentInputGender(index, '女')} className={cx('rounded-xl border border-gray-200', selectedGender === '女' ? 'bg-gray-900 text-white' : 'bg-white')}>女</button>
+                  <div key={row.id} className="rounded-2xl bg-gray-50 p-3 text-xs font-black">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <input
+                          value={row.name}
+                          onChange={(event) => updateStudentInputRow(row.id, { name: event.target.value })}
+                          className="h-11 min-w-0 flex-1 border border-gray-200 bg-white px-2 text-sm font-normal"
+                          placeholder="姓名"
+                          aria-label="学生姓名"
+                        />
+                        <input
+                          value={row.no}
+                          onChange={(event) => updateStudentInputRow(row.id, { no: event.target.value })}
+                          className="h-11 w-20 shrink-0 border border-gray-200 bg-white px-2 text-sm font-normal"
+                          placeholder="学号"
+                          aria-label="学生学号"
+                        />
+                        <div className="grid h-11 w-20 shrink-0 grid-cols-2 gap-1 text-xs font-black">
+                          <button type="button" onClick={() => updateStudentInputRow(row.id, { gender: '男' })} className={cx('rounded-xl border border-gray-200', selectedGender === '男' ? 'bg-gray-900 text-white' : 'bg-white')}>男</button>
+                          <button type="button" onClick={() => updateStudentInputRow(row.id, { gender: '女' })} className={cx('rounded-xl border border-gray-200', selectedGender === '女' ? 'bg-gray-900 text-white' : 'bg-white')}>女</button>
+                        </div>
+                      </div>
+                      {studentInputRows.length > 1 && (
+                        <button type="button" onClick={() => removeStudentInputRow(row.id)} className="flex h-11 w-8 shrink-0 items-center justify-center rounded-xl text-gray-400 active:bg-white active:text-gray-700" aria-label="清除该学生">
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
-                </div>
                 );
               })}
               <button
@@ -3587,12 +4102,13 @@ const TeacherCMobileLowFi: React.FC = () => {
             </div>
             <button
               type="button"
+              disabled={!canSubmitStudents}
               onClick={() => {
                 setClassCreated(true);
-                setStudentCount((count) => Math.max(count, studentInputRows));
+                setStudentCount((count) => Math.max(count, studentInputRows.length));
                 navigate('record');
               }}
-              className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white"
+              className={cx('h-12 w-full rounded-2xl border border-gray-200 text-sm font-black', canSubmitStudents ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400')}
             >
               完成
             </button>
@@ -3786,7 +4302,12 @@ const TeacherCMobileLowFi: React.FC = () => {
                   邀请家长绑定
                 </button>
               </section>
-            </div>
+          </div>
+            {activeClassProfile.isCreator && (
+              <button type="button" onClick={() => setShowTransferAdminTeacherSheet(true)} className="mb-2 h-12 w-full rounded-2xl border border-gray-200 bg-white text-sm font-black text-gray-950 active:bg-gray-100">
+                转移班级管理员
+              </button>
+            )}
             <button type="button" onClick={() => setShowClassExitSheet(true)} className="h-12 w-full rounded-2xl border border-gray-300 bg-white text-sm font-black text-gray-950 active:bg-gray-100">
               {classDangerLabel}
             </button>
@@ -4097,34 +4618,69 @@ const TeacherCMobileLowFi: React.FC = () => {
         <>
           <TabHeader title="我的" />
           <div className="space-y-3 p-5 pb-24">
-            <div className="rounded-3xl bg-gray-50 p-4">
-              <div className="flex items-center gap-3">
+            <div className="relative rounded-3xl bg-gray-50 p-4">
+              <button
+                type="button"
+                onClick={openNameSheet}
+                className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-gray-600 active:bg-gray-100"
+                aria-label="编辑资料"
+              >
+                <Edit3 size={16} />
+              </button>
+              <div className="flex items-center gap-3 pr-11">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-lg font-black">郭</div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-base font-black">郭老师</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {!hasSchoolSpace && <span className="rounded-lg bg-white px-2 py-1 text-xs font-black">个人版</span>}
-                  </div>
+                  {hasSchoolSpace && (
+                    <button
+                      type="button"
+                      onClick={() => setShowSpaceSelectSheet(true)}
+                      className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-xl bg-white px-2.5 py-1.5 text-xs font-black text-gray-600 active:bg-gray-100"
+                      aria-label="切换版本"
+                      aria-expanded={showSpaceSelectSheet}
+                    >
+                      <span className="min-w-0 truncate">{currentSpaceTitle}</span>
+                      <ArrowLeftRight size={13} className="shrink-0" />
+                    </button>
+                  )}
+                  {!hasSchoolSpace && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="rounded-lg bg-white px-2 py-1 text-xs font-black">个人版</span>
+                    </div>
+                  )}
                 </div>
-                <button type="button" onClick={() => navigate('profileEdit')} className="h-10 shrink-0 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black">编辑</button>
               </div>
-              {hasSchoolSpace && (
-                <button
-                  type="button"
-                  onClick={() => setShowSpaceSelectSheet(true)}
-                  className="mt-4 flex h-12 w-full items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 text-left text-sm font-black active:bg-gray-100"
-                >
-                  <span>当前版本</span>
-                  <span className="flex min-w-0 items-center gap-2 text-gray-600">
-                    <span className="max-w-40 truncate">{currentSpaceTitle}</span>
-                    <ChevronRight size={16} />
-                  </span>
-                </button>
-              )}
             </div>
 
             {!hasSchoolSpace && (
               <button type="button" onClick={() => setShowSchoolUpgradeSheet(true)} className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">了解学校版</button>
+            )}
+
+            {hasSchoolSpace && (
+              <section className="rounded-3xl bg-gray-50 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-black">学校基础信息</div>
+                  <Building2 size={18} className="text-gray-500" />
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {schoolBasicInfoTabs.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => openSchoolBasicInfo(item.key)}
+                        className="flex min-h-[84px] flex-col justify-between rounded-2xl bg-white p-3 text-left active:bg-gray-100"
+                      >
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-50">
+                          <Icon size={17} />
+                        </span>
+                        <span className="text-sm font-black">{item.label}管理</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
             )}
 
             <div className="overflow-hidden rounded-2xl bg-gray-50">
@@ -4143,68 +4699,100 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
-    if (page === 'profileEdit') {
-      const teachingSamples = [
-        { classes: ['2025级1班', '2025级2班'], subject: '英语' },
-        { classes: ['2023级1班'], subject: '音乐' },
-      ];
-      const classOptions = ['2025级1班', '2025级2班', '2023级1班'];
-      const subjectOptions = ['语文', '数学', '英语', '音乐', '体育', '美术'];
+    if (page === 'termManagement') {
+      const visibleTermItems = schoolTermItems.filter((item) => !deletedTermIds.includes(item.id));
+      const currentTerm = visibleTermItems.find((item) => item.id === currentTermId) ?? visibleTermItems[0] ?? schoolTermItems[0];
 
       return (
         <>
-          <ScreenHeader title="个人信息" />
+          <ScreenHeader title="学期管理" />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
-            <div className="flex-1 space-y-4 overflow-y-auto pb-4">
-              <section className="rounded-3xl bg-gray-50 p-5">
-                <div className="flex flex-col items-center">
-                  <div className="relative">
-                    <button type="button" onClick={() => setShowAvatarSheet(true)} className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gray-200 text-2xl font-black shadow-sm active:bg-gray-300" aria-label="更换头像">郭</button>
-                    <button type="button" onClick={() => setShowAvatarSheet(true)} className="absolute -bottom-1 -right-1 flex h-11 w-11 items-center justify-center rounded-full border-4 border-white bg-gray-900 text-white active:bg-gray-700" aria-label="更换头像">
-                      <Camera size={18} />
-                    </button>
-                  </div>
-                </div>
+            <div className="flex-1 space-y-3 overflow-y-auto pb-24">
+              <section className="rounded-3xl bg-gray-50 p-4">
+                <div className="text-xs font-black text-gray-500">当前学期</div>
+                <div className="mt-2 text-base font-black">{formatTermName(currentTerm)}</div>
+                <div className="mt-1 text-xs font-medium text-gray-500">{currentTerm.start} - {currentTerm.end}</div>
               </section>
-
-              <button type="button" onClick={openNameSheet} className="flex min-h-14 w-full items-center justify-between rounded-2xl bg-gray-50 px-4 text-left active:bg-gray-100">
-                <span className="text-sm font-normal text-gray-500">姓名</span>
-                <span className="flex min-w-0 items-center gap-2">
-                  <span className="max-w-40 truncate text-sm font-black text-gray-950">{teacherName.trim() || '郭老师'}</span>
-                  <ChevronRight size={18} className="shrink-0 text-gray-400" />
-                </span>
-              </button>
 
               <section className="space-y-2">
                 <div className="flex items-center justify-between px-1">
-                  <FormSectionTitle title="任教信息" />
-                  <button type="button" onClick={openTeachingCreate} className="h-9 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black active:bg-gray-100">新增</button>
+                  <FormSectionTitle title={`${visibleTermItems.length} 个学期`} />
+                  <button type="button" onClick={() => openTermEditSheet()} className="h-9 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black active:bg-gray-100">新增</button>
                 </div>
-                {Array.from({ length: teachingRows }).map((_, index) => {
-                  const sample = teachingSamples[index] || { classes: ['2025级1班'], subject: '语文' };
+                {visibleTermItems.map((item) => {
+                  const isCurrent = item.id === currentTermId;
                   return (
-                    <div key={index} className="relative rounded-2xl bg-gray-50 p-4">
-                      <button type="button" onClick={() => openTeachingEdit(index)} className="block w-full text-left active:opacity-70">
-                        <div className="flex items-center gap-2 pr-10">
-                          <div className="text-lg font-black">{sample.subject}</div>
-                          <span className="rounded-xl bg-white px-2.5 py-1 text-xs font-black text-gray-700">{sample.classes.length} 个班</span>
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveTermAction(item)}
+                      className="flex min-h-20 w-full items-center justify-between gap-3 rounded-2xl bg-gray-50 px-4 py-3 text-left active:bg-gray-100"
+                    >
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <div className={cx('h-2.5 w-2.5 shrink-0 rounded-full', isCurrent ? 'bg-teal-500' : 'bg-gray-300')} />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-black">{formatTermName(item)}</div>
+                          <div className="mt-1 text-xs font-medium text-gray-500">{item.start} - {item.end}</div>
                         </div>
-                        <div className="mt-3 text-sm font-medium leading-5 text-gray-600">{sample.classes.join('、')}</div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          removeTeachingRow(index);
-                        }}
-                        className="absolute right-3 top-4 flex h-10 w-10 items-center justify-center rounded-xl text-gray-400 active:bg-white"
-                        aria-label={`删除任教信息 ${index + 1}`}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {isCurrent && <BasicInfoStatusBadge status="current" />}
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-gray-500">
+                          <MoreHorizontal size={18} />
+                        </span>
+                      </div>
+                    </button>
                   );
                 })}
+              </section>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    if (page === 'subjectManagement' || page === 'departmentManagement') {
+      const isSubject = page === 'subjectManagement';
+      const activeItems = isSubject ? schoolSubjectItems : schoolDepartmentItems;
+      const title = isSubject ? '科目管理' : '部门管理';
+
+      return (
+        <>
+          <ScreenHeader title={title} />
+          <div className="flex h-[calc(100%-64px)] flex-col p-5">
+            <div className="flex-1 space-y-3 overflow-y-auto pb-24">
+              <section className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <FormSectionTitle title={`${activeItems.length} 项`} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveBasicInfoTab(isSubject ? 'subject' : 'department');
+                      openBasicInfoEditSheet();
+                    }}
+                    className="h-9 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black active:bg-gray-100"
+                  >
+                    新增
+                  </button>
+                </div>
+
+                {activeItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveBasicInfoTab(isSubject ? 'subject' : 'department');
+                      openBasicInfoEditSheet(item);
+                    }}
+                    className="flex min-h-16 w-full items-center justify-between gap-3 rounded-2xl bg-gray-50 px-4 py-3 text-left active:bg-gray-100"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-black">{item.name}</span>
+                      <span className="mt-1 block truncate text-xs font-medium text-gray-500">{item.desc}</span>
+                    </span>
+                    <BasicInfoStatusBadge status={item.status} />
+                  </button>
+                ))}
               </section>
             </div>
           </div>

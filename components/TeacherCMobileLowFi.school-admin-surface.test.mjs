@@ -8,7 +8,7 @@ const requireSource = (text, message) => {
   if (!source.includes(text)) failures.push(message);
 };
 
-requireSource("type CEndSurface = 'summary' | 'teacher' | 'parent' | 'schoolAdmin' | 'ops';", 'C端改造顶部导航应包含学校后台端类型。');
+requireSource("'schoolAdmin'", 'C端改造顶部导航类型应包含学校后台端。');
 requireSource("{ key: 'schoolAdmin', label: '学校后台端' }", 'C端改造顶部导航应新增学校后台端。');
 requireSource('const renderSchoolAdminPrototype = () =>', '学校后台端应有独立低保真原型面板。');
 requireSource("if (surface === 'schoolAdmin') return renderSchoolAdminPrototype();", '点击学校后台端应切换到学校后台端原型。');

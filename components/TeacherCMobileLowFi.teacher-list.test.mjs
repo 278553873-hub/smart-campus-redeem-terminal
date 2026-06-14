@@ -22,7 +22,10 @@ requireText("type ClassTeacherProfile", '老师列表应有独立老师数据结
 requireText('subjects: string[];', '老师应支持多个任教学科标签。');
 requireText('isHomeroom: boolean;', '老师应标识是否班主任。');
 requireText('isAdmin: boolean;', '老师应标识是否管理员。');
-requireText("subjects: ['语文', '道德与法治'], isHomeroom: false, isAdmin: true", '管理员与班主任应区分，管理员可以不是班主任。');
+requireText("subjects: ['语文', '道德与法治'], isHomeroom: false, isAdmin: false", '管理员初始数据应可由状态动态计算，支持后续转移。');
+requireText("const currentTeacherDisplayName = teacherName.trim() || '郭老师';", '当前老师显示名应集中计算，避免默认管理员候选异常。');
+requireText("const activeAdminTeacherName = classAdminTeacherName === '郭老师' ? currentTeacherDisplayName : classAdminTeacherName;", '默认管理员应随当前老师显示名同步。');
+requireText("isAdmin: teacher.name === activeAdminTeacherName", '管理员标签应随班级管理员状态动态变化。');
 requireText("subjects: ['体育', '劳动'], isHomeroom: true, isAdmin: false", '班主任也应能同时任教多个科目。');
 requireText("navigate(activeClassProfile.isCreator ? 'teacherList' : 'teacherListMember')", '08A/08B 应分别进入 09A/09B。');
 requireText('<div className="grid shrink-0 grid-rows-2 gap-2">\n                  <PageNodeButton item="teacherList" lane={lane.title} />\n                  <PageNodeButton item="teacherListMember" lane={lane.title} />\n                </div>', '09A/09B 在地图上应像 08A/08B 一样并排展示。');
@@ -47,6 +50,18 @@ requireText('setActiveTeacherAction(teacher)', '管理员视角应通过更多 i
 requireText('renderTeacherActionSheet', '管理员视角应有老师更多操作底部弹层。');
 requireText("activeTeacherAction.isHomeroom ? '取消班主任' : '设为班主任'", '更多操作应支持设置或取消班主任。');
 requireText('移除老师', '更多操作应支持移除老师。');
+requireText('setRemoveTeacherCandidate(activeTeacherAction)', '点击移除老师后应先记录待移除老师。');
+requireText('renderRemoveTeacherConfirmSheet', '移除老师应有二次确认弹窗。');
+requireText('确认移除老师', '移除老师二次确认弹窗应明确标题。');
+requireText('确认后该老师不再管理当前班级。', 'PRD 应说明移除老师确认后的结果。');
+requireText("showClassActionToast(`已移除${removeTeacherCandidate.name}`)", '确认移除后才应展示移除成功反馈。');
+requireText('转移班级管理员', '08A 应提供转移班级管理员入口。');
+requireText('renderTransferAdminTeacherSheet', '08A 应有选择新管理员的老师列表弹窗。');
+requireText('transferAdminCandidates.map((teacher)', '转移管理员弹窗应展示可选择老师列表。');
+requireText('setTransferAdminCandidate(teacher)', '选中老师后应进入转移管理员二次确认。');
+requireText('renderTransferAdminConfirmSheet', '转移管理员应有二次确认弹窗。');
+requireText("setClassAdminTeacherName(transferAdminCandidate.name)", '确认后管理员身份应转移给选中老师。');
+requireText('原管理员不再拥有班级管理员身份', 'PRD 应说明转移后原管理员权限变化。');
 
 const teacherListMemberBlockStart = source.indexOf("if (page === 'teacherListMember')");
 const teacherListMemberBlockEnd = source.indexOf("if (page === 'parentBindingList')", teacherListMemberBlockStart);
