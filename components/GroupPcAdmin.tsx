@@ -111,11 +111,21 @@ const campusRows: CampusRow[] = [
 ];
 
 const groupIndicatorRows: IndicatorRow[] = [
-  { key: 'i1', dimension: '德育', level1: '品德发展', level2: '遵纪守法', level3: '友爱同学', campusUsage: 6, updatedAt: '2026-05-26', status: '启用' },
-  { key: 'i2', dimension: '智育', level1: '学习品质', level2: '创新思维', level3: '科创实践', campusUsage: 5, updatedAt: '2026-05-22', status: '启用' },
-  { key: 'i3', dimension: '体育', level1: '身心健康', level2: '运动习惯', level3: '课程参与', campusUsage: 6, updatedAt: '2026-05-18', status: '启用' },
-  { key: 'i4', dimension: '美育', level1: '审美素养', level2: '艺术实践', level3: '作品展示', campusUsage: 4, updatedAt: '2026-05-16', status: '待完善' },
-  { key: 'i5', dimension: '劳育', level1: '劳动素养', level2: '校园劳动', level3: '公共服务', campusUsage: 5, updatedAt: '2026-05-12', status: '启用' },
+  { key: 'i1', dimension: '德育', level1: '德育', level2: '行为习惯', level3: '文明礼貌、遵守纪律、自律自省', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i2', dimension: '德育', level1: '德育', level2: '公民素养', level3: '诚实守信、守正修身、实事求是', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i3', dimension: '德育', level1: '德育', level2: '家国担当', level3: '爱国爱校、社会责任、砺志坚心、持之以恒', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i4', dimension: '智育', level1: '智育', level2: '学习态度', level3: '勤奋学习、认真作业、虚心求教', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i5', dimension: '智育', level1: '智育', level2: '认知能力', level3: '细心思考、挑战难题', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i6', dimension: '智育', level1: '智育', level2: '科学精神', level3: '探索尝试', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i7', dimension: '体育', level1: '体育', level2: '身心健康', level3: '积极乐观、课内锻炼、课外运动', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i8', dimension: '体育', level1: '体育', level2: '身体素质', level3: '身体强健、顽强拼搏', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i9', dimension: '体育', level1: '体育', level2: '健康生活', level3: '公平比赛', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i10', dimension: '美育', level1: '美育', level2: '审美修养', level3: '发现美好、传统文化', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i11', dimension: '美育', level1: '美育', level2: '表现创造', level3: '表达美好、作品创作、舞台呈现', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i12', dimension: '美育', level1: '美育', level2: '艺术特长', level3: '学校特色', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i13', dimension: '劳育', level1: '劳育', level2: '劳动技能', level3: '卫生习惯、整理内务、认真值日', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i14', dimension: '劳育', level1: '劳育', level2: '实践合作', level3: '分担家务、校园服务、校外活动', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
+  { key: 'i15', dimension: '劳育', level1: '劳育', level2: '创新能力', level3: '活学活用', campusUsage: 6, updatedAt: '2026-06-15', status: '启用' },
 ];
 
 const campusIndicatorRows: CampusIndicatorRow[] = [
@@ -281,6 +291,83 @@ const lowIndicators = [
   { name: '劳育 / 生活技能 / 家庭维修', dimension: '劳育', cycles: '全集团命中 28 次', action: '优化指标描述' },
 ];
 
+
+const groupIndicatorMindMap = [
+  { key: 'de', dimension: '德育', color: '#1677ff', bg: 'bg-blue-50 text-blue-700 border-blue-100', branches: [
+    { level2: '行为习惯', level3: ['文明礼貌', '遵守纪律', '自律自省'] },
+    { level2: '公民素养', level3: ['诚实守信', '守正修身', '实事求是'] },
+    { level2: '家国担当', level3: ['爱国爱校', '社会责任', '砺志坚心', '持之以恒'] },
+  ] },
+  { key: 'zhi', dimension: '智育', color: '#14b8a6', bg: 'bg-teal-50 text-teal-700 border-teal-100', branches: [
+    { level2: '学习态度', level3: ['勤奋学习', '认真作业', '虚心求教'] },
+    { level2: '认知能力', level3: ['细心思考', '挑战难题'] },
+    { level2: '科学精神', level3: ['探索尝试'] },
+  ] },
+  { key: 'ti', dimension: '体育', color: '#f97316', bg: 'bg-orange-50 text-orange-700 border-orange-100', branches: [
+    { level2: '身心健康', level3: ['积极乐观', '课内锻炼', '课外运动'] },
+    { level2: '身体素质', level3: ['身体强健', '顽强拼搏'] },
+    { level2: '健康生活', level3: ['公平比赛'] },
+  ] },
+  { key: 'mei', dimension: '美育', color: '#8b5cf6', bg: 'bg-violet-50 text-violet-700 border-violet-100', branches: [
+    { level2: '审美修养', level3: ['发现美好', '传统文化'] },
+    { level2: '表现创造', level3: ['表达美好', '作品创作', '舞台呈现'] },
+    { level2: '艺术特长', level3: ['学校特色'] },
+  ] },
+  { key: 'lao', dimension: '劳育', color: '#22c55e', bg: 'bg-green-50 text-green-700 border-green-100', branches: [
+    { level2: '劳动技能', level3: ['卫生习惯', '整理内务', '认真值日'] },
+    { level2: '实践合作', level3: ['分担家务', '校园服务', '校外活动'] },
+    { level2: '创新能力', level3: ['活学活用'] },
+  ] },
+];
+
+const IndicatorMindMap: React.FC = () => (
+  <div className="overflow-x-auto pb-1">
+    <div className="min-w-[1060px]">
+      <div className="flex justify-center">
+        <div className="relative rounded-xl border border-slate-300 bg-slate-900 px-8 py-3 text-base font-black text-white shadow-sm">
+          集团五育指标体系
+          <span className="absolute left-1/2 top-full h-8 w-px -translate-x-1/2 bg-slate-300" />
+        </div>
+      </div>
+
+      <div className="relative mt-8 grid grid-cols-5 gap-4">
+        <span className="absolute left-[10%] right-[10%] top-0 h-px bg-slate-300" />
+        {groupIndicatorMindMap.map((dimension) => (
+          <div key={dimension.key} className="relative pt-5">
+            <span className="absolute left-1/2 top-0 h-5 w-px -translate-x-1/2 bg-slate-300" />
+            <div className={`mx-auto flex h-12 w-24 items-center justify-center rounded-xl border text-base font-black shadow-sm ${dimension.bg}`}>
+              {dimension.dimension}
+            </div>
+
+            <div className="relative mt-5 space-y-4">
+              <span className="absolute bottom-8 left-1/2 top-0 w-px -translate-x-1/2 bg-slate-200" />
+              {dimension.branches.map((branch) => (
+                <div key={branch.level2} className="relative">
+                  <span className="absolute left-1/2 top-0 h-4 w-px -translate-x-1/2 -translate-y-4 bg-slate-200" />
+                  <div className="relative rounded-xl border border-slate-200 bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+                    <span className="absolute left-1/2 top-0 h-2 w-px -translate-x-1/2 -translate-y-2 bg-slate-200" />
+                    <div className="flex items-center justify-center gap-2 rounded-lg bg-slate-50 px-2 py-2">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: dimension.color }} />
+                      <span className="text-sm font-black text-slate-900">{branch.level2}</span>
+                    </div>
+                    <div className="mt-3 grid gap-2">
+                      {branch.level3.map((item) => (
+                        <div key={item} className="relative rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5 text-center text-xs font-bold leading-5 text-slate-600">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 const warningDistribution = [
   { label: '德育行为', value: 4, color: '#f53f3f' },
   { label: '体质达标', value: 5, color: '#ff7d00' },
@@ -290,6 +377,16 @@ const warningDistribution = [
 ];
 
 const formatNumber = (value: number) => value.toLocaleString('zh-CN');
+
+const formatBigScreenRefreshTime = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
 
 const BIG_SCREEN_CANVAS_WIDTH = 1920;
 const BIG_SCREEN_CANVAS_HEIGHT = 1080;
@@ -568,20 +665,29 @@ const BigScreenRadar: React.FC = () => {
   );
 };
 
-const BigScreenHeroVisual: React.FC = () => {
+const BigScreenHeroVisual: React.FC<{ campus?: string }> = ({ campus }) => {
+  const fiveData = campus ? campusFiveData.find((item) => item.campus === campus) : null;
+  const behaviorData = campus ? campusBehaviorData.find((item) => item.campus === campus) : null;
+  const warningData = campus ? campusWarningData.find((item) => item.campus === campus) : null;
+  const scoreMap = fiveData
+    ? { de: fiveData.de, zhi: fiveData.zhi, ti: fiveData.ti, mei: fiveData.mei, lao: fiveData.lao }
+    : { de: 80, zhi: 86, ti: 73, mei: 71, lao: 75 };
+  const recordTotal = behaviorData ? behaviorData.positive + behaviorData.negative : 400900;
   const bars = [
-    { x: 207, y: 122, w: 42, h: 126, color: '#22d3ee', label: '德' },
-    { x: 270, y: 70, w: 48, h: 178, color: '#2dd4bf', label: '智' },
-    { x: 338, y: 108, w: 42, h: 140, color: '#38bdf8', label: '体' },
-    { x: 405, y: 146, w: 38, h: 102, color: '#14b8a6', label: '美' },
-    { x: 154, y: 170, w: 34, h: 78, color: '#67e8f9', label: '劳' },
-  ];
+    { x: 207, y: 122, w: 42, maxH: 126, score: scoreMap.de, color: '#22d3ee', label: '德' },
+    { x: 270, y: 70, w: 48, maxH: 178, score: scoreMap.zhi, color: '#2dd4bf', label: '智' },
+    { x: 338, y: 108, w: 42, maxH: 140, score: scoreMap.ti, color: '#38bdf8', label: '体' },
+    { x: 405, y: 146, w: 38, maxH: 102, score: scoreMap.mei, color: '#14b8a6', label: '美' },
+    { x: 154, y: 170, w: 34, maxH: 78, score: scoreMap.lao, color: '#67e8f9', label: '劳' },
+  ].map((bar) => ({ ...bar, h: Math.max(56, Math.round(bar.maxH * (bar.score / 88))) }));
 
   const anchorStats = [
-    { label: '覆盖校区', value: '6', unit: '个', className: 'left-8 top-10' },
-    { label: '均衡指数', value: '79.4', unit: '', className: 'right-8 top-10' },
-    { label: '行为记录', value: '400,900', unit: '条', className: 'left-12 bottom-8' },
-    { label: '风险预警', value: '12', unit: '项', className: 'right-12 bottom-8', warn: true },
+    campus && behaviorData
+      ? { label: '覆盖学生', value: formatNumber(behaviorData.studentCount), unit: '人', className: 'left-8 top-10' }
+      : { label: '覆盖校区', value: '6', unit: '个', className: 'left-8 top-10' },
+    { label: '均衡指数', value: fiveData ? String(fiveData.total) : '79.4', unit: '', className: 'right-8 top-10' },
+    { label: '行为记录', value: formatNumber(recordTotal), unit: '条', className: 'left-12 bottom-8' },
+    { label: '风险预警', value: String(warningData?.count ?? 12), unit: '项', className: 'right-12 bottom-8', warn: Boolean(warningData?.count ?? 12) },
   ];
 
   return (
@@ -675,7 +781,7 @@ const BigScreenHeroVisual: React.FC = () => {
       ))}
 
       <div className="absolute left-1/2 top-[252px] -translate-x-1/2 text-center">
-        <div className="font-mono text-[34px] font-black leading-none tracking-[-0.04em] text-white drop-shadow-[0_0_16px_rgba(125,211,252,0.55)]">集团数据中枢</div>
+        <div className="font-mono text-[34px] font-black leading-none tracking-[-0.04em] text-white drop-shadow-[0_0_16px_rgba(125,211,252,0.55)]">{campus || '集团数据中枢'}</div>
         <div className="mt-1 text-[11px] font-bold tracking-[0.24em] text-cyan-200/65">五育 · 行为 · 预警 · 校区</div>
       </div>
     </div>
@@ -961,21 +1067,46 @@ const BigScreenBehaviorOperation: React.FC<{ campus?: string }> = ({ campus }) =
   );
 };
 
-const BigScreenIndicatorInsight: React.FC = () => {
-  const total = indicatorDistribution.reduce((sum, item) => sum + item.value, 0);
-  const max = Math.max(...topIndicators.map((item) => item.value));
+const BigScreenIndicatorInsight: React.FC<{ campus?: string }> = ({ campus }) => {
+  const fiveData = campus ? campusFiveData.find((item) => item.campus === campus) : null;
+  const behaviorData = campus ? campusBehaviorData.find((item) => item.campus === campus) : null;
+  const campusIndicators = campusIndicatorData.filter((item) => item.campus === campus);
+  const recordTotal = behaviorData ? behaviorData.positive + behaviorData.negative : 0;
+  const distribution = fiveData && behaviorData
+    ? [
+      { label: '德育', value: Math.round(recordTotal * fiveData.de / 500), color: '#1677ff' },
+      { label: '智育', value: Math.round(recordTotal * fiveData.zhi / 500), color: '#14b8a6' },
+      { label: '体育', value: Math.round(recordTotal * fiveData.ti / 500), color: '#f97316' },
+      { label: '美育', value: Math.round(recordTotal * fiveData.mei / 500), color: '#8b5cf6' },
+      { label: '劳育', value: Math.round(recordTotal * fiveData.lao / 500), color: '#22c55e' },
+    ]
+    : indicatorDistribution;
+  const topData = campus && fiveData && behaviorData
+    ? [
+      ...campusIndicators.map((item, index) => ({ name: item.top, value: item.value, campuses: 1, tone: ['bg-blue-500', 'bg-teal-500', 'bg-green-500'][index % 3] })),
+      { name: '德育 / 行为习惯 / 文明礼貌', value: Math.round(behaviorData.positive * fiveData.de / 520), campuses: 1, tone: 'bg-blue-500' },
+      { name: '智育 / 学习态度 / 认真作业', value: Math.round(behaviorData.positive * fiveData.zhi / 580), campuses: 1, tone: 'bg-teal-500' },
+      { name: '劳育 / 劳动技能 / 认真值日', value: Math.round(behaviorData.positive * fiveData.lao / 620), campuses: 1, tone: 'bg-green-500' },
+      { name: '体育 / 身心健康 / 课内锻炼', value: Math.round(behaviorData.positive * fiveData.ti / 660), campuses: 1, tone: 'bg-orange-500' },
+    ].sort((a, b) => b.value - a.value).slice(0, 4)
+    : topIndicators.slice(0, 4);
+  const total = distribution.reduce((sum, item) => sum + item.value, 0);
+  const max = Math.max(...topData.map((item) => item.value));
+  const lowFrequencyCount = fiveData
+    ? [fiveData.de, fiveData.zhi, fiveData.ti, fiveData.mei, fiveData.lao].filter((score) => score < 75).length
+    : 4;
   return (
     <div className="grid h-full grid-cols-[178px_1fr] gap-3">
       <div className="flex min-h-0 flex-col rounded-2xl border border-cyan-300/12 bg-cyan-950/30 p-3">
         <div className="mb-2 flex items-end justify-between">
           <div>
             <div className="text-xs font-black tracking-[0.12em] text-cyan-200">五育记录分布</div>
-            <div className="mt-1 font-mono text-[23px] font-black text-white">全集团</div>
+            <div className="mt-1 font-mono text-[23px] font-black text-white">{campus ? campusShortName(campus) : '全集团'}</div>
           </div>
           <div className="text-[11px] font-bold text-cyan-100/60">占比</div>
         </div>
         <div className="space-y-2">
-          {indicatorDistribution.map((item) => {
+          {distribution.map((item) => {
             const percent = Math.round((item.value / total) * 100);
             return (
               <div key={item.label}>
@@ -992,21 +1123,21 @@ const BigScreenIndicatorInsight: React.FC = () => {
         </div>
         <div className="mt-auto rounded-xl border border-amber-300/15 bg-amber-300/10 px-3 py-2">
           <div className="text-[11px] font-bold text-amber-100/70">低频待优化指标</div>
-          <div className="mt-0.5 font-mono text-xl font-black text-amber-100">4 个</div>
+          <div className="mt-0.5 font-mono text-xl font-black text-amber-100">{lowFrequencyCount} 个</div>
         </div>
       </div>
       <div className="flex min-h-0 flex-col rounded-2xl border border-cyan-300/12 bg-cyan-950/22 p-3">
         <div className="flex items-center justify-between">
           <div className="text-xs font-black tracking-[0.12em] text-cyan-200">高频指标 TOP4</div>
-          <div className="text-[11px] font-bold text-cyan-100/55">记录数 · 覆盖校区</div>
+          <div className="text-[11px] font-bold text-cyan-100/55">{campus ? '记录数 · 当前校区' : '记录数 · 覆盖校区'}</div>
         </div>
         <div className="mt-3 space-y-2">
-          {topIndicators.slice(0, 4).map((item, index) => (
+          {topData.map((item, index) => (
             <div key={item.name}>
               <div className="mb-1 grid grid-cols-[28px_1fr_94px] items-center gap-2">
                 <span className="font-mono text-sm font-black text-cyan-300">{String(index + 1).padStart(2, '0')}</span>
                 <span className="truncate text-[13px] font-bold text-cyan-50/88">{item.name}</span>
-                <span className="text-right font-mono text-xs font-black text-cyan-200/80">{formatNumber(item.value)} · {item.campuses}校区</span>
+                <span className="text-right font-mono text-xs font-black text-cyan-200/80">{formatNumber(item.value)} · {campus ? '本校区' : `${item.campuses}校区`}</span>
               </div>
               <div className="ml-9 h-2 overflow-hidden rounded-full bg-cyan-950/70">
                 <div className={`h-full rounded-full ${item.tone} shadow-[0_0_18px_rgba(34,211,238,0.35)]`} style={{ width: `${Math.max((item.value / max) * 100, 8)}%` }} />
@@ -1016,10 +1147,10 @@ const BigScreenIndicatorInsight: React.FC = () => {
         </div>
         <div className="mt-auto grid grid-cols-4 gap-2 pt-3">
           {[
-            { label: '覆盖校区', value: '6 个' },
-            { label: '五育触达', value: '6 个' },
-            { label: '校区指标', value: '40 个' },
-            { label: '零记录指标', value: '1 个' },
+            { label: campus ? '覆盖学生' : '覆盖校区', value: campus && behaviorData ? `${formatNumber(behaviorData.studentCount)} 人` : '6 个' },
+            { label: '五育触达', value: campus ? `${5 - lowFrequencyCount}/5` : '6 个' },
+            { label: '校区指标', value: campus ? `${Math.max(28, topData.length * 8)} 个` : '40 个' },
+            { label: '零记录指标', value: campus ? `${lowFrequencyCount > 1 ? 1 : 0} 个` : '1 个' },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-cyan-300/10 bg-cyan-950/35 px-2 py-2 text-center">
               <div className="font-mono text-[16px] font-black text-white">{item.value}</div>
@@ -1032,20 +1163,39 @@ const BigScreenIndicatorInsight: React.FC = () => {
   );
 };
 
-const BigScreenCampuses: React.FC<{ onCampusClick?: (name: string) => void }> = ({ onCampusClick }) => (
-  <div className="grid grid-cols-3 gap-2">
-    {campusRows.map((campus) => (
+const BigScreenCampuses: React.FC<{ campus?: string; onCampusClick?: (name: string) => void }> = ({ campus, onCampusClick }) => {
+  const rows = campus ? campusRows.filter((item) => item.name === campus) : campusRows;
+
+  return (
+  <div className={`grid gap-2 ${campus ? 'grid-cols-1' : 'grid-cols-3'}`}>
+    {rows.map((campusItem) => (
       <div
-        key={campus.key}
-        className={`group relative border border-cyan-300/12 bg-cyan-950/35 px-3 py-2 transition-all ${onCampusClick ? 'cursor-pointer hover:bg-cyan-800/50 hover:border-cyan-300/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]' : ''}`}
-        onClick={() => onCampusClick?.(campus.name)}
+        key={campusItem.key}
+        className={`group relative border border-cyan-300/12 bg-cyan-950/35 px-3 py-2 transition-all ${onCampusClick && !campus ? 'cursor-pointer hover:bg-cyan-800/50 hover:border-cyan-300/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]' : ''}`}
+        onClick={() => !campus && onCampusClick?.(campusItem.name)}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-xs font-black text-cyan-50">{campus.name}</span>
-          <span className={`h-2 w-2 rounded-full ${campus.status === '重点关注' ? 'bg-rose-400' : campus.status === '关注' ? 'bg-amber-300' : 'bg-emerald-300'}`} />
+          <span className="truncate text-xs font-black text-cyan-50">{campusItem.name}</span>
+          <span className={`h-2 w-2 rounded-full ${campusItem.status === '重点关注' ? 'bg-rose-400' : campusItem.status === '关注' ? 'bg-amber-300' : 'bg-emerald-300'}`} />
         </div>
-        <div className="mt-1 font-mono text-[11px] font-bold text-cyan-100/55">记录 {formatNumber(campus.behaviorCount)}</div>
-        {onCampusClick && (
+        <div className="mt-1 font-mono text-[11px] font-bold text-cyan-100/55">记录 {formatNumber(campusItem.behaviorCount)}</div>
+        {campus && (
+          <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+            <div className="border border-cyan-300/10 bg-cyan-950/30 px-2 py-1.5">
+              <div className="font-mono text-[13px] font-black text-white">{campusItem.studentCoverage}%</div>
+              <div className="text-[10px] font-bold text-cyan-100/50">学生覆盖</div>
+            </div>
+            <div className="border border-cyan-300/10 bg-cyan-950/30 px-2 py-1.5">
+              <div className="font-mono text-[13px] font-black text-white">{campusItem.teacherParticipation}%</div>
+              <div className="text-[10px] font-bold text-cyan-100/50">教师参与</div>
+            </div>
+            <div className="border border-cyan-300/10 bg-cyan-950/30 px-2 py-1.5">
+              <div className="font-mono text-[13px] font-black text-white">{campusItem.indicatorBreadth}</div>
+              <div className="text-[10px] font-bold text-cyan-100/50">指标覆盖</div>
+            </div>
+          </div>
+        )}
+        {onCampusClick && !campus && (
           <div className="absolute bottom-1 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <span className="text-[9px] font-bold text-cyan-300/70">点击下钻</span>
             <span className="text-[10px] text-cyan-300/70">→</span>
@@ -1054,7 +1204,8 @@ const BigScreenCampuses: React.FC<{ onCampusClick?: (name: string) => void }> = 
       </div>
     ))}
   </div>
-);
+  );
+};
 
 
 // 6 校区五育得分数据
@@ -1311,7 +1462,16 @@ const CampusDrillDown: React.FC<{ campus: string; onClose: () => void }> = ({ ca
 const BigScreenOverviewContent: React.FC = () => {
   const [selectedCampus, setSelectedCampus] = useState('group');
   const [drillCampus, setDrillCampus] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const isGroup = selectedCampus === 'group';
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60 * 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   // 根据选择获取当前校区数据
   const currentData = isGroup
@@ -1329,6 +1489,8 @@ const BigScreenOverviewContent: React.FC = () => {
           teachers: Math.round(b.studentCount * 0.03).toString() + '/' + Math.round(b.studentCount * 0.04).toString(),
         };
       })();
+  const selectedCampusRow = isGroup ? null : campusRows.find((item) => item.name === selectedCampus);
+  const selectedCampusWarning = isGroup ? null : campusWarningData.find((item) => item.campus === selectedCampus);
 
   return (
   <BigScreenScaleFrame>
@@ -1361,7 +1523,7 @@ const BigScreenOverviewContent: React.FC = () => {
           <div className="absolute right-0 top-3 flex items-start gap-4">
             <CampusSelector value={selectedCampus} onChange={setSelectedCampus} />
             <div className="text-right">
-              <div className="font-mono text-[19px] font-black text-cyan-100">2026-06-02 14:30</div>
+              <div className="font-mono text-[19px] font-black text-cyan-100">{formatBigScreenRefreshTime(currentTime)}</div>
               <div className="mt-1 text-[11px] font-bold tracking-[0.16em] text-cyan-200/60">每 5 分钟刷新</div>
             </div>
           </div>
@@ -1382,7 +1544,7 @@ const BigScreenOverviewContent: React.FC = () => {
           </BigScreenPanel>
 
           <BigScreenPanel title="态势总览">
-            <BigScreenHeroVisual />
+            <BigScreenHeroVisual campus={isGroup ? undefined : selectedCampus} />
           </BigScreenPanel>
 
           <BigScreenPanel title="学情预警">
@@ -1390,7 +1552,7 @@ const BigScreenOverviewContent: React.FC = () => {
           </BigScreenPanel>
 
           <BigScreenPanel title="指标运行洞察">
-            <BigScreenIndicatorInsight />
+            <BigScreenIndicatorInsight campus={isGroup ? undefined : selectedCampus} />
           </BigScreenPanel>
 
           <BigScreenPanel title={isGroup ? '各校五育对比' : '五育发展详情'}>
@@ -1401,7 +1563,7 @@ const BigScreenOverviewContent: React.FC = () => {
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2">
                 <div className="border border-cyan-300/12 bg-cyan-950/35 p-3 text-center">
-                  <div className="font-mono text-[22px] font-black text-white">{isGroup ? '6/6' : '5/5'}</div>
+                  <div className="font-mono text-[22px] font-black text-white">{isGroup ? '6/6' : `${selectedCampusRow?.dimensionsTouched ?? 0}/5`}</div>
                   <div className="text-[11px] font-bold text-cyan-100/60">五育触达</div>
                 </div>
                 <div className="border border-cyan-300/12 bg-cyan-950/35 p-3 text-center">
@@ -1409,11 +1571,11 @@ const BigScreenOverviewContent: React.FC = () => {
                   <div className="text-[11px] font-bold text-cyan-100/60">学情预警</div>
                 </div>
                 <div className="border border-cyan-300/12 bg-cyan-950/35 p-3 text-center">
-                  <div className="font-mono text-[22px] font-black text-white">{isGroup ? '2' : '0'}</div>
+                  <div className="font-mono text-[22px] font-black text-white">{isGroup ? '2' : selectedCampusWarning?.level === '高' ? '1' : '0'}</div>
                   <div className="text-[11px] font-bold text-cyan-100/60">重点关注</div>
                 </div>
               </div>
-              <BigScreenCampuses onCampusClick={(name) => setDrillCampus(name)} />
+              <BigScreenCampuses campus={isGroup ? undefined : selectedCampus} onCampusClick={(name) => setDrillCampus(name)} />
             </div>
           </BigScreenPanel>
         </main>
@@ -1497,21 +1659,31 @@ const AdminOverviewContent: React.FC = () => {
 
 const IndicatorsContent: React.FC = () => {
   const indicatorColumns = useMemo(() => [
-    { title: '五育维度', dataIndex: 'dimension', width: 100, render: (value: string) => <Tag color="blue">{value}</Tag> },
-    { title: '一级指标', dataIndex: 'level1', width: 150, render: (value: string) => <span className="font-black text-slate-800">{value}</span> },
-    { title: '二级指标', dataIndex: 'level2', width: 150 },
-    { title: '三级指标', dataIndex: 'level3', width: 170 },
-    { title: '使用校区', dataIndex: 'districtUsage', width: 110, render: (value: number) => <span className="font-black text-slate-700">{value}/6 个</span> },
+    { title: '一级指标', dataIndex: 'level1', width: 110, render: (value: string) => <Tag color="arcoblue">{value}</Tag> },
+    { title: '二级指标', dataIndex: 'level2', width: 140, render: (value: string) => <span className="font-black text-slate-800">{value}</span> },
+    {
+      title: '三级指标',
+      dataIndex: 'level3',
+      width: 360,
+      render: (value: string) => (
+        <div className="flex flex-wrap gap-1.5">
+          {value.split('、').map((item) => (
+            <Tag key={item} color="gray" className="!m-0">{item}</Tag>
+          ))}
+        </div>
+      ),
+    },
+    { title: '使用校区', dataIndex: 'campusUsage', width: 110, render: (value: number) => <span className="font-black text-slate-700">{value}/6 个</span> },
     { title: '更新时间', dataIndex: 'updatedAt', width: 120 },
     { title: '状态', dataIndex: 'status', width: 100, render: (value: IndicatorRow['status']) => value === '启用' ? <Tag color="green">启用</Tag> : <Tag color="orangered">待完善</Tag> },
     { title: '操作', dataIndex: 'action', width: 110, render: () => <Button type="text">编辑</Button> },
   ], []);
 
-  const districtIndicatorColumns = useMemo(() => [
-    { title: '区域', dataIndex: 'district', width: 160, render: (value: string) => <span className="font-black text-slate-800">{value}</span> },
+  const campusIndicatorColumns = useMemo(() => [
+    { title: '校区', dataIndex: 'campus', width: 180, render: (value: string) => <span className="font-black text-slate-800">{value}</span> },
     { title: '指标体系版本', dataIndex: 'version', width: 220 },
     { title: '集团指标覆盖', dataIndex: 'groupCoverage', width: 150, render: (value: number) => <Progress percent={value} size="small" color={value >= 98 ? '#00b42a' : value >= 95 ? '#165dff' : '#ff7d00'} /> },
-    { title: '区域指标', dataIndex: 'customItems', width: 110, render: (value: number) => <span className="font-black text-slate-700">{value} 条</span> },
+    { title: '校区指标', dataIndex: 'customItems', width: 110, render: (value: number) => <span className="font-black text-slate-700">{value} 条</span> },
     { title: '更新时间', dataIndex: 'updatedAt', width: 120 },
     {
       title: '状态',
@@ -1528,24 +1700,11 @@ const IndicatorsContent: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-5 gap-4">
-        {dimensions.map((item) => (
-          <div key={item.key} className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl border text-lg font-black ${item.bg}`}>{item.label}</div>
-            <div className="text-lg font-black text-slate-900">{item.full}</div>
-            <div className="mt-2 text-xs font-bold leading-5 text-slate-500">
-              {item.key === 'de' && '思想品德、文明礼仪、遵纪守法、集体荣誉'}
-              {item.key === 'zhi' && '学业发展、学科素养、创新思维、竞赛成果'}
-              {item.key === 'ti' && '体质健康、运动习惯、赛事参与、课程参与'}
-              {item.key === 'mei' && '艺术素养、审美能力、文艺活动、作品沉淀'}
-              {item.key === 'lao' && '校园劳动、社会实践、生活技能、公共服务'}
-            </div>
-            <div className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-500">已配置 {item.key === 'de' ? 48 : item.key === 'zhi' ? 42 : item.key === 'ti' ? 36 : item.key === 'mei' ? 28 : 34} 条指标</div>
-          </div>
-        ))}
-      </div>
+      <Card className="!rounded-2xl !border-slate-200" title={<span className="font-black text-slate-900">集团五育指标体系</span>} extra={<Button type="primary">新增集团指标</Button>}>
+        <IndicatorMindMap />
+      </Card>
 
-      <Card className="!rounded-2xl !border-slate-200" title={<span className="font-black text-slate-900">集团指标体系设置</span>} extra={<Button type="primary">新增集团指标</Button>}>
+      <Card className="!rounded-2xl !border-slate-200" title={<span className="font-black text-slate-900">集团指标明细</span>}>
         <div className="pc-filter-bar mb-4 flex items-center gap-3">
           <Input allowClear prefix={<Search size={15} />} placeholder="搜索一级、二级、三级指标" style={{ width: 260 }} />
           <Select placeholder="五育维度" allowClear style={{ width: 160 }}>
@@ -1558,7 +1717,7 @@ const IndicatorsContent: React.FC = () => {
           <Button type="primary">查询</Button>
           <Button>重置</Button>
         </div>
-        <Table columns={indicatorColumns} data={groupIndicatorRows} pagination={false} rowKey="key" />
+        <Table columns={indicatorColumns} data={groupIndicatorRows} pagination={false} rowKey="key" scroll={{ x: 1050 }} />
       </Card>
 
       <Card className="!rounded-2xl !border-slate-200" title={<span className="font-black text-slate-900">校区指标体系查看</span>} extra={<Button>导出对齐情况</Button>}>
@@ -1572,7 +1731,7 @@ const IndicatorsContent: React.FC = () => {
           <Button type="primary">查询</Button>
           <Button>重置</Button>
         </div>
-        <Table columns={districtIndicatorColumns} data={campusIndicatorRows} pagination={false} rowKey="key" />
+        <Table columns={campusIndicatorColumns} data={campusIndicatorRows} pagination={false} rowKey="key" />
       </Card>
     </div>
   );

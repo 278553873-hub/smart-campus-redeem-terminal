@@ -105,8 +105,14 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             ],
         },
         {
-            title: '班级维护',
+            title: '学生信息更新',
             items: [
+                {
+                    label: '批量修改学生',
+                    icon: UsersIcon,
+                    tone: 'slate',
+                    onClick: () => runClassAction(onSelectClass),
+                },
                 {
                     label: '设置兑换密码',
                     icon: ShieldIcon,
@@ -119,6 +125,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     tone: 'emerald',
                     onClick: () => runClassAction(onViewFaceUpdate),
                 },
+            ],
+        },
+        {
+            title: '班级维护',
+            items: [
                 {
                     label: '离校学生',
                     icon: UsersIcon,

@@ -27,7 +27,7 @@ import {
   CheckSquare
 } from 'lucide-react';
 
-declare global { interface Window { confetti: any; } }
+declare global { interface Window { confetti?: (options: Record<string, unknown>) => void; } }
 
 interface StudentData {
   id: string;
@@ -434,6 +434,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [newOptionLabel, setNewOptionLabel] = useState('');
   const [feedbackEffect, setFeedbackEffect] = useState<{ id: string, type: 'positive' | 'negative', time: number } | null>(null);
   const [isGlobalRaining, setIsGlobalRaining] = useState(false);
+  const [isCelebrating, setIsCelebrating] = useState(false);
   const [randomModalOpen, setRandomModalOpen] = useState(false);
   const [randomStudents, setRandomStudents] = useState<StudentData[]>([]);
   const [randomGroups, setRandomGroups] = useState<GroupData[]>([]);
@@ -449,6 +450,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [voiceLevel, setVoiceLevel] = useState(0);
   const [voiceDockPosition, setVoiceDockPosition] = useState<{ x: number; y: number } | null>(null);
   const randomRollTimerRef = useRef<number | null>(null);
+  const celebrationTimerRef = useRef<number | null>(null);
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
   const speechRecognitionRef = useRef<any | null>(null);
   const voiceFinalizedRef = useRef(false);
@@ -551,6 +553,9 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     return () => {
       if (randomRollTimerRef.current !== null) {
         window.clearTimeout(randomRollTimerRef.current);
+      }
+      if (celebrationTimerRef.current !== null) {
+        window.clearTimeout(celebrationTimerRef.current);
       }
       if (speechRecognitionRef.current) {
         speechRecognitionRef.current.stop();
@@ -666,6 +671,18 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   };
 
   const fireCelebration = () => {
+    if (celebrationTimerRef.current !== null) {
+      window.clearTimeout(celebrationTimerRef.current);
+    }
+    setIsCelebrating(true);
+    celebrationTimerRef.current = window.setTimeout(() => {
+      setIsCelebrating(false);
+      celebrationTimerRef.current = null;
+    }, 1800);
+
+    const audio = audioRefs.current['praise'];
+    if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
+
     if (window.confetti) {
       const duration = 3000;
       const animationEnd = Date.now() + duration;
@@ -673,11 +690,9 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       const interval: any = setInterval(function () {
         if (Date.now() > animationEnd) return clearInterval(interval);
         const pc = 40 * ((animationEnd - Date.now()) / duration);
-        window.confetti({ ...defaults, particleCount: pc, angle: 50, origin: { x: 0, y: 1 } });
-        window.confetti({ ...defaults, particleCount: pc, angle: 130, origin: { x: 1, y: 1 } });
+        window.confetti?.({ ...defaults, particleCount: pc, angle: 50, origin: { x: 0, y: 1 } });
+        window.confetti?.({ ...defaults, particleCount: pc, angle: 130, origin: { x: 1, y: 1 } });
       }, 200);
-      const audio = audioRefs.current['praise'];
-      if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
     }
   };
 
@@ -1307,6 +1322,31 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           {[...Array(6)].map((_, i) => (<div key={`b-${i}`} className="absolute w-[1px] bg-blue-300/20 rounded-full animate-raindrop-layered will-change-transform" style={{ left: `${Math.random() * 100}%`, top: '-100px', height: '100px', animationDuration: '0.9s', animationDelay: `${Math.random()}s` }} />))}
           {[...Array(5)].map((_, i) => (<div key={`m-${i}`} className="absolute w-[2px] bg-gradient-to-b from-blue-400/10 via-blue-400/50 to-blue-500/60 rounded-full animate-raindrop-layered shadow-[0_0_6px_rgba(59,130,246,0.2)] will-change-transform" style={{ left: `${Math.random() * 100}%`, top: '-100px', height: '60px', animationDuration: '0.6s', animationDelay: `${Math.random()}s` }} />))}
           {[...Array(4)].map((_, i) => (<div key={`f-${i}`} className="absolute w-[3px] bg-gradient-to-b from-blue-300/40 via-blue-500 to-blue-600 rounded-full animate-raindrop-layered shadow-[0_0_10px_rgba(59,130,246,0.3)] will-change-transform" style={{ left: `${Math.random() * 100}%`, top: '-100px', height: '50px', animationDuration: '0.4s', animationDelay: `${Math.random()}s` }} />))}
+        </div>
+      )}
+
+      {isCelebrating && (
+        <div className="fixed inset-0 z-[111] pointer-events-none overflow-hidden">
+          <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-amber-300/70 animate-praise-ring" />
+          <Sparkles className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.45)] animate-praise-core" strokeWidth={2.6} />
+          {[
+            ['12%', '18%', '#fbbf24', '0ms'],
+            ['24%', '68%', '#34d399', '90ms'],
+            ['38%', '28%', '#60a5fa', '150ms'],
+            ['52%', '76%', '#f472b6', '40ms'],
+            ['66%', '22%', '#f59e0b', '120ms'],
+            ['78%', '62%', '#22c55e', '70ms'],
+            ['88%', '34%', '#38bdf8', '180ms'],
+            ['18%', '48%', '#fb7185', '210ms'],
+            ['44%', '12%', '#a78bfa', '260ms'],
+            ['70%', '84%', '#facc15', '300ms']
+          ].map(([left, top, color, delay], index) => (
+            <span
+              key={index}
+              className="absolute h-2.5 w-2.5 rounded-full animate-praise-spark"
+              style={{ left, top, backgroundColor: color, animationDelay: delay }}
+            />
+          ))}
         </div>
       )}
 
@@ -1993,6 +2033,12 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         .scroll-stable { scrollbar-gutter: stable; }
         @keyframes raindrop-layered { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 0.8; } 100% { transform: translateY(120vh); opacity: 0; } }
         .animate-raindrop-layered { animation: raindrop-layered linear infinite; }
+        @keyframes praise-ring { 0% { transform: translate(-50%, -50%) scale(0.35); opacity: 0; } 28% { opacity: 0.8; } 100% { transform: translate(-50%, -50%) scale(5.6); opacity: 0; } }
+        .animate-praise-ring { animation: praise-ring 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes praise-core { 0% { transform: translate(-50%, -50%) scale(0.55) rotate(-8deg); opacity: 0; } 24% { opacity: 1; } 55% { transform: translate(-50%, -50%) scale(1.2) rotate(8deg); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.9) rotate(0); opacity: 0; } }
+        .animate-praise-core { animation: praise-core 1.2s ease-out forwards; }
+        @keyframes praise-spark { 0% { transform: translateY(18px) scale(0.4); opacity: 0; } 28% { opacity: 1; } 100% { transform: translateY(-92px) scale(1.2); opacity: 0; } }
+        .animate-praise-spark { animation: praise-spark 1.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes toast-slide-down { 0% { opacity: 0; margin-top: -16px; } 100% { opacity: 1; margin-top: 0; } }
         .toast-slide-down { animation: toast-slide-down 0.3s ease-out; }
         @keyframes random-card-shuffle { 0% { transform: translateY(0) scale(1); filter: blur(0px); } 35% { transform: translateY(-8px) scale(1.02); filter: blur(0.4px); } 70% { transform: translateY(6px) scale(0.99); filter: blur(0.6px); } 100% { transform: translateY(0) scale(1); filter: blur(0px); } }

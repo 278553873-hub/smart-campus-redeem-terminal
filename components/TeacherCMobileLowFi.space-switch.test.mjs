@@ -13,7 +13,7 @@ const requirePrd = (text, message) => {
 requireSource("title: '登录页'", '01 页面名称应为登录页。');
 requireSource("{ title: '首次进入', pages: ['login', 'profile', 'home', 'classCreate', 'classJoin', 'studentAdd', 'record'] }", '首次进入流程应补全为 01 登录页 → 02 完善信息 → 03 新手首页 → 04/05 → 12 → 13。');
 requireSource("<PageNodeButton item=\"home\" lane={lane.title} />\n                <span className=\"shrink-0 text-sm font-black text-gray-400\">→</span>\n                <div className=\"grid shrink-0 grid-rows-2 gap-2\">\n                  <PageNodeButton item=\"classCreate\" lane={lane.title} />\n                  <PageNodeButton item=\"classJoin\" lane={lane.title} />\n                </div>\n                <span className=\"shrink-0 text-sm font-black text-gray-400\">→</span>\n                <PageNodeButton item=\"studentAdd\" lane={lane.title} />\n                <span className=\"shrink-0 text-sm font-black text-gray-400\">→</span>\n                <PageNodeButton item=\"record\" lane={lane.title} />", '03 后应平行展示 04 创建班级和 05 加入班级，并共同指向 12 添加学生，再进入 13 记录页。');
-requireSource("{ title: '班级', pages: ['classList', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList'] }", '班级流程不应再包含 12 添加学生。');
+requireSource("{ title: '班级', pages: ['classList', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] }", '班级流程不应再包含 12 添加学生。');
 requireSource("if (next === 'home') {", '从页面导航地图点击 03 新手首页时应有专门重置逻辑。');
 requireSource("setClassCreated(false);\n      setJoinedClassHasStudents(false);\n      setStudentCount(0);\n      setRecordCount(0);", '从页面导航地图点击 03 新手首页时应默认所有步骤未完成。');
 requireSource("if (pageKey === 'record') return '13';", '记录页应编号为 13。');
@@ -24,11 +24,14 @@ requireSource("if (pageKey === 'mineSchool') return '14B';", '我的页拥有学
 requireSource("if (pageKey === 'termManagement') return '15';", '15 页面应为学期管理。');
 requireSource("title: '我的（仅有个人版）'", '14A 页面标题应为我的（仅有个人版）。');
 requireSource("title: '我的（拥有学校版）'", '14B 页面标题应为我的（拥有学校版）。');
-requireSource("<PageNodeButton item=\"minePersonal\" lane={lane.title} />\n                  <PageNodeButton item=\"mineSchool\" lane={lane.title} />", '页面导航地图中 14A 和 14B 应平行展示。');
+requireSource("{ title: '我的', pages: ['minePersonal', 'mineSchool', 'termManagement', 'subjectManagement', 'departmentManagement', 'schoolUsageReport'] }", '我的流程应包含 14A、14B、学校基础信息管理页和学校数据报表页。');
+requireSource("<div className=\"grid shrink-0 grid-rows-2 gap-2\">\n                  <PageNodeButton item=\"minePersonal\" lane={lane.title} />\n                  <PageNodeButton item=\"mineSchool\" lane={lane.title} />\n                </div>", '页面导航地图中 14A 和 14B 应上下平行展示。');
 requireSource("<PageNodeButton item=\"termManagement\" lane={lane.title} />", '页面导航地图中 14A/14B 应共同指向 15 学期管理。');
-requireSource("modules: ['教师卡片', '头像', '姓名', '编辑按钮', '了解学校版'", '14A 应展示编辑按钮和了解学校版入口。');
-requireSource("modules: ['教师卡片', '头像', '姓名', '编辑按钮', '当前版本入口', '学校基础信息', '切换版本弹窗'", '14B 应展示编辑按钮、当前版本入口、学校基础信息和切换版本弹窗。');
+requireSource("<PageNodeButton item=\"schoolUsageReport\" lane={lane.title} />", '页面导航地图中应展示 18 学校数据报表。');
+requireSource("modules: ['教师卡片', '头像', '姓名', '编辑按钮', '了解学校版', '学校基础信息'", '14A 应展示编辑按钮、了解学校版入口和学校基础信息。');
+requireSource("modules: ['教师卡片', '头像', '姓名', '编辑按钮', '当前版本入口', '学校基础信息', '管理工具', '学校数据报表', '生成期末报告', '切换版本弹窗'", '14B 应展示编辑按钮、当前版本入口、学校基础信息、管理工具和切换版本弹窗。');
 requireSource("14B 不展示“了解学校版”按钮。", '14B 说明应明确不展示了解学校版按钮。');
+requireSource("学校基础信息在 14A 和 14B 都展示，以卡片承载学期管理、科目管理、部门管理三个直达入口。", '14A/14B 说明应明确都展示学校基础信息。');
 requireSource("const [showSpaceSelectSheet, setShowSpaceSelectSheet] = useState(false);", '14B 应能打开切换版本弹层。');
 requireSource("aria-label=\"切换版本\"", '空间切换弹层 aria-label 应为切换版本。');
 requireSource("className=\"absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-gray-600 active:bg-gray-100\"", '编辑按钮应放在基本信息卡片右上角，不和切换按钮硬捆在一起。');
@@ -86,6 +89,9 @@ const mineRenderEnd = source.indexOf("if (page === 'termManagement')", mineRende
 const mineRender = source.slice(mineRenderStart, mineRenderEnd);
 if (!mineRender.includes("!hasSchoolSpace && (")) {
   failures.push('了解学校版按钮必须只在 14A 展示。');
+}
+if (mineRender.includes("{hasSchoolSpace && (\n              <section className=\"rounded-3xl bg-gray-50 p-4\">")) {
+  failures.push('学校基础信息卡片不能只在 14B 展示，14A 也需要展示。');
 }
 if (mineRender.includes("<span>当前版本</span>")) {
   failures.push('14B 不应再使用独立整行“当前版本”按钮，占用我的页空间。');

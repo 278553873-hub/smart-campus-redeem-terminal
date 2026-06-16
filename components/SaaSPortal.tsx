@@ -218,7 +218,7 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
       tags: ['家长端', '微信小程序'],
       lines: ['绑定学生信息后', '可以随时查看报告'],
       tone: 'emerald',
-      qrCode: '/assets/compass_qr.png',
+      qrCode: '/assets/compass_qr_latest.jpg',
     },
   ];
 
@@ -381,47 +381,46 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
 
   return (
     <div className="h-full bg-[#f5f7fa] font-sans overflow-y-auto [scrollbar-gutter:stable]">
-      <main className="p-6 xl:p-8">
-        <div className="max-w-[1600px] mx-auto flex flex-col gap-5">
+      <main className="p-4 xl:p-5">
+        <div className="max-w-[1600px] mx-auto flex flex-col gap-4">
 
           {/* ── 顶部欢迎横幅 ── */}
-          <section className="relative overflow-hidden rounded-lg bg-white px-8 py-6 shadow-sm border border-slate-100">
+          <section className="relative overflow-hidden rounded-lg bg-white px-6 py-3 shadow-sm border border-slate-100">
             {/* 右侧品牌化轻插画区 */}
-            <div className="pointer-events-none absolute inset-y-0 right-6 hidden w-[340px] xl:block">
+            <div className="pointer-events-none absolute inset-y-0 right-6 hidden w-[300px] xl:block">
               <div className="relative h-full w-full">
-                <div className="absolute right-8 top-1/2 h-28 w-28 -translate-y-1/2 rounded-full bg-sky-100/70 blur-3xl" />
-                <div className="absolute right-0 top-10 h-24 w-24 rounded-full bg-cyan-100/65 blur-2xl" />
-                <div className="absolute left-20 bottom-5 h-20 w-20 rounded-full bg-blue-100/60 blur-2xl" />
+                <div className="absolute right-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-sky-100/70 blur-3xl" />
+                <div className="absolute right-0 top-7 h-20 w-20 rounded-full bg-cyan-100/65 blur-2xl" />
+                <div className="absolute left-20 bottom-4 h-16 w-16 rounded-full bg-blue-100/60 blur-2xl" />
 
-                <div className="absolute right-8 top-1/2 h-[126px] w-[220px] -translate-y-1/2 rounded-[2rem] border border-sky-100/80 bg-[linear-gradient(135deg,rgba(239,246,255,0.92)_0%,rgba(255,255,255,0.96)_54%,rgba(236,254,255,0.92)_100%)] shadow-[0_24px_52px_rgba(148,163,184,0.14)]">
-                  <div className="absolute inset-x-0 top-0 h-12 rounded-t-[2rem] bg-gradient-to-r from-blue-100/55 via-white/20 to-cyan-100/55" />
-                  <div className="absolute left-5 top-6 h-2 w-16 rounded-full bg-blue-100/90" />
-                  <div className="absolute left-5 top-12 h-2 w-11 rounded-full bg-slate-100" />
-                  <div className="absolute left-5 bottom-6 flex gap-2">
-                    <span className="h-9 w-9 rounded-2xl bg-blue-50 shadow-sm" />
-                    <span className="h-9 w-9 rounded-2xl bg-cyan-50 shadow-sm" />
-                    <span className="h-9 w-9 rounded-2xl bg-emerald-50 shadow-sm" />
+                <div className="absolute right-8 top-1/2 h-[104px] w-[196px] -translate-y-1/2 rounded-[1.5rem] border border-sky-100/80 bg-[linear-gradient(135deg,rgba(239,246,255,0.92)_0%,rgba(255,255,255,0.96)_54%,rgba(236,254,255,0.92)_100%)] shadow-[0_18px_40px_rgba(148,163,184,0.12)]">
+                  <div className="absolute inset-x-0 top-0 h-10 rounded-t-[1.5rem] bg-gradient-to-r from-blue-100/55 via-white/20 to-cyan-100/55" />
+                  <div className="absolute left-5 top-5 h-2 w-14 rounded-full bg-blue-100/90" />
+                  <div className="absolute left-5 top-10 h-2 w-10 rounded-full bg-slate-100" />
+                  <div className="absolute left-5 bottom-5 flex gap-2">
+                    <span className="h-7 w-7 rounded-xl bg-blue-50 shadow-sm" />
+                    <span className="h-7 w-7 rounded-xl bg-cyan-50 shadow-sm" />
+                    <span className="h-7 w-7 rounded-xl bg-emerald-50 shadow-sm" />
                   </div>
-                  <PlatformBrandMark className="absolute right-5 top-1/2 -translate-y-1/2 text-blue-200/75" size={54} />
+                  <PlatformBrandMark className="absolute right-5 top-1/2 -translate-y-1/2 text-blue-200/75" size={46} />
                 </div>
 
-                <div className="absolute left-4 top-7 flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-blue-100/80 bg-white/90 text-blue-500 shadow-[0_18px_34px_rgba(59,130,246,0.12)]">
-                  <Settings size={26} strokeWidth={2.1} />
+                <div className="absolute left-4 top-5 flex h-[52px] w-[52px] items-center justify-center rounded-[1.15rem] border border-blue-100/80 bg-white/90 text-blue-500 shadow-[0_14px_28px_rgba(59,130,246,0.10)]">
+                  <Settings size={22} strokeWidth={2.1} />
                 </div>
-                <div className="absolute left-14 bottom-5 flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-violet-100/80 bg-white/92 text-violet-500 shadow-[0_18px_34px_rgba(139,92,246,0.10)]">
-                  <BookOpen size={22} strokeWidth={2.1} />
+                <div className="absolute left-14 bottom-4 flex h-12 w-12 items-center justify-center rounded-[1.1rem] border border-violet-100/80 bg-white/92 text-violet-500 shadow-[0_14px_28px_rgba(139,92,246,0.09)]">
+                  <BookOpen size={19} strokeWidth={2.1} />
                 </div>
-                <div className="absolute right-28 bottom-7 flex h-12 w-12 items-center justify-center rounded-[1.1rem] border border-emerald-100/80 bg-white/92 text-emerald-500 shadow-[0_16px_28px_rgba(16,185,129,0.10)]">
-                  <Monitor size={19} strokeWidth={2.1} />
+                <div className="absolute right-24 bottom-5 flex h-10 w-10 items-center justify-center rounded-[1rem] border border-emerald-100/80 bg-white/92 text-emerald-500 shadow-[0_12px_24px_rgba(16,185,129,0.09)]">
+                  <Monitor size={17} strokeWidth={2.1} />
                 </div>
               </div>
             </div>
-            <div className="relative xl:max-w-[calc(100%-360px)]">
-              <h1 className="text-[28px] font-black text-slate-800 tracking-tight leading-tight">
+            <div className="relative xl:max-w-[calc(100%-320px)]">
+              <h1 className="text-[24px] font-black text-slate-800 tracking-tight leading-tight">
                 {teacherProfile.name}，您好！
               </h1>
-              <p className="mt-1.5 text-[15px] font-medium text-slate-500">{emotionalMessage}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-[13px] font-medium text-slate-500">{dateStr}</span>
                 <span className="rounded-full bg-blue-50 px-3 py-1 text-[13px] font-medium text-blue-500">{teacherProfile.school}</span>
               </div>
@@ -429,44 +428,44 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
           </section>
 
           {/* ── 主内容两栏布局 ── */}
-          <div className="grid grid-cols-1 xl:grid-cols-[1000px_1fr] gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_420px] gap-4">
 
             {/* 左栏 */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
 
               {/* 我的应用 */}
-              <section className="rounded-lg border border-slate-100 bg-white p-6 shadow-sm">
+              <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
                 <PortalSectionHeader title="我的应用" icon={Settings} tone="blue" />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   {activeApps.map((app) => (
                     <button
                       key={app.id}
                       type="button"
                       onClick={() => app.target && onNavigate(app.target)}
-                      className={`group relative overflow-hidden rounded-lg border p-5 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_48px_rgba(148,163,184,0.18)] active:scale-95 ${app.panelClass}`}
+                      className={`group relative overflow-hidden rounded-lg border p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(148,163,184,0.16)] active:scale-95 ${app.panelClass}`}
                     >
-                      <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t ${app.bottomGlow}`} />
-                      <div className="pointer-events-none absolute -right-4 top-6 opacity-100">
-                        <app.icon size={148} strokeWidth={1.3} className={app.watermarkClass} />
+                      <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t ${app.bottomGlow}`} />
+                      <div className="pointer-events-none absolute -right-2 top-5 opacity-100">
+                        <app.icon size={118} strokeWidth={1.3} className={app.watermarkClass} />
                       </div>
-                      <div className="relative flex h-full min-h-[198px] flex-col">
-                        <div className={`inline-flex h-[70px] w-[70px] items-center justify-center rounded-2xl bg-gradient-to-br ${app.color} text-white shadow-[0_20px_40px_rgba(59,130,246,0.18)] ${app.shadow} transition-transform duration-300 group-hover:scale-105`}>
-                          <app.icon size={30} strokeWidth={2.2} className="text-white" />
+                      <div className="relative flex h-full min-h-[154px] flex-col">
+                        <div className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${app.color} text-white shadow-[0_16px_32px_rgba(59,130,246,0.16)] ${app.shadow} transition-transform duration-300 group-hover:scale-105`}>
+                          <app.icon size={25} strokeWidth={2.2} className="text-white" />
                         </div>
-                        <div className="mt-7 max-w-[72%]">
-                          <div className="text-[20px] font-black tracking-[-0.03em] text-slate-900">{app.name}</div>
-                          <div className="mt-2 text-[14px] font-semibold leading-6 text-slate-500">{app.desc}</div>
+                        <div className="mt-4 max-w-[72%]">
+                          <div className="text-[18px] font-black tracking-[-0.02em] text-slate-900">{app.name}</div>
+                          <div className="mt-1 text-[13px] font-semibold leading-5 text-slate-500">{app.desc}</div>
                         </div>
-                        <div className="mt-auto flex items-end justify-between gap-4 pt-7">
+                        <div className="mt-auto flex items-end justify-between gap-3 pt-4">
                           <div className="flex flex-col gap-0.5">
                             {(app as any).studentsCount && (
-                              <span className="text-[14px] font-semibold tracking-[0.01em] text-slate-400">{(app as any).studentsCount}</span>
+                              <span className="text-[13px] font-semibold tracking-[0.01em] text-slate-400">{(app as any).studentsCount}</span>
                             )}
-                            <span className="text-[14px] font-semibold tracking-[0.01em] text-slate-400">{app.meta}</span>
+                            <span className="text-[13px] font-semibold tracking-[0.01em] text-slate-400">{app.meta}</span>
                           </div>
-                          <div className={`flex h-12 w-12 items-center justify-center rounded-full border transition-all duration-300 group-hover:translate-x-0.5 ${app.arrowClass}`}>
-                            <ChevronRight size={20} strokeWidth={2.2} />
+                          <div className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300 group-hover:translate-x-0.5 ${app.arrowClass}`}>
+                            <ChevronRight size={18} strokeWidth={2.2} />
                           </div>
                         </div>
                       </div>
@@ -476,23 +475,23 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
               </section>
 
               {/* 更多应用 */}
-              <section className="rounded-lg border border-slate-100 bg-white p-6 shadow-sm">
-                <PortalSectionHeader title="更多应用" icon={LayoutGrid} tone="violet" />
+              <section className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm">
+                <PortalSectionHeader title="更多应用" icon={LayoutGrid} tone="violet" compact />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="mt-3 grid grid-cols-2 gap-3">
                   {favoriteApps.map((app) => (
                     <article
                       key={app.id}
-                      className="group flex items-start gap-4 rounded-lg border border-slate-100 bg-slate-50/50 p-5 text-left transition-all hover:border-blue-100 hover:bg-white hover:shadow-sm"
+                      className="group flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/50 p-3 text-left transition-all hover:border-blue-100 hover:bg-white hover:shadow-sm"
                     >
-                      <div className={`flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${app.color} shadow-md ${app.shadow} transition-transform group-hover:scale-105 duration-300`}>
-                        <app.icon size={30} className="text-white" />
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${app.color} shadow-md ${app.shadow} transition-transform group-hover:scale-105 duration-300`}>
+                        <app.icon size={22} className="text-white" />
                       </div>
-                      <div className="min-w-0 flex-1 pt-1">
-                        <div className="text-[20px] font-black tracking-[-0.02em] text-slate-900">{app.name}</div>
-                        <p className="mt-1.5 text-[14px] font-medium leading-6 text-slate-500">{app.desc}</p>
-                        <div className="mt-4 flex items-center justify-between">
-                          <span className="text-[14px] font-bold text-slate-600">{app.price}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[17px] font-black tracking-[-0.02em] text-slate-900">{app.name}</div>
+                        <p className="mt-0.5 line-clamp-1 text-[13px] font-medium leading-5 text-slate-500">{app.desc}</p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-[13px] font-bold text-slate-600">{app.price}</span>
                           <button
                             type="button"
                             onClick={() => handleFavoriteAppClick(app.id)}
@@ -509,40 +508,39 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
             </div>
 
             {/* 右栏 */}
-            <aside className="flex h-full flex-col gap-6">
+            <aside className="flex h-full flex-col gap-4">
 
               {/* 联系我们 */}
               <section className="rounded-lg border border-slate-100 bg-white px-4 py-3 shadow-none">
                 <div className="flex flex-col gap-3">
                   <PortalSectionHeader title="服务与支持" icon={PhoneCall} tone="emerald" compact />
-                  <div className="flex items-center gap-3">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-2">
                     {[
                       { name: '曹老师', phone: '18011564926' },
                       { name: '贾老师', phone: '13908238448' },
                     ].map((adviser) => (
-                      <div key={adviser.phone} className="flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 transition-colors hover:border-slate-300">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm">
-                          <User size={12} />
+                      <div key={adviser.phone} className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition-colors hover:border-slate-300">
+                        <div className="flex items-center gap-1.5 text-[12px] font-bold leading-4 text-slate-700">
+                          <User size={12} className="shrink-0 text-slate-400" />
+                          <span className="min-w-0 truncate">{adviser.name}</span>
                         </div>
-                        <span className="text-[12px] font-bold text-slate-700">{adviser.name}</span>
-                        <span className="text-[12px] font-semibold text-slate-400">|</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm">
-                          <PhoneCall size={11} />
+                        <div className="mt-1 flex items-center gap-1.5 text-[12px] font-semibold leading-4 text-slate-500 tabular-nums">
+                          <PhoneCall size={11} className="shrink-0 text-slate-400" />
+                          <span className="min-w-0 whitespace-nowrap">{adviser.phone}</span>
                         </div>
-                        <span className="text-[12px] font-semibold text-slate-500 tabular-nums">{adviser.phone}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </section>
 
-              {/* 卡片组：三个卡片并排 */}
-              <div className="grid grid-cols-3 gap-5 flex-1">
+              {/* 卡片组：右栏纵向排列，卡片内部保持图标/二维码在上、文字在下 */}
+              <div className="flex flex-col gap-3">
                 {promoCards.map((card) => {
                   const theme = card.tone === 'blue'
                     ? {
-                      sectionClass: 'border-blue-100 bg-[linear-gradient(180deg,#f2f7ff_0%,#e1edff_100%)] shadow-[0_18px_36px_rgba(59,130,246,0.16)] hover:shadow-[0_24px_44px_rgba(59,130,246,0.22)]',
-                      iconBgClass: 'border border-blue-100 bg-white shadow-[0_14px_28px_rgba(59,130,246,0.10)] text-slate-800',
+                      sectionClass: 'border-blue-100 bg-[linear-gradient(135deg,#f8fbff_0%,#eef5ff_100%)] hover:shadow-[0_14px_28px_rgba(59,130,246,0.12)]',
+                      iconBgClass: 'border border-blue-100 bg-white text-slate-800',
                       tagClass: 'bg-blue-500',
                       titleClass: 'text-blue-950',
                       lineClass: 'text-slate-600',
@@ -550,16 +548,16 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                     }
                     : card.tone === 'emerald'
                       ? {
-                        sectionClass: 'border-emerald-100 bg-[linear-gradient(180deg,#effcf7_0%,#daf7ee_100%)] shadow-[0_18px_36px_rgba(16,185,129,0.14)] hover:shadow-[0_24px_44px_rgba(16,185,129,0.20)]',
-                        iconBgClass: 'border border-emerald-100 bg-white shadow-[0_14px_28px_rgba(16,185,129,0.10)] text-slate-800',
+                        sectionClass: 'border-emerald-100 bg-[linear-gradient(135deg,#f5fffb_0%,#e8fbf4_100%)] hover:shadow-[0_14px_28px_rgba(16,185,129,0.12)]',
+                        iconBgClass: 'border border-emerald-100 bg-white text-slate-800',
                         tagClass: 'bg-emerald-500',
                         titleClass: 'text-emerald-950',
                         lineClass: 'text-slate-600',
                         decorClass: 'bg-emerald-200/45',
                       }
                       : {
-                        sectionClass: 'border-orange-100 bg-[linear-gradient(180deg,#fff9f2_0%,#ffe9cf_100%)] shadow-[0_18px_36px_rgba(249,115,22,0.14)] hover:shadow-[0_24px_44px_rgba(249,115,22,0.20)]',
-                        iconBgClass: 'bg-gradient-to-br from-[#f97316] to-[#fbbf24] shadow-[0_14px_28px_rgba(249,115,22,0.24)] text-white',
+                        sectionClass: 'border-orange-100 bg-[linear-gradient(135deg,#fffaf4_0%,#fff1dc_100%)] hover:shadow-[0_14px_28px_rgba(249,115,22,0.12)]',
+                        iconBgClass: 'bg-gradient-to-br from-[#f97316] to-[#fbbf24] text-white',
                         tagClass: 'bg-orange-500',
                         titleClass: 'text-orange-950',
                         lineClass: 'text-slate-600',
@@ -569,18 +567,17 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                   return (
                     <section
                       key={card.id}
-                      className={`relative overflow-hidden rounded-lg border p-6 transition-all duration-300 hover:-translate-y-0.5 flex flex-col text-center ${theme.sectionClass}`}
+                      className={`relative flex flex-col overflow-hidden rounded-lg border px-4 py-2.5 text-center transition-all duration-300 hover:-translate-y-0.5 ${theme.sectionClass}`}
                     >
-                      <div className={`pointer-events-none absolute -right-10 top-3 h-28 w-28 rounded-full blur-2xl ${theme.decorClass}`} />
+                      <div className={`pointer-events-none absolute -right-8 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full blur-2xl ${theme.decorClass}`} />
 
-                      {/* 顶部图标/二维码区域 */}
-                      <div className="relative flex flex-col items-center">
-                        <div className={`w-[78px] h-[78px] flex items-center justify-center mb-4 rounded-xl ${theme.iconBgClass}`}>
+                      <div className="relative flex h-full flex-col items-center">
+                        <div className={`mb-1.5 flex aspect-square w-12 shrink-0 items-center justify-center rounded-xl ${theme.iconBgClass}`}>
                           {card.qrCode ? (
                             <img
                               src={card.qrCode}
                               alt={card.title}
-                              className="w-full h-full object-contain mix-blend-multiply p-1.5"
+                              className="h-full w-full object-contain mix-blend-multiply p-1.5"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
@@ -591,9 +588,8 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                           ) : (
                             card.icon
                           )}
-                          {/* 占位格子 */}
                           {card.qrCode && (
-                            <div className="hidden w-full h-full grid grid-cols-7 gap-0.5 p-1.5">
+                            <div className="hidden h-full w-full grid-cols-7 gap-0.5 p-1.5">
                               {Array.from({ length: 49 }, (_, idx) => {
                                 const filled = [0, 1, 5, 6, 7, 13, 14, 20, 28, 30, 31, 34, 35, 41, 42, 43, 47, 48].includes(idx);
                                 return <span key={idx} className={`rounded-[2px] ${filled ? 'bg-slate-500' : 'bg-slate-200/60'}`} />;
@@ -601,43 +597,31 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                             </div>
                           )}
                         </div>
-                      </div>
-
-                      {/* 文案区域（统一高度、顶部对齐） */}
-                      <div className="relative flex-1 flex flex-col justify-start">
-                        <div className={`mb-2.5 text-[19px] font-black tracking-[-0.02em] ${theme.titleClass}`}>{card.title}</div>
-
-                        {/* 标签 */}
-                        <div className="flex flex-nowrap whitespace-nowrap justify-center gap-1.5 mb-2.5">
-                          {card.tags.map(tag => (
-                            <span
-                              key={tag}
-                              className={`px-2 py-0.5 text-[10px] font-bold rounded-full text-white ${theme.tagClass}`}
+                        <div className="flex min-w-0 flex-1 flex-col items-center">
+                          <div className={`text-[16px] font-black tracking-[-0.02em] leading-5 ${theme.titleClass}`}>{card.title}</div>
+                          <div className="mt-1 flex flex-wrap justify-center gap-1">
+                            {card.tags.map(tag => (
+                              <span
+                                key={tag}
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold leading-4 text-white ${theme.tagClass}`}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <p className={`mt-0.5 text-[12px] font-medium leading-4 ${theme.lineClass}`}>
+                            {card.lines.join(' ')}
+                          </p>
+                          {card.btnLabel && (
+                            <button
+                              onClick={card.action}
+                              className="mt-1.5 inline-flex h-7 w-full items-center justify-center rounded-lg border border-orange-200 bg-white px-4 text-[12px] font-bold text-orange-500 shadow-sm transition-colors hover:bg-orange-50"
                             >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* 简介 */}
-                        <div className="space-y-0.5">
-                          {card.lines.map((line) => (
-                            <p key={line} className={`text-[12px] font-medium leading-relaxed ${theme.lineClass}`}>{line}</p>
-                          ))}
+                              {card.btnLabel}
+                            </button>
+                          )}
                         </div>
                       </div>
-
-                      {/* 底部按钮（仅限积分银行有） */}
-                      {card.btnLabel && (
-                        <div className="mt-4">
-                          <button
-                            onClick={card.action}
-                            className="w-full py-2 rounded-lg bg-white border border-orange-200 text-orange-500 text-[13px] font-bold hover:bg-orange-50 transition-colors shadow-sm"
-                          >
-                            {card.btnLabel}
-                          </button>
-                        </div>
-                      )}
                     </section>
                   );
                 })}

@@ -11,6 +11,7 @@ const requireText = (source, needle, message) => {
 
 requireText(classListSource, 'onViewHomeworkEntry: (classId: string) => void;', '班级列表应暴露作业录入回调。');
 requireText(classListSource, "title: '日常操作'", '班级更多操作应按日常操作归类。');
+requireText(classListSource, "title: '学生信息更新'", '班级更多操作应把学生资料维护能力归入学生信息更新。');
 requireText(classListSource, "label: '作业录入'", '班级更多操作应新增作业录入。');
 requireText(classListSource, 'runClassAction(onViewHomeworkEntry)', '作业录入应携带当前班级 id。');
 requireText(classListSource, 'FileTextIcon', '作业录入应使用轻量图标入口。');
@@ -19,11 +20,15 @@ requireText(classListSource, 'rounded-t-[30px] bg-white', '班级更多操作应
 requireText(classListSource, "title: '班级维护'", '班级更多操作应把维护类能力独立分组。');
 requireText(classListSource, "title: '协同管理'", '班级更多操作应把邀请老师归入协同管理。');
 requireText(classListSource, "label: '兑换奖励'", '底部弹窗应展示兑换奖励入口。');
+requireText(classListSource, "label: '批量修改学生'", '底部弹窗应展示批量修改学生入口。');
 requireText(classListSource, "label: '设置兑换密码'", '底部弹窗应展示设置兑换密码入口。');
 requireText(classListSource, "label: '更新人脸数据'", '底部弹窗应展示更新人脸数据入口。');
 requireText(classListSource, "label: '离校学生'", '底部弹窗应展示离校学生入口。');
 requireText(classListSource, "label: '邀请老师加入'", '底部弹窗应展示邀请老师加入入口。');
 requireText(classListSource, "label: '编辑班级信息'", '底部弹窗应展示编辑班级信息入口。');
+if (classListSource.includes("title: '校园币兑换'")) {
+  throw new Error('班级更多操作不应继续使用“校园币兑换”分组，应改为“学生信息更新”。');
+}
 requireText(classListSource, 'onInviteTeacher: (classId: string) => void;', '班级列表应暴露邀请老师回调。');
 requireText(classListSource, 'onEditClassInfo: (classId: string) => void;', '班级列表应暴露编辑班级信息回调。');
 

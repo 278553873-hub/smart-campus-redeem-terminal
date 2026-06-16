@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowLeftRight, BarChart3, BookOpen, Building2, CalendarDays, Camera, CheckCircle2, ChevronDown, ChevronRight, Clock, Copy, Edit3, FileText, Gift, ImagePlus, LogIn, MessageCircle, Mic, MoreHorizontal, Plus, ScanFace, Shield, Trash2, Type, UserPlus, Users, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, BarChart3, BookOpen, Building2, CalendarDays, Camera, CheckCircle2, ChevronDown, ChevronRight, Clock, Copy, Edit3, FileText, Gift, ImagePlus, LineChart, LogIn, MessageCircle, Mic, MoreHorizontal, Phone, Plus, ScanFace, Shield, Sparkles, Trash2, Type, UserPlus, Users } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 
 type PageKey =
@@ -21,6 +21,7 @@ type PageKey =
   | 'teacherListMember'
   | 'parentBindingList'
   | 'studentList'
+  | 'studentBatchEdit'
   | 'studentDetail'
   | 'classReport'
   | 'termReport'
@@ -29,19 +30,21 @@ type PageKey =
   | 'termManagement'
   | 'subjectManagement'
   | 'departmentManagement'
+  | 'schoolUsageReport'
   | 'advisor';
 
 type ViewState = 'normal' | 'loading' | 'empty' | 'network' | 'denied';
 type RecordStage = 'idle' | 'recording' | 'transcribing' | 'identifying' | 'saved';
 type Priority = 'P0' | 'P1' | 'P2' | 'P3';
 type PhoneLoginTab = 'sms' | 'password';
-type ClassActionKey = 'reward' | 'password' | 'face' | 'homework' | 'leftStudents' | 'inviteTeacher' | 'inviteParent' | 'editClass';
+type ClassActionKey = 'reward' | 'batchStudents' | 'password' | 'face' | 'homework' | 'leftStudents' | 'inviteTeacher' | 'inviteParent' | 'editClass';
 type TeachingGrade = '2025级' | '2024级' | '2023级';
 type WechatInviteMode = 'select' | 'confirm' | 'received';
 type InviteAudience = 'teacher' | 'parent';
 type CEndSurface = 'summary' | 'teacher' | 'parent' | 'versionCompare' | 'schoolAdmin' | 'ops';
-type ParentPageKey = 'wechatCard' | 'login' | 'bindSelf' | 'bindInvite' | 'landing';
+type ParentPageKey = 'wechatCard' | 'login' | 'bindSelf' | 'bindInvite' | 'parentIdentity' | 'landing';
 type ParentBindMode = 'school' | 'class';
+type ParentIdentityRelation = '爸爸' | '妈妈' | '爷爷' | '奶奶' | '外公' | '外婆' | '其他';
 type TeacherSpaceId = 'personal' | 'schoolA' | 'schoolB';
 type SchoolBasicInfoTab = 'term' | 'subject' | 'department';
 type TeacherSpaceProfile = {
@@ -68,8 +71,21 @@ type ParentBindingProfile = {
   name: string;
   no: string;
   gender: '男' | '女';
-  bound: boolean;
-  bindingCount: number;
+  guardians: Array<{
+    id: string;
+    phone: string;
+    phoneTail: string;
+    relation: ParentIdentityRelation;
+    relationOther?: string;
+  }>;
+};
+type ActiveParentBindingCandidate = {
+  studentName: string;
+  guardianId: string;
+  guardianLabel: string;
+  phone: string;
+  relation: ParentIdentityRelation;
+  relationOther: string;
 };
 type StudentInputRow = {
   id: number;
@@ -118,6 +134,7 @@ const pageOrder: PageKey[] = [
   'teacherListMember',
   'parentBindingList',
   'studentList',
+  'studentBatchEdit',
   'studentAdd',
   'record',
   'minePersonal',
@@ -125,13 +142,14 @@ const pageOrder: PageKey[] = [
   'termManagement',
   'subjectManagement',
   'departmentManagement',
+  'schoolUsageReport',
 ];
 
 const flowLanes: Array<{ title: string; pages: PageKey[] }> = [
   { title: '首次进入', pages: ['login', 'profile', 'home', 'classCreate', 'classJoin', 'studentAdd', 'record'] },
   { title: '老用户', pages: ['login', 'record'] },
-  { title: '班级', pages: ['classList', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList'] },
-  { title: '我的', pages: ['minePersonal', 'mineSchool', 'termManagement', 'subjectManagement', 'departmentManagement'] },
+  { title: '班级', pages: ['classList', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] },
+  { title: '我的', pages: ['minePersonal', 'mineSchool', 'termManagement', 'subjectManagement', 'departmentManagement', 'schoolUsageReport'] },
 ];
 
 const pageNumberLabel = (pageKey: PageKey) => {
@@ -142,6 +160,7 @@ const pageNumberLabel = (pageKey: PageKey) => {
   if (pageKey === 'teacherListMember') return '09B';
   if (pageKey === 'parentBindingList') return '10';
   if (pageKey === 'studentList') return '11';
+  if (pageKey === 'studentBatchEdit') return '11A';
   if (pageKey === 'studentAdd') return '12';
   if (pageKey === 'record') return '13';
   if (pageKey === 'minePersonal') return '14A';
@@ -149,6 +168,7 @@ const pageNumberLabel = (pageKey: PageKey) => {
   if (pageKey === 'termManagement') return '15';
   if (pageKey === 'subjectManagement') return '16';
   if (pageKey === 'departmentManagement') return '17';
+  if (pageKey === 'schoolUsageReport') return '18';
   const pageIndex = pageOrder.indexOf(pageKey) + 1;
   return String(pageIndex).padStart(2, '0');
 };
@@ -172,27 +192,49 @@ const parentPageLabels: Record<ParentPageKey, { number: string; title: string }>
   login: { number: '01', title: '微信登录' },
   bindSelf: { number: '02', title: '绑定学生（自主）' },
   bindInvite: { number: '03', title: '绑定学生（班级邀请）' },
-  landing: { number: '04', title: '落地页' },
+  parentIdentity: { number: '04', title: '绑定提醒' },
+  landing: { number: '05', title: '落地页' },
 };
 
 type ParentFlowLane =
-  | { title: string; nodes: Array<{ page: ParentPageKey }>; branches?: never }
-  | { title: string; source: ParentPageKey; branches: Array<{ text: string; page: ParentPageKey }> };
+  | { title: string; nodes: ParentFlowNode[]; branches?: never }
+  | { title: string; source: ParentPageKey; branches: ParentFlowBranch[] };
+type ParentFlowNode = { page: ParentPageKey; branches?: ParentFlowBranch[] };
+type ParentFlowBranch = { text: string; pages: ParentFlowNode[] };
 
 const parentFlowLanes: ParentFlowLane[] = [
   {
     title: '自主登录',
-    nodes: [
-      { page: 'login' },
-      { page: 'bindSelf' },
+    source: 'login',
+    branches: [
+      {
+        text: '未绑定任何学生',
+        pages: [{
+          page: 'bindSelf',
+          branches: [
+            { text: '授权手机与班主任录入的手机一致', pages: [{ page: 'landing' }] },
+            { text: '授权手机与班主任录入的手机不一致', pages: [{ page: 'parentIdentity' }, { page: 'landing' }] },
+          ],
+        }],
+      },
+      { text: '已绑定任何学生', pages: [{ page: 'landing' }] },
     ],
   },
   {
     title: '被邀请',
     source: 'wechatCard',
     branches: [
-      { text: '未绑定该班级的任意学生', page: 'bindInvite' },
-      { text: '已绑定该班级的任意学生', page: 'landing' },
+      {
+        text: '未绑定该班级的任意学生',
+        pages: [{
+          page: 'bindInvite',
+          branches: [
+            { text: '授权手机与班主任录入的手机一致', pages: [{ page: 'landing' }] },
+            { text: '授权手机与班主任录入的手机不一致', pages: [{ page: 'parentIdentity' }, { page: 'landing' }] },
+          ],
+        }],
+      },
+      { text: '已绑定该班级的任意学生', pages: [{ page: 'landing' }] },
     ],
   },
 ];
@@ -221,6 +263,7 @@ const schoolBasicInfoTabs: Array<{ key: SchoolBasicInfoTab; label: string; icon:
 const formatTermName = (term: Pick<SchoolTermItem, 'schoolYear' | 'termType'>) => `${term.schoolYear} ${term.termType}`;
 const schoolYearOptions = ['2025-2026学年', '2026-2027学年', '2027-2028学年', '2028-2029学年'];
 const termTypeOptions: SchoolTermItem['termType'][] = ['上学期', '下学期'];
+const parentIdentityRelationOptions: ParentIdentityRelation[] = ['爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他'];
 
 const schoolTermItems: SchoolTermItem[] = [
   { id: 'term-2025-2026-2', schoolYear: '2025-2026学年', termType: '下学期', start: '2026.02.17', end: '2026.07.10', status: 'current' },
@@ -250,27 +293,15 @@ const schoolBasicInfoStatusLabels: Record<SchoolBasicInfoItem['status'], string>
   disabled: '停用',
 };
 
-const versionCompareRows: Array<{ feature: string; personal: string; school: string }> = [
-  { feature: '微信登录', personal: '✓', school: '✓' },
-  { feature: '创建班级', personal: '✓', school: '✓' },
-  { feature: '加入班级', personal: '✓', school: '✓' },
-  { feature: '添加学生', personal: '✓', school: '✓' },
-  { feature: 'AI日常记录', personal: '✓', school: '✓' },
-  { feature: '拍照识别奖状', personal: '✓', school: '✓' },
-  { feature: '默认指标', personal: '✓', school: '✓' },
-  { feature: '自定义指标', personal: '×', school: '✓' },
-  { feature: '月度报告', personal: '×', school: '✓' },
-  { feature: '期末报告', personal: '×', school: '✓' },
-  { feature: '班级统计', personal: '✓', school: '✓' },
-  { feature: '学校报告', personal: '×', school: '✓' },
-  { feature: '邀请老师', personal: '×', school: '✓' },
-  { feature: '邀请家长', personal: '×', school: '✓' },
-  { feature: '家长端', personal: '×', school: '✓' },
-  { feature: '批量导入', personal: '×', school: '✓' },
-  { feature: '学校组织管理', personal: '×', school: '✓' },
-  { feature: '运营转学校版', personal: '✓', school: '✓' },
-  { feature: '货柜机/终端', personal: '×', school: '✓' },
-  { feature: '区域统计', personal: '×', school: '✓' },
+const versionCompareRows: Array<{ type: string; items: string[]; personal: string; school: string }> = [
+  { type: '基础功能', items: ['学生管理', '班级管理'], personal: '✓', school: '✓' },
+  { type: 'AI解析', items: ['语音识别', '奖状识别', '学生识别', '指标识别'], personal: '✓', school: '✓' },
+  { type: '家校协同', items: ['邀请老师', '邀请家长', '家长端'], personal: '✓', school: '✓' },
+  { type: '指标配置', items: ['自定义指标'], personal: '×', school: '✓' },
+  { type: 'AI报告', items: ['期末综合报告'], personal: '✓', school: '✓' },
+  { type: '详细报告', items: ['月度成长报告', '各学科明细报告'], personal: '×', school: '✓' },
+  { type: '校级报告', items: ['校级分析报告'], personal: '×', school: '✓' },
+  { type: '硬件兑换', items: ['货柜机'], personal: '×', school: '✓' },
 ];
 
 const summaryPrdBlocks: PrdBlock[] = [
@@ -356,15 +387,18 @@ const parentPrdBlocks: PrdBlock[] = [
   { type: 'p', text: '家长端分为自主登录和被邀请两条路径。两条路径完成绑定后，统一进入落地页，用成长页低保真原型说明完整路径。' },
   { type: 'h2', text: '自主登录' },
   { type: 'list', items: [
-    '01 微信登录：布局同教师端 01 登录页，但产品名为“素养指南针”，只保留微信授权登录。',
+    '01 微信登录：布局同教师端 01 登录页，但产品名为“素养指南针”，只保留微信授权登录；点击后展示微信原生手机号授权弹窗。',
+    '已绑定任何学生：01 微信登录后直接进入 05 落地页。',
+    '未绑定任何学生：01 微信登录后进入 02 绑定学生（自主）；授权手机与班主任录入手机一致时直接进入 05，不一致时进入 04 后再到 05。',
     '02 绑定学生（自主）：合并原 02A 和 02B，家长可选择学校编号或班级号，再输入学生姓名和学生学号。',
-    '04 落地页：绑定成功后进入，样式参考 demo-家长-手机端的成长页。',
+    '04 绑定提醒：先选择与当前学生的家长身份，再展示当前授权手机号脱敏值；选择其他时需要补充关系。',
   ] },
   { type: 'h2', text: '被邀请' },
   { type: 'list', items: [
     '00 收到卡片：微信聊天对话中展示“素养指南针”小程序卡片。',
     '03 绑定学生（班级邀请）：系统自动带入班级号信息，家长只需要输入学生姓名和学生学号。',
-    '04 落地页：绑定成功后进入，展示孩子成长概览。',
+    '03 后校验授权手机：与班主任录入手机一致时直接进入 05，不一致时进入 04 后再到 05。',
+    '05 落地页：身份确认后进入，展示孩子成长概览。',
   ] },
   { type: 'h2', text: '交互规则' },
   { type: 'list', items: [
@@ -372,7 +406,10 @@ const parentPrdBlocks: PrdBlock[] = [
     '02 自主绑定：编号、学生姓名、学生学号全部不为空时，底部“绑定学生”按钮激活。',
     '03 班级邀请：班级号自动带入，不展示可编辑班级号输入框。',
     '03 班级邀请：学生姓名和学生学号全部不为空时，底部“绑定学生”按钮激活。',
-    '04 落地页复刻成长页结构：孩子卡、本月净得分、表扬/待改进、预估分红和底部三栏导航。',
+    '02/03 绑定后：授权手机与班主任录入手机一致直接进入 05，授权手机不一致进入 04。',
+    '01 微信登录：点击微信授权登录后先展示“申请获取并验证你的手机号”的微信授权弹窗，选择号码后进入 02 自主绑定。',
+    '04 绑定提醒：提醒文案为“家长您好，为了切实守护每位学生的信息安全与隐私权，请您仔细核实并确认信息，仅允许绑定自己孩子的账号，感谢您的配合。”。',
+    '05 落地页复刻成长页结构：孩子卡、本月净得分、表扬/待改进、预估分红和底部三栏导航。',
     '登录页不展示手机号登录、密码登录或额外说明。',
     '绑定页只承载一个任务，正式内容入口统一放到落地页。',
   ] },
@@ -409,16 +446,16 @@ const schoolAdminPrdBlocks: PrdBlock[] = [
 
 const versionComparePrdBlocks: PrdBlock[] = [
   { type: 'h1', text: '个人版 / 学校版功能对比' },
-  { type: 'p', text: '顶部导航新增“版本对比”，用于快速判断哪些能力属于个人体验入口，哪些能力必须进入学校版承接。页面只用表格呈现，不增加解释型长文案。' },
+  { type: 'p', text: '顶部导航新增“版本对比”，用于快速判断个人版缺口，以及学校版承接的完整能力。页面只用表格呈现，不增加解释型长文案。' },
   { type: 'h2', text: '展示规则' },
   { type: 'list', items: [
-    '表头固定为“功能、个人版、学校版”。',
-    '个人版和学校版只展示 ✓ / ×，不在单元格内写说明。',
-    '功能点按老师体验、报告、协同、学校管理、硬件/区域能力排序。',
-    '个人版保留核心 AI 体验能力，关闭学校统一管理、家长端和硬件区域能力。',
+    '表头固定为“能力类型、个人版、学校版”。',
+    '版本单元格只展示 ✓ / ×，不在单元格内写说明。',
+    '功能按基础功能、AI解析、家校协同、指标配置、AI报告、详细报告、校级报告、硬件兑换合并展示。',
+    '个人版主要缺少月度成长报告、各学科明细报告、货柜机、自定义指标、校级分析报告。',
   ] },
-  { type: 'h2', text: '功能点' },
-  { type: 'list', items: versionCompareRows.map((row) => `${row.feature}：个人版 ${row.personal}｜学校版 ${row.school}`) },
+  { type: 'h2', text: '能力类型' },
+  { type: 'list', items: versionCompareRows.map((row) => `${row.type}：${row.items.join('、')}｜个人版 ${row.personal}｜学校版 ${row.school}`) },
 ];
 
 const pageMeta: Record<PageKey, PageMeta> = {
@@ -692,12 +729,12 @@ const pageMeta: Record<PageKey, PageMeta> = {
   parentBindingList: {
     title: '家长绑定列表',
     subtitle: '查看当前班级学生家长绑定情况。',
-    modules: ['未绑定/已绑定切换', '学生头像', '姓名', '绑定状态', '绑定人数'],
+    modules: ['未绑定/已绑定切换', '学生头像', '姓名', '家长身份', '拨打电话', '移除绑定'],
     ctas: [
       { label: '邀请家长绑定', priority: 'P0', position: '页面底部固定按钮' },
     ],
     states: {
-      normal: '通过未绑定/已绑定切换查看学生；已绑定学生展示已绑定家长人数。',
+      normal: '通过未绑定/已绑定切换查看学生；已绑定学生按学生聚合展示每个家长的身份和操作入口。',
       loading: '绑定情况加载中。',
       empty: '暂无学生。',
       network: '加载失败，提供重试。',
@@ -719,6 +756,21 @@ const pageMeta: Record<PageKey, PageMeta> = {
       empty: '无学生时引导新增学生。',
       network: '加载失败，保留重试。',
       denied: '无权限时返回班级页。',
+    },
+  },
+  studentBatchEdit: {
+    title: '批量修改学生信息',
+    subtitle: '批量维护学生姓名、性别和学号。',
+    modules: ['学生行列表', '姓名输入', '学号输入', '性别点选', '保存修改'],
+    ctas: [
+      { label: '保存修改', priority: 'P0', position: '底部主按钮' },
+    ],
+    states: {
+      normal: '展示当前班级学生，可逐行编辑。',
+      loading: '保存中。',
+      empty: '暂无学生。',
+      network: '保存失败，保留已编辑内容。',
+      denied: '无班级管理权限时返回班级列表。',
     },
   },
   studentDetail: {
@@ -772,8 +824,10 @@ const pageMeta: Record<PageKey, PageMeta> = {
   minePersonal: {
     title: '我的（仅有个人版）',
     subtitle: '查看账号、个人版、协议和学校版入口。',
-    modules: ['教师卡片', '头像', '姓名', '编辑按钮', '了解学校版', '学校版功能弹窗', '顾问微信二维码', '修改密码', '隐私协议', '用户协议', '退出登录'],
+    modules: ['教师卡片', '头像', '姓名', '编辑按钮', '了解学校版', '学校基础信息', '管理工具', '学校数据报表', '生成期末报告', '学校版功能弹窗', '顾问微信二维码', '修改密码', '隐私协议', '用户协议', '退出登录'],
     ctas: [
+      { label: '学校数据报表', priority: 'P1', position: '管理工具卡片，点击进入学校数据报表' },
+      { label: '生成期末报告', priority: 'P0', position: '管理工具卡片，点击后二次确认' },
       { label: '了解学校版', priority: 'P1', position: '教师卡片下方按钮，点击打开底部弹窗' },
       { label: '修改密码', priority: 'P1', position: '账号设置列表' },
       { label: '退出登录', priority: 'P3', position: '页面底部' },
@@ -789,10 +843,12 @@ const pageMeta: Record<PageKey, PageMeta> = {
   mineSchool: {
     title: '我的（拥有学校版）',
     subtitle: '查看账号、当前版本、协议和账号设置。',
-    modules: ['教师卡片', '头像', '姓名', '编辑按钮', '当前版本入口', '学校基础信息', '切换版本弹窗', '修改密码', '隐私协议', '用户协议', '退出登录'],
+    modules: ['教师卡片', '头像', '姓名', '编辑按钮', '当前版本入口', '学校基础信息', '管理工具', '学校数据报表', '生成期末报告', '切换版本弹窗', '修改密码', '隐私协议', '用户协议', '退出登录'],
     ctas: [
       { label: '切换版本', priority: 'P0', position: '教师卡片头像姓名学校行右侧操作组，点击打开底部弹窗' },
       { label: '编辑资料', priority: 'P1', position: '教师卡片头像姓名学校行右侧操作组' },
+      { label: '学校数据报表', priority: 'P1', position: '管理工具卡片，点击进入学校数据报表' },
+      { label: '生成期末报告', priority: 'P0', position: '管理工具卡片，点击后二次确认' },
       { label: '修改密码', priority: 'P1', position: '账号设置列表' },
       { label: '退出登录', priority: 'P3', position: '页面底部' },
     ],
@@ -856,6 +912,21 @@ const pageMeta: Record<PageKey, PageMeta> = {
       denied: '无学校管理权限时隐藏入口并返回我的页。',
     },
   },
+  schoolUsageReport: {
+    title: '学校数据报表',
+    subtitle: '查看学校使用数据。',
+    modules: ['使用概览', '活跃教师', '日常记录', '覆盖学生', '报告生成'],
+    ctas: [
+      { label: '返回我的', priority: 'P1', position: '顶部返回' },
+    ],
+    states: {
+      normal: '展示学校使用数据概览。',
+      loading: '数据加载中。',
+      empty: '暂无使用数据。',
+      network: '加载失败，提供重试。',
+      denied: '无学校管理权限时返回我的页。',
+    },
+  },
   advisor: {
     title: '顾问联系方式',
     subtitle: '自然展示顾问联系方式，不强销售。',
@@ -915,6 +986,11 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     { type: 'list', items: [
       '14A 用于老师只有个人版的状态。',
       '教师卡片展示个人版标签，不展示切换版本入口。',
+      '学校基础信息在 14A 和 14B 都展示，以卡片承载学期管理、科目管理、部门管理三个直达入口。',
+      '管理工具在 14A 和 14B 都展示，包含学校数据报表和生成期末报告。',
+      '点击学校数据报表进入 18 学校数据报表，查看学校使用数据。',
+      '点击生成期末报告必须先二次确认：学生日常行为已录入完成；如报告需要展示成绩，成绩也已录入完成。',
+      '确认后发送生成请求，并 toast 提示“报告排队生成中”。',
       '页面展示“了解学校版”按钮。',
       '弹窗先说明学校版适合全校统一使用，再展示学校统一使用能力和顾问微信二维码。',
       '学校版能力用“能力标题 + 学校收益”表达，避免只罗列功能名。',
@@ -928,6 +1004,10 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '14B 用于老师已经拥有学校版的状态。',
       '教师卡片头像姓名学校行右侧展示同组操作按钮：编辑资料和切换版本。切换版本点击后从底部上滑展示“切换版本”。',
       '切换版本弹窗只展示版本名称和当前标签，不展示“个人体验数据”“学校统一数据”等备注文案。',
+      '学校基础信息在 14A 和 14B 都展示，以卡片承载学期管理、科目管理、部门管理三个直达入口。',
+      '管理工具在 14A 和 14B 都展示，包含学校数据报表和生成期末报告。',
+      '点击学校数据报表进入 18 学校数据报表，查看学校使用数据。',
+      '点击生成期末报告必须先二次确认，确认后发送生成请求并提示排队。',
       '14B 不展示“了解学校版”按钮。',
     ] },
   ],
@@ -984,10 +1064,11 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '老师列表标题展示人数，例如“老师列表(8人)”，括号数字使用辅助字重和灰色。',
       '老师列表卡片外层一行展示 5 个老师，避免页面过长。',
       '点击右上角 icon 进入老师列表，查看当前班级全部老师。',
-      '家长绑定列表标题展示绑定进度，例如“家长绑定列表(32/50)”，括号数字使用辅助字重和灰色。',
-      '家长绑定列表默认以两列学生卡片展示首批学生，未绑定学生优先；班级详情预览不展示单个学生绑定人数。',
-      '点击家长绑定列表右上角 icon 进入完整列表，查看全部学生绑定状态和绑定人数。',
-      '完整家长绑定列表不展示学号；每个学生卡片展示头像、姓名、绑定状态和绑定人数，例如“2人”。',
+      '家长绑定列表标题展示绑定进度，例如“家长绑定列表(48/50)”，括号数字使用辅助字重和灰色。',
+      '家长绑定列表默认以两列学生聚合卡片展示首批学生，未绑定学生优先。',
+      '点击家长绑定列表右上角 icon 进入完整列表，通过 tab 查看未绑定和已绑定学生。',
+      '完整家长绑定列表不展示学号；未绑定卡片展示学生头像、学生姓名和未绑定标签。',
+      '已绑定预览按学生聚合展示，例如“王小明”卡片内展示“爸爸、姑姑”等关系标签；08A/08B 预览不展示电话 icon。',
       '班级详情和完整家长绑定列表均提供“邀请家长绑定”按钮，层级同老师列表板块的邀请老师。',
       '邀请家长绑定流程完成后回到发起邀请的当前页面。',
       '点击邀请老师复用班级邀请流程。',
@@ -1035,9 +1116,13 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '10 是统一的家长绑定列表页，管理员和非管理员看到相同内容。',
       '页面使用“未绑定/已绑定”tab 切换查看学生，tab 内数字即统计。',
       '邀请家长绑定按钮固定在页面底部，与 09 老师列表保持一致。',
-      '学生列表使用紧凑行展示，不展示学号；未绑定学生不展示 0 人。',
-      '已绑定学生展示已绑定家长人数，例如“已绑定2位家长”。绑定时只经过微信授权和学生信息输入，系统不持有家长姓名或角色信息。',
-      '页面不提供移除家长操作，因为系统无法识别具体家长身份。',
+      'mock 数据为 48/50：50 个学生中 48 个学生已绑定，未绑定学生优先展示。',
+      '未绑定卡片展示学生头像、学生姓名和未绑定标签。',
+      '已绑定 tab 每个家长绑定关系展示为一张可点击卡片，卡片只展示学生头像和“学生姓名+关系”，例如“王小明的爸爸”；姓名字号应克制，关系作为轻层级信息展示。',
+      '同一个学生有多个家长绑定时，多个家长卡片连续排列；不同学生之间用弱化线条分隔。',
+      '已绑定卡片列表态不展示手机号、不展示 icon 操作；点击卡片后在弹窗中展示并支持编辑完整手机号和关系，同时提供拨打电话和移除绑定操作。',
+      '家长身份来自信息确认页的爸爸、妈妈、爷爷、奶奶、外公、外婆或其他文本。',
+      '一个学生可以被多个家长绑定，班主任和管理员可以移除单个家长绑定关系；详情弹窗和移除确认均展示完整手机号，帮助确认是否绑定错误。',
       '从 08A/08B 班级详情进入时，邀请家长绑定流程完成后回到当前页。',
     ] },
   ],
@@ -1050,6 +1135,16 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '点击全选后文案变为取消全选。',
       '学生以一行 3 个卡片展示，卡片包含头像、性别、姓名、学号。',
       '新增学生入口放在学生卡片列表下方，样式与学生卡片一致。',
+    ] },
+  ],
+  studentBatchEdit: [
+    { type: 'h2', text: '批量修改学生信息规则' },
+    { type: 'list', items: [
+      '从 07 班级列表的班级更多操作进入。',
+      '页面结构参考 12 添加学生，但不提供添加一名和清除学生。',
+      '每行包含姓名、较短学号输入框、男/女点选。',
+      '姓名、学号、性别均有值时，底部保存修改按钮可点击。',
+      '保存后回到 11 学生列表，并展示保存成功反馈。',
     ] },
   ],
   studentAdd: [
@@ -1119,6 +1214,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [studentCount, setStudentCount] = useState(0);
   const [showMultiResult, setShowMultiResult] = useState(false);
   const [showWechatPhoneSheet, setShowWechatPhoneSheet] = useState(false);
+  const [showParentWechatPhoneSheet, setShowParentWechatPhoneSheet] = useState(false);
   const [teacherName, setTeacherName] = useState('');
   const [schoolStage, setSchoolStage] = useState('');
   const [entryYear, setEntryYear] = useState('');
@@ -1132,6 +1228,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [selectedStudentNos, setSelectedStudentNos] = useState<string[]>([]);
   const [studentListMode, setStudentListMode] = useState<'student' | 'group'>('student');
   const [studentInputRows, setStudentInputRows] = useState<StudentInputRow[]>([{ id: 1, name: '', no: '', gender: '男' }]);
+  const [studentBatchEditRows, setStudentBatchEditRows] = useState<StudentInputRow[]>([]);
   const [teachingRows, setTeachingRows] = useState(2);
   const [showPhoneLoginSheet, setShowPhoneLoginSheet] = useState(false);
   const [phoneLoginTab, setPhoneLoginTab] = useState<PhoneLoginTab>('sms');
@@ -1140,6 +1237,9 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [draftTeacherName, setDraftTeacherName] = useState('');
   const [showSchoolUpgradeSheet, setShowSchoolUpgradeSheet] = useState(false);
   const [showSpaceSelectSheet, setShowSpaceSelectSheet] = useState(false);
+  const [showFinalReportConfirmSheet, setShowFinalReportConfirmSheet] = useState(false);
+  const [finalReportBehaviorConfirmed, setFinalReportBehaviorConfirmed] = useState(false);
+  const [finalReportScoreConfirmed, setFinalReportScoreConfirmed] = useState(false);
   const [currentSpaceId, setCurrentSpaceId] = useState<TeacherSpaceId>('personal');
   const [showSchoolAdminSpaceMenu, setShowSchoolAdminSpaceMenu] = useState(true);
   const [activeBasicInfoTab, setActiveBasicInfoTab] = useState<SchoolBasicInfoTab>('term');
@@ -1185,18 +1285,26 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [classDeleteConfirmText, setClassDeleteConfirmText] = useState('');
   const [activeTeacherAction, setActiveTeacherAction] = useState<ClassTeacherProfile | null>(null);
   const [removeTeacherCandidate, setRemoveTeacherCandidate] = useState<ClassTeacherProfile | null>(null);
+  const [removeParentBindingCandidate, setRemoveParentBindingCandidate] = useState<{ studentName: string; guardianLabel: string; phone: string } | null>(null);
+  const [activeParentBindingCandidate, setActiveParentBindingCandidate] = useState<ActiveParentBindingCandidate | null>(null);
   const [showTransferAdminTeacherSheet, setShowTransferAdminTeacherSheet] = useState(false);
   const [transferAdminCandidate, setTransferAdminCandidate] = useState<ClassTeacherProfile | null>(null);
   const [classAdminTeacherName, setClassAdminTeacherName] = useState('郭老师');
   const [classActionToast, setClassActionToast] = useState('');
   const classActionToastTimerRef = useRef<number | null>(null);
   const [parentPage, setParentPage] = useState<ParentPageKey>('wechatCard');
+  const [activeParentDirectoryNodeKey, setActiveParentDirectoryNodeKey] = useState('被邀请-source-wechatCard');
   const [parentBindMode, setParentBindMode] = useState<ParentBindMode>('school');
   const [parentBindForm, setParentBindForm] = useState({
     schoolCode: '',
     classCode: '',
     studentName: '',
     studentNo: '',
+  });
+  const [parentIdentityForm, setParentIdentityForm] = useState<{ phone: string; relation: ParentIdentityRelation; relationOther: string }>({
+    phone: '13812345678',
+    relation: '爸爸',
+    relationOther: '',
   });
   const [showParentChildSwitcherSheet, setShowParentChildSwitcherSheet] = useState(false);
 
@@ -1248,36 +1356,62 @@ const TeacherCMobileLowFi: React.FC = () => {
   const primaryClassTeachers = classTeachers.filter((teacher) => teacher.isAdmin || teacher.isHomeroom);
   const otherClassTeachers = classTeachers.filter((teacher) => !teacher.isAdmin && !teacher.isHomeroom);
   const parentBindingRows: ParentBindingProfile[] = [
-    ...['张天天', '林小杰', '吴思源', '郑可欣', '何一鸣', '宋雨桐', '唐心怡', '蒋明轩', '邹若涵', '冯子墨', '卢星辰', '夏语乔', '龚浩然', '潘依依', '秦嘉木', '姚安琪', '田乐乐', '许知行'].map((name, index) => ({
+    ...['张天天', '林小杰'].map((name, index) => ({
       name,
       no: `202501${String(index + 1).padStart(2, '0')}`,
       gender: index % 3 === 0 ? '女' as const : '男' as const,
-      bound: false,
-      bindingCount: 0,
+      guardians: [],
     })),
-    ...Array.from({ length: 32 }).map((_, index) => ({
-      name: ['王小明', '李小红', '陈一诺', '周子航', '赵昕然', '钱嘉乐', '孙雨萌', '李浩宇'][index % 8] + (index > 7 ? String(index + 1) : ''),
-      no: `202502${String(index + 1).padStart(2, '0')}`,
-      gender: index % 2 === 0 ? '男' as const : '女' as const,
-      bound: true,
-      bindingCount: index % 5 === 0 ? 2 : 1,
-    })),
+    ...Array.from({ length: 48 }).map((_, index) => {
+      const phoneTail = ['5678', '2186', '9035', '7421'][index % 4];
+      const secondPhoneTail = ['6612', '3908', '1205'][index % 3];
+      return {
+        name: ['王小明', '李小红', '陈一诺', '周子航', '赵昕然', '钱嘉乐', '孙雨萌', '李浩宇'][index % 8] + (index > 7 ? String(index + 1) : ''),
+        no: `202502${String(index + 1).padStart(2, '0')}`,
+        gender: index % 2 === 0 ? '男' as const : '女' as const,
+        guardians: [
+          {
+            id: `guardian-${index + 1}-1`,
+            phone: `138${String(1200 + index).padStart(4, '0')}${phoneTail}`,
+            phoneTail,
+            relation: (['爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆'] as ParentIdentityRelation[])[index % 6],
+          },
+          ...(index % 12 === 0 ? [{
+            id: `guardian-${index + 1}-2`,
+            phone: `139${String(6500 + index).padStart(4, '0')}${secondPhoneTail}`,
+            phoneTail: secondPhoneTail,
+            relation: '其他' as ParentIdentityRelation,
+            relationOther: index % 24 === 0 ? '姑姑' : '监护人',
+          }] : []),
+        ],
+      };
+    }),
   ];
   const [parentBindingTab, setParentBindingTab] = useState<'unbound' | 'bound'>('unbound');
-  const sortedParentBindingRows = [...parentBindingRows].sort((a, b) => Number(a.bound) - Number(b.bound));
-  const unboundParentBindingRows = parentBindingRows.filter((student) => !student.bound);
-  const boundParentBindingRows = parentBindingRows.filter((student) => student.bound);
-  const boundParentCount = parentBindingRows.filter((student) => student.bound).length;
+  const hasParentBinding = (student: ParentBindingProfile) => student.guardians.length > 0;
+  const sortedParentBindingRows = [...parentBindingRows].sort((a, b) => Number(hasParentBinding(a)) - Number(hasParentBinding(b)));
+  const unboundParentBindingRows = parentBindingRows.filter((student) => !hasParentBinding(student));
+  const boundParentBindingRows = parentBindingRows.filter((student) => hasParentBinding(student));
+  const boundParentCount = boundParentBindingRows.length;
   const visibleStudentRows = studentRows.filter((student) => {
     const keyword = studentSearch.trim();
     const matchesSearch = !keyword || student.name.includes(keyword) || student.no.includes(keyword);
     const matchesGender = studentGenderFilter === 'all' || student.gender === studentGenderFilter;
     return matchesSearch && matchesGender;
   });
+  const createStudentBatchEditRows = () => studentRows.map((student, index) => ({
+    id: index + 1,
+    name: student.name,
+    no: student.no,
+    gender: student.gender,
+  }));
   const activeClassTitle = `${activeClassProfile.name}（${inferGradeLabel(activeClassProfile.stage, activeClassProfile.entryYearValue)}）`;
   const isParentInviteBinding = parentPage === 'bindInvite';
   const parentPrimaryCode = parentBindMode === 'school' ? parentBindForm.schoolCode : parentBindForm.classCode;
   const parentCanBind = Boolean((isParentInviteBinding || parentPrimaryCode.trim()) && parentBindForm.studentName.trim() && parentBindForm.studentNo.trim());
+  const parentStudentName = parentBindForm.studentName.trim() || '郑小磊';
+  const parentMaskedPhone = parentIdentityForm.phone.replace(/^(\d{3})\d{4}(\d+)$/, '$1****$2');
+  const parentIdentityComplete = parentIdentityForm.relation !== '其他' || Boolean(parentIdentityForm.relationOther.trim());
   const parentCodeLabel = parentBindMode === 'school' ? '学校编号' : '班级号';
   const parentCodePlaceholder = parentBindMode === 'school' ? '请输入学校编号' : '请输入班级号';
   const parentCodeValue = parentBindMode === 'school' ? parentBindForm.schoolCode : parentBindForm.classCode;
@@ -1396,6 +1530,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       setInviteeLoggedIn(false);
       setInviteeAlreadyJoined(false);
       setStudentInputRows([{ id: 1, name: '', no: '', gender: '男' }]);
+      setStudentBatchEditRows([]);
       return;
     }
     if (next === 'home') {
@@ -1406,6 +1541,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       setRecordCount(0);
       setShowMultiResult(false);
       setStudentInputRows([{ id: 1, name: '', no: '', gender: '男' }]);
+      setStudentBatchEditRows([]);
       return;
     }
     if (!teacherName.trim()) setTeacherName('郭');
@@ -1414,11 +1550,14 @@ const TeacherCMobileLowFi: React.FC = () => {
       setStudentCount((count) => Math.max(count, 2));
       setRecordCount((count) => Math.max(count, 2));
     }
-    if (['studentList', 'classReport', 'termReport', 'studentDetail'].includes(next)) {
+    if (['studentList', 'studentBatchEdit', 'classReport', 'termReport', 'studentDetail'].includes(next)) {
       setStudentCount((count) => Math.max(count, 2));
     }
     if (next === 'studentAdd') {
       setStudentInputRows([{ id: 1, name: '', no: '', gender: '男' }]);
+    }
+    if (next === 'studentBatchEdit' && studentBatchEditRows.length === 0) {
+      setStudentBatchEditRows(createStudentBatchEditRows());
     }
   };
 
@@ -1456,8 +1595,39 @@ const TeacherCMobileLowFi: React.FC = () => {
     setShowInviteConfirmSheet(true);
   };
 
-  const jumpToParentPage = (next: ParentPageKey) => {
+  const getDefaultParentDirectoryNodeKey = (next: ParentPageKey) => {
+    const findNodeKey = (nodes: ParentFlowNode[], keyPrefix: string): string | null => {
+      for (const node of nodes) {
+        const nodeKey = `${keyPrefix}-${node.page}`;
+        if (node.page === next) return nodeKey;
+        if (node.branches) {
+          for (const branch of node.branches) {
+            const branchKey = findNodeKey(branch.pages, `${nodeKey}-${branch.text}`);
+            if (branchKey) return branchKey;
+          }
+        }
+      }
+      return null;
+    };
+
+    for (const lane of parentFlowLanes) {
+      if ('branches' in lane) {
+        if (lane.source === next) return `${lane.title}-source-${next}`;
+        for (const branch of lane.branches) {
+          const branchKey = findNodeKey(branch.pages, `${lane.title}-${branch.text}`);
+          if (branchKey) return branchKey;
+        }
+      } else {
+        const nodeKey = findNodeKey(lane.nodes, `${lane.title}-node`);
+        if (nodeKey) return nodeKey;
+      }
+    }
+    return `${next}`;
+  };
+
+  const jumpToParentPage = (next: ParentPageKey, directoryNodeKey?: string) => {
     setParentPage(next);
+    setActiveParentDirectoryNodeKey(directoryNodeKey || getDefaultParentDirectoryNodeKey(next));
     if (next === 'bindSelf') setParentBindMode('school');
     if (next === 'bindInvite') setParentBindMode('class');
   };
@@ -1502,12 +1672,21 @@ const TeacherCMobileLowFi: React.FC = () => {
     navigate('studentAdd');
   };
 
+  const openStudentBatchEdit = () => {
+    setStudentBatchEditRows(createStudentBatchEditRows());
+    navigate('studentBatchEdit');
+  };
+
   const addStudentInputRow = () => {
     setStudentInputRows((rows) => [...rows, { id: Math.max(...rows.map((row) => row.id)) + 1, name: '', no: '', gender: '男' }]);
   };
 
   const updateStudentInputRow = (id: number, patch: Partial<Omit<StudentInputRow, 'id'>>) => {
     setStudentInputRows((rows) => rows.map((row) => row.id === id ? { ...row, ...patch } : row));
+  };
+
+  const updateStudentBatchEditRow = (id: number, patch: Partial<Omit<StudentInputRow, 'id'>>) => {
+    setStudentBatchEditRows((rows) => rows.map((row) => row.id === id ? { ...row, ...patch } : row));
   };
 
   const removeStudentInputRow = (id: number) => {
@@ -1720,6 +1899,12 @@ const TeacherCMobileLowFi: React.FC = () => {
     navigate(pageMap[tab]);
   };
 
+  const openFinalReportConfirmSheet = () => {
+    setFinalReportBehaviorConfirmed(false);
+    setFinalReportScoreConfirmed(false);
+    setShowFinalReportConfirmSheet(true);
+  };
+
   const openTermEditSheet = (item?: SchoolTermItem) => {
     setEditingTermItem(item ?? null);
     setShowTermEditSheet(true);
@@ -1745,6 +1930,10 @@ const TeacherCMobileLowFi: React.FC = () => {
   };
 
   const runClassAction = (key: ClassActionKey) => {
+    if (key === 'batchStudents') {
+      openStudentBatchEdit();
+      return;
+    }
     if (key === 'reward' || key === 'homework' || key === 'leftStudents') {
       navigate('studentList');
       return;
@@ -1758,7 +1947,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       setActiveClassAction(null);
       return;
     }
-    const toastMap: Record<Exclude<ClassActionKey, 'reward' | 'homework' | 'leftStudents' | 'editClass' | 'inviteTeacher' | 'inviteParent'>, string> = {
+    const toastMap: Record<Exclude<ClassActionKey, 'reward' | 'homework' | 'batchStudents' | 'leftStudents' | 'editClass' | 'inviteTeacher' | 'inviteParent'>, string> = {
       password: '设置兑换密码',
       face: '更新人脸数据',
     };
@@ -1796,14 +1985,15 @@ const TeacherCMobileLowFi: React.FC = () => {
       title: '日常操作',
       items: [
         { key: 'homework' as const, label: '作业录入', icon: FileText },
+        { key: 'reward' as const, label: '兑换奖励', icon: Gift },
       ],
     },
     {
-      title: '校园币兑换',
+      title: '学生信息更新',
       items: [
-        { key: 'reward' as const, label: '兑换奖励', icon: Gift },
-        { key: 'password' as const, label: '设置兑换密码', icon: Shield },
+        { key: 'batchStudents' as const, label: '批量修改学生', icon: Users },
         { key: 'face' as const, label: '更新人脸数据', icon: ScanFace },
+        { key: 'password' as const, label: '设置兑换密码', icon: Shield },
       ],
     },
     {
@@ -1966,6 +2156,144 @@ const TeacherCMobileLowFi: React.FC = () => {
               确认移除
             </button>
           </div>
+        </section>
+      </div>
+    );
+  };
+
+  const renderRemoveParentBindingConfirmSheet = () => {
+    if (!removeParentBindingCandidate) return null;
+    const close = () => setRemoveParentBindingCandidate(null);
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[130] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="确认移除家长绑定">
+        <button type="button" aria-label="关闭移除家长绑定确认弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">确认移除绑定</h3>
+          <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
+            移除后，{removeParentBindingCandidate.guardianLabel}将不能继续查看{removeParentBindingCandidate.studentName}的成长信息。
+          </p>
+          <div className="mt-3 rounded-2xl bg-gray-50 px-3 py-2 text-sm font-black tabular-nums text-gray-950">
+            {removeParentBindingCandidate.phone}
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
+            <button
+              type="button"
+              onClick={() => {
+                showClassActionToast(`已移除${removeParentBindingCandidate.studentName}${removeParentBindingCandidate.guardianLabel}绑定`);
+                close();
+              }}
+              className="h-12 rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white"
+            >
+              确认移除
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  };
+
+  const renderParentBindingDetailSheet = () => {
+    if (!activeParentBindingCandidate) return null;
+    const close = () => setActiveParentBindingCandidate(null);
+    const currentGuardianLabel = activeParentBindingCandidate.relation === '其他'
+      ? activeParentBindingCandidate.relationOther.trim() || '其他'
+      : activeParentBindingCandidate.relation;
+    const canSaveParentBinding = activeParentBindingCandidate.phone.trim().length >= 7
+      && (activeParentBindingCandidate.relation !== '其他' || Boolean(activeParentBindingCandidate.relationOther.trim()));
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[130] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="家长绑定详情">
+        <button type="button" aria-label="关闭家长绑定详情弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-base font-black">家长绑定详情</h3>
+              <div className="mt-1 truncate text-sm font-semibold text-gray-500">{activeParentBindingCandidate.studentName}的{currentGuardianLabel}</div>
+            </div>
+            <button type="button" onClick={close} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-lg font-black active:bg-gray-100">×</button>
+          </div>
+          <div className="space-y-3 rounded-2xl bg-gray-50 p-3">
+            <label className="block">
+              <span className="text-xs font-black text-gray-500">关系</span>
+              <select
+                value={activeParentBindingCandidate.relation}
+                onChange={(event) => setActiveParentBindingCandidate((current) => current ? { ...current, relation: event.target.value as ParentIdentityRelation } : current)}
+                className="mt-2 h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-950 outline-none focus:border-gray-900"
+                aria-label="编辑家长关系"
+              >
+                {parentIdentityRelationOptions.map((relation) => (
+                  <option key={relation} value={relation}>{relation}</option>
+                ))}
+              </select>
+            </label>
+            {activeParentBindingCandidate.relation === '其他' && (
+              <label className="block">
+                <span className="text-xs font-black text-gray-500">具体关系</span>
+                <input
+                  value={activeParentBindingCandidate.relationOther}
+                  onChange={(event) => setActiveParentBindingCandidate((current) => current ? { ...current, relationOther: event.target.value } : current)}
+                  className="mt-2 h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-950 outline-none focus:border-gray-900"
+                  placeholder="请输入关系"
+                  aria-label="编辑其他关系"
+                />
+              </label>
+            )}
+            <label className="block">
+              <span className="text-xs font-black text-gray-500">手机号</span>
+              <input
+                value={activeParentBindingCandidate.phone}
+                onChange={(event) => setActiveParentBindingCandidate((current) => current ? { ...current, phone: event.target.value } : current)}
+                className="mt-2 h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold tabular-nums text-gray-950 outline-none focus:border-gray-900"
+                inputMode="tel"
+                aria-label="编辑家长手机号"
+              />
+            </label>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => showClassActionToast(`正在拨打${activeParentBindingCandidate.studentName}${currentGuardianLabel}电话`)}
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white active:bg-gray-800"
+            >
+              <Phone size={16} />
+              拨打电话
+            </button>
+            {canRemoveParentBinding && (
+              <button
+                type="button"
+                onClick={() => {
+                  setRemoveParentBindingCandidate({
+                    studentName: activeParentBindingCandidate.studentName,
+                    guardianLabel: currentGuardianLabel,
+                    phone: activeParentBindingCandidate.phone,
+                  });
+                  close();
+                }}
+                className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-sm font-black text-red-600 active:bg-red-50"
+              >
+                <Trash2 size={16} />
+              移除绑定
+            </button>
+          )}
+          </div>
+          <button
+            type="button"
+            disabled={!canSaveParentBinding}
+            onClick={() => {
+              showClassActionToast(`已保存${activeParentBindingCandidate.studentName}家长信息`);
+              close();
+            }}
+            className={cx(
+              'mt-2 h-12 w-full rounded-2xl border border-gray-200 text-sm font-black',
+              canSaveParentBinding ? 'bg-white text-gray-950 active:bg-gray-50' : 'bg-gray-100 text-gray-400'
+            )}
+          >
+            保存修改
+          </button>
         </section>
       </div>
     );
@@ -2462,26 +2790,87 @@ const TeacherCMobileLowFi: React.FC = () => {
     <span className="ml-1 align-baseline text-xs font-semibold text-gray-400 tabular-nums">{children}</span>
   );
 
-  const ParentBindingCard = ({ student, compact = false, showBindingCount = true }: { student: ParentBindingProfile; compact?: boolean; showBindingCount?: boolean }) => (
-    <div className={cx('min-w-0 bg-white', compact ? 'rounded-2xl p-2.5' : 'rounded-2xl border border-gray-100 px-3 py-2.5')}>
-      <div className="flex min-w-0 items-center gap-2.5">
-        <div className={cx('flex shrink-0 items-center justify-center rounded-full bg-gray-100 font-black', compact ? 'h-8 w-8 text-xs' : 'h-9 w-9 text-sm')}>
+  const getParentGuardianLabel = (guardian: ParentBindingProfile['guardians'][number]) => (
+    guardian.relation === '其他' ? guardian.relationOther?.trim() || '其他' : guardian.relation
+  );
+  const canRemoveParentBinding = activeClassProfile.isCreator || classTeachers.some((teacher) => teacher.name === currentTeacherDisplayName && teacher.isHomeroom);
+
+  const ParentBindingCard = ({ student, compact = false }: { student: ParentBindingProfile; compact?: boolean }) => {
+    const guardians = student.guardians;
+    const visibleGuardians = compact ? guardians.slice(0, 2) : guardians;
+    const hiddenGuardianCount = guardians.length - visibleGuardians.length;
+
+    return (
+      <div className={cx(
+        'min-w-0 bg-white',
+        compact ? 'rounded-2xl p-2.5' : 'rounded-2xl border border-gray-100 px-3 py-3',
+        guardians.length === 0 && 'ring-1 ring-gray-100'
+      )}>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className={cx('flex shrink-0 items-center justify-center rounded-full bg-gray-100 font-black', compact ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-sm')}>
+            {student.name.slice(0, 1)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className={cx('truncate font-black leading-5', compact ? 'text-sm' : 'text-base')}>{student.name}</div>
+            {!compact && guardians.length === 0 && (
+              <div className="mt-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-500">未绑定</div>
+            )}
+          </div>
+          {compact && guardians.length === 0 && <div className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-black text-gray-500">未绑定</div>}
+        </div>
+        {guardians.length > 0 && (
+          <div className={cx('flex flex-wrap gap-1.5', compact ? 'mt-2 pl-10' : 'mt-3 pl-[50px]')}>
+            {visibleGuardians.map((guardian) => {
+              const guardianLabel = getParentGuardianLabel(guardian);
+              return (
+                <span
+                  key={guardian.id}
+                  className={cx(
+                    'inline-flex items-center rounded-full bg-gray-50 font-black text-gray-600',
+                    compact ? 'gap-1 px-2 py-0.5 text-[10px]' : 'gap-1 px-2 py-1 text-xs'
+                  )}
+                >
+                  <span className="max-w-[88px] truncate px-0.5">{guardianLabel}</span>
+                </span>
+              );
+            })}
+            {hiddenGuardianCount > 0 && (
+              <span className={cx('rounded-full bg-gray-50 font-black text-gray-400', compact ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs')}>+{hiddenGuardianCount}</span>
+            )}
+          </div>
+        )}
+        </div>
+    );
+  };
+
+  const ParentBindingGuardianCard = ({ student, guardian }: { student: ParentBindingProfile; guardian: ParentBindingProfile['guardians'][number] }) => {
+    const guardianLabel = getParentGuardianLabel(guardian);
+
+    return (
+      <button
+        type="button"
+        onClick={() => setActiveParentBindingCandidate({
+          studentName: student.name,
+          guardianId: guardian.id,
+          guardianLabel,
+          phone: guardian.phone,
+          relation: guardian.relation,
+          relationOther: guardian.relationOther || '',
+        })}
+        className="flex min-h-14 w-full min-w-0 items-center gap-2.5 rounded-2xl bg-white px-3 py-2 text-left active:bg-gray-50"
+        aria-label={`查看${student.name}的${guardianLabel}绑定详情`}
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-black text-gray-700">
           {student.name.slice(0, 1)}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className={cx('truncate font-black', compact ? 'text-xs' : 'text-sm')}>{student.name}</div>
-            <div className={cx('shrink-0 rounded-full px-2 py-0.5 font-semibold', student.bound ? 'bg-gray-100 text-gray-500' : 'bg-gray-900 text-white', compact ? 'text-[10px]' : 'text-xs')}>
-              {student.bound ? '已绑定' : '未绑定'}
-            </div>
-          </div>
-          {showBindingCount && student.bound && (
-            <div className="mt-1 text-xs font-semibold text-gray-500">已绑定{student.bindingCount}位家长</div>
-          )}
+        <div className="flex min-w-0 flex-1 items-baseline gap-0.5">
+          <span className="truncate text-[15px] font-bold leading-5 text-gray-950">{student.name}</span>
+          <span className="shrink-0 text-sm font-semibold leading-5 text-gray-500">的</span>
+          <span className="shrink-0 text-sm font-semibold leading-5 text-gray-700">{guardianLabel}</span>
         </div>
-      </div>
-    </div>
-  );
+      </button>
+    );
+  };
 
   const renderPrdBlock = (block: PrdBlock, index: number) => {
     if (block.type === 'h1') return <h1 key={index} className="text-2xl font-black leading-tight">{block.text}</h1>;
@@ -2553,7 +2942,10 @@ const TeacherCMobileLowFi: React.FC = () => {
                 <span className="shrink-0 text-sm font-black text-gray-400">→</span>
                 <PageNodeButton item="parentBindingList" lane={lane.title} />
                 <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="studentList" lane={lane.title} />
+                <div className="grid shrink-0 grid-rows-2 gap-2">
+                  <PageNodeButton item="studentList" lane={lane.title} />
+                  <PageNodeButton item="studentBatchEdit" lane={lane.title} />
+                </div>
               </div>
             ) : lane.title === '老用户' ? (
               <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
@@ -2573,6 +2965,8 @@ const TeacherCMobileLowFi: React.FC = () => {
                   <PageNodeButton item="subjectManagement" lane={lane.title} />
                   <PageNodeButton item="departmentManagement" lane={lane.title} />
                 </div>
+                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
+                <PageNodeButton item="schoolUsageReport" lane={lane.title} />
               </div>
             ) : (
               <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
@@ -2625,6 +3019,49 @@ const TeacherCMobileLowFi: React.FC = () => {
     </section>
   );
 
+  const renderParentFlowNodes = (nodes: ParentFlowNode[], keyPrefix: string): React.ReactNode => (
+    <div className="flex items-center gap-2">
+      {nodes.map((node, index) => {
+        const nodeKey = `${keyPrefix}-${node.page}`;
+        const active = activeParentDirectoryNodeKey === nodeKey;
+        return (
+          <React.Fragment key={nodeKey}>
+            {index > 0 && <span className="shrink-0 text-sm font-black text-gray-400">→</span>}
+            <button
+              type="button"
+              onClick={() => jumpToParentPage(node.page, nodeKey)}
+              className={cx(
+                'min-h-10 shrink-0 rounded-xl border px-3 py-2 text-left active:bg-gray-100',
+                active ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700'
+              )}
+            >
+              <span className={cx('block text-xs font-black', active ? 'text-white' : 'text-gray-950')}>
+                {parentPageLabels[node.page].number} {parentPageLabels[node.page].title}
+              </span>
+            </button>
+            {node.branches && (
+              <>
+                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
+                <div className="grid shrink-0 gap-2">
+                  {node.branches.map((branch) => (
+                    <div key={`${nodeKey}-${branch.text}`} className="flex items-center gap-2">
+                      <div className="flex min-w-[190px] items-center gap-2 text-[11px] font-black text-gray-500">
+                        <span className="h-px w-6 bg-gray-300" />
+                        <span className="whitespace-nowrap">{branch.text}</span>
+                        <span className="text-sm text-gray-400">→</span>
+                      </div>
+                      {renderParentFlowNodes(branch.pages, `${nodeKey}-${branch.text}`)}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+
   const renderParentPageDirectory = () => (
     <section className="rounded-2xl bg-white p-4">
       <div className="space-y-3">
@@ -2633,55 +3070,48 @@ const TeacherCMobileLowFi: React.FC = () => {
             <div className="text-xs font-black text-gray-500">{lane.title}</div>
             {'branches' in lane ? (
               <div className="flex min-w-0 items-center gap-3 overflow-x-auto">
+                {(() => {
+                  const sourceNodeKey = `${lane.title}-source-${lane.source}`;
+                  const sourceActive = activeParentDirectoryNodeKey === sourceNodeKey;
+                  return (
                 <button
                   type="button"
-                  onClick={() => jumpToParentPage(lane.source)}
+                  onClick={() => jumpToParentPage(lane.source, sourceNodeKey)}
                   className={cx(
                     'min-h-12 shrink-0 rounded-xl border px-3 py-2 text-left active:bg-gray-100',
-                    parentPage === lane.source ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700'
+                    sourceActive ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700'
                   )}
                 >
-                  <span className={cx('block text-xs font-black', parentPage === lane.source ? 'text-white' : 'text-gray-950')}>
+                  <span className={cx('block text-xs font-black', sourceActive ? 'text-white' : 'text-gray-950')}>
                     {parentPageLabels[lane.source].number} {parentPageLabels[lane.source].title}
                   </span>
                 </button>
+                  );
+                })()}
                 <div className="grid shrink-0 gap-2">
-                  {lane.branches.map((branch) => {
-                    const active = parentPage === branch.page;
-                    return (
-                      <div key={branch.page} className="flex items-center gap-2">
+                  {lane.branches.map((branch) => (
+                      <div key={branch.text} className="flex items-center gap-2">
                         <div className="flex min-w-[152px] items-center gap-2 text-[11px] font-black text-gray-500">
                           <span className="h-px w-6 bg-gray-300" />
                           <span className="whitespace-nowrap">{branch.text}</span>
                           <span className="text-sm text-gray-400">→</span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => jumpToParentPage(branch.page)}
-                          className={cx(
-                            'min-h-10 shrink-0 rounded-xl border px-3 py-2 text-left active:bg-gray-100',
-                            active ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700'
-                          )}
-                        >
-                          <span className={cx('block text-xs font-black', active ? 'text-white' : 'text-gray-950')}>
-                            {parentPageLabels[branch.page].number} {parentPageLabels[branch.page].title}
-                          </span>
-                        </button>
+                        {renderParentFlowNodes(branch.pages, `${lane.title}-${branch.text}`)}
                       </div>
-                    );
-                  })}
+                    ))}
                 </div>
               </div>
             ) : (
               <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
                 {lane.nodes.map((node, index) => {
-                  const active = parentPage === node.page;
+                  const nodeKey = `${lane.title}-node-${node.page}`;
+                  const active = activeParentDirectoryNodeKey === nodeKey;
                   return (
                     <React.Fragment key={`${lane.title}-${node.page}`}>
                       {index > 0 && <span className="shrink-0 text-sm font-black text-gray-400">→</span>}
                       <button
                         type="button"
-                        onClick={() => jumpToParentPage(node.page)}
+                        onClick={() => jumpToParentPage(node.page, nodeKey)}
                         className={cx(
                           'min-h-12 shrink-0 rounded-xl border px-3 py-2 text-left active:bg-gray-100',
                           active ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700'
@@ -2787,7 +3217,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           <h3 className="mt-6 text-2xl font-black">欢迎使用 素养指南针</h3>
         </div>
         <div className="space-y-3 pb-3">
-          <button type="button" onClick={() => jumpToParentPage('bindSelf')} className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">微信授权登录</button>
+          <button type="button" onClick={() => setShowParentWechatPhoneSheet(true)} className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">微信授权登录</button>
           <label className="flex items-center justify-center gap-2 text-[11px] leading-5">
             <input type="checkbox" defaultChecked className="h-4 w-4 accent-black" />
             <span>我已阅读并同意《隐私保护指引》</span>
@@ -2860,7 +3290,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           type="button"
           disabled={!parentCanBind}
           onClick={() => {
-            if (parentCanBind) jumpToParentPage('landing');
+            if (parentCanBind) jumpToParentPage('parentIdentity');
           }}
           className={cx(
             'h-12 w-full rounded-2xl border border-gray-200 text-sm font-black',
@@ -2869,6 +3299,88 @@ const TeacherCMobileLowFi: React.FC = () => {
         >
           绑定学生
         </button>
+      </div>
+    </div>
+  );
+
+  const renderParentIdentity = () => (
+    <div className="flex h-full w-full flex-col bg-white text-gray-950">
+      <header className="grid h-16 items-center border-b border-gray-100 bg-white px-4 [grid-template-columns:44px_1fr_44px]">
+        <button type="button" onClick={() => jumpToParentPage(isParentInviteBinding ? 'bindInvite' : 'bindSelf')} className="flex h-11 w-11 items-center justify-center rounded-xl active:bg-gray-100" aria-label="返回">
+          <ArrowLeft size={19} />
+        </button>
+        <h2 className="text-center text-base font-black">绑定提醒</h2>
+        <span />
+      </header>
+      <div className="flex h-[calc(100%-64px)] flex-col p-5">
+        <div className="flex-1 space-y-3 overflow-y-auto">
+          <section className="rounded-2xl bg-gray-50 p-4">
+            <h3 className="text-base font-black leading-6 text-gray-950">家长您好</h3>
+            <p className="mt-2 text-sm font-medium leading-6 text-gray-600">为了切实守护每位学生的信息安全与隐私权，请您仔细核实并确认信息，仅允许绑定自己孩子的账号，感谢您的配合。</p>
+          </section>
+
+          <div className="rounded-2xl bg-gray-50 p-3">
+            <div className="text-xs font-black text-gray-500">您的家长身份</div>
+            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_132px] items-center gap-2">
+              <div className="flex h-11 min-w-0 items-center px-1 text-sm font-black text-gray-950">
+                <span className="truncate">{parentStudentName}的</span>
+              </div>
+              <select
+                value={parentIdentityForm.relation}
+                onChange={(event) => setParentIdentityForm((form) => ({ ...form, relation: event.target.value as ParentIdentityRelation }))}
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-normal"
+                aria-label="选择家长关系"
+              >
+                {parentIdentityRelationOptions.map((relation) => (
+                  <option key={relation} value={relation}>{relation}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {parentIdentityForm.relation === '其他' && (
+            <label className="block rounded-2xl bg-gray-50 p-3 text-xs font-black">
+              具体关系
+              <input
+                value={parentIdentityForm.relationOther}
+                onChange={(event) => setParentIdentityForm((form) => ({ ...form, relationOther: event.target.value }))}
+                className="mt-2 h-11 w-full border border-gray-200 bg-white px-3 text-sm font-normal"
+                placeholder={`请输入与${parentStudentName}的关系`}
+                aria-label="具体关系"
+              />
+            </label>
+          )}
+
+          <div className="rounded-2xl bg-gray-50 p-3">
+            <div className="text-xs font-black text-gray-500">您的联系手机</div>
+            <div className="mt-2 flex min-h-11 items-center justify-between gap-3 px-1">
+              <span className="text-sm font-black text-gray-950">{parentMaskedPhone}</span>
+              <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-black text-gray-500">当前授权手机</span>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2 pt-3">
+          <button
+            type="button"
+            onClick={() => jumpToParentPage(isParentInviteBinding ? 'bindInvite' : 'bindSelf')}
+            className="h-12 w-full rounded-2xl border border-gray-300 bg-white text-sm font-black text-gray-700 active:bg-gray-50"
+          >
+            返回修改
+          </button>
+          <button
+            type="button"
+            disabled={!parentIdentityComplete}
+            onClick={() => {
+            if (parentIdentityComplete) jumpToParentPage('landing');
+          }}
+          className={cx(
+              'h-12 w-full rounded-2xl border border-gray-200 text-sm font-black',
+              parentIdentityComplete ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400'
+            )}
+          >
+            确认绑定
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2993,13 +3505,64 @@ const TeacherCMobileLowFi: React.FC = () => {
     );
   };
 
+  const renderParentWechatPhoneSheet = () => {
+    if (!showParentWechatPhoneSheet) return null;
+
+    const allowPhone = () => {
+      setShowParentWechatPhoneSheet(false);
+      jumpToParentPage('bindSelf');
+    };
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="微信手机号授权">
+        <button type="button" aria-label="关闭授权弹窗" className="absolute inset-0 cursor-default" onClick={() => setShowParentWechatPhoneSheet(false)} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-50">
+                <Sparkles size={20} />
+              </div>
+              <div className="text-base font-black">素养指南针</div>
+            </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-sm font-black">i</div>
+          </div>
+
+          <div className="mt-5">
+            <h3 className="text-xl font-black leading-tight">申请获取并验证你的手机号</h3>
+            <p className="mt-2 text-sm leading-5 text-slate-600">用户正常进行授权登录</p>
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-2xl bg-gray-50">
+            <button type="button" onClick={allowPhone} className="block min-h-16 w-full border-b border-gray-100 px-4 py-3 text-center active:bg-slate-100">
+              <div className="text-lg font-medium">152****1332</div>
+              <div className="mt-1 text-xs font-black text-slate-600">上次提供</div>
+            </button>
+            <button type="button" onClick={allowPhone} className="block min-h-16 w-full px-4 py-3 text-center active:bg-slate-100">
+              <div className="text-lg font-medium">199****8610</div>
+            </button>
+          </div>
+
+          <button type="button" onClick={() => setShowParentWechatPhoneSheet(false)} className="mt-4 min-h-12 w-full rounded-2xl border border-gray-200 bg-white text-base font-black active:bg-slate-100">
+            不允许
+          </button>
+          <button type="button" className="mt-7 min-h-11 w-full text-sm font-black underline underline-offset-4">
+            管理号码
+          </button>
+        </section>
+      </div>
+    );
+  };
+
   const renderParentPrototype = () => (
     <PhoneMockup showDeviceFrame={false} safeAreaTop={false}>
       <div className="relative h-full w-full overflow-hidden bg-white">
         {parentPage === 'wechatCard' && renderParentWechatCard()}
         {parentPage === 'login' && renderParentLogin()}
         {(parentPage === 'bindSelf' || parentPage === 'bindInvite') && renderParentBinding()}
+        {parentPage === 'parentIdentity' && renderParentIdentity()}
         {parentPage === 'landing' && renderParentLanding()}
+        {renderParentWechatPhoneSheet()}
         {renderParentChildSwitcherSheet()}
       </div>
     </PhoneMockup>
@@ -3122,18 +3685,21 @@ const TeacherCMobileLowFi: React.FC = () => {
   const renderVersionComparePrototype = () => (
     <div className="h-full w-full max-w-[760px] overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-950">
       <div className="border-b border-gray-200 px-5 py-4">
-        <div className="text-base font-black">个人版 / 学校版</div>
+        <div className="text-base font-black">版本能力对比</div>
       </div>
       <div className="h-[calc(100%-57px)] overflow-y-auto p-5">
         <div className="overflow-hidden rounded-2xl border border-gray-200">
-          <div className="grid grid-cols-[1.45fr_0.8fr_0.8fr] border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-black text-gray-500">
-            <div>功能</div>
+          <div className="grid grid-cols-[1.7fr_0.7fr_0.7fr] border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-black text-gray-500">
+            <div>能力类型</div>
             <div className="text-center">个人版</div>
             <div className="text-center">学校版</div>
           </div>
           {versionCompareRows.map((row, index) => (
-            <div key={row.feature} className={cx('grid grid-cols-[1.45fr_0.8fr_0.8fr] items-center px-4 py-3 text-sm', index > 0 && 'border-t border-gray-100')}>
-              <div className="truncate pr-3 font-black text-gray-800">{row.feature}</div>
+            <div key={row.type} className={cx('grid grid-cols-[1.7fr_0.7fr_0.7fr] items-center px-4 py-3', index > 0 && 'border-t border-gray-100')}>
+              <div className="min-w-0 pr-3">
+                <div className="truncate text-sm font-black text-gray-800">{row.type}</div>
+                <div className="mt-1 truncate text-[11px] font-medium text-gray-500">{row.items.join(' / ')}</div>
+              </div>
               <div className={cx('text-center text-base font-black', row.personal === '✓' ? 'text-gray-950' : 'text-gray-300')}>{row.personal}</div>
               <div className={cx('text-center text-base font-black', row.school === '✓' ? 'text-gray-950' : 'text-gray-300')}>{row.school}</div>
             </div>
@@ -3207,6 +3773,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           {renderWechatPhoneSheet()}
           {renderPhoneLoginSheet()}
           {renderSpaceSelectSheet()}
+          {renderFinalReportConfirmSheet()}
           {renderSchoolBasicInfoEditSheet()}
           {renderTermEditSheet()}
           {renderTermActionSheet()}
@@ -3221,6 +3788,8 @@ const TeacherCMobileLowFi: React.FC = () => {
           {renderClassEditSheet()}
           {renderClassExitSheet()}
           {renderRemoveTeacherConfirmSheet()}
+          {renderRemoveParentBindingConfirmSheet()}
+          {renderParentBindingDetailSheet()}
           {renderTransferAdminTeacherSheet()}
           {renderTransferAdminConfirmSheet()}
           {renderClassActionSheet()}
@@ -3518,6 +4087,64 @@ const TeacherCMobileLowFi: React.FC = () => {
                 </button>
               );
             })}
+          </div>
+        </section>
+      </div>
+    );
+  };
+
+  const renderFinalReportConfirmSheet = () => {
+    if (!showFinalReportConfirmSheet) return null;
+    const close = () => setShowFinalReportConfirmSheet(false);
+    const canSubmit = finalReportBehaviorConfirmed && finalReportScoreConfirmed;
+    const confirmItems = [
+      {
+        key: 'behavior',
+        checked: finalReportBehaviorConfirmed,
+        onChange: setFinalReportBehaviorConfirmed,
+        title: '学生日常行为已录入完成',
+      },
+      {
+        key: 'score',
+        checked: finalReportScoreConfirmed,
+        onChange: setFinalReportScoreConfirmed,
+        title: '需要展示成绩时，成绩已录入完成',
+      },
+    ];
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[130] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="确认生成期末报告">
+        <button type="button" aria-label="关闭生成期末报告确认弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">确认生成期末报告</h3>
+          <div className="mt-4 space-y-2">
+            {confirmItems.map((item) => (
+              <label key={item.key} className="flex min-h-14 items-center gap-3 rounded-2xl bg-gray-50 px-3 text-sm font-black">
+                <input
+                  type="checkbox"
+                  checked={item.checked}
+                  onChange={(event) => item.onChange(event.target.checked)}
+                  className="h-5 w-5 accent-gray-950"
+                />
+                <span className="min-w-0 flex-1 leading-5">{item.title}</span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
+            <button
+              type="button"
+              disabled={!canSubmit}
+              onClick={() => {
+                if (!canSubmit) return;
+                setShowFinalReportConfirmSheet(false);
+                showClassActionToast('报告排队生成中');
+              }}
+              className={cx('h-12 rounded-2xl border border-gray-200 text-sm font-black', canSubmit ? 'bg-gray-950 text-white' : 'bg-gray-100 text-gray-400')}
+            >
+              确认生成
+            </button>
           </div>
         </section>
       </div>
@@ -4117,6 +4744,59 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
+    if (page === 'studentBatchEdit') {
+      const canSaveStudentBatch = studentBatchEditRows.length > 0 && studentBatchEditRows.every((row) => row.name.trim() && row.no.trim() && row.gender);
+
+      return (
+        <>
+          <ScreenHeader title="批量修改学生信息" />
+          <div className="flex h-[calc(100%-64px)] flex-col p-5">
+            <div className="flex-1 space-y-3 overflow-y-auto pb-4">
+              {studentBatchEditRows.map((row) => {
+                const selectedGender = row.gender;
+                return (
+                  <div key={row.id} className="rounded-2xl bg-gray-50 p-3 text-xs font-black">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <input
+                        value={row.name}
+                        onChange={(event) => updateStudentBatchEditRow(row.id, { name: event.target.value })}
+                        className="h-11 min-w-0 flex-1 border border-gray-200 bg-white px-2 text-sm font-normal"
+                        placeholder="姓名"
+                        aria-label="学生姓名"
+                      />
+                      <input
+                        value={row.no}
+                        onChange={(event) => updateStudentBatchEditRow(row.id, { no: event.target.value })}
+                        className="h-11 w-20 shrink-0 border border-gray-200 bg-white px-2 text-sm font-normal"
+                        placeholder="学号"
+                        aria-label="学生学号"
+                      />
+                      <div className="grid h-11 w-20 shrink-0 grid-cols-2 gap-1 text-xs font-black">
+                        <button type="button" onClick={() => updateStudentBatchEditRow(row.id, { gender: '男' })} className={cx('rounded-xl border border-gray-200', selectedGender === '男' ? 'bg-gray-900 text-white' : 'bg-white')}>男</button>
+                        <button type="button" onClick={() => updateStudentBatchEditRow(row.id, { gender: '女' })} className={cx('rounded-xl border border-gray-200', selectedGender === '女' ? 'bg-gray-900 text-white' : 'bg-white')}>女</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              disabled={!canSaveStudentBatch}
+              onClick={() => {
+                setStudentCount((count) => Math.max(count, studentBatchEditRows.length));
+                showClassActionToast('已保存学生信息');
+                navigate('studentList');
+              }}
+              className={cx('h-12 w-full rounded-2xl border border-gray-200 text-sm font-black', canSaveStudentBatch ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400')}
+            >
+              保存修改
+            </button>
+          </div>
+        </>
+      );
+    }
+
     if (page === 'record') {
       return (
         <>
@@ -4294,7 +4974,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   {sortedParentBindingRows.slice(0, 4).map((student) => (
-                    <ParentBindingCard key={student.no} student={student} compact showBindingCount={false} />
+                    <ParentBindingCard key={student.no} student={student} compact />
                   ))}
                 </div>
                 <button type="button" onClick={openInviteParentFromDetail} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-xs font-black active:bg-gray-100">
@@ -4429,9 +5109,21 @@ const TeacherCMobileLowFi: React.FC = () => {
               ))}
             </div>
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pb-20">
-              {parentBindingVisibleRows.map((student) => (
+              {parentBindingTab === 'unbound' ? unboundParentBindingRows.map((student) => (
                 <ParentBindingCard key={student.no} student={student} />
-              ))}
+              )) : (
+                <div className="space-y-2">
+                  {boundParentBindingRows.map((student, index) => (
+                    <div key={student.no} className={cx(index > 0 && 'border-t border-gray-100 pt-2')}>
+                      <div className="space-y-1.5">
+                        {student.guardians.map((guardian) => (
+                          <ParentBindingGuardianCard key={guardian.id} student={student} guardian={guardian} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="absolute inset-x-5 bottom-5 bg-white pt-3">
               <button type="button" onClick={openInviteParentFromBindingList} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-sm font-black shadow-[0_-10px_24px_rgba(15,23,42,0.06)] active:bg-gray-100">
@@ -4618,7 +5310,7 @@ const TeacherCMobileLowFi: React.FC = () => {
         <>
           <TabHeader title="我的" />
           <div className="space-y-3 p-5 pb-24">
-            <div className="relative rounded-3xl bg-gray-50 p-4">
+            <div className="relative rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
               <button
                 type="button"
                 onClick={openNameSheet}
@@ -4628,7 +5320,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                 <Edit3 size={16} />
               </button>
               <div className="flex items-center gap-3 pr-11">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-lg font-black">郭</div>
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-lg font-black text-gray-800">郭</div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-base font-black">郭老师</div>
                   {hasSchoolSpace && (
@@ -4652,35 +5344,54 @@ const TeacherCMobileLowFi: React.FC = () => {
               </div>
             </div>
 
+            <section className="rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+              <div className="text-sm font-black">管理工具</div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('schoolUsageReport')}
+                  className="flex min-h-[86px] flex-col justify-between rounded-2xl border border-gray-200 bg-gray-50 p-3 text-left active:bg-gray-100"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-gray-900 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
+                    <LineChart size={18} />
+                  </span>
+                  <span className="text-sm font-black leading-5">学校数据报表</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={openFinalReportConfirmSheet}
+                  className="flex min-h-[86px] flex-col justify-between rounded-2xl border border-gray-200 bg-gray-50 p-3 text-left active:bg-gray-100"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-gray-900 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
+                    <FileText size={18} />
+                  </span>
+                  <span className="text-sm font-black leading-5">生成期末报告</span>
+                </button>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+              <div className="text-sm font-black">学校基础信息</div>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {schoolBasicInfoTabs.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => openSchoolBasicInfo(item.key)}
+                      className="flex min-h-[70px] flex-col items-center justify-center gap-2 rounded-2xl text-center active:bg-gray-100"
+                    >
+                      <Icon size={28} className="text-gray-700" />
+                      <span className="text-xs font-black leading-4">{item.label}管理</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
             {!hasSchoolSpace && (
               <button type="button" onClick={() => setShowSchoolUpgradeSheet(true)} className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">了解学校版</button>
-            )}
-
-            {hasSchoolSpace && (
-              <section className="rounded-3xl bg-gray-50 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-black">学校基础信息</div>
-                  <Building2 size={18} className="text-gray-500" />
-                </div>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {schoolBasicInfoTabs.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => openSchoolBasicInfo(item.key)}
-                        className="flex min-h-[84px] flex-col justify-between rounded-2xl bg-white p-3 text-left active:bg-gray-100"
-                      >
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-50">
-                          <Icon size={17} />
-                        </span>
-                        <span className="text-sm font-black">{item.label}管理</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
             )}
 
             <div className="overflow-hidden rounded-2xl bg-gray-50">
@@ -4808,6 +5519,58 @@ const TeacherCMobileLowFi: React.FC = () => {
             <div className="rounded-3xl bg-gray-50 p-5 text-center text-sm font-black">顾问微信二维码占位</div>
             <button type="button" className="h-11 w-full rounded-2xl border border-gray-200 bg-white text-sm font-black">复制微信</button>
             <button type="button" className="h-11 w-full rounded-2xl border border-gray-200 bg-white text-sm font-black">拨打电话</button>
+          </div>
+        </>
+      );
+    }
+
+    if (page === 'schoolUsageReport') {
+      const metricItems = [
+        { label: '活跃教师', value: '42', sub: '本周使用' },
+        { label: '日常记录', value: '3,286', sub: '本学期累计' },
+        { label: '覆盖学生', value: '96%', sub: '已产生记录' },
+        { label: '报告生成', value: '18', sub: '本月完成' },
+      ];
+
+      return (
+        <>
+          <ScreenHeader title="学校数据报表" />
+          <div className="flex h-[calc(100%-64px)] flex-col p-5">
+            <div className="flex-1 space-y-3 overflow-y-auto pb-24">
+              <section className="grid grid-cols-2 gap-2">
+                {metricItems.map((item) => (
+                  <div key={item.label} className="rounded-2xl bg-gray-50 p-3">
+                    <div className="text-xs font-black text-gray-500">{item.label}</div>
+                    <div className="mt-2 text-2xl font-black leading-none">{item.value}</div>
+                    <div className="mt-1 text-xs font-medium text-gray-500">{item.sub}</div>
+                  </div>
+                ))}
+              </section>
+              <section className="rounded-3xl bg-gray-50 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-black">使用趋势</div>
+                  <BarChart3 size={18} className="text-gray-500" />
+                </div>
+                <div className="mt-4 flex h-28 items-end gap-2">
+                  {[38, 54, 46, 72, 64, 86, 78].map((height, index) => (
+                    <div key={index} className="flex flex-1 items-end rounded-xl bg-white p-1">
+                      <div className="w-full rounded-lg bg-gray-900" style={{ height: `${height}%` }} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+              <section className="rounded-3xl bg-gray-50 p-4">
+                <div className="text-sm font-black">高频功能</div>
+                <div className="mt-3 space-y-2">
+                  {['AI日常记录', '奖状识别', '班级报告'].map((item, index) => (
+                    <div key={item} className="flex h-11 items-center justify-between rounded-2xl bg-white px-3">
+                      <span className="text-sm font-black">{item}</span>
+                      <span className="text-xs font-black text-gray-500">{[1280, 436, 92][index]}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
           </div>
         </>
       );
