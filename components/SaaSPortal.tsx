@@ -381,19 +381,19 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
 
   return (
     <div className="h-full bg-[#f5f7fa] font-sans overflow-y-auto [scrollbar-gutter:stable]">
-      <main className="p-4 xl:p-5">
-        <div className="max-w-[1600px] mx-auto flex flex-col gap-4">
+      <main className="px-4 py-3 xl:px-5 xl:py-3">
+        <div className="mx-auto flex max-w-[1714px] flex-col gap-4">
 
           {/* ── 顶部欢迎横幅 ── */}
-          <section className="relative overflow-hidden rounded-lg bg-white px-6 py-3 shadow-sm border border-slate-100">
+          <section className="relative h-[132px] overflow-hidden rounded-lg border border-slate-100 bg-white px-8 py-4 shadow-sm">
             {/* 右侧品牌化轻插画区 */}
-            <div className="pointer-events-none absolute inset-y-0 right-6 hidden w-[300px] xl:block">
+            <div className="pointer-events-none absolute inset-y-0 right-8 hidden w-[380px] xl:block">
               <div className="relative h-full w-full">
                 <div className="absolute right-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-sky-100/70 blur-3xl" />
                 <div className="absolute right-0 top-7 h-20 w-20 rounded-full bg-cyan-100/65 blur-2xl" />
                 <div className="absolute left-20 bottom-4 h-16 w-16 rounded-full bg-blue-100/60 blur-2xl" />
 
-                <div className="absolute right-8 top-1/2 h-[104px] w-[196px] -translate-y-1/2 rounded-[1.5rem] border border-sky-100/80 bg-[linear-gradient(135deg,rgba(239,246,255,0.92)_0%,rgba(255,255,255,0.96)_54%,rgba(236,254,255,0.92)_100%)] shadow-[0_18px_40px_rgba(148,163,184,0.12)]">
+                <div className="absolute right-8 top-1/2 h-[92px] w-[236px] -translate-y-1/2 rounded-[1.7rem] border border-sky-100/80 bg-[linear-gradient(135deg,rgba(239,246,255,0.92)_0%,rgba(255,255,255,0.96)_54%,rgba(236,254,255,0.92)_100%)] shadow-[0_18px_40px_rgba(148,163,184,0.12)]">
                   <div className="absolute inset-x-0 top-0 h-10 rounded-t-[1.5rem] bg-gradient-to-r from-blue-100/55 via-white/20 to-cyan-100/55" />
                   <div className="absolute left-5 top-5 h-2 w-14 rounded-full bg-blue-100/90" />
                   <div className="absolute left-5 top-10 h-2 w-10 rounded-full bg-slate-100" />
@@ -402,42 +402,45 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                     <span className="h-7 w-7 rounded-xl bg-cyan-50 shadow-sm" />
                     <span className="h-7 w-7 rounded-xl bg-emerald-50 shadow-sm" />
                   </div>
-                  <PlatformBrandMark className="absolute right-5 top-1/2 -translate-y-1/2 text-blue-200/75" size={46} />
+                  <PlatformBrandMark className="absolute right-5 top-1/2 -translate-y-1/2 text-blue-200/75" size={56} />
                 </div>
 
-                <div className="absolute left-4 top-5 flex h-[52px] w-[52px] items-center justify-center rounded-[1.15rem] border border-blue-100/80 bg-white/90 text-blue-500 shadow-[0_14px_28px_rgba(59,130,246,0.10)]">
+                <div className="absolute left-5 top-7 flex h-[56px] w-[56px] items-center justify-center rounded-[1.25rem] border border-blue-100/80 bg-white/90 text-blue-500 shadow-[0_14px_28px_rgba(59,130,246,0.10)]">
                   <Settings size={22} strokeWidth={2.1} />
                 </div>
-                <div className="absolute left-14 bottom-4 flex h-12 w-12 items-center justify-center rounded-[1.1rem] border border-violet-100/80 bg-white/92 text-violet-500 shadow-[0_14px_28px_rgba(139,92,246,0.09)]">
+                <div className="absolute left-16 bottom-6 flex h-12 w-12 items-center justify-center rounded-[1.1rem] border border-violet-100/80 bg-white/92 text-violet-500 shadow-[0_14px_28px_rgba(139,92,246,0.09)]">
                   <BookOpen size={19} strokeWidth={2.1} />
                 </div>
-                <div className="absolute right-24 bottom-5 flex h-10 w-10 items-center justify-center rounded-[1rem] border border-emerald-100/80 bg-white/92 text-emerald-500 shadow-[0_12px_24px_rgba(16,185,129,0.09)]">
+                <div className="absolute right-28 bottom-7 flex h-12 w-12 items-center justify-center rounded-[1.1rem] border border-emerald-100/80 bg-white/92 text-emerald-500 shadow-[0_12px_24px_rgba(16,185,129,0.09)]">
                   <Monitor size={17} strokeWidth={2.1} />
                 </div>
               </div>
             </div>
-            <div className="relative xl:max-w-[calc(100%-320px)]">
-              <h1 className="text-[24px] font-black text-slate-800 tracking-tight leading-tight">
+            <div className="relative xl:max-w-[calc(100%-420px)]">
+              <h1 className="text-[25px] font-black leading-tight tracking-tight text-slate-800">
                 {teacherProfile.name}，您好！
               </h1>
+              <p className="mt-2 text-[14px] font-bold leading-5 text-slate-500">
+                谢谢你把耐心留给每一个孩子，今天的认真会被孩子们记住。
+              </p>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-[13px] font-medium text-slate-500">{dateStr}</span>
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-[13px] font-medium text-blue-500">{teacherProfile.school}</span>
+                <span className="rounded-full bg-slate-100 px-3 py-0.5 text-[13px] font-medium text-slate-500">{dateStr}</span>
+                <span className="rounded-full bg-blue-50 px-3 py-0.5 text-[13px] font-medium text-blue-500">{teacherProfile.school}</span>
               </div>
             </div>
           </section>
 
           {/* ── 主内容两栏布局 ── */}
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_420px] gap-4">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(560px,616px)]">
 
             {/* 左栏 */}
             <div className="flex flex-col gap-4">
 
               {/* 我的应用 */}
-              <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
+              <section className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm">
                 <PortalSectionHeader title="我的应用" icon={Settings} tone="blue" />
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   {activeApps.map((app) => (
                     <button
                       key={app.id}
@@ -446,25 +449,25 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                       className={`group relative overflow-hidden rounded-lg border p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(148,163,184,0.16)] active:scale-95 ${app.panelClass}`}
                     >
                       <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t ${app.bottomGlow}`} />
-                      <div className="pointer-events-none absolute -right-2 top-5 opacity-100">
-                        <app.icon size={118} strokeWidth={1.3} className={app.watermarkClass} />
+                      <div className="pointer-events-none absolute -right-3 top-8 opacity-100">
+                        <app.icon size={140} strokeWidth={1.2} className={app.watermarkClass} />
                       </div>
-                      <div className="relative flex h-full min-h-[154px] flex-col">
-                        <div className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${app.color} text-white shadow-[0_16px_32px_rgba(59,130,246,0.16)] ${app.shadow} transition-transform duration-300 group-hover:scale-105`}>
+                      <div className="relative flex h-full min-h-[188px] flex-col">
+                        <div className={`inline-flex h-[58px] w-[58px] items-center justify-center rounded-2xl bg-gradient-to-br ${app.color} text-white shadow-[0_16px_32px_rgba(59,130,246,0.16)] ${app.shadow} transition-transform duration-300 group-hover:scale-105`}>
                           <app.icon size={25} strokeWidth={2.2} className="text-white" />
                         </div>
                         <div className="mt-4 max-w-[72%]">
-                          <div className="text-[18px] font-black tracking-[-0.02em] text-slate-900">{app.name}</div>
+                          <div className="text-[19px] font-black tracking-[-0.02em] text-slate-900">{app.name}</div>
                           <div className="mt-1 text-[13px] font-semibold leading-5 text-slate-500">{app.desc}</div>
                         </div>
-                        <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+                        <div className="mt-auto flex items-end justify-between gap-3 pt-3">
                           <div className="flex flex-col gap-0.5">
                             {(app as any).studentsCount && (
                               <span className="text-[13px] font-semibold tracking-[0.01em] text-slate-400">{(app as any).studentsCount}</span>
                             )}
                             <span className="text-[13px] font-semibold tracking-[0.01em] text-slate-400">{app.meta}</span>
                           </div>
-                          <div className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300 group-hover:translate-x-0.5 ${app.arrowClass}`}>
+                          <div className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 group-hover:translate-x-0.5 ${app.arrowClass}`}>
                             <ChevronRight size={18} strokeWidth={2.2} />
                           </div>
                         </div>
@@ -482,7 +485,7 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                   {favoriteApps.map((app) => (
                     <article
                       key={app.id}
-                      className="group flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/50 p-3 text-left transition-all hover:border-blue-100 hover:bg-white hover:shadow-sm"
+                      className="group flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/50 p-2.5 text-left transition-all hover:border-blue-100 hover:bg-white hover:shadow-sm"
                     >
                       <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${app.color} shadow-md ${app.shadow} transition-transform group-hover:scale-105 duration-300`}>
                         <app.icon size={22} className="text-white" />
@@ -519,13 +522,14 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                       { name: '曹老师', phone: '18011564926' },
                       { name: '贾老师', phone: '13908238448' },
                     ].map((adviser) => (
-                      <div key={adviser.phone} className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition-colors hover:border-slate-300">
-                        <div className="flex items-center gap-1.5 text-[12px] font-bold leading-4 text-slate-700">
-                          <User size={12} className="shrink-0 text-slate-400" />
+                      <div key={adviser.phone} className="flex min-w-0 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 transition-colors hover:border-slate-300">
+                        <div className="flex min-w-0 items-center gap-1.5 text-[12px] font-bold leading-4 text-slate-700">
+                          <User size={13} className="shrink-0 text-slate-400" />
                           <span className="min-w-0 truncate">{adviser.name}</span>
                         </div>
-                        <div className="mt-1 flex items-center gap-1.5 text-[12px] font-semibold leading-4 text-slate-500 tabular-nums">
-                          <PhoneCall size={11} className="shrink-0 text-slate-400" />
+                        <span className="h-3 w-px shrink-0 bg-slate-300" />
+                        <div className="flex min-w-0 items-center gap-1.5 text-[13px] font-semibold leading-4 text-slate-500 tabular-nums">
+                          <PhoneCall size={12} className="shrink-0 text-slate-400" />
                           <span className="min-w-0 whitespace-nowrap">{adviser.phone}</span>
                         </div>
                       </div>
@@ -534,8 +538,8 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                 </div>
               </section>
 
-              {/* 卡片组：右栏纵向排列，卡片内部保持图标/二维码在上、文字在下 */}
-              <div className="flex flex-col gap-3">
+              {/* 卡片组：右栏三列排列，卡片内部保持图标/二维码在上、文字在下。 */}
+              <div className="grid flex-1 grid-cols-3 gap-5">
                 {promoCards.map((card) => {
                   const theme = card.tone === 'blue'
                     ? {
@@ -567,17 +571,17 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                   return (
                     <section
                       key={card.id}
-                      className={`relative flex flex-col overflow-hidden rounded-lg border px-4 py-2.5 text-center transition-all duration-300 hover:-translate-y-0.5 ${theme.sectionClass}`}
+                      className={`relative flex min-h-[376px] flex-col overflow-hidden rounded-lg border px-4 py-6 text-center transition-all duration-300 hover:-translate-y-0.5 ${theme.sectionClass}`}
                     >
                       <div className={`pointer-events-none absolute -right-8 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full blur-2xl ${theme.decorClass}`} />
 
                       <div className="relative flex h-full flex-col items-center">
-                        <div className={`mb-1.5 flex aspect-square w-12 shrink-0 items-center justify-center rounded-xl ${theme.iconBgClass}`}>
+                        <div className={`mb-4 flex aspect-square w-[74px] shrink-0 items-center justify-center rounded-xl ${theme.iconBgClass}`}>
                           {card.qrCode ? (
                             <img
                               src={card.qrCode}
                               alt={card.title}
-                              className="h-full w-full object-contain mix-blend-multiply p-1.5"
+                              className="h-full w-full object-contain mix-blend-multiply p-2"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
@@ -598,8 +602,8 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                           )}
                         </div>
                         <div className="flex min-w-0 flex-1 flex-col items-center">
-                          <div className={`text-[16px] font-black tracking-[-0.02em] leading-5 ${theme.titleClass}`}>{card.title}</div>
-                          <div className="mt-1 flex flex-wrap justify-center gap-1">
+                          <div className={`text-[18px] font-black leading-6 tracking-[-0.02em] ${theme.titleClass}`}>{card.title}</div>
+                          <div className="mt-3 flex flex-wrap justify-center gap-1">
                             {card.tags.map(tag => (
                               <span
                                 key={tag}
@@ -609,13 +613,13 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                               </span>
                             ))}
                           </div>
-                          <p className={`mt-0.5 text-[12px] font-medium leading-4 ${theme.lineClass}`}>
-                            {card.lines.join(' ')}
+                          <p className={`mt-3 text-[13px] font-semibold leading-6 ${theme.lineClass}`}>
+                            {card.lines.map((line) => <React.Fragment key={line}>{line}<br /></React.Fragment>)}
                           </p>
                           {card.btnLabel && (
                             <button
                               onClick={card.action}
-                              className="mt-1.5 inline-flex h-7 w-full items-center justify-center rounded-lg border border-orange-200 bg-white px-4 text-[12px] font-bold text-orange-500 shadow-sm transition-colors hover:bg-orange-50"
+                              className="mt-auto inline-flex h-9 w-full items-center justify-center rounded-lg border border-orange-200 bg-white px-4 text-[13px] font-bold text-orange-500 shadow-sm transition-colors hover:bg-orange-50"
                             >
                               {card.btnLabel}
                             </button>
