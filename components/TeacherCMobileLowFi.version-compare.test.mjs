@@ -11,6 +11,17 @@ requireSource("{ key: 'versionCompare', label: '版本对比' }", 'C端改造顶
 requireSource("const versionCompareRows: Array<{ type: string; items: string[]; personal: string; school: string }> = [", '版本对比应使用按类型合并后的双版本数据结构。');
 requireSource("版本能力对比", '版本对比原型标题应改为能力对比。');
 
+const surfaceTabsStart = source.indexOf('const surfaceTabs');
+const surfaceTabsEnd = source.indexOf('];', surfaceTabsStart);
+const surfaceTabsBlock = source.slice(surfaceTabsStart, surfaceTabsEnd);
+const surfaceTabKeys = [...surfaceTabsBlock.matchAll(/\{ key: '([^']+)', label: '([^']+)' \}/g)].map((match) => match[1]);
+if (surfaceTabsBlock.includes("label: '改造点整理'") || surfaceTabKeys.includes('summary')) {
+  failures.push('C端改造右侧导航不应展示“改造点整理”。');
+}
+if (surfaceTabKeys.at(-1) !== 'versionCompare') {
+  failures.push('C端改造右侧导航中“版本对比”应放在最后。');
+}
+
 [
   "type: '基础功能', items: ['学生管理', '班级管理'], personal: '✓', school: '✓'",
   "type: 'AI解析', items: ['语音识别', '奖状识别', '学生识别', '指标识别'], personal: '✓', school: '✓'",

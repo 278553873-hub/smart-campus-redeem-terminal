@@ -86,6 +86,18 @@ if (parentBindingCardBlock.includes('Phone size={13}') || parentBindingCardBlock
   failures.push('已绑定列表卡片不应直接展示 icon 操作。');
 }
 
+if (!parentBindingCardBlock.includes("'whitespace-nowrap font-black leading-5'")) {
+  failures.push('家长绑定卡片学生姓名必须单行完整展示，不应在 08 预览中换行或截断。');
+}
+
+if (parentBindingCardBlock.includes("'truncate font-black leading-5'")) {
+  failures.push('家长绑定卡片学生姓名不应使用 truncate 截断。');
+}
+
+if (parentBindingCardBlock.includes("'break-words font-black leading-5'")) {
+  failures.push('家长绑定卡片学生姓名不应换行展示。');
+}
+
 const classDetailStart = source.indexOf("if (page === 'classDetail' || page === 'classDetailMember')");
 const classDetailEnd = source.indexOf("if (page === 'teacherList')", classDetailStart);
 const classDetailBlock = classDetailStart >= 0 && classDetailEnd > classDetailStart

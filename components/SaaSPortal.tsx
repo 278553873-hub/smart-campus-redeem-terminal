@@ -385,7 +385,7 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
         <div className="mx-auto flex max-w-[1714px] flex-col gap-4">
 
           {/* ── 顶部欢迎横幅 ── */}
-          <section className="relative h-[132px] overflow-hidden rounded-lg border border-slate-100 bg-white px-8 py-4 shadow-sm">
+          <section className="relative h-[165px] overflow-hidden rounded-lg border border-slate-100 bg-white px-8 py-4 shadow-sm">
             {/* 右侧品牌化轻插画区 */}
             <div className="pointer-events-none absolute inset-y-0 right-8 hidden w-[380px] xl:block">
               <div className="relative h-full w-full">

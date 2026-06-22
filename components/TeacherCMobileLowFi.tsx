@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowLeftRight, BarChart3, BookOpen, Building2, CalendarDays, Camera, CheckCircle2, ChevronDown, ChevronRight, Clock, Copy, Edit3, FileText, Gift, ImagePlus, LineChart, LogIn, MessageCircle, Mic, MoreHorizontal, Phone, Plus, ScanFace, Shield, Sparkles, Trash2, Type, UserPlus, Users } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, BookOpen, Building2, CalendarDays, Camera, ChartNoAxesColumnIncreasing, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Clock, Coins, Copy, Edit3, Eye, EyeOff, FileText, Gift, GripVertical, ImagePlus, KeyRound, LogIn, LogOut, MessageCircle, Mic, MoreHorizontal, Phone, Plus, ScanFace, ScanLine, Settings, Shield, Sparkles, Trash2, Type, UserPlus, Users } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 
 type PageKey =
@@ -14,9 +14,11 @@ type PageKey =
   | 'photoAward'
   | 'aiResult'
   | 'editResult'
-  | 'classList'
+  | 'classListPersonal'
+  | 'classListSchool'
   | 'classDetail'
   | 'classDetailMember'
+  | 'classDetailSchoolHead'
   | 'teacherList'
   | 'teacherListMember'
   | 'parentBindingList'
@@ -27,10 +29,13 @@ type PageKey =
   | 'termReport'
   | 'minePersonal'
   | 'mineSchool'
+  | 'teacherBasicInfoPersonal'
+  | 'teacherBasicInfoSchool'
+  | 'mineSettings'
   | 'termManagement'
   | 'subjectManagement'
   | 'departmentManagement'
-  | 'schoolUsageReport'
+  | 'coinIssuanceManagement'
   | 'advisor';
 
 type ViewState = 'normal' | 'loading' | 'empty' | 'network' | 'denied';
@@ -47,6 +52,13 @@ type ParentBindMode = 'school' | 'class';
 type ParentIdentityRelation = '爸爸' | '妈妈' | '爷爷' | '奶奶' | '外公' | '外婆' | '其他';
 type TeacherSpaceId = 'personal' | 'schoolA' | 'schoolB';
 type SchoolBasicInfoTab = 'term' | 'subject' | 'department';
+type CoinIssuePeriod = 'weekly' | 'monthly';
+type TeacherBasicConfigKey = 'headClass' | 'gradeLeader' | 'department';
+type TeachingInfoRow = {
+  id: number;
+  subject: string;
+  classes: string[];
+};
 type TeacherSpaceProfile = {
   id: TeacherSpaceId;
   title: string;
@@ -64,8 +76,8 @@ type ClassProfile = {
 type ClassTeacherProfile = {
   name: string;
   subjects: string[];
-  isHomeroom: boolean;
-  isAdmin: boolean;
+  isHeadTeacher: boolean;
+  isDeputyHeadTeacher: boolean;
 };
 type ParentBindingProfile = {
   name: string;
@@ -99,6 +111,10 @@ type SchoolBasicInfoItem = {
   desc: string;
   status: 'enabled' | 'disabled' | 'current' | 'draft';
 };
+type SchoolSubjectItem = {
+  id: string;
+  name: string;
+};
 type SchoolTermItem = {
   id: string;
   schoolYear: string;
@@ -127,9 +143,11 @@ const pageOrder: PageKey[] = [
   'home',
   'classCreate',
   'classJoin',
-  'classList',
+  'classListPersonal',
+  'classListSchool',
   'classDetail',
   'classDetailMember',
+  'classDetailSchoolHead',
   'teacherList',
   'teacherListMember',
   'parentBindingList',
@@ -139,23 +157,29 @@ const pageOrder: PageKey[] = [
   'record',
   'minePersonal',
   'mineSchool',
+  'teacherBasicInfoPersonal',
+  'teacherBasicInfoSchool',
+  'mineSettings',
   'termManagement',
   'subjectManagement',
   'departmentManagement',
-  'schoolUsageReport',
+  'coinIssuanceManagement',
 ];
 
 const flowLanes: Array<{ title: string; pages: PageKey[] }> = [
-  { title: '首次进入', pages: ['login', 'profile', 'home', 'classCreate', 'classJoin', 'studentAdd', 'record'] },
-  { title: '老用户', pages: ['login', 'record'] },
-  { title: '班级', pages: ['classList', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] },
-  { title: '我的', pages: ['minePersonal', 'mineSchool', 'termManagement', 'subjectManagement', 'departmentManagement', 'schoolUsageReport'] },
+  { title: '登录', pages: ['login', 'profile', 'home', 'classCreate', 'classJoin', 'studentAdd', 'record'] },
+  { title: '班级(个人版)', pages: ['classListPersonal', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] },
+  { title: '班级(学校版)', pages: ['classListSchool', 'classDetailSchoolHead', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] },
+  { title: '我的(个人版)', pages: ['minePersonal', 'teacherBasicInfoPersonal'] },
+  { title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'termManagement', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement'] },
 ];
 
 const pageNumberLabel = (pageKey: PageKey) => {
-  if (pageKey === 'classList') return '07';
+  if (pageKey === 'classListPersonal') return '07A';
+  if (pageKey === 'classListSchool') return '07B';
   if (pageKey === 'classDetail') return '08A';
   if (pageKey === 'classDetailMember') return '08B';
+  if (pageKey === 'classDetailSchoolHead') return '08C';
   if (pageKey === 'teacherList') return '09A';
   if (pageKey === 'teacherListMember') return '09B';
   if (pageKey === 'parentBindingList') return '10';
@@ -165,10 +189,13 @@ const pageNumberLabel = (pageKey: PageKey) => {
   if (pageKey === 'record') return '13';
   if (pageKey === 'minePersonal') return '14A';
   if (pageKey === 'mineSchool') return '14B';
-  if (pageKey === 'termManagement') return '15';
-  if (pageKey === 'subjectManagement') return '16';
-  if (pageKey === 'departmentManagement') return '17';
-  if (pageKey === 'schoolUsageReport') return '18';
+  if (pageKey === 'teacherBasicInfoPersonal') return '15A';
+  if (pageKey === 'teacherBasicInfoSchool') return '15B';
+  if (pageKey === 'mineSettings') return '16';
+  if (pageKey === 'termManagement') return '17';
+  if (pageKey === 'subjectManagement') return '18';
+  if (pageKey === 'departmentManagement') return '19';
+  if (pageKey === 'coinIssuanceManagement') return '21';
   const pageIndex = pageOrder.indexOf(pageKey) + 1;
   return String(pageIndex).padStart(2, '0');
 };
@@ -183,7 +210,7 @@ type PathTarget =
 const invitePathNodes: Array<{ label: string; desc: string; target: PathTarget }> = [
   { label: '收到卡片', desc: '微信聊天对话', target: { type: 'wechatReceivedCard' } },
   { label: '未登录打开', desc: '进入 01 登录页', target: { type: 'page', page: 'login' } },
-  { label: '已登录已加入', desc: '进入班级页', target: { type: 'page', page: 'classList' } },
+  { label: '已登录已加入', desc: '进入班级页', target: { type: 'page', page: 'classListSchool' } },
   { label: '已登录未加入', desc: '班级页弹窗', target: { type: 'classInviteConfirm' } },
 ];
 
@@ -240,12 +267,11 @@ const parentFlowLanes: ParentFlowLane[] = [
 ];
 
 const surfaceTabs: Array<{ key: CEndSurface; label: string }> = [
-  { key: 'summary', label: '改造点整理' },
   { key: 'teacher', label: '教师端' },
   { key: 'parent', label: '家长端' },
-  { key: 'versionCompare', label: '版本对比' },
   { key: 'schoolAdmin', label: '学校后台端' },
   { key: 'ops', label: '运营端' },
+  { key: 'versionCompare', label: '版本对比' },
 ];
 
 const teacherSpaces: TeacherSpaceProfile[] = [
@@ -253,6 +279,7 @@ const teacherSpaces: TeacherSpaceProfile[] = [
   { id: 'schoolA', title: '成都七中初中附属小学', type: 'school' },
   { id: 'schoolB', title: '星河实验小学', type: 'school' },
 ];
+const defaultTeacherSpaceId: TeacherSpaceId = 'schoolB';
 
 const schoolBasicInfoTabs: Array<{ key: SchoolBasicInfoTab; label: string; icon: React.ElementType; summary: string }> = [
   { key: 'term', label: '学期', icon: CalendarDays, summary: '当前学期、下学期时间' },
@@ -273,17 +300,17 @@ const schoolTermItems: SchoolTermItem[] = [
   { id: 'term-2027-2028-2', schoolYear: '2027-2028学年', termType: '下学期', start: '2028.02.21', end: '2028.07.07', status: 'draft' },
 ];
 
-const schoolSubjectItems: SchoolBasicInfoItem[] = [
-    { id: 'subject-cn', name: '语文', desc: '任教、成绩、报告可选', status: 'enabled' },
-    { id: 'subject-math', name: '数学', desc: '任教、成绩、报告可选', status: 'enabled' },
-    { id: 'subject-en', name: '英语', desc: '任教、成绩、报告可选', status: 'enabled' },
-    { id: 'subject-calligraphy', name: '书法', desc: '停用后不再作为新增选项', status: 'disabled' },
+const schoolSubjectItems: SchoolSubjectItem[] = [
+    { id: 'subject-cn', name: '语文' },
+    { id: 'subject-math', name: '数学' },
+    { id: 'subject-en', name: '英语' },
+    { id: 'subject-calligraphy', name: '书法' },
 ];
 
 const schoolDepartmentItems: SchoolBasicInfoItem[] = [
-    { id: 'department-moral', name: '德育处', desc: '3 位老师', status: 'enabled' },
-    { id: 'department-grade', name: '一年级组', desc: '8 位老师', status: 'enabled' },
-    { id: 'department-art', name: '艺体组', desc: '5 位老师', status: 'enabled' },
+    { id: 'department-moral', name: '德育处', desc: '', status: 'enabled' },
+    { id: 'department-grade', name: '一年级组', desc: '', status: 'enabled' },
+    { id: 'department-art', name: '艺体组', desc: '', status: 'enabled' },
 ];
 
 const schoolBasicInfoStatusLabels: Record<SchoolBasicInfoItem['status'], string> = {
@@ -417,17 +444,20 @@ const parentPrdBlocks: PrdBlock[] = [
 
 const opsPrdBlocks: PrdBlock[] = [
   { type: 'h1', text: '运营端' },
-  { type: 'p', text: '用于承接 C 端老师线索和使用情况，帮助团队判断哪些学校值得跟进。' },
+  { type: 'p', text: '用于承接 C 端老师线索、学校开通状态、个人用户转化和期末报告生成待办。' },
   { type: 'h2', text: '功能清单' },
   { type: 'list', items: [
-    '必须：查看个人版老师列表、学校名称补充情况、最近使用时间。',
-    '必须：查看老师创建/加入班级、学生数、AI 记录数、报告生成情况。',
+    '必须：首页为工作台，展示学校总数及未开始、合作中、已到期状态分布。',
+    '必须：首页展示个人用户总数及已转化、待转化状态分布。',
+    '必须：首页展示期末报告生成待办，并支持标记已处理。',
+    '必须：在运营端菜单新增个人用户管理。',
+    '必须：个人用户管理展示用户、来源、意向学校、转化状态、报告次数、最近活跃和负责人。',
     '应该：支持按学校、老师活跃度、报告生成情况筛选。',
     '不做：不在教师端强行展示推荐学校开通入口。',
   ] },
   { type: 'h2', text: '页面状态' },
   { type: 'list', items: [
-    '正常：展示老师线索表和关键使用数据。',
+    '正常：展示运营工作台、待办和个人用户管理列表。',
     '空数据：暂无 C 端老师线索。',
     '加载：表格骨架屏。',
     '网络错误：表格区域展示重试。',
@@ -493,13 +523,12 @@ const pageMeta: Record<PageKey, PageMeta> = {
   },
   home: {
     title: '新手首页',
-    subtitle: '先满足评价条件，再引导完成一次 AI 记录体验。',
-    modules: ['记录标题', '老师称呼', '新手任务', '获得班级', '确认学生', '完成首次记录', '底部导航'],
+    subtitle: '先获得班级并确认学生，再进入记录页。',
+    modules: ['记录标题', '老师称呼', '新手任务', '获得班级', '确认学生', '底部导航'],
     ctas: [
       { label: '创建班级', priority: 'P0', position: '新手任务第 1 步按钮块' },
       { label: '加入班级', priority: 'P0', position: '新手任务第 1 步按钮块' },
       { label: '去添加', priority: 'P0', position: '新手任务第 2 步' },
-      { label: '去记录', priority: 'P0', position: '新手任务第 3 步' },
     ],
     states: {
       normal: '展示新手任务和已完成状态。',
@@ -511,16 +540,15 @@ const pageMeta: Record<PageKey, PageMeta> = {
   },
   classCreate: {
     title: '创建班级',
-    subtitle: '选择学段和入学年份，生成默认班级名称。',
-    modules: ['学段选择', '入学年份选择', '班级数字输入', '默认班级名称', '自定义名称入口'],
+    subtitle: '选择学段、入学年份和班号，生成班级名称。',
+    modules: ['学段选择', '入学年份选择', '班级数字输入'],
     ctas: [
       { label: '保存并添加学生', priority: 'P0', position: '页面底部主按钮' },
-      { label: '自定义名称', priority: 'P1', position: '班级名称输入框右侧' },
     ],
     states: {
-      normal: '选择学段和入学年份后生成默认班级名称。',
+      normal: '选择学段、入学年份和班号后生成班级名称。',
       loading: '保存中。',
-      empty: '班级名称或年级为空时提示。',
+      empty: '学段、入学年份或班号为空时提示。',
       network: '保存失败，保留表单。',
       denied: '登录失效，提示重新登录。',
     },
@@ -560,7 +588,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
   record: {
     title: '记录页',
     subtitle: '语音/文字记录，拍照识别奖状。',
-    modules: ['默认指标入口', 'AI说明入口', '记录流/空状态', '底部录入条：拍照/按住说话/文字', '语音识别进度浮层'],
+    modules: ['默认指标入口', '记录引导示例', '记录流/空状态', '底部录入条：拍照/按住说话/文字', '语音识别进度浮层'],
     ctas: [
       { label: '按住说话', priority: 'P0', position: '底部悬浮录入条中间' },
       { label: '拍照', priority: 'P1', position: '悬浮录入条左侧' },
@@ -637,8 +665,8 @@ const pageMeta: Record<PageKey, PageMeta> = {
       denied: '无权限编辑时只读展示。',
     },
   },
-  classList: {
-    title: '班级列表',
+  classListPersonal: {
+    title: '班级列表（个人版）',
     subtitle: '查看个人体验内的班级。',
     modules: ['创建班级入口', '加入班级入口', '班级卡片', '班级名称', '推断年级', '任教标签', '8 位数字班级号', '班级人数'],
     ctas: [
@@ -655,35 +683,49 @@ const pageMeta: Record<PageKey, PageMeta> = {
       denied: '登录失效，提示重新登录。',
     },
   },
-  classDetail: {
-    title: '班级详情（管理员）',
-    subtitle: '维护班级基础信息、协同老师和班级状态。',
-    modules: ['班级基本信息卡片', '班级名称', '班级学段', '8 位数字班级号', '老师列表卡片', '家长绑定列表卡片', '解散/退出班级'],
+  classListSchool: {
+    title: '班级列表（学校版）',
+    subtitle: '查看学校统一管理的班级。',
+    modules: ['班级卡片', '班级名称', '推断年级', '任教标签', '8 位数字班级号', '班级人数'],
     ctas: [
-      { label: '编辑班级名称', priority: 'P1', position: '班级名称右侧 icon' },
+      { label: '学生列表', priority: 'P1', position: '班级卡片底部' },
+      { label: '班级报告', priority: 'P1', position: '班级卡片底部' },
+    ],
+    states: {
+      normal: '展示学校版班级列表，不展示创建班级和加入班级入口。',
+      loading: '班级加载中。',
+      empty: '暂无可查看班级。',
+      network: '加载失败，提供重试。',
+      denied: '无权限时提示联系学校管理员。',
+    },
+  },
+  classDetail: {
+    title: '班级详情（班主任）',
+    subtitle: '维护班级基础信息、协同老师和班级状态。',
+    modules: ['班级基本信息卡片', '班级名称', '班级学段', '8 位数字班级号', '老师列表卡片', '家长绑定列表卡片', '转移班主任', '解散班级'],
+    ctas: [
+      { label: '编辑班号', priority: 'P1', position: '班级名称右侧 icon' },
       { label: '编辑班级学段', priority: 'P1', position: '班级学段右侧 icon' },
       { label: '复制班级号', priority: 'P1', position: '班级号右侧 icon' },
       { label: '邀请老师', priority: 'P0', position: '老师列表卡片内' },
       { label: '更多老师', priority: 'P1', position: '老师列表卡片右上角' },
       { label: '更多家长绑定情况', priority: 'P1', position: '家长绑定列表卡片右上角' },
-      { label: '转移班级管理员', priority: 'P2', position: '页面底部，解散班级上方' },
-      { label: '解散班级/退出班级', priority: 'P3', position: '页面底部，按当前账号权限展示' },
+      { label: '转移班主任', priority: 'P2', position: '页面底部，解散班级上方' },
+      { label: '解散班级', priority: 'P3', position: '页面底部' },
     ],
     states: {
-      normal: '展示班级基础信息、一行老师列表和按权限展示的退出/解散按钮。',
+      normal: '展示班级基础信息、一行老师列表、转移班主任和解散班级按钮。',
       loading: '班级详情加载中。',
       empty: '老师列表为空时保留邀请老师入口。',
       network: '加载失败，提供重试。',
-      denied: '无班级管理权限时返回班级页。',
+      denied: '非班主任不可修改班级详情。',
     },
   },
   classDetailMember: {
-    title: '班级详情（非管理员）',
-    subtitle: '非管理员可查看班级基础信息、协同老师，并退出班级。',
+    title: '班级详情（非班主任）',
+    subtitle: '非班主任可查看班级基础信息、协同老师，并退出班级。',
     modules: ['班级基本信息卡片', '班级名称', '班级学段', '8 位数字班级号', '老师列表卡片', '家长绑定列表卡片', '退出班级'],
     ctas: [
-      { label: '编辑班级名称', priority: 'P1', position: '班级名称右侧 icon；按权限可禁用' },
-      { label: '编辑班级学段', priority: 'P1', position: '班级学段右侧 icon；按权限可禁用' },
       { label: '复制班级号', priority: 'P1', position: '班级号右侧 icon' },
       { label: '邀请老师', priority: 'P0', position: '老师列表卡片内' },
       { label: '更多老师', priority: 'P1', position: '老师列表卡片右上角' },
@@ -691,17 +733,38 @@ const pageMeta: Record<PageKey, PageMeta> = {
       { label: '退出班级', priority: 'P3', position: '页面底部' },
     ],
     states: {
-      normal: '展示非管理员视角的班级详情和退出班级按钮。',
+      normal: '展示非班主任视角的班级详情和退出班级按钮，不展示编辑班级入口。',
       loading: '班级详情加载中。',
       empty: '老师列表为空时保留邀请老师入口。',
       network: '加载失败，提供重试。',
       denied: '无班级查看权限时返回班级页。',
     },
   },
+  classDetailSchoolHead: {
+    title: '班级详情（班主任-学校版）',
+    subtitle: '学校版班主任维护班级基础信息、协同老师和班级状态，不支持解散班级。',
+    modules: ['班级基本信息卡片', '班级名称', '班级学段', '8 位数字班级号', '老师列表卡片', '家长绑定列表卡片', '转移班主任'],
+    ctas: [
+      { label: '编辑班号', priority: 'P1', position: '班级名称右侧 icon' },
+      { label: '编辑班级学段', priority: 'P1', position: '班级学段右侧 icon' },
+      { label: '复制班级号', priority: 'P1', position: '班级号右侧 icon' },
+      { label: '邀请老师', priority: 'P0', position: '老师列表卡片内' },
+      { label: '更多老师', priority: 'P1', position: '老师列表卡片右上角' },
+      { label: '更多家长绑定情况', priority: 'P1', position: '家长绑定列表卡片右上角' },
+      { label: '转移班主任', priority: 'P2', position: '页面底部' },
+    ],
+    states: {
+      normal: '展示班级基础信息、一行老师列表、转移班主任按钮，不展示解散班级。',
+      loading: '班级详情加载中。',
+      empty: '老师列表为空时保留邀请老师入口。',
+      network: '加载失败，提供重试。',
+      denied: '无班级管理权限时返回班级页。',
+    },
+  },
   teacherList: {
-    title: '老师列表（管理员）',
-    subtitle: '管理员维护老师身份和成员。',
-    modules: ['老师列表', '头像', '姓名', '管理员标签', '班主任标签', '多学科标签', '更多操作'],
+    title: '老师列表（班主任）',
+    subtitle: '班主任维护老师身份和成员。',
+    modules: ['老师列表', '头像', '姓名', '班主任标签', '副班主任标签', '多学科标签', '更多操作'],
     ctas: [
       { label: '更多操作', priority: 'P1', position: '老师卡片右侧' },
     ],
@@ -714,9 +777,9 @@ const pageMeta: Record<PageKey, PageMeta> = {
     },
   },
   teacherListMember: {
-    title: '老师列表（非管理员）',
+    title: '老师列表（非班主任）',
     subtitle: '查看当前班级全部老师。',
-    modules: ['老师列表', '头像', '姓名', '管理员标签', '班主任标签', '多学科标签'],
+    modules: ['老师列表', '头像', '姓名', '班主任标签', '副班主任标签', '多学科标签'],
     ctas: [],
     states: {
       normal: '展示全部已加入老师，不展示操作入口。',
@@ -823,17 +886,18 @@ const pageMeta: Record<PageKey, PageMeta> = {
   },
   minePersonal: {
     title: '我的（仅有个人版）',
-    subtitle: '查看账号、个人版、协议和学校版入口。',
-    modules: ['教师卡片', '头像', '姓名', '编辑按钮', '了解学校版', '学校基础信息', '管理工具', '学校数据报表', '生成期末报告', '学校版功能弹窗', '顾问微信二维码', '修改密码', '隐私协议', '用户协议', '退出登录'],
+    subtitle: '查看教师信息、个人版和常用工具入口。',
+    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '了解学校版', '管理工具', '生成期末报告', '更多工具', '学期管理', '科目管理', '部门管理', '货币发放管理', '学校版功能弹窗', '顾问微信二维码'],
     ctas: [
-      { label: '学校数据报表', priority: 'P1', position: '管理工具卡片，点击进入学校数据报表' },
+      { label: '头像', priority: 'P0', position: '教师信息区，点击进入基本信息设置页' },
+      { label: '扫一扫', priority: 'P1', position: '页面右上角 icon' },
+      { label: '设置', priority: 'P1', position: '页面右上角 icon，点击进入设置页' },
+      { label: '货币发放管理', priority: 'P1', position: '更多工具卡片，点击进入货币发放管理' },
       { label: '生成期末报告', priority: 'P0', position: '管理工具卡片，点击后二次确认' },
       { label: '了解学校版', priority: 'P1', position: '教师卡片下方按钮，点击打开底部弹窗' },
-      { label: '修改密码', priority: 'P1', position: '账号设置列表' },
-      { label: '退出登录', priority: 'P3', position: '页面底部' },
     ],
     states: {
-      normal: '展示教师卡片、了解学校版入口和账号设置。',
+      normal: '展示教师信息、了解学校版入口和常用管理入口。',
       loading: '账号信息加载中。',
       empty: '账号信息缺失。',
       network: '加载失败，提供重试。',
@@ -841,21 +905,72 @@ const pageMeta: Record<PageKey, PageMeta> = {
     },
   },
   mineSchool: {
-    title: '我的（拥有学校版）',
-    subtitle: '查看账号、当前版本、协议和账号设置。',
-    modules: ['教师卡片', '头像', '姓名', '编辑按钮', '当前版本入口', '学校基础信息', '管理工具', '学校数据报表', '生成期末报告', '切换版本弹窗', '修改密码', '隐私协议', '用户协议', '退出登录'],
+    title: '我的（拥有多个版本）',
+    subtitle: '查看教师信息、当前版本和常用工具入口。',
+    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '当前版本入口', '管理工具', '学校数据报表', '生成期末报告', '更多工具', '学期管理', '科目管理', '部门管理', '货币发放管理', '切换版本弹窗'],
     ctas: [
-      { label: '切换版本', priority: 'P0', position: '教师卡片头像姓名学校行右侧操作组，点击打开底部弹窗' },
-      { label: '编辑资料', priority: 'P1', position: '教师卡片头像姓名学校行右侧操作组' },
-      { label: '学校数据报表', priority: 'P1', position: '管理工具卡片，点击进入学校数据报表' },
+      { label: '头像', priority: 'P0', position: '教师信息区，点击进入基本信息设置页' },
+      { label: '扫一扫', priority: 'P1', position: '页面右上角 icon' },
+      { label: '设置', priority: 'P1', position: '页面右上角 icon，点击进入设置页' },
+      { label: '切换版本', priority: 'P0', position: '教师信息区学校/版本胶囊，点击打开底部弹窗' },
+      { label: '货币发放管理', priority: 'P1', position: '更多工具卡片，点击进入货币发放管理' },
+      { label: '学校数据报表', priority: 'P0', position: '当前切换到学校版时展示在管理工具卡片' },
       { label: '生成期末报告', priority: 'P0', position: '管理工具卡片，点击后二次确认' },
-      { label: '修改密码', priority: 'P1', position: '账号设置列表' },
+    ],
+    states: {
+      normal: '展示教师信息、当前版本入口和常用管理入口，不展示了解学校版按钮。',
+      loading: '账号信息加载中。',
+      empty: '账号信息缺失。',
+      network: '加载失败，提供重试。',
+      denied: '登录失效，提示重新登录。',
+    },
+  },
+  teacherBasicInfoPersonal: {
+    title: '基本信息设置（个人版）',
+    subtitle: '编辑头像、姓名和个人版基础配置。',
+    modules: ['头像', '姓名', '部门设置'],
+    ctas: [
+      { label: '头像', priority: 'P0', position: '顶部头像区，点击打开更换头像弹窗' },
+      { label: '姓名', priority: 'P1', position: '头像下方行，点击打开修改姓名弹窗' },
+      { label: '部门设置', priority: 'P1', position: '配置项行，点击打开底部弹窗' },
+    ],
+    states: {
+      normal: '个人版仅展示头像、姓名和部门设置。',
+      loading: '基本信息加载中。',
+      empty: '基本信息缺失。',
+      network: '加载失败，提供重试。',
+      denied: '无权限时返回我的页。',
+    },
+  },
+  teacherBasicInfoSchool: {
+    title: '基本信息设置（学校版）',
+    subtitle: '编辑头像、姓名和教师基础配置。',
+    modules: ['头像', '姓名', '任教班级', '带班班级', '分管年级', '部门设置'],
+    ctas: [
+      { label: '头像', priority: 'P0', position: '顶部头像区，点击打开更换头像弹窗' },
+      { label: '姓名', priority: 'P1', position: '头像下方行，点击打开修改姓名弹窗' },
+      { label: '任教班级', priority: 'P1', position: '配置项右侧 icon，点击打开底部弹窗' },
+    ],
+    states: {
+      normal: '学校版展示头像、姓名、任教班级、带班班级、分管年级和部门设置。',
+      loading: '基本信息加载中。',
+      empty: '基本信息缺失。',
+      network: '加载失败，提供重试。',
+      denied: '无权限时返回我的页。',
+    },
+  },
+  mineSettings: {
+    title: '设置',
+    subtitle: '管理账号安全和查看协议。',
+    modules: ['登录账号', '修改密码', '隐私协议', '用户协议', '退出登录'],
+    ctas: [
+      { label: '修改密码', priority: 'P1', position: '账号安全区，展开密码表单' },
       { label: '退出登录', priority: 'P3', position: '页面底部' },
     ],
     states: {
-      normal: '展示教师卡片、当前版本入口和账号设置，不展示了解学校版按钮。',
-      loading: '账号信息加载中。',
-      empty: '账号信息缺失。',
+      normal: '展示账号安全和协议入口。',
+      loading: '设置加载中。',
+      empty: '无设置项。',
       network: '加载失败，提供重试。',
       denied: '登录失效，提示重新登录。',
     },
@@ -881,11 +996,11 @@ const pageMeta: Record<PageKey, PageMeta> = {
   subjectManagement: {
     title: '科目管理',
     subtitle: '维护学校常用科目。',
-    modules: ['科目列表', '状态标签', '新增入口', '编辑底部弹窗'],
+    modules: ['科目列表', '新增入口', '拖动排序', '编辑底部弹窗', '删除科目'],
     ctas: [
       { label: '新增科目', priority: 'P0', position: '页面顶部右侧' },
-      { label: '编辑科目', priority: 'P1', position: '列表行点击' },
-      { label: '启用/停用', priority: 'P1', position: '编辑底部弹窗' },
+      { label: '修改科目名称', priority: 'P1', position: '列表行点击或编辑图标' },
+      { label: '删除科目', priority: 'P3', position: '列表行删除图标，二次确认后删除' },
     ],
     states: {
       normal: '展示科目列表。',
@@ -897,12 +1012,12 @@ const pageMeta: Record<PageKey, PageMeta> = {
   },
   departmentManagement: {
     title: '部门管理',
-    subtitle: '维护学校部门。',
-    modules: ['部门列表', '状态标签', '新增入口', '编辑底部弹窗'],
+    subtitle: '维护学校部门名称。',
+    modules: ['部门列表', '新增部门', '修改部门名称', '删除部门'],
     ctas: [
       { label: '新增部门', priority: 'P0', position: '页面顶部右侧' },
       { label: '编辑部门', priority: 'P1', position: '列表行点击' },
-      { label: '启用/停用', priority: 'P1', position: '编辑底部弹窗' },
+      { label: '删除部门', priority: 'P3', position: '列表行右侧 icon' },
     ],
     states: {
       normal: '展示部门列表。',
@@ -912,18 +1027,19 @@ const pageMeta: Record<PageKey, PageMeta> = {
       denied: '无学校管理权限时隐藏入口并返回我的页。',
     },
   },
-  schoolUsageReport: {
-    title: '学校数据报表',
-    subtitle: '查看学校使用数据。',
-    modules: ['使用概览', '活跃教师', '日常记录', '覆盖学生', '报告生成'],
+  coinIssuanceManagement: {
+    title: '货币发放管理',
+    subtitle: '配置校园币自动发放规则。',
+    modules: ['开启货币发放', '长按提示', '发放周期', '班级总预算', '阳光保底比例', '积分排行比例', '保存按钮'],
     ctas: [
-      { label: '返回我的', priority: 'P1', position: '顶部返回' },
+      { label: '开启货币发放', priority: 'P0', position: '页面顶部配置项开关' },
+      { label: '保存', priority: 'P0', position: '页面底部主按钮' },
     ],
     states: {
-      normal: '展示学校使用数据概览。',
-      loading: '数据加载中。',
-      empty: '暂无使用数据。',
-      network: '加载失败，提供重试。',
+      normal: '默认关闭，只展示开关；开启后展示发放周期、预算和比例配置。',
+      loading: '配置加载中。',
+      empty: '未配置时使用默认值。',
+      network: '保存失败，保留已编辑内容。',
       denied: '无学校管理权限时返回我的页。',
     },
   },
@@ -965,11 +1081,51 @@ const priorityClass: Record<Priority, string> = {
 
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ');
 
+const classDetailComparisonPrdBlocks: PrdBlock[] = [
+  { type: 'h1', text: '08 班级详情差异对比' },
+  { type: 'p', text: '这组 PRD 重点说明页面差异、权限边界和路由条件，不重复低保真图上已经可见的按钮和卡片。' },
+  { type: 'h2', text: '页面分工' },
+  { type: 'list', items: [
+    '08A 个人版班主任：个人老师自己创建或拥有班主任权限的班级，允许编辑班级、转移班主任、管理老师角色，并可解散个人版班级。',
+    '08B 非班主任：任课老师或被邀请加入的协作老师，只能查看班级资料、邀请老师/家长、进入老师列表和学生列表，不能编辑班级，也不能解散班级。',
+    '08C 学校版班主任：学校统一管理下的班主任，允许维护班级协作和转移班主任，但班级归属学校，不允许在手机端解散。',
+    '08D 暂不落独立页面：如果后续需要区分“学校版非班主任”，可作为 08D；当前它与 08B 权限一致，继续复用 08B，避免为了概念完整而增加低价值页面。',
+  ] },
+  { type: 'h2', text: '进入条件' },
+  { type: 'list', items: [
+    '从 07A 个人版班级列表进入时，如果当前老师是班主任，进入 08A；否则进入 08B。',
+    '从 07B 学校版班级列表进入时，如果当前老师是班主任，进入 08C；否则仍进入 08B。',
+    '被邀请老师已加入班级后再次打开邀请卡片，按是否班主任和当前版本归属落到 08A、08B 或 08C，不新增邀请承接页。',
+  ] },
+  { type: 'h2', text: '核心差异' },
+  { type: 'list', items: [
+    '编辑班级信息：08A、08C 可以编辑；08B 不展示编辑入口。',
+    '老师角色管理：08A、08C 进入 09A，可设置副班主任、移除老师、转移班主任；08B 进入 09B，只查看老师和邀请老师。',
+    '家长绑定：三者都可查看家长绑定概览并邀请家长；完整管理能力收敛到 10 家长绑定列表，不在 08 页面展开。',
+    '危险操作：08A 是解散班级；08B 是退出班级；08C 也是退出班级，因为学校版班级由学校统一管理。',
+  ] },
+  { type: 'h2', text: '确认规则' },
+  { type: 'list', items: [
+    '解散班级只出现在 08A，并要求二次确认和输入 delete，避免误删个人版班级。',
+    '退出班级出现在 08B、08C，只需要二次确认，不要求输入 delete，因为不会删除班级数据。',
+    '转移班主任必须先选中接收老师，再二次确认；确认后原班主任立刻失去班主任权限。',
+  ] },
+  { type: 'h2', text: '设计取舍' },
+  { type: 'list', items: [
+    '08A/08B/08C 保持同一信息骨架，是为了让老师切换身份时认知成本最低；差异只体现在权限和危险操作。',
+    '不把所有角色差异都拆成页面，是为了避免页面地图变复杂；只有会影响关键权限或学校/个人版归属的状态才独立编号。',
+    '08D 先作为预留口径记录在 PRD 中，等学校版非班主任出现独特能力时再落页面。',
+  ] },
+];
+
 const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
   login: [
-    { type: 'h2', text: '首次进入流程' },
+    { type: 'h2', text: '登录流程' },
     { type: 'list', items: [
-      '页面导航地图中，首次进入流程固定为 01 登录页 → 02 完善信息 → 03 新手首页。',
+      '页面导航地图中，01 登录页后合并展示三条分支：新用户首次登录、新用户已填写姓名但未完成新手引导、老用户登录。',
+      '新用户首次登录时进入 02 完善信息 → 03 新手首页。',
+      '新用户已填写姓名但未完成新手引导时直接进入 03 新手首页，后续节点不重复展示。',
+      '老用户登录时直接进入 13 记录页。',
       '空间选择不作为首次进入流程中的独立页面节点。',
       '已登录老师再次进入时，系统按上次使用空间直接进入对应首页。',
     ] },
@@ -985,10 +1141,11 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     { type: 'h2', text: '14A 仅有个人版' },
     { type: 'list', items: [
       '14A 用于老师只有个人版的状态。',
-      '教师卡片展示个人版标签，不展示切换版本入口。',
-      '学校基础信息在 14A 和 14B 都展示，以卡片承载学期管理、科目管理、部门管理三个直达入口。',
-      '管理工具在 14A 和 14B 都展示，包含学校数据报表和生成期末报告。',
-      '点击学校数据报表进入 18 学校数据报表，查看学校使用数据。',
+      '教师信息直接铺开到页面顶部，不使用教师信息卡片。',
+      '头像点击进入 15A 基本信息设置（个人版）。',
+      '右上角展示扫一扫和设置 icon。',
+      '更多工具在 14A 和 14B 都展示，以卡片承载学期管理、科目管理、部门管理和货币发放管理。',
+      '点击货币发放管理进入 21 货币发放管理，默认关闭货币发放，开启后展示发放周期、班级总预算、阳光保底比例和积分排行比例。',
       '点击生成期末报告必须先二次确认：学生日常行为已录入完成；如报告需要展示成绩，成绩也已录入完成。',
       '确认后发送生成请求，并 toast 提示“报告排队生成中”。',
       '页面展示“了解学校版”按钮。',
@@ -999,14 +1156,15 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     ] },
   ],
   mineSchool: [
-    { type: 'h2', text: '14B 拥有学校版' },
+    { type: 'h2', text: '14B 拥有多个版本' },
     { type: 'list', items: [
-      '14B 用于老师已经拥有学校版的状态。',
+      '14B 用于老师拥有多个版本的状态；即使当前切换到个人版，也仍停留在 14B。',
+      '头像点击进入 15B 基本信息设置（学校版）。',
       '教师卡片头像姓名学校行右侧展示同组操作按钮：编辑资料和切换版本。切换版本点击后从底部上滑展示“切换版本”。',
       '切换版本弹窗只展示版本名称和当前标签，不展示“个人体验数据”“学校统一数据”等备注文案。',
-      '学校基础信息在 14A 和 14B 都展示，以卡片承载学期管理、科目管理、部门管理三个直达入口。',
-      '管理工具在 14A 和 14B 都展示，包含学校数据报表和生成期末报告。',
-      '点击学校数据报表进入 18 学校数据报表，查看学校使用数据。',
+      '管理工具随当前切换版本变化：当前为学校版时展示学校数据报表、生成期末报告；当前为个人版时只展示生成期末报告。',
+      '更多工具在 14A 和 14B 都展示，以卡片承载学期管理、科目管理、部门管理和货币发放管理。',
+      '点击货币发放管理进入 21 货币发放管理，默认关闭货币发放，开启后展示发放周期、班级总预算、阳光保底比例和积分排行比例。',
       '点击生成期末报告必须先二次确认，确认后发送生成请求并提示排队。',
       '14B 不展示“了解学校版”按钮。',
     ] },
@@ -1016,13 +1174,15 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     { type: 'list', items: [
       '老师必须先获得班级，路径包括创建班级和加入班级。',
       '如果加入已有班级且班级已有学生，添加学生步骤自动完成。',
-      '班级里有学生后即可进行评价，首次记录是核心体验引导，不是使用门槛。',
-      '完成首次日常行为记录后隐藏新手任务，展示日常行为记录历史。',
+      '03 新手首页只保留 2 个步骤：获得班级、确认学生。',
+      '完成第 2 步确认学生后，直接进入 13 记录页。',
+      '首次记录引导放在 13 记录页内，不再作为 03 新手首页第 3 步。',
     ] },
   ],
-  classList: [
+  classListPersonal: [
     { type: 'h2', text: '班级卡片结构' },
     { type: 'list', items: [
+      '个人版班级列表展示创建班级和加入班级入口。',
       '班级名称右侧展示基于学段和入学年份推断的年级。',
       '班级名下方展示当前登录账号的任教标签，例如班主任、语文、数学。',
       '班级号和人数在同一行展示。',
@@ -1049,14 +1209,25 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '点击同意加入后关闭弹窗并留在班级页；点击暂不加入后关闭弹窗，不加入班级。',
     ] },
   ],
+  classListSchool: [
+    { type: 'h2', text: '班级卡片结构' },
+    { type: 'list', items: [
+      '学校版班级列表不展示创建班级和加入班级入口。',
+      '班级名称右侧展示基于学段和入学年份推断的年级。',
+      '班级名下方展示当前登录账号的任教标签，例如班主任、语文、数学。',
+      '班级号和人数在同一行展示。',
+      '卡片 CTA 为学生列表和班级报告。',
+    ] },
+  ],
   classDetail: [
-    { type: 'h2', text: '班级详情规则' },
+    ...classDetailComparisonPrdBlocks,
+    { type: 'h2', text: '共用细节规则' },
     { type: 'list', items: [
       '从班级卡片更多操作点击“编辑班级信息”进入。',
       '班级基本信息以班级卡片展示，班级名称格式为“2025级1班（一年级）”，不单独展示学段标签。',
       '班级详情不展示班主任、语文等任教标签，这些标签属于当前登录账号与班级的关系，不属于班级基础信息。',
       '卡片右上角只有一个编辑 icon，点击从底部上滑编辑弹窗。',
-      '编辑弹窗字段顺序为：学段、入学年份、班级名称。',
+      '编辑弹窗字段顺序为：学段、入学年份、班号；班级名称按“入学年份级 + 班号 + 班”自动生成。',
       '班级详情卡片不展示班主任字段。',
       '班级号和人数同一行展示：左侧班级号文案，右侧人数。',
       '班级号文案后展示复制 icon，点击班级号区域复制班级号。',
@@ -1072,48 +1243,59 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '班级详情和完整家长绑定列表均提供“邀请家长绑定”按钮，层级同老师列表板块的邀请老师。',
       '邀请家长绑定流程完成后回到发起邀请的当前页面。',
       '点击邀请老师复用班级邀请流程。',
-      '08A 管理员可点击“转移班级管理员”，从底部老师列表弹窗中选择一位非管理员老师。',
-      '选中老师后必须展示二次确认弹窗；确认后管理员身份转移给该老师，原管理员不再拥有班级管理员身份。',
-      '页面底部按权限展示危险操作：创建人显示解散班级，非创建人显示退出班级。',
+      '08A 班主任可点击“转移班主任”，从底部老师列表弹窗中选择一位非班主任老师。',
+      '选中老师后必须展示二次确认弹窗；确认后班主任身份转移给该老师，原班主任不再拥有班级班主任权限。',
+      '页面底部按权限展示危险操作：班主任显示解散班级，非班主任显示退出班级。',
       '解散班级需要二次确认，并输入 delete 后才可点击确认解散。',
       '退出班级同样需要二次确认，但不需要输入 delete。',
     ] },
   ],
-  classDetailMember: [
-    { type: 'h2', text: '非管理员视角' },
+  classDetailSchoolHead: [
+    ...classDetailComparisonPrdBlocks,
+    { type: 'h2', text: '学校版班主任补充' },
     { type: 'list', items: [
-      '从 07 班级列表进入非本人创建的班级时，跳转到 08B 班级详情（非管理员）。',
-      '非管理员可以查看班级基础信息、复制班级号、邀请老师和查看老师列表。',
-      '班级卡片沿用管理员详情结构：不展示班主任字段，班级号和人数同一行。',
+      '学校版班主任从 07B 班级列表进入时，跳转到 08C 班级详情（班主任-学校版）。',
+      '08C 与 08A 共享编辑班级、转移班主任、邀请老师等能力。',
+      '08C 不展示解散班级按钮；学校版班级由学校统一管理，班主任无权解散。',
+      '08C 点击老师列表 icon 进入 09A 班主任老师列表。',
+    ] },
+  ],
+  classDetailMember: [
+    ...classDetailComparisonPrdBlocks,
+    { type: 'h2', text: '非班主任补充' },
+    { type: 'list', items: [
+      '从 07A/07B 班级列表进入非班主任身份的班级时，跳转到 08B 班级详情（非班主任）。',
+      '非班主任可以查看班级基础信息、复制班级号、邀请老师和查看老师列表，但不能修改班级详情。',
+      '班级卡片沿用班主任详情结构：不展示班主任字段，班级号和人数同一行。',
       '页面底部不展示解散班级，只展示退出班级。',
       '退出班级需要二次确认；确认后当前老师不再管理该班级，班级数据仍由创建人保留。',
-      '08A 点击老师列表 icon 进入 09A 管理员老师列表，08B 点击老师列表 icon 进入 09B 非管理员老师列表。',
+      '08A 点击老师列表 icon 进入 09A 班主任老师列表，08B 点击老师列表 icon 进入 09B 非班主任老师列表。',
     ] },
   ],
   teacherList: [
     { type: 'h2', text: '09A 老师列表规则' },
     { type: 'list', items: [
-      '09A 是管理员视角，管理员即创建班级的人。',
-      '老师卡片包含头像、姓名、管理员标签、班主任标签和多个任教学科标签。',
-      '老师列表中的每位老师使用独立卡片展示，管理员和班主任置顶。',
+      '09A 是班主任视角，个人版中创建班级的人默认成为班主任。',
+      '老师卡片包含头像、姓名、班主任标签、副班主任标签和多个任教学科标签。',
+      '老师列表中的每位老师使用独立卡片展示，班主任和副班主任置顶。',
       '老师列表内容区可滚动，邀请老师按钮固定在页面底部。',
-      '管理员和班主任下方用一条横线分隔其余老师；班主任只是标签，不代表管理权限。',
-      '管理员点击老师卡片右侧更多 icon，可设置一个或多个老师为班主任，也可取消班主任或移除老师。',
+      '班主任和副班主任下方用一条横线分隔其余老师。',
+      '班主任点击老师卡片右侧更多 icon，可设置一个或多个老师为副班主任，也可取消副班主任或移除老师。',
       '点击移除老师后必须展示二次确认弹窗；确认后该老师不再管理当前班级。',
     ] },
   ],
   teacherListMember: [
     { type: 'h2', text: '09B 老师列表规则' },
     { type: 'list', items: [
-      '09B 是非管理员视角。',
-      '老师卡片包含头像、姓名、管理员标签、班主任标签和多个任教学科标签。',
-      '非管理员可查看老师列表，管理员和班主任置顶并用横线分隔其余老师；列表可滚动，底部展示邀请老师按钮；不展示移除或更多操作。',
+      '09B 是非班主任视角。',
+      '老师卡片包含头像、姓名、班主任标签、副班主任标签和多个任教学科标签。',
+      '非班主任可查看老师列表，班主任和副班主任置顶并用横线分隔其余老师；列表可滚动，底部展示邀请老师按钮；不展示移除或更多操作。',
     ] },
   ],
   parentBindingList: [
     { type: 'h2', text: '10 家长绑定列表规则' },
     { type: 'list', items: [
-      '10 是统一的家长绑定列表页，管理员和非管理员看到相同内容。',
+      '10 是统一的家长绑定列表页，班主任和非班主任看到相同内容。',
       '页面使用“未绑定/已绑定”tab 切换查看学生，tab 内数字即统计。',
       '邀请家长绑定按钮固定在页面底部，与 09 老师列表保持一致。',
       'mock 数据为 48/50：50 个学生中 48 个学生已绑定，未绑定学生优先展示。',
@@ -1122,7 +1304,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '同一个学生有多个家长绑定时，多个家长卡片连续排列；不同学生之间用弱化线条分隔。',
       '已绑定卡片列表态不展示手机号、不展示 icon 操作；点击卡片后在弹窗中展示并支持编辑完整手机号和关系，同时提供拨打电话和移除绑定操作。',
       '家长身份来自信息确认页的爸爸、妈妈、爷爷、奶奶、外公、外婆或其他文本。',
-      '一个学生可以被多个家长绑定，班主任和管理员可以移除单个家长绑定关系；详情弹窗和移除确认均展示完整手机号，帮助确认是否绑定错误。',
+      '一个学生可以被多个家长绑定，班主任和副班主任可以移除单个家长绑定关系；详情弹窗和移除确认均展示完整手机号，帮助确认是否绑定错误。',
       '从 08A/08B 班级详情进入时，邀请家长绑定流程完成后回到当前页。',
     ] },
   ],
@@ -1189,13 +1371,57 @@ const inferGradeLabel = (stage: '小学' | '初中' | '高中', entryYearValue: 
   return gradeMap[stage][Math.min(gradeIndex, gradeMap[stage].length) - 1];
 };
 
+const buildClassName = (entryYearValue: string | number, classNumberValue: string | number) => `${entryYearValue}级${classNumberValue}班`;
+const getClassNumberFromName = (name: string) => name.match(/级(\d+)班/)?.[1] ?? '1';
 const formatClassCode = (code: string) => code.replace(/\D/g, '').slice(0, 8);
 const bottomSheetBackdropClass = 'absolute inset-0 flex items-end animate-in fade-in duration-200 ease-out motion-reduce:animate-none';
 const bottomSheetPanelClass = 'relative w-full animate-in slide-in-from-bottom-6 fade-in duration-300 ease-out motion-reduce:animate-none';
+const getPrototypeWidthMax = (currentSurface: CEndSurface) => (currentSurface === 'ops' || currentSurface === 'schoolAdmin' ? 82 : 52);
+const formatCoinAmount = (amount: number) => {
+  if (!Number.isFinite(amount)) return '0';
+  return Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace(/\.?0+$/, '');
+};
+
+const SwitchControl = ({
+  checked,
+  onChange,
+  ariaLabel,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  ariaLabel: string;
+}) => (
+  <button
+    type="button"
+    role="switch"
+    aria-label={ariaLabel}
+    aria-checked={checked}
+    onClick={() => onChange(!checked)}
+    className={cx(
+      'relative h-7 w-12 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900/15 active:scale-[0.98]',
+      checked ? 'bg-gray-900' : 'bg-gray-300'
+    )}
+  >
+    <span
+      className={cx(
+        'absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow-[0_1px_4px_rgba(15,23,42,0.22)] transition-transform',
+        checked ? 'translate-x-5' : 'translate-x-0'
+      )}
+    />
+  </button>
+);
 
 const TeacherCMobileLowFi: React.FC = () => {
   const [surface, setSurface] = useState<CEndSurface>('teacher');
-  const [prototypeWidth, setPrototypeWidth] = useState(34);
+  const [prototypeWidths, setPrototypeWidths] = useState<Record<CEndSurface, number>>({
+    summary: 34,
+    teacher: 34,
+    parent: 34,
+    versionCompare: 34,
+    schoolAdmin: 60,
+    ops: 60,
+  });
+  const prototypeWidth = prototypeWidths[surface];
   const resizeDragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -1203,7 +1429,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     containerWidth: number;
   } | null>(null);
   const [page, setPage] = useState<PageKey>('login');
-  const [activeLane, setActiveLane] = useState<string>('首次进入');
+  const [activeLane, setActiveLane] = useState<string>('登录');
   const [activeInviteNode, setActiveInviteNode] = useState<number>(-1);
   const [viewState, setViewState] = useState<ViewState>('normal');
   const [history, setHistory] = useState<PageKey[]>([]);
@@ -1219,8 +1445,6 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [schoolStage, setSchoolStage] = useState('');
   const [entryYear, setEntryYear] = useState('');
   const [classNumber, setClassNumber] = useState('1');
-  const [isCustomClassName, setIsCustomClassName] = useState(false);
-  const [customClassName, setCustomClassName] = useState('');
   const [classCode, setClassCode] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
   const [studentGenderFilter, setStudentGenderFilter] = useState<'all' | '男' | '女'>('all');
@@ -1229,7 +1453,10 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [studentListMode, setStudentListMode] = useState<'student' | 'group'>('student');
   const [studentInputRows, setStudentInputRows] = useState<StudentInputRow[]>([{ id: 1, name: '', no: '', gender: '男' }]);
   const [studentBatchEditRows, setStudentBatchEditRows] = useState<StudentInputRow[]>([]);
-  const [teachingRows, setTeachingRows] = useState(2);
+  const [teachingInfoRows, setTeachingInfoRows] = useState<TeachingInfoRow[]>([
+    { id: 1, subject: '英语', classes: ['2025级1班', '2025级2班'] },
+    { id: 2, subject: '音乐', classes: ['2023级1班'] },
+  ]);
   const [showPhoneLoginSheet, setShowPhoneLoginSheet] = useState(false);
   const [phoneLoginTab, setPhoneLoginTab] = useState<PhoneLoginTab>('sms');
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
@@ -1240,13 +1467,27 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [showFinalReportConfirmSheet, setShowFinalReportConfirmSheet] = useState(false);
   const [finalReportBehaviorConfirmed, setFinalReportBehaviorConfirmed] = useState(false);
   const [finalReportScoreConfirmed, setFinalReportScoreConfirmed] = useState(false);
-  const [currentSpaceId, setCurrentSpaceId] = useState<TeacherSpaceId>('personal');
+  const [coinIssuanceEnabled, setCoinIssuanceEnabled] = useState(false);
+  const [coinIssuePeriod, setCoinIssuePeriod] = useState<CoinIssuePeriod>('weekly');
+  const [coinClassBudget, setCoinClassBudget] = useState(500);
+  const [sunshineRatio, setSunshineRatio] = useState(30);
+  const [rankingRatio, setRankingRatio] = useState(70);
+  const [showCoinIssueHelpOverlay, setShowCoinIssueHelpOverlay] = useState(false);
+  const [currentSpaceId, setCurrentSpaceId] = useState<TeacherSpaceId>(defaultTeacherSpaceId);
   const [showSchoolAdminSpaceMenu, setShowSchoolAdminSpaceMenu] = useState(true);
+  const [opsPage, setOpsPage] = useState<'home' | 'personalUsers'>('home');
+  const [handledOpsTodoIds, setHandledOpsTodoIds] = useState<string[]>([]);
   const [activeBasicInfoTab, setActiveBasicInfoTab] = useState<SchoolBasicInfoTab>('term');
   const [editingBasicInfoItem, setEditingBasicInfoItem] = useState<SchoolBasicInfoItem | null>(null);
+  const [subjectItems, setSubjectItems] = useState<SchoolSubjectItem[]>(schoolSubjectItems);
+  const [editingSubjectItem, setEditingSubjectItem] = useState<SchoolSubjectItem | null>(null);
+  const [deletingSubjectItem, setDeletingSubjectItem] = useState<SchoolSubjectItem | null>(null);
+  const [showSubjectEditSheet, setShowSubjectEditSheet] = useState(false);
+  const [draggingSubjectId, setDraggingSubjectId] = useState<string | null>(null);
   const [editingTermItem, setEditingTermItem] = useState<SchoolTermItem | null>(null);
   const [activeTermAction, setActiveTermAction] = useState<SchoolTermItem | null>(null);
   const [deletedTermIds, setDeletedTermIds] = useState<string[]>([]);
+  const [deletedDepartmentIds, setDeletedDepartmentIds] = useState<string[]>([]);
   const [showBasicInfoEditSheet, setShowBasicInfoEditSheet] = useState(false);
   const [showTermEditSheet, setShowTermEditSheet] = useState(false);
   const [currentTermId, setCurrentTermId] = useState('term-2025-2026-2');
@@ -1257,7 +1498,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [showClassCodeInviteSheet, setShowClassCodeInviteSheet] = useState(false);
   const [showInviteConfirmSheet, setShowInviteConfirmSheet] = useState(false);
   const [inviteAudience, setInviteAudience] = useState<InviteAudience>('teacher');
-  const [inviteReturnPage, setInviteReturnPage] = useState<PageKey>('classList');
+  const [inviteReturnPage, setInviteReturnPage] = useState<PageKey>('classListPersonal');
   const [wechatShareSentTo, setWechatShareSentTo] = useState('');
   const [pendingInviteAfterLogin, setPendingInviteAfterLogin] = useState(false);
   const [inviteeLoggedIn, setInviteeLoggedIn] = useState(false);
@@ -1266,6 +1507,13 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [teachingGrade, setTeachingGrade] = useState<TeachingGrade>('2025级');
   const [teachingSelectedClasses, setTeachingSelectedClasses] = useState<string[]>(['2025级1班', '2025级2班']);
   const [teachingSubject, setTeachingSubject] = useState('英语');
+  const [activeTeacherBasicConfig, setActiveTeacherBasicConfig] = useState<TeacherBasicConfigKey | null>(null);
+  const [teacherBasicConfigValues, setTeacherBasicConfigValues] = useState<Record<TeacherBasicConfigKey, string>>({
+    headClass: '2025级1班',
+    gradeLeader: '2025级',
+    department: '学发中心',
+  });
+  const [draftTeacherBasicConfigValue, setDraftTeacherBasicConfigValue] = useState('');
   const [activeClassAction, setActiveClassAction] = useState<{ name: string; code: string } | null>(null);
   const [inviteClass, setInviteClass] = useState<{ name: string; code: string; inviter: string }>({ name: '2025级1班', code: '58273914', inviter: '郭老师' });
   const [activeClassProfile, setActiveClassProfile] = useState<ClassProfile>({
@@ -1279,7 +1527,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   });
   const [showClassExitSheet, setShowClassExitSheet] = useState(false);
   const [showClassEditSheet, setShowClassEditSheet] = useState(false);
-  const [draftClassName, setDraftClassName] = useState('');
+  const [draftClassNumber, setDraftClassNumber] = useState('1');
   const [draftClassStage, setDraftClassStage] = useState<'小学' | '初中' | '高中'>('小学');
   const [draftClassEntryYear, setDraftClassEntryYear] = useState(2025);
   const [classDeleteConfirmText, setClassDeleteConfirmText] = useState('');
@@ -1287,9 +1535,9 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [removeTeacherCandidate, setRemoveTeacherCandidate] = useState<ClassTeacherProfile | null>(null);
   const [removeParentBindingCandidate, setRemoveParentBindingCandidate] = useState<{ studentName: string; guardianLabel: string; phone: string } | null>(null);
   const [activeParentBindingCandidate, setActiveParentBindingCandidate] = useState<ActiveParentBindingCandidate | null>(null);
-  const [showTransferAdminTeacherSheet, setShowTransferAdminTeacherSheet] = useState(false);
-  const [transferAdminCandidate, setTransferAdminCandidate] = useState<ClassTeacherProfile | null>(null);
-  const [classAdminTeacherName, setClassAdminTeacherName] = useState('郭老师');
+  const [showTransferHeadTeacherSheet, setShowTransferHeadTeacherSheet] = useState(false);
+  const [transferHeadTeacherCandidate, setTransferHeadTeacherCandidate] = useState<ClassTeacherProfile | null>(null);
+  const [classHeadTeacherName, setClassHeadTeacherName] = useState('郭老师');
   const [classActionToast, setClassActionToast] = useState('');
   const classActionToastTimerRef = useRef<number | null>(null);
   const [parentPage, setParentPage] = useState<ParentPageKey>('wechatCard');
@@ -1327,9 +1575,9 @@ const TeacherCMobileLowFi: React.FC = () => {
     }, 2000);
   };
   const demoAcademicStartYear = 2025;
-  const defaultClassName = entryYear ? `${entryYear}级${classNumber || '1'}班` : '';
-  const classDisplayName = isCustomClassName ? customClassName : defaultClassName;
-  const canSaveClass = Boolean(schoolStage && entryYear && classNumber.trim() && classDisplayName.trim());
+  const normalizedClassNumber = classNumber.trim();
+  const classDisplayName = entryYear && normalizedClassNumber ? buildClassName(entryYear, normalizedClassNumber) : '';
+  const canSaveClass = Boolean(schoolStage && entryYear && normalizedClassNumber);
   const canJoinClass = classCode.trim().length === 8;
   const studentRows = [
     { name: '王小明', no: '20250101', gender: '男' as const },
@@ -1338,23 +1586,23 @@ const TeacherCMobileLowFi: React.FC = () => {
     { name: '周子航', no: '20250104', gender: '男' as const },
   ];
   const currentTeacherDisplayName = teacherName.trim() || '郭老师';
-  const activeAdminTeacherName = classAdminTeacherName === '郭老师' ? currentTeacherDisplayName : classAdminTeacherName;
+  const activeHeadTeacherName = classHeadTeacherName === '郭老师' ? currentTeacherDisplayName : classHeadTeacherName;
   const classTeachers: ClassTeacherProfile[] = [
-    { name: currentTeacherDisplayName, subjects: ['语文', '道德与法治'], isHomeroom: false, isAdmin: false },
-    { name: '陈老师', subjects: ['语文', '书法'], isHomeroom: true, isAdmin: false },
-    { name: '李老师', subjects: ['数学', '科学'], isHomeroom: false, isAdmin: false },
-    { name: '王老师', subjects: ['英语'], isHomeroom: false, isAdmin: false },
-    { name: '赵老师', subjects: ['体育', '劳动'], isHomeroom: true, isAdmin: false },
-    { name: '刘老师', subjects: ['美术'], isHomeroom: false, isAdmin: false },
-    { name: '马老师', subjects: ['信息科技'], isHomeroom: false, isAdmin: false },
-    { name: '高老师', subjects: ['综合实践'], isHomeroom: false, isAdmin: false },
+    { name: currentTeacherDisplayName, subjects: ['语文', '道德与法治'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { name: '陈老师', subjects: ['语文', '书法'], isHeadTeacher: false, isDeputyHeadTeacher: true },
+    { name: '李老师', subjects: ['数学', '科学'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { name: '王老师', subjects: ['英语'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { name: '赵老师', subjects: ['体育', '劳动'], isHeadTeacher: false, isDeputyHeadTeacher: true },
+    { name: '刘老师', subjects: ['美术'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { name: '马老师', subjects: ['信息科技'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { name: '高老师', subjects: ['综合实践'], isHeadTeacher: false, isDeputyHeadTeacher: false },
   ].map((teacher) => ({
     ...teacher,
-    isAdmin: teacher.name === activeAdminTeacherName,
+    isHeadTeacher: teacher.name === activeHeadTeacherName,
   }));
-  const transferAdminCandidates = classTeachers.filter((teacher) => !teacher.isAdmin);
-  const primaryClassTeachers = classTeachers.filter((teacher) => teacher.isAdmin || teacher.isHomeroom);
-  const otherClassTeachers = classTeachers.filter((teacher) => !teacher.isAdmin && !teacher.isHomeroom);
+  const transferHeadTeacherCandidates = classTeachers.filter((teacher) => !teacher.isHeadTeacher);
+  const primaryClassTeachers = classTeachers.filter((teacher) => teacher.isHeadTeacher || teacher.isDeputyHeadTeacher);
+  const otherClassTeachers = classTeachers.filter((teacher) => !teacher.isHeadTeacher && !teacher.isDeputyHeadTeacher);
   const parentBindingRows: ParentBindingProfile[] = [
     ...['张天天', '林小杰'].map((name, index) => ({
       name,
@@ -1431,7 +1679,10 @@ const TeacherCMobileLowFi: React.FC = () => {
     const drag = resizeDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     const deltaPercent = ((event.clientX - drag.startX) / drag.containerWidth) * 100;
-    setPrototypeWidth(Math.min(52, Math.max(24, drag.startWidth + deltaPercent)));
+    setPrototypeWidths((widths) => ({
+      ...widths,
+      [surface]: Math.min(getPrototypeWidthMax(surface), Math.max(24, drag.startWidth + deltaPercent)),
+    }));
   };
 
   const handleResizeEnd = (event: React.PointerEvent<HTMLButtonElement>) => {
@@ -1495,7 +1746,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     setActiveTeacherAction(null);
     setClassActionToast('');
     setHistory([]);
-    if (next === 'classDetail') {
+    if (next === 'classDetail' || next === 'classDetailSchoolHead') {
       setActiveClassProfile({
         name: '2025级1班',
         code: '58273914',
@@ -1517,6 +1768,8 @@ const TeacherCMobileLowFi: React.FC = () => {
         isCreator: false,
       });
     }
+    if (next === 'minePersonal') setCurrentSpaceId('personal');
+    if (next === 'mineSchool') setCurrentSpaceId(defaultTeacherSpaceId);
     setPage(next);
     setViewState('normal');
     setRecordStage('idle');
@@ -1568,7 +1821,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       return;
     }
 
-    jumpToPage('classList');
+    jumpToPage(getClassListPageForCurrentSpace());
     if (target.type === 'inviteWechat') {
       setInviteeAlreadyJoined(false);
       setShowInviteConfirmSheet(false);
@@ -1593,6 +1846,11 @@ const TeacherCMobileLowFi: React.FC = () => {
     }
     setInviteeAlreadyJoined(false);
     setShowInviteConfirmSheet(true);
+  };
+
+  const getClassListPageForCurrentSpace = (): PageKey => {
+    const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
+    return currentSpace.type === 'school' ? 'classListSchool' : 'classListPersonal';
   };
 
   const getDefaultParentDirectoryNodeKey = (next: ParentPageKey) => {
@@ -1660,10 +1918,10 @@ const TeacherCMobileLowFi: React.FC = () => {
     setInviteeLoggedIn(true);
     setPendingInviteAfterLogin(false);
     if (inviteeAlreadyJoined) {
-      navigate('classList');
+      navigate(getClassListPageForCurrentSpace());
       return;
     }
-    navigate('classList');
+    navigate(getClassListPageForCurrentSpace());
     setShowInviteConfirmSheet(true);
   };
 
@@ -1708,22 +1966,19 @@ const TeacherCMobileLowFi: React.FC = () => {
   const openTeachingCreate = () => {
     setEditingTeachingIndex(null);
     setTeachingGrade('2025级');
-    setTeachingSelectedClasses(['2025级1班', '2025级2班']);
+    setTeachingSelectedClasses(['2025级1班']);
     setTeachingSubject('英语');
     setShowTeachingSheet(true);
   };
 
   const openTeachingEdit = (index: number) => {
+    const row = teachingInfoRows[index];
+    if (!row) return;
     setEditingTeachingIndex(index);
-    if (index === 0) {
-      setTeachingGrade('2025级');
-      setTeachingSelectedClasses(['2025级1班', '2025级2班']);
-      setTeachingSubject('英语');
-    } else {
-      setTeachingGrade('2023级');
-      setTeachingSelectedClasses(['2023级1班']);
-      setTeachingSubject('音乐');
-    }
+    const rowGrade = (row.classes[0]?.slice(0, 5) || '2025级') as TeachingGrade;
+    setTeachingGrade(rowGrade);
+    setTeachingSelectedClasses(row.classes);
+    setTeachingSubject(row.subject);
     setShowTeachingSheet(true);
   };
 
@@ -1739,13 +1994,41 @@ const TeacherCMobileLowFi: React.FC = () => {
   };
 
   const submitTeachingSheet = () => {
-    if (editingTeachingIndex === null) setTeachingRows((count) => count + 1);
+    if (teachingSelectedClasses.length === 0) return;
+    if (editingTeachingIndex === null) {
+      setTeachingInfoRows((rows) => [
+        ...rows,
+        {
+          id: Math.max(0, ...rows.map((row) => row.id)) + 1,
+          subject: teachingSubject,
+          classes: teachingSelectedClasses,
+        },
+      ]);
+    } else {
+      setTeachingInfoRows((rows) => rows.map((row, index) => (
+        index === editingTeachingIndex ? { ...row, subject: teachingSubject, classes: teachingSelectedClasses } : row
+      )));
+    }
     setShowTeachingSheet(false);
   };
 
   const removeTeachingRow = (index: number) => {
-    setTeachingRows((count) => Math.max(1, count - 1));
+    setTeachingInfoRows((rows) => rows.length > 1 ? rows.filter((_, rowIndex) => rowIndex !== index) : rows);
     if (editingTeachingIndex === index) setEditingTeachingIndex(null);
+  };
+
+  const openTeacherBasicConfigSheet = (key: TeacherBasicConfigKey) => {
+    setActiveTeacherBasicConfig(key);
+    setDraftTeacherBasicConfigValue(teacherBasicConfigValues[key]);
+  };
+
+  const submitTeacherBasicConfigSheet = () => {
+    if (!activeTeacherBasicConfig || !draftTeacherBasicConfigValue) return;
+    setTeacherBasicConfigValues((values) => ({
+      ...values,
+      [activeTeacherBasicConfig]: draftTeacherBasicConfigValue,
+    }));
+    setActiveTeacherBasicConfig(null);
   };
 
   const startVoice = () => {
@@ -1824,8 +2107,8 @@ const TeacherCMobileLowFi: React.FC = () => {
   const BottomNav = () => (
     <nav className="absolute inset-x-4 bottom-4 grid h-14 grid-cols-3 rounded-2xl border border-gray-100 bg-white shadow-[0_-8px_28px_rgba(15,23,42,0.06)] text-center text-[11px] font-black">
       <button type="button" onClick={() => navigate('home')} className={cx('rounded-l-[14px]', (page === 'home' || page === 'record') && 'bg-gray-950 text-white')}>记录</button>
-      <button type="button" onClick={() => navigate('classList')} className={cx(page === 'classList' && 'bg-gray-950 text-white')}>班级</button>
-      <button type="button" onClick={() => navigate(currentSpaceId === 'personal' ? 'minePersonal' : 'mineSchool')} className={cx('rounded-r-[14px]', (page === 'minePersonal' || page === 'mineSchool') && 'bg-gray-950 text-white')}>我的</button>
+      <button type="button" onClick={() => navigate(getClassListPageForCurrentSpace())} className={cx((page === 'classListPersonal' || page === 'classListSchool') && 'bg-gray-950 text-white')}>班级</button>
+      <button type="button" onClick={() => navigate((teacherSpaces.find((space) => space.id === currentSpaceId)?.type ?? 'personal') === 'school' ? 'mineSchool' : 'minePersonal')} className={cx('rounded-r-[14px]', (page === 'minePersonal' || page === 'mineSchool') && 'bg-gray-950 text-white')}>我的</button>
     </nav>
   );
 
@@ -1889,6 +2172,24 @@ const TeacherCMobileLowFi: React.FC = () => {
     setShowBasicInfoEditSheet(true);
   };
 
+  const openSubjectEditSheet = (item?: SchoolSubjectItem) => {
+    setEditingSubjectItem(item ?? null);
+    setShowSubjectEditSheet(true);
+  };
+
+  const moveSubjectItem = (dragId: string, targetId: string) => {
+    if (dragId === targetId) return;
+    setSubjectItems((items) => {
+      const fromIndex = items.findIndex((item) => item.id === dragId);
+      const toIndex = items.findIndex((item) => item.id === targetId);
+      if (fromIndex < 0 || toIndex < 0) return items;
+      const nextItems = [...items];
+      const [movedItem] = nextItems.splice(fromIndex, 1);
+      nextItems.splice(toIndex, 0, movedItem);
+      return nextItems;
+    });
+  };
+
   const openSchoolBasicInfo = (tab: SchoolBasicInfoTab) => {
     setActiveBasicInfoTab(tab);
     const pageMap: Record<SchoolBasicInfoTab, PageKey> = {
@@ -1897,6 +2198,18 @@ const TeacherCMobileLowFi: React.FC = () => {
       department: 'departmentManagement',
     };
     navigate(pageMap[tab]);
+  };
+
+  const updateSunshineRatio = (value: number) => {
+    const nextValue = Math.max(0, Math.min(100, value));
+    setSunshineRatio(nextValue);
+    setRankingRatio(100 - nextValue);
+  };
+
+  const updateRankingRatio = (value: number) => {
+    const nextValue = Math.max(0, Math.min(100, value));
+    setRankingRatio(nextValue);
+    setSunshineRatio(100 - nextValue);
   };
 
   const openFinalReportConfirmSheet = () => {
@@ -1939,11 +2252,11 @@ const TeacherCMobileLowFi: React.FC = () => {
       return;
     }
     if (key === 'editClass') {
-      navigate(activeClassProfile.isCreator ? 'classDetail' : 'classDetailMember');
+      navigate(getClassDetailPageForProfile(activeClassProfile));
       return;
     }
     if (key === 'inviteTeacher' || key === 'inviteParent') {
-      openInviteForClass(key === 'inviteTeacher' ? 'teacher' : 'parent', 'classList', activeClassAction ?? undefined);
+      openInviteForClass(key === 'inviteTeacher' ? 'teacher' : 'parent', getClassListPageForCurrentSpace(), activeClassAction ?? undefined);
       setActiveClassAction(null);
       return;
     }
@@ -1958,22 +2271,22 @@ const TeacherCMobileLowFi: React.FC = () => {
   const openClassDetail = (profile: ClassProfile) => {
     setActiveClassProfile(profile);
     setActiveClassAction(null);
-    navigate(profile.isCreator ? 'classDetail' : 'classDetailMember');
+    navigate(getClassDetailPageForProfile(profile));
   };
 
   const openClassEditSheet = () => {
-    setDraftClassName(activeClassProfile.name);
+    setDraftClassNumber(getClassNumberFromName(activeClassProfile.name));
     setDraftClassStage(activeClassProfile.stage);
     setDraftClassEntryYear(activeClassProfile.entryYearValue);
     setShowClassEditSheet(true);
   };
 
   const submitClassEditSheet = () => {
-    const nextName = draftClassName.trim();
-    if (!nextName) return;
+    const nextClassNumber = draftClassNumber.trim();
+    if (!nextClassNumber) return;
     setActiveClassProfile((profile) => ({
       ...profile,
-      name: nextName,
+      name: buildClassName(draftClassEntryYear, nextClassNumber),
       stage: draftClassStage,
       entryYearValue: draftClassEntryYear,
     }));
@@ -2089,7 +2402,7 @@ const TeacherCMobileLowFi: React.FC = () => {
 
   const renderTeacherActionSheet = () => {
     if (!activeTeacherAction) return null;
-    const homeroomActionLabel = activeTeacherAction.isHomeroom ? '取消班主任' : '设为班主任';
+    const deputyHeadTeacherActionLabel = activeTeacherAction.isDeputyHeadTeacher ? '取消副班主任' : '设为副班主任';
     return (
       <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="老师更多操作">
         <button type="button" aria-label="关闭老师更多操作" className="absolute inset-0 cursor-default" onClick={() => setActiveTeacherAction(null)} />
@@ -2105,12 +2418,12 @@ const TeacherCMobileLowFi: React.FC = () => {
             <button
               type="button"
               onClick={() => {
-                showClassActionToast(`${activeTeacherAction.name}${activeTeacherAction.isHomeroom ? '已取消班主任' : '已设为班主任'}`);
+                showClassActionToast(`${activeTeacherAction.name}${activeTeacherAction.isDeputyHeadTeacher ? '已取消副班主任' : '已设为副班主任'}`);
                 setActiveTeacherAction(null);
               }}
               className="flex h-12 w-full items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 text-sm font-black active:bg-gray-100"
             >
-              <span>{homeroomActionLabel}</span>
+              <span>{deputyHeadTeacherActionLabel}</span>
               <ChevronRight size={16} />
             </button>
             <button
@@ -2299,27 +2612,27 @@ const TeacherCMobileLowFi: React.FC = () => {
     );
   };
 
-  const renderTransferAdminTeacherSheet = () => {
-    if (!showTransferAdminTeacherSheet) return null;
-    const close = () => setShowTransferAdminTeacherSheet(false);
+  const renderTransferHeadTeacherSheet = () => {
+    if (!showTransferHeadTeacherSheet) return null;
+    const close = () => setShowTransferHeadTeacherSheet(false);
 
     return (
-      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="选择新管理员">
-        <button type="button" aria-label="关闭选择新管理员弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="选择新班主任">
+        <button type="button" aria-label="关闭选择新班主任弹窗" className="absolute inset-0 cursor-default" onClick={close} />
         <section className={cx(bottomSheetPanelClass, 'flex max-h-[82%] flex-col rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="text-base font-black">转移班级管理员</h3>
+            <h3 className="text-base font-black">转移班主任</h3>
             <button type="button" onClick={close} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-lg font-black active:bg-gray-100">×</button>
           </div>
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
-            {transferAdminCandidates.map((teacher) => (
+            {transferHeadTeacherCandidates.map((teacher) => (
               <button
                 key={teacher.name}
                 type="button"
                 onClick={() => {
-                  setShowTransferAdminTeacherSheet(false);
-                  setTransferAdminCandidate(teacher);
+                  setShowTransferHeadTeacherSheet(false);
+                  setTransferHeadTeacherCandidate(teacher);
                 }}
                 className="flex min-h-[74px] w-full items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-3 text-left active:bg-gray-100"
               >
@@ -2337,26 +2650,26 @@ const TeacherCMobileLowFi: React.FC = () => {
     );
   };
 
-  const renderTransferAdminConfirmSheet = () => {
-    if (!transferAdminCandidate) return null;
-    const close = () => setTransferAdminCandidate(null);
+  const renderTransferHeadTeacherConfirmSheet = () => {
+    if (!transferHeadTeacherCandidate) return null;
+    const close = () => setTransferHeadTeacherCandidate(null);
 
     return (
-      <div className={cx(bottomSheetBackdropClass, 'z-[130] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="确认转移班级管理员">
-        <button type="button" aria-label="关闭转移管理员确认弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+      <div className={cx(bottomSheetBackdropClass, 'z-[130] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="确认转移班主任">
+        <button type="button" aria-label="关闭转移班主任确认弹窗" className="absolute inset-0 cursor-default" onClick={close} />
         <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
-          <h3 className="text-base font-black">确认转移管理员</h3>
+          <h3 className="text-base font-black">确认转移班主任</h3>
           <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
-            将「{activeClassProfile.name}」管理员转移给{transferAdminCandidate.name}。确认后，你不再拥有该班级管理员身份。
+            将「{activeClassProfile.name}」班主任转移给{transferHeadTeacherCandidate.name}。确认后，你不再拥有该班级班主任权限。
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
             <button
               type="button"
               onClick={() => {
-                setClassAdminTeacherName(transferAdminCandidate.name);
-                showClassActionToast(`管理员已转移给${transferAdminCandidate.name}`);
+                setClassHeadTeacherName(transferHeadTeacherCandidate.name);
+                showClassActionToast(`班主任已转移给${transferHeadTeacherCandidate.name}`);
                 close();
               }}
               className="h-12 rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white"
@@ -2626,7 +2939,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                 setClassCreated(true);
                 setJoinedClassHasStudents(true);
                 setStudentCount((count) => Math.max(count, 2));
-                navigate('classList');
+                navigate(getClassListPageForCurrentSpace());
               }}
               className="h-12 rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white"
             >
@@ -2641,7 +2954,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const renderClassEditSheet = () => {
     if (!showClassEditSheet) return null;
     const close = () => setShowClassEditSheet(false);
-    const canSubmit = Boolean(draftClassName.trim());
+    const canSubmit = Boolean(draftClassNumber.trim());
 
     return (
       <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="编辑班级信息">
@@ -2679,14 +2992,18 @@ const TeacherCMobileLowFi: React.FC = () => {
               </select>
             </label>
             <label className="block text-xs font-black text-gray-500">
-              班级名称
-              <input
-                value={draftClassName}
-                onChange={(event) => setDraftClassName(event.target.value)}
-                className="mt-2 h-12 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal text-gray-950"
-                placeholder="输入班级名称"
-                aria-label="班级名称"
-              />
+              班号
+              <div className="mt-2 flex h-12 items-center rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal text-gray-950">
+                <span className="shrink-0">{draftClassEntryYear}级</span>
+                <input
+                  value={draftClassNumber}
+                  onChange={(event) => setDraftClassNumber(event.target.value.replace(/[^0-9]/g, ''))}
+                  className="mx-2 h-8 w-16 rounded-xl border border-gray-200 bg-white text-center text-sm font-black text-gray-950"
+                  inputMode="numeric"
+                  aria-label="班号数字"
+                />
+                <span className="shrink-0">班</span>
+              </div>
             </label>
           </div>
           <div className="mt-5 grid grid-cols-2 gap-2">
@@ -2712,20 +3029,22 @@ const TeacherCMobileLowFi: React.FC = () => {
       setClassDeleteConfirmText('');
     };
     const isCreator = activeClassProfile.isCreator;
+    const isSchoolHead = page === 'classDetailSchoolHead';
     const canDissolve = classDeleteConfirmText.trim() === 'delete';
+    const isDissolveMode = isCreator && !isSchoolHead;
 
     return (
-      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label={isCreator ? '确认解散班级' : '确认退出班级'}>
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label={isDissolveMode ? '确认解散班级' : '确认退出班级'}>
         <button type="button" aria-label="关闭班级操作确认弹窗" className="absolute inset-0 cursor-default" onClick={close} />
         <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
-          <h3 className="text-base font-black">{isCreator ? '解散班级' : '退出班级'}</h3>
+          <h3 className="text-base font-black">{isDissolveMode ? '解散班级' : '退出班级'}</h3>
           <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
-            {isCreator
+            {isDissolveMode
               ? `你是「${activeClassProfile.name}」的创建人。解散后，老师将无法继续共同管理该班级。`
               : `退出后，你将不再管理「${activeClassProfile.name}」，该班级数据仍由创建人保留。`}
           </p>
-          {isCreator && (
+          {isDissolveMode && (
             <label className="mt-4 block text-xs font-black text-gray-500">
               输入 delete 确认解散
               <input
@@ -2741,18 +3060,18 @@ const TeacherCMobileLowFi: React.FC = () => {
             <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
             <button
               type="button"
-              disabled={isCreator && !canDissolve}
+              disabled={isDissolveMode && !canDissolve}
               onClick={() => {
                 close();
-                showClassActionToast(isCreator ? '已解散班级' : '已退出班级');
-                navigate('classList');
+                showClassActionToast(isDissolveMode ? '已解散班级' : '已退出班级');
+                navigate(getClassListPageForCurrentSpace());
               }}
               className={cx(
                 'h-12 rounded-2xl border border-gray-200 text-sm font-black',
-                isCreator && !canDissolve ? 'bg-gray-100 text-gray-400' : 'bg-gray-900 text-white'
+                isDissolveMode && !canDissolve ? 'bg-gray-100 text-gray-400' : 'bg-gray-900 text-white'
               )}
             >
-              {isCreator ? '确认解散' : '确认退出'}
+              {isDissolveMode ? '确认解散' : '确认退出'}
             </button>
           </div>
         </section>
@@ -2778,8 +3097,8 @@ const TeacherCMobileLowFi: React.FC = () => {
 
   const TeacherRoleTags = ({ teacher }: { teacher: ClassTeacherProfile }) => (
     <div className="mt-2 flex flex-wrap gap-1.5">
-      {teacher.isAdmin && <span className="rounded-lg bg-gray-900 px-2 py-0.5 text-[11px] font-black text-white">管理员</span>}
-      {teacher.isHomeroom && <span className="rounded-lg bg-gray-300 px-2 py-0.5 text-[11px] font-black text-gray-900">班主任</span>}
+      {teacher.isHeadTeacher && <span className="rounded-lg bg-gray-900 px-2 py-0.5 text-[11px] font-black text-white">班主任</span>}
+      {teacher.isDeputyHeadTeacher && <span className="rounded-lg bg-gray-300 px-2 py-0.5 text-[11px] font-black text-gray-900">副班主任</span>}
       {teacher.subjects.map((subject) => (
         <span key={`${teacher.name}-${subject}`} className="rounded-lg border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-bold text-gray-600">{subject}</span>
       ))}
@@ -2793,30 +3112,30 @@ const TeacherCMobileLowFi: React.FC = () => {
   const getParentGuardianLabel = (guardian: ParentBindingProfile['guardians'][number]) => (
     guardian.relation === '其他' ? guardian.relationOther?.trim() || '其他' : guardian.relation
   );
-  const canRemoveParentBinding = activeClassProfile.isCreator || classTeachers.some((teacher) => teacher.name === currentTeacherDisplayName && teacher.isHomeroom);
+  const canRemoveParentBinding = activeClassProfile.isCreator || classTeachers.some((teacher) => teacher.name === currentTeacherDisplayName && (teacher.isHeadTeacher || teacher.isDeputyHeadTeacher));
 
   const ParentBindingCard = ({ student, compact = false }: { student: ParentBindingProfile; compact?: boolean }) => {
     const guardians = student.guardians;
     const visibleGuardians = compact ? guardians.slice(0, 2) : guardians;
     const hiddenGuardianCount = guardians.length - visibleGuardians.length;
+    const isUnbound = guardians.length === 0;
 
     return (
       <div className={cx(
         'min-w-0 bg-white',
         compact ? 'rounded-2xl p-2.5' : 'rounded-2xl border border-gray-100 px-3 py-3',
-        guardians.length === 0 && 'ring-1 ring-gray-100'
+        isUnbound && 'ring-1 ring-gray-100'
       )}>
-        <div className="flex min-w-0 items-center gap-2.5">
+        <div className={cx('flex min-w-0 gap-2.5', isUnbound ? 'items-start' : 'items-center')}>
           <div className={cx('flex shrink-0 items-center justify-center rounded-full bg-gray-100 font-black', compact ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-sm')}>
             {student.name.slice(0, 1)}
           </div>
           <div className="min-w-0 flex-1">
-            <div className={cx('truncate font-black leading-5', compact ? 'text-sm' : 'text-base')}>{student.name}</div>
-            {!compact && guardians.length === 0 && (
-              <div className="mt-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-500">未绑定</div>
+            <div className={cx('whitespace-nowrap font-black leading-5', compact ? 'text-sm' : 'text-base')}>{student.name}</div>
+            {isUnbound && (
+              <div className={cx('mt-1 inline-flex rounded-full bg-gray-100 font-black text-gray-500', compact ? 'px-2 py-0.5 text-[10px]' : 'px-2 py-0.5 text-[11px]')}>未绑定</div>
             )}
           </div>
-          {compact && guardians.length === 0 && <div className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-black text-gray-500">未绑定</div>}
         </div>
         {guardians.length > 0 && (
           <div className={cx('flex flex-wrap gap-1.5', compact ? 'mt-2 pl-10' : 'mt-3 pl-[50px]')}>
@@ -2885,11 +3204,11 @@ const TeacherCMobileLowFi: React.FC = () => {
   };
 
   const PageNodeButton = ({ item, lane }: { item: PageKey; lane?: string }) => {
-    const active = page === item && activeLane === (lane ?? '首次进入');
+    const active = page === item && activeInviteNode < 0;
     return (
       <button
         type="button"
-        onClick={() => { setActiveLane(lane ?? '首次进入'); setActiveInviteNode(-1); jumpToPage(item); }}
+        onClick={() => { setActiveLane(lane ?? '登录'); setActiveInviteNode(-1); jumpToPage(item); }}
         className={cx(
           'flex h-10 shrink-0 items-center rounded-xl border px-3 text-left active:bg-gray-100',
           active ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700'
@@ -2904,72 +3223,73 @@ const TeacherCMobileLowFi: React.FC = () => {
   };
 
   const renderPageDirectory = () => (
-    <section className="rounded-2xl bg-white p-4">
-      <div className="space-y-3">
+    <section className="overflow-x-auto rounded-2xl bg-white p-4">
+      <div className="w-max min-w-full space-y-3">
         {flowLanes.map((lane) => (
-          <div key={lane.title} className="grid grid-cols-[72px_1fr] items-center gap-3">
-            <div className="text-xs font-black text-gray-500">{lane.title}</div>
-            {lane.title === '首次进入' ? (
-              <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
+          <div key={lane.title} className="grid min-w-full grid-cols-[96px_max-content] items-center gap-3">
+            <div className="whitespace-nowrap text-xs font-black text-gray-500">{lane.title}</div>
+            {lane.title === '登录' ? (
+              <div className="flex items-center gap-2">
                 <PageNodeButton item="login" lane={lane.title} />
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="profile" lane={lane.title} />
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="home" lane={lane.title} />
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <div className="grid shrink-0 grid-rows-2 gap-2">
-                  <PageNodeButton item="classCreate" lane={lane.title} />
-                  <PageNodeButton item="classJoin" lane={lane.title} />
+                <div className="grid shrink-0 gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="grid w-[152px] shrink-0 grid-cols-[20px_1fr_12px] items-center gap-2 text-[11px] font-black leading-4 text-gray-500">
+                      <span className="h-px bg-gray-300" />
+                      <span>新用户首次登录</span>
+                      <span className="text-sm text-gray-400">→</span>
+                    </div>
+                    <PageNodeButton item="profile" lane={lane.title} />
+                    <span className="shrink-0 text-sm font-black text-gray-400">→</span>
+                    <PageNodeButton item="home" lane={lane.title} />
+                    <span className="shrink-0 text-sm font-black text-gray-400">→</span>
+                    <div className="grid shrink-0 grid-rows-2 gap-2">
+                      <PageNodeButton item="classCreate" lane={lane.title} />
+                      <PageNodeButton item="classJoin" lane={lane.title} />
+                    </div>
+                    <span className="shrink-0 text-sm font-black text-gray-400">→</span>
+                    <PageNodeButton item="studentAdd" lane={lane.title} />
+                    <span className="shrink-0 text-sm font-black text-gray-400">→</span>
+                    <PageNodeButton item="record" lane={lane.title} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="grid w-[152px] shrink-0 grid-cols-[20px_1fr_12px] items-center gap-2 text-[11px] font-black leading-4 text-gray-500">
+                      <span className="h-px bg-gray-300" />
+                      <span>新用户已填写姓名，但未完成新手引导</span>
+                      <span className="text-sm text-gray-400">→</span>
+                    </div>
+                    <PageNodeButton item="home" lane={lane.title} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="grid w-[152px] shrink-0 grid-cols-[20px_1fr_12px] items-center gap-2 text-[11px] font-black leading-4 text-gray-500">
+                      <span className="h-px bg-gray-300" />
+                      <span>老用户登录</span>
+                      <span className="text-sm text-gray-400">→</span>
+                    </div>
+                    <PageNodeButton item="record" lane={lane.title} />
+                  </div>
                 </div>
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="studentAdd" lane={lane.title} />
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="record" lane={lane.title} />
               </div>
-            ) : lane.title === '班级' ? (
-              <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
-                <PageNodeButton item="classList" lane={lane.title} />
+            ) : lane.title === '我的(个人版)' ? (
+              <div className="flex items-center gap-2">
+                <PageNodeButton item="minePersonal" lane={lane.title} />
                 <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <div className="grid shrink-0 grid-rows-2 gap-2">
-                  <PageNodeButton item="classDetail" lane={lane.title} />
-                  <PageNodeButton item="classDetailMember" lane={lane.title} />
-                </div>
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <div className="grid shrink-0 grid-rows-2 gap-2">
-                  <PageNodeButton item="teacherList" lane={lane.title} />
-                  <PageNodeButton item="teacherListMember" lane={lane.title} />
-                </div>
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="parentBindingList" lane={lane.title} />
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <div className="grid shrink-0 grid-rows-2 gap-2">
-                  <PageNodeButton item="studentList" lane={lane.title} />
-                  <PageNodeButton item="studentBatchEdit" lane={lane.title} />
-                </div>
+                <PageNodeButton item="teacherBasicInfoPersonal" lane={lane.title} />
               </div>
-            ) : lane.title === '老用户' ? (
-              <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
-                <PageNodeButton item="login" lane={lane.title} />
+            ) : lane.title === '我的(学校版)' ? (
+              <div className="flex items-center gap-2">
+                <PageNodeButton item="mineSchool" lane={lane.title} />
                 <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="record" lane={lane.title} />
-              </div>
-            ) : lane.title === '我的' ? (
-              <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
-                <div className="grid shrink-0 grid-rows-2 gap-2">
-                  <PageNodeButton item="minePersonal" lane={lane.title} />
-                  <PageNodeButton item="mineSchool" lane={lane.title} />
-                </div>
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <div className="grid shrink-0 grid-rows-3 gap-2">
+                <div className="grid shrink-0 grid-cols-3 gap-2">
+                  <PageNodeButton item="teacherBasicInfoSchool" lane={lane.title} />
+                  <PageNodeButton item="mineSettings" lane={lane.title} />
                   <PageNodeButton item="termManagement" lane={lane.title} />
                   <PageNodeButton item="subjectManagement" lane={lane.title} />
                   <PageNodeButton item="departmentManagement" lane={lane.title} />
+                  <PageNodeButton item="coinIssuanceManagement" lane={lane.title} />
                 </div>
-                <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="schoolUsageReport" lane={lane.title} />
               </div>
             ) : (
-              <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
+              <div className="flex items-center gap-2">
                 {lane.pages.map((item, index) => (
                   <React.Fragment key={item}>
                     {index > 0 && <span className="shrink-0 text-sm font-black text-gray-400">→</span>}
@@ -2980,9 +3300,9 @@ const TeacherCMobileLowFi: React.FC = () => {
             )}
           </div>
         ))}
-        <div className="grid grid-cols-[72px_1fr] items-start gap-3 border-t border-gray-100 pt-3">
-          <div className="text-xs font-black text-gray-500">被邀请</div>
-          <div className="flex min-w-0 items-center gap-3 overflow-x-auto">
+        <div className="grid min-w-full grid-cols-[96px_max-content] items-start gap-3 border-t border-gray-100 pt-3">
+          <div className="whitespace-nowrap text-xs font-black text-gray-500">被邀请</div>
+          <div className="flex items-center gap-3">
             {(() => {
               const srcActive = activeInviteNode === 0;
               return (
@@ -2998,7 +3318,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                 { cond: '已登录未加入', node: invitePathNodes[3], idx: 3 },
               ] as const).map((branch) => {
                 const destActive = activeInviteNode === branch.idx;
-                const destPage = branch.node.target.type === 'page' ? branch.node.target.page : 'classList';
+                const destPage = branch.node.target.type === 'page' ? branch.node.target.page : 'classListSchool';
                 return (
                   <div key={branch.cond} className="flex items-center gap-2">
                     <div className="flex min-w-[152px] items-center gap-2 text-[11px] font-black text-gray-500">
@@ -3568,44 +3888,171 @@ const TeacherCMobileLowFi: React.FC = () => {
     </PhoneMockup>
   );
 
-  const renderOpsPrototype = () => (
-    <div className="h-full w-full max-w-[760px] overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-950">
-      <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-        <div>
-          <div className="text-base font-black">C端老师线索</div>
-          <div className="mt-1 text-xs font-medium text-gray-500">按使用深度判断跟进优先级</div>
+  const renderOpsPrototype = () => {
+    const schoolStats = [
+      { label: '未开始', value: 8 },
+      { label: '合作中', value: 46 },
+      { label: '已到期', value: 6 },
+    ];
+    const personalStats = [
+      { label: '已转化', value: 328 },
+      { label: '待转化', value: 514 },
+    ];
+    const todos = [
+      { id: 'school-report-1', target: '未来实验小学', type: '学校', time: '10:24' },
+      { id: 'user-report-1', target: '李明老师', type: '个人用户', time: '09:48' },
+      { id: 'school-report-2', target: '星河第二小学', type: '学校', time: '昨天' },
+      { id: 'user-report-2', target: '周婷婷老师', type: '个人用户', time: '昨天' },
+    ];
+    const userRows = [
+      { phone: '138****2468', name: '李明老师', classCount: 3, studentCount: 128, recordCount: 42, schoolVersion: '否' },
+      { phone: '186****5179', name: '周婷婷老师', classCount: 1, studentCount: 36, recordCount: 11, schoolVersion: '否' },
+      { phone: '139****8021', name: '王晨老师', classCount: 5, studentCount: 216, recordCount: 97, schoolVersion: '是' },
+      { phone: '158****6390', name: '赵晓老师', classCount: 2, studentCount: 84, recordCount: 28, schoolVersion: '是' },
+    ];
+    const pendingCount = todos.filter((item) => !handledOpsTodoIds.includes(item.id)).length;
+
+    const markTodoHandled = (id: string) => {
+      setHandledOpsTodoIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    };
+
+    return (
+      <div className="h-full w-full max-w-[950px] overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-950">
+        <div className="flex h-14 items-center border-b border-gray-200 px-4">
+          <div className="text-base font-black">C端改造 · 运营端</div>
+          <button type="button" className="ml-auto h-9 rounded-xl border border-gray-200 px-3 text-sm font-black">退出登录</button>
         </div>
-        <button type="button" className="h-10 rounded-xl border border-gray-200 px-4 text-sm font-black">导出</button>
-      </div>
-      <div className="grid grid-cols-4 gap-3 border-b border-gray-100 p-4">
-        {['新增老师 128', '活跃老师 76', '生成报告 31', '高意向 12'].map((item) => {
-          const [label, value] = item.split(' ');
-          return (
-            <div key={item} className="rounded-2xl bg-gray-50 p-3">
-              <div className="text-xs font-black text-gray-500">{label}</div>
-              <div className="mt-2 text-xl font-black">{value}</div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.8fr] border-b border-gray-100 bg-gray-50 px-4 py-3 text-xs font-black text-gray-500">
-        <div>老师</div>
-        <div>学校</div>
-        <div>班级</div>
-        <div>AI记录</div>
-        <div>状态</div>
-      </div>
-      {[
-        ['郭老师', '星河实验小学', '2', '68', '高意向'],
-        ['陈老师', '未填写', '1', '21', '活跃'],
-        ['李老师', '南城一中', '3', '96', '高意向'],
-      ].map((row) => (
-        <div key={row.join('-')} className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.8fr] border-b border-gray-100 px-4 py-4 text-sm font-medium">
-          {row.map((cell) => <div key={cell} className="truncate pr-2">{cell}</div>)}
+        <div className="flex h-[calc(100%-57px)]">
+          <aside className="w-[148px] shrink-0 border-r border-gray-200 bg-gray-50 p-3">
+            {[
+              { key: 'home' as const, label: '首页' },
+              { key: 'personalUsers' as const, label: '个人用户管理' },
+            ].map((item) => {
+              const active = opsPage === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setOpsPage(item.key)}
+                  className={cx('mb-2 h-10 w-full rounded-xl px-3 text-left text-sm font-black', active ? 'bg-gray-950 text-white' : 'text-gray-600 active:bg-gray-200')}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </aside>
+
+          <main className="min-w-0 flex-1 overflow-y-auto p-4">
+            {opsPage === 'home' && (
+              <div className="space-y-4">
+                <section className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-gray-200 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-black">学校总数</div>
+                      <div className="text-2xl font-black">60</div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {schoolStats.map((item) => (
+                        <div key={item.label} className="rounded-xl bg-gray-50 px-3 py-2">
+                          <div className="text-[11px] font-black text-gray-500">{item.label}</div>
+                          <div className="mt-2 text-lg font-black">{item.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-gray-200 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-black">个人用户</div>
+                      <div className="text-2xl font-black">842</div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      {personalStats.map((item) => (
+                        <div key={item.label} className="rounded-xl bg-gray-50 px-3 py-2">
+                          <div className="text-[11px] font-black text-gray-500">{item.label}</div>
+                          <div className="mt-2 text-lg font-black">{item.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                <section className="overflow-hidden rounded-2xl border border-gray-200">
+                  <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-4 py-3">
+                    <div className="text-sm font-black">待办</div>
+                    <div className="rounded-xl bg-white px-2.5 py-1 text-xs font-black text-gray-600">{pendingCount} 条待处理</div>
+                  </div>
+                  {todos.map((item) => {
+                    const handled = handledOpsTodoIds.includes(item.id);
+                    return (
+                      <div key={item.id} className="flex items-center gap-3 border-b border-gray-100 px-4 py-3 last:border-b-0">
+                        <div className={cx('flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black', handled ? 'bg-gray-100 text-gray-400' : 'bg-gray-950 text-white')}>
+                          {handled ? '✓' : '!'}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className={cx('truncate text-sm font-black', handled ? 'text-gray-400' : 'text-gray-900')}>
+                            {item.target} 发起了2025-2026学年下学期的期末报告生成
+                          </div>
+                          <div className="mt-1 text-xs font-medium text-gray-500">{item.type} · {item.time}</div>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={handled}
+                          onClick={() => markTodoHandled(item.id)}
+                          className={cx('h-8 shrink-0 rounded-xl px-3 text-xs font-black', handled ? 'bg-gray-100 text-gray-400' : 'bg-gray-950 text-white')}
+                        >
+                          {handled ? '已处理' : '标记处理'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </section>
+              </div>
+            )}
+
+            {opsPage === 'personalUsers' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-[1fr_1fr_0.8fr_auto] gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-3 text-xs font-black text-gray-500">
+                  <div className="rounded-xl bg-white px-3 py-2">搜索姓名 / 学校</div>
+                  <div className="rounded-xl bg-white px-3 py-2">全部状态</div>
+                  <div className="rounded-xl bg-white px-3 py-2">全部来源</div>
+                  <button type="button" className="h-9 rounded-xl bg-gray-950 px-4 text-white">查询</button>
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-gray-200">
+                  <div>
+                    <div className="grid grid-cols-[1.02fr_0.72fr_0.58fr_0.62fr_0.58fr_0.72fr_1.8fr] border-b border-gray-100 bg-gray-50 px-4 py-3 text-xs font-black text-gray-500">
+                      <div>手机号</div>
+                      <div>姓名</div>
+                      <div className="text-right">拥有班级数</div>
+                      <div className="text-right">拥有学生数</div>
+                      <div className="text-right">记录条数</div>
+                      <div>是否转学校版</div>
+                      <div>操作</div>
+                    </div>
+                    {userRows.map((row) => (
+                      <div key={row.phone} className="grid grid-cols-[1.02fr_0.72fr_0.58fr_0.62fr_0.58fr_0.72fr_1.8fr] items-center border-b border-gray-100 px-4 py-3 text-sm font-medium last:border-b-0">
+                        <div className="truncate pr-2 font-black text-gray-900">{row.phone}</div>
+                        <div className="truncate pr-2">{row.name}</div>
+                        <div className="pr-4 text-right font-black">{row.classCount}</div>
+                        <div className="pr-4 text-right font-black">{row.studentCount}</div>
+                        <div className="pr-4 text-right font-black">{row.recordCount}</div>
+                        <div className={cx('font-black', row.schoolVersion === '是' ? 'text-gray-500' : 'text-gray-950')}>{row.schoolVersion}</div>
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-black">
+                          {['登录学校后台', '个性化配置', '提示词管理', '手动触发'].map((action) => (
+                            <button key={action} type="button" className="text-gray-900 underline-offset-4 active:underline">{action}</button>
+                          ))}
+                          <button type="button" className="text-red-600 underline-offset-4 active:underline">删除</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </main>
         </div>
-      ))}
-    </div>
-  );
+      </div>
+    );
+  };
 
   const renderSchoolAdminPrototype = () => {
     const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
@@ -3774,13 +4221,23 @@ const TeacherCMobileLowFi: React.FC = () => {
           {renderPhoneLoginSheet()}
           {renderSpaceSelectSheet()}
           {renderFinalReportConfirmSheet()}
+          {showCoinIssueHelpOverlay && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/55 px-8" onClick={() => setShowCoinIssueHelpOverlay(false)}>
+              <div className="rounded-3xl bg-white p-5 text-center text-sm font-black leading-7 text-gray-900 shadow-[0_20px_60px_rgba(15,23,42,0.25)]">
+                开启后，会按照每周/每月基于学生的评价情况，发放校园币。
+              </div>
+            </div>
+          )}
           {renderSchoolBasicInfoEditSheet()}
+          {renderSubjectEditSheet()}
+          {renderSubjectDeleteConfirmSheet()}
           {renderTermEditSheet()}
           {renderTermActionSheet()}
           {renderAvatarSheet()}
           {renderNameSheet()}
           {renderSchoolUpgradeSheet()}
           {renderTeachingSheet()}
+          {renderTeacherBasicConfigSheet()}
           {renderInviteOptionsSheet()}
           {renderWechatChatSheet()}
           {renderClassCodeInviteSheet()}
@@ -3790,8 +4247,8 @@ const TeacherCMobileLowFi: React.FC = () => {
           {renderRemoveTeacherConfirmSheet()}
           {renderRemoveParentBindingConfirmSheet()}
           {renderParentBindingDetailSheet()}
-          {renderTransferAdminTeacherSheet()}
-          {renderTransferAdminConfirmSheet()}
+          {renderTransferHeadTeacherSheet()}
+          {renderTransferHeadTeacherConfirmSheet()}
           {renderClassActionSheet()}
           {renderTeacherActionSheet()}
         </div>
@@ -3806,15 +4263,18 @@ const TeacherCMobileLowFi: React.FC = () => {
     if (surface === 'schoolAdmin') return renderStaticPrdPanel(schoolAdminPrdBlocks);
     if (surface === 'ops') return renderStaticPrdPanel(opsPrdBlocks);
 
+    const isClassDetailPrd = page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead';
     const blocks: PrdBlock[] = [
-      { type: 'h1', text: meta.title },
-      { type: 'p', text: meta.subtitle },
-      { type: 'h2', text: '页面模块' },
-      { type: 'list', items: meta.modules },
-      { type: 'h2', text: 'CTA 按钮' },
-      { type: 'list', items: meta.ctas.map((cta) => `${cta.label}｜${cta.priority}｜${cta.position}`) },
-      { type: 'h2', text: '页面状态' },
-      { type: 'list', items: stateCycle.map((state) => `${stateLabels[state]}：${meta.states[state]}`) },
+      ...(!isClassDetailPrd ? [
+        { type: 'h1' as const, text: meta.title },
+        { type: 'p' as const, text: meta.subtitle },
+        { type: 'h2' as const, text: '页面模块' },
+        { type: 'list' as const, items: meta.modules },
+        { type: 'h2' as const, text: 'CTA 按钮' },
+        { type: 'list' as const, items: meta.ctas.map((cta) => `${cta.label}｜${cta.priority}｜${cta.position}`) },
+        { type: 'h2' as const, text: '页面状态' },
+        { type: 'list' as const, items: stateCycle.map((state) => `${stateLabels[state]}：${meta.states[state]}`) },
+      ] : []),
       ...(pagePrdDetails[page] || []),
     ];
 
@@ -4060,8 +4520,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     const selectSpace = (spaceId: TeacherSpaceId) => {
       setCurrentSpaceId(spaceId);
       setShowSpaceSelectSheet(false);
-      const selectedSpace = teacherSpaces.find((space) => space.id === spaceId);
-      navigate(selectedSpace?.type === 'school' ? 'mineSchool' : 'minePersonal');
+      navigate('mineSchool');
     };
 
     return (
@@ -4153,8 +4612,12 @@ const TeacherCMobileLowFi: React.FC = () => {
 
   const renderSchoolBasicInfoEditSheet = () => {
     if (!showBasicInfoEditSheet) return null;
-    const close = () => setShowBasicInfoEditSheet(false);
+    const close = () => {
+      setEditingBasicInfoItem(null);
+      setShowBasicInfoEditSheet(false);
+    };
     const tabLabel = schoolBasicInfoTabs.find((item) => item.key === activeBasicInfoTab)?.label ?? '基础信息';
+    const isDepartment = activeBasicInfoTab === 'department';
     const isEditing = Boolean(editingBasicInfoItem);
     const title = `${isEditing ? '编辑' : '新增'}${tabLabel}`;
     const currentName = editingBasicInfoItem?.name ?? '';
@@ -4188,14 +4651,84 @@ const TeacherCMobileLowFi: React.FC = () => {
             </div>
           )}
 
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <button type="button" className="h-11 rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">启用</button>
-            <button type="button" className="h-11 rounded-2xl border border-gray-200 bg-white text-sm font-black">停用</button>
-          </div>
-
           <button type="button" onClick={close} className="mt-4 h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">
             完成
           </button>
+        </section>
+      </div>
+    );
+  };
+
+  const renderSubjectEditSheet = () => {
+    if (!showSubjectEditSheet) return null;
+    const close = () => {
+      setShowSubjectEditSheet(false);
+      setEditingSubjectItem(null);
+    };
+    const isEditing = Boolean(editingSubjectItem);
+    const title = isEditing ? '修改科目名称' : '新增科目';
+    const inputId = 'school-subject-name-input';
+
+    const saveSubject = () => {
+      const input = document.getElementById(inputId) as HTMLInputElement | null;
+      const name = input?.value.trim();
+      if (!name) return;
+      if (editingSubjectItem) {
+        setSubjectItems((items) => items.map((item) => item.id === editingSubjectItem.id ? { ...item, name } : item));
+      } else {
+        setSubjectItems((items) => [...items, { id: `subject-${Date.now()}`, name }]);
+      }
+      close();
+    };
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label={title}>
+        <button type="button" aria-label="关闭科目编辑弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">{title}</h3>
+
+          <label className="mt-4 block text-xs font-black text-gray-600">
+            科目名称
+            <input
+              id={inputId}
+              className="mt-2 h-12 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-base font-normal text-gray-950 outline-none focus:border-gray-900"
+              defaultValue={editingSubjectItem?.name ?? ''}
+              placeholder="请输入科目名称"
+            />
+          </label>
+
+          <button type="button" onClick={saveSubject} className="mt-4 h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">
+            完成
+          </button>
+        </section>
+      </div>
+    );
+  };
+
+  const renderSubjectDeleteConfirmSheet = () => {
+    if (!deletingSubjectItem) return null;
+    const close = () => setDeletingSubjectItem(null);
+    const confirmDelete = () => {
+      setSubjectItems((items) => items.filter((item) => item.id !== deletingSubjectItem.id));
+      close();
+    };
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[121] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="确认删除科目">
+        <button type="button" aria-label="关闭删除科目确认弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">删除科目</h3>
+          <div className="mt-3 rounded-2xl bg-gray-50 px-4 py-3 text-sm font-black text-gray-900">{deletingSubjectItem.name}</div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">
+              取消
+            </button>
+            <button type="button" onClick={confirmDelete} className="h-12 rounded-2xl border border-red-100 bg-red-50 text-sm font-black text-red-600 active:bg-red-100">
+              确认删除
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -4333,8 +4866,8 @@ const TeacherCMobileLowFi: React.FC = () => {
 
           <div className="mt-4 min-h-0 flex-1 space-y-4">
             <div className="overflow-hidden rounded-2xl bg-gray-50">
-              <div className="grid h-80 grid-cols-[92px_1fr]">
-                <div className="border-r border-gray-200 bg-gray-100 p-2">
+              <div className="grid h-[280px] min-h-0 grid-cols-[92px_1fr]">
+                <div className="min-h-0 overflow-y-auto overscroll-contain border-r border-gray-200 bg-gray-100 p-2 touch-pan-y">
                   {gradeOptions.map((item) => (
                     <button
                       key={item}
@@ -4346,7 +4879,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                     </button>
                   ))}
                 </div>
-                <div className="flex min-w-0 flex-col p-3">
+                <div className="flex min-h-0 min-w-0 flex-col p-3">
                   <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 touch-pan-y">
                     {classOptions.map((item) => {
                       const selected = teachingSelectedClasses.includes(item);
@@ -4384,7 +4917,65 @@ const TeacherCMobileLowFi: React.FC = () => {
             </div>
           </div>
 
-          <button type="button" onClick={submitTeachingSheet} disabled={teachingSelectedClasses.length === 0} className={cx('mt-5 h-12 w-full rounded-2xl border border-gray-200 text-sm font-black', teachingSelectedClasses.length > 0 ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400')}>提交</button>
+          <button type="button" onClick={submitTeachingSheet} disabled={teachingSelectedClasses.length === 0} className={cx('mt-5 h-12 w-full rounded-2xl border border-gray-200 text-sm font-black', teachingSelectedClasses.length > 0 ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400')}>保存</button>
+          <button type="button" onClick={close} className="mt-3 h-10 w-full text-sm font-normal text-gray-400 active:text-gray-600">暂不选择</button>
+        </section>
+      </div>
+    );
+  };
+
+  const renderTeacherBasicConfigSheet = () => {
+    if (!activeTeacherBasicConfig) return null;
+    const close = () => setActiveTeacherBasicConfig(null);
+    const configMeta: Record<TeacherBasicConfigKey, { title: string; options: string[] }> = {
+      headClass: {
+        title: '选择带班班级',
+        options: Array.from({ length: 12 }).map((_, index) => `2025级${index + 1}班`),
+      },
+      gradeLeader: {
+        title: '选择分管年级',
+        options: ['2025级', '2024级', '2023级', '2022级', '2021级', '2020级'],
+      },
+      department: {
+        title: '部门设置',
+        options: schoolDepartmentItems.map((item) => item.name),
+      },
+    };
+    const currentMeta = configMeta[activeTeacherBasicConfig];
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label={currentMeta.title}>
+        <button type="button" aria-label={`关闭${currentMeta.title}弹窗`} className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'flex max-h-[78%] flex-col rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">{currentMeta.title}</h3>
+          <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 touch-pan-y">
+            {currentMeta.options.map((item) => {
+              const selected = draftTeacherBasicConfigValue === item;
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setDraftTeacherBasicConfigValue(item)}
+                  className={cx('flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl px-4 text-left text-sm font-normal active:bg-gray-100', selected ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900')}
+                >
+                  <span className="min-w-0 flex-1 truncate">{item}</span>
+                  {selected && <CheckCircle2 size={16} className="shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+          <div className="shrink-0 pt-5">
+            <button
+              type="button"
+              onClick={submitTeacherBasicConfigSheet}
+              disabled={!draftTeacherBasicConfigValue}
+              className={cx('flex min-h-14 w-full shrink-0 items-center justify-center rounded-2xl border border-gray-200 text-sm font-black', draftTeacherBasicConfigValue ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400')}
+            >
+              保存
+            </button>
+            <button type="button" onClick={close} className="mt-3 flex min-h-11 w-full shrink-0 items-center justify-center text-sm font-normal text-gray-400 active:text-gray-600">暂不选择</button>
+          </div>
         </section>
       </div>
     );
@@ -4451,8 +5042,8 @@ const TeacherCMobileLowFi: React.FC = () => {
 
     if (page === 'home') {
       const hasStudents = studentCount > 0 || joinedClassHasStudents;
-      const stepsDone = classCreated && hasStudents && recordCount > 0;
-      const currentStep = !classCreated ? 'class' : !hasStudents ? 'student' : recordCount === 0 ? 'record' : 'done';
+      const stepsDone = classCreated && hasStudents;
+      const currentStep = !classCreated ? 'class' : !hasStudents ? 'student' : 'done';
       const displayName = teacherName.trim() || '老师';
 
       return (
@@ -4465,10 +5056,10 @@ const TeacherCMobileLowFi: React.FC = () => {
               <>
                 <div className="rounded-3xl bg-gray-50 p-4">
                   <div className="text-base font-black leading-6">
-                    {displayName}老师，完成一次 AI 评价体验
+                    {displayName}老师，先做好这两步准备吧
                   </div>
                   <div className="mt-1 text-sm font-medium leading-5 text-gray-600">
-                    先获得班级并确认学生，再记录一条日常行为。
+                    想用 AI 记录学生的日常行为？先完成两个小步骤。
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -4489,8 +5080,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <TaskRow done={hasStudents} active={currentStep === 'student'} index={2} label="2. 确认学生" action="去添加" onClick={openStudentAdd} />
-                  <TaskRow done={recordCount > 0} active={currentStep === 'record'} index={3} label="3. 完成首次记录" action="去记录" onClick={() => navigate('record')} isLast />
+                  <TaskRow done={hasStudents} active={currentStep === 'student'} index={2} label="2. 确认学生" action="去添加" onClick={openStudentAdd} isLast />
                 </div>
               </>
             ) : (
@@ -4556,46 +5146,17 @@ const TeacherCMobileLowFi: React.FC = () => {
               {schoolStage && entryYear && (
                 <div className="rounded-2xl bg-gray-50 p-3 text-xs font-black">
                   班级名称
-                  {isCustomClassName ? (
-                    <div className="mt-2 flex items-center gap-2">
-                      <input
-                        value={customClassName}
-                        onChange={(event) => setCustomClassName(event.target.value)}
-                        className="h-11 min-w-0 flex-1 border border-gray-200 bg-white px-3 text-sm font-normal"
-                        aria-label="自定义班级名称"
-                      />
-                      <button
-                        type="button"
-                        className="h-11 shrink-0 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black"
-                      >
-                        自定义名称
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="mt-2 flex items-center gap-2">
-                      <div className="flex h-11 min-w-0 flex-1 items-center gap-2 bg-white px-3 text-sm font-normal">
-                        <span>{entryYear}级</span>
-                        <input
-                          value={classNumber}
-                          onChange={(event) => setClassNumber(event.target.value.replace(/[^0-9]/g, ''))}
-                          className="h-8 w-14 border border-gray-200 text-center"
-                          inputMode="numeric"
-                          aria-label="班级数字"
-                        />
-                        <span>班</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCustomClassName(classDisplayName || defaultClassName);
-                          setIsCustomClassName(true);
-                        }}
-                        className="h-11 shrink-0 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black"
-                      >
-                        自定义名称
-                      </button>
-                    </div>
-                  )}
+                  <div className="mt-2 flex h-11 items-center gap-2 bg-white px-3 text-sm font-normal">
+                    <span>{entryYear}级</span>
+                    <input
+                      value={classNumber}
+                      onChange={(event) => setClassNumber(event.target.value.replace(/[^0-9]/g, ''))}
+                      className="h-8 w-14 border border-gray-200 text-center"
+                      inputMode="numeric"
+                      aria-label="班级数字"
+                    />
+                    <span>班</span>
+                  </div>
                 </div>
               )}
 
@@ -4640,7 +5201,7 @@ const TeacherCMobileLowFi: React.FC = () => {
         if (!canJoinClass) return;
         setClassCreated(true);
         setJoinedClassHasStudents(true);
-        navigate('home');
+        navigate('record');
       };
 
       return (
@@ -4798,20 +5359,32 @@ const TeacherCMobileLowFi: React.FC = () => {
     }
 
     if (page === 'record') {
+      const recordGuideExamples = [
+        '张三同学今天主动帮助同学解决问题，值得表扬。',
+        '2025级1班全体同学积极参加体育锻炼。',
+        '2025级1班的1号，2号，3号，4号，7号同学在语文课堂上积极举手发言。',
+        '李四同学昨天言语辱骂王五同学。',
+      ];
       return (
         <>
-          <TabHeader title="记录" />
           <div className="space-y-3 p-5 pb-28">
-            <div className="flex gap-2 text-xs"><button className="rounded-xl bg-gray-50 px-3 py-2">查看默认指标</button><button className="rounded-xl bg-gray-50 px-3 py-2">AI说明</button></div>
-            {recordCount === 0 ? (
-              <div className="rounded-3xl border border-dashed border-gray-200 p-8 text-center text-sm font-black">试着说一句或输入一句</div>
-            ) : (
-              <button type="button" onClick={() => navigate('aiResult')} className="w-full rounded-3xl bg-gray-50 p-4 text-left text-xs">
-                <div className="font-black">今天 10:20</div>
-                <div className="mt-2 rounded-xl border border-dashed border-gray-200 p-2">原始语音 + 转文字：1班1号和2号主动打扫卫生。</div>
-                <div className="mt-2 rounded-xl bg-gray-50 p-2">AI解读：2名学生｜劳育｜+3</div>
-              </button>
-            )}
+            <div className="flex gap-2 text-xs"><button className="rounded-xl bg-gray-50 px-3 py-2">查看默认指标</button></div>
+            <section className="rounded-3xl bg-gray-50 p-4">
+              <div className="text-sm font-black leading-6">试试通过语音描述一下内容：</div>
+              <div className="mt-3 space-y-2">
+                {recordGuideExamples.map((example, index) => (
+                  <button
+                    key={example}
+                    type="button"
+                    onClick={() => navigate('textInput')}
+                    className="flex w-full gap-3 rounded-2xl bg-white p-3 text-left active:bg-gray-100"
+                  >
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-gray-900 text-xs font-black text-white">{index + 1}</span>
+                    <span className="min-w-0 text-sm font-medium leading-6 text-gray-800">{example}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
           </div>
           <div className="absolute inset-x-5 bottom-20 grid h-14 grid-cols-[1fr_2fr_1fr] gap-2 rounded-2xl bg-white p-2 text-xs font-black">
             <button type="button" onClick={() => navigate('photoAward')} className="rounded-xl bg-gray-50"><Camera size={16} className="mx-auto" />拍照</button>
@@ -4890,15 +5463,18 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
-    if (page === 'classList') {
+    if (page === 'classListPersonal' || page === 'classListSchool') {
+      const isSchoolList = page === 'classListSchool';
+
       return (
         <>
-          <TabHeader title="班级" />
           <div className="space-y-3 p-5 pb-24">
-            <div className="grid grid-cols-2 gap-3">
-              <ClassEntryCard type="create" onClick={() => navigate('classCreate')} />
-              <ClassEntryCard type="join" onClick={() => navigate('classJoin')} />
-            </div>
+            {!isSchoolList && (
+              <div className="grid grid-cols-2 gap-3">
+                <ClassEntryCard type="create" onClick={() => navigate('classCreate')} />
+                <ClassEntryCard type="join" onClick={() => navigate('classJoin')} />
+              </div>
+            )}
             <ClassCard name="2025级1班" code="58273914" stage="小学" entryYearValue={2025} tags={['班主任', '语文']} count={2} creatorName={teacherName.trim() || '郭老师'} isCreator />
             <ClassCard name="2024级2班" code="73948162" stage="初中" entryYearValue={2024} tags={['数学']} count={0} creatorName="陈老师" isCreator={false} />
           </div>
@@ -4907,24 +5483,28 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
-    if (page === 'classDetail' || page === 'classDetailMember') {
+    if (page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead') {
+      const isHeadTeacherDetail = page === 'classDetail' || page === 'classDetailSchoolHead';
       const openInviteFromDetail = () => {
         openInviteForClass('teacher', page);
       };
       const openInviteParentFromDetail = () => {
         openInviteForClass('parent', page);
       };
-      const classDangerLabel = activeClassProfile.isCreator ? '解散班级' : '退出班级';
+      const isSchoolVersionHead = page === 'classDetailSchoolHead';
+      const classDangerLabel = isHeadTeacherDetail ? (isSchoolVersionHead ? '退出班级' : '解散班级') : '退出班级';
 
       return (
         <>
-          <ScreenHeader title={activeClassProfile.isCreator ? '班级详情（管理员）' : '班级详情（非管理员）'} />
+          <ScreenHeader title={isHeadTeacherDetail ? '班级详情（班主任）' : '班级详情（非班主任）'} />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
             <div className="flex-1 space-y-3 overflow-y-auto pb-4">
               <section className="relative rounded-3xl border border-gray-200 bg-gray-50 p-4">
-                <button type="button" onClick={openClassEditSheet} className="absolute right-4 top-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white active:bg-gray-100" aria-label="编辑班级信息">
-                  <Edit3 size={16} />
-                </button>
+                {isHeadTeacherDetail && (
+                  <button type="button" onClick={openClassEditSheet} className="absolute right-4 top-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white active:bg-gray-100" aria-label="编辑班级信息">
+                    <Edit3 size={16} />
+                  </button>
+                )}
                 <div className="space-y-3 pr-12">
                   <div className="min-w-0">
                     <h3 className="truncate text-xl font-black leading-7">{activeClassTitle}</h3>
@@ -4947,7 +5527,7 @@ const TeacherCMobileLowFi: React.FC = () => {
               <section className="rounded-2xl bg-gray-50 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-black">老师列表<CountText>({classTeachers.length}人)</CountText></div>
-                  <button type="button" onClick={() => navigate(activeClassProfile.isCreator ? 'teacherList' : 'teacherListMember')} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white active:bg-gray-100" aria-label="查看更多老师">
+                  <button type="button" onClick={() => navigate(isHeadTeacherDetail ? 'teacherList' : 'teacherListMember')} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white active:bg-gray-100" aria-label="查看更多老师">
                     <ChevronRight size={17} />
                   </button>
                 </div>
@@ -4983,9 +5563,9 @@ const TeacherCMobileLowFi: React.FC = () => {
                 </button>
               </section>
           </div>
-            {activeClassProfile.isCreator && (
-              <button type="button" onClick={() => setShowTransferAdminTeacherSheet(true)} className="mb-2 h-12 w-full rounded-2xl border border-gray-200 bg-white text-sm font-black text-gray-950 active:bg-gray-100">
-                转移班级管理员
+            {isHeadTeacherDetail && (
+              <button type="button" onClick={() => setShowTransferHeadTeacherSheet(true)} className="mb-2 h-12 w-full rounded-2xl border border-gray-200 bg-white text-sm font-black text-gray-950 active:bg-gray-100">
+                转移班主任
               </button>
             )}
             <button type="button" onClick={() => setShowClassExitSheet(true)} className="h-12 w-full rounded-2xl border border-gray-300 bg-white text-sm font-black text-gray-950 active:bg-gray-100">
@@ -5013,12 +5593,13 @@ const TeacherCMobileLowFi: React.FC = () => {
                     <div className="truncate text-sm font-black">{teacher.name}</div>
                     <TeacherRoleTags teacher={teacher} />
                   </div>
-                  <button type="button" onClick={() => setActiveTeacherAction(teacher)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 active:bg-gray-100" aria-label={`${teacher.name}更多操作`}>
-                    <MoreHorizontal size={17} />
-                  </button>
+                  {teacher.name !== currentTeacherDisplayName && (
+                    <button type="button" onClick={() => setActiveTeacherAction(teacher)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 active:bg-gray-100" aria-label={`${teacher.name}更多操作`}>
+                      <MoreHorizontal size={17} />
+                    </button>
+                  )}
                 </div>
               ))}
-              {primaryClassTeachers.length > 0 && otherClassTeachers.length > 0 && <div className="h-px bg-gray-200" />}
               {otherClassTeachers.map((teacher) => (
                 <div key={teacher.name} className="flex min-h-[92px] items-center gap-3 rounded-2xl bg-gray-50 p-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black">{teacher.name.slice(0, 1)}</div>
@@ -5026,9 +5607,11 @@ const TeacherCMobileLowFi: React.FC = () => {
                     <div className="truncate text-sm font-black">{teacher.name}</div>
                     <TeacherRoleTags teacher={teacher} />
                   </div>
-                  <button type="button" onClick={() => setActiveTeacherAction(teacher)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 active:bg-gray-100" aria-label={`${teacher.name}更多操作`}>
-                    <MoreHorizontal size={17} />
-                  </button>
+                  {teacher.name !== currentTeacherDisplayName && (
+                    <button type="button" onClick={() => setActiveTeacherAction(teacher)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 active:bg-gray-100" aria-label={`${teacher.name}更多操作`}>
+                      <MoreHorizontal size={17} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -5303,27 +5886,48 @@ const TeacherCMobileLowFi: React.FC = () => {
     }
 
     if (page === 'minePersonal' || page === 'mineSchool') {
-      const hasSchoolSpace = page === 'mineSchool';
-      const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
-      const currentSpaceTitle = hasSchoolSpace ? currentSpace.title : '个人版';
+      const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces.find((space) => space.id === defaultTeacherSpaceId) ?? teacherSpaces[0];
+      const hasMultipleVersions = page === 'mineSchool';
+      const isCurrentSchoolVersion = currentSpace.type === 'school';
+      const currentSpaceTitle = currentSpace.title;
+      const managementToolItems: Array<{ key: string; label: string; icon: React.ElementType; onClick: () => void }> = [
+        ...(hasMultipleVersions && isCurrentSchoolVersion ? [{
+          key: 'schoolDataReport',
+          label: '学校数据报表',
+          icon: ChartNoAxesColumnIncreasing,
+          onClick: () => showClassActionToast('学校数据报表演示中'),
+        }] : []),
+        {
+          key: 'finalReport',
+          label: '生成期末报告',
+          icon: FileText,
+          onClick: openFinalReportConfirmSheet,
+        },
+      ];
+      const moreToolItems: Array<{ key: string; label: string; icon: React.ElementType; onClick: () => void }> = [
+        ...schoolBasicInfoTabs.map((item) => ({
+          key: item.key,
+          label: `${item.label}管理`,
+          icon: item.icon,
+          onClick: () => openSchoolBasicInfo(item.key),
+        })),
+        { key: 'coinIssuanceManagement', label: '货币发放', icon: Coins, onClick: () => navigate('coinIssuanceManagement') },
+      ];
       return (
         <>
-          <TabHeader title="我的" />
           <div className="space-y-3 p-5 pb-24">
-            <div className="relative rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+            <div className="flex items-start gap-3 px-1 pb-1 pt-1">
               <button
                 type="button"
-                onClick={openNameSheet}
-                className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-gray-600 active:bg-gray-100"
-                aria-label="编辑资料"
+                onClick={() => navigate(hasMultipleVersions ? 'teacherBasicInfoSchool' : 'teacherBasicInfoPersonal')}
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-lg font-black text-gray-800 active:bg-gray-200"
+                aria-label="进入基本信息设置"
               >
-                <Edit3 size={16} />
+                郭
               </button>
-              <div className="flex items-center gap-3 pr-11">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-lg font-black text-gray-800">郭</div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-base font-black">郭老师</div>
-                  {hasSchoolSpace && (
+              <div className="min-w-0 flex-1">
+                  <div className="truncate text-xl font-black">郭老师</div>
+                  {hasMultipleVersions && (
                     <button
                       type="button"
                       onClick={() => setShowSpaceSelectSheet(true)}
@@ -5335,67 +5939,186 @@ const TeacherCMobileLowFi: React.FC = () => {
                       <ArrowLeftRight size={13} className="shrink-0" />
                     </button>
                   )}
-                  {!hasSchoolSpace && (
+                  {!hasMultipleVersions && (
                     <div className="mt-2 flex flex-wrap gap-2">
                       <span className="rounded-lg bg-white px-2 py-1 text-xs font-black">个人版</span>
                     </div>
                   )}
                 </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => showClassActionToast('扫一扫功能演示中')}
+                    className="flex h-11 w-11 items-center justify-center rounded-2xl text-gray-700 active:bg-gray-100"
+                    aria-label="扫一扫"
+                  >
+                    <ScanLine size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('mineSettings')}
+                    className="flex h-11 w-11 items-center justify-center rounded-2xl text-gray-700 active:bg-gray-100"
+                    aria-label="设置"
+                  >
+                    <Settings size={18} />
+                  </button>
+                </div>
               </div>
-            </div>
 
             <section className="rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
               <div className="text-sm font-black">管理工具</div>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => navigate('schoolUsageReport')}
-                  className="flex min-h-[86px] flex-col justify-between rounded-2xl border border-gray-200 bg-gray-50 p-3 text-left active:bg-gray-100"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-gray-900 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
-                    <LineChart size={18} />
-                  </span>
-                  <span className="text-sm font-black leading-5">学校数据报表</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={openFinalReportConfirmSheet}
-                  className="flex min-h-[86px] flex-col justify-between rounded-2xl border border-gray-200 bg-gray-50 p-3 text-left active:bg-gray-100"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-gray-900 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
-                    <FileText size={18} />
-                  </span>
-                  <span className="text-sm font-black leading-5">生成期末报告</span>
-                </button>
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-              <div className="text-sm font-black">学校基础信息</div>
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                {schoolBasicInfoTabs.map((item) => {
+                {managementToolItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <button
                       key={item.key}
                       type="button"
-                      onClick={() => openSchoolBasicInfo(item.key)}
-                      className="flex min-h-[70px] flex-col items-center justify-center gap-2 rounded-2xl text-center active:bg-gray-100"
+                      onClick={item.onClick}
+                      className="flex min-h-[86px] flex-col justify-between rounded-2xl border border-gray-200 bg-gray-50 p-3 text-left active:bg-gray-100"
                     >
-                      <Icon size={28} className="text-gray-700" />
-                      <span className="text-xs font-black leading-4">{item.label}管理</span>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-gray-900 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
+                        <Icon size={18} />
+                      </span>
+                      <span className="text-sm font-black leading-5">{item.label}</span>
                     </button>
                   );
                 })}
               </div>
             </section>
 
-            {!hasSchoolSpace && (
+            <section className="rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+              <div className="text-sm font-black">更多工具</div>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {moreToolItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={item.onClick}
+                      className="flex min-h-[70px] flex-col items-center justify-center gap-2 rounded-2xl text-center active:bg-gray-100"
+                    >
+                      <Icon size={28} className="text-gray-700" />
+                      <span className="text-xs font-black leading-4">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {!hasMultipleVersions && (
               <button type="button" onClick={() => setShowSchoolUpgradeSheet(true)} className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">了解学校版</button>
             )}
 
+
+          </div>
+          <BottomNav />
+        </>
+      );
+    }
+
+    if (page === 'teacherBasicInfoPersonal' || page === 'teacherBasicInfoSchool') {
+      const isPersonalBasicInfo = page === 'teacherBasicInfoPersonal';
+      const basicInfoRows = [
+        ...(!isPersonalBasicInfo ? [
+          { key: 'headClass' as const, label: '带班班级', value: teacherBasicConfigValues.headClass },
+          { key: 'gradeLeader' as const, label: '分管年级', value: teacherBasicConfigValues.gradeLeader },
+        ] : []),
+        { key: 'department' as const, label: '部门设置', value: teacherBasicConfigValues.department },
+      ];
+      return (
+        <>
+          <ScreenHeader title="基本信息设置" />
+          <div className="teacher-basic-info-lowfi space-y-3 bg-gray-50 p-4 pb-24">
+            <section className="overflow-hidden rounded-3xl bg-white">
+              <button type="button" onClick={() => setShowAvatarSheet(true)} className="teacher-basic-info-avatar-wireframe flex min-h-[104px] w-full items-center justify-center bg-white active:bg-gray-50" aria-label="更换头像">
+                <div className="relative">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-2xl font-semibold text-gray-700">郭</div>
+                  <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-600 shadow-[0_2px_8px_rgba(15,23,42,0.10)]">
+                    <Camera size={15} />
+                  </span>
+                </div>
+              </button>
+
+              <button type="button" onClick={openNameSheet} className="flex min-h-[52px] w-full items-center justify-between gap-3 border-t border-gray-100 px-4 text-left active:bg-gray-50" aria-label="修改姓名">
+                <span className="text-sm font-normal text-gray-500">姓名</span>
+                <span className="flex min-w-0 items-center gap-2 text-sm font-normal text-gray-900">
+                  <span className="truncate">{teacherName || '郭老师'}</span>
+                  <Edit3 size={15} className="shrink-0 text-gray-500" />
+                </span>
+              </button>
+            </section>
+
+            <section className="overflow-hidden rounded-3xl bg-white">
+              <div className="px-4 py-3">
+                <div className="text-sm font-semibold text-gray-900">教师基础配置</div>
+              </div>
+
+              <div className="divide-y divide-gray-100">
+                {!isPersonalBasicInfo && (
+                  <div className="px-4 py-3">
+                    <div className="flex min-h-9 items-center justify-between gap-3">
+                      <span className="text-sm font-normal text-gray-500">任教班级</span>
+                      <button type="button" onClick={openTeachingCreate} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700 active:bg-gray-200" aria-label="新增任教班级">
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                    <div className="mt-2 space-y-2">
+                      {teachingInfoRows.map((item, index) => (
+                        <div key={item.id} className="flex items-center gap-2 rounded-2xl bg-gray-50 px-3 py-2">
+                          <div className="min-w-0 flex-1">
+                            <span className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-semibold text-gray-900">{item.subject}</span>
+                              <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-gray-500">{item.classes.length} 个班</span>
+                            </span>
+                            <span className="mt-1 block truncate text-xs font-normal text-gray-500">{item.classes.join('、')}</span>
+                          </div>
+                          <button type="button" onClick={() => removeTeachingRow(index)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-red-500 active:bg-red-50" aria-label={`删除任教班级${index + 1}`}>
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {basicInfoRows.map((row) => (
+                  <button key={row.label} type="button" onClick={() => openTeacherBasicConfigSheet(row.key)} className="flex min-h-[52px] w-full items-center justify-between gap-3 px-4 text-left active:bg-gray-50" aria-label={`编辑${row.label}`}>
+                    <span className="text-sm font-normal text-gray-500">{row.label}</span>
+                    <span className="flex min-w-0 items-center gap-2 text-right text-sm font-normal text-gray-900">
+                      <span className="min-w-0 truncate">{row.value}</span>
+                      <Edit3 size={15} className="shrink-0 text-gray-400" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        </>
+      );
+    }
+
+    if (page === 'mineSettings') {
+      return (
+        <>
+          <ScreenHeader title="设置" />
+          <div className="space-y-3 p-5 pb-5">
+            <section className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+              <div className="px-4 py-3 text-sm font-black">账号安全</div>
+              <div className="h-px bg-gray-100" />
+              <div className="flex h-12 items-center justify-between px-4 text-sm font-black">
+                <span>登录账号</span>
+                <span className="font-medium text-gray-500">139****0121</span>
+              </div>
+              <div className="flex h-12 items-center justify-between border-t border-gray-100 px-4 text-sm font-black">
+                <span className="flex items-center gap-2"><KeyRound size={16} />修改密码</span>
+                <ChevronRight size={16} />
+              </div>
+            </section>
+
             <div className="overflow-hidden rounded-2xl bg-gray-50">
-              {['修改密码', '隐私协议', '用户协议'].map((item) => (
+              {['隐私协议', '用户协议'].map((item) => (
                 <button key={item} type="button" className="flex h-12 w-full items-center justify-between border-b border-white px-4 text-left text-sm font-black last:border-b-0">
                   <span>{item}</span>
                   <ChevronRight size={16} />
@@ -5405,7 +6128,6 @@ const TeacherCMobileLowFi: React.FC = () => {
 
             <button type="button" className="h-11 w-full rounded-2xl border border-gray-200 bg-white text-sm font-black">退出登录</button>
           </div>
-          <BottomNav />
         </>
       );
     }
@@ -5462,49 +6184,231 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
-    if (page === 'subjectManagement' || page === 'departmentManagement') {
-      const isSubject = page === 'subjectManagement';
-      const activeItems = isSubject ? schoolSubjectItems : schoolDepartmentItems;
-      const title = isSubject ? '科目管理' : '部门管理';
-
+    if (page === 'subjectManagement') {
       return (
         <>
-          <ScreenHeader title={title} />
+          <ScreenHeader title="科目管理" />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
             <div className="flex-1 space-y-3 overflow-y-auto pb-24">
               <section className="space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <FormSectionTitle title={`${activeItems.length} 项`} />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveBasicInfoTab(isSubject ? 'subject' : 'department');
-                      openBasicInfoEditSheet();
-                    }}
-                    className="h-9 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black active:bg-gray-100"
-                  >
-                    新增
-                  </button>
-                </div>
-
-                {activeItems.map((item) => (
-                  <button
+                {subjectItems.map((item) => (
+                  <div
                     key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveBasicInfoTab(isSubject ? 'subject' : 'department');
-                      openBasicInfoEditSheet(item);
+                    draggable
+                    onDragStart={() => setDraggingSubjectId(item.id)}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      if (draggingSubjectId) moveSubjectItem(draggingSubjectId, item.id);
                     }}
-                    className="flex min-h-16 w-full items-center justify-between gap-3 rounded-2xl bg-gray-50 px-4 py-3 text-left active:bg-gray-100"
+                    onDragEnd={() => setDraggingSubjectId(null)}
+                    className={cx(
+                      'flex min-h-14 w-full items-center gap-3 rounded-2xl bg-gray-50 px-3 py-2 text-left active:bg-gray-100',
+                      draggingSubjectId === item.id && 'opacity-60'
+                    )}
                   >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-black">{item.name}</span>
-                      <span className="mt-1 block truncate text-xs font-medium text-gray-500">{item.desc}</span>
+                    <span className="flex h-10 w-8 shrink-0 cursor-grab items-center justify-center rounded-xl text-gray-400 active:cursor-grabbing" aria-label="拖动排序">
+                      <GripVertical size={18} />
                     </span>
-                    <BasicInfoStatusBadge status={item.status} />
-                  </button>
+                    <button type="button" onClick={() => openSubjectEditSheet(item)} className="min-w-0 flex-1 truncate text-left text-sm font-black">
+                      {item.name}
+                    </button>
+                    <button type="button" onClick={() => openSubjectEditSheet(item)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 active:bg-gray-100" aria-label={`修改${item.name}`}>
+                      <Edit3 size={16} />
+                    </button>
+                    <button type="button" onClick={() => setDeletingSubjectItem(item)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-red-500 active:bg-red-50" aria-label={`删除${item.name}`}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => openSubjectEditSheet()}
+                  className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-2 text-sm font-black text-gray-600 active:bg-gray-50"
+                >
+                  <Plus size={16} />
+                  新增
+                </button>
               </section>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    if (page === 'departmentManagement') {
+      const visibleDepartmentItems = schoolDepartmentItems.filter((item) => !deletedDepartmentIds.includes(item.id));
+
+      return (
+        <>
+          <ScreenHeader title="部门管理" />
+          <div className="flex h-[calc(100%-64px)] flex-col p-5">
+            <div className="flex-1 space-y-2 overflow-y-auto pb-24">
+              <section className="space-y-2">
+                {visibleDepartmentItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex min-h-14 w-full items-center gap-2 rounded-2xl bg-gray-50 px-3 py-2"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveBasicInfoTab('department');
+                        openBasicInfoEditSheet(item);
+                      }}
+                      className="min-w-0 flex-1 truncate px-1 text-left text-sm font-black active:text-gray-600"
+                    >
+                      {item.name}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveBasicInfoTab('department');
+                        openBasicInfoEditSheet(item);
+                      }}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 active:bg-gray-100"
+                      aria-label={`修改${item.name}`}
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeletedDepartmentIds((ids) => [...ids, item.id])}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-rose-500 active:bg-rose-50"
+                      aria-label={`删除${item.name}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveBasicInfoTab('department');
+                    openBasicInfoEditSheet();
+                  }}
+                  className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-3 text-sm font-black text-gray-600 active:bg-gray-50"
+                >
+                  <Plus size={16} />
+                  新增部门
+                </button>
+              </section>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    if (page === 'coinIssuanceManagement') {
+      const budgetSentencePrefix = coinIssuePeriod === 'weekly' ? '每周每个班级发放' : '每月每个班级发放';
+      const sliderClass = 'h-2 w-full accent-gray-900';
+      const sunshinePoolAmount = coinClassBudget * sunshineRatio / 100;
+      const rankingPoolAmount = coinClassBudget * rankingRatio / 100;
+      return (
+        <>
+          <ScreenHeader title="货币发放管理" />
+          <div className="flex h-[calc(100%-64px)] flex-col p-5">
+            <div className="flex-1 space-y-3 overflow-y-auto pb-24">
+              <section className="rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+                <div className="flex min-h-12 items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-sm font-black">开启货币发放</span>
+                    <button
+                      type="button"
+                      onPointerDown={() => setShowCoinIssueHelpOverlay(true)}
+                      onContextMenu={(event) => event.preventDefault()}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-500 active:bg-gray-100"
+                      aria-label="长按查看货币发放说明"
+                    >
+                      <CircleHelp size={16} />
+                    </button>
+                  </div>
+                  <SwitchControl
+                    checked={coinIssuanceEnabled}
+                    onChange={setCoinIssuanceEnabled}
+                    ariaLabel="开启货币发放"
+                  />
+                </div>
+              </section>
+
+              {coinIssuanceEnabled && (
+                <section className="space-y-3 rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+                  <label className="block">
+                    <span className="text-sm font-black">发放周期</span>
+                    <select
+                      value={coinIssuePeriod}
+                      onChange={(event) => setCoinIssuePeriod(event.target.value as CoinIssuePeriod)}
+                      className="mt-2 h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-black"
+                    >
+                      <option value="weekly">每周一发放</option>
+                      <option value="monthly">每月一号发放</option>
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-black">班级总预算</span>
+                    <div className="mt-2 flex min-h-12 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3">
+                      <span className="shrink-0 text-sm font-black text-gray-700">{budgetSentencePrefix}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={coinClassBudget}
+                        onChange={(event) => setCoinClassBudget(Number(event.target.value || 0))}
+                        className="h-9 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-2 text-center text-sm font-black text-gray-950"
+                        aria-label={budgetSentencePrefix}
+                      />
+                      <span className="shrink-0 text-sm font-black text-gray-700">币</span>
+                    </div>
+                  </label>
+
+                  <label className="block rounded-2xl bg-gray-50 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-black">阳光保底比例</span>
+                      <span className="text-sm font-black">{sunshineRatio}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={sunshineRatio}
+                      onChange={(event) => updateSunshineRatio(Number(event.target.value))}
+                      className={sliderClass}
+                    />
+                    <div className="mt-2 space-y-1 text-xs leading-5 text-gray-500">
+                      <div className="font-medium">每位学生无论评价如何，都可以获得的奖励。</div>
+                      <div className="font-black text-gray-900">全班平分：{formatCoinAmount(sunshinePoolAmount)}币</div>
+                    </div>
+                  </label>
+
+                  <label className="block rounded-2xl bg-gray-50 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-black">积分排行比例</span>
+                      <span className="text-sm font-black">{rankingRatio}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={rankingRatio}
+                      onChange={(event) => updateRankingRatio(Number(event.target.value))}
+                      className={sliderClass}
+                    />
+                    <div className="mt-2 space-y-1 text-xs leading-5 text-gray-500">
+                      <div className="font-medium">评分为正的学生，可按比例分配的奖励。</div>
+                      <div className="font-black text-gray-900">奖池金额：{formatCoinAmount(rankingPoolAmount)}币</div>
+                    </div>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => showClassActionToast('货币发放配置已保存')}
+                    className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white active:bg-gray-800"
+                  >
+                    保存
+                  </button>
+                </section>
+              )}
             </div>
           </div>
         </>
@@ -5524,58 +6428,6 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
-    if (page === 'schoolUsageReport') {
-      const metricItems = [
-        { label: '活跃教师', value: '42', sub: '本周使用' },
-        { label: '日常记录', value: '3,286', sub: '本学期累计' },
-        { label: '覆盖学生', value: '96%', sub: '已产生记录' },
-        { label: '报告生成', value: '18', sub: '本月完成' },
-      ];
-
-      return (
-        <>
-          <ScreenHeader title="学校数据报表" />
-          <div className="flex h-[calc(100%-64px)] flex-col p-5">
-            <div className="flex-1 space-y-3 overflow-y-auto pb-24">
-              <section className="grid grid-cols-2 gap-2">
-                {metricItems.map((item) => (
-                  <div key={item.label} className="rounded-2xl bg-gray-50 p-3">
-                    <div className="text-xs font-black text-gray-500">{item.label}</div>
-                    <div className="mt-2 text-2xl font-black leading-none">{item.value}</div>
-                    <div className="mt-1 text-xs font-medium text-gray-500">{item.sub}</div>
-                  </div>
-                ))}
-              </section>
-              <section className="rounded-3xl bg-gray-50 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-black">使用趋势</div>
-                  <BarChart3 size={18} className="text-gray-500" />
-                </div>
-                <div className="mt-4 flex h-28 items-end gap-2">
-                  {[38, 54, 46, 72, 64, 86, 78].map((height, index) => (
-                    <div key={index} className="flex flex-1 items-end rounded-xl bg-white p-1">
-                      <div className="w-full rounded-lg bg-gray-900" style={{ height: `${height}%` }} />
-                    </div>
-                  ))}
-                </div>
-              </section>
-              <section className="rounded-3xl bg-gray-50 p-4">
-                <div className="text-sm font-black">高频功能</div>
-                <div className="mt-3 space-y-2">
-                  {['AI日常记录', '奖状识别', '班级报告'].map((item, index) => (
-                    <div key={item} className="flex h-11 items-center justify-between rounded-2xl bg-white px-3">
-                      <span className="text-sm font-black">{item}</span>
-                      <span className="text-xs font-black text-gray-500">{[1280, 436, 92][index]}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-          </div>
-        </>
-      );
-    }
-
     return null;
   };
 
@@ -5585,7 +6437,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       style={{ '--prototype-width': `${prototypeWidth}%` } as React.CSSProperties}
     >
       <section
-        className="flex h-[100dvh] w-full shrink-0 items-center justify-center bg-white p-4 xl:h-full xl:w-[min(var(--prototype-width),100%)]"
+        className={cx('flex h-[100dvh] w-full shrink-0 items-center justify-center bg-white xl:h-full xl:w-[min(var(--prototype-width),100%)]', surface === 'ops' ? 'p-2 xl:p-4' : 'p-4')}
       >
         {renderPrototypePanel()}
       </section>

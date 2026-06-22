@@ -10,6 +10,7 @@ const requireSource = (text, message) => {
 
 requireSource("'schoolAdmin'", 'C端改造顶部导航类型应包含学校后台端。');
 requireSource("{ key: 'schoolAdmin', label: '学校后台端' }", 'C端改造顶部导航应新增学校后台端。');
+requireSource("schoolAdmin: 60,", '学校后台端默认原型区宽度应为 60%。');
 requireSource('const renderSchoolAdminPrototype = () =>', '学校后台端应有独立低保真原型面板。');
 requireSource("if (surface === 'schoolAdmin') return renderSchoolAdminPrototype();", '点击学校后台端应切换到学校后台端原型。');
 requireSource("if (surface === 'schoolAdmin') return renderStaticPrdPanel(schoolAdminPrdBlocks);", '学校后台端应有对应 PRD 面板。');
@@ -22,7 +23,7 @@ requireSource('teacherSpaces.map((space)', '学校后台端原型应渲染多个
 requireSource('const [showSchoolAdminSpaceMenu, setShowSchoolAdminSpaceMenu] = useState(true);', '学校后台端空间菜单应有独立开关状态。');
 requireSource('setShowSchoolAdminSpaceMenu(false);', '学校后台端选择任意空间后应关闭菜单。');
 requireSource('onClick={() => selectSchoolAdminSpace(space.id)}', '学校后台端空间切换应通过选择函数关闭菜单。');
-requireSource("selectedSpace?.type === 'school' ? 'mineSchool' : 'minePersonal'", '教师端切换空间后应按空间类型进入我的页。');
+requireSource("navigate('mineSchool');", '14B 代表用户拥有多个版本，教师端切换学校/个人版后应仍停留在 14B。');
 requireSource('aria-label="切换空间"', '学校后台端应在右上角身份区提供空间切换入口。');
 requireSource('aria-expanded={showSchoolAdminSpaceMenu}', '学校后台端切换入口应表达弹窗展开状态。');
 requireSource('ChevronDown,', '学校后台端使用下拉箭头时必须正确导入 ChevronDown。');
