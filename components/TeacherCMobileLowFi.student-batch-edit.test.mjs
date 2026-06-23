@@ -18,13 +18,15 @@ requireText('updateStudentBatchEditRow(row.id, { name: event.target.value })', '
 requireText('updateStudentBatchEditRow(row.id, { no: event.target.value })', '页面应支持编辑学生学号。');
 requireText("updateStudentBatchEditRow(row.id, { gender: '男' })", '页面应支持切换男。');
 requireText("updateStudentBatchEditRow(row.id, { gender: '女' })", '页面应支持切换女。');
-requireText("const canSaveStudentBatch = studentBatchEditRows.length > 0 && studentBatchEditRows.every((row) => row.name.trim() && row.no.trim() && row.gender);", '姓名、学号、性别均有效时才可保存。');
+requireText("const canSaveStudentBatch = studentBatchEditRows.length > 0 && studentBatchEditRows.every((row) => row.name.trim() && row.gender);", '姓名和性别有效时即可保存，学号选填。');
+requireText('placeholder="学号选填"', '批量修改页学号输入应明确为学号选填。');
 requireText('disabled={!canSaveStudentBatch}', '保存按钮应根据有效性禁用。');
 requireText('保存修改', '底部主按钮应为保存修改。');
 requireText("showClassActionToast('已保存学生信息');", '保存后应给出成功反馈。');
 requireText("navigate('studentList');", '保存后应回到学生列表。');
 requireText("'studentBatchEdit']", '班级流程图应展示 11A 批量修改学生信息页。');
 requireText('页面结构参考 12 添加学生，但不提供添加一名和清除学生。', 'PRD 应说明页面参考 12 但不提供新增/删除行。');
+requireText('姓名和性别有值时，底部保存修改按钮可点击；学号选填。', 'PRD 应说明批量修改页学号选填。');
 
 const batchStart = source.indexOf("if (page === 'studentBatchEdit')");
 const batchEnd = source.indexOf("if (page === 'record')", batchStart);

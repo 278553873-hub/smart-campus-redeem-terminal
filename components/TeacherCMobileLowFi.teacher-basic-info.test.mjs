@@ -34,13 +34,13 @@ requireText("if (pageKey === 'teacherBasicInfoPersonal') return '15A';", '个人
 requireText("if (pageKey === 'teacherBasicInfoSchool') return '15B';", '学校版基本信息设置编号应为 15B。');
 requireText("teacherBasicInfoPersonal: {", '应存在 15A 元信息。');
 requireText("title: '基本信息设置（个人版）'", '15A 标题应标明个人版。');
-requireText("modules: ['头像', '姓名', '部门设置']", '15A 只保留头像、姓名、部门设置。');
-requireText("normal: '个人版仅展示头像、姓名和部门设置。'", '15A 状态说明应体现精简功能。');
+requireText("modules: ['头像', '姓名', '任教班级', '部门设置']", '15A 应保留头像、姓名、任教班级、部门设置。');
+requireText("normal: '个人版展示头像、姓名、任教班级和部门设置。'", '15A 状态说明应体现任教班级配置。');
 requireText("teacherBasicInfoSchool: {", '应存在 15B 元信息。');
 requireText("title: '基本信息设置（学校版）'", '15B 标题应标明学校版。');
 requireText("modules: ['头像', '姓名', '任教班级', '带班班级', '分管年级', '部门设置']", '15B 应保留完整学校版配置。');
 requireText("{ title: '我的(个人版)', pages: ['minePersonal', 'teacherBasicInfoPersonal'] }", '页面导图应拆出我的(个人版)：14A 到 15A。');
-requireText("{ title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'termManagement', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement'] }", '页面导图应拆出我的(学校版)：14B 到 15B/16/17/18/19/21。');
+requireText("{ title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement'] }", '页面导图应拆出我的(学校版)：14B 到 15B/16/18/19/21。');
 requireText('<PageNodeButton item="teacherBasicInfoPersonal" lane={lane.title} />', '页面导图应展示 15A 节点。');
 requireText('<PageNodeButton item="teacherBasicInfoSchool" lane={lane.title} />', '页面导图应展示 15B 节点。');
 requireText("onClick={() => navigate(hasMultipleVersions ? 'teacherBasicInfoSchool' : 'teacherBasicInfoPersonal')}", '14A/14B 头像入口应分别进入 15A/15B。');
@@ -65,11 +65,12 @@ requireText("className={cx('flex min-h-14 w-full shrink-0 items-center justify-c
 
 requirePageText('const isPersonalBasicInfo = page === \'teacherBasicInfoPersonal\';', '页面实现应识别 15A 个人版。');
 requirePageText("...(!isPersonalBasicInfo ? [", '15A 应移除学校版专属配置项。');
+requirePageText("{ key: 'headClass' as const, label: '带班班级', value: teacherBasicConfigValues.headClass }", '带班班级应只作为 15B 配置项存在。');
+requirePageText("{ key: 'gradeLeader' as const, label: '分管年级', value: teacherBasicConfigValues.gradeLeader }", '分管年级应只作为 15B 配置项存在。');
 requirePageText("{ key: 'department' as const, label: '部门设置', value: teacherBasicConfigValues.department }", '15A/15B 都应展示部门设置。');
-requirePageText('{!isPersonalBasicInfo && (', '任教班级区域只应在 15B 展示。');
-requirePageText('aria-label="新增任教班级"', '15B 任教班级应提供新增入口。');
-requirePageText('teachingInfoRows.map((item, index)', '15B 任教班级应根据真实数组渲染多条信息。');
-requirePageText('onClick={() => removeTeachingRow(index)}', '15B 任教班级每条信息应可删除。');
+requirePageText('aria-label="新增任教班级"', '15A/15B 任教班级应提供新增入口。');
+requirePageText('teachingInfoRows.map((item, index)', '15A/15B 任教班级应根据真实数组渲染多条信息。');
+requirePageText('onClick={() => removeTeachingRow(index)}', '15A/15B 任教班级每条信息应可删除。');
 requirePageText('openTeacherBasicConfigSheet(row.key)', '配置项行应可点击编辑。');
 requirePageText("item.classes.join('、')", '15B 任教班级应展示完整班级名称。');
 requirePageText('value: teacherBasicConfigValues.department', '部门设置应展示可编辑状态中的部门值。');

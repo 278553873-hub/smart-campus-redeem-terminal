@@ -17,11 +17,12 @@ requireSource("新用户已填写姓名，但未完成新手引导", '01 登录�
 requireSource("老用户登录", '01 登录页后应展示老用户登录分支。');
 requireSource("<PageNodeButton item=\"login\" lane={lane.title} />", '登录流程应以普通页面节点展示 01 登录页。');
 requireSource("<PageNodeButton item=\"record\" lane={lane.title} />", '登录流程应以普通页面节点展示 13 记录页。');
-requireSource("{ title: '班级(个人版)', pages: ['classListPersonal', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] }", '个人版班级流程应从 07A 班级列表开始，且不应包含 12 添加学生。');
-requireSource("{ title: '班级(学校版)', pages: ['classListSchool', 'classDetailSchoolHead', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] }", '学校版班级流程应从 07B 班级列表开始，班主任详情使用 08C。');
+requireSource("title: '班级(个人版)',\n    pages: ['classListPersonal'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetail'] },\n          { text: '非班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任', pages: ['teacherListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['parentBindingList', 'studentList', 'studentBatchEdit'],", '个人版班级流程应从 07A 后并行进入 08A/08B，再并行进入 09A/09B，且不应包含 12 添加学生。');
+requireSource("title: '班级(学校版)',\n    pages: ['classListSchool'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetailSchoolHead'] },\n          { text: '非班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任', pages: ['teacherListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['parentBindingList', 'studentList', 'studentBatchEdit'],", '学校版班级流程应从 07B 后并行进入 08C/08B，再并行进入 09A/09B。');
 requireSource("if (pageKey === 'classListPersonal') return '07A';", '个人版班级列表应编号为 07A。');
 requireSource("if (pageKey === 'classListSchool') return '07B';", '学校版班级列表应编号为 07B。');
-requireSource("<PageNodeButton item={item} lane={lane.title} />", '班级流程应回到普通页面节点列表，不使用共用虚拟分组。');
+requireSource("const [schoolClassTeachingOnly, setSchoolClassTeachingOnly] = useState(false);", '07B 学校版班级列表应支持只显示任教班级筛选状态。');
+requireSource("<PageNodeButton item={item} lane={lane.title} />", '班级流程应使用普通页面节点列表，不使用共用虚拟分组。');
 requireSource("grid min-w-full grid-cols-[96px_max-content]", '页面导航地图流程名称列应保持 96px，右侧内容由整体地图横向撑开。');
 requireSource("whitespace-nowrap text-xs font-black text-gray-500", '页面导航地图流程名称不应换行。');
 requireSource("const active = page === item && activeInviteNode < 0;", '页面导航地图点击任一页面节点时，相同页面在其他流程中也应一起选中。');
@@ -72,8 +73,47 @@ if (!classListRender.includes("const isSchoolList = page === 'classListSchool';"
 if (!classListRender.includes("!isSchoolList && (\n              <div className=\"grid grid-cols-2 gap-3\">")) {
   failures.push('07B 学校版班级列表页不应展示创建班级和加入班级入口。');
 }
+if (!classListRender.includes("const gradeFilterOptions: SchoolClassGradeFilter[] = ['全部', '一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三', '高一', '高二', '高三'];")) {
+  failures.push('07B 学校版班级列表顶部应提供覆盖 K12 的年级筛选选项。');
+}
+if (!classListRender.includes("const schoolVisibleClassCards = classCards.filter((item) => {") || !classListRender.includes("const matchGrade = schoolClassGradeFilter === '全部' || inferGradeLabel(item.stage, item.entryYearValue) === schoolClassGradeFilter;")) {
+  failures.push('07B 学校版班级列表应按年级筛选班级卡片。');
+}
+if (!classListRender.includes("const matchTeaching = !schoolClassTeachingOnly || item.tags.some((tag) => tag !== '班主任');")) {
+  failures.push('07B 学校版班级列表应支持只显示任教班级。');
+}
+if (!classListRender.includes('<select') || !classListRender.includes('value={schoolClassGradeFilter}') || !classListRender.includes('setSchoolClassGradeFilter(event.target.value as SchoolClassGradeFilter)')) {
+  failures.push('07B 学校版班级列表应使用下拉选择控件筛选年级，适配 K12 多年级场景。');
+}
+if (classListRender.includes('>年级筛选</label>') || classListRender.includes('>年级筛选</div>')) {
+  failures.push('07B 学校版班级列表的筛选器不应显示“年级筛选”提示文案。');
+}
+if (!classListRender.includes('<section className="flex items-center justify-between gap-3">') || !classListRender.includes('className="relative w-28"')) {
+  failures.push('07B 学校版班级列表筛选器应在同一行左侧展示年级下拉，并保持紧凑宽度。');
+}
+if (!classListRender.includes('任教班级') || !classListRender.includes('setSchoolClassTeachingOnly((current) => !current)') || !classListRender.includes('aria-pressed={schoolClassTeachingOnly}')) {
+  failures.push('07B 学校版班级列表应在年级筛选同一行提供任教班级即时筛选按钮。');
+}
+if (classListRender.includes('setSchoolClassGradeFilter(item)') || classListRender.includes('aria-pressed={schoolClassGradeFilter === item}')) {
+  failures.push('07B 学校版班级列表不应使用横向胶囊按钮做年级筛选。');
+}
 if (!classListRender.includes('<ClassEntryCard type="create"') || !classListRender.includes('<ClassEntryCard type="join"')) {
   failures.push('07A 个人版班级列表页仍需保留创建班级和加入班级入口。');
+}
+if (!classListRender.includes('const personalClassCards = classCards') || !classListRender.includes('.sort((a, b) => Number(b.isCreator) - Number(a.isCreator));')) {
+  failures.push('07A 个人版班级列表应将我创建的班级固定排在我加入的班级上方。');
+}
+if (source.includes("{isCreator ? '我创建' : '我加入'}")) {
+  failures.push('07A/07B 班级卡片不应使用文字标签区分我创建和我加入。');
+}
+if (!classListRender.includes('const createdClassCards = personalClassCards.filter((item) => item.isCreator);') || !classListRender.includes('const joinedClassCards = personalClassCards.filter((item) => !item.isCreator);')) {
+  failures.push('07A 个人版班级列表应拆分创建的班级和加入的班级。');
+}
+if (!classListRender.includes('创建的班级') || !classListRender.includes('加入的班级')) {
+  failures.push('07A 个人版班级列表应使用轻分组标题区分创建的班级和加入的班级。');
+}
+if (!source.includes('<div className="relative rounded-2xl bg-gray-50 p-4">')) {
+  failures.push('班级卡片应保持统一卡片样式，不再通过卡片视觉层级区分关系。');
 }
 requireSource("return currentSpace.type === 'school' ? 'classListSchool' : 'classListPersonal';", '底部导航和回流入口应按当前版本进入 07A/07B。');
 requireSource("if (next === 'home') {", '从页面导航地图点击 03 新手首页时应有专门重置逻辑。');
@@ -117,12 +157,21 @@ requireSource("if (pageKey === 'termManagement') return '17';", '17 页面应为
 requireSource("title: '我的（仅有个人版）'", '14A 页面标题应为我的（仅有个人版）。');
 requireSource("title: '我的（拥有多个版本）'", '14B 页面标题应为我的（拥有多个版本）。');
 requireSource("{ title: '我的(个人版)', pages: ['minePersonal', 'teacherBasicInfoPersonal'] }", '我的(个人版)流程应为 14A 到 15A。');
-requireSource("{ title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'termManagement', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement'] }", '我的(学校版)流程应为 14B 到 15B/16/17/18/19/21。');
+requireSource("{ title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement'] }", '我的(学校版)流程应为 14B 到 15B/16/18/19/21。');
 if (source.includes("{ title: '班级(个人版)', pages: ['classListPersonal', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] },\n  'classDetailSchoolHead',")) {
   failures.push('页面导航流程数组不能混入裸页面 key，否则 C端改造右侧目录会在 lane.pages.map 时报错。');
 }
 if (source.includes("{ title: '班级(学校版)', pages: ['classListSchool', 'classDetailSchoolHead', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] },\n  'classDetailSchoolHead',")) {
   failures.push('页面导航流程数组不能在学校版流程后混入裸页面 key。');
+}
+if (source.includes("{ title: '班级(个人版)', pages: ['classListPersonal', 'classDetail', 'classDetailMember'")) {
+  failures.push('班级(个人版)不应把 08A 和 08B 表达成串行页面，应作为并行分支。');
+}
+if (source.includes("{ title: '班级(学校版)', pages: ['classListSchool', 'classDetailSchoolHead', 'classDetailMember'")) {
+  failures.push('班级(学校版)不应把 08C 和 08B 表达成串行页面，应作为并行分支。');
+}
+if (source.includes("tailPages: ['teacherList', 'teacherListMember'")) {
+  failures.push('09A 和 09B 不应放在公共后续流程中串行展示，应作为第二组并行分支。');
 }
 requireSource("lane.title === '我的(个人版)'", '页面导航地图应单独渲染我的(个人版)流程。');
 requireSource("<PageNodeButton item=\"minePersonal\" lane={lane.title} />\n                <span className=\"shrink-0 text-sm font-black text-gray-400\">→</span>\n                <PageNodeButton item=\"teacherBasicInfoPersonal\" lane={lane.title} />", '我的(个人版)应表达 14A 到 15A。');

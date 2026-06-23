@@ -9,8 +9,11 @@ const requireText = (text, message) => {
 requireText("| 'teacherListMember'", 'C 端原型应新增 09B 非班主任老师列表页面。');
 requireText("if (pageKey === 'teacherList') return '09A';", '09A 应对应班主任老师列表。');
 requireText("if (pageKey === 'teacherListMember') return '09B';", '09B 应对应非班主任老师列表。');
-requireText("title: '班级详情（班主任）'", '08A 页面名称应为班级详情（班主任）。');
-requireText("title: '班级详情（非班主任）'", '08B 页面名称应为班级详情（非班主任）。');
+requireText("classDetail: {\n    title: '班级详情'", '08A 节点名称应为班级详情。');
+requireText("classDetailMember: {\n    title: '班级详情'", '08B 节点名称应为班级详情。');
+requireText("classDetailSchoolHead: {\n    title: '班级详情(学校版)'", '08C 节点名称应为班级详情(学校版)。');
+requireText("teacherList: {\n    title: '老师列表'", '09A 节点名称应为老师列表。');
+requireText("teacherListMember: {\n    title: '老师列表'", '09B 节点名称应为老师列表。');
 requireText("title={isHeadTeacherDetail ? '班级详情（班主任）' : '班级详情（非班主任）'}", '08A/08B 手机页标题应按班主任身份展示。');
 requireText('班级详情卡片不展示班主任字段。', 'PRD 应说明 08A/08B 班级卡片不展示班主任字段。');
 requireText('班级号和人数同一行展示：左侧班级号文案，右侧人数。', 'PRD 应说明班级号和人数同排。');
@@ -28,8 +31,10 @@ requireText("const activeHeadTeacherName = classHeadTeacherName === '郭老师' 
 requireText("isHeadTeacher: teacher.name === activeHeadTeacherName", '班主任标签应随班主任状态动态变化。');
 requireText("subjects: ['体育', '劳动'], isHeadTeacher: false, isDeputyHeadTeacher: true", '副班主任也应能同时任教多个科目。');
 requireText("navigate(isHeadTeacherDetail ? 'teacherList' : 'teacherListMember')", '08A/08B 应分别进入 09A/09B。');
-requireText("{ title: '班级(个人版)', pages: ['classListPersonal', 'classDetail', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] }", '09A/09B 应保留在个人版班级普通流程中。');
-requireText("{ title: '班级(学校版)', pages: ['classListSchool', 'classDetailSchoolHead', 'classDetailMember', 'teacherList', 'teacherListMember', 'parentBindingList', 'studentList', 'studentBatchEdit'] }", '09A/09B 应保留在学校版班级普通流程中。');
+requireText("title: '班级(个人版)',\n    pages: ['classListPersonal'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetail'] },\n          { text: '非班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任', pages: ['teacherListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['parentBindingList', 'studentList', 'studentBatchEdit'],", '08A/08B 应作为个人版班级流程的第一组并行分支，09A/09B 应作为第二组并行分支。');
+requireText("title: '班级(学校版)',\n    pages: ['classListSchool'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetailSchoolHead'] },\n          { text: '非班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任', pages: ['teacherListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['parentBindingList', 'studentList', 'studentBatchEdit'],", '08C/08B 应作为学校版班级流程的第一组并行分支，09A/09B 应作为第二组并行分支。');
+requireText('grid w-fit shrink-0 grid-cols-[20px_max-content_12px] items-center gap-2 text-[11px] font-black leading-4 text-gray-500', '页面地图分支条件列应按内容撑开。');
+requireText('<span className="whitespace-nowrap">{branch.text}</span>', '页面地图分支名称班主任/非班主任不应换行。');
 requireText('09A 老师列表规则', 'PRD 说明应区分 09A。');
 requireText('09B 老师列表规则', 'PRD 说明应区分 09B。');
 requireText('09A 是班主任视角，个人版中创建班级的人默认成为班主任。', 'PRD 应说明 09A 是班主任视角。');
@@ -108,7 +113,7 @@ if ((classDetailBlock.match(/解散班级/g) ?? []).length !== 1) {
 }
 
 // 08C assertions: school version head teacher
-if (!source.includes("title: '班级详情（班主任-学校版）'", '08C 页面名称应为班级详情（班主任-学校版）。')) {
+if (!source.includes("title: '班级详情(学校版)'", '08C 页面名称应为班级详情(学校版)。')) {
   // fallback
 }
 if (!source.includes("page === 'classDetailSchoolHead'")) {
