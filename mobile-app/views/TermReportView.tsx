@@ -21,7 +21,8 @@ import {
     PenTool, Star, MapPin, BrainCircuit, HeartHandshake, Map, Clock, Target,
     Calculator, Languages, FlaskConical, Monitor, Palette, Smile, Dumbbell,
     Award, Quote, Sparkles, Compass, Megaphone, Layout, Users,
-    Sun, MessageSquare, PenLine, Edit3, ArrowUpRight, Anchor, Lightbulb, X, Layers
+    Sun, MessageSquare, PenLine, Edit3, ArrowUpRight, Anchor, Lightbulb, X, Layers,
+    FileText, Printer, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { BackIcon } from '../components/Icons';
 
@@ -2180,6 +2181,8 @@ const MobileAnchorBar = ({ activeSection, onNavigate, items }: { activeSection: 
 // --- MAIN WRAPPER ---
 
 const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
+    const [viewMode, setViewMode] = useState<'mobile' | 'a4'>('mobile');
+    const [currentPage, setCurrentPage] = useState(0);
     const [activeSection, setActiveSection] = useState('cover');
     const [showSubjectSubPage, setShowSubjectSubPage] = useState(false);
     const [currentSubjectName, setCurrentSubjectName] = useState('');
@@ -2202,7 +2205,9 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
     const firstAnchorId = mobileAnchorItems[0]?.id;
 
     const handleStartReading = () => {
-        if (firstAnchorId) {
+        if (viewMode === 'a4') {
+            setCurrentPage(page => Math.min(page + 1, a4Pages.length - 1));
+        } else if (firstAnchorId) {
             scrollToSection(firstAnchorId);
         }
     };
@@ -2221,6 +2226,30 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
         setCurrentSubjectName(subject);
         setShowSubjectSubPage(true);
     };
+
+    const a4Pages = isMale ? [
+        <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
+        <PageTeacherAttention key="teacher" mode="a4" />,
+        <PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={true} />,
+        <PageFuturePotential key="future" mode="a4" />,
+        <PageFutureGrowthSuggestions key="future-suggestions" mode="a4" />,
+        <PageStrengthsEnhancement key="strengths" mode="a4" />,
+        <PageWeaknessImprovement key="weakness" mode="a4" />,
+        <PageParentChildActivities key="activities" mode="a4" />,
+        <PageHolidayNotice key="holiday" mode="a4" />,
+        <PageParentFeedback key="parent" mode="a4" />,
+        <PageStudentFeedback key="student" mode="a4" />
+    ] : [
+        <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
+        <PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={false} />,
+        <PageComprehensiveGrowthAdvice key="advice" student={student} mode="a4" />,
+        <PageSimpleParentChildActivities key="activities" student={student} mode="a4" />
+    ];
+
+    const totalPages = a4Pages.length;
+    const handlePrevPage = () => setCurrentPage(page => Math.max(0, page - 1));
+    const handleNextPage = () => setCurrentPage(page => Math.min(totalPages - 1, page + 1));
+    const handlePrint = () => window.print();
 
     const mobilePages = isMale ? [
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
@@ -2253,11 +2282,55 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
                     </button>
                 </div>
                 <div className="font-bold text-slate-900 text-base">{showSubjectSubPage ? '学科报告' : '学期报告'}</div>
-                <div className="flex-1"></div>
+                <div className="flex-1 flex justify-end gap-1">
+                    {viewMode === 'a4' && (
+                        <button
+                            onClick={handlePrint}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-blue-600 active:bg-blue-50"
+                            aria-label="打印A4报告"
+                            title="打印A4报告"
+                        >
+                            <Printer className="h-4 w-4" />
+                        </button>
+                    )}
+                    <button
+                        onClick={() => {
+                            setViewMode(mode => mode === 'mobile' ? 'a4' : 'mobile');
+                            setShowSubjectSubPage(false);
+                        }}
+                        className={`flex h-8 w-8 items-center justify-center rounded-full active:bg-slate-100 ${viewMode === 'a4' ? 'bg-blue-50 text-blue-600' : 'text-slate-700'}`}
+                        aria-label={viewMode === 'a4' ? '返回手机报告' : '预览A4报告'}
+                        title={viewMode === 'a4' ? '返回手机报告' : '预览A4报告'}
+                    >
+                        <FileText className="h-4 w-4" />
+                    </button>
+                </div>
             </div>
 
+            {viewMode === 'a4' && !showSubjectSubPage && (
+                <div className="flex h-[42px] shrink-0 items-center justify-between bg-slate-50 px-4 print:hidden">
+                    <button
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 0}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 disabled:opacity-30"
+                        aria-label="上一页"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <div className="text-[11px] font-bold text-slate-500">{currentPage + 1} / {totalPages}</div>
+                    <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages - 1}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 disabled:opacity-30"
+                        aria-label="下一页"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
+
             {/* Mobile Anchor Navigation (Only in Mobile Mode) */}
-            {isMale && mobileAnchorItems.length > 0 && (
+            {viewMode === 'mobile' && isMale && mobileAnchorItems.length > 0 && (
                 <MobileAnchorBar activeSection={activeSection} onNavigate={scrollToSection} items={mobileAnchorItems} />
             )}
 
@@ -2274,10 +2347,23 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
                         />
                     </div>
                 ) : (
-                    <div className="w-full bg-white overflow-hidden pb-10">
-                        {mobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
-                        <div className="p-8 text-center text-[10px] text-slate-300 uppercase tracking-widest font-bold">- End of Report -</div>
-                    </div>
+                    <>
+                        {viewMode === 'mobile' && (
+                            <div className="w-full bg-white overflow-hidden pb-10 print:hidden">
+                                {mobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
+                                <div className="p-8 text-center text-[10px] text-slate-300 uppercase tracking-widest font-bold">- End of Report -</div>
+                            </div>
+                        )}
+
+                        {viewMode === 'a4' && (
+                            <div className="w-full bg-slate-100 py-4 print:hidden">
+                                {a4Pages[currentPage]}
+                            </div>
+                        )}
+                        <div className="hidden print:block w-full">
+                            {a4Pages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
+                        </div>
+                    </>
                 )}
             </div>
         </div>

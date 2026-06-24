@@ -20,23 +20,25 @@ const subjectReportPage = slice('const PageSubjectReportsWithTabs', 'const PageF
 const growthOverview = slice('const PageGrowthOverview', '// 新增：高光时刻板块');
 
 for (const forbidden of [
-  'viewMode',
-  'setViewMode',
-  'handlePrint',
-  'window.print',
-  '<Printer',
   "['mobile', 'a4'].map",
-  "viewMode === 'a4'",
-  "viewMode === 'mobile'",
 ]) {
   if (mainView.includes(forbidden)) {
-    throw new Error(`学期报告手机端不应保留手机/A4切换或打印入口：${forbidden}`);
+    throw new Error(`学期报告手机端不应恢复旧版大工具条切换：${forbidden}`);
   }
 }
 
 for (const required of [
+  "const [viewMode, setViewMode] = useState<'mobile' | 'a4'>('mobile');",
+  "const [currentPage, setCurrentPage] = useState(0);",
+  'const a4Pages = isMale ? [',
+  'const handlePrint = () => window.print();',
+  "aria-label={viewMode === 'a4' ? '返回手机报告' : '预览A4报告'}",
+  'aria-label="打印A4报告"',
+  "{viewMode === 'a4' && !showSubjectSubPage && (",
+  '{a4Pages[currentPage]}',
+  '{a4Pages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}',
   '] : [];',
-  '{isMale && mobileAnchorItems.length > 0 && (',
+  "{viewMode === 'mobile' && isMale && mobileAnchorItems.length > 0 && (",
   '<MobileAnchorBar activeSection={activeSection} onNavigate={scrollToSection} items={mobileAnchorItems} />',
   '{mobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}',
   '<PageSubjectReportsWithTabs',

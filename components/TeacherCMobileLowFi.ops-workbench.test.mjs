@@ -14,7 +14,7 @@ function forbidText(text, message) {
 }
 
 requireText("{ key: 'ops', label: '运营端' }", 'C端改造顶部导航应包含运营端。');
-requireText("const [opsPage, setOpsPage] = useState<'home' | 'personalUsers'>('home');", '运营端应有首页和个人用户管理内部页状态。');
+requireText("const [opsPage, setOpsPage] = useState<'home' | 'personalUsers' | 'suggestionFeedback'>('home');", '运营端应有首页、个人用户管理和建议反馈内部页状态。');
 requireText("C端改造 · 运营端", '运营端原型标题应明确位于 C端改造。');
 requireText('>退出登录</button>', '运营端顶部按钮应显示退出登录。');
 requireText('max-w-[950px]', '运营端原型宽度应扩展到 950px，减少列表左右滑动。');
@@ -29,6 +29,7 @@ requireText("style={{ '--prototype-width': `${prototypeWidth}%` } as React.CSSPr
 requireText("currentSurface === 'ops' || currentSurface === 'schoolAdmin' ? 82 : 52", '运营端和学校后台端拖拽展示区上限应高于手机端原型。');
 requireText("{ key: 'home' as const, label: '首页' }", '运营端内部菜单应包含首页。');
 requireText("{ key: 'personalUsers' as const, label: '个人用户管理' }", '运营端内部菜单应包含个人用户管理。');
+requireText("{ key: 'suggestionFeedback' as const, label: '建议反馈' }", '运营端内部菜单应包含建议反馈。');
 requireText('<div className="text-sm font-black">学校总数</div>', '运营首页应展示学校总数。');
 requireText("{ label: '未开始', value: 8 }", '运营首页应展示未开始学校数。');
 requireText("{ label: '合作中', value: 46 }", '运营首页应展示合作中学校数。');
@@ -51,6 +52,13 @@ requireText('提示词管理', '个人用户管理行内操作应包含提示词
 requireText('手动触发', '个人用户管理行内操作应包含手动触发。');
 requireText('删除</button>', '个人用户管理行内操作应包含删除。');
 requireText('overflow-hidden rounded-2xl border border-gray-200', '个人用户管理表格应优先在扩展容器内完整展示。');
+requireText("opsPage === 'suggestionFeedback'", '运营端应渲染建议反馈模块。');
+requireText('搜索老师 / 内容', '建议反馈模块应支持按老师或内容搜索。');
+requireText('teacherSuggestionFeedbackRows.map((row)', '建议反馈模块应展示教师端提交的反馈列表。');
+requireText('老师姓名</div>', '建议反馈模块表格应展示老师姓名。');
+requireText('手机号</div>', '建议反馈模块表格应展示手机号。');
+requireText('操作</div>', '建议反馈模块表格应展示操作列。');
+requireText("{row.status === '待处理' ? '标记为已处理' : '标记为待处理'}", '建议反馈模块应支持标记为已处理和标记为待处理。');
 
 forbidText("title=\"运营端-PC工作台\"", '不应把学校 PC 端环境切换改名为运营端。');
 forbidText('>导出</button>', '运营端顶部按钮不应再显示导出。');

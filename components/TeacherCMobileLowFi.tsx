@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowLeftRight, BookOpen, Building2, CalendarDays, Camera, ChartNoAxesColumnIncreasing, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Clock, Coins, Copy, Edit3, Eye, EyeOff, FileText, Gift, GripVertical, ImagePlus, KeyRound, LogIn, LogOut, MessageCircle, Mic, MoreHorizontal, Phone, Plus, ScanFace, ScanLine, Settings, Shield, Sparkles, Trash2, Type, UserPlus, Users } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, BookOpen, Building2, CalendarDays, Camera, ChartNoAxesColumnIncreasing, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Clock, Coins, Copy, Edit3, Eye, EyeOff, FileText, Gift, GripVertical, ImagePlus, KeyRound, LogIn, LogOut, MessageCircle, Mic, MoreHorizontal, Phone, Plus, ScanFace, ScanLine, Settings, Shield, SlidersHorizontal, Sparkles, Trash2, Type, UserPlus, Users } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 
 type PageKey =
@@ -36,18 +36,20 @@ type PageKey =
   | 'subjectManagement'
   | 'departmentManagement'
   | 'coinIssuanceManagement'
+  | 'suggestionFeedback'
   | 'advisor';
 
 type ViewState = 'normal' | 'loading' | 'empty' | 'network' | 'denied';
 type RecordStage = 'idle' | 'recording' | 'transcribing' | 'identifying' | 'saved';
 type Priority = 'P0' | 'P1' | 'P2' | 'P3';
 type PhoneLoginTab = 'sms' | 'password';
+type SchoolAdminLoginTab = 'password' | 'sms' | 'scan';
 type ClassActionKey = 'reward' | 'batchStudents' | 'password' | 'face' | 'homework' | 'leftStudents' | 'inviteTeacher' | 'inviteParent' | 'editClass';
 type TeachingGrade = '2025级' | '2024级' | '2023级';
 type WechatInviteMode = 'select' | 'confirm' | 'received';
 type InviteAudience = 'teacher' | 'parent';
 type CEndSurface = 'summary' | 'teacher' | 'parent' | 'versionCompare' | 'schoolAdmin' | 'ops';
-type ParentPageKey = 'wechatCard' | 'login' | 'bindSelfMatched' | 'bindSelfUnmatched' | 'bindInviteMatched' | 'bindInviteUnmatched' | 'bindInviteBoundUnmatched' | 'bindingLimitNotice' | 'bindingNotice' | 'parentIdentity' | 'landing';
+type ParentPageKey = 'wechatCard' | 'login' | 'bindSelfMatched' | 'bindSelfUnmatched' | 'bindInviteMatched' | 'bindInviteUnmatched' | 'bindInviteBoundUnmatched' | 'bindingLimitNotice' | 'bindingTotalLimitNotice' | 'bindingNotice' | 'parentIdentity' | 'landing';
 type ParentBindMode = 'school' | 'class';
 type ParentIdentityRelation = '家长' | '爸爸' | '妈妈' | '爷爷' | '奶奶' | '外公' | '外婆' | '其他';
 type TeacherSpaceId = 'personal' | 'schoolA' | 'schoolB';
@@ -55,6 +57,7 @@ type SchoolBasicInfoTab = 'term' | 'subject' | 'department';
 type CoinIssuePeriod = 'weekly' | 'monthly';
 type SchoolClassGradeFilter = '全部' | '一年级' | '二年级' | '三年级' | '四年级' | '五年级' | '六年级' | '初一' | '初二' | '初三' | '高一' | '高二' | '高三';
 type TeacherBasicConfigKey = 'headClass' | 'gradeLeader' | 'department';
+type ClassDissolveStep = 'check' | 'final';
 type TeachingInfoRow = {
   id: number;
   subject: string;
@@ -106,6 +109,16 @@ type StudentInputRow = {
   name: string;
   no: string;
   gender: '男' | '女';
+};
+type TeacherSuggestionFeedback = {
+  id: string;
+  teacher: string;
+  phone: string;
+  version: '个人版' | '学校版';
+  content: string;
+  imageCount: number;
+  time: string;
+  status: '待处理' | '已处理';
 };
 type SchoolBasicInfoItem = {
   id: string;
@@ -166,6 +179,7 @@ const pageOrder: PageKey[] = [
   'subjectManagement',
   'departmentManagement',
   'coinIssuanceManagement',
+  'suggestionFeedback',
 ];
 
 type FlowBranch = { text: string; pages: PageKey[] };
@@ -211,8 +225,8 @@ const flowLanes: FlowLane[] = [
     ],
     tailPages: ['parentBindingList', 'studentList', 'studentBatchEdit'],
   },
-  { title: '我的(个人版)', pages: ['minePersonal', 'teacherBasicInfoPersonal'] },
-  { title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement'] },
+  { title: '我的(个人版)', pages: ['minePersonal', 'teacherBasicInfoPersonal', 'suggestionFeedback'] },
+  { title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement', 'suggestionFeedback'] },
 ];
 
 const pageNumberLabel = (pageKey: PageKey) => {
@@ -237,6 +251,7 @@ const pageNumberLabel = (pageKey: PageKey) => {
   if (pageKey === 'subjectManagement') return '18';
   if (pageKey === 'departmentManagement') return '19';
   if (pageKey === 'coinIssuanceManagement') return '21';
+  if (pageKey === 'suggestionFeedback') return '22';
   const pageIndex = pageOrder.indexOf(pageKey) + 1;
   return String(pageIndex).padStart(2, '0');
 };
@@ -264,6 +279,7 @@ const parentPageLabels: Record<ParentPageKey, { number: string; title: string }>
   bindInviteUnmatched: { number: '03B', title: '绑定学生' },
   bindInviteBoundUnmatched: { number: '03C', title: '绑定学生' },
   bindingLimitNotice: { number: '04B', title: '绑定提醒' },
+  bindingTotalLimitNotice: { number: '04C', title: '绑定提醒' },
   bindingNotice: { number: '04A', title: '绑定提醒' },
   parentIdentity: { number: '04', title: '绑定确认' },
   landing: { number: '05', title: '落地页' },
@@ -280,9 +296,9 @@ const parentFlowLanes: ParentFlowLane[] = [
     title: '自主登录',
     source: 'login',
     branches: [
-      { text: '未绑定任何学生&手机号匹配成功', pages: [{ page: 'bindSelfMatched' }, { page: 'landing' }] },
-      { text: '未绑定任何学生&手机号未匹配', pages: [{ page: 'bindSelfUnmatched' }] },
-      { text: '已绑定任何学生', pages: [{ page: 'landing' }] },
+      { text: '手机号匹配成功&有新增绑定', pages: [{ page: 'bindSelfMatched' }, { page: 'landing' }] },
+      { text: '手机号未匹配', pages: [{ page: 'bindSelfUnmatched' }] },
+      { text: '手机号匹配成功&无新增绑定', pages: [{ page: 'landing' }] },
     ],
   },
   {
@@ -294,10 +310,12 @@ const parentFlowLanes: ParentFlowLane[] = [
         pages: [{
           page: 'login',
           branches: [
-            { text: '手机号匹配成功', pages: [{ page: 'bindInviteMatched' }, { page: 'landing' }] },
+            { text: '手机号匹配成功&有新增绑定', pages: [{ page: 'bindInviteMatched' }, { page: 'landing' }] },
+            { text: '手机号匹配成功&无新增绑定', pages: [{ page: 'landing' }] },
             { text: '手机号未匹配成功&未绑定该班级的任意学生', pages: [{ page: 'bindInviteUnmatched' }, { page: 'bindingNotice' }, { page: 'landing' }] },
             { text: '手机号未匹配成功&已绑定该班级的任意学生', pages: [{ page: 'bindInviteBoundUnmatched' }, { page: 'bindingNotice' }, { page: 'landing' }] },
             { text: '手机号未匹配成功&已绑定该班级的2个学生', pages: [{ page: 'bindingLimitNotice' }, { page: 'landing' }] },
+            { text: '已绑定3名学生&继续新增', pages: [{ page: 'bindingTotalLimitNotice' }, { page: 'landing' }] },
           ],
         }],
       },
@@ -307,8 +325,8 @@ const parentFlowLanes: ParentFlowLane[] = [
     title: '自主新增绑定',
     source: 'landing',
     branches: [
-      { text: '检索到有新的绑定信息', pages: [{ page: 'bindSelfMatched' }, { page: 'landing' }] },
-      { text: '未检索到新的绑定信息', pages: [{ page: 'bindSelfUnmatched' }] },
+      { text: '点击新增绑定&绑定学生数<3', pages: [{ page: 'bindSelfUnmatched' }] },
+      { text: '点击新增绑定&绑定学生数≧3', pages: [{ page: 'bindingTotalLimitNotice' }, { page: 'landing' }] },
     ],
   },
 ];
@@ -464,7 +482,7 @@ const parentPrdBlocks: PrdBlock[] = [
   { type: 'h2', text: '自主登录' },
   { type: 'list', items: [
     '01 微信登录：布局同教师端 01 登录页，但产品名为“素养指南针”，只保留微信授权登录；点击后展示微信原生手机号授权弹窗。',
-    '01 后直接分三支：未绑定任何学生&手机号匹配成功、未绑定任何学生&手机号未匹配、已绑定任何学生。',
+    '01 后直接分三支：手机号匹配成功&有新增绑定、手机号未匹配、手机号匹配成功&无新增绑定。',
     '03A 绑定学生：手机号匹配到学生后进入；有多个可绑定学生时按顺序挨个判断，每次只展示当前待判断学生，全部判断后进入 05。',
     '02B 手机号未匹配：展示当前授权手机未匹配，并引导重新授权其他手机号；如无可匹配手机号，则联系班主任分享邀请链接。',
     '04A 绑定提醒：用于承接 03B/03C 后的安全确认，强调同一班级最多绑定 2 名学生。',
@@ -472,18 +490,19 @@ const parentPrdBlocks: PrdBlock[] = [
   { type: 'h2', text: '被邀请' },
   { type: 'list', items: [
     '00 收到卡片：微信聊天对话中展示“素养指南针”小程序卡片。',
-    '03A 绑定学生：展示可绑定学生并选择家长身份，多学生时按顺序逐个判断，全部判断后进入 05。',
+    '01 手机号匹配成功后，如有新增绑定进入 03A；如无新增绑定直接进入 05。',
+    '03A 绑定学生：仅承接有新增绑定的场景，展示可绑定学生并选择家长身份，多学生时按顺序逐个判断，全部判断后进入 05。',
     '邀请路径手机号未匹配时，根据同班已绑定数量进入 03B、03C 或 04B。',
     '05 落地页：身份确认后进入，展示孩子成长概览。',
   ] },
   { type: 'h2', text: '交互规则' },
   { type: 'list', items: [
     '02/03 都不再输入学生姓名和学生学号。',
-    '03A 只展示确认绑定所需信息；自主登录和被邀请手机号匹配成功时共用同一页面。',
+    '03A 只展示确认绑定所需信息；自主登录匹配成功、被邀请且有新增绑定时共用同一页面。',
     '匹配成功页直接选择家长身份；多学生时不提供左右切换，必须按顺序判断当前学生是否为自己的孩子，直到全部判断完才进入 05。',
     '04A 绑定提醒页展示同班绑定数量安全提醒、学生卡片和家长身份；同一班级最多绑定 2 名学生。',
     '01 微信登录：点击微信授权登录后先展示“申请获取并验证你的手机号”的微信授权弹窗，选择号码后进入对应匹配结果页。',
-    '05 落地页点击新增绑定：关闭切换孩子弹窗并展示轻提示检索进度；有新学生进入确认绑定页，无结果进入 02B 提示页。',
+    '05 落地页点击新增绑定：关闭切换孩子弹窗后进入 02B；如系统已检索到新的绑定信息，应主动进入 03A，不依赖用户点击新增绑定。',
     '05 落地页复刻成长页结构：孩子卡、本月净得分、表扬/待改进、预估分红和底部三栏导航。',
     '登录页不展示手机号登录、密码登录或额外说明。',
     '绑定页只承载一个任务，正式内容入口统一放到落地页。',
@@ -499,13 +518,15 @@ const opsPrdBlocks: PrdBlock[] = [
     '必须：首页展示个人用户总数及已转化、待转化状态分布。',
     '必须：首页展示期末报告生成待办，并支持标记已处理。',
     '必须：在运营端菜单新增个人用户管理。',
+    '必须：在运营端菜单新增建议反馈，承接教师端 14A/14B 更多工具提交的反馈。',
     '必须：个人用户管理展示用户、来源、意向学校、转化状态、报告次数、最近活跃和负责人。',
+    '必须：建议反馈展示老师、版本、反馈内容、图片数量、时间和处理状态。',
     '应该：支持按学校、老师活跃度、报告生成情况筛选。',
     '不做：不在教师端强行展示推荐学校开通入口。',
   ] },
   { type: 'h2', text: '页面状态' },
   { type: 'list', items: [
-    '正常：展示运营工作台、待办和个人用户管理列表。',
+    '正常：展示运营工作台、待办、个人用户管理列表和建议反馈列表。',
     '空数据：暂无 C 端老师线索。',
     '加载：表格骨架屏。',
     '网络错误：表格区域展示重试。',
@@ -516,9 +537,10 @@ const schoolAdminPrdBlocks: PrdBlock[] = [
   { type: 'h1', text: '学校后台端' },
   { type: 'h2', text: '功能清单' },
   { type: 'list', items: [
-    '个人空间 / 多个学校空间切换。',
-    '默认停留在个人空间。',
-    '点击后同步切换选中态。',
+    '后台登录支持密码登录、验证码登录和扫码登录三种方式。',
+    '顶部提供个人版 / 学校版切换；一个账号可切换到个人空间或多个学校空间。',
+    '切换到个人版后，首页“我的应用”不展示“管理后台”入口。',
+    '编辑学生信息添加家长手机号时，若该手机号已作为 3 个孩子的家长手机号，则提示不能添加。',
   ] },
 ];
 
@@ -618,7 +640,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
   },
   studentAdd: {
     title: '添加学生',
-    subtitle: '手机端录入姓名、选填学号、性别，支持扫码识别表格。',
+    subtitle: '手机端录入姓名、必填学号、性别，支持扫码识别表格。',
     modules: ['扫码识别表格', '学生录入行', '姓名', '学号', '性别点选', '新增一行'],
     ctas: [
       { label: '扫码识别表格', priority: 'P0', position: '学生录入列表上方' },
@@ -627,7 +649,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
       { label: '清除该学生', priority: 'P2', position: '多行录入时学生行右侧留白区' },
     ],
     states: {
-      normal: '展示一行学生输入，性别默认男，可新增输入行。',
+      normal: '展示一行学生输入，姓名和学号必填，性别默认男，可新增输入行。',
       loading: '保存或导入中。',
       empty: '无学生时引导添加第一名。',
       network: '保存失败，保留已输入内容。',
@@ -717,10 +739,9 @@ const pageMeta: Record<PageKey, PageMeta> = {
   classListPersonal: {
     title: '班级列表（个人版）',
     subtitle: '查看个人体验内的班级。',
-    modules: ['创建班级入口', '加入班级入口', '班级卡片', '班级名称', '推断年级', '任教标签', '8 位数字班级号', '班级人数'],
+    modules: ['班级操作入口', '班级显示设置', '班级卡片', '班级名称', '推断年级', '任教标签', '8 位数字班级号', '班级人数'],
     ctas: [
-      { label: '创建班级', priority: 'P0', position: '页面顶部按钮块' },
-      { label: '加入班级', priority: 'P0', position: '页面顶部按钮块' },
+      { label: '班级操作', priority: 'P0', position: '页面右上角' },
       { label: '学生列表', priority: 'P1', position: '班级卡片底部' },
       { label: '班级报告', priority: 'P1', position: '班级卡片底部' },
     ],
@@ -841,12 +862,12 @@ const pageMeta: Record<PageKey, PageMeta> = {
   parentBindingList: {
     title: '家长绑定列表',
     subtitle: '查看当前班级学生家长绑定情况。',
-    modules: ['未绑定/已绑定切换', '未填手机号', '待家长绑定', '学生头像', '姓名', '家长身份', '拨打电话', '移除绑定'],
+    modules: ['未绑定/已绑定切换', '待绑定', '学生头像', '姓名', '家长身份', '拨打电话', '移除绑定'],
     ctas: [
       { label: '邀请家长绑定', priority: 'P0', position: '页面底部固定按钮' },
     ],
     states: {
-      normal: '通过未绑定/已绑定切换查看学生；未绑定学生区分未填手机号和待家长绑定，已绑定学生按学生聚合展示每个家长的身份和操作入口。',
+      normal: '通过未绑定/已绑定切换查看学生；未绑定学生统一展示待绑定，已绑定学生按学生聚合展示每个家长的身份和操作入口。',
       loading: '绑定情况加载中。',
       empty: '暂无学生。',
       network: '加载失败，提供重试。',
@@ -936,12 +957,13 @@ const pageMeta: Record<PageKey, PageMeta> = {
   minePersonal: {
     title: '我的（仅有个人版）',
     subtitle: '查看教师信息、个人版和常用工具入口。',
-    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '了解学校版', '管理工具', '生成期末报告', '更多工具', '科目管理', '部门管理', '货币发放管理', '学校版功能弹窗', '顾问微信二维码'],
+    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '了解学校版', '管理工具', '生成期末报告', '更多工具', '科目管理', '部门管理', '货币发放管理', '建议反馈', '学校版功能弹窗', '顾问微信二维码'],
     ctas: [
       { label: '头像', priority: 'P0', position: '教师信息区，点击进入基本信息设置页' },
       { label: '扫一扫', priority: 'P1', position: '页面右上角 icon' },
       { label: '设置', priority: 'P1', position: '页面右上角 icon，点击进入设置页' },
       { label: '货币发放管理', priority: 'P1', position: '更多工具卡片，点击进入货币发放管理' },
+      { label: '建议反馈', priority: 'P1', position: '更多工具卡片，点击进入建议反馈表单' },
       { label: '生成期末报告', priority: 'P0', position: '管理工具卡片，点击后提示未到学期末并可预览样例' },
       { label: '了解学校版', priority: 'P1', position: '教师卡片下方按钮，点击打开底部弹窗' },
     ],
@@ -956,13 +978,14 @@ const pageMeta: Record<PageKey, PageMeta> = {
   mineSchool: {
     title: '我的（拥有多个版本）',
     subtitle: '查看教师信息、当前版本和常用工具入口。',
-    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '当前版本入口', '管理工具', '学校数据报表', '生成期末报告', '更多工具', '科目管理', '部门管理', '货币发放管理', '切换版本弹窗'],
+    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '当前版本入口', '管理工具', '学校数据报表', '生成期末报告', '更多工具', '科目管理', '部门管理', '货币发放管理', '建议反馈', '切换版本弹窗'],
     ctas: [
       { label: '头像', priority: 'P0', position: '教师信息区，点击进入基本信息设置页' },
       { label: '扫一扫', priority: 'P1', position: '页面右上角 icon' },
       { label: '设置', priority: 'P1', position: '页面右上角 icon，点击进入设置页' },
       { label: '切换版本', priority: 'P0', position: '教师信息区学校/版本胶囊，点击打开底部弹窗' },
       { label: '货币发放管理', priority: 'P1', position: '更多工具卡片，点击进入货币发放管理' },
+      { label: '建议反馈', priority: 'P1', position: '更多工具卡片，点击进入建议反馈表单' },
       { label: '学校数据报表', priority: 'P0', position: '当前切换到学校版时展示在管理工具卡片' },
       { label: '生成期末报告', priority: 'P0', position: '管理工具卡片，点击后提示未到学期末并可预览样例' },
     ],
@@ -1093,6 +1116,22 @@ const pageMeta: Record<PageKey, PageMeta> = {
       denied: '无学校管理权限时返回我的页。',
     },
   },
+  suggestionFeedback: {
+    title: '建议反馈',
+    subtitle: '提交文字和图片给运营端处理。',
+    modules: ['反馈内容', '上传图片', '图片数量', '提交按钮'],
+    ctas: [
+      { label: '提交', priority: 'P0', position: '页面底部主按钮' },
+      { label: '上传图片', priority: 'P1', position: '图片上传区' },
+    ],
+    states: {
+      normal: '展示反馈内容输入和 1-5 张图片上传。',
+      loading: '提交中。',
+      empty: '反馈内容为空时提交按钮不可用。',
+      network: '提交失败，保留表单。',
+      denied: '登录失效时返回我的页。',
+    },
+  },
   advisor: {
     title: '顾问联系方式',
     subtitle: '自然展示顾问联系方式，不强销售。',
@@ -1156,7 +1195,10 @@ const classDetailComparisonPrdBlocks: PrdBlock[] = [
   ] },
   { type: 'h2', text: '确认规则' },
   { type: 'list', items: [
-    '解散班级只出现在 08A，并要求二次确认和输入 delete，避免误删个人版班级。',
+    '解散班级只出现在 08A，并使用分步确认，避免把所有风险信息揉在一个弹窗中。',
+    '解散第 1 步提示替代路径：如果老师只是想让班级不在 07A 首页展示，应引导其通过 07A 右上角“+”中的“显示设置”取消显示，而不是解散班级。',
+    '解散第 2 步校验前置条件：没有其他老师加入该班级，且没有任何家长绑定该班级学生。',
+    '解散第 3 步才提示不可恢复后果，并要求输入英文 delete 后才能确认。',
     '退出班级出现在 08B、08C，只需要二次确认，不要求输入 delete，因为不会删除班级数据。',
     '转移班主任必须先选中接收老师，再二次确认；确认后原班主任立刻失去班主任权限。',
   ] },
@@ -1194,8 +1236,9 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '教师信息直接铺开到页面顶部，不使用教师信息卡片。',
       '头像点击进入 15A 基本信息设置（个人版）。',
       '右上角展示扫一扫和设置 icon。',
-      '更多工具在 14A 和 14B 都展示，以卡片承载科目管理、部门管理和货币发放管理。',
+      '更多工具在 14A 和 14B 都展示，以卡片承载科目管理、部门管理、货币发放管理和建议反馈。',
       '点击货币发放管理进入 21 货币发放管理，默认关闭货币发放，开启后展示发放周期、班级总预算、阳光保底比例和积分排行比例。',
+      '点击建议反馈进入 22 建议反馈表单，可填写文本并上传 1-5 张图片；提交后进入运营端建议反馈模块。',
       '点击生成期末报告展示未到学期末提示，并提供期末报告样例预览。',
       '页面展示“了解学校版”按钮。',
       '弹窗先说明学校版适合全校统一使用，再展示学校统一使用能力和顾问微信二维码。',
@@ -1212,8 +1255,9 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '教师卡片头像姓名学校行右侧展示同组操作按钮：编辑资料和切换版本。切换版本点击后从底部上滑展示“切换版本”。',
       '切换版本弹窗只展示版本名称和当前标签，不展示“个人体验数据”“学校统一数据”等备注文案。',
       '管理工具随当前切换版本变化：当前为学校版时展示学校数据报表、生成期末报告；当前为个人版时只展示生成期末报告。',
-      '更多工具在 14A 和 14B 都展示，以卡片承载科目管理、部门管理和货币发放管理。',
+      '更多工具在 14A 和 14B 都展示，以卡片承载科目管理、部门管理、货币发放管理和建议反馈。',
       '点击货币发放管理进入 21 货币发放管理，默认关闭货币发放，开启后展示发放周期、班级总预算、阳光保底比例和积分排行比例。',
+      '点击建议反馈进入 22 建议反馈表单，可填写文本并上传 1-5 张图片；提交后进入运营端建议反馈模块。',
       '点击生成期末报告展示未到学期末提示，并提供期末报告样例预览。',
       '14B 不展示“了解学校版”按钮。',
     ] },
@@ -1231,7 +1275,8 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
   classListPersonal: [
     { type: 'h2', text: '班级卡片结构' },
     { type: 'list', items: [
-      '个人版班级列表展示创建班级和加入班级入口。',
+      '个人版班级列表右上角展示“+”操作入口，点击后展示创建班级、加入班级、显示设置。',
+      '创建班级、加入班级和显示设置均收敛到底部操作弹层中，07A 主页面不再展示大入口卡片。',
       '班级名称右侧展示基于学段和入学年份推断的年级。',
       '班级名下方展示当前登录账号的任教标签，例如班主任、语文、数学。',
       '班级号和人数在同一行展示。',
@@ -1287,7 +1332,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '家长绑定列表标题展示绑定进度，例如“家长绑定列表(48/50)”，括号数字使用辅助字重和灰色。',
       '家长绑定列表默认以两列学生聚合卡片展示首批学生，未绑定学生优先。',
       '点击家长绑定列表右上角 icon 进入完整列表，通过 tab 查看未绑定和已绑定学生。',
-      '完整家长绑定列表不展示学号；未绑定卡片展示学生头像、学生姓名，并按是否已预留手机号展示“未填手机号”或“待家长绑定”。',
+      '完整家长绑定列表不展示学号；未绑定卡片展示学生头像、学生姓名和“待绑定”标签。',
       '已绑定预览按学生聚合展示，例如“王小明”卡片内展示“爸爸、姑姑”等关系标签；08A/08B 预览不展示电话 icon。',
       '班级详情和完整家长绑定列表均提供“邀请家长绑定”按钮，层级同老师列表板块的邀请老师。',
       '邀请家长绑定流程完成后回到发起邀请的当前页面。',
@@ -1295,7 +1340,10 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '08A 班主任可点击“转移班主任”，从底部老师列表弹窗中选择一位非班主任老师。',
       '选中老师后必须展示二次确认弹窗；确认后班主任身份转移给该老师，原班主任不再拥有班级班主任权限。',
       '页面底部按权限展示危险操作：班主任显示解散班级，非班主任显示退出班级。',
-      '解散班级需要二次确认，并输入 delete 后才可点击确认解散。',
+      '解散班级需要分步确认，不把替代路径、条件校验和最终 delete 输入放在同一步。',
+      '解散第 1 步提示：如果只是想从首页移除班级，可通过 07A 右上角“+”里的“显示设置”取消显示。',
+      '解散第 2 步提示并确认前置条件：没有其他老师加入该班级，且没有任何家长绑定该班级学生。',
+      '解散第 3 步才提示后果：解散后将清空该班级信息和所有学生信息，并要求输入英文 delete 才能确认解散。',
       '退出班级同样需要二次确认，但不需要输入 delete。',
     ] },
   ],
@@ -1348,8 +1396,8 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '页面使用“未绑定/已绑定”tab 切换查看学生，tab 内数字即统计。',
       '邀请家长绑定按钮固定在页面底部，与 09 老师列表保持一致。',
       'mock 数据为 48/50：50 个学生中 48 个学生已绑定，未绑定学生优先展示。',
-      '未绑定卡片展示学生头像、学生姓名，并按是否已预留手机号展示“未填手机号”或“待家长绑定”。',
-      '未填手机号表示老师还没有录入可用于自动匹配的家长手机号；待家长绑定表示老师已预留手机号，只等家长微信授权绑定。',
+      '未绑定卡片展示学生头像、学生姓名和“待绑定”标签。',
+      '待绑定统一表示该学生还没有完成家长绑定，不在列表层区分是否已预留手机号。',
       '已绑定 tab 每个家长绑定关系展示为一张可点击卡片，卡片只展示学生头像和“学生姓名+关系”，例如“王小明的爸爸”；姓名字号应克制，关系作为轻层级信息展示。',
       '同一个学生有多个家长绑定时，多个家长卡片连续排列；不同学生之间用弱化线条分隔。',
       '已绑定卡片列表态不展示手机号、不展示 icon 操作；点击卡片后在弹窗中展示并支持编辑完整手机号和关系，同时提供拨打电话和移除绑定操作。',
@@ -1375,7 +1423,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '从 07 班级列表的班级更多操作进入。',
       '页面结构参考 12 添加学生，但不提供添加一名和清除学生。',
       '每行包含姓名、较短学号输入框、男/女点选。',
-      '姓名和性别有值时，底部保存修改按钮可点击；学号选填。',
+      '姓名、学号和性别都有值时，底部保存修改按钮可点击；学号必填。',
       '保存后回到 11 学生列表，并展示保存成功反馈。',
     ] },
   ],
@@ -1388,8 +1436,8 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '点击添加一名后再新增一行。',
       '每行包含姓名、较短学号输入框、男/女点选。',
       '性别默认男，且每行可独立切换。',
-      '每一行的姓名和性别填写完成后，底部完成按钮才可点击；学号选填。',
-      '学号选填，填写后可支持学号进行评价，例如“1号和3号同学打架”。',
+      '每一行的姓名、学号和性别填写完成后，底部完成按钮才可点击；学号必填。',
+      '学号必填，填写后可支持学号进行评价，例如“1号和3号同学打架”。',
       '当存在多行时，每个学生行右侧留白区展示清除 icon，用于删除误添加的整条学生数据；不展示学生序号文案。',
       '不提供批量粘贴入口。',
     ] },
@@ -1534,9 +1582,17 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [sunshineRatio, setSunshineRatio] = useState(30);
   const [rankingRatio, setRankingRatio] = useState(70);
   const [showCoinIssueHelpOverlay, setShowCoinIssueHelpOverlay] = useState(false);
+  const [suggestionFeedbackText, setSuggestionFeedbackText] = useState('');
+  const [suggestionFeedbackImages, setSuggestionFeedbackImages] = useState<string[]>([]);
+  const [teacherSuggestionFeedbackRows, setTeacherSuggestionFeedbackRows] = useState<TeacherSuggestionFeedback[]>([
+    { id: 'feedback-1', teacher: '李明老师', phone: '138****2468', version: '个人版', content: '希望批量导入学生时能自动识别学号列。', imageCount: 2, time: '10:18', status: '待处理' },
+    { id: 'feedback-2', teacher: '郭老师', phone: '139****8021', version: '学校版', content: '建议期末报告生成后支持按班级查看失败原因。', imageCount: 1, time: '昨天', status: '已处理' },
+  ]);
   const [currentSpaceId, setCurrentSpaceId] = useState<TeacherSpaceId>(defaultTeacherSpaceId);
   const [showSchoolAdminSpaceMenu, setShowSchoolAdminSpaceMenu] = useState(true);
-  const [opsPage, setOpsPage] = useState<'home' | 'personalUsers'>('home');
+  const [schoolAdminLoginTab, setSchoolAdminLoginTab] = useState<SchoolAdminLoginTab>('scan');
+  const [schoolAdminLoggedIn, setSchoolAdminLoggedIn] = useState(false);
+  const [opsPage, setOpsPage] = useState<'home' | 'personalUsers' | 'suggestionFeedback'>('home');
   const [handledOpsTodoIds, setHandledOpsTodoIds] = useState<string[]>([]);
   const [activeBasicInfoTab, setActiveBasicInfoTab] = useState<SchoolBasicInfoTab>('term');
   const [editingBasicInfoItem, setEditingBasicInfoItem] = useState<SchoolBasicInfoItem | null>(null);
@@ -1576,6 +1632,9 @@ const TeacherCMobileLowFi: React.FC = () => {
   });
   const [draftTeacherBasicConfigValue, setDraftTeacherBasicConfigValue] = useState('');
   const [activeClassAction, setActiveClassAction] = useState<{ name: string; code: string } | null>(null);
+  const [showPersonalClassActionSheet, setShowPersonalClassActionSheet] = useState(false);
+  const [showPersonalClassDisplaySheet, setShowPersonalClassDisplaySheet] = useState(false);
+  const [personalVisibleClassCodes, setPersonalVisibleClassCodes] = useState<string[]>(['58273914', '73948162']);
   const [inviteClass, setInviteClass] = useState<{ name: string; code: string; inviter: string }>({ name: '2025级1班', code: '58273914', inviter: '郭老师' });
   const [activeClassProfile, setActiveClassProfile] = useState<ClassProfile>({
     name: '2025级1班',
@@ -1587,6 +1646,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     isCreator: true,
   });
   const [showClassExitSheet, setShowClassExitSheet] = useState(false);
+  const [classDissolveStep, setClassDissolveStep] = useState<ClassDissolveStep>('check');
   const [showClassEditSheet, setShowClassEditSheet] = useState(false);
   const [draftClassNumber, setDraftClassNumber] = useState('1');
   const [draftClassStage, setDraftClassStage] = useState<'小学' | '初中' | '高中'>('小学');
@@ -1776,16 +1836,12 @@ const TeacherCMobileLowFi: React.FC = () => {
     </article>
   );
 
-  const startParentBindingLookup = (hasResult = true) => {
+  const startParentBindingLookup = () => {
     setParentBindingReturnPage('landing');
-    showClassActionToast('正在查找可绑定学生');
     if (parentBindingLookupTimerRef.current !== null) {
       window.clearTimeout(parentBindingLookupTimerRef.current);
     }
-    parentBindingLookupTimerRef.current = window.setTimeout(() => {
-      parentBindingLookupTimerRef.current = null;
-      jumpToParentPage(hasResult ? 'bindSelfMatched' : 'bindSelfUnmatched');
-    }, 1100);
+    jumpToParentPage('bindSelfUnmatched');
   };
 
   const handleResizeStart = (event: React.PointerEvent<HTMLButtonElement>) => {
@@ -1836,6 +1892,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     setShowClassCodeInviteSheet(false);
     setShowInviteConfirmSheet(false);
     setShowClassExitSheet(false);
+    setClassDissolveStep('check');
     setShowClassEditSheet(false);
     setClassDeleteConfirmText('');
     setEditingTeachingIndex(null);
@@ -1865,6 +1922,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     setShowClassCodeInviteSheet(false);
     setShowInviteConfirmSheet(false);
     setShowClassExitSheet(false);
+    setClassDissolveStep('check');
     setShowClassEditSheet(false);
     setClassDeleteConfirmText('');
     setEditingTeachingIndex(null);
@@ -2020,7 +2078,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     setParentPage(next);
     setActiveParentDirectoryNodeKey(directoryNodeKey || getDefaultParentDirectoryNodeKey(next));
     setParentBindingLookupState('idle');
-    if ((next === 'bindSelfMatched' || next === 'bindSelfUnmatched' || next === 'bindInviteMatched' || next === 'bindInviteUnmatched' || next === 'bindInviteBoundUnmatched' || next === 'bindingLimitNotice' || next === 'bindingNotice') && directoryNodeKey) {
+    if ((next === 'bindSelfMatched' || next === 'bindSelfUnmatched' || next === 'bindInviteMatched' || next === 'bindInviteUnmatched' || next === 'bindInviteBoundUnmatched' || next === 'bindingLimitNotice' || next === 'bindingTotalLimitNotice' || next === 'bindingNotice') && directoryNodeKey) {
       setParentBindingReturnPage(directoryNodeKey.startsWith('自主新增绑定') ? 'landing' : 'login');
     }
     if (next === 'bindSelfMatched' || next === 'bindSelfUnmatched') setParentBindMode('school');
@@ -2067,10 +2125,42 @@ const TeacherCMobileLowFi: React.FC = () => {
   const fillStudentsFromScannedTable = () => {
     setStudentInputRows([
       { id: 1, name: '林小杰', no: '20250101', gender: '男' },
-      { id: 2, name: '周雨晴', no: '', gender: '女' },
+      { id: 2, name: '周雨晴', no: '20250102', gender: '女' },
       { id: 3, name: '陈浩然', no: '20250103', gender: '男' },
     ]);
     setShowStudentScanSheet(false);
+  };
+
+  const addSuggestionFeedbackImage = () => {
+    setSuggestionFeedbackImages((images) => images.length >= 5 ? images : [...images, `图片${images.length + 1}`]);
+  };
+
+  const removeSuggestionFeedbackImage = (index: number) => {
+    setSuggestionFeedbackImages((images) => images.filter((_, imageIndex) => imageIndex !== index));
+  };
+
+  const submitSuggestionFeedback = () => {
+    const text = suggestionFeedbackText.trim();
+    if (!text) return;
+    const version: TeacherSuggestionFeedback['version'] = currentSpaceId === 'personal' ? '个人版' : '学校版';
+    setTeacherSuggestionFeedbackRows((rows) => [{
+      id: `feedback-${Date.now()}`,
+      teacher: '郭老师',
+      phone: '139****8021',
+      version,
+      content: text,
+      imageCount: suggestionFeedbackImages.length,
+      time: '刚刚',
+      status: '待处理',
+    }, ...rows]);
+    setSuggestionFeedbackText('');
+    setSuggestionFeedbackImages([]);
+    showClassActionToast('建议反馈已提交');
+    navigate(currentSpaceId === 'personal' ? 'minePersonal' : 'mineSchool');
+  };
+
+  const markSuggestionFeedbackStatus = (id: string, status: TeacherSuggestionFeedback['status']) => {
+    setTeacherSuggestionFeedbackRows((rows) => rows.map((row) => row.id === id ? { ...row, status } : row));
   };
 
   const updateStudentInputRow = (id: number, patch: Partial<Omit<StudentInputRow, 'id'>>) => {
@@ -3161,51 +3251,81 @@ const TeacherCMobileLowFi: React.FC = () => {
     const close = () => {
       setShowClassExitSheet(false);
       setClassDeleteConfirmText('');
+      setClassDissolveStep('check');
     };
     const isCreator = activeClassProfile.isCreator;
     const isSchoolHead = page === 'classDetailSchoolHead';
     const canDissolve = classDeleteConfirmText.trim() === 'delete';
     const isDissolveMode = isCreator && !isSchoolHead;
+    const dissolvePrimaryLabel = classDissolveStep === 'check' ? '已确认，继续' : '确认解散班级';
+    const dissolveTitle = classDissolveStep === 'check' ? '解散班级' : '最终确认';
 
     return (
       <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label={isDissolveMode ? '确认解散班级' : '确认退出班级'}>
         <button type="button" aria-label="关闭班级操作确认弹窗" className="absolute inset-0 cursor-default" onClick={close} />
         <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
-          <h3 className="text-base font-black">{isDissolveMode ? '解散班级' : '退出班级'}</h3>
-          <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
-            {isDissolveMode
-              ? `你是「${activeClassProfile.name}」的创建人。解散后，老师将无法继续共同管理该班级。`
-              : `退出后，你将不再管理「${activeClassProfile.name}」，该班级数据仍由创建人保留。`}
-          </p>
-          {isDissolveMode && (
-            <label className="mt-4 block text-xs font-black text-gray-500">
-              输入 delete 确认解散
-              <input
-                value={classDeleteConfirmText}
-                onChange={(event) => setClassDeleteConfirmText(event.target.value)}
-                className="mt-2 h-12 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal text-gray-950"
-                placeholder="delete"
-                aria-label="输入 delete 确认解散"
-              />
-            </label>
+          <h3 className="text-base font-black">{isDissolveMode ? dissolveTitle : '退出班级'}</h3>
+          {isDissolveMode ? (
+            <div className="mt-4 space-y-3">
+              {classDissolveStep === 'check' && (
+                <>
+                  <section className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
+                    <div className="text-sm font-black text-gray-950">只是想从首页移除这个班级？</div>
+                    <p className="mt-1 text-xs font-medium leading-5 text-gray-600">可以在 07A 右上角“+”里进入“显示设置”，取消该班级显示。</p>
+                  </section>
+                  <section className="rounded-2xl border border-gray-200 bg-white p-3">
+                  <div className="text-sm font-black text-gray-950">请先确认以下条件</div>
+                  <ul className="mt-2 space-y-1.5 text-xs font-medium leading-5 text-gray-600">
+                    <li>没有其他老师加入该班级</li>
+                    <li>没有任何家长绑定该班级学生</li>
+                  </ul>
+                  </section>
+                </>
+              )}
+              {classDissolveStep === 'final' && (
+                <>
+                  <section className="rounded-2xl border border-red-200 bg-red-50 p-3">
+                    <div className="text-sm font-black text-red-600">解散后将清空该班级信息和所有学生信息，且不可恢复。</div>
+                  </section>
+                  <label className="block text-xs font-black text-gray-500">
+                    输入英文 delete 确认解散
+                    <input
+                      value={classDeleteConfirmText}
+                      onChange={(event) => setClassDeleteConfirmText(event.target.value)}
+                      className="mt-2 h-12 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal text-gray-950"
+                      placeholder="delete"
+                      aria-label="输入英文 delete 确认解散"
+                    />
+                  </label>
+                </>
+              )}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
+              退出后，你将不再管理「{activeClassProfile.name}」，该班级数据仍由创建人保留。
+            </p>
           )}
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
             <button
               type="button"
-              disabled={isDissolveMode && !canDissolve}
+              disabled={isDissolveMode && classDissolveStep === 'final' && !canDissolve}
               onClick={() => {
+                if (isDissolveMode && classDissolveStep === 'check') {
+                  setClassDissolveStep('final');
+                  return;
+                }
                 close();
                 showClassActionToast(isDissolveMode ? '已解散班级' : '已退出班级');
                 navigate(getClassListPageForCurrentSpace());
               }}
               className={cx(
                 'h-12 rounded-2xl border border-gray-200 text-sm font-black',
-                isDissolveMode && !canDissolve ? 'bg-gray-100 text-gray-400' : 'bg-gray-900 text-white'
+                isDissolveMode && classDissolveStep === 'final' && !canDissolve ? 'bg-gray-100 text-gray-400' : 'bg-gray-900 text-white'
               )}
             >
-              {isDissolveMode ? '确认解散' : '确认退出'}
+              {isDissolveMode ? dissolvePrimaryLabel : '确认退出'}
             </button>
           </div>
         </section>
@@ -3253,7 +3373,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     const visibleGuardians = compact ? guardians.slice(0, 2) : guardians;
     const hiddenGuardianCount = guardians.length - visibleGuardians.length;
     const isUnbound = guardians.length === 0;
-    const unboundLabel = student.reservedPhone ? '待家长绑定' : '未填手机号';
+    const unboundLabel = '待绑定';
 
     return (
       <div className={cx(
@@ -3408,7 +3528,10 @@ const TeacherCMobileLowFi: React.FC = () => {
               <div className="flex items-center gap-2">
                 <PageNodeButton item="minePersonal" lane={lane.title} />
                 <span className="shrink-0 text-sm font-black text-gray-400">→</span>
-                <PageNodeButton item="teacherBasicInfoPersonal" lane={lane.title} />
+                <div className="grid shrink-0 grid-cols-2 gap-2">
+                  <PageNodeButton item="teacherBasicInfoPersonal" lane={lane.title} />
+                  <PageNodeButton item="suggestionFeedback" lane={lane.title} />
+                </div>
               </div>
             ) : lane.title === '我的(学校版)' ? (
               <div className="flex items-center gap-2">
@@ -3420,6 +3543,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                   <PageNodeButton item="subjectManagement" lane={lane.title} />
                   <PageNodeButton item="departmentManagement" lane={lane.title} />
                   <PageNodeButton item="coinIssuanceManagement" lane={lane.title} />
+                  <PageNodeButton item="suggestionFeedback" lane={lane.title} />
                 </div>
               </div>
             ) : lane.branchGroups ? (
@@ -3780,7 +3904,13 @@ const TeacherCMobileLowFi: React.FC = () => {
                 type="button"
                 disabled={!parentIdentityComplete}
                 onClick={() => {
-                  if (parentIdentityComplete) continueParentBindingFlow();
+                  if (parentIdentityComplete) {
+                    if (parentIdentityForm.phone === '17700003333') {
+                      jumpToParentPage('bindingTotalLimitNotice');
+                      return;
+                    }
+                    continueParentBindingFlow();
+                  }
                 }}
                 className={cx(
                   'h-12 w-full rounded-2xl border border-gray-200 text-sm font-black',
@@ -3836,7 +3966,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           <section className="rounded-2xl bg-gray-50 p-4">
             <h3 className="text-xs font-black text-gray-500">安全提醒</h3>
             <p className="mt-2 text-sm font-semibold leading-6 text-gray-700">
-              为保障学生信息安全，同一班级最多绑定 2 名学生。请确认当前绑定均为自己的孩子。
+              为保障学生信息安全，同一班级最多绑定 2 名学生，一个家长最多绑定 3 名学生。请确认当前绑定均为自己的孩子。
             </p>
           </section>
 
@@ -3887,7 +4017,13 @@ const TeacherCMobileLowFi: React.FC = () => {
             type="button"
             disabled={!parentIdentityComplete}
             onClick={() => {
-              if (parentIdentityComplete) jumpToParentPage('landing');
+              if (parentIdentityComplete) {
+                if (parentIdentityForm.phone === '17700003333') {
+                  jumpToParentPage('bindingTotalLimitNotice');
+                  return;
+                }
+                jumpToParentPage('landing');
+              }
             }}
             className={cx(
               'h-12 w-full rounded-2xl border border-gray-200 text-sm font-black',
@@ -3921,6 +4057,42 @@ const TeacherCMobileLowFi: React.FC = () => {
 
           {renderParentStudentCard('郑小磊')}
           {renderParentStudentCard('郑小雅')}
+          <div className="rounded-2xl bg-gray-50 px-4 py-3 text-sm font-semibold leading-6 text-gray-700">
+            一个家长最多绑定 3 名学生。
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => jumpToParentPage('landing')}
+          className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white active:bg-gray-700"
+        >
+          回到首页
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderParentBindingTotalLimitNotice = () => (
+    <div className="flex h-full w-full flex-col bg-white text-gray-950">
+      <header className="grid h-16 items-center border-b border-gray-100 bg-white px-4 [grid-template-columns:44px_1fr_44px]">
+        <button type="button" onClick={() => jumpToParentPage('landing')} className="flex h-11 w-11 items-center justify-center rounded-xl active:bg-gray-100" aria-label="返回首页">
+          <ArrowLeft size={19} />
+        </button>
+        <h2 className="text-center text-base font-black">绑定提醒</h2>
+        <span />
+      </header>
+      <div className="flex h-[calc(100%-64px)] flex-col px-5 pb-5 pt-5">
+        <div className="flex-1 space-y-3 overflow-y-auto">
+          <section className="rounded-2xl bg-gray-50 p-4">
+            <h3 className="text-xs font-black text-gray-500">安全提醒</h3>
+            <p className="mt-2 text-sm font-semibold leading-6 text-gray-700">
+              为保障学生信息安全，一个家长最多绑定 3 名学生。当前账号已绑定 3 个孩子，如需调整，请联系班主任先解绑后再重新绑定。
+            </p>
+          </section>
+
+          {renderParentStudentCard('郑小磊')}
+          {renderParentStudentCard('郑小雅')}
+          {renderParentStudentCard('郑小宇')}
         </div>
         <button
           type="button"
@@ -3975,6 +4147,10 @@ const TeacherCMobileLowFi: React.FC = () => {
           disabled={!parentInviteStudentComplete}
           onClick={() => {
             if (parentInviteStudentComplete) {
+              if (parentIdentityForm.phone === '17700003333') {
+                jumpToParentPage('bindingTotalLimitNotice');
+                return;
+              }
               setParentBindingNoticeBackPage(variant === 'bound' ? 'bindInviteBoundUnmatched' : 'bindInviteUnmatched');
               jumpToParentPage('bindingNotice');
             }
@@ -4165,7 +4341,11 @@ const TeacherCMobileLowFi: React.FC = () => {
     const close = () => setShowParentChildSwitcherSheet(false);
     const addBinding = () => {
       close();
-      startParentBindingLookup(true);
+      if (parentIdentityForm.phone === '17700003333') {
+        jumpToParentPage('bindingTotalLimitNotice');
+        return;
+      }
+      startParentBindingLookup();
     };
 
     return (
@@ -4229,17 +4409,20 @@ const TeacherCMobileLowFi: React.FC = () => {
   const renderParentWechatPhoneSheet = () => {
     if (!showParentWechatPhoneSheet) return null;
 
-    const allowPhone = (phone: string) => {
-      const isMatchedPhone = phone === '15200001332';
-      const hasReachedClassBindingLimit = phone === '19900008610';
-      const target: ParentPageKey = isMatchedPhone
+    const allowPhone = (phone: string, result: 'matchedWithNewBinding' | 'matchedWithoutNewBinding' | 'unmatchedLimit' | 'totalLimit' = 'matchedWithNewBinding') => {
+      const isInviteLogin = parentLoginTarget === 'bindInviteMatched';
+      const target: ParentPageKey = result === 'matchedWithNewBinding'
         ? parentLoginTarget
-        : parentLoginTarget === 'bindInviteMatched' ? (hasReachedClassBindingLimit ? 'bindingLimitNotice' : 'bindInviteUnmatched') : 'bindSelfUnmatched';
+        : result === 'matchedWithoutNewBinding'
+          ? 'landing'
+          : result === 'totalLimit'
+            ? 'bindingTotalLimitNotice'
+            : isInviteLogin ? 'bindingLimitNotice' : 'bindSelfUnmatched';
       setParentIdentityForm((form) => ({ ...form, phone }));
       setActiveParentMatchedStudentIndex(0);
       setParentBindingReturnPage('login');
       setParentBindingNoticeBackPage(target);
-      if (parentLoginTarget === 'bindInviteMatched') setParentBindMode('class');
+      if (isInviteLogin) setParentBindMode('class');
       setShowParentWechatPhoneSheet(false);
       jumpToParentPage(target);
     };
@@ -4265,12 +4448,18 @@ const TeacherCMobileLowFi: React.FC = () => {
           </div>
 
           <div className="mt-5 overflow-hidden rounded-2xl bg-gray-50">
-            <button type="button" onClick={() => allowPhone('15200001332')} className="block min-h-16 w-full border-b border-gray-100 px-4 py-3 text-center active:bg-slate-100">
+            <button type="button" onClick={() => allowPhone('15200001332', 'matchedWithNewBinding')} className="block min-h-16 w-full border-b border-gray-100 px-4 py-3 text-center active:bg-slate-100">
               <div className="text-lg font-medium">152****1332</div>
               <div className="mt-1 text-xs font-black text-slate-600">上次提供</div>
             </button>
-            <button type="button" onClick={() => allowPhone('19900008610')} className="block min-h-16 w-full px-4 py-3 text-center active:bg-slate-100">
+            <button type="button" onClick={() => allowPhone('18800005566', 'matchedWithoutNewBinding')} className="block min-h-16 w-full border-b border-gray-100 px-4 py-3 text-center active:bg-slate-100">
+              <div className="text-lg font-medium">188****5566</div>
+            </button>
+            <button type="button" onClick={() => allowPhone('19900008610', 'unmatchedLimit')} className="block min-h-16 w-full px-4 py-3 text-center active:bg-slate-100">
               <div className="text-lg font-medium">199****8610</div>
+            </button>
+            <button type="button" onClick={() => allowPhone('17700003333', 'totalLimit')} className="block min-h-16 w-full border-t border-gray-100 px-4 py-3 text-center active:bg-slate-100">
+              <div className="text-lg font-medium">177****3333</div>
             </button>
           </div>
 
@@ -4294,6 +4483,7 @@ const TeacherCMobileLowFi: React.FC = () => {
         {parentPage === 'bindInviteUnmatched' && renderParentInviteStudentBinding('unbound')}
         {parentPage === 'bindInviteBoundUnmatched' && renderParentInviteStudentBinding('bound')}
         {parentPage === 'bindingLimitNotice' && renderParentBindingLimitNotice()}
+        {parentPage === 'bindingTotalLimitNotice' && renderParentBindingTotalLimitNotice()}
         {parentPage === 'bindingNotice' && renderParentBindingNotice()}
         {parentPage === 'parentIdentity' && renderParentIdentity()}
         {parentPage === 'landing' && renderParentLanding()}
@@ -4348,6 +4538,7 @@ const TeacherCMobileLowFi: React.FC = () => {
             {[
               { key: 'home' as const, label: '首页' },
               { key: 'personalUsers' as const, label: '个人用户管理' },
+              { key: 'suggestionFeedback' as const, label: '建议反馈' },
             ].map((item) => {
               const active = opsPage === item.key;
               return (
@@ -4469,6 +4660,47 @@ const TeacherCMobileLowFi: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {opsPage === 'suggestionFeedback' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-[1fr_0.8fr_0.8fr_auto] gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-3 text-xs font-black text-gray-500">
+                  <div className="rounded-xl bg-white px-3 py-2">搜索老师 / 内容</div>
+                  <div className="rounded-xl bg-white px-3 py-2">全部版本</div>
+                  <div className="rounded-xl bg-white px-3 py-2">全部状态</div>
+                  <button type="button" className="h-9 rounded-xl bg-gray-950 px-4 text-white">查询</button>
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-gray-200">
+                  <div className="grid grid-cols-[0.72fr_0.78fr_0.58fr_1.55fr_0.38fr_0.48fr_0.52fr_0.92fr] border-b border-gray-100 bg-gray-50 px-4 py-3 text-xs font-black text-gray-500">
+                    <div>老师姓名</div>
+                    <div>手机号</div>
+                    <div>版本</div>
+                    <div>反馈内容</div>
+                    <div className="text-right">图片</div>
+                    <div>时间</div>
+                    <div>状态</div>
+                    <div>操作</div>
+                  </div>
+                  {teacherSuggestionFeedbackRows.map((row) => (
+                    <div key={row.id} className="grid grid-cols-[0.72fr_0.78fr_0.58fr_1.55fr_0.38fr_0.48fr_0.52fr_0.92fr] items-center border-b border-gray-100 px-4 py-3 text-sm font-medium last:border-b-0">
+                      <div className="truncate pr-2 font-black text-gray-900">{row.teacher}</div>
+                      <div className="truncate pr-2 text-gray-700">{row.phone}</div>
+                      <div className="truncate pr-2">{row.version}</div>
+                      <div className="truncate pr-3 text-gray-700">{row.content}</div>
+                      <div className="pr-4 text-right font-black">{row.imageCount}</div>
+                      <div className="truncate pr-2 text-gray-500">{row.time}</div>
+                      <div className={cx('font-black', row.status === '待处理' ? 'text-gray-950' : 'text-gray-400')}>{row.status}</div>
+                      <button
+                        type="button"
+                        className="h-8 justify-self-start rounded-xl border border-gray-200 px-3 text-xs font-black text-gray-700 active:bg-gray-100"
+                        onClick={() => markSuggestionFeedbackStatus(row.id, row.status === '待处理' ? '已处理' : '待处理')}
+                      >
+                        {row.status === '待处理' ? '标记为已处理' : '标记为待处理'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </main>
         </div>
       </div>
@@ -4477,32 +4709,140 @@ const TeacherCMobileLowFi: React.FC = () => {
 
   const renderSchoolAdminPrototype = () => {
     const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
+    const currentSpaceIsPersonal = currentSpace.type === 'personal';
+    const schoolAdminLoginTabs: Array<{ key: SchoolAdminLoginTab; label: string }> = [
+      { key: 'password', label: '密码登录' },
+      { key: 'sms', label: '验证码登录' },
+      { key: 'scan', label: '扫码登录' },
+    ];
+    const schoolAdminApplications = [
+      { key: 'admin', label: '管理后台', meta: '开通学生：2530', enabledInPersonal: false },
+      { key: 'screen', label: '课堂大屏', meta: '有效期至：2027-09-01', enabledInPersonal: true },
+    ];
+    const schoolAdminPromoCards = ['积分银行', 'AI素养评价', '素养指南针'];
+    const schoolAdminWorkspaceTabs = currentSpaceIsPersonal ? ['首页', '课堂大屏'] : ['首页', '学校管理后台', '积分银行（一体机）', '课堂大屏'];
+    const visibleSchoolAdminApplications = schoolAdminApplications.filter((item) => !currentSpaceIsPersonal || item.enabledInPersonal);
     const selectSchoolAdminSpace = (spaceId: TeacherSpaceId) => {
       setCurrentSpaceId(spaceId);
       setShowSchoolAdminSpaceMenu(false);
     };
 
+    if (!schoolAdminLoggedIn) {
+      return (
+        <div className="relative flex h-full w-full max-w-[760px] items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-[#f5f7fa] text-gray-950">
+          <div className="absolute left-[14%] top-[13%] h-[180px] w-[180px] rounded-full bg-gray-200/70 blur-[58px]" aria-hidden="true" />
+          <div className="absolute bottom-[12%] right-[18%] h-[160px] w-[160px] rounded-full bg-gray-100 blur-[58px]" aria-hidden="true" />
+          <section className="relative z-10 w-full max-w-[440px] rounded bg-white/95 p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] ring-1 ring-white/70">
+            <div className="mb-8 flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-[#2a68ff] text-white shadow-md shadow-blue-200">
+                <Shield size={24} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black tracking-tight text-gray-900">乐途AI智慧教育平台</h2>
+                <p className="mt-0.5 text-[11px] font-medium text-gray-500">学校端安全登录</p>
+              </div>
+            </div>
+
+            <div className="mb-6 flex gap-3">
+              {schoolAdminLoginTabs.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setSchoolAdminLoginTab(item.key)}
+                  className={cx(
+                    'flex-1 rounded border py-2.5 text-sm font-bold transition-all',
+                    schoolAdminLoginTab === item.key
+                      ? 'border-[#2a68ff] bg-[#2a68ff] text-white shadow-md shadow-blue-200'
+                      : 'border-gray-200 bg-white text-gray-600 active:bg-gray-50'
+                  )}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {schoolAdminLoginTab === 'scan' ? (
+              <div className="space-y-4">
+                <div className="mx-auto grid h-40 w-40 grid-cols-5 gap-1 rounded border border-gray-200 bg-white p-4">
+                  {Array.from({ length: 25 }).map((_, index) => (
+                    <span key={index} className={cx('rounded-[4px]', [0, 1, 3, 5, 6, 7, 9, 11, 13, 14, 17, 18, 20, 21, 23, 24].includes(index) ? 'bg-gray-900' : 'bg-gray-100')} />
+                  ))}
+                </div>
+                <div className="h-4" />
+                <button type="button" onClick={() => setSchoolAdminLoggedIn(true)} className="flex h-10 w-full items-center justify-center rounded bg-[#4f46e5] text-sm font-bold text-white shadow-md shadow-indigo-500/20 active:scale-[0.98]">已扫码，立即登录</button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1.5 flex text-[11px] font-bold text-gray-700">
+                    <span className="mr-0.5 text-red-500">*</span>
+                    手机号
+                  </label>
+                  <div className="flex h-[42px] items-center gap-3 rounded border border-gray-200 bg-white px-3 text-sm font-medium text-gray-400">
+                    <UserPlus size={16} />
+                    <span>请输入手机号（演示环境任意输入）</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 flex text-[11px] font-bold text-gray-700">
+                    <span className="mr-0.5 text-red-500">*</span>
+                    {schoolAdminLoginTab === 'password' ? '密码' : '验证码'}
+                  </label>
+                  <div className="flex h-[42px] items-center gap-3 rounded border border-gray-200 bg-white px-3 text-sm font-medium text-gray-400">
+                    <Shield size={16} />
+                    <span>{schoolAdminLoginTab === 'password' ? '请输入密码（演示环境任意输入）' : '请输入验证码（演示验证码：123456）'}</span>
+                    {schoolAdminLoginTab === 'sms' && <span className="ml-auto rounded bg-blue-50 px-2 py-1 text-[11px] font-bold text-[#2a68ff]">获取验证码</span>}
+                  </div>
+                </div>
+
+                <div className="h-4" />
+                <button type="button" onClick={() => setSchoolAdminLoggedIn(true)} className="flex h-10 w-full items-center justify-center rounded bg-[#4f46e5] text-sm font-bold text-white shadow-md shadow-indigo-500/20 active:scale-[0.98]">立即登录</button>
+                <div className="flex justify-end pt-1">
+                  <button type="button" className="text-[11px] font-bold text-[#2a68ff]">忘记密码？</button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      );
+    }
+
     return (
       <div className="h-full w-full max-w-[760px] overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-950">
-        <div className="relative flex h-16 items-center border-b border-gray-200 px-5">
-          <div className="flex min-w-0 items-center gap-3">
+        <div className="relative flex h-14 items-center border-b border-gray-200 px-5">
+          <div className="flex min-w-0 shrink-0 items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-950 text-white text-sm font-black">盾</div>
             <div className="shrink-0 text-base font-black">乐途 AI 智慧教育平台</div>
           </div>
+          <div className="mx-5 flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+            {schoolAdminWorkspaceTabs.map((tab, index) => (
+              <button
+                key={tab}
+                type="button"
+                className={cx(
+                  'h-9 shrink-0 rounded-xl border px-3 text-xs font-black',
+                  index === 0 ? 'border-gray-900 bg-gray-950 text-white' : 'border-gray-200 bg-gray-50 text-gray-500'
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowSchoolAdminSpaceMenu((open) => !open)}
-                className="flex h-11 min-w-[184px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 text-left active:bg-gray-50"
+                className="flex h-10 min-w-[172px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 text-left active:bg-gray-50"
                 aria-label="切换空间"
                 aria-expanded={showSchoolAdminSpaceMenu}
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-black">{currentSpace.type === 'personal' ? '个' : '管'}</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-black">{currentSpace.type === 'personal' ? '个' : '管'}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-black leading-4">{currentSpace.type === 'personal' ? '个人老师' : '管理员'}</span>
-                  <span className="mt-1 block truncate text-xs font-black leading-4 text-gray-500">{currentSpace.title}</span>
+                  <span className="block text-xs font-black leading-4">{currentSpace.type === 'personal' ? '个人老师' : '管理员'}</span>
+                  <span className="block truncate text-[11px] font-black leading-4 text-gray-500">{currentSpace.title}</span>
                 </span>
                 <ChevronDown size={14} className="shrink-0 text-gray-400" />
               </button>
@@ -4529,22 +4869,71 @@ const TeacherCMobileLowFi: React.FC = () => {
                 </div>
               )}
             </div>
-            <button type="button" className="h-10 rounded-2xl px-3 text-sm font-black text-gray-500">退出</button>
+            <button type="button" onClick={() => setSchoolAdminLoggedIn(false)} className="h-10 rounded-2xl px-3 text-sm font-black text-gray-500">退出</button>
           </div>
         </div>
 
-        <div className="p-5">
-          <section className="rounded-2xl bg-gray-50 p-5">
-            <div className="text-xs font-black text-gray-500">当前版本</div>
-            <div className="mt-3 text-xl font-black">
-              {currentSpace.title}
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-xs font-black text-gray-500">
-              {(currentSpace.type === 'personal' ? ['个人班级', '默认指标', '体验报告'] : ['学校班级', '学校指标', '学校报告']).map((item) => (
-                <div key={item} className="rounded-xl bg-white px-3 py-2">{item}</div>
-              ))}
+        <div className="h-[calc(100%-56px)] overflow-y-auto bg-gray-50 p-5">
+          <section className="rounded-xl border border-gray-200 bg-white p-4">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="text-xl font-black">郭老师，您好！</div>
+                <div className="mt-2 flex items-center gap-2 text-xs font-black text-gray-500">
+                  <span className="rounded-full bg-gray-100 px-3 py-1">{currentSpace.title}</span>
+                  <span className="rounded-full bg-gray-100 px-3 py-1">{currentSpaceIsPersonal ? '个人版' : '学校版'}</span>
+                </div>
+              </div>
+              <div className="hidden grid-cols-3 gap-2 text-xs font-black text-gray-500 sm:grid">
+                {schoolAdminPromoCards.map((item) => (
+                  <div key={item} className="rounded-xl bg-gray-50 px-3 py-2">{item}</div>
+                ))}
+              </div>
             </div>
           </section>
+
+          <div className="mt-4 grid grid-cols-[minmax(0,1fr)_260px] gap-4">
+            <div className="space-y-4">
+              <section className="rounded-xl border border-gray-200 bg-white p-4">
+                <div className="text-base font-black">我的应用</div>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {visibleSchoolAdminApplications.map((item) => (
+                    <button key={item.key} type="button" className="min-h-[132px] rounded-xl border border-gray-200 bg-gray-50 p-4 text-left active:bg-gray-100">
+                      <span className="block text-lg font-black">{item.label}</span>
+                      <span className="mt-3 block text-xs font-black text-gray-500">{item.meta}</span>
+                      <span className="mt-6 block h-2 w-20 rounded-full bg-gray-200" />
+                    </button>
+                  ))}
+                </div>
+              </section>
+              <section className="rounded-xl border border-gray-200 bg-white p-4">
+                <div className="text-base font-black">更多应用</div>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {['绘本工坊'].map((item) => (
+                    <div key={item} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-sm font-black">{item}</div>
+                      <div className="mt-2 h-2 w-24 rounded-full bg-gray-200" />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+            <aside className="space-y-3">
+              <section className="rounded-xl border border-gray-200 bg-white p-3">
+                <div className="text-sm font-black">服务与支持</div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-black text-gray-500">
+                  <div className="rounded-xl bg-gray-50 px-3 py-2">曹老师</div>
+                  <div className="rounded-xl bg-gray-50 px-3 py-2">贾老师</div>
+                </div>
+              </section>
+              {schoolAdminPromoCards.map((item) => (
+                <section key={item} className="min-h-[112px] rounded-xl border border-gray-200 bg-white p-3 text-center">
+                  <div className="mx-auto h-12 w-12 rounded-xl bg-gray-100" />
+                  <div className="mt-3 text-sm font-black">{item}</div>
+                  <div className="mx-auto mt-2 h-2 w-16 rounded-full bg-gray-100" />
+                </section>
+              ))}
+            </aside>
+          </div>
         </div>
       </div>
     );
@@ -5657,7 +6046,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     }
 
     if (page === 'studentAdd') {
-      const canSubmitStudents = studentInputRows.every((row) => row.name.trim() && row.gender);
+      const canSubmitStudents = studentInputRows.every((row) => row.name.trim() && row.no.trim() && row.gender);
 
       return (
         <>
@@ -5689,8 +6078,9 @@ const TeacherCMobileLowFi: React.FC = () => {
                           value={row.no}
                           onChange={(event) => updateStudentInputRow(row.id, { no: event.target.value })}
                           className="h-11 w-24 shrink-0 border border-gray-200 bg-white px-2 text-sm font-normal"
-                          placeholder="学号选填"
+                          placeholder="学号必填"
                           aria-label="学生学号"
+                          aria-required="true"
                         />
                         <div className="grid h-11 w-20 shrink-0 grid-cols-2 gap-1 text-xs font-black">
                           <button type="button" onClick={() => updateStudentInputRow(row.id, { gender: '男' })} className={cx('rounded-xl border border-gray-200', selectedGender === '男' ? 'bg-gray-900 text-white' : 'bg-white')}>男</button>
@@ -5706,7 +6096,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                   </div>
                 );
               })}
-              <div className="px-1 text-xs font-normal text-gray-500">学号选填，填写后可支持学号进行评价，例如“1号和3号同学打架”</div>
+              <div className="px-1 text-xs font-normal text-gray-500">学号必填，填写后可支持学号进行评价，例如“1号和3号同学打架”</div>
               <button
                 type="button"
                 onClick={addStudentInputRow}
@@ -5749,7 +6139,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     }
 
     if (page === 'studentBatchEdit') {
-      const canSaveStudentBatch = studentBatchEditRows.length > 0 && studentBatchEditRows.every((row) => row.name.trim() && row.gender);
+      const canSaveStudentBatch = studentBatchEditRows.length > 0 && studentBatchEditRows.every((row) => row.name.trim() && row.no.trim() && row.gender);
 
       return (
         <>
@@ -5772,8 +6162,9 @@ const TeacherCMobileLowFi: React.FC = () => {
                         value={row.no}
                         onChange={(event) => updateStudentBatchEditRow(row.id, { no: event.target.value })}
                         className="h-11 w-24 shrink-0 border border-gray-200 bg-white px-2 text-sm font-normal"
-                        placeholder="学号选填"
+                        placeholder="学号必填"
                         aria-label="学生学号"
+                        aria-required="true"
                       />
                       <div className="grid h-11 w-20 shrink-0 grid-cols-2 gap-1 text-xs font-black">
                         <button type="button" onClick={() => updateStudentBatchEditRow(row.id, { gender: '男' })} className={cx('rounded-xl border border-gray-200', selectedGender === '男' ? 'bg-gray-900 text-white' : 'bg-white')}>男</button>
@@ -5917,8 +6308,9 @@ const TeacherCMobileLowFi: React.FC = () => {
       const personalClassCards = classCards
         .slice(0, 2)
         .sort((a, b) => Number(b.isCreator) - Number(a.isCreator));
-      const createdClassCards = personalClassCards.filter((item) => item.isCreator);
-      const joinedClassCards = personalClassCards.filter((item) => !item.isCreator);
+      const visiblePersonalClassCards = personalClassCards.filter((item) => personalVisibleClassCodes.includes(item.code));
+      const createdClassCards = visiblePersonalClassCards.filter((item) => item.isCreator);
+      const joinedClassCards = visiblePersonalClassCards.filter((item) => !item.isCreator);
       const schoolVisibleClassCards = classCards.filter((item) => {
         const matchGrade = schoolClassGradeFilter === '全部' || inferGradeLabel(item.stage, item.entryYearValue) === schoolClassGradeFilter;
         const matchTeaching = !schoolClassTeachingOnly || item.tags.some((tag) => tag !== '班主任');
@@ -5930,10 +6322,16 @@ const TeacherCMobileLowFi: React.FC = () => {
         <>
           <div className="space-y-3 p-5 pb-24">
             {!isSchoolList && (
-              <div className="grid grid-cols-2 gap-3">
-                <ClassEntryCard type="create" onClick={() => navigate('classCreate')} />
-                <ClassEntryCard type="join" onClick={() => navigate('classJoin')} />
-              </div>
+              <section className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowPersonalClassActionSheet(true)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-gray-900 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-gray-100 active:bg-gray-100"
+                  aria-label="打开班级操作"
+                >
+                  <Plus size={20} />
+                </button>
+              </section>
             )}
             {isSchoolList && (
               <section className="flex items-center justify-between gap-3">
@@ -5986,9 +6384,96 @@ const TeacherCMobileLowFi: React.FC = () => {
                     ))}
                   </section>
                 )}
+                {visiblePersonalClassCards.length === 0 && (
+                  <section className="rounded-2xl bg-gray-50 p-4 text-sm font-black text-gray-500">
+                    暂无显示班级
+                  </section>
+                )}
               </>
             )}
           </div>
+          {showPersonalClassActionSheet && (
+            <div className={cx(bottomSheetBackdropClass, 'z-[115] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="班级操作">
+              <button type="button" aria-label="关闭班级操作" className="absolute inset-0 cursor-default" onClick={() => setShowPersonalClassActionSheet(false)} />
+              <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h3 className="text-base font-black">班级操作</h3>
+                  <button type="button" onClick={() => setShowPersonalClassActionSheet(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-lg font-black active:bg-gray-100">×</button>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPersonalClassActionSheet(false);
+                      navigate('classCreate');
+                    }}
+                    className="flex h-12 w-full items-center justify-between rounded-2xl bg-gray-50 px-4 text-sm font-black active:bg-gray-100"
+                  >
+                    <span className="flex items-center gap-2"><Plus size={17} />创建班级</span>
+                    <ChevronRight size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPersonalClassActionSheet(false);
+                      navigate('classJoin');
+                    }}
+                    className="flex h-12 w-full items-center justify-between rounded-2xl bg-gray-50 px-4 text-sm font-black active:bg-gray-100"
+                  >
+                    <span className="flex items-center gap-2"><LogIn size={17} />加入班级</span>
+                    <ChevronRight size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPersonalClassActionSheet(false);
+                      setShowPersonalClassDisplaySheet(true);
+                    }}
+                    className="flex h-12 w-full items-center justify-between rounded-2xl bg-gray-50 px-4 text-sm font-black active:bg-gray-100"
+                  >
+                    <span className="flex items-center gap-2"><SlidersHorizontal size={17} />显示设置</span>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </section>
+            </div>
+          )}
+          {showPersonalClassDisplaySheet && (
+            <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="显示班级">
+              <button type="button" aria-label="关闭显示班级设置" className="absolute inset-0 cursor-default" onClick={() => setShowPersonalClassDisplaySheet(false)} />
+              <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h3 className="text-base font-black">显示班级</h3>
+                  <button type="button" onClick={() => setShowPersonalClassDisplaySheet(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-lg font-black active:bg-gray-100">×</button>
+                </div>
+                <div className="space-y-2">
+                  {personalClassCards.map((item) => {
+                    const checked = personalVisibleClassCodes.includes(item.code);
+                    return (
+                      <button
+                        key={item.code}
+                        type="button"
+                        onClick={() => setPersonalVisibleClassCodes((codes) => (
+                          codes.includes(item.code)
+                            ? codes.filter((code) => code !== item.code)
+                            : [...codes, item.code]
+                        ))}
+                        className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-2xl bg-gray-50 px-4 text-left active:bg-gray-100"
+                        aria-pressed={checked}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-black">{item.name}（{inferGradeLabel(item.stage, item.entryYearValue)}）</span>
+                          <span className="mt-1 block text-xs font-medium text-gray-500">班级号：{formatClassCode(item.code)}</span>
+                        </span>
+                        <span className={cx('flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-black', checked ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white text-transparent')}>✓</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button type="button" onClick={() => setShowPersonalClassDisplaySheet(false)} className="mt-4 h-12 w-full rounded-2xl bg-gray-900 text-sm font-black text-white active:bg-gray-700">完成</button>
+              </section>
+            </div>
+          )}
           <BottomNav />
         </>
       );
@@ -6111,6 +6596,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                   )}
                 </div>
               ))}
+              {primaryClassTeachers.length > 0 && otherClassTeachers.length > 0 && <div className="h-px bg-gray-200" />}
               {otherClassTeachers.map((teacher) => (
                 <div key={teacher.name} className="flex min-h-[92px] items-center gap-3 rounded-2xl bg-gray-50 p-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black">{teacher.name.slice(0, 1)}</div>
@@ -6423,6 +6909,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           onClick: () => openSchoolBasicInfo(item.key),
         })),
         { key: 'coinIssuanceManagement', label: '货币发放', icon: Coins, onClick: () => navigate('coinIssuanceManagement') },
+        { key: 'suggestionFeedback', label: '建议反馈', icon: MessageCircle, onClick: () => navigate('suggestionFeedback') },
       ];
       return (
         <>
@@ -6636,6 +7123,73 @@ const TeacherCMobileLowFi: React.FC = () => {
             </div>
 
             <button type="button" className="h-11 w-full rounded-2xl border border-gray-200 bg-white text-sm font-black">退出登录</button>
+          </div>
+        </>
+      );
+    }
+
+    if (page === 'suggestionFeedback') {
+      const canSubmitSuggestion = Boolean(suggestionFeedbackText.trim());
+      const canAddSuggestionImage = suggestionFeedbackImages.length < 5;
+
+      return (
+        <>
+          <ScreenHeader title="建议反馈" />
+          <div className="flex h-[calc(100%-64px)] flex-col p-5">
+            <div className="flex-1 space-y-4 overflow-y-auto pb-4">
+              <label className="block">
+                <span className="text-sm font-black text-gray-900">反馈内容</span>
+                <textarea
+                  value={suggestionFeedbackText}
+                  onChange={(event) => setSuggestionFeedbackText(event.target.value)}
+                  className="mt-2 min-h-[156px] w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm font-normal leading-6 text-gray-900"
+                  placeholder="请输入建议或问题"
+                  aria-label="反馈内容"
+                  aria-required="true"
+                />
+              </label>
+
+              <section>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-black text-gray-900">上传图片</div>
+                  <div className="text-xs font-black text-gray-500">{suggestionFeedbackImages.length}/5</div>
+                </div>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {suggestionFeedbackImages.map((image, index) => (
+                    <div key={`${image}-${index}`} className="relative flex aspect-square items-center justify-center rounded-2xl bg-gray-50 text-xs font-black text-gray-500">
+                      {image}
+                      <button
+                        type="button"
+                        onClick={() => removeSuggestionFeedbackImage(index)}
+                        className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-gray-700 shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
+                        aria-label={`删除第${index + 1}张反馈图片`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {canAddSuggestionImage && (
+                    <button
+                      type="button"
+                      onClick={addSuggestionFeedbackImage}
+                      className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-300 bg-white text-xs font-black text-gray-600 active:bg-gray-50"
+                      aria-label="上传反馈图片"
+                    >
+                      <ImagePlus size={22} />
+                      上传图片
+                    </button>
+                  )}
+                </div>
+              </section>
+            </div>
+            <button
+              type="button"
+              disabled={!canSubmitSuggestion}
+              onClick={submitSuggestionFeedback}
+              className={cx('h-12 w-full rounded-2xl border border-gray-200 text-sm font-black', canSubmitSuggestion ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400')}
+            >
+              提交
+            </button>
           </div>
         </>
       );
