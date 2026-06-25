@@ -7,7 +7,7 @@ const requireText = (text, message) => {
 };
 
 requireText('只是想从首页移除这个班级？', '解散班级前应先提示可用显示设置替代。');
-requireText('可以在 07A 右上角“+”里进入“显示设置”，取消该班级显示。', '替代路径应指向 07A 加号里的显示设置。');
+requireText('可以在“班级页”的右上角“+”里进入“显示设置”，取消该班级显示。', '替代路径应使用用户能理解的班级页表达。');
 requireText("type ClassDissolveStep = 'check' | 'final';", '解散班级应使用两步确认状态。');
 requireText("const [classDissolveStep, setClassDissolveStep] = useState<ClassDissolveStep>('check');", '解散确认每次应从替代路径和条件确认开始。');
 requireText('请先确认以下条件', '解散班级应在第二步明确前置条件。');

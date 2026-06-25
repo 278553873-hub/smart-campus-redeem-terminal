@@ -1196,7 +1196,7 @@ const classDetailComparisonPrdBlocks: PrdBlock[] = [
   { type: 'h2', text: '确认规则' },
   { type: 'list', items: [
     '解散班级只出现在 08A，并使用分步确认，避免把所有风险信息揉在一个弹窗中。',
-    '解散第 1 步提示替代路径：如果老师只是想让班级不在 07A 首页展示，应引导其通过 07A 右上角“+”中的“显示设置”取消显示，而不是解散班级。',
+    '解散第 1 步提示替代路径：如果老师只是想让班级不在首页展示，应引导其通过班级页右上角“+”中的“显示设置”取消显示，而不是解散班级。',
     '解散第 2 步校验前置条件：没有其他老师加入该班级，且没有任何家长绑定该班级学生。',
     '解散第 3 步才提示不可恢复后果，并要求输入英文 delete 后才能确认。',
     '退出班级出现在 08B、08C，只需要二次确认，不要求输入 delete，因为不会删除班级数据。',
@@ -1285,12 +1285,13 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     { type: 'h2', text: '邀请老师加入' },
     { type: 'list', items: [
       '从班级卡片更多操作进入“邀请老师加入”。',
-      '先展示邀请方式弹窗：邀请微信好友、通过班级号邀请、取消。',
-      '选择微信好友时调用微信原生“选择聊天”页，包含关闭、多选、搜索、最近转发、最近聊天。',
+      '先展示邀请方式弹窗：通过微信邀请、二维码邀请、通过链接邀请、取消。',
+      '通过微信邀请展示“推荐”标签；选择后调用微信原生“选择聊天”页，包含关闭、多选、搜索、最近转发、最近聊天。',
+      '选择二维码邀请时展示加入班级图片，图片包含“加入AI素养评价”标题、小程序二维码和邀请文案，图片下方提供“保存图片”。',
       '选择任意聊天后进入微信原生发送确认半屏，展示接收人、小程序卡片、消息输入、取消和发送。',
       '点击发送后完成转发，小程序卡片打开后按登录态和班级关系直接进入登录页或班级页。',
       '被邀请方先在微信聊天对话中看到小程序卡片，点击卡片后再进入小程序。',
-      '选择班级号邀请时只展示可复制文案，文案包含班级号、班级名称和快速加入链接。',
+      '选择链接邀请时只展示可复制文案，文案包含班级名称和快速加入链接。',
       '邀请链接打开后不出现额外承接页：未登录进登录页，已登录进班级页。',
       '已登录但没有该班级时，班级页展示加入确认弹窗。',
       '右侧页面总览下方的“被邀请”用于展示被邀请方路径，从微信聊天对话收到小程序卡片开始。',
@@ -1341,7 +1342,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '选中老师后必须展示二次确认弹窗；确认后班主任身份转移给该老师，原班主任不再拥有班级班主任权限。',
       '页面底部按权限展示危险操作：班主任显示解散班级，非班主任显示退出班级。',
       '解散班级需要分步确认，不把替代路径、条件校验和最终 delete 输入放在同一步。',
-      '解散第 1 步提示：如果只是想从首页移除班级，可通过 07A 右上角“+”里的“显示设置”取消显示。',
+      '解散第 1 步提示：如果只是想从首页移除班级，可通过班级页右上角“+”里的“显示设置”取消显示。',
       '解散第 2 步提示并确认前置条件：没有其他老师加入该班级，且没有任何家长绑定该班级学生。',
       '解散第 3 步才提示后果：解散后将清空该班级信息和所有学生信息，并要求输入英文 delete 才能确认解散。',
       '退出班级同样需要二次确认，但不需要输入 delete。',
@@ -1613,6 +1614,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [showWechatChatSheet, setShowWechatChatSheet] = useState(false);
   const [wechatInviteMode, setWechatInviteMode] = useState<WechatInviteMode>('select');
   const [showClassCodeInviteSheet, setShowClassCodeInviteSheet] = useState(false);
+  const [showQrInviteSheet, setShowQrInviteSheet] = useState(false);
   const [showInviteConfirmSheet, setShowInviteConfirmSheet] = useState(false);
   const [inviteAudience, setInviteAudience] = useState<InviteAudience>('teacher');
   const [inviteReturnPage, setInviteReturnPage] = useState<PageKey>('classListPersonal');
@@ -2914,10 +2916,10 @@ const TeacherCMobileLowFi: React.FC = () => {
       : `${inviteClass.inviter}邀请你绑定学生`,
     cardHero: inviteAudience === 'teacher' ? '邀请' : '指南针',
     cardAction: inviteAudience === 'teacher' ? '立即加入' : '立即查看',
-    codeTitle: inviteAudience === 'teacher' ? '班级号邀请' : '家长邀请',
+    codeTitle: inviteAudience === 'teacher' ? '链接邀请' : '家长邀请',
     copiedToast: inviteAudience === 'teacher' ? '已复制邀请文案' : '已复制家长邀请文案',
     codeText: inviteAudience === 'teacher'
-      ? `Hi，我正在用「AI素养评价」记录学生日常表现。你可以输入班级号 ${inviteClass.code}，加入「${inviteClass.name}」一起管理班级；也可以点击链接 ai-literacy://join-class?code=${inviteClass.code} 直接加入。`
+      ? `我正在使用「AI 素养评价」记录学生日常表现。为进一步提升班级管理工作效率，诚邀您加入「${inviteClass.name}」，共同参与班级管理。点击链接 ai-literacy://join-class?code=${inviteClass.code}，直接加入班级。`
       : `家长您好，${inviteClass.inviter}邀请您绑定「${inviteClass.name}」学生，查看孩子的日常评价记录和成长报告。请在「素养指南针」中输入班级号 ${inviteClass.code}，或点击链接 ai-literacy://bind-student?code=${inviteClass.code} 完成绑定。`,
     confirmText: inviteAudience === 'teacher'
       ? `${inviteClass.inviter}邀请你一起管理「${inviteClass.name}」。加入后，你可以查看班级学生，并使用 AI 记录学生日常行为、生成评价报告。`
@@ -2946,8 +2948,22 @@ const TeacherCMobileLowFi: React.FC = () => {
               className="flex min-h-14 w-full items-center gap-3 rounded-2xl bg-gray-50 px-4 text-left active:bg-gray-100"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white"><MessageCircle size={18} /></span>
-              <span className="text-sm font-black">邀请微信好友</span>
+              <span className="min-w-0 flex-1 text-sm font-black">通过微信邀请</span>
+              {inviteAudience === 'teacher' && <span className="rounded-full bg-gray-900 px-2 py-1 text-[11px] font-black text-white">推荐</span>}
             </button>
+            {inviteAudience === 'teacher' && (
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  setShowQrInviteSheet(true);
+                }}
+                className="flex min-h-14 w-full items-center gap-3 rounded-2xl bg-gray-50 px-4 text-left active:bg-gray-100"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white"><ScanLine size={18} /></span>
+                <span className="text-sm font-black">二维码邀请</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -2957,7 +2973,7 @@ const TeacherCMobileLowFi: React.FC = () => {
               className="flex min-h-14 w-full items-center gap-3 rounded-2xl bg-gray-50 px-4 text-left active:bg-gray-100"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white"><Copy size={18} /></span>
-              <span className="text-sm font-black">通过班级号邀请</span>
+              <span className="text-sm font-black">{inviteAudience === 'teacher' ? '通过链接邀请' : '家长邀请'}</span>
             </button>
           </div>
           <button type="button" onClick={close} className="mt-3 h-11 w-full rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
@@ -3142,6 +3158,34 @@ const TeacherCMobileLowFi: React.FC = () => {
     );
   };
 
+  const renderQrInviteSheet = () => {
+    if (!showQrInviteSheet) return null;
+    const close = () => setShowQrInviteSheet(false);
+    const qrInviteText = `我正在使用「AI 素养评价」记录学生日常表现。为进一步提升班级管理工作效率，诚邀您加入「${inviteClass.name}」，共同参与班级管理。微信扫描上方二维码即可加入班级。`;
+
+    return (
+      <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="二维码邀请">
+        <button type="button" aria-label="关闭二维码邀请弹窗" className="absolute inset-0 cursor-default" onClick={close} />
+        <section className={cx(bottomSheetPanelClass, 'max-h-[92%] overflow-y-auto rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <h3 className="text-base font-black">二维码邀请</h3>
+          <div className="mt-4 overflow-hidden rounded-3xl border border-gray-200 bg-white p-5 text-center">
+            <div className="text-lg font-black text-gray-950">加入AI素养评价</div>
+            <img src="/assets/ai_literacy_qr.png" alt="AI素养评价小程序二维码" className="mx-auto mt-5 h-36 w-36 rounded-2xl border border-gray-100 bg-gray-50 object-cover p-2" />
+            <p className="mt-5 text-left text-sm font-medium leading-7 text-gray-700">{qrInviteText}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => showClassActionToast('已保存邀请图片')}
+            className="mt-4 h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white"
+          >
+            保存图片
+          </button>
+        </section>
+      </div>
+    );
+  };
+
   const renderInviteConfirmSheet = () => {
     if (!showInviteConfirmSheet) return null;
     const close = () => setShowInviteConfirmSheet(false);
@@ -3272,7 +3316,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                 <>
                   <section className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
                     <div className="text-sm font-black text-gray-950">只是想从首页移除这个班级？</div>
-                    <p className="mt-1 text-xs font-medium leading-5 text-gray-600">可以在 07A 右上角“+”里进入“显示设置”，取消该班级显示。</p>
+                    <p className="mt-1 text-xs font-medium leading-5 text-gray-600">可以在“班级页”的右上角“+”里进入“显示设置”，取消该班级显示。</p>
                   </section>
                   <section className="rounded-2xl border border-gray-200 bg-white p-3">
                   <div className="text-sm font-black text-gray-950">请先确认以下条件</div>
@@ -5051,6 +5095,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           {renderInviteOptionsSheet()}
           {renderWechatChatSheet()}
           {renderClassCodeInviteSheet()}
+          {renderQrInviteSheet()}
           {renderInviteConfirmSheet()}
           {renderClassEditSheet()}
           {renderClassExitSheet()}

@@ -48,6 +48,23 @@ requireText('const primaryClassTeachers = classTeachers.filter((teacher) => teac
 requireText('const otherClassTeachers = classTeachers.filter((teacher) => !teacher.isHeadTeacher && !teacher.isDeputyHeadTeacher);', '老师列表应拆出其余老师。');
 requireText('{primaryClassTeachers.length > 0 && otherClassTeachers.length > 0 && <div className="h-px bg-gray-200" />}', '班主任/副班主任和其余老师之间应使用横线分隔。');
 requireText('班主任和副班主任置顶', 'PRD 应说明班主任和副班主任置顶。');
+requireText('先展示邀请方式弹窗：通过微信邀请、二维码邀请、通过链接邀请、取消。', 'PRD 应说明邀请老师三种方式。');
+requireText('通过微信邀请展示“推荐”标签', 'PRD 应说明通过微信邀请有推荐标签。');
+requireText('选择二维码邀请时展示加入班级图片', 'PRD 应说明二维码邀请图片。');
+requireText('选择链接邀请时只展示可复制文案', 'PRD 应说明链接邀请文案。');
+requireText('<span className="min-w-0 flex-1 text-sm font-black">通过微信邀请</span>', '邀请老师弹窗应将邀请微信好友改为通过微信邀请。');
+requireText('<span className="rounded-full bg-gray-900 px-2 py-1 text-[11px] font-black text-white">推荐</span>', '通过微信邀请应展示推荐标签。');
+requireText('<span className="text-sm font-black">二维码邀请</span>', '邀请老师弹窗应新增二维码邀请。');
+requireText("setShowQrInviteSheet(true);", '点击二维码邀请应展示二维码邀请弹窗。');
+requireText("inviteAudience === 'teacher' ? '通过链接邀请' : '家长邀请'", '教师邀请应将通过班级号邀请改为通过链接邀请。');
+requireText("codeTitle: inviteAudience === 'teacher' ? '链接邀请' : '家长邀请'", '教师链接邀请弹窗标题应为链接邀请。');
+requireText('我正在使用「AI 素养评价」记录学生日常表现。为进一步提升班级管理工作效率，诚邀您加入「${inviteClass.name}」，共同参与班级管理。点击链接 ai-literacy://join-class?code=${inviteClass.code}，直接加入班级。', '教师链接邀请文案应按新口径展示。');
+requireText('const renderQrInviteSheet = () =>', '应新增二维码邀请弹窗。');
+requireText('aria-label="二维码邀请"', '二维码邀请弹窗应有无障碍标签。');
+requireText('加入AI素养评价', '二维码邀请图片上方应展示指定标题。');
+requireText('/assets/ai_literacy_qr.png', '二维码邀请应展示 AI 素养评价小程序二维码。');
+requireText('微信扫描上方二维码即可加入班级。', '二维码邀请图片下方应展示扫码加入文案。');
+requireText('保存图片', '二维码邀请图片下方应提供保存图片按钮。');
 
 requireText('onClick={openInviteFromList}', '09A 邀请老师入口应使用老师列表邀请处理。');
 requireText('mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100', '09A 邀请老师入口应固定在列表下方。');
@@ -88,6 +105,18 @@ if (teacherListMemberBlock.includes('移除') || teacherListMemberBlock.includes
 }
 if (!teacherListMemberBlock.includes('邀请老师')) {
   failures.push('09B 非班主任老师列表应展示邀请老师按钮。');
+}
+const inviteOptionsStart = source.indexOf('const renderInviteOptionsSheet = () =>');
+const inviteOptionsEnd = source.indexOf('const renderWechatChatSheet = () =>', inviteOptionsStart);
+const inviteOptionsBlock = source.slice(inviteOptionsStart, inviteOptionsEnd);
+if (inviteOptionsBlock.includes('邀请微信好友') || inviteOptionsBlock.includes('通过班级号邀请')) {
+  failures.push('邀请老师方式弹窗不应继续展示“邀请微信好友”或“通过班级号邀请”。');
+}
+const teacherInviteCopyStart = source.indexOf('const inviteCopy = {');
+const teacherInviteCopyEnd = source.indexOf('const renderInviteOptionsSheet = () =>', teacherInviteCopyStart);
+const teacherInviteCopyBlock = source.slice(teacherInviteCopyStart, teacherInviteCopyEnd);
+if (teacherInviteCopyBlock.includes('加入「${inviteClass.name}」一起管理班级；也可以点击链接')) {
+  failures.push('教师链接邀请文案不应再引导输入班级号。');
 }
 
 const classDetailBlockStart = source.indexOf("if (page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead')");
