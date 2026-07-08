@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Generate a square PNG-style avatar frame asset only, 1024 x 1024. The image must contain only a circular glowing border/frame effect like a premium mobile app teacher avatar frame. No person, no face, no text, no icon, no watermark.\n\nComposition: centered circular frame. Leave the entire center area inside the circle as perfectly flat solid #00ff00 chroma-key green so it can be removed and reveal a real teacher photo underneath. Leave the outside background also perfectly flat solid #00ff00. The frame itself should be a clean double-ring border: outer soft glow ring and inner crisp white/cyan ring. Use very light cyan, sky blue, soft lilac, and a tiny petal-pink highlight, matching the provided reference image. Add subtle luminous halo and glassy edge, but keep it elegant and not too thick.\n\nImportant constraints: background and center must be uniform #00ff00 with no shadows, gradients, particles, or glow bleeding into green areas. The ring/frame must be fully separated from the green. No cast shadow outside the ring. The frame should work on top of a circular teacher portrait. Avoid cartoon character, portrait, UI buttons, badge, star icon, text, heavy neon, dark colors.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "high"
+}

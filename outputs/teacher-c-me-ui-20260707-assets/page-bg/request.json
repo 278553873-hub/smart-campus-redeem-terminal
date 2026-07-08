@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Generate a clean raster background image asset for a Chinese teacher mobile app My page. Target dimensions: 864 x 1536 portrait. This is a background asset only, not a UI mockup. No text, no labels, no avatars, no buttons, no cards, no navigation bar, no device frame.\n\nVisual direction: match a bright AI teacher assistant mobile UI background. Use a soft pale grey-blue base, cyan and aqua diffuse glow on upper left and middle left, moon-blue haze on upper right, very soft lilac and petal-pink diffusion near bottom right and bottom left. Add subtle futuristic technology feeling: very fine diagonal white light lines, faint circuit-like contour lines, tiny soft light particles, and one very subtle translucent glass cube / rounded square motif in the upper-right area. Keep it understated so white UI cards and black Chinese text remain readable on top.\n\nThe bottom half must remain visibly designed, not plain white: continue the soft cyan-blue-lilac gradient all the way to the bottom, with enough calm whitespace. Avoid dark cyberpunk, strong neon, busy decoration, stock photo texture, books, people, text, icons, or any UI elements. Make it suitable to use as a full-screen background image under mobile app UI.",
+  "size": "864x1536",
+  "n": 1,
+  "quality": "high"
+}

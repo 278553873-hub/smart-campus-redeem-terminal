@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Create a realistic production-quality mobile app UI design for a Chinese teacher mini-program page named 我的. Target dimensions: 864 x 1536 portrait. Single screen only, no device chrome, no browser chrome. Concept direction: Aurora Milk C-end redesign system, younger, light-tech, dreamy, gentle, low saturation, but still practical and dense. Do not include explanatory paragraphs, notes, logic remarks, annotations, wireframe labels, or design rationale.\n\nScreen state: teacher side C-end transformation, My page, 14B user has multiple versions, currently on school version. Header area should feel like a soft personal command center, not a marketing hero. Show Chinese female teacher avatar, 刘飞飞老师, 成都七中初中附属小学, and a prominent class-source switcher pill labeled 成都市未来实验小学 with a small swap icon. Scan and settings appear as compact icon buttons.\n\nUse a full-page pale mist background with cyan, moon-blue, lilac and petal-pink diffusion. Use translucent white surfaces, subtle borders, tiny highlights. Main modules: 管理工具 with 学校数据报表 and 生成期末报告 as two balanced action tiles; 更多工具 as compact four-item grid: 科目管理, 部门管理, 货币发放, 建议反馈; 我的文件 as a single quiet row. Bottom navigation: 记录, 班级, 我的; 我的 selected. Icons should be clean line icons, rounded stroke, 20-22px. Avoid card-in-card nesting. Avoid strong blue corporate SaaS style, avoid beige, avoid dark slate dominance, avoid orange primary buttons. Keep text short and real UI only.",
+  "size": "864x1536",
+  "n": 1,
+  "quality": "high"
+}

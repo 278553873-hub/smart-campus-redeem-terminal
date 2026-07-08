@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Generate a polished mobile app UI mockup refining the previous Option 5 function-center layout for the teacher-side C-end My page. Target dimensions 864 x 1536 portrait, no phone chrome, no browser chrome. The result should look like a real WeChat mini-program screen, not a marketing poster.\n\nDesign requirements: 1) Correct mobile typography and icon scale. Labels must be compact, icon visuals medium-sized and consistent, section titles not oversized. 2) Add stronger technology feeling through diffuse gradient, light glassmorphism, subtle cyan/lilac glow, fine circuit-like line accents, soft translucent layers. Keep it bright and warm, not dark cyber. 3) Preserve simple function grouping like the reference screenshot.\n\nLayout: top identity header compact, with avatar, 刘飞飞老师, 成都七中初中附属小学, pill 成都市未来实验小学, scan and settings icon buttons. Under it, two rounded translucent-white group cards. Card 1 常用功能: 学校数据报表, 生成期末报告, 货币发放, 我的文件. Card 2 更多功能: 科目管理, 部门管理, 建议反馈, 班级来源, 扫一扫, 设置. Use 4 columns where possible, with appropriate spacing. Bottom navigation fixed: 记录, 班级, 我的 active.\n\nPalette: Aurora Milk tech palette, pale cyan #58C3CF, moon blue #7F9EED, lilac #AD94ED, petal pink #DF82AA, white glass, blue-gray text. Do not place notes, UI instructions, PRD text, placeholder lorem ipsum, or logic explanations on the screen.",
+  "size": "864x1536",
+  "n": 1,
+  "quality": "high"
+}

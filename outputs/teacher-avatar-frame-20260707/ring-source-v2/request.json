@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Square image of avatar accessory frame only, no person, no face, no text, no UI. On a plain pure white background, create a very thin circular neon halo frame for a modern mobile teacher profile avatar: delicate outer ring, soft pastel cyan blue and lavender pink gradient, subtle inner glow, airy translucent light, bottom has a very faint cyan glow accent. The center should be empty white for placing a real portrait later. Leave generous padding around the ring. Minimal, premium, clean, not metallic, not thick, not 3D, not cartoon, not badge-like. The ring should look like a light accessory border, not a heavy frame.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "high"
+}

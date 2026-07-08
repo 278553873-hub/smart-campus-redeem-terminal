@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Editorial illustration, coherent stylized visual language, clear subject, balanced composition. A polished 3D chibi female AI homeroom teacher assistant character for a Chinese teacher mobile app. Square centered character asset on a very light blue-white studio background, friendly young adult woman, short soft dark hair, warm smile, subtle headset microphone, smart teacher cardigan with soft cyan and lavender accents, holding a small glowing tablet with abstract student data icons. Cute Q-version proportions, premium toy-like 3D render, clean rounded shapes, bright soft studio lighting, gentle cyan blue lavender palette, modern AI education assistant feeling, no text, no logo, no UI, centered upper body with enough margin, suitable for placement at the top of a mobile AI chat-like page. Avoid: realistic human photo, old doctor, male, child, text, letters, watermark, logo, busy background, dark cyberpunk, scary robot, medical coat, clutter, cropped head, extra fingers, deformed hands, low quality.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "high"
+}

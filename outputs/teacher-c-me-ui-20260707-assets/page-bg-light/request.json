@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Generate a very light raster background image asset for a Chinese teacher mobile app My page. Target dimensions: 864 x 1536 portrait. Background asset only: no UI, no text, no labels, no avatars, no buttons, no cards, no navigation bar, no device frame.\n\nUse the provided design direction conceptually: bright, clean, soft AI teacher assistant background, but make the colors much lighter and less saturated than a typical tech gradient. The overall impression should be nearly white, airy, and calm. Use pale icy blue and very light cyan around the top-left and upper-middle, a barely visible moon-blue haze near the top-right, and only a tiny amount of soft lilac/pink near the lower edges. The bottom half must be especially light: mostly white with only 5-10% opacity pastel blue/lilac haze, so a floating white navigation bar still stands out.\n\nAdd subtle technology details only: extremely faint diagonal light streaks, barely visible circuit contour lines, tiny soft particles, and a very subtle translucent glass cube in the upper-right. Keep all decorative elements low contrast. Avoid saturated cyan, saturated pink, heavy purple, neon, dark cyberpunk, busy decoration, books, people, text, icons, or any UI elements. The background should support white cards, not compete with them.",
+  "size": "864x1536",
+  "n": 1,
+  "quality": "high"
+}

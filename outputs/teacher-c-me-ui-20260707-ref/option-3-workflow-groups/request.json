@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Create a realistic production-ready mobile UI mockup for a Chinese teacher mini-program page named 我的. Target dimensions: 864 x 1536 portrait. Single screen, no device frame. Generate a different concept inspired by the provided screenshot: clean card-based function groups, big rounded white surfaces, icon-first navigation, dense but calm. Do not show explanatory notes, annotations, onboarding copy, or logic descriptions.\n\nContext: C-end transformation teacher side. Page state: 14B multiple versions, current school version. Header should be elegant and compact: Chinese female teacher avatar, 刘飞飞老师, school 成都七中初中附属小学, source pill 成都市未来实验小学, scan and settings icon buttons.\n\nDesign variation: split features by teacher workflow. Section 工作台: four large colorful icons in a white rounded group: 学校数据报表, 生成期末报告, 货币发放, 我的文件. Section 基础管理: four icon shortcuts: 科目管理, 部门管理, 班级来源, 设置. Section 支持与反馈: two wide but compact shortcuts: 建议反馈, 扫一扫. Fixed bottom navigation: 记录, 班级, 我的 selected. Use soft grey-blue page background, white cards, minimal shadows, 30px radius, playful but professional gradient icons inspired by app shortcuts. Typography Chinese PingFang style, section titles bold but not too heavy, labels concise. Avoid too many colored backgrounds, avoid nested cards, keep limited space showing useful information.",
+  "size": "864x1536",
+  "n": 1,
+  "quality": "high"
+}
