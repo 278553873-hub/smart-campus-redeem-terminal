@@ -148,7 +148,7 @@ requireText('const renderParentLanding', '家长端应新增落地页原型。')
 requireText('CheckCircle2,', '落地页表扬图标应从 lucide-react 正确导入。');
 requireText('Clock,', '落地页待改进图标应从 lucide-react 正确导入。');
 requireText('本月净得分', '落地页应复刻成长页的本月净得分卡。');
-requireText('预估分红总额', '落地页应复刻成长页的预估分红卡。');
+requireText('预计可得', '落地页应复刻成长页的预计可得卡。');
 requireText("['成长', '报告', '银行']", '落地页应保留成长页底部三栏导航。');
 requireText('showParentChildSwitcherSheet', '落地页切换孩子应有独立弹窗状态。');
 requireText('const renderParentChildSwitcherSheet', '落地页应提供切换孩子底部弹窗。');

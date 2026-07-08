@@ -74,6 +74,12 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
       studentNo: `${cls.id.split('_')[1]}${classNumber.padStart(2, '0')}${(i + 1).toString().padStart(2, '0')}`,
       status: i === count - 1 ? 'left' : 'active',
       reservedPhones: i % 4 === 0 ? ['13800001001', '13900002002'] : ['13800001001'],
+      guardianContacts: i % 4 === 0
+        ? [
+          { phone: '13800001001', relation: '爸爸' },
+          { phone: '13900002002', relation: '妈妈' },
+        ]
+        : [{ phone: '13800001001', relation: '家长' }],
       name: nameObj.n,
       gender: nameObj.g as 'male' | 'female',
       grade: cls.gradeLevel,

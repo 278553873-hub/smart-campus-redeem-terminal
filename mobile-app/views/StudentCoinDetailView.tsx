@@ -161,7 +161,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
           <MobileCard variant="card" padding="lg" className="mt-4 overflow-hidden rounded-[2rem] border-2 border-orange-100/60 bg-gradient-to-b from-orange-50/80 to-amber-50/50">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-xs font-extrabold uppercase tracking-widest text-orange-600/80">预估分红总额</h2>
+                <h2 className="text-xs font-extrabold uppercase tracking-widest text-orange-600/80">预计可得</h2>
               </div>
               <span className="rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-black text-orange-500">预估</span>
             </div>

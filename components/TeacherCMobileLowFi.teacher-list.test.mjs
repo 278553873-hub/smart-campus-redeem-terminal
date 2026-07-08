@@ -31,8 +31,8 @@ requireText("const activeHeadTeacherName = classHeadTeacherName === '郭老师' 
 requireText("isHeadTeacher: teacher.name === activeHeadTeacherName", '班主任标签应随班主任状态动态变化。');
 requireText("subjects: ['体育', '劳动'], isHeadTeacher: false, isDeputyHeadTeacher: true", '副班主任也应能同时任教多个科目。');
 requireText("navigate(isHeadTeacherDetail ? 'teacherList' : 'teacherListMember')", '08A/08B 应分别进入 09A/09B。');
-requireText("title: '班级(个人版)',\n    pages: ['classListPersonal'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetail'] },\n          { text: '非班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任', pages: ['teacherListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['parentBindingList', 'studentList', 'studentBatchEdit'],", '08A/08B 应作为个人版班级流程的第一组并行分支，09A/09B 应作为第二组并行分支。');
-requireText("title: '班级(学校版)',\n    pages: ['classListSchool'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetailSchoolHead'] },\n          { text: '非班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任', pages: ['teacherListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['parentBindingList', 'studentList', 'studentBatchEdit'],", '08C/08B 应作为学校版班级流程的第一组并行分支，09A/09B 应作为第二组并行分支。');
+requireText("title: '班级(个人版)',\n    pages: ['classListPersonal'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetail'] },\n          { text: '非班主任&副班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任&副班主任', pages: ['teacherListMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任&副班主任', pages: ['parentBindingList'] },\n          { text: '非班主任', pages: ['parentBindingListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['studentList', 'studentBatchEdit'],", '08A/08B、09A/09B、10A/10B 应作为个人版班级流程的并行分支。');
+requireText("title: '班级(学校版)',\n    pages: ['classListSchool'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetailSchoolHead'] },\n          { text: '非班主任&副班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任&副班主任', pages: ['teacherListMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任&副班主任', pages: ['parentBindingList'] },\n          { text: '非班主任', pages: ['parentBindingListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['studentList', 'studentBatchEdit'],", '08C/08B、09A/09B、10A/10B 应作为学校版班级流程的并行分支。');
 requireText('grid w-fit shrink-0 grid-cols-[20px_max-content_12px] items-center gap-2 text-[11px] font-black leading-4 text-gray-500', '页面地图分支条件列应按内容撑开。');
 requireText('<span className="whitespace-nowrap">{branch.text}</span>', '页面地图分支名称班主任/非班主任不应换行。');
 requireText('09A 老师列表规则', 'PRD 说明应区分 09A。');
@@ -56,8 +56,8 @@ requireText('<span className="min-w-0 flex-1 text-sm font-black">通过微信邀
 requireText('<span className="rounded-full bg-gray-900 px-2 py-1 text-[11px] font-black text-white">推荐</span>', '通过微信邀请应展示推荐标签。');
 requireText('<span className="text-sm font-black">二维码邀请</span>', '邀请老师弹窗应新增二维码邀请。');
 requireText("setShowQrInviteSheet(true);", '点击二维码邀请应展示二维码邀请弹窗。');
-requireText("inviteAudience === 'teacher' ? '通过链接邀请' : '家长邀请'", '教师邀请应将通过班级号邀请改为通过链接邀请。');
-requireText("codeTitle: inviteAudience === 'teacher' ? '链接邀请' : '家长邀请'", '教师链接邀请弹窗标题应为链接邀请。');
+requireText('<span className="text-sm font-black">通过链接邀请</span>', '邀请弹窗应将通过班级号邀请改为通过链接邀请。');
+requireText("codeTitle: '链接邀请'", '教师和家长的链接邀请弹窗标题应为链接邀请。');
 requireText('我正在使用「AI 素养评价」记录学生日常表现。为进一步提升班级管理工作效率，诚邀您加入「${inviteClass.name}」，共同参与班级管理。点击链接 ai-literacy://join-class?code=${inviteClass.code}，直接加入班级。', '教师链接邀请文案应按新口径展示。');
 requireText('const renderQrInviteSheet = () =>', '应新增二维码邀请弹窗。');
 requireText('aria-label="二维码邀请"', '二维码邀请弹窗应有无障碍标签。');
@@ -92,7 +92,7 @@ requireText("const isClassDetailPrd = page === 'classDetail' || page === 'classD
 requireText("...(!isClassDetailPrd ? [", '08A/08B/08C PRD 不应先展示通用页面模块、CTA 和状态清单。');
 
 const teacherListMemberBlockStart = source.indexOf("if (page === 'teacherListMember')");
-const teacherListMemberBlockEnd = source.indexOf("if (page === 'parentBindingList')", teacherListMemberBlockStart);
+const teacherListMemberBlockEnd = source.indexOf("if (page === 'parentBindingList' || page === 'parentBindingListMember')", teacherListMemberBlockStart);
 const teacherListMemberBlock = source.slice(teacherListMemberBlockStart, teacherListMemberBlockEnd);
 const teacherListBlockStart = source.indexOf("if (page === 'teacherList')");
 const teacherListBlockEnd = source.indexOf("if (page === 'teacherListMember')", teacherListBlockStart);

@@ -17,7 +17,7 @@ interface ParentPageShellProps {
 }
 
 export const ParentPageShell: React.FC<ParentPageShellProps> = ({ children, className = '' }) => (
-  <div className={cx('relative flex-1 overflow-y-auto no-scrollbar bg-transparent text-slate-800', className)}>
+  <div className={cx('relative flex-1 overflow-y-auto no-scrollbar bg-transparent text-slate-800 antialiased', className)}>
     {children}
   </div>
 );
@@ -29,7 +29,7 @@ interface ParentCardProps {
 }
 
 export const ParentCard: React.FC<ParentCardProps> = ({ as: Component = 'section', children, className = '' }) => (
-  <Component className={cx(parentSurface.card, parentRadius.card, parentShadow.card, 'p-4', className)}>
+  <Component className={cx(parentSurface.card, parentRadius.card, parentShadow.card, 'p-4 text-pretty', className)}>
     {children}
   </Component>
 );
@@ -99,7 +99,7 @@ export const ParentChildAvatar: React.FC<ParentChildAvatarProps> = ({
         <img
           src={src}
           alt={imageAlt}
-          className={cx('h-full w-full object-cover', imageClassName)}
+          className={cx('h-full w-full object-cover outline outline-1 -outline-offset-1 outline-black/10', imageClassName)}
         />
       ) : (
         fallbackText
@@ -114,7 +114,7 @@ type ParentButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const parentButtonBase =
-  'inline-flex min-h-11 items-center justify-center gap-2 px-4 text-[14px] font-black transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-11 items-center justify-center gap-2 px-4 text-[14px] font-black transition-[transform,background-color,box-shadow,opacity] duration-150 ease-out active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100';
 
 export const ParentPrimaryButton: React.FC<ParentButtonProps> = ({
   children,
@@ -173,13 +173,13 @@ export const ParentBottomSheet: React.FC<ParentBottomSheetProps> = ({
     >
       <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-slate-200" aria-hidden="true" />
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 id="parent-bottom-sheet-title" className={cx('text-[17px] font-black', parentText.title)}>
+        <h2 id="parent-bottom-sheet-title" className={cx('text-[17px] font-black text-balance', parentText.title)}>
           {title}
         </h2>
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-all active:scale-95"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-[transform,background-color] duration-150 ease-out active:scale-[0.96]"
           aria-label="关闭"
         >
           <X size={18} strokeWidth={2.6} />

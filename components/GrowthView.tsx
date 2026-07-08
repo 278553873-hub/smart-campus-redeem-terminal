@@ -300,7 +300,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                     <div className="bg-gradient-to-b from-orange-50/80 to-amber-50/50 rounded-[2rem] p-6 border-2 border-orange-100/50 flex flex-col relative overflow-hidden">
                         <div className="flex justify-start items-start w-full shrink-0 h-[28px]">
                             <span className="text-orange-600/80 font-extrabold text-xs uppercase tracking-widest pl-1">
-                                预估分红总额
+                                预计可得
                             </span>
                         </div>
 

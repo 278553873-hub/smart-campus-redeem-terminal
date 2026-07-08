@@ -9,8 +9,14 @@ import certificateImg from './resources/certificate.png';
 import genericGrowthImg from './resources/generic_growth.png';
 import pingpongCertImg from './resources/pingpong_cert.png';
 import aiBotImg from './resources/ai-bot.png';
+import aiArtBadgeImg from './resources/ai-art-badge.png';
+import aiHeadteacherAssistantCharacterImg from './resources/ai-headteacher-assistant-character.png';
+import aiHeadteacherAssistantIcon from './resources/ai-headteacher-assistant-icon.png';
+import aiPrincipalAssistantIcon from './resources/ai-principal-assistant-icon.png';
 import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
+import teacherMePageBg from './resources/teacher-me-page-bg.png';
 import teacherLiuAvatarImg from './resources/teacher-liu-avatar.png';
+import teacherLiuAvatarFramedImg from './resources/teacher-liu-avatar-framed.png';
 import awardCertificateDefaultMobileImg from './resources/highlight-defaults/award-certificate-default.png';
 import dailyDefaultGrowthMobileImg from './resources/highlight-defaults/daily-default-growth.png';
 import dailyKindnessCollaborationMobileImg from './resources/highlight-defaults/daily-kindness-collaboration.png';
@@ -144,7 +150,8 @@ export const ASSETS = {
     GIRLS: [avatarGirl1, avatarGirl2, avatarGirl3, avatarGirl4, avatarGirl5, avatarGirl6, avatarGirl7, avatarGirl],
     TEACHER_WANG: encodeSVG(teacherWangSVG),
     TEACHER_LIN: encodeSVG(teacherLinSVG),
-    TEACHER_LIU: teacherLiuAvatarImg,
+    TEACHER_LIU: teacherLiuAvatarFramedImg,
+    TEACHER_LIU_RAW: teacherLiuAvatarImg,
   },
   COVER: {
     BOY: coverBoy,
@@ -159,7 +166,12 @@ export const ASSETS = {
     SUBJECT: subjectReportIcon,
     TERM: termReportIcon,
     AI_BOT: aiBotImg,
+    AI_ART_BADGE: aiArtBadgeImg,
+    AI_HEADTEACHER_ASSISTANT_CHARACTER: aiHeadteacherAssistantCharacterImg,
+    AI_HEADTEACHER_ASSISTANT: aiHeadteacherAssistantIcon,
+    AI_PRINCIPAL_ASSISTANT: aiPrincipalAssistantIcon,
     TEACHER_ME_HERO_BG: teacherMeHeroBg,
+    TEACHER_ME_PAGE_BG: teacherMePageBg,
   },
   HIGHLIGHTS: {
     CERTIFICATE: certificateImg,

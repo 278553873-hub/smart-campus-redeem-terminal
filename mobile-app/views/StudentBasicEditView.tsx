@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Camera, ChevronLeft, Image, Plus, Trash2, UsersRound } from 'lucide-react';
-import { ClassInfo, Student } from '../types';
+import { Camera, ChevronLeft, Image, Plus, UsersRound, X } from 'lucide-react';
+import { ClassInfo, GuardianContact, GuardianRelation, Student } from '../types';
 import { ASSETS } from '../assets/images';
 import { MobileCard } from '../components/ui/MobileCard';
 import { IconBadge } from '../components/ui/IconBadge';
@@ -16,7 +16,33 @@ interface StudentBasicEditViewProps {
 const fieldInputClass = 'mt-2 h-12 w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 outline-none transition-all focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-50';
 const labelClass = `${phoneText.label} text-slate-500`;
 
-const normalizePhones = (phones: string[]) => phones.map(phone => phone.trim()).filter(Boolean);
+const guardianRelationOptions: GuardianRelation[] = ['家长', '爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他'];
+
+const normalizeContacts = (contacts: GuardianContact[]) => contacts
+  .map(contact => ({
+    ...contact,
+    phone: contact.phone.trim(),
+    relationOther: contact.relationOther?.trim(),
+  }))
+  .filter(contact => contact.phone);
+
+const normalizePhones = (contacts: GuardianContact[]) => normalizeContacts(contacts).map(contact => contact.phone);
+
+const createBlankContact = (): GuardianContact => ({ phone: '', relation: '家长', relationOther: '' });
+
+const getInitialContacts = (student: Student): GuardianContact[] => {
+  if (student.guardianContacts?.length) {
+    return student.guardianContacts.map(contact => ({
+      phone: contact.phone,
+      relation: contact.relation ?? '家长',
+      relationOther: contact.relationOther ?? '',
+    }));
+  }
+  if (student.reservedPhones?.length) {
+    return student.reservedPhones.map(phone => ({ phone, relation: '家长', relationOther: '' }));
+  }
+  return [createBlankContact()];
+};
 
 
 const getClassYear = (className: string) => className.match(/^(\d{4}级)/)?.[1] || className;
@@ -44,6 +70,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
   const [draft, setDraft] = useState<Student>({
     ...student,
     status: student.status ?? 'active',
+    guardianContacts: getInitialContacts(student),
     reservedPhones: student.reservedPhones?.length ? student.reservedPhones : [''],
   });
   const [showClassPicker, setShowClassPicker] = useState(false);
@@ -92,30 +119,32 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
 
   const saveAvatarFromAlbum = chooseMockAvatar;
 
-  const updatePhone = (index: number, value: string) => {
+  const updateContact = (index: number, patch: Partial<GuardianContact>) => {
     setDraft(prev => ({
       ...prev,
-      reservedPhones: (prev.reservedPhones ?? []).map((phone, phoneIndex) => phoneIndex === index ? value : phone),
+      guardianContacts: (prev.guardianContacts ?? []).map((contact, contactIndex) => contactIndex === index ? { ...contact, ...patch } : contact),
     }));
   };
 
-  const addPhone = () => {
-    setDraft(prev => ({ ...prev, reservedPhones: [...(prev.reservedPhones ?? []), ''] }));
+  const addContact = () => {
+    setDraft(prev => ({ ...prev, guardianContacts: [...(prev.guardianContacts ?? []), createBlankContact()] }));
   };
 
-  const removePhone = (index: number) => {
+  const removeContact = (index: number) => {
     setDraft(prev => {
-      const nextPhones = (prev.reservedPhones ?? []).filter((_, phoneIndex) => phoneIndex !== index);
-      return { ...prev, reservedPhones: nextPhones.length ? nextPhones : [''] };
+      const nextContacts = (prev.guardianContacts ?? []).filter((_, contactIndex) => contactIndex !== index);
+      return { ...prev, guardianContacts: nextContacts.length ? nextContacts : [createBlankContact()] };
     });
   };
 
   const saveBasicInfo = () => {
+    const guardianContacts = normalizeContacts(draft.guardianContacts ?? []);
     onSave({
       ...draft,
       name: draft.name.trim() || student.name,
       studentNo: draft.studentNo?.trim() || student.studentNo,
-      reservedPhones: normalizePhones(draft.reservedPhones ?? []),
+      guardianContacts,
+      reservedPhones: normalizePhones(guardianContacts),
     });
   };
 
@@ -233,25 +262,47 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <IconBadge icon={UsersRound} tone="teal" size="sm" />
-                <h2 className={`${phoneText.sectionTitle} text-slate-900`}>预留手机</h2>
+                <h2 className={`${phoneText.sectionTitle} text-slate-900`}>家长联系方式</h2>
               </div>
-              <button type="button" onClick={addPhone} className="flex h-10 items-center gap-1 rounded-full bg-teal-50 px-3 text-xs font-semibold text-teal-700 active:scale-95">
-                <Plus className="h-4 w-4" /> 添加预留手机
+              <button type="button" onClick={addContact} className="flex h-10 items-center gap-1 rounded-full bg-teal-50 px-3 text-xs font-semibold text-teal-700 active:scale-95">
+                <Plus className="h-4 w-4" /> 添加联系方式
               </button>
             </div>
 
             <div className="space-y-3">
-              {(draft.reservedPhones ?? ['']).map((phone, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input
-                    className="h-12 min-w-0 flex-1 rounded-2xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 outline-none focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-50"
-                    value={phone}
-                    onChange={event => updatePhone(index, event.target.value)}
-                    placeholder="请输入预留手机号"
-                  />
-                  <button type="button" onClick={() => removePhone(index)} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 active:scale-95" aria-label="删除预留手机">
-                    <Trash2 className="h-4 w-4" />
+              {(draft.guardianContacts ?? [createBlankContact()]).map((contact, index) => (
+                <div key={index} className="relative space-y-2 rounded-[22px] border border-slate-100 bg-slate-50/70 p-2">
+                  <button type="button" onClick={() => removeContact(index)} className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-slate-400 shadow-sm ring-1 ring-slate-100 active:bg-rose-50 active:text-rose-500" aria-label="删除家长联系方式">
+                    <X className="h-3.5 w-3.5" />
                   </button>
+                  <div className="grid grid-cols-[minmax(0,1fr)_92px] gap-2 pr-5">
+                    <input
+                      className="h-12 min-w-0 rounded-2xl border border-slate-100 bg-white px-4 text-sm font-medium text-slate-900 outline-none focus:border-teal-300 focus:ring-4 focus:ring-teal-50"
+                      value={contact.phone}
+                      onChange={event => updateContact(index, { phone: event.target.value })}
+                      placeholder="请输入手机号"
+                      inputMode="tel"
+                    />
+                    <select
+                      className="h-12 rounded-2xl border border-slate-100 bg-white px-3 text-sm font-medium text-slate-900 outline-none focus:border-teal-300 focus:ring-4 focus:ring-teal-50"
+                      value={contact.relation}
+                      onChange={event => updateContact(index, { relation: event.target.value as GuardianRelation })}
+                      aria-label="家长关系"
+                    >
+                      {guardianRelationOptions.map(relation => (
+                        <option key={relation} value={relation}>{relation}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {contact.relation === '其他' && (
+                    <input
+                      className="h-11 w-full rounded-2xl border border-slate-100 bg-white px-3 text-sm font-medium text-slate-900 outline-none focus:border-teal-300 focus:ring-4 focus:ring-teal-50"
+                      value={contact.relationOther ?? ''}
+                      onChange={event => updateContact(index, { relationOther: event.target.value })}
+                      placeholder="请输入关系"
+                      aria-label="其他关系"
+                    />
+                  )}
                 </div>
               ))}
             </div>

@@ -25,6 +25,7 @@ export const parentButtonTone = {
   secondary: 'border border-[#D8EEF0] bg-white text-emerald-700 shadow-none',
   neutral: 'bg-slate-100 text-slate-600 shadow-none',
   attention: 'bg-gradient-to-br from-[#FFB36C] to-[#FF7E6B] text-white shadow-[0_18px_34px_-24px_rgba(255,126,107,0.58)]',
+  attentionSoft: 'border border-orange-200 bg-orange-50 text-orange-600 shadow-none',
 } as const;
 
 export const parentRadius = {

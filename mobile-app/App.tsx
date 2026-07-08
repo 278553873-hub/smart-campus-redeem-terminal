@@ -6,7 +6,7 @@ import ClassDetailView from './views/ClassDetailView';
 import RecordInputView from './views/RecordInputView';
 import ClassReportView from './views/ClassReportView';
 import ClassRecordLogView from './views/ClassRecordLogView';
-import MeView from './views/MeView';
+import MeView, { ClassSourceSheet, type TeacherSpaceOption } from './views/MeView';
 import MyFilesView from './views/MyFilesView';
 import TermReportView from './views/TermReportView';
 import ClassLeaderboardView from './views/ClassLeaderboardView';
@@ -18,6 +18,19 @@ import HomeworkEntryView from './views/HomeworkEntryView';
 import TeacherProfileEditView from './views/TeacherProfileEditView';
 import StudentBasicEditView from './views/StudentBasicEditView';
 import StudentCoinDetailView from './views/StudentCoinDetailView';
+import AiHeadteacherAssistantView from './views/AiHeadteacherAssistantView';
+import {
+    CoinIssuanceView,
+    DeleteConfirmSheet,
+    DepartmentManagementView,
+    MineSettingsView,
+    SubjectManagementView,
+    SuggestionFeedbackView,
+    TextEditSheet,
+    type CoinIssuanceConfig,
+    type SchoolDepartmentItem,
+    type SchoolSubjectItem,
+} from './views/MeFeatureViews';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import TeacherRecordAuroraBackground from './components/TeacherRecordAuroraBackground';
 import { DeviceWrapper } from '../components/DeviceWrapper';
@@ -91,6 +104,36 @@ const TEACHER_PROFILE_DEPARTMENTS: TeacherDepartment[] = [
     { id: 'grade-office', name: '年级办公室' },
 ];
 
+const TEACHER_SPACE_OPTIONS: TeacherSpaceOption[] = [
+    { id: 'personal', title: '我创建的班级', type: 'personal' },
+    { id: 'collab-li', title: '李明老师的班级', type: 'collaboration' },
+    { id: 'school-qizhong', title: '成都七中初中附属小学', type: 'school' },
+    { id: 'school-star', title: '星河实验小学', type: 'school' },
+];
+const DEFAULT_TEACHER_SPACE_ID = 'school-star';
+
+const INITIAL_SCHOOL_SUBJECTS: SchoolSubjectItem[] = [
+    { id: 'subject-cn', name: '语文' },
+    { id: 'subject-math', name: '数学' },
+    { id: 'subject-en', name: '英语' },
+    { id: 'subject-pe', name: '体育' },
+    { id: 'subject-calligraphy', name: '书法' },
+];
+
+const INITIAL_SCHOOL_DEPARTMENTS: SchoolDepartmentItem[] = [
+    { id: 'department-student-development', name: '学发中心' },
+    { id: 'department-moral', name: '德育处' },
+    { id: 'department-academic', name: '教务处' },
+    { id: 'department-art', name: '艺体组' },
+];
+
+const DEFAULT_COIN_ISSUANCE_CONFIG: CoinIssuanceConfig = {
+    enabled: false,
+    period: 'weekly',
+    classBudget: 500,
+    sunshineRatio: 60,
+};
+
 const createTeachingAssignments = (classIds: string[], subject: string) => (
     classIds.map(classId => ({ classId, subject }))
 );
@@ -98,6 +141,7 @@ const createTeachingAssignments = (classIds: string[], subject: string) => (
 const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
     name: '刘飞飞老师',
     avatar: ASSETS.AVATAR.TEACHER_LIU,
+    schoolName: '星河实验小学',
     departmentId: 'student-development',
     departmentName: '学发中心',
     teachingAssignments: [
@@ -112,7 +156,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'ai_headteacher_assistant' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
 
 interface MobileAppProps {
     showPhoneShell?: boolean;
@@ -156,7 +200,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'record_input') return 0;
         if (view === 'class_list' || view === 'class_detail' || view === 'class_report' || view === 'student_detail' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
-        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit') return 2;
+        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'ai_headteacher_assistant') return 2;
         return 0;
     };
 
@@ -192,6 +236,19 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [selectedSubject, setSelectedSubject] = useState<string>('');
     const [batchStudentIds, setBatchStudentIds] = useState<string[]>([]);
     const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(DEFAULT_TEACHER_PROFILE);
+    const [currentTeacherSpaceId, setCurrentTeacherSpaceId] = useState(DEFAULT_TEACHER_SPACE_ID);
+    const [showTeacherSpaceSheet, setShowTeacherSpaceSheet] = useState(false);
+    const [schoolSubjects, setSchoolSubjects] = useState<SchoolSubjectItem[]>(INITIAL_SCHOOL_SUBJECTS);
+    const [schoolDepartments, setSchoolDepartments] = useState<SchoolDepartmentItem[]>(INITIAL_SCHOOL_DEPARTMENTS);
+    const [draggingSubjectId, setDraggingSubjectId] = useState<string | null>(null);
+    const [activeNameEditor, setActiveNameEditor] = useState<'subject' | 'department' | null>(null);
+    const [subjectDraftTarget, setSubjectDraftTarget] = useState<SchoolSubjectItem | null>(null);
+    const [departmentDraftTarget, setDepartmentDraftTarget] = useState<SchoolDepartmentItem | null>(null);
+    const [nameDraft, setNameDraft] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<{ type: 'subject' | 'department'; id: string; name: string } | null>(null);
+    const [coinIssuanceConfig, setCoinIssuanceConfig] = useState<CoinIssuanceConfig>(DEFAULT_COIN_ISSUANCE_CONFIG);
+    const [suggestionText, setSuggestionText] = useState('');
+    const [suggestionImages, setSuggestionImages] = useState<string[]>([]);
 
     // Multi-Selection State for Class Detail
     const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
@@ -215,6 +272,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [showGradeSelect, setShowGradeSelect] = useState(false);
     const [showSubjectScopeSelect, setShowSubjectScopeSelect] = useState(false);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
+    const [successToastMessage, setSuccessToastMessage] = useState({
+        title: 'AI 生成中...',
+        body: '数据量较大，稍后可以在学生详情页进行查看',
+    });
     const [isOverlayActive, setIsOverlayActive] = useState(false);
 
     // Keyboard States
@@ -236,6 +297,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const navigateTo = (view: ViewState) => {
         setHistory(prev => [...prev, currentView]);
         setCurrentView(view);
+        setShowTeacherSpaceSheet(false);
         const mainContainer = document.getElementById('main-scroll-container');
         if (mainContainer) mainContainer.scrollTop = 0;
 
@@ -260,6 +322,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const switchTab = (tab: ViewState) => {
         setHistory([]);
         setCurrentView(tab);
+        setShowTeacherSpaceSheet(false);
         const mainContainer = document.getElementById('main-scroll-container');
         if (mainContainer) mainContainer.scrollTop = 0;
 
@@ -345,6 +408,86 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const handleEditClassInfo = (classId: string) => {
         const className = MOCK_CLASSES.find(c => c.id === classId)?.name || '当前班级';
         alert(`${className}班级信息编辑功能演示中`);
+    };
+
+    const openSubjectEditor = (item?: SchoolSubjectItem) => {
+        setActiveNameEditor('subject');
+        setSubjectDraftTarget(item ?? null);
+        setNameDraft(item?.name ?? '');
+    };
+
+    const openDepartmentEditor = (item?: SchoolDepartmentItem) => {
+        setActiveNameEditor('department');
+        setDepartmentDraftTarget(item ?? null);
+        setNameDraft(item?.name ?? '');
+    };
+
+    const closeNameEditor = () => {
+        setActiveNameEditor(null);
+        setSubjectDraftTarget(null);
+        setDepartmentDraftTarget(null);
+        setNameDraft('');
+    };
+
+    const saveNameEditor = () => {
+        const nextName = nameDraft.trim();
+        if (!nextName) return;
+
+        if (activeNameEditor === 'subject') {
+            setSchoolSubjects(prev => subjectDraftTarget
+                ? prev.map(item => item.id === subjectDraftTarget.id ? { ...item, name: nextName } : item)
+                : [...prev, { id: `subject-${Date.now()}`, name: nextName }]
+            );
+        }
+
+        if (activeNameEditor === 'department') {
+            setSchoolDepartments(prev => departmentDraftTarget
+                ? prev.map(item => item.id === departmentDraftTarget.id ? { ...item, name: nextName } : item)
+                : [...prev, { id: `department-${Date.now()}`, name: nextName }]
+            );
+        }
+
+        closeNameEditor();
+    };
+
+    const moveSubjectItem = (dragId: string, targetId: string) => {
+        if (dragId === targetId) return;
+        setSchoolSubjects(prev => {
+            const fromIndex = prev.findIndex(item => item.id === dragId);
+            const toIndex = prev.findIndex(item => item.id === targetId);
+            if (fromIndex < 0 || toIndex < 0) return prev;
+            const next = [...prev];
+            const [moved] = next.splice(fromIndex, 1);
+            next.splice(toIndex, 0, moved);
+            return next;
+        });
+    };
+
+    const confirmDeleteMineFeatureItem = () => {
+        if (!deleteTarget) return;
+        if (deleteTarget.type === 'subject') {
+            setSchoolSubjects(prev => prev.filter(item => item.id !== deleteTarget.id));
+        } else {
+            setSchoolDepartments(prev => prev.filter(item => item.id !== deleteTarget.id));
+        }
+        setDeleteTarget(null);
+    };
+
+    const addSuggestionImage = () => {
+        setSuggestionImages(prev => prev.length >= 5 ? prev : [...prev, `图片${prev.length + 1}`]);
+    };
+
+    const submitSuggestion = () => {
+        if (!suggestionText.trim()) return;
+        setSuggestionText('');
+        setSuggestionImages([]);
+        setSuccessToastMessage({
+            title: '反馈已提交',
+            body: '运营端会收到这条建议反馈',
+        });
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 1800);
+        navigateTo('me');
     };
 
     const handleStartRecord = (studentIds: string[], mode: 'voice' | 'camera' | 'text' = 'voice') => {
@@ -438,6 +581,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const handleConfirmGenerate = () => {
         setShowGenModal(false);
         closeAllSelectDropdowns();
+        setSuccessToastMessage({
+            title: 'AI 生成中...',
+            body: '数据量较大，稍后可以在学生详情页进行查看',
+        });
         setShowSuccessToast(true);
         // Removed setTimeout to allow manual close
     };
@@ -483,6 +630,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'me': return '';
             case 'my_files': return '我的文件';
             case 'teacher_profile_edit': return '编辑教师信息';
+            case 'mine_settings': return '设置';
+            case 'subject_management': return '科目管理';
+            case 'department_management': return '部门管理';
+            case 'coin_issuance': return '货币发放';
+            case 'suggestion_feedback': return '建议反馈';
+            case 'ai_headteacher_assistant': return 'AI班主任助理';
             case 'class_leaderboard': return '排行榜';
             case 'leader_report': return '学校数据报表';
             case 'reward_verification': return '班级奖励兑换';
@@ -492,6 +645,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             default: return '';
         }
     };
+
+    const activeTeacherSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === currentTeacherSpaceId) ?? TEACHER_SPACE_OPTIONS[0];
 
     const getActiveStudentNames = () => {
         return MOCK_STUDENTS_CLASS_1
@@ -592,21 +747,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
         if (currentView === 'me') {
             return (
-                <div className="relative h-full w-full overflow-hidden bg-[#F4FCFF]" aria-hidden="true">
-                    <div className="pointer-events-none absolute -left-24 -right-28 top-0 h-[420px] opacity-75 blur-[30px]">
-                        <img
-                            src={ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG}
-                            alt=""
-                            className="h-full w-full scale-125 object-cover object-right-top"
-                        />
-                    </div>
-                    <div className="pointer-events-none absolute inset-x-0 top-[190px] h-[360px] opacity-60">
-                        <img
-                            src={ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG}
-                            alt=""
-                            className="h-full w-full scale-150 object-cover object-right-bottom blur-2xl"
-                        />
-                    </div>
+                <div className="relative h-full w-full overflow-hidden bg-[#F3F8FC]" aria-hidden="true">
+                    <img
+                        src={ASSETS.MANAGEMENT.TEACHER_ME_PAGE_BG}
+                        alt=""
+                        className="h-full w-full object-cover"
+                    />
                 </div>
             );
         }
@@ -805,11 +951,19 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'me' && (
                                 <MeView
                                     teacherProfile={teacherProfile}
+                                    currentSpace={activeTeacherSpace}
+                                    isSpaceSheetOpen={showTeacherSpaceSheet}
                                     onNavigateToFiles={() => navigateTo('my_files')}
                                     onEditTeacherProfile={() => navigateTo('teacher_profile_edit')}
-                                    onOpenGenerateModal={handleOpenSubjectGenModal}
                                     onOpenTermGenerateModal={handleOpenTermGenModal}
                                     onViewLeaderReport={handleViewLeaderReport}
+                                    onOpenSettings={() => navigateTo('mine_settings')}
+                                    onOpenSubjectManagement={() => navigateTo('subject_management')}
+                                    onOpenDepartmentManagement={() => navigateTo('department_management')}
+                                    onOpenCoinIssuance={() => navigateTo('coin_issuance')}
+                                    onOpenSuggestionFeedback={() => navigateTo('suggestion_feedback')}
+                                    onOpenAiHeadteacherAssistant={() => navigateTo('ai_headteacher_assistant')}
+                                    onToggleSpaceSheet={() => setShowTeacherSpaceSheet(prev => !prev)}
                                 />
                             )}
 
@@ -819,6 +973,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     classes={MOCK_CLASSES}
                                     subjects={TEACHER_PROFILE_SUBJECTS}
                                     departments={TEACHER_PROFILE_DEPARTMENTS}
+                                    currentSpace={activeTeacherSpace}
                                     onBack={goBack}
                                     onChange={setTeacherProfile}
                                 />
@@ -827,10 +982,96 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'my_files' && (
                                 <MyFilesView onBack={goBack} />
                             )}
+
+                            {currentView === 'mine_settings' && (
+                                <MineSettingsView onLogout={() => alert('退出登录功能演示中')} />
+                            )}
+
+                            {currentView === 'subject_management' && (
+                                <SubjectManagementView
+                                    subjects={schoolSubjects}
+                                    draggingSubjectId={draggingSubjectId}
+                                    onAdd={() => openSubjectEditor()}
+                                    onEdit={openSubjectEditor}
+                                    onDelete={(item) => setDeleteTarget({ type: 'subject', id: item.id, name: item.name })}
+                                    onDragStart={setDraggingSubjectId}
+                                    onDragOver={(targetId) => draggingSubjectId && moveSubjectItem(draggingSubjectId, targetId)}
+                                    onDragEnd={() => setDraggingSubjectId(null)}
+                                />
+                            )}
+
+                            {currentView === 'department_management' && (
+                                <DepartmentManagementView
+                                    departments={schoolDepartments}
+                                    onAdd={() => openDepartmentEditor()}
+                                    onEdit={openDepartmentEditor}
+                                    onDelete={(item) => setDeleteTarget({ type: 'department', id: item.id, name: item.name })}
+                                />
+                            )}
+
+                            {currentView === 'coin_issuance' && (
+                                <CoinIssuanceView
+                                    config={coinIssuanceConfig}
+                                    onChange={setCoinIssuanceConfig}
+                                    onSave={() => {
+                                        setSuccessToastMessage({
+                                            title: '配置已保存',
+                                            body: '货币发放规则已在当前演示会话中更新',
+                                        });
+                                        setShowSuccessToast(true);
+                                        setTimeout(() => setShowSuccessToast(false), 1800);
+                                    }}
+                                />
+                            )}
+
+                            {currentView === 'suggestion_feedback' && (
+                                <SuggestionFeedbackView
+                                    text={suggestionText}
+                                    images={suggestionImages}
+                                    onTextChange={setSuggestionText}
+                                    onAddImage={addSuggestionImage}
+                                    onRemoveImage={(index) => setSuggestionImages(prev => prev.filter((_, imageIndex) => imageIndex !== index))}
+                                    onSubmit={submitSuggestion}
+                                />
+                            )}
+
+                            {currentView === 'ai_headteacher_assistant' && (
+                                <AiHeadteacherAssistantView onBack={goBack} />
+                            )}
                         </main>
 
                         {showInputBar && <div className="pointer-events-none absolute bottom-16 left-0 right-0 z-[55] h-28 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.9)_46%,#FFFFFF_100%)]" />}
                         {showInputBar && <GlobalInputBar />}
+
+                        {activeNameEditor === 'subject' && (
+                            <TextEditSheet
+                                title={subjectDraftTarget ? '修改科目' : '新增科目'}
+                                value={nameDraft}
+                                placeholder="请输入科目名称"
+                                onChange={setNameDraft}
+                                onCancel={closeNameEditor}
+                                onConfirm={saveNameEditor}
+                            />
+                        )}
+
+                        {activeNameEditor === 'department' && (
+                            <TextEditSheet
+                                title={departmentDraftTarget ? '修改部门' : '新增部门'}
+                                value={nameDraft}
+                                placeholder="请输入部门名称"
+                                onChange={setNameDraft}
+                                onCancel={closeNameEditor}
+                                onConfirm={saveNameEditor}
+                            />
+                        )}
+
+                        {deleteTarget && (
+                            <DeleteConfirmSheet
+                                title={`删除${deleteTarget.name}`}
+                                onCancel={() => setDeleteTarget(null)}
+                                onConfirm={confirmDeleteMineFeatureItem}
+                            />
+                        )}
 
                         {currentView === 'record_input' && (
                             <div className="absolute inset-0 z-50 overflow-hidden">
@@ -863,7 +1104,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 <div className="grid h-full grid-cols-3 items-center text-center">
                                     <button onClick={() => switchTab('home_log')} className="flex h-full flex-col items-center justify-center gap-1 active:scale-95 transition">
                                         <ActivityIcon className={`h-5 w-5 ${activeIndex === 0 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`} fill="none" />
-                                        <span className={`text-xs font-semibold ${activeIndex === 0 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`}>首页</span>
+                                        <span className={`text-xs font-semibold ${activeIndex === 0 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`}>记录</span>
                                     </button>
                                     <button onClick={() => switchTab('class_list')} className="flex h-full flex-col items-center justify-center gap-1 active:scale-95 transition">
                                         <HomeIcon className={`h-5 w-5 ${activeIndex === 1 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`} fill="none" />
@@ -875,6 +1116,18 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     </button>
                                 </div>
                             </nav>
+                        )}
+
+                        {currentView === 'me' && showTeacherSpaceSheet && (
+                            <ClassSourceSheet
+                                currentSpace={activeTeacherSpace}
+                                spaceOptions={TEACHER_SPACE_OPTIONS}
+                                onClose={() => setShowTeacherSpaceSheet(false)}
+                                onSelectSpace={(spaceId) => {
+                                    setCurrentTeacherSpaceId(spaceId);
+                                    setShowTeacherSpaceSheet(false);
+                                }}
+                            />
                         )}
 
 
@@ -1031,11 +1284,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                         </svg>
                                     </div>
                                     <h3 className="text-lg font-bold mb-2">
-                                        AI 生成中...
+                                        {successToastMessage.title}
                                     </h3>
                                     <p className="text-xs text-slate-300 leading-relaxed mb-6">
-                                        数据量较大，稍后可以在<br />
-                                        <span className="text-white font-medium">学生详情页</span> 进行查看
+                                        {successToastMessage.body}
                                     </p>
                                     <button
                                         onClick={() => setShowSuccessToast(false)}

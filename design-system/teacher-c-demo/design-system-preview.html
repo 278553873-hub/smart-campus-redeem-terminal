@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo C端改造教师端 Design System v1.0</title>
+  <link rel="stylesheet" href="./tokens.css" />
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--tc-page-background);
+      color: var(--tc-text-title);
+      font-family: PingFang SC, Hiragino Sans GB, Microsoft YaHei, Noto Sans CJK SC, sans-serif;
+      letter-spacing: 0;
+    }
+    button, input, textarea { font: inherit; }
+    .page {
+      display: grid;
+      grid-template-columns: 264px minmax(0, 1fr);
+      gap: 24px;
+      width: min(1560px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 24px 0 56px;
+    }
+    .sidebar {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      min-height: calc(100vh - 48px);
+      padding: 20px;
+      border: 1px solid var(--tc-border-subtle);
+      border-radius: var(--tc-radius-xl);
+      background: var(--tc-bg-surface);
+      box-shadow: var(--tc-shadow-card);
+      backdrop-filter: blur(22px);
+    }
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 18px;
+      background: var(--tc-button-primary-bg);
+      color: white;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: var(--tc-shadow-float);
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 22px;
+      font-weight: 760;
+    }
+    .brand p {
+      margin: 3px 0 0;
+      color: var(--tc-text-muted);
+      font-size: 12px;
+      line-height: 18px;
+    }
+    .nav {
+      display: grid;
+      gap: 6px;
+      margin-top: 24px;
+    }
+    .nav a {
+      display: flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 0 12px;
+      border-radius: 14px;
+      color: var(--tc-text-body);
+      font-size: 13px;
+      font-weight: 650;
+      text-decoration: none;
+    }
+    .nav a:hover { background: var(--tc-bg-soft); color: var(--tc-text-title); }
+    .theme-button {
+      width: 100%;
+      min-height: 44px;
+      margin-top: 22px;
+      border: 1px solid var(--tc-border-subtle);
+      border-radius: var(--tc-radius-md);
+      background: var(--tc-button-secondary-bg);
+      color: var(--tc-button-secondary-text);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .main { display: grid; gap: 20px; min-width: 0; }
+    .panel, .hero {
+      border: 1px solid var(--tc-border-subtle);
+      border-radius: var(--tc-radius-2xl);
+      background: var(--tc-bg-surface);
+      box-shadow: var(--tc-shadow-card);
+      backdrop-filter: blur(22px);
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 390px;
+      gap: 26px;
+      padding: 30px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid rgba(88, 195, 207, .28);
+      border-radius: var(--tc-radius-pill);
+      background: rgba(88, 195, 207, .12);
+      color: var(--tc-color-primary-strong);
+      font-size: 12px;
+      font-weight: 760;
+    }
+    .hero-title {
+      max-width: 720px;
+      margin: 18px 0 0;
+      font-size: clamp(34px, 5vw, 66px);
+      line-height: 1.04;
+      font-weight: 820;
+      letter-spacing: 0;
+    }
+    .hero-copy {
+      max-width: 760px;
+      margin: 16px 0 0;
+      color: var(--tc-text-body);
+      font-size: 15px;
+      line-height: 26px;
+    }
+    .hero-tags, .chips, .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--tc-border-subtle);
+      border-radius: var(--tc-radius-pill);
+      background: var(--tc-bg-soft);
+      color: var(--tc-text-body);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .panel { padding: 24px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+    h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 30px;
+      font-weight: 800;
+    }
+    .section-note {
+      max-width: 560px;
+      color: var(--tc-text-muted);
+      font-size: 13px;
+      line-height: 21px;
+      text-align: right;
+    }
+    .grid { display: grid; gap: 12px; }
+    .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .swatch, .spec-card, .business-card, .state-card, .phone {
+      border: 1px solid var(--tc-border-subtle);
+      background: var(--tc-bg-card);
+      box-shadow: var(--tc-shadow-card);
+    }
+    .swatch { overflow: hidden; border-radius: var(--tc-radius-lg); }
+    .swatch-color { height: 84px; }
+    .swatch-body { padding: 12px; }
+    .swatch-name { font-size: 13px; line-height: 18px; font-weight: 760; }
+    .swatch-value { margin-top: 4px; color: var(--tc-text-muted); font-size: 12px; line-height: 18px; font-weight: 600; }
+    .spec-card, .business-card, .state-card {
+      padding: 16px;
+      border-radius: var(--tc-radius-lg);
+    }
+    .spec-title {
+      margin: 0;
+      font-size: 15px;
+      line-height: 22px;
+      font-weight: 760;
+    }
+    .spec-desc {
+      margin: 6px 0 0;
+      color: var(--tc-text-body);
+      font-size: 13px;
+      line-height: 21px;
+    }
+    .demo-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 16px;
+      border: 1px solid transparent;
+      border-radius: var(--tc-radius-md);
+      font-size: 14px;
+      font-weight: 760;
+    }
+    .primary { background: var(--tc-button-primary-bg); color: var(--tc-button-primary-text); box-shadow: var(--tc-shadow-float); }
+    .secondary { border-color: var(--tc-border-subtle); background: var(--tc-button-secondary-bg); color: var(--tc-button-secondary-text); }
+    .soft { background: var(--tc-button-soft-bg); color: var(--tc-button-soft-text); }
+    .danger { border-color: var(--tc-border-danger); background: var(--tc-button-danger-bg); color: var(--tc-button-danger-text); }
+    .disabled { background: var(--tc-button-disabled-bg); color: var(--tc-button-disabled-text); }
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .field label { font-size: 13px; font-weight: 700; }
+    .input {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 14px;
+      border: 1px solid var(--tc-border-control);
+      border-radius: var(--tc-radius-md);
+      background: var(--tc-input-bg);
+      color: var(--tc-text-title);
+      outline: none;
+    }
+    .input:focus { border-color: var(--tc-border-focus); background: var(--tc-input-bg-focus); }
+    .phone {
+      width: 100%;
+      max-width: 390px;
+      min-height: 720px;
+      padding: 14px;
+      border-radius: 38px;
+      justify-self: center;
+    }
+    .screen {
+      position: relative;
+      overflow: hidden;
+      min-height: 690px;
+      border-radius: 28px;
+      background: var(--tc-page-background);
+    }
+    .phone-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      padding: 0 16px;
+      color: var(--tc-text-title);
+      font-size: 13px;
+      font-weight: 760;
+    }
+    .capsule {
+      width: 76px;
+      height: 30px;
+      border: 1px solid var(--tc-border-subtle);
+      border-radius: var(--tc-radius-pill);
+      background: rgba(255,255,255,.55);
+    }
+    [data-theme="dark"] .capsule { background: rgba(255,255,255,.08); }
+    .screen-title {
+      margin: 2px 0 0;
+      text-align: center;
+      font-size: 18px;
+      line-height: 26px;
+      font-weight: 760;
+    }
+    .robot {
+      display: block;
+      width: 230px;
+      height: 250px;
+      object-fit: contain;
+      object-position: center;
+      margin: 14px auto 0;
+      border-radius: 30px;
+      mix-blend-mode: multiply;
+    }
+    [data-theme="dark"] .robot { mix-blend-mode: normal; opacity: .92; }
+    .mobile-form { display: grid; gap: 12px; padding: 0 22px 22px; }
+    .mobile-field label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 700; }
+    .mobile-input {
+      display: flex;
+      align-items: center;
+      min-height: 48px;
+      padding: 0 14px;
+      border: 1px solid var(--tc-border-control);
+      border-radius: var(--tc-radius-md);
+      background: var(--tc-input-bg);
+      color: var(--tc-text-placeholder);
+      font-size: 14px;
+    }
+    .mobile-primary {
+      min-height: 52px;
+      margin-top: 8px;
+      border: 0;
+      border-radius: 18px;
+      background: var(--tc-button-primary-bg);
+      color: white;
+      font-size: 15px;
+      font-weight: 760;
+      box-shadow: var(--tc-shadow-float);
+    }
+    .sheet-stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 320px;
+      border: 1px solid var(--tc-border-subtle);
+      border-radius: var(--tc-radius-xl);
+      background: var(--tc-bg-soft);
+    }
+    .sheet {
+      position: absolute;
+      inset: auto 0 0 0;
+      padding: 18px 20px 24px;
+      border: 1px solid var(--tc-border-subtle);
+      border-radius: var(--tc-radius-sheet);
+      background: var(--tc-bg-card);
+      box-shadow: var(--tc-shadow-sheet);
+    }
+    .grabber { width: 42px; height: 5px; margin: 0 auto 16px; border-radius: 999px; background: var(--tc-ink-200); }
+    .option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 50px;
+      margin-top: 8px;
+      padding: 0 14px;
+      border-radius: var(--tc-radius-md);
+      background: var(--tc-bg-soft);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .business-card {
+      display: grid;
+      gap: 10px;
+      min-height: 178px;
+    }
+    .business-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+    .icon-bubble {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(88,195,207,.18), rgba(173,148,237,.18));
+      color: var(--tc-color-primary-strong);
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .mini-lines { display: grid; gap: 7px; }
+    .line { height: 9px; border-radius: 999px; background: var(--tc-ink-100); }
+    .line.short { width: 58%; }
+    .ai-card {
+      padding: 14px;
+      border: 1px solid rgba(88,195,207,.28);
+      border-radius: var(--tc-radius-xl);
+      background: var(--tc-card-ai-bg);
+    }
+    .score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      height: 38px;
+      border-radius: 14px;
+      background: var(--tc-card-positive-bg);
+      color: var(--tc-record-score-positive);
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .voice-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .voice-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 0 12px;
+      border-radius: var(--tc-radius-pill);
+      font-size: 13px;
+      font-weight: 760;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 999px; background: currentColor; }
+    .matching { background: rgba(88,195,207,.14); color: var(--tc-voice-matching); }
+    .speaking { background: rgba(112,189,155,.16); color: var(--tc-voice-speaking); }
+    .muted { background: rgba(143,157,173,.14); color: var(--tc-voice-muted); }
+    .offline { background: rgba(231,119,112,.14); color: var(--tc-voice-offline); }
+    .wave { display: inline-flex; align-items: center; gap: 3px; height: 18px; color: currentColor; }
+    .wave span { width: 3px; border-radius: 999px; background: currentColor; animation: pulse 1.1s ease-in-out infinite; }
+    .wave span:nth-child(1){height:8px}.wave span:nth-child(2){height:14px;animation-delay:.1s}.wave span:nth-child(3){height:18px;animation-delay:.2s}.wave span:nth-child(4){height:12px;animation-delay:.3s}
+    @keyframes pulse { 0%,100%{transform:scaleY(.55);opacity:.64} 50%{transform:scaleY(1);opacity:1} }
+    .type-row {
+      display: grid;
+      grid-template-columns: 150px minmax(0,1fr) 170px;
+      gap: 14px;
+      align-items: baseline;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--tc-border-subtle);
+    }
+    .type-row:last-child { border-bottom: 0; }
+    .type-name, .type-meta { color: var(--tc-text-muted); font-size: 12px; font-weight: 700; }
+    .type-meta { text-align: right; }
+    .display { font-size: 26px; line-height: 34px; font-weight: 700; }
+    .page-title { font-size: 18px; line-height: 26px; font-weight: 700; }
+    .section-title { font-size: 16px; line-height: 24px; font-weight: 650; }
+    .card-title { font-size: 15px; line-height: 22px; font-weight: 650; }
+    .body-text { font-size: 14px; line-height: 22px; font-weight: 400; }
+    .meta-text { font-size: 13px; line-height: 20px; font-weight: 400; }
+    .label-text { font-size: 12px; line-height: 18px; font-weight: 600; }
+    .space-row { display: grid; grid-template-columns: 92px minmax(0,1fr) 64px; align-items: center; gap: 12px; margin: 10px 0; }
+    .space-bar { height: 18px; border-radius: 999px; background: linear-gradient(90deg, rgba(88,195,207,.24), rgba(127,158,237,.34)); }
+    .screen-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .screen-card { padding: 14px; border: 1px solid var(--tc-border-subtle); border-radius: var(--tc-radius-lg); background: var(--tc-bg-card); }
+    .rule-table { display:grid; gap: 8px; }
+    .rule-row { display:grid; grid-template-columns: 120px minmax(0,1fr); gap: 12px; padding: 10px 0; border-bottom:1px solid var(--tc-border-subtle); font-size:13px; line-height:21px; }
+    .rule-row:last-child { border-bottom:0; }
+    .rule-row strong { color: var(--tc-text-title); }
+    @media (max-width: 1120px) {
+      .page { grid-template-columns: 1fr; }
+      .sidebar { position: static; min-height: auto; }
+      .nav { grid-template-columns: repeat(4,minmax(0,1fr)); }
+      .hero { grid-template-columns: 1fr; }
+      .cols-4, .screen-grid, .voice-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .cols-3 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 720px) {
+      .page { width: min(100vw - 24px, 1560px); padding-top: 12px; }
+      .hero, .panel { padding: 18px; border-radius: var(--tc-radius-xl); }
+      .nav, .cols-2, .cols-3, .cols-4, .screen-grid, .voice-grid { grid-template-columns: 1fr; }
+      .section-head { display:block; }
+      .section-note { margin-top:8px; text-align:left; }
+      .type-row, .rule-row { grid-template-columns:1fr; gap:6px; }
+      .type-meta { text-align:left; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">AI</div>
+        <div>
+          <h1>教师端 DS v1.0</h1>
+          <p>C端改造重构方向</p>
+        </div>
+      </div>
+      <nav class="nav" aria-label="设计规范导航">
+        <a href="#vision">重构方向</a>
+        <a href="#colors">颜色系统</a>
+        <a href="#foundation">基础规则</a>
+        <a href="#components">通用组件</a>
+        <a href="#business">业务组件</a>
+        <a href="#templates">页面模板</a>
+        <a href="#states">状态系统</a>
+        <a href="#voice">语音状态</a>
+        <a href="#roles">权限版本</a>
+        <a href="#type">字体间距</a>
+      </nav>
+      <button class="theme-button" type="button" id="themeToggle">切换夜间模式</button>
+    </aside>
+
+    <main class="main">
+      <section class="hero" id="vision">
+        <div>
+          <span class="eyebrow">不继承旧 demo 样式 · 重构型设计系统</span>
+          <div class="hero-title">晨雾里的 AI 助教，轻、聪明、柔软、可靠。</div>
+          <p class="hero-copy">新版以 Design Token 为源头：`tokens.json` 定义 primitive / semantic / component 三层结构，`tokens.css` 自动生成，再支撑业务组件、页面模板、权限差异、语音状态和夜间模式。</p>
+          <div class="hero-tags">
+            <span class="chip">Aurora Milk 色彩</span>
+            <span class="chip">Token 三层架构</span>
+            <span class="chip">高信息密度</span>
+            <span class="chip">渐进披露</span>
+            <span class="chip">AI IP 系统</span>
+            <span class="chip">权限驱动显示</span>
+          </div>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="phone-top"><span>9:41</span><div class="capsule"></div></div>
+            <div class="screen-title">02 完善信息</div>
+            <img class="robot" src="./assets/ai-robot-ip-crop.png" alt="聪明可爱的 AI 机器人 IP 草图" />
+            <div class="mobile-form">
+              <div class="mobile-field"><label>姓名</label><div class="mobile-input">请输入姓名</div></div>
+              <div class="mobile-field"><label>学校</label><div class="mobile-input">请输入学校名称</div></div>
+              <button class="mobile-primary" type="button">进入体验</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="colors">
+        <div class="section-head"><h2>颜色系统</h2><div class="section-note">使用 Aurora Milk 调色板：晨雾青、月光蓝、鼠尾草绿、雾紫、花瓣粉、奶油黄、珊瑚红。</div></div>
+        <div class="grid cols-4">
+          <div class="swatch"><div class="swatch-color" style="background:#58C3CF"></div><div class="swatch-body"><div class="swatch-name">晨雾青</div><div class="swatch-value">#58C3CF · 主品牌</div></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#7F9EED"></div><div class="swatch-body"><div class="swatch-name">月光蓝</div><div class="swatch-value">#7F9EED · 科技辅助</div></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#70BD9B"></div><div class="swatch-body"><div class="swatch-name">鼠尾草绿</div><div class="swatch-value">#70BD9B · 成功/正向</div></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#AD94ED"></div><div class="swatch-body"><div class="swatch-name">雾紫</div><div class="swatch-value">#AD94ED · 空间/班级</div></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#DF82AA"></div><div class="swatch-body"><div class="swatch-name">花瓣粉</div><div class="swatch-value">#DF82AA · AI 高光</div></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#E2B85D"></div><div class="swatch-body"><div class="swatch-name">奶油黄</div><div class="swatch-value">#E2B85D · 提醒</div></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#E77770"></div><div class="swatch-body"><div class="swatch-name">珊瑚红</div><div class="swatch-value">#E77770 · 危险/掉线</div></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#111B2B"></div><div class="swatch-body"><div class="swatch-name">墨蓝灰</div><div class="swatch-value">#111B2B · 文本</div></div></div>
+        </div>
+      </section>
+
+      <section class="panel" id="foundation">
+        <div class="section-head"><h2>基础规则</h2><div class="section-note">圆角表达亲和，阴影只表达层级，描边负责清晰边界。</div></div>
+        <div class="grid cols-3">
+          <div class="spec-card" style="border-radius:12px"><h3 class="spec-title">12px 紧凑控件</h3><p class="spec-desc">图标按钮、小标签、列表内控件。</p></div>
+          <div class="spec-card" style="border-radius:20px"><h3 class="spec-title">20px 普通卡片</h3><p class="spec-desc">班级、老师、学生、家长绑定卡。</p></div>
+          <div class="spec-card" style="border-radius:24px; background:var(--tc-card-ai-bg)"><h3 class="spec-title">24px AI 卡片</h3><p class="spec-desc">AI 解读、生成中、02 IP 展示。</p></div>
+        </div>
+      </section>
+
+      <section class="panel" id="components">
+        <div class="section-head"><h2>通用组件</h2><div class="section-note">按钮、输入、卡片、弹窗、导航、分段控件，作为所有业务组件的基础。</div></div>
+        <div class="grid cols-2">
+          <div class="spec-card"><h3 class="spec-title">Button</h3><p class="spec-desc">每页最多一个主按钮，危险操作浅红底红字。</p><div class="button-row"><button class="demo-btn primary">主按钮</button><button class="demo-btn secondary">次按钮</button><button class="demo-btn soft">弱入口</button><button class="demo-btn danger">退出</button><button class="demo-btn disabled">不可用</button></div></div>
+          <div class="spec-card"><h3 class="spec-title">Input</h3><p class="spec-desc">标签外置，聚焦态使用晨雾青描边。</p><div class="field"><label>学校</label><input class="input" value="星河实验小学" /></div></div>
+          <div class="sheet-stage"><div class="sheet"><div class="grabber"></div><h3 class="spec-title">Bottom Sheet</h3><div class="option">创建班级 <span>›</span></div><div class="option">加入班级 <span>›</span></div><div class="option">显示设置 <span>›</span></div></div></div>
+          <div class="spec-card"><h3 class="spec-title">Segmented Control</h3><p class="spec-desc">用于记录学生/记录班级、未绑定/已绑定。选中态用白色浮块加短线，不用整块强渐变。</p><div class="button-row"><span class="chip" style="background:white;color:var(--tc-color-primary-strong)">记录学生</span><span class="chip">记录班级</span><span class="chip">未绑定 2</span><span class="chip">已绑定 48</span></div></div>
+        </div>
+      </section>
+
+      <section class="panel" id="business">
+        <div class="section-head"><h2>教师业务组件</h2><div class="section-note">这是 v1.0 的核心：不是通用 UI，而是服务教师端真实业务。</div></div>
+        <div class="grid cols-3">
+          <div class="business-card"><div class="business-top"><h3 class="spec-title">AI 解读卡</h3><span class="score">+3</span></div><div class="ai-card"><div class="label-text">AI 智能解读</div><div class="mini-lines"><div class="line"></div><div class="line"></div><div class="line short"></div></div></div><p class="spec-desc">整卡可点，字段内不重复放编辑按钮。</p></div>
+          <div class="business-card"><div class="business-top"><h3 class="spec-title">班级卡</h3><div class="icon-bubble">班</div></div><div class="card-title">2025级1班（一年级）</div><div class="chips"><span class="chip">班主任</span><span class="chip">语文</span></div><p class="spec-desc">班级号、人数、学生列表、班级报告。</p></div>
+          <div class="business-card"><div class="business-top"><h3 class="spec-title">老师卡</h3><div class="icon-bubble">郭</div></div><div class="chips"><span class="chip">班主任</span><span class="chip">副班主任</span><span class="chip">数学</span></div><p class="spec-desc">班主任视角有更多操作，非班主任只读。</p></div>
+          <div class="business-card"><div class="business-top"><h3 class="spec-title">学生卡</h3><div class="icon-bubble">林</div></div><div class="mini-lines"><div class="line"></div><div class="line short"></div></div><p class="spec-desc">头像、姓名、性别、学号，整卡进入详情。</p></div>
+          <div class="business-card"><div class="business-top"><h3 class="spec-title">家长绑定卡</h3><div class="icon-bubble">家</div></div><div class="chips"><span class="chip">待绑定</span><span class="chip">爸爸</span></div><p class="spec-desc">列表态不展示手机号，详情弹窗再展示。</p></div>
+          <div class="business-card"><div class="business-top"><h3 class="spec-title">空间切换</h3><div class="icon-bubble">空</div></div><div class="chips"><span class="chip">个人</span><span class="chip">协作</span><span class="chip">学校</span></div><p class="spec-desc">能力差异通过权限隐藏，不堆禁用入口。</p></div>
+        </div>
+      </section>
+
+      <section class="panel" id="templates">
+        <div class="section-head"><h2>页面模板覆盖</h2><div class="section-note">覆盖教师端完整路径，而不是只设计 02 页面。</div></div>
+        <div class="screen-grid">
+          <div class="screen-card"><h3 class="spec-title">登录/授权</h3><p class="spec-desc">微信授权、手机号登录、协议勾选，不写长介绍。</p></div>
+          <div class="screen-card"><h3 class="spec-title">首次使用</h3><p class="spec-desc">完善信息、新手首页、创建/加入班级、添加学生。</p></div>
+          <div class="screen-card"><h3 class="spec-title">高频记录</h3><p class="spec-desc">记录页、文字记录、拍照识别、AI 结果、编辑。</p></div>
+          <div class="screen-card"><h3 class="spec-title">班级协作</h3><p class="spec-desc">班级列表、详情、老师列表、家长绑定、学生列表。</p></div>
+          <div class="screen-card"><h3 class="spec-title">我的/设置</h3><p class="spec-desc">个人版、学校版、基本信息、建议反馈、管理工具。</p></div>
+          <div class="screen-card"><h3 class="spec-title">邀请流程</h3><p class="spec-desc">微信邀请、二维码、链接、发送确认、承接路径。</p></div>
+          <div class="screen-card"><h3 class="spec-title">危险操作</h3><p class="spec-desc">移除、退出、解散、转移班主任，分步确认。</p></div>
+          <div class="screen-card"><h3 class="spec-title">夜间模式</h3><p class="spec-desc">温柔深色，不做纯黑反色。</p></div>
+        </div>
+      </section>
+
+      <section class="panel" id="states">
+        <div class="section-head"><h2>状态系统</h2><div class="section-note">加载、空、错误、权限、AI 识别、提交中都需要统一表达。</div></div>
+        <div class="grid cols-4">
+          <div class="state-card"><h3 class="spec-title">Loading</h3><p class="spec-desc">骨架屏保留页面结构。</p></div>
+          <div class="state-card"><h3 class="spec-title">Empty</h3><p class="spec-desc">IP 小形象 + 一句引导 + 一个主操作。</p></div>
+          <div class="state-card"><h3 class="spec-title">Error</h3><p class="spec-desc">浅红/浅黄提示 + 重试。</p></div>
+          <div class="state-card"><h3 class="spec-title">Denied</h3><p class="spec-desc">说明原因 + 返回/联系管理员。</p></div>
+          <div class="state-card"><h3 class="spec-title">Submitting</h3><p class="spec-desc">主按钮 loading，防重复点击。</p></div>
+          <div class="state-card"><h3 class="spec-title">Success</h3><p class="spec-desc">轻 toast，不打断流程。</p></div>
+          <div class="state-card"><h3 class="spec-title">AI 识别中</h3><p class="spec-desc">AI IP 小头像 + 短文案。</p></div>
+          <div class="state-card"><h3 class="spec-title">需修正</h3><p class="spec-desc">AI 卡片右上角弱提示。</p></div>
+        </div>
+      </section>
+
+      <section class="panel" id="voice">
+        <div class="section-head"><h2>语音状态</h2><div class="section-note">状态不能只靠颜色，必须同时有图标、文案或动效。</div></div>
+        <div class="voice-grid">
+          <div class="state-card"><div class="voice-pill matching"><span class="dot"></span>正在匹配...</div><p class="spec-desc">AI 匹配或连接中。</p></div>
+          <div class="state-card"><div class="voice-pill speaking"><span class="wave"><span></span><span></span><span></span><span></span></span>正在听你说</div><p class="spec-desc">通话中或录音中。</p></div>
+          <div class="state-card"><div class="voice-pill muted"><span class="dot"></span>已静音</div><p class="spec-desc">麦克风关闭，保留文字入口。</p></div>
+          <div class="state-card"><div class="voice-pill offline"><span class="dot"></span>连接已断开</div><p class="spec-desc">提供重新连接。</p></div>
+        </div>
+      </section>
+
+      <section class="panel" id="roles">
+        <div class="section-head"><h2>权限与版本</h2><div class="section-note">C端改造的关键是个人、协作、学校空间与老师角色差异。</div></div>
+        <div class="rule-table">
+          <div class="rule-row"><strong>个人空间</strong><span>我创建的班级，可创建/加入班级、记录、生成期末报告。</span></div>
+          <div class="rule-row"><strong>协作空间</strong><span>某某老师的班级，按角色查看、记录、邀请和管理。</span></div>
+          <div class="rule-row"><strong>学校空间</strong><span>学校统一班级、学校报表、基础配置，不展示个人版营销入口。</span></div>
+          <div class="rule-row"><strong>班主任</strong><span>可编辑班级、管理老师、家长绑定、转移班主任。</span></div>
+          <div class="rule-row"><strong>非班主任</strong><span>只读为主，可记录和邀请，不能编辑核心班级信息。</span></div>
+        </div>
+      </section>
+
+      <section class="panel" id="type">
+        <div class="section-head"><h2>字体与间距</h2><div class="section-note">移动端克制字重，使用 4px 间距系统，保证高密度但不拥挤。</div></div>
+        <div class="type-row"><div class="type-name">Display</div><div class="display">聪明的 AI 助手</div><div class="type-meta">26 / 34 / 700</div></div>
+        <div class="type-row"><div class="type-name">Page Title</div><div class="page-title">02 完善信息</div><div class="type-meta">18 / 26 / 700</div></div>
+        <div class="type-row"><div class="type-name">Section Title</div><div class="section-title">老师列表</div><div class="type-meta">16 / 24 / 650</div></div>
+        <div class="type-row"><div class="type-name">Card Title</div><div class="card-title">2025级1班（一年级）</div><div class="type-meta">15 / 22 / 650</div></div>
+        <div class="type-row"><div class="type-name">Body</div><div class="body-text">张三同学今天主动帮助同学解决问题，值得表扬。</div><div class="type-meta">14 / 22 / 400</div></div>
+        <div class="type-row"><div class="type-name">Meta</div><div class="meta-text">今天 10:20 · 已入库</div><div class="type-meta">13 / 20 / 400</div></div>
+        <div class="space-row"><span class="type-name">4px</span><div class="space-bar" style="width:4px"></div><span class="type-meta">space-1</span></div>
+        <div class="space-row"><span class="type-name">12px</span><div class="space-bar" style="width:12px"></div><span class="type-meta">card gap</span></div>
+        <div class="space-row"><span class="type-name">20px</span><div class="space-bar" style="width:20px"></div><span class="type-meta">page x</span></div>
+        <div class="space-row"><span class="type-name">48px</span><div class="space-bar" style="width:48px"></div><span class="type-meta">hero gap</span></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const button = document.getElementById('themeToggle');
+    button.addEventListener('click', () => {
+      const dark = document.body.dataset.theme !== 'dark';
+      document.body.dataset.theme = dark ? 'dark' : '';
+      button.textContent = dark ? '切换日间模式' : '切换夜间模式';
+    });
+  </script>
+</body>
+</html>

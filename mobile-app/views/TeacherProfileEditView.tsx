@@ -8,6 +8,8 @@ import {
     Trash2,
 } from 'lucide-react';
 import type { ClassInfo, TeacherDepartment, TeacherProfile, TeacherTeachingAssignment } from '../types';
+import type { TeacherSpaceOption } from './MeView';
+import { ASSETS } from '../assets/images';
 import { MobileCard } from '../components/ui/MobileCard';
 import { phoneText } from '../styles/phoneTokens';
 
@@ -16,11 +18,12 @@ interface TeacherProfileEditViewProps {
     classes: ClassInfo[];
     subjects: string[];
     departments: TeacherDepartment[];
+    currentSpace: TeacherSpaceOption;
     onBack: () => void;
     onChange: (profile: TeacherProfile) => void;
 }
 
-type EditorMode = 'idle' | 'avatar' | 'name' | 'teachingClasses' | 'homeroom' | 'gradeLeader' | 'department';
+type EditorMode = 'idle' | 'avatar' | 'name' | 'school' | 'teachingClasses' | 'homeroom' | 'gradeLeader' | 'department';
 
 interface TeachingGroup {
     subject: string;
@@ -95,9 +98,10 @@ export const groupTeachingAssignmentsBySubject = (assignments: TeacherTeachingAs
     }));
 };
 
-const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile, classes, subjects, departments, onBack, onChange }) => {
+const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile, classes, subjects, departments, currentSpace, onBack, onChange }) => {
     const [draft, setDraft] = useState<TeacherProfile>(profile);
     const [nameDraft, setNameDraft] = useState(profile.name);
+    const [schoolDraft, setSchoolDraft] = useState(profile.schoolName);
     const [mode, setMode] = useState<EditorMode>('idle');
     const [selectedClassIds, setSelectedClassIds] = useState<Set<string>>(new Set());
     const [selectedGrades, setSelectedGrades] = useState<Set<string>>(new Set());
@@ -110,6 +114,8 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     const classesByGrade = useMemo(() => groupClassesByGrade(classes), [classes]);
     const gradeOptions = useMemo(() => Object.keys(classesByGrade), [classesByGrade]);
     const teachingGroups = useMemo(() => groupTeachingAssignmentsBySubject(draft.teachingAssignments, classes), [draft.teachingAssignments, classes]);
+    const schoolNameLocked = currentSpace.type === 'school';
+    const displaySchoolName = schoolNameLocked ? currentSpace.title : draft.schoolName;
 
     const applyProfileChange = (updater: (current: TeacherProfile) => TeacherProfile) => {
         const next = updater(draft);
@@ -464,6 +470,13 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         setMode('idle');
     };
 
+    const saveSchoolName = () => {
+        const normalizedSchoolName = schoolDraft.trim();
+        if (!normalizedSchoolName) return;
+        applyProfileChange(prev => ({ ...prev, schoolName: normalizedSchoolName }));
+        setMode('idle');
+    };
+
     const renderNameDialog = () => (
         <div className="absolute inset-0 z-[130] flex items-center bg-slate-950/30 px-5" onClick={() => setMode('idle')}>
             <div className="w-full rounded-3xl bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}>
@@ -487,8 +500,34 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         </div>
     );
 
+    const renderSchoolDialog = () => (
+        <div className="absolute inset-0 z-[130] flex items-center bg-slate-950/30 px-5" onClick={() => setMode('idle')}>
+            <div className="w-full rounded-3xl bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}>
+                <h3 className="text-center text-lg font-extrabold text-slate-900">修改学校</h3>
+                <input
+                    value={schoolDraft}
+                    onChange={event => setSchoolDraft(event.target.value)}
+                    onKeyDown={event => {
+                        if (event.key === 'Enter') saveSchoolName();
+                    }}
+                    autoFocus
+                    maxLength={30}
+                    className="mt-5 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-900 outline-none focus:border-blue-400 focus:bg-white"
+                    aria-label="学校名称"
+                />
+                <div className="mt-4 flex gap-3">
+                    <button type="button" onClick={() => setMode('idle')} className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-slate-100 text-sm font-bold text-slate-600">取消</button>
+                    <button type="button" disabled={!schoolDraft.trim()} onClick={saveSchoolName} className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-blue-600 text-sm font-extrabold text-white disabled:bg-slate-200 disabled:text-slate-400">确定</button>
+                </div>
+            </div>
+        </div>
+    );
+
     const roleSummary = (ids: string[]) => ids.length > 0 ? summarizeClassIds(ids, classes) : '暂未选择';
     const gradeLeaderSummary = draft.gradeLeaderGrades.length > 0 ? draft.gradeLeaderGrades.join('、') : '暂未选择';
+    const displayAvatar = draft.avatar === ASSETS.AVATAR.TEACHER_LIU
+        ? ASSETS.AVATAR.TEACHER_LIU_RAW
+        : draft.avatar;
     const renderConfigValue = (value: string, selected: boolean) => (
         <p className={`min-w-0 truncate text-right text-sm ${selected ? 'font-bold text-slate-700' : 'font-normal text-slate-300'}`}>{value}</p>
     );
@@ -507,8 +546,10 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
             <div className="flex-1 space-y-3 overflow-y-auto px-5 pb-8 pt-2">
                 <MobileCard variant="hero" padding="lg" className="teacher-avatar-card text-center">
                     <button type="button" onClick={() => setMode('avatar')} className="group mx-auto block" aria-label="更换头像">
-                        <div className="relative mx-auto h-24 w-24 rounded-full bg-blue-50 p-1.5 shadow-inner">
-                            <img src={draft.avatar} alt="老师头像" className="h-full w-full rounded-full object-cover ring-2 ring-white" />
+                        <div className="relative mx-auto h-24 w-24 rounded-full bg-gradient-to-br from-white via-cyan-100/80 to-blue-100/70 p-[3px] shadow-[0_18px_28px_-18px_rgba(37,99,235,0.34)] ring-1 ring-white/90">
+                            <span className="block h-full w-full overflow-hidden rounded-full bg-white">
+                                <img src={displayAvatar} alt="老师头像" className="h-full w-full object-cover object-center" />
+                            </span>
                             <span className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-blue-600 text-white shadow-lg transition-transform group-active:scale-95">
                                 <Camera className="h-4 w-4" />
                             </span>
@@ -530,6 +571,25 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                         >
                             <Pencil className="h-4 w-4" />
                         </button>
+                    </div>
+                </MobileCard>
+
+                <MobileCard variant="card" padding="md" className="teacher-school-card">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="grid min-w-0 flex-1 grid-cols-[96px_1fr] items-center gap-3">
+                            <span className="text-sm font-semibold text-slate-400">学校</span>
+                            {renderConfigValue(displaySchoolName || '暂未选择', Boolean(displaySchoolName))}
+                        </div>
+                        {!schoolNameLocked && (
+                            <button
+                                type="button"
+                                onClick={() => { setSchoolDraft(draft.schoolName); setMode('school'); }}
+                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100"
+                                aria-label="修改学校"
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </button>
+                        )}
                     </div>
                 </MobileCard>
 
@@ -602,6 +662,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
 
             {mode === 'avatar' && renderAvatarSheet()}
             {mode === 'name' && renderNameDialog()}
+            {mode === 'school' && renderSchoolDialog()}
             {(mode === 'teachingClasses' || mode === 'homeroom') && renderClassSelectorSheet()}
             {mode === 'gradeLeader' && renderGradeLeaderSelectorSheet()}
             {mode === 'department' && renderDepartmentSelectorSheet()}

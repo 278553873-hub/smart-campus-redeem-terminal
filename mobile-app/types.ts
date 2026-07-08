@@ -1,3 +1,11 @@
+export type GuardianRelation = '家长' | '爸爸' | '妈妈' | '爷爷' | '奶奶' | '外公' | '外婆' | '其他';
+
+export interface GuardianContact {
+  phone: string;
+  relation: GuardianRelation;
+  relationOther?: string;
+}
+
 export interface Student {
   id: string;
   name: string;
@@ -8,6 +16,7 @@ export interface Student {
   studentNo?: string;
   status?: 'active' | 'left';
   reservedPhones?: string[];
+  guardianContacts?: GuardianContact[];
 }
 
 
@@ -80,6 +89,7 @@ export interface TeacherDepartment {
 export interface TeacherProfile {
   name: string;
   avatar: string;
+  schoolName: string;
   departmentId: string;
   departmentName: string;
   teachingAssignments: TeacherTeachingAssignment[];

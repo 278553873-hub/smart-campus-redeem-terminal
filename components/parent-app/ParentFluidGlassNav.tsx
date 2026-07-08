@@ -10,7 +10,7 @@ interface ParentFluidGlassNavProps {
   itemCount: number;
 }
 
-const labels = ['成长', '报告', '银行'];
+const labels = ['成长', '报告', '我的'];
 
 const makeNavTexture = () => {
   const canvas = document.createElement('canvas');
@@ -27,7 +27,7 @@ const makeNavTexture = () => {
   ctx.globalAlpha = 0.55;
   ctx.fillStyle = '#111827';
   ctx.font = '700 34px PingFang SC, sans-serif';
-  ['表扬 +3', '报告', '920', '银行'].forEach((text, index) => {
+  ['表扬 +3', '报告', '家长', '我的'].forEach((text, index) => {
     ctx.fillText(text, 70 + index * 235, 78 + (index % 2) * 70);
   });
 
