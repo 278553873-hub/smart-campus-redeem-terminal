@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Simple centered icon asset, bold silhouette, minimal detail, high contrast, readable at small sizes. A tiny premium app badge with the exact text AI, artistic lettering, glossy cyan blue to violet gradient, soft luminous rim, rounded sticker shape, clean 3D gel style, centered composition, no other text, no logo, no watermark, designed to overlay on the bottom-right corner of a chibi female AI assistant avatar icon, square icon asset, high contrast readable letters. Avoid: extra words, misspelled text, unreadable letters, many letters, watermark, logo, busy background, dark background, low quality, blurry text.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "high"
+}
