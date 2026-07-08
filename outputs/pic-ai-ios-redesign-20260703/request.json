@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Create a single high-fidelity mobile app UI design mockup, portrait 9:16, iOS Human Interface Guidelines inspired, for a Chinese parent-facing student growth points app. Use the attached reference concept only as content structure, not visual style: student profile header with avatar, name 林小满, class 2024级2班, small actions 档案 and notification; main growth score card showing 本月净得分 45 分, status 稳步成长, two compact metrics 表扬 13次 and 待改进 1次; reward estimate card showing 预计可得 90.88, split into 成长奖励 70.5 and 得分奖励 20.38; bottom tab bar with 成长 selected, 报告, 银行. Entire design should be a completely new UI: futuristic but warm, AI elements, subtle neural-network lines, small luminous data particles, frosted glass cards, very light misty gradients in pale cyan, mint, soft lavender and white, small blue-green and peach gradient icon containers, clean SF Pro-like typography, high information density but minimal. Follow iOS spacing and touch targets, rounded corners controlled and consistent, no explanatory notes, no marketing copy, no wireframe annotations, no English UI text, no oversized decorative hero, no clutter, no dark cyberpunk, no game style. The screen must look like a polished production app screenshot, with crisp readable Chinese text, realistic mobile safe area, white card surfaces, soft shadows, and a refined AI-powered education technology feeling.",
+  "size": "864x1536",
+  "n": 1,
+  "quality": "high"
+}
