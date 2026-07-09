@@ -19,6 +19,7 @@ import TeacherProfileEditView from './views/TeacherProfileEditView';
 import StudentBasicEditView from './views/StudentBasicEditView';
 import StudentCoinDetailView from './views/StudentCoinDetailView';
 import AiHeadteacherAssistantView from './views/AiHeadteacherAssistantView';
+import AiPrincipalAssistantView from './views/AiPrincipalAssistantView';
 import {
     CoinIssuanceView,
     DeleteConfirmSheet,
@@ -156,7 +157,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'ai_headteacher_assistant' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'ai_headteacher_assistant' | 'ai_principal_assistant' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
 
 interface MobileAppProps {
     showPhoneShell?: boolean;
@@ -200,7 +201,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'record_input') return 0;
         if (view === 'class_list' || view === 'class_detail' || view === 'class_report' || view === 'student_detail' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
-        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'ai_headteacher_assistant') return 2;
+        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'ai_headteacher_assistant' || view === 'ai_principal_assistant') return 2;
         return 0;
     };
 
@@ -636,6 +637,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'coin_issuance': return '货币发放';
             case 'suggestion_feedback': return '建议反馈';
             case 'ai_headteacher_assistant': return 'AI班主任助理';
+            case 'ai_principal_assistant': return 'AI校长助理';
             case 'class_leaderboard': return '排行榜';
             case 'leader_report': return '学校数据报表';
             case 'reward_verification': return '班级奖励兑换';
@@ -963,6 +965,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onOpenCoinIssuance={() => navigateTo('coin_issuance')}
                                     onOpenSuggestionFeedback={() => navigateTo('suggestion_feedback')}
                                     onOpenAiHeadteacherAssistant={() => navigateTo('ai_headteacher_assistant')}
+                                    onOpenAiPrincipalAssistant={() => navigateTo('ai_principal_assistant')}
                                     onToggleSpaceSheet={() => setShowTeacherSpaceSheet(prev => !prev)}
                                 />
                             )}
@@ -1037,6 +1040,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                             {currentView === 'ai_headteacher_assistant' && (
                                 <AiHeadteacherAssistantView onBack={goBack} />
+                            )}
+
+                            {currentView === 'ai_principal_assistant' && (
+                                <AiPrincipalAssistantView onBack={goBack} />
                             )}
                         </main>
 

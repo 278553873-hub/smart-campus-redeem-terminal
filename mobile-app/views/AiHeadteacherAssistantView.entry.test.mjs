@@ -14,9 +14,10 @@ const forbidText = (source, needle, message) => {
 };
 
 requireText(meSource, 'onOpenAiHeadteacherAssistant: () => void;', '我的页应暴露 AI 班主任助理入口回调。');
-requireText(meSource, "title: 'AI班主任助理'", '管理工具应保留 AI 班主任助理入口。');
+requireText(meSource, "title: '班主任助理'", '管理工具应将 AI 班主任助理入口改名为班主任助理。');
 requireText(meSource, 'onClick: onOpenAiHeadteacherAssistant', 'AI 班主任助理入口应进入子页面，而不是停留在 toast 演示反馈。');
 forbidText(meSource, "showDemoFeedback('AI班主任助理')", 'AI 班主任助理入口不应继续弹出功能演示中。');
+forbidText(meSource, "title: 'AI班主任助理'", '管理工具入口不应继续显示 AI班主任助理。');
 
 requireText(appSource, "import AiHeadteacherAssistantView from './views/AiHeadteacherAssistantView';", 'App 应导入 AI 班主任助理子页面。');
 requireText(appSource, "'ai_headteacher_assistant'", 'App 页面枚举应包含 AI 班主任助理子页面。');

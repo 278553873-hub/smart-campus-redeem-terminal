@@ -29,6 +29,7 @@ ssh_keys/
 
 # Local agent workspace
 .superpowers/
+.workbuddy/
 
 # Local generated artifacts
 output/

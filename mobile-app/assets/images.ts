@@ -12,6 +12,7 @@ import aiBotImg from './resources/ai-bot.png';
 import aiArtBadgeImg from './resources/ai-art-badge.png';
 import aiHeadteacherAssistantCharacterImg from './resources/ai-headteacher-assistant-character.png';
 import aiHeadteacherAssistantIcon from './resources/ai-headteacher-assistant-icon.png';
+import aiPrincipalAssistantCharacterImg from './resources/ai-principal-assistant-character.png';
 import aiPrincipalAssistantIcon from './resources/ai-principal-assistant-icon.png';
 import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
 import teacherMePageBg from './resources/teacher-me-page-bg.png';
@@ -169,6 +170,7 @@ export const ASSETS = {
     AI_ART_BADGE: aiArtBadgeImg,
     AI_HEADTEACHER_ASSISTANT_CHARACTER: aiHeadteacherAssistantCharacterImg,
     AI_HEADTEACHER_ASSISTANT: aiHeadteacherAssistantIcon,
+    AI_PRINCIPAL_ASSISTANT_CHARACTER: aiPrincipalAssistantCharacterImg,
     AI_PRINCIPAL_ASSISTANT: aiPrincipalAssistantIcon,
     TEACHER_ME_HERO_BG: teacherMeHeroBg,
     TEACHER_ME_PAGE_BG: teacherMePageBg,

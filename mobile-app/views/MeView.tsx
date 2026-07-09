@@ -36,6 +36,7 @@ interface MeViewProps {
     onOpenCoinIssuance: () => void;
     onOpenSuggestionFeedback: () => void;
     onOpenAiHeadteacherAssistant: () => void;
+    onOpenAiPrincipalAssistant: () => void;
     onToggleSpaceSheet: () => void;
 }
 
@@ -188,6 +189,7 @@ const MeView: React.FC<MeViewProps> = ({
     onOpenCoinIssuance,
     onOpenSuggestionFeedback,
     onOpenAiHeadteacherAssistant,
+    onOpenAiPrincipalAssistant,
     onToggleSpaceSheet,
 }) => {
     const showDemoFeedback = (label: string) => {
@@ -208,9 +210,9 @@ const MeView: React.FC<MeViewProps> = ({
             onClick: onOpenTermGenerateModal,
         },
         {
-            title: 'AI班主任助理',
+            title: '班主任助理',
             imageSrc: ASSETS.MANAGEMENT.AI_HEADTEACHER_ASSISTANT,
-            imageAlt: 'AI班主任助理图标',
+            imageAlt: '班主任助理图标',
             imageBadgeSrc: ASSETS.MANAGEMENT.AI_ART_BADGE,
             imageBadgeAlt: 'AI标签',
             onClick: onOpenAiHeadteacherAssistant,
@@ -221,7 +223,7 @@ const MeView: React.FC<MeViewProps> = ({
             imageAlt: '校长助理图标',
             imageBadgeSrc: ASSETS.MANAGEMENT.AI_ART_BADGE,
             imageBadgeAlt: 'AI标签',
-            onClick: () => showDemoFeedback('校长助理'),
+            onClick: onOpenAiPrincipalAssistant,
         },
     ];
 
