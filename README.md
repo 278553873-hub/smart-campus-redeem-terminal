@@ -1,21 +1,56 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 校园智能积分兑换终端
 
-# Run and deploy your AI Studio app
+这是校园智能积分兑换终端的前端项目，包含 PC 端、移动端和演示大屏等页面。
 
-This contains everything you need to run your app locally.
+## 本地运行
 
-View your app in AI Studio: https://ai.studio/apps/drive/1krMqwrcTRd41s76FUmeq04OG0zVn0_my
+1. 安装依赖：
 
-## Run Locally
+   ```bash
+   npm install
+   ```
 
-**Prerequisites:**  Node.js
+2. 配置本地环境变量：
 
+   ```bash
+   cp .env.example .env.local
+   ```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
-\n<!-- Last Sync: 2026-04-28 by Gemini Agent -->
+   按需填写 `GEMINI_API_KEY` 等本地配置。
+
+3. 启动开发环境：
+
+   ```bash
+   npm run dev
+   ```
+
+## 构建检查
+
+```bash
+npm run build
+```
+
+## 提交服务器说明
+
+本项目里，“提交服务器”不是只推送 GitHub，而是指把当前版本构建后部署到演示服务器：
+
+- 访问地址：`http://8.137.11.220:9001/`
+- 服务器配置文件：`.deploy.local`
+- 一键脚本：`一键同步代码到Github.command`
+
+执行一键脚本会完成这些动作：
+
+1. 构建生产版本。
+2. 如有代码改动，创建本地 Git 提交。
+3. 推送当前分支到 GitHub。
+4. 同步 `dist/` 构建产物到服务器。
+5. 重启服务器上的演示服务。
+6. 验证 `http://8.137.11.220:9001/` 是否可访问。
+
+以后如果需求里说“提交服务器”或“更新服务器”，应优先理解为部署到 `http://8.137.11.220:9001/`；GitHub 推送只是同步代码，不代表服务器已经更新。
+
+## 注意事项
+
+- `.deploy.local` 包含服务器连接配置和密码，只保存在本机，不要提交到仓库。
+- `logs/agent_detail/` 是本地沟通与操作日志目录，已被忽略，不要提交。
+- 修改配置时需要同步检查 `.env.example` 和本地环境文件，避免配置说明缺失。
