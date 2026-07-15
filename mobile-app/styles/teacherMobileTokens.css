@@ -54,7 +54,8 @@
     var(--tm-bg-page-gradient);
 }
 
-.parent-teacher-token-card {
+.parent-teacher-token-card,
+.teacher-mobile-token-card {
   background: var(--tm-bg-card);
   box-shadow: var(--tm-card-shadow);
 }

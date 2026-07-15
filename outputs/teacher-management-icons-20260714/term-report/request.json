@@ -1,0 +1,8 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Simple centered icon asset, bold silhouette, minimal detail, high contrast, readable at small sizes. A single polished mobile app shortcut icon for a Chinese teacher app, representing a final-term student report. Center one compact light-skeuomorphic object: a softly closed report booklet or report folder in a pink-to-lilac gradient, with one small white checklist motif on the cover and a tiny golden-pink achievement seal tucked at the lower-right edge, viewed from a gentle upper-front angle. Place the object inside a warm white rounded-square app tile with a very pale cool-lilac edge haze. Soft top-left studio lighting, subtle ambient occlusion, delicate contact shadow, smooth satin material, softly beveled edges, pastel petal pink, lilac and periwinkle accents. Friendly, refined, professional education-tool feeling. The symbol must remain instantly recognizable at 48px. Generous balanced padding, centered composition, no text, no letters, no numbers. Match a premium soft 3D educational icon family, restrained rather than toy-like. Avoid: text, Chinese characters, English letters, numbers, watermark, logo, multiple icons, full UI screen, dark background, harsh shadow, glossy plastic toy, photorealism, excessive detail, thick outline, neon, orange dominance, clutter, cropped object, asymmetric tile.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "high",
+  "background": "opaque"
+}

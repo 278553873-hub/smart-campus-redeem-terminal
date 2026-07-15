@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Professional high-density UI dashboard screenshot, realistic data visualization, clear information hierarchy, crisp panels, restrained labels, no explanatory paragraphs. Mobile teacher mini program weekly action advice report page, portrait 4:3 UI mockup for Chinese school class analytics. Clean minimal high-density layout, airy blue-white background with subtle cyan and soft lavender diffusion, compact header with back button, small AI class advisor character, title 本周行动建议, class and week metadata. No data sufficiency toggle. Five fixed sections: 本周速览, 学生洞察, 评价洞察, 班级洞察, 下周行动建议. Use compact metric chips, slim timeline anchors, white cards with 20-22px radius, light borders, no nested cards, line icons, dense readable Chinese placeholder text, polished mobile product UI, trustworthy AI report feel. Avoid: data sufficiency toggle, 数据充足, 数据较少, cluttered controls, marketing hero, heavy shadows, dark theme, 3D icons, emojis, long explanatory copy, nested cards.",
+  "size": "1024x1536",
+  "n": 1,
+  "quality": "low"
+}

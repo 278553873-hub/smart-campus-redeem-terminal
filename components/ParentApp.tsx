@@ -31,10 +31,17 @@ import {
   ParentSecondaryButton,
 } from './parent-app/ParentUI';
 import TeacherFluidGlassNav from '../mobile-app/components/TeacherFluidGlassNav';
+import AssignedQuestionnaireView from './parent-app/AssignedQuestionnaireView';
 import '../mobile-app/styles/navigation.css';
 import '../mobile-app/styles/teacherMobileTokens.css';
 import { BANK_CONFIG } from '../constants';
 import { ASSETS } from '../mobile-app/assets/images';
+import {
+  QUESTIONNAIRE_STORE_EVENT,
+  isQuestionnaireOverdue,
+  readQuestionnaires,
+  type QuestionnaireRecord,
+} from '../shared/questionnaireStore';
 
 interface ParentAppProps {
   showPhoneShell?: boolean;
@@ -624,6 +631,8 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
   const [showDepositReview, setShowDepositReview] = useState(false);
   const [withdrawTarget, setWithdrawTarget] = useState<ParentDeposit | null>(null);
   const [activeQuestionnaireId, setActiveQuestionnaireId] = useState('');
+  const [sharedQuestionnaires, setSharedQuestionnaires] = useState<QuestionnaireRecord[]>(() => readQuestionnaires());
+  const [activeSharedQuestionnaireId, setActiveSharedQuestionnaireId] = useState('');
   const [questionnaireStepIndex, setQuestionnaireStepIndex] = useState(0);
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<QuestionnaireAnswerDraft>({});
   const [questionnaireTextAnswers, setQuestionnaireTextAnswers] = useState<Record<string, string>>({});
@@ -642,6 +651,26 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
     () => childrenList.find(child => child.id === activeChildId) ?? childrenList[0] ?? null,
     [activeChildId, childrenList]
   );
+
+  useEffect(() => {
+    const refresh = () => setSharedQuestionnaires(readQuestionnaires());
+    window.addEventListener(QUESTIONNAIRE_STORE_EVENT, refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener(QUESTIONNAIRE_STORE_EVENT, refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+
+  const pendingAssignedQuestionnaires = useMemo(() => {
+    if (!activeChild) return [];
+    return sharedQuestionnaires.filter(questionnaire => (
+      questionnaire.status === 'active'
+      && questionnaire.targets.some(target => target.studentNo === activeChild.studentNo && target.reachable)
+      && !questionnaire.submissions.some(submission => submission.studentNo === activeChild.studentNo)
+    ));
+  }, [activeChild, sharedQuestionnaires]);
+  const activeSharedQuestionnaire = sharedQuestionnaires.find(item => item.id === activeSharedQuestionnaireId) ?? null;
 
   const activeReport = activeChild?.reports.find(report => report.id === activeReportId) ?? activeChild?.reports[0] ?? null;
   const activeArchive = activeChild?.archives.find(archive => archive.id === activeArchiveId) ?? activeChild?.archives[0] ?? null;
@@ -921,6 +950,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
   };
 
   const openQuestionnaireForm = (questionnaireId: string) => {
+    setActiveSharedQuestionnaireId('');
     setActiveQuestionnaireId(questionnaireId);
     setQuestionnaireStepIndex(0);
     setQuestionnaireAnswers({});
@@ -1057,7 +1087,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
 
   const MessageBellEntry = () => {
     const pendingQuestionnaireRows = getPendingQuestionnaireMessages();
-    const messageCount = pendingQuestionnaireRows?.length ?? 0;
+    const messageCount = (pendingQuestionnaireRows?.length ?? 0) + pendingAssignedQuestionnaires.length;
     if (!activeChild || messageCount === 0) return null;
     return (
       <button
@@ -2352,6 +2382,31 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
       <ParentPageShell className="pb-28">
         <Header title="待办" showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />
         <section className="mx-5 mt-4 space-y-2">
+          {pendingAssignedQuestionnaires.map(questionnaire => (
+            <ParentCard key={questionnaire.id} as="article" className="overflow-hidden p-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSharedQuestionnaireId(questionnaire.id);
+                  setScreen('questionnaireForm');
+                }}
+                className={`flex min-h-[76px] w-full items-center gap-3 px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS}`}
+              >
+                <ParentGradientIcon tone="blue" size="sm">
+                  <ClipboardList size={16} strokeWidth={2.6} />
+                </ParentGradientIcon>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-black leading-5 text-slate-950">{questionnaire.title}</span>
+                  <span className={`mt-1 block truncate text-[12px] font-bold ${isQuestionnaireOverdue(questionnaire) ? 'text-amber-600' : 'text-slate-400'}`}>
+                    {questionnaire.creatorName} · {questionnaire.suggestedDeadline
+                      ? questionnaire.suggestedDeadline.replace('2026-', '').replace('-', '月').replace(' ', '日 ')
+                      : '不限时间'}
+                  </span>
+                </span>
+                <span className="flex h-10 min-w-[62px] shrink-0 items-center justify-center rounded-[14px] border border-[#BFEAED] bg-white px-3 text-[15px] font-black text-[#0797A8] shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">填写</span>
+              </button>
+            </ParentCard>
+          ))}
           {pendingQuestionnaireRows && pendingQuestionnaireRows.length > 0 ? pendingQuestionnaireRows.map(questionnaire => (
             <ParentCard key={questionnaire.id} as="article" className="overflow-hidden p-0">
               <button
@@ -2368,14 +2423,14 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
                 </span>
               </button>
             </ParentCard>
-          )) : (
+          )) : pendingAssignedQuestionnaires.length === 0 ? (
             <ParentCard as="section" className="p-8 text-center">
               <ParentGradientIcon tone="softBlue" size="lg" className="mx-auto mb-3">
                 <CheckCircle2 size={24} />
               </ParentGradientIcon>
               <div className="text-[17px] font-black text-slate-700">暂无待办</div>
             </ParentCard>
-          )}
+          ) : null}
         </section>
       </ParentPageShell>
     );
@@ -2388,6 +2443,21 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
     if (screen === 'reports') return Reports();
     if (screen === 'archiveList') return ArchiveList();
     if (screen === 'archiveDetail') return ArchiveDetail();
+    if (screen === 'questionnaireForm' && activeChild && activeSharedQuestionnaire) {
+      return (
+        <AssignedQuestionnaireView
+          questionnaire={activeSharedQuestionnaire}
+          child={{ name: activeChild.name, studentNo: activeChild.studentNo }}
+          guardianRelation={PARENT_PROFILE.relation}
+          onBack={() => setScreen('todo')}
+          onSubmitted={() => {
+            setSharedQuestionnaires(readQuestionnaires());
+            setSubmitSuccessMessage('问卷提交成功');
+            setScreen('growth');
+          }}
+        />
+      );
+    }
     if (screen === 'questionnaireForm') return QuestionnaireForm();
     if (screen === 'questionnaireDetail') return QuestionnaireDetail();
     if (screen === 'reportDetail') return ReportDetail();

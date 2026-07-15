@@ -1,12 +1,11 @@
 import React from 'react';
 import {
     ArrowLeftRight,
-    BarChart3,
     BookOpen,
     Building2,
     Camera,
+    ClipboardList,
     Coins,
-    FileText,
     MessageCircle,
     ScanLine,
     Settings,
@@ -35,6 +34,7 @@ interface MeViewProps {
     onOpenDepartmentManagement: () => void;
     onOpenCoinIssuance: () => void;
     onOpenSuggestionFeedback: () => void;
+    onOpenQuestionnaire: () => void;
     onOpenAiHeadteacherAssistant: () => void;
     onOpenAiPrincipalAssistant: () => void;
     onToggleSpaceSheet: () => void;
@@ -47,10 +47,12 @@ interface MenuEntry {
     icon?: LucideIcon;
     imageSrc?: string;
     imageAlt?: string;
+    imageClassName?: string;
     imageBadgeSrc?: string;
     imageBadgeAlt?: string;
     tone?: IconTone;
     onClick?: () => void;
+    plainImage?: boolean;
 }
 
 interface ToolSectionProps {
@@ -96,9 +98,19 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                     className={`${isSecondary ? 'min-h-[78px] gap-2' : 'min-h-[92px] gap-2.5'} group flex flex-col items-center justify-start rounded-[20px] text-center transition duration-200 active:scale-[0.97] active:bg-white/54`}
                 >
                     {item.imageSrc ? (
-                        <span className="relative flex h-12 w-12 items-center justify-center overflow-visible rounded-[17px] bg-gradient-to-br from-[#F4FEFF] to-[#ECF4FF] shadow-[0_14px_28px_-22px_rgba(30,64,175,0.76)] ring-1 ring-cyan-100/80">
-                            <span className="pointer-events-none absolute inset-[1px] rounded-[16px] bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.18)_62%,rgba(255,255,255,0)_100%)]" aria-hidden="true" />
-                            <img src={item.imageSrc} alt={item.imageAlt ?? item.title} className="relative h-11 w-11 object-contain" />
+                        <span className="relative flex h-12 w-12 items-center justify-center overflow-visible rounded-[17px]">
+                            {item.plainImage ? (
+                                <img
+                                    src={item.imageSrc}
+                                    alt={item.imageAlt ?? item.title}
+                                    className={item.imageClassName ?? 'h-12 w-12 rounded-[17px] object-cover shadow-[0_14px_28px_-22px_rgba(30,64,175,0.76)]'}
+                                />
+                            ) : (
+                                <span className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-[17px] bg-gradient-to-br from-[#F4FEFF] to-[#ECF4FF] shadow-[0_14px_28px_-22px_rgba(30,64,175,0.76)] ring-1 ring-cyan-100/80">
+                                    <span className="pointer-events-none absolute inset-[1px] rounded-[16px] bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.18)_62%,rgba(255,255,255,0)_100%)]" aria-hidden="true" />
+                                    <img src={item.imageSrc} alt={item.imageAlt ?? item.title} className={item.imageClassName ?? 'relative h-11 w-11 object-contain'} />
+                                </span>
+                            )}
                             {item.imageBadgeSrc && (
                                 <img
                                     src={item.imageBadgeSrc}
@@ -188,6 +200,7 @@ const MeView: React.FC<MeViewProps> = ({
     onOpenDepartmentManagement,
     onOpenCoinIssuance,
     onOpenSuggestionFeedback,
+    onOpenQuestionnaire,
     onOpenAiHeadteacherAssistant,
     onOpenAiPrincipalAssistant,
     onToggleSpaceSheet,
@@ -199,14 +212,16 @@ const MeView: React.FC<MeViewProps> = ({
     const primaryTools: MenuEntry[] = [
         {
             title: '学校报表',
-            icon: BarChart3,
-            tone: 'blue',
+            imageSrc: ASSETS.MANAGEMENT.SCHOOL_REPORT_V2,
+            imageAlt: '学校报表图标',
+            plainImage: true,
             onClick: onViewLeaderReport,
         },
         {
             title: '期末报告',
-            icon: FileText,
-            tone: 'cyan',
+            imageSrc: ASSETS.MANAGEMENT.TERM_REPORT_V2,
+            imageAlt: '期末报告图标',
+            plainImage: true,
             onClick: onOpenTermGenerateModal,
         },
         {
@@ -251,6 +266,12 @@ const MeView: React.FC<MeViewProps> = ({
             icon: MessageCircle,
             tone: 'pink',
             onClick: onOpenSuggestionFeedback,
+        },
+        {
+            title: '问卷调查',
+            icon: ClipboardList,
+            tone: 'cyan',
+            onClick: onOpenQuestionnaire,
         },
     ];
 

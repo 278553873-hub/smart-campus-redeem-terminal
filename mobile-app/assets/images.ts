@@ -25,6 +25,8 @@ import dailyClassroomThinkingMobileImg from './resources/highlight-defaults/dail
 import dailyLaborServiceMobileImg from './resources/highlight-defaults/daily-labor-service.png';
 import dailySportsVitalityMobileImg from './resources/highlight-defaults/daily-sports-vitality.png';
 import dailyArtCreativityMobileImg from './resources/highlight-defaults/daily-art-creativity.png';
+import schoolReportV2Icon from './resources/school-report-v2.png';
+import termReportV2Icon from './resources/term-report-v2.png';
 
 import avatarBoy1 from './resources/avatar_boy_1.png';
 import avatarBoy2 from './resources/avatar_boy_2.png';
@@ -166,6 +168,8 @@ export const ASSETS = {
   MANAGEMENT: {
     SUBJECT: subjectReportIcon,
     TERM: termReportIcon,
+    SCHOOL_REPORT_V2: schoolReportV2Icon,
+    TERM_REPORT_V2: termReportV2Icon,
     AI_BOT: aiBotImg,
     AI_ART_BADGE: aiArtBadgeImg,
     AI_HEADTEACHER_ASSISTANT_CHARACTER: aiHeadteacherAssistantCharacterImg,
