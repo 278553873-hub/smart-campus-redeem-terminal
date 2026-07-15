@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Simple centered icon asset, bold silhouette, minimal detail, high contrast, readable at small sizes. A single polished mobile app shortcut icon for a Chinese teacher management tool named School Report. Centered front-facing rounded folder silhouette with one overlapping report sheet, simple white three-bar chart symbol cut into the front. Friendly minimal 2.5D soft-plastic style matching modern Chinese education apps. Smooth sky-blue to cyan gradient, tiny lavender highlight, very soft ambient shadow, crisp clean edges, generous white padding, pure flat white background with no texture, readable at 48 pixels, no surrounding app-icon tile, no text. Avoid: letters, Chinese characters, numbers, watermark, logo, white rounded-square container, enclosing tile, photorealism, complex details, thin lines, dark colors, orange, yellow, heavy shadow, isometric angle, side view, multiple icons, gray background, gradient background.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "high"
+}
