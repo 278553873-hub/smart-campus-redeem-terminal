@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ClassListView from './views/ClassListView';
@@ -18,11 +18,17 @@ import HomeworkEntryView from './views/HomeworkEntryView';
 import TeacherProfileEditView from './views/TeacherProfileEditView';
 import StudentBasicEditView from './views/StudentBasicEditView';
 import StudentCoinDetailView from './views/StudentCoinDetailView';
+import StudentCollectionRecordDetailView from './views/student-collection/StudentCollectionRecordDetailView';
 import AiHeadteacherAssistantView from './views/AiHeadteacherAssistantView';
 import WeeklyActionAdviceView from './views/WeeklyActionAdviceView';
 import WeeklyActionAdviceHistoryView from './views/WeeklyActionAdviceHistoryView';
+import TeacherEvaluationReviewView from './views/TeacherEvaluationReviewView';
+import TeacherEvaluationReviewHistoryView from './views/TeacherEvaluationReviewHistoryView';
 import AiPrincipalAssistantView from './views/AiPrincipalAssistantView';
+import PrincipalPeriodicReportView from './views/PrincipalPeriodicReportView';
+import PrincipalTermReportView from './views/PrincipalTermReportView';
 import QuestionnaireManagementView from './views/questionnaire/QuestionnaireManagementView';
+import ArchiveDesignView from './views/archive-design/ArchiveDesignView';
 import {
     CoinIssuanceView,
     DeleteConfirmSheet,
@@ -37,6 +43,7 @@ import {
 } from './views/MeFeatureViews';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import TeacherRecordAuroraBackground from './components/TeacherRecordAuroraBackground';
+import { teacherBrandCssVariables } from './styles/teacherMobileTokens';
 import { DeviceWrapper } from '../components/DeviceWrapper';
 import PhoneMockup from '../components/PhoneMockup';
 import { ASSETS } from './assets/images';
@@ -74,9 +81,27 @@ import {
 } from './constants';
 import { Student, TeacherDepartment, TeacherProfile } from './types';
 import {
+    QUESTIONNAIRE_STORE_EVENT,
+    getCompletedStudentCollectionHistory,
+    getPendingAssignedStudentCollections,
+    readQuestionnaires,
+    type StudentCollectionHistoryItem,
+} from '../shared/questionnaireStore';
+import {
+    ARCHIVE_STORE_EVENT,
+    getPendingArchiveTasksForTeacher,
+    readArchiveWorkspace,
+} from '../shared/studentArchiveStore';
+import {
     CURRENT_WEEKLY_ACTION_ADVICE,
     WEEKLY_ACTION_ADVICE_CURRENT_BY_CLASS,
 } from './data/weeklyActionAdvice';
+import {
+    CURRENT_TEACHER_EVALUATION_REVIEW,
+    TEACHER_EVALUATION_REVIEW_CURRENT_BY_CLASS,
+} from './data/teacherEvaluationReview';
+import { CURRENT_PRINCIPAL_TERM } from './data/principalTermReport';
+import { canTeacherSpaceRecordClass } from './domain/teacherSpaceAccess';
 
 const TERMS = [
     "2025-2026学年 上学期",
@@ -112,14 +137,27 @@ const TEACHER_PROFILE_DEPARTMENTS: TeacherDepartment[] = [
     { id: 'grade-office', name: '年级办公室' },
 ];
 
+const CLASS_RECORD_ENABLED_SPACE_IDS = new Set(['school-qizhong', 'school-star']);
 const TEACHER_SPACE_OPTIONS: TeacherSpaceOption[] = [
-    { id: 'personal', title: '我创建的班级', type: 'personal' },
-    { id: 'collab-li', title: '李明老师的班级', type: 'collaboration' },
-    { id: 'school-qizhong', title: '成都七中初中附属小学', type: 'school' },
-    { id: 'school-star', title: '星河实验小学', type: 'school' },
-];
+    { id: 'personal', title: '我创建的班级', type: 'personal', role: 'owner' },
+    { id: 'collab-li', title: '李明老师的班级', type: 'collaboration', role: 'collaborator' },
+    { id: 'school-qizhong', title: '成都七中初中附属小学', type: 'school', role: 'homeroomTeacher' },
+    { id: 'school-star', title: '星河实验小学', type: 'school', role: 'leader' },
+    { id: 'school-qinghe', title: '青禾实验小学', type: 'school', role: 'teacher' },
+].map(space => ({
+    ...space,
+    classRecordEnabled: CLASS_RECORD_ENABLED_SPACE_IDS.has(space.id),
+}));
 const DEFAULT_TEACHER_SPACE_ID = 'school-star';
 const DEFAULT_WEEKLY_ADVICE_CLASS_ID = 'c_2025_4';
+const CLASS_MEMBERSHIP_BY_SPACE: Record<string, Record<string, 'created' | 'joined'>> = {
+    personal: {
+        c_2025_1: 'created',
+    },
+    'collab-li': {
+        c_2025_2: 'joined',
+    },
+};
 
 const INITIAL_SCHOOL_SUBJECTS: SchoolSubjectItem[] = [
     { id: 'subject-cn', name: '语文' },
@@ -148,7 +186,7 @@ const createTeachingAssignments = (classIds: string[], subject: string) => (
 );
 
 const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
-    name: '刘飞飞老师',
+    name: '刘飞',
     avatar: ASSETS.AVATAR.TEACHER_LIU,
     schoolName: '星河实验小学',
     departmentId: 'student-development',
@@ -157,15 +195,57 @@ const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
         ...createTeachingAssignments(['c_2025_1', 'c_2025_2', 'c_2025_3', 'c_2025_4', 'c_2025_5', 'c_2025_6', 'c_2025_7'], '体育'),
         ...createTeachingAssignments(['c_2024_1', 'c_2024_2', 'c_2024_3', 'c_2024_4', 'c_2024_5', 'c_2024_6', 'c_2024_7', 'c_2024_8', 'c_2024_9', 'c_2024_10'], '体育'),
     ],
-    homeroomClassIds: ['c_2025_4', 'c_2025_1', 'c_2024_2'],
+    homeroomClassIds: ['c_2025_4', 'c_2025_1', 'c_2024_2', 'c_2025_7'],
     gradeLeaderGrades: ['2025级'],
+};
+
+const INITIAL_TEACHER_PROFILES_BY_SPACE: Record<string, TeacherProfile> = {
+    personal: {
+        ...DEFAULT_TEACHER_PROFILE,
+        name: '大飞',
+        avatar: ASSETS.AVATAR.TEACHER_DA_FEI,
+        schoolName: '个人空间',
+        departmentId: '',
+        departmentName: '',
+        teachingAssignments: createTeachingAssignments(['c_2025_1'], '语文'),
+        homeroomClassIds: ['c_2025_1'],
+        gradeLeaderGrades: [],
+    },
+    'collab-li': {
+        ...DEFAULT_TEACHER_PROFILE,
+        schoolName: '李明老师的班级',
+        departmentId: '',
+        departmentName: '',
+        teachingAssignments: createTeachingAssignments(['c_2025_2'], '体育'),
+        homeroomClassIds: [],
+        gradeLeaderGrades: [],
+    },
+    'school-qizhong': {
+        ...DEFAULT_TEACHER_PROFILE,
+        schoolName: '成都七中初中附属小学',
+        departmentId: 'physical-education',
+        departmentName: '艺体组',
+        teachingAssignments: createTeachingAssignments(['c_2025_4'], '体育'),
+        homeroomClassIds: ['c_2025_4'],
+        gradeLeaderGrades: [],
+    },
+    'school-star': DEFAULT_TEACHER_PROFILE,
+    'school-qinghe': {
+        ...DEFAULT_TEACHER_PROFILE,
+        schoolName: '青禾实验小学',
+        departmentId: 'physical-education',
+        departmentName: '艺体组',
+        teachingAssignments: createTeachingAssignments(['c_2025_3', 'c_2025_6'], '体育'),
+        homeroomClassIds: [],
+        gradeLeaderGrades: [],
+    },
 };
 
 const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '全校学生' : `${grade}学生`;
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'ai_headteacher_assistant' | 'weekly_action_advice' | 'weekly_action_history' | 'ai_principal_assistant' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'class_list' | 'class_detail' | 'class_report' | 'student_detail' | 'student_collection_detail' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'ai_headteacher_assistant' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_monthly_report' | 'principal_term_report' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
 
 interface MobileAppProps {
     showPhoneShell?: boolean;
@@ -176,77 +256,43 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [currentView, setCurrentView] = useState<ViewState>('home_log');
     const [history, setHistory] = useState<ViewState[]>([]);
 
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [slideDirection, setSlideDirection] = useState<'left' | 'right' | 'none'>('none');
-    // 交替状态用于触发底栏 CSS 抖动果冻动画的重新播放
-    const [jellyToggle, setJellyToggle] = useState<'a' | 'b' | 'none'>('none');
-
-    // 测量底栏物理尺寸以供滑块镜头克隆层完全对齐
-    const tabbarRef = useRef<HTMLDivElement>(null);
-    const [tabbarWidth, setTabbarWidth] = useState(320);
-
-    useLayoutEffect(() => {
-        if (tabbarRef.current) {
-            setTabbarWidth(tabbarRef.current.offsetWidth);
-        }
-        const handleResize = () => {
-            if (tabbarRef.current) {
-                setTabbarWidth(tabbarRef.current.offsetWidth);
-            }
-        };
-        window.addEventListener('resize', handleResize);
-        const timer = setTimeout(() => {
-            if (tabbarRef.current) {
-                setTabbarWidth(tabbarRef.current.offsetWidth);
-            }
-        }, 50);
-        return () => {
-            window.removeEventListener('resize', handleResize);
-            clearTimeout(timer);
-        };
-    }, [currentView]);
-
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'record_input') return 0;
-        if (view === 'class_list' || view === 'class_detail' || view === 'class_report' || view === 'student_detail' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
-        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'ai_headteacher_assistant' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'ai_principal_assistant') return 2;
+        if (view === 'class_list' || view === 'class_detail' || view === 'class_report' || view === 'student_detail' || view === 'student_collection_detail' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
+        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'ai_headteacher_assistant' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_monthly_report' || view === 'principal_term_report') return 2;
         return 0;
     };
-
-    useEffect(() => {
-        const nextIndex = getActiveTabIndex(currentView);
-        if (nextIndex !== activeIndex) {
-            if (nextIndex > activeIndex) {
-                setSlideDirection('right');
-            } else if (nextIndex < activeIndex) {
-                setSlideDirection('left');
-            }
-            setActiveIndex(nextIndex);
-            
-            // 每次点击切换 Tab 时，交替改变 jellyToggle 状态，强制浏览器重新渲染并播放 CSS 动画
-            setJellyToggle(prev => {
-                if (prev === 'none') return 'a';
-                return prev === 'a' ? 'b' : 'a';
-            });
-
-            const timer = setTimeout(() => {
-                setSlideDirection('none');
-            }, 350);
-            return () => clearTimeout(timer);
-        }
-    }, [currentView, activeIndex]);
+    const activeIndex = getActiveTabIndex(currentView);
 
     // Selection States
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [selectedStudent, setSelectedStudent] = useState<Student>(MOCK_STUDENTS_CLASS_1[0]);
+    const [studentDetailInitialTab, setStudentDetailInitialTab] = useState<'growth' | 'evaluation' | 'collection'>('growth');
+    const [activeStudentCollectionRecord, setActiveStudentCollectionRecord] = useState<StudentCollectionHistoryItem | null>(null);
     const [studentOverrides, setStudentOverrides] = useState<Record<string, Student>>({});
     const activeStudent = studentOverrides[selectedStudent.id] ?? selectedStudent;
     const activeCampusCoinDetail = GET_MOCK_CAMPUS_COIN_DETAIL(activeStudent);
     const [selectedSubject, setSelectedSubject] = useState<string>('');
     const [batchStudentIds, setBatchStudentIds] = useState<string[]>([]);
-    const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(DEFAULT_TEACHER_PROFILE);
+    const [teacherProfilesBySpace, setTeacherProfilesBySpace] = useState<Record<string, TeacherProfile>>(INITIAL_TEACHER_PROFILES_BY_SPACE);
     const [weeklyAdviceClassId, setWeeklyAdviceClassId] = useState(DEFAULT_WEEKLY_ADVICE_CLASS_ID);
+    const [principalWeeklyReportGenerated, setPrincipalWeeklyReportGenerated] = useState(false);
+    const [principalMonthlyReportGenerated, setPrincipalMonthlyReportGenerated] = useState(false);
+    const [principalTermReportGenerated, setPrincipalTermReportGenerated] = useState(false);
     const [currentTeacherSpaceId, setCurrentTeacherSpaceId] = useState(DEFAULT_TEACHER_SPACE_ID);
+    const activeTeacherSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === currentTeacherSpaceId) ?? TEACHER_SPACE_OPTIONS[0];
+    const hasMultipleTeacherSpaces = TEACHER_SPACE_OPTIONS.length > 1;
+    const canRecordClassForActiveSpace = canTeacherSpaceRecordClass(activeTeacherSpace);
+    const teacherProfile = teacherProfilesBySpace[activeTeacherSpace.id] ?? DEFAULT_TEACHER_PROFILE;
+    const activeClassMembershipById = CLASS_MEMBERSHIP_BY_SPACE[activeTeacherSpace.id] ?? {};
+    const activeSpaceClasses = activeTeacherSpace.type === 'school'
+        ? MOCK_CLASSES
+        : MOCK_CLASSES.filter(classInfo => activeClassMembershipById[classInfo.id]);
+    const activeTeacherId = `${activeTeacherSpace.id}:${teacherProfile.name}`;
+    const [questionnaireEntryMode, setQuestionnaireEntryMode] = useState<'owned' | 'assigned'>('owned');
+    const [archiveEntryMode, setArchiveEntryMode] = useState<'design' | 'assigned'>('design');
+    const [pendingCollectionCount, setPendingCollectionCount] = useState(0);
+    const [pendingArchiveTaskCount, setPendingArchiveTaskCount] = useState(0);
     const [showTeacherSpaceSheet, setShowTeacherSpaceSheet] = useState(false);
     const [schoolSubjects, setSchoolSubjects] = useState<SchoolSubjectItem[]>(INITIAL_SCHOOL_SUBJECTS);
     const [schoolDepartments, setSchoolDepartments] = useState<SchoolDepartmentItem[]>(INITIAL_SCHOOL_DEPARTMENTS);
@@ -260,13 +306,53 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [suggestionText, setSuggestionText] = useState('');
     const [suggestionImages, setSuggestionImages] = useState<string[]>([]);
 
+    useEffect(() => {
+        const refreshPendingCollections = () => {
+            setPendingCollectionCount(getPendingAssignedStudentCollections(
+                readQuestionnaires(),
+                activeTeacherId,
+                teacherProfile.name,
+                activeTeacherSpace.id,
+            ).length);
+        };
+        refreshPendingCollections();
+        window.addEventListener(QUESTIONNAIRE_STORE_EVENT, refreshPendingCollections);
+        window.addEventListener('storage', refreshPendingCollections);
+        return () => {
+            window.removeEventListener(QUESTIONNAIRE_STORE_EVENT, refreshPendingCollections);
+            window.removeEventListener('storage', refreshPendingCollections);
+        };
+    }, [activeTeacherId, activeTeacherSpace.id, teacherProfile.name]);
+
     // Multi-Selection State for Class Detail
     const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
     const [multiSelectIds, setMultiSelectIds] = useState<Set<string>>(new Set());
 
     const [activeLogTab, setActiveLogTab] = useState<'student' | 'class'>('student');
+    const [recordContextToast, setRecordContextToast] = useState('');
     const [pendingRecordData, setPendingRecordData] = useState<any>(null);
     const [recordMode, setRecordMode] = useState<'voice' | 'camera' | 'text'>('voice');
+
+    useEffect(() => {
+        if (!recordContextToast) return;
+        const timer = window.setTimeout(() => setRecordContextToast(''), 1800);
+        return () => window.clearTimeout(timer);
+    }, [recordContextToast]);
+
+    const handleSelectTeacherSpace = (spaceId: string) => {
+        const nextSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === spaceId);
+        if (!nextSpace) return;
+
+        const shouldReturnToStudent = activeLogTab === 'class' && !canTeacherSpaceRecordClass(nextSpace);
+        setCurrentTeacherSpaceId(spaceId);
+        if (shouldReturnToStudent) {
+            setActiveLogTab('student');
+            if (currentView === 'home_log') {
+                setRecordContextToast(`已切换至${nextSpace.title}，当前为记录学生`);
+            }
+        }
+        setShowTeacherSpaceSheet(false);
+    };
 
     // UI States
     const [showPlusMenu, setShowPlusMenu] = useState(false);
@@ -361,12 +447,45 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     const handleSelectStudent = (student: Student) => {
         setSelectedStudent(studentOverrides[student.id] ?? student);
+        setStudentDetailInitialTab('growth');
         navigateTo('student_detail');
     };
 
     const getMergedStudentsForClass = (classId: string) => (
         GET_MOCK_STUDENTS_FOR_CLASS(classId).map(student => studentOverrides[student.id] ?? student)
     );
+
+    useEffect(() => {
+        const refreshPendingArchiveTasks = () => {
+            if (activeTeacherSpace.type !== 'school') {
+                setPendingArchiveTaskCount(0);
+                return;
+            }
+            const archiveClasses = MOCK_CLASSES.filter(classInfo => (
+                teacherProfile.homeroomClassIds.includes(classInfo.id)
+                || teacherProfile.teachingAssignments.some(item => item.classId === classInfo.id)
+            ));
+            const workspace = readArchiveWorkspace({
+                spaceId: activeTeacherSpace.id,
+                teacherName: teacherProfile.name,
+                classes: archiveClasses,
+                homeroomClassIds: teacherProfile.homeroomClassIds,
+                getStudentsForClass: getMergedStudentsForClass,
+            });
+            setPendingArchiveTaskCount(getPendingArchiveTasksForTeacher(
+                workspace,
+                teacherProfile.name,
+                teacherProfile.homeroomClassIds,
+            ).length);
+        };
+        refreshPendingArchiveTasks();
+        window.addEventListener(ARCHIVE_STORE_EVENT, refreshPendingArchiveTasks);
+        window.addEventListener('storage', refreshPendingArchiveTasks);
+        return () => {
+            window.removeEventListener(ARCHIVE_STORE_EVENT, refreshPendingArchiveTasks);
+            window.removeEventListener('storage', refreshPendingArchiveTasks);
+        };
+    }, [activeTeacherId, activeTeacherSpace.id, activeTeacherSpace.type, teacherProfile.name, teacherProfile.homeroomClassIds, teacherProfile.teachingAssignments, studentOverrides]);
 
     const handleSaveStudentBasicInfo = (student: Student) => {
         setStudentOverrides(prev => ({ ...prev, [student.id]: student }));
@@ -413,6 +532,19 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const handleInviteTeacher = (classId: string) => {
         const className = MOCK_CLASSES.find(c => c.id === classId)?.name || '当前班级';
         alert(`已生成${className}老师邀请链接`);
+    };
+
+    const handleInviteParent = (classId: string) => {
+        const className = MOCK_CLASSES.find(c => c.id === classId)?.name || '当前班级';
+        alert(`已生成${className}家长邀请链接`);
+    };
+
+    const handleCreateClass = () => {
+        alert('创建班级流程演示中');
+    };
+
+    const handleJoinClass = () => {
+        alert('加入班级流程演示中');
     };
 
     const handleEditClassInfo = (classId: string) => {
@@ -512,7 +644,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     };
 
     const handleAnalysisComplete = (result: any) => {
-        setPendingRecordData(result);
+        setPendingRecordData({
+            ...result,
+            requestId: typeof crypto?.randomUUID === 'function'
+                ? crypto.randomUUID()
+                : `record_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        });
         if (showKeyboard) {
             setShowKeyboard(false);
             setInputText('');
@@ -633,6 +770,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'class_list': return '我的班级';
             case 'class_report': return '班级报告';
             case 'student_detail': return '学生详情';
+            case 'student_collection_detail': return '采集详情';
             case 'student_basic_edit': return '基础信息编辑';
             case 'student_coin_detail': return '校园币详情';
             case 'report_detail': return `${selectedSubject}报告`;
@@ -645,11 +783,17 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'department_management': return '部门管理';
             case 'coin_issuance': return '货币发放';
             case 'suggestion_feedback': return '建议反馈';
-            case 'questionnaire': return '问卷调查';
+            case 'questionnaire': return '问卷采集';
+            case 'archive_design': return '档案设计';
             case 'ai_headteacher_assistant': return 'AI班主任助理';
             case 'weekly_action_advice': return '本周行动建议';
             case 'weekly_action_history': return '往期建议';
+            case 'teacher_evaluation_review': return '我的评价复盘';
+            case 'teacher_evaluation_review_history': return '往期复盘';
             case 'ai_principal_assistant': return 'AI校长助理';
+            case 'principal_weekly_report': return '本周管理建议';
+            case 'principal_monthly_report': return '上月学校复盘';
+            case 'principal_term_report': return '学期学校报告';
             case 'class_leaderboard': return '排行榜';
             case 'leader_report': return '学校数据报表';
             case 'reward_verification': return '班级奖励兑换';
@@ -660,9 +804,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         }
     };
 
-    const activeTeacherSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === currentTeacherSpaceId) ?? TEACHER_SPACE_OPTIONS[0];
     const homeroomClasses = MOCK_CLASSES.filter(classInfo => teacherProfile.homeroomClassIds.includes(classInfo.id));
-    const activeWeeklyAdviceReport = WEEKLY_ACTION_ADVICE_CURRENT_BY_CLASS[weeklyAdviceClassId] ?? CURRENT_WEEKLY_ACTION_ADVICE;
+    const activeWeeklyAdvice = WEEKLY_ACTION_ADVICE_CURRENT_BY_CLASS[weeklyAdviceClassId] ?? CURRENT_WEEKLY_ACTION_ADVICE;
+    const activeEvaluationReview = TEACHER_EVALUATION_REVIEW_CURRENT_BY_CLASS[weeklyAdviceClassId]
+        ?? CURRENT_TEACHER_EVALUATION_REVIEW;
 
     const getActiveStudentNames = () => {
         return MOCK_STUDENTS_CLASS_1
@@ -671,78 +816,75 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             .join('、');
     };
 
-    // Floating Input Bar Component - solid light island, so it stays readable over record cards.
+    // Shared record input: a quiet white action surface above the bottom navigation.
     const GlobalInputBar = () => {
         const targetIds: string[] = isMultiSelectMode ? Array.from(multiSelectIds) : [];
-        const isClassMode = activeLogTab === 'class';
-        const tone = isClassMode
-            ? {
-                shell: 'bg-white border-[#EEE2FF] shadow-[0_10px_22px_rgba(124,58,237,0.09)] ring-[#F7F0FF]',
-                main: 'from-[#FAF6FF] to-[#F4F7FF] text-[#7C3AED] border-[#EEE2FF]',
-                icon: 'bg-[#FDFCFF] text-[#7C3AED] border-[#EEE2FF]',
-            }
-            : {
-                shell: 'bg-white border-[#D4F4F8] shadow-[0_10px_22px_rgba(18,184,203,0.10)] ring-[#EFFBFC]',
-                main: 'from-[#F0FCFE] to-[#F2F6FF] text-[#128698] border-[#D4F4F8]',
-                icon: 'bg-[#FBFEFF] text-[#128698] border-[#D4F4F8]',
-            };
+
+        if (showKeyboard) {
+            return (
+                <div className="pointer-events-none absolute bottom-[292px] left-0 right-0 z-[85] mx-auto max-w-md px-4">
+                    <div className="pointer-events-auto mx-auto grid h-16 max-w-[350px] grid-cols-[minmax(0,1fr)_48px] items-center gap-1 rounded-[var(--tm-radius-card)] bg-white px-2.5 [box-shadow:var(--tm-shadow-floating)]">
+                        <div
+                            role="textbox"
+                            aria-label="记录内容"
+                            aria-readonly="true"
+                            className={`min-w-0 truncate px-3 text-[15px] font-medium ${inputText ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}
+                        >
+                            {inputText || '输入记录内容'}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowKeyboard(false)}
+                            aria-label="切换到语音记录"
+                            className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-inner)] text-[var(--tm-text-primary)] transition active:scale-95 active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
+                        >
+                            <VolumeIcon className="h-[22px] w-[22px]" />
+                        </button>
+                    </div>
+                </div>
+            );
+        }
 
         return (
-            <div className={`absolute left-0 right-0 z-[60] mx-auto max-w-md px-5 pointer-events-none transition-all duration-300 ${showKeyboard ? 'bottom-[310px]' : 'bottom-[82px]'}`}>
-                <div className={`pointer-events-auto mx-auto grid h-[60px] max-w-[350px] grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2.5 rounded-full border px-3 ring-1 ${tone.shell}`}>
+            <div className={`pointer-events-none absolute ${showTabBar ? 'bottom-[82px]' : 'bottom-4'} left-0 right-0 z-[60] mx-auto max-w-md px-4 transition-all duration-300`}>
+                <div className="pointer-events-auto mx-auto grid h-16 max-w-[350px] grid-cols-[48px_minmax(0,1fr)_48px] items-center rounded-[var(--tm-radius-card)] bg-white px-2.5 [box-shadow:var(--tm-shadow-floating)]">
                     <button
                         onClick={() => handleStartRecord(targetIds, 'camera')}
                         aria-label="拍照记录"
-                        className={`flex h-10 w-10 items-center justify-center rounded-[18px] border transition active:scale-95 ${tone.icon}`}
+                        className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-inner)] text-[var(--tm-text-primary)] transition active:scale-95 active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
                     >
-                        <CameraIcon className="h-5 w-5" />
+                        <CameraIcon className="h-[22px] w-[22px]" />
                     </button>
 
                     <button
                         onClick={() => handleStartRecord(targetIds, 'voice')}
                         aria-label="语音记录"
-                        className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-full border bg-gradient-to-r px-4 text-[14px] font-bold tracking-normal transition active:scale-[0.98] ${tone.main}`}
+                        className="flex h-11 min-w-0 items-center justify-center rounded-[var(--tm-radius-inner)] px-4 text-[15px] font-semibold text-[var(--tm-text-primary)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"
                     >
-                        <VolumeIcon className="h-4.5 w-4.5" />
-                        <span>按住 说话</span>
+                        <span>按住说话</span>
                     </button>
 
                     <button
                         onClick={() => setShowKeyboard(true)}
                         aria-label={isMultiSelectMode ? `已选${multiSelectIds.size}人，文字记录` : '文字记录'}
-                        className={`relative flex h-10 w-10 items-center justify-center rounded-[18px] border transition active:scale-95 ${tone.icon}`}
+                        className="relative flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-inner)] text-[var(--tm-text-primary)] transition active:scale-95 active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
                     >
-                        <KeyboardIcon className="h-5 w-5" />
-                        {showKeyboard && <span className="absolute -bottom-1 h-1 w-5 rounded-full bg-current" />}
+                        <KeyboardIcon className="h-[22px] w-[22px]" />
                     </button>
                 </div>
             </div>
         );
     };
 
-    const TabItem = ({ icon, label, active, onClick }: { icon: string; label: string; active: boolean; onClick: () => void }) => {
-        const Icon = icon === 'Activity' ? ActivityLucide : icon === 'Home' ? HomeLucide : UserLucide;
-        return (
-            <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-blue-600 scale-110' : 'text-slate-400 opacity-60'}`}>
-                <Icon size={24} />
-                <span className="text-xs font-medium">{label}</span>
-            </button>
-        );
-    };
-
-    const TabBar = ({ active, onChange }: { active: string; onChange: (v: string) => void }) => (
-        <div className="absolute bottom-0 left-0 w-full h-[83px] pb-[34px] flex items-center justify-between px-10 bg-white/80 backdrop-blur-md border-t border-slate-100/50 z-50">
-            <TabItem icon="Activity" label="记录" active={active === 'home_log'} onClick={() => onChange('home_log')} />
-            <TabItem icon="Home" label="班级" active={active === 'class_list' || active === 'class_detail' || active === 'class_report'} onClick={() => onChange('class_list')} />
-            <TabItem icon="User" label="我的" active={active === 'me' || active === 'my_files'} onClick={() => onChange('me')} />
-        </div>
-    );
-
-
     const showInputBar = ['home_log', 'class_detail'].includes(currentView);
     const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView);
-    const viewHandlesScroll = ['home_log', 'class_detail', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'questionnaire'].includes(currentView);
+    const primaryTabViewKey = showTabBar ? 'teacher-primary-tabs' : currentView;
+    const pageTransitionClass = showTabBar ? '' : 'animate-page-enter';
+    const viewHandlesScroll = ['home_log', 'class_list', 'class_detail', 'student_collection_detail', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'questionnaire', 'archive_design'].includes(currentView);
     const hasScreenLevelBackground = ['home_log', 'class_list', 'class_detail', 'student_detail', 'me'].includes(currentView);
+    const getBottomNavTone = (index: number) => activeIndex === index
+        ? 'text-[var(--tm-brand-primary)]'
+        : 'text-[var(--tm-nav-item-default)]';
 
     const getPhoneScreenBackground = () => {
         if (currentView === 'home_log') {
@@ -755,22 +897,14 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
         if (currentView === 'student_detail') {
             return (
-                <div className="relative h-full w-full overflow-hidden bg-[#F7F9FC]" aria-hidden="true">
-                    <div className="absolute inset-x-0 top-0 h-[245px] bg-[radial-gradient(circle_at_18%_18%,rgba(219,234,254,0.92),transparent_34%),radial-gradient(circle_at_78%_8%,rgba(254,243,199,0.74),transparent_30%),radial-gradient(circle_at_58%_64%,rgba(220,252,231,0.64),transparent_34%),linear-gradient(180deg,#F8FBFF_0%,#FFFFFF_62%,#F7F9FC_100%)]" />
+                <div className="relative h-full w-full overflow-hidden bg-[var(--tm-bg-page)]" aria-hidden="true">
+                    <div className="absolute inset-x-0 top-0 h-[245px] bg-[radial-gradient(circle_at_18%_18%,var(--tm-glow-primary),transparent_34%),radial-gradient(circle_at_78%_8%,var(--tm-glow-secondary),transparent_30%),linear-gradient(180deg,var(--tm-bg-page)_0%,var(--tm-bg-surface)_100%)]" />
                 </div>
             );
         }
 
         if (currentView === 'me') {
-            return (
-                <div className="relative h-full w-full overflow-hidden bg-[#F3F8FC]" aria-hidden="true">
-                    <img
-                        src={ASSETS.MANAGEMENT.TEACHER_ME_PAGE_BG}
-                        alt=""
-                        className="h-full w-full object-cover"
-                    />
-                </div>
-            );
+            return <div className="h-full w-full bg-[var(--tm-bg-page)]" aria-hidden="true"></div>;
         }
 
         return undefined;
@@ -790,7 +924,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     );
 
     return (
-        <div className="w-screen h-[100dvh] bg-[#f1f5f9] flex items-center justify-center p-4">
+        <div
+            className="flex h-[100dvh] w-screen items-center justify-center bg-[var(--tm-bg-page)] p-4"
+            style={teacherBrandCssVariables as React.CSSProperties}
+        >
             <PhoneMockup
                 showDeviceFrame={showPhoneShell}
                 contentTopInsetMode="status-bar"
@@ -799,7 +936,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                     <div className={`flex-1 flex flex-col relative overflow-hidden ${hasScreenLevelBackground ? 'bg-transparent' : 'bg-white'}`}>
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_detail' && currentView !== 'student_detail' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'questionnaire' && currentView !== 'ai_headteacher_assistant' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'ai_principal_assistant' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_detail' && currentView !== 'student_detail' && currentView !== 'student_collection_detail' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'ai_headteacher_assistant' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_monthly_report' && currentView !== 'principal_term_report' && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -821,9 +958,9 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
 
                         <main
-                            key={currentView}
+                            key={primaryTabViewKey}
                             id="main-scroll-container"
-                            className={`flex-1 relative animate-page-enter ${showTabBar && !viewHandlesScroll ? 'has-floating-tabbar' : ''} ${isOverlayActive ? 'z-[100]' : 'z-auto'} ${viewHandlesScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto no-scrollbar'}`}
+                            className={`min-h-0 flex-1 relative ${pageTransitionClass} ${showTabBar && !viewHandlesScroll ? 'has-floating-tabbar' : ''} ${isOverlayActive ? 'z-[100]' : 'z-auto'} ${viewHandlesScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto no-scrollbar'}`}
                         >
                             {currentView === 'home_log' && (
                                 <ClassRecordLogView
@@ -836,13 +973,26 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onClearNewRecord={() => setPendingRecordData(null)}
                                     onToggleModal={setIsOverlayActive}
                                     addDemoTopBreathingSpace={!showPhoneShell}
+                                    classSourceName={activeTeacherSpace.title}
+                                    classSourceType={activeTeacherSpace.type}
+                                    showClassSourceSwitcher={hasMultipleTeacherSpaces}
+                                    canRecordClass={canRecordClassForActiveSpace}
+                                    onOpenClassSourceSwitcher={() => setShowTeacherSpaceSheet(true)}
                                 />
                             )}
 
                             {currentView === 'class_list' && (
                                 <ClassListView
-                                    classes={MOCK_CLASSES}
+                                    classes={activeSpaceClasses}
                                     teacherProfile={teacherProfile}
+                                    currentSpace={activeTeacherSpace}
+                                    classMembershipById={activeClassMembershipById}
+                                    addDemoTopBreathingSpace={!showPhoneShell}
+                                    showClassSourceSwitcher={hasMultipleTeacherSpaces}
+                                    isSpaceSheetOpen={showTeacherSpaceSheet}
+                                    onOpenClassSourceSwitcher={() => setShowTeacherSpaceSheet(true)}
+                                    onCreateClass={handleCreateClass}
+                                    onJoinClass={handleJoinClass}
                                     onSelectClass={handleSelectClass}
                                     getStudentsForClass={getMergedStudentsForClass}
                                     onRestoreStudentStatus={handleRestoreStudentStatus}
@@ -853,6 +1003,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onViewBankPassword={handleViewBankPassword}
                                     onViewHomeworkEntry={handleViewHomeworkEntry}
                                     onInviteTeacher={handleInviteTeacher}
+                                    onInviteParent={handleInviteParent}
                                     onEditClassInfo={handleEditClassInfo}
                                 />
                             )}
@@ -934,7 +1085,24 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onUpdateStudentStatus={handleUpdateStudentStatus}
                                     onViewCampusCoins={() => navigateTo('student_coin_detail')}
                                     campusCoinDetail={activeCampusCoinDetail}
+                                    initialTab={studentDetailInitialTab}
+                                    collectionHistory={getCompletedStudentCollectionHistory(
+                                        readQuestionnaires(),
+                                        activeStudent.studentNo ?? activeStudent.id,
+                                        activeTeacherId,
+                                        teacherProfile.name,
+                                        activeTeacherSpace.id,
+                                    )}
+                                    onViewCollectionRecord={(item) => {
+                                        setActiveStudentCollectionRecord(item);
+                                        setStudentDetailInitialTab('collection');
+                                        navigateTo('student_collection_detail');
+                                    }}
                                 />
+                            )}
+
+                            {currentView === 'student_collection_detail' && activeStudentCollectionRecord && (
+                                <StudentCollectionRecordDetailView item={activeStudentCollectionRecord} onBack={goBack} />
                             )}
 
                             {currentView === 'student_basic_edit' && (
@@ -978,7 +1146,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onOpenDepartmentManagement={() => navigateTo('department_management')}
                                     onOpenCoinIssuance={() => navigateTo('coin_issuance')}
                                     onOpenSuggestionFeedback={() => navigateTo('suggestion_feedback')}
-                                    onOpenQuestionnaire={() => navigateTo('questionnaire')}
+                                    onOpenQuestionnaire={() => { setQuestionnaireEntryMode('owned'); navigateTo('questionnaire'); }}
+                                    pendingCollectionCount={pendingCollectionCount}
+                                    onOpenAssignedCollections={() => { setQuestionnaireEntryMode('assigned'); navigateTo('questionnaire'); }}
+                                    pendingArchiveTaskCount={pendingArchiveTaskCount}
+                                    onOpenAssignedArchiveTasks={() => { setArchiveEntryMode('assigned'); navigateTo('archive_design'); }}
+                                    onOpenArchiveDesign={() => { setArchiveEntryMode('design'); navigateTo('archive_design'); }}
                                     onOpenAiHeadteacherAssistant={() => navigateTo('ai_headteacher_assistant')}
                                     onOpenAiPrincipalAssistant={() => navigateTo('ai_principal_assistant')}
                                     onToggleSpaceSheet={() => setShowTeacherSpaceSheet(prev => !prev)}
@@ -993,7 +1166,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     departments={TEACHER_PROFILE_DEPARTMENTS}
                                     currentSpace={activeTeacherSpace}
                                     onBack={goBack}
-                                    onChange={setTeacherProfile}
+                                    onChange={(nextProfile) => {
+                                        setTeacherProfilesBySpace(prev => ({
+                                            ...prev,
+                                            [activeTeacherSpace.id]: nextProfile,
+                                        }));
+                                    }}
                                 />
                             )}
 
@@ -1055,8 +1233,26 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                             {currentView === 'questionnaire' && (
                                 <QuestionnaireManagementView
+                                    key={`${activeTeacherId}-${questionnaireEntryMode}`}
                                     onBack={goBack}
+                                    teacherId={activeTeacherId}
                                     teacherName={teacherProfile.name}
+                                    spaceId={activeTeacherSpace.id}
+                                    homeroomClassIds={teacherProfile.homeroomClassIds}
+                                    initialMode={questionnaireEntryMode}
+                                    classes={MOCK_CLASSES.filter(classInfo => (
+                                        teacherProfile.homeroomClassIds.includes(classInfo.id)
+                                        || teacherProfile.teachingAssignments.some(item => item.classId === classInfo.id)
+                                    ))}
+                                    getStudentsForClass={getMergedStudentsForClass}
+                                    entryMode={archiveEntryMode}
+                                />
+                            )}
+
+                            {currentView === 'archive_design' && (
+                                <ArchiveDesignView
+                                    onBack={goBack}
+                                    teacherProfile={teacherProfile}
                                     spaceId={activeTeacherSpace.id}
                                     classes={MOCK_CLASSES.filter(classInfo => (
                                         teacherProfile.homeroomClassIds.includes(classInfo.id)
@@ -1075,12 +1271,16 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                         setWeeklyAdviceClassId(classId);
                                         navigateTo('weekly_action_advice');
                                     }}
+                                    onOpenEvaluationReview={(classId) => {
+                                        setWeeklyAdviceClassId(classId);
+                                        navigateTo('teacher_evaluation_review');
+                                    }}
                                 />
                             )}
 
                             {currentView === 'weekly_action_advice' && (
                                 <WeeklyActionAdviceView
-                                    report={activeWeeklyAdviceReport}
+                                    data={activeWeeklyAdvice}
                                     onBack={goBack}
                                     onOpenHistory={() => navigateTo('weekly_action_history')}
                                 />
@@ -1094,12 +1294,64 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 />
                             )}
 
+                            {currentView === 'teacher_evaluation_review' && (
+                                <TeacherEvaluationReviewView
+                                    data={activeEvaluationReview}
+                                    onBack={goBack}
+                                    onOpenHistory={() => navigateTo('teacher_evaluation_review_history')}
+                                />
+                            )}
+
+                            {currentView === 'teacher_evaluation_review_history' && (
+                                <TeacherEvaluationReviewHistoryView
+                                    onBack={goBack}
+                                    classes={homeroomClasses}
+                                    initialClassId={weeklyAdviceClassId}
+                                />
+                            )}
+
                             {currentView === 'ai_principal_assistant' && (
-                                <AiPrincipalAssistantView onBack={goBack} />
+                                <AiPrincipalAssistantView
+                                    onBack={goBack}
+                                    termConfig={CURRENT_PRINCIPAL_TERM}
+                                    hasGeneratedTermReport={principalTermReportGenerated}
+                                    onOpenWeeklyReport={() => navigateTo('principal_weekly_report')}
+                                    onOpenMonthlyReport={() => navigateTo('principal_monthly_report')}
+                                    onOpenTermReport={() => navigateTo('principal_term_report')}
+                                />
+                            )}
+
+                            {currentView === 'principal_weekly_report' && (
+                                <PrincipalPeriodicReportView
+                                    kind="weekly"
+                                    schoolName={teacherProfile.schoolName}
+                                    generated={principalWeeklyReportGenerated}
+                                    onGenerated={() => setPrincipalWeeklyReportGenerated(true)}
+                                    onBack={goBack}
+                                />
+                            )}
+
+                            {currentView === 'principal_monthly_report' && (
+                                <PrincipalPeriodicReportView
+                                    kind="monthly"
+                                    schoolName={teacherProfile.schoolName}
+                                    generated={principalMonthlyReportGenerated}
+                                    onGenerated={() => setPrincipalMonthlyReportGenerated(true)}
+                                    onBack={goBack}
+                                />
+                            )}
+
+                            {currentView === 'principal_term_report' && (
+                                <PrincipalTermReportView
+                                    schoolName={teacherProfile.schoolName}
+                                    term={CURRENT_PRINCIPAL_TERM}
+                                    generated={principalTermReportGenerated}
+                                    onGenerated={() => setPrincipalTermReportGenerated(true)}
+                                    onBack={goBack}
+                                />
                             )}
                         </main>
 
-                        {showInputBar && <div className="pointer-events-none absolute bottom-16 left-0 right-0 z-[55] h-28 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.9)_46%,#FFFFFF_100%)]" />}
                         {showInputBar && <GlobalInputBar />}
 
                         {activeNameEditor === 'subject' && (
@@ -1147,46 +1399,61 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                         {/* Keyboard Overlay */}
                         {showKeyboard && (
                             <>
-                                <div className="absolute inset-0 z-[55] bg-black/5" onClick={() => setShowKeyboard(false)}></div>
+                                <div className="absolute inset-0 z-[70] bg-black/5" onClick={() => setShowKeyboard(false)}></div>
                                 <VirtualKeyboard
                                     onClose={() => setShowKeyboard(false)}
                                     onKeyPress={(key) => setInputText(prev => prev + (key === 'space' ? ' ' : key))}
                                     onDelete={() => setInputText(prev => prev.slice(0, -1))}
-                                    onSubmit={() => handleAnalysisComplete({ type: 'text', text: inputText, mockStudents: isMultiSelectMode ? Array.from(multiSelectIds) : [] })}
+                                    onSubmit={() => {
+                                        if (!inputText.trim()) return;
+                                        handleAnalysisComplete({ type: 'text', text: inputText, mockStudents: isMultiSelectMode ? Array.from(multiSelectIds) : [] });
+                                    }}
                                 />
                             </>
                         )}
 
-                        {/* Teacher mobile bottom navigation - fixed global color, independent from record mode. */}
+                        {/* Teacher mobile bottom navigation - solid icons and brand red active state. */}
                         {showTabBar && (
-                            <nav className="absolute bottom-0 left-0 right-0 z-50 h-16 border-t border-[#EEF4F8] bg-white shadow-[0_-6px_18px_rgba(60,85,120,0.035)]">
+                            <nav className="absolute bottom-0 left-0 right-0 z-50 h-16 border-0 bg-white/95 [box-shadow:var(--tm-shadow-navigation)] backdrop-blur-xl">
                                 <div className="grid h-full grid-cols-3 items-center text-center">
-                                    <button onClick={() => switchTab('home_log')} className="flex h-full flex-col items-center justify-center gap-1 active:scale-95 transition">
-                                        <ActivityIcon className={`h-5 w-5 ${activeIndex === 0 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`} fill="none" />
-                                        <span className={`text-xs font-semibold ${activeIndex === 0 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`}>记录</span>
+                                    <button onClick={() => switchTab('home_log')} className="flex h-full min-w-0 flex-col items-center justify-center gap-1 transition active:scale-95">
+                                        <ActivityIcon className={`h-[21px] w-[21px] ${getBottomNavTone(0)}`} fill="currentColor" />
+                                        <span className={`text-xs font-semibold ${getBottomNavTone(0)}`}>记录</span>
                                     </button>
-                                    <button onClick={() => switchTab('class_list')} className="flex h-full flex-col items-center justify-center gap-1 active:scale-95 transition">
-                                        <HomeIcon className={`h-5 w-5 ${activeIndex === 1 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`} fill="none" />
-                                        <span className={`text-xs font-semibold ${activeIndex === 1 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`}>班级</span>
+                                    <button onClick={() => switchTab('class_list')} className="flex h-full min-w-0 flex-col items-center justify-center gap-1 transition active:scale-95">
+                                        <HomeIcon className={`h-[21px] w-[21px] ${getBottomNavTone(1)}`} fill="currentColor" />
+                                        <span className={`text-xs font-semibold ${getBottomNavTone(1)}`}>班级</span>
                                     </button>
-                                    <button onClick={() => switchTab('me')} className="flex h-full flex-col items-center justify-center gap-1 active:scale-95 transition">
-                                        <UserIcon className={`h-5 w-5 ${activeIndex === 2 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`} fill="none" />
-                                        <span className={`text-xs font-semibold ${activeIndex === 2 ? 'text-[#1E9AAA]' : 'text-[#AAB6C4]'}`}>我的</span>
+                                    <button onClick={() => switchTab('me')} className="flex h-full min-w-0 flex-col items-center justify-center gap-1 transition active:scale-95">
+                                        <span className="relative">
+                                            <UserIcon className={`h-[21px] w-[21px] ${getBottomNavTone(2)}`} fill="currentColor" />
+                                            {pendingCollectionCount + pendingArchiveTaskCount > 0 && <span className="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--tm-status-negative)] px-1 text-[9px] font-bold leading-none tabular-nums text-white">{pendingCollectionCount + pendingArchiveTaskCount > 9 ? '9+' : pendingCollectionCount + pendingArchiveTaskCount}</span>}
+                                        </span>
+                                        <span className={`text-xs font-semibold ${getBottomNavTone(2)}`}>我的</span>
                                     </button>
                                 </div>
                             </nav>
                         )}
 
-                        {currentView === 'me' && showTeacherSpaceSheet && (
+                        {(currentView === 'me' || currentView === 'home_log' || currentView === 'class_list') && showTeacherSpaceSheet && (
                             <ClassSourceSheet
                                 currentSpace={activeTeacherSpace}
                                 spaceOptions={TEACHER_SPACE_OPTIONS}
                                 onClose={() => setShowTeacherSpaceSheet(false)}
-                                onSelectSpace={(spaceId) => {
-                                    setCurrentTeacherSpaceId(spaceId);
-                                    setShowTeacherSpaceSheet(false);
-                                }}
+                                onSelectSpace={handleSelectTeacherSpace}
                             />
+                        )}
+
+                        {currentView === 'home_log' && recordContextToast && (
+                            <div
+                                className="pointer-events-none absolute inset-x-5 bottom-[150px] z-[65] flex justify-center"
+                                role="status"
+                                aria-live="polite"
+                            >
+                                <div className="max-w-full rounded-full bg-[var(--tm-text-primary)] px-4 py-2 text-center text-[12px] font-medium text-white shadow-[0_4px_8px_rgba(44,37,34,0.18)]">
+                                    {recordContextToast}
+                                </div>
+                            </div>
                         )}
 
 
@@ -1228,10 +1495,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                                             setSelectedTerm(term);
                                                             setShowTermSelect(false);
                                                         }}
-                                                        className={`w-full text-left px-4 py-3 text-sm font-medium active:bg-slate-50 flex items-center justify-between ${term === selectedTerm ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                                        className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${term === selectedTerm ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                                                     >
                                                         {term}
-                                                        {term === selectedTerm && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                                                        {term === selectedTerm && <div className="h-2 w-2 rounded-full bg-[var(--tm-brand-primary)]"></div>}
                                                     </button>
                                                 ))}
                                             </div>
@@ -1258,10 +1525,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                                                 setSelectedGradeScope(grade);
                                                                 setShowGradeSelect(false);
                                                             }}
-                                                            className={`w-full text-left px-4 py-3 text-sm font-medium active:bg-slate-50 flex items-center justify-between ${grade === selectedGradeScope ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                                            className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${grade === selectedGradeScope ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                                                         >
                                                             {grade}
-                                                            {grade === selectedGradeScope && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                                                            {grade === selectedGradeScope && <div className="h-2 w-2 rounded-full bg-[var(--tm-brand-primary)]"></div>}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -1289,10 +1556,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                                                 setSelectedSubjectScope(subject);
                                                                 setShowSubjectScopeSelect(false);
                                                             }}
-                                                            className={`w-full text-left px-4 py-3 text-sm font-medium active:bg-slate-50 flex items-center justify-between ${subject === selectedSubjectScope ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                                            className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${subject === selectedSubjectScope ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                                                         >
                                                             {subject}
-                                                            {subject === selectedSubjectScope && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                                                            {subject === selectedSubjectScope && <div className="h-2 w-2 rounded-full bg-[var(--tm-brand-primary)]"></div>}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -1319,7 +1586,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                         </button>
                                         <button
                                             onClick={handleConfirmGenerate}
-                                            className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm shadow-lg shadow-blue-200 active:scale-[0.98] transition-all"
+                                            className="flex-1 rounded-xl bg-[var(--tm-brand-primary)] py-3.5 text-sm font-bold text-white shadow-[var(--tm-shadow-control)] transition-all active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)]"
                                         >
                                             立即生成
                                         </button>
@@ -1336,7 +1603,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     {/* Shimmer effect */}
                                     <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none"></div>
 
-                                    <div className="w-12 h-12 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30 ring-2 ring-white/10">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-icon)] ring-2 ring-white/10">
                                         <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>

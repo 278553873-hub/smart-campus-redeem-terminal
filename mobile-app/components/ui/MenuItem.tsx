@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronRight, type LucideIcon } from 'lucide-react';
-import { phoneText, type PhoneTone } from '../../styles/phoneTokens';
+import { phoneText, type PhoneTone } from '../../styles/teacherMobileTokens';
 import { IconBadge } from './IconBadge';
 
 interface MenuItemProps {
@@ -28,7 +28,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   const content = (
     <>
       <div className="flex min-w-0 flex-1 items-center gap-4 text-left">
-        <IconBadge icon={icon} size="md" tone={danger ? 'danger' : tone} />
+        <IconBadge icon={icon} size="md" tone={danger ? 'negative' : tone} />
         <div className="min-w-0 flex-1">
           <span className={`block truncate ${phoneText.itemTitle} ${danger ? 'text-rose-600' : 'text-slate-900'}`}>{title}</span>
           {description && <p className={`mt-1.5 line-clamp-2 text-slate-400 ${phoneText.helper}`}>{description}</p>}

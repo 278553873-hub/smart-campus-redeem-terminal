@@ -11,6 +11,6 @@ assert.doesNotMatch(
 
 assert.match(
   source,
-  /flex-1\s+min-h-0\s+overflow-y-auto\s+p-4\s+space-y-6\s+pb-28\s+no-scrollbar\s+relative\s+z-10/,
-  '记录页内容滚动区域应填满剩余高度，同时保留底部悬浮控件避让'
+  /relative\s+z-10\s+flex-1\s+min-h-0\s+space-y-3\.5\s+overflow-y-auto\s+px-5\s+pb-44\s+pt-0\s+no-scrollbar/,
+  '记录页内容滚动区域应保持完整高度，并通过尾部留白保证最后一条记录可滚动到录入条上方'
 );

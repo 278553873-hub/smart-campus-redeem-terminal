@@ -216,6 +216,8 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
     }, [isRecording, finalizePress]);
 
     const visualVoiceLevel = Math.max(voiceLevel, micState === 'listening' ? 0.24 : 0.34);
+    const shouldShowStudentContext = mode !== 'camera' || Boolean(studentNameList) || initialStudentIds.length > 0;
+    const studentContextLabel = studentNameList || '未选择学生';
 
     return (
         <div className={`absolute inset-0 z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300 ${mode === 'camera' ? 'bg-black' : 'teacher-record-soft-page'}`}>
@@ -231,15 +233,17 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
                     </button>
                 </div>
 
-                <div className="flex flex-col items-center flex-none">
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${mode === 'camera' ? 'bg-black/40 backdrop-blur-md border border-white/10' : ''}`}>
-                        <span className={`text-sm font-bold max-w-[150px] truncate ${mode === 'camera' ? 'text-white' : 'text-slate-800'}`}>{studentNameList || "未选择学生"}</span>
-                        {initialStudentIds.length > 0 && (
-                            <span className={`text-[11px] px-1.5 rounded-md font-semibold ${mode === 'camera' ? 'bg-white text-black' : 'bg-blue-600 text-white'}`}>
-                                {initialStudentIds.length}
-                            </span>
-                        )}
-                    </div>
+                <div className="flex flex-none flex-col items-center">
+                    {shouldShowStudentContext && (
+                        <div className={`flex items-center gap-2 rounded-full px-3 py-1 ${mode === 'camera' ? 'border border-white/10 bg-black/40 backdrop-blur-md' : ''}`}>
+                            <span className={`max-w-[150px] truncate text-sm font-bold ${mode === 'camera' ? 'text-white' : 'text-slate-800'}`}>{studentContextLabel}</span>
+                            {initialStudentIds.length > 0 && (
+                                <span className={`rounded-md px-1.5 text-[11px] font-semibold ${mode === 'camera' ? 'bg-white text-black' : 'bg-blue-600 text-white'}`}>
+                                    {initialStudentIds.length}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex-1 w-10"></div>

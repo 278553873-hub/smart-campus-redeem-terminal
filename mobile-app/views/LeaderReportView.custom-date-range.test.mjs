@@ -79,7 +79,7 @@ for (const required of [
   'min-h-[44px]',
   'rounded-t-[32px]',
   'max-h-[82%]',
-  'bg-black/40 backdrop-blur-sm',
+  'bg-[var(--tm-mask)] backdrop-blur-sm',
   'disabled={Boolean(dateRangeError)}',
   "isFilterPinned ? 'pointer-events-auto' : 'pointer-events-none'",
 ]) {

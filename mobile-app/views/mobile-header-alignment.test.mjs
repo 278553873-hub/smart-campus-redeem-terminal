@@ -10,7 +10,7 @@ if (!leader.includes('h-[44px]')) {
   failures.push('对照页“学校数据报表”顶部栏不是 44px，无法作为对齐基准。');
 }
 
-if (!app.includes('className="h-11 flex items-center justify-between px-4 bg-white/80')) {
+if (!app.includes('h-11 flex items-center justify-between px-4 sticky top-0')) {
   failures.push('通用 LocalHeader 应统一为 44px 高度，并使用 16px 横向边距。');
 }
 
@@ -18,8 +18,8 @@ if (app.includes('className="h-14 flex items-center justify-between px-6 bg-whit
   failures.push('通用 LocalHeader 仍为 56px，会导致“我的班级”标题低于微信胶囊中心。');
 }
 
-if (!record.includes('h-11 flex items-center gap-2 pl-4 pr-[132px]')) {
-  failures.push('记录页顶部切换栏应统一为 44px 导航行。');
+if (!record.includes('min-h-11 flex-1') || !record.includes('min-h-11 shrink-0')) {
+  failures.push('记录页顶部模式和指标入口应使用至少 44px 的稳定触控高度。');
 }
 
 if (record.includes('h-[50px] flex items-center gap-2 pl-4 pr-[132px]')) {

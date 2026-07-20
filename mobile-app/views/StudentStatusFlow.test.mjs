@@ -23,9 +23,10 @@ requireText(classListSource, 'getStudentsForClass', '班级列表应接收班级
 requireText(classListSource, 'leftStudents', '班级列表页应在当前页维护离校学生集合。');
 requireText(classListSource, 'showLeftStudentSheet', '班级列表页应在当前页打开离校学生轻量抽屉。');
 requireText(classListSource, 'relative h-full overflow-hidden', '班级列表页应固定为手机屏幕高度，避免离校学生弹窗挂到长列表底部看不见。');
-requireText(classListSource, 'h-full overflow-y-auto', '班级列表内容应自己滚动，让弹窗覆盖当前手机屏幕。');
+requireText(classListSource, 'h-full space-y-4 overflow-y-auto', '班级列表内容应自己滚动，让弹窗覆盖当前手机屏幕。');
 requireText(classListSource, '离校学生', '班级卡片更多操作里应提供离校学生入口。');
-requireText(classListSource, "activeMenuId === cls.id ? 'z-[130]'", '打开更多菜单的班级卡片应提升层级，避免菜单被后续班级卡片和按钮遮挡。');
+requireText(classListSource, 'activeActionClass &&', '班级更多操作应通过当前屏幕的底部弹窗展示。');
+requireText(classListSource, 'z-[145] flex items-end', '班级更多操作弹窗应覆盖班级列表层级。');
 if (classDetailSource.includes('离校学生{leftStudents.length')) {
   throw new Error('离校学生入口不应放在学生列表工具栏，低频操作应收进班级卡片更多操作。');
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     BackIcon, VolumeIcon, ActivityIcon,
     SwapIcon, FileIcon, DeleteIcon, RetryIcon, ChevronRightIcon,
@@ -8,6 +8,8 @@ import { MOCK_STUDENTS_CLASS_1, MOCK_CLASS_RECORD_LOGS } from '../constants';
 import { ASSETS } from '../assets/images';
 import { Loader2, Sparkles } from 'lucide-react'; // Import directly if needed for icons not in components
 import TeacherRecordAuroraBackground from '../components/TeacherRecordAuroraBackground';
+import ClassSourceTrigger from '../components/ClassSourceTrigger';
+import type { TeacherSpaceType } from '../domain/teacherSpaceAccess';
 
 interface ClassRecordLogViewProps {
     classNameStr?: string;
@@ -20,11 +22,19 @@ interface ClassRecordLogViewProps {
     addDemoTopBreathingSpace?: boolean;
     activeTab: 'student' | 'class';
     onTabChange: (tab: 'student' | 'class') => void;
+    classSourceName?: string;
+    classSourceType?: TeacherSpaceType;
+    showClassSourceSwitcher?: boolean;
+    canRecordClass?: boolean;
+    onOpenClassSourceSwitcher?: () => void;
 }
 
 // Data Models
 type LogStatus = 'processing' | 'done';
 type LogType = 'file' | 'voice' | 'camera' | 'text';
+
+const recordSheetBackdropClass = 'fixed inset-0 z-[1000] flex items-end justify-center bg-[var(--tm-mask)] backdrop-blur-sm animate-in fade-in [animation-duration:var(--tm-duration-standard)]';
+const recordSheetSurfaceClass = 'flex w-full max-w-md flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)]';
 
 interface LogItem {
     id: string;
@@ -130,10 +140,13 @@ const INITIAL_LOGS: LogItem[] = [
 
 const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     classNameStr, onBack, onStartRecord, isMainView = false, newRecordData, onClearNewRecord, onToggleModal,
-    addDemoTopBreathingSpace = false, activeTab, onTabChange
+    addDemoTopBreathingSpace = false, activeTab, onTabChange, classSourceName = '',
+    classSourceType = 'personal', showClassSourceSwitcher = false, canRecordClass = false,
+    onOpenClassSourceSwitcher
 }) => {
     // State
     const [logs, setLogs] = useState<LogItem[]>(INITIAL_LOGS);
+    const processedRecordIdsRef = useRef<Set<string>>(new Set());
 
     // UI Interaction State
     const [showHeaderMenu, setShowHeaderMenu] = useState(false);
@@ -156,7 +169,11 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     // Effect: Handle New Record Injection
     useEffect(() => {
         if (newRecordData) {
-            const newId = `new_${Date.now()}`;
+            const recordRequestId = newRecordData.requestId ?? `${newRecordData.type ?? 'record'}:${newRecordData.text ?? ''}`;
+            if (processedRecordIdsRef.current.has(recordRequestId)) return;
+            processedRecordIdsRef.current.add(recordRequestId);
+
+            const newId = `new_${recordRequestId}`;
             const now = new Date();
             const timeString = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
@@ -224,26 +241,26 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     // --- Components ---
 
     const TeacherRecordHeader = ({ id, time }: { id: string, time: string }) => (
-        <div className="mb-3.5 flex items-center justify-between relative z-20">
-            <span className="text-[15px] font-bold text-slate-400 tracking-tight">{time}</span>
+        <div className="relative z-20 mb-3 flex items-center justify-between">
+            <span className="text-[13px] font-medium text-[var(--tm-text-disabled)]">{time}</span>
             <button
                 onClick={(e) => {
                     e.stopPropagation();
                     setActiveCardMenu(activeCardMenu === id ? null : id);
                 }}
-                className={`flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition-colors active:bg-slate-100 active:text-slate-600 ${activeCardMenu === id ? 'bg-slate-100 text-slate-500' : ''}`}
+                className={`flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-tertiary)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)] ${activeCardMenu === id ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : ''}`}
                 aria-label="更多操作"
             >
                 <WechatMoreIcon className="w-4.5 h-4.5" />
             </button>
 
             {activeCardMenu === id && (
-                <div className="absolute top-9 right-0 bg-white shadow-lg border border-slate-100 rounded-xl p-1 w-32 animate-in fade-in zoom-in duration-200 origin-top-right ring-1 ring-black/5 z-30">
-                    <button className="flex items-center gap-2 text-xs font-medium text-slate-700 p-2 active:bg-slate-50 rounded-lg w-full text-left" onClick={() => setActiveCardMenu(null)}>
+                <div className="absolute right-0 top-11 z-30 w-32 origin-top-right animate-in rounded-[var(--tm-radius-control)] bg-white p-1 shadow-[var(--tm-shadow-floating)] ring-1 ring-[var(--tm-border-subtle)] fade-in zoom-in duration-200">
+                    <button className="flex min-h-11 w-full items-center gap-2 rounded-[8px] px-2 text-left text-xs font-medium text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]" onClick={() => setActiveCardMenu(null)}>
                         <RetryIcon className="w-3.5 h-3.5" /> 重新识别
                     </button>
-                    <div className="h-[1px] bg-slate-50 mx-2"></div>
-                    <button className="flex items-center gap-2 text-xs font-medium text-red-500 p-2 active:bg-red-50 rounded-lg w-full text-left" onClick={() => { setLogs(l => l.filter(i => i.id !== id)); setActiveCardMenu(null); }}>
+                    <div className="mx-2 h-px bg-[var(--tm-bg-surface-muted)]"></div>
+                    <button className="flex min-h-11 w-full items-center gap-2 rounded-[8px] px-2 text-left text-xs font-medium text-[var(--tm-status-negative)] active:bg-[var(--tm-status-negative-soft)]" onClick={() => { setLogs(l => l.filter(i => i.id !== id)); setActiveCardMenu(null); }}>
                         <DeleteIcon className="w-3.5 h-3.5" /> 删除记录
                     </button>
                 </div>
@@ -255,7 +272,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     const VoicePlayback = ({ active, duration }: { active: 'student' | 'class'; duration?: string }) => (
         <button
             type="button"
-            className={`mb-3 inline-flex h-9 items-center gap-2 rounded-full border px-3.5 text-[13px] font-bold transition active:scale-95 ${active === 'class' ? 'border-[#EEE2FF] bg-[#FDFCFF] text-[#7C3AED]' : 'border-[#D4F4F8] bg-[#FAFEFF] text-[#128698]'}`}
+            className={`mb-3 inline-flex min-h-11 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold transition active:scale-95 ${active === 'class' ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]' : 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]'}`}
             aria-label="播放原始语音"
         >
             <span className="h-0 w-0 border-y-[5px] border-y-transparent border-l-[7px] border-l-current" aria-hidden="true" />
@@ -265,54 +282,62 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                     <i key={index} className="w-0.5 rounded-full bg-current opacity-70" style={{ height }} />
                 ))}
             </span>
-            <span className="ml-1 text-slate-500">{duration || '10s'}</span>
+            <span className="ml-1 text-[var(--tm-text-secondary)]">{duration || '10s'}</span>
         </button>
     );
 
     const FieldLabel = ({ text }: { text: string }) => (
-        <div className="pt-1.5 text-[13px] font-bold text-slate-500">{text}</div>
+        <div className="pt-1 text-[12px] font-medium text-[var(--tm-text-secondary)]">{text}</div>
     );
 
     const formatScoreValue = (value: number) => value > 0 ? `+${value}` : `${value}`;
+    const modeTextTone = activeTab === 'class'
+        ? 'text-[var(--tm-record-class-text)]'
+        : 'text-[var(--tm-record-student-text)]';
+    const modeSolidTone = activeTab === 'class'
+        ? 'bg-[var(--tm-record-class-primary)] text-white'
+        : 'bg-[var(--tm-record-student-primary)] text-white';
+    const modeSoftTone = activeTab === 'class'
+        ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]'
+        : 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]';
 
     // --- Render Log Item Logic ---
     // --- Render Log Item Logic ---
     const renderLogItem = (log: LogItem) => {
-        // 1. PROCESSING STATE - Candy Shimmer
+        // 1. PROCESSING STATE
         if (log.status === 'processing') {
+            const processingTone = activeTab === 'class'
+                ? 'text-[var(--tm-record-class-text)]'
+                : 'text-[var(--tm-record-student-text)]';
             return (
-                <div key={log.id} className="bg-white/80 backdrop-blur-md rounded-3xl p-5 shadow-lg shadow-blue-100/50 border border-white relative overflow-hidden animate-in fade-in slide-in-from-top-5 duration-500">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-100/40 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
-                    <div className="flex justify-between items-center mb-4 relative z-10">
-                        <div className="flex items-center gap-2.5 text-blue-600">
-                            <div className="relative">
-                                <div className="absolute inset-0 bg-blue-400 rounded-full blur animate-ping opacity-20"></div>
-                                <Loader2 className="w-5 h-5 animate-spin relative z-10" />
-                            </div>
-                            <span className="text-sm font-semibold tracking-wide">AI 正在思考中...</span>
+                <div key={log.id} className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-white p-4 shadow-[var(--tm-shadow-card)] animate-in fade-in slide-in-from-top-5 duration-500">
+                    <div className="relative z-10 mb-4 flex items-center justify-between">
+                        <div className={`flex items-center gap-2.5 ${processingTone}`}>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <span className="text-sm font-semibold">AI 正在识别</span>
                         </div>
-                        <span className="text-xs text-slate-400 font-bold bg-slate-50 px-2 py-0.5 rounded-full">{log.time.split(' ')[1]}</span>
+                        <span className="text-xs font-medium text-[var(--tm-text-disabled)]">{log.time.split(' ')[1]}</span>
                     </div>
-                    <div className="space-y-3 opacity-60 relative z-10">
-                        <div className="h-4 bg-slate-100/80 rounded-full w-3/4 animate-pulse"></div>
-                        <div className="h-4 bg-slate-100/80 rounded-full w-1/2 animate-pulse"></div>
+                    <div className="relative z-10 space-y-3 opacity-70">
+                        <div className="h-3.5 w-3/4 animate-pulse rounded-full bg-[var(--tm-bg-surface-muted)]"></div>
+                        <div className="h-3.5 w-1/2 animate-pulse rounded-full bg-[var(--tm-bg-surface-muted)]"></div>
                     </div>
                 </div>
             );
         }
 
-        // 2. DONE STATE - FILE (Clean Glass)
+        // 2. DONE STATE - FILE
         if (log.type === 'file') {
             return (
-                <div key={log.id} className="bg-white rounded-3xl p-5 shadow-sm border border-white relative">
+                <div key={log.id} className="relative rounded-[var(--tm-radius-card)] bg-white p-4 shadow-[var(--tm-shadow-card)]">
                     <TeacherRecordHeader id={log.id} time={log.time} />
-                    <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-3.5 flex items-center gap-4 mb-4">
-                        <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center border border-slate-50 shrink-0">
-                            <FileIcon className="w-6 h-6 text-cyan-500" />
+                    <div className="mb-1 flex items-center gap-3 rounded-2xl bg-[var(--tm-bg-surface-soft)] p-3.5">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--tm-brand-primary)]">
+                            <FileIcon className="h-5 w-5" />
                         </div>
                         <div className="flex-1 overflow-hidden min-w-0">
-                            <div className="text-sm font-bold text-slate-700 truncate">{log.content}</div>
-                            <div className="text-[11px] text-slate-400 font-bold mt-1 bg-slate-100 inline-block px-1.5 rounded">PDF DOCUMENT</div>
+                            <div className="truncate text-sm font-semibold text-[var(--tm-text-primary)]">{log.content}</div>
+                            <div className="mt-1 text-[11px] font-medium text-[var(--tm-text-disabled)]">文件记录</div>
                         </div>
                     </div>
                 </div>
@@ -325,42 +350,44 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         const scoreItems = log.scores && log.scores.length > 0 ? log.scores : (log.score ? [log.score] : []);
         const totalScore = scoreItems.reduce((sum, item) => sum + item.value, 0);
         const scoreTone = isNegative ? 'negative' : 'positive';
-        const aiBlockClass = isNegative
-            ? 'border-[#F7BCC8] bg-gradient-to-b from-[#FFF7F9] to-white shadow-[0_8px_20px_rgba(224,82,104,0.045)]'
-            : 'border-[#9BEAF1] bg-gradient-to-b from-[#F7FEFF] to-white shadow-[0_8px_20px_rgba(18,184,203,0.045)]';
-        const modeTextClass = isClass ? 'text-[#7C3AED] border-[#EAD8FF] bg-[#FDFCFF]' : 'text-[#128698] border-[#D4F4F8] bg-[#FAFEFF]';
+        const modeTextClass = isClass
+            ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]'
+            : 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]';
+        const modeAccentClass = isClass
+            ? 'bg-[var(--tm-record-class-primary)]'
+            : 'bg-[var(--tm-record-student-primary)]';
         const totalClass = scoreTone === 'negative'
-            ? 'border-[var(--tm-record-negative-border)] bg-[var(--tm-record-negative-bg)] text-[var(--tm-record-negative-text)]'
-            : 'border-[var(--tm-record-positive-border)] bg-[var(--tm-record-positive-bg)] text-[var(--tm-record-positive-text)]';
+            ? 'bg-[var(--tm-record-negative-bg)] text-[var(--tm-record-negative-text)]'
+            : 'bg-[var(--tm-record-positive-bg)] text-[var(--tm-record-positive-text)]';
 
         return (
-            <div key={log.id} className="relative overflow-hidden rounded-[26px] border border-[#EDF3F7] bg-white p-4 shadow-[0_10px_26px_rgba(48,76,105,0.045)] animate-in fade-in duration-500">
+            <div key={log.id} className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-white p-4 shadow-[var(--tm-shadow-card)] animate-in fade-in duration-500">
                 <TeacherRecordHeader id={log.id} time={log.time} />
 
                 {log.type === 'voice' && <VoicePlayback active={log.scope} duration={log.audioDuration} />}
 
-                <p className="mb-3.5 text-[15px] font-bold leading-[1.45] text-slate-900">
+                <p className="mb-3.5 text-[14px] font-medium leading-[1.55] text-[var(--tm-text-primary)]">
                     {log.content}
                 </p>
 
                 <button
                     type="button"
                     onClick={() => { setEditingLog(log); setShowScoreEdit(true); }}
-                    className={`block w-full rounded-[24px] border-[1.5px] p-3.5 text-left transition active:scale-[0.995] ${aiBlockClass}`}
+                    className="block w-full rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-3.5 text-left transition active:scale-[0.995]"
                     aria-label="编辑 AI 智能解读结果"
                 >
-                    <div className="mb-3 grid grid-cols-[28px_auto_1fr_auto] items-center gap-2">
+                    <div className="mb-3 grid grid-cols-[26px_auto_1fr_auto] items-center gap-2">
                         <img
                             src={ASSETS.MANAGEMENT.AI_BOT}
                             alt="AI Bot"
-                            className="h-[28px] w-[28px] object-contain"
+                            className="h-[26px] w-[26px] object-contain"
                         />
-                        <span className="text-[15px] font-extrabold text-slate-900">AI 智能解读</span>
-                        <span className={`h-1 w-8 rounded-full opacity-55 ${isClass ? 'bg-gradient-to-r from-[#D8B4FE] to-[#F0ABFC]' : 'bg-gradient-to-r from-[#7DDDE7] to-[#B8C4FF]'}`} />
+                        <span className="text-[14px] font-semibold text-[var(--tm-text-primary)]">AI 智能解读</span>
+                        <span className={`h-1 w-6 rounded-full opacity-70 ${modeAccentClass}`} />
                         {scoreItems.length > 0 && (
-                            <div className={`grid h-[43px] min-w-[78px] grid-cols-[auto_auto] items-center justify-center gap-1 rounded-[16px] border px-2.5 ${totalClass}`}>
-                                <span className="text-[26px] font-black leading-none">{formatScoreValue(totalScore)}</span>
-                                <span className="text-[11px] font-bold leading-none text-slate-500">总分</span>
+                            <div className={`grid h-10 min-w-[68px] grid-cols-[auto_auto] items-center justify-center gap-1 rounded-[var(--tm-radius-control)] px-2.5 ${totalClass}`}>
+                                <span className="text-[22px] font-bold leading-none">{formatScoreValue(totalScore)}</span>
+                                <span className="text-[10px] font-medium leading-none text-[var(--tm-text-secondary)]">总分</span>
                             </div>
                         )}
                     </div>
@@ -368,7 +395,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                     <div className="grid grid-cols-[38px_minmax(0,1fr)] gap-x-2 gap-y-2">
                         <FieldLabel text="时间" />
                         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                            <span className="inline-flex min-h-[30px] items-center rounded-full border border-[#EAF1F6] bg-white px-3 text-[14px] font-bold text-slate-800 shadow-[0_2px_8px_rgba(48,76,105,0.018)]">
+                            <span className="inline-flex min-h-[28px] items-center text-[13px] font-medium text-[var(--tm-text-primary)]">
                                 {log.rawDate || log.time.split(' ')[0]}
                             </span>
                         </div>
@@ -376,28 +403,28 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         <FieldLabel text="对象" />
                         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                             {(log.students || []).slice(0, 1).map(stu => (
-                                <span key={stu.id} className={`inline-flex min-h-[30px] max-w-full items-center rounded-full border px-2.5 text-[12px] font-extrabold ${modeTextClass}`}>
+                                <span key={stu.id} className={`inline-flex min-h-[28px] max-w-full items-center rounded-full px-2.5 text-[12px] font-semibold ${modeTextClass}`}>
                                     {stu.name.replace(/ /g, '')}
                                 </span>
                             ))}
                             {log.students && log.students.length > 1 && (
-                                <span className={`inline-flex min-h-[30px] items-center rounded-full border px-2.5 text-[12px] font-extrabold ${modeTextClass}`}>+{log.students.length - 1}人</span>
+                                <span className={`inline-flex min-h-[28px] items-center rounded-full px-2.5 text-[12px] font-semibold ${modeTextClass}`}>+{log.students.length - 1}人</span>
                             )}
                         </div>
 
                         <FieldLabel text="指标" />
                         <div className="min-w-0 space-y-1.5">
                             {scoreItems.map((item, index) => (
-                                <div key={`${item.label}-${index}`} className={`grid min-h-[29px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[11px] border bg-white/90 px-2.5 text-[11.5px] font-bold ${isNegative ? 'border-[#F9D8DF] text-slate-700' : 'border-[#E5EFF4] text-slate-700'}`}>
+                                <div key={`${item.label}-${index}`} className="grid min-h-8 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-[var(--tm-border-subtle)] px-0.5 text-[12px] font-medium text-[var(--tm-text-primary)] last:border-b-0">
                                     <span className="min-w-0 truncate">{item.label}</span>
-                                    <span className={`text-[13px] font-black ${item.value < 0 ? 'text-[#E05268]' : 'text-[#0F8F83]'}`}>{formatScoreValue(item.value)}</span>
+                                    <span className={`text-[13px] font-bold ${item.value < 0 ? 'text-[var(--tm-record-negative-text)]' : 'text-[var(--tm-record-positive-text)]'}`}>{formatScoreValue(item.value)}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     {log.aiSummary && (
-                        <div className="mt-3 rounded-[18px] bg-white/74 px-3.5 py-3 text-[14px] font-bold leading-[1.48] text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.74)]">
+                        <div className="mt-3 border-t border-[var(--tm-border-subtle)] pt-3 text-[13px] font-medium leading-[1.55] text-[var(--tm-text-primary)]">
                             {log.aiSummary}
                         </div>
                     )}
@@ -409,8 +436,8 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
     // --- Main Render ---
     return (
-        <div className="flex flex-col h-full bg-[#FAFAFA] relative overflow-hidden">
-            {/* Multi-color tech aurora background for the record page. */}
+        <div className="relative flex h-full flex-col overflow-hidden bg-transparent">
+            {/* Brand-tinted atmosphere stays subtle so content remains visually neutral. */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <TeacherRecordAuroraBackground activeTab={activeTab} />
             </div>
@@ -427,37 +454,62 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         </div>
                     )}
 
-                    <div className="pr-[116px]">
-                        <div className="flex rounded-[23px] border border-white/95 bg-white/82 p-1 shadow-[0_8px_20px_rgba(60,85,120,0.055)] ring-1 ring-[#EAF1F6]/80">
+                    <div className={`flex min-h-11 items-center gap-3 ${canRecordClass ? '' : 'justify-between'}`}>
+                        {showClassSourceSwitcher && classSourceName && (
+                            <ClassSourceTrigger
+                                name={classSourceName}
+                                type={classSourceType}
+                                onClick={onOpenClassSourceSwitcher}
+                                variant="quiet"
+                            />
+                        )}
+                        {!canRecordClass && (
                             <button
-                                onClick={() => onTabChange('student')}
-                                className={`flex-1 py-3 text-[15px] font-extrabold rounded-[19px] transition-all duration-300 ${activeTab === 'student' ? 'bg-gradient-to-r from-[#19B8C8] to-[#6679F2] text-white shadow-[0_8px_16px_rgba(18,184,203,0.16)]' : 'text-[#66768A]'}`}
+                                type="button"
+                                className="ml-auto flex min-h-11 shrink-0 items-center gap-0.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-medium text-[var(--tm-text-secondary)] transition-colors duration-200 active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
+                                aria-label="查看学生指标"
                             >
-                                记录学生
+                                <span>学生指标</span>
+                                <ChevronRightIcon className="h-3.5 w-3.5 opacity-60" />
                             </button>
-                            <button
-                                onClick={() => onTabChange('class')}
-                                className={`flex-1 py-3 text-[15px] font-extrabold rounded-[19px] transition-all duration-300 ${activeTab === 'class' ? 'bg-gradient-to-r from-[#7C3AED] to-[#B832D2] text-white shadow-[0_8px_16px_rgba(124,58,237,0.15)]' : 'text-[#66768A]'}`}
-                            >
-                                记录班级
-                            </button>
-                        </div>
+                        )}
                     </div>
                 </div>
 
-                <div className="px-6 pb-4 pt-2">
-                    <button className="text-left text-[#7B8796] active:scale-[0.99] transition">
-                        <div className="flex items-center gap-1 text-[15px] font-bold">
-                            <span>查看指标</span>
-                            <ChevronRightIcon className="w-4 h-4 opacity-60" />
+                {canRecordClass && (
+                    <div className="grid grid-cols-[224px_minmax(0,1fr)] items-end gap-3 px-5 pb-3 pt-1.5">
+                        <div className="w-full">
+                            <div className="flex h-full rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-glass)] p-1 shadow-[var(--tm-shadow-control)]">
+                                <button
+                                    onClick={() => onTabChange('student')}
+                                    className={`min-h-11 flex-1 rounded-[var(--tm-radius-control)] px-2 text-[14px] font-semibold transition-[background-color,color] [transition-duration:var(--tm-duration-standard)] ${activeTab === 'student' ? 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
+                                    aria-pressed={activeTab === 'student'}
+                                >
+                                    记录学生
+                                </button>
+                                <button
+                                    onClick={() => onTabChange('class')}
+                                    className={`min-h-11 flex-1 rounded-[var(--tm-radius-control)] px-2 text-[14px] font-semibold transition-[background-color,color] [transition-duration:var(--tm-duration-standard)] ${activeTab === 'class' ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
+                                    aria-pressed={activeTab === 'class'}
+                                >
+                                    记录班级
+                                </button>
+                            </div>
                         </div>
-                        <div className="mt-0.5 text-[12px] font-bold text-[#9AA8B8]">内容由 AI 生成</div>
-                    </button>
-                </div>
+                        <button
+                            type="button"
+                            className="flex min-h-11 shrink-0 items-center justify-self-end gap-0.5 rounded-[var(--tm-radius-control)] pl-3 pr-2.5 text-[13px] font-medium text-[var(--tm-text-secondary)] transition-[background-color,color,transform] duration-200 active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
+                            aria-label={`查看${activeTab === 'student' ? '学生' : '班级'}指标`}
+                        >
+                            <span>{activeTab === 'student' ? '学生指标' : '班级指标'}</span>
+                            <ChevronRightIcon className="h-3.5 w-3.5 opacity-60" />
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* List Content */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-0 space-y-4 pb-44 no-scrollbar relative z-10">
+            <div className="relative z-10 flex-1 min-h-0 space-y-3.5 overflow-y-auto px-5 pb-44 pt-0 no-scrollbar">
                 {logs
                     .filter(log => log.scope === activeTab)
                     .map(log => renderLogItem(log))}
@@ -474,13 +526,13 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
             {/* Mobile Style Date Picker */}
             {showDatePicker && editingLog && (
-                <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDatePicker(false)}>
-                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-lg flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+                <div className={recordSheetBackdropClass} onClick={() => setShowDatePicker(false)}>
+                    <div className={recordSheetSurfaceClass} onClick={(e) => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-50 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-slate-800">选择日期</h3>
                             <div className="flex items-center gap-3">
-                                <button onClick={() => setShowDatePicker(false)} className="text-sm font-bold text-slate-400">取消</button>
-                                <button onClick={() => setShowDatePicker(false)} className="text-sm font-bold text-cyan-700">完成</button>
+                                <button onClick={() => setShowDatePicker(false)} className="min-h-11 px-2 text-sm font-bold text-[var(--tm-text-disabled)]">取消</button>
+                                <button onClick={() => setShowDatePicker(false)} className={`min-h-11 px-2 text-sm font-semibold ${modeTextTone}`}>完成</button>
                             </div>
                         </div>
                         <div className="h-64 overflow-hidden relative flex items-center justify-center p-6">
@@ -488,15 +540,15 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             <div className="flex-1 h-full flex items-center justify-center gap-8 z-10">
                                 {/* Simulated Wheels */}
                                 <div className="text-center">
-                                    <div className="text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-tighter">Year</div>
+                                    <div className="mb-1 text-[11px] font-medium text-slate-300">年</div>
                                     <div className="text-xl font-semibold text-slate-800">2025</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-tighter">Month</div>
+                                    <div className="mb-1 text-[11px] font-medium text-slate-300">月</div>
                                     <div className="text-xl font-semibold text-slate-800">11</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-[11px] font-bold text-slate-300 mb-1 uppercase tracking-tighter">Day</div>
+                                    <div className="mb-1 text-[11px] font-medium text-slate-300">日</div>
                                     <div className="text-xl font-semibold text-slate-700 opacity-40">11</div>
                                     <div className="text-xl font-semibold text-slate-800 py-2">12</div>
                                     <div className="text-xl font-semibold text-slate-700 opacity-40">13</div>
@@ -521,12 +573,12 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
             {/* Class Select Modal with Grade Filter */}
             {showClassSelect && editingLog && (
-                <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowClassSelect(false)}>
-                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-lg h-[75vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+                <div className={recordSheetBackdropClass} onClick={() => setShowClassSelect(false)}>
+                    <div className={`${recordSheetSurfaceClass} h-[75vh]`} onClick={(e) => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-50">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-slate-800">选择班级</h3>
-                                <button onClick={() => setShowClassSelect(false)} className="p-2 bg-slate-50 rounded-full text-slate-400"><CloseIcon className="w-5 h-5" /></button>
+                                <button onClick={() => setShowClassSelect(false)} className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-disabled)]"><CloseIcon className="w-5 h-5" /></button>
                             </div>
                             {/* Grade Filter Tabs */}
                             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
@@ -534,9 +586,9 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                     <button
                                         key={grade}
                                         onClick={() => setSelectedGradeFilter(grade)}
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border
+                                        className={`min-h-11 whitespace-nowrap rounded-xl border px-4 text-xs font-bold transition-all
                                             ${selectedGradeFilter === grade
-                                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100'
+                                                ? 'border-transparent bg-[var(--tm-record-class-primary)] text-white'
                                                 : 'bg-slate-50 border-transparent text-slate-500 '}`}
                                     >
                                         {grade}
@@ -562,7 +614,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                         className="w-full text-left p-4 rounded-2xl bg-slate-50   font-bold text-sm transition-colors border border-transparent  flex items-center justify-between group"
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                                            <div className="h-1.5 w-1.5 rounded-full bg-[var(--tm-record-class-primary)]"></div>
                                             <span>{cls.n}</span>
                                             <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 rounded-md group- group-">{cls.g}</span>
                                         </div>
@@ -576,11 +628,11 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
             {/* Score Edit Modal */}
             {showScoreEdit && editingLog && (
-                <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowScoreEdit(false)}>
-                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-lg h-[70vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+                <div className={recordSheetBackdropClass} onClick={() => setShowScoreEdit(false)}>
+                    <div className={`${recordSheetSurfaceClass} h-[70vh]`} onClick={(e) => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-50 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-slate-800">修改得分项</h3>
-                            <button onClick={() => setShowScoreEdit(false)} className="p-2 bg-slate-50 rounded-full text-slate-400"><CloseIcon className="w-5 h-5" /></button>
+                            <button onClick={() => setShowScoreEdit(false)} className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-disabled)]"><CloseIcon className="w-5 h-5" /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                             <div>
@@ -593,7 +645,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                         <button
                                             key={label}
                                             onClick={() => handleUpdateLogScore(editingLog.id, label, editingLog.score?.value || 0)}
-                                            className={`p-3.5 rounded-xl border text-xs font-bold text-left transition-all ${editingLog.score?.label === label ? 'bg-indigo-50 border-indigo-200 text-cyan-700' : 'bg-white border-slate-100 text-slate-600'}`}
+                                            className={`rounded-xl border p-3.5 text-left text-xs font-semibold transition-all ${editingLog.score?.label === label ? `border-transparent ${modeSoftTone}` : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-text-secondary)]'}`}
                                         >
                                             {label}
                                         </button>
@@ -607,7 +659,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                         <button
                                             key={v}
                                             onClick={() => handleUpdateLogScore(editingLog.id, editingLog.score?.label || '', v)}
-                                            className={`flex-1 h-12 rounded-xl font-mono font-semibold flex items-center justify-center transition-all ${editingLog.score?.value === v ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-110' : 'bg-white text-slate-400'}`}
+                                            className={`flex h-12 flex-1 items-center justify-center rounded-xl font-mono font-semibold transition-all ${editingLog.score?.value === v ? `${v < 0 ? 'bg-[var(--tm-status-negative)]' : 'bg-[var(--tm-status-positive)]'} scale-105 text-white` : `${v < 0 ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-status-positive)]'} bg-white`}`}
                                         >
                                             {v > 0 ? `+${v}` : v}
                                         </button>
@@ -616,35 +668,35 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             </div>
                         </div>
                         <div className="p-4 safe-area-bottom">
-                            <button onClick={() => setShowScoreEdit(false)} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-semibold shadow-xl shadow-indigo-100 active:scale-95 transition-all">确认修改</button>
+                            <button onClick={() => setShowScoreEdit(false)} className={`w-full rounded-2xl py-4 font-semibold transition-all active:scale-95 ${modeSolidTone}`}>确认修改</button>
                         </div>
                     </div>
                 </div>
             )}
             {/* Student List Modal (Reused) */}
             {showStudentListModal && (
-                <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowStudentListModal(false)}>
-                    <div className="bg-white w-full max-w-md rounded-t-[32px] shadow-lg h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+                <div className={recordSheetBackdropClass} onClick={() => setShowStudentListModal(false)}>
+                    <div className={`${recordSheetSurfaceClass} h-[85vh]`} onClick={(e) => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-50 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-slate-800">涉及学生</h3>
-                            <button onClick={() => setShowStudentListModal(false)} className="p-2 bg-slate-50 rounded-full active:bg-slate-100 text-slate-400  transition-colors"><CloseIcon className="w-6 h-6" /></button>
+                            <button onClick={() => setShowStudentListModal(false)} className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-muted)]"><CloseIcon className="w-6 h-6" /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-3">
                             {MOCK_STUDENTS_CLASS_1.slice(0, 15).map((student, idx) => (
                                 <div key={student.id} className="flex items-center justify-between p-3.5 bg-slate-50/50  rounded-2xl border border-slate-100/50 transition-colors">
                                     <div className="flex items-center gap-3.5">
-                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-cyan-50 flex items-center justify-center text-xs font-semibold text-blue-600 shadow-inner">{idx + 1}</div>
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--tm-record-student-soft)] text-xs font-semibold text-[var(--tm-record-student-text)]">{idx + 1}</div>
                                         <div>
                                             <div className="text-sm font-bold text-slate-800">{student.name}</div>
                                             <div className="text-[11px] text-slate-400 font-medium">{student.id}</div>
                                         </div>
                                     </div>
-                                    <button className="text-xs font-bold text-white bg-blue-500  px-4 py-2 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95">替换</button>
+                                    <button className="min-h-11 rounded-xl bg-[var(--tm-record-student-soft)] px-4 text-xs font-semibold text-[var(--tm-record-student-text)] transition-all active:scale-95">替换</button>
                                 </div>
                             ))}
                         </div>
                         <div className="p-4 safe-area-bottom bg-white border-t border-slate-50">
-                            <button onClick={() => setShowStudentListModal(false)} className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-2xl font-semibold text-base shadow-lg shadow-blue-200 active:scale-[0.98] transition-all">
+                            <button onClick={() => setShowStudentListModal(false)} className="w-full rounded-2xl bg-[var(--tm-record-student-primary)] py-4 text-base font-semibold text-white transition-all active:scale-[0.98]">
                                 确认列表
                             </button>
                         </div>

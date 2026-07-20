@@ -1,6 +1,9 @@
 export type QuestionnaireStatus = 'draft' | 'active' | 'ended' | 'archived';
-export type QuestionnaireQuestionType = 'single' | 'multiple' | 'rating' | 'text';
+export type QuestionnaireCollectionMode = 'guardian_questionnaire' | 'student_information' | 'teacher_questionnaire';
+export type QuestionnaireQuestionType = 'single' | 'multiple' | 'rating' | 'text' | 'short_text' | 'number' | 'date';
 export type QuestionnaireTargetMode = 'all' | 'classes' | 'students';
+export type StudentCollectionRecordStatus = 'pending' | 'draft' | 'completed';
+export type StudentAssignmentMode = 'creator' | 'homeroom';
 
 export interface QuestionnaireChoiceAnswer {
   selectedOptions: string[];
@@ -36,6 +39,19 @@ export interface QuestionnaireSubmission {
   answers: Record<string, QuestionnaireAnswer>;
 }
 
+export interface StudentCollectionRecord {
+  id: string;
+  studentNo: string;
+  studentName: string;
+  classId: string;
+  className: string;
+  status: StudentCollectionRecordStatus;
+  updatedAt: string;
+  answers: Record<string, QuestionnaireAnswer>;
+  assigneeTeacherId?: string;
+  assigneeTeacherName?: string;
+}
+
 export interface QuestionnaireRecord {
   id: string;
   title: string;
@@ -45,11 +61,30 @@ export interface QuestionnaireRecord {
   createdAt: string;
   suggestedDeadline: string;
   status: QuestionnaireStatus;
+  creatorTeacherId?: string;
+  collectionMode?: QuestionnaireCollectionMode;
+  studentAssignmentMode?: StudentAssignmentMode;
   targetMode?: QuestionnaireTargetMode;
   targetClassIds?: string[];
   questions: QuestionnaireQuestion[];
   targets: QuestionnaireTarget[];
   submissions: QuestionnaireSubmission[];
+  studentRecords?: StudentCollectionRecord[];
+}
+
+export type StudentCollectionHistoryMode = 'guardian_questionnaire' | 'student_information';
+
+export interface StudentCollectionHistoryItem {
+  id: string;
+  questionnaireId: string;
+  collectionMode: StudentCollectionHistoryMode;
+  title: string;
+  description: string;
+  creatorName: string;
+  respondentLabel: string;
+  completedAt: string;
+  questions: QuestionnaireQuestion[];
+  answers: Record<string, QuestionnaireAnswer>;
 }
 
 const STORAGE_KEY = 'campus-questionnaires-v1';
@@ -143,7 +178,160 @@ const createDemoSubmissions = (
   answers: answers(index),
 }));
 
+const enrollmentInformationFields: QuestionnaireQuestion[] = [
+  { id: 'enrollment-address', type: 'short_text', title: '现居住地址', required: true, options: [] },
+  { id: 'enrollment-birthday', type: 'date', title: '出生日期', required: true, options: [] },
+  { id: 'enrollment-height', type: 'number', title: '身高（厘米）', required: false, options: [] },
+  { id: 'enrollment-residence', type: 'single', title: '户籍类型', required: true, options: ['本地户籍', '外地户籍'] },
+  { id: 'enrollment-allergy', type: 'multiple', title: '需要关注的过敏原', required: false, options: ['无', '食物', '药物', '花粉'] },
+  { id: 'enrollment-notes', type: 'text', title: '其他需要学校关注的情况', required: false, options: [] },
+];
+
+const createStudentCollectionRecords = (
+  prefix: string,
+  targets: QuestionnaireTarget[],
+  completedCount: number,
+  draftCount: number,
+  assigneeTeacherId = 'school-star:刘飞',
+  assigneeTeacherName = '刘飞',
+): StudentCollectionRecord[] => targets.map((target, index) => {
+  const completed = index < completedCount;
+  const draft = !completed && index < completedCount + draftCount;
+  return {
+    id: `${prefix}-${target.studentNo}`,
+    studentNo: target.studentNo,
+    studentName: target.studentName,
+    classId: target.classId,
+    className: target.className,
+    status: completed ? 'completed' : draft ? 'draft' : 'pending',
+    updatedAt: completed || draft ? `2026-07-${String(12 + (index % 3)).padStart(2, '0')} ${String(9 + index).padStart(2, '0')}:20` : '',
+    assigneeTeacherId,
+    assigneeTeacherName,
+    answers: completed || draft ? {
+      'enrollment-address': `锦江区春熙路${index + 1}号`,
+      'enrollment-birthday': `2019-0${(index % 8) + 1}-${String(8 + index).padStart(2, '0')}`,
+      'enrollment-height': 118 + index,
+      'enrollment-residence': index % 3 === 0 ? '外地户籍' : '本地户籍',
+      'enrollment-allergy': index % 4 === 0 ? ['食物'] : ['无'],
+      'enrollment-notes': completed && index % 3 === 0 ? '午休时需要提醒及时补充饮水。' : '',
+    } : {},
+  };
+});
+
+const schoolEnrollmentTargets: QuestionnaireTarget[] = [
+  ['20250121', '沈知夏', 'c_2025_1', '2025级一班'],
+  ['20250122', '顾晨阳', 'c_2025_1', '2025级一班'],
+  ['20250123', '许安然', 'c_2025_1', '2025级一班'],
+  ['20250221', '周景行', 'c_2025_2', '2025级二班'],
+  ['20250222', '宋予希', 'c_2025_2', '2025级二班'],
+  ['20250223', '陈嘉树', 'c_2025_2', '2025级二班'],
+  ['20250421', '林星野', 'c_2025_4', '2025级四班'],
+  ['20250422', '陆可心', 'c_2025_4', '2025级四班'],
+  ['20250423', '赵一川', 'c_2025_4', '2025级四班'],
+].map(([studentNo, studentName, classId, className], index) => ({
+  studentId: `school-enrollment-${index + 1}`,
+  studentNo,
+  studentName,
+  classId,
+  className,
+  reachable: true,
+}));
+
+const schoolEnrollmentRecords = createStudentCollectionRecords(
+  'school-enrollment',
+  schoolEnrollmentTargets,
+  schoolEnrollmentTargets.length,
+  0,
+).map((record, index) => {
+  const isCurrentTeacherClass = record.classId === 'c_2025_1' || record.classId === 'c_2025_4';
+  const hasSavedContent = index === 0 || index === 1 || index === 6 || index === 7;
+  return {
+    ...record,
+    status: index === 0 || index === 6 ? 'completed' as const : index === 1 || index === 7 ? 'draft' as const : 'pending' as const,
+    updatedAt: hasSavedContent ? record.updatedAt : '',
+    answers: hasSavedContent ? record.answers : {},
+    assigneeTeacherId: isCurrentTeacherClass ? 'school-star:刘飞' : 'school-star:王蕾',
+    assigneeTeacherName: isCurrentTeacherClass ? '刘飞' : '王蕾老师',
+  };
+});
+
 const seedQuestionnaires: QuestionnaireRecord[] = [
+  {
+    id: 'collection-school-enrollment-202607',
+    title: '一年级新生入学资料补充',
+    description: '补充新生基础资料与入学关注事项。',
+    creatorName: '李校长',
+    creatorTeacherId: 'school-star:李校长',
+    spaceId: 'school-star',
+    createdAt: '2026-07-15 08:30',
+    suggestedDeadline: '',
+    status: 'active',
+    collectionMode: 'student_information',
+    studentAssignmentMode: 'homeroom',
+    targetMode: 'classes',
+    targetClassIds: ['c_2025_1', 'c_2025_2', 'c_2025_4'],
+    questions: enrollmentInformationFields,
+    targets: schoolEnrollmentTargets,
+    submissions: [],
+    studentRecords: schoolEnrollmentRecords,
+  },
+  {
+    id: 'collection-enrollment-202607',
+    title: '一年级新生入学信息采集',
+    description: '逐一核对新生基础资料与入学关注事项。',
+    creatorName: '刘飞飞老师',
+    creatorTeacherId: 'school-star:刘飞',
+    spaceId: 'school-star',
+    createdAt: '2026-07-11 08:40',
+    suggestedDeadline: '',
+    status: 'active',
+    collectionMode: 'student_information',
+    studentAssignmentMode: 'creator',
+    targetMode: 'all',
+    questions: enrollmentInformationFields,
+    targets: seedTargets.map(target => ({ ...target, reachable: true })),
+    submissions: [],
+    studentRecords: createStudentCollectionRecords('enrollment', seedTargets, 5, 2),
+  },
+  {
+    id: 'collection-status-check-202606',
+    title: '学生学籍信息核对',
+    description: '核对学生本学期学籍信息。',
+    creatorName: '刘飞飞老师',
+    creatorTeacherId: 'school-star:刘飞',
+    spaceId: 'school-star',
+    createdAt: '2026-06-10 10:20',
+    suggestedDeadline: '',
+    status: 'ended',
+    collectionMode: 'student_information',
+    studentAssignmentMode: 'creator',
+    targetMode: 'all',
+    questions: enrollmentInformationFields.slice(0, 4),
+    targets: seedTargets.slice(0, 8).map(target => ({ ...target, reachable: true })),
+    submissions: [],
+    studentRecords: createStudentCollectionRecords('status-check', seedTargets.slice(0, 8), 8, 0),
+  },
+  {
+    id: 'collection-health-draft',
+    title: '学生健康信息补充',
+    description: '',
+    creatorName: '刘飞飞老师',
+    creatorTeacherId: 'school-star:刘飞',
+    spaceId: 'school-star',
+    createdAt: '2026-07-14 14:10',
+    suggestedDeadline: '',
+    status: 'draft',
+    collectionMode: 'student_information',
+    studentAssignmentMode: 'creator',
+    targetMode: 'all',
+    questions: [
+      { id: 'health-height', type: 'number', title: '身高（厘米）', required: false, options: [] },
+      { id: 'health-note', type: 'text', title: '健康情况补充', required: false, options: [] },
+    ],
+    targets: [],
+    submissions: [],
+    studentRecords: [],
+  },
   {
     id: 'survey-reading-202607',
     title: '暑期家庭阅读情况调查',
@@ -335,6 +523,9 @@ const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): Questionnair
   return {
     ...rest,
     suggestedDeadline: rest.suggestedDeadline ?? deadline ?? '',
+    collectionMode: rest.collectionMode ?? 'guardian_questionnaire',
+    studentAssignmentMode: rest.studentAssignmentMode ?? 'creator',
+    studentRecords: rest.studentRecords ?? [],
   };
 };
 
@@ -382,6 +573,150 @@ export const upsertQuestionnaire = (record: QuestionnaireRecord) => {
     : [record, ...current]);
 };
 
+export const getQuestionnaireCollectionMode = (record: QuestionnaireRecord): QuestionnaireCollectionMode => (
+  record.collectionMode ?? 'guardian_questionnaire'
+);
+
+const normalizeTeacherName = (name: string) => name.replace(/老师$/u, '').trim();
+
+const matchesTeacher = (
+  assignedTeacherId: string | undefined,
+  assignedTeacherName: string | undefined,
+  teacherId: string,
+  teacherName: string,
+) => {
+  if (assignedTeacherId) return assignedTeacherId === teacherId;
+  if (!assignedTeacherName) return false;
+  const assignedName = normalizeTeacherName(assignedTeacherName);
+  const currentName = normalizeTeacherName(teacherName);
+  return assignedName === currentName || assignedName.startsWith(currentName) || currentName.startsWith(assignedName);
+};
+
+export const isQuestionnaireCreatedByTeacher = (
+  record: QuestionnaireRecord,
+  teacherId: string,
+  teacherName: string,
+) => matchesTeacher(record.creatorTeacherId, record.creatorName, teacherId, teacherName);
+
+export const getStudentCollectionRecordsForTeacher = (
+  record: QuestionnaireRecord,
+  teacherId: string,
+  teacherName: string,
+): StudentCollectionRecord[] => {
+  if (getQuestionnaireCollectionMode(record) !== 'student_information') return [];
+  const recordsByStudentNo = new Map((record.studentRecords ?? []).map(item => [item.studentNo, item]));
+  const studentRecords: StudentCollectionRecord[] = record.targets.map(target => recordsByStudentNo.get(target.studentNo) ?? {
+    id: `${record.id}-${target.studentNo}`,
+    studentNo: target.studentNo,
+    studentName: target.studentName,
+    classId: target.classId,
+    className: target.className,
+    status: 'pending' as const,
+    updatedAt: '',
+    answers: {},
+  });
+  return studentRecords.filter(item => {
+    if (item.assigneeTeacherId || item.assigneeTeacherName) {
+      return matchesTeacher(item.assigneeTeacherId, item.assigneeTeacherName, teacherId, teacherName);
+    }
+    return (record.studentAssignmentMode ?? 'creator') === 'creator'
+      && isQuestionnaireCreatedByTeacher(record, teacherId, teacherName);
+  });
+};
+
+export const getPendingAssignedStudentCollections = (
+  records: QuestionnaireRecord[],
+  teacherId: string,
+  teacherName: string,
+  spaceId?: string,
+) => records.filter(record => {
+  if (
+    record.status !== 'active'
+    || getQuestionnaireCollectionMode(record) !== 'student_information'
+    || spaceId && record.spaceId !== spaceId
+  ) return false;
+  const assignedRecords = getStudentCollectionRecordsForTeacher(record, teacherId, teacherName);
+  return assignedRecords.length > 0 && assignedRecords.some(item => item.status !== 'completed');
+});
+
+const formatTeacherRespondentLabel = (teacherName: string) => {
+  const normalized = teacherName.trim();
+  if (!normalized) return '老师更新';
+  return `${normalized.endsWith('老师') ? normalized : `${normalized}老师`}更新`;
+};
+
+export const getCompletedStudentCollectionHistory = (
+  records: QuestionnaireRecord[],
+  studentNo: string,
+  teacherId: string,
+  teacherName: string,
+  spaceId?: string,
+): StudentCollectionHistoryItem[] => {
+  const history: StudentCollectionHistoryItem[] = [];
+  records.forEach(record => {
+    if (record.status === 'draft' || spaceId && record.spaceId !== spaceId) return;
+    const mode = getQuestionnaireCollectionMode(record);
+    const createdByCurrentTeacher = isQuestionnaireCreatedByTeacher(record, teacherId, teacherName);
+
+    if (mode === 'guardian_questionnaire') {
+      if (!createdByCurrentTeacher) return;
+      const submission = record.submissions.find(item => item.studentNo === studentNo);
+      if (!submission) return;
+      history.push({
+        id: `${record.id}-${submission.id}`,
+        questionnaireId: record.id,
+        collectionMode: mode,
+        title: record.title,
+        description: record.description,
+        creatorName: record.creatorName,
+        respondentLabel: `${submission.guardianRelation}填写`,
+        completedAt: submission.submittedAt,
+        questions: record.questions,
+        answers: submission.answers,
+      });
+      return;
+    }
+
+    if (mode === 'student_information') {
+      const studentRecord = (record.studentRecords ?? []).find(item => (
+        item.studentNo === studentNo && item.status === 'completed'
+      ));
+      if (!studentRecord) return;
+      const assignedToCurrentTeacher = getStudentCollectionRecordsForTeacher(
+        record,
+        teacherId,
+        teacherName,
+      ).some(item => item.studentNo === studentNo);
+      if (!createdByCurrentTeacher && !assignedToCurrentTeacher) return;
+      history.push({
+        id: `${record.id}-${studentRecord.id}`,
+        questionnaireId: record.id,
+        collectionMode: mode,
+        title: record.title,
+        description: record.description,
+        creatorName: record.creatorName,
+        respondentLabel: formatTeacherRespondentLabel(studentRecord.assigneeTeacherName ?? record.creatorName),
+        completedAt: studentRecord.updatedAt,
+        questions: record.questions,
+        answers: studentRecord.answers,
+      });
+    }
+  });
+  return history.sort((left, right) => right.completedAt.localeCompare(left.completedAt));
+};
+
+export const getStudentCollectionCompletedCount = (record: QuestionnaireRecord) => (
+  (record.studentRecords ?? []).filter(item => item.status === 'completed').length
+);
+
+export const isQuestionnaireFullyCollected = (record: QuestionnaireRecord) => {
+  const reachable = getReachableTargetCount(record);
+  const completed = getQuestionnaireCollectionMode(record) === 'student_information'
+    ? getStudentCollectionCompletedCount(record)
+    : record.submissions.length;
+  return reachable > 0 && completed >= reachable;
+};
+
 const allowedStatusTransitions: Record<QuestionnaireStatus, QuestionnaireStatus[]> = {
   draft: ['active'],
   active: ['ended'],
@@ -393,6 +728,12 @@ export const updateQuestionnaireStatus = (id: string, status: QuestionnaireStatu
   const records = readQuestionnaires();
   const record = records.find(item => item.id === id);
   if (!record || !allowedStatusTransitions[record.status].includes(status)) return false;
+  if (
+    record.status === 'ended'
+    && status === 'active'
+    && getQuestionnaireCollectionMode(record) === 'guardian_questionnaire'
+    && isQuestionnaireFullyCollected(record)
+  ) return false;
   writeQuestionnaires(records.map(item => item.id === id ? { ...item, status } : item));
   return true;
 };
@@ -417,12 +758,45 @@ export const submitQuestionnaireResponse = (
   const records = readQuestionnaires();
   const questionnaire = records.find(item => item.id === questionnaireId);
   const canSubmit = questionnaire?.status === 'active'
+    && getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'
     && questionnaire.targets.some(target => target.studentNo === submission.studentNo && target.reachable)
     && !questionnaire.submissions.some(existing => existing.studentNo === submission.studentNo);
   if (!canSubmit) return false;
 
   writeQuestionnaires(records.map(item => item.id === questionnaireId
     ? { ...item, submissions: [...item.submissions, submission] }
+    : item));
+  return true;
+};
+
+export const saveStudentCollectionRecord = (
+  questionnaireId: string,
+  studentRecord: StudentCollectionRecord,
+  teacherId?: string,
+  teacherName?: string,
+) => {
+  const records = readQuestionnaires();
+  const questionnaire = records.find(item => item.id === questionnaireId);
+  const assignedRecord = questionnaire && getStudentCollectionRecordsForTeacher(
+    questionnaire,
+    teacherId ?? '',
+    teacherName ?? '',
+  ).find(item => item.studentNo === studentRecord.studentNo);
+  const canSave = questionnaire?.status === 'active'
+    && getQuestionnaireCollectionMode(questionnaire) === 'student_information'
+    && questionnaire.targets.some(target => target.studentNo === studentRecord.studentNo)
+    && (!teacherId || !teacherName || Boolean(assignedRecord));
+  if (!canSave || !questionnaire) return false;
+
+  const currentRecords = questionnaire.studentRecords ?? [];
+  const exists = currentRecords.some(item => item.studentNo === studentRecord.studentNo);
+  writeQuestionnaires(records.map(item => item.id === questionnaireId
+    ? {
+        ...item,
+        studentRecords: exists
+          ? currentRecords.map(existing => existing.studentNo === studentRecord.studentNo ? studentRecord : existing)
+          : [...currentRecords, studentRecord],
+      }
     : item));
   return true;
 };
@@ -434,12 +808,17 @@ export const isQuestionnaireOverdue = (record: QuestionnaireRecord, now = new Da
 };
 
 export const getReachableTargetCount = (record: QuestionnaireRecord) => (
-  record.targets.filter(target => target.reachable).length
+  getQuestionnaireCollectionMode(record) === 'student_information'
+    ? record.targets.length
+    : record.targets.filter(target => target.reachable).length
 );
 
 export const getCompletionRate = (record: QuestionnaireRecord) => {
   const reachable = getReachableTargetCount(record);
-  return reachable === 0 ? 0 : Math.round((record.submissions.length / reachable) * 100);
+  const completed = getQuestionnaireCollectionMode(record) === 'student_information'
+    ? getStudentCollectionCompletedCount(record)
+    : record.submissions.length;
+  return reachable === 0 ? 0 : Math.round((completed / reachable) * 100);
 };
 
 export const isQuestionnaireChoiceAnswer = (answer: QuestionnaireAnswer | undefined): answer is QuestionnaireChoiceAnswer => (

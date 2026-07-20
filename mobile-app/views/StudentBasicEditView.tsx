@@ -4,7 +4,7 @@ import { ClassInfo, GuardianContact, GuardianRelation, Student } from '../types'
 import { ASSETS } from '../assets/images';
 import { MobileCard } from '../components/ui/MobileCard';
 import { IconBadge } from '../components/ui/IconBadge';
-import { phoneText } from '../styles/phoneTokens';
+import { phoneText } from '../styles/teacherMobileTokens';
 
 interface StudentBasicEditViewProps {
   student: Student;
@@ -261,7 +261,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
           <MobileCard variant="card" padding="md" className="mt-4">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <IconBadge icon={UsersRound} tone="teal" size="sm" />
+                <IconBadge icon={UsersRound} tone="positive" size="sm" />
                 <h2 className={`${phoneText.sectionTitle} text-slate-900`}>家长联系方式</h2>
               </div>
               <button type="button" onClick={addContact} className="flex h-10 items-center gap-1 rounded-full bg-teal-50 px-3 text-xs font-semibold text-teal-700 active:scale-95">

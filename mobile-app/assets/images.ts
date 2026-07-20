@@ -16,6 +16,7 @@ import aiPrincipalAssistantCharacterImg from './resources/ai-principal-assistant
 import aiPrincipalAssistantIcon from './resources/ai-principal-assistant-icon.png';
 import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
 import teacherMePageBg from './resources/teacher-me-page-bg.png';
+import teacherDaFeiAvatarImg from './resources/teacher-da-fei-avatar.png';
 import teacherLiuAvatarImg from './resources/teacher-liu-avatar.png';
 import teacherLiuAvatarFramedImg from './resources/teacher-liu-avatar-framed.png';
 import awardCertificateDefaultMobileImg from './resources/highlight-defaults/award-certificate-default.png';
@@ -153,6 +154,7 @@ export const ASSETS = {
     GIRLS: [avatarGirl1, avatarGirl2, avatarGirl3, avatarGirl4, avatarGirl5, avatarGirl6, avatarGirl7, avatarGirl],
     TEACHER_WANG: encodeSVG(teacherWangSVG),
     TEACHER_LIN: encodeSVG(teacherLinSVG),
+    TEACHER_DA_FEI: teacherDaFeiAvatarImg,
     TEACHER_LIU: teacherLiuAvatarFramedImg,
     TEACHER_LIU_RAW: teacherLiuAvatarImg,
   },

@@ -110,12 +110,12 @@ if (!teacherUsageSection.includes('className={`min-h-[36px] rounded-xl px-4 text
 }
 
 
-if (!teacherUsageSection.includes('className="inline-flex rounded-2xl bg-slate-100 p-1"')) {
+if (!teacherUsageSection.includes('className="inline-flex rounded-2xl bg-[var(--tm-bg-surface-muted)] p-1"')) {
   throw new Error('教师使用排行榜筛选外层应使用 inline-flex，避免背景铺满溢出');
 }
-if (teacherUsageSection.includes("rankingTab === 'active' ? 'text-emerald-600' : 'text-orange-600'")) {
-  throw new Error('教师使用排行榜标题行「查看全部」颜色不应随橙色 Tab 变化');
+if (teacherUsageSection.includes('text-emerald') || teacherUsageSection.includes('text-orange')) {
+  throw new Error('教师使用排行榜不应残留旧绿色或工具类橙色，应统一引用品牌 Token');
 }
-if (!teacherUsageSection.includes('className="shrink-0 text-xs font-medium text-emerald-600 active:opacity-70"')) {
-  throw new Error('教师使用排行榜「查看全部」应与其他板块统一为绿色文字按钮');
+if (!teacherUsageSection.includes('className="shrink-0 text-xs font-medium text-[var(--tm-brand-primary)] active:opacity-70"')) {
+  throw new Error('教师使用排行榜「查看全部」应与其他板块统一为品牌红文字按钮');
 }

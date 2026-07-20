@@ -8,6 +8,9 @@ const dashboardSource = read('./DashboardView.tsx');
 const basicEditSource = read('./StudentBasicEditView.tsx');
 const coinDetailSource = read('./StudentCoinDetailView.tsx');
 const coinFormatSource = read('../utils/coinFormat.ts');
+const questionnaireStoreSource = read('../../shared/questionnaireStore.ts');
+const collectionHistorySource = read('./student-collection/StudentCollectionHistoryTab.tsx');
+const collectionDetailSource = read('./student-collection/StudentCollectionRecordDetailView.tsx');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -36,6 +39,10 @@ requireText(appSource, 'currentView !== \'student_detail\'', '学生详情页不
 requireText(appSource, 'onBack={goBack}', '学生详情页返回入口应并入首个学生信息卡。');
 requireText(appSource, "'student_detail'", '学生详情页应具备独立沉浸背景判断。');
 requireText(appSource, 'radial-gradient(circle_at_18%_18%', '学生详情页状态栏区域应使用首卡同款淡雅弥散渐变背景。');
+requireText(appSource, "'student_collection_detail'", 'App 路由应包含学生采集记录详情页。');
+requireText(appSource, 'getCompletedStudentCollectionHistory(', '学生详情必须从问卷数据层读取已完成采集记录。');
+requireText(appSource, '<StudentCollectionRecordDetailView', '点击采集记录后必须进入独立详情页。');
+requireText(appSource, "setStudentDetailInitialTab('collection')", '从采集详情返回后应保持在采集记录页签。');
 
 requireText(dashboardSource, 'onEditBasicInfo', '学生详情总览应接收基础信息编辑入口。');
 requireText(dashboardSource, 'aria-label="编辑基础信息"', '顶部学生身份卡应使用图标按钮并保留无障碍标签。');
@@ -130,6 +137,23 @@ if (dashboardSource.includes('上月对比') || dashboardSource.includes('showLa
   throw new Error('五育能力模型不应再展示上月对比或年级平均，应改为当前与班级平均。');
 }
 requireText(dashboardSource, 'renderRecordTab', '学生详情总览应保留成长/评价记录内容。');
+requireText(dashboardSource, "useState<'growth' | 'evaluation' | 'collection'>", '学生详情必须提供采集记录第三页签。');
+requireText(dashboardSource, "initialTab = 'growth'", '学生详情应支持从采集详情返回时恢复原页签。');
+requireText(dashboardSource, '成长报告', '学生详情必须保留成长报告页签。');
+requireText(dashboardSource, '评价记录', '学生详情必须保留评价记录页签。');
+requireText(dashboardSource, '采集记录', '学生详情必须新增采集记录页签。');
+requireText(dashboardSource, "activeTab === 'growth' && renderGrowthTab()", '五育模型和成长内容必须只在成长报告页签展示。');
+requireText(dashboardSource, '<StudentCollectionHistoryTab items={collectionHistory}', '采集记录页签必须使用独立业务组件。');
+requireText(questionnaireStoreSource, 'getCompletedStudentCollectionHistory', '问卷数据层必须提供按学生查询采集历史的方法。');
+requireText(questionnaireStoreSource, "item.studentNo === studentNo && item.status === 'completed'", '学生详情只能展示已完成的学生采集记录。');
+requireText(questionnaireStoreSource, 'createdByCurrentTeacher', '学生采集历史查询必须校验任务创建权限。');
+requireText(questionnaireStoreSource, 'assignedToCurrentTeacher', '学生采集历史查询必须校验逐生填写分配权限。');
+requireText(collectionHistorySource, '家长问卷', '采集记录卡片必须区分家长问卷。');
+requireText(collectionHistorySource, '学生采集', '采集记录卡片必须区分学生采集。');
+requireText(collectionHistorySource, 'respondentLabel', '采集记录卡片必须展示实际填写人。');
+requireText(collectionDetailSource, 'divide-y divide-slate-100', '采集详情必须使用连续问答列表，不得为每道题嵌套卡片。');
+requireText(collectionDetailSource, 'formatQuestionnaireAnswer', '采集详情必须统一格式化结构化答案。');
+requireText(collectionDetailSource, '返回学生详情', '采集详情必须提供明确返回路径。');
 if (dashboardSource.includes("'redemption'")) {
   throw new Error('学生详情页不应再把兑换记录作为与成长报告同级的主要 Tab。');
 }

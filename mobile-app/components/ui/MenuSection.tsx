@@ -1,6 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { phoneText, type PhoneTone } from '../../styles/phoneTokens';
+import { phoneText, type PhoneTone } from '../../styles/teacherMobileTokens';
 import { IconBadge } from './IconBadge';
 import { MobileCard } from './MobileCard';
 

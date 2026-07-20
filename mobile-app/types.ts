@@ -70,6 +70,7 @@ export interface CampusCoinDetail {
 export interface ClassInfo {
   id: string;
   name: string;
+  classCode: string;
   gradeLevel: string;
   studentCount: number;
   tags: string[]; // e.g. "班主任", "数学"

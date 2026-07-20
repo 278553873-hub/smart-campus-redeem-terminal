@@ -58,7 +58,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
 
   const screenContent = (
     <div
-      className={`bg-white relative overflow-hidden border border-slate-200 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] ${showDeviceFrame ? 'rounded-[50px]' : 'rounded-none'}`}
+      className={`relative overflow-hidden border border-slate-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] ${showDeviceFrame ? 'rounded-[50px]' : 'rounded-none'}`}
       style={{ width: `${screenWidth}px`, height: `${screenHeight}px` }}
     >
         {screenBackground && (

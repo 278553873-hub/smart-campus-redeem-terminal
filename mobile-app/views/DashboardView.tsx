@@ -8,6 +8,8 @@ import {
 import { AlertTriangle, BadgeCheck, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
+import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
+import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
 
 interface DashboardViewProps {
     student: Student;
@@ -19,6 +21,9 @@ interface DashboardViewProps {
     onUpdateStudentStatus: (student: Student, status: Student['status']) => void;
     onViewCampusCoins: () => void;
     campusCoinDetail: CampusCoinDetail;
+    collectionHistory: StudentCollectionHistoryItem[];
+    onViewCollectionRecord: (item: StudentCollectionHistoryItem) => void;
+    initialTab?: 'growth' | 'evaluation' | 'collection';
 }
 
 // Helper: Radar Chart Component
@@ -220,9 +225,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onEditBasicInfo,
     onUpdateStudentStatus,
     onViewCampusCoins,
-    campusCoinDetail
+    campusCoinDetail,
+    collectionHistory,
+    onViewCollectionRecord,
+    initialTab = 'growth',
 }) => {
-    const [activeTab, setActiveTab] = useState<'growth' | 'evaluation'>('growth');
+    const [activeTab, setActiveTab] = useState<'growth' | 'evaluation' | 'collection'>(initialTab);
 
     // UI States
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['subject_reports']));
@@ -267,6 +275,30 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
     const renderGrowthTab = () => (
         <div className="space-y-3 pb-24 animate-in fade-in duration-300">
+            {/* C. Term Selector */}
+            <div className="flex items-center gap-3">
+                <button className="flex min-h-11 items-center gap-1.5 rounded-full border border-slate-100 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm transition-all active:opacity-60">
+                    <span>2025-2026学年 上学期</span>
+                    <ChevronDownIcon className="h-3.5 w-3.5 text-slate-400" />
+                </button>
+            </div>
+
+            {/* D. Radar Chart Card */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+                <div className="relative z-10 flex items-center justify-between px-5 pb-2 pt-4">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                        <AwardIcon className="h-4 w-4 text-amber-500" />
+                        五育能力模型
+                    </h3>
+                </div>
+                <div className="relative z-0 -my-4 flex w-full justify-center opacity-100">
+                    <div className="-mb-1 -mt-1 origin-center">
+                        <FiveEducationRadar scores={validScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
+                    </div>
+                </div>
+                <div className="h-6" />
+            </div>
+
             {/* Term Report */}
             <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
                 <button
@@ -488,57 +520,44 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                 </div>
 
-                {/* C. Term Selector */}
-                <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-1.5 bg-white text-slate-800 px-3 py-2 rounded-full text-sm font-medium border border-slate-100 shadow-sm transition-all active:opacity-60">
-                        <span>2025-2026学年 上学期</span>
-                        <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
-                    </button>
-                </div>
-
-                {/* D. Radar Chart Card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
-                    {/* Header Controls */}
-                    <div className="px-5 pt-4 pb-2 flex items-center justify-between z-10 relative">
-                        <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                            <AwardIcon className="w-4 h-4 text-amber-500" />
-                            五育能力模型
-                        </h3>
-                    </div>
-
-                    {/* Optimized Chart Container: Removed fixed height, using negative margins to trim padding */}
-                    <div className="w-full flex justify-center -my-4 opacity-100 relative z-0">
-                        <div className="origin-center -mt-1 -mb-1">
-                            {/* Passed props to chart */}
-                            <FiveEducationRadar scores={validScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
-                        </div>
-                    </div>
-                    {/* Visual Spacer at bottom to ensure no cut-off but minimal whitespace */}
-                    <div className="h-6"></div>
-                </div>
-
-                {/* D. Tabs */}
+                {/* C. Tabs */}
                 <div className="sticky top-14 z-30 bg-[#F7F9FC] pt-2 pb-1">
-                    <div className="bg-slate-200/50 p-1 rounded-xl flex h-11">
+                    <div className="grid h-11 grid-cols-3 rounded-xl bg-slate-200/50 p-1" role="tablist" aria-label="学生详情内容">
                         <button
+                            type="button"
+                            role="tab"
+                            aria-selected={activeTab === 'growth'}
                             onClick={() => setActiveTab('growth')}
-                            className={`flex-[1.2] text-sm font-medium rounded-lg transition-all shadow-sm ${activeTab === 'growth' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
+                            className={`rounded-lg px-1 text-[13px] font-medium transition-all ${activeTab === 'growth' ? 'bg-white text-slate-800 shadow-sm' : 'bg-transparent text-slate-400'}`}
                         >
                             成长报告
                         </button>
                         <button
+                            type="button"
+                            role="tab"
+                            aria-selected={activeTab === 'evaluation'}
                             onClick={() => setActiveTab('evaluation')}
-                            className={`flex-[1.2] text-sm font-medium rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 ${activeTab === 'evaluation' ? 'bg-white text-slate-800' : 'bg-transparent text-slate-400 shadow-none'}`}
+                            className={`rounded-lg px-1 text-[13px] font-medium transition-all ${activeTab === 'evaluation' ? 'bg-white text-slate-800 shadow-sm' : 'bg-transparent text-slate-400'}`}
                         >
                             评价记录
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={activeTab === 'collection'}
+                            onClick={() => setActiveTab('collection')}
+                            className={`rounded-lg px-1 text-[13px] font-medium transition-all ${activeTab === 'collection' ? 'bg-white text-slate-800 shadow-sm' : 'bg-transparent text-slate-400'}`}
+                        >
+                            采集记录
                         </button>
                     </div>
                 </div>
 
-                {/* E. Content Area */}
+                {/* D. Content Area */}
                 <div className="min-h-[400px]">
                     {activeTab === 'growth' && renderGrowthTab()}
                     {activeTab === 'evaluation' && renderRecordTab()}
+                    {activeTab === 'collection' && <StudentCollectionHistoryTab items={collectionHistory} onOpen={onViewCollectionRecord} />}
                 </div>
             </div>
 

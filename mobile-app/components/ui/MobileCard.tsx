@@ -1,5 +1,5 @@
 import React from 'react';
-import { phoneRadius, phoneShadow } from '../../styles/phoneTokens';
+import { phoneRadius, phoneShadow } from '../../styles/teacherMobileTokens';
 
 type MobileCardVariant = 'flat' | 'card' | 'raised' | 'hero' | 'ai' | 'metric';
 type MobileCardPadding = 'none' | 'sm' | 'md' | 'lg';
@@ -16,7 +16,7 @@ const variantClass: Record<MobileCardVariant, string> = {
   card: `bg-white ${phoneRadius.xl} ${phoneShadow.card} border border-slate-100/70`,
   raised: `bg-white ${phoneRadius.xl} ${phoneShadow.raised} border border-slate-100/70`,
   hero: `bg-white ${phoneRadius.sheet} ${phoneShadow.raised} border border-slate-100/70`,
-  ai: `bg-white ${phoneRadius.xl} ${phoneShadow.raised} border border-cyan-100/70`,
+  ai: `bg-white ${phoneRadius.xl} ${phoneShadow.raised} border border-[var(--tm-brand-primary-soft-strong)]`,
   metric: `bg-white ${phoneRadius.xl} ${phoneShadow.card} border border-slate-100/70`,
 };
 

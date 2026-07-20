@@ -1,146 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --ai-primary: #6366f1;
-  --ai-secondary: #06b6d4;
-  --ai-accent: #ec4899;
-  --ai-bg-main: #f8fafc;
-  --ai-transition: all 150ms ease;
-
-  /* Student Mode Palette */
-  --student-primary: #6366F1;
-  --student-secondary: #A855F7;
-  --student-accent: #EC4899;
-
-  /* Class Mode Palette */
-  --class-primary: #00B19D;
-  --class-secondary: #3B82F6;
-  --class-accent: #10B981;
-
-  /* Glassmorphism 3.0 - Airy & Light */
-  --ai-glass-bg: rgba(255, 255, 255, 0.7);
-  --ai-glass-border: rgba(255, 255, 255, 0.8);
-  --ai-card-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
-  --ai-inner-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5);
-
-  /* Teacher mobile soft page background */
-  --page-bg: #F8FBFF;
-  --page-glow-blue: #EDF5FF;
-  --page-glow-pink: #FFF3FA;
-  --page-glow-purple: #F4F0FF;
-
-  /* Teacher record v19 */
-  --tm-record-student-primary: #12B8CB;
-  --tm-record-student-secondary: #6577F5;
-  --tm-record-class-primary: #7C3AED;
-  --tm-record-class-secondary: #C026D3;
-  --tm-record-positive-bg: rgba(236, 253, 245, 0.82);
-  --tm-record-positive-border: rgba(20, 184, 166, 0.30);
-  --tm-record-positive-text: #0F766E;
-  --tm-record-negative-bg: rgba(255, 241, 244, 0.84);
-  --tm-record-negative-border: rgba(224, 82, 104, 0.30);
-  --tm-record-negative-text: #E05268;
-  --tm-record-nav-active: #1E9AAA;
-}
-
-.teacher-mobile-soft-page {
-  background:
-    radial-gradient(circle at 18% 8%, rgba(255, 232, 248, 0.9), transparent 28%),
-    radial-gradient(circle at 82% 4%, rgba(226, 241, 255, 0.95), transparent 32%),
-    linear-gradient(180deg, #F9FBFF 0%, #FFFFFF 72%);
-}
-
-
 .teacher-mobile-phone-gradient {
   background:
-    radial-gradient(circle at 18% 8%, rgba(255, 232, 248, 0.9), transparent 28%),
-    radial-gradient(circle at 82% 4%, rgba(226, 241, 255, 0.95), transparent 32%),
-    linear-gradient(180deg, #F9FBFF 0%, #FFFFFF 72%);
+    radial-gradient(circle at 12% 0%, var(--tm-glow-primary), transparent 30%),
+    radial-gradient(circle at 88% 2%, var(--tm-glow-secondary), transparent 30%),
+    linear-gradient(180deg, var(--tm-bg-page) 0%, var(--tm-bg-surface) 100%);
 }
 
 .teacher-record-soft-page {
   background:
-    radial-gradient(circle at 18% 8%, rgba(255, 232, 248, 0.9), transparent 28%),
-    radial-gradient(circle at 82% 4%, rgba(226, 241, 255, 0.95), transparent 32%),
-    radial-gradient(circle at 50% 58%, rgba(244, 240, 255, 0.68), transparent 38%),
-    linear-gradient(180deg, #F9FBFF 0%, #FFFFFF 72%);
+    radial-gradient(circle at 12% 0%, var(--tm-glow-primary), transparent 32%),
+    radial-gradient(circle at 88% 2%, var(--tm-glow-secondary), transparent 30%),
+    linear-gradient(180deg, var(--tm-bg-page) 0%, var(--tm-bg-surface) 76%);
 }
 
 .teacher-record-soft-dock {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.88);
-  border-radius: 32px;
-  box-shadow: 0 18px 48px rgba(95, 128, 178, 0.14);
+  background: var(--tm-bg-surface-glass);
+  border-radius: var(--tm-radius-card);
+  box-shadow: var(--tm-shadow-floating);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
 
 .teacher-record-voice-pill {
-  background: linear-gradient(100deg, #F3A5EA 0%, #CFA5FF 45%, #8BD5FF 100%);
+  background: var(--tm-brand-primary);
   border-radius: 999px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 14px 34px rgba(122, 162, 231, 0.28);
-}
-
-/* ... existing reset styles ... */
-
-/* 1. The Airy Card - Matching Reference */
-.ai-card-premium {
-  background: var(--ai-glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--ai-glass-border);
-  border-radius: 32px;
-  box-shadow: var(--ai-card-shadow);
-  padding: 24px;
-}
-
-/* 2. Neural Icon Wrapper */
-.neural-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
-
-
-/* 2. Liquid Button - 科技感按钮 */
-.ai-btn-primary {
-  background: linear-gradient(135deg, var(--ai-primary), var(--ai-secondary));
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 14px;
-  font-weight: 600;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-  transition: var(--ai-transition);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.ai-btn-primary:active {
-  transform: scale(0.96);
-  filter: brightness(1.1);
-}
-
-/* 3. AI Gradient Text - 渐变文字 */
-.ai-text-gradient {
-  background: linear-gradient(135deg, var(--ai-primary), var(--ai-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 800;
+  box-shadow: 0 12px 24px -14px var(--tm-shadow-brand-color);
 }
 
 @keyframes ai-assistant-shine {
@@ -153,17 +40,50 @@
   }
 }
 
+.ai-assistant-theme-headteacher {
+  --tm-assistant-role-text: var(--tm-role-headteacher-strong);
+  --tm-assistant-role-primary: var(--tm-role-headteacher-primary);
+  --tm-assistant-role-highlight: var(--tm-role-headteacher-highlight);
+  --tm-assistant-role-soft: var(--tm-role-headteacher-soft);
+  --tm-assistant-role-soft-strong: var(--tm-role-headteacher-soft-strong);
+  --tm-assistant-role-border: var(--tm-role-headteacher-border);
+  --tm-assistant-role-accent-border: var(--tm-role-headteacher-border);
+  --tm-assistant-page-glow-primary: var(--tm-role-headteacher-glow-primary);
+  --tm-assistant-page-glow-secondary: var(--tm-role-headteacher-glow-secondary);
+  --tm-assistant-role-shadow: var(--tm-role-headteacher-shadow);
+}
+
+.ai-assistant-theme-principal {
+  --tm-assistant-role-text: var(--tm-role-principal-strong);
+  --tm-assistant-role-primary: var(--tm-role-principal-primary);
+  --tm-assistant-role-highlight: var(--tm-role-principal-highlight);
+  --tm-assistant-role-soft: var(--tm-role-principal-soft);
+  --tm-assistant-role-soft-strong: var(--tm-role-principal-soft-strong);
+  --tm-assistant-role-border: var(--tm-role-principal-border);
+  --tm-assistant-role-accent-border: var(--tm-role-principal-accent-border);
+  --tm-assistant-page-glow-primary: var(--tm-role-principal-glow-primary);
+  --tm-assistant-page-glow-secondary: var(--tm-role-principal-glow-secondary);
+  --tm-assistant-role-shadow: var(--tm-role-principal-shadow);
+}
+
+.teacher-assistant-page {
+  background:
+    radial-gradient(circle at 14% 0%, var(--tm-assistant-page-glow-primary), transparent 32%),
+    radial-gradient(circle at 88% 2%, var(--tm-assistant-page-glow-secondary), transparent 30%),
+    linear-gradient(180deg, var(--tm-assistant-role-soft) 0%, var(--tm-bg-surface) 72%);
+}
+
 .ai-assistant-typewriter-shine {
-  color: #334155;
+  color: var(--tm-assistant-role-text);
   background:
     linear-gradient(
       105deg,
-      #334155 0%,
-      #334155 34%,
-      #1E9AAA 45%,
-      #7DD3FC 50%,
-      #334155 61%,
-      #334155 100%
+      var(--tm-assistant-role-text) 0%,
+      var(--tm-assistant-role-text) 34%,
+      var(--tm-assistant-role-primary) 45%,
+      var(--tm-assistant-role-highlight) 50%,
+      var(--tm-assistant-role-text) 61%,
+      var(--tm-assistant-role-text) 100%
     );
   background-size: 260% auto;
   background-position: 140% center;
@@ -186,12 +106,11 @@
   isolation: isolate;
   border: 2px solid transparent;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.90) 0%, rgba(240, 253, 255, 0.76) 54%, rgba(248, 252, 255, 0.72) 100%) padding-box,
-    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(224, 242, 254, 0.82) 16%, rgba(103, 207, 218, 0.48) 46%, rgba(199, 210, 254, 0.42) 78%, rgba(255, 255, 255, 0.96) 100%) border-box;
+    linear-gradient(145deg, var(--tm-bg-surface-glass) 0%, var(--tm-assistant-role-soft) 54%, var(--tm-bg-surface) 100%) padding-box,
+    linear-gradient(135deg, var(--tm-bg-surface) 0%, var(--tm-assistant-role-soft-strong) 18%, var(--tm-assistant-role-border) 52%, var(--tm-assistant-role-accent-border) 80%, var(--tm-bg-surface) 100%) border-box;
   box-shadow:
-    0 20px 38px -30px rgba(14, 116, 144, 0.18),
-    0 10px 22px -22px rgba(99, 102, 241, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    0 20px 38px -30px var(--tm-assistant-role-shadow),
+    inset 0 1px 0 var(--tm-bg-surface-glass);
 }
 
 .ai-assistant-dialog-card::before {
@@ -200,7 +119,7 @@
   inset: 0;
   z-index: -1;
   border-radius: inherit;
-  background: linear-gradient(145deg, rgba(103, 207, 218, 0.08), rgba(255, 255, 255, 0.04) 58%, rgba(165, 180, 252, 0.07));
+  background: linear-gradient(145deg, var(--tm-assistant-page-glow-primary), transparent 58%, var(--tm-assistant-page-glow-secondary));
   pointer-events: none;
 }
 
@@ -209,47 +128,16 @@
   position: absolute;
   inset: 1px;
   z-index: -1;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(224, 247, 255, 0.18));
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--tm-bg-surface-glass), var(--tm-assistant-role-soft));
   pointer-events: none;
 }
 
 .ai-assistant-dialog-tail {
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.90), rgba(240, 253, 255, 0.76)) padding-box,
-    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(103, 207, 218, 0.48), rgba(199, 210, 254, 0.42)) border-box;
+    linear-gradient(145deg, var(--tm-bg-surface), var(--tm-assistant-role-soft)) padding-box,
+    linear-gradient(135deg, var(--tm-bg-surface), var(--tm-assistant-role-border), var(--tm-assistant-role-accent-border)) border-box;
   border-color: transparent;
-}
-
-/* 4. Glass TabBar - 底部导航 */
-.ai-tabbar {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.03);
-}
-
-/* 5. AI Loading Shimmer - 扫描感加载 */
-@keyframes ai-scan {
-  0% {
-    transform: translateY(-100%);
-  }
-
-  100% {
-    transform: translateY(400%);
-  }
-}
-
-.ai-scan-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--ai-secondary), transparent);
-  opacity: 0.5;
-  animation: ai-scan 3s linear infinite;
 }
 
 /* --- App Simulation Wrappers --- */
@@ -259,11 +147,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f1f5f9;
-  /* Soft light blue-gray background */
+  background: var(--tm-bg-page, #FFF9F6);
   background-image:
-    radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.03) 0%, transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.03) 0%, transparent 40%);
+    radial-gradient(circle at 20% 20%, rgba(224, 39, 39, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(247, 92, 3, 0.04) 0%, transparent 40%);
 }
 
 .phone-mockup {
@@ -399,7 +286,7 @@
 
 @media (max-width: 600px) {
   .app-container {
-    background: var(--ai-bg-main);
+    background: var(--tm-bg-page, #FFF9F6);
   }
 
   .phone-mockup {
@@ -421,7 +308,7 @@
 .rich-text-content {
   font-size: 14px;
   line-height: 1.8;
-  color: #334155;
+  color: var(--tm-text-secondary);
 }
 
 .rich-text-content p {
@@ -438,19 +325,18 @@
 .rich-text-content li {
   margin-bottom: 1.5rem;
   padding: 1.25rem;
-  background: rgba(99, 102, 241, 0.03);
+  background: var(--tm-brand-primary-soft);
   border-radius: 16px;
-  border: 1px solid rgba(99, 102, 241, 0.1);
+  border: 1px solid var(--tm-brand-primary-soft-strong);
 }
 
 .rich-text-content strong {
-  color: var(--ai-primary);
+  color: var(--tm-brand-primary);
   font-weight: 800;
   font-size: 15px;
   display: inline-block;
   margin-bottom: 0.5rem;
-  font-family: 'Outfit', sans-serif;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
 }
 
 .rich-text-content li br {

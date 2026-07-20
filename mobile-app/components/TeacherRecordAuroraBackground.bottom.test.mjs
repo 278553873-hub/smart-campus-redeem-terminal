@@ -11,6 +11,6 @@ assert.doesNotMatch(
 
 assert.match(
   source,
-  /bg-\[linear-gradient\(180deg,transparent_0%,rgba\(255,255,255,0\.82\)_72%,rgba\(255,255,255,0\.96\)_100%\)\]/,
-  '记录页背景底部应有轻微收净层，让悬浮控件后方保持干净'
+  /bg-\[linear-gradient\(180deg,transparent_0%,var\(--tm-bg-surface-glass\)_72%,var\(--tm-bg-surface\)_100%\)\]/,
+  '记录页背景底部应通过表面令牌形成轻微收净层，让悬浮控件后方保持干净'
 );

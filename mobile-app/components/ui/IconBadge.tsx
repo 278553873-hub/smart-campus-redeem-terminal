@@ -1,6 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { phoneRadius, phoneTone, type PhoneTone } from '../../styles/phoneTokens';
+import { phoneRadius, phoneTone, type PhoneTone } from '../../styles/teacherMobileTokens';
 
 type IconBadgeSize = 'sm' | 'md' | 'lg' | 'xl';
 type IconBadgeShape = 'rounded' | 'circle';

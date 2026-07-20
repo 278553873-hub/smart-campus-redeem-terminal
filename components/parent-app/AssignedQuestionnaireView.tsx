@@ -31,8 +31,11 @@ interface AssignedQuestionnaireViewProps {
 const getQuestionTypeLabel = (question: QuestionnaireQuestion) => ({
   single: '单选',
   multiple: '多选',
-  rating: '1-5分',
+  rating: `${question.options.length || 5}级量表`,
   text: '简答',
+  short_text: '填空',
+  number: '数字',
+  date: '日期',
 }[question.type]);
 
 const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
@@ -54,6 +57,9 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   const selectedOptions = getQuestionnaireSelectedOptions(currentAnswer);
   const currentCustomText = isQuestionnaireChoiceAnswer(currentAnswer) ? currentAnswer.customText : {};
   const isLastQuestion = stepIndex === questionnaire.questions.length - 1;
+  const ratingValues = question?.type === 'rating'
+    ? (question.options.length > 0 ? question.options : ['1', '2', '3', '4', '5'])
+    : [];
   const canContinue = useMemo(() => {
     if (!question || !question.required) return true;
     if (question.type === 'single' || question.type === 'multiple') {
@@ -195,15 +201,16 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
 
           {question.type === 'rating' && (
             <div className="mt-6">
-              <div className="flex items-center justify-between gap-1">
-                {[1, 2, 3, 4, 5].map(value => {
+              <div className="grid grid-cols-5 gap-2.5">
+                {ratingValues.map(option => {
+                  const value = Number(option);
                   const selected = Number(currentAnswer) === value;
                   return (
-                    <button key={value} type="button" onClick={() => toggleOption(String(value))} aria-pressed={selected} className={`flex aspect-square min-w-0 flex-1 max-w-12 items-center justify-center rounded-full text-[16px] font-black transition active:scale-[0.96] ${selected ? 'bg-gradient-to-br from-[#0DB4F1] to-[#18D0A8] text-white shadow-[0_12px_24px_-16px_rgba(13,180,241,0.8)]' : 'bg-slate-50 text-slate-500 ring-1 ring-slate-100'}`}>{value}</button>
+                    <button key={value} type="button" onClick={() => toggleOption(String(value))} aria-pressed={selected} className={`flex aspect-square min-w-0 items-center justify-center rounded-full text-[16px] font-black transition active:scale-[0.96] ${selected ? 'bg-gradient-to-br from-[#0DB4F1] to-[#18D0A8] text-white shadow-[0_12px_24px_-16px_rgba(13,180,241,0.8)]' : 'bg-slate-50 text-slate-500 ring-1 ring-slate-100'}`}>{value}</button>
                   );
                 })}
               </div>
-              <div className="mt-3 flex justify-between text-[11px] font-bold text-slate-400"><span>不满意</span><span>非常满意</span></div>
+              <div className="mt-3 flex justify-between text-[11px] font-bold text-slate-400"><span>低</span><span>高</span></div>
             </div>
           )}
 

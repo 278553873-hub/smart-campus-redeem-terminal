@@ -1,25 +1,60 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart3, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Building2, CalendarRange, ChevronLeft, ChevronRight, ScanSearch } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import MobileNoticeSheet from '../components/ui/MobileNoticeSheet';
+import {
+    getPrincipalTermReportAvailability,
+    type SchoolTermConfig,
+} from '../domain/principalTermReport';
 
 interface AiPrincipalAssistantViewProps {
     onBack: () => void;
+    termConfig: SchoolTermConfig;
+    hasGeneratedTermReport: boolean;
+    onOpenWeeklyReport: () => void;
+    onOpenMonthlyReport: () => void;
+    onOpenTermReport: () => void;
 }
 
-const assistantOptions = [
+type AssistantAction = 'weeklyAdvice' | 'monthlyReview' | 'termReport';
+
+interface AssistantOption {
+    title: string;
+    body: string;
+    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+    action: AssistantAction;
+    emphasis: 'primary' | 'secondary';
+    tone: 'brand' | 'secondary' | 'reward';
+}
+
+const assistantOptions: AssistantOption[] = [
     {
-        title: '生成学校本周管理摘要',
-        body: '汇总班级记录与校园币使用情况，提示本周校务关注重点。',
+        title: '本周管理建议',
+        body: '根据上周学校数据，整理本周管理重点。',
         icon: Building2,
+        action: 'weeklyAdvice',
+        emphasis: 'primary',
+        tone: 'brand',
     },
     {
-        title: '查看年级发展趋势',
-        body: '按年级整理五育表现变化，辅助判断后续管理动作。',
-        icon: BarChart3,
+        title: '上月学校复盘',
+        body: '复盘上月运行情况，发现持续问题与改进方向。',
+        icon: ScanSearch,
+        action: 'monthlyReview',
+        emphasis: 'secondary',
+        tone: 'secondary',
+    },
+    {
+        title: '学期学校报告',
+        body: '汇总本学期数据，生成学校学期运营报告。',
+        icon: CalendarRange,
+        action: 'termReport',
+        emphasis: 'secondary',
+        tone: 'reward',
     },
 ];
 
-const assistantMessage = '你好，我是校长助理\n请选择一个分析方向，我将为你发现潜在问题，并提供管理建议。';
+const assistantMessage = '你好，我是校长助理\n我会按周提供管理建议，按月复盘学校运行，并在期末生成学期报告。';
 
 const getTypeDelay = (char: string) => {
     if (char === '\n') return 280;
@@ -28,8 +63,27 @@ const getTypeDelay = (char: string) => {
     return 56;
 };
 
-const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({ onBack }) => {
+const optionToneClass: Record<AssistantOption['tone'], string> = {
+    brand: 'border-[var(--tm-role-principal-soft-strong)] bg-[var(--tm-role-principal-soft)] text-[var(--tm-role-principal-strong)]',
+    secondary: 'border-[var(--tm-role-principal-soft-strong)] bg-[var(--tm-role-principal-soft)] text-[var(--tm-role-principal-strong)]',
+    reward: 'border-[var(--tm-role-principal-accent-border)] bg-[var(--tm-role-principal-accent-soft)] text-[var(--tm-role-principal-accent-strong)]',
+};
+
+interface AssistantNotice {
+    title: string;
+    message: string;
+}
+
+const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
+    onBack,
+    termConfig,
+    hasGeneratedTermReport,
+    onOpenWeeklyReport,
+    onOpenMonthlyReport,
+    onOpenTermReport,
+}) => {
     const [typedMessage, setTypedMessage] = useState('');
+    const [notice, setNotice] = useState<AssistantNotice | null>(null);
 
     useEffect(() => {
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -56,71 +110,93 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({ onB
         };
     }, []);
 
-    const showPendingFeedback = (title: string) => {
-        window.alert(`${title}能力建设中`);
+    const handleOption = (item: AssistantOption) => {
+        if (item.action === 'weeklyAdvice') {
+            onOpenWeeklyReport();
+            return;
+        }
+
+        if (item.action === 'monthlyReview') {
+            onOpenMonthlyReport();
+            return;
+        }
+
+        const availability = getPrincipalTermReportAvailability(termConfig);
+        if (hasGeneratedTermReport || availability.status === 'available') {
+            onOpenTermReport();
+            return;
+        }
+
+        setNotice(availability);
     };
 
     return (
-        <div className="relative min-h-full overflow-hidden bg-[linear-gradient(180deg,#F7FCFF_0%,#EEF8FF_42%,#FFFFFF_100%)] font-sans text-slate-950">
-            <div className="pointer-events-none absolute -left-24 top-5 h-72 w-72 rounded-full bg-cyan-200/45 blur-3xl" aria-hidden="true" />
-            <div className="pointer-events-none absolute -right-28 top-20 h-72 w-72 rounded-full bg-violet-200/48 blur-3xl" aria-hidden="true" />
-            <div className="pointer-events-none absolute left-10 top-72 h-56 w-56 rounded-full bg-blue-100/64 blur-3xl" aria-hidden="true" />
+        <div className="ai-assistant-theme-principal teacher-assistant-page relative min-h-full overflow-hidden font-sans text-[var(--tm-text-primary)]">
 
             <button
                 type="button"
                 onClick={onBack}
-                className="absolute left-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/68 text-slate-600 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.35)] ring-1 ring-white/70 backdrop-blur-md transition active:scale-95 active:bg-white/86"
+                className="absolute left-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-bg-surface-glass)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] backdrop-blur-md transition active:scale-95 active:bg-[var(--tm-bg-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
                 aria-label="返回"
             >
                 <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
             </button>
 
             <main className="relative z-10 px-5 pb-8 pt-4">
-                <section className="relative min-h-[410px] overflow-visible pt-10 text-center">
-                    <div className="absolute inset-x-0 top-12 mx-auto h-60 w-72 rounded-full bg-[radial-gradient(circle,rgba(191,244,248,0.70)_0%,rgba(226,245,255,0.52)_46%,rgba(255,255,255,0)_76%)] blur-sm" aria-hidden="true" />
-                    <div className="relative mx-auto flex h-[286px] w-[286px] items-center justify-center">
-                        <div className="absolute inset-x-6 bottom-5 h-12 rounded-full bg-blue-300/16 blur-2xl" aria-hidden="true" />
+                <section className="relative min-h-[365px] overflow-visible pt-10 text-center">
+                    <div className="relative mx-auto flex h-[250px] w-[250px] items-center justify-center">
                         <img
                             src={ASSETS.MANAGEMENT.AI_PRINCIPAL_ASSISTANT_CHARACTER}
                             alt="AI校长助理形象"
-                            className="relative h-[286px] w-[286px] scale-[1.04] object-contain drop-shadow-[0_26px_32px_rgba(37,99,235,0.13)]"
+                            className="relative h-[250px] w-[250px] scale-[1.04] object-contain drop-shadow-[0_22px_28px_var(--tm-role-principal-shadow)]"
                         />
                     </div>
 
-                    <div className="ai-assistant-dialog-card relative mx-auto -mt-1 min-h-[92px] w-full rounded-[22px] px-4 py-3 text-left backdrop-blur-md" aria-live="polite">
+                    <div className="ai-assistant-dialog-card relative mx-auto -mt-1 min-h-[96px] w-full rounded-[var(--tm-radius-card)] px-4 py-3 text-left backdrop-blur-md" aria-live="polite">
                         <span className="ai-assistant-dialog-tail absolute -top-1.5 left-7 h-3 w-3 rotate-45 border-l border-t" aria-hidden="true" />
-                        <p className="ai-assistant-typewriter-shine whitespace-pre-line text-[16px] font-semibold leading-7 text-slate-700">
+                        <p className="ai-assistant-typewriter-shine whitespace-pre-line text-[15px] font-semibold leading-7">
                             {typedMessage}
                             {typedMessage.length < assistantMessage.length && (
-                                <span className="ml-0.5 inline-block h-5 w-[1.5px] translate-y-1 animate-pulse rounded-full bg-[#1E9AAA]" aria-hidden="true" />
+                                <span className="ml-0.5 inline-block h-5 w-[1.5px] translate-y-1 animate-pulse rounded-full bg-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
                             )}
                         </p>
                     </div>
                 </section>
 
-                <section className="mt-4 space-y-3">
+                <section className="mt-3 space-y-3" aria-label="校长助理分析能力">
                     {assistantOptions.map((item) => {
                         const Icon = item.icon;
+                        const primary = item.emphasis === 'primary';
                         return (
                             <button
                                 key={item.title}
                                 type="button"
-                                onClick={() => showPendingFeedback(item.title)}
-                                className="flex min-h-[92px] w-full items-center gap-3 rounded-[24px] border border-white/90 bg-white/92 px-4 text-left shadow-[0_18px_42px_-34px_rgba(35,96,145,0.34)] ring-1 ring-slate-100/70 transition active:scale-[0.98] active:bg-blue-50/40"
+                                onClick={() => handleOption(item)}
+                                className={`flex w-full items-center gap-3 border bg-[var(--tm-bg-surface-glass)] px-4 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.98] active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)] ${primary
+                                    ? 'min-h-[92px] rounded-[var(--tm-radius-card)] border-[var(--tm-role-principal-soft-strong)]'
+                                    : 'min-h-[76px] rounded-[var(--tm-radius-inner)] border-[var(--tm-border-subtle)]'
+                                }`}
                             >
-                                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-blue-500 to-violet-500 text-white shadow-[0_16px_30px_-22px_rgba(79,70,229,0.88)]">
-                                    <Icon className="h-6 w-6" strokeWidth={2.2} />
+                                <span className={`flex shrink-0 items-center justify-center border ${primary ? 'h-12 w-12 rounded-[var(--tm-radius-inner)]' : 'h-10 w-10 rounded-[var(--tm-radius-control)]'} ${optionToneClass[item.tone]}`}>
+                                    <Icon className={primary ? 'h-6 w-6' : 'h-5 w-5'} strokeWidth={2.1} />
                                 </span>
                                 <span className="min-w-0 flex-1">
-                                    <span className="block text-[15px] font-bold leading-5 text-slate-950">{item.title}</span>
-                                    <span className="mt-1.5 block text-[12px] font-medium leading-5 text-slate-500">{item.body}</span>
+                                    <span className="block text-[15px] font-semibold leading-5 text-[var(--tm-text-primary)]">{item.title}</span>
+                                    <span className="mt-1 block text-[12px] leading-5 text-[var(--tm-text-secondary)]">{item.body}</span>
                                 </span>
-                                <ChevronRight className="h-4.5 w-4.5 shrink-0 text-slate-300" strokeWidth={2.1} />
+                                <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-tertiary)]" strokeWidth={2.1} />
                             </button>
                         );
                     })}
                 </section>
             </main>
+
+            <MobileNoticeSheet
+                open={Boolean(notice)}
+                title={notice?.title ?? ''}
+                message={notice?.message ?? ''}
+                onDismiss={() => setNotice(null)}
+            />
         </div>
     );
 };

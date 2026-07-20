@@ -1,10 +1,48 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    Check,
+    ChevronDown,
+    ChevronRight,
+    Copy,
+    LogIn,
+    MessageCircle,
+    Plus,
+    SlidersHorizontal,
+} from 'lucide-react';
 import { ClassInfo, Student, TeacherProfile } from '../types';
-import { UsersIcon, ChartIcon, WechatMoreIcon, TrophyIcon, GiftIcon, ScanFaceIcon, ShieldIcon, FileTextIcon, CloseIcon, EditIcon, UserPlusIcon } from '../components/Icons';
+import {
+    UsersIcon,
+    ChartIcon,
+    WechatMoreIcon,
+    TrophyIcon,
+    GiftIcon,
+    ScanFaceIcon,
+    ShieldIcon,
+    FileTextIcon,
+    CloseIcon,
+    EditIcon,
+    UserPlusIcon,
+} from '../components/Icons';
+import ClassSourceTrigger from '../components/ClassSourceTrigger';
+import {
+    canManagePersonalClasses,
+    canViewClassLeaderboard,
+    getTeacherClassActionPolicy,
+    type TeacherClassMembership,
+    type TeacherSpaceOption,
+} from '../domain/teacherSpaceAccess';
 
 interface ClassListViewProps {
     classes: ClassInfo[];
     teacherProfile: TeacherProfile;
+    currentSpace: TeacherSpaceOption;
+    classMembershipById: Record<string, TeacherClassMembership>;
+    addDemoTopBreathingSpace?: boolean;
+    showClassSourceSwitcher: boolean;
+    isSpaceSheetOpen: boolean;
+    onOpenClassSourceSwitcher: () => void;
+    onCreateClass: () => void;
+    onJoinClass: () => void;
     onSelectClass: (classId: string) => void;
     getStudentsForClass: (classId: string) => Student[];
     onRestoreStudentStatus: (student: Student) => void;
@@ -15,10 +53,11 @@ interface ClassListViewProps {
     onViewBankPassword: (classId: string) => void;
     onViewHomeworkEntry: (classId: string) => void;
     onInviteTeacher: (classId: string) => void;
+    onInviteParent: (classId: string) => void;
     onEditClassInfo: (classId: string) => void;
 }
 
-type ClassActionTone = 'amber' | 'indigo' | 'emerald' | 'blue' | 'slate' | 'cyan' | 'violet';
+type ClassActionTone = 'brand' | 'secondary' | 'reward' | 'positive' | 'neutral';
 
 interface ClassActionItem {
     label: string;
@@ -34,18 +73,26 @@ interface ClassActionGroup {
 }
 
 const actionToneClass: Record<ClassActionTone, string> = {
-    amber: 'bg-amber-50 text-amber-600 border-amber-100',
-    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    blue: 'bg-blue-50 text-blue-600 border-blue-100',
-    slate: 'bg-slate-100 text-slate-600 border-slate-200',
-    cyan: 'bg-cyan-50 text-cyan-600 border-cyan-100',
-    violet: 'bg-violet-50 text-violet-600 border-violet-100',
+    brand: 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]',
+    secondary: 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]',
+    reward: 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]',
+    positive: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]',
+    neutral: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]',
 };
+
+const formatClassCode = (classCode: string) => classCode.replace(/(\d{4})(?=\d)/, '$1 ');
 
 const ClassListView: React.FC<ClassListViewProps> = ({
     classes,
     teacherProfile,
+    currentSpace,
+    classMembershipById,
+    addDemoTopBreathingSpace = false,
+    showClassSourceSwitcher,
+    isSpaceSheetOpen,
+    onOpenClassSourceSwitcher,
+    onCreateClass,
+    onJoinClass,
     onSelectClass,
     getStudentsForClass,
     onRestoreStudentStatus,
@@ -56,25 +103,72 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onViewBankPassword,
     onViewHomeworkEntry,
     onInviteTeacher,
-    onEditClassInfo
+    onInviteParent,
+    onEditClassInfo,
 }) => {
     const [activeActionClassId, setActiveActionClassId] = useState<string | null>(null);
     const [showTeachingOnly, setShowTeachingOnly] = useState(false);
+    const [gradeFilter, setGradeFilter] = useState('全部');
     const [leftStudentClassId, setLeftStudentClassId] = useState<string | null>(null);
+    const [showPersonalClassActions, setShowPersonalClassActions] = useState(false);
+    const [showDisplaySettings, setShowDisplaySettings] = useState(false);
+    const [hiddenClassIdsBySpace, setHiddenClassIdsBySpace] = useState<Record<string, string[]>>({});
+    const [copiedClassId, setCopiedClassId] = useState<string | null>(null);
 
     const teachingClassIds = useMemo(() => (
         new Set(teacherProfile.teachingAssignments.map(assignment => assignment.classId))
     ), [teacherProfile.teachingAssignments]);
+    const homeroomClassIds = useMemo(() => new Set(teacherProfile.homeroomClassIds), [teacherProfile.homeroomClassIds]);
+    const assignedClassIds = useMemo(() => new Set([...teachingClassIds, ...homeroomClassIds]), [homeroomClassIds, teachingClassIds]);
+    const hiddenClassIds = useMemo(() => new Set(hiddenClassIdsBySpace[currentSpace.id] ?? []), [currentSpace.id, hiddenClassIdsBySpace]);
+    const isSchoolSpace = currentSpace.type === 'school';
+    const canManagePersonal = canManagePersonalClasses(currentSpace);
+    const showLeaderboard = canViewClassLeaderboard(currentSpace);
 
-    const visibleClasses = showTeachingOnly
-        ? classes.filter(cls => teachingClassIds.has(cls.id))
-        : classes;
-    const leftStudentClass = useMemo(() => classes.find(cls => cls.id === leftStudentClassId) || null, [classes, leftStudentClassId]);
+    const gradeOptions = useMemo(() => (
+        ['全部', ...Array.from(new Set(classes.map(classInfo => classInfo.gradeLevel)))]
+    ), [classes]);
+
+    const visibleClasses = useMemo(() => classes.filter(classInfo => {
+        if (!isSchoolSpace && hiddenClassIds.has(classInfo.id)) return false;
+        if (isSchoolSpace && gradeFilter !== '全部' && classInfo.gradeLevel !== gradeFilter) return false;
+        if (isSchoolSpace && showTeachingOnly && !assignedClassIds.has(classInfo.id)) return false;
+        return true;
+    }), [assignedClassIds, classes, gradeFilter, hiddenClassIds, isSchoolSpace, showTeachingOnly]);
+
+    const leftStudentClass = useMemo(() => classes.find(classInfo => classInfo.id === leftStudentClassId) || null, [classes, leftStudentClassId]);
     const leftStudents = useMemo(() => (
         leftStudentClassId ? getStudentsForClass(leftStudentClassId).filter(student => student.status === 'left') : []
     ), [getStudentsForClass, leftStudentClassId]);
     const showLeftStudentSheet = leftStudentClassId !== null;
-    const activeActionClass = useMemo(() => classes.find(cls => cls.id === activeActionClassId) || null, [classes, activeActionClassId]);
+    const activeActionClass = useMemo(() => classes.find(classInfo => classInfo.id === activeActionClassId) || null, [classes, activeActionClassId]);
+
+    useEffect(() => {
+        setActiveActionClassId(null);
+        setLeftStudentClassId(null);
+        setShowPersonalClassActions(false);
+        setShowDisplaySettings(false);
+        setGradeFilter('全部');
+        setShowTeachingOnly(false);
+    }, [currentSpace.id]);
+
+    useEffect(() => {
+        if (!copiedClassId) return;
+        const timer = window.setTimeout(() => setCopiedClassId(null), 1600);
+        return () => window.clearTimeout(timer);
+    }, [copiedClassId]);
+
+    const getMembership = (classId: string): TeacherClassMembership => (
+        isSchoolSpace ? 'school' : classMembershipById[classId] ?? 'joined'
+    );
+
+    const getActionPolicy = (classId: string) => getTeacherClassActionPolicy({
+        space: currentSpace,
+        classId,
+        membership: getMembership(classId),
+        teachingClassIds,
+        homeroomClassIds,
+    });
 
     const closeActionSheet = () => setActiveActionClassId(null);
 
@@ -85,194 +179,354 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         action(classId);
     };
 
-    const actionGroups: ClassActionGroup[] = activeActionClass ? [
-        {
+    const activeActionPolicy = activeActionClass ? getActionPolicy(activeActionClass.id) : null;
+    const actionGroups: ClassActionGroup[] = activeActionClass && activeActionPolicy ? [
+        activeActionPolicy.canUseDailyActions ? {
             title: '日常操作',
             items: [
                 {
                     label: '兑换奖励',
                     icon: GiftIcon,
-                    tone: 'amber',
+                    tone: 'reward',
                     hasBadge: activeActionClass.hasPendingRewards,
                     onClick: () => runClassAction(onViewRewardVerification),
                 },
                 {
                     label: '作业录入',
                     icon: FileTextIcon,
-                    tone: 'blue',
+                    tone: 'brand',
                     onClick: () => runClassAction(onViewHomeworkEntry),
                 },
             ],
-        },
-        {
+        } : null,
+        activeActionPolicy.canUpdateStudents ? {
             title: '学生信息更新',
             items: [
                 {
                     label: '批量修改学生',
                     icon: UsersIcon,
-                    tone: 'slate',
+                    tone: 'neutral',
                     onClick: () => runClassAction(onSelectClass),
                 },
                 {
                     label: '设置兑换密码',
                     icon: ShieldIcon,
-                    tone: 'indigo',
+                    tone: 'secondary',
                     onClick: () => runClassAction(onViewBankPassword),
                 },
                 {
                     label: '更新人脸数据',
                     icon: ScanFaceIcon,
-                    tone: 'emerald',
+                    tone: 'positive',
                     onClick: () => runClassAction(onViewFaceUpdate),
                 },
             ],
-        },
-        {
+        } : null,
+        activeActionPolicy.canMaintainClass ? {
             title: '班级维护',
             items: [
                 {
                     label: '离校学生',
                     icon: UsersIcon,
-                    tone: 'slate',
+                    tone: 'neutral',
                     onClick: () => runClassAction(setLeftStudentClassId),
                 },
                 {
                     label: '编辑班级信息',
                     icon: EditIcon,
-                    tone: 'violet',
+                    tone: 'brand',
                     onClick: () => runClassAction(onEditClassInfo),
                 },
             ],
-        },
-        {
+        } : null,
+        activeActionPolicy.canInviteTeacher || activeActionPolicy.canInviteParent ? {
             title: '协同管理',
             items: [
-                {
+                ...(activeActionPolicy.canInviteTeacher ? [{
                     label: '邀请老师加入',
                     icon: UserPlusIcon,
-                    tone: 'cyan',
+                    tone: 'secondary' as const,
                     onClick: () => runClassAction(onInviteTeacher),
-                },
+                }] : []),
+                ...(activeActionPolicy.canInviteParent ? [{
+                    label: '邀请家长加入',
+                    icon: MessageCircle,
+                    tone: 'brand' as const,
+                    onClick: () => runClassAction(onInviteParent),
+                }] : []),
             ],
-        },
-    ] : [];
+        } : null,
+    ].filter((group): group is ClassActionGroup => Boolean(group)) : [];
+
+    const copyClassCode = async (classInfo: ClassInfo) => {
+        try {
+            await navigator.clipboard?.writeText(classInfo.classCode);
+        } finally {
+            setCopiedClassId(classInfo.id);
+        }
+    };
+
+    const toggleClassVisibility = (classId: string) => {
+        setHiddenClassIdsBySpace(current => {
+            const hiddenIds = new Set(current[currentSpace.id] ?? []);
+            if (hiddenIds.has(classId)) hiddenIds.delete(classId);
+            else hiddenIds.add(classId);
+            return { ...current, [currentSpace.id]: Array.from(hiddenIds) };
+        });
+    };
+
+    const renderClassCard = (classInfo: ClassInfo) => {
+        const isHeadTeacher = homeroomClassIds.has(classInfo.id);
+        const subjectTags = Array.from(new Set(
+            teacherProfile.teachingAssignments
+                .filter(assignment => assignment.classId === classInfo.id)
+                .map(assignment => assignment.subject)
+        ));
+        const classActionPolicy = getActionPolicy(classInfo.id);
+        const hasMoreActions = Object.values(classActionPolicy).some(Boolean);
+
+        return (
+            <article key={classInfo.id} className="relative rounded-[var(--tm-radius-card)] bg-white px-4 py-3 [box-shadow:0_12px_28px_-16px_var(--tm-shadow-neutral-color),0_3px_10px_-7px_var(--tm-shadow-neutral-color)]">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-lg font-semibold text-[var(--tm-text-primary)]">{classInfo.name}</h3>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {isHeadTeacher && (
+                                <span className="whitespace-nowrap rounded-lg bg-[var(--tm-brand-secondary-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--tm-brand-secondary-strong)]">
+                                    班主任
+                                </span>
+                            )}
+                            {subjectTags.map(tag => (
+                                <span key={tag} className="whitespace-nowrap rounded-lg bg-[var(--tm-bg-surface-muted)] px-2 py-0.5 text-xs font-normal text-[var(--tm-text-secondary)]">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                    {hasMoreActions && (
+                        <button
+                            type="button"
+                            aria-label={`${classInfo.name}更多操作`}
+                            onClick={() => setActiveActionClassId(classInfo.id)}
+                            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]"
+                        >
+                            <WechatMoreIcon className="h-5 w-5" />
+                            {classInfo.hasPendingRewards && (
+                                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--tm-status-negative)] ring-2 ring-white" />
+                            )}
+                        </button>
+                    )}
+                </div>
+
+                <div className="mt-1 flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-[var(--tm-border-subtle)] pb-1 text-[13px] text-[var(--tm-text-secondary)]">
+                    <span>{classInfo.gradeLevel} · {classInfo.studentCount}人</span>
+                    <button
+                        type="button"
+                        onClick={() => copyClassCode(classInfo)}
+                        className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[12px] font-medium text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
+                        aria-label={`复制${classInfo.name}班级号${classInfo.classCode}`}
+                    >
+                        <span>班级号</span>
+                        <span className="font-semibold tabular-nums text-[var(--tm-text-primary)]">{formatClassCode(classInfo.classCode)}</span>
+                        {copiedClassId === classInfo.id ? <Check className="h-3.5 w-3.5 text-[var(--tm-status-positive)]" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2.5">
+                    <button
+                        onClick={() => onSelectClass(classInfo.id)}
+                        className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-muted)]"
+                    >
+                        <UsersIcon className="h-4 w-4" />
+                        学生列表
+                    </button>
+                    <button
+                        onClick={() => onViewClassReport(classInfo.id)}
+                        className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-sm font-semibold text-[var(--tm-brand-primary)] transition-colors active:bg-[var(--tm-brand-primary-soft-strong)]"
+                    >
+                        <ChartIcon className="h-4 w-4" />
+                        班级报告
+                    </button>
+                </div>
+            </article>
+        );
+    };
 
     return (
         <div className="relative h-full overflow-hidden">
-            <div className="relative z-10 h-full overflow-y-auto p-4 space-y-4 pb-40 no-scrollbar">
+            <div className={`relative z-10 h-full space-y-4 overflow-y-auto px-4 pb-40 no-scrollbar ${addDemoTopBreathingSpace ? 'pt-5' : 'pt-3'}`}>
+                <section className="space-y-3 px-1">
+                    <div className="flex min-h-11 items-center justify-between gap-2">
+                        {showClassSourceSwitcher ? (
+                            <ClassSourceTrigger
+                                name={currentSpace.title}
+                                type={currentSpace.type}
+                                expanded={isSpaceSheetOpen}
+                                onClick={onOpenClassSourceSwitcher}
+                                variant="quiet"
+                                className="min-w-0 flex-1"
+                            />
+                        ) : (
+                            <h1 className="truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{currentSpace.title}</h1>
+                        )}
 
-            {/* Top Action Area: Leaderboard & Summary */}
-            <div className="flex flex-col items-start gap-4 px-1">
-                <button
-                    className="h-10 rounded bg-gradient-to-r from-cyan-500 to-blue-500 px-4 text-white shadow-sm transition-all active:scale-95 flex items-center gap-2 text-sm font-semibold"
-                    onClick={onViewLeaderboard}
-                >
-                    <div className="flex h-6 w-6 items-center justify-center rounded bg-white/18 text-white">
-                        <TrophyIcon className="w-4 h-4" />
+                        {showLeaderboard && (
+                            <button
+                                className="flex min-h-11 shrink-0 items-center gap-2 rounded-[var(--tm-radius-control)] bg-white px-3 text-[13px] font-semibold text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)]"
+                                onClick={onViewLeaderboard}
+                            >
+                                <TrophyIcon className="h-4 w-4" />
+                                班级排行榜
+                            </button>
+                        )}
+
+                        {canManagePersonal && (
+                            <button
+                                type="button"
+                                onClick={() => setShowPersonalClassActions(true)}
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)] active:scale-95 active:bg-[var(--tm-brand-primary-soft)]"
+                                aria-label="打开班级操作"
+                            >
+                                <Plus className="h-5 w-5" strokeWidth={2.4} />
+                            </button>
+                        )}
                     </div>
-                    班级排行榜
-                </button>
 
-                <button
-                    type="button"
-                    aria-pressed={showTeachingOnly}
-                    onClick={() => setShowTeachingOnly(prev => !prev)}
-                    className={`h-[10px] rounded-[14px] border-0 px-0 text-xs font-semibold leading-[10px] transition-all active:scale-95 ${showTeachingOnly ? 'bg-transparent text-slate-500 shadow-none' : 'bg-transparent text-slate-500'}`}
-                >
-                    <span className="flex items-center gap-1.5 whitespace-nowrap">
-                        <span className={`flex h-4 w-4 items-center justify-center rounded border text-[10px] leading-none ${showTeachingOnly ? 'border-cyan-600 bg-cyan-600 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
-                            ✓
-                        </span>
-                        只显示任教班级
-                    </span>
-                </button>
+                    {isSchoolSpace && (
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                            <label className="relative min-w-0">
+                                <span className="sr-only">按年级筛选班级</span>
+                                <select
+                                    value={gradeFilter}
+                                    onChange={event => setGradeFilter(event.target.value)}
+                                    className="min-h-11 w-full appearance-none rounded-[var(--tm-radius-control)] bg-white px-3 pr-9 text-[13px] font-medium text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)] outline-none ring-1 ring-inset ring-[var(--tm-border-subtle)] focus:ring-2 focus:ring-[var(--tm-brand-primary)]"
+                                    aria-label="按年级筛选班级"
+                                >
+                                    {gradeOptions.map(option => <option key={option} value={option}>{option}</option>)}
+                                </select>
+                                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
+                            </label>
+                            <button
+                                type="button"
+                                aria-pressed={showTeachingOnly}
+                                onClick={() => setShowTeachingOnly(current => !current)}
+                                className={`flex min-h-11 items-center gap-2 rounded-[var(--tm-radius-control)] px-3 text-[13px] font-medium shadow-[var(--tm-shadow-control)] transition active:scale-[0.98] ${showTeachingOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'bg-white text-[var(--tm-text-secondary)] ring-1 ring-inset ring-[var(--tm-border-subtle)]'}`}
+                            >
+                                <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] text-[10px] ${showTeachingOnly ? 'bg-white text-[var(--tm-brand-primary)]' : 'ring-1 ring-inset ring-[var(--tm-border-control)]'}`}>
+                                    {showTeachingOnly && '✓'}
+                                </span>
+                                只显示任教班级
+                            </button>
+                        </div>
+                    )}
+                </section>
+
+                {visibleClasses.map(renderClassCard)}
+
+                {visibleClasses.length === 0 && (
+                    <section className="rounded-[var(--tm-radius-card)] bg-white p-6 text-center [box-shadow:0_12px_28px_-16px_var(--tm-shadow-neutral-color),0_3px_10px_-7px_var(--tm-shadow-neutral-color)]">
+                        <p className="text-sm font-semibold text-[var(--tm-text-primary)]">{isSchoolSpace ? '没有符合条件的班级' : '暂无显示班级'}</p>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (isSchoolSpace) {
+                                    setGradeFilter('全部');
+                                    setShowTeachingOnly(false);
+                                } else {
+                                    setShowDisplaySettings(true);
+                                }
+                            }}
+                            className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]"
+                        >
+                            {isSchoolSpace ? '清除筛选' : '调整显示'}
+                        </button>
+                    </section>
+                )}
             </div>
 
-            {visibleClasses.map((cls) => {
-                // Separate tags logic for visual distinction
-                const isHeadTeacher = cls.tags.includes('班主任');
-                const subjectTags = cls.tags.filter(t => t !== '班主任');
-
-                return (
-                    <div key={cls.id} className="h-[160px] bg-white rounded-[22px] px-5 py-3 shadow-[0_9px_24px_rgba(15,23,42,0.045)] border border-slate-100/80 relative group transition-all">
-                        {/* Background decoration */}
-                        <div className="absolute inset-0 rounded overflow-hidden pointer-events-none">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-50 rounded-bl-full opacity-60 -mr-4 -mt-4"></div>
+            {showPersonalClassActions && (
+                <div className="fixed inset-0 z-[145] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="班级操作">
+                    <button aria-label="关闭班级操作" className="absolute inset-0" onClick={() => setShowPersonalClassActions(false)} />
+                    <section className="relative w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-3 shadow-[var(--tm-shadow-sheet)]">
+                        <div className="mx-auto h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />
+                        <div className="mt-2 flex min-h-12 items-center justify-between">
+                            <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">班级操作</h2>
+                            <button type="button" onClick={() => setShowPersonalClassActions(false)} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭">
+                                <CloseIcon className="h-5 w-5" />
+                            </button>
                         </div>
-
-                        <div className="relative z-10">
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex flex-col gap-2">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-slate-800 mb-1">{cls.name}</h3>
-                                        <p className="text-sm text-slate-500">{cls.gradeLevel} · 共{cls.studentCount}人</p>
-                                    </div>
-                                    {/* Tags Display - Aligned to the left info block */}
-                                    <div className="flex gap-1.5 flex-wrap">
-                                        {isHeadTeacher && (
-                                            <span className="text-[11px] px-2 py-0.5 bg-indigo-600 text-white rounded-lg whitespace-nowrap font-semibold shadow-sm shadow-indigo-100">
-                                                班主任
-                                            </span>
-                                        )}
-                                        {subjectTags.map(tag => (
-                                            <span key={tag} className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-100 rounded-lg whitespace-nowrap font-normal">
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col items-end gap-2">
+                        <div className="mt-2 space-y-2">
+                            {[
+                                { label: '创建班级', icon: Plus, onClick: onCreateClass },
+                                { label: '加入班级', icon: LogIn, onClick: onJoinClass },
+                                { label: '显示设置', icon: SlidersHorizontal, onClick: () => setShowDisplaySettings(true) },
+                            ].map(item => {
+                                const Icon = item.icon;
+                                return (
                                     <button
+                                        key={item.label}
                                         type="button"
-                                        aria-label={`${cls.name}更多操作`}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setActiveActionClassId(cls.id);
+                                        onClick={() => {
+                                            setShowPersonalClassActions(false);
+                                            item.onClick();
                                         }}
-                                        className="relative flex min-h-11 min-w-11 items-center justify-center rounded-full text-slate-400 transition-colors active:bg-slate-200"
+                                        className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 text-left active:bg-[var(--tm-bg-surface-muted)]"
                                     >
-                                        <WechatMoreIcon className="w-5 h-5" />
-                                        {cls.hasPendingRewards && (
-                                            <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500 ring-2 ring-white"></div>
-                                        )}
+                                        <span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-white text-[var(--tm-brand-primary)]"><Icon className="h-[18px] w-[18px]" /></span>
+                                        <span className="flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">{item.label}</span>
+                                        <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
                                     </button>
-
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 mt-4">
-                                <button
-                                    onClick={() => onSelectClass(cls.id)}
-                                    className="h-[38px] rounded-[14px] flex-1 flex items-center justify-center gap-2 bg-slate-50 active:bg-slate-100 text-slate-700 text-sm font-semibold transition-colors"
-                                >
-                                    <UsersIcon className="w-4 h-4" />
-                                    学生列表
-                                </button>
-                                <button
-                                    onClick={() => onViewClassReport(cls.id)}
-                                    className="h-[38px] rounded-[14px] flex-1 flex items-center justify-center gap-2 bg-cyan-50 active:bg-cyan-100 text-cyan-700 text-sm font-semibold transition-colors"
-                                >
-                                    <ChartIcon className="w-4 h-4" />
-                                    班级报告
-                                </button>
-                            </div>
+                                );
+                            })}
                         </div>
-                    </div>
-                );
-            })}
-            </div>
+                    </section>
+                </div>
+            )}
 
-            {activeActionClass && (
-                <div className="absolute inset-0 z-[145] flex items-end bg-slate-950/45 backdrop-blur-[2px]">
+            {showDisplaySettings && (
+                <div className="fixed inset-0 z-[150] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="显示班级">
+                    <button aria-label="关闭显示设置" className="absolute inset-0" onClick={() => setShowDisplaySettings(false)} />
+                    <section className="relative max-h-[72%] w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-3 shadow-[var(--tm-shadow-sheet)]">
+                        <div className="mx-auto h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />
+                        <div className="mt-2 flex min-h-12 items-center justify-between">
+                            <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">显示班级</h2>
+                            <button type="button" onClick={() => setShowDisplaySettings(false)} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭">
+                                <CloseIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="mt-2 max-h-[48vh] space-y-2 overflow-y-auto pb-1 no-scrollbar">
+                            {classes.map(classInfo => {
+                                const visible = !hiddenClassIds.has(classInfo.id);
+                                return (
+                                    <button
+                                        key={classInfo.id}
+                                        type="button"
+                                        onClick={() => toggleClassVisibility(classInfo.id)}
+                                        className="flex min-h-[56px] w-full items-center justify-between gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left active:bg-[var(--tm-bg-surface-muted)]"
+                                        aria-pressed={visible}
+                                    >
+                                        <span className="min-w-0 truncate text-sm font-semibold text-[var(--tm-text-primary)]">{classInfo.name}</span>
+                                        <span className={`flex h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors ${visible ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-muted)] ring-1 ring-inset ring-[var(--tm-border-subtle)]'}`}>
+                                            <span className={`h-5 w-5 rounded-full bg-white shadow-[var(--tm-shadow-control)] transition-transform ${visible ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </section>
+                </div>
+            )}
+
+            {activeActionClass && actionGroups.length > 0 && (
+                <div className="fixed inset-0 z-[145] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label={`${activeActionClass.name}更多操作`}>
                     <button aria-label="关闭班级更多操作" className="absolute inset-0" onClick={closeActionSheet} />
-                    <div className="relative w-full rounded-t-[30px] bg-white px-5 pb-5 pt-4 shadow-[0_-18px_50px_rgba(15,23,42,0.18)] animate-in slide-in-from-bottom-4 fade-in duration-200">
+                    <div className="relative w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-4 shadow-[var(--tm-shadow-sheet)] animate-in slide-in-from-bottom-4 fade-in [animation-duration:var(--tm-duration-standard)]">
                         <div className="mb-4 flex items-center justify-between">
                             <div className="min-w-0">
-                                <h3 className="truncate text-[18px] font-semibold text-slate-900">{activeActionClass.name}</h3>
-                                <p className="mt-0.5 text-xs font-medium text-slate-400">更多操作</p>
+                                <h3 className="truncate text-[18px] font-semibold text-[var(--tm-text-primary)]">{activeActionClass.name}</h3>
+                                <p className="mt-0.5 text-xs font-medium tabular-nums text-[var(--tm-text-disabled)]">班级号 {formatClassCode(activeActionClass.classCode)}</p>
                             </div>
-                            <button onClick={closeActionSheet} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-400 active:bg-slate-50" aria-label="关闭">
+                            <button onClick={closeActionSheet} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭">
                                 <CloseIcon className="h-5 w-5" />
                             </button>
                         </div>
@@ -280,7 +534,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         <div className="max-h-[58vh] space-y-4 overflow-y-auto pb-1 no-scrollbar">
                             {actionGroups.map(group => (
                                 <section key={group.title}>
-                                    <h4 className="mb-2 px-1 text-xs font-semibold text-slate-400">{group.title}</h4>
+                                    <h4 className="mb-2 px-1 text-xs font-semibold text-[var(--tm-text-disabled)]">{group.title}</h4>
                                     <div className="grid grid-cols-2 gap-2.5">
                                         {group.items.map(item => {
                                             const Icon = item.icon;
@@ -289,15 +543,13 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                                     key={item.label}
                                                     type="button"
                                                     onClick={item.onClick}
-                                                    className="relative flex min-h-[56px] items-center gap-3 rounded-[18px] border border-slate-100 bg-slate-50/65 px-3 text-left transition active:scale-[0.98] active:bg-slate-100"
+                                                    className="relative flex min-h-[56px] items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 text-left transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-muted)]"
                                                 >
-                                                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] border ${actionToneClass[item.tone]}`}>
+                                                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] ${actionToneClass[item.tone]}`}>
                                                         <Icon className="h-[18px] w-[18px]" />
                                                     </span>
-                                                    <span className="min-w-0 flex-1 text-[14px] font-semibold leading-snug text-slate-700">{item.label}</span>
-                                                    {item.hasBadge && (
-                                                        <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-                                                    )}
+                                                    <span className="min-w-0 flex-1 text-[14px] font-semibold leading-snug text-[var(--tm-text-primary)]">{item.label}</span>
+                                                    {item.hasBadge && <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-[var(--tm-status-negative)] ring-2 ring-white" />}
                                                 </button>
                                             );
                                         })}
@@ -310,37 +562,29 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             )}
 
             {showLeftStudentSheet && (
-                <div className="absolute inset-0 z-[150] flex items-end bg-black/55">
+                <div className="fixed inset-0 z-[150] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="离校学生">
                     <button aria-label="关闭离校学生" className="absolute inset-0" onClick={() => setLeftStudentClassId(null)} />
-                    <div className="relative max-h-[72%] w-full rounded-t-[32px] bg-white px-5 pb-5 pt-5 shadow-2xl">
+                    <div className="relative max-h-[72%] w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-5 shadow-[var(--tm-shadow-sheet)]">
                         <div className="mb-4 flex items-center justify-center">
-                            <h3 className="text-[20px] font-black text-slate-800">离校学生</h3>
-                            <button onClick={() => setLeftStudentClassId(null)} className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full active:bg-slate-50">
-                                <CloseIcon className="h-5 w-5 text-slate-400" />
+                            <h3 className="text-[20px] font-semibold text-[var(--tm-text-primary)]">离校学生</h3>
+                            <button onClick={() => setLeftStudentClassId(null)} className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭">
+                                <CloseIcon className="h-5 w-5 text-[var(--tm-text-disabled)]" />
                             </button>
                         </div>
                         <div className="max-h-[440px] space-y-3 overflow-y-auto pb-4">
                             {leftStudents.length === 0 && (
-                                <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm font-semibold text-slate-400">
+                                <div className="rounded-[var(--tm-radius-card)] border border-dashed border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-8 text-center text-sm font-semibold text-[var(--tm-text-secondary)]">
                                     暂无离校学生
                                 </div>
                             )}
                             {leftStudents.map(student => (
-                                <div key={student.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
-                                    <img
-                                        src={student.avatar}
-                                        alt={`${student.name}头像`}
-                                        className="h-11 w-11 shrink-0 rounded-full border border-slate-100 bg-slate-50 object-cover"
-                                    />
+                                <div key={student.id} className="flex items-center gap-3 rounded-[var(--tm-radius-inner)] bg-white p-3 shadow-[var(--tm-shadow-card)]">
+                                    <img src={student.avatar} alt={`${student.name}头像`} className="h-11 w-11 shrink-0 rounded-full bg-[var(--tm-bg-surface-soft)] object-cover" />
                                     <div className="min-w-0 flex-1">
-                                        <div className="text-[15px] font-black text-slate-800">{student.name}</div>
-                                        <div className="mt-1 truncate text-xs font-medium text-slate-400">{student.studentNo || student.id} · {leftStudentClass?.name || student.class}</div>
+                                        <div className="text-[15px] font-semibold text-[var(--tm-text-primary)]">{student.name}</div>
+                                        <div className="mt-1 truncate text-xs font-medium text-[var(--tm-text-disabled)]">{student.studentNo || student.id} · {leftStudentClass?.name || student.class}</div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => onRestoreStudentStatus(student)}
-                                        className="h-10 shrink-0 rounded-full bg-emerald-50 px-3 text-xs font-black text-emerald-700 active:scale-95"
-                                    >
+                                    <button type="button" onClick={() => onRestoreStudentStatus(student)} className="min-h-11 shrink-0 rounded-full bg-[var(--tm-status-positive-soft)] px-3 text-xs font-semibold text-[var(--tm-status-positive-strong)] active:scale-95">
                                         恢复
                                     </button>
                                 </div>

@@ -32,12 +32,13 @@ import {
 } from './parent-app/ParentUI';
 import TeacherFluidGlassNav from '../mobile-app/components/TeacherFluidGlassNav';
 import AssignedQuestionnaireView from './parent-app/AssignedQuestionnaireView';
+import { parentSurface } from './parent-app/ParentStyleTokens';
 import '../mobile-app/styles/navigation.css';
-import '../mobile-app/styles/teacherMobileTokens.css';
 import { BANK_CONFIG } from '../constants';
 import { ASSETS } from '../mobile-app/assets/images';
 import {
   QUESTIONNAIRE_STORE_EVENT,
+  getQuestionnaireCollectionMode,
   isQuestionnaireOverdue,
   readQuestionnaires,
   type QuestionnaireRecord,
@@ -605,7 +606,7 @@ const PARENT_PROFILE = {
 const formatDailyRate = (rate: number) => `${Number((rate * 100).toFixed(2))}%`;
 
 const ParentDiffuseBackdrop = () => (
-  <div aria-hidden="true" className="parent-teacher-token-backdrop pointer-events-none absolute inset-0 overflow-hidden" />
+  <div aria-hidden="true" className={`${parentSurface.background} pointer-events-none absolute inset-0 overflow-hidden`} />
 );
 
 const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHasBoundChild = true }) => {
@@ -666,6 +667,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
     if (!activeChild) return [];
     return sharedQuestionnaires.filter(questionnaire => (
       questionnaire.status === 'active'
+      && getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'
       && questionnaire.targets.some(target => target.studentNo === activeChild.studentNo && target.reachable)
       && !questionnaire.submissions.some(submission => submission.studentNo === activeChild.studentNo)
     ));

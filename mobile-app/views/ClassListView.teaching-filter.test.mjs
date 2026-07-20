@@ -10,16 +10,16 @@ const requireText = (source, needle, message) => {
 requireText(classListSource, 'teacherProfile: TeacherProfile;', '班级列表应接收教师资料，用任教关系过滤班级。');
 requireText(classListSource, 'showTeachingOnly', '班级列表应有“只显示任教班级”的勾选状态。');
 requireText(classListSource, 'teachingClassIds', '班级列表应基于 teachingAssignments 生成任教班级集合。');
+requireText(classListSource, 'homeroomClassIds', '任教班级应同时包含班主任班级。');
+requireText(classListSource, 'assignedClassIds', '班级列表应合并任教学科和班主任关系。');
 requireText(classListSource, 'visibleClasses', '班级列表渲染应使用过滤后的班级列表。');
 requireText(classListSource, '只显示任教班级', '顶部操作区应提供“只显示任教班级”选项。');
-requireText(classListSource, "showTeachingOnly ? 'bg-transparent text-slate-500 shadow-none'", '任教筛选选中态不应显示背景、边框或阴影。');
-requireText(classListSource, 'h-10 rounded bg-gradient-to-r', '班级排行榜按钮应为 40px 高、4px 圆角。');
-requireText(classListSource, 'flex flex-col items-start gap-4 px-1', '“只显示任教班级”应放在班级排行榜下方，并与排行榜保持 16px 间距。');
-requireText(classListSource, 'flex flex-col items-start gap-4 px-1', '班级排行榜、任教筛选、班级卡片之间应保持 16px 间距。');
-requireText(classListSource, 'h-[10px] rounded-[14px] border-0 px-0', '任教班级筛选按钮应按标注压缩高度、圆角、边框和左右内边距。');
-requireText(classListSource, 'classes.filter(cls => teachingClassIds.has(cls.id))', '勾选后应只展示 teachingAssignments 中的班级。');
-requireText(classListSource, 'h-[160px] bg-white rounded', '班级卡片高度应收敛为 160px。');
-requireText(classListSource, 'h-[38px] rounded', '班级卡片底部操作按钮应为 38px 高、4px 圆角。');
+requireText(classListSource, "isSchoolSpace && gradeFilter !== '全部'", '年级筛选只能作用于学校版。');
+requireText(classListSource, 'isSchoolSpace && showTeachingOnly && !assignedClassIds.has(classInfo.id)', '任教筛选只能作用于学校版，并依据真实任教关系过滤。');
+requireText(classListSource, 'className={`flex min-h-11 items-center gap-2 rounded-[var(--tm-radius-control)]', '任教班级筛选按钮应使用统一控件圆角，并保留完整触控热区。');
+requireText(classListSource, 'min-h-11 w-full appearance-none rounded-[var(--tm-radius-control)]', '学校版年级筛选应提供至少 44px 触控高度。');
+requireText(classListSource, 'rounded-[var(--tm-radius-card)] bg-white px-4 py-3 [box-shadow:0_12px_28px_-16px_var(--tm-shadow-neutral-color),0_3px_10px_-7px_var(--tm-shadow-neutral-color)]', '班级卡片应使用统圆角与无边框双层阴影。');
+requireText(classListSource, 'flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)]', '班级卡片底部操作按钮应满足 44px 最小触控高度。');
 requireText(appSource, 'teacherProfile={teacherProfile}', 'App 应把当前教师资料传给班级列表。');
 
 if (classListSource.includes('共 {classes.length} 个班级')) {
@@ -32,8 +32,8 @@ if (classListSource.includes("showTeachingOnly ? 'border-blue-200")) {
   throw new Error('勾选后筛选按钮不应继续显示蓝色边框。');
 }
 
-if (classListSource.includes('min-h-11 rounded-2xl px-3')) {
-  throw new Error('任教班级筛选按钮不应继续使用 44px 高和 12px 左右内边距。');
+if (classListSource.includes('h-[10px]') || classListSource.includes('h-[38px]')) {
+  throw new Error('任教筛选和班级卡操作不应继续使用低于 44px 的触控高度。');
 }
 if (classListSource.includes('py-3.5')) {
   throw new Error('班级卡片不应继续使用较高的纵向内边距导致高度超过 160px。');

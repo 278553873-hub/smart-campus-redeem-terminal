@@ -17,6 +17,12 @@ assert.doesNotMatch(
 );
 
 assert.match(
+  app,
+  /const viewHandlesScroll = \[[^\]]*'class_list'/,
+  '班级列表已在内部处理滚动和底部留白，外层 main 不应再添加底部导航安全区'
+);
+
+assert.match(
   css,
   /--teacher-tabbar-height:\s*66px;/,
   '底部导航高度应抽象为 CSS 变量，避免滚动安全区和实际底栏尺寸不一致'

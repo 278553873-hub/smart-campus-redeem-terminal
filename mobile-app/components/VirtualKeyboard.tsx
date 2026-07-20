@@ -13,7 +13,7 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({ onClose, onKey
     const row3 = ['Z', 'X', 'C', 'V', 'B', 'N', 'M'];
 
     return (
-        <div className="absolute bottom-0 left-0 right-0 h-[280px] bg-[#D1D5DB] pb-safe z-50 flex flex-col p-2 gap-2 animate-in slide-in-from-bottom duration-300 pointer-events-auto">
+        <div className="pointer-events-auto absolute bottom-0 left-0 right-0 z-[80] flex h-[280px] flex-col gap-2 bg-[#D1D5DB] p-2 pb-safe animate-in slide-in-from-bottom duration-300">
             <div className="flex justify-center gap-1.5 w-full">
                 {row1.map(key => (
                     <button key={key} onClick={() => onKeyPress(key.toLowerCase())} className="flex-1 h-11 bg-white rounded-lg shadow-sm text-black font-medium text-xl active:bg-gray-300 transition-colors">

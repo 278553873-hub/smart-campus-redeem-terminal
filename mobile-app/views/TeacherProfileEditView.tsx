@@ -11,7 +11,7 @@ import type { ClassInfo, TeacherDepartment, TeacherProfile, TeacherTeachingAssig
 import type { TeacherSpaceOption } from './MeView';
 import { ASSETS } from '../assets/images';
 import { MobileCard } from '../components/ui/MobileCard';
-import { phoneText } from '../styles/phoneTokens';
+import { phoneText } from '../styles/teacherMobileTokens';
 
 interface TeacherProfileEditViewProps {
     profile: TeacherProfile;

@@ -1,403 +1,222 @@
-# 教师手机端 Design Token（设计变量）
+# 教师手机端 Design Token（设计令牌）
 
-> 适用对象：教师手机端 Demo、小程序壳层内的教师移动端页面、教师端手机尺寸弹窗/底部抽屉/导航/卡片。
+> 适用范围：教师微信小程序手机端，包括记录、班级、学生、报表、我的、弹层和底部导航。
 >
-> 不适用对象：PC 后台、货柜机终端、教室大屏、家长手机端。家长端已有独立暖色规范，不应直接套用本文件。
+> 不适用范围：家长手机端、PC 后台、货柜机终端和教室大屏。各端保持独立主题，禁止交叉覆盖。
 
-## 1. 设计目标
+## 1. 唯一来源
 
-教师手机端当前视觉风格可以概括为：
-
-- **清爽浅色底**：白色内容卡片叠在浅蓝、浅粉、浅紫弥散背景上。
-- **AI 科技感**：核心品牌色使用靛蓝到青色渐变，局部使用粉色强调。
-- **教师工作效率优先**：列表、班级、学生、报表页面要稳定、清晰、低干扰。
-- **轻毛玻璃质感**：底部导航、悬浮层、重要卡片使用半透明白、柔和阴影和模糊。
-- **状态颜色克制**：成功、警告、危险只在状态提示、标签和反馈中使用，不抢主品牌层级。
-
-本文件把颜色拆成三层：
+教师手机端只允许存在一个可执行令牌源：
 
 ```text
-Primitive 原始值 → Semantic 语义值 → Component 组件值
+mobile-app/styles/teacherMobileTokens.ts
 ```
 
-- **Primitive（原始值）**：只记录颜色本身，不表达业务含义。
-- **Semantic（语义值）**：表达用途，如主色、页面背景、成功状态。
-- **Component（组件值）**：表达组件内的具体用法，如按钮背景、卡片边框、底栏滑块。
+该文件同时维护：
 
----
+- Primitive（原始值）：品牌红、辅助橙、奖励金、角色玉石青、中性色、正向绿、负向玫红。
+- Semantic（语义值）：品牌、文字、页面、表面、边框、状态。
+- Component（组件值）：记录模式、导航、阴影、圆角、触控、字号、间距和动效。
 
-## 2. Primitive Tokens：原始颜色
+页面只能引用 `--tm-*` 语义变量或该文件导出的共享样式映射，不得在页面内重新声明主题变量。
 
-### 2.1 品牌与科技色
+已废弃并删除：
 
-| Token | 色值 | 来源/用途 |
-|---|---:|---|
-| `--tm-indigo-500` | `#6366F1` | 教师端 AI 主色、学生模式主色、选中态 |
-| `--tm-indigo-600` | `#4F46E5` | 主色按压态、深一级强调 |
-| `--tm-blue-500` | `#3B82F6` | 班级卡片、智育、信息强调 |
-| `--tm-blue-600` | `#2563EB` | 蓝色文字强调、按钮按压态 |
-| `--tm-cyan-500` | `#06B6D4` | AI 辅助色、扫描/科技感强调 |
-| `--tm-cyan-600` | `#0891B2` | 青色深态 |
-| `--tm-violet-500` | `#8B5CF6` | 雷达图、能力图、紫色辅助 |
-| `--tm-violet-400` | `#A78BFA` | 紫色轻强调 |
-| `--tm-pink-500` | `#EC4899` | 美育、AI 渐变强调、局部高光 |
+- `mobile-app/styles/teacherBrandTokens.ts`
+- `mobile-app/styles/phoneTokens.ts`
+- `mobile-app/styles/teacherMobileTokens.css`
+- `mobile-app/index.css` 中旧 `--ai-*`、`--student-*`、`--class-*` 蓝紫/靛青变量
 
-### 2.2 教师业务状态色
+## 2. 视觉方向
 
-| Token | 色值 | 来源/用途 |
-|---|---:|---|
-| `--tm-emerald-500` | `#10B981` | 班级模式、体育、成功反馈 |
-| `--tm-emerald-600` | `#059669` | 选中态、报表筛选主按钮 |
-| `--tm-teal-600` | `#0F766E` | 合格/稳定状态、深绿色文本 |
-| `--tm-amber-500` | `#F59E0B` | 德育、提醒、待处理 |
-| `--tm-orange-600` | `#EA580C` | 低活跃榜、轻警示 |
-| `--tm-rose-500` | `#F43F5E` | 危险、错误、负反馈 |
-| `--tm-lime-500` | `#84CC16` | 劳动维度、轻活力强调 |
+- 暖白页面底色，品牌红和辅助橙只用于小面积强调及顶部弱弥散光。
+- 白色内容表面、轻中性阴影、克制圆角，不使用重玻璃和厚重彩色发光。
+- 记录学生使用品牌红，记录班级使用辅助橙；二者只表达记录对象。
+- 加分使用正向绿，扣分使用负向玫红；不得与记录对象颜色混用。
+- 蓝紫、靛青不再承担教师端品牌、主操作、选中态或人工智能角色色。班主任助理使用玉石青角色体系，校长助理使用品牌红与奖励金角色体系。
 
-### 2.3 中性色
+## 3. 原始颜色
 
-| Token | 色值 | 用途 |
-|---|---:|---|
-| `--tm-white` | `#FFFFFF` | 卡片、底栏、弹窗主体 |
-| `--tm-slate-50` | `#F8FAFC` | 弱背景、列表分组底 |
-| `--tm-slate-100` | `#F1F5F9` | 分隔块、禁用背景 |
-| `--tm-slate-200` | `#E2E8F0` | 分割线、图表网格线 |
-| `--tm-slate-300` | `#CBD5E1` | 弱图标、禁用文字 |
-| `--tm-slate-400` | `#94A3B8` | 辅助文字、占位文字 |
-| `--tm-slate-500` | `#64748B` | 次要文字 |
-| `--tm-slate-600` | `#475569` | 常规说明文字 |
-| `--tm-slate-700` | `#334155` | 次级标题 |
-| `--tm-slate-900` | `#0F172A` | 主标题、正文强文本 |
-| `--tm-slate-950` | `#020617` | 最高强调文本 |
+### 3.1 品牌与中性色
 
-### 2.4 轻色背景与弥散光
+| 用途 | Token | 色值 |
+|---|---|---:|
+| 品牌主色 | `red-500` | `#E02727` |
+| 品牌按压 | `red-700` | `#BA352E` |
+| 品牌浅底 | `red-50` | `#FFF1F1` |
+| 辅助橙 | `orange-500` | `#F75C03` |
+| 辅助橙文字 | `orange-700` | `#B83F00` |
+| 辅助橙浅底 | `orange-50` | `#FFF5EC` |
+| 角色玉石青 | `jade-500` | `#278779` |
+| 角色玉石青文字 | `jade-700` | `#155B54` |
+| 角色玉石青浅底 | `jade-50` | `#ECF8F6` |
+| 页面暖白 | 页面语义值 | `#FFF9F6` |
+| 主文字 | `neutral-900` | `#171513` |
+| 次文字 | `neutral-500` | `#6D6764` |
+| 弱图标/禁用 | `neutral-400` | `#A49C97` |
+| 弱边框 | `neutral-200` | `#E7E2DF` |
 
-| Token | 色值 | 用途 |
-|---|---:|---|
-| `--tm-page-bg` | `#F8FBFF` | 教师手机端页面主背景 |
-| `--tm-page-bg-top` | `#F9FBFF` | 页面顶部浅蓝白渐变起点 |
-| `--tm-page-bg-bottom` | `#FFFFFF` | 页面底部白色渐变终点 |
-| `--tm-glow-blue` | `#E2F1FF` | 顶部右侧浅蓝弥散光 |
-| `--tm-glow-pink` | `#FFE8F8` | 顶部左侧浅粉弥散光 |
-| `--tm-glow-purple` | `#F4F0FF` | 记录页中部浅紫弥散光 |
-| `--tm-report-bg` | `#EEF7F3` | 学校数据报表页浅绿背景 |
+### 3.2 状态色
 
-### 2.5 透明与玻璃色
+| 语义 | 浅底 | 主色 | 深文字 |
+|---|---:|---:|---:|
+| 正向/加分 | `#ECF8F1` | `#168252` | `#0F6A45` |
+| 负向/扣分 | `#FFF0F3` | `#B4233C` | `#8F1830` |
+| 奖励 | `#FFF8E5` | `#FA9C00` | `#9A5B00` |
 
-| Token | 色值 | 用途 |
-|---|---:|---|
-| `--tm-glass-bg` | `rgba(255,255,255,0.62)` | 教师端通用浮层背景，不用于底部导航主容器 |
-| `--tm-glass-bg-strong` | `rgba(255,255,255,0.72)` | 通用浮层背景；悬浮输入区优先使用高不透明白底 |
-| `--tm-glass-border` | `rgba(255,255,255,0.74)` | 毛玻璃边框 |
-| `--tm-glass-highlight` | `rgba(255,255,255,0.72)` | 玻璃高光线 |
-| `--tm-mask-bg` | `rgba(15,23,42,0.35)` | 弹窗遮罩 |
+### 3.3 人工智能助理角色色
 
----
+角色色表达助理的业务角色，不替代全局品牌、状态或记录模式语义；人工智能身份由人物、打字机、流光和卡片材质共同表达。
 
-## 3. Semantic Tokens：语义颜色
-
-### 3.1 品牌语义
-
-| Token | 对应原始值 | 使用说明 |
-|---|---|---|
-| `--tm-color-primary` | `var(--tm-indigo-500)` | 教师端默认主色，适合选中态、主操作、重点入口 |
-| `--tm-color-primary-pressed` | `var(--tm-indigo-600)` | 主操作按压态 |
-| `--tm-color-secondary` | `var(--tm-cyan-500)` | AI 科技感辅助色、扫描线、渐变终点 |
-| `--tm-color-accent` | `var(--tm-pink-500)` | 局部高光，不用于大面积按钮 |
-| `--tm-color-class` | `var(--tm-emerald-500)` | 班级、群体、数据覆盖类场景 |
-| `--tm-color-data` | `var(--tm-blue-500)` | 图表、统计、智育信息 |
-
-### 3.2 文本语义
-
-| Token | 对应原始值 | 使用说明 |
-|---|---|---|
-| `--tm-text-primary` | `var(--tm-slate-950)` | 页面标题、关键姓名、核心数字 |
-| `--tm-text-secondary` | `var(--tm-slate-700)` | 卡片标题、列表标题 |
-| `--tm-text-body` | `var(--tm-slate-600)` | 正文、描述 |
-| `--tm-text-muted` | `var(--tm-slate-500)` | 次要信息 |
-| `--tm-text-placeholder` | `var(--tm-slate-400)` | 输入提示、空状态弱文字 |
-| `--tm-text-disabled` | `var(--tm-slate-300)` | 禁用态文字 |
-| `--tm-text-inverse` | `var(--tm-white)` | 深色或彩色底上的文字 |
-
-### 3.3 背景语义
-
-| Token | 对应原始值 | 使用说明 |
-|---|---|---|
-| `--tm-bg-page` | `var(--tm-page-bg)` | 页面基础底色 |
-| `--tm-bg-page-gradient` | `linear-gradient(180deg, var(--tm-page-bg-top) 0%, var(--tm-page-bg-bottom) 72%)` | 教师端默认柔和渐变背景 |
-| `--tm-bg-card` | `var(--tm-white)` | 普通卡片、列表卡片 |
-| `--tm-bg-card-subtle` | `var(--tm-slate-50)` | 卡片内部弱分组、图表承载区 |
-| `--tm-bg-control` | `var(--tm-slate-100)` | 分段控件外层、弱按钮背景 |
-| `--tm-bg-glass` | `var(--tm-glass-bg)` | 底部导航、悬浮栏 |
-| `--tm-bg-report` | `var(--tm-report-bg)` | 学校数据报表页独立浅绿背景 |
-
-### 3.4 边框与分割语义
-
-| Token | 对应原始值 | 使用说明 |
-|---|---|---|
-| `--tm-border-subtle` | `var(--tm-slate-100)` | 卡片边框、列表分割 |
-| `--tm-border-default` | `var(--tm-slate-200)` | 表单边框、较明显分隔 |
-| `--tm-border-focus` | `var(--tm-color-primary)` | 输入框聚焦态 |
-| `--tm-border-glass` | `var(--tm-glass-border)` | 毛玻璃组件边框 |
-
-### 3.5 状态语义
-
-| Token | 背景 | 文字 | 使用说明 |
-|---|---|---|---|
-| `--tm-success-*` | `#ECFDF5` | `var(--tm-emerald-600)` | 成功、已完成、正向反馈 |
-| `--tm-info-*` | `#EFF6FF` | `var(--tm-blue-600)` | 信息、班级数据、说明提示 |
-| `--tm-ai-*` | `#ECFEFF` | `var(--tm-cyan-600)` | AI 分析、智能生成 |
-| `--tm-warning-*` | `#FFFBEB` | `var(--tm-amber-500)` | 待处理、提醒 |
-| `--tm-danger-*` | `#FFF1F2` | `var(--tm-rose-500)` | 错误、危险、负反馈 |
-| `--tm-neutral-*` | `var(--tm-slate-50)` | `var(--tm-slate-600)` | 普通标签、弱状态 |
-
----
-
-## 4. Component Tokens：组件颜色
-
-### 4.1 页面背景
-
-| 组件 Token | 值 | 使用场景 |
-|---|---|---|
-| `--tm-page-background` | `var(--tm-bg-page-gradient)` | 默认教师端页面背景 |
-| `--tm-page-glow-left` | `radial-gradient(circle at 18% 8%, rgba(255,232,248,0.9), transparent 28%)` | 顶部左侧粉色光 |
-| `--tm-page-glow-right` | `radial-gradient(circle at 82% 4%, rgba(226,241,255,0.95), transparent 32%)` | 顶部右侧蓝色光 |
-| `--tm-page-glow-middle` | `radial-gradient(circle at 50% 58%, rgba(244,240,255,0.68), transparent 38%)` | 记录页中部紫色光 |
-
-推荐 CSS（层叠顺序固定）：
-
-```css
-.teacher-mobile-page {
-  background:
-    var(--tm-page-glow-left),
-    var(--tm-page-glow-right),
-    var(--tm-page-background);
-}
-
-.teacher-record-page {
-  background:
-    var(--tm-page-glow-left),
-    var(--tm-page-glow-right),
-    var(--tm-page-glow-middle),
-    var(--tm-page-background);
-}
-```
-
-### 4.2 卡片
-
-| 组件 Token | 值 | 使用场景 |
-|---|---|---|
-| `--tm-card-bg` | `var(--tm-bg-card)` | 普通内容卡片 |
-| `--tm-card-bg-soft` | `rgba(255,255,255,0.80)` | 轻玻璃卡片 |
-| `--tm-card-border` | `var(--tm-border-subtle)` | 普通卡片边框 |
-| `--tm-card-ring` | `rgba(226,232,240,0.70)` | 高级卡片弱描边 |
-| `--tm-card-shadow` | `0 14px 38px -28px rgba(15,23,42,0.38)` | 普通移动端卡片阴影 |
-| `--tm-card-shadow-raised` | `0 24px 70px -38px rgba(14,116,144,0.50)` | 个人中心 Hero、强视觉卡片 |
-
-### 4.3 按钮
-
-| 组件 Token | 背景 | 文字 | 阴影 |
-|---|---|---|---|
-| `--tm-button-primary-*` | `linear-gradient(135deg,var(--tm-color-primary),var(--tm-color-secondary))` | `var(--tm-text-inverse)` | `0 14px 28px -18px rgba(37,99,235,0.80)` |
-| `--tm-button-class-*` | `var(--tm-emerald-600)` | `var(--tm-text-inverse)` | `0 14px 28px -18px rgba(5,150,105,0.90)` |
-| `--tm-button-secondary-*` | `var(--tm-slate-100)` | `var(--tm-slate-600)` | `none` |
-| `--tm-button-danger-*` | `var(--tm-danger-bg)` | `var(--tm-rose-500)` | `none` |
-| `--tm-button-disabled-*` | `var(--tm-slate-200)` | `var(--tm-slate-400)` | `none` |
-
-使用规则：
-
-- 主操作默认使用 `primary`，报表筛选、班级覆盖类页面可使用 `class`。
-- 不要在同一页面同时出现多个高饱和主按钮。
-- 危险操作必须使用浅底红字，不直接使用大面积纯红按钮，除非是最终确认弹窗。
-
-### 4.4 底部悬浮导航
-
-| 组件 Token | 值 | 使用场景 |
-|---|---|---|
-| `--tm-tabbar-bg` | `rgba(255,255,255,0.62)` | 教师端悬浮底栏 |
-| `--tm-tabbar-highlight` | `linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0.12))` | 底栏玻璃高光 |
-| `--tm-tabbar-shadow` | `0 10px 28px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.72)` | 底栏阴影 |
-| `--tm-tabbar-item-active` | `var(--tm-color-primary)` | 选中图标与文字 |
-| `--tm-tabbar-item-default` | `var(--tm-slate-400)` | 未选中图标与文字 |
-| `--tm-tabbar-indicator-bg` | `rgba(255,255,255,0.52)` | 液态滑块背景 |
-| `--tm-tabbar-indicator-border` | `rgba(255,255,255,0.74)` | 液态滑块边框 |
-
-### 4.5 表单输入
-
-| 组件 Token | 值 | 使用场景 |
-|---|---|---|
-| `--tm-input-bg` | `var(--tm-slate-50)` | 默认输入框背景 |
-| `--tm-input-bg-focus` | `var(--tm-white)` | 聚焦背景 |
-| `--tm-input-border` | `var(--tm-border-subtle)` | 默认边框 |
-| `--tm-input-border-focus` | `var(--tm-color-primary)` | 聚焦边框 |
-| `--tm-input-text` | `var(--tm-text-primary)` | 输入内容 |
-| `--tm-input-placeholder` | `var(--tm-text-placeholder)` | 占位提示 |
-| `--tm-input-error-border` | `var(--tm-rose-500)` | 错误边框 |
-
-### 4.6 标签与状态徽章
-
-| Tone | 背景 | 文字 | 边框 | 使用场景 |
+| 角色 | 主色 | 强文字 | 浅底 | 流光高光 |
 |---|---|---|---|---|
-| `brand` | `#EEF2FF` | `var(--tm-indigo-500)` | `#E0E7FF` | 默认品牌标签 |
-| `blue` | `#EFF6FF` | `var(--tm-blue-600)` | `#DBEAFE` | 数据、智育、班级信息 |
-| `cyan` | `#ECFEFF` | `var(--tm-cyan-600)` | `#CFFAFE` | AI、智能分析 |
-| `emerald` | `#ECFDF5` | `var(--tm-emerald-600)` | `#D1FAE5` | 成功、班级、体育 |
-| `amber` | `#FFFBEB` | `var(--tm-amber-500)` | `#FEF3C7` | 提醒、德育 |
-| `rose` | `#FFF1F2` | `var(--tm-rose-500)` | `#FFE4E6` | 错误、负反馈 |
-| `neutral` | `var(--tm-slate-50)` | `var(--tm-slate-600)` | `var(--tm-slate-100)` | 默认弱标签 |
+| 班主任助理 | `--tm-role-headteacher-primary` | `--tm-role-headteacher-strong` | `--tm-role-headteacher-soft` | `--tm-role-headteacher-highlight`（浅玉石青） |
+| 校长助理 | `--tm-role-principal-primary` | `--tm-role-principal-strong` | `--tm-role-principal-soft` | `--tm-role-principal-highlight`（管理金） |
 
-### 4.7 教师记录 AI 解读卡
+角色页面的背景光、边框、焦点、阴影和文字流光必须引用对应 `--tm-role-*` Token，禁止重新引入青蓝、柔紫或一次性角色色。流光高光必须与角色深色正文保持足够的明度差，避免动画运行但视觉不可辨识。
 
-| 组件 Token | 值 | 使用场景 |
+### 3.4 采集受众色
+
+问卷采集按填写对象区分受众色，颜色必须与图标和类型文字共同出现，不能单独依赖颜色传达类型。
+
+| 受众 | Token 前缀 | 视觉方向 |
 |---|---|---|
-| `--tm-record-student-primary` | `#12B8CB` | 记录学生模式主色、AI 正向边框 |
-| `--tm-record-student-secondary` | `#6577F5` | 记录学生模式渐变终点 |
-| `--tm-record-class-primary` | `#7C3AED` | 记录班级模式主色 |
-| `--tm-record-class-secondary` | `#C026D3` | 记录班级模式渐变终点 |
-| `--tm-record-positive-bg` | `rgba(236,253,245,0.82)` | 正向总分摘要背景 |
-| `--tm-record-positive-border` | `rgba(20,184,166,0.30)` | 正向 AI 解读边框和总分边框 |
-| `--tm-record-positive-text` | `#0F766E` | 正向分值文字 |
-| `--tm-record-negative-bg` | `rgba(255,241,244,0.84)` | 扣分总分摘要背景 |
-| `--tm-record-negative-border` | `rgba(224,82,104,0.30)` | 扣分 AI 解读边框和总分边框 |
-| `--tm-record-negative-text` | `#E05268` | 扣分分值文字 |
+| 家长 | `--tm-audience-guardian-*` | 品牌红 |
+| 学生 | `--tm-audience-student-*` | 玉石青 |
+| 教师 | `--tm-audience-teacher-*` | 奖励金 |
 
-使用规则：
+## 4. 核心语义变量
 
-- AI 解读卡只在教师记录流中使用，不复制到班级列表、我的页面、报表页等普通卡片。
-- 整块 AI 解读卡可点击编辑时，字段内不放编辑图标。
-- 总分使用标题右侧摘要块，不使用圆形装饰章，不使用字段胶囊样式。
-- 指标行固定为“名称左对齐、分值右对齐”，支持多指标。
-- 记录学生和记录班级是模式色，正向和扣分是语义色，两者不得混用。
-- 底部导航使用固定干净青蓝 `#1E9AAA`，不跟随记录模式色切换。
-
----
-
-## 5. CSS 变量建议
-
-后续可把以下内容沉淀到 `mobile-app/index.css` 或独立 `mobile-app/styles/teacherMobileTokens.css`：
-
-```css
-:root {
-  /* Primitive */
-  --tm-indigo-500: #6366F1;
-  --tm-indigo-600: #4F46E5;
-  --tm-blue-500: #3B82F6;
-  --tm-blue-600: #2563EB;
-  --tm-cyan-500: #06B6D4;
-  --tm-cyan-600: #0891B2;
-  --tm-violet-500: #8B5CF6;
-  --tm-violet-400: #A78BFA;
-  --tm-pink-500: #EC4899;
-  --tm-emerald-500: #10B981;
-  --tm-emerald-600: #059669;
-  --tm-teal-600: #0F766E;
-  --tm-amber-500: #F59E0B;
-  --tm-orange-600: #EA580C;
-  --tm-rose-500: #F43F5E;
-  --tm-lime-500: #84CC16;
-  --tm-white: #FFFFFF;
-  --tm-slate-50: #F8FAFC;
-  --tm-slate-100: #F1F5F9;
-  --tm-slate-200: #E2E8F0;
-  --tm-slate-300: #CBD5E1;
-  --tm-slate-400: #94A3B8;
-  --tm-slate-500: #64748B;
-  --tm-slate-600: #475569;
-  --tm-slate-700: #334155;
-  --tm-slate-900: #0F172A;
-  --tm-slate-950: #020617;
-
-  /* Semantic */
-  --tm-color-primary: var(--tm-indigo-500);
-  --tm-color-primary-pressed: var(--tm-indigo-600);
-  --tm-color-secondary: var(--tm-cyan-500);
-  --tm-color-accent: var(--tm-pink-500);
-  --tm-color-class: var(--tm-emerald-500);
-  --tm-color-data: var(--tm-blue-500);
-  --tm-text-primary: var(--tm-slate-950);
-  --tm-text-secondary: var(--tm-slate-700);
-  --tm-text-body: var(--tm-slate-600);
-  --tm-text-muted: var(--tm-slate-500);
-  --tm-text-placeholder: var(--tm-slate-400);
-  --tm-text-disabled: var(--tm-slate-300);
-  --tm-text-inverse: var(--tm-white);
-  --tm-bg-page: #F8FBFF;
-  --tm-bg-page-gradient: linear-gradient(180deg, #F9FBFF 0%, #FFFFFF 72%);
-  --tm-bg-card: var(--tm-white);
-  --tm-bg-card-subtle: var(--tm-slate-50);
-  --tm-bg-control: var(--tm-slate-100);
-  --tm-border-subtle: var(--tm-slate-100);
-  --tm-border-default: var(--tm-slate-200);
-  --tm-border-focus: var(--tm-color-primary);
-
-  /* Component */
-  --tm-card-shadow: 0 14px 38px -28px rgba(15,23,42,0.38);
-  --tm-card-shadow-raised: 0 24px 70px -38px rgba(14,116,144,0.50);
-  --tm-tabbar-bg: rgba(255,255,255,0.62);
-  --tm-tabbar-shadow: 0 10px 28px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.72);
-  --tm-tabbar-indicator-bg: rgba(255,255,255,0.52);
-  --tm-tabbar-indicator-border: rgba(255,255,255,0.74);
-  --tm-mask-bg: rgba(15,23,42,0.35);
-}
-```
-
----
-
-## 6. Tailwind 使用映射
-
-当前项目大量使用 Tailwind CSS（通过类名直接写样式的工具库），短期可按以下规则映射：
-
-| 语义 | Tailwind 推荐类 | Token |
+| 语义 | CSS（层叠样式表）变量 | 说明 |
 |---|---|---|
-| 页面背景 | `teacher-mobile-phone-gradient` | `--tm-page-background` |
-| 主文字 | `text-slate-950` / `text-slate-900` | `--tm-text-primary` |
-| 次文字 | `text-slate-600` / `text-slate-500` | `--tm-text-body` / `--tm-text-muted` |
-| 白卡 | `bg-white border border-slate-100 shadow-sm` | `--tm-card-*` |
-| 弱容器 | `bg-slate-50` / `bg-slate-100` | `--tm-bg-card-subtle` / `--tm-bg-control` |
-| 主色入口 | `bg-indigo-600 text-white` | `--tm-color-primary` |
-| 班级/报表入口 | `bg-emerald-600 text-white` | `--tm-color-class` |
-| 数据强调 | `text-blue-600 bg-blue-50` | `--tm-color-data` |
-| AI 强调 | `text-cyan-600 bg-cyan-50` | `--tm-color-secondary` |
-| 负向提示 | `text-rose-600 bg-rose-50` | `--tm-danger-*` |
+| 品牌主色 | `--tm-brand-primary` | 主入口、全局选中态 |
+| 品牌深色 | `--tm-brand-primary-strong` | 品牌浅底上的普通字号文字 |
+| 辅助色 | `--tm-brand-secondary` | 班级模式图形强调，不承载小字号文字 |
+| 辅助色文字 | `--tm-brand-secondary-strong` | 橙色浅底上的文字 |
+| 主文字 | `--tm-text-primary` | 标题、姓名、关键数字 |
+| 次文字 | `--tm-text-secondary` | 正文辅助信息、未选中导航 |
+| 弱文字 | `--tm-text-tertiary` | 非关键提示和装饰图标 |
+| 禁用文字 | `--tm-text-disabled` | 仅用于真正不可操作状态 |
+| 页面背景 | `--tm-bg-page` | 教师端全局暖白背景 |
+| 内容表面 | `--tm-bg-surface` | 卡片、弹层、底栏 |
+| 弱表面 | `--tm-bg-surface-soft` | 次级按钮、卡内弱分组 |
+| 弱边框 | `--tm-border-subtle` | 分割线、描边 |
+| 控件边框 | `--tm-border-control` | 输入框等必须被清晰识别的交互边界 |
+| 焦点环 | `--tm-focus-ring` | 表单及按钮的键盘焦点反馈 |
+| 遮罩 | `--tm-mask` | 底部抽屉和弹层遮罩 |
 
----
+角色色与受众色均属于业务语义层，只能由对应角色页、问卷类型标签和类型图形使用，不得改写全局导航、通用主按钮或正负状态。
 
-## 7. 使用边界与禁止项
+## 5. 记录语义
 
-### 7.1 推荐
+| 用途 | 强调 | 可读文字 | 浅底 |
+|---|---|---|---|
+| 记录学生 | `--tm-record-student-primary` | `--tm-record-student-text` | `--tm-record-student-soft` |
+| 记录班级 | `--tm-record-class-primary` | `--tm-record-class-text` | `--tm-record-class-soft` |
+| 加分 | `--tm-status-positive` | `--tm-record-positive-text` | `--tm-record-positive-bg` |
+| 扣分 | `--tm-status-negative` | `--tm-record-negative-text` | `--tm-record-negative-bg` |
 
-- 页面背景优先使用浅蓝白渐变和弥散光，不用大面积高饱和色。
-- 内容承载优先使用白卡、浅灰分组、轻阴影。
-- 主操作使用靛蓝/青色体系，班级数据类页面可用绿色体系。
-- 图表、报表页面可以使用绿色作为局部主色，但不要替代全局主品牌色。
-- 状态标签必须成套使用背景、文字、边框，不单独换文字颜色。
+规则：
 
-### 7.2 禁止
+- `#F75C03` 在白底只用于图形、色块和大面积状态，不用于普通字号正文。
+- 品牌红 `#E02727` 在浅红底上只用于图形强调；`12px-14px` 文字使用 `--tm-record-student-text`。
+- 班级模式的 `12px-14px` 文字统一使用 `--tm-record-class-text`（`#B83F00`）。
+- 总分使用正负语义色，不跟随记录学生/记录班级模式色。
 
-- 禁止在新组件中继续散落一次性十六进制色值，如 `#3B82F6`，应先引用 token。
-- 禁止把家长端黄色 `#FFC210` 作为教师端主操作色。
-- 禁止把 PC 后台蓝色 `#165DFF` 直接迁移到教师手机端，除非是 PC 后台页面。
-- 禁止同一页面同时大面积使用靛蓝、绿色、粉色三个强主色。
-- 禁止普通卡片使用厚重彩色发光阴影。
-- 禁止用低对比灰字承载关键数据、学生姓名、班级名称、提交按钮。
+## 6. 排版令牌
 
----
+| 层级 | Token | 默认值 |
+|---|---|---:|
+| 页面标题 | `--tm-font-size-page-title` | `22px` |
+| 区块标题 | `--tm-font-size-section-title` | `17px` |
+| 卡片标题 | `--tm-font-size-card-title` | `15px` |
+| 正文 | `--tm-font-size-body` | `14px` |
+| 紧凑正文 | `--tm-font-size-compact` | `13px` |
+| 辅助信息 | `--tm-font-size-meta` | `12px` |
+| 徽标 | `--tm-font-size-badge` | `11px` |
+| 统计数字 | `--tm-font-size-metric` | `24px` |
 
-## 8. 与现有文件的关系
+普通正文不得低于 `12px`。`11px` 只用于徽标、数量角标等短信息，不承载需要阅读和判断的正文。
+总分、统计摘要等大数字默认使用 `24px`，不得在普通列表中继续放大。
 
-本文件基于以下现有实现提炼：
+## 7. 圆角、阴影与触控
 
-- `design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md`：教师手机端新规范，包含字号、圆角、阴影、组件分层要求。
-- `mobile-app/index.css`：教师端 AI 主色、学生/班级模式色、手机端柔和背景、毛玻璃底栏基础色。
-- `mobile-app/styles/phoneTokens.ts`：已有文字、圆角、阴影、间距、tone 类型。
-- `mobile-app/styles/navigation.css`：教师端底部悬浮毛玻璃导航颜色、阴影和透明度。
-- `mobile-app/views/DashboardView.tsx`：五育维度颜色、雷达图和核心数据色。
-- `mobile-app/views/LeaderReportView.tsx`：学校数据报表页绿色体系与图表颜色。
-- `mobile-app/views/MeView.tsx`：个人中心 Hero 卡片、轻玻璃和蓝色强调按钮。
+### 7.1 圆角
 
-后续如果要落地到代码，建议顺序：
+| 用途 | Token | 值 |
+|---|---|---:|
+| 按钮/控件 | `--tm-radius-control` | `12px` |
+| 卡内分组/工具项 | `--tm-radius-inner` | `16px` |
+| 内容卡片 | `--tm-radius-card` | `20px` |
+| 底部抽屉 | `--tm-radius-sheet` | `28px` |
 
-1. 新增 `mobile-app/styles/teacherMobileTokens.css`，先只放颜色变量。
-2. 将 `mobile-app/index.css` 中已有 `--ai-*`、`--student-*`、`--class-*` 渐进映射到 `--tm-*`。
-3. 优先改通用组件：底部导航、MobileCard、MenuItem、IconBadge、输入框。
-4. 最后再清理业务页面里的硬编码颜色。
+头像、徽标、标签等圆形内容使用 `rounded-full`。普通页面区块不得使用 `30px+` 大圆角。
+
+### 7.2 阴影
+
+| 用途 | Token |
+|---|---|
+| 普通卡片 | `--tm-shadow-card` |
+| 强调卡片 | `--tm-shadow-card-raised` |
+| 选中控件 | `--tm-shadow-control` |
+| 悬浮录入条 | `--tm-shadow-floating` |
+| 底部导航 | `--tm-shadow-navigation` |
+| 底部抽屉 | `--tm-shadow-sheet` |
+
+业务页面不得使用阴影颜色自行拼装新的阴影公式。
+
+### 7.3 触控
+
+- 所有可点击控件的最小触控尺寸为 `44px × 44px`。
+- 对应 Token 为 `--tm-size-touch`。
+- 小图标可以保持 `16px-22px`，但必须放入至少 `44px` 的点击容器。
+- 底部导航未选中态使用 `--tm-nav-item-default`，不得使用低对比禁用色。
+- 弱提示文字必须使用 `--tm-text-tertiary` 并满足普通文字对比度；`--tm-text-disabled` 不得承载仍需阅读的信息。
+
+## 8. 间距与动效
+
+间距使用 `4 / 8 / 12 / 16 / 20 / 24 / 32px` 七级刻度，对应 `--tm-space-*`。
+
+| 动效 | Token | 值 |
+|---|---|---:|
+| 即时反馈 | `--tm-duration-fast` | `150ms` |
+| 常规状态切换 | `--tm-duration-standard` | `200ms` |
+| 页面/抽屉进入 | `--tm-duration-panel` | `300ms` |
+
+动效只用于状态反馈和层级变化，并遵守系统“减少动态效果”设置。
+
+## 9. 页面使用边界
+
+### 记录页
+
+- 记录模式、对象标签和语音来源标签使用对应模式令牌。
+- AI 解读区保持中性表面，总分使用正负语义令牌。
+- 悬浮录入条使用中性表面和完整悬浮阴影，不跟随模式变色。
+
+### 班级页
+
+- 班主任标签使用辅助橙浅底和深橙文字。
+- 学生列表使用中性入口，班级报告使用品牌浅底入口。
+- 卡片、入口和筛选控件必须满足 `44px` 触控要求。
+
+### 我的页
+
+- 工具区使用统一卡片、图标槽位、圆角和阴影令牌。
+- AI 助理可保留角色图片，但外层容器仍遵循教师端令牌。
+- 低频工具只在对应分组中展示，不侵入高频记录流程。
+
+### 问卷采集页
+
+- 家长问卷、学生信息采集和教师问卷使用对应受众 Token；列表必须同时展示类型文字。
+- 页面、卡片、按钮、表单、状态、抽屉仍使用全局教师端 Token，受众色不得扩散成页面主题。
+- 未开放的采集类型不进入新建采集高频流程。
+
+## 10. 检查清单
+
+- 教师手机端是否只从 `teacherMobileTokens.ts` 获取主题令牌。
+- 页面内是否不存在蓝紫、靛青品牌变量和一次性主题色；助理角色与问卷受众是否只使用对应角色/受众 Token。
+- 普通文字对比度是否至少达到 `4.5:1`。
+- 图标和控件边界对比度是否至少达到 `3:1`。
+- 所有交互热区是否至少为 `44px × 44px`。
+- 卡片、圆角和阴影是否引用组件级令牌。
+- 记录、班级、我的三页是否共享同一底栏和表面规则。

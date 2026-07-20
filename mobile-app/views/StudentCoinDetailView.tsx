@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ChevronLeft, Clock, Coins, Landmark, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
 import { CampusCoinDetail, Student } from '../types';
 import { MobileCard } from '../components/ui/MobileCard';
-import { phoneText } from '../styles/phoneTokens';
+import { phoneText } from '../styles/teacherMobileTokens';
 import { formatCoinAmount } from '../utils/coinFormat';
 
 interface StudentCoinDetailViewProps {

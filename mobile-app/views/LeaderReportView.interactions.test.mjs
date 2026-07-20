@@ -28,22 +28,22 @@ for (const required of [
   '完整筛选',
   'rounded-3xl bg-white p-1.5',
   'rounded-[22px] bg-white p-2',
-  'border-transparent bg-emerald-50/70 text-emerald-800',
-  'border-transparent bg-emerald-500 text-white shadow-sm',
+  'border-transparent bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)]',
+  'border-transparent bg-[var(--tm-brand-primary)] text-white shadow-sm',
   'pointer-events-none absolute inset-x-0 top-0',
   'h-[108px] bg-white',
   'bg-white px-4 pb-2 pt-3',
-  'rounded-b-none border-b border-slate-100/80',
+  'rounded-b-none border-b border-[var(--tm-border-subtle)]',
   'flex flex-col gap-1.5',
-  'grid h-12 grid-cols-2 rounded-[22px] bg-emerald-50/90 p-1',
+  'grid h-12 grid-cols-2 rounded-[22px] bg-[var(--tm-brand-primary-soft)] p-1',
   'grid h-9 min-w-0 grid-cols-4 gap-1 rounded-[18px] bg-white p-0.5',
-  'text-emerald-800 active:bg-white/80',
+  'text-[var(--tm-brand-primary-pressed)] active:bg-white/80',
   '教师使用',
   '事件分布',
   'text-[14px] font-semibold',
   "isFilterPinned ? 'pointer-events-none",
   "isFilterPinned ? 'opacity-100",
-  'shadow-[0_18px_42px_-30px_rgba(15,23,42,0.46)]',
+  'shadow-[0_18px_42px_-30px_var(--tm-shadow-neutral)]',
   'transition-all duration-300 ease-out',
 ]) {
   if (!leaderView.includes(required)) {
@@ -51,8 +51,8 @@ for (const required of [
   }
 }
 
-if (leaderView.includes('bg-slate-100/80') || leaderView.includes('text-slate-500 active:bg-white/70')) {
-  throw new Error('吸顶紧凑态教师/事件筛选不应使用灰色底和灰色未选中文字，应使用清晰的绿色系');
+if (leaderView.includes('bg-emerald') || leaderView.includes('text-emerald')) {
+  throw new Error('吸顶紧凑态教师/事件筛选不应残留旧绿色，应统一使用品牌红 Token');
 }
 
 for (const chart of [gradeChart, classChart]) {
@@ -111,7 +111,7 @@ for (const required of [
   'showDonutTip',
   '占比',
   "triggerOn: 'click'",
-  "backgroundColor: 'rgba(15, 23, 42, 0.92)'",
+  'backgroundColor: teacherBrandSemantic.chartTooltip',
   "chart.dispatchAction({ type: 'showTip'",
   'aria-label={`查看${item.name}事件占比`}',
 ]) {
