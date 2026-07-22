@@ -14,6 +14,7 @@ export interface Student {
   class: string;
   avatar?: string;
   studentNo?: string;
+  birthDate?: string;
   status?: 'active' | 'left';
   reservedPhones?: string[];
   guardianContacts?: GuardianContact[];
@@ -74,7 +75,6 @@ export interface ClassInfo {
   gradeLevel: string;
   studentCount: number;
   tags: string[]; // e.g. "班主任", "数学"
-  hasPendingRewards?: boolean;
 }
 
 export interface TeacherTeachingAssignment {
@@ -95,6 +95,7 @@ export interface TeacherProfile {
   departmentName: string;
   teachingAssignments: TeacherTeachingAssignment[];
   homeroomClassIds: string[];
+  deputyHomeroomClassIds?: string[];
   gradeLeaderGrades: string[];
 }
 

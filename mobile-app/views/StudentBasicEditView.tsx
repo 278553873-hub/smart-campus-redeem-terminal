@@ -13,8 +13,8 @@ interface StudentBasicEditViewProps {
   onSave: (student: Student) => void;
 }
 
-const fieldInputClass = 'mt-2 h-12 w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 outline-none transition-all focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-50';
-const labelClass = `${phoneText.label} text-slate-500`;
+const fieldInputClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-4 text-sm font-medium text-[var(--tm-text-primary)] outline-none transition-all focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]';
+const labelClass = `${phoneText.label} text-[var(--tm-text-tertiary)]`;
 
 const guardianRelationOptions: GuardianRelation[] = ['家长', '爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他'];
 
@@ -143,21 +143,22 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
       ...draft,
       name: draft.name.trim() || student.name,
       studentNo: draft.studentNo?.trim() || student.studentNo,
+      birthDate: draft.birthDate || undefined,
       guardianContacts,
       reservedPhones: normalizePhones(guardianContacts),
     });
   };
 
   return (
-    <div className="h-full min-h-0 overflow-hidden bg-[#F8FAFC]">
+    <div className="h-full min-h-0 overflow-hidden bg-transparent font-sans">
       <div className="flex h-full min-h-0 flex-col">
         <input ref={cameraInputRef} type="file" accept="image/*" capture="user" className="hidden" onChange={readAvatarFile} />
         <input ref={albumInputRef} type="file" accept="image/*" className="hidden" onChange={readAvatarFile} />
-        <header className="flex h-11 shrink-0 items-center justify-between border-b border-slate-100/80 bg-white/90 px-4 backdrop-blur-md">
-          <button onClick={onBack} className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-slate-500 active:bg-slate-100" aria-label="返回学生详情">
+        <header className="flex h-11 shrink-0 items-center justify-between border-b border-white/40 bg-white/38 px-4 backdrop-blur-md">
+          <button onClick={onBack} className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回学生详情">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className={`${phoneText.navTitle} text-slate-900`}>基础信息编辑</h1>
+          <h1 className={`${phoneText.navTitle} text-[var(--tm-text-primary)]`}>基础信息编辑</h1>
           <div className="h-10 w-10" aria-hidden="true" />
         </header>
 
@@ -165,7 +166,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
           <MobileCard variant="card" padding="md" className="space-y-4">
             <div>
               <span className={labelClass}>头像</span>
-              <div className="mt-2 flex items-center justify-between rounded-3xl border border-slate-100 bg-slate-50 p-3">
+              <div className="mt-2 flex items-center justify-between rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-3">
                 <div className="flex items-center gap-3">
                   <img
                     src={draft.avatar || (draft.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.GENERIC_GIRL)}
@@ -176,7 +177,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                 <button
                   type="button"
                   onClick={() => setShowAvatarSheet(true)}
-                  className="flex h-10 items-center gap-1 rounded-full bg-blue-50 px-3 text-xs font-semibold text-blue-600 active:scale-95"
+                  className="flex h-10 items-center gap-1 rounded-full bg-[var(--tm-brand-primary-soft)] px-3 text-xs font-semibold text-[var(--tm-brand-primary)] active:scale-95"
                 >
                   <Camera className="h-4 w-4" /> 更换头像
                 </button>
@@ -199,7 +200,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                     key={option.value}
                     type="button"
                     onClick={() => setDraft(prev => ({ ...prev, gender: option.value as Student['gender'] }))}
-                    className={`h-12 rounded-2xl border text-sm font-semibold transition-all active:scale-[0.98] ${draft.gender === option.value ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-500'}`}
+                    className={`h-12 rounded-[var(--tm-radius-control)] border text-sm font-semibold transition-all active:scale-[0.98] ${draft.gender === option.value ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]'}`}
                   >
                     {option.label}
                   </button>
@@ -212,25 +213,30 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
               <input className={fieldInputClass} value={draft.studentNo ?? ''} onChange={event => setDraft(prev => ({ ...prev, studentNo: event.target.value }))} placeholder="请输入学号" />
             </label>
 
+            <label className="block">
+              <span className={labelClass}>出生日期</span>
+              <input type="date" className={fieldInputClass} value={draft.birthDate ?? ''} onInput={event => setDraft(prev => ({ ...prev, birthDate: event.currentTarget.value }))} />
+            </label>
+
             <div>
               <span className={labelClass}>所在班级</span>
               <button
                 type="button"
                 onClick={toggleClassPicker}
-                className="mt-2 flex h-12 w-full items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 text-left text-sm font-medium text-slate-900 active:bg-slate-100"
+                className="mt-2 flex h-12 w-full items-center justify-between rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-4 text-left text-sm font-medium text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]"
               >
                 <span>{formatCompactClassName(draft.class)}</span>
-                <span className="text-xs font-semibold text-blue-500">更换</span>
+                <span className="text-xs font-semibold text-[var(--tm-brand-primary)]">更换</span>
               </button>
               {showClassPicker && (
-                <div className="mt-2 grid h-56 grid-cols-[92px_1fr] overflow-hidden rounded-2xl border border-slate-100 bg-white" aria-label="班级级联选择">
-                  <div className="overflow-y-auto border-r border-slate-100 bg-slate-50/80 p-2 no-scrollbar" aria-label="左侧先选入学年级">
+                <div className="mt-2 grid h-56 grid-cols-[92px_1fr] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]" aria-label="班级级联选择">
+                  <div className="overflow-y-auto border-r border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-2 no-scrollbar" aria-label="左侧先选入学年级">
                     {yearOptions.map(year => (
                       <button
                         key={year}
                         type="button"
                         onClick={() => setClassPickerYear(year)}
-                        className={`mb-1 flex h-10 w-full items-center justify-center rounded-xl text-xs font-bold transition-all ${classPickerYear === year ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 active:bg-white'}`}
+                        className={`mb-1 flex h-10 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-xs font-bold transition-all ${classPickerYear === year ? 'bg-[var(--tm-brand-primary)] text-white shadow-sm' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface)]'}`}
                       >
                         {year}
                       </button>
@@ -246,10 +252,10 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                           setClassPickerYear(getClassYear(item.name));
                           setShowClassPicker(false);
                         }}
-                        className={`flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left text-sm active:bg-slate-50 ${selectedClass?.id === item.id ? 'bg-blue-50 font-semibold text-blue-700' : 'text-slate-600'}`}
+                        className={`flex min-h-11 w-full items-center justify-between rounded-[var(--tm-radius-control)] px-3 text-left text-sm active:bg-[var(--tm-bg-surface-soft)] ${selectedClass?.id === item.id ? 'bg-[var(--tm-brand-primary-soft)] font-semibold text-[var(--tm-brand-primary-pressed)]' : 'text-[var(--tm-text-secondary)]'}`}
                       >
                         <span>{formatCompactClassName(item.name)}</span>
-                        <span className="text-xs text-slate-400">{item.gradeLevel}</span>
+                        <span className="text-xs text-[var(--tm-text-tertiary)]">{item.gradeLevel}</span>
                       </button>
                     ))}
                   </div>
@@ -261,30 +267,30 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
           <MobileCard variant="card" padding="md" className="mt-4">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <IconBadge icon={UsersRound} tone="positive" size="sm" />
-                <h2 className={`${phoneText.sectionTitle} text-slate-900`}>家长联系方式</h2>
+                <IconBadge icon={UsersRound} tone="brand" size="sm" />
+                <h2 className={`${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>家长联系方式</h2>
               </div>
-              <button type="button" onClick={addContact} className="flex h-10 items-center gap-1 rounded-full bg-teal-50 px-3 text-xs font-semibold text-teal-700 active:scale-95">
+              <button type="button" onClick={addContact} className="flex h-10 items-center gap-1 rounded-full bg-[var(--tm-brand-primary-soft)] px-3 text-xs font-semibold text-[var(--tm-brand-primary-pressed)] active:scale-95">
                 <Plus className="h-4 w-4" /> 添加联系方式
               </button>
             </div>
 
             <div className="space-y-3">
               {(draft.guardianContacts ?? [createBlankContact()]).map((contact, index) => (
-                <div key={index} className="relative space-y-2 rounded-[22px] border border-slate-100 bg-slate-50/70 p-2">
-                  <button type="button" onClick={() => removeContact(index)} className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-slate-400 shadow-sm ring-1 ring-slate-100 active:bg-rose-50 active:text-rose-500" aria-label="删除家长联系方式">
+                <div key={index} className="relative space-y-2 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-2">
+                  <button type="button" onClick={() => removeContact(index)} className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[var(--tm-text-tertiary)] shadow-sm ring-1 ring-[var(--tm-border-subtle)] active:bg-[var(--tm-status-negative-soft)] active:text-[var(--tm-status-negative)]" aria-label="删除家长联系方式">
                     <X className="h-3.5 w-3.5" />
                   </button>
                   <div className="grid grid-cols-[minmax(0,1fr)_92px] gap-2 pr-5">
                     <input
-                      className="h-12 min-w-0 rounded-2xl border border-slate-100 bg-white px-4 text-sm font-medium text-slate-900 outline-none focus:border-teal-300 focus:ring-4 focus:ring-teal-50"
+                      className="h-12 min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 text-sm font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
                       value={contact.phone}
                       onChange={event => updateContact(index, { phone: event.target.value })}
                       placeholder="请输入手机号"
                       inputMode="tel"
                     />
                     <select
-                      className="h-12 rounded-2xl border border-slate-100 bg-white px-3 text-sm font-medium text-slate-900 outline-none focus:border-teal-300 focus:ring-4 focus:ring-teal-50"
+                      className="h-12 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-sm font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
                       value={contact.relation}
                       onChange={event => updateContact(index, { relation: event.target.value as GuardianRelation })}
                       aria-label="家长关系"
@@ -296,7 +302,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                   </div>
                   {contact.relation === '其他' && (
                     <input
-                      className="h-11 w-full rounded-2xl border border-slate-100 bg-white px-3 text-sm font-medium text-slate-900 outline-none focus:border-teal-300 focus:ring-4 focus:ring-teal-50"
+                      className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-sm font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
                       value={contact.relationOther ?? ''}
                       onChange={event => updateContact(index, { relationOther: event.target.value })}
                       placeholder="请输入关系"
@@ -311,20 +317,20 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
 
 
         {showAvatarSheet && (
-          <div className="absolute inset-0 z-[130] flex items-end bg-slate-950/30 px-4 pb-5" onClick={() => setShowAvatarSheet(false)}>
-            <div className="w-full rounded-[32px] bg-white p-4 shadow-2xl" onClick={event => event.stopPropagation()}>
-              <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200" />
-              <h3 className="px-2 text-center text-lg font-extrabold text-slate-900">更换头像</h3>
+          <div className="absolute inset-0 z-[130] flex items-end bg-[var(--tm-mask)] px-4 pb-5" onClick={() => setShowAvatarSheet(false)}>
+            <div className="w-full rounded-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+              <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[var(--tm-brand-primary-soft-strong)]" />
+              <h3 className="px-2 text-center text-lg font-extrabold text-[var(--tm-text-primary)]">更换头像</h3>
               <div className="mt-5 space-y-2">
-                <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-2xl bg-blue-50 px-4 text-left font-bold text-blue-600 active:bg-blue-100">
+                <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-primary-soft)] px-4 text-left font-bold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]">
                   <Camera className="h-5 w-5" />
                   拍照
                 </button>
-                <button type="button" onClick={() => albumInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-2xl bg-slate-50 px-4 text-left font-bold text-slate-700 active:bg-slate-100">
+                <button type="button" onClick={() => albumInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left font-bold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]">
                   <Image className="h-5 w-5" />
                   从相册选择
                 </button>
-                <button type="button" onClick={() => setShowAvatarSheet(false)} className="flex h-12 w-full items-center justify-center rounded-2xl text-sm font-bold text-slate-400 active:bg-slate-50">
+                <button type="button" onClick={() => setShowAvatarSheet(false)} className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-sm font-bold text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]">
                   取消
                 </button>
               </div>
@@ -332,8 +338,8 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 border-t border-slate-100 bg-white/95 px-5 pb-5 pt-3 shadow-[0_-10px_40px_rgba(15,23,42,0.08)] backdrop-blur-md">
-          <button onClick={saveBasicInfo} className="h-12 w-full rounded-2xl bg-blue-600 text-sm font-bold text-white shadow-lg shadow-blue-200 active:scale-[0.98]">
+        <div className="absolute inset-x-0 bottom-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 pb-5 pt-3 shadow-[var(--tm-shadow-navigation)] backdrop-blur-md">
+          <button onClick={saveBasicInfo} className="h-12 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)]">
             保存基础信息
           </button>
         </div>

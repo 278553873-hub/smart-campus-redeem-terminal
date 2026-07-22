@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('./MeFeatureViews.tsx', import.meta.url), 'utf8');
+const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const featureStart = source.indexOf('export const SubjectManagementView');
 const sheetStart = source.indexOf('interface EditSheetProps');
 
@@ -17,15 +18,34 @@ const requireText = (haystack, needle, message) => {
 
 for (const required of [
   'const FeaturePageBody',
-  'var(--tm-glow-primary)',
-  'var(--tm-glow-secondary)',
   'const FeaturePanel',
-  'bg-[var(--tm-bg-surface-glass)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral)]',
+  'bg-[var(--tm-bg-surface-glass)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral-color)]',
   "const featurePrimaryButtonClass = 'flex h-12 w-full",
   'bg-[var(--tm-brand-primary)]',
   'text-[var(--tm-status-negative)]',
 ]) {
   requireText(source, required, `管理子页面缺少品牌化基础样式：${required}`);
+}
+
+const featurePageBodyClass = source.match(/const FeaturePageBody:[\s\S]*?<div className="([^"]+)"/)?.[1] ?? '';
+if (featurePageBodyClass.includes('bg-[') || featurePageBodyClass.includes('gradient')) {
+  throw new Error('管理子页面不应再自绘整页渐变背景，顶部氛围光应由屏幕级背景统一提供。');
+}
+
+if (source.includes('const PageBody') || source.includes('const WhitePanel')) {
+  throw new Error('设置页不应继续保留旧版蓝色渐变骨架，应与科目/部门等子页面共用统一品牌页面骨架。');
+}
+
+requireText(source, 'export const MineSettingsView', '设置页应继续提供。');
+const settingsSource = source.slice(source.indexOf('export const MineSettingsView'), featureStart);
+requireText(settingsSource, '<FeaturePageBody>', '设置页应使用统一品牌页面骨架，保证顶部标题栏与页面氛围光一致。');
+
+const screenBackgroundList = appSource.match(/const hasScreenLevelBackground = \[([^\]]+)\]/)?.[1] ?? '';
+const phoneScreenBackgroundList = appSource.match(/if \(\[([^\]]+)\]\.includes\(currentView\)\) \{\s*return <TeacherMobileScreenBackground/)?.[1] ?? '';
+for (const viewName of ["'mine_settings'", "'subject_management'", "'department_management'", "'coin_issuance'", "'suggestion_feedback'"]) {
+  if (!screenBackgroundList.includes(viewName) || !phoneScreenBackgroundList.includes(viewName)) {
+    throw new Error(viewName + ' 应纳入屏幕级背景，标题栏才能与页面氛围光融为一体。');
+  }
 }
 
 for (const required of [

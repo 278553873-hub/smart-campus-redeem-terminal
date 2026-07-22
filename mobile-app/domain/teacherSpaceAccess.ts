@@ -128,10 +128,10 @@ export const getTeacherClassActionPolicy = ({
     const isHomeroomTeacher = space.type === 'school' && homeroomClassIds.has(classId);
     const isAssignedTeacher = teachingClassIds.has(classId) || isHomeroomTeacher;
     const canManageClass = isSchoolManager || isClassOwner || isHomeroomTeacher;
-    const canCollaborate = canManageClass || membership === 'joined' || space.type === 'collaboration' || isAssignedTeacher;
+    const canCollaborate = canManageClass || membership === 'joined' || space.type === 'collaboration' || space.type === 'school' || isAssignedTeacher;
 
     return {
-        canUseDailyActions: canManageClass || isAssignedTeacher || membership === 'joined' || space.type === 'collaboration',
+        canUseDailyActions: canManageClass || isAssignedTeacher || membership === 'joined' || space.type === 'collaboration' || space.type === 'school',
         canUpdateStudents: canManageClass,
         canMaintainClass: canManageClass,
         canInviteTeacher: canCollaborate,

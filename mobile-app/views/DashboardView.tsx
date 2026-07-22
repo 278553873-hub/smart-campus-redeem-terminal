@@ -5,11 +5,16 @@ import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
     AwardIcon, GrowthIcon
 } from '../components/Icons';
-import { AlertTriangle, BadgeCheck, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, BookOpenCheck, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, School } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
+import {
+    teacherBrandPalette,
+    teacherBrandSemantic,
+    teacherFiveEducationSemantic,
+} from '../styles/teacherMobileTokens';
 
 interface DashboardViewProps {
     student: Student;
@@ -23,6 +28,7 @@ interface DashboardViewProps {
     campusCoinDetail: CampusCoinDetail;
     collectionHistory: StudentCollectionHistoryItem[];
     onViewCollectionRecord: (item: StudentCollectionHistoryItem) => void;
+    onOpenStudentArchive: () => void;
     initialTab?: 'growth' | 'evaluation' | 'collection';
 }
 
@@ -42,7 +48,7 @@ const FiveEducationRadar = ({
 }) => {
     const size = 360;
     const center = size / 2;
-    const radius = 126;
+    const radius = 118;
     const levels = 4;
     const ORDER = ['moral', 'intellectual', 'physical', 'aesthetic', 'labor'];
 
@@ -77,21 +83,21 @@ const FiveEducationRadar = ({
     const studentPoints = generatePoints(activeData);
     const classAvgPoints = generatePoints(classAvgData);
 
-    const getCategoryColor = (cat: string) => {
+    const getCategoryTone = (cat: string) => {
         switch (cat) {
-            case 'moral': return '#F59E0B';
-            case 'intellectual': return '#3B82F6';
-            case 'physical': return '#10B981';
-            case 'aesthetic': return '#EC4899';
-            case 'labor': return '#84CC16';
-            default: return '#8B5CF6';
+            case 'moral': return { main: teacherFiveEducationSemantic.virtue, soft: teacherBrandPalette.red[50], strong: teacherBrandPalette.red[700] };
+            case 'intellectual': return { main: teacherFiveEducationSemantic.wisdom, soft: teacherBrandPalette.orange[50], strong: teacherBrandPalette.orange[700] };
+            case 'physical': return { main: teacherFiveEducationSemantic.fitness, soft: teacherBrandPalette.green[50], strong: teacherBrandPalette.green[700] };
+            case 'aesthetic': return { main: teacherFiveEducationSemantic.aesthetic, soft: teacherBrandPalette.jade[50], strong: teacherBrandPalette.jade[700] };
+            case 'labor': return { main: teacherFiveEducationSemantic.labor, soft: teacherBrandPalette.gold[50], strong: teacherBrandPalette.gold[700] };
+            default: return { main: teacherBrandSemantic.textSecondary, soft: teacherBrandSemantic.surfaceSoft, strong: teacherBrandSemantic.textPrimary };
         }
     };
 
     return (
-        <div className="flex flex-col items-center justify-center py-4 relative">
-            <div className="relative h-[360px] w-[360px]">
-                <svg width="360" height="360" viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
+        <div className="relative flex flex-col items-center justify-center py-2">
+            <div className="relative aspect-square w-full max-w-[340px]">
+                <svg viewBox={`0 0 ${size} ${size}`} className="h-full w-full overflow-visible">
                     {[...Array(levels)].map((_, i) => (
                         <polygon
                             key={i}
@@ -100,22 +106,22 @@ const FiveEducationRadar = ({
                                 const c = getCoordinates(val, idx, activeData.length);
                                 return `${c.x},${c.y}`;
                             }).join(' ')}
-                            fill={i === 0 ? "#F8FAFC" : "transparent"}
-                            stroke="#E2E8F0"
-                            strokeWidth="1.5"
+                            fill={i === 0 ? teacherBrandSemantic.surfaceSoft : "transparent"}
+                            stroke={teacherBrandSemantic.gridLine}
+                            strokeWidth="1"
                             strokeDasharray="4 4"
                         />
                     ))}
 
                     {activeData.map((_, i) => {
                         const end = getCoordinates(100, i, activeData.length);
-                        return <line key={i} x1={center} y1={center} x2={end.x} y2={end.y} stroke="#E2E8F0" strokeWidth="1.5" />;
+                        return <line key={i} x1={center} y1={center} x2={end.x} y2={end.y} stroke={teacherBrandSemantic.gridLine} strokeWidth="1" />;
                     })}
 
                     {activeData.map((s, i) => {
                         const labelCoords = getCoordinates(112, i, activeData.length);
                         return (
-                            <text key={`label-${s.category}`} x={labelCoords.x} y={labelCoords.y} textAnchor="middle" dominantBaseline="middle" className="text-sm font-medium fill-slate-500">
+                            <text key={`label-${s.category}`} x={labelCoords.x} y={labelCoords.y} textAnchor="middle" dominantBaseline="middle" className="text-sm font-medium" fill={teacherBrandSemantic.textSecondary}>
                                 {s.label}
                             </text>
                         );
@@ -125,21 +131,23 @@ const FiveEducationRadar = ({
                         <g className="animate-in fade-in duration-500">
                             <polygon
                                 points={classAvgPoints}
-                                fill="rgba(139, 92, 246, 0.09)"
-                                stroke="#A78BFA"
-                                strokeWidth="2"
+                                fill={teacherBrandSemantic.textDisabled}
+                                fillOpacity="0.04"
+                                stroke={teacherBrandSemantic.textDisabled}
+                                strokeWidth="1.8"
                             />
                             {classAvgData.map((s, i) => {
                                 const coords = getCoordinates(s.value, i, classAvgData.length);
                                 const valueY = coords.y + 18;
                                 return (
                                     <g key={`class-${s.category}`}>
-                                        <circle cx={coords.x} cy={coords.y} r="4" fill="white" stroke="#A78BFA" strokeWidth="1.8" />
+                                        <circle cx={coords.x} cy={coords.y} r="3.5" fill="white" stroke={teacherBrandSemantic.textDisabled} strokeWidth="1.5" />
                                         <text
                                             x={coords.x}
                                             y={valueY + 1}
                                             textAnchor="middle"
-                                            className="text-[12px] font-medium fill-violet-400"
+                                            className="text-[12px] font-medium"
+                                            fill={teacherBrandSemantic.textTertiary}
                                         >
                                             {s.score}
                                         </text>
@@ -153,33 +161,33 @@ const FiveEducationRadar = ({
                         <g>
                             <polygon
                                 points={studentPoints}
-                                fill="rgba(59, 130, 246, 0.15)"
-                                stroke="#3B82F6"
-                                strokeWidth="2.8"
-                                className="drop-shadow-sm"
+                                fill={teacherBrandSemantic.primary}
+                                fillOpacity="0.10"
+                                stroke={teacherBrandSemantic.primary}
+                                strokeWidth="2.4"
                             />
                             {activeData.map((s, i) => {
                                 const coords = getCoordinates(s.value, i, activeData.length);
                                 const valueY = coords.y - 17;
+                                const tone = getCategoryTone(s.category);
 
                                 return (
                                     <g key={i}>
-                                        <circle cx={coords.x} cy={coords.y} r="5.5" fill="white" stroke={getCategoryColor(s.category)} strokeWidth="3" />
+                                        <circle cx={coords.x} cy={coords.y} r="5" fill="white" stroke={tone.main} strokeWidth="2.5" />
                                         <rect
                                             x={coords.x - 14}
                                             y={valueY - 14}
                                             width="28"
                                             height="21"
                                             rx="10.5"
-                                            fill={getCategoryColor(s.category)}
-                                            opacity="0.96"
+                                            fill={tone.soft}
                                         />
                                         <text
                                             x={coords.x}
                                             y={valueY + 1}
                                             textAnchor="middle"
                                             className="text-[12px] font-medium"
-                                            fill="white"
+                                            fill={tone.strong}
                                         >
                                             {s.score}
                                         </text>
@@ -191,24 +199,24 @@ const FiveEducationRadar = ({
                 </svg>
             </div>
 
-            <div className="mt-2 flex items-center gap-3">
+            <div className="mt-1 flex items-center gap-2">
                 <button
                     type="button"
                     onClick={onToggleCurrent}
-                    className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-all ${showCurrent ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-100' : 'bg-slate-50 text-slate-300'}`}
+                    className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-all ${showCurrent ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'bg-white text-[var(--tm-text-secondary)] ring-1 ring-[var(--tm-border-subtle)]'}`}
                     aria-pressed={showCurrent}
                 >
-                    <div className={`h-3 w-3 rounded-full border-2 ${showCurrent ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-white'}`}></div>
+                    <div className={`h-3 w-3 rounded-full border-2 ${showCurrent ? 'border-[var(--tm-brand-primary)] bg-white' : 'border-[var(--tm-border-subtle)] bg-white'}`}></div>
                     当前
                 </button>
 
                 <button
                     type="button"
                     onClick={onToggleClassAvg}
-                    className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-all ${showClassAvg ? 'bg-violet-50 text-violet-600 ring-1 ring-violet-100' : 'bg-slate-50 text-slate-300'}`}
+                    className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-all ${showClassAvg ? 'bg-white text-[var(--tm-text-secondary)] ring-1 ring-[var(--tm-border-subtle)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-tertiary)]'}`}
                     aria-pressed={showClassAvg}
                 >
-                    <div className={`h-0 w-6 border-t-2 ${showClassAvg ? 'border-violet-300' : 'border-slate-300'}`}></div>
+                    <div className={`h-0 w-6 border-t-2 ${showClassAvg ? 'border-[var(--tm-text-disabled)]' : 'border-[var(--tm-border-subtle)]'}`}></div>
                     班级平均
                 </button>
             </div>
@@ -228,6 +236,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     campusCoinDetail,
     collectionHistory,
     onViewCollectionRecord,
+    onOpenStudentArchive,
     initialTab = 'growth',
 }) => {
     const [activeTab, setActiveTab] = useState<'growth' | 'evaluation' | 'collection'>(initialTab);
@@ -277,235 +286,240 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="space-y-3 pb-24 animate-in fade-in duration-300">
             {/* C. Term Selector */}
             <div className="flex items-center gap-3">
-                <button className="flex min-h-11 items-center gap-1.5 rounded-full border border-slate-100 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm transition-all active:opacity-60">
+                <button className="flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] bg-white px-3 text-sm font-medium text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)] transition-all active:opacity-60">
                     <span>2025-2026学年 上学期</span>
-                    <ChevronDownIcon className="h-3.5 w-3.5 text-slate-400" />
+                    <ChevronDownIcon className="h-3.5 w-3.5 text-[var(--tm-text-tertiary)]" />
                 </button>
             </div>
 
+            <button
+                type="button"
+                onClick={onOpenStudentArchive}
+                className="flex min-h-[60px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-white px-4 text-left shadow-[var(--tm-shadow-card)] transition active:bg-[var(--tm-bg-surface-soft)]"
+            >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
+                    <BookOpenCheck className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">学生成长档案</span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
+            </button>
+
             {/* D. Radar Chart Card */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <div className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-white shadow-[var(--tm-shadow-card)]">
                 <div className="relative z-10 flex items-center justify-between px-5 pb-2 pt-4">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                        <AwardIcon className="h-4 w-4 text-amber-500" />
+                    <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
+                        <AwardIcon className="h-4 w-4 text-[var(--tm-brand-reward)]" />
                         五育能力模型
                     </h3>
                 </div>
-                <div className="relative z-0 -my-4 flex w-full justify-center opacity-100">
-                    <div className="-mb-1 -mt-1 origin-center">
-                        <FiveEducationRadar scores={validScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
-                    </div>
+                <div className="relative z-0 flex w-full justify-center px-2 pb-4">
+                    <FiveEducationRadar scores={validScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
                 </div>
-                <div className="h-6" />
             </div>
 
-            {/* Term Report */}
-            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <section className="overflow-hidden rounded-[var(--tm-radius-card)] bg-white shadow-[var(--tm-shadow-card)]">
                 <button
                     onClick={() => toggleSection('term_report')}
-                    className="w-full flex items-center justify-between px-4 py-3.5 text-slate-800 font-bold text-sm active:bg-slate-50 transition-colors"
+                    className="flex min-h-[60px] w-full items-center justify-between px-4 text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
-                            <FileTextIcon className="w-4 h-4" />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">
+                            <FileTextIcon className="h-4 w-4" />
                         </div>
                         <span>期末综合素质报告</span>
                     </div>
-                    {expandedSections.has('term_report') ? <ChevronDownIcon className="w-4 h-4 text-slate-400" /> : <ChevronRightIcon className="w-4 h-4 text-slate-400" />}
+                    {expandedSections.has('term_report') ? <ChevronDownIcon className="h-4 w-4 text-[var(--tm-text-tertiary)]" /> : <ChevronRightIcon className="h-4 w-4 text-[var(--tm-text-tertiary)]" />}
                 </button>
                 {expandedSections.has('term_report') && (
-                    <div className="px-4 pb-4 pl-[3.25rem]">
-                        <div className="flex items-center justify-between bg-slate-50 rounded-lg p-3 border border-slate-100">
-                            <span className="text-xs text-slate-500">2025-2026学年 上学期</span>
-                            <button onClick={onViewTermReport} className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-md font-bold shadow-sm active:scale-95 transition-all">查看</button>
-                        </div>
+                    <div className="flex items-center justify-between border-t border-[var(--tm-border-subtle)] px-4 py-3 pl-[4.25rem]">
+                        <span className="text-xs text-[var(--tm-text-secondary)]">2025-2026学年 上学期</span>
+                        <button onClick={onViewTermReport} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-3 text-xs font-semibold text-[var(--tm-brand-primary-strong)] active:scale-95">查看</button>
                     </div>
                 )}
-            </div>
-
-
-            {/* Monthly Growth Reports */}
-            {growthReports.map((report) => (
-                <div key={report.id} className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                {growthReports.map((report) => (
+                    <div key={report.id} className="border-t border-[var(--tm-border-subtle)]">
                     <button
                         onClick={() => toggleSection(`growth_${report.id}`)}
-                        className="w-full flex items-center justify-between px-4 py-3.5 text-slate-800 font-bold text-sm active:bg-slate-50 transition-colors"
+                        className="flex min-h-[60px] w-full items-center justify-between px-4 text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                     >
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]">
                                 <GrowthIcon />
                             </div>
                             <span>{report.title}</span>
                         </div>
-                        {expandedSections.has(`growth_${report.id}`) ? <ChevronDownIcon className="w-4 h-4 text-slate-400" /> : <ChevronRightIcon className="w-4 h-4 text-slate-400" />}
+                        {expandedSections.has(`growth_${report.id}`) ? <ChevronDownIcon className="h-4 w-4 text-[var(--tm-text-tertiary)]" /> : <ChevronRightIcon className="h-4 w-4 text-[var(--tm-text-tertiary)]" />}
                     </button>
                     {expandedSections.has(`growth_${report.id}`) && (
-                        <div className="px-4 pb-4 pl-[3.25rem]">
-                            <div className="bg-amber-50/30 rounded-lg p-3 text-xs text-slate-600 leading-relaxed border border-amber-100/50">
-                                <p className="mb-2 line-clamp-2">本月在德育方面表现优异，积极参与班级事务，乐于助人...</p>
-                                <button className="text-amber-700 font-bold flex items-center gap-1 text-[11px]">查看完整报告 <ChevronRightIcon className="w-3 h-3" /></button>
-                            </div>
+                        <div className="border-t border-[var(--tm-border-subtle)] px-4 pb-4 pt-3 pl-[4.25rem] text-xs leading-relaxed text-[var(--tm-text-secondary)]">
+                            <p className="line-clamp-2">本月在德育方面表现优异，积极参与班级事务，乐于助人...</p>
+                            <button className="mt-2 flex min-h-11 items-center gap-1 text-[11px] font-semibold text-[var(--tm-brand-primary-strong)]">查看完整报告 <ChevronRightIcon className="h-3 w-3" /></button>
                         </div>
                     )}
                 </div>
-            ))}
+                ))}
+            </section>
         </div>
     );
 
     const renderEvaluationTab = () => (
         <div className="space-y-3 pb-24 pt-2 animate-in fade-in duration-300">
-            {(MOCK_BEHAVIOR_RECORDS as any[]).map((rec) => (
-                <div key={rec.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                    {/* Header: Path & Score */}
-                    <div className="flex justify-between items-start mb-3">
-                        <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                            {rec.indicatorPath.map((path: string, idx: number) => (
-                                <React.Fragment key={idx}>
-                                    <span className={`px-1.5 py-0.5 rounded-md ${idx === rec.indicatorPath.length - 1 ? "bg-slate-100 text-slate-700 font-bold" : "text-slate-400"}`}>{path}</span>
-                                    {idx < rec.indicatorPath.length - 1 && <span className="text-slate-300">/</span>}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                    </div>
+            {(MOCK_BEHAVIOR_RECORDS as any[]).map((rec) => {
+                const resultSurfaceClass = rec.isBad
+                    ? 'border-[var(--tm-record-negative-border)] bg-[var(--tm-record-negative-bg)]'
+                    : 'border-[var(--tm-record-positive-border)] bg-[var(--tm-record-positive-bg)]';
+                const resultTextClass = rec.isBad
+                    ? 'text-[var(--tm-record-negative-text)]'
+                    : 'text-[var(--tm-record-positive-text)]';
+                const isExpanded = expandedRecordId === rec.id;
 
-                    {/* Main Content */}
-                    <div className="flex items-start gap-3">
-                        <div className="flex-1">
-                            <div className="mb-2">
-                                <p className="text-[14px] leading-relaxed text-slate-800 text-justify">
-                                    {rec.aiComment}
-                                </p>
+                return (
+                    <article key={rec.id} className={`rounded-[var(--tm-radius-inner)] border p-4 shadow-[var(--tm-shadow-card)] ${resultSurfaceClass}`}>
+                        <div className="flex items-center justify-between gap-3 text-[11px] font-medium text-[var(--tm-text-secondary)]">
+                            <span>{rec.evaluation_date} · {rec.teacherName}</span>
+                            <span className={`shrink-0 text-lg font-bold tabular-nums ${resultTextClass}`}>
+                                {rec.scoreChange > 0 ? `+${rec.scoreChange}` : rec.scoreChange}
+                            </span>
+                        </div>
+
+                        <div className="mt-3 flex items-center gap-2">
+                            <img src={ASSETS.MANAGEMENT.AI_BOT} alt="" className="h-6 w-6 object-contain" />
+                            <span className="text-sm font-semibold text-[var(--tm-text-primary)]">AI 智能解读</span>
+                        </div>
+
+                        <p className="mt-2 text-[14px] leading-relaxed text-[var(--tm-text-primary)]">
+                            {rec.aiComment}
+                        </p>
+
+                        <div className="mt-3 flex items-start justify-between gap-3 border-t border-black/5 pt-3">
+                            <span className="min-w-0 text-xs leading-relaxed text-[var(--tm-text-secondary)]">
+                                {rec.indicatorPath.join(' / ')}
+                            </span>
+                            <span className={`shrink-0 text-[13px] font-bold tabular-nums ${resultTextClass}`}>
+                                {rec.scoreChange > 0 ? `+${rec.scoreChange}` : rec.scoreChange}
+                            </span>
+                        </div>
+
+                        <button
+                            type="button"
+                            aria-expanded={isExpanded}
+                            onClick={() => setExpandedRecordId(isExpanded ? null : rec.id)}
+                            className="mt-1 flex min-h-11 w-full items-center justify-between text-left text-xs font-medium text-[var(--tm-text-secondary)]"
+                        >
+                            <span>原始记录</span>
+                            <ChevronDownIcon className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isExpanded && (
+                            <div className="border-t border-black/5 pt-3 text-xs leading-relaxed text-[var(--tm-text-secondary)] animate-in slide-in-from-top-1">
+                                <p>{rec.description}</p>
+                                {rec.auditReason && (
+                                    <p className="mt-2">
+                                        <span className="font-semibold text-[var(--tm-text-primary)]">判定依据：</span>
+                                        {rec.auditReason}
+                                    </p>
+                                )}
                             </div>
-
-                            {/* Footer Infos */}
-                            <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-2">
-                                <span className="font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">{rec.evaluation_date}</span>
-                                <span>{rec.teacherName}</span>
-                                <button
-                                    onClick={() => setExpandedRecordId(expandedRecordId === rec.id ? null : rec.id)}
-                                    className="text-blue-600 font-medium ml-auto"
-                                >
-                                    {expandedRecordId === rec.id ? '收起' : '详情'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Score Badge */}
-                        <div className={`shrink-0 w-10 h-10 rounded-lg flex flex-col items-center justify-center font-black border tracking-tight ${rec.isBad ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                            <span className="text-[9px] uppercase opacity-50 scale-75">Score</span>
-                            <span className="text-sm leading-none -mt-0.5">{rec.scoreChange > 0 ? `+${rec.scoreChange}` : rec.scoreChange}</span>
-                        </div>
-                    </div>
-
-                    {/* Expanded Content */}
-                    {expandedRecordId === rec.id && (
-                        <div className="mt-3 pt-3 border-t border-slate-50 text-xs text-slate-600 leading-relaxed animate-in slide-in-from-top-1">
-                            <div className="mb-2">
-                                <span className="inline-block text-[10px] text-white bg-slate-300 px-1.5 py-0.5 rounded mb-1 mr-2">原文</span>
-                                {rec.description}
-                            </div>
-                            {rec.auditReason && (
-                                <div className="p-2 bg-amber-50 rounded border border-amber-100/50 text-amber-900/80">
-                                    <span className="font-bold mr-1">AI 判定:</span>
-                                    {rec.auditReason}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            ))}
-            <div className="text-center py-6 text-xs text-slate-300">
-                - 仅展示最近一年的记录 -
+                        )}
+                    </article>
+                );
+            })}
+            <div className="py-6 text-center text-xs text-[var(--tm-text-tertiary)]">
+                仅展示最近一年的记录
             </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#F7F9FC] font-sans pb-safe">
+        <div className="relative h-full min-h-0 overflow-hidden bg-transparent font-sans">
+            <div className="h-full overflow-y-auto pb-safe no-scrollbar">
 
             {/* A. Student Profile Card */}
-            <div className="w-full rounded-b-3xl border-b border-slate-100 px-5 pb-5 pt-3 shadow-sm relative overflow-hidden bg-[radial-gradient(circle_at_16%_8%,rgba(219,234,254,0.95),transparent_36%),radial-gradient(circle_at_82%_4%,rgba(254,243,199,0.78),transparent_31%),radial-gradient(circle_at_62%_76%,rgba(220,252,231,0.62),transparent_34%),linear-gradient(180deg,#F8FBFF_0%,#FFFFFF_72%,#F7F9FC_100%)]">
-                <div className="absolute right-0 top-0 w-36 h-36 bg-gradient-to-br from-white/50 to-transparent rounded-bl-full opacity-80 pointer-events-none"></div>
-
-                <div className="relative z-10">
-                    <div className="mb-3 flex h-10 items-center justify-between">
+            <div className="relative w-full overflow-hidden rounded-b-[var(--tm-radius-card)] bg-[linear-gradient(135deg,var(--tm-bg-surface)_0%,var(--tm-brand-primary-soft)_100%)] px-4 pb-4 pt-2 shadow-[var(--tm-shadow-card)]">
+                <div className="pointer-events-none absolute -right-14 -top-16 h-44 w-44 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--tm-brand-primary)_14%,transparent),transparent_70%)]" aria-hidden="true" />
+                <div className="relative">
+                    <div className="mb-3 flex h-11 items-center justify-between">
                         <button
                             type="button"
                             onClick={onBack}
                             aria-label="返回"
-                            className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-slate-500 transition-colors active:bg-slate-100"
+                            className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                         >
                             <ChevronLeft className="h-5 w-5" />
                         </button>
-                        <div className="h-10 w-10" aria-hidden="true" />
+                        <div className="flex items-center">
+                            <button
+                                type="button"
+                                onClick={onEditBasicInfo}
+                                aria-label="编辑基础信息"
+                                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowStatusActionSheet(true)}
+                                aria-label="管理学籍状态"
+                                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                            >
+                                <MoreHorizontal className="h-5 w-5" />
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-4">
-                            <div className="relative shrink-0">
-                                <div className="w-16 h-16 rounded-full p-1 bg-white border border-slate-100 shadow-sm relative overflow-hidden">
-                                    <img
-                                        src={student.avatar || (student.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.GENERIC_GIRL)}
-                                        alt="avatar"
-                                        className="w-full h-full rounded-full object-cover transition-transform duration-500"
-                                    />
-                                </div>
-                            </div>
-                            <div className="min-w-0">
-                                <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
-                                    {student.name}
-                                    {student.gender === 'male' ? <MaleIcon className="w-4 h-4 text-blue-400" /> : <FemaleIcon className="w-4 h-4 text-pink-400" />}
-                                </h2>
-                                <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                                    <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-500">{formatCompactClassName(student.class)}</span>
-                                    <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-600">ID: {student.id}</span>
-                                </div>
+                    <div className="flex min-w-0 items-center gap-4">
+                        <div className="relative shrink-0">
+                            <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border-2 border-[var(--tm-brand-primary-soft-strong)] bg-white p-1 shadow-[var(--tm-shadow-avatar)]">
+                                <img
+                                    src={student.avatar || (student.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.GENERIC_GIRL)}
+                                    alt={`${student.name}头像`}
+                                    className="h-full w-full rounded-full object-cover"
+                                />
                             </div>
                         </div>
-                        <button
-                            type="button"
-                            onClick={onEditBasicInfo}
-                            aria-label="编辑基础信息"
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 active:scale-95"
-                        >
-                            <Pencil className="h-4 w-4" />
-                        </button>
+                        <div className="min-w-0 flex-1">
+                            <h2 className="flex items-center gap-2 text-2xl font-bold text-[var(--tm-text-primary)]">
+                                <span className="truncate">{student.name}</span>
+                                {student.gender === 'male'
+                                    ? <MaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-male)]" />
+                                    : <FemaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-female)]" />}
+                            </h2>
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                <span className="flex items-center gap-1 rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]"><School className="h-3 w-3" />{formatCompactClassName(student.class)}</span>
+                                <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">ID: {student.id}</span>
+                                <span className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]'}`}>
+                                    <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+                                    {studentStatusLabel}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* 2. Scrollable Content */}
-            <div className="p-4 space-y-4">
-                <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
-                    <div>
-                        <div className="text-[15px] font-black text-slate-800">学籍状态</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className={`rounded-full px-3 py-1 text-xs font-black ${student.status === 'left' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                            {studentStatusLabel}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setShowStatusActionSheet(true)}
-                            className="h-9 rounded-full border border-blue-100 bg-blue-50 px-4 text-xs font-black text-blue-600 active:scale-95 active:bg-blue-100"
-                        >管理</button>
-                    </div>
-                </div>
-
+            <div className="space-y-4 p-4">
                 {/* B. Assets Card */}
-                <div className="rounded-2xl border border-blue-100/70 bg-white p-3 shadow-sm">
-                    <div className="flex items-center justify-between gap-2">
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                            <div className="flex min-w-0 flex-1 items-center justify-center rounded-full border border-orange-100 bg-orange-50/60 px-2.5 py-2 text-xs">
-                                <span className="mr-1.5 shrink-0 font-bold text-slate-500">钱包</span>
-                                <span className="inline-flex min-w-0 items-center font-black tracking-tight text-slate-800">
-                                    <img src="/assets/coin.png" className="mr-1 h-[1.1em] w-[1.1em] -translate-y-px opacity-90" alt="coin" />
+                <div className="rounded-[var(--tm-radius-inner)] bg-white px-3 py-2 shadow-[var(--tm-shadow-card)]">
+                    <div className="flex min-h-[56px] items-center">
+                        <div className="flex min-w-0 flex-1 items-center gap-2 px-2">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
+                                <img src="/assets/coin.png" className="h-5 w-5" alt="" />
+                            </span>
+                            <div className="min-w-0">
+                                <div className="text-[11px] font-medium text-[var(--tm-text-secondary)]">钱包</div>
+                                <span className="block truncate text-base font-bold tabular-nums text-[var(--tm-brand-reward-strong)]">
                                     {formatCoinAmount(campusCoinDetail.balance)}
                                 </span>
                             </div>
-                            <div className="flex min-w-0 flex-1 items-center justify-center rounded-full border border-blue-100 bg-blue-50/60 px-2.5 py-2 text-xs">
-                                <span className="mr-1.5 shrink-0 font-bold text-slate-500">存款</span>
-                                <span className="inline-flex min-w-0 items-center font-black tracking-tight text-slate-800">
-                                    <img src="/assets/coin.png" className="mr-1 h-[1.1em] w-[1.1em] -translate-y-px opacity-90" alt="coin" />
+                        </div>
+                        <div className="h-8 w-px bg-[var(--tm-border-subtle)]" aria-hidden="true" />
+                        <div className="flex min-w-0 flex-1 items-center gap-2 px-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
+                                <img src="/assets/coin.png" className="h-5 w-5" alt="" />
+                            </span>
+                            <div className="min-w-0">
+                                <div className="text-[11px] font-medium text-[var(--tm-text-secondary)]">存款</div>
+                                <span className="block truncate text-base font-bold tabular-nums text-[var(--tm-brand-reward-strong)]">
                                     {formatCoinAmount(campusCoinDetail.bankDeposit)}
                                 </span>
                             </div>
@@ -513,22 +527,23 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         <button
                             type="button"
                             onClick={onViewCampusCoins}
-                            className="flex h-9 shrink-0 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold text-slate-400 active:bg-slate-50 active:text-slate-600"
+                            aria-label="查看校园币明细"
+                            className="flex h-11 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]"
                         >
-                            查看明细 <ChevronRight size={12} strokeWidth={3} />
+                            查看明细 <ChevronRight size={14} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
 
                 {/* C. Tabs */}
-                <div className="sticky top-14 z-30 bg-[#F7F9FC] pt-2 pb-1">
-                    <div className="grid h-11 grid-cols-3 rounded-xl bg-slate-200/50 p-1" role="tablist" aria-label="学生详情内容">
+                <div className="sticky top-0 z-30 bg-[var(--tm-bg-page)] py-2">
+                    <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] p-1" role="tablist" aria-label="学生详情内容">
                         <button
                             type="button"
                             role="tab"
                             aria-selected={activeTab === 'growth'}
                             onClick={() => setActiveTab('growth')}
-                            className={`rounded-lg px-1 text-[13px] font-medium transition-all ${activeTab === 'growth' ? 'bg-white text-slate-800 shadow-sm' : 'bg-transparent text-slate-400'}`}
+                            className={`rounded-lg px-1 text-[13px] font-semibold transition-all ${activeTab === 'growth' ? 'bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}
                         >
                             成长报告
                         </button>
@@ -537,7 +552,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             role="tab"
                             aria-selected={activeTab === 'evaluation'}
                             onClick={() => setActiveTab('evaluation')}
-                            className={`rounded-lg px-1 text-[13px] font-medium transition-all ${activeTab === 'evaluation' ? 'bg-white text-slate-800 shadow-sm' : 'bg-transparent text-slate-400'}`}
+                            className={`rounded-lg px-1 text-[13px] font-semibold transition-all ${activeTab === 'evaluation' ? 'bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}
                         >
                             评价记录
                         </button>
@@ -546,7 +561,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             role="tab"
                             aria-selected={activeTab === 'collection'}
                             onClick={() => setActiveTab('collection')}
-                            className={`rounded-lg px-1 text-[13px] font-medium transition-all ${activeTab === 'collection' ? 'bg-white text-slate-800 shadow-sm' : 'bg-transparent text-slate-400'}`}
+                            className={`rounded-lg px-1 text-[13px] font-semibold transition-all ${activeTab === 'collection' ? 'bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}
                         >
                             采集记录
                         </button>
@@ -560,38 +575,57 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     {activeTab === 'collection' && <StudentCollectionHistoryTab items={collectionHistory} onOpen={onViewCollectionRecord} />}
                 </div>
             </div>
+            </div>
 
             {showStatusActionSheet && (
-                <div className="absolute inset-0 z-[120] flex items-end bg-slate-950/35 px-4 pb-5" onClick={() => setShowStatusActionSheet(false)}>
-                    <div className="w-full rounded-[32px] bg-white p-4 shadow-2xl" onClick={event => event.stopPropagation()}>
-                        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200" />
+                <div
+                    className="absolute inset-0 z-[120] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]"
+                    onClick={() => setShowStatusActionSheet(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="管理学籍状态"
+                >
+                    <div className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+                        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" />
                         <div className="mb-4 flex items-center gap-3">
-                            <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${student.status === 'left' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                            <span className={`flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]'}`}>
                                 {student.status === 'left' ? <AlertTriangle className="h-5 w-5" /> : <BadgeCheck className="h-5 w-5" />}
                             </span>
                             <div>
-                                <h3 className="text-lg font-extrabold text-slate-900">学籍状态</h3>
-                                <p className="mt-0.5 text-xs font-semibold text-slate-400">当前：{studentStatusLabel}</p>
+                                <h3 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">学籍状态</h3>
+                                <p className="mt-0.5 text-xs font-medium text-[var(--tm-text-secondary)]">当前：{studentStatusLabel}</p>
                             </div>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => setShowLeaveConfirm(true)}
-                            className="h-12 w-full rounded-2xl border border-amber-200 bg-amber-50 text-sm font-bold text-amber-700 active:scale-[0.98]"
-                        >
-                            设为离校
-                        </button>
+                        {student.status !== 'left' && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowStatusActionSheet(false);
+                                    setShowLeaveConfirm(true);
+                                }}
+                                className="h-12 w-full rounded-[var(--tm-radius-inner)] border border-[var(--tm-record-negative-border)] bg-[var(--tm-record-negative-bg)] text-sm font-semibold text-[var(--tm-record-negative-text)] active:scale-[0.98]"
+                            >
+                                设为离校
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
 
             {showLeaveConfirm && (
-                <div className="absolute inset-0 z-[140] flex items-end bg-slate-950/45 px-4 pb-5" onClick={() => setShowLeaveConfirm(false)}>
-                    <div className="w-full rounded-[32px] bg-white p-4 shadow-2xl" onClick={event => event.stopPropagation()}>
-                        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200" />
-                        <div className="rounded-3xl bg-amber-50 p-4">
-                            <h3 className="text-lg font-extrabold text-slate-900">确认设为离校？</h3>
-                            <p className="mt-2 text-sm font-medium leading-relaxed text-amber-800">
+                <div
+                    className="absolute inset-0 z-[140] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]"
+                    onClick={() => setShowLeaveConfirm(false)}
+                    role="alertdialog"
+                    aria-modal="true"
+                    aria-labelledby="leave-student-confirm-title"
+                    aria-describedby="leave-student-confirm-description"
+                >
+                    <div className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+                        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" />
+                        <div className="py-1">
+                            <h3 id="leave-student-confirm-title" className="text-[17px] font-semibold text-[var(--tm-text-primary)]">确认设为离校？</h3>
+                            <p id="leave-student-confirm-description" className="mt-2 text-sm leading-relaxed text-[var(--tm-text-secondary)]">
                                 设置离校后，该学生将不在学生列表展示。可在班级卡片更多操作中恢复。
                             </p>
                         </div>
@@ -599,7 +633,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setShowLeaveConfirm(false)}
-                                className="h-12 rounded-2xl bg-slate-100 text-sm font-bold text-slate-600 active:scale-[0.98]"
+                                className="h-12 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] text-sm font-semibold text-[var(--tm-text-secondary)] active:scale-[0.98]"
                             >
                                 取消
                             </button>
@@ -611,7 +645,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                     setShowStatusActionSheet(false);
                                     onBack?.();
                                 }}
-                                className="h-12 rounded-2xl bg-amber-500 text-sm font-bold text-white shadow-lg shadow-amber-100 active:scale-[0.98]"
+                                className="h-12 rounded-[var(--tm-radius-inner)] bg-[var(--tm-status-negative)] text-sm font-semibold text-white active:scale-[0.98]"
                             >
                                 确认离校
                             </button>

@@ -1,3 +1,5 @@
+import type { FormLayoutMode, FormSection } from './formDefinition';
+
 export type QuestionnaireStatus = 'draft' | 'active' | 'ended' | 'archived';
 export type QuestionnaireCollectionMode = 'guardian_questionnaire' | 'student_information' | 'teacher_questionnaire';
 export type QuestionnaireQuestionType = 'single' | 'multiple' | 'rating' | 'text' | 'short_text' | 'number' | 'date';
@@ -19,6 +21,7 @@ export interface QuestionnaireQuestion {
   required: boolean;
   options: string[];
   customAnswerOptions?: string[];
+  sectionId?: string;
 }
 
 export interface QuestionnaireTarget {
@@ -66,6 +69,8 @@ export interface QuestionnaireRecord {
   studentAssignmentMode?: StudentAssignmentMode;
   targetMode?: QuestionnaireTargetMode;
   targetClassIds?: string[];
+  layoutMode?: FormLayoutMode;
+  sections?: FormSection[];
   questions: QuestionnaireQuestion[];
   targets: QuestionnaireTarget[];
   submissions: QuestionnaireSubmission[];
@@ -525,6 +530,8 @@ const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): Questionnair
     suggestedDeadline: rest.suggestedDeadline ?? deadline ?? '',
     collectionMode: rest.collectionMode ?? 'guardian_questionnaire',
     studentAssignmentMode: rest.studentAssignmentMode ?? 'creator',
+    layoutMode: rest.layoutMode ?? 'flat',
+    sections: rest.sections ?? [],
     studentRecords: rest.studentRecords ?? [],
   };
 };

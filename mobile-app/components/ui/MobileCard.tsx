@@ -13,11 +13,11 @@ interface MobileCardProps {
 
 const variantClass: Record<MobileCardVariant, string> = {
   flat: `bg-white ${phoneRadius.lg} ${phoneShadow.none}`,
-  card: `bg-white ${phoneRadius.xl} ${phoneShadow.card} border border-slate-100/70`,
-  raised: `bg-white ${phoneRadius.xl} ${phoneShadow.raised} border border-slate-100/70`,
-  hero: `bg-white ${phoneRadius.sheet} ${phoneShadow.raised} border border-slate-100/70`,
+  card: `bg-white ${phoneRadius.xl} ${phoneShadow.card}`,
+  raised: `bg-white ${phoneRadius.xl} ${phoneShadow.raised}`,
+  hero: `bg-white ${phoneRadius.sheet} ${phoneShadow.raised}`,
   ai: `bg-white ${phoneRadius.xl} ${phoneShadow.raised} border border-[var(--tm-brand-primary-soft-strong)]`,
-  metric: `bg-white ${phoneRadius.xl} ${phoneShadow.card} border border-slate-100/70`,
+  metric: `bg-white ${phoneRadius.xl} ${phoneShadow.card}`,
 };
 
 const paddingClass: Record<MobileCardPadding, string> = {

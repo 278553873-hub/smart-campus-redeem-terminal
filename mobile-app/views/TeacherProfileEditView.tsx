@@ -240,22 +240,22 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     };
 
     const renderSheetFrame = (title: string, children: React.ReactNode, footer: React.ReactNode) => (
-        <div className="absolute inset-0 z-[120] flex items-end bg-slate-950/35" onClick={() => setMode('idle')}>
+        <div className="absolute inset-0 z-[120] flex items-end bg-[var(--tm-mask)]" onClick={() => setMode('idle')}>
             <div
-                className="bottom-sheet flex max-h-[86%] w-full min-h-0 flex-col rounded-t-[28px] bg-white shadow-[0_-18px_44px_rgba(15,23,42,0.18)]"
+                className="bottom-sheet flex max-h-[86%] w-full min-h-0 flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-sheet)]"
                 role="dialog"
                 aria-modal="true"
                 aria-label={title}
                 onClick={event => event.stopPropagation()}
             >
                 <div className="shrink-0 px-5 pb-3 pt-3">
-                    <div className="mx-auto mb-3 h-1.5 w-9 rounded-full bg-slate-200" />
-                    <h2 className={`${phoneText.sectionTitle} text-center text-slate-900`}>{title}</h2>
+                    <div className="mx-auto mb-3 h-1.5 w-9 rounded-full bg-[var(--tm-brand-primary-soft-strong)]" aria-hidden="true" />
+                    <h2 className={`${phoneText.sectionTitle} text-center text-[var(--tm-text-primary)]`}>{title}</h2>
                 </div>
                 <div className="min-h-0 flex-1 overflow-hidden px-5">
                     {children}
                 </div>
-                <div className="shrink-0 space-y-1 border-t border-slate-100 px-5 pb-5 pt-3">
+                <div className="shrink-0 space-y-1 border-t border-[var(--tm-border-subtle)] px-5 pb-5 pt-3">
                     {footer}
                 </div>
             </div>
@@ -274,9 +274,9 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         return renderSheetFrame(
             title,
             <div className="flex h-full min-h-[420px] flex-col gap-3">
-                <div className={`${isTeaching ? 'h-[270px] shrink-0' : 'min-h-0 flex-1'} overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/70`}>
+                <div className={`${isTeaching ? 'h-[270px] shrink-0' : 'min-h-0 flex-1'} overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)]`}>
                     <div className="grid h-full min-h-0 grid-cols-[92px_1fr]" aria-label="班级级联选择">
-                        <div className="min-h-0 overflow-y-auto overscroll-contain border-r border-slate-100 bg-slate-50 p-2 no-scrollbar" aria-label="左侧先选年级">
+                        <div className="min-h-0 overflow-y-auto overscroll-contain border-r border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-2 no-scrollbar" aria-label="左侧先选年级">
                             {gradeOptions.map(grade => {
                                 const selectedCount = (classesByGrade[grade] || []).filter(classInfo => selectedClassIds.has(classInfo.id)).length;
                                 return (
@@ -284,10 +284,10 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                         key={grade}
                                         type="button"
                                         onClick={() => setActiveGrade(grade)}
-                                        className={`mb-2 flex min-h-11 w-full flex-col items-center justify-center rounded-2xl text-xs font-extrabold transition-all last:mb-0 active:scale-95 ${activeGrade === grade ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-slate-500 active:bg-blue-50 active:text-blue-600'}`}
+                                        className={`mb-2 flex min-h-11 w-full flex-col items-center justify-center rounded-[var(--tm-radius-control)] text-xs font-extrabold transition-all last:mb-0 active:scale-95 ${activeGrade === grade ? 'bg-[var(--tm-brand-primary)] text-white shadow-[var(--tm-shadow-icon)]' : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-brand-primary-soft)] active:text-[var(--tm-brand-primary-pressed)]'}`}
                                     >
                                         <span>{grade}</span>
-                                        {selectedCount > 0 && <span className={`mt-0.5 text-[10px] ${activeGrade === grade ? 'text-blue-100' : 'text-blue-500'}`}>{selectedCount}个</span>}
+                                        {selectedCount > 0 && <span className={`mt-0.5 text-[11px] ${activeGrade === grade ? 'text-white/80' : 'text-[var(--tm-brand-primary-pressed)]'}`}>{selectedCount}个</span>}
                                     </button>
                                 );
                             })}
@@ -295,8 +295,8 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                         <div className="flex min-h-0 min-w-0 flex-col p-3" aria-label="右侧再选该年级下的班级">
                             <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                                 <div className="min-w-0">
-                                    <h3 className={`${phoneText.sectionTitle} truncate text-slate-900`}>{activeGrade || '选择年级'}</h3>
-                                    <p className="mt-1 text-xs text-slate-400">已选 {activeSelectedCount} / {activeGradeClasses.length} 个班</p>
+                                    <h3 className={`${phoneText.sectionTitle} truncate text-[var(--tm-text-primary)]`}>{activeGrade || '选择年级'}</h3>
+                                    <p className="mt-1 text-xs text-[var(--tm-text-tertiary)]">已选 {activeSelectedCount} / {activeGradeClasses.length} 个班</p>
                                 </div>
                             </div>
                             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 no-scrollbar">
@@ -309,9 +309,9 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                             onClick={() => toggleClass(classInfo.id)}
                                             aria-pressed={selected}
                                             aria-label={`${selected ? '取消选择' : '选择'}${classInfo.name}`}
-                                            className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border px-3 text-left text-sm font-bold transition-all active:scale-[0.99] ${selected ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-100 bg-white text-slate-600 active:bg-slate-50'}`}
+                                            className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] border px-3 text-left text-sm font-bold transition-all active:scale-[0.99] ${selected ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
                                         >
-                                            <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-black ${selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-transparent'}`}>✓</span>
+                                            <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-black ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-white' : 'border-[var(--tm-border-control)] text-transparent'}`}>✓</span>
                                             <span className="min-w-0 flex-1 truncate">{classInfo.name}</span>
                                         </button>
                                     );
@@ -321,8 +321,8 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     </div>
                 </div>
                 {isTeaching && (
-                    <div className="shrink-0 rounded-3xl border border-slate-100 bg-slate-50/70 p-3" aria-label="下方选择任教学科">
-                        <h3 className={`${phoneText.sectionTitle} text-slate-900`}>选择任教学科</h3>
+                    <div className="shrink-0 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-3" aria-label="下方选择任教学科">
+                        <h3 className={`${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>选择任教学科</h3>
                         <div className="mt-3 grid grid-cols-4 gap-2">
                             {subjects.map(subject => (
                                 <button
@@ -330,7 +330,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                     type="button"
                                     onClick={() => setSelectedSubject(subject)}
                                     aria-pressed={selectedSubject === subject}
-                                    className={`flex min-h-11 items-center justify-center rounded-2xl border px-2 text-xs font-extrabold transition-all active:scale-95 ${selectedSubject === subject ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-100 bg-white text-slate-600 active:bg-slate-50'}`}
+                                    className={`flex min-h-11 items-center justify-center rounded-[var(--tm-radius-control)] border px-2 text-xs font-extrabold transition-all active:scale-95 ${selectedSubject === subject ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
                                 >
                                     {subject}
                                 </button>
@@ -344,14 +344,14 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     type="button"
                     disabled={primaryDisabled}
                     onClick={onPrimary}
-                    className="flex h-12 w-full items-center justify-center rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                    className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white shadow-[var(--tm-shadow-icon)] transition-all active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] disabled:shadow-none"
                 >
                     {primaryDisabled ? (selectedClassIds.size === 0 ? '请先选择班级' : '请先选择学科') : '保存'}
                 </button>
                 <button
                     type="button"
                     onClick={isTeaching ? () => setMode('idle') : clearHomeroomClasses}
-                    className="flex h-10 w-full items-center justify-center rounded-2xl text-sm font-medium text-slate-400 active:bg-slate-50"
+                    className="flex h-10 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-sm font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     暂不选择
                 </button>
@@ -372,7 +372,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                 type="button"
                                 onClick={() => toggleGrade(grade)}
                                 aria-pressed={selected}
-                                className={`flex min-h-14 items-center justify-center rounded-2xl border px-3 text-sm font-bold transition-all active:scale-95 ${selected ? 'border-indigo-200 bg-indigo-50 text-indigo-600 shadow-sm' : 'border-slate-100 bg-white text-slate-600 shadow-sm'}`}
+                                className={`flex min-h-14 items-center justify-center rounded-[var(--tm-radius-inner)] border px-3 text-sm font-bold transition-all active:scale-95 ${selected ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)] shadow-[var(--tm-shadow-control)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)]'}`}
                             >
                                 {grade}
                             </button>
@@ -384,14 +384,14 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <button
                     type="button"
                     onClick={saveGradeLeaderGrades}
-                    className="flex h-12 w-full items-center justify-center rounded-2xl bg-indigo-600 text-sm font-extrabold text-white shadow-lg shadow-indigo-600/20 transition-all active:scale-[0.98]"
+                    className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white shadow-[var(--tm-shadow-icon)] transition-all active:scale-[0.98]"
                 >
                     保存
                 </button>
                 <button
                     type="button"
                     onClick={clearGradeLeaderGrades}
-                    className="flex h-10 w-full items-center justify-center rounded-2xl text-sm font-medium text-slate-400 active:bg-slate-50"
+                    className="flex h-10 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-sm font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     暂不选择
                 </button>
@@ -412,10 +412,10 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                 type="button"
                                 onClick={() => setSelectedDepartmentId(department.id)}
                                 aria-pressed={selected}
-                                className={`flex min-h-14 w-full items-center justify-between rounded-2xl border px-4 text-left transition-all active:scale-[0.99] ${selected ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-100 bg-white text-slate-700 shadow-sm'}`}
+                                className={`flex min-h-14 w-full items-center justify-between rounded-[var(--tm-radius-inner)] border px-4 text-left transition-all active:scale-[0.99] ${selected ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)]'}`}
                             >
                                 <span className="text-sm font-bold">{department.name}</span>
-                                {selected && <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-bold text-white">当前</span>}
+                                {selected && <span className="rounded-full bg-[var(--tm-brand-primary)] px-2.5 py-1 text-[11px] font-bold text-white">当前</span>}
                             </button>
                         );
                     })}
@@ -426,14 +426,14 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     type="button"
                     disabled={!selectedDepartmentId}
                     onClick={saveDepartment}
-                    className="flex h-12 w-full items-center justify-center rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                    className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white shadow-[var(--tm-shadow-icon)] transition-all active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] disabled:shadow-none"
                 >
                     保存
                 </button>
                 <button
                     type="button"
                     onClick={clearDepartment}
-                    className="flex h-10 w-full items-center justify-center rounded-2xl text-sm font-medium text-slate-400 active:bg-slate-50"
+                    className="flex h-10 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-sm font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     暂不选择
                 </button>
@@ -442,20 +442,20 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     );
 
     const renderAvatarSheet = () => (
-        <div className="absolute inset-0 z-[130] flex items-end bg-slate-950/30 px-4 pb-5" onClick={() => setMode('idle')}>
-            <div className="w-full rounded-[32px] bg-white p-4 shadow-2xl" onClick={event => event.stopPropagation()}>
-                <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200" />
-                <h3 className="px-2 text-center text-lg font-extrabold text-slate-900">更换头像</h3>
+        <div className="absolute inset-0 z-[130] flex items-end bg-[var(--tm-mask)] px-4 pb-5" onClick={() => setMode('idle')}>
+            <div className="w-full rounded-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+                <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[var(--tm-brand-primary-soft-strong)]" aria-hidden="true" />
+                <h3 className={`px-2 text-center ${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>更换头像</h3>
                 <div className="mt-5 space-y-2">
-                    <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-2xl bg-blue-50 px-4 text-left font-bold text-blue-600 active:bg-blue-100">
+                    <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-primary-soft)] px-4 text-left font-bold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]">
                         <Camera className="h-5 w-5" />
                         拍照
                     </button>
-                    <button type="button" onClick={() => albumInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-2xl bg-slate-50 px-4 text-left font-bold text-slate-700 active:bg-slate-100">
+                    <button type="button" onClick={() => albumInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left font-bold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]">
                         <Image className="h-5 w-5" />
                         从相册选择
                     </button>
-                    <button type="button" onClick={() => setMode('idle')} className="flex h-12 w-full items-center justify-center rounded-2xl text-sm font-bold text-slate-400 active:bg-slate-50">
+                    <button type="button" onClick={() => setMode('idle')} className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-sm font-bold text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]">
                         取消
                     </button>
                 </div>
@@ -478,9 +478,9 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     };
 
     const renderNameDialog = () => (
-        <div className="absolute inset-0 z-[130] flex items-center bg-slate-950/30 px-5" onClick={() => setMode('idle')}>
-            <div className="w-full rounded-3xl bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}>
-                <h3 className="text-center text-lg font-extrabold text-slate-900">修改姓名</h3>
+        <div className="absolute inset-0 z-[130] flex items-center bg-[var(--tm-mask)] px-5" onClick={() => setMode('idle')}>
+            <div className="w-full rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-5 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+                <h3 className={`text-center ${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>修改姓名</h3>
                 <input
                     value={nameDraft}
                     onChange={event => setNameDraft(event.target.value)}
@@ -489,21 +489,21 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     }}
                     autoFocus
                     maxLength={20}
-                    className="mt-5 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-900 outline-none focus:border-blue-400 focus:bg-white"
+                    className="mt-5 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-4 text-base font-bold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
                     aria-label="教师姓名"
                 />
                 <div className="mt-4 flex gap-3">
-                    <button type="button" onClick={() => setMode('idle')} className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-slate-100 text-sm font-bold text-slate-600">取消</button>
-                    <button type="button" disabled={!nameDraft.trim()} onClick={saveName} className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-blue-600 text-sm font-extrabold text-white disabled:bg-slate-200 disabled:text-slate-400">确定</button>
+                    <button type="button" onClick={() => setMode('idle')} className="flex h-11 flex-1 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-sm font-bold text-[var(--tm-text-secondary)]">取消</button>
+                    <button type="button" disabled={!nameDraft.trim()} onClick={saveName} className="flex h-11 flex-1 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">确定</button>
                 </div>
             </div>
         </div>
     );
 
     const renderSchoolDialog = () => (
-        <div className="absolute inset-0 z-[130] flex items-center bg-slate-950/30 px-5" onClick={() => setMode('idle')}>
-            <div className="w-full rounded-3xl bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}>
-                <h3 className="text-center text-lg font-extrabold text-slate-900">修改学校</h3>
+        <div className="absolute inset-0 z-[130] flex items-center bg-[var(--tm-mask)] px-5" onClick={() => setMode('idle')}>
+            <div className="w-full rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-5 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+                <h3 className={`text-center ${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>修改学校</h3>
                 <input
                     value={schoolDraft}
                     onChange={event => setSchoolDraft(event.target.value)}
@@ -512,12 +512,12 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     }}
                     autoFocus
                     maxLength={30}
-                    className="mt-5 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-bold text-slate-900 outline-none focus:border-blue-400 focus:bg-white"
+                    className="mt-5 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-4 text-base font-bold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
                     aria-label="学校名称"
                 />
                 <div className="mt-4 flex gap-3">
-                    <button type="button" onClick={() => setMode('idle')} className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-slate-100 text-sm font-bold text-slate-600">取消</button>
-                    <button type="button" disabled={!schoolDraft.trim()} onClick={saveSchoolName} className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-blue-600 text-sm font-extrabold text-white disabled:bg-slate-200 disabled:text-slate-400">确定</button>
+                    <button type="button" onClick={() => setMode('idle')} className="flex h-11 flex-1 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-sm font-bold text-[var(--tm-text-secondary)]">取消</button>
+                    <button type="button" disabled={!schoolDraft.trim()} onClick={saveSchoolName} className="flex h-11 flex-1 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">确定</button>
                 </div>
             </div>
         </div>
@@ -529,16 +529,19 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         ? ASSETS.AVATAR.TEACHER_LIU_RAW
         : draft.avatar;
     const renderConfigValue = (value: string, selected: boolean) => (
-        <p className={`min-w-0 truncate text-right text-sm ${selected ? 'font-bold text-slate-700' : 'font-normal text-slate-300'}`}>{value}</p>
+        <p className={`min-w-0 truncate text-right text-sm ${selected ? 'font-bold text-[var(--tm-text-primary)]' : 'font-normal text-[var(--tm-text-tertiary)]'}`}>{value}</p>
     );
 
+    const editButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)] transition active:scale-95 active:bg-[var(--tm-brand-primary-soft-strong)]';
+    const fieldLabelClass = 'text-sm font-medium text-[var(--tm-text-tertiary)]';
+
     return (
-        <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-slate-50 font-sans text-slate-900">
+        <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] font-sans text-[var(--tm-text-primary)]">
             <input ref={cameraInputRef} type="file" accept="image/*" capture="user" className="hidden" onChange={readAvatarFile} />
             <input ref={albumInputRef} type="file" accept="image/*" className="hidden" onChange={readAvatarFile} />
 
             <div className="shrink-0 px-5 pt-3">
-                <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-500 shadow-sm ring-1 ring-slate-100 active:bg-slate-100" aria-label="返回">
+                <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)] ring-1 ring-[var(--tm-border-subtle)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回">
                     <ChevronLeft className="h-5 w-5" />
                 </button>
             </div>
@@ -546,11 +549,11 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
             <div className="flex-1 space-y-3 overflow-y-auto px-5 pb-8 pt-2">
                 <MobileCard variant="hero" padding="lg" className="teacher-avatar-card text-center">
                     <button type="button" onClick={() => setMode('avatar')} className="group mx-auto block" aria-label="更换头像">
-                        <div className="relative mx-auto h-24 w-24 rounded-full bg-gradient-to-br from-white via-cyan-100/80 to-blue-100/70 p-[3px] shadow-[0_18px_28px_-18px_rgba(37,99,235,0.34)] ring-1 ring-white/90">
-                            <span className="block h-full w-full overflow-hidden rounded-full bg-white">
+                        <div className="relative mx-auto h-24 w-24 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] shadow-[var(--tm-shadow-avatar)] ring-1 ring-white/90">
+                            <span className="block h-full w-full overflow-hidden rounded-full bg-[var(--tm-bg-surface)]">
                                 <img src={displayAvatar} alt="老师头像" className="h-full w-full object-cover object-center" />
                             </span>
-                            <span className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-blue-600 text-white shadow-lg transition-transform group-active:scale-95">
+                            <span className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[var(--tm-brand-primary)] text-white shadow-[var(--tm-shadow-icon)] transition-transform group-active:scale-95">
                                 <Camera className="h-4 w-4" />
                             </span>
                         </div>
@@ -560,13 +563,13 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <MobileCard variant="card" padding="md" className="teacher-name-card">
                     <div className="flex items-center justify-between gap-3">
                         <div className="grid min-w-0 flex-1 grid-cols-[96px_1fr] items-center gap-3">
-                            <span className="text-sm font-semibold text-slate-400">姓名</span>
-                            <h2 className="min-w-0 truncate text-right text-sm font-bold text-slate-700">{draft.name}</h2>
+                            <span className={fieldLabelClass}>姓名</span>
+                            <h2 className="min-w-0 truncate text-right text-sm font-bold text-[var(--tm-text-primary)]">{draft.name}</h2>
                         </div>
                         <button
                             type="button"
                             onClick={() => { setNameDraft(draft.name); setMode('name'); }}
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100"
+                            className={editButtonClass}
                             aria-label="修改姓名"
                         >
                             <Pencil className="h-4 w-4" />
@@ -577,14 +580,14 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <MobileCard variant="card" padding="md" className="teacher-school-card">
                     <div className="flex items-center justify-between gap-3">
                         <div className="grid min-w-0 flex-1 grid-cols-[96px_1fr] items-center gap-3">
-                            <span className="text-sm font-semibold text-slate-400">学校</span>
+                            <span className={fieldLabelClass}>学校</span>
                             {renderConfigValue(displaySchoolName || '暂未选择', Boolean(displaySchoolName))}
                         </div>
                         {!schoolNameLocked && (
                             <button
                                 type="button"
                                 onClick={() => { setSchoolDraft(draft.schoolName); setMode('school'); }}
-                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100"
+                                className={editButtonClass}
                                 aria-label="修改学校"
                             >
                                 <Pencil className="h-4 w-4" />
@@ -596,24 +599,24 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <MobileCard variant="card" padding="md" className="teacher-teaching-card">
                     <div className="mb-3 flex items-center justify-between gap-3">
                         <div className="grid min-w-0 flex-1 grid-cols-[96px_1fr] items-center gap-3">
-                            <span className="text-sm font-semibold text-slate-400">任教班级</span>
+                            <span className={fieldLabelClass}>任教班级</span>
                         </div>
-                        <button type="button" onClick={() => { resetCascadeSelection(); setMode('teachingClasses'); }} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100" aria-label="添加任教班级">
+                        <button type="button" onClick={() => { resetCascadeSelection(); setMode('teachingClasses'); }} className={editButtonClass} aria-label="添加任教班级">
                             <Plus className="h-4 w-4" />
                         </button>
                     </div>
                     {teachingGroups.length > 0 && (
                         <div className="space-y-2">
                             {teachingGroups.map(group => (
-                                <div key={group.subject} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                                <div key={group.subject} className="flex items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-4 py-3">
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-base font-extrabold text-slate-900">{group.subject}</span>
-                                            <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-600">{group.classIds.length} 个班</span>
+                                            <span className="text-[15px] font-bold text-[var(--tm-text-primary)]">{group.subject}</span>
+                                            <span className="rounded-full bg-[var(--tm-brand-primary-soft)] px-2 py-1 text-[11px] font-bold text-[var(--tm-brand-primary-pressed)]">{group.classIds.length} 个班</span>
                                         </div>
-                                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{group.summary}</p>
+                                        <p className="mt-1 text-xs font-medium leading-relaxed text-[var(--tm-text-secondary)]">{group.summary}</p>
                                     </div>
-                                    <button type="button" onClick={() => removeTeachingGroup(group)} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-300 active:bg-rose-50 active:text-rose-500" aria-label={`删除${group.subject}任教范围`}>
+                                    <button type="button" onClick={() => removeTeachingGroup(group)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] transition active:scale-95 active:bg-[var(--tm-status-negative-soft)] active:text-[var(--tm-status-negative)]" aria-label={`删除${group.subject}任教范围`}>
                                         <Trash2 className="h-4 w-4" />
                                     </button>
                                 </div>
@@ -625,10 +628,10 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <MobileCard variant="card" padding="md" className="teacher-homeroom-card">
                     <div className="flex items-center justify-between gap-3">
                         <div className="grid min-w-0 flex-1 grid-cols-[96px_1fr] items-center gap-3">
-                            <span className="text-sm font-semibold text-slate-400">带班班级</span>
+                            <span className={fieldLabelClass}>带班班级</span>
                             {renderConfigValue(roleSummary(draft.homeroomClassIds), draft.homeroomClassIds.length > 0)}
                         </div>
-                        <button type="button" onClick={() => openRoleSelector('homeroom', draft.homeroomClassIds)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-600 active:bg-violet-100" aria-label="修改带班班级">
+                        <button type="button" onClick={() => openRoleSelector('homeroom', draft.homeroomClassIds)} className={editButtonClass} aria-label="修改带班班级">
                             <Pencil className="h-4 w-4" />
                         </button>
                     </div>
@@ -637,10 +640,10 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <MobileCard variant="card" padding="md" className="teacher-grade-leader-card">
                     <div className="flex items-center justify-between gap-3">
                         <div className="grid min-w-0 flex-1 grid-cols-[96px_1fr] items-center gap-3">
-                            <span className="text-sm font-semibold text-slate-400">分管年级</span>
+                            <span className={fieldLabelClass}>分管年级</span>
                             {renderConfigValue(gradeLeaderSummary, draft.gradeLeaderGrades.length > 0)}
                         </div>
-                        <button type="button" onClick={openGradeLeaderSelector} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 active:bg-indigo-100" aria-label="修改分管年级">
+                        <button type="button" onClick={openGradeLeaderSelector} className={editButtonClass} aria-label="修改分管年级">
                             <Pencil className="h-4 w-4" />
                         </button>
                     </div>
@@ -649,10 +652,10 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <MobileCard variant="card" padding="md" className="teacher-department-card">
                     <div className="flex items-center justify-between gap-3">
                         <div className="grid min-w-0 flex-1 grid-cols-[96px_1fr] items-center gap-3">
-                            <span className="text-sm font-semibold text-slate-400">部门设置</span>
+                            <span className={fieldLabelClass}>部门设置</span>
                             {renderConfigValue(draft.departmentName || '暂未选择', Boolean(draft.departmentName))}
                         </div>
-                        <button type="button" onClick={openDepartmentSelector} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100" aria-label="修改部门设置">
+                        <button type="button" onClick={openDepartmentSelector} className={editButtonClass} aria-label="修改部门设置">
                             <Pencil className="h-4 w-4" />
                         </button>
                     </div>

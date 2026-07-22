@@ -33,37 +33,28 @@ const categoryLabels: Record<FlowCategory, string> = {
   class_shop: '班级兑换',
 };
 
-const getFlowIcon = (category: FlowCategory) => {
+const getFlowIcon = (category: FlowCategory, type: CoinFlowItem['type']) => {
+  const toneClass = type === 'income' ? 'text-[var(--tm-brand-reward-strong)]' : 'text-[var(--tm-text-tertiary)]';
   switch (category) {
     case 'vending_shop':
     case 'class_shop':
-      return <ShoppingBag size={18} className="text-pink-500" />;
+      return <ShoppingBag size={18} className={toneClass} />;
     case 'dividend':
-      return <TrendingUp size={18} className="text-orange-500" />;
+      return <TrendingUp size={18} className={toneClass} />;
     case 'reward':
-      return <Sparkles size={18} className="text-yellow-500" />;
+      return <Sparkles size={18} className={toneClass} />;
     case 'interest':
-      return <Landmark size={18} className="text-blue-500" />;
+      return <Landmark size={18} className={toneClass} />;
     default:
-      return <Clock size={18} className="text-slate-500" />;
+      return <Clock size={18} className={toneClass} />;
   }
 };
 
-const getFlowBg = (category: FlowCategory) => {
-  switch (category) {
-    case 'vending_shop':
-    case 'class_shop':
-      return 'bg-pink-50 ring-pink-100';
-    case 'dividend':
-      return 'bg-orange-50 ring-orange-100';
-    case 'reward':
-      return 'bg-yellow-50 ring-yellow-100';
-    case 'interest':
-      return 'bg-blue-50 ring-blue-100';
-    default:
-      return 'bg-slate-50 ring-slate-100';
-  }
-};
+const getFlowBg = (type: CoinFlowItem['type']) => (
+  type === 'income'
+    ? 'bg-[var(--tm-brand-reward-soft)] ring-[var(--tm-brand-reward-soft)]'
+    : 'bg-[var(--tm-bg-surface-muted)] ring-[var(--tm-bg-surface-soft)]'
+);
 
 const getIssueCategory = (source: string): FlowCategory => {
   if (source.includes('结算') || source.includes('分红')) return 'dividend';
@@ -131,22 +122,22 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
   };
 
   return (
-    <div className="h-full min-h-0 overflow-hidden bg-[#F8FAFC]">
+    <div className="h-full min-h-0 overflow-hidden bg-transparent font-sans">
       <div className="flex h-full min-h-0 flex-col">
-        <header className="flex h-11 shrink-0 items-center justify-between border-b border-slate-100/80 bg-white/90 px-4 backdrop-blur-md">
-          <button onClick={onBack} className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-slate-500 active:bg-slate-100" aria-label="返回学生详情">
+        <header className="flex h-11 shrink-0 items-center justify-between border-b border-white/40 bg-white/38 px-4 backdrop-blur-md">
+          <button onClick={onBack} className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回学生详情">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className={`${phoneText.navTitle} text-slate-900`}>校园币详情</h1>
+          <h1 className={`${phoneText.navTitle} text-[var(--tm-text-primary)]`}>校园币详情</h1>
           <div className="h-10 w-10" aria-hidden="true" />
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-8 no-scrollbar">
-          <MobileCard variant="hero" padding="lg" className="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md">
+          <MobileCard variant="hero" padding="lg" className="relative overflow-hidden bg-gradient-to-br from-[var(--tm-brand-reward)] to-[var(--tm-brand-reward-strong)] text-white shadow-[var(--tm-shadow-card)]">
             <div className="absolute -right-10 -bottom-12 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
             <Coins size={110} className="absolute -bottom-8 -right-7 text-white/10" />
             <div className="relative z-10">
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-100/90">{student.name} · 只读校园币档案</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/80">{student.name} · 只读校园币档案</p>
               <div className="mt-3 flex items-center text-[34px] font-black leading-none tracking-tight">
                 <img src="/assets/coin.png" className="mr-1.5 h-[1em] w-[1em] drop-shadow-sm" alt="coin" />
                 {formatCoinAmount(coinDetail.balance + coinDetail.bankDeposit)}
@@ -158,16 +149,16 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
             </div>
           </MobileCard>
 
-          <MobileCard variant="card" padding="lg" className="mt-4 overflow-hidden rounded-[2rem] border-2 border-orange-100/60 bg-gradient-to-b from-orange-50/80 to-amber-50/50">
+          <MobileCard variant="card" padding="lg" className="mt-4 overflow-hidden border border-[var(--tm-brand-reward)]/20 bg-[var(--tm-brand-reward-soft)]">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-xs font-extrabold uppercase tracking-widest text-orange-600/80">预计可得</h2>
+                <h2 className="text-xs font-extrabold uppercase tracking-widest text-[var(--tm-brand-reward-strong)]">预计可得</h2>
               </div>
-              <span className="rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-black text-orange-500">预估</span>
+              <span className="rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-black text-[var(--tm-brand-reward-strong)]">预估</span>
             </div>
 
             <div className="flex items-center justify-center py-6">
-              <div className="flex items-center justify-center gap-3 text-[52px] font-black leading-none tracking-tight text-orange-500">
+              <div className="flex items-center justify-center gap-3 text-[52px] font-black leading-none tracking-tight text-[var(--tm-brand-reward-strong)]">
                 <img src="/assets/coin.png" className="h-[0.9em] w-[0.9em] -translate-y-0.5" alt="coin" />
                 <span>{formatCoinAmount(monthlyEstimate.estimatedTotal)}</span>
               </div>
@@ -176,10 +167,10 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
             <div className="flex h-[56px] items-center justify-between gap-3">
               {estimateBonusItems.map((item, index) => (
                 <React.Fragment key={item.label}>
-                  {index > 0 && <div className="shrink-0 text-sm font-black leading-none text-orange-300">+</div>}
-                  <div className="flex h-full flex-1 flex-col items-center justify-center rounded-2xl border border-orange-100/50 bg-white/70 px-2 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                    <span className="mb-0.5 text-[10px] font-bold text-orange-600/70">{item.label}</span>
-                    <div className="flex items-center justify-center gap-1 text-sm font-black text-orange-500">
+                  {index > 0 && <div className="shrink-0 text-sm font-black leading-none text-[var(--tm-brand-reward)]">+</div>}
+                  <div className="flex h-full flex-1 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-[var(--tm-brand-reward)]/15 bg-white/70 px-2 py-1 shadow-[var(--tm-shadow-control)]">
+                    <span className="mb-0.5 text-[10px] font-bold text-[var(--tm-text-tertiary)]">{item.label}</span>
+                    <div className="flex items-center justify-center gap-1 text-sm font-black text-[var(--tm-brand-reward-strong)]">
                       <img src="/assets/coin.png" className="h-[1.1em] w-[1.1em] -translate-y-px" alt="coin" />
                       <span>{formatCoinAmount(item.value)}</span>
                     </div>
@@ -189,22 +180,22 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
             </div>
           </MobileCard>
 
-          <div className="mt-4 rounded-[1.75rem] bg-[#f8fbff] p-4 shadow-sm" aria-label="校园币流水明细，包含发币记录和兑换记录">
+          <div className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]" aria-label="校园币流水明细，包含发币记录和兑换记录">
             <div className="mb-3 flex items-center justify-between gap-4">
               <div className="relative shrink-0">
                 <select
                   value={activeYear}
                   onChange={event => setActiveYear(event.target.value)}
-                  className="cursor-pointer appearance-none rounded-2xl border-2 border-slate-50 bg-white py-2 pl-4 pr-8 text-sm font-bold text-slate-800 shadow-sm outline-none transition-colors focus:ring-2 focus:ring-blue-500"
+                  className="cursor-pointer appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] py-2 pl-4 pr-8 text-sm font-bold text-[var(--tm-text-primary)] shadow-sm outline-none transition-colors focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
                 >
                   <option value="2026">2026 年</option>
                   <option value="2025">2025 年</option>
                   <option value="2024">2024 年</option>
                 </select>
-                <div className="pointer-events-none absolute right-3 top-1/2 mt-px -translate-y-1/2 border-l-[4px] border-r-[4px] border-t-[5px] border-l-transparent border-r-transparent border-t-slate-400" />
+                <div className="pointer-events-none absolute right-3 top-1/2 mt-px -translate-y-1/2 border-l-[4px] border-r-[4px] border-t-[5px] border-l-transparent border-r-transparent [border-top-color:var(--tm-text-tertiary)]" />
               </div>
 
-              <div className="flex max-w-[240px] flex-1 rounded-2xl bg-slate-200/60 p-1">
+              <div className="flex max-w-[240px] flex-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] p-1">
                 {([
                   ['all', '全部'],
                   ['income', '收入'],
@@ -214,7 +205,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                     key={filter}
                     type="button"
                     onClick={() => selectFilter(filter)}
-                    className={`flex-1 rounded-xl py-1.5 text-sm font-bold transition-all ${activeFilter === filter ? `bg-white shadow-sm ${filter === 'income' ? 'text-green-600' : filter === 'expense' ? 'text-red-500' : 'text-slate-800'}` : 'text-slate-500 active:text-slate-700'}`}
+                    className={`flex-1 rounded-lg py-1.5 text-sm font-bold transition-all ${activeFilter === filter ? 'bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}
                   >
                     {label}
                   </button>
@@ -228,7 +219,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`flex h-8 shrink-0 items-center justify-center rounded-full px-4 text-[13px] font-bold transition-all ${activeCategory === category ? 'border border-blue-200 bg-blue-100 text-blue-700 shadow-sm' : 'border border-slate-200 bg-white text-slate-500 active:bg-slate-50'}`}
+                  className={`flex h-8 shrink-0 items-center justify-center rounded-full px-4 text-[13px] font-bold transition-all ${activeCategory === category ? 'border border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)] shadow-sm' : 'border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
                 >
                   {categoryLabels[category]}
                 </button>
@@ -237,25 +228,25 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
 
             <div className="space-y-3">
               {filteredFlowItems.length === 0 ? (
-                <div className="flex h-48 flex-col items-center justify-center text-slate-400 opacity-60">
-                  <Clock size={42} className="mb-4 text-slate-300" />
+                <div className="flex h-48 flex-col items-center justify-center text-[var(--tm-text-tertiary)]">
+                  <Clock size={42} className="mb-4 text-[var(--tm-text-disabled)]" />
                   <p className="text-sm font-bold">暂无符合条件的流水记录</p>
                 </div>
               ) : filteredFlowItems.map(item => (
-                <div key={item.id} className="flex items-center gap-4 rounded-3xl border-2 border-slate-50 bg-white p-4 shadow-sm transition-transform active:scale-[0.98]">
-                  <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ring-4 ring-white shadow-sm ${getFlowBg(item.category)}`}>
-                    {getFlowIcon(item.category)}
+                <div key={item.id} className="flex items-center gap-4 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-4 transition-transform active:scale-[0.98]">
+                  <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ring-4 ${getFlowBg(item.type)}`}>
+                    {getFlowIcon(item.category, item.type)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="mb-1 truncate text-base font-bold text-slate-800">{item.title}</h4>
-                    <div className="truncate text-xs font-bold text-slate-400">
+                    <h4 className="mb-1 truncate text-base font-bold text-[var(--tm-text-primary)]">{item.title}</h4>
+                    <div className="truncate text-xs font-bold text-[var(--tm-text-tertiary)]">
                       <span>{item.time}</span>
                       <span className="mx-1">·</span>
                       <span>{item.description}</span>
                     </div>
                   </div>
                   <div className="shrink-0 pl-2">
-                    <div className={`flex items-center gap-1 text-2xl font-black leading-none ${item.type === 'income' ? 'text-green-500' : 'text-slate-700'}`}>
+                    <div className={`flex items-center gap-1 text-2xl font-black leading-none ${item.type === 'income' ? 'text-[var(--tm-status-positive)]' : 'text-[var(--tm-text-primary)]'}`}>
                       {item.type === 'income' ? '+' : '-'}
                       <span>{formatCoinAmount(item.amount)}</span>
                       <img src="/assets/coin.png" className="h-[0.9em] w-[0.9em] -translate-y-px" alt="coin" />

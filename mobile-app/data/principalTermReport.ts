@@ -36,6 +36,7 @@ export interface PrincipalTermReportPractice {
 }
 
 export interface PrincipalTermReportContent {
+  generatedDate: string;
   conclusion: string;
   metrics: PrincipalTermReportMetric[];
   usage: PrincipalTermReportFinding[];
@@ -47,6 +48,7 @@ export interface PrincipalTermReportContent {
 }
 
 export const PRINCIPAL_TERM_REPORT_SAMPLE: PrincipalTermReportContent = {
+  generatedDate: '2026年7月20日',
   conclusion: '本学期学校已形成较完整的过程性评价基础，学生覆盖完整，部分班级和教师群体形成了连续使用样本；下一阶段应优先改善班级之间的记录密度差异，扩大多学科参与，并补充过程性学习和低频指标的真实场景证据。',
   metrics: [
     { label: '累计评价', value: '8,260', detail: '形成较完整的学期过程数据' },
@@ -74,7 +76,7 @@ export const PRINCIPAL_TERM_REPORT_SAMPLE: PrincipalTermReportContent = {
     },
     {
       title: '跨学科观察开始建立',
-      detail: '骨干教师的记录已覆盖课堂表现、责任担当、艺术参与和行为提醒，学生成长材料不再局限于单一学科。',
+      detail: '高频使用教师的记录已覆盖课堂表现、责任担当、艺术参与和行为提醒，学生成长材料不再局限于单一学科。',
       evidence: '高频教师既包含班主任，也包含跨班任课教师。',
     },
   ],
@@ -128,7 +130,7 @@ export const PRINCIPAL_TERM_REPORT_SAMPLE: PrincipalTermReportContent = {
     {
       title: '复制高频使用教师的快速记录方法',
       detail: '用短时示范和同伴带动推广语音记录、指标确认和阶段复盘，降低参与门槛。',
-      owner: '教务处、骨干教师',
+      owner: '教务处、教师代表',
       metric: '教师活跃率提升至80%以上',
     },
     {

@@ -5,7 +5,6 @@ import {
     ChevronRight,
     ClipboardList,
     Coins,
-    FileCheck2,
     FileCog,
     MessageCircle,
     Settings,
@@ -40,8 +39,6 @@ interface MeViewProps {
     onOpenQuestionnaire: () => void;
     pendingCollectionCount: number;
     onOpenAssignedCollections: () => void;
-    pendingArchiveTaskCount: number;
-    onOpenAssignedArchiveTasks: () => void;
     onOpenArchiveDesign: () => void;
     onOpenAiHeadteacherAssistant: () => void;
     onOpenAiPrincipalAssistant: () => void;
@@ -199,8 +196,6 @@ const MeView: React.FC<MeViewProps> = ({
     onOpenQuestionnaire,
     pendingCollectionCount,
     onOpenAssignedCollections,
-    pendingArchiveTaskCount,
-    onOpenAssignedArchiveTasks,
     onOpenArchiveDesign,
     onOpenAiHeadteacherAssistant,
     onOpenAiPrincipalAssistant,
@@ -302,7 +297,7 @@ const MeView: React.FC<MeViewProps> = ({
 
     return (
         <div
-            className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_14%_0%,var(--tm-glow-primary),transparent_28%),radial-gradient(circle_at_88%_2%,var(--tm-glow-secondary),transparent_30%),linear-gradient(180deg,var(--tm-bg-page-glass)_0%,var(--tm-bg-surface-glass)_100%)] pb-24 font-sans text-[var(--tm-text-primary)]"
+            className="relative min-h-screen overflow-hidden bg-transparent pb-24 font-sans text-[var(--tm-text-primary)]"
         >
             <div className="relative px-5 pt-7">
                 <div className="relative z-10 min-h-[144px]">
@@ -361,20 +356,6 @@ const MeView: React.FC<MeViewProps> = ({
                         <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">待填写采集</span>
                         <span className="flex shrink-0 items-center gap-1.5">
                             <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--tm-status-negative)] px-1.5 text-[11px] font-bold tabular-nums text-white">{pendingCollectionCount}</span>
-                            <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                        </span>
-                    </button>
-                )}
-                {pendingArchiveTaskCount > 0 && (
-                    <button
-                        type="button"
-                        onClick={onOpenAssignedArchiveTasks}
-                        className={`flex min-h-[58px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] px-4 text-left transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)] ${toolCardSurfaceClass}`}
-                    >
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><FileCheck2 className="h-5 w-5" /></span>
-                        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">待完成建档</span>
-                        <span className="flex shrink-0 items-center gap-1.5">
-                            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--tm-status-negative)] px-1.5 text-[11px] font-bold tabular-nums text-white">{pendingArchiveTaskCount}</span>
                             <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
                         </span>
                     </button>

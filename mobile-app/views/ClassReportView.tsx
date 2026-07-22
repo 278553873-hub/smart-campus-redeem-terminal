@@ -1,8 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { ClassInfo, Student } from '../types';
+import React, { useMemo, useState } from 'react';
+import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import {
-    HelpIcon, CheckCircleIcon, AlertCircleIcon
-} from '../components/Icons';
+    TeacherReportBarChart,
+    TeacherReportDonutChart,
+    type TeacherReportBarSeries,
+    type TeacherReportChartColor,
+} from '../components/report/TeacherReportChart';
+import { ClassInfo, Student } from '../types';
 
 interface ClassReportViewProps {
     classInfo: ClassInfo;
@@ -13,429 +17,496 @@ interface ClassReportViewProps {
 
 type ReportScope = 'mine' | 'all';
 type TimeRange = 'day' | 'week' | 'month' | 'semester' | 'custom';
+type EducationKey = 'all' | 'virtue' | 'wisdom' | 'fitness' | 'aesthetic' | 'labor';
+type RankingMode = 'net' | 'progress';
 
-// Simple SVG Donut Chart Component
-const DonutChart = ({ data }: { data: { label: string, value: number, color: string }[] }) => {
-    const total = data.reduce((acc, cur) => acc + cur.value, 0);
-    let cumulativeAngle = 0;
+const educationDimensions: {
+    key: Exclude<EducationKey, 'all'>;
+    label: string;
+    color: TeacherReportChartColor;
+}[] = [
+    { key: 'virtue', label: '德育', color: 'virtue' },
+    { key: 'wisdom', label: '智育', color: 'wisdom' },
+    { key: 'fitness', label: '体育', color: 'fitness' },
+    { key: 'aesthetic', label: '美育', color: 'aesthetic' },
+    { key: 'labor', label: '劳育', color: 'labor' },
+];
 
-    // Handle empty data
-    if (total === 0) {
-        return (
-            <div className="w-32 h-32 rounded-full border-4 border-slate-100 flex items-center justify-center relative">
-                <span className="text-xs text-slate-300">暂无数据</span>
-            </div>
-        );
-    }
+const timeRangeTabs: { key: TimeRange; label: string }[] = [
+    { key: 'day', label: '今日' },
+    { key: 'week', label: '本周' },
+    { key: 'month', label: '本月' },
+    { key: 'semester', label: '本学期' },
+    { key: 'custom', label: '自定义' },
+];
 
-    return (
-        <div className="relative w-40 h-40 flex items-center justify-center">
-            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 transform">
-                {data.map((item, index) => {
-                    const angle = (item.value / total) * 360;
-                    if (angle === 0) return null;
-                    const largeArcFlag = angle > 180 ? 1 : 0;
-                    const r = 40; // radius
-                    const cx = 50;
-                    const cy = 50;
+const cardClass = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]';
 
-                    const startX = cx + r * Math.cos((cumulativeAngle * Math.PI) / 180);
-                    const startY = cy + r * Math.sin((cumulativeAngle * Math.PI) / 180);
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+    <h2 className="mb-3 text-[var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">
+        {children}
+    </h2>
+);
 
-                    cumulativeAngle += angle;
-
-                    const endX = cx + r * Math.cos((cumulativeAngle * Math.PI) / 180);
-                    const endY = cy + r * Math.sin((cumulativeAngle * Math.PI) / 180);
-
-                    if (data.filter(d => d.value > 0).length === 1) {
-                        return <circle key={index} cx="50" cy="50" r="40" stroke={item.color} strokeWidth="12" fill="none" />;
-                    }
-
-                    const pathData = [
-                        `M ${startX} ${startY}`,
-                        `A ${r} ${r} 0 ${largeArcFlag} 1 ${endX} ${endY}`
-                    ].join(' ');
-
-                    return (
-                        <path
-                            key={index}
-                            d={pathData}
-                            fill="none"
-                            stroke={item.color}
-                            strokeWidth="12"
-                            strokeLinecap="round"
-                            className="transition-all duration-500 ease-out "
-                        />
-                    );
-                })}
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-3xl font-bold text-slate-800">{total}</span>
-                <span className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">总记录</span>
-            </div>
-        </div>
-    );
+const getDaysInRange = (start: string, end: string) => {
+    if (!start || !end) return 7;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const difference = endDate.getTime() - startDate.getTime();
+    return Math.max(1, Math.ceil(difference / 86_400_000) + 1);
 };
 
-const ClassReportView: React.FC<ClassReportViewProps> = ({ classInfo, students, onSelectStudent, onGoToClassDetail }) => {
-    const handleStudentClick = (name: string) => {
-        const student = students.find(s => s.name === name);
-        if (student) {
-            onSelectStudent(student);
-        }
-    };
+const ClassReportView: React.FC<ClassReportViewProps> = ({
+    classInfo,
+    students,
+    onSelectStudent,
+    onGoToClassDetail,
+}) => {
     const [scope, setScope] = useState<ReportScope>('mine');
     const [timeRange, setTimeRange] = useState<TimeRange>('week');
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
-    const [activeRankDim, setActiveRankDim] = useState('诗意');
+    const [rankingMode, setRankingMode] = useState<RankingMode>('net');
+    const [activeEducation, setActiveEducation] = useState<EducationKey>('all');
+    const [showAllRanking, setShowAllRanking] = useState(false);
+    const [showAllFocus, setShowAllFocus] = useState(false);
+    const [showAllUnreviewed, setShowAllUnreviewed] = useState(false);
 
-    // Mock Data Generator
+    const totalStudents = students.length || classInfo.studentCount;
+
     const reportData = useMemo(() => {
-        let daysCount = 1;
-        switch (timeRange) {
-            case 'day': daysCount = 1; break;
-            case 'week': daysCount = 5; break;
-            case 'month': daysCount = 22; break;
-            case 'semester': daysCount = 100; break;
-            case 'custom':
-                if (customRange.start && customRange.end) {
-                    const s = new Date(customRange.start);
-                    const e = new Date(customRange.end);
-                    daysCount = Math.max(1, Math.ceil((e.getTime() - s.getTime()) / (1000 * 3600 * 24)));
-                } else {
-                    daysCount = 7;
-                }
-                break;
-        }
+        const periodMultiplier: Record<Exclude<TimeRange, 'custom'>, number> = {
+            day: 0.2,
+            week: 1,
+            month: 4,
+            semester: 18,
+        };
+        const selectedPeriodMultiplier = timeRange === 'custom'
+            ? Math.max(0.2, getDaysInRange(customRange.start, customRange.end) / 7)
+            : periodMultiplier[timeRange];
+        const scopeMultiplier = scope === 'all' ? 1 : 0.42;
+        const dataMultiplier = selectedPeriodMultiplier * scopeMultiplier;
+        const totalRecords = Math.max(1, Math.round(447 * dataMultiplier));
+        const positiveRecords = Math.round(totalRecords * 0.84);
+        const negativeRecords = totalRecords - positiveRecords;
+        const coverageBase = Math.min(1, 0.5 + selectedPeriodMultiplier * 0.14 + (scope === 'all' ? 0.32 : 0.06));
+        const coveredStudents = Math.min(totalStudents, Math.round(totalStudents * coverageBase));
+        const previousRecords = Math.max(1, Math.round(totalRecords * 0.78));
+        const previousCovered = Math.max(0, Math.min(totalStudents, coveredStudents - Math.max(0, Math.round(totalStudents * 0.04))));
 
-        const entriesPerTeacherPerDay = 4.5;
-        const teachersCount = scope === 'mine' ? 1 : 8;
-        const variance = 0.8 + Math.random() * 0.4;
-        const totalEntries = Math.max(1, Math.floor(daysCount * entriesPerTeacherPerDay * teachersCount * variance));
-
-        const positiveEntries = Math.floor(totalEntries * 0.82);
-        const negativeEntries = totalEntries - positiveEntries;
-
-        let coverageBase = 0;
-        if (timeRange === 'day') coverageBase = scope === 'mine' ? 0.1 : 0.4;
-        else if (timeRange === 'week') coverageBase = scope === 'mine' ? 0.35 : 0.75;
-        else if (timeRange === 'month') coverageBase = scope === 'mine' ? 0.65 : 0.92;
-        else coverageBase = scope === 'mine' ? 0.85 : 0.98;
-
-        const coveredCount = Math.min(classInfo.studentCount, Math.floor(classInfo.studentCount * (coverageBase + (Math.random() * 0.1 - 0.05))));
-        const coverageRate = Math.round((coveredCount / classInfo.studentCount) * 100);
-        const unEvaluatedCount = classInfo.studentCount - coveredCount;
-
-        const positiveCoverage = Math.floor(coveredCount * 0.85);
-        const negativeCoverage = Math.floor(coveredCount * 0.2);
-
-        const allNames = ['林小杰', '林云溪', '张林天', '王小虎', '李思思', '陈晨', '刘洋', '赵雪', '孙悟空', '猪八戒', '沙僧', '唐僧', '贾宝玉', '林黛玉', '薛宝钗', '王熙凤', '史湘云', '宋江', '武松', '鲁智深', '林冲', '李逵', '刘备', '关羽', '张飞', '赵云', '诸葛亮', '曹操', '周瑜', '司马懿'];
-        const unEvaluatedNames = allNames
-            .filter((_, i) => (i * 7 + (scope === 'mine' ? 3 : 0)) % 10 < (unEvaluatedCount / allNames.length * 10))
-            .slice(0, unEvaluatedCount);
-
-        const weights = { poetic: 0.25, safety: 0.20, physical: 0.20, elegant: 0.20, clean: 0.15 };
-        const pillars = ['诗意', '安全', '健体', '文雅', '美净'];
-
-        const dimRankings = pillars.map(dim => ({
-            dim,
-            pos: [
-                { name: allNames[Math.floor(Math.random() * 10)], score: Math.round(10 * variance) },
-                { name: allNames[Math.floor(Math.random() * 10) + 10], score: Math.round(8 * variance) },
-            ],
-            neg: [
-                { name: allNames[Math.floor(Math.random() * 5) + 20], score: Math.round(5 * variance) },
-            ]
+        const eventWeights = [0.22, 0.2, 0.18, 0.21, 0.19];
+        const educationEvents = educationDimensions.map((dimension, index) => ({
+            ...dimension,
+            value: Math.max(1, Math.round(totalRecords * eventWeights[index])),
         }));
+        const addScores = [116, 175, 394, 332, 288].map(value => Math.max(1, Math.round(value * dataMultiplier)));
+        const deductScores = [13, 21, 46, 80, 32].map(value => Math.max(0, Math.round(value * dataMultiplier)));
+        const netScores = addScores.map((value, index) => value - deductScores[index]);
+        const unreviewedStudents = students.slice(coveredStudents);
 
         return {
-            totalEntries,
-            positiveEntries,
-            negativeEntries,
-            positiveCoverage,
-            negativeCoverage,
-            coveredStudents: coveredCount,
-            coverageRate,
-            unEvaluatedCount,
-            unEvaluatedNames,
-            dimRankings,
-            chartData: [
-                { label: '诗意', value: Math.round(totalEntries * weights.poetic), color: '#F59E0B' },
-                { label: '安全', value: Math.round(totalEntries * weights.safety), color: '#3B82F6' },
-                { label: '健体', value: Math.round(totalEntries * weights.physical), color: '#10B981' },
-                { label: '文雅', value: Math.round(totalEntries * weights.elegant), color: '#EC4899' },
-                { label: '美净', value: Math.round(totalEntries * weights.clean), color: '#84CC16' },
-            ]
+            totalRecords,
+            positiveRecords,
+            negativeRecords,
+            coveredStudents,
+            previousRecords,
+            previousCovered,
+            dataMultiplier,
+            educationEvents,
+            addScores,
+            deductScores,
+            netScores,
+            unreviewedStudents,
         };
-    }, [scope, timeRange, classInfo.studentCount, customRange.start, customRange.end]);
+    }, [customRange.end, customRange.start, scope, students, timeRange, totalStudents]);
 
-    const timeRangeTabs: { key: TimeRange; label: string }[] = [
-        { key: 'day', label: '今日' },
-        { key: 'week', label: '本周' },
-        { key: 'month', label: '本月' },
-        { key: 'semester', label: '本学期' },
-        { key: 'custom', label: '自定义' },
-    ];
+    const recordDistributionSeries = useMemo<TeacherReportBarSeries[]>(() => {
+        const currentValues = reportData.educationEvents.map(item => item.value);
+        return [
+            { name: '本周期', values: currentValues, color: 'virtue' as const },
+            {
+                name: '上周期',
+                values: currentValues.map(value => Math.max(1, Math.round(value * 0.78))),
+                color: 'virtue' as const,
+                muted: true,
+            },
+            {
+                name: '年级平均',
+                values: currentValues.map(value => Math.max(1, Math.round(value * 0.85))),
+                color: 'peer' as const,
+            },
+        ];
+    }, [reportData]);
+
+    const educationScoreSeries = useMemo<TeacherReportBarSeries[]>(() => [
+        { name: '加分', values: reportData.addScores, color: 'positive' },
+        { name: '扣分', values: reportData.deductScores, color: 'negative' },
+        { name: '净得分', values: reportData.netScores, color: 'total' },
+    ], [reportData]);
+
+    const rankingRows = useMemo(() => {
+        const rows = students.map((student, index) => {
+            const plus = Math.max(6, Math.round((58 - index * 0.8) * Math.max(0.5, reportData.dataMultiplier)));
+            const minus = index % 4 === 0 ? Math.round((index + 3) * Math.max(0.3, reportData.dataMultiplier)) : 0;
+            return {
+                student,
+                plus,
+                minus,
+                net: plus - minus,
+                progress: Math.max(1, 48 - index + (index % 3) * 4),
+            };
+        });
+
+        return rows.sort((a, b) => (
+            rankingMode === 'net' ? b.net - a.net : b.progress - a.progress
+        ));
+    }, [rankingMode, reportData.dataMultiplier, students]);
+
+    const focusRows = useMemo(() => {
+        const dimensionOffset = Math.max(0, educationDimensions.findIndex(item => item.key === activeEducation));
+        const orderedStudents = [...students].sort((a, b) => a.id.localeCompare(b.id));
+        const rotatedStudents = orderedStudents.map((_, index) => orderedStudents[(index + dimensionOffset * 3) % orderedStudents.length]);
+
+        return {
+            positive: rotatedStudents.slice(0, 10).map((student, index) => ({
+                student,
+                score: Math.max(8, Math.round((56 - index * 2) * Math.max(0.5, reportData.dataMultiplier))),
+            })),
+            negative: [...rotatedStudents].reverse().slice(0, 10).map((student, index) => ({
+                student,
+                score: Math.max(1, Math.round((14 - index) * Math.max(0.4, reportData.dataMultiplier))),
+            })),
+        };
+    }, [activeEducation, reportData.dataMultiplier, students]);
+
+    const visibleRankingRows = showAllRanking ? rankingRows.slice(0, 10) : rankingRows.slice(0, 5);
+    const visiblePositiveFocus = showAllFocus ? focusRows.positive : focusRows.positive.slice(0, 5);
+    const visibleNegativeFocus = showAllFocus ? focusRows.negative : focusRows.negative.slice(0, 5);
+    const visibleUnreviewedStudents = showAllUnreviewed
+        ? reportData.unreviewedStudents
+        : reportData.unreviewedStudents.slice(0, 6);
+
+    const reportKey = `${scope}-${timeRange}-${customRange.start}-${customRange.end}`;
 
     return (
-        <div className="pb-10 bg-[#F0F4F8] min-h-screen font-sans">
-            {/* Sticky Header Section */}
-            <div className="bg-white sticky top-0 z-20 shadow-sm">
-                <div className="px-4 py-3 pb-0">
-                    <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <h1 className="text-xl font-bold text-slate-900">{classInfo.name}</h1>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">
-                                {classInfo.studentCount}名学生 · {classInfo.tags.includes('班主任') ? '班主任' : '任课老师'}
-                            </p>
-                        </div>
-                        {/* Scope Toggle Pill */}
-                        <div className="bg-slate-100 p-1 rounded-lg flex text-xs font-bold shrink-0">
-                            <button
-                                onClick={() => setScope('mine')}
-                                className={`px-3 py-1.5 rounded-md transition-all duration-200 ${scope === 'mine' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 '}`}
-                            >
-                                我的记录
-                            </button>
-                            <button
-                                onClick={() => setScope('all')}
-                                className={`px-3 py-1.5 rounded-md transition-all duration-200 ${scope === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 '}`}
-                            >
-                                全班汇总
-                            </button>
-                        </div>
+        <div className="min-h-full bg-transparent pb-8 text-[var(--tm-text-primary)]">
+            <header className="border-b border-white/50 bg-[var(--tm-bg-page-glass)] px-5 pb-3 pt-4 backdrop-blur-xl">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                        <h1 className="truncate text-[var(--tm-font-size-page-title)] font-bold leading-tight">
+                            {classInfo.name}
+                        </h1>
+                        <p className="mt-1 text-[var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">
+                            {totalStudents}名学生
+                        </p>
                     </div>
-
-                    {/* Time Range Tabs */}
-                    <div className="flex border-b border-slate-100 relative">
-                        {timeRangeTabs.map((t) => (
+                    <div className="grid shrink-0 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] p-1">
+                        {([
+                            { key: 'mine' as const, label: '我的记录' },
+                            { key: 'all' as const, label: '全班汇总' },
+                        ]).map(item => (
                             <button
-                                key={t.key}
-                                onClick={() => setTimeRange(t.key)}
-                                className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${timeRange === t.key ? 'text-blue-600 font-bold' : 'text-slate-400 '}`}
+                                key={item.key}
+                                type="button"
+                                aria-pressed={scope === item.key}
+                                onClick={() => setScope(item.key)}
+                                className={`h-11 min-w-[76px] rounded-[8px] px-3 text-[var(--tm-font-size-compact)] font-semibold transition duration-200 ${
+                                    scope === item.key
+                                        ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]'
+                                        : 'text-[var(--tm-brand-primary-strong)]'
+                                }`}
                             >
-                                {t.label}
-                                {timeRange === t.key && (
-                                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full animate-in fade-in duration-200"></div>
-                                )}
+                                {item.label}
                             </button>
                         ))}
                     </div>
-
-                    {/* Custom Range Picker */}
-                    {timeRange === 'custom' && (
-                        <div className="py-3 flex items-center gap-2 animate-in slide-in-from-top-1 duration-200">
-                            <input
-                                type="date"
-                                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                value={customRange.start}
-                                onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
-                            />
-                            <span className="text-slate-400 text-xs">至</span>
-                            <input
-                                type="date"
-                                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                value={customRange.end}
-                                onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
-                            />
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                {/* 1. Detail Metrics Cards */}
-                <div className="grid grid-cols-2 gap-3">
-                    {/* Positive Stats */}
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-32 relative overflow-hidden">
-                        <div className="absolute right-0 top-0 w-12 h-12 bg-emerald-50 rounded-bl-full opacity-40 pointer-events-none"></div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">正面评价</span>
-                            </div>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-extrabold text-slate-800 tracking-tight">{reportData.positiveEntries}</span>
-                                <span className="text-xs text-slate-400 font-bold">次</span>
-                            </div>
-                        </div>
-                        <div className="pt-2 border-t border-slate-50 space-y-0.5">
-                            <div className="text-xs text-slate-400 font-medium">覆盖人数</div>
-                            <div className="text-xs font-bold text-emerald-600">{reportData.positiveCoverage} <span className="text-xs text-slate-300 font-normal">人</span></div>
-                        </div>
-                    </div>
-
-                    {/* Negative Stats */}
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-32 relative overflow-hidden">
-                        <div className="absolute right-0 top-0 w-12 h-12 bg-rose-50 rounded-bl-full opacity-40 pointer-events-none"></div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">改进建议</span>
-                            </div>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-extrabold text-slate-800 tracking-tight">{reportData.negativeEntries}</span>
-                                <span className="text-xs text-slate-400 font-bold">次</span>
-                            </div>
-                        </div>
-                        <div className="pt-2 border-t border-slate-50 space-y-0.5">
-                            <div className="text-xs text-slate-400 font-medium">覆盖人数</div>
-                            <div className="text-xs font-bold text-rose-500">{reportData.negativeCoverage} <span className="text-xs text-slate-300 font-normal">人</span></div>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Coverage Summary */}
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-4 shadow-lg shadow-blue-200 flex items-center justify-between text-white overflow-hidden relative">
-                    <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                    <div className="relative z-10 w-2/3">
-                        <div className="text-xs font-bold opacity-70 mb-1 uppercase tracking-widest">总体学生覆盖率</div>
-                        <div className="flex items-baseline gap-2 mb-2">
-                            <span className="text-3xl font-extrabold">{reportData.coverageRate}</span>
-                            <span className="text-xs font-bold opacity-80">%</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-                            <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${reportData.coverageRate}%` }}></div>
-                        </div>
-                    </div>
-                    <div className="text-right relative z-10">
-                        <div className="text-xs font-bold opacity-70 mb-1">评价总计</div>
-                        <div className="text-xl font-extrabold">{reportData.totalEntries}</div>
-                        <div className="text-xs font-bold bg-white/20 px-1.5 py-0.5 rounded-md mt-1 inline-block">条记录</div>
-                    </div>
+                <div className="flex overflow-x-auto rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] p-1 no-scrollbar">
+                    {timeRangeTabs.map(item => (
+                        <button
+                            key={item.key}
+                            type="button"
+                            aria-pressed={timeRange === item.key}
+                            onClick={() => setTimeRange(item.key)}
+                            className={`h-11 min-w-[64px] flex-1 rounded-[8px] px-2 text-[var(--tm-font-size-meta)] font-semibold transition duration-200 ${
+                                timeRange === item.key
+                                    ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]'
+                                    : 'text-[var(--tm-brand-primary-strong)]'
+                            }`}
+                        >
+                            {item.label}
+                        </button>
+                    ))}
                 </div>
 
-                {/* 2. Unevaluated List */}
-                {reportData.unEvaluatedCount > 0 ? (
-                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 relative overflow-hidden">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                    <AlertCircleIcon className="w-4 h-4 text-orange-500" />
-                                    {scope === 'mine' ? '我的未点评学生清单' : '全班未被关注学生'}
-                                </h3>
-                                <p className="text-xs text-slate-400 mt-1">
-                                    {scope === 'mine' ? '本周期内您还未对以下学生进行评价：' : '本周期内以下学生没有收到任何评价：'}
-                                </p>
-                            </div>
-                            <span className="bg-orange-50 text-orange-600 text-xs font-bold px-2.5 py-1 rounded-lg border border-orange-100">
-                                待评 {reportData.unEvaluatedCount} 人
-                            </span>
-                        </div>
-
-                        <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100/50">
-                            <div className="flex flex-wrap gap-2">
-                                {reportData.unEvaluatedNames.map((name, idx) => (
-                                    <div
-                                        key={idx}
-                                        onClick={() => handleStudentClick(name)}
-                                        className="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm   transition-colors cursor-pointer select-none active:bg-blue-50"
-                                    >
-                                        {name}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="mt-3 flex justify-end">
-                            <button
-                                onClick={onGoToClassDetail}
-                                className="text-xs font-bold text-blue-600 flex items-center gap-1 active:opacity-70"
-                            >
-                                去点评 <span className="text-xs">-&gt;</span>
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 flex flex-col items-center justify-center text-center gap-2">
-                        <CheckCircleIcon className="w-8 h-8 text-emerald-500" />
-                        <h3 className="font-bold text-emerald-800">完美覆盖！</h3>
-                        <p className="text-xs text-emerald-600 opacity-80">
-                            {scope === 'mine' ? '您' : '所有老师'}已经关注到了每一位同学。
-                        </p>
+                {timeRange === 'custom' && (
+                    <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                        <input
+                            type="date"
+                            aria-label="开始日期"
+                            value={customRange.start}
+                            onChange={event => setCustomRange(current => ({ ...current, start: event.target.value }))}
+                            className="h-11 min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-2 text-[var(--tm-font-size-meta)] text-[var(--tm-text-primary)] outline-none focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                        />
+                        <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">至</span>
+                        <input
+                            type="date"
+                            aria-label="结束日期"
+                            value={customRange.end}
+                            onChange={event => setCustomRange(current => ({ ...current, end: event.target.value }))}
+                            className="h-11 min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-2 text-[var(--tm-font-size-meta)] text-[var(--tm-text-primary)] outline-none focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                        />
                     </div>
                 )}
+            </header>
 
-                {/* 3. Five Education Distribution */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-sm font-bold text-slate-800 border-l-4 border-blue-500 pl-3">班级评价指标分布</h3>
-                        <button className="text-slate-400"><HelpIcon className="w-4 h-4" /></button>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <div className="flex-1 flex justify-center">
-                            <DonutChart data={reportData.chartData} />
+            <div className="space-y-6 px-5 pt-5">
+                <section aria-labelledby="class-report-overview-title">
+                    <SectionTitle><span id="class-report-overview-title">概况</span></SectionTitle>
+                    <div className={`${cardClass} grid grid-cols-2 p-4`}>
+                        <div className="border-r border-[var(--tm-border-subtle)] pr-4">
+                            <div className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">评价记录</div>
+                            <div className="mt-2 flex items-baseline gap-1">
+                                <strong className="text-[var(--tm-font-size-metric)] leading-none">{reportData.totalRecords}</strong>
+                                <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">条</span>
+                            </div>
+                            <div className="mt-2 text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">
+                                上周期 {reportData.previousRecords}条
+                            </div>
                         </div>
-                        <div className="w-[45%] pl-2 space-y-2.5">
-                            {reportData.chartData.map((item, idx) => (
-                                <div key={idx} className="flex items-center justify-between text-xs">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                        <span className="text-slate-600">{item.label}</span>
-                                    </div>
-                                    <span className="font-bold text-slate-800">{Math.round((item.value / (reportData.totalEntries || 1)) * 100)}%</span>
-                                </div>
-                            ))}
+                        <div className="pl-4">
+                            <div className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">覆盖学生</div>
+                            <div className="mt-2 flex items-baseline gap-1">
+                                <strong className="text-[var(--tm-font-size-metric)] leading-none">{reportData.coveredStudents}</strong>
+                                <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">人</span>
+                            </div>
+                            <div className="mt-2 text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">
+                                上周期 {reportData.previousCovered}人
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                {/* 4. Dimension Rankings */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-sm font-bold text-slate-800 border-l-4 border-blue-500 pl-3">维度表现排行</h3>
-                        <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-[200px]">
-                            {['诗意', '安全', '健体', '文雅', '美净'].map(d => (
+                <section aria-labelledby="record-distribution-title">
+                    <SectionTitle><span id="record-distribution-title">评价记录分布</span></SectionTitle>
+                    <div className={`${cardClass} px-3 pb-2 pt-4`}>
+                        <TeacherReportBarChart
+                            ariaLabel="德智体美劳五类评价记录在本周期、上周期和年级平均的对比"
+                            categories={educationDimensions.map(item => item.label)}
+                            categoryColors={educationDimensions.map(item => item.color)}
+                            series={recordDistributionSeries}
+                            optionKey={`records-${reportKey}`}
+                            className="h-56"
+                        />
+                    </div>
+                </section>
+
+                <section aria-labelledby="education-score-title">
+                    <SectionTitle><span id="education-score-title">五育得分分布</span></SectionTitle>
+                    <div className={`${cardClass} px-3 pb-2 pt-4`}>
+                        <TeacherReportBarChart
+                            ariaLabel="德育、智育、体育、美育、劳育的加分、扣分与净得分对比"
+                            categories={educationDimensions.map(item => item.label)}
+                            series={educationScoreSeries}
+                            optionKey={`scores-${reportKey}`}
+                            className="h-64"
+                        />
+                    </div>
+                </section>
+
+                <section aria-labelledby="education-event-title">
+                    <SectionTitle><span id="education-event-title">五育事件分布</span></SectionTitle>
+                    <div className={`${cardClass} px-3 pb-3 pt-2`}>
+                        <TeacherReportDonutChart
+                            ariaLabel="德育、智育、体育、美育、劳育的评价事件占比"
+                            data={reportData.educationEvents.map(item => ({
+                                name: item.label,
+                                value: item.value,
+                                color: item.color,
+                            }))}
+                            optionKey={`events-${reportKey}`}
+                            className="h-64"
+                        />
+                    </div>
+                </section>
+
+                <section aria-labelledby="ranking-title">
+                    <SectionTitle><span id="ranking-title">排行榜</span></SectionTitle>
+                    <div className={`${cardClass} overflow-hidden p-3`}>
+                        <div className="mb-2 grid grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] p-1">
+                            {([
+                                { key: 'net' as const, label: '净得分排行' },
+                                { key: 'progress' as const, label: '进步排行' },
+                            ]).map(item => (
                                 <button
-                                    key={d}
-                                    onClick={() => setActiveRankDim(d)}
-                                    className={`px-2 py-1 rounded text-xs font-bold whitespace-nowrap transition-all ${activeRankDim === d ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}
+                                    key={item.key}
+                                    type="button"
+                                    aria-pressed={rankingMode === item.key}
+                                    onClick={() => setRankingMode(item.key)}
+                                    className={`h-11 rounded-[8px] text-[var(--tm-font-size-compact)] font-semibold transition duration-200 ${
+                                        rankingMode === item.key
+                                            ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]'
+                                            : 'text-[var(--tm-brand-primary-strong)]'
+                                    }`}
                                 >
-                                    {d}
+                                    {item.label}
                                 </button>
                             ))}
                         </div>
+                        <ol>
+                            {visibleRankingRows.map((row, index) => (
+                                <li key={row.student.id} className="border-b border-[var(--tm-border-subtle)] last:border-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => onSelectStudent(row.student)}
+                                        className="grid min-h-11 w-full grid-cols-[28px_1fr_auto] items-center gap-2 rounded-[8px] px-2 text-left transition active:bg-[var(--tm-bg-surface-soft)]"
+                                    >
+                                        <span className="text-center text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{index + 1}</span>
+                                        <span className="truncate text-[var(--tm-font-size-body)] font-medium">{row.student.name}</span>
+                                        <span className={`text-[var(--tm-font-size-body)] font-semibold ${rankingMode === 'net' ? 'text-[var(--tm-status-positive-strong)]' : 'text-[var(--tm-brand-secondary-strong)]'}`}>
+                                            {rankingMode === 'net' ? `${row.net >= 0 ? '+' : ''}${row.net}` : `+${row.progress}`}
+                                        </span>
+                                    </button>
+                                </li>
+                            ))}
+                        </ol>
+                        {rankingRows.length > 5 && (
+                            <button
+                                type="button"
+                                onClick={() => setShowAllRanking(value => !value)}
+                                className="mt-2 flex min-h-11 w-full items-center justify-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)]"
+                            >
+                                {showAllRanking ? '收起排行' : '查看前10名'}
+                                {showAllRanking ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </button>
+                        )}
                     </div>
+                </section>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Positive Ranking */}
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-1.5 mb-2">
-                                <div className="w-1 h-3 bg-emerald-400 rounded-full"></div>
-                                <span className="text-[11px] font-bold text-slate-500">加分榜</span>
-                            </div>
-                            {reportData.dimRankings.find(dr => dr.dim === activeRankDim)?.pos.map((stu, i) => (
-                                <div
-                                    key={i}
-                                    onClick={() => handleStudentClick(stu.name)}
-                                    className="flex flex-col p-2 bg-emerald-50/50 rounded-lg border border-emerald-100/50 cursor-pointer /50 transition-colors active:scale-95 transition-all"
+                <section aria-labelledby="focus-students-title">
+                    <SectionTitle><span id="focus-students-title">重点关注对象</span></SectionTitle>
+                    <div className={`${cardClass} p-3`}>
+                        <div className="mb-3 flex gap-1 overflow-x-auto rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] p-1 no-scrollbar">
+                            {[{ key: 'all' as const, label: '全部' }, ...educationDimensions].map(item => (
+                                <button
+                                    key={item.key}
+                                    type="button"
+                                    aria-pressed={activeEducation === item.key}
+                                    onClick={() => setActiveEducation(item.key)}
+                                    className={`h-11 min-w-[56px] rounded-[8px] px-3 text-[var(--tm-font-size-compact)] font-semibold transition duration-200 ${
+                                        activeEducation === item.key
+                                            ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]'
+                                            : 'text-[var(--tm-brand-primary-strong)]'
+                                    }`}
                                 >
-                                    <span className="text-xs font-bold text-slate-700">{stu.name}</span>
-                                    <span className="text-xs font-bold text-emerald-600">+{stu.score}分</span>
-                                </div>
+                                    {item.label}
+                                </button>
                             ))}
                         </div>
 
-                        {/* Negative Ranking */}
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-1.5 mb-2">
-                                <div className="w-1 h-3 bg-rose-400 rounded-full"></div>
-                                <span className="text-[11px] font-bold text-slate-500">减分榜</span>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <div className="mb-1 text-center text-[var(--tm-font-size-meta)] font-semibold text-[var(--tm-status-positive-strong)]">加分 Top 10</div>
+                                <ol>
+                                    {visiblePositiveFocus.map((row, index) => (
+                                        <li key={row.student.id}>
+                                            <button
+                                                type="button"
+                                                onClick={() => onSelectStudent(row.student)}
+                                                className="grid min-h-11 w-full grid-cols-[20px_1fr_auto] items-center gap-1 rounded-[8px] px-1 text-left transition active:bg-[var(--tm-status-positive-soft)]"
+                                            >
+                                                <span className="text-center text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{index + 1}</span>
+                                                <span className="truncate text-[var(--tm-font-size-compact)]">{row.student.name}</span>
+                                                <span className="text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-positive-strong)]">+{row.score}</span>
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ol>
                             </div>
-                            {reportData.dimRankings.find(dr => dr.dim === activeRankDim)?.neg.map((stu, i) => (
-                                <div
-                                    key={i}
-                                    onClick={() => handleStudentClick(stu.name)}
-                                    className="flex flex-col p-2 bg-rose-50/50 rounded-lg border border-rose-100/50 cursor-pointer /50 transition-colors active:scale-95 transition-all"
-                                >
-                                    <span className="text-xs font-bold text-slate-700">{stu.name}</span>
-                                    <span className="text-xs font-bold text-rose-500">-{stu.score}分</span>
-                                </div>
-                            ))}
+                            <div>
+                                <div className="mb-1 text-center text-[var(--tm-font-size-meta)] font-semibold text-[var(--tm-status-negative-strong)]">扣分 Top 10</div>
+                                <ol>
+                                    {visibleNegativeFocus.map((row, index) => (
+                                        <li key={row.student.id}>
+                                            <button
+                                                type="button"
+                                                onClick={() => onSelectStudent(row.student)}
+                                                className="grid min-h-11 w-full grid-cols-[20px_1fr_auto] items-center gap-1 rounded-[8px] px-1 text-left transition active:bg-[var(--tm-status-negative-soft)]"
+                                            >
+                                                <span className="text-center text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{index + 1}</span>
+                                                <span className="truncate text-[var(--tm-font-size-compact)]">{row.student.name}</span>
+                                                <span className="text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative-strong)]">-{row.score}</span>
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
                         </div>
+
+                        {focusRows.positive.length > 5 && (
+                            <button
+                                type="button"
+                                onClick={() => setShowAllFocus(value => !value)}
+                                className="mt-2 flex min-h-11 w-full items-center justify-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]"
+                            >
+                                {showAllFocus ? '收起名单' : '查看完整 Top 10'}
+                                {showAllFocus ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </button>
+                        )}
                     </div>
-                </div>
+                </section>
+
+                <section aria-labelledby="unreviewed-title">
+                    <SectionTitle><span id="unreviewed-title">未点评学生清单</span></SectionTitle>
+                    <div className={`${cardClass} p-4`}>
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <span className="text-[var(--tm-font-size-body)] font-medium">学生覆盖进度</span>
+                            <span className="rounded-full bg-[var(--tm-status-positive-soft)] px-3 py-1.5 text-[var(--tm-font-size-meta)] font-semibold text-[var(--tm-status-positive-strong)]">
+                                已点评 {reportData.coveredStudents}/{totalStudents}
+                            </span>
+                        </div>
+
+                        {reportData.unreviewedStudents.length === 0 ? (
+                            <div className="flex min-h-36 flex-col items-center justify-center text-center">
+                                <CheckCircle2 className="mb-3 h-8 w-8 text-[var(--tm-status-positive)]" />
+                                <strong className="text-[var(--tm-font-size-card-title)] text-[var(--tm-status-positive-strong)]">全班学生均已点评</strong>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {visibleUnreviewedStudents.map(student => (
+                                        <button
+                                            key={student.id}
+                                            type="button"
+                                            onClick={() => onSelectStudent(student)}
+                                            className="min-h-11 truncate rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 text-left text-[var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] transition active:bg-[var(--tm-brand-primary-soft)]"
+                                        >
+                                            {student.name}
+                                        </button>
+                                    ))}
+                                </div>
+                                {reportData.unreviewedStudents.length > 6 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAllUnreviewed(value => !value)}
+                                        className="mt-2 flex min-h-11 w-full items-center justify-center gap-1 rounded-[var(--tm-radius-control)] text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)]"
+                                    >
+                                        {showAllUnreviewed ? '收起名单' : `查看剩余${reportData.unreviewedStudents.length - 6}人`}
+                                        {showAllUnreviewed ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={onGoToClassDetail}
+                                    className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[var(--tm-font-size-body)] font-semibold text-white transition active:bg-[var(--tm-brand-primary-pressed)]"
+                                >
+                                    去点评
+                                    <ArrowRight className="h-4 w-4" />
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </section>
             </div>
         </div>
     );

@@ -1,17 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BookOpen,
   Building2,
   CalendarDays,
   ChevronLeft,
   CircleAlert,
+  History,
   LayoutGrid,
   ListChecks,
   Sparkles,
   TrendingUp,
 } from 'lucide-react';
 import type { SchoolTermConfig } from '../domain/principalTermReport';
-import { PRINCIPAL_TERM_REPORT_SAMPLE } from '../data/principalTermReport';
+import {
+  PRINCIPAL_TERM_REPORT_SAMPLE,
+  type PrincipalTermReportContent,
+} from '../data/principalTermReport';
 
 interface PrincipalTermReportViewProps {
   schoolName: string;
@@ -19,6 +23,8 @@ interface PrincipalTermReportViewProps {
   generated: boolean;
   onBack: () => void;
   onGenerated: () => void;
+  onOpenHistory?: () => void;
+  reportData?: PrincipalTermReportContent;
 }
 
 const ANALYSIS_STEPS = [
@@ -38,13 +44,12 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
   generated,
   onBack,
   onGenerated,
+  onOpenHistory,
+  reportData,
 }) => {
+  const report = reportData ?? PRINCIPAL_TERM_REPORT_SAMPLE;
   const [loading, setLoading] = useState(!generated);
   const [visibleStepCount, setVisibleStepCount] = useState(generated ? ANALYSIS_STEPS.length : 1);
-  const generatedDate = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
-  }, []);
 
   useEffect(() => {
     if (generated) {
@@ -74,7 +79,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
 
   return (
     <div className="min-h-full bg-[var(--tm-bg-page)] text-[var(--tm-text-primary)]">
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-[var(--tm-bg-page-glass)] px-4 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 flex h-14 items-center bg-[var(--tm-bg-page-glass)] px-4 backdrop-blur-xl">
         <button
           type="button"
           onClick={onBack}
@@ -83,8 +88,20 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
         >
           <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
         </button>
-        <span className="text-[17px] font-semibold">学期学校报告</span>
-        <span className="h-11 w-11" aria-hidden="true" />
+        <span className="pointer-events-none absolute inset-x-14 text-center text-[17px] font-semibold">学期学校报告</span>
+        {onOpenHistory && !loading ? (
+          <button
+            type="button"
+            onClick={onOpenHistory}
+            className="ml-auto flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] transition active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
+            aria-label="查看往期学期报告"
+            title="查看往期学期报告"
+          >
+            <History className="h-5 w-5" strokeWidth={2.2} />
+          </button>
+        ) : (
+          <span className="ml-auto h-11 w-11" aria-hidden="true" />
+        )}
       </header>
 
       {loading ? (
@@ -127,7 +144,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
           <section className="border-b border-[var(--tm-border-subtle)] px-5 py-6">
             <h2 className="text-[17px] font-semibold">学期核心数据</h2>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              {PRINCIPAL_TERM_REPORT_SAMPLE.metrics.map(metric => (
+              {report.metrics.map(metric => (
                 <div key={metric.label} className="min-h-[104px] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-3.5 [box-shadow:var(--tm-shadow-card)]">
                   <p className="text-[12px] text-[var(--tm-text-secondary)]">{metric.label}</p>
                   <p className="mt-2 text-[24px] font-bold tabular-nums text-[var(--tm-text-primary)]">{metric.value}</p>
@@ -142,7 +159,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
               <Sparkles className="h-5 w-5 text-[var(--tm-brand-primary)]" strokeWidth={2} />
               <h2 className="text-[17px] font-semibold">总体判断</h2>
             </div>
-            <p className="mt-3 text-[14px] leading-7 text-[var(--tm-text-secondary)]">{PRINCIPAL_TERM_REPORT_SAMPLE.conclusion}</p>
+            <p className="mt-3 text-[14px] leading-7 text-[var(--tm-text-secondary)]">{report.conclusion}</p>
           </section>
 
           <section className="border-b border-[var(--tm-border-subtle)] px-5 py-6">
@@ -151,7 +168,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
               <h2 className="text-[17px] font-semibold">班级与教师使用情况</h2>
             </div>
             <div className="mt-4 space-y-5">
-              {PRINCIPAL_TERM_REPORT_SAMPLE.usage.map((item, index) => (
+              {report.usage.map((item, index) => (
                 <article key={item.title} className="border-l-2 border-[var(--tm-role-principal-soft-strong)] pl-3.5">
                   <h3 className="text-[15px] font-semibold">{index + 1}. {item.title}</h3>
                   <p className="mt-2 text-[14px] leading-6 text-[var(--tm-text-secondary)]">{item.detail}</p>
@@ -167,7 +184,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
               <h2 className="text-[17px] font-semibold">优秀成果与亮点</h2>
             </div>
             <div className="mt-4 space-y-5">
-              {PRINCIPAL_TERM_REPORT_SAMPLE.highlights.map((item, index) => (
+              {report.highlights.map((item, index) => (
                 <article key={item.title} className="border-l-2 border-[var(--tm-status-positive)] pl-3.5">
                   <h3 className="text-[15px] font-semibold">{index + 1}. {item.title}</h3>
                   <p className="mt-2 text-[14px] leading-6 text-[var(--tm-text-secondary)]">{item.detail}</p>
@@ -183,7 +200,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
               <h2 className="text-[17px] font-semibold">代表性实践</h2>
             </div>
             <div className="mt-4 divide-y divide-[var(--tm-border-subtle)]">
-              {PRINCIPAL_TERM_REPORT_SAMPLE.practices.map((item, index) => (
+              {report.practices.map((item, index) => (
                 <article key={item.title} className="py-5 first:pt-0 last:pb-0">
                   <p className="text-[11px] font-medium text-[var(--tm-role-principal-accent-strong)]">案例 {index + 1} · {item.context}</p>
                   <h3 className="mt-1.5 text-[15px] font-semibold">{item.title}</h3>
@@ -201,7 +218,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
               <h2 className="text-[17px] font-semibold">五育与指标体系观察</h2>
             </div>
             <div className="mt-4 space-y-5">
-              {PRINCIPAL_TERM_REPORT_SAMPLE.indicatorInsights.map((item, index) => (
+              {report.indicatorInsights.map((item, index) => (
                 <article key={item.title} className="border-l-2 border-[var(--tm-brand-secondary)] pl-3.5">
                   <h3 className="text-[15px] font-semibold">{index + 1}. {item.title}</h3>
                   <p className="mt-2 text-[14px] leading-6 text-[var(--tm-text-secondary)]">{item.detail}</p>
@@ -217,7 +234,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
               <h2 className="text-[17px] font-semibold">需要关注的问题</h2>
             </div>
             <div className="mt-4 space-y-5">
-              {PRINCIPAL_TERM_REPORT_SAMPLE.concerns.map((item, index) => (
+              {report.concerns.map((item, index) => (
                 <article key={item.title} className="border-l-2 border-[var(--tm-status-negative)] pl-3.5">
                   <h3 className="text-[15px] font-semibold">{index + 1}. {item.title}</h3>
                   <p className="mt-2 text-[14px] leading-6 text-[var(--tm-text-secondary)]">{item.detail}</p>
@@ -233,7 +250,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
               <h2 className="text-[17px] font-semibold">下学期深化建议</h2>
             </div>
             <ol className="mt-4 space-y-5">
-              {PRINCIPAL_TERM_REPORT_SAMPLE.actions.map((item, index) => (
+              {report.actions.map((item, index) => (
                 <li key={item.title} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--tm-brand-secondary-soft)] text-[12px] font-bold text-[var(--tm-brand-secondary-strong)]">{index + 1}</span>
                   <div>
@@ -247,7 +264,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
           </section>
 
           <footer className="mx-5 border-t border-[var(--tm-border-subtle)] py-5 text-[12px] leading-5 text-[var(--tm-text-tertiary)]">
-            本报告由AI基于本学期学校评价数据生成，仅供学校管理与工作复盘参考。生成日期：{generatedDate}
+            本报告由AI基于本学期学校评价数据生成，仅供学校管理与工作复盘参考。生成日期：{report.generatedDate}
           </footer>
         </main>
       )}

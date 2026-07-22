@@ -18,7 +18,6 @@ import {
   Inbox,
   ListChecks,
   MessageSquareText,
-  Minus,
   MoreHorizontal,
   Plus,
   RotateCcw,
@@ -30,10 +29,11 @@ import {
   Trash2,
   UserRoundCheck,
   UsersRound,
-  X,
 } from 'lucide-react';
 import type { ClassInfo, Student } from '../../types';
+import FormBuilder, { type FormFieldTypeOption } from '../../components/form-builder/FormBuilder';
 import AssignedQuestionnaireView from '../../../components/parent-app/AssignedQuestionnaireView';
+import type { ConfigurableFormField, FormLayoutMode, FormSection } from '../../../shared/formDefinition';
 import {
   QUESTIONNAIRE_STORE_EVENT,
   createQuestionId,
@@ -101,6 +101,22 @@ const questionTypeMeta: Record<QuestionnaireQuestionType, { label: string; icon:
   date: { label: '日期', icon: CalendarDays },
 };
 
+const questionnaireFieldTypes: Array<FormFieldTypeOption<QuestionnaireQuestionType>> = [
+  { value: 'single', label: '单选题', icon: CircleDot, choice: true },
+  { value: 'multiple', label: '多选题', icon: ListChecks, choice: true },
+  { value: 'rating', label: '量表题', icon: Star, rating: true },
+  { value: 'text', label: '简答题', icon: MessageSquareText },
+];
+
+const collectionFieldTypes: Array<FormFieldTypeOption<QuestionnaireQuestionType>> = [
+  { value: 'short_text', label: '单行文本', icon: TextCursorInput },
+  { value: 'single', label: '单选', icon: CircleDot, choice: true },
+  { value: 'date', label: '日期', icon: CalendarDays },
+  { value: 'text', label: '多行文本', icon: AlignLeft, primary: false },
+  { value: 'number', label: '数字', icon: Hash, primary: false },
+  { value: 'multiple', label: '多选', icon: ListChecks, choice: true, primary: false },
+];
+
 const collectionModeMeta: Record<QuestionnaireCollectionMode, {
   label: string;
   shortLabel: string;
@@ -135,8 +151,6 @@ const collectionModeMeta: Record<QuestionnaireCollectionMode, {
   },
 };
 
-const MIN_RATING_LEVELS = 2;
-const MAX_RATING_LEVELS = 10;
 const createRatingOptions = (count: number) => Array.from({ length: count }, (_, index) => String(index + 1));
 
 const formatSuggestedDeadline = (deadline: string) => deadline.replace('2026-', '').replace('-', '月').replace(' ', '日 ');
@@ -203,7 +217,7 @@ const PageHeader: React.FC<{
 }> = ({ title, onBack, action, wideAction = false }) => {
   const actionClassName = action ? '-mr-2 h-11 w-11' : 'h-11 w-11';
   return (
-  <header className="sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 backdrop-blur-md">
+  <header className="sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-white/38 px-4 backdrop-blur-md">
     <button
       type="button"
       aria-label="返回"
@@ -289,13 +303,14 @@ const StepIndicator: React.FC<{ current: number; mode: QuestionnaireCollectionMo
   </div>
 );
 
-const emptyQuestion = (type: QuestionnaireQuestionType): QuestionnaireQuestion => ({
+const emptyQuestion = (type: QuestionnaireQuestionType, sectionId?: string): QuestionnaireQuestion => ({
   id: createQuestionId(),
   type,
   title: '',
   required: true,
   options: type === 'single' || type === 'multiple' ? ['选项1', '选项2'] : type === 'rating' ? createRatingOptions(5) : [],
   customAnswerOptions: [],
+  sectionId,
 });
 
 const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = ({
@@ -326,20 +341,17 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [draftId, setDraftId] = useState('');
   const [draftTitle, setDraftTitle] = useState('');
   const [draftDescription, setDraftDescription] = useState('');
+  const [draftLayoutMode, setDraftLayoutMode] = useState<FormLayoutMode>('flat');
+  const [draftSections, setDraftSections] = useState<FormSection[]>([]);
   const [draftQuestions, setDraftQuestions] = useState<QuestionnaireQuestion[]>([]);
-  const [expandedQuestionId, setExpandedQuestionId] = useState('');
-  const [pendingQuestionFocusId, setPendingQuestionFocusId] = useState('');
   const [targetMode, setTargetMode] = useState<QuestionnaireTargetMode>('all');
   const [selectedClassIds, setSelectedClassIds] = useState<Set<string>>(new Set());
   const [selectedStudentNos, setSelectedStudentNos] = useState<Set<string>>(new Set());
   const [activeClassId, setActiveClassId] = useState(classes[0]?.id ?? '');
   const [hasSuggestedDeadline, setHasSuggestedDeadline] = useState(false);
   const [suggestedDeadline, setSuggestedDeadline] = useState('');
-  const [showQuestionTypeSheet, setShowQuestionTypeSheet] = useState(false);
   const [showCreateTypeSheet, setShowCreateTypeSheet] = useState(false);
   const [showAssignmentSheet, setShowAssignmentSheet] = useState(false);
-  const [showMoreFieldTypes, setShowMoreFieldTypes] = useState(false);
-  const [customOptionQuestionId, setCustomOptionQuestionId] = useState('');
   const [showRecordMenu, setShowRecordMenu] = useState(false);
   const [showDraftMenu, setShowDraftMenu] = useState(false);
   const [showDeleteDraftConfirm, setShowDeleteDraftConfirm] = useState(false);
@@ -348,6 +360,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [activeStudentNo, setActiveStudentNo] = useState('');
   const [studentRecordAnswers, setStudentRecordAnswers] = useState<Record<string, QuestionnaireAnswer>>({});
   const [toast, setToast] = useState('');
+  const [stepOneValidationAttempt, setStepOneValidationAttempt] = useState(0);
 
   useEffect(() => {
     const refresh = () => setRecords(readQuestionnaires());
@@ -364,15 +377,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const timer = window.setTimeout(() => setToast(''), 1800);
     return () => window.clearTimeout(timer);
   }, [toast]);
-
-  useEffect(() => {
-    if (!pendingQuestionFocusId || pageMode !== 'create') return;
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById(`question-${pendingQuestionFocusId}`)?.focus();
-      setPendingQuestionFocusId('');
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [pageMode, pendingQuestionFocusId]);
 
   const availableClasses = useMemo(() => classes, [classes]);
   const activeClassStudents = useMemo(() => (
@@ -391,10 +395,29 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const filteredRecords = ownedRecords.filter(record => record.status === listFilter);
   const archivedRecords = ownedRecords.filter(record => record.status === 'archived');
   const assignedRecords = getPendingAssignedStudentCollections(records, teacherId, teacherName, spaceId);
-  const validStepOne = Boolean(draftTitle.trim()) && draftQuestions.length > 0 && draftQuestions.every(question => (
-    Boolean(question.title.trim())
-    && (['text', 'short_text', 'number', 'date'].includes(question.type) || question.options.filter(Boolean).length >= 2)
-  ));
+  const validStructure = draftLayoutMode === 'flat' || (
+    draftSections.length > 0
+    && draftQuestions.every(question => Boolean(question.sectionId) && draftSections.some(section => section.id === question.sectionId))
+  );
+  const stepOneFieldErrors = useMemo(() => Object.fromEntries(draftQuestions.flatMap(question => {
+    const error: { label?: string; options?: string } = {};
+    if (!question.title.trim()) error.label = `请输入${collectionMode === 'student_information' ? '字段' : '题目'}名称`;
+    if (!['text', 'short_text', 'number', 'date'].includes(question.type) && question.options.filter(option => option.trim()).length < 2) {
+      error.options = '请至少填写2个选项';
+    }
+    return error.label || error.options ? [[question.id, error] as const] : [];
+  })), [collectionMode, draftQuestions]);
+  const stepOneTitleError = !draftTitle.trim()
+    ? `请输入${collectionMode === 'student_information' ? '采集名称' : '问卷标题'}`
+    : '';
+  const stepOneListError = draftLayoutMode === 'grouped' && draftSections.length === 0
+    ? '请先添加分组'
+    : draftQuestions.length === 0
+      ? `请至少添加1个${collectionMode === 'student_information' ? '字段' : '题目'}`
+      : !validStructure
+        ? `请为所有${collectionMode === 'student_information' ? '字段' : '题目'}选择分组`
+        : '';
+  const validStepOne = !stepOneTitleError && !stepOneListError && Object.keys(stepOneFieldErrors).length === 0;
 
   const showToast = (message: string) => setToast(message);
 
@@ -426,9 +449,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setDraftId(record?.id ?? '');
     setDraftTitle(record?.title ?? '');
     setDraftDescription(record?.description ?? '');
+    setDraftLayoutMode(record?.layoutMode ?? 'flat');
+    setDraftSections((record?.sections ?? []).map(section => ({ ...section })));
     const nextQuestions = record?.questions.length ? record.questions : [];
     setDraftQuestions(nextQuestions);
-    setExpandedQuestionId(nextQuestions[0]?.id ?? '');
     setTargetMode(record?.targetMode ?? 'all');
     setSelectedClassIds(new Set(record?.targetClassIds ?? record?.targets.map(target => target.classId) ?? []));
     setSelectedStudentNos(new Set(record?.targets.map(target => target.studentNo) ?? []));
@@ -436,8 +460,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setSuggestedDeadline((record?.suggestedDeadline ?? '').replace(' ', 'T'));
     setActiveClassId(record?.targets[0]?.classId ?? availableClasses[0]?.id ?? '');
     setCreateStep(1);
+    setStepOneValidationAttempt(0);
     setShowCreateTypeSheet(false);
-    setShowMoreFieldTypes(false);
     setPageMode('create');
   };
 
@@ -457,6 +481,22 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       reachable: collectionMode === 'student_information'
         || Boolean(student.guardianContacts?.length) && !student.studentNo?.endsWith('07'),
     }));
+
+  const advanceCreateStep = () => {
+    if (createStep === 1) {
+      setStepOneValidationAttempt(attempt => attempt + 1);
+      if (!validStepOne) {
+        window.requestAnimationFrame(() => {
+          const target = document.getElementById(stepOneTitleError ? 'survey-title' : stepOneListError ? 'form-builder-list-error' : '');
+          target?.focus({ preventScroll: true });
+          target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+        return;
+      }
+      setStepOneValidationAttempt(0);
+    }
+    setCreateStep(step => Math.min(3, step + 1));
+  };
 
   const getHomeroomAssignee = (classId: string) => {
     if (homeroomClassIds.includes(classId)) return { id: teacherId, name: teacherName };
@@ -507,6 +547,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       studentAssignmentMode: collectionMode === 'student_information' ? studentAssignmentMode : undefined,
       targetMode,
       targetClassIds: targetMode === 'classes' ? Array.from(selectedClassIds) : [],
+      layoutMode: draftLayoutMode,
+      sections: draftSections,
       questions: draftQuestions,
       targets,
       submissions: existing?.submissions ?? [],
@@ -536,6 +578,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       studentAssignmentMode: collectionMode === 'student_information' ? studentAssignmentMode : undefined,
       targetMode,
       targetClassIds: targetMode === 'classes' ? Array.from(selectedClassIds) : [],
+      layoutMode: draftLayoutMode,
+      sections: draftSections,
       questions: draftQuestions,
       targets,
       submissions: existing?.submissions ?? [],
@@ -547,40 +591,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setDetailTab('data');
     setPageMode('detail');
     showToast(collectionMode === 'student_information' ? '已开始采集' : '问卷已发布到家长端');
-  };
-
-  const updateQuestion = (id: string, patch: Partial<QuestionnaireQuestion>) => {
-    setDraftQuestions(items => items.map(item => item.id === id ? { ...item, ...patch } : item));
-  };
-
-  const addQuestion = (type: QuestionnaireQuestionType) => {
-    const question = emptyQuestion(type);
-    setDraftQuestions(items => [...items, question]);
-    setExpandedQuestionId(question.id);
-    setPendingQuestionFocusId(question.id);
-    setShowQuestionTypeSheet(false);
-  };
-
-  const updateRatingLevelCount = (question: QuestionnaireQuestion, nextCount: number) => {
-    const count = Math.max(MIN_RATING_LEVELS, Math.min(MAX_RATING_LEVELS, nextCount));
-    updateQuestion(question.id, { options: createRatingOptions(count) });
-  };
-
-  const addCustomAnswerOption = () => {
-    const question = draftQuestions.find(item => item.id === customOptionQuestionId);
-    if (!question) return;
-    let optionLabel = '其他';
-    let suffix = 2;
-    while (question.options.includes(optionLabel)) {
-      optionLabel = `其他${suffix}`;
-      suffix += 1;
-    }
-    updateQuestion(question.id, {
-      options: [...question.options, optionLabel],
-      customAnswerOptions: [...(question.customAnswerOptions ?? []), optionLabel],
-    });
-    setExpandedQuestionId(question.id);
-    setCustomOptionQuestionId('');
   };
 
   const toggleClass = (classId: string) => {
@@ -742,7 +752,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
   const renderList = () => {
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24">
         <PageHeader
           title="问卷采集"
           onBack={onBack}
@@ -852,7 +862,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   };
 
   const renderAssignedList = () => (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-8">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
       <PageHeader title="待我填写" onBack={initialMode === 'assigned' ? onBack : () => setPageMode('list')} />
       <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 pt-4 no-scrollbar">
         <section className="space-y-2.5">
@@ -891,7 +901,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   );
 
   const renderArchivedList = () => (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-8">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
       <PageHeader title="已归档" onBack={() => { setListFilter('ended'); setPageMode('list'); }} />
       <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 pt-4 no-scrollbar">
         <section className="space-y-2.5">
@@ -937,119 +947,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     </div>
   );
 
-  const renderQuestionEditor = (question: QuestionnaireQuestion, index: number) => {
-    const expanded = expandedQuestionId === question.id;
-    const meta = questionTypeMeta[question.type];
-    const typeLabel = collectionMode === 'student_information'
-      ? question.type === 'text' ? '多行文本' : question.type === 'single' ? '单选' : question.type === 'multiple' ? '多选' : meta.label
-      : meta.label;
-    const TypeIcon = meta.icon;
-    return (
-      <article key={question.id} className={`overflow-hidden rounded-[var(--tm-radius-card)] border bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)] transition-colors ${expanded ? 'border-[var(--tm-brand-primary-soft-strong)]' : 'border-[var(--tm-border-subtle)]'}`}>
-        <button type="button" onClick={() => setExpandedQuestionId(expanded ? '' : question.id)} className={`flex min-h-[64px] w-full items-center gap-3 px-4 text-left transition-colors active:bg-[var(--tm-brand-primary-soft)] ${expanded ? 'bg-[var(--tm-brand-primary-soft)]' : ''}`}>
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{index + 1}</span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{question.title || '请输入题目'}</span>
-            <span className="mt-0.5 flex items-center gap-1 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]"><TypeIcon className="h-3 w-3" />{typeLabel}</span>
-          </span>
-          <ChevronRight className={`h-4 w-4 text-[var(--tm-text-disabled)] transition-transform ${expanded ? 'rotate-90' : ''}`} />
-        </button>
-        {expanded && (
-          <div className="border-t border-[var(--tm-brand-primary-soft-strong)] px-4 pb-4 pt-3">
-            <label className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]" htmlFor={`question-${question.id}`}>题目</label>
-            <textarea
-              id={`question-${question.id}`}
-              value={question.title}
-              onChange={event => updateQuestion(question.id, { title: event.target.value })}
-              rows={2}
-              placeholder="请输入问题"
-              className="mt-2 min-h-[72px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3.5 py-3 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)] outline-none transition focus:border-[var(--tm-brand-primary)] focus:ring-4 focus:ring-[var(--tm-focus-ring)]"
-            />
-            {(question.type === 'single' || question.type === 'multiple') && (
-              <div className="mt-4 space-y-2">
-                <div className="px-0.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">选项</div>
-                {question.options.map((option, optionIndex) => {
-                  const allowsCustomAnswer = question.customAnswerOptions?.includes(option) ?? false;
-                  return (
-                    <div key={`${question.id}-${optionIndex}`}>
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-badge)] font-bold tabular-nums text-[var(--tm-text-secondary)]">{optionIndex + 1}</span>
-                        <input
-                          value={option}
-                          onChange={event => {
-                            const nextValue = event.target.value;
-                            updateQuestion(question.id, {
-                              options: question.options.map((item, itemIndex) => itemIndex === optionIndex ? nextValue : item),
-                              customAnswerOptions: (question.customAnswerOptions ?? []).map(item => item === option ? nextValue : item),
-                            });
-                          }}
-                          aria-label={`选项${optionIndex + 1}`}
-                          className="h-11 min-w-0 flex-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)] outline-none transition focus:border-[var(--tm-brand-primary)] focus:ring-4 focus:ring-[var(--tm-focus-ring)]"
-                        />
-                        {question.options.length > 2 && (
-                          <IconButton
-                            label={`删除选项${optionIndex + 1}`}
-                            onClick={() => updateQuestion(question.id, {
-                              options: question.options.filter((_, itemIndex) => itemIndex !== optionIndex),
-                              customAnswerOptions: (question.customAnswerOptions ?? []).filter(item => item !== option),
-                            })}
-                            className="h-11 w-11 text-[var(--tm-text-tertiary)]"
-                          >
-                            <X className="h-4 w-4" />
-                          </IconButton>
-                        )}
-                      </div>
-                      {allowsCustomAnswer && (
-                        <div className="ml-8 mt-1 flex min-h-7 items-center gap-1.5 px-1 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-brand-primary-strong)]">
-                          <MessageSquareText className="h-3.5 w-3.5" />
-                          选中后需填写
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                <div className="flex items-center justify-between gap-3">
-                  <button type="button" onClick={() => updateQuestion(question.id, { options: [...question.options, `选项${question.options.length + 1}`] })} className="flex min-h-11 items-center gap-2 px-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)]">
-                    <Plus className="h-4 w-4" /> 添加选项
-                  </button>
-                  <button type="button" onClick={() => setCustomOptionQuestionId(question.id)} className="flex min-h-11 items-center gap-1.5 px-1 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-tertiary)]">
-                    <MoreHorizontal className="h-4 w-4" /> 更多
-                  </button>
-                </div>
-              </div>
-            )}
-            {question.type === 'rating' && (
-              <div className="mt-4 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-3">
-                <div className="flex min-h-11 items-center justify-between gap-3">
-                  <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">量表级数</span>
-                  <div className="flex items-center gap-1.5">
-                    <IconButton label="减少量表级数" disabled={question.options.length <= MIN_RATING_LEVELS} onClick={() => updateRatingLevelCount(question, question.options.length - 1)} className="h-11 w-11 border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] disabled:opacity-35"><Minus className="h-4 w-4" /></IconButton>
-                    <span className="min-w-12 text-center text-[length:var(--tm-font-size-body)] font-bold tabular-nums text-[var(--tm-text-primary)]">{question.options.length}级</span>
-                    <IconButton label="增加量表级数" disabled={question.options.length >= MAX_RATING_LEVELS} onClick={() => updateRatingLevelCount(question, question.options.length + 1)} className="h-11 w-11 border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] disabled:opacity-35"><Plus className="h-4 w-4" /></IconButton>
-                  </div>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {question.options.map(value => <span key={value} className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-compact)] font-bold tabular-nums text-[var(--tm-text-secondary)]">{value}</span>)}
-                </div>
-              </div>
-            )}
-            {question.type === 'text' && <div className="mt-3 h-20 rounded-[var(--tm-radius-control)] border border-dashed border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-3 text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-tertiary)]">{collectionMode === 'student_information' ? '多行填写区域' : '家长将在这里填写回答'}</div>}
-            {question.type === 'short_text' && <div className="mt-3 h-11 rounded-[var(--tm-radius-control)] border border-dashed border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-3 text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-tertiary)]">单行填写区域</div>}
-            {question.type === 'number' && <div className="mt-3 h-11 rounded-[var(--tm-radius-control)] border border-dashed border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-3 text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-tertiary)]">仅填写数字</div>}
-            {question.type === 'date' && <div className="mt-3 h-11 rounded-[var(--tm-radius-control)] border border-dashed border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-3 text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-tertiary)]">选择日期</div>}
-            <div className="mt-3 flex items-center justify-between border-t border-[var(--tm-border-subtle)] pt-3">
-              <button type="button" onClick={() => updateQuestion(question.id, { required: !question.required })} className="flex min-h-11 items-center gap-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]" aria-pressed={question.required}>
-                <span className={`flex h-6 w-10 rounded-full p-0.5 transition ${question.required ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-border-subtle)]'}`}><span className={`h-5 w-5 rounded-full bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-control)] transition ${question.required ? 'translate-x-4' : ''}`} /></span>
-                必答
-              </button>
-              <IconButton label={collectionMode === 'student_information' ? '删除字段' : '删除题目'} onClick={() => setDraftQuestions(items => items.filter(item => item.id !== question.id))} className="h-11 w-11 text-[var(--tm-status-negative-strong)]"><Trash2 className="h-4 w-4" /></IconButton>
-            </div>
-          </div>
-        )}
-      </article>
-    );
-  };
-
   const renderCreate = () => {
     const isStudentCollection = collectionMode === 'student_information';
     const targets = buildTargets();
@@ -1058,8 +955,17 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const activeClassNos = activeClassStudents.map(student => student.studentNo).filter(Boolean) as string[];
     const activeClassAllSelected = activeClassNos.length > 0 && activeClassNos.every(no => selectedStudentNos.has(no));
     const allClassesSelected = availableClasses.length > 0 && availableClasses.every(classInfo => selectedClassIds.has(classInfo.id));
+    const builderFields: Array<ConfigurableFormField<QuestionnaireQuestionType>> = draftQuestions.map(question => ({
+      id: question.id,
+      label: question.title,
+      type: question.type,
+      required: question.required,
+      options: question.options,
+      customAnswerOptions: question.customAnswerOptions,
+      sectionId: question.sectionId,
+    }));
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24">
         <PageHeader
           title={draftId ? (isStudentCollection ? '编辑采集表' : '编辑问卷') : (isStudentCollection ? '新建采集表' : '新建问卷')}
           onBack={() => createStep > 1 ? setCreateStep(step => step - 1) : setPageMode('list')}
@@ -1070,18 +976,41 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           {createStep === 1 && (
             <div className="space-y-4">
               <section className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
-                <label htmlFor="survey-title" className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">{isStudentCollection ? '采集名称' : '问卷标题'}</label>
-                <input id="survey-title" value={draftTitle} maxLength={40} onChange={event => setDraftTitle(event.target.value)} placeholder={isStudentCollection ? '例如：一年级新生入学信息采集' : '例如：暑期家庭阅读情况调查'} className="mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3.5 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-4 focus:ring-[var(--tm-focus-ring)]" />
+                <label htmlFor="survey-title" className={`text-[length:var(--tm-font-size-meta)] font-semibold ${stepOneValidationAttempt && stepOneTitleError ? 'text-[var(--tm-status-negative-strong)]' : 'text-[var(--tm-text-secondary)]'}`}>{isStudentCollection ? '采集名称' : '问卷标题'}</label>
+                <input id="survey-title" value={draftTitle} maxLength={40} onChange={event => setDraftTitle(event.target.value)} placeholder={isStudentCollection ? '例如：一年级新生入学信息采集' : '例如：暑期家庭阅读情况调查'} aria-invalid={Boolean(stepOneValidationAttempt && stepOneTitleError)} aria-describedby={stepOneValidationAttempt && stepOneTitleError ? 'survey-title-error' : undefined} className={`mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border bg-[var(--tm-bg-surface-soft)] px-3.5 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-4 focus:ring-[var(--tm-focus-ring)] ${stepOneValidationAttempt && stepOneTitleError ? 'border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-border-control)]'}`} />
+                {stepOneValidationAttempt > 0 && stepOneTitleError && <p id="survey-title-error" className="mt-1.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{stepOneTitleError}</p>}
                 <label htmlFor="survey-description" className="mt-4 block text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">说明（选填）</label>
                 <textarea id="survey-description" value={draftDescription} maxLength={120} onChange={event => setDraftDescription(event.target.value)} rows={3} placeholder={isStudentCollection ? '简要说明需要采集的信息' : '简要说明本次调查目的'} className="mt-2 min-h-[88px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3.5 py-3 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-4 focus:ring-[var(--tm-focus-ring)]" />
               </section>
-              <div className="flex items-center justify-between px-1">
-                <h2 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">{isStudentCollection ? '字段' : '题目'} <span className="ml-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{draftQuestions.length}{isStudentCollection ? '项' : '题'}</span></h2>
-                <SecondaryButton onClick={() => { setShowMoreFieldTypes(false); setShowQuestionTypeSheet(true); }} className="min-h-11 px-3 text-[var(--tm-brand-primary-strong)]"><Plus className="h-4 w-4" />{isStudentCollection ? '添加字段' : '添加题目'}</SecondaryButton>
-              </div>
-              <div className="space-y-3">
-                {draftQuestions.map(renderQuestionEditor)}
-              </div>
+              <FormBuilder
+                layoutMode={draftLayoutMode}
+                sections={draftSections}
+                fields={builderFields}
+                itemLabel={isStudentCollection ? '字段' : '题目'}
+                fieldTypes={isStudentCollection ? collectionFieldTypes : questionnaireFieldTypes}
+                allowCustomAnswer={!isStudentCollection}
+                fieldErrors={stepOneValidationAttempt ? stepOneFieldErrors : undefined}
+                listError={stepOneValidationAttempt ? stepOneListError : ''}
+                validationAttempt={stepOneValidationAttempt}
+                focusInvalidField={Boolean(!stepOneTitleError && !stepOneListError)}
+                createField={(type, sectionId) => {
+                  const question = emptyQuestion(type, sectionId);
+                  return { ...question, label: question.title };
+                }}
+                onChange={value => {
+                  setDraftLayoutMode(value.layoutMode);
+                  setDraftSections(value.sections);
+                  setDraftQuestions(value.fields.map(field => ({
+                    id: field.id,
+                    type: field.type,
+                    title: field.label,
+                    required: field.required,
+                    options: field.options,
+                    customAnswerOptions: field.customAnswerOptions,
+                    sectionId: field.sectionId,
+                  })));
+                }}
+              />
             </div>
           )}
 
@@ -1212,8 +1141,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               <Save className="h-4 w-4" />保存草稿
             </SecondaryButton>
             <PrimaryButton
-              disabled={createStep === 1 ? !validStepOne : createStep === 2 && targets.length === 0}
-              onClick={createStep === 3 ? publishQuestionnaire : () => setCreateStep(step => Math.min(3, step + 1))}
+              disabled={createStep === 2 && targets.length === 0}
+              onClick={createStep === 3 ? publishQuestionnaire : advanceCreateStep}
             >
               {createStep === 3
                 ? isStudentCollection ? <><ClipboardCheck className="h-4 w-4" />开始采集</> : <><Send className="h-4 w-4" />确认发布</>
@@ -1222,26 +1151,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           </div>
         </BottomAction>
 
-        <BottomSheet open={showQuestionTypeSheet} label={isStudentCollection ? '选择字段类型' : '选择题型'} onDismiss={() => setShowQuestionTypeSheet(false)}>
-          <h2 className="text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">{isStudentCollection ? '选择字段类型' : '选择题型'}</h2>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {((isStudentCollection
-              ? (showMoreFieldTypes ? ['text', 'number', 'multiple'] : ['short_text', 'single', 'date'])
-              : ['single', 'multiple', 'rating', 'text']) as QuestionnaireQuestionType[]).map(type => {
-              const meta = questionTypeMeta[type];
-              const TypeIcon = meta.icon;
-              const label = isStudentCollection
-                ? type === 'text' ? '多行文本' : type === 'single' ? '单选' : type === 'multiple' ? '多选' : meta.label
-                : meta.label;
-              return <button key={type} type="button" onClick={() => addQuestion(type)} className="flex min-h-[76px] items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-4 text-left active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)]"><span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]"><TypeIcon className="h-5 w-5" /></span><span className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{label}</span></button>;
-            })}
-          </div>
-          {isStudentCollection && (
-            <button type="button" onClick={() => setShowMoreFieldTypes(value => !value)} className="mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]">
-              {showMoreFieldTypes ? '常用字段' : '更多字段'}<ChevronDown className={`h-4 w-4 transition-transform ${showMoreFieldTypes ? 'rotate-180' : ''}`} />
-            </button>
-          )}
-        </BottomSheet>
         <BottomSheet open={showAssignmentSheet} label="填写分工" onDismiss={() => setShowAssignmentSheet(false)}>
           <h2 className="text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">填写分工</h2>
           <div className="mt-4 overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
@@ -1261,16 +1170,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               );
             })}
           </div>
-        </BottomSheet>
-        <BottomSheet open={Boolean(customOptionQuestionId)} label="更多选项" onDismiss={() => setCustomOptionQuestionId('')}>
-          <div className="flex min-h-11 items-center justify-between gap-3">
-            <h2 className="text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">更多选项</h2>
-            <IconButton label="关闭" onClick={() => setCustomOptionQuestionId('')} className="h-11 w-11 bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]"><X className="h-4 w-4" /></IconButton>
-          </div>
-          <button type="button" onClick={addCustomAnswerOption} className="mt-3 flex min-h-[58px] w-full items-center gap-3 border-t border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">
-            <span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]"><MessageSquareText className="h-5 w-5" /></span>
-            添加“其他（请填写）”
-          </button>
         </BottomSheet>
         <BottomSheet open={showDraftMenu} label="草稿操作" onDismiss={() => setShowDraftMenu(false)}>
           <button type="button" onClick={() => { setShowDraftMenu(false); setShowDeleteDraftConfirm(true); }} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]">
@@ -1311,7 +1210,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       completed: { label: '已完成', className: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' },
     };
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-8">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
         <PageHeader
           title="采集详情"
           onBack={() => setPageMode(assignedContext ? 'assigned-list' : record.status === 'archived' ? 'archived-list' : 'list')}
@@ -1375,7 +1274,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const editable = activeRecord.status === 'active';
     const updateAnswer = (questionId: string, answer: QuestionnaireAnswer) => setStudentRecordAnswers(previous => ({ ...previous, [questionId]: answer }));
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24">
         <PageHeader title={studentRecord.studentName} onBack={() => setPageMode('detail')} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-28 no-scrollbar">
           <div className="pb-3 pt-4">
@@ -1386,9 +1285,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             {activeRecord.questions.map((question, index) => {
               const answer = studentRecordAnswers[question.id];
               const selectedOptions = Array.isArray(answer) ? answer : typeof answer === 'string' ? [answer] : [];
+              const section = activeRecord.layoutMode === 'grouped'
+                ? activeRecord.sections?.find(item => item.id === question.sectionId)
+                : undefined;
+              const previousSectionId = activeRecord.questions[index - 1]?.sectionId;
               return (
-                <div key={question.id} className="px-4 py-4">
-                  <label className="block text-[length:var(--tm-font-size-body)] font-semibold leading-5 text-[var(--tm-text-primary)]">{index + 1}. {question.title}{question.required && <span className="ml-1 text-[var(--tm-status-negative-strong)]">*</span>}</label>
+                <React.Fragment key={question.id}>
+                  {section && section.id !== previousSectionId && <div className="bg-[var(--tm-bg-surface-soft)] px-4 py-3 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">{section.label}</div>}
+                  <div className="px-4 py-4">
+                    <label className="block text-[length:var(--tm-font-size-body)] font-semibold leading-5 text-[var(--tm-text-primary)]">{index + 1}. {question.title}{question.required && <span className="ml-1 text-[var(--tm-status-negative-strong)]">*</span>}</label>
                   {question.type === 'short_text' && <input disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => updateAnswer(question.id, event.target.value)} className="mt-3 h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-4 focus:ring-[var(--tm-focus-ring)] disabled:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-secondary)]" />}
                   {question.type === 'text' && <textarea disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => updateAnswer(question.id, event.target.value)} rows={4} className="mt-3 min-h-[104px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 py-3 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-4 focus:ring-[var(--tm-focus-ring)] disabled:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-secondary)]" />}
                   {question.type === 'number' && <input disabled={!editable} type="number" inputMode="decimal" value={typeof answer === 'number' || typeof answer === 'string' ? answer : ''} onChange={event => updateAnswer(question.id, event.target.value)} className="mt-3 h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-medium tabular-nums text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-4 focus:ring-[var(--tm-focus-ring)] disabled:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-secondary)]" />}
@@ -1402,7 +1307,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                     </div>
                   )}
                   {question.type === 'rating' && <div className="mt-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">{formatQuestionnaireAnswer(answer)}</div>}
-                </div>
+                  </div>
+                </React.Fragment>
               );
             })}
           </section>
@@ -1555,7 +1461,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     if (!activeRecord) return renderList();
     if (getQuestionnaireCollectionMode(activeRecord) === 'student_information') return renderStudentCollectionDetail(activeRecord);
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-8">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
         <PageHeader title="问卷详情" onBack={() => setPageMode(activeRecord.status === 'archived' ? 'archived-list' : 'list')} action={<IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}><MoreHorizontal className="h-5 w-5" /></IconButton>} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 no-scrollbar">
           <section className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
@@ -1605,7 +1511,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const renderResponseDetail = () => {
     if (!activeRecord || !activeSubmission) return renderDetail();
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)]">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
         <PageHeader title="答卷详情" onBack={() => setPageMode('detail')} />
         <main className="min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain px-5 py-4 no-scrollbar">
           <div className="flex items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] px-4 py-3">
@@ -1652,7 +1558,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     ));
     const visibleRows = filteredRows.slice(0, visibleQuestionResponseCount);
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)]">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
         <PageHeader title="全部回答" onBack={() => setPageMode('detail')} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 no-scrollbar">
           <section className="pt-4">

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 const app = fs.readFileSync('mobile-app/App.tsx', 'utf8');
 const record = fs.readFileSync('mobile-app/views/ClassRecordLogView.tsx', 'utf8');
-const background = fs.readFileSync('mobile-app/components/TeacherRecordAuroraBackground.tsx', 'utf8');
+const background = fs.readFileSync('mobile-app/components/TeacherMobileScreenBackground.tsx', 'utf8');
 const tokenSource = fs.readFileSync('mobile-app/styles/teacherMobileTokens.ts', 'utf8');
 
 assert.match(tokenSource, /'--tm-record-student-primary': teacherBrandSemantic\.primary/);

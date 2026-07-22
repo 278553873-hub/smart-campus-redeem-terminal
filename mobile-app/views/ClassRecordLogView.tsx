@@ -7,7 +7,6 @@ import {
 import { MOCK_STUDENTS_CLASS_1, MOCK_CLASS_RECORD_LOGS } from '../constants';
 import { ASSETS } from '../assets/images';
 import { Loader2, Sparkles } from 'lucide-react'; // Import directly if needed for icons not in components
-import TeacherRecordAuroraBackground from '../components/TeacherRecordAuroraBackground';
 import ClassSourceTrigger from '../components/ClassSourceTrigger';
 import type { TeacherSpaceType } from '../domain/teacherSpaceAccess';
 
@@ -35,7 +34,6 @@ type LogType = 'file' | 'voice' | 'camera' | 'text';
 
 const recordSheetBackdropClass = 'fixed inset-0 z-[1000] flex items-end justify-center bg-[var(--tm-mask)] backdrop-blur-sm animate-in fade-in [animation-duration:var(--tm-duration-standard)]';
 const recordSheetSurfaceClass = 'flex w-full max-w-md flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)]';
-
 interface LogItem {
     id: string;
     type: LogType;
@@ -350,15 +348,15 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         const scoreItems = log.scores && log.scores.length > 0 ? log.scores : (log.score ? [log.score] : []);
         const totalScore = scoreItems.reduce((sum, item) => sum + item.value, 0);
         const scoreTone = isNegative ? 'negative' : 'positive';
-        const modeTextClass = isClass
-            ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]'
-            : 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]';
-        const modeAccentClass = isClass
-            ? 'bg-[var(--tm-record-class-primary)]'
-            : 'bg-[var(--tm-record-student-primary)]';
+        const resultSurfaceClass = isNegative
+            ? 'border-[var(--tm-record-negative-border)] bg-[var(--tm-record-negative-bg)]'
+            : 'border-[var(--tm-record-positive-border)] bg-[var(--tm-record-positive-bg)]';
+        const resultAccentClass = isNegative
+            ? 'bg-[var(--tm-status-negative)]'
+            : 'bg-[var(--tm-status-positive)]';
         const totalClass = scoreTone === 'negative'
-            ? 'bg-[var(--tm-record-negative-bg)] text-[var(--tm-record-negative-text)]'
-            : 'bg-[var(--tm-record-positive-bg)] text-[var(--tm-record-positive-text)]';
+            ? 'border border-[var(--tm-record-negative-border)] bg-white/90 text-[var(--tm-status-negative)]'
+            : 'border border-[var(--tm-record-positive-border)] bg-white/90 text-[var(--tm-status-positive)]';
 
         return (
             <div key={log.id} className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-white p-4 shadow-[var(--tm-shadow-card)] animate-in fade-in duration-500">
@@ -373,7 +371,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                 <button
                     type="button"
                     onClick={() => { setEditingLog(log); setShowScoreEdit(true); }}
-                    className="block w-full rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-3.5 text-left transition active:scale-[0.995]"
+                    className={`block w-full rounded-[var(--tm-radius-inner)] border p-3.5 text-left transition active:scale-[0.995] ${resultSurfaceClass}`}
                     aria-label="编辑 AI 智能解读结果"
                 >
                     <div className="mb-3 grid grid-cols-[26px_auto_1fr_auto] items-center gap-2">
@@ -383,7 +381,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             className="h-[26px] w-[26px] object-contain"
                         />
                         <span className="text-[14px] font-semibold text-[var(--tm-text-primary)]">AI 智能解读</span>
-                        <span className={`h-1 w-6 rounded-full opacity-70 ${modeAccentClass}`} />
+                        <span className={`h-1 w-6 rounded-full opacity-75 ${resultAccentClass}`} />
                         {scoreItems.length > 0 && (
                             <div className={`grid h-10 min-w-[68px] grid-cols-[auto_auto] items-center justify-center gap-1 rounded-[var(--tm-radius-control)] px-2.5 ${totalClass}`}>
                                 <span className="text-[22px] font-bold leading-none">{formatScoreValue(totalScore)}</span>
@@ -403,12 +401,12 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         <FieldLabel text="对象" />
                         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                             {(log.students || []).slice(0, 1).map(stu => (
-                                <span key={stu.id} className={`inline-flex min-h-[28px] max-w-full items-center rounded-full px-2.5 text-[12px] font-semibold ${modeTextClass}`}>
+                                <span key={stu.id} className="inline-flex min-h-[28px] max-w-full items-center text-[13px] font-semibold text-[var(--tm-text-primary)]">
                                     {stu.name.replace(/ /g, '')}
                                 </span>
                             ))}
                             {log.students && log.students.length > 1 && (
-                                <span className={`inline-flex min-h-[28px] items-center rounded-full px-2.5 text-[12px] font-semibold ${modeTextClass}`}>+{log.students.length - 1}人</span>
+                                <span className="inline-flex min-h-[28px] items-center rounded-full border border-[var(--tm-border-subtle)] bg-white/72 px-2.5 text-[12px] font-semibold text-[var(--tm-text-secondary)]">+{log.students.length - 1}人</span>
                             )}
                         </div>
 
@@ -437,11 +435,6 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     // --- Main Render ---
     return (
         <div className="relative flex h-full flex-col overflow-hidden bg-transparent">
-            {/* Brand-tinted atmosphere stays subtle so content remains visually neutral. */}
-            <div className="absolute inset-0 z-0 pointer-events-none">
-                <TeacherRecordAuroraBackground activeTab={activeTab} />
-            </div>
-
             {/* Header (Top-most Integration) */}
             <div className={`sticky top-0 z-30 ${addDemoTopBreathingSpace ? 'pt-2' : ''}`}>
                 <div className="px-5 pt-3">

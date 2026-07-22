@@ -53,6 +53,7 @@ mobile-app/styles/teacherMobileTokens.ts
 | 页面暖白 | 页面语义值 | `#FFF9F6` |
 | 主文字 | `neutral-900` | `#171513` |
 | 次文字 | `neutral-500` | `#6D6764` |
+| 弱文字 | `neutral-550` | `#7B7572` |
 | 弱图标/禁用 | `neutral-400` | `#A49C97` |
 | 弱边框 | `neutral-200` | `#E7E2DF` |
 
@@ -60,8 +61,8 @@ mobile-app/styles/teacherMobileTokens.ts
 
 | 语义 | 浅底 | 主色 | 深文字 |
 |---|---:|---:|---:|
-| 正向/加分 | `#ECF8F1` | `#168252` | `#0F6A45` |
-| 负向/扣分 | `#FFF0F3` | `#B4233C` | `#8F1830` |
+| 正向/加分 | `#F4FBF4` | `#48A04D` | `#2E7D32` |
+| 负向/扣分 | `#FFF6F5` | `#AB352C` | `#AB352C` |
 | 奖励 | `#FFF8E5` | `#FA9C00` | `#9A5B00` |
 
 ### 3.3 人工智能助理角色色
@@ -70,10 +71,10 @@ mobile-app/styles/teacherMobileTokens.ts
 
 | 角色 | 主色 | 强文字 | 浅底 | 流光高光 |
 |---|---|---|---|---|
-| 班主任助理 | `--tm-role-headteacher-primary` | `--tm-role-headteacher-strong` | `--tm-role-headteacher-soft` | `--tm-role-headteacher-highlight`（浅玉石青） |
+| 班主任助理 | `--tm-role-headteacher-primary`（`#1F9E84`） | `--tm-role-headteacher-strong`（`#126B5B`） | `--tm-role-headteacher-soft`（`#EFFAF7`） | `--tm-role-headteacher-highlight`（`#86E0CC`） |
 | 校长助理 | `--tm-role-principal-primary` | `--tm-role-principal-strong` | `--tm-role-principal-soft` | `--tm-role-principal-highlight`（管理金） |
 
-角色页面的背景光、边框、焦点、阴影和文字流光必须引用对应 `--tm-role-*` Token，禁止重新引入青蓝、柔紫或一次性角色色。流光高光必须与角色深色正文保持足够的明度差，避免动画运行但视觉不可辨识。
+角色页面的背景光、边框、焦点、阴影和文字流光必须引用对应 `--tm-role-*` Token，禁止重新引入青蓝、柔紫或一次性角色色。班主任助理的鲜活翡翠青为特殊角色语义，不覆盖学生采集使用的玉石青受众色。流光高光必须与角色深色正文保持足够的明度差，避免动画运行但视觉不可辨识。
 
 ### 3.4 采集受众色
 
@@ -84,6 +85,34 @@ mobile-app/styles/teacherMobileTokens.ts
 | 家长 | `--tm-audience-guardian-*` | 品牌红 |
 | 学生 | `--tm-audience-student-*` | 玉石青 |
 | 教师 | `--tm-audience-teacher-*` | 奖励金 |
+
+### 3.5 点缀色与性别色
+
+花名册头像、分组标签等不承载业务语义的位置，使用品牌色板派生的低饱和点缀色，解决页面只剩红与灰的单调问题；禁止重新引入蓝紫多彩体系。
+
+| 用途 | 浅底 | 强文字 | 边框 |
+|---|---|---|---|
+| 点缀青 | `--tm-tag-jade-soft` | `--tm-tag-jade-strong` | `--tm-tag-jade-border` |
+| 点缀橙 | `--tm-tag-orange-soft` | `--tm-tag-orange-strong` | `--tm-tag-orange-border` |
+| 点缀红 | `--tm-tag-red-soft` | `--tm-tag-red-strong` | `--tm-tag-red-border` |
+| 点缀金 | `--tm-tag-gold-soft` | `--tm-tag-gold-strong` | `--tm-tag-gold-border` |
+
+性别仅通过头像右下角小角标表达，不与头像底色绑定：男生 `--tm-gender-male`（薄荷绿 `#2CCBA3`），女生 `--tm-gender-female`（辅助橙 `#F75C03`）。性别筛选等需要承载文字的场景使用对应 `--tm-tag-jade-strong` / `--tm-tag-orange-strong` 深色，保证可读性。
+
+### 3.6 图表用色规则
+
+图表只允许三种用色语义，禁止混用：
+
+1. 分类色：仅用于固定分类。五育（德智体美劳）使用 `--tm-edu-virtue`（品牌红）、`--tm-edu-wisdom`（辅助橙）、`--tm-edu-fitness`（正向绿）、`--tm-edu-aesthetic`（深薄荷 `#14A085`）、`--tm-edu-labor`（深金 `#C88100`），同一分类在所有图表（条形、环形、图例）中颜色恒定。分类色必须满足白底 3:1 图形对比度，禁止直接取用薄荷绿 `#2CCBA3`、奖励金 `#FA9C00` 等低对比色值。体育与覆盖率同属绿色系是有意设计：分类场景与比例场景不共存于同一图表，不产生歧义。
+2. 比例色：覆盖率仅表示“已覆盖比例”，统一使用正向绿，不默认判断达标、预警或不足。系统不得预设达标线；只有学校明确配置目标值后，才可显示学校目标线及对应提示。
+3. 量级色：单一系列的正向数量图表（如评价记录数）统一使用正向绿渐变，不因维度（年级/班级）改变颜色；数量无正负含义时不得使用品牌红，避免告警误读。
+4. 对比色：无正负含义的多系列对比（如本周期/上周期/年级平均）使用明度层级，禁止借用品牌红、正向绿、奖励金表达周期或主体，避免把事实数据误读为告警或优劣判断。规则为：分类维度（如五育）使用分类色实色；自身历史系列（如上周期）使用同色系 `--tm-chart-series-muted-opacity`（40%）透明度；外部参照（如年级平均）统一使用中性浅灰 `--tm-chart-series-peer`；汇总推导值（如净得分）使用深中性 `--tm-chart-series-total`。图例只表达系列维度，使用中性灰阶标记。
+
+颜色跟语义走，不跟卡片走：所有覆盖率元件（统计卡进度条、指标覆盖行、覆盖率图表）统一使用正向绿，只表达覆盖比例；统计卡图标默认中性，只有评价次数等正向量级指标使用正向绿浅底图标；禁止按卡片固定分配红、橙、金造成语义混乱。
+
+图表网格线使用 `neutral-100`（`#F1EEEC`）虚线，保持隐约可见；图表不再使用灰色衬底容器，直接放置在白色卡片上。
+
+分段控件（Tab 切换）轨道统一使用品牌浅红 `--tm-brand-primary-soft`，选中项白底，未选中项使用品牌深红文字；筛选 chips 和次要按钮未选中态使用白底加发丝边框，禁止多种灰底混用造成原型感。
 
 ## 4. 核心语义变量
 
@@ -102,6 +131,12 @@ mobile-app/styles/teacherMobileTokens.ts
 | 弱表面 | `--tm-bg-surface-soft` | 次级按钮、卡内弱分组 |
 | 弱边框 | `--tm-border-subtle` | 分割线、描边 |
 | 控件边框 | `--tm-border-control` | 输入框等必须被清晰识别的交互边界 |
+| 图表网格线 | `--tm-chart-grid` | 图表坐标网格与轴线 |
+| 图表浮层 | `--tm-chart-tooltip` | 图表数据提示浮层背景 |
+| 图表悬停 | `--tm-chart-hover` | 图表悬停或触摸高亮 |
+| 图表弱化透明度 | `--tm-chart-series-muted-opacity` | 对比图中自身历史系列的同色系透明度（0.4） |
+| 图表参照色 | `--tm-chart-series-peer` | 对比图中年级平均等外部参照系列的中性浅灰 |
+| 图表汇总色 | `--tm-chart-series-total` | 净得分等汇总推导系列的深中性色 |
 | 焦点环 | `--tm-focus-ring` | 表单及按钮的键盘焦点反馈 |
 | 遮罩 | `--tm-mask` | 底部抽屉和弹层遮罩 |
 
@@ -122,6 +157,8 @@ mobile-app/styles/teacherMobileTokens.ts
 - 品牌红 `#E02727` 在浅红底上只用于图形强调；`12px-14px` 文字使用 `--tm-record-student-text`。
 - 班级模式的 `12px-14px` 文字统一使用 `--tm-record-class-text`（`#B83F00`）。
 - 总分使用正负语义色，不跟随记录学生/记录班级模式色。
+- AI 解读卡整块表面跟随事件结果：正向用 `--tm-record-positive-bg`，负向用 `--tm-record-negative-bg`；一条记录经 AI 拆事件后只会是正向或负向，不设计正负混合态。
+- 记录对象使用中性深色文字，不使用模式色；指标名称保持中性，颜色只表达分值正负。
 
 ## 6. 排版令牌
 
@@ -158,12 +195,15 @@ mobile-app/styles/teacherMobileTokens.ts
 |---|---|
 | 普通卡片 | `--tm-shadow-card` |
 | 强调卡片 | `--tm-shadow-card-raised` |
-| 选中控件 | `--tm-shadow-control` |
+| 表面型控件 | `--tm-shadow-control` |
 | 悬浮录入条 | `--tm-shadow-floating` |
 | 底部导航 | `--tm-shadow-navigation` |
 | 底部抽屉 | `--tm-shadow-sheet` |
 
 业务页面不得使用阴影颜色自行拼装新的阴影公式。
+
+- 筛选工具行、轻量入口等表面型控件默认使用 `--tm-bg-surface` + `--tm-shadow-control` 建立边界，不再叠加常驻描边。
+- `--tm-border-control` 仅用于文本输入、复选框本体等必须明确识别交互边界的控件；焦点环属于无障碍状态，不受无边框表面规则限制。
 
 ### 7.3 触控
 
@@ -195,9 +235,18 @@ mobile-app/styles/teacherMobileTokens.ts
 
 ### 班级页
 
-- 班主任标签使用辅助橙浅底和深橙文字。
-- 学生列表使用中性入口，班级报告使用品牌浅底入口。
+- 班主任与副班主任标签使用辅助橙浅底和深橙文字，任教学科使用中性标签。
+- 学生列表使用品牌浅底主入口，班级报告使用中性次入口。
+- 年级、人数与班级号统一使用 13px 元信息字号；班级号数字可使用正文色和半粗字重。
 - 卡片、入口和筛选控件必须满足 `44px` 触控要求。
+
+### 学生详情页
+
+- 身份区使用白色轻表面；班级和学号使用中性 Token，性别使用 `--tm-gender-*`，在校状态使用正向绿。
+- 校园币资产统一使用奖励金 Token；成长、评价、采集分段控件使用品牌浅红轨道。
+- 五育雷达图的分类点使用 `--tm-edu-*`，当前学生轮廓使用品牌红，班级平均使用中性灰。
+- 评价记录使用 `--tm-record-positive-*` / `--tm-record-negative-*`，采集记录类型使用 `--tm-audience-*`。
+- 页面不得使用蓝紫、靛青、粉色作为主操作、图表系列或任意装饰色。
 
 ### 我的页
 
@@ -219,4 +268,5 @@ mobile-app/styles/teacherMobileTokens.ts
 - 图标和控件边界对比度是否至少达到 `3:1`。
 - 所有交互热区是否至少为 `44px × 44px`。
 - 卡片、圆角和阴影是否引用组件级令牌。
+- 多系列对比图是否遵循对比色规则：分类维度用分类色、历史系列用 40% 透明度、外部参照用参照灰，未借用品牌红/正向绿/奖励金表达周期。
 - 记录、班级、我的三页是否共享同一底栏和表面规则。

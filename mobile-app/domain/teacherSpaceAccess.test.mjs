@@ -77,11 +77,11 @@ assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'cla
 });
 
 assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1' }), {
-  canUseDailyActions: false,
+  canUseDailyActions: true,
   canUpdateStudents: false,
   canMaintainClass: false,
-  canInviteTeacher: false,
-  canInviteParent: false,
+  canInviteTeacher: true,
+  canInviteParent: true,
 });
 
 const meViewSource = fs.readFileSync(new URL('../views/MeView.tsx', import.meta.url), 'utf8');

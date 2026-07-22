@@ -53,13 +53,18 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   const shouldShowNativeChrome = showDeviceFrame && safeAreaTop;
   const nativeChromeTopInset = contentTopInsetMode === 'status-bar' ? 54 : 106;
   const simulatedChromeTopInset = shouldShowNativeChrome ? nativeChromeTopInset : 0;
+  const simulatedCapsuleRightInset = shouldShowNativeChrome ? 112 : 0;
   const deviceFrameVisibility = showDeviceFrame ? 'opacity-100' : 'opacity-0';
   const nativeChromeVisibility = shouldShowNativeChrome ? 'opacity-100' : 'opacity-0';
 
   const screenContent = (
     <div
       className={`relative overflow-hidden border border-slate-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] ${showDeviceFrame ? 'rounded-[50px]' : 'rounded-none'}`}
-      style={{ width: `${screenWidth}px`, height: `${screenHeight}px` }}
+      style={{
+        width: `${screenWidth}px`,
+        height: `${screenHeight}px`,
+        '--mini-program-capsule-right-inset': `${simulatedCapsuleRightInset}px`,
+      } as React.CSSProperties}
     >
         {screenBackground && (
           <div className="absolute inset-0 z-0 pointer-events-none">

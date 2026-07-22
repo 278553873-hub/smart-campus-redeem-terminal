@@ -4,6 +4,7 @@ import {
   Check,
   ChevronLeft,
   CircleAlert,
+  History,
   ListChecks,
   Sparkles,
   TrendingUp,
@@ -11,6 +12,7 @@ import {
 import {
   PRINCIPAL_PERIODIC_REPORTS,
   type PrincipalPeriodicReportKind,
+  type PrincipalPeriodicReportContent,
 } from '../data/principalPeriodicReports';
 
 interface PrincipalPeriodicReportViewProps {
@@ -19,6 +21,8 @@ interface PrincipalPeriodicReportViewProps {
   generated: boolean;
   onGenerated: () => void;
   onBack: () => void;
+  onOpenHistory?: () => void;
+  reportData?: PrincipalPeriodicReportContent;
 }
 
 const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = ({
@@ -27,8 +31,10 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
   generated,
   onGenerated,
   onBack,
+  onOpenHistory,
+  reportData,
 }) => {
-  const report = PRINCIPAL_PERIODIC_REPORTS[kind];
+  const report = reportData ?? PRINCIPAL_PERIODIC_REPORTS[kind];
   const [loading, setLoading] = useState(!generated);
   const [visibleStepCount, setVisibleStepCount] = useState(generated ? report.analysisSteps.length : 1);
 
@@ -70,6 +76,19 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
           <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
         </button>
         <h1 className="pointer-events-none absolute inset-x-14 text-center text-[17px] font-semibold">{report.pageTitle}</h1>
+        {onOpenHistory && !loading ? (
+          <button
+            type="button"
+            onClick={onOpenHistory}
+            className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition active:scale-95 active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
+            aria-label={kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘'}
+            title={kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘'}
+          >
+            <History className="h-5 w-5" strokeWidth={2.2} />
+          </button>
+        ) : (
+          <span className="ml-auto h-11 w-11" aria-hidden="true" />
+        )}
       </header>
 
       {loading ? (

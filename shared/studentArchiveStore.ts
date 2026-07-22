@@ -1,23 +1,28 @@
 import type { ClassInfo, Student } from '../mobile-app/types';
+import type { FormLayoutMode, FormSection } from './formDefinition';
 
-export type ArchiveStage = 'entry' | 'term' | 'transition';
 export type ArchiveTemplateStatus = 'recommended' | 'draft' | 'published' | 'disabled';
-export type ArchiveSource = 'homeroom' | 'guardian' | 'student' | 'records';
-export type ArchiveFieldType = 'short-text' | 'long-text' | 'single-select' | 'multiple-select';
-export type ArchiveProgressStatus = 'draft' | 'pending' | 'archived';
+export type ArchiveFieldType = 'text' | 'single-select' | 'multiple-select' | 'date' | 'number';
+export type ArchiveSystemFieldKey = 'name' | 'studentNo' | 'gender' | 'birthDate' | 'grade' | 'class';
 
-export interface ArchiveSection {
-  id: string;
-  label: string;
-  description?: string;
-}
+export const ARCHIVE_SYSTEM_FIELD_OPTIONS: Array<{ key: ArchiveSystemFieldKey; label: string }> = [
+  { key: 'name', label: '姓名' },
+  { key: 'studentNo', label: '学号' },
+  { key: 'gender', label: '性别' },
+  { key: 'birthDate', label: '出生日期' },
+  { key: 'grade', label: '年级' },
+  { key: 'class', label: '班级' },
+];
+
+const DEFAULT_ARCHIVE_SYSTEM_FIELDS: ArchiveSystemFieldKey[] = ['name', 'class'];
+
+export type ArchiveSection = FormSection;
 
 export interface ArchiveField {
   id: string;
   semanticKey: string;
   label: string;
   type: ArchiveFieldType;
-  group: 'core' | 'stage';
   sectionId: string;
   required: boolean;
   options: string[];
@@ -30,71 +35,38 @@ export interface ArchiveTemplate {
   origin: 'recommended' | 'school';
   status: ArchiveTemplateStatus;
   version: number;
-  stage: ArchiveStage;
+  layoutMode: FormLayoutMode;
   gradeScopes: string[];
-  sources: ArchiveSource[];
+  systemFields: ArchiveSystemFieldKey[];
   sections: ArchiveSection[];
   fields: ArchiveField[];
   updatedAt: string;
+  deletedAt?: string;
 }
 
-export interface ArchiveSourceProgress {
-  source: ArchiveSource;
-  status: 'waiting' | 'received' | 'not-required';
-  updatedAt?: string;
+export interface ArchiveTemplateSnapshot {
+  name: string;
+  version: number;
+  layoutMode: FormLayoutMode;
+  systemFields: ArchiveSystemFieldKey[];
+  sections: ArchiveSection[];
+  fields: ArchiveField[];
 }
 
-export interface ArchiveStudentProgress {
+export interface ArchiveDraft {
+  id: string;
   studentId: string;
   studentName: string;
   classId: string;
   className: string;
-  status: ArchiveProgressStatus;
-  answers: Record<string, string>;
-  sourceProgress: ArchiveSourceProgress[];
-  updatedAt: string;
-}
-
-export interface ArchiveClassAssignment {
-  classId: string;
-  className: string;
-  assigneeType: 'homeroom' | 'designated';
-  assigneeName?: string;
-  assigneeRole: '班主任' | '指定任课教师';
-}
-
-export interface ArchiveReminderPolicy {
-  notifyOnCreate: boolean;
-  beforeDeadlineDays: number[];
-  repeatWhenOverdue: boolean;
-}
-
-export interface ArchiveTask {
-  id: string;
-  spaceId: string;
-  name: string;
   templateId: string;
   templateName: string;
   templateVersion: number;
-  stage: ArchiveStage;
-  schoolTerm: string;
-  gradeScope: string;
-  classIds: string[];
-  classAssignments: ArchiveClassAssignment[];
-  reminderPolicy: ArchiveReminderPolicy;
-  createdBy: string;
-  deadline: string;
-  status: 'active' | 'completed';
+  templateSnapshot: ArchiveTemplateSnapshot;
+  answers: Record<string, string>;
   createdAt: string;
-  progress: ArchiveStudentProgress[];
-}
-
-export interface ArchiveSourceRecord {
-  source: ArchiveSource;
-  title: string;
-  provider: string;
-  submittedAt: string;
-  status: '已入档' | '待补充';
+  updatedAt: string;
+  createdBy: string;
 }
 
 export interface ArchiveSnapshot {
@@ -106,30 +78,21 @@ export interface ArchiveSnapshot {
   templateId: string;
   templateName: string;
   templateVersion: number;
-  stage: ArchiveStage;
+  templateSnapshot: ArchiveTemplateSnapshot;
   period: string;
   status: 'archived' | 'revision-draft';
   createdAt: string;
   createdBy: string;
+  systemValues: Partial<Record<ArchiveSystemFieldKey, string>>;
   answers: Record<string, string>;
-  sourceRecords: ArchiveSourceRecord[];
   revisionOf?: string;
   correctionReason?: string;
-}
-
-export interface StudentBaseArchive {
-  studentId: string;
-  healthNotes: string;
-  allergyHistory: string;
-  guardianSummary: string;
-  classHistory: string[];
-  updatedAt: string;
 }
 
 export interface ArchiveAuditEvent {
   id: string;
   studentId: string;
-  action: '查看档案' | '确认成档' | '申请更正' | '更新底档';
+  action: '查看档案' | '确认成档' | '申请更正';
   operator: string;
   operatorRole: string;
   occurredAt: string;
@@ -137,12 +100,11 @@ export interface ArchiveAuditEvent {
 }
 
 export interface ArchiveWorkspace {
-  schemaVersion: 2;
+  schemaVersion: 5;
   spaceId: string;
   templates: ArchiveTemplate[];
-  tasks: ArchiveTask[];
+  drafts: ArchiveDraft[];
   snapshots: ArchiveSnapshot[];
-  baseArchives: StudentBaseArchive[];
   auditEvents: ArchiveAuditEvent[];
 }
 
@@ -157,24 +119,10 @@ interface ArchiveWorkspaceContext {
 export const ARCHIVE_STORE_EVENT = 'student-archive-store-updated';
 const STORAGE_PREFIX = 'teacher-student-archive-workspace-v1';
 
-export const archiveStageMeta: Record<ArchiveStage, { label: string; shortLabel: string }> = {
-  entry: { label: '入学基线档案', shortLabel: '入学' },
-  term: { label: '学期成长档案', shortLabel: '学期' },
-  transition: { label: '转衔成长档案', shortLabel: '转衔' },
-};
-
-export const archiveSourceMeta: Record<ArchiveSource, { label: string; shortLabel: string }> = {
-  homeroom: { label: '班主任观察', shortLabel: '班主任' },
-  guardian: { label: '家长问卷', shortLabel: '家长' },
-  student: { label: '学生自评', shortLabel: '学生' },
-  records: { label: '日常评价数据', shortLabel: '记录' },
-};
-
 const field = (
   semanticKey: string,
   label: string,
   type: ArchiveFieldType,
-  group: ArchiveField['group'],
   sectionId: string,
   required = true,
   options: string[] = [],
@@ -183,73 +131,88 @@ const field = (
   semanticKey,
   label,
   type,
-  group,
   sectionId,
   required,
   options,
 });
 
-const section = (id: string, label: string, description?: string): ArchiveSection => ({ id, label, description });
+const section = (id: string, label: string): ArchiveSection => ({ id, label });
 
-const summarySection = section('summary', '教师交接摘要', '帮助后续教师快速了解学生');
+const summarySection = section('summary', '教师交接摘要');
 
 const coreFields: ArchiveField[] = [
-  field('strengths', '优势特点', 'long-text', 'core', 'summary'),
-  field('interests', '兴趣倾向', 'multiple-select', 'core', 'summary', true, ['阅读表达', '科学探究', '艺术创作', '体育运动', '劳动实践', '同伴交往']),
-  field('learning-habits', '学习习惯', 'single-select', 'core', 'summary', true, ['需要持续支持', '逐步稳定', '表现稳定', '能主动规划']),
-  field('emotion-state', '情绪状态', 'single-select', 'core', 'summary', true, ['需要陪伴调节', '提醒后可调节', '基本稳定', '能主动调节']),
-  field('peer-relations', '同伴交往', 'single-select', 'core', 'summary', true, ['较少参与', '被动加入', '主动合作', '能支持同伴']),
-  field('current-focus', '当前关注', 'long-text', 'core', 'summary'),
-  field('support-strategy', '有效支持方式', 'long-text', 'core', 'summary'),
-  field('stage-goal', '阶段目标', 'long-text', 'core', 'summary'),
+  field('strengths', '优势特点', 'text', 'summary'),
+  field('interests', '兴趣倾向', 'multiple-select', 'summary', true, ['阅读表达', '科学探究', '艺术创作', '体育运动', '劳动实践', '同伴交往']),
+  field('learning-habits', '学习习惯', 'single-select', 'summary', true, ['需要持续支持', '逐步稳定', '表现稳定', '能主动规划']),
+  field('emotion-state', '情绪状态', 'single-select', 'summary', true, ['需要陪伴调节', '提醒后可调节', '基本稳定', '能主动调节']),
+  field('peer-relations', '同伴交往', 'single-select', 'summary', true, ['较少参与', '被动加入', '主动合作', '能支持同伴']),
+  field('current-focus', '当前关注', 'text', 'summary'),
+  field('support-strategy', '有效支持方式', 'text', 'summary'),
+  field('stage-goal', '阶段目标', 'text', 'summary'),
 ];
 
 const entryFields: ArchiveField[] = [
-  field('foundation-cognition', '基础认知', 'single-select', 'core', 'academic', true, ['零基础', '启蒙阶段', '有基础']),
-  field('focus-habit', '专注习惯', 'single-select', 'core', 'academic', true, ['少于10分钟', '10-20分钟', '20分钟以上']),
-  field('question-task', '提问与任务', 'single-select', 'core', 'academic', true, ['主动提问并独立完成', '有时需要鼓励', '较少提问且依赖帮助']),
-  field('interest-tendency', '兴趣倾向', 'multiple-select', 'core', 'interest', true, ['阅读', '艺术', '运动', '探究', '社交']),
-  field('hands-on-creativity', '动手创意', 'single-select', 'stage', 'interest', true, ['很喜欢', '一般', '不太喜欢']),
-  field('learning-style', '学习方式', 'multiple-select', 'core', 'cognition', true, ['听讲型', '动手型', '讨论型', '视觉型']),
-  field('problem-solving', '问题解决', 'single-select', 'core', 'cognition', true, ['自己尝试', '主动求助', '容易放弃']),
-  field('help-sharing', '帮助分享', 'single-select', 'core', 'social', true, ['经常主动', '有时', '较少']),
-  field('rules-manners', '规则礼貌', 'single-select', 'core', 'social', true, ['自觉', '需要提醒', '较弱']),
-  field('conflict-handling', '冲突处理', 'single-select', 'core', 'social', true, ['能够商量', '哭闹或退缩', '容易争抢']),
-  field('emotion-stability', '情绪稳定性', 'single-select', 'core', 'personality-family', true, ['快速平复', '需要安慰', '持续较久']),
-  field('exercise-vitality', '运动活力', 'single-select', 'stage', 'personality-family', true, ['热爱', '一般', '不爱运动']),
-  field('primary-caregiver', '主要照顾人', 'single-select', 'stage', 'personality-family', true, ['父母', '祖辈', '其他']),
-  field('family-time', '家庭陪伴时间', 'single-select', 'stage', 'personality-family', true, ['少于30分钟', '30分钟-1小时', '1-2小时', '2小时以上']),
-  field('guardian-goal', '家长期望', 'multiple-select', 'stage', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
-  field('student-goal', '学生自选', 'multiple-select', 'stage', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
-  field('teacher-goal', '教师建议', 'multiple-select', 'stage', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
-  field('inner-drive-signal', '当前突出内驱力信号', 'single-select', 'core', 'inner-drive', true, ['兴趣激发', '胜任感', '归属感', '尚不明确']),
-  field('initial-light', '初始光芒定位', 'multiple-select', 'core', 'inner-drive', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
-  field('next-drive-focus', '下一阶段优先关注方向', 'multiple-select', 'core', 'inner-drive', true, ['继续观察兴趣火花', '积累“我能行”的成功体验', '建立信任的师生/同伴关系']),
-  field('guardian-confirmation', '家长确认', 'single-select', 'stage', 'confirmation', false, ['已确认', '待确认', '无需确认']),
-  field('strengths', '优势特点', 'long-text', 'core', 'summary'),
-  field('current-focus', '当前关注', 'long-text', 'core', 'summary'),
-  field('support-strategy', '有效支持方式', 'long-text', 'core', 'summary'),
-  field('stage-goal', '阶段目标', 'long-text', 'core', 'summary'),
+  field('foundation-cognition', '基础认知', 'single-select', 'academic', true, ['零基础', '启蒙阶段', '有基础']),
+  field('focus-habit', '专注习惯', 'single-select', 'academic', true, ['少于10分钟', '10-20分钟', '20分钟以上']),
+  field('question-task', '提问与任务', 'single-select', 'academic', true, ['主动提问并独立完成', '有时需要鼓励', '较少提问且依赖帮助']),
+  field('interest-tendency', '兴趣倾向', 'multiple-select', 'interest', true, ['阅读', '艺术', '运动', '探究', '社交']),
+  field('hands-on-creativity', '动手创意', 'single-select', 'interest', true, ['很喜欢', '一般', '不太喜欢']),
+  field('learning-style', '学习方式', 'multiple-select', 'cognition', true, ['听讲型', '动手型', '讨论型', '视觉型']),
+  field('problem-solving', '问题解决', 'single-select', 'cognition', true, ['自己尝试', '主动求助', '容易放弃']),
+  field('help-sharing', '帮助分享', 'single-select', 'social', true, ['经常主动', '有时', '较少']),
+  field('rules-manners', '规则礼貌', 'single-select', 'social', true, ['自觉', '需要提醒', '较弱']),
+  field('conflict-handling', '冲突处理', 'single-select', 'social', true, ['能够商量', '哭闹或退缩', '容易争抢']),
+  field('emotion-stability', '情绪稳定性', 'single-select', 'personality-family', true, ['快速平复', '需要安慰', '持续较久']),
+  field('exercise-vitality', '运动活力', 'single-select', 'personality-family', true, ['热爱', '一般', '不爱运动']),
+  field('primary-caregiver', '主要照顾人', 'single-select', 'personality-family', true, ['父母', '祖辈', '其他']),
+  field('family-time', '家庭陪伴时间', 'single-select', 'personality-family', true, ['少于30分钟', '30分钟-1小时', '1-2小时', '2小时以上']),
+  field('guardian-goal', '家长期望', 'multiple-select', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
+  field('student-goal', '学生自选', 'multiple-select', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
+  field('teacher-goal', '教师建议', 'multiple-select', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
+  field('inner-drive-signal', '当前突出内驱力信号', 'single-select', 'inner-drive', true, ['兴趣激发', '胜任感', '归属感', '尚不明确']),
+  field('initial-light', '初始光芒定位', 'multiple-select', 'inner-drive', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
+  field('next-drive-focus', '下一阶段优先关注方向', 'multiple-select', 'inner-drive', true, ['继续观察兴趣火花', '积累“我能行”的成功体验', '建立信任的师生/同伴关系']),
+  field('guardian-confirmation', '家长确认', 'single-select', 'confirmation', false, ['已确认', '待确认', '无需确认']),
+  field('strengths', '优势特点', 'text', 'summary'),
+  field('current-focus', '当前关注', 'text', 'summary'),
+  field('support-strategy', '有效支持方式', 'text', 'summary'),
+  field('stage-goal', '阶段目标', 'text', 'summary'),
 ];
 
 const termFields: ArchiveField[] = [
-  field('term-change', '本学期变化', 'long-text', 'stage', 'term-growth'),
-  field('representative-evidence', '代表性证据', 'long-text', 'stage', 'term-growth'),
-  field('goal-progress', '目标达成情况', 'single-select', 'stage', 'term-growth', true, ['尚未显现', '开始进步', '基本达成', '超出预期']),
-  field('new-strength', '新发现的优势', 'long-text', 'stage', 'term-growth', false),
-  field('next-strategy', '下阶段策略', 'long-text', 'stage', 'term-growth'),
+  field('term-change', '本学期变化', 'text', 'term-growth'),
+  field('representative-evidence', '代表性证据', 'text', 'term-growth'),
+  field('goal-progress', '目标达成情况', 'single-select', 'term-growth', true, ['尚未显现', '开始进步', '基本达成', '超出预期']),
+  field('new-strength', '新发现的优势', 'text', 'term-growth', false),
+  field('next-strategy', '下阶段策略', 'text', 'term-growth'),
 ];
 
 const transitionFields: ArchiveField[] = [
-  field('long-term-summary', '长期成长概览', 'long-text', 'stage', 'transition-summary'),
-  field('best-method', '最有效的教育方式', 'long-text', 'stage', 'transition-summary'),
-  field('continued-support', '仍需支持事项', 'long-text', 'stage', 'transition-summary'),
-  field('important-change', '重要变化', 'long-text', 'stage', 'transition-summary'),
-  field('handoff-advice', '交接建议', 'long-text', 'stage', 'transition-summary'),
+  field('long-term-summary', '长期成长概览', 'text', 'transition-summary'),
+  field('best-method', '最有效的教育方式', 'text', 'transition-summary'),
+  field('continued-support', '仍需支持事项', 'text', 'transition-summary'),
+  field('important-change', '重要变化', 'text', 'transition-summary'),
+  field('handoff-advice', '交接建议', 'text', 'transition-summary'),
 ];
 
 const cloneFields = (items: ArchiveField[]) => items.map(item => ({ ...item, options: [...item.options] }));
 const cloneSections = (items: ArchiveSection[]) => items.map(item => ({ ...item }));
+
+const createTemplateSnapshot = (template: ArchiveTemplate): ArchiveTemplateSnapshot => ({
+  name: template.name,
+  version: template.version,
+  layoutMode: template.layoutMode,
+  systemFields: [...template.systemFields],
+  sections: cloneSections(template.sections),
+  fields: cloneFields(template.fields),
+});
+
+const cloneTemplateSnapshot = (snapshot: ArchiveTemplateSnapshot): ArchiveTemplateSnapshot => ({
+  ...snapshot,
+  systemFields: [...snapshot.systemFields],
+  sections: cloneSections(snapshot.sections),
+  fields: cloneFields(snapshot.fields),
+});
 
 const entrySections: ArchiveSection[] = [
   section('academic', '学业基础'),
@@ -257,8 +220,8 @@ const entrySections: ArchiveSection[] = [
   section('cognition', '认知特点'),
   section('social', '交往风格'),
   section('personality-family', '性格与家庭'),
-  section('development-goals', '优先发展目标', '家长、学生与教师共同选择'),
-  section('inner-drive', '内驱力特征', '关注兴趣激发、胜任感与归属感'),
+  section('development-goals', '优先发展目标'),
+  section('inner-drive', '内驱力特征'),
   section('confirmation', '建档确认'),
   summarySection,
 ];
@@ -274,9 +237,9 @@ const createRecommendedTemplates = (spaceId: string): ArchiveTemplate[] => [
     origin: 'recommended',
     status: 'recommended',
     version: 1,
-    stage: 'entry',
+    layoutMode: 'grouped',
     gradeScopes: ['一年级'],
-    sources: ['homeroom', 'guardian', 'student', 'records'],
+    systemFields: ['name', 'class', 'birthDate'],
     sections: cloneSections(entrySections),
     fields: cloneFields(entryFields),
     updatedAt: '2026-07-01',
@@ -288,9 +251,9 @@ const createRecommendedTemplates = (spaceId: string): ArchiveTemplate[] => [
     origin: 'recommended',
     status: 'recommended',
     version: 1,
-    stage: 'term',
+    layoutMode: 'grouped',
     gradeScopes: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
-    sources: ['homeroom', 'guardian', 'student', 'records'],
+    systemFields: ['name', 'class', 'birthDate'],
     sections: cloneSections(termSections),
     fields: cloneFields([...coreFields, ...termFields]),
     updatedAt: '2026-07-01',
@@ -302,9 +265,9 @@ const createRecommendedTemplates = (spaceId: string): ArchiveTemplate[] => [
     origin: 'recommended',
     status: 'recommended',
     version: 1,
-    stage: 'transition',
+    layoutMode: 'grouped',
     gradeScopes: ['六年级'],
-    sources: ['homeroom', 'student', 'records'],
+    systemFields: ['name', 'studentNo', 'class'],
     sections: cloneSections(transitionSections),
     fields: cloneFields([...coreFields, ...transitionFields]),
     updatedAt: '2026-07-01',
@@ -367,18 +330,23 @@ const getStorageKey = (spaceId: string) => `${STORAGE_PREFIX}:${spaceId}`;
 const isoDate = () => new Date().toISOString().slice(0, 10);
 const timestampText = () => new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
 
-const makeSourceProgress = (sources: ArchiveSource[], index: number): ArchiveSourceProgress[] => (
-  (Object.keys(archiveSourceMeta) as ArchiveSource[]).map(source => {
-    if (!sources.includes(source)) return { source, status: 'not-required' };
-    const received = source === 'homeroom' || source === 'records' || index % 4 !== 3;
-    return { source, status: received ? 'received' : 'waiting', updatedAt: received ? '2026-07-10' : undefined };
-  })
+export const getArchiveSystemFieldLabel = (key: ArchiveSystemFieldKey) => (
+  ARCHIVE_SYSTEM_FIELD_OPTIONS.find(item => item.key === key)?.label ?? key
 );
+
+export const getArchiveSystemValues = (student: Student): Partial<Record<ArchiveSystemFieldKey, string>> => ({
+  name: student.name,
+  studentNo: student.studentNo ?? '',
+  gender: student.gender === 'male' ? '男' : '女',
+  birthDate: student.birthDate ?? '',
+  grade: student.grade,
+  class: student.class,
+});
 
 const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, getStudentsForClass }: ArchiveWorkspaceContext): ArchiveWorkspace => {
   const recommended = createRecommendedTemplates(spaceId);
-  const termRecommended = recommended.find(template => template.stage === 'term')!;
-  const entryRecommended = recommended.find(template => template.stage === 'entry')!;
+  const termRecommended = recommended.find(template => template.id === 'recommended-term-v1')!;
+  const entryRecommended = recommended.find(template => template.id === 'recommended-entry-v1')!;
   const schoolTermTemplate: ArchiveTemplate = {
     ...termRecommended,
     id: 'school-term-growth-v2',
@@ -398,7 +366,6 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
     status: 'draft',
     version: 1,
     updatedAt: '2026-07-12',
-    sources: ['homeroom', 'guardian', 'student'],
     sections: cloneSections(entryRecommended.sections),
     fields: cloneFields(entryRecommended.fields),
   };
@@ -406,45 +373,21 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
   const preferredClassId = homeroomClassIds.find(id => classes.some(item => item.id === id)) ?? classes[0]?.id ?? '';
   const preferredClass = classes.find(item => item.id === preferredClassId) ?? classes[0];
   const students = preferredClass ? getStudentsForClass(preferredClass.id).filter(student => student.status !== 'left').slice(0, 12) : [];
-  const progress: ArchiveStudentProgress[] = students.map((student, index) => ({
+  const drafts: ArchiveDraft[] = students.slice(7, 10).map((student, index) => ({
+    id: `draft-${student.id}-term-2026`,
     studentId: student.id,
     studentName: student.name,
     classId: preferredClass.id,
     className: preferredClass.name,
-    status: index < 7 ? 'archived' : index < 9 ? 'pending' : 'draft',
-    answers: index < 7 ? { ...termAnswerSeed } : index < 9 ? { ...termAnswerSeed, 'next-strategy': '' } : {},
-    sourceProgress: makeSourceProgress(schoolTermTemplate.sources, index).map(item => index < 7 && item.status !== 'not-required' ? ({ ...item, status: 'received' as const, updatedAt: '2026-07-10' }) : item),
-    updatedAt: index < 7 ? '2026-07-11' : index < 9 ? '2026-07-13' : '2026-07-09',
-  }));
-
-  const task: ArchiveTask = {
-    id: 'task-2026-spring-term',
-    spaceId,
-    name: '2025-2026学年下学期成长档案',
     templateId: schoolTermTemplate.id,
     templateName: schoolTermTemplate.name,
     templateVersion: schoolTermTemplate.version,
-    stage: 'term',
-    schoolTerm: '2025-2026学年 下学期',
-    gradeScope: preferredClass?.gradeLevel ?? '一年级',
-    classIds: preferredClass ? [preferredClass.id] : [],
-    classAssignments: preferredClass ? [{
-      classId: preferredClass.id,
-      className: preferredClass.name,
-      assigneeType: 'homeroom',
-      assigneeRole: '班主任',
-    }] : [],
-    reminderPolicy: {
-      notifyOnCreate: true,
-      beforeDeadlineDays: [3, 1],
-      repeatWhenOverdue: true,
-    },
-    createdBy: '学校档案管理员',
-    deadline: '2026-07-20',
-    status: 'active',
-    createdAt: '2026-07-08',
-    progress,
-  };
+    templateSnapshot: createTemplateSnapshot(schoolTermTemplate),
+    answers: index === 0 ? { ...termAnswerSeed, 'next-strategy': '' } : {},
+    createdAt: '2026-07-09',
+    updatedAt: index === 0 ? '2026-07-13' : '2026-07-09',
+    createdBy: teacherName,
+  }));
 
   const snapshots: ArchiveSnapshot[] = students.flatMap((student, index) => {
     const entry: ArchiveSnapshot = {
@@ -456,17 +399,13 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
       templateId: 'recommended-entry-v1',
       templateName: '一年级初始成长档案',
       templateVersion: 1,
-      stage: 'entry',
+      templateSnapshot: createTemplateSnapshot(entryRecommended),
       period: '一年级入学第4周',
       status: 'archived',
       createdAt: '2025-09-28',
       createdBy: '张林老师',
+      systemValues: getArchiveSystemValues(student),
       answers: { ...previousAnswerSeed },
-      sourceRecords: [
-        { source: 'guardian', title: '一年级学生家长问卷', provider: `${student.name}家长`, submittedAt: '2025-09-12', status: '已入档' },
-        { source: 'student', title: '一年级学生访谈', provider: student.name, submittedAt: '2025-09-18', status: '已入档' },
-        { source: 'homeroom', title: '入学第1-4周教师观察', provider: '张林老师', submittedAt: '2025-09-26', status: '已入档' },
-      ],
     };
     if (index >= 7) return [entry];
     const term: ArchiveSnapshot = {
@@ -478,48 +417,111 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
       templateId: schoolTermTemplate.id,
       templateName: schoolTermTemplate.name,
       templateVersion: schoolTermTemplate.version,
-      stage: 'term',
+      templateSnapshot: createTemplateSnapshot(schoolTermTemplate),
       period: '2025-2026学年 下学期',
       status: 'archived',
       createdAt: '2026-07-11',
       createdBy: teacherName,
+      systemValues: getArchiveSystemValues(student),
       answers: { ...termAnswerSeed },
-      sourceRecords: schoolTermTemplate.sources.map(source => ({
-        source,
-        title: archiveSourceMeta[source].label,
-        provider: source === 'homeroom' ? teacherName : source === 'guardian' ? `${student.name}家长` : source === 'student' ? student.name : '系统汇总',
-        submittedAt: '2026-07-10',
-        status: '已入档' as const,
-      })),
     };
     return [entry, term];
   });
 
-  const baseArchives = students.map(student => ({
-    studentId: student.id,
-    healthNotes: '无特殊健康提醒',
-    allergyHistory: '无已知过敏史',
-    guardianSummary: student.guardianContacts?.map(item => `${item.relation} ${item.phone.slice(0, 3)}****${item.phone.slice(-4)}`).join('、') || '家长信息待完善',
-    classHistory: [preferredClass.name],
-    updatedAt: '2026-06-28',
-  }));
-
   const firstStudent = students[0];
   const auditEvents: ArchiveAuditEvent[] = firstStudent ? [
-    { id: 'audit-seed-1', studentId: firstStudent.id, action: '确认成档', operator: teacherName, operatorRole: '班主任', occurredAt: '2026-07-11 16:20', detail: '确认2025-2026学年下学期成长档案' },
+    { id: 'audit-seed-1', studentId: firstStudent.id, action: '确认成档', operator: teacherName, operatorRole: '教师', occurredAt: '2026-07-11 16:20', detail: '确认2025-2026学年下学期成长档案' },
     { id: 'audit-seed-2', studentId: firstStudent.id, action: '查看档案', operator: '周老师', operatorRole: '现任数学教师', occurredAt: '2026-07-14 09:15', detail: '查看最新成长档案' },
   ] : [];
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 5,
     spaceId,
     templates: [...recommended, schoolTermTemplate, schoolEntryTemplate],
-    tasks: [task],
+    drafts,
     snapshots,
-    baseArchives,
     auditEvents,
   };
 };
+
+type LegacyField = Omit<ArchiveField, 'type'> & {
+  type: ArchiveFieldType | 'short-text' | 'long-text';
+  group?: 'core' | 'stage';
+};
+
+const normalizeTemplate = (template: ArchiveTemplate): ArchiveTemplate => ({
+  ...template,
+  layoutMode: template.layoutMode ?? ((template.sections ?? []).length > 0 ? 'grouped' : 'flat'),
+  systemFields: [...(template.systemFields ?? DEFAULT_ARCHIVE_SYSTEM_FIELDS)],
+  sections: (template.sections ?? []).map(item => ({ id: item.id, label: item.label })),
+  fields: ((template.fields ?? []) as LegacyField[]).map(item => ({
+    id: item.id,
+    semanticKey: item.semanticKey,
+    label: item.label,
+    type: item.type === 'short-text' || item.type === 'long-text' ? 'text' : item.type,
+    sectionId: item.sectionId,
+    required: item.required,
+    options: [...item.options],
+  })),
+});
+
+type StoredTemplateSnapshot = Omit<ArchiveTemplateSnapshot, 'systemFields'> & { systemFields?: ArchiveSystemFieldKey[] };
+type StoredArchiveDraft = Omit<ArchiveDraft, 'templateSnapshot'> & { templateSnapshot?: StoredTemplateSnapshot };
+type StoredArchiveSnapshot = Omit<ArchiveSnapshot, 'templateSnapshot' | 'systemValues'> & {
+  templateSnapshot?: StoredTemplateSnapshot;
+  systemValues?: Partial<Record<ArchiveSystemFieldKey, string>>;
+};
+
+const normalizeTemplateSnapshot = (snapshot: StoredTemplateSnapshot): ArchiveTemplateSnapshot => ({
+  ...snapshot,
+  systemFields: [...(snapshot.systemFields ?? DEFAULT_ARCHIVE_SYSTEM_FIELDS)],
+  sections: cloneSections(snapshot.sections),
+  fields: cloneFields(snapshot.fields),
+});
+
+const resolveStoredTemplateSnapshot = (
+  record: StoredArchiveDraft | StoredArchiveSnapshot,
+  templates: ArchiveTemplate[],
+): ArchiveTemplateSnapshot => {
+  if (record.templateSnapshot) return normalizeTemplateSnapshot(record.templateSnapshot);
+  const template = templates.find(item => item.id === record.templateId && item.version === record.templateVersion);
+  if (template) return createTemplateSnapshot(template);
+  return {
+    name: record.templateName,
+    version: record.templateVersion,
+    layoutMode: 'flat',
+    systemFields: [...DEFAULT_ARCHIVE_SYSTEM_FIELDS],
+    sections: [],
+    fields: Object.keys(record.answers).map((semanticKey, index) => ({
+      id: `field-restored-${index}`,
+      semanticKey,
+      label: semanticKey,
+      type: 'text',
+      sectionId: '',
+      required: false,
+      options: [],
+    })),
+  };
+};
+
+const hydrateStudentArchiveRecords = (
+  drafts: StoredArchiveDraft[],
+  snapshots: StoredArchiveSnapshot[],
+  templates: ArchiveTemplate[],
+): Pick<ArchiveWorkspace, 'drafts' | 'snapshots'> => ({
+  drafts: drafts.map(record => ({
+    ...record,
+    templateSnapshot: resolveStoredTemplateSnapshot(record, templates),
+  })),
+  snapshots: snapshots.map(record => ({
+    ...record,
+    templateSnapshot: resolveStoredTemplateSnapshot(record, templates),
+    systemValues: record.systemValues ?? {
+      name: record.studentName,
+      class: record.className,
+    },
+  })),
+});
 
 export const readArchiveWorkspace = (context: ArchiveWorkspaceContext): ArchiveWorkspace => {
   const seed = createSeedWorkspace(context);
@@ -527,69 +529,96 @@ export const readArchiveWorkspace = (context: ArchiveWorkspaceContext): ArchiveW
   const stored = window.localStorage.getItem(getStorageKey(context.spaceId));
   if (!stored) return seed;
   try {
-    const parsed = JSON.parse(stored) as Omit<ArchiveWorkspace, 'schemaVersion'> & { schemaVersion?: number };
-    if (parsed.schemaVersion === 2) {
+    const parsed = JSON.parse(stored) as {
+      schemaVersion?: number;
+      spaceId?: string;
+      templates?: ArchiveTemplate[];
+      drafts?: StoredArchiveDraft[];
+      snapshots?: StoredArchiveSnapshot[];
+      auditEvents?: ArchiveAuditEvent[];
+    };
+    if (parsed.schemaVersion === 3 || parsed.schemaVersion === 4 || parsed.schemaVersion === 5) {
+      const templates = (parsed.templates ?? []).map(normalizeTemplate);
+      const records = hydrateStudentArchiveRecords(parsed.drafts ?? [], parsed.snapshots ?? [], templates);
       return {
-        ...parsed,
-        tasks: parsed.tasks.map(task => ({
-          ...task,
-          classAssignments: task.classAssignments ?? task.classIds.map(classId => ({
-            classId,
-            className: context.classes.find(item => item.id === classId)?.name ?? classId,
-            assigneeType: 'homeroom' as const,
-            assigneeRole: '班主任' as const,
-          })),
-          reminderPolicy: task.reminderPolicy ?? {
-            notifyOnCreate: true,
-            beforeDeadlineDays: [3, 1],
-            repeatWhenOverdue: true,
-          },
-          createdBy: task.createdBy ?? '学校档案管理员',
-        })),
+        schemaVersion: 5,
+        spaceId: parsed.spaceId ?? context.spaceId,
+        templates,
+        ...records,
+        auditEvents: parsed.auditEvents ?? [],
       };
     }
-    if (parsed.schemaVersion !== 1) return seed;
+    if (parsed.schemaVersion !== 1 && parsed.schemaVersion !== 2) return seed;
 
     const recommended = createRecommendedTemplates(context.spaceId);
-    const migratedTemplates = parsed.templates
+    const legacyTemplates = (parsed.templates ?? []) as Array<Omit<ArchiveTemplate, 'fields' | 'layoutMode'> & { fields: LegacyField[]; layoutMode?: FormLayoutMode }>;
+    const migratedTemplates = legacyTemplates
       .filter(template => template.origin !== 'recommended')
       .map(template => {
-        const legacyFields = template.fields as Array<ArchiveField & { sectionId?: string }>;
+        const legacyFields = template.fields ?? [];
         const hasCore = legacyFields.some(item => item.group === 'core');
         const hasStage = legacyFields.some(item => item.group !== 'core');
-        const sections = [
+        const sections = template.sections?.length ? template.sections : [
           ...(hasCore ? [section('legacy-core', '核心信息')] : []),
           ...(hasStage ? [section('legacy-stage', '阶段信息')] : []),
         ];
         return {
           ...template,
           sections,
-          fields: legacyFields.map(item => ({
-            ...item,
-            sectionId: item.sectionId ?? (item.group === 'core' ? 'legacy-core' : 'legacy-stage'),
-            options: [...item.options],
-          })),
+          fields: legacyFields.map(item => {
+            const { group, ...rest } = item;
+            return {
+              ...rest,
+              sectionId: item.sectionId ?? (group === 'core' ? 'legacy-core' : 'legacy-stage'),
+              options: [...item.options],
+            };
+          }),
         };
       });
+    type LegacyTask = {
+      templateId: string;
+      templateName: string;
+      templateVersion: number;
+      createdBy?: string;
+      createdAt: string;
+      progress: Array<{
+        studentId: string;
+        studentName: string;
+        classId: string;
+        className: string;
+        status: 'draft' | 'pending' | 'archived';
+        answers: Record<string, string>;
+        updatedAt: string;
+      }>;
+    };
+    const legacyTasks = ((parsed as unknown as { tasks?: LegacyTask[] }).tasks ?? []);
+    const drafts: StoredArchiveDraft[] = [
+      ...(parsed.drafts ?? []),
+      ...legacyTasks.flatMap(task => task.progress
+        .filter(item => item.status !== 'archived')
+        .map(item => ({
+          id: `draft-${item.studentId}-${task.templateId}`,
+          studentId: item.studentId,
+          studentName: item.studentName,
+          classId: item.classId,
+          className: item.className,
+          templateId: task.templateId,
+          templateName: task.templateName,
+          templateVersion: task.templateVersion,
+          answers: item.answers,
+          createdAt: task.createdAt,
+          updatedAt: item.updatedAt,
+          createdBy: task.createdBy ?? '教师',
+        }))),
+    ];
+    const templates = [...recommended, ...migratedTemplates.map(normalizeTemplate)];
+    const records = hydrateStudentArchiveRecords(drafts, parsed.snapshots ?? [], templates);
     return {
-      ...parsed,
-      schemaVersion: 2,
-      templates: [...recommended, ...migratedTemplates],
-      tasks: parsed.tasks.map(task => ({
-        ...task,
-        classAssignments: task.classIds.map(classId => ({
-          classId,
-          className: context.classes.find(item => item.id === classId)?.name ?? classId,
-          assigneeType: 'homeroom' as const,
-          assigneeRole: '班主任' as const,
-        })),
-        reminderPolicy: {
-          notifyOnCreate: true,
-          beforeDeadlineDays: [3, 1],
-          repeatWhenOverdue: true,
-        },
-        createdBy: '学校档案管理员',
-      })),
+      schemaVersion: 5,
+      spaceId: parsed.spaceId ?? context.spaceId,
+      templates,
+      ...records,
+      auditEvents: parsed.auditEvents ?? [],
     };
   } catch {
     return seed;
@@ -603,7 +632,7 @@ export const persistArchiveWorkspace = (workspace: ArchiveWorkspace) => {
 };
 
 export const cloneRecommendedTemplate = (workspace: ArchiveWorkspace, templateId: string): { workspace: ArchiveWorkspace; templateId: string } => {
-  const source = workspace.templates.find(template => template.id === templateId);
+  const source = workspace.templates.find(template => template.id === templateId && !template.deletedAt);
   if (!source) return { workspace, templateId };
   const nextId = `school-template-${Date.now()}`;
   const copy: ArchiveTemplate = {
@@ -614,151 +643,159 @@ export const cloneRecommendedTemplate = (workspace: ArchiveWorkspace, templateId
     status: 'draft',
     version: 1,
     updatedAt: isoDate(),
+    systemFields: [...source.systemFields],
     sections: cloneSections(source.sections),
     fields: cloneFields(source.fields),
   };
   return { workspace: { ...workspace, templates: [...workspace.templates, copy] }, templateId: nextId };
+};
+
+export const createBlankArchiveTemplate = (workspace: ArchiveWorkspace): { workspace: ArchiveWorkspace; templateId: string } => {
+  const templateId = `school-template-blank-${Date.now()}`;
+  const template: ArchiveTemplate = {
+    id: templateId,
+    spaceId: workspace.spaceId,
+    name: '未命名档案',
+    origin: 'school',
+    status: 'draft',
+    version: 1,
+    layoutMode: 'flat',
+    gradeScopes: [],
+    systemFields: [...DEFAULT_ARCHIVE_SYSTEM_FIELDS],
+    sections: [],
+    fields: [],
+    updatedAt: isoDate(),
+  };
+  return { workspace: { ...workspace, templates: [...workspace.templates, template] }, templateId };
 };
 
 export const saveArchiveTemplate = (workspace: ArchiveWorkspace, template: ArchiveTemplate): ArchiveWorkspace => ({
   ...workspace,
-  templates: workspace.templates.map(item => item.id === template.id ? { ...template, updatedAt: isoDate() } : item),
+  templates: workspace.templates.map(item => item.id === template.id && !item.deletedAt ? { ...template, updatedAt: isoDate() } : item),
 });
 
-export const createTemplateVersion = (workspace: ArchiveWorkspace, templateId: string): { workspace: ArchiveWorkspace; templateId: string } => {
-  const source = workspace.templates.find(template => template.id === templateId);
-  if (!source) return { workspace, templateId };
-  const nextId = `${source.id}-v${source.version + 1}-${Date.now()}`;
-  const copy: ArchiveTemplate = {
-    ...source,
-    id: nextId,
-    status: 'draft',
-    version: source.version + 1,
-    updatedAt: isoDate(),
-    sections: cloneSections(source.sections),
-    fields: cloneFields(source.fields),
+export const deleteArchiveTemplate = (
+  workspace: ArchiveWorkspace,
+  templateId: string,
+): { workspace: ArchiveWorkspace; deleted: boolean } => {
+  const template = workspace.templates.find(item => item.id === templateId);
+  const canDelete = template?.origin === 'school'
+    && !template.deletedAt
+    && (template.status === 'draft' || template.status === 'disabled');
+  if (!canDelete) return { workspace, deleted: false };
+  return {
+    workspace: {
+      ...workspace,
+      templates: workspace.templates.map(item => (
+        item.id === templateId ? { ...item, deletedAt: isoDate(), updatedAt: isoDate() } : item
+      )),
+    },
+    deleted: true,
   };
-  return { workspace: { ...workspace, templates: [...workspace.templates, copy] }, templateId: nextId };
 };
 
-export const createArchiveTask = (
+export const setArchiveTemplateStatus = (
   workspace: ArchiveWorkspace,
-  input: Omit<ArchiveTask, 'id' | 'spaceId' | 'createdAt' | 'status' | 'progress'>,
-  classes: ClassInfo[],
-  getStudentsForClass: (classId: string) => Student[],
-): ArchiveWorkspace => {
-  const template = workspace.templates.find(item => item.id === input.templateId);
-  if (!template) return workspace;
-  const progress = input.classIds.flatMap(classId => {
-    const classInfo = classes.find(item => item.id === classId);
-    if (!classInfo) return [];
-    return getStudentsForClass(classId)
-      .filter(student => student.status !== 'left')
-      .map((student, index) => ({
-        studentId: student.id,
-        studentName: student.name,
-        classId,
-        className: classInfo.name,
-        status: 'draft' as const,
-        answers: {},
-        sourceProgress: makeSourceProgress(template.sources, index + 3).map(item => item.source === 'homeroom' ? { ...item, status: 'waiting' as const, updatedAt: undefined } : item),
-        updatedAt: isoDate(),
-      }));
-  });
-  const task: ArchiveTask = {
-    ...input,
-    id: `archive-task-${Date.now()}`,
-    spaceId: workspace.spaceId,
+  templateId: string,
+  status: Extract<ArchiveTemplateStatus, 'published' | 'disabled'>,
+): ArchiveWorkspace => ({
+  ...workspace,
+  templates: workspace.templates.map(item => (
+    item.id === templateId && item.origin === 'school' && item.status !== 'draft' && !item.deletedAt
+      ? { ...item, status, updatedAt: isoDate() }
+      : item
+  )),
+});
+
+export const getEnabledTemplatesForGrade = (workspace: ArchiveWorkspace, grade: string): ArchiveTemplate[] => (
+  workspace.templates.filter(template => (
+    template.origin === 'school'
+    && template.status === 'published'
+    && !template.deletedAt
+    && template.gradeScopes.includes(grade)
+  ))
+);
+
+export const createStudentArchiveDraft = (
+  workspace: ArchiveWorkspace,
+  templateId: string,
+  student: Student,
+  classInfo: { id: string; name: string },
+  operator: string,
+): { workspace: ArchiveWorkspace; draftId: string } => {
+  const template = workspace.templates.find(item => item.id === templateId && !item.deletedAt);
+  if (!template || template.status !== 'published') return { workspace, draftId: '' };
+  const existing = workspace.drafts.find(item => item.studentId === student.id && item.templateId === templateId);
+  if (existing) return { workspace, draftId: existing.id };
+  const draftId = `draft-${student.id}-${Date.now()}`;
+  const draft: ArchiveDraft = {
+    id: draftId,
+    studentId: student.id,
+    studentName: student.name,
+    classId: classInfo.id,
+    className: classInfo.name,
+    templateId: template.id,
+    templateName: template.name,
+    templateVersion: template.version,
+    templateSnapshot: createTemplateSnapshot(template),
+    answers: {},
     createdAt: isoDate(),
-    status: 'active',
-    progress,
+    updatedAt: isoDate(),
+    createdBy: operator,
   };
-  return { ...workspace, tasks: [task, ...workspace.tasks] };
+  return { workspace: { ...workspace, drafts: [draft, ...workspace.drafts] }, draftId };
 };
 
 export const saveStudentArchiveDraft = (
   workspace: ArchiveWorkspace,
-  taskId: string,
-  studentId: string,
+  draftId: string,
   answers: Record<string, string>,
   submit: boolean,
   operator: string,
+  systemValues: Partial<Record<ArchiveSystemFieldKey, string>> = {},
 ): ArchiveWorkspace => {
-  const task = workspace.tasks.find(item => item.id === taskId);
-  const progress = task?.progress.find(item => item.studentId === studentId);
-  const template = task ? workspace.templates.find(item => item.id === task.templateId) : undefined;
-  if (!task || !progress || !template) return workspace;
-  const nextProgress: ArchiveStudentProgress = {
-    ...progress,
-    answers,
-    status: submit ? 'archived' : 'pending',
-    updatedAt: isoDate(),
-    sourceProgress: progress.sourceProgress.map(item => item.source === 'homeroom' ? { ...item, status: 'received', updatedAt: isoDate() } : item),
-  };
-  const nextTasks = workspace.tasks.map(item => {
-    if (item.id !== taskId) return item;
-    const nextItems = item.progress.map(student => student.studentId === studentId ? nextProgress : student);
-    return { ...item, progress: nextItems, status: nextItems.every(student => student.status === 'archived') ? 'completed' as const : item.status };
-  });
-  if (!submit) return { ...workspace, tasks: nextTasks };
+  const draft = workspace.drafts.find(item => item.id === draftId);
+  if (!draft) return workspace;
+  if (!submit) {
+    return {
+      ...workspace,
+      drafts: workspace.drafts.map(item => item.id === draftId ? { ...item, answers, updatedAt: isoDate() } : item),
+    };
+  }
 
   const snapshot: ArchiveSnapshot = {
-    id: `snapshot-${studentId}-${Date.now()}`,
-    studentId,
-    studentName: progress.studentName,
-    classId: progress.classId,
-    className: progress.className,
-    templateId: template.id,
-    templateName: template.name,
-    templateVersion: template.version,
-    stage: task.stage,
-    period: task.schoolTerm,
+    id: `snapshot-${draft.studentId}-${Date.now()}`,
+    studentId: draft.studentId,
+    studentName: draft.studentName,
+    classId: draft.classId,
+    className: draft.className,
+    templateId: draft.templateId,
+    templateName: draft.templateName,
+    templateVersion: draft.templateVersion,
+    templateSnapshot: cloneTemplateSnapshot(draft.templateSnapshot),
+    period: isoDate(),
     status: 'archived',
     createdAt: isoDate(),
     createdBy: operator,
+    systemValues: { ...systemValues },
     answers,
-    sourceRecords: nextProgress.sourceProgress
-      .filter(item => item.status !== 'not-required')
-      .map(item => ({
-        source: item.source,
-        title: archiveSourceMeta[item.source].label,
-        provider: item.source === 'homeroom' ? operator : item.source === 'guardian' ? `${progress.studentName}家长` : item.source === 'student' ? progress.studentName : '系统汇总',
-        submittedAt: item.updatedAt ?? isoDate(),
-        status: item.status === 'received' ? '已入档' : '待补充',
-      })),
   };
   const audit: ArchiveAuditEvent = {
     id: `audit-${Date.now()}`,
-    studentId,
+    studentId: draft.studentId,
     action: '确认成档',
     operator,
-    operatorRole: '班主任',
+    operatorRole: '教师',
     occurredAt: timestampText(),
-    detail: `确认${task.schoolTerm}${archiveStageMeta[task.stage].label}`,
+    detail: `确认「${draft.templateName}」`,
   };
-  return { ...workspace, tasks: nextTasks, snapshots: [...workspace.snapshots, snapshot], auditEvents: [audit, ...workspace.auditEvents] };
+  return {
+    ...workspace,
+    drafts: workspace.drafts.filter(item => item.id !== draftId),
+    snapshots: [...workspace.snapshots, snapshot],
+    auditEvents: [audit, ...workspace.auditEvents],
+  };
 };
-
-export const markArchiveSourceReceived = (
-  workspace: ArchiveWorkspace,
-  taskId: string,
-  studentId: string,
-  source: ArchiveSource,
-): ArchiveWorkspace => ({
-  ...workspace,
-  tasks: workspace.tasks.map(task => task.id !== taskId ? task : ({
-    ...task,
-    progress: task.progress.map(student => student.studentId !== studentId ? student : ({
-      ...student,
-      sourceProgress: student.sourceProgress.map(item => item.source !== source ? item : ({
-        ...item,
-        status: 'received',
-        updatedAt: isoDate(),
-      })),
-      updatedAt: isoDate(),
-    })),
-  })),
-});
 
 export const requestSnapshotCorrection = (
   workspace: ArchiveWorkspace,
@@ -776,15 +813,15 @@ export const requestSnapshotCorrection = (
     createdBy: operator,
     revisionOf: source.id,
     correctionReason: reason,
+    templateSnapshot: cloneTemplateSnapshot(source.templateSnapshot),
     answers: { ...source.answers },
-    sourceRecords: source.sourceRecords.map(record => ({ ...record })),
   };
   const audit: ArchiveAuditEvent = {
     id: `audit-${Date.now()}`,
     studentId: source.studentId,
     action: '申请更正',
     operator,
-    operatorRole: '班主任',
+    operatorRole: '教师',
     occurredAt: timestampText(),
     detail: reason,
   };
@@ -804,55 +841,19 @@ export const appendArchiveViewAudit = (workspace: ArchiveWorkspace, studentId: s
   return { ...workspace, auditEvents: [audit, ...workspace.auditEvents].slice(0, 120) };
 };
 
-export const updateStudentBaseArchive = (
-  workspace: ArchiveWorkspace,
-  studentId: string,
-  values: Pick<StudentBaseArchive, 'healthNotes' | 'allergyHistory' | 'guardianSummary'>,
-  operator: string,
-): ArchiveWorkspace => {
-  const nextBaseArchives = workspace.baseArchives.map(item => item.studentId === studentId ? ({
-    ...item,
-    ...values,
-    updatedAt: isoDate(),
-  }) : item);
-  const audit: ArchiveAuditEvent = {
-    id: `audit-${Date.now()}`,
-    studentId,
-    action: '更新底档',
-    operator,
-    operatorRole: '班主任',
-    occurredAt: timestampText(),
-    detail: '更新健康提醒、过敏史或家庭联系人',
-  };
-  return { ...workspace, baseArchives: nextBaseArchives, auditEvents: [audit, ...workspace.auditEvents] };
-};
-
-export const getTaskCompletionRate = (task: ArchiveTask) => (
-  task.progress.length === 0 ? 0 : Math.round(task.progress.filter(item => item.status === 'archived').length / task.progress.length * 100)
-);
-
 export const getPendingArchiveTasksForTeacher = (
   workspace: ArchiveWorkspace,
   teacherName: string,
   homeroomClassIds: string[],
-) => workspace.tasks.filter(task => {
-  if (task.status !== 'active') return false;
-  const assignedClassIds = task.classAssignments
-    .filter(assignment => (
-      assignment.assigneeType === 'homeroom'
-        ? homeroomClassIds.includes(assignment.classId)
-        : assignment.assigneeName === teacherName
-    ))
-    .map(assignment => assignment.classId);
-  return task.progress.some(item => assignedClassIds.includes(item.classId) && item.status !== 'archived');
-});
+): ArchiveDraft[] => workspace.drafts.filter(draft => (
+  homeroomClassIds.includes(draft.classId) || draft.createdBy === teacherName
+));
 
 export const createArchiveField = (sectionId = ''): ArchiveField => ({
   id: `field-custom-${Date.now()}`,
   semanticKey: `custom-${Date.now()}`,
   label: '新字段',
-  type: 'short-text',
-  group: 'stage',
+  type: 'text',
   sectionId,
   required: false,
   options: [],

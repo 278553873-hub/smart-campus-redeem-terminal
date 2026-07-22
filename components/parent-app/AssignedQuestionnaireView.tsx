@@ -52,6 +52,9 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   const [submitError, setSubmitError] = useState('');
 
   const question = questionnaire.questions[stepIndex];
+  const currentSection = questionnaire.layoutMode === 'grouped'
+    ? questionnaire.sections?.find(section => section.id === question?.sectionId)
+    : undefined;
   const progress = Math.round(((stepIndex + 1) / Math.max(1, questionnaire.questions.length)) * 100);
   const currentAnswer = question ? answers[question.id] : undefined;
   const selectedOptions = getQuestionnaireSelectedOptions(currentAnswer);
@@ -157,6 +160,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
 
       <section className="mx-5 mt-4">
         <ParentCard as="section" className="p-5">
+          {currentSection && <div className="mb-3 text-[12px] font-black text-slate-500">{currentSection.label}</div>}
           <div className="mb-3 flex items-center justify-between gap-3">
             <span className="inline-flex rounded-full bg-sky-50 px-3 py-1.5 text-[12px] font-black text-sky-600">{getQuestionTypeLabel(question)}</span>
             {question.required && <span className="text-[11px] font-bold text-slate-400">必答</span>}

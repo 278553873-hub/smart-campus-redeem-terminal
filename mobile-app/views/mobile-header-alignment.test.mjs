@@ -14,6 +14,10 @@ if (!app.includes('h-11 flex items-center justify-between px-4 sticky top-0')) {
   failures.push('通用 LocalHeader 应统一为 44px 高度，并使用 16px 横向边距。');
 }
 
+if (app.includes("sticky top-0 z-[45] backdrop-blur-md") && app.includes("'bg-white/38 border-b")) {
+  failures.push('通用 LocalHeader 不应保留底部分隔线，应依靠毛玻璃与内容自然分层。');
+}
+
 if (app.includes('className="h-14 flex items-center justify-between px-6 bg-white/80')) {
   failures.push('通用 LocalHeader 仍为 56px，会导致“我的班级”标题低于微信胶囊中心。');
 }

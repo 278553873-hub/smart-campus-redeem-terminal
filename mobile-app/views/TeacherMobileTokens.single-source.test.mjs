@@ -37,7 +37,7 @@ assert.match(app, /from '\.\/styles\/teacherMobileTokens'/);
 assert.doesNotMatch(app, /\b(?:blue|indigo|violet|purple)-\d+/);
 assert.doesNotMatch(parent, /teacherMobileTokens/);
 assert.match(guidelines, /mobile-app\/styles\/teacherMobileTokens\.ts/);
-assert.match(canonical, /textTertiary: teacherBrandPalette\.neutral\[500\]/);
+assert.match(canonical, /textTertiary: teacherBrandPalette\.neutral\[550\]/);
 assert.match(canonical, /'--tm-text-tertiary': teacherBrandSemantic\.textTertiary/);
 assert.match(canonical, /metric: 'text-\[24px\]/);
 
@@ -56,8 +56,16 @@ const contrast = (foreground, background) => {
 assert.ok(contrast('#BA352E', '#FFF1F1') >= 4.5, '学生模式浅底文字对比度不足');
 assert.ok(contrast('#B83F00', '#FFF5EC') >= 4.5, '班级模式浅底文字对比度不足');
 assert.ok(contrast('#155B54', '#ECF8F6') >= 4.5, '学生受众浅底文字对比度不足');
+assert.ok(contrast('#126B5B', '#EFFAF7') >= 4.5, '班主任助理正文对比度不足');
+assert.ok(contrast('#1F9E84', '#FFFFFF') >= 3, '班主任助理图标与白色前景对比度不足');
 assert.ok(contrast('#6D6764', '#FFFFFF') >= 4.5, '弱提示文字对比度不足');
 assert.ok(contrast('#918985', '#FFF9F6') >= 3, '表单控件边界对比度不足');
+assert.ok(contrast('#7B7572', '#FFFFFF') >= 4.5, '三级弱文字对比度不足');
+assert.ok(contrast('#14A085', '#FFFFFF') >= 3, '五育美育分类色白底对比度不足');
+assert.ok(contrast('#C88100', '#FFFFFF') >= 3, '五育劳育分类色白底对比度不足');
+assert.ok(contrast('#48A04D', '#FFFFFF') >= 3, '五育体育分类色白底对比度不足');
+assert.ok(contrast('#E02727', '#FFFFFF') >= 3, '五育德育分类色白底对比度不足');
+assert.ok(contrast('#F75C03', '#FFFFFF') >= 3, '五育智育分类色白底对比度不足');
 
 for (const legacy of [
   '--ai-primary',

@@ -35,7 +35,7 @@ for (const required of [
   'displayedPercent',
   'style={{ width: `${displayedPercent}%` }}',
   'aria-label={`${label}进度${displayedPercent}%`}',
-  'theme.bar',
+  'coverageTone.bar',
   'text-3xl font-bold',
   'tracking-normal',
 ]) {

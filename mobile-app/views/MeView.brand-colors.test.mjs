@@ -4,7 +4,7 @@ const viewSource = readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8'
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const tokenSource = readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 
-for (const color of ['#E02727', '#F75C03', '#FA9C00', '#B4233C']) {
+for (const color of ['#E02727', '#F75C03', '#FA9C00', '#AB352C']) {
   if (!tokenSource.includes(color)) {
     throw new Error(`教师端品牌 Token 缺少“我的”页所需颜色：${color}`);
   }

@@ -2,13 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-.teacher-mobile-phone-gradient {
-  background:
-    radial-gradient(circle at 12% 0%, var(--tm-glow-primary), transparent 30%),
-    radial-gradient(circle at 88% 2%, var(--tm-glow-secondary), transparent 30%),
-    linear-gradient(180deg, var(--tm-bg-page) 0%, var(--tm-bg-surface) 100%);
-}
-
 .teacher-record-soft-page {
   background:
     radial-gradient(circle at 12% 0%, var(--tm-glow-primary), transparent 32%),

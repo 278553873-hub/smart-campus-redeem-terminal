@@ -145,8 +145,8 @@ const AiHeadteacherAssistantView: React.FC<AiHeadteacherAssistantViewProps> = ({
                                 }`}
                             >
                                 <span className={`flex shrink-0 items-center justify-center ${primary
-                                    ? 'h-12 w-12 rounded-[var(--tm-radius-inner)] bg-[var(--tm-role-headteacher-primary)] text-[var(--tm-text-inverse)] [box-shadow:0_12px_24px_-16px_var(--tm-role-headteacher-shadow)]'
-                                    : 'h-10 w-10 rounded-[var(--tm-radius-control)] border border-[var(--tm-role-headteacher-border)] bg-[var(--tm-role-headteacher-soft)] text-[var(--tm-role-headteacher-strong)]'
+                                    ? 'h-12 w-12 rounded-[var(--tm-radius-inner)] border border-[var(--tm-role-headteacher-border)] bg-[var(--tm-role-headteacher-soft-strong)] text-[var(--tm-role-headteacher-primary)] [box-shadow:0_12px_24px_-18px_var(--tm-role-headteacher-shadow)]'
+                                    : 'h-10 w-10 rounded-[var(--tm-radius-control)] border border-[var(--tm-role-headteacher-border)] bg-[var(--tm-role-headteacher-soft)] text-[var(--tm-role-headteacher-primary)]'
                                 }`}>
                                     <Icon className={primary ? 'h-6 w-6' : 'h-5 w-5'} strokeWidth={2.2} />
                                 </span>

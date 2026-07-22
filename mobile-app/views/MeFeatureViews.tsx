@@ -69,33 +69,20 @@ interface SuggestionFeedbackViewProps {
     onSubmit: () => void;
 }
 
-const PageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode }> = ({ children, footer }) => (
-    <div className="flex min-h-full flex-col bg-[linear-gradient(180deg,#F8FCFF_0%,#FFFFFF_48%,#F6FAFD_100%)]">
-        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5 pb-28 no-scrollbar">{children}</div>
-        {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-white/80 bg-white/86 px-5 py-4 shadow-[0_-14px_34px_-28px_rgba(15,23,42,0.42)] backdrop-blur-xl">{footer}</div>}
-    </div>
-);
-
-const WhitePanel: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <section className={`overflow-hidden rounded-[24px] border border-white/90 bg-white shadow-[0_18px_42px_-34px_rgba(35,96,145,0.34)] ring-1 ring-slate-100/70 ${className}`}>
-        {children}
-    </section>
-);
-
 const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode }> = ({ children, footer }) => (
-    <div className="relative flex min-h-full flex-col bg-[radial-gradient(circle_at_10%_0%,var(--tm-glow-primary),transparent_28%),radial-gradient(circle_at_92%_0%,var(--tm-glow-secondary),transparent_24%),linear-gradient(180deg,var(--tm-bg-page-glass)_0%,var(--tm-bg-surface)_48%,var(--tm-bg-surface-soft)_100%)] text-[var(--tm-text-primary)]">
+    <div className="relative flex min-h-full flex-col text-[var(--tm-text-primary)]">
         <div className={`flex-1 space-y-4 overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : 'pb-8'}`}>{children}</div>
-        {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 py-4 shadow-[0_-10px_28px_-24px_var(--tm-shadow-neutral)] backdrop-blur-xl">{footer}</div>}
+        {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 py-4 shadow-[0_-10px_28px_-24px_var(--tm-shadow-neutral-color)] backdrop-blur-xl">{footer}</div>}
     </div>
 );
 
 const FeaturePanel: React.FC<{ children: React.ReactNode; className?: string; allowOverflow?: boolean }> = ({ children, className = '', allowOverflow = false }) => (
-    <section className={`${allowOverflow ? 'overflow-visible' : 'overflow-hidden'} rounded-[24px] bg-[var(--tm-bg-surface-glass)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral)] backdrop-blur-sm ${className}`}>
+    <section className={`${allowOverflow ? 'overflow-visible' : 'overflow-hidden'} rounded-[24px] bg-[var(--tm-bg-surface-glass)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral-color)] backdrop-blur-sm ${className}`}>
         {children}
     </section>
 );
 
-const featurePrimaryButtonClass = 'flex h-12 w-full items-center justify-center gap-2 rounded-[20px] bg-[var(--tm-brand-primary)] text-[14px] font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand)] transition active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)]';
+const featurePrimaryButtonClass = 'flex h-12 w-full items-center justify-center gap-2 rounded-[20px] bg-[var(--tm-brand-primary)] text-[14px] font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)] transition active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)]';
 const featureListRowClass = 'flex min-h-[60px] items-center gap-1 border-b border-[var(--tm-border-subtle)]/70 px-3 last:border-b-0';
 const featureEditButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition active:bg-[var(--tm-brand-primary-soft)] active:text-[var(--tm-brand-primary)]';
 const featureDeleteButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-status-negative)] transition active:bg-[var(--tm-status-negative-soft)]';
@@ -115,12 +102,12 @@ const SwitchControl: React.FC<{ checked: boolean; onChange: (checked: boolean) =
 );
 
 const ActionRow: React.FC<{ icon?: React.ElementType; title: string; value?: string; onClick?: () => void }> = ({ icon: Icon, title, value, onClick }) => (
-    <button type="button" onClick={onClick} className="flex min-h-[54px] w-full items-center justify-between gap-3 border-b border-slate-100 px-4 text-left last:border-b-0 active:bg-slate-50">
-        <span className="flex min-w-0 items-center gap-3 text-[14px] font-semibold text-slate-900">
-            {Icon && <Icon className="h-4.5 w-4.5 shrink-0 text-slate-500" strokeWidth={2.1} />}
+    <button type="button" onClick={onClick} className="flex min-h-[54px] w-full items-center justify-between gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-bg-surface-soft)]">
+        <span className="flex min-w-0 items-center gap-3 text-[14px] font-semibold text-[var(--tm-text-primary)]">
+            {Icon && <Icon className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-secondary)]" strokeWidth={2.1} />}
             <span className="truncate">{title}</span>
         </span>
-        <span className="flex shrink-0 items-center gap-2 text-[13px] font-medium text-slate-400">
+        <span className="flex shrink-0 items-center gap-2 text-[13px] font-medium text-[var(--tm-text-tertiary)]">
             {value}
             <ChevronRight className="h-4 w-4" strokeWidth={2.1} />
         </span>
@@ -128,22 +115,22 @@ const ActionRow: React.FC<{ icon?: React.ElementType; title: string; value?: str
 );
 
 export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => (
-    <PageBody>
-        <WhitePanel>
-            <div className="px-4 py-3 text-[14px] font-bold text-slate-900">账号安全</div>
+    <FeaturePageBody>
+        <FeaturePanel>
+            <div className="px-4 py-3 text-[14px] font-bold text-[var(--tm-text-primary)]">账号安全</div>
             <ActionRow icon={Shield} title="登录账号" value="139****0121" />
             <ActionRow icon={KeyRound} title="修改密码" />
-        </WhitePanel>
+        </FeaturePanel>
 
-        <WhitePanel>
+        <FeaturePanel>
             <ActionRow icon={Lock} title="隐私协议" />
             <ActionRow icon={BookOpen} title="用户协议" />
-        </WhitePanel>
+        </FeaturePanel>
 
-        <button type="button" onClick={onLogout} className="h-12 w-full rounded-[20px] border border-slate-100 bg-white text-[14px] font-semibold text-rose-500 shadow-[0_14px_32px_-28px_rgba(15,23,42,0.32)] active:bg-rose-50">
+        <button type="button" onClick={onLogout} className="h-12 w-full rounded-[20px] bg-[var(--tm-bg-surface-glass)] text-[14px] font-semibold text-[var(--tm-status-negative)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral-color)] backdrop-blur-sm transition active:scale-[0.99] active:bg-[var(--tm-status-negative-soft)]">
             退出登录
         </button>
-    </PageBody>
+    </FeaturePageBody>
 );
 
 export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ subjects, draggingSubjectId, onAdd, onEdit, onDelete, onDragStart, onDragOver, onDragEnd }) => (
@@ -238,7 +225,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                             <CircleHelp className="h-4 w-4" aria-hidden="true" />
                         </button>
                         {showIssuanceHelp && (
-                            <div id={issuanceHelpId} role="tooltip" className="pointer-events-none absolute left-0 top-full z-30 w-[260px] max-w-[calc(100vw-64px)] rounded-2xl bg-[var(--tm-text-primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-white shadow-[0_14px_32px_-20px_var(--tm-shadow-neutral)]">
+                            <div id={issuanceHelpId} role="tooltip" className="pointer-events-none absolute left-0 top-full z-30 w-[260px] max-w-[calc(100vw-64px)] rounded-2xl bg-[var(--tm-text-primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-white shadow-[0_14px_32px_-20px_var(--tm-shadow-neutral-color)]">
                                 开启后，系统将按设置的周期和预算自动向班级发放货币。
                             </div>
                         )}
@@ -316,12 +303,12 @@ export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ 
     return (
         <FeaturePageBody
             footer={(
-                <button type="button" disabled={!canSubmit} onClick={onSubmit} className={`h-12 w-full rounded-[20px] text-[14px] font-bold transition ${canSubmit ? 'bg-[var(--tm-brand-primary)] text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand)] active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-disabled)]'}`}>
+                <button type="button" disabled={!canSubmit} onClick={onSubmit} className={`h-12 w-full rounded-[20px] text-[14px] font-bold transition ${canSubmit ? 'bg-[var(--tm-brand-primary)] text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)] active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-disabled)]'}`}>
                     提交
                 </button>
             )}
         >
-            <FeaturePanel className="p-4 focus-within:shadow-[0_0_0_2px_var(--tm-brand-primary-soft-strong),0_12px_32px_-26px_var(--tm-shadow-neutral)]">
+            <FeaturePanel className="p-4 focus-within:shadow-[0_0_0_2px_var(--tm-brand-primary-soft-strong),0_12px_32px_-26px_var(--tm-shadow-neutral-color)]">
                 <textarea value={text} onChange={(event) => onTextChange(event.target.value)} className="min-h-[156px] w-full resize-none bg-transparent text-[14px] leading-6 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-disabled)]" placeholder="请输入建议或问题" aria-label="反馈内容" />
             </FeaturePanel>
 
@@ -334,7 +321,7 @@ export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ 
                     {images.map((image, index) => (
                         <div key={`${image}-${index}`} className="relative flex aspect-square items-center justify-center rounded-2xl bg-[var(--tm-bg-surface-soft)] text-[12px] font-semibold text-[var(--tm-text-secondary)]">
                             {image}
-                            <button type="button" onClick={() => onRemoveImage(index)} className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--tm-status-negative)] text-white shadow-[0_8px_18px_-12px_var(--tm-shadow-neutral)]" aria-label={`删除第${index + 1}张反馈图片`}>
+                            <button type="button" onClick={() => onRemoveImage(index)} className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--tm-status-negative)] text-white shadow-[0_8px_18px_-12px_var(--tm-shadow-neutral-color)]" aria-label={`删除第${index + 1}张反馈图片`}>
                                 <X className="h-3.5 w-3.5" />
                             </button>
                         </div>
@@ -362,7 +349,7 @@ interface EditSheetProps {
 
 export const TextEditSheet: React.FC<EditSheetProps> = ({ title, value, placeholder, onChange, onCancel, onConfirm }) => (
     <div className="absolute inset-0 z-[100] flex items-end bg-[var(--tm-mask)] px-4 pb-4 backdrop-blur-[2px]" onClick={onCancel}>
-        <section className="w-full rounded-[28px] bg-[var(--tm-bg-surface-glass)] p-4 shadow-[0_28px_80px_-42px_var(--tm-shadow-neutral)] backdrop-blur-xl" onClick={(event) => event.stopPropagation()}>
+        <section className="w-full rounded-[28px] bg-[var(--tm-bg-surface-glass)] p-4 shadow-[0_28px_80px_-42px_var(--tm-shadow-neutral-color)] backdrop-blur-xl" onClick={(event) => event.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
                 <button type="button" onClick={onCancel} className="h-9 px-2 text-[13px] font-semibold text-[var(--tm-text-secondary)]">取消</button>
                 <div className="text-[16px] font-bold text-[var(--tm-text-primary)]">{title}</div>
@@ -384,7 +371,7 @@ interface ConfirmSheetProps {
 
 export const DeleteConfirmSheet: React.FC<ConfirmSheetProps> = ({ title, onCancel, onConfirm }) => (
     <div className="absolute inset-0 z-[100] flex items-end bg-[var(--tm-mask)] px-4 pb-4 backdrop-blur-[2px]" onClick={onCancel}>
-        <section className="w-full rounded-[28px] bg-[var(--tm-bg-surface-glass)] p-4 shadow-[0_28px_80px_-42px_var(--tm-shadow-neutral)] backdrop-blur-xl" onClick={(event) => event.stopPropagation()}>
+        <section className="w-full rounded-[28px] bg-[var(--tm-bg-surface-glass)] p-4 shadow-[0_28px_80px_-42px_var(--tm-shadow-neutral-color)] backdrop-blur-xl" onClick={(event) => event.stopPropagation()}>
             <div className="px-2 pb-4 pt-1 text-center text-[16px] font-bold text-[var(--tm-text-primary)]">{title}</div>
             <button type="button" onClick={onConfirm} className="h-12 w-full rounded-[20px] bg-[var(--tm-status-negative-soft)] text-[14px] font-bold text-[var(--tm-status-negative)] active:bg-[var(--tm-status-negative)] active:text-white">
                 删除

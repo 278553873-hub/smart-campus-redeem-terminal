@@ -110,7 +110,7 @@ if (!teacherUsageSection.includes('className={`min-h-[36px] rounded-xl px-4 text
 }
 
 
-if (!teacherUsageSection.includes('className="inline-flex rounded-2xl bg-[var(--tm-bg-surface-muted)] p-1"')) {
+if (!teacherUsageSection.includes('className="inline-flex rounded-2xl bg-[var(--tm-brand-primary-soft)] p-1"')) {
   throw new Error('教师使用排行榜筛选外层应使用 inline-flex，避免背景铺满溢出');
 }
 if (teacherUsageSection.includes('text-emerald') || teacherUsageSection.includes('text-orange')) {

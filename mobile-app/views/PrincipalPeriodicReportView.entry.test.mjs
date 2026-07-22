@@ -22,6 +22,8 @@ for (const required of [
   'generated={principalMonthlyReportGenerated}',
   'onGenerated={() => setPrincipalWeeklyReportGenerated(true)}',
   'onGenerated={() => setPrincipalMonthlyReportGenerated(true)}',
+  "onOpenHistory={() => navigateTo('principal_weekly_history')}",
+  "onOpenHistory={() => navigateTo('principal_monthly_history')}",
 ]) {
   requireText(appSource, required, `App 未完整接入校长周月报告：${required}`);
 }
@@ -35,6 +37,8 @@ for (const required of [
   'report.actionsTitle',
   'report.notice',
   'aria-label="返回"',
+  "aria-label={kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘'}",
+  'reportData?: PrincipalPeriodicReportContent;',
   'focus-visible:ring-2',
 ]) {
   requireText(viewSource, required, `校长周月报告页缺少状态、内容或无障碍能力：${required}`);

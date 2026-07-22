@@ -73,6 +73,7 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
     return {
       id: `${cls.id.replace('c_', '').replace('_', '')}${(i + 1).toString().padStart(2, '0')}`,
       studentNo: `${cls.id.split('_')[1]}${classNumber.padStart(2, '0')}${(i + 1).toString().padStart(2, '0')}`,
+      birthDate: i % 3 === 0 ? undefined : `${Number(cls.id.split('_')[1]) - 6}-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 24) + 1).padStart(2, '0')}`,
       status: i === count - 1 ? 'left' : 'active',
       reservedPhones: i % 4 === 0 ? ['13800001001', '13900002002'] : ['13800001001'],
       guardianContacts: i % 4 === 0

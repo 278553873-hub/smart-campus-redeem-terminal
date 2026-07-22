@@ -20,7 +20,9 @@ requireText(appSource, "name: '大飞'", '个人版教师姓名应为大飞。')
 requireText(appSource, 'avatar: ASSETS.AVATAR.TEACHER_DA_FEI', '个人版应使用独立头像。');
 requireText(source, 'text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]', '我的页面教师姓名字号应保持 22px，并使用品牌中性色 Token。');
 requireText(source, '编辑教师信息', '编辑按钮应保持独立可点击区域。');
-requireText(appSource, 'return <div className="h-full w-full bg-[var(--tm-bg-page)]"', '我的页面屏幕级背景应使用页面背景 Token。');
+requireText(appSource, 'return <TeacherMobileScreenBackground />', '我的页面屏幕级背景应统一使用公共背景组件。');
+const screenBackgroundSource = fs.readFileSync(new URL('../components/TeacherMobileScreenBackground.tsx', import.meta.url), 'utf8');
+requireText(screenBackgroundSource, 'bg-[var(--tm-bg-page)]', '我的页面屏幕级背景应使用页面背景 Token。');
 requireText(source, 'min-h-[144px]', '教师信息展示区应压缩高度，避免头像区域占用过多空间。');
 requireText(source, 'Camera', '教师头像右下角应使用相机图标。');
 requireText(source, 'border border-white bg-white text-[var(--tm-brand-primary)]', '我的页头像相机图标应使用白色实底和品牌红图标。');
