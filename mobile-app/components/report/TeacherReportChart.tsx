@@ -29,10 +29,12 @@ const loadTeacherReportChartRuntime = async () => {
 };
 
 export type TeacherReportChartColor =
+    | 'data'
     | 'brand'
     | 'secondary'
     | 'reward'
     | 'positive'
+    | 'warning'
     | 'negative'
     | 'virtue'
     | 'wisdom'
@@ -44,6 +46,7 @@ export type TeacherReportChartColor =
 
 interface TeacherReportChartTheme {
     colors: Record<TeacherReportChartColor, string>;
+    labelColors: Record<TeacherReportChartColor, string>;
     textPrimary: string;
     textSecondary: string;
     gridLine: string;
@@ -59,17 +62,35 @@ const readChartTheme = (element: HTMLElement): TeacherReportChartTheme => {
 
     return {
         colors: {
+            data: readToken(style, '--tm-chart-data-default'),
             brand: readToken(style, '--tm-brand-primary'),
             secondary: readToken(style, '--tm-brand-secondary'),
             reward: readToken(style, '--tm-brand-reward'),
-            positive: readToken(style, '--tm-status-positive'),
-            negative: readToken(style, '--tm-status-negative'),
-            virtue: readToken(style, '--tm-edu-virtue'),
-            wisdom: readToken(style, '--tm-edu-wisdom'),
-            fitness: readToken(style, '--tm-edu-fitness'),
-            aesthetic: readToken(style, '--tm-edu-aesthetic'),
-            labor: readToken(style, '--tm-edu-labor'),
+            positive: readToken(style, '--tm-chart-positive'),
+            warning: readToken(style, '--tm-chart-warning'),
+            negative: readToken(style, '--tm-chart-negative'),
+            virtue: readToken(style, '--tm-chart-edu-virtue'),
+            wisdom: readToken(style, '--tm-chart-edu-wisdom'),
+            fitness: readToken(style, '--tm-chart-edu-fitness'),
+            aesthetic: readToken(style, '--tm-chart-edu-aesthetic'),
+            labor: readToken(style, '--tm-chart-edu-labor'),
             peer: readToken(style, '--tm-chart-series-peer'),
+            total: readToken(style, '--tm-chart-series-total'),
+        },
+        labelColors: {
+            data: readToken(style, '--tm-chart-data-default-text'),
+            brand: readToken(style, '--tm-brand-primary-strong'),
+            secondary: readToken(style, '--tm-brand-secondary-strong'),
+            reward: readToken(style, '--tm-brand-reward-strong'),
+            positive: readToken(style, '--tm-chart-positive-text'),
+            warning: readToken(style, '--tm-chart-warning-text'),
+            negative: readToken(style, '--tm-chart-negative-text'),
+            virtue: readToken(style, '--tm-text-primary'),
+            wisdom: readToken(style, '--tm-text-primary'),
+            fitness: readToken(style, '--tm-text-primary'),
+            aesthetic: readToken(style, '--tm-text-primary'),
+            labor: readToken(style, '--tm-text-primary'),
+            peer: readToken(style, '--tm-text-secondary'),
             total: readToken(style, '--tm-chart-series-total'),
         },
         textPrimary: readToken(style, '--tm-text-primary'),
@@ -161,6 +182,9 @@ interface TeacherReportBarChartProps {
     className?: string;
     // 分类维度着色（如五育）：每个类目使用固定分类色，系列维度改用明度层级表达。
     categoryColors?: TeacherReportChartColor[];
+    // 柱顶已有精确值时，可关闭手机端冗余的纵轴标尺与网格。
+    showValueAxis?: boolean;
+    valueLabelSuffix?: string;
 }
 
 export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
@@ -170,8 +194,11 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
     optionKey,
     className = 'h-56',
     categoryColors,
+    showValueAxis = true,
+    valueLabelSuffix = '',
 }) => {
     const useCategoryColors = Boolean(categoryColors && categoryColors.length > 0);
+    const hasNegativeValue = series.some(item => item.values.some(value => value < 0));
     const createOption = React.useCallback((theme: TeacherReportChartTheme): EChartsCoreOption => ({
         animationDuration: 500,
         animationDurationUpdate: 250,
@@ -199,7 +226,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                 })),
             } : {}),
         },
-        grid: { left: 38, right: 8, top: 42, bottom: 30 },
+        grid: { left: showValueAxis ? 38 : 8, right: 8, top: 42, bottom: 30 },
         xAxis: {
             type: 'category',
             data: categories,
@@ -209,21 +236,34 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
         },
         yAxis: {
             type: 'value',
-            min: 0,
+            min: hasNegativeValue ? undefined : 0,
             splitNumber: 4,
-            axisLabel: { color: theme.textSecondary, fontSize: 10 },
-            splitLine: { lineStyle: { color: theme.gridLine, type: 'dashed' } },
+            axisLabel: { show: showValueAxis, color: theme.textSecondary, fontSize: 10 },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            splitLine: {
+                show: showValueAxis,
+                lineStyle: { color: theme.gridLine, type: 'dashed' },
+            },
         },
         series: series.map(item => ({
             name: item.name,
             type: 'bar',
-            data: useCategoryColors && item.color !== 'peer'
-                ? item.values.map((value, index) => ({
-                    value,
-                    itemStyle: { color: theme.colors[categoryColors![index]] },
-                }))
-                : item.values,
-            barMaxWidth: 22,
+            data: item.values.map((value, index) => ({
+                value,
+                ...(useCategoryColors && item.color !== 'peer'
+                    ? { itemStyle: { color: theme.colors[categoryColors![index]] } }
+                    : {}),
+                label: {
+                    position: value < 0 ? 'bottom' : 'top',
+                    ...(useCategoryColors && !item.muted && item.color !== 'peer'
+                        ? { color: theme.labelColors[categoryColors![index]] }
+                        : {}),
+                },
+            })),
+            barMaxWidth: showValueAxis ? 22 : 16,
+            barGap: showValueAxis ? '30%' : '100%',
+            barMinHeight: 2,
             itemStyle: {
                 borderRadius: [4, 4, 0, 0],
                 opacity: item.muted ? theme.mutedOpacity : 1,
@@ -231,14 +271,15 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
             label: {
                 show: true,
                 position: 'top',
+                formatter: `{c}${valueLabelSuffix}`,
                 color: item.muted || item.color === 'peer'
                     ? theme.textSecondary
-                    : (useCategoryColors ? theme.textPrimary : theme.colors[item.color]),
-                fontSize: 9,
+                    : (useCategoryColors ? theme.textPrimary : theme.labelColors[item.color]),
+                fontSize: showValueAxis ? 9 : 10,
                 fontWeight: 600,
             },
         })),
-    }), [categories, series, useCategoryColors, categoryColors]);
+    }), [categories, series, useCategoryColors, categoryColors, hasNegativeValue, showValueAxis, valueLabelSuffix]);
 
     return (
         <TeacherReportChart

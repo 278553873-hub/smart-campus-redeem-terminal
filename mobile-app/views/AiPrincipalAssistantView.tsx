@@ -10,7 +10,7 @@ import {
 interface AiPrincipalAssistantViewProps {
     onBack: () => void;
     termConfig: SchoolTermConfig;
-    hasGeneratedTermReport: boolean;
+    hasTermReportTask: boolean;
     onOpenWeeklyReport: () => void;
     onOpenMonthlyReport: () => void;
     onOpenTermReport: () => void;
@@ -77,7 +77,7 @@ interface AssistantNotice {
 const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
     onBack,
     termConfig,
-    hasGeneratedTermReport,
+    hasTermReportTask,
     onOpenWeeklyReport,
     onOpenMonthlyReport,
     onOpenTermReport,
@@ -122,7 +122,7 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
         }
 
         const availability = getPrincipalTermReportAvailability(termConfig);
-        if (hasGeneratedTermReport || availability.status === 'available') {
+        if (hasTermReportTask || availability.status === 'available') {
             onOpenTermReport();
             return;
         }

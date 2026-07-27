@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   BookOpen,
   Building2,
   CalendarDays,
-  ChevronLeft,
   CircleAlert,
   History,
   LayoutGrid,
@@ -16,13 +15,18 @@ import {
   PRINCIPAL_TERM_REPORT_SAMPLE,
   type PrincipalTermReportContent,
 } from '../data/principalTermReport';
+import AssistantReportFeedback from '../components/AssistantReportFeedback';
+import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
+import type { ReportGenerationTaskStatus } from '../hooks/useReportGenerationTask';
 
 interface PrincipalTermReportViewProps {
   schoolName: string;
   term: SchoolTermConfig;
-  generated: boolean;
+  status?: ReportGenerationTaskStatus;
+  generated?: boolean;
+  visibleStepCount?: number;
   onBack: () => void;
-  onGenerated: () => void;
+  onRetry?: () => void;
   onOpenHistory?: () => void;
   reportData?: PrincipalTermReportContent;
 }
@@ -41,70 +45,44 @@ const formatDateRange = (term: SchoolTermConfig) => (
 const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
   schoolName,
   term,
-  generated,
+  status: statusProp,
+  generated = false,
+  visibleStepCount = 1,
   onBack,
-  onGenerated,
+  onRetry,
   onOpenHistory,
   reportData,
 }) => {
   const report = reportData ?? PRINCIPAL_TERM_REPORT_SAMPLE;
-  const [loading, setLoading] = useState(!generated);
-  const [visibleStepCount, setVisibleStepCount] = useState(generated ? ANALYSIS_STEPS.length : 1);
-
-  useEffect(() => {
-    if (generated) {
-      setLoading(false);
-      setVisibleStepCount(ANALYSIS_STEPS.length);
-      return;
-    }
-
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) {
-      setLoading(false);
-      setVisibleStepCount(ANALYSIS_STEPS.length);
-      onGenerated();
-      return;
-    }
-
-    const timers = ANALYSIS_STEPS.slice(1).map((_, index) => (
-      window.setTimeout(() => setVisibleStepCount(index + 2), 650 * (index + 1))
-    ));
-    timers.push(window.setTimeout(() => {
-      setLoading(false);
-      onGenerated();
-    }, 2800));
-
-    return () => timers.forEach(timer => window.clearTimeout(timer));
-  }, [generated, onGenerated]);
+  const status = statusProp ?? (generated ? 'generated' : 'generating');
+  const loading = status === 'idle' || status === 'generating';
 
   return (
-    <div className="min-h-full bg-[var(--tm-bg-page)] text-[var(--tm-text-primary)]">
-      <header className="sticky top-0 z-30 flex h-14 items-center bg-[var(--tm-bg-page-glass)] px-4 backdrop-blur-xl">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] transition active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
-          aria-label="返回"
-        >
-          <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
-        </button>
-        <span className="pointer-events-none absolute inset-x-14 text-center text-[17px] font-semibold">学期学校报告</span>
-        {onOpenHistory && !loading ? (
-          <button
-            type="button"
-            onClick={onOpenHistory}
-            className="ml-auto flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] transition active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
-            aria-label="查看往期学期报告"
-            title="查看往期学期报告"
-          >
-            <History className="h-5 w-5" strokeWidth={2.2} />
-          </button>
-        ) : (
-          <span className="ml-auto h-11 w-11" aria-hidden="true" />
-        )}
-      </header>
+    <div className="ai-assistant-theme-principal principal-report-page min-h-full bg-transparent text-[var(--tm-text-primary)]">
+      <AssistantSubpageHeader
+        title="学期学校报告"
+        onBack={onBack}
+        action={onOpenHistory && status === 'generated' ? {
+          label: '查看往期学期报告',
+          icon: <History className="h-5 w-5" strokeWidth={2.2} />,
+          onClick: onOpenHistory,
+        } : undefined}
+      />
 
-      {loading ? (
+      {status === 'empty' ? (
+        <AssistantReportFeedback
+          status="empty"
+          title="本学期暂无可分析数据"
+          message="当前学期没有有效评价记录，系统不会调用人工智能生成学校学期报告。"
+        />
+      ) : status === 'failed' ? (
+        <AssistantReportFeedback
+          status="failed"
+          title="学期报告生成失败"
+          message="本次报告没有生成成功，请检查网络后重试；已冻结的数据快照不会重复计入。"
+          onRetry={onRetry}
+        />
+      ) : loading ? (
         <main className="px-6 pb-12 pt-16" aria-live="polite">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card-raised)]">
             <Sparkles className="h-7 w-7 animate-pulse" strokeWidth={1.9} />
@@ -126,7 +104,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
         </main>
       ) : (
         <main className="pb-[calc(32px+env(safe-area-inset-bottom))]">
-          <section className="border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-5 pb-6 pt-5">
+          <section className="border-b border-[var(--tm-border-subtle)] px-5 pb-6 pt-5">
             <div className="inline-flex min-h-7 items-center gap-1.5 rounded-full bg-[var(--tm-brand-primary-soft)] px-3 text-[12px] font-semibold text-[var(--tm-brand-primary)]">
               <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
               AI学期综合分析

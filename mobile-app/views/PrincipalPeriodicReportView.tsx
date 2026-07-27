@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   CalendarDays,
-  Check,
-  ChevronLeft,
   CircleAlert,
   History,
   ListChecks,
@@ -14,12 +12,17 @@ import {
   type PrincipalPeriodicReportKind,
   type PrincipalPeriodicReportContent,
 } from '../data/principalPeriodicReports';
+import AssistantReportFeedback from '../components/AssistantReportFeedback';
+import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
+import type { ReportGenerationTaskStatus } from '../hooks/useReportGenerationTask';
 
 interface PrincipalPeriodicReportViewProps {
   kind: PrincipalPeriodicReportKind;
   schoolName: string;
-  generated: boolean;
-  onGenerated: () => void;
+  status?: ReportGenerationTaskStatus;
+  generated?: boolean;
+  visibleStepCount?: number;
+  onRetry?: () => void;
   onBack: () => void;
   onOpenHistory?: () => void;
   reportData?: PrincipalPeriodicReportContent;
@@ -28,70 +31,48 @@ interface PrincipalPeriodicReportViewProps {
 const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = ({
   kind,
   schoolName,
-  generated,
-  onGenerated,
+  status: statusProp,
+  generated = false,
+  visibleStepCount = 1,
+  onRetry,
   onBack,
   onOpenHistory,
   reportData,
 }) => {
   const report = reportData ?? PRINCIPAL_PERIODIC_REPORTS[kind];
-  const [loading, setLoading] = useState(!generated);
-  const [visibleStepCount, setVisibleStepCount] = useState(generated ? report.analysisSteps.length : 1);
-
-  useEffect(() => {
-    if (generated) {
-      setLoading(false);
-      setVisibleStepCount(report.analysisSteps.length);
-      return;
-    }
-
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) {
-      setVisibleStepCount(report.analysisSteps.length);
-      setLoading(false);
-      onGenerated();
-      return;
-    }
-
-    const timers = report.analysisSteps.slice(1).map((_, index) => (
-      window.setTimeout(() => setVisibleStepCount(index + 2), 650 * (index + 1))
-    ));
-    timers.push(window.setTimeout(() => {
-      setLoading(false);
-      onGenerated();
-    }, 2800));
-
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [generated, onGenerated, report.analysisSteps]);
+  const status = statusProp ?? (generated ? 'generated' : 'generating');
+  const loading = status === 'idle' || status === 'generating';
+  const emptyTitle = kind === 'weekly' ? '上周暂无可分析数据' : '上月暂无可分析数据';
+  const emptyMessage = kind === 'weekly'
+    ? '上一个完整自然周没有有效评价记录，本周管理建议不会调用人工智能生成。'
+    : '上一个完整自然月没有有效评价记录，本次学校复盘不会调用人工智能生成。';
 
   return (
-    <div className="ai-assistant-theme-principal min-h-full bg-[var(--tm-bg-surface)] font-sans text-[var(--tm-text-primary)]">
-      <header className="sticky top-0 z-30 flex h-14 items-center border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-4 backdrop-blur-xl">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition active:scale-95 active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
-          aria-label="返回"
-        >
-          <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
-        </button>
-        <h1 className="pointer-events-none absolute inset-x-14 text-center text-[17px] font-semibold">{report.pageTitle}</h1>
-        {onOpenHistory && !loading ? (
-          <button
-            type="button"
-            onClick={onOpenHistory}
-            className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition active:scale-95 active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
-            aria-label={kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘'}
-            title={kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘'}
-          >
-            <History className="h-5 w-5" strokeWidth={2.2} />
-          </button>
-        ) : (
-          <span className="ml-auto h-11 w-11" aria-hidden="true" />
-        )}
-      </header>
+    <div className="ai-assistant-theme-principal principal-report-page min-h-full bg-transparent font-sans text-[var(--tm-text-primary)]">
+      <AssistantSubpageHeader
+        title={report.pageTitle}
+        onBack={onBack}
+        action={onOpenHistory && status === 'generated' ? {
+          label: kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘',
+          icon: <History className="h-5 w-5" strokeWidth={2.2} />,
+          onClick: onOpenHistory,
+        } : undefined}
+      />
 
-      {loading ? (
+      {status === 'empty' ? (
+        <AssistantReportFeedback
+          status="empty"
+          title={emptyTitle}
+          message={emptyMessage}
+        />
+      ) : status === 'failed' ? (
+        <AssistantReportFeedback
+          status="failed"
+          title="报告生成失败"
+          message="本次报告没有生成成功，请检查网络后重试；已冻结的数据快照不会重复计入。"
+          onRetry={onRetry}
+        />
+      ) : loading ? (
         <main className="flex min-h-[620px] flex-col items-center px-7 pt-24">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--tm-role-principal-soft)] text-[var(--tm-role-principal-strong)]">
             <Sparkles className="h-6 w-6" strokeWidth={2} />
@@ -99,16 +80,11 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
           <h2 className="mt-6 text-[20px] font-semibold">{report.loadingTitle}</h2>
           <div className="mt-7 w-full max-w-[280px] space-y-4" role="status" aria-label={report.loadingTitle}>
             {report.analysisSteps.slice(0, visibleStepCount).map((step, index) => {
-              const complete = index < visibleStepCount - 1;
+              const active = index === visibleStepCount - 1;
               return (
                 <div key={step} className="flex items-center gap-3 text-[13px] text-[var(--tm-text-secondary)]">
-                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${complete
-                    ? 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]'
-                    : 'bg-[var(--tm-role-principal-soft)] text-[var(--tm-role-principal-strong)]'
-                  }`}>
-                    {complete ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />}
-                  </span>
-                  <span>{step}</span>
+                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? 'animate-pulse bg-[var(--tm-role-principal-primary)]' : 'bg-[var(--tm-border-subtle)]'}`} aria-hidden="true" />
+                  <span className={active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-tertiary)]'}>{step}</span>
                 </div>
               );
             })}

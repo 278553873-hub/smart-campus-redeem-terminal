@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   BookOpenCheck,
-  ChevronDown,
   ChevronRight,
   FilePenLine,
   History,
@@ -13,14 +12,17 @@ import type { ClassInfo, Student, TeacherProfile } from '../../types';
 import {
   appendArchiveViewAudit,
   createStudentArchiveDraft,
+  formatArchiveAnswer,
+  getArchiveAnswerValidationError,
   getArchiveSystemFieldLabel,
   getArchiveSystemValues,
   getEnabledTemplatesForGrade,
+  isArchiveAnswerFilled,
   persistArchiveWorkspace,
   readArchiveWorkspace,
   saveStudentArchiveDraft,
+  type ArchiveAnswer,
   type ArchiveDraft,
-  type ArchiveField,
   type ArchiveSnapshot,
   type ArchiveSystemFieldKey,
   type ArchiveTemplate,
@@ -29,6 +31,7 @@ import {
 import {
   BottomAction,
   BottomSheet,
+  iconButton,
   inputClass,
   pageBackground,
   PageHeader,
@@ -38,6 +41,7 @@ import {
   StatusPill,
   Toast,
 } from './archivePagePrimitives';
+import ArchiveFormRenderer from './ArchiveFormRenderer';
 
 interface StudentArchiveViewProps {
   onBack: () => void;
@@ -51,13 +55,6 @@ interface StudentArchiveViewProps {
 }
 
 type PageMode = 'root' | 'template-select' | 'fill' | 'detail';
-
-const toggleValue = (current: string, option: string) => {
-  const values = current ? current.split('、').filter(Boolean) : [];
-  return values.includes(option)
-    ? values.filter(item => item !== option).join('、')
-    : [...values, option].join('、');
-};
 
 const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   onBack,
@@ -79,14 +76,17 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   const [workspace, setWorkspace] = useState<ArchiveWorkspace>(readWorkspace);
   const [pageMode, setPageMode] = useState<PageMode>('root');
   const [activeDraftId, setActiveDraftId] = useState('');
+  const [transientDraft, setTransientDraft] = useState<ArchiveDraft | null>(null);
   const [activeSnapshotId, setActiveSnapshotId] = useState('');
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, ArchiveAnswer>>({});
   const [editingSystemField, setEditingSystemField] = useState<ArchiveSystemFieldKey | null>(null);
   const [systemFieldDraft, setSystemFieldDraft] = useState('');
   const [toast, setToast] = useState('');
 
   useEffect(() => {
     setWorkspace(readWorkspace());
+    setTransientDraft(null);
+    setActiveDraftId('');
     setPageMode('root');
   }, [spaceId, student.id]);
 
@@ -106,12 +106,15 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     .filter(item => item.studentId === student.id && item.status === 'archived')
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const enabledTemplates = getEnabledTemplatesForGrade(workspace, student.grade);
-  const activeDraft = workspace.drafts.find(item => item.id === activeDraftId);
+  const activeDraft = transientDraft?.id === activeDraftId
+    ? transientDraft
+    : workspace.drafts.find(item => item.id === activeDraftId);
   const activeTemplate = activeDraft?.templateSnapshot;
   const activeSnapshot = workspace.snapshots.find(item => item.id === activeSnapshotId);
   const currentSystemValues = getArchiveSystemValues(student);
 
   const openDraft = (draft: ArchiveDraft) => {
+    setTransientDraft(null);
     setActiveDraftId(draft.id);
     setAnswers({ ...draft.answers });
     setPageMode('fill');
@@ -120,9 +123,17 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   const selectTemplate = (template: ArchiveTemplate) => {
     const result = createStudentArchiveDraft(workspace, template.id, student, classInfo, teacherProfile.name);
     if (!result.draftId) return;
-    updateWorkspace(result.workspace);
     const draft = result.workspace.drafts.find(item => item.id === result.draftId);
-    if (draft) openDraft(draft);
+    if (!draft) return;
+    const persistedDraft = workspace.drafts.find(item => item.id === draft.id);
+    if (persistedDraft) {
+      openDraft(persistedDraft);
+      return;
+    }
+    setTransientDraft(draft);
+    setActiveDraftId(draft.id);
+    setAnswers({});
+    setPageMode('fill');
   };
 
   const saveDraft = (submit: boolean) => {
@@ -133,17 +144,27 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
       window.setTimeout(() => setToast(''), 1800);
       return;
     }
-    const missing = activeTemplate.fields.find(field => field.required && !answers[field.semanticKey]?.trim());
-    if (submit && missing) {
-      setToast(`请先填写“${missing.label}”`);
+    const validationError = activeTemplate.fields.map(field => getArchiveAnswerValidationError(field, answers[field.semanticKey])).find(Boolean);
+    if (submit && validationError) {
+      setToast(validationError);
       window.setTimeout(() => setToast(''), 1800);
       return;
     }
     const systemValues = Object.fromEntries(
       activeTemplate.systemFields.map(key => [key, currentSystemValues[key] ?? '']),
     ) as Partial<Record<ArchiveSystemFieldKey, string>>;
-    const next = saveStudentArchiveDraft(workspace, activeDraft.id, answers, submit, teacherProfile.name, systemValues);
+    const workingWorkspace = transientDraft?.id === activeDraft.id
+      ? { ...workspace, drafts: [transientDraft, ...workspace.drafts] }
+      : workspace;
+    const next = saveStudentArchiveDraft(workingWorkspace, activeDraft.id, answers, submit, teacherProfile.name, systemValues);
+    setTransientDraft(null);
     updateWorkspace(next, submit ? '已确认成档' : '草稿已保存');
+    setPageMode('root');
+  };
+
+  const closeFill = () => {
+    if (transientDraft?.id === activeDraftId) setTransientDraft(null);
+    setActiveDraftId('');
     setPageMode('root');
   };
 
@@ -151,31 +172,6 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     setActiveSnapshotId(snapshot.id);
     updateWorkspace(appendArchiveViewAudit(workspace, student.id, teacherProfile.name));
     setPageMode('detail');
-  };
-
-  const renderFieldInput = (field: ArchiveField) => {
-    const value = answers[field.semanticKey] ?? '';
-    if (field.type === 'text') {
-      return <textarea value={value} onChange={event => setAnswers({ ...answers, [field.semanticKey]: event.target.value })} rows={3} placeholder="请输入" className={`${inputClass} min-h-[92px] py-3`} />;
-    }
-    if (field.type === 'date') {
-      return <input type="date" value={value} onInput={event => setAnswers({ ...answers, [field.semanticKey]: event.currentTarget.value })} className={`${inputClass} h-12`} />;
-    }
-    if (field.type === 'number') {
-      return <input type="number" inputMode="decimal" value={value} onChange={event => setAnswers({ ...answers, [field.semanticKey]: event.target.value })} placeholder="请输入数字" className={`${inputClass} h-12`} />;
-    }
-    return (
-      <div className="flex flex-wrap gap-2">
-        {field.options.map(option => {
-          const selected = field.type === 'multiple-select' ? value.split('、').includes(option) : value === option;
-          return (
-            <button key={option} type="button" onClick={() => setAnswers({ ...answers, [field.semanticKey]: field.type === 'multiple-select' ? toggleValue(value, option) : option })} className={`min-h-10 rounded-[13px] border px-3 text-left text-[13px] font-medium ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-text-secondary)]'}`}>
-              {option}
-            </button>
-          );
-        })}
-      </div>
-    );
   };
 
   const openSystemFieldEditor = (key: ArchiveSystemFieldKey) => {
@@ -226,16 +222,25 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
 
   const renderRoot = () => (
     <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`}>
-      <PageHeader title="学生成长档案" onBack={onBack} />
+      <PageHeader
+        title="学生成长档案"
+        onBack={onBack}
+        action={(
+          <button
+            type="button"
+            onClick={() => setPageMode('template-select')}
+            className={iconButton}
+            aria-label="新建档案"
+          >
+            <Plus className="h-5 w-5" />
+          </button>
+        )}
+      />
       <div className="flex-1 overflow-y-auto px-5 pb-8 pt-4 no-scrollbar">
-        <button type="button" onClick={() => setPageMode('template-select')} className={`${primaryButton} w-full`}>
-          <Plus className="h-4.5 w-4.5" />新建档案
-        </button>
-
         {drafts.length > 0 && (
-          <section className="mt-6">
+          <section>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">未完成</h2>
+              <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">待继续</h2>
               <span className="text-[12px] font-semibold text-[var(--tm-text-tertiary)]">{drafts.length}份</span>
             </div>
             <div className="space-y-2.5">
@@ -254,11 +259,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
           </section>
         )}
 
-        <section className="mt-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">历史档案</h2>
-            <span className="text-[12px] font-semibold text-[var(--tm-text-tertiary)]">{snapshots.length}份</span>
-          </div>
+        <section className={drafts.length > 0 ? 'mt-6' : ''}>
           <div className="space-y-2.5">
             {snapshots.map(snapshot => (
               <button key={snapshot.id} type="button" onClick={() => openSnapshot(snapshot)} className={`${sectionSurface} flex min-h-[78px] w-full items-center gap-3 px-4 text-left transition active:scale-[0.985]`}>
@@ -271,7 +272,14 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
               </button>
             ))}
             {snapshots.length === 0 && (
-              <div className={`${sectionSurface} px-4 py-8 text-center text-[14px] font-medium text-[var(--tm-text-secondary)]`}>暂无历史档案</div>
+              <div className={`${sectionSurface} px-4 py-8 text-center`}>
+                <p className="text-[14px] font-medium text-[var(--tm-text-secondary)]">暂无档案</p>
+                {drafts.length === 0 && (
+                  <button type="button" onClick={() => setPageMode('template-select')} className={`${primaryButton} mt-5`}>
+                    <Plus className="h-4.5 w-4.5" />新建档案
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </section>
@@ -304,52 +312,15 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
 
   const renderFill = () => {
     if (!activeDraft || !activeTemplate) return renderRoot();
-    const grouped = activeTemplate.layoutMode === 'grouped';
-    const firstIncompleteSectionIndex = activeTemplate.sections.findIndex(section => (
-      activeTemplate.fields
-        .filter(field => field.sectionId === section.id && field.required)
-        .some(field => !answers[field.semanticKey]?.trim())
-    ));
     return (
       <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`}>
-        <PageHeader title={activeTemplate.name} onBack={() => setPageMode('root')} action={<StatusPill className="bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">草稿</StatusPill>} />
+        <PageHeader title={activeTemplate.name} onBack={closeFill} />
         <div className="flex-1 overflow-y-auto px-5 pb-36 pt-4 no-scrollbar">
           {renderSystemFields(activeTemplate.systemFields, currentSystemValues, true)}
 
-          {grouped ? <section className="mt-4 space-y-3">
-            {activeTemplate.sections.map((section, sectionIndex) => {
-              const fields = activeTemplate.fields.filter(field => field.sectionId === section.id);
-              const completed = fields.filter(field => answers[field.semanticKey]?.trim()).length;
-              return (
-                <details key={section.id} className={`${sectionSurface} overflow-hidden`} open={sectionIndex === (firstIncompleteSectionIndex >= 0 ? firstIncompleteSectionIndex : 0)}>
-                  <summary className="flex min-h-[60px] cursor-pointer list-none items-center gap-3 px-4">
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-bold text-[var(--tm-text-primary)]">{section.label}</span>
-                    </span>
-                    <span className={`text-[12px] font-bold tabular-nums ${completed === fields.length ? 'text-[var(--tm-status-positive-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>{completed}/{fields.length}</span>
-                    <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
-                  </summary>
-                  <div className="space-y-5 border-t border-[var(--tm-border-subtle)] px-4 py-4">
-                    {fields.map((field, index) => (
-                      <div key={field.id}>
-                        <label className="mb-2 block text-[14px] font-semibold text-[var(--tm-text-primary)]">{index + 1}. {field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</label>
-                        {renderFieldInput(field)}
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              );
-            })}
-          </section> : (
-            <section className={`${sectionSurface} mt-4 space-y-5 p-4`}>
-              {activeTemplate.fields.map((field, index) => (
-                <div key={field.id}>
-                  <label className="mb-2 block text-[14px] font-semibold text-[var(--tm-text-primary)]">{index + 1}. {field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</label>
-                  {renderFieldInput(field)}
-                </div>
-              ))}
-            </section>
-          )}
+          <div className="mt-4">
+            <ArchiveFormRenderer definition={activeTemplate} answers={answers} onAnswersChange={setAnswers} />
+          </div>
         </div>
         <BottomAction>
           <div className="grid grid-cols-[0.82fr_1.18fr] gap-3">
@@ -366,7 +337,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     const template = activeSnapshot.templateSnapshot;
     return (
       <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`}>
-        <PageHeader title="档案详情" onBack={() => setPageMode('root')} action={<StatusPill className="bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]">已成档</StatusPill>} />
+        <PageHeader title="档案详情" onBack={() => setPageMode('root')} />
         <div className="flex-1 overflow-y-auto px-5 pb-8 pt-4 no-scrollbar">
           <section className={`${sectionSurface} p-4`}>
             <div className="flex items-start gap-3">
@@ -399,16 +370,16 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
             {template?.layoutMode === 'flat' ? (
               <article className={`${sectionSurface} p-4`}>
                 <div className="divide-y divide-[var(--tm-border-subtle)]">
-                  {template.fields.filter(field => activeSnapshot.answers[field.semanticKey]).map(field => (
+                  {template.fields.filter(field => isArchiveAnswerFilled(activeSnapshot.answers[field.semanticKey])).map(field => (
                     <div key={field.id} className="py-3 first:pt-0 last:pb-0">
                       <div className="text-[11px] font-semibold text-[var(--tm-text-tertiary)]">{field.label}</div>
-                      <div className="mt-1 text-[13px] font-medium leading-relaxed text-[var(--tm-text-primary)]">{activeSnapshot.answers[field.semanticKey]}</div>
+                      <div className="mt-1 text-[13px] font-medium leading-relaxed text-[var(--tm-text-primary)]">{formatArchiveAnswer(activeSnapshot.answers[field.semanticKey])}</div>
                     </div>
                   ))}
                 </div>
               </article>
             ) : template ? template.sections.map(section => {
-              const fields = template.fields.filter(field => field.sectionId === section.id && activeSnapshot.answers[field.semanticKey]);
+              const fields = template.fields.filter(field => field.sectionId === section.id && isArchiveAnswerFilled(activeSnapshot.answers[field.semanticKey]));
               if (fields.length === 0) return null;
               return (
                 <article key={section.id} className={`${sectionSurface} p-4`}>
@@ -417,7 +388,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
                     {fields.map(field => (
                       <div key={field.id} className="py-3 first:pt-0 last:pb-0">
                         <div className="text-[11px] font-semibold text-[var(--tm-text-tertiary)]">{field.label}</div>
-                        <div className="mt-1 text-[13px] font-medium leading-relaxed text-[var(--tm-text-primary)]">{activeSnapshot.answers[field.semanticKey]}</div>
+                        <div className="mt-1 text-[13px] font-medium leading-relaxed text-[var(--tm-text-primary)]">{formatArchiveAnswer(activeSnapshot.answers[field.semanticKey])}</div>
                       </div>
                     ))}
                   </div>
@@ -426,7 +397,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
             }) : Object.entries(activeSnapshot.answers).map(([key, value]) => (
               <article key={key} className={`${sectionSurface} p-4`}>
                 <div className="text-[11px] font-semibold text-[var(--tm-text-tertiary)]">{key}</div>
-                <div className="mt-1 text-[13px] font-medium leading-relaxed text-[var(--tm-text-primary)]">{value}</div>
+                <div className="mt-1 text-[13px] font-medium leading-relaxed text-[var(--tm-text-primary)]">{formatArchiveAnswer(value)}</div>
               </article>
             ))}
           </section>

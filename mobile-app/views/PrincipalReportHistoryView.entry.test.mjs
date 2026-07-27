@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const historyViewSource = fs.readFileSync(new URL('./PrincipalReportHistoryView.tsx', import.meta.url), 'utf8');
 const historyDataSource = fs.readFileSync(new URL('../data/principalReportHistory.ts', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+const headerSource = fs.readFileSync(new URL('../components/AssistantSubpageHeader.tsx', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-校长助理周月学期报告.md', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
@@ -36,12 +37,23 @@ for (const required of [
   'setSelectedReport(null)',
   'reportData={selectedReport.report}',
   'generated',
-  'aria-label="返回当前报告"',
+  'backLabel="返回当前报告"',
   'focus-visible:ring-2',
   '生成于{report.generatedDate}',
 ]) {
   requireText(historyViewSource, required, `校长报告历史页缺少列表、详情或返回能力：${required}`);
 }
+
+for (const required of [
+  'h-11 shrink-0',
+  'bg-[var(--tm-bg-page-glass)]',
+  'backdrop-blur-xl',
+  'inset-x-16 truncate text-center',
+]) {
+  requireText(headerSource, required, `校长历史页标题栏未与教师端子页面规范对齐：${required}`);
+}
+
+forbidText(headerSource, 'border-b', '共享子页面标题栏不应保留分割线。');
 
 for (const required of [
   'principal-weekly-2026-07-13',

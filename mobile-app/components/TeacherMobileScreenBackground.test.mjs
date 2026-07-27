@@ -9,6 +9,8 @@ const studentDetail = fs.readFileSync('mobile-app/views/DashboardView.tsx', 'utf
 
 assert.match(source, /variant\?: TeacherMobileScreenBackgroundVariant/);
 assert.match(source, /recordMode\?: TeacherMobileRecordMode/);
+assert.match(source, /variant === 'plain'/);
+assert.match(source, /bg-\[var\(--tm-page-plain-header-bg\)\]/);
 assert.match(source, /var\(--tm-bg-page-low\)/);
 assert.match(source, /var\(--tm-glow-primary-subtle\)/);
 assert.match(source, /var\(--tm-glow-secondary-subtle\)/);
@@ -21,10 +23,11 @@ assert.doesNotMatch(source, /bottom-0 h-48/);
 assert.doesNotMatch(source, /linear-gradient\(180deg, var\(--tm-bg-page\) 0%, var\(--tm-bg-surface\) 100%\)/);
 
 assert.match(app, /<TeacherMobileScreenBackground variant="record" recordMode=\{activeLogTab\} \/>/);
+assert.match(app, /<TeacherMobileScreenBackground variant="plain" \/>/);
 assert.match(app, /<TeacherMobileScreenBackground \/>/);
 assert.doesNotMatch(app, /radial-gradient\(/);
 assert.doesNotMatch(record, /TeacherMobileScreenBackground|TeacherRecordAuroraBackground/);
 assert.match(me, /bg-transparent/);
-assert.match(studentDetail, /min-h-screen bg-transparent/);
+assert.match(studentDetail, /relative h-full min-h-0 overflow-hidden bg-transparent/);
 
 console.log('teacher mobile public screen background assertions passed');

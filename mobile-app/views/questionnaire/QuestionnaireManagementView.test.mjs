@@ -7,13 +7,22 @@ const parentSource = fs.readFileSync(new URL('../../../components/ParentApp.tsx'
 const storeSource = fs.readFileSync(new URL('../../../shared/questionnaireStore.ts', import.meta.url), 'utf8');
 const teacherTokenSource = fs.readFileSync(new URL('../../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const formBuilderSource = fs.readFileSync(new URL('../../components/form-builder/FormBuilder.tsx', import.meta.url), 'utf8');
+const autoResizeTextareaSource = fs.readFileSync(new URL('../../components/ui/AutoResizeTextarea.tsx', import.meta.url), 'utf8');
+const mobileBottomSheetSource = fs.readFileSync(new URL('../../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
+const classCascadeSource = fs.readFileSync(new URL('../../components/ui/MobileClassCascadePicker.tsx', import.meta.url), 'utf8');
+const floatingCreateSource = fs.readFileSync(new URL('../../components/ui/MobileFloatingCreateButton.tsx', import.meta.url), 'utf8');
 const formDefinitionSource = fs.readFileSync(new URL('../../../shared/formDefinition.ts', import.meta.url), 'utf8');
 const listSource = viewSource.slice(viewSource.indexOf('const renderList'), viewSource.indexOf('const renderCreate'));
+const listHeaderSource = listSource.slice(0, listSource.indexOf('<main'));
 const listCardsSource = listSource.slice(listSource.indexOf('{filteredRecords.map'), listSource.indexOf('{filteredRecords.length === 0'));
 const detailSource = viewSource.slice(viewSource.indexOf('const renderDetail'), viewSource.indexOf('const renderResponseDetail'));
 
 const requireText = (source, text, message) => {
   if (!source.includes(text)) throw new Error(message);
+};
+
+const forbidText = (source, text, message) => {
+  if (source.includes(text)) throw new Error(message);
 };
 
 for (const required of ['科目管理', '部门管理', '货币发放', '建议反馈', '问卷采集']) {
@@ -27,8 +36,8 @@ if (moreToolsSource.indexOf("title: '问卷采集'") < moreToolsSource.indexOf("
 requireText(meSource, '<ToolGrid items={moreTools} columns={4} variant="secondary" />', '更多工具必须显式保持四列布局。');
 requireText(appSource, "'questionnaire'", '教师端导航必须注册问卷调查页面。');
 requireText(appSource, "case 'questionnaire': return '问卷采集'", '教师端导航标题必须统一为问卷采集。');
-const questionnaireScreenBackground = appSource.match(/if \(\[([^\]]+)\]\.includes\(currentView\)\) \{\s*return <TeacherMobileScreenBackground/)?.[1] ?? '';
-requireText(questionnaireScreenBackground, "'questionnaire'", '问卷采集应纳入屏幕级背景，标题栏才能与页面氛围光融为一体。');
+const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
+requireText(plainBackgroundList, "'questionnaire'", '问卷采集应使用屏幕级纯色背景。');
 
 for (const required of [
   '编辑问卷',
@@ -45,11 +54,11 @@ for (const required of [
   requireText(viewSource, required, `教师端问卷流程缺少：${required}`);
 }
 
-for (const questionType of ["single: { label: '单选题'", "multiple: { label: '多选题'", "rating: { label: '量表题'", "text: { label: '简答题'"]) {
+for (const questionType of ["single: { label: '单选题'", "multiple: { label: '多选题'", "rating: { label: '评分题'", "text: { label: '问答题'", "date: { label: '日期'", "number: { label: '数字'"]) {
   requireText(viewSource, questionType, `教师端缺少题型：${questionType}`);
 }
 
-requireText(storeSource, 'record.targets.filter(target => target.reachable).length', '完成率分母必须使用可送达学生数。');
+requireText(storeSource, 'getActiveQuestionnaireTargets(record).filter(target => target.reachable).length', '完成率分母必须只使用当前有效且可送达的学生数。');
 requireText(storeSource, 'completed / reachable', '完成率必须使用对应采集模式的已完成数除以目标数。');
 requireText(storeSource, 'suggestedDeadline: string', '问卷必须将建议完成时间与状态分开保存。');
 requireText(storeSource, 'isQuestionnaireOverdue', '问卷必须能够识别仅用于提示的逾期状态。');
@@ -69,14 +78,40 @@ if (viewSource.includes('添加第一题')) {
   throw new Error('0题状态不应重复展示第二个添加题目按钮。');
 }
 requireText(viewSource, '<FormBuilder', '问卷和学生采集必须接入共享表单构建器。');
+requireText(viewSource, "type BasicInfoField = 'title' | 'description' | null", '问卷标题和说明必须具备独立的展示态与编辑态。');
+requireText(viewSource, "activeBasicInfoField === 'title'", '点击问卷标题后必须切换到标题编辑态。');
+requireText(viewSource, "activeBasicInfoField === 'description'", '点击问卷说明后必须切换到说明编辑态。');
+requireText(viewSource, "setActiveBasicInfoField('title')", '问卷标题点击或校验失败后必须能够激活编辑态。');
+requireText(viewSource, "setActiveBasicInfoField('description')", '问卷说明点击后必须能够激活编辑态。');
+requireText(viewSource, 'titleInputRef.current?.focus()', '进入标题编辑态后必须自动激活光标。');
+requireText(viewSource, 'descriptionInputRef.current?.focus()', '进入说明编辑态后必须自动激活光标。');
+requireText(viewSource, "!target.closest('[data-basic-info-editor]')", '点击基础信息区之外必须退出标题或说明编辑态。');
+requireText(viewSource, "draftTitle || titlePlaceholder", '标题展示态必须直接展示内容或精简占位文案。');
+requireText(viewSource, "isStudentCollection ? '请输入采集名称' : '请输入问卷名称'", '问卷与学生采集必须使用对应的名称占位文案。');
+requireText(viewSource, "isStudentCollection ? '请输入采集说明(非必填)' : '请输入问卷说明(非必填)'", '问卷与学生采集必须使用对应的非必填说明文案。');
+requireText(viewSource, 'draftDescription || descriptionPlaceholder', '说明展示态与编辑态必须复用同一占位文案。');
+requireText(viewSource, '<AutoResizeTextarea ref={descriptionInputRef}', '问卷说明必须单行起步并随内容自动增高。');
+requireText(autoResizeTextareaSource, 'rows={1}', '自动增高输入框不应默认预留两行高度。');
+requireText(autoResizeTextareaSource, 'Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)', '自动增高输入框必须在触控高度与最大高度之间调整。');
+requireText(viewSource, 'text-[length:var(--tm-font-size-document-title)]', '问卷标题必须使用独立的文档标题层级。');
+requireText(teacherTokenSource, "'--tm-font-size-document-title': '26px'", '问卷名称字号必须按评审结果收紧为26像素。');
+requireText(viewSource, "stepOneTitleError) setActiveBasicInfoField('title')", '标题校验失败时必须先恢复输入控件再定位错误。');
+requireText(viewSource, "stepOneValidationAttempt && stepOneTitleError ? 'border-[var(--tm-status-negative-strong)]' : 'border-transparent'", '标题展示态默认不应出现横线，只有错误时保留负向下边框。');
+forbidText(viewSource, '请输入问卷说明（选填）', '说明文案不应重复问卷语境或展示非必要的选填说明。');
+forbidText(viewSource, '<label htmlFor="survey-title"', '问卷标题不应重复展示可见字段标签。');
+forbidText(viewSource, '<label htmlFor="survey-description"', '问卷说明不应重复展示可见字段标签。');
+requireText(viewSource, 'allowCustomAnswer', '问卷和学生信息采集的单选、多选都必须支持添加“其他”选项。');
+if (viewSource.includes('allowCustomAnswer={!isStudentCollection}')) {
+  throw new Error('学生信息采集不应单独关闭“其他”选项。');
+}
 requireText(formBuilderSource, '添加{itemLabel}', '共享构建器必须保留清晰的添加入口。');
 const flatFieldSection = formBuilderSource.slice(formBuilderSource.indexOf("{layoutMode === 'flat' ? ("), formBuilderSource.indexOf(") : (", formBuilderSource.indexOf("{layoutMode === 'flat' ? (")));
 if (flatFieldSection.indexOf('{renderFieldList(fields)}') > flatFieldSection.lastIndexOf('添加{itemLabel}')) {
   throw new Error('平铺模式的添加入口必须位于题目列表末尾。');
 }
-if (viewSource.includes('label="复制题目"')) {
-  throw new Error('题目编辑器不应保留复制题目功能。');
-}
+requireText(formBuilderSource, 'const copyField =', '题目更多菜单必须支持复制题目。');
+requireText(formBuilderSource, 'nextFields.splice(sourceIndex + 1, 0, copy)', '复制题目必须插入原题下一位。');
+requireText(formBuilderSource, '<MoreHorizontal', '题目编辑态必须通过更多按钮渐进披露低频设置。');
 requireText(formBuilderSource, 'pendingFocusId.current = field.id', '选择题型后必须直接聚焦新题目的输入框。');
 requireText(formBuilderSource, 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]', '题目和选项输入框必须使用教师端控件边框与表面令牌。');
 requireText(formBuilderSource, '>{optionIndex + 1}</span>', '选项编辑器应使用中性序号，不应模拟填写控件。');
@@ -96,30 +131,86 @@ requireText(storeSource, 'customText: Record<string, string>', '自定义答案�
 if (formBuilderSource.includes('updateFieldType') || formBuilderSource.includes('value={activeField.type}')) {
   throw new Error('字段类型应在新增时确定，编辑阶段不应提供类型切换。');
 }
-requireText(formBuilderSource, '添加可填写项', '自定义填写项必须与普通选项放在同一编辑上下文。');
+requireText(formBuilderSource, '添加“其他”选项', '“其他”选项必须与普通选项放在同一编辑上下文。');
+const optionActionsStart = formBuilderSource.indexOf('onClick={() => addOption(field)}');
+const moreSettingsStart = formBuilderSource.indexOf('<BottomSheet open={Boolean(activeField)}');
+const customOptionAction = formBuilderSource.indexOf('onClick={() => addCustomOption(field)}');
+if (customOptionAction < optionActionsStart || customOptionAction > moreSettingsStart) {
+  throw new Error('添加“其他”选项必须紧邻添加普通选项，不能放入题目设置。');
+}
+if (formBuilderSource.includes('addCustomOption(activeField)')) {
+  throw new Error('题目设置中不应保留添加“其他”选项操作。');
+}
 requireText(formBuilderSource, "let label = '其他（请填写）'", '可填写项生成后必须直接表达填写含义。');
 requireText(formBuilderSource, '选中后需填写', '特殊填写项应明确展示其填写状态。');
 requireText(formBuilderSource, '<AutoResizeTextarea', '题目名称输入框必须根据内容自动增高。');
-requireText(formBuilderSource, "expanded ? 'border-[var(--tm-border-control)]'", '展开态必须使用中性边框，避免被误认为报错。');
+requireText(formBuilderSource, "expanded && !readOnly ? 'min-h-11 items-center py-2'", '展开态题型行必须收紧，让题干输入框直接承接在下方。');
+requireText(formBuilderSource, "children ? 'row-span-2' : ''", '展开态题号列不得撑高题型行并制造空白区域。');
+requireText(formBuilderSource, 'const toggleFieldEditor =', '点击题目内容区必须统一控制进入和退出编辑态。');
+requireText(formBuilderSource, 'pendingFocusId.current = field.id', '每次进入题目编辑态都必须自动聚焦题干。');
+requireText(formBuilderSource, 'data-form-field-editor={fieldId}', '每个题目必须提供可识别的编辑态边界。');
+requireText(formBuilderSource, "document.addEventListener('click', closeFieldEditor)", '点击当前题目之外的区域必须退出编辑态。');
+requireText(formBuilderSource, "const listenerFrame = window.requestAnimationFrame", '外部点击监听必须延后一帧挂载，不能吞掉进入题目编辑态的首次点击。');
+requireText(formBuilderSource, "current === expandedFieldId ? '' : current", '切换到另一题时不得被旧题目的外部点击逻辑再次关闭。');
+requireText(formBuilderSource, 'border-0 border-b bg-transparent', '题干输入框只应保留下边框。');
+forbidText(formBuilderSource, '<ChevronUp', '题目编辑态不应展示收起箭头。');
+forbidText(formBuilderSource, "expanded ? <ChevronUp", '题目列表不应展示展开或收起箭头。');
+forbidText(formBuilderSource, 'className="border-t border-[var(--tm-border-subtle)] px-4 pb-4 pt-3"', '题型与题干之间不应保留分隔线。');
+forbidText(formBuilderSource, 'items-center justify-between border-t border-[var(--tm-border-subtle)] pt-3', '必填与更多操作上方不应保留分隔线。');
+requireText(formBuilderSource, "expanded ? 'border-[var(--tm-brand-primary)]'", '展开态必须使用品牌焦点边框表达当前编辑题目。');
+requireText(formBuilderSource, 'fieldNumber={index + 1}', '题号必须作为独立左侧序号列展示。');
+requireText(formBuilderSource, 'renderFieldPreview(field, choice, rating, usesSubFields)', '列表态必须复用真实填写控件外观进行预览。');
+requireText(formBuilderSource, 'border-transparent', '非编辑题目不应保留常驻描边。');
 requireText(formBuilderSource, 'aria-invalid={Boolean(fieldError?.label)}', '题目错误必须向读屏软件暴露无效状态。');
 requireText(formBuilderSource, 'aria-invalid={Boolean(fieldError?.options)}', '选项错误必须向读屏软件暴露无效状态。');
 requireText(formBuilderSource, 'if (visibleInput)', '同一错误重复校验时必须重新聚焦已经展开的题目输入框。');
 requireText(formBuilderSource, '使用分组', '共享构建器必须提供分组开关。');
+requireText(formBuilderSource, '<h2 className="text-[length:var(--tm-font-size-card-title)]', '题目标题必须与分组开关共用紧凑标题行。');
+forbidText(formBuilderSource, 'min-h-[60px] items-center justify-between gap-4 px-4', '分组开关不应继续使用独立卡片。');
+requireText(formBuilderSource, 'setActiveSectionMenuId(section.id)', '分组低频操作必须通过更多菜单渐进披露。');
+const groupedFieldSection = formBuilderSource.slice(formBuilderSource.indexOf("<section className=\"mt-2\">", formBuilderSource.indexOf(") : (")), formBuilderSource.indexOf('</section>', formBuilderSource.indexOf("<section className=\"mt-2\">", formBuilderSource.indexOf(") : ("))));
+if (groupedFieldSection.indexOf('{renderGroupedFieldList()}') > groupedFieldSection.lastIndexOf('添加分组')) {
+  throw new Error('分组模式的添加分组入口必须位于分组列表末尾。');
+}
 if (formBuilderSource.includes('默认分组') || formBuilderSource.includes('{sections.length}组')) {
   throw new Error('开启分组后只应提供添加分组入口，不应展示默认分组或分组数量。');
 }
 requireText(formBuilderSource, 'fields.map(field => ({ ...field, sectionId: nextSection.id }))', '创建首个分组后必须将已有题目自动归入该组。');
+requireText(formBuilderSource, '添加{itemLabel}到本组', '组内添加动作必须明确说明题目或字段将加入当前分组。');
+requireText(formBuilderSource, '<FolderPlus', '添加分组必须使用区别于添加题目的结构型图标。');
+requireText(formBuilderSource, 'bg-[var(--tm-bg-surface-muted)]', '添加分组必须使用中性表面，与组内品牌色添加动作拉开层级。');
+forbidText(mobileBottomSheetSource, 'backdrop-blur', '底部抽屉蒙层不应模糊背景内容。');
+requireText(mobileBottomSheetSource, 'focus({ preventScroll: true })', '底部抽屉聚焦与焦点恢复不得改变父页面滚动位置。');
+requireText(mobileBottomSheetSource, 'tabIndex={-1}', '底部抽屉打开后必须能够聚焦抽屉容器。');
+const sectionDraftSheetSource = formBuilderSource.slice(formBuilderSource.indexOf('<BottomSheet open={Boolean(sectionDraft)}'), formBuilderSource.indexOf('<BottomSheet open={showSectionSorter}'));
+forbidText(sectionDraftSheetSource, 'autoFocus', '添加分组抽屉不应自动聚焦输入框并主动拉起软键盘。');
 requireText(formDefinitionSource, "FormLayoutMode = 'flat' | 'grouped'", '中台表单定义必须区分平铺和分组布局。');
 requireText(storeSource, 'sectionId?: string', '题目必须支持可选分组关系。');
-for (const targetMode of ["['all', '全体学生']", "['classes', '按班级']", "['students', '指定学生']"]) {
-  requireText(viewSource, targetMode, `发送范围缺少模式：${targetMode}`);
+if (viewSource.includes("[['all', '全体学生'], ['classes', '按班级'], ['students', '指定学生']]")) {
+  throw new Error('发送范围不应继续使用全体学生、按班级、指定学生三段模式。');
 }
-requireText(viewSource, 'onClick={toggleAllClasses}', '按班级模式必须支持一次全选全部班级。');
-requireText(viewSource, 'selectedClassIds.has(classInfo.id)', '按班级模式必须支持直接多选班级。');
+requireText(viewSource, 'const gradeGroups = useMemo', '发送范围必须将后端权限班级按年级组织。');
+requireText(viewSource, 'onClick={toggleAllClasses}', '发送范围必须支持一次选择全部权限班级。');
+requireText(viewSource, '<MobileClassCascadePicker', '问卷发送范围必须复用教师个人信息页的班级级联组件。');
+requireText(classCascadeSource, 'grid-cols-[92px_1fr]', '班级级联必须使用左侧年级、右侧班级的双栏布局。');
+requireText(classCascadeSource, 'aria-label="左侧先选年级"', '班级级联左侧必须先选择年级。');
+requireText(classCascadeSource, 'aria-label="右侧再选该年级下的班级"', '班级级联右侧必须选择当前年级下的班级。');
+forbidText(viewSource, 'selectedStudentNos', '本期问卷不支持指定学生，不应保留学生选择状态。');
+forbidText(viewSource, 'setStudentPickerClassId', '本期问卷不应提供班级下钻学生入口。');
+forbidText(viewSource, '<MobileBottomSheet', '发送范围不应再打开指定学生抽屉。');
+requireText(viewSource, "allScopeLabel = '全部班级'", '普通教师范围必须使用权限班级口径。');
+requireText(appSource, "hasSchoolWideQuestionnaireAccess ? '全部年级' : '全部班级'", '领导和普通教师必须使用不同的全部范围标签。');
+requireText(appSource, 'questionnaireAuthorizedClasses', '问卷页面必须只接收权限过滤后的班级集合。');
 if (viewSource.includes('已选择学生')) {
   throw new Error('发送范围页不应展示额外的人数摘要卡片。');
 }
-requireText(storeSource, "QuestionnaireTargetMode = 'all' | 'classes' | 'students'", '草稿必须保存发送范围模式。');
+requireText(storeSource, "QuestionnaireTargetMode = 'all' | 'classes' | 'students'", '数据层必须继续兼容历史发送范围模式。');
+requireText(storeSource, "QuestionnaireTargetSyncPolicy = 'fixed' | 'follow_classes'", '数据层必须继续兼容历史固定名单。');
+requireText(storeSource, 'reconcileQuestionnaireTargets', '数据层必须统一对账动态班级范围。');
+requireText(storeSource, "scopeStatus: 'exited' as const", '转出学生必须标记退出且保留历史接收记录。');
+requireText(viewSource, "targetMode: 'classes'", '本期新建问卷必须统一保存为班级范围。');
+requireText(viewSource, "targetSyncPolicy: 'follow_classes'", '本期班级范围必须动态跟随成员变化。');
+requireText(parentSource, 'getActiveQuestionnaireTargets(questionnaire)', '家长端待办必须排除已退出范围的学生。');
 requireText(parentSource, 'pendingAssignedQuestionnaires', '家长端待办必须读取教师发布的共享问卷。');
 
 const assignedSource = fs.readFileSync(new URL('../../../components/parent-app/AssignedQuestionnaireView.tsx', import.meta.url), 'utf8');
@@ -233,12 +324,18 @@ if (detailSource.includes('删除草稿') || detailSource.includes('永久删除
   throw new Error('已发布问卷详情不能提供永久删除入口。');
 }
 requireText(viewSource, '删除后无法恢复', '永久删除草稿前必须二次确认。');
-requireText(formBuilderSource, 'minRatingLevels = 2', '量表最少必须支持2级。');
 requireText(formBuilderSource, 'maxRatingLevels = 10', '量表最多必须支持10级。');
-requireText(formBuilderSource, '减少量表级数', '量表题必须支持配置级数。');
+requireText(formBuilderSource, '减少起始分', '评分题必须支持配置起始分。');
+requireText(formBuilderSource, '增加结束分', '评分题必须支持配置结束分且最高不超过10分。');
+requireText(formBuilderSource, '最少选择', '多选题必须支持最少选择数。');
+requireText(formBuilderSource, '最多选择', '多选题必须支持最多选择数。');
+requireText(formBuilderSource, "['ymd', '年-月-日']", '日期题必须支持日期格式设置。');
+requireText(formBuilderSource, "['integer', '整数']", '数字题必须支持数字格式设置。');
+requireText(formDefinitionSource, 'normalizeFormFieldSettings', '共享字段模型必须为旧数据补齐题型设置默认值。');
+requireText(storeSource, 'getQuestionnaireAnswerValidationError', '填写提交必须校验题型个性化设置。');
 requireText(viewSource, 'const options = question.options;', '量表统计必须读取题目实际配置。');
 requireText(assignedSource, 'ratingValues.map(option =>', '家长端必须按实际量表级数渲染。');
-requireText(assignedSource, "rating: `${question.options.length || 5}级量表`", '家长端题型标签必须展示实际量表级数。');
+requireText(assignedSource, 'ratingMin', '家长端题型标签必须展示实际评分区间。');
 
 const fixedHeightPageCount = viewSource.match(/relative flex h-full min-h-0 flex-col overflow-hidden/g)?.length ?? 0;
 if (fixedHeightPageCount < 4) {
@@ -252,7 +349,7 @@ if (scrollRegionCount < 3) {
 
 requireText(viewSource, 'min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain', '单份答卷详情必须保留独立纵向滚动区域。');
 
-requireText(viewSource, 'sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-white/38 px-4 backdrop-blur-md', '问卷顶部必须使用教师端44像素头部，并与通用标题栏一致使用轻薄玻璃、不保留分割线。');
+requireText(viewSource, 'sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-white/38 pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md', '问卷顶部必须使用教师端44像素头部，并避让微信胶囊安全区。');
 if (viewSource.includes('justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)]')) {
   throw new Error('问卷顶部标题栏不应保留分割线，应依靠毛玻璃与内容自然分层。');
 }
@@ -262,7 +359,13 @@ if (viewSource.includes('overflow-hidden bg-[var(--tm-bg-page)]')) {
 requireText(viewSource, 'absolute inset-x-16 truncate text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]', '问卷顶部标题必须使用教师端区块标题层级。');
 requireText(viewSource, '<ChevronLeft className="h-5 w-5" />', '问卷顶部返回图标必须与管理页保持一致。');
 requireText(viewSource, "action ? '-mr-2 h-11 w-11' : 'h-11 w-11'", '问卷顶部操作必须保留44像素触控范围。');
-requireText(viewSource, 'label="新建采集" onClick={() => setShowCreateTypeSheet(true)} className="text-[var(--tm-brand-primary-strong)]"', '新建采集应使用轻量的品牌加号按钮。');
+requireText(viewSource, 'import MobileFloatingCreateButton', '问卷列表必须复用通用悬浮创建组件。');
+requireText(listSource, '<MobileFloatingCreateButton label="新建采集" onClick={() => setShowCreateTypeSheet(true)} />', '新建采集必须从右下角悬浮入口打开类型选择。');
+requireText(listSource, 'pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]', '问卷列表必须为悬浮创建按钮和底部安全区预留空间。');
+forbidText(listHeaderSource, '待我填写', '问卷列表顶部不得重复展示待我填写快捷入口。');
+forbidText(listHeaderSource, '新建采集', '问卷列表顶部不得承载新建采集入口。');
+requireText(floatingCreateSource, 'h-[var(--tm-size-floating-action)] w-[var(--tm-size-floating-action)]', '通用悬浮创建按钮必须使用教师端组件尺寸令牌。');
+requireText(floatingCreateSource, "bottom: 'calc(var(--tm-space-5) + env(safe-area-inset-bottom))'", '通用悬浮创建按钮必须避让底部安全区。');
 if (viewSource.includes('subtitle?: string') || viewSource.includes('subtitle={`第${createStep}步，共3步`}')) {
   throw new Error('问卷顶部不应承载步骤或答卷副标题。');
 }
@@ -275,14 +378,34 @@ if (viewSource.includes('即将开放') || viewSource.includes('<LockKeyhole')) 
   throw new Error('未开放的教师问卷不应侵入新建采集高频流程。');
 }
 requireText(storeSource, "QuestionnaireCollectionMode = 'guardian_questionnaire' | 'student_information' | 'teacher_questionnaire'", '底层必须按通用采集模式区分填写方和采集对象。');
+requireText(viewSource, "['unreachable', '未绑定']", '家长问卷答卷筛选必须使用明确的未绑定术语。');
+if (viewSource.includes('未送达')) {
+  throw new Error('教师端不应使用容易被理解为通知失败的“未送达”。');
+}
 requireText(viewSource, "startCreate(undefined, 'student_information')", '学生信息采集必须可以从新建类型浮层进入。');
 requireText(viewSource, '由老师逐生填写', '学生信息采集类型必须明确填写方。');
 for (const fieldType of ["short_text: { label: '单行文本'", "number: { label: '数字'", "date: { label: '日期'"]) {
   requireText(viewSource, fieldType, `学生信息采集缺少字段类型：${fieldType}`);
 }
-requireText(viewSource, "{ value: 'text', label: '多行文本', icon: AlignLeft, primary: false }", '字段选择必须标记低频字段。');
-requireText(formBuilderSource, "showMoreTypes ? '常用类型' : '更多类型'", '共享构建器必须渐进披露低频字段类型。');
-requireText(viewSource, "type StudentRecordFilter = 'all' | StudentCollectionRecordStatus", '学生信息采集必须支持按逐生记录状态筛选。');
+requireText(viewSource, "multi_fill: { label: '多项填空题'", '问卷题型元数据必须包含多项填空题。');
+requireText(viewSource, "{ value: 'multi_fill', label: '多项填空题', icon: ListPlus, subFields: true }", '家长问卷必须开放多项填空题。');
+requireText(formBuilderSource, '添加填空项', '表单构建器必须支持渐进添加填空项。');
+requireText(formBuilderSource, "disabled={(field.subFields?.length ?? 0) <= 2}", '多项填空题不得少于2个填空项。');
+requireText(formBuilderSource, "disabled={(field.subFields?.length ?? 0) >= 6}", '多项填空题不得超过6个填空项。');
+requireText(storeSource, 'QuestionnaireMultiFillAnswer', '底层必须使用独立的多项填空答案结构。');
+requireText(storeSource, 'getQuestionnaireMultiFillValues', '多项填空答案读取必须收敛到共享方法。');
+requireText(assignedSource, "question.type === 'multi_fill'", '家长端必须渲染多项填空输入控件。');
+requireText(viewSource, 'openQuestionResponses(question.id, subField.id)', '多项填空统计必须支持按子项查看全部回答。');
+requireText(viewSource, "{ value: 'text', label: '多行文本', icon: AlignLeft }", '字段类型选择必须直接展示多行文本。');
+requireText(viewSource, "{ value: 'multiple', label: '多选', icon: ListChecks, choice: true }", '字段类型选择必须直接展示多选。');
+requireText(viewSource, "type StudentRecordFilter = 'all' | 'incomplete' | 'completed'", '学生信息采集必须使用任务视角的三类筛选。');
+requireText(viewSource, "studentRecordFilter === 'incomplete' ? item.status !== 'completed'", '待完成必须合并未填写和草稿记录。');
+requireText(viewSource, "[['all', '全部'], ['incomplete', '待完成'], ['completed', '已完成']]", '逐生记录顶部只保留全部、待完成和已完成。');
+requireText(viewSource, "draft: { label: '待继续'", '草稿记录应在学生行内表达为待继续。');
+requireText(viewSource, "Number(right.status === 'draft') - Number(left.status === 'draft')", '待完成列表必须将待继续记录排在未填写记录之前。');
+if (viewSource.includes("[['all', '全部'], ['pending', '未填写'], ['draft', '草稿'], ['completed', '已完成']]")) {
+  throw new Error('草稿不应作为逐生记录的一级筛选。');
+}
 requireText(viewSource, "status: 'pending'", '学生范围生成后必须为每名学生建立未填写记录。');
 requireText(viewSource, "saveStudentCollectionRecord(activeRecord.id", '教师必须可以保存逐生采集记录。');
 requireText(viewSource, "saveActiveStudentRecord('completed')", '逐生采集记录必须可以标记完成。');
@@ -321,6 +444,8 @@ for (const token of [
   "'--tm-text-tertiary'",
   "'--tm-border-control'",
   "'--tm-focus-ring'",
+  "'--tm-input-focus-ring'",
+  "'--tm-font-size-document-title'",
   "'--tm-font-size-metric'",
   "'--tm-audience-guardian-primary'",
   "'--tm-audience-student-primary'",
@@ -328,6 +453,11 @@ for (const token of [
   "'--tm-audience-student-soft'",
 ]) {
   requireText(teacherTokenSource, token, `教师端唯一令牌源缺少：${token}`);
+}
+
+requireText(viewSource, 'focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '问卷输入框应使用轻量输入焦点环。');
+if (viewSource.includes('focus:ring-4 focus:ring-[var(--tm-focus-ring)]')) {
+  throw new Error('问卷输入框不应使用4像素实色焦点环。');
 }
 
 console.log('Questionnaire management assertions passed');

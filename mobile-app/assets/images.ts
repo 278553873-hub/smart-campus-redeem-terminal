@@ -3,6 +3,7 @@ import coverBoy from './resources/boy.png';
 import coverGirl from './resources/girl.png';
 import avatarBoy from './resources/avatar-boy.png';
 import avatarGirl from './resources/avatar-girl.png';
+import studentGirlDefaultAvatar from './resources/student-girl-default-avatar.png';
 import subjectReportIcon from './resources/subject-report.png';
 import termReportIcon from './resources/term-report.png';
 import certificateImg from './resources/certificate.png';
@@ -28,6 +29,7 @@ import dailySportsVitalityMobileImg from './resources/highlight-defaults/daily-s
 import dailyArtCreativityMobileImg from './resources/highlight-defaults/daily-art-creativity.png';
 import schoolReportV2Icon from './resources/school-report-v2.png';
 import termReportV2Icon from './resources/term-report-v2.png';
+import { studentGirlAvatarGroups, studentGirlAvatars } from './studentAvatarCatalog';
 
 import avatarBoy1 from './resources/avatar_boy_1.png';
 import avatarBoy2 from './resources/avatar_boy_2.png';
@@ -150,6 +152,9 @@ export const ASSETS = {
     GIRL: avatarGirl,
     GENERIC_BOY: encodeSVG(genericBoyAvatarSVG),
     GENERIC_GIRL: encodeSVG(genericGirlAvatarSVG),
+    STUDENT_GIRL_DEFAULT: studentGirlDefaultAvatar,
+    SYSTEM_GIRL_GROUPS: studentGirlAvatarGroups,
+    SYSTEM_GIRLS: studentGirlAvatars,
     BOYS: [avatarBoy1, avatarBoy2, avatarBoy3, avatarBoy4, avatarBoy5, avatarBoy6, avatarBoy7, avatarBoy],
     GIRLS: [avatarGirl1, avatarGirl2, avatarGirl3, avatarGirl4, avatarGirl5, avatarGirl6, avatarGirl7, avatarGirl],
     TEACHER_WANG: encodeSVG(teacherWangSVG),

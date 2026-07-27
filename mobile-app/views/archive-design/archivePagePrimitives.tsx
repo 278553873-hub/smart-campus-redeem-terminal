@@ -7,10 +7,10 @@ export const sectionSurface = 'rounded-[var(--tm-radius-card)] border border-[va
 export const primaryButton = 'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[15px] font-bold text-white shadow-[var(--tm-shadow-card)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none';
 export const secondaryButton = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-4 text-[14px] font-semibold text-[var(--tm-text-secondary)] shadow-sm transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-45';
 export const iconButton = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)]';
-export const inputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-white px-3.5 text-[14px] font-medium text-[var(--tm-text-primary)] outline-none transition placeholder:text-[var(--tm-text-tertiary)] focus:border-[var(--tm-brand-primary)] focus:ring-4 focus:ring-[var(--tm-focus-ring)]';
+export const inputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-white px-3.5 text-[14px] font-medium text-[var(--tm-text-primary)] outline-none transition placeholder:text-[var(--tm-text-tertiary)] focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 
 export const PageHeader: React.FC<{ title: string; onBack: () => void; action?: React.ReactNode }> = ({ title, onBack, action }) => (
-  <header className="sticky top-0 z-40 flex h-11 shrink-0 items-center justify-between bg-white/38 px-4 backdrop-blur-md">
+  <header className="sticky top-0 z-40 flex h-11 shrink-0 items-center justify-between bg-white/38 pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md">
     <button type="button" onClick={onBack} className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回">
       <ChevronLeft className="h-5 w-5" />
     </button>

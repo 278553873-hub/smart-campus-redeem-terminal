@@ -1,5 +1,5 @@
 import type { ClassInfo, Student } from '../mobile-app/types';
-import type { FormLayoutMode, FormSection } from './formDefinition';
+import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode, type FormSection } from './formDefinition';
 
 export type ArchiveTemplateStatus = 'recommended' | 'draft' | 'published' | 'disabled';
 export type ArchiveFieldType = 'text' | 'single-select' | 'multiple-select' | 'date' | 'number';
@@ -14,6 +14,8 @@ export const ARCHIVE_SYSTEM_FIELD_OPTIONS: Array<{ key: ArchiveSystemFieldKey; l
   { key: 'class', label: '班级' },
 ];
 
+export const ARCHIVE_SELECTABLE_SYSTEM_FIELD_OPTIONS = ARCHIVE_SYSTEM_FIELD_OPTIONS.filter(option => option.key !== 'grade');
+
 const DEFAULT_ARCHIVE_SYSTEM_FIELDS: ArchiveSystemFieldKey[] = ['name', 'class'];
 
 export type ArchiveSection = FormSection;
@@ -26,7 +28,16 @@ export interface ArchiveField {
   sectionId: string;
   required: boolean;
   options: string[];
+  customAnswerOptions?: string[];
+  settings?: FormFieldSettings;
 }
+
+export interface ArchiveChoiceAnswer {
+  selectedOptions: string[];
+  customText: Record<string, string>;
+}
+
+export type ArchiveAnswer = string | ArchiveChoiceAnswer;
 
 export interface ArchiveTemplate {
   id: string;
@@ -63,7 +74,7 @@ export interface ArchiveDraft {
   templateName: string;
   templateVersion: number;
   templateSnapshot: ArchiveTemplateSnapshot;
-  answers: Record<string, string>;
+  answers: Record<string, ArchiveAnswer>;
   createdAt: string;
   updatedAt: string;
   createdBy: string;
@@ -84,7 +95,7 @@ export interface ArchiveSnapshot {
   createdAt: string;
   createdBy: string;
   systemValues: Partial<Record<ArchiveSystemFieldKey, string>>;
-  answers: Record<string, string>;
+  answers: Record<string, ArchiveAnswer>;
   revisionOf?: string;
   correctionReason?: string;
 }
@@ -100,7 +111,7 @@ export interface ArchiveAuditEvent {
 }
 
 export interface ArchiveWorkspace {
-  schemaVersion: 5;
+  schemaVersion: 6;
   spaceId: string;
   templates: ArchiveTemplate[];
   drafts: ArchiveDraft[];
@@ -134,6 +145,7 @@ const field = (
   sectionId,
   required,
   options,
+  customAnswerOptions: [],
 });
 
 const section = (id: string, label: string): ArchiveSection => ({ id, label });
@@ -195,7 +207,12 @@ const transitionFields: ArchiveField[] = [
   field('handoff-advice', '交接建议', 'text', 'transition-summary'),
 ];
 
-const cloneFields = (items: ArchiveField[]) => items.map(item => ({ ...item, options: [...item.options] }));
+const cloneFields = (items: ArchiveField[]) => items.map(item => ({
+  ...item,
+  options: [...item.options],
+  customAnswerOptions: [...(item.customAnswerOptions ?? [])],
+  settings: normalizeFormFieldSettings(item.type, item.settings, item.options),
+}));
 const cloneSections = (items: ArchiveSection[]) => items.map(item => ({ ...item }));
 
 const createTemplateSnapshot = (template: ArchiveTemplate): ArchiveTemplateSnapshot => ({
@@ -334,6 +351,68 @@ export const getArchiveSystemFieldLabel = (key: ArchiveSystemFieldKey) => (
   ARCHIVE_SYSTEM_FIELD_OPTIONS.find(item => item.key === key)?.label ?? key
 );
 
+export const isArchiveChoiceAnswer = (answer: ArchiveAnswer | undefined): answer is ArchiveChoiceAnswer => (
+  Boolean(answer)
+  && typeof answer === 'object'
+  && Array.isArray((answer as ArchiveChoiceAnswer).selectedOptions)
+  && typeof (answer as ArchiveChoiceAnswer).customText === 'object'
+);
+
+export const getArchiveSelectedOptions = (answer: ArchiveAnswer | undefined): string[] => {
+  if (isArchiveChoiceAnswer(answer)) return answer.selectedOptions;
+  if (typeof answer !== 'string' || !answer.trim()) return [];
+  return answer.split('、').filter(Boolean);
+};
+
+export const isArchiveAnswerFilled = (answer: ArchiveAnswer | undefined) => (
+  isArchiveChoiceAnswer(answer) ? answer.selectedOptions.length > 0 : Boolean(answer?.trim())
+);
+
+export const getArchiveAnswerValidationError = (field: ArchiveField, answer: ArchiveAnswer | undefined): string => {
+  if (field.required && !isArchiveAnswerFilled(answer)) return `请先填写“${field.label}”`;
+  if (!isArchiveAnswerFilled(answer)) return '';
+  if (field.type === 'multiple-select') {
+    const selectedOptions = getArchiveSelectedOptions(answer);
+    const settings = normalizeFormFieldSettings(field.type, field.settings, field.options);
+    const min = settings.minSelections ?? 1;
+    const max = settings.maxSelections ?? field.options.length;
+    if (selectedOptions.length < min || selectedOptions.length > max) return `“${field.label}”请选择${min}至${max}项`;
+  }
+  if (field.type === 'single-select' || field.type === 'multiple-select') {
+    const customText = isArchiveChoiceAnswer(answer) ? answer.customText : {};
+    if (getArchiveSelectedOptions(answer).some(option => field.customAnswerOptions?.includes(option) && !customText[option]?.trim())) return `请补充“${field.label}”中的填写内容`;
+  }
+  if (field.type === 'date') {
+    const format = normalizeFormFieldSettings(field.type, field.settings, field.options).dateFormat ?? 'ymd';
+    const pattern = format === 'year' ? /^\d{4}$/u : format === 'ym' ? /^\d{4}-\d{2}$/u : /^\d{4}-\d{2}-\d{2}$/u;
+    if (!pattern.test(String(answer))) return `“${field.label}”日期格式不正确`;
+  }
+  if (field.type === 'number') {
+    const text = String(answer).trim();
+    const value = Number(text);
+    const format = normalizeFormFieldSettings(field.type, field.settings, field.options).numberFormat ?? 'integer';
+    const decimalPlaces = text.includes('.') ? text.split('.')[1]?.length ?? 0 : 0;
+    const maxDecimals = format === 'integer' ? 0 : format === 'decimal-1' ? 1 : 2;
+    if (!Number.isFinite(value) || decimalPlaces > maxDecimals) return `“${field.label}”数字格式不正确`;
+  }
+  return '';
+};
+
+export const formatArchiveAnswer = (answer: ArchiveAnswer | undefined) => {
+  if (!isArchiveChoiceAnswer(answer)) return answer ?? '';
+  return answer.selectedOptions.map(option => {
+    const customText = answer.customText[option]?.trim();
+    return customText ? `${option}：${customText}` : option;
+  }).join('、');
+};
+
+const cloneArchiveAnswers = (answers: Record<string, ArchiveAnswer>): Record<string, ArchiveAnswer> => Object.fromEntries(
+  Object.entries(answers).map(([key, answer]) => [key, isArchiveChoiceAnswer(answer) ? {
+    selectedOptions: [...answer.selectedOptions],
+    customText: { ...answer.customText },
+  } : answer]),
+);
+
 export const getArchiveSystemValues = (student: Student): Partial<Record<ArchiveSystemFieldKey, string>> => ({
   name: student.name,
   studentNo: student.studentNo ?? '',
@@ -435,7 +514,7 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
   ] : [];
 
   return {
-    schemaVersion: 5,
+    schemaVersion: 6,
     spaceId,
     templates: [...recommended, schoolTermTemplate, schoolEntryTemplate],
     drafts,
@@ -452,7 +531,7 @@ type LegacyField = Omit<ArchiveField, 'type'> & {
 const normalizeTemplate = (template: ArchiveTemplate): ArchiveTemplate => ({
   ...template,
   layoutMode: template.layoutMode ?? ((template.sections ?? []).length > 0 ? 'grouped' : 'flat'),
-  systemFields: [...(template.systemFields ?? DEFAULT_ARCHIVE_SYSTEM_FIELDS)],
+  systemFields: [...(template.systemFields ?? DEFAULT_ARCHIVE_SYSTEM_FIELDS)].filter(key => key !== 'grade'),
   sections: (template.sections ?? []).map(item => ({ id: item.id, label: item.label })),
   fields: ((template.fields ?? []) as LegacyField[]).map(item => ({
     id: item.id,
@@ -462,6 +541,8 @@ const normalizeTemplate = (template: ArchiveTemplate): ArchiveTemplate => ({
     sectionId: item.sectionId,
     required: item.required,
     options: [...item.options],
+    customAnswerOptions: [...(item.customAnswerOptions ?? [])],
+    settings: normalizeFormFieldSettings(item.type, item.settings, item.options),
   })),
 });
 
@@ -537,11 +618,11 @@ export const readArchiveWorkspace = (context: ArchiveWorkspaceContext): ArchiveW
       snapshots?: StoredArchiveSnapshot[];
       auditEvents?: ArchiveAuditEvent[];
     };
-    if (parsed.schemaVersion === 3 || parsed.schemaVersion === 4 || parsed.schemaVersion === 5) {
+    if (parsed.schemaVersion === 3 || parsed.schemaVersion === 4 || parsed.schemaVersion === 5 || parsed.schemaVersion === 6) {
       const templates = (parsed.templates ?? []).map(normalizeTemplate);
       const records = hydrateStudentArchiveRecords(parsed.drafts ?? [], parsed.snapshots ?? [], templates);
       return {
-        schemaVersion: 5,
+        schemaVersion: 6,
         spaceId: parsed.spaceId ?? context.spaceId,
         templates,
         ...records,
@@ -614,7 +695,7 @@ export const readArchiveWorkspace = (context: ArchiveWorkspaceContext): ArchiveW
     const templates = [...recommended, ...migratedTemplates.map(normalizeTemplate)];
     const records = hydrateStudentArchiveRecords(drafts, parsed.snapshots ?? [], templates);
     return {
-      schemaVersion: 5,
+      schemaVersion: 6,
       spaceId: parsed.spaceId ?? context.spaceId,
       templates,
       ...records,
@@ -669,10 +750,16 @@ export const createBlankArchiveTemplate = (workspace: ArchiveWorkspace): { works
   return { workspace: { ...workspace, templates: [...workspace.templates, template] }, templateId };
 };
 
-export const saveArchiveTemplate = (workspace: ArchiveWorkspace, template: ArchiveTemplate): ArchiveWorkspace => ({
-  ...workspace,
-  templates: workspace.templates.map(item => item.id === template.id && !item.deletedAt ? { ...template, updatedAt: isoDate() } : item),
-});
+export const saveArchiveTemplate = (workspace: ArchiveWorkspace, template: ArchiveTemplate): ArchiveWorkspace => {
+  const savedTemplate = { ...template, updatedAt: isoDate() };
+  const exists = workspace.templates.some(item => item.id === template.id && !item.deletedAt);
+  return {
+    ...workspace,
+    templates: exists
+      ? workspace.templates.map(item => item.id === template.id && !item.deletedAt ? savedTemplate : item)
+      : [...workspace.templates, savedTemplate],
+  };
+};
 
 export const deleteArchiveTemplate = (
   workspace: ArchiveWorkspace,
@@ -749,7 +836,7 @@ export const createStudentArchiveDraft = (
 export const saveStudentArchiveDraft = (
   workspace: ArchiveWorkspace,
   draftId: string,
-  answers: Record<string, string>,
+  answers: Record<string, ArchiveAnswer>,
   submit: boolean,
   operator: string,
   systemValues: Partial<Record<ArchiveSystemFieldKey, string>> = {},
@@ -759,7 +846,7 @@ export const saveStudentArchiveDraft = (
   if (!submit) {
     return {
       ...workspace,
-      drafts: workspace.drafts.map(item => item.id === draftId ? { ...item, answers, updatedAt: isoDate() } : item),
+      drafts: workspace.drafts.map(item => item.id === draftId ? { ...item, answers: cloneArchiveAnswers(answers), updatedAt: isoDate() } : item),
     };
   }
 
@@ -778,7 +865,7 @@ export const saveStudentArchiveDraft = (
     createdAt: isoDate(),
     createdBy: operator,
     systemValues: { ...systemValues },
-    answers,
+    answers: cloneArchiveAnswers(answers),
   };
   const audit: ArchiveAuditEvent = {
     id: `audit-${Date.now()}`,
@@ -814,7 +901,7 @@ export const requestSnapshotCorrection = (
     revisionOf: source.id,
     correctionReason: reason,
     templateSnapshot: cloneTemplateSnapshot(source.templateSnapshot),
-    answers: { ...source.answers },
+    answers: cloneArchiveAnswers(source.answers),
   };
   const audit: ArchiveAuditEvent = {
     id: `audit-${Date.now()}`,
@@ -852,9 +939,11 @@ export const getPendingArchiveTasksForTeacher = (
 export const createArchiveField = (sectionId = ''): ArchiveField => ({
   id: `field-custom-${Date.now()}`,
   semanticKey: `custom-${Date.now()}`,
-  label: '新字段',
+  label: '',
   type: 'text',
   sectionId,
   required: false,
   options: [],
+  customAnswerOptions: [],
+  settings: {},
 });

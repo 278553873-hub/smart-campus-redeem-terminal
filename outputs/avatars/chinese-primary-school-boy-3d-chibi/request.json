@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Editorial illustration, coherent stylized visual language, clear subject, balanced composition. A polished square profile avatar of a fictional Chinese primary school boy, approximately 9 to 11 years old. Head-and-shoulders portrait, facing forward with a gentle confident smile, lively dark brown eyes, neat short black hair, rounded childlike facial proportions, healthy warm skin tone. He wears a clean contemporary blue-and-white Chinese school sports uniform with a simple collar, no school badge, no lettering, no logos. Premium 3D chibi character rendering, refined animated-feature-film quality, soft rounded forms, subtle realistic fabric texture, smooth but not plastic skin, soft studio lighting, clear catchlights, crisp silhouette. Centered symmetrical composition with generous breathing room around the hair and shoulders, visually readable as a small app avatar. Simple solid pale mint background with a soft grounded shadow, cheerful, trustworthy, wholesome, age-appropriate, culturally authentic. Avoid: photorealistic adult face, teenager, western school blazer, tie, graduation cap, text, Chinese characters, numbers, logo, watermark, school emblem, flag, red scarf, backpack, props, busy background, harsh shadows, dramatic cinematic lighting, oversized ears, crossed eyes, asymmetrical eyes, distorted face, extra limbs, visible hands, cropped hair, cropped chin, low resolution, flat 2D drawing, glossy plastic toy look.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "high"
+}

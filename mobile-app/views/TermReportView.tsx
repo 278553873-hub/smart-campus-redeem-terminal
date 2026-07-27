@@ -200,7 +200,7 @@ const COVER_TRAITS = [
 const PageCover = ({ student, onStart, mode = 'mobile' }: { student: Student, onStart: () => void, mode?: 'a4' | 'mobile', key?: any }) => {
     const classLabel = student.class || '2025级一班';
     const gradeLabel = student.grade || '一年级';
-    const termLabel = '2025-2026学年 上学期';
+    const termLabel = '2025-2026学年 下学期';
 
     return (
         <ReportPageContainer mode={mode} className="flex flex-col items-center justify-between text-center bg-gradient-to-b from-blue-50/30 to-white overflow-hidden min-h-[600px]">

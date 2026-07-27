@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const viewSource = fs.readFileSync(new URL('./PrincipalTermReportView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const sheetSource = fs.readFileSync(new URL('../components/ui/MobileNoticeSheet.tsx', import.meta.url), 'utf8');
+const headerSource = fs.readFileSync(new URL('../components/AssistantSubpageHeader.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -16,8 +17,9 @@ for (const required of [
   "import PrincipalTermReportView from './views/PrincipalTermReportView';",
   "'principal_term_report'",
   "{currentView === 'principal_term_report' && (",
-  'generated={principalTermReportGenerated}',
-  'onGenerated={() => setPrincipalTermReportGenerated(true)}',
+  'status={principalTermReportTask.status}',
+  'visibleStepCount={principalTermReportTask.visibleStepCount}',
+  'onRetry={principalTermReportTask.retry}',
   "onOpenHistory={() => navigateTo('principal_term_history')}",
 ]) {
   requireText(appSource, required, `App 未完整接入学期学校报告：${required}`);
@@ -42,10 +44,14 @@ for (const required of [
   requireText(viewSource, required, `学期学校报告缺少内容或状态：${required}`);
 }
 
-requireText(viewSource, 'aria-label="返回"', '学期报告页应提供明确返回入口。');
-requireText(viewSource, 'aria-label="查看往期学期报告"', '学期报告页应提供往期报告入口。');
+requireText(headerSource, "backLabel = '返回'", '学期报告页应通过共享标题栏提供明确返回入口。');
+requireText(viewSource, "label: '查看往期学期报告'", '学期报告页应提供往期报告入口。');
 requireText(viewSource, 'reportData?: PrincipalTermReportContent;', '学期报告页应支持复用历史报告内容。');
-requireText(viewSource, 'focus-visible:ring-2', '学期报告交互控件应保留键盘焦点。');
+requireText(headerSource, 'focus-visible:ring-2', '学期报告交互控件应保留键盘焦点。');
+requireText(viewSource, "status === 'empty'", '学期报告应处理无有效数据状态。');
+requireText(viewSource, "status === 'failed'", '学期报告应处理生成失败状态。');
+requireText(viewSource, 'principal-report-page', '学期报告应使用校长助理渐变背景。');
+forbidText(viewSource, 'bg-[var(--tm-bg-surface)] px-5 pb-6 pt-5', '学期报告首屏不应使用整块白底截断屏幕渐变。');
 forbidText(viewSource, '<textarea', '当前学期报告页不应开放对话输入。');
 forbidText(viewSource, '发消息', '当前学期报告页不应出现聊天入口。');
 

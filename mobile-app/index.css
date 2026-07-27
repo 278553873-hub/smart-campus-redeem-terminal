@@ -66,6 +66,19 @@
     linear-gradient(180deg, var(--tm-assistant-role-soft) 0%, var(--tm-bg-surface) 72%);
 }
 
+.principal-report-screen-background {
+  background:
+    radial-gradient(circle at 12% -4%, var(--tm-role-principal-glow-primary), transparent 36%),
+    radial-gradient(circle at 92% 14%, var(--tm-role-principal-glow-secondary), transparent 34%),
+    linear-gradient(
+      180deg,
+      var(--tm-role-principal-soft) 0%,
+      var(--tm-role-principal-accent-soft) 30%,
+      var(--tm-bg-page) 66%,
+      var(--tm-bg-page-low) 100%
+    );
+}
+
 .ai-assistant-typewriter-shine {
   color: var(--tm-assistant-role-text);
   background:
@@ -134,6 +147,19 @@
 }
 
 /* --- App Simulation Wrappers --- */
+.teacher-mobile-app,
+.teacher-mobile-app * {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.teacher-mobile-app::-webkit-scrollbar,
+.teacher-mobile-app *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .app-container {
   width: 100vw;
   height: 100vh;

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type TeacherMobileScreenBackgroundVariant = 'ambient' | 'record';
+export type TeacherMobileScreenBackgroundVariant = 'ambient' | 'plain' | 'record';
 export type TeacherMobileRecordMode = 'student' | 'class';
 
 interface TeacherMobileScreenBackgroundProps {
@@ -32,26 +32,32 @@ const RecordBackgroundPanel: React.FC<{
 const TeacherMobileScreenBackground: React.FC<TeacherMobileScreenBackgroundProps> = ({
     variant = 'ambient',
     recordMode = 'student',
-}) => (
-    <div className="absolute inset-0 overflow-hidden bg-[var(--tm-bg-page)]" aria-hidden="true">
-        <SharedAmbientBase />
-        {variant === 'ambient' ? (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_2%,var(--tm-glow-primary),transparent_32%),radial-gradient(circle_at_94%_18%,var(--tm-glow-secondary),transparent_34%)]" />
-        ) : (
-            <>
-                <RecordBackgroundPanel
-                    visible={recordMode === 'student'}
-                    primaryGlow="var(--tm-glow-primary)"
-                    secondaryGlow="var(--tm-glow-secondary)"
-                />
-                <RecordBackgroundPanel
-                    visible={recordMode === 'class'}
-                    primaryGlow="var(--tm-glow-secondary)"
-                    secondaryGlow="var(--tm-glow-primary)"
-                />
-            </>
-        )}
-    </div>
-);
+}) => {
+    if (variant === 'plain') {
+        return <div className="absolute inset-0 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />;
+    }
+
+    return (
+        <div className="absolute inset-0 overflow-hidden bg-[var(--tm-bg-page)]" aria-hidden="true">
+            <SharedAmbientBase />
+            {variant === 'ambient' ? (
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_2%,var(--tm-glow-primary),transparent_32%),radial-gradient(circle_at_94%_18%,var(--tm-glow-secondary),transparent_34%)]" />
+            ) : (
+                <>
+                    <RecordBackgroundPanel
+                        visible={recordMode === 'student'}
+                        primaryGlow="var(--tm-glow-primary)"
+                        secondaryGlow="var(--tm-glow-secondary)"
+                    />
+                    <RecordBackgroundPanel
+                        visible={recordMode === 'class'}
+                        primaryGlow="var(--tm-glow-secondary)"
+                        secondaryGlow="var(--tm-glow-primary)"
+                    />
+                </>
+            )}
+        </div>
+    );
+};
 
 export default TeacherMobileScreenBackground;

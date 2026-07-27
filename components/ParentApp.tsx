@@ -38,6 +38,7 @@ import { BANK_CONFIG } from '../constants';
 import { ASSETS } from '../mobile-app/assets/images';
 import {
   QUESTIONNAIRE_STORE_EVENT,
+  getActiveQuestionnaireTargets,
   getQuestionnaireCollectionMode,
   isQuestionnaireOverdue,
   readQuestionnaires,
@@ -668,7 +669,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
     return sharedQuestionnaires.filter(questionnaire => (
       questionnaire.status === 'active'
       && getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'
-      && questionnaire.targets.some(target => target.studentNo === activeChild.studentNo && target.reachable)
+      && getActiveQuestionnaireTargets(questionnaire).some(target => target.studentNo === activeChild.studentNo && target.reachable)
       && !questionnaire.submissions.some(submission => submission.studentNo === activeChild.studentNo)
     ));
   }, [activeChild, sharedQuestionnaires]);

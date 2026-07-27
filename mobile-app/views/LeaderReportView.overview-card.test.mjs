@@ -35,12 +35,22 @@ for (const required of [
   'displayedPercent',
   'style={{ width: `${displayedPercent}%` }}',
   'aria-label={`${label}进度${displayedPercent}%`}',
-  'coverageTone.bar',
+  'theme.bar',
   'text-3xl font-bold',
   'tracking-normal',
 ]) {
   if (!metricSource.includes(required)) {
     throw new Error(`数据总览比例指标需要使用同步动画进度条，缺少：${required}`);
+  }
+}
+
+for (const required of [
+  'tone="brand"',
+  'tone="secondary"',
+  'tone="reward"',
+]) {
+  if (!overviewSource.includes(required)) {
+    throw new Error(`数据总览需要区分使用教师、覆盖学生和评价次数的类型色，缺少：${required}`);
   }
 }
 

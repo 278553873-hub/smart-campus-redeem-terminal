@@ -7,6 +7,9 @@ const constantsSource = read('../constants.ts');
 const dashboardSource = read('./DashboardView.tsx');
 const basicEditSource = read('./StudentBasicEditView.tsx');
 const coinDetailSource = read('./StudentCoinDetailView.tsx');
+const evaluationRecordsSource = read('./StudentEvaluationRecordsView.tsx');
+const termSelectorSource = read('../components/student-detail/StudentTermSelector.tsx');
+const timeRangeSelectorSource = read('../components/student-detail/StudentTimeRangeSelector.tsx');
 const coinFormatSource = read('../utils/coinFormat.ts');
 const questionnaireStoreSource = read('../../shared/questionnaireStore.ts');
 const collectionHistorySource = read('./student-collection/StudentCollectionHistoryTab.tsx');
@@ -40,23 +43,36 @@ requireText(appSource, 'onBack={goBack}', '学生详情页返回入口应并入�
 requireText(appSource, "'student_detail'", '学生详情页应具备独立沉浸背景判断。');
 requireText(appSource, 'TeacherMobileScreenBackground', '应提供教师手机端公共屏幕背景组件。');
 requireText(appSource, "'student_detail', 'student_archive'", '学生详情页应纳入屏幕级背景页面集合。');
-requireText(appSource, 'return <TeacherMobileScreenBackground />;', '学生详情页所属页面集合应返回公共屏幕背景。');
+const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
+requireText(plainBackgroundList, "'student_detail'", '学生详情页应使用纯白标题栏、浅灰内容区背景。');
+requireText(appSource, '<TeacherMobileScreenBackground variant="plain" />', '学生详情页所属页面集合应返回公共纯色屏幕背景。');
+requireText(appSource, "hasPlainBackground ? 'z-[2]' : 'z-auto'", '学生详情内容层必须高于纯白标题背景，避免返回、档案和学籍入口被遮挡。');
 requireText(appSource, "'student_collection_detail'", 'App 路由应包含学生采集记录详情页。');
 requireText(appSource, 'getCompletedStudentCollectionHistory(', '学生详情必须从问卷数据层读取已完成采集记录。');
 requireText(appSource, '<StudentCollectionRecordDetailView', '点击采集记录后必须进入独立详情页。');
 requireText(appSource, "setStudentDetailInitialTab('collection')", '从采集详情返回后应保持在采集记录页签。');
+requireText(appSource, "setStudentDetailInitialTab('overview')", '从学生列表进入详情时必须默认展示成长概览。');
+if (appSource.includes("setStudentDetailInitialTab('growth')")) {
+  throw new Error('学生详情入口不应继续写入已移除的 growth 页签，否则首屏正文为空。');
+}
 
 requireText(dashboardSource, 'onEditBasicInfo', '学生详情总览应接收基础信息编辑入口。');
 requireText(appSource, "'class_detail', 'student_detail', 'student_archive'", '学生详情页应在手机屏幕内自行管理滚动。');
 requireText(dashboardSource, 'relative h-full min-h-0 overflow-hidden bg-transparent', '学生详情根容器应占满屏幕并保持透明，让公共背景完整显示。');
 requireText(dashboardSource, 'h-full overflow-y-auto pb-safe no-scrollbar', '学生详情内容应独立滚动，避免底部抽屉挂到长页面底部。');
-requireText(dashboardSource, 'aria-label="编辑基础信息"', '顶部学生身份卡应使用图标按钮并保留无障碍标签。');
-requireText(dashboardSource, '<Pencil', '顶部学生身份卡编辑入口应改为图标按钮。');
+requireText(dashboardSource, 'aria-label="编辑基础信息"', '学生头像编辑入口必须保留无障碍标签。');
+requireText(dashboardSource, '<Camera', '学生头像右下角必须展示相机图标。');
+if (dashboardSource.includes('<Pencil')) {
+  throw new Error('学生身份卡顶部不应继续展示独立铅笔编辑按钮。');
+}
+if (dashboardSource.indexOf('aria-label="编辑基础信息"') < dashboardSource.indexOf('<div className="flex min-w-0 items-center gap-4">')) {
+  throw new Error('基础信息编辑入口必须绑定在学生头像上，而不是学生卡片顶部操作区。');
+}
 if (dashboardSource.includes('>编辑基础信息<')) {
-  throw new Error('学生详情页编辑基础信息按钮不应显示文字，应改为图标。');
+  throw new Error('学生详情页不应额外显示“编辑基础信息”文字操作。');
 }
 if (dashboardSource.includes('handleUpdateFaceClick') || dashboardSource.includes('选择人脸更新方式')) {
-  throw new Error('学生详情页头像不应保留独立编辑功能，应合并到基础信息编辑页。');
+  throw new Error('学生详情页头像只负责进入基础信息编辑页，不应直接触发换脸流程。');
 }
 requireText(dashboardSource, 'formatCompactClassName', '学生详情页班级标签应格式化为 2025级1班。');
 if (dashboardSource.includes('{student.grade}{student.class}')) {
@@ -96,9 +112,15 @@ if (dashboardSource.includes('总资产') || dashboardSource.includes('totalCamp
   throw new Error('资产卡不应展示总资产，只展示钱包、存款和查看明细。');
 }
 requireText(dashboardSource, 'flex min-h-[56px] items-center', '资产卡应压缩为单行展示。');
-requireText(dashboardSource, 'C. Term Selector', '当前学期筛选应移动到五育能力模型上方。');
-if (dashboardSource.indexOf('C. Term Selector') > dashboardSource.indexOf('D. Radar Chart Card')) {
-  throw new Error('当前学期筛选应位于五育能力模型上方。');
+requireText(dashboardSource, '<StudentTermSelector value={selectedTerm}', '成长报告必须使用学期选择器。');
+requireText(termSelectorSource, '<StudentTimeRangeSelector', '学期筛选必须复用学生详情通用时间选择器。');
+requireText(timeRangeSelectorSource, 'h-11 w-full', '时间选择器必须满足 44px 触控高度。');
+requireText(termSelectorSource, '（本学期）', '学期选择器必须明确当前学期。');
+requireText(dashboardSource, '本学期五育积分', '五育积分应明确为本学期实时累计结果。');
+requireText(dashboardSource, 'currentTermOption', '成长概览必须固定读取当前学期数据。');
+const overviewSource = dashboardSource.slice(dashboardSource.indexOf('const renderOverviewTab'), dashboardSource.indexOf('const renderReportTab'));
+if (overviewSource.includes('<StudentTermSelector')) {
+  throw new Error('成长概览只展示本学期数据，不应提供历史学期筛选。');
 }
 if (dashboardSource.includes('Filter Bar (Term Selector)') || dashboardSource.includes('merged basic info')) {
   throw new Error('学生信息、资产和学期筛选不应继续使用旧的混合布局。');
@@ -126,7 +148,7 @@ requireText(dashboardSource, 'onToggleClassAvg', '五育能力模型班级平均
 requireText(dashboardSource, 'aspect-square w-full max-w-[340px]', '五育雷达图应使用响应式正方形，避免小屏溢出。');
 requireText(dashboardSource, 'stroke={teacherBrandSemantic.textDisabled}', '班级平均应使用弱化的中性实线展示。');
 requireText(dashboardSource, 'border-[var(--tm-text-disabled)]', '班级平均图例应使用中性实线 Token。');
-requireText(dashboardSource, 'const tone = getCategoryTone(s.category)', '当前分值标签应使用固定五育分类色。');
+requireText(dashboardSource, 'getFiveEducationTone', '当前分值标签应使用固定五育分类色。');
 if (dashboardSource.includes('fill="#F5F3FF"')) {
   throw new Error('班级平均数值不应再使用背景填充。');
 }
@@ -146,26 +168,75 @@ for (const legacyColor of ['blue-', 'purple-', 'violet-', 'indigo-', 'cyan-', 'p
 }
 for (const required of [
   'teacherFiveEducationSemantic',
-  '--tm-record-positive-bg',
-  '--tm-record-negative-bg',
   '--tm-brand-reward-soft',
   '--tm-brand-primary-soft',
   'aria-label="管理学籍状态"',
 ]) {
   requireText(dashboardSource, required, `学生详情页未完整接入新设计 Token：${required}`);
 }
+requireText(evaluationRecordsSource, '--tm-record-positive-bg', '评价记录二级页应使用正向记录 Token。');
+requireText(evaluationRecordsSource, '--tm-record-negative-bg', '评价记录二级页应使用负向记录 Token。');
 requireText(dashboardSource, 'showClassAvg', '五育能力模型应保留班级平均开关。');
+requireText(overviewSource, '<FiveEducationRadar scores={currentScores}', '成长概览必须直接展示五育雷达图。');
+if (dashboardSource.includes('showFiveComparison') || dashboardSource.includes('班级对比')) {
+  throw new Error('五育雷达图不应再通过班级对比按钮延迟展示。');
+}
+requireText(overviewSource, '评价记录 {currentTermEvaluationRecords.length}条', '雷达图下方必须以文字链接展示本学期评价记录数量。');
+requireText(overviewSource, 'setSelectedTerm(currentTermOption.value)', '评价记录入口必须携带本学期条件进入二级页。');
+requireText(overviewSource, 'setShowEvaluationRecords(true)', '评价记录入口必须直接进入评价记录二级页。');
+if (overviewSource.includes('showEvaluationPreview') || overviewSource.includes('aria-expanded') || overviewSource.includes('student-evaluation-preview')) {
+  throw new Error('成长概览中的评价记录入口不应再原地展开明细。');
+}
 if (dashboardSource.includes('上月对比') || dashboardSource.includes('showLastMonth') || dashboardSource.includes('年级平均')) {
   throw new Error('五育能力模型不应再展示上月对比或年级平均，应改为当前与班级平均。');
 }
-requireText(dashboardSource, 'renderRecordTab', '学生详情总览应保留成长/评价记录内容。');
-requireText(dashboardSource, "useState<'growth' | 'evaluation' | 'collection'>", '学生详情必须提供采集记录第三页签。');
-requireText(dashboardSource, "initialTab = 'growth'", '学生详情应支持从采集详情返回时恢复原页签。');
+requireText(dashboardSource, "useState<'overview' | 'report' | 'collection'>", '学生详情一级页签应拆分为成长概览、成长报告和采集记录。');
+requireText(dashboardSource, "initialTab = 'overview'", '学生详情应默认进入成长概览。');
+requireText(dashboardSource, '成长概览', '学生详情必须提供成长概览页签。');
 requireText(dashboardSource, '成长报告', '学生详情必须保留成长报告页签。');
 requireText(dashboardSource, '评价记录', '学生详情必须保留评价记录页签。');
 requireText(dashboardSource, '采集记录', '学生详情必须新增采集记录页签。');
-requireText(dashboardSource, "activeTab === 'growth' && renderGrowthTab()", '五育模型和成长内容必须只在成长报告页签展示。');
+requireText(dashboardSource, "activeTab === 'overview' && renderOverviewTab()", '实时五育积分必须只在成长概览展示。');
+requireText(dashboardSource, "activeTab === 'report' && renderReportTab()", '阶段报告必须收敛到成长报告页签。');
+if (dashboardSource.includes("activeTab === 'evaluation'")) {
+  throw new Error('评价记录不应继续占用学生详情一级页签。');
+}
+requireText(dashboardSource, '<StudentEvaluationRecordsView', '评价记录应进入独立二级页面。');
+requireText(evaluationRecordsSource, 'record.evaluation_date >= activeTerm.startDate', '评价记录必须按所选学期过滤。');
+requireText(evaluationRecordsSource, 'ariaLabel="筛选评价记录学期"', '评价记录二级页必须继承并允许切换学期。');
+requireText(dashboardSource, 'onClick={() => setShowStatusActionSheet(true)}', '学生卡片顶部的学籍入口应直接打开学籍状态抽屉。');
+requireText(dashboardSource, '>学籍</span>', '学生卡片顶部必须显示中文“学籍”。');
+if (dashboardSource.includes('showMoreActionsSheet') || dashboardSource.includes('aria-label="更多学生操作"')) {
+  throw new Error('学籍管理不应再经过只有一个操作的更多菜单。');
+}
+requireText(dashboardSource, 'aria-label="查看学生成长档案"', '学生成长档案应使用学生卡片顶部的轻量入口。');
+requireText(dashboardSource, 'onClick={onOpenStudentArchive}', '学生成长档案入口应直接进入档案页面。');
+requireText(dashboardSource, '<FolderOpen', '学生成长档案入口应使用文件夹图标表达档案语义。');
+requireText(dashboardSource, '>档案</span>', '学生成长档案入口必须显示中文“档案”。');
+const studentHeaderActionsSource = dashboardSource.slice(
+  dashboardSource.indexOf('aria-label="查看学生成长档案"'),
+  dashboardSource.indexOf('<div className="flex min-w-0 items-center gap-4">'),
+);
+if ((studentHeaderActionsSource.match(/text-\[var\(--tm-text-secondary\)\]/g) || []).length !== 2) {
+  throw new Error('学生卡片顶部的“档案”和“学籍”应统一使用中性深灰。');
+}
+if (studentHeaderActionsSource.includes('--tm-brand-primary')) {
+  throw new Error('学生卡片顶部并列入口不应使用品牌红制造错误的主次关系。');
+}
+if (dashboardSource.includes('BookOpenCheck')) {
+  throw new Error('学生成长档案入口不应继续使用语义含混的带勾书本图标。');
+}
+if (dashboardSource.indexOf('aria-label="查看学生成长档案"') > dashboardSource.indexOf('{/* 2. Scrollable Content */}')) {
+  throw new Error('学生成长档案入口必须位于学生身份卡顶部。');
+}
+if (dashboardSource.includes('>学生成长档案</span>')) {
+  throw new Error('学生成长档案不应继续作为更多操作抽屉中的文字菜单项。');
+}
 requireText(dashboardSource, '<StudentCollectionHistoryTab items={collectionHistory}', '采集记录页签必须使用独立业务组件。');
+requireText(dashboardSource, 'termOptions={STUDENT_TERM_OPTIONS}', '采集记录必须复用成长数据的学期定义。');
+requireText(dashboardSource, 'selectedTerm={selectedTerm}', '成长报告与采集记录必须共享所选学期。');
+requireText(dashboardSource, 'onSelectedTermChange={setSelectedTerm}', '采集记录必须能够切换共享学期。');
+requireText(dashboardSource, "value: '2025-spring'", '学生详情当前学期必须与演示日期保持一致。');
 requireText(questionnaireStoreSource, 'getCompletedStudentCollectionHistory', '问卷数据层必须提供按学生查询采集历史的方法。');
 requireText(questionnaireStoreSource, "item.studentNo === studentNo && item.status === 'completed'", '学生详情只能展示已完成的学生采集记录。');
 requireText(questionnaireStoreSource, 'createdByCurrentTeacher', '学生采集历史查询必须校验任务创建权限。');
@@ -173,6 +244,16 @@ requireText(questionnaireStoreSource, 'assignedToCurrentTeacher', '学生采集�
 requireText(collectionHistorySource, '家长问卷', '采集记录卡片必须区分家长问卷。');
 requireText(collectionHistorySource, '学生采集', '采集记录卡片必须区分学生采集。');
 requireText(collectionHistorySource, 'respondentLabel', '采集记录卡片必须展示实际填写人。');
+requireText(collectionHistorySource, '<StudentTermSelector', '采集记录必须复用成长报告的学期选择器。');
+requireText(collectionHistorySource, 'completedDate >= activeTerm.startDate', '采集记录必须按所选学期过滤。');
+requireText(collectionHistorySource, 'getMonthGroup', '采集记录必须在所选学期内按月份聚合。');
+for (const extraTimeOption of ['全部时间', '本月', '上月', '自定义时间']) {
+  if (collectionHistorySource.includes(extraTimeOption)) {
+    throw new Error(`采集记录不应额外提供时间筛选项：${extraTimeOption}`);
+  }
+}
+requireText(collectionHistorySource, 'aria-expanded={isExpanded}', '采集记录时间分组必须支持折叠。');
+requireText(collectionHistorySource, 'min-h-[var(--tm-size-touch)]', '采集记录时间分组必须满足 44px 触控尺寸。');
 requireText(collectionDetailSource, 'divide-y divide-slate-100', '采集详情必须使用连续问答列表，不得为每道题嵌套卡片。');
 requireText(collectionDetailSource, 'formatQuestionnaireAnswer', '采集详情必须统一格式化结构化答案。');
 requireText(collectionDetailSource, '返回学生详情', '采集详情必须提供明确返回路径。');
@@ -202,7 +283,7 @@ requireText(typesSource, "export type GuardianRelation = '家长' | '爸爸' | '
 requireText(typesSource, 'guardianContacts?: GuardianContact[];', 'Student 类型应包含家长联系方式结构。');
 requireText(basicEditSource, "const guardianRelationOptions: GuardianRelation[] = ['家长', '爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他'];", '基础信息编辑页应提供家长关系选择。');
 requireText(basicEditSource, "contact.relation === '其他'", '选择其他关系时应显示自定义关系输入框。');
-requireText(basicEditSource, 'saveAvatarFromAlbum', '基础信息编辑页应把头像更换合并到保存流程。');
+requireText(basicEditSource, 'confirmSystemAvatar', '基础信息编辑页应确认系统头像后再写入学生资料。');
 requireText(basicEditSource, '保存基础信息', '基础信息编辑页应提供明确保存按钮。');
 requireText(basicEditSource, 'h-full min-h-0 overflow-hidden', '基础信息编辑子页面应使用手机壳内高度，避免底部按钮裁切。');
 requireText(basicEditSource, 'StudentBasicEditView', '基础信息编辑页应独立封装。');
@@ -218,22 +299,28 @@ requireText(basicEditSource, '从相册选择', '头像操作蒙层应提供从�
 requireText(basicEditSource, 'cameraInputRef', '头像操作应复用拍照文件入口。');
 requireText(basicEditSource, 'albumInputRef', '头像操作应复用相册文件入口。');
 
-for (const required of ['发币记录', '兑换记录', '预计可得']) {
-  requireText(coinDetailSource, required, `校园币详情页缺少区块：${required}`);
+for (const required of ['收入', '支出', '校园币收支记录', '校园币流水']) {
+  requireText(coinDetailSource, required, `校园币详情页缺少收支流水能力：${required}`);
 }
 requireText(coinDetailSource, 'CampusCoinDetail', '校园币详情页应使用校园币详情类型。');
 requireText(coinDetailSource, 'issueRecords.map', '校园币详情页应展示发放流水列表。');
 requireText(coinDetailSource, 'consumeRecords.map', '校园币详情页应展示消耗流水列表。');
-requireText(coinDetailSource, 'estimatedTotal', '校园币详情页应展示本月预计结算合计。');
-requireText(coinDetailSource, '只读', '校园币详情页应明确为只读详情，不提供发币扣币操作。');
+requireText(coinDetailSource, 'line-clamp-2', '校园币流水标题和说明应至少支持两行展示。');
 requireText(coinDetailSource, 'activeFilter', '校园币详情页应参考货柜机流水明细提供收支筛选。');
 requireText(coinDetailSource, 'activeCategory', '校园币详情页应参考货柜机流水明细提供类型筛选。');
 requireText(coinDetailSource, 'formatCoinAmount', '校园币详情页金额应使用统一校园币格式化函数。');
-requireText(coinDetailSource, 'estimateBonusItems', '预计可得应按货柜机样式展示构成项。');
-requireText(coinDetailSource, '成长奖励', '预计可得应展示成长奖励构成。');
-requireText(coinDetailSource, '得分奖励', '预计可得应展示得分奖励构成。');
-if (coinDetailSource.includes('本月预估可得金额') || coinDetailSource.includes('月底按规则统一入账')) {
-  throw new Error('校园币详情页预估板块应复刻货柜机预计可得，不应继续使用旧说明文案。');
+requireText(coinDetailSource, 'showFilterSheet', '校园币年份与交易类型应收进筛选抽屉。');
+requireText(coinDetailSource, 'groupedFlowItems', '校园币流水应按月份分组。');
+requireText(coinDetailSource, 'divide-y divide-[var(--tm-border-subtle)]', '同月流水应使用连续列表与分隔线组织。');
+requireText(coinDetailSource, 'h-11 w-11', '校园币图标按钮应满足 44px 触控尺寸。');
+if (coinDetailSource.includes('学期')) {
+  throw new Error('校园币是持续资产，不应使用学期筛选。');
+}
+if (coinDetailSource.includes('monthlyEstimate') || coinDetailSource.includes('预计可得') || coinDetailSource.includes('校园币总额')) {
+  throw new Error('校园币详情页只保留收支记录，不应展示预估或金额分布。');
+}
+if (coinDetailSource.includes('mb-1 truncate text-base') || coinDetailSource.includes('truncate text-xs font-bold')) {
+  throw new Error('校园币流水不应继续强制单行截断标题和来源。');
 }
 
 requireText(coinFormatSource, 'maximumFractionDigits: 2', '校园币金额最多保留 2 位小数。');

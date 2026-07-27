@@ -48,11 +48,38 @@ interface LeaderReportViewProps {
     onBack: () => void;
 }
 
-const coverageTone = {
-    bar: 'bg-[var(--tm-status-positive)]',
-    text: 'text-[var(--tm-status-positive-strong)]',
-    shell: 'bg-[var(--tm-status-positive-soft)]',
+type CoverageLevel = 'low' | 'medium' | 'high';
+
+const coverageToneMap = {
+    low: {
+        bar: 'bg-[var(--tm-status-negative)]',
+        text: 'text-[var(--tm-status-negative-strong)]',
+        shell: 'bg-[var(--tm-status-negative-soft)]',
+    },
+    medium: {
+        bar: 'bg-[var(--tm-brand-secondary)]',
+        text: 'text-[var(--tm-brand-secondary-strong)]',
+        shell: 'bg-[var(--tm-brand-secondary-soft)]',
+    },
+    high: {
+        bar: 'bg-[var(--tm-status-positive)]',
+        text: 'text-[var(--tm-status-positive-strong)]',
+        shell: 'bg-[var(--tm-status-positive-soft)]',
+    },
 } as const;
+
+const coverageChartColorMap: Record<CoverageLevel, string> = {
+    low: teacherBrandSemantic.negative,
+    medium: teacherBrandSemantic.secondary,
+    high: teacherBrandSemantic.positive,
+};
+
+const getCoverageLevel = (percent: number): CoverageLevel => (
+    percent >= 80 ? 'high' : percent >= 60 ? 'medium' : 'low'
+);
+
+const getCoverageTone = (percent: number) => coverageToneMap[getCoverageLevel(percent)];
+const getCoverageChartColor = (percent: number) => coverageChartColorMap[getCoverageLevel(percent)];
 
 const useAnimatedNumber = (targetValue: number, duration = 650, replayKey?: string) => {
     const target = Number.isFinite(targetValue) ? targetValue : 0;
@@ -140,12 +167,22 @@ const MetricUnit = ({
     fraction?: string;
     value?: string;
     icon: React.ElementType;
-    tone: 'neutral' | 'positive';
+    tone: 'brand' | 'secondary' | 'reward';
     animationKey?: string;
 }) => {
     const theme = {
-        neutral: { icon: 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' },
-        positive: { icon: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]' },
+        brand: {
+            icon: 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]',
+            bar: 'bg-[var(--tm-brand-primary)]',
+        },
+        secondary: {
+            icon: 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]',
+            bar: 'bg-[var(--tm-brand-secondary)]',
+        },
+        reward: {
+            icon: 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]',
+            bar: 'bg-[var(--tm-brand-reward)]',
+        },
     }[tone];
     const showProgress = percent !== undefined;
     const safePercent = Math.max(0, Math.min(100, percent ?? 0));
@@ -173,7 +210,7 @@ const MetricUnit = ({
                 </div>
                 {showProgress && (
                     <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" aria-label={`${label}进度${displayedPercent}%`}>
-                        <div className={`h-full rounded-full ${coverageTone.bar}`} style={{ width: `${displayedPercent}%` }} />
+                        <div className={`h-full rounded-full ${theme.bar}`} style={{ width: `${displayedPercent}%` }} />
                     </div>
                 )}
             </div>
@@ -186,10 +223,10 @@ const OverviewCard = ({ snapshot, animationKey }: { snapshot: LeaderReportSnapsh
         <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">数据总览</h2>
         <div className="mt-3 grid grid-cols-1 gap-3">
             <div className="grid grid-cols-2 gap-3">
-                <MetricUnit label="使用教师" percent={snapshot?.summary.teacherPercent ?? 0} fraction={`${snapshot?.summary.activeTeachers ?? 0} / ${snapshot?.summary.totalTeachers ?? 0}`} icon={UserCheck} tone="neutral" animationKey={`${animationKey}-teacher`} />
-                <MetricUnit label="覆盖学生" percent={snapshot?.summary.studentPercent ?? 0} fraction={`${snapshot?.summary.totalCoveredStudents ?? 0} / ${snapshot?.summary.totalStudents ?? 0}`} icon={Users} tone="neutral" animationKey={`${animationKey}-student`} />
+                <MetricUnit label="使用教师" percent={snapshot?.summary.teacherPercent ?? 0} fraction={`${snapshot?.summary.activeTeachers ?? 0} / ${snapshot?.summary.totalTeachers ?? 0}`} icon={UserCheck} tone="brand" animationKey={`${animationKey}-teacher`} />
+                <MetricUnit label="覆盖学生" percent={snapshot?.summary.studentPercent ?? 0} fraction={`${snapshot?.summary.totalCoveredStudents ?? 0} / ${snapshot?.summary.totalStudents ?? 0}`} icon={Users} tone="secondary" animationKey={`${animationKey}-student`} />
             </div>
-            <MetricUnit label="评价次数" value={`${snapshot?.summary.totalRecords ?? 0}`} icon={ClipboardList} tone="positive" animationKey={`${animationKey}-records`} />
+            <MetricUnit label="评价次数" value={`${snapshot?.summary.totalRecords ?? 0}`} icon={ClipboardList} tone="reward" animationKey={`${animationKey}-records`} />
         </div>
     </section>
 );
@@ -625,8 +662,6 @@ const getDefaultCoverageGradeId = (grades: LeaderReportGradeCoverage[]) => {
     if (!grades.length) return null;
     return grades[0].id;
 };
-
-const coverageChartColor = teacherBrandSemantic.positive;
 
 const getEvaluationRecordsAxis = (values: number[]) => {
     const maxValue = Math.max(0, ...values);
@@ -1094,12 +1129,14 @@ const IndicatorUsageSummaryCard = ({
             label: '二级指标覆盖率',
             coverageRate: secondSummary.coverageRate,
             uncovered: secondSummary.uncovered,
+            tone: 'brand',
         },
         {
             key: 'third',
             label: '三级指标覆盖率',
             coverageRate: thirdSummary.coverageRate,
             uncovered: thirdSummary.uncovered,
+            tone: 'secondary',
         },
     ] as const;
 
@@ -1133,14 +1170,22 @@ const IndicatorCoverageChartRow = ({
         label: string;
         coverageRate: number;
         uncovered: number;
+        tone: 'brand' | 'secondary';
     };
 }) => {
-    const tone = {
-        shell: coverageTone.shell,
-        track: 'bg-white/70',
-        bar: coverageTone.bar,
-        text: coverageTone.text,
-    };
+    const tone = item.tone === 'brand'
+        ? {
+            shell: 'bg-[var(--tm-brand-primary-soft)]',
+            track: 'bg-[var(--tm-brand-primary-soft-strong)]',
+            bar: 'bg-gradient-to-r from-[var(--tm-brand-primary)] to-[var(--tm-brand-primary-hover)]',
+            text: 'text-[var(--tm-brand-primary-pressed)]',
+        }
+        : {
+            shell: 'bg-[var(--tm-brand-secondary-soft)]',
+            track: 'bg-white/70',
+            bar: 'bg-gradient-to-r from-[var(--tm-brand-secondary)] to-[var(--tm-brand-secondary-strong)]',
+            text: 'text-[var(--tm-brand-secondary-strong)]',
+        };
 
     return (
         <div className={`rounded-2xl p-3 ${tone.shell}`}>
@@ -1380,7 +1425,7 @@ const GradeCoverageChart = ({
                     type: 'bar',
                     data: grades.map(grade => {
                         const percent = rate(grade.covered, grade.total);
-                        const baseColor = coverageChartColor;
+                        const baseColor = getCoverageChartColor(percent);
                         return {
                             value: percent,
                             itemStyle: {
@@ -1447,7 +1492,7 @@ const GradeCoverageChart = ({
 
 const ClassCoverageRow: React.FC<{ item: LeaderReportClassCoverage }> = ({ item }) => {
     const percent = rate(item.covered, item.total);
-    const tone = coverageTone;
+    const tone = getCoverageTone(percent);
 
     return (
         <div className="rounded-2xl bg-white/80 p-3">
@@ -1588,8 +1633,8 @@ const GradeEvaluationRecordsChart = ({
                         value: grade.evaluationRecords,
                         itemStyle: {
                             color: new echartsCore.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: teacherBrandSemantic.positive },
-                                { offset: 1, color: `${teacherBrandSemantic.positive}CC` },
+                                { offset: 0, color: teacherBrandSemantic.primary },
+                                { offset: 1, color: `${teacherBrandSemantic.primaryHover}CC` },
                             ]),
                             borderRadius: [10, 10, 4, 4],
                             opacity: 0.96,
@@ -1598,7 +1643,7 @@ const GradeEvaluationRecordsChart = ({
                             show: true,
                             position: 'top',
                             formatter: '{c}条',
-                            color: teacherBrandSemantic.positiveStrong,
+                            color: teacherBrandSemantic.primaryPressed,
                             fontSize: 12,
                             fontWeight: 800,
                             valueAnimation: true,
@@ -1757,7 +1802,7 @@ const ClassCoverageChart = ({ classes, animationKey }: { classes: LeaderReportCl
                     data: sortedClasses.map(item => {
                         const targetPercent = rate(item.covered, item.total);
                         const percent = Math.round(rate(item.covered, item.total) * displayedProgress);
-                        const baseColor = coverageChartColor;
+                        const baseColor = getCoverageChartColor(targetPercent);
                         return {
                             value: percent,
                             itemStyle: {
@@ -1918,8 +1963,8 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
                         value: Math.round(item.evaluationRecords * displayedProgress),
                         itemStyle: {
                             color: new echartsCore.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: teacherBrandSemantic.positive },
-                                { offset: 1, color: `${teacherBrandSemantic.positive}CC` },
+                                { offset: 0, color: teacherBrandSemantic.secondary },
+                                { offset: 1, color: `${teacherBrandSemantic.secondaryStrong}CC` },
                             ]),
                             borderRadius: [8, 8, 3, 3],
                         },
@@ -1927,7 +1972,7 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
                             show: true,
                             position: 'top',
                             formatter: '{c}条',
-                            color: teacherBrandSemantic.positiveStrong,
+                            color: teacherBrandSemantic.secondaryStrong,
                             fontSize: 12,
                             fontWeight: 800,
                             valueAnimation: true,
@@ -2461,7 +2506,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                             <div className="mb-2 flex items-center justify-between px-1">
                                 <div className="text-base font-semibold text-[var(--tm-text-primary)]">{selectedGrade.name}班级覆盖率</div>
                                 <div className="text-right">
-                                    <span className="text-xl font-black leading-none text-[var(--tm-brand-primary-pressed)]">
+                                    <span className={`text-xl font-black leading-none ${getCoverageTone(rate(selectedGrade.covered, selectedGrade.total)).text}`}>
                                         <AnimatedNumber value={rate(selectedGrade.covered, selectedGrade.total)} replayKey={`${selectedGrade.id}-${selectedGrade.covered}/${selectedGrade.total}-summary`} />%
                                     </span>
                                 </div>

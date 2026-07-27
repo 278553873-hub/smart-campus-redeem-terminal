@@ -14,12 +14,18 @@ requireText(appSource, 'const getPhoneScreenBackground = () =>', '教师手机�
 requireText(appSource, "currentView === 'class_list'", '班级页面应进入屏幕级背景分支。');
 requireText(appSource, "import TeacherMobileScreenBackground from './components/TeacherMobileScreenBackground'", '教师手机端应引用公共屏幕背景组件。');
 const ambientBranchList = appSource.match(/if \(\[([^\]]+)\]\.includes\(currentView\)\) \{\s*return <TeacherMobileScreenBackground/)?.[1] ?? '';
-for (const viewName of ["'student_detail'", "'student_archive'", "'me'"]) {
-  if (!ambientBranchList.includes(viewName)) failures.push('学生详情等长页面应统一进入公共环境背景分支：缺少 ' + viewName + '。');
+for (const viewName of ["'student_archive'", "'me'"]) {
+  if (!ambientBranchList.includes(viewName)) failures.push('环境氛围页面应统一进入公共渐变背景分支：缺少 ' + viewName + '。');
+}
+const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
+for (const viewName of ["'class_detail'", "'class_report'", "'student_detail'"]) {
+  if (!plainBackgroundList.includes(viewName)) failures.push('查看类页面应统一进入纯白标题栏、浅灰内容区背景分支：缺少 ' + viewName + '。');
 }
 requireText(appSource, "currentView === 'me'", '我的页面应进入屏幕级背景分支。');
 requireText(backgroundSource, 'var(--tm-bg-page)', '公共背景组件应使用页面背景令牌。');
 requireText(backgroundSource, 'var(--tm-bg-page-low)', '公共背景组件应延续到页面下方。');
+requireText(backgroundSource, 'var(--tm-page-plain-header-bg)', '纯色页面状态栏应使用正式标题栏背景 Token。');
+requireText(appSource, 'var(--tm-page-plain-content-bg)', '纯色页面内容区应使用正式内容背景 Token。');
 requireText(appSource, 'screenBackground={getPhoneScreenBackground()}', 'PhoneMockup 应接收当前页面的屏幕级背景。');
 requireText(appSource, 'const hasScreenLevelBackground', '有屏幕级背景的页面，内容容器应能切换为透明。');
 requireText(appSource, "currentView !== 'class_list'", '班级首页不应显示 LocalHeader 白色标题条。');

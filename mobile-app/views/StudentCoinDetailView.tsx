@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronLeft, Clock, Coins, Landmark, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
+import { ChevronLeft, Clock, Landmark, ShoppingBag, SlidersHorizontal, Sparkles, TrendingUp, X } from 'lucide-react';
 import { CampusCoinDetail, Student } from '../types';
-import { MobileCard } from '../components/ui/MobileCard';
 import { phoneText } from '../styles/teacherMobileTokens';
 import { formatCoinAmount } from '../utils/coinFormat';
 
@@ -25,7 +24,7 @@ interface CoinFlowItem {
 }
 
 const categoryLabels: Record<FlowCategory, string> = {
-  all: '全部',
+  all: '全部类型',
   dividend: '月度分红',
   reward: '班级奖励',
   interest: '银行利息',
@@ -33,27 +32,33 @@ const categoryLabels: Record<FlowCategory, string> = {
   class_shop: '班级兑换',
 };
 
+const flowFilterOptions: Array<{ value: FlowFilter; label: string }> = [
+  { value: 'all', label: '全部' },
+  { value: 'income', label: '收入' },
+  { value: 'expense', label: '支出' },
+];
+
 const getFlowIcon = (category: FlowCategory, type: CoinFlowItem['type']) => {
   const toneClass = type === 'income' ? 'text-[var(--tm-brand-reward-strong)]' : 'text-[var(--tm-text-tertiary)]';
   switch (category) {
     case 'vending_shop':
     case 'class_shop':
-      return <ShoppingBag size={18} className={toneClass} />;
+      return <ShoppingBag className={`h-[18px] w-[18px] ${toneClass}`} />;
     case 'dividend':
-      return <TrendingUp size={18} className={toneClass} />;
+      return <TrendingUp className={`h-[18px] w-[18px] ${toneClass}`} />;
     case 'reward':
-      return <Sparkles size={18} className={toneClass} />;
+      return <Sparkles className={`h-[18px] w-[18px] ${toneClass}`} />;
     case 'interest':
-      return <Landmark size={18} className={toneClass} />;
+      return <Landmark className={`h-[18px] w-[18px] ${toneClass}`} />;
     default:
-      return <Clock size={18} className={toneClass} />;
+      return <Clock className={`h-[18px] w-[18px] ${toneClass}`} />;
   }
 };
 
-const getFlowBg = (type: CoinFlowItem['type']) => (
+const getFlowIconSurface = (type: CoinFlowItem['type']) => (
   type === 'income'
-    ? 'bg-[var(--tm-brand-reward-soft)] ring-[var(--tm-brand-reward-soft)]'
-    : 'bg-[var(--tm-bg-surface-muted)] ring-[var(--tm-bg-surface-soft)]'
+    ? 'bg-[var(--tm-brand-reward-soft)]'
+    : 'bg-[var(--tm-bg-surface-muted)]'
 );
 
 const getIssueCategory = (source: string): FlowCategory => {
@@ -68,11 +73,23 @@ const getConsumeCategory = (scene: string): FlowCategory => {
   return 'class_shop';
 };
 
+const formatMonthLabel = (monthKey: string) => {
+  const [year, month] = monthKey.split('-');
+  return `${year}年${Number(month)}月`;
+};
+
+const formatFlowTime = (value: string) => {
+  const [date, time] = value.split(' ');
+  const [, month, day] = date.split('-');
+  return `${Number(month)}月${Number(day)}日${time ? ` ${time.slice(0, 5)}` : ''}`;
+};
+
 const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, coinDetail, onBack }) => {
-  const { issueRecords, consumeRecords, monthlyEstimate } = coinDetail;
+  const { issueRecords, consumeRecords } = coinDetail;
   const [activeFilter, setActiveFilter] = useState<FlowFilter>('all');
   const [activeYear, setActiveYear] = useState<string>('2026');
   const [activeCategory, setActiveCategory] = useState<FlowCategory>('all');
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
 
   const flowItems = useMemo<CoinFlowItem[]>(() => {
     const incomeItems = issueRecords.map(record => ({
@@ -93,15 +110,14 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
       type: 'expense' as const,
       category: getConsumeCategory(record.scene),
     }));
-
     return [...incomeItems, ...expenseItems].sort((a, b) => b.time.localeCompare(a.time));
   }, [consumeRecords, issueRecords]);
 
-  const filteredFlowItems = flowItems.filter(item => (
-    (activeFilter === 'all' || item.type === activeFilter) &&
-    (activeCategory === 'all' || item.category === activeCategory) &&
-    item.time.startsWith(activeYear)
-  ));
+  const yearOptions = useMemo(() => Array.from(new Set([
+    ...flowItems.map(item => item.time.slice(0, 4)),
+    '2025',
+    '2024',
+  ])).sort((a, b) => b.localeCompare(a)), [flowItems]);
 
   const categoryOptions: FlowCategory[] = [
     'all',
@@ -109,155 +125,190 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
     ...(activeFilter === 'income' ? [] : ['vending_shop', 'class_shop'] as FlowCategory[]),
   ];
 
-  const growthReward = monthlyEstimate.basePerformance + monthlyEstimate.classBonus - monthlyEstimate.deductions;
-  const scoreReward = monthlyEstimate.rankingReward;
-  const estimateBonusItems = [
-    { label: '成长奖励', value: growthReward },
-    { label: '得分奖励', value: scoreReward },
-  ].filter(item => item.value !== 0);
+  const filteredFlowItems = useMemo(() => flowItems.filter(item => (
+    (activeFilter === 'all' || item.type === activeFilter)
+    && (activeCategory === 'all' || item.category === activeCategory)
+    && item.time.startsWith(activeYear)
+  )), [activeCategory, activeFilter, activeYear, flowItems]);
+
+  const groupedFlowItems = useMemo(() => filteredFlowItems.reduce<Array<{ month: string; items: CoinFlowItem[] }>>((groups, item) => {
+    const month = item.time.slice(0, 7);
+    const currentGroup = groups[groups.length - 1];
+    if (currentGroup?.month === month) currentGroup.items.push(item);
+    else groups.push({ month, items: [item] });
+    return groups;
+  }, []), [filteredFlowItems]);
 
   const selectFilter = (filter: FlowFilter) => {
     setActiveFilter(filter);
     setActiveCategory('all');
   };
 
+  const resetFilters = () => {
+    setActiveYear(yearOptions[0] ?? '2026');
+    setActiveCategory('all');
+  };
+
   return (
-    <div className="h-full min-h-0 overflow-hidden bg-transparent font-sans">
+    <div className="relative h-full min-h-0 overflow-hidden bg-transparent font-sans">
       <div className="flex h-full min-h-0 flex-col">
-        <header className="flex h-11 shrink-0 items-center justify-between border-b border-white/40 bg-white/38 px-4 backdrop-blur-md">
-          <button onClick={onBack} className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回学生详情">
+        <header className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-4 backdrop-blur-md">
+          <button type="button" onClick={onBack} className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回学生详情">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className={`${phoneText.navTitle} text-[var(--tm-text-primary)]`}>校园币详情</h1>
-          <div className="h-10 w-10" aria-hidden="true" />
+          <h1 className={`${phoneText.navTitle} text-[var(--tm-text-primary)]`}>校园币流水</h1>
+          <div className="h-11 w-11" aria-hidden="true" />
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-8 no-scrollbar">
-          <MobileCard variant="hero" padding="lg" className="relative overflow-hidden bg-gradient-to-br from-[var(--tm-brand-reward)] to-[var(--tm-brand-reward-strong)] text-white shadow-[var(--tm-shadow-card)]">
-            <div className="absolute -right-10 -bottom-12 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-            <Coins size={110} className="absolute -bottom-8 -right-7 text-white/10" />
-            <div className="relative z-10">
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/80">{student.name} · 只读校园币档案</p>
-              <div className="mt-3 flex items-center text-[34px] font-black leading-none tracking-tight">
-                <img src="/assets/coin.png" className="mr-1.5 h-[1em] w-[1em] drop-shadow-sm" alt="coin" />
-                {formatCoinAmount(coinDetail.balance + coinDetail.bankDeposit)}
+        <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4 no-scrollbar" aria-label={`${student.name}的校园币收支记录`}>
+          <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 shadow-[var(--tm-shadow-card)]" aria-label="校园币资产">
+            <div className="grid min-h-[58px] grid-cols-2 divide-x divide-[var(--tm-border-subtle)]">
+              <div className="flex items-center gap-3 pr-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
+                  <img src="/assets/coin.png" className="h-5 w-5" alt="" />
+                </span>
+                <div>
+                  <div className="text-[12px] font-medium text-[var(--tm-text-secondary)]">钱包</div>
+                  <div className="mt-1 text-xl font-bold leading-none tabular-nums text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(coinDetail.balance)}</div>
+                </div>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className="inline-flex items-center rounded-full border border-white/20 bg-black/10 px-3 py-1.5 text-xs font-bold text-white/90 shadow-inner">钱包 {formatCoinAmount(coinDetail.balance)}</span>
-                <span className="inline-flex items-center rounded-full border border-white/20 bg-black/10 px-3 py-1.5 text-xs font-bold text-white/90 shadow-inner">存款 {formatCoinAmount(coinDetail.bankDeposit)}</span>
-              </div>
-            </div>
-          </MobileCard>
-
-          <MobileCard variant="card" padding="lg" className="mt-4 overflow-hidden border border-[var(--tm-brand-reward)]/20 bg-[var(--tm-brand-reward-soft)]">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-xs font-extrabold uppercase tracking-widest text-[var(--tm-brand-reward-strong)]">预计可得</h2>
-              </div>
-              <span className="rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-black text-[var(--tm-brand-reward-strong)]">预估</span>
-            </div>
-
-            <div className="flex items-center justify-center py-6">
-              <div className="flex items-center justify-center gap-3 text-[52px] font-black leading-none tracking-tight text-[var(--tm-brand-reward-strong)]">
-                <img src="/assets/coin.png" className="h-[0.9em] w-[0.9em] -translate-y-0.5" alt="coin" />
-                <span>{formatCoinAmount(monthlyEstimate.estimatedTotal)}</span>
+              <div className="flex items-center gap-3 pl-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
+                  <Landmark className="h-[18px] w-[18px] text-[var(--tm-brand-reward-strong)]" />
+                </span>
+                <div>
+                  <div className="text-[12px] font-medium text-[var(--tm-text-secondary)]">存款</div>
+                  <div className="mt-1 text-xl font-bold leading-none tabular-nums text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(coinDetail.bankDeposit)}</div>
+                </div>
               </div>
             </div>
+          </section>
 
-            <div className="flex h-[56px] items-center justify-between gap-3">
-              {estimateBonusItems.map((item, index) => (
-                <React.Fragment key={item.label}>
-                  {index > 0 && <div className="shrink-0 text-sm font-black leading-none text-[var(--tm-brand-reward)]">+</div>}
-                  <div className="flex h-full flex-1 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-[var(--tm-brand-reward)]/15 bg-white/70 px-2 py-1 shadow-[var(--tm-shadow-control)]">
-                    <span className="mb-0.5 text-[10px] font-bold text-[var(--tm-text-tertiary)]">{item.label}</span>
-                    <div className="flex items-center justify-center gap-1 text-sm font-black text-[var(--tm-brand-reward-strong)]">
-                      <img src="/assets/coin.png" className="h-[1.1em] w-[1.1em] -translate-y-px" alt="coin" />
-                      <span>{formatCoinAmount(item.value)}</span>
-                    </div>
-                  </div>
-                </React.Fragment>
-              ))}
-            </div>
-          </MobileCard>
-
-          <div className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]" aria-label="校园币流水明细，包含发币记录和兑换记录">
-            <div className="mb-3 flex items-center justify-between gap-4">
-              <div className="relative shrink-0">
-                <select
-                  value={activeYear}
-                  onChange={event => setActiveYear(event.target.value)}
-                  className="cursor-pointer appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] py-2 pl-4 pr-8 text-sm font-bold text-[var(--tm-text-primary)] shadow-sm outline-none transition-colors focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
-                >
-                  <option value="2026">2026 年</option>
-                  <option value="2025">2025 年</option>
-                  <option value="2024">2024 年</option>
-                </select>
-                <div className="pointer-events-none absolute right-3 top-1/2 mt-px -translate-y-1/2 border-l-[4px] border-r-[4px] border-t-[5px] border-l-transparent border-r-transparent [border-top-color:var(--tm-text-tertiary)]" />
-              </div>
-
-              <div className="flex max-w-[240px] flex-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] p-1">
-                {([
-                  ['all', '全部'],
-                  ['income', '收入'],
-                  ['expense', '支出'],
-                ] as [FlowFilter, string][]).map(([filter, label]) => (
-                  <button
-                    key={filter}
-                    type="button"
-                    onClick={() => selectFilter(filter)}
-                    className={`flex-1 rounded-lg py-1.5 text-sm font-bold transition-all ${activeFilter === filter ? 'bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {categoryOptions.map(category => (
+          <div className="mt-4 grid grid-cols-[1fr_44px] gap-2">
+            <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)]" aria-label="按收支类型筛选">
+              {flowFilterOptions.map(option => (
                 <button
-                  key={category}
+                  key={option.value}
                   type="button"
-                  onClick={() => setActiveCategory(category)}
-                  className={`flex h-8 shrink-0 items-center justify-center rounded-full px-4 text-[13px] font-bold transition-all ${activeCategory === category ? 'border border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)] shadow-sm' : 'border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
+                  onClick={() => selectFilter(option.value)}
+                  aria-pressed={activeFilter === option.value}
+                  className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                 >
-                  {categoryLabels[category]}
+                  <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition ${activeFilter === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>
+                    {option.label}
+                  </span>
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={() => setShowFilterSheet(true)}
+              aria-label="筛选校园币流水"
+              className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+            </button>
+          </div>
 
-            <div className="space-y-3">
-              {filteredFlowItems.length === 0 ? (
-                <div className="flex h-48 flex-col items-center justify-center text-[var(--tm-text-tertiary)]">
-                  <Clock size={42} className="mb-4 text-[var(--tm-text-disabled)]" />
-                  <p className="text-sm font-bold">暂无符合条件的流水记录</p>
-                </div>
-              ) : filteredFlowItems.map(item => (
-                <div key={item.id} className="flex items-center gap-4 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-4 transition-transform active:scale-[0.98]">
-                  <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ring-4 ${getFlowBg(item.type)}`}>
-                    {getFlowIcon(item.category, item.type)}
+          <div className="flex min-h-10 items-center gap-2 text-[12px] font-medium text-[var(--tm-text-tertiary)]">
+            <span>{activeYear}年</span>
+            <span aria-hidden="true">·</span>
+            <span>{categoryLabels[activeCategory]}</span>
+          </div>
+
+          {groupedFlowItems.length === 0 ? (
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-tertiary)] shadow-[var(--tm-shadow-card)]">
+              <Clock className="h-9 w-9 text-[var(--tm-text-disabled)]" />
+              <p className="mt-3 text-sm font-medium">暂无符合条件的流水记录</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {groupedFlowItems.map(group => (
+                <section key={group.month}>
+                  <h2 className="mb-2 px-1 text-[13px] font-semibold text-[var(--tm-text-secondary)]">{formatMonthLabel(group.month)}</h2>
+                  <div className="divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 shadow-[var(--tm-shadow-card)]">
+                    {group.items.map(item => (
+                      <div key={item.id} className="flex min-h-[78px] items-start gap-3 py-3">
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${getFlowIconSurface(item.type)}`}>
+                          {getFlowIcon(item.category, item.type)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="line-clamp-2 text-[length:var(--tm-font-size-card-title)] font-semibold leading-5 text-[var(--tm-text-primary)]">{item.title}</h3>
+                          <p className="mt-1 line-clamp-2 text-[length:var(--tm-font-size-meta)] font-medium leading-4 text-[var(--tm-text-tertiary)]">
+                            {formatFlowTime(item.time)} · {item.description}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 pt-1 text-lg font-bold leading-none tabular-nums ${item.type === 'income' ? 'text-[var(--tm-status-positive)]' : 'text-[var(--tm-text-primary)]'}`}>
+                          {item.type === 'income' ? '+' : '-'}{formatCoinAmount(item.amount)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="mb-1 truncate text-base font-bold text-[var(--tm-text-primary)]">{item.title}</h4>
-                    <div className="truncate text-xs font-bold text-[var(--tm-text-tertiary)]">
-                      <span>{item.time}</span>
-                      <span className="mx-1">·</span>
-                      <span>{item.description}</span>
-                    </div>
-                  </div>
-                  <div className="shrink-0 pl-2">
-                    <div className={`flex items-center gap-1 text-2xl font-black leading-none ${item.type === 'income' ? 'text-[var(--tm-status-positive)]' : 'text-[var(--tm-text-primary)]'}`}>
-                      {item.type === 'income' ? '+' : '-'}
-                      <span>{formatCoinAmount(item.amount)}</span>
-                      <img src="/assets/coin.png" className="h-[0.9em] w-[0.9em] -translate-y-px" alt="coin" />
-                    </div>
-                  </div>
-                </div>
+                </section>
               ))}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {showFilterSheet && (
+        <div
+          className="absolute inset-0 z-[120] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]"
+          onClick={() => setShowFilterSheet(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="筛选校园币流水"
+        >
+          <div className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+            <div className="mx-auto mb-2 h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" />
+            <div className="flex min-h-11 items-center justify-between">
+              <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">筛选</h2>
+              <button type="button" onClick={() => setShowFilterSheet(false)} aria-label="关闭筛选" className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <section className="mt-3">
+              <h3 className="text-[13px] font-medium text-[var(--tm-text-secondary)]">年份</h3>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {yearOptions.map(year => (
+                  <button
+                    key={year}
+                    type="button"
+                    onClick={() => setActiveYear(year)}
+                    aria-pressed={activeYear === year}
+                    className={`h-11 rounded-[var(--tm-radius-control)] text-[13px] font-semibold ${activeYear === year ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]'}`}
+                  >
+                    {year}年
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-5">
+              <h3 className="text-[13px] font-medium text-[var(--tm-text-secondary)]">交易类型</h3>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {categoryOptions.map(category => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setActiveCategory(category)}
+                    aria-pressed={activeCategory === category}
+                    className={`min-h-11 rounded-[var(--tm-radius-control)] px-3 text-[13px] font-semibold ${activeCategory === category ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]'}`}
+                  >
+                    {categoryLabels[category]}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <div className="mt-6 grid grid-cols-[1fr_2fr] gap-2">
+              <button type="button" onClick={resetFilters} className="h-12 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] text-sm font-semibold text-[var(--tm-text-secondary)] active:scale-[0.98]">重置</button>
+              <button type="button" onClick={() => setShowFilterSheet(false)} className="h-12 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-primary)] text-sm font-semibold text-[var(--tm-text-inverse)] active:scale-[0.98]">完成</button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

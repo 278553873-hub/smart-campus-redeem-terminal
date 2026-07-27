@@ -87,7 +87,7 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
       grade: cls.gradeLevel,
       class: cls.name,
       avatar: isMissingFace
-        ? (nameObj.g === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.GENERIC_GIRL)
+        ? (nameObj.g === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.STUDENT_GIRL_DEFAULT)
         : (nameObj.g === 'male'
           ? ASSETS.AVATAR.BOYS[(seed + i) % ASSETS.AVATAR.BOYS.length]
           : ASSETS.AVATAR.GIRLS[(seed + i) % ASSETS.AVATAR.GIRLS.length]),
@@ -226,8 +226,8 @@ export const MOCK_SUBJECTS: SubjectGrade[] = [
 ];
 
 export const MOCK_GROWTH_REPORTS: GrowthReportItem[] = [
-  { id: '1', title: '2025年10月-成长报告', date: '2025-10' },
-  { id: '2', title: '2025年9月-成长报告', date: '2025-09' },
+  { id: '1', title: '2026年7月-成长报告', date: '2026-07' },
+  { id: '2', title: '2026年6月-成长报告', date: '2026-06' },
 ];
 
 export const MOCK_PE_REPORT_DETAILS: DetailedReportSection[] = [
@@ -612,40 +612,43 @@ Object.keys(MOCK_GRADE_SUBJECT_REPORT_TEMPLATES).forEach(grade => {
 export const MOCK_BEHAVIOR_RECORDS = [
   {
     id: "rec_001",
-    timestamp: "2026-01-15 16:10:00",
-    evaluation_date: "2026-01-15",
+    timestamp: "2026-07-15 16:10:00",
+    evaluation_date: "2026-07-15",
     type: "behavior",
     indicatorPath: ["智育", "学科评价", "英语学科"],
     scoreChange: 2,
     isBad: false,
     description: "本月中英语课上主动用英语主持对话，并帮助同学纠正发音。", // 原始记录
     aiComment: "你在英语课上表现非常积极，主动承担主持任务并耐心帮助同伴，展现了出色的表达能力与互助精神。", // AI评价 (event_summary)
+    teacherId: "teacher-zhou-english",
     teacherName: "英语周老师",
     auditReason: "[学科评价]+[带动同学]→[+2]分(主动主持对话并纠错)"
   },
   {
     id: "rec_002",
-    timestamp: "2026-01-12 09:30:00",
-    evaluation_date: "2026-01-12",
+    timestamp: "2026-07-12 09:30:00",
+    evaluation_date: "2026-07-12",
     type: "behavior",
     indicatorPath: ["德育", "品格修养", "诚实守信"],
     scoreChange: 1,
     isBad: false,
     description: "拾金不昧，在操场捡到红领巾主动交还给值周老师。",
     aiComment: "诚信是一盏明灯。你拾金不昧的行为值得表扬，这份诚实的小细节让校园更加温暖。",
+    teacherId: "teacher-wang-homeroom",
     teacherName: "班主任王老师",
     auditReason: "[品格修养]+[影响个人]→[+1]分(拾金不昧)"
   },
   {
     id: "rec_003",
-    timestamp: "2026-01-10 14:00:00",
-    evaluation_date: "2026-01-10",
+    timestamp: "2026-07-10 14:00:00",
+    evaluation_date: "2026-07-10",
     type: "behavior",
     indicatorPath: ["智育", "学习态度", "课前准备"],
     scoreChange: -1,
     isBad: true,
     description: "上课铃响后仍在走廊追逐，进教室后课本未准备好。",
     aiComment: "课前的安静是为了更好的思考。希望下次铃响后能迅速回到座位，做好学习准备哦。",
+    teacherId: "teacher-li-math",
     teacherName: "数学李老师",
     auditReason: "[学习态度]+[影响个人]→[-1]分(课前准备不充分)"
   }

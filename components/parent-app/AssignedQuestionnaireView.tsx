@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft, Check, Circle, Send } from 'lucide-react';
 import {
+  getQuestionnaireAnswerValidationError,
+  getQuestionnaireMultiFillValues,
   getQuestionnaireSelectedOptions,
   isQuestionnaireChoiceAnswer,
   submitQuestionnaireResponse,
@@ -8,6 +10,7 @@ import {
   type QuestionnaireQuestion,
   type QuestionnaireRecord,
 } from '../../shared/questionnaireStore';
+import { normalizeFormFieldSettings } from '../../shared/formDefinition';
 import {
   ParentBottomSheet,
   ParentCard,
@@ -31,8 +34,9 @@ interface AssignedQuestionnaireViewProps {
 const getQuestionTypeLabel = (question: QuestionnaireQuestion) => ({
   single: '单选',
   multiple: '多选',
-  rating: `${question.options.length || 5}级量表`,
-  text: '简答',
+  rating: `${normalizeFormFieldSettings(question.type, question.settings, question.options).ratingMin ?? 1}-${normalizeFormFieldSettings(question.type, question.settings, question.options).ratingMax ?? 5}分`,
+  text: '问答',
+  multi_fill: '多项填空',
   short_text: '填空',
   number: '数字',
   date: '日期',
@@ -59,20 +63,12 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   const currentAnswer = question ? answers[question.id] : undefined;
   const selectedOptions = getQuestionnaireSelectedOptions(currentAnswer);
   const currentCustomText = isQuestionnaireChoiceAnswer(currentAnswer) ? currentAnswer.customText : {};
+  const currentFillValues = getQuestionnaireMultiFillValues(currentAnswer);
   const isLastQuestion = stepIndex === questionnaire.questions.length - 1;
   const ratingValues = question?.type === 'rating'
     ? (question.options.length > 0 ? question.options : ['1', '2', '3', '4', '5'])
     : [];
-  const canContinue = useMemo(() => {
-    if (!question || !question.required) return true;
-    if (question.type === 'single' || question.type === 'multiple') {
-      if (selectedOptions.length === 0) return false;
-      return selectedOptions.every(option => (
-        !question.customAnswerOptions?.includes(option) || Boolean(currentCustomText[option]?.trim())
-      ));
-    }
-    return currentAnswer !== undefined && String(currentAnswer).trim().length > 0;
-  }, [currentAnswer, currentCustomText, question, selectedOptions]);
+  const canContinue = useMemo(() => !question || !getQuestionnaireAnswerValidationError(question, currentAnswer), [currentAnswer, question]);
 
   if (!question) return null;
 
@@ -98,7 +94,9 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
       const nextSelected = question.type === 'multiple'
         ? selectedOptions.includes(option)
           ? selectedOptions.filter(item => item !== option)
-          : [...selectedOptions, option]
+          : selectedOptions.length >= (normalizeFormFieldSettings(question.type, question.settings, question.options).maxSelections ?? question.options.length)
+            ? selectedOptions
+            : [...selectedOptions, option]
         : [option];
       const nextCustomText = Object.fromEntries(
         Object.entries(currentCustomText).filter(([key]) => nextSelected.includes(key)),
@@ -119,6 +117,13 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
         selectedOptions,
         customText: { ...currentCustomText, [option]: value },
       },
+    }));
+  };
+
+  const updateFillValue = (subFieldId: string, value: string) => {
+    setAnswers(previous => ({
+      ...previous,
+      [question.id]: { fillValues: { ...currentFillValues, [subFieldId]: value } },
     }));
   };
 
@@ -160,10 +165,13 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
 
       <section className="mx-5 mt-4">
         <ParentCard as="section" className="p-5">
+          {stepIndex === 0 && questionnaire.description && (
+            <p className="mb-5 whitespace-pre-wrap break-words text-[14px] font-medium leading-relaxed text-slate-600">{questionnaire.description}</p>
+          )}
           {currentSection && <div className="mb-3 text-[12px] font-black text-slate-500">{currentSection.label}</div>}
           <div className="mb-3 flex items-center justify-between gap-3">
             <span className="inline-flex rounded-full bg-sky-50 px-3 py-1.5 text-[12px] font-black text-sky-600">{getQuestionTypeLabel(question)}</span>
-            {question.required && <span className="text-[11px] font-bold text-slate-400">必答</span>}
+            {question.required && <span className="text-[11px] font-bold text-slate-400">{question.type === 'multi_fill' ? '含必填项' : '必答'}</span>}
           </div>
           <h2 className="break-words text-[18px] font-black leading-[1.4] text-slate-950">{question.title}</h2>
 
@@ -228,6 +236,36 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
               className="mt-5 min-h-[132px] w-full resize-none rounded-[16px] border border-slate-100 bg-slate-50 px-4 py-3 text-[15px] font-bold leading-relaxed text-slate-800 outline-none transition focus:border-[#0DB4F1] focus:bg-white focus:ring-4 focus:ring-cyan-100/60"
             />
           )}
+
+          {question.type === 'multi_fill' && (
+            <div className="mt-5 space-y-4">
+              {(question.subFields ?? []).map((subField, subFieldIndex) => (
+                <label key={subField.id} className="block">
+                  <span className="text-[13px] font-bold text-slate-600">{subField.label}{subField.required && <span className="ml-1 text-rose-500" aria-hidden="true">*</span>}</span>
+                  <input
+                    value={currentFillValues[subField.id] ?? ''}
+                    onChange={event => updateFillValue(subField.id, event.target.value)}
+                    maxLength={120}
+                    placeholder="请输入"
+                    required={subField.required}
+                    enterKeyHint={subFieldIndex === (question.subFields?.length ?? 0) - 1 ? 'done' : 'next'}
+                    className="mt-2 h-12 w-full rounded-[14px] border border-slate-100 bg-slate-50 px-3.5 text-[15px] font-bold text-slate-800 outline-none transition focus:border-[#0DB4F1] focus:bg-white focus:ring-4 focus:ring-cyan-100/60"
+                  />
+                </label>
+              ))}
+            </div>
+          )}
+
+          {question.type === 'date' && (() => {
+            const dateFormat = normalizeFormFieldSettings(question.type, question.settings, question.options).dateFormat ?? 'ymd';
+            return <input type={dateFormat === 'year' ? 'number' : dateFormat === 'ym' ? 'month' : 'date'} inputMode={dateFormat === 'year' ? 'numeric' : undefined} min={dateFormat === 'year' ? 1900 : undefined} max={dateFormat === 'year' ? 2100 : undefined} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} className="mt-5 h-12 w-full rounded-[16px] border border-slate-100 bg-slate-50 px-4 text-[15px] font-bold text-slate-800 outline-none transition focus:border-[#0DB4F1] focus:bg-white focus:ring-4 focus:ring-cyan-100/60" />;
+          })()}
+
+          {question.type === 'number' && (() => {
+            const numberFormat = normalizeFormFieldSettings(question.type, question.settings, question.options).numberFormat ?? 'integer';
+            const step = numberFormat === 'integer' ? 1 : numberFormat === 'decimal-1' ? 0.1 : 0.01;
+            return <input type="number" inputMode="decimal" step={step} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} placeholder="请输入数字" className="mt-5 h-12 w-full rounded-[16px] border border-slate-100 bg-slate-50 px-4 text-[15px] font-bold text-slate-800 outline-none transition focus:border-[#0DB4F1] focus:bg-white focus:ring-4 focus:ring-cyan-100/60" />;
+          })()}
         </ParentCard>
       </section>
 

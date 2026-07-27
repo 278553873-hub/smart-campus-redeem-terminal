@@ -11,6 +11,7 @@ import type { ClassInfo, TeacherDepartment, TeacherProfile, TeacherTeachingAssig
 import type { TeacherSpaceOption } from './MeView';
 import { ASSETS } from '../assets/images';
 import { MobileCard } from '../components/ui/MobileCard';
+import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker';
 import { phoneText } from '../styles/teacherMobileTokens';
 
 interface TeacherProfileEditViewProps {
@@ -268,57 +269,18 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         const title = isTeaching ? '新增任教班级' : '选择带班班级';
         const onPrimary = isTeaching ? saveTeachingAssignments : saveRoleClasses;
         const primaryDisabled = selectedClassIds.size === 0 || (isTeaching && !selectedSubject);
-        const activeGradeClasses = classesByGrade[activeGrade] || [];
-        const activeSelectedCount = activeGradeClasses.filter(classInfo => selectedClassIds.has(classInfo.id)).length;
 
         return renderSheetFrame(
             title,
             <div className="flex h-full min-h-[420px] flex-col gap-3">
                 <div className={`${isTeaching ? 'h-[270px] shrink-0' : 'min-h-0 flex-1'} overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)]`}>
-                    <div className="grid h-full min-h-0 grid-cols-[92px_1fr]" aria-label="班级级联选择">
-                        <div className="min-h-0 overflow-y-auto overscroll-contain border-r border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-2 no-scrollbar" aria-label="左侧先选年级">
-                            {gradeOptions.map(grade => {
-                                const selectedCount = (classesByGrade[grade] || []).filter(classInfo => selectedClassIds.has(classInfo.id)).length;
-                                return (
-                                    <button
-                                        key={grade}
-                                        type="button"
-                                        onClick={() => setActiveGrade(grade)}
-                                        className={`mb-2 flex min-h-11 w-full flex-col items-center justify-center rounded-[var(--tm-radius-control)] text-xs font-extrabold transition-all last:mb-0 active:scale-95 ${activeGrade === grade ? 'bg-[var(--tm-brand-primary)] text-white shadow-[var(--tm-shadow-icon)]' : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-brand-primary-soft)] active:text-[var(--tm-brand-primary-pressed)]'}`}
-                                    >
-                                        <span>{grade}</span>
-                                        {selectedCount > 0 && <span className={`mt-0.5 text-[11px] ${activeGrade === grade ? 'text-white/80' : 'text-[var(--tm-brand-primary-pressed)]'}`}>{selectedCount}个</span>}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        <div className="flex min-h-0 min-w-0 flex-col p-3" aria-label="右侧再选该年级下的班级">
-                            <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
-                                <div className="min-w-0">
-                                    <h3 className={`${phoneText.sectionTitle} truncate text-[var(--tm-text-primary)]`}>{activeGrade || '选择年级'}</h3>
-                                    <p className="mt-1 text-xs text-[var(--tm-text-tertiary)]">已选 {activeSelectedCount} / {activeGradeClasses.length} 个班</p>
-                                </div>
-                            </div>
-                            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 no-scrollbar">
-                                {activeGradeClasses.map(classInfo => {
-                                    const selected = selectedClassIds.has(classInfo.id);
-                                    return (
-                                        <button
-                                            key={classInfo.id}
-                                            type="button"
-                                            onClick={() => toggleClass(classInfo.id)}
-                                            aria-pressed={selected}
-                                            aria-label={`${selected ? '取消选择' : '选择'}${classInfo.name}`}
-                                            className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] border px-3 text-left text-sm font-bold transition-all active:scale-[0.99] ${selected ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
-                                        >
-                                            <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-black ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-white' : 'border-[var(--tm-border-control)] text-transparent'}`}>✓</span>
-                                            <span className="min-w-0 flex-1 truncate">{classInfo.name}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
+                    <MobileClassCascadePicker
+                        groups={gradeOptions.map(grade => ({ gradeLabel: grade, classes: classesByGrade[grade] || [] }))}
+                        selectedClassIds={selectedClassIds}
+                        activeGrade={activeGrade}
+                        onActiveGradeChange={setActiveGrade}
+                        onToggleClass={toggleClass}
+                    />
                 </div>
                 {isTeaching && (
                     <div className="shrink-0 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-3" aria-label="下方选择任教学科">

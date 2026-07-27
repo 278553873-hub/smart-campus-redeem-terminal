@@ -1,9 +1,10 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Camera, ChevronLeft, Image, Plus, UsersRound, X } from 'lucide-react';
+import { Camera, Check, ChevronLeft, Image, Plus, UsersRound, X } from 'lucide-react';
 import { ClassInfo, GuardianContact, GuardianRelation, Student } from '../types';
 import { ASSETS } from '../assets/images';
 import { MobileCard } from '../components/ui/MobileCard';
 import { IconBadge } from '../components/ui/IconBadge';
+import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import { phoneText } from '../styles/teacherMobileTokens';
 
 interface StudentBasicEditViewProps {
@@ -29,6 +30,20 @@ const normalizeContacts = (contacts: GuardianContact[]) => contacts
 const normalizePhones = (contacts: GuardianContact[]) => normalizeContacts(contacts).map(contact => contact.phone);
 
 const createBlankContact = (): GuardianContact => ({ phone: '', relation: '家长', relationOther: '' });
+
+type AvatarSheetMode = 'system' | 'upload';
+
+const getSystemAvatarGroups = (gender: Student['gender']) => gender === 'female'
+  ? ASSETS.AVATAR.SYSTEM_GIRL_GROUPS
+  : [{
+      id: 'boy',
+      label: '男生头像',
+      avatars: ASSETS.AVATAR.BOYS.map((src, index) => ({
+        id: `boy-${index + 1}`,
+        label: `男生头像${index + 1}`,
+        src,
+      })),
+    }];
 
 const getInitialContacts = (student: Student): GuardianContact[] => {
   if (student.guardianContacts?.length) {
@@ -76,23 +91,27 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
   const [showClassPicker, setShowClassPicker] = useState(false);
   const [classPickerYear, setClassPickerYear] = useState(getClassYear(student.class || classes[0]?.name || ''));
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
+  const [avatarSheetMode, setAvatarSheetMode] = useState<AvatarSheetMode>('system');
+  const [pendingAvatar, setPendingAvatar] = useState('');
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const albumInputRef = useRef<HTMLInputElement>(null);
 
   const selectedClass = useMemo(() => classes.find(item => item.name === draft.class), [classes, draft.class]);
   const yearOptions = useMemo(() => Array.from(new Set(classes.map(item => getClassYear(item.name)))), [classes]);
   const classOptions = useMemo(() => classes.filter(item => getClassYear(item.name) === classPickerYear), [classes, classPickerYear]);
+  const systemAvatarGroups = useMemo(() => getSystemAvatarGroups(draft.gender), [draft.gender]);
 
   const toggleClassPicker = () => {
     setClassPickerYear(selectedClass ? getClassYear(selectedClass.name) : getClassYear(draft.class || yearOptions[0] || ''));
     setShowClassPicker(prev => !prev);
   };
 
-  const cycleMockAvatar = () => {
-    const avatarPool = draft.gender === 'male' ? ASSETS.AVATAR.BOYS : ASSETS.AVATAR.GIRLS;
-    const currentIndex = avatarPool.findIndex(avatar => avatar === draft.avatar);
-    const nextAvatar = avatarPool[(currentIndex + 1 + avatarPool.length) % avatarPool.length] || draft.avatar;
-    setDraft(prev => ({ ...prev, avatar: nextAvatar }));
+  const openAvatarSheet = () => {
+    const systemAvatars = systemAvatarGroups.flatMap(group => group.avatars);
+    const currentSystemAvatar = systemAvatars.find(avatar => avatar.src === draft.avatar);
+    setPendingAvatar(currentSystemAvatar?.src ?? systemAvatars[0]?.src ?? '');
+    setAvatarSheetMode('system');
+    setShowAvatarSheet(true);
   };
 
   const readAvatarFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,12 +131,11 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
     event.target.value = '';
   };
 
-  const chooseMockAvatar = () => {
-    cycleMockAvatar();
+  const confirmSystemAvatar = () => {
+    if (!pendingAvatar) return;
+    setDraft(prev => ({ ...prev, avatar: pendingAvatar }));
     setShowAvatarSheet(false);
   };
-
-  const saveAvatarFromAlbum = chooseMockAvatar;
 
   const updateContact = (index: number, patch: Partial<GuardianContact>) => {
     setDraft(prev => ({
@@ -169,14 +187,14 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
               <div className="mt-2 flex items-center justify-between rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-3">
                 <div className="flex items-center gap-3">
                   <img
-                    src={draft.avatar || (draft.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.GENERIC_GIRL)}
+                    src={draft.avatar || (draft.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.STUDENT_GIRL_DEFAULT)}
                     alt="学生头像"
                     className="h-16 w-16 rounded-full border border-white bg-white object-cover shadow-sm"
                   />
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowAvatarSheet(true)}
+                  onClick={openAvatarSheet}
                   className="flex h-10 items-center gap-1 rounded-full bg-[var(--tm-brand-primary-soft)] px-3 text-xs font-semibold text-[var(--tm-brand-primary)] active:scale-95"
                 >
                   <Camera className="h-4 w-4" /> 更换头像
@@ -316,27 +334,92 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
         </div>
 
 
-        {showAvatarSheet && (
-          <div className="absolute inset-0 z-[130] flex items-end bg-[var(--tm-mask)] px-4 pb-5" onClick={() => setShowAvatarSheet(false)}>
-            <div className="w-full rounded-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
-              <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[var(--tm-brand-primary-soft-strong)]" />
-              <h3 className="px-2 text-center text-lg font-extrabold text-[var(--tm-text-primary)]">更换头像</h3>
-              <div className="mt-5 space-y-2">
-                <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-primary-soft)] px-4 text-left font-bold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]">
-                  <Camera className="h-5 w-5" />
-                  拍照
+        <MobileBottomSheet
+          open={showAvatarSheet}
+          title="更换头像"
+          onClose={() => setShowAvatarSheet(false)}
+          footer={avatarSheetMode === 'system' ? (
+            <button
+              type="button"
+              disabled={!pendingAvatar}
+              onClick={confirmSystemAvatar}
+              className="mb-4 h-12 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+            >
+              使用此头像
+            </button>
+          ) : undefined}
+        >
+          <div className="sticky top-0 z-10 bg-[var(--tm-bg-surface)] pb-3">
+            <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] p-1" role="tablist" aria-label="头像来源">
+              {[
+                { value: 'system', label: '系统头像' },
+                { value: 'upload', label: '上传头像' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={avatarSheetMode === option.value}
+                  onClick={() => setAvatarSheetMode(option.value as AvatarSheetMode)}
+                  className={`rounded-[calc(var(--tm-radius-control)-4px)] text-sm font-semibold transition-all ${avatarSheetMode === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                >
+                  {option.label}
                 </button>
-                <button type="button" onClick={() => albumInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left font-bold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]">
-                  <Image className="h-5 w-5" />
-                  从相册选择
-                </button>
-                <button type="button" onClick={() => setShowAvatarSheet(false)} className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-sm font-bold text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]">
-                  取消
-                </button>
-              </div>
+              ))}
             </div>
           </div>
-        )}
+
+          {avatarSheetMode === 'system' ? (
+            <div className="space-y-5 pb-1">
+              {systemAvatarGroups.map(group => (
+                <section key={group.id} aria-labelledby={`avatar-group-${group.id}`}>
+                  <h3 id={`avatar-group-${group.id}`} className="mb-2 text-sm font-semibold text-[var(--tm-text-secondary)]">{group.label}</h3>
+                  <div className="grid grid-cols-4 gap-3">
+                    {group.avatars.map(avatar => {
+                      const isSelected = pendingAvatar === avatar.src;
+                      return (
+                        <button
+                          key={avatar.id}
+                          type="button"
+                          aria-label={`选择${avatar.label}`}
+                          aria-pressed={isSelected}
+                          onClick={() => setPendingAvatar(avatar.src)}
+                          className={`relative aspect-square min-w-0 overflow-hidden rounded-[var(--tm-radius-inner)] border-2 bg-[var(--tm-bg-surface-soft)] transition-transform active:scale-95 ${isSelected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft-strong)]' : 'border-transparent'}`}
+                        >
+                          <img src={avatar.src} alt="" className="h-full w-full object-cover" />
+                          {isSelected && (
+                            <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--tm-brand-primary)] text-white shadow-[var(--tm-shadow-icon)]" aria-hidden="true">
+                              <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3 pb-2">
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-primary-soft)] px-4 text-left font-semibold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]"
+              >
+                <Camera className="h-5 w-5" />
+                拍照
+              </button>
+              <button
+                type="button"
+                onClick={() => albumInputRef.current?.click()}
+                className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]"
+              >
+                <Image className="h-5 w-5" />
+                从相册选择
+              </button>
+            </div>
+          )}
+        </MobileBottomSheet>
 
         <div className="absolute inset-x-0 bottom-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 pb-5 pt-3 shadow-[var(--tm-shadow-navigation)] backdrop-blur-md">
           <button onClick={saveBasicInfo} className="h-12 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)]">

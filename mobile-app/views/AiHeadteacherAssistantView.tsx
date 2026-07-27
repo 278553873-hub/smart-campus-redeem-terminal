@@ -31,8 +31,8 @@ const assistantOptions: AssistantOption[] = [
         emphasis: 'primary',
     },
     {
-        title: '上月评价复盘',
-        body: '根据上月记录，发现评价视角盲区。',
+        title: '我的评价复盘',
+        body: '复盘上月记录，发现评价视角盲区。',
         icon: ScanSearch,
         action: 'evaluationReview',
         emphasis: 'secondary',

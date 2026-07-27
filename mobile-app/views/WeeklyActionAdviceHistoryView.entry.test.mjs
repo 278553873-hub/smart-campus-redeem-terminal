@@ -33,7 +33,8 @@ requireText(historySource, 'classes.length > 1', '多个带班班级时历史页
 requireText(historySource, 'setActiveClassId(classId)', '历史页切换班级后应直接刷新列表。');
 requireText(historySource, '<HomeroomClassPickerSheet', '历史页应复用带班班级选择组件。');
 
-requireText(pickerSource, 'aria-label="选择班级"', '共用班级选择组件应提供对话框语义。');
+requireText(pickerSource, 'role="dialog"', '共用班级选择组件应提供对话框语义。');
+requireText(pickerSource, 'aria-labelledby={titleId}', '共用班级选择组件应关联可见标题。');
 requireText(pickerSource, 'classes.map', '共用班级选择组件应渲染带班班级。');
 requireText(pickerSource, 'min-h-14', '班级选项应提供足够触控高度。');
 

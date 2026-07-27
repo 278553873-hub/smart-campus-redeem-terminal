@@ -59,7 +59,7 @@ const StudentCollectionRecordDetailView: React.FC<StudentCollectionRecordDetailV
 
         <section className="mt-4 divide-y divide-slate-100 overflow-hidden rounded-[20px] bg-white shadow-[0_0_0_1px_rgba(15,23,42,0.04),0_2px_8px_-4px_rgba(15,23,42,0.10),0_12px_24px_-20px_rgba(35,96,145,0.18)]">
           {item.questions.map((question, index) => {
-            const answer = formatQuestionnaireAnswer(item.answers[question.id]);
+            const answer = formatQuestionnaireAnswer(item.answers[question.id], question);
             const empty = answer === '未填写';
             return (
               <div key={question.id} className="px-4 py-4">

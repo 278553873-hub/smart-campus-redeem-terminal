@@ -25,10 +25,10 @@ requireText(appSource, "'ai_principal_assistant'", 'App 页面枚举应包含 AI
 requireText(appSource, "onOpenAiPrincipalAssistant={() => navigateTo('ai_principal_assistant')}", 'App 应将我的页入口接到 AI 校长助理页面。');
 requireText(appSource, "{currentView === 'ai_principal_assistant' && (", 'App 应渲染 AI 校长助理页面。');
 requireText(appSource, 'termConfig={CURRENT_PRINCIPAL_TERM}', 'AI 校长助理应读取当前学期起止时间。');
-requireText(appSource, 'hasGeneratedTermReport={principalTermReportGenerated}', 'AI 校长助理应区分已生成报告。');
-requireText(appSource, "onOpenWeeklyReport={() => navigateTo('principal_weekly_report')}", 'AI 校长助理应接入本周管理建议页。');
-requireText(appSource, "onOpenMonthlyReport={() => navigateTo('principal_monthly_report')}", 'AI 校长助理应接入上月学校复盘页。');
-requireText(appSource, "onOpenTermReport={() => navigateTo('principal_term_report')}", 'AI 校长助理应接入学期学校报告页。');
+requireText(appSource, "hasTermReportTask={principalTermReportTask.status !== 'idle'}", 'AI 校长助理应允许重新进入正在生成或已完成的学期任务。');
+requireText(appSource, 'principalWeeklyReportTask.start();', 'AI 校长助理应在应用层启动本周管理建议任务。');
+requireText(appSource, 'principalMonthlyReportTask.start();', 'AI 校长助理应在应用层启动上月学校复盘任务。');
+requireText(appSource, 'principalTermReportTask.start();', 'AI 校长助理应在应用层启动学期学校报告任务。');
 requireText(appSource, "currentView !== 'ai_principal_assistant'", 'AI 校长助理页面不应继续显示通用顶部标题栏。');
 
 requireText(viewSource, 'AI校长助理形象', '子页面顶部应展示 AI 校长助理形象。');
@@ -62,7 +62,7 @@ requireText(viewSource, '学期学校报告', '第三个选项应提供学期学
 requireText(viewSource, 'onOpenWeeklyReport();', '周管理建议入口应直接进入可用页面。');
 requireText(viewSource, 'onOpenMonthlyReport();', '月度学校复盘入口应直接进入可用页面。');
 requireText(viewSource, 'getPrincipalTermReportAvailability(termConfig)', '学期报告点击前应按后台学期配置判断生成资格。');
-requireText(viewSource, "hasGeneratedTermReport || availability.status === 'available'", '已生成报告应可直接查看，未生成报告仅在窗口内生成。');
+requireText(viewSource, "hasTermReportTask || availability.status === 'available'", '已有任务应可直接查看，未创建任务仅在窗口内生成。');
 requireText(viewSource, '<MobileNoticeSheet', '未到生成时间时应使用统一手机端提示浮层。');
 forbidText(viewSource, 'window.alert', '校长助理不应继续使用浏览器原生弹窗。');
 forbidText(viewSource, '能力建设中', '三个校长助理入口均应可用，不应保留能力建设中占位。');

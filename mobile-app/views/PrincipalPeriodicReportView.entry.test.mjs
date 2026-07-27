@@ -3,6 +3,9 @@ import fs from 'node:fs';
 const viewSource = fs.readFileSync(new URL('./PrincipalPeriodicReportView.tsx', import.meta.url), 'utf8');
 const dataSource = fs.readFileSync(new URL('../data/principalPeriodicReports.ts', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+const feedbackSource = fs.readFileSync(new URL('../components/AssistantReportFeedback.tsx', import.meta.url), 'utf8');
+const headerSource = fs.readFileSync(new URL('../components/AssistantSubpageHeader.tsx', import.meta.url), 'utf8');
+const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -18,10 +21,12 @@ for (const required of [
   "'principal_monthly_report'",
   "{currentView === 'principal_weekly_report' && (",
   "{currentView === 'principal_monthly_report' && (",
-  'generated={principalWeeklyReportGenerated}',
-  'generated={principalMonthlyReportGenerated}',
-  'onGenerated={() => setPrincipalWeeklyReportGenerated(true)}',
-  'onGenerated={() => setPrincipalMonthlyReportGenerated(true)}',
+  'status={principalWeeklyReportTask.status}',
+  'status={principalMonthlyReportTask.status}',
+  'visibleStepCount={principalWeeklyReportTask.visibleStepCount}',
+  'visibleStepCount={principalMonthlyReportTask.visibleStepCount}',
+  'onRetry={principalWeeklyReportTask.retry}',
+  'onRetry={principalMonthlyReportTask.retry}',
   "onOpenHistory={() => navigateTo('principal_weekly_history')}",
   "onOpenHistory={() => navigateTo('principal_monthly_history')}",
 ]) {
@@ -36,13 +41,20 @@ for (const required of [
   'report.findingsTitle',
   'report.actionsTitle',
   'report.notice',
-  'aria-label="返回"',
-  "aria-label={kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘'}",
+  "label: kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘'",
   'reportData?: PrincipalPeriodicReportContent;',
-  'focus-visible:ring-2',
+  "status === 'empty'",
+  "status === 'failed'",
+  'principal-report-page',
 ]) {
   requireText(viewSource, required, `校长周月报告页缺少状态、内容或无障碍能力：${required}`);
 }
+
+requireText(feedbackSource, '重新生成', '报告生成失败后应提供明确的重试操作。');
+requireText(headerSource, "backLabel = '返回'", '校长报告共享标题栏应提供明确返回入口。');
+requireText(headerSource, 'focus-visible:ring-2', '校长报告共享标题栏应保留键盘焦点。');
+requireText(cssSource, '.principal-report-screen-background', '校长报告应使用屏幕级统一渐变背景。');
+requireText(cssSource, 'var(--tm-role-principal-accent-soft)', '校长报告渐变应引用管理金角色令牌。');
 
 for (const required of [
   '正在核对上周学校数据',

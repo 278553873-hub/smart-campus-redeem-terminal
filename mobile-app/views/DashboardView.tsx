@@ -5,11 +5,13 @@ import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
     AwardIcon, GrowthIcon
 } from '../components/Icons';
-import { AlertTriangle, BadgeCheck, BookOpenCheck, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, School } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Camera, ChevronLeft, ChevronRight, FolderOpen, School } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
+import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
+import StudentEvaluationRecordsView, { type StudentEvaluationRecord } from './StudentEvaluationRecordsView';
 import {
     teacherBrandPalette,
     teacherBrandSemantic,
@@ -27,10 +29,50 @@ interface DashboardViewProps {
     onViewCampusCoins: () => void;
     campusCoinDetail: CampusCoinDetail;
     collectionHistory: StudentCollectionHistoryItem[];
+    evaluationRecords: StudentEvaluationRecord[];
+    currentTeacherId: string;
+    currentTeacherName: string;
+    canEditOtherTeachersEvaluationRecords: boolean;
+    onUpdateEvaluationRecord: (record: StudentEvaluationRecord) => void;
     onViewCollectionRecord: (item: StudentCollectionHistoryItem) => void;
     onOpenStudentArchive: () => void;
-    initialTab?: 'growth' | 'evaluation' | 'collection';
+    initialTab?: 'overview' | 'report' | 'collection';
 }
+
+const STUDENT_TERM_OPTIONS: StudentTermOption[] = [
+    { value: '2025-spring', label: '2025-2026学年 下学期', startDate: '2026-03-01', endDate: '2026-08-31', isCurrent: true },
+    { value: '2025-fall', label: '2025-2026学年 上学期', startDate: '2025-09-01', endDate: '2026-02-28' },
+    { value: '2024-spring', label: '2024-2025学年 下学期', startDate: '2025-03-01', endDate: '2025-08-31' },
+];
+
+const TERM_SCORE_OFFSETS: Record<string, Record<string, number>> = {
+    '2025-spring': {},
+    '2025-fall': { moral: -4, intellectual: 3, physical: 5, aesthetic: -2, labor: 6 },
+    '2024-spring': { moral: -8, intellectual: -2, physical: 2, aesthetic: 4, labor: -3 },
+};
+
+const FIVE_EDUCATION_CATEGORY_BY_LABEL: Record<string, string> = {
+    德育: 'moral',
+    智育: 'intellectual',
+    体育: 'physical',
+    美育: 'aesthetic',
+    劳育: 'labor',
+};
+
+const getTermValueForEvaluationDate = (value: string) => (
+    STUDENT_TERM_OPTIONS.find(option => value >= option.startDate && value <= option.endDate)?.value
+);
+
+const getFiveEducationTone = (category: string) => {
+    switch (category) {
+        case 'moral': return { main: teacherFiveEducationSemantic.virtue, soft: teacherBrandPalette.red[50], strong: teacherBrandPalette.red[700] };
+        case 'intellectual': return { main: teacherFiveEducationSemantic.wisdom, soft: teacherBrandPalette.orange[50], strong: teacherBrandPalette.orange[700] };
+        case 'physical': return { main: teacherFiveEducationSemantic.fitness, soft: teacherBrandPalette.green[50], strong: teacherBrandPalette.green[700] };
+        case 'aesthetic': return { main: teacherFiveEducationSemantic.aesthetic, soft: teacherBrandPalette.jade[50], strong: teacherBrandPalette.jade[700] };
+        case 'labor': return { main: teacherFiveEducationSemantic.labor, soft: teacherBrandPalette.gold[50], strong: teacherBrandPalette.gold[700] };
+        default: return { main: teacherBrandSemantic.textSecondary, soft: teacherBrandSemantic.surfaceSoft, strong: teacherBrandSemantic.textPrimary };
+    }
+};
 
 // Helper: Radar Chart Component
 const FiveEducationRadar = ({
@@ -82,17 +124,6 @@ const FiveEducationRadar = ({
 
     const studentPoints = generatePoints(activeData);
     const classAvgPoints = generatePoints(classAvgData);
-
-    const getCategoryTone = (cat: string) => {
-        switch (cat) {
-            case 'moral': return { main: teacherFiveEducationSemantic.virtue, soft: teacherBrandPalette.red[50], strong: teacherBrandPalette.red[700] };
-            case 'intellectual': return { main: teacherFiveEducationSemantic.wisdom, soft: teacherBrandPalette.orange[50], strong: teacherBrandPalette.orange[700] };
-            case 'physical': return { main: teacherFiveEducationSemantic.fitness, soft: teacherBrandPalette.green[50], strong: teacherBrandPalette.green[700] };
-            case 'aesthetic': return { main: teacherFiveEducationSemantic.aesthetic, soft: teacherBrandPalette.jade[50], strong: teacherBrandPalette.jade[700] };
-            case 'labor': return { main: teacherFiveEducationSemantic.labor, soft: teacherBrandPalette.gold[50], strong: teacherBrandPalette.gold[700] };
-            default: return { main: teacherBrandSemantic.textSecondary, soft: teacherBrandSemantic.surfaceSoft, strong: teacherBrandSemantic.textPrimary };
-        }
-    };
 
     return (
         <div className="relative flex flex-col items-center justify-center py-2">
@@ -169,7 +200,7 @@ const FiveEducationRadar = ({
                             {activeData.map((s, i) => {
                                 const coords = getCoordinates(s.value, i, activeData.length);
                                 const valueY = coords.y - 17;
-                                const tone = getCategoryTone(s.category);
+                                const tone = getFiveEducationTone(s.category);
 
                                 return (
                                     <g key={i}>
@@ -203,17 +234,17 @@ const FiveEducationRadar = ({
                 <button
                     type="button"
                     onClick={onToggleCurrent}
-                    className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-all ${showCurrent ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'bg-white text-[var(--tm-text-secondary)] ring-1 ring-[var(--tm-border-subtle)]'}`}
+                    className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-all ${showCurrent ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] ring-1 ring-[var(--tm-border-subtle)]'}`}
                     aria-pressed={showCurrent}
                 >
-                    <div className={`h-3 w-3 rounded-full border-2 ${showCurrent ? 'border-[var(--tm-brand-primary)] bg-white' : 'border-[var(--tm-border-subtle)] bg-white'}`}></div>
+                    <div className={`h-3 w-3 rounded-full border-2 bg-[var(--tm-bg-surface)] ${showCurrent ? 'border-[var(--tm-brand-primary)]' : 'border-[var(--tm-border-subtle)]'}`}></div>
                     当前
                 </button>
 
                 <button
                     type="button"
                     onClick={onToggleClassAvg}
-                    className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-all ${showClassAvg ? 'bg-white text-[var(--tm-text-secondary)] ring-1 ring-[var(--tm-border-subtle)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-tertiary)]'}`}
+                    className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-all ${showClassAvg ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] ring-1 ring-[var(--tm-border-subtle)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-tertiary)]'}`}
                     aria-pressed={showClassAvg}
                 >
                     <div className={`h-0 w-6 border-t-2 ${showClassAvg ? 'border-[var(--tm-text-disabled)]' : 'border-[var(--tm-border-subtle)]'}`}></div>
@@ -235,16 +266,21 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onViewCampusCoins,
     campusCoinDetail,
     collectionHistory,
+    evaluationRecords,
+    currentTeacherId,
+    currentTeacherName,
+    canEditOtherTeachersEvaluationRecords,
+    onUpdateEvaluationRecord,
     onViewCollectionRecord,
     onOpenStudentArchive,
-    initialTab = 'growth',
+    initialTab = 'overview',
 }) => {
-    const [activeTab, setActiveTab] = useState<'growth' | 'evaluation' | 'collection'>(initialTab);
+    const [activeTab, setActiveTab] = useState<'overview' | 'report' | 'collection'>(initialTab);
 
     // UI States
-    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['subject_reports']));
-    const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
-
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+    const [selectedTerm, setSelectedTerm] = useState(STUDENT_TERM_OPTIONS[0].value);
+    const [showEvaluationRecords, setShowEvaluationRecords] = useState(false);
     const [showCurrent, setShowCurrent] = useState(true);
     const [showClassAvg, setShowClassAvg] = useState(true);
     const [showStatusActionSheet, setShowStatusActionSheet] = useState(false);
@@ -257,7 +293,31 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         setExpandedSections(newSet);
     };
 
-    const validScores = scores.filter(s => s.category !== 'creativity');
+    const currentTermOption = STUDENT_TERM_OPTIONS.find(option => option.isCurrent) ?? STUDENT_TERM_OPTIONS[0];
+    const selectedTermOption = STUDENT_TERM_OPTIONS.find(option => option.value === selectedTerm) ?? currentTermOption;
+    const evaluationScoreDeltas = useMemo(() => {
+        const deltas: Record<string, Record<string, number>> = {};
+        const applyRecord = (record: StudentEvaluationRecord, factor: number) => {
+            const termValue = getTermValueForEvaluationDate(record.evaluation_date);
+            const category = FIVE_EDUCATION_CATEGORY_BY_LABEL[record.indicatorPath[0]];
+            if (!termValue || !category) return;
+            deltas[termValue] ??= {};
+            deltas[termValue][category] = (deltas[termValue][category] ?? 0) + record.scoreChange * factor;
+        };
+        (MOCK_BEHAVIOR_RECORDS as StudentEvaluationRecord[]).forEach(record => applyRecord(record, -1));
+        evaluationRecords.forEach(record => applyRecord(record, 1));
+        return deltas;
+    }, [evaluationRecords]);
+    const currentScores = useMemo(() => {
+        const offsets = TERM_SCORE_OFFSETS[currentTermOption.value] ?? {};
+        const recordDeltas = evaluationScoreDeltas[currentTermOption.value] ?? {};
+        return scores
+            .filter(score => score.category !== 'creativity')
+            .map(score => ({ ...score, score: Math.max(0, Math.min(100, score.score + (offsets[score.category] ?? 0) + (recordDeltas[score.category] ?? 0))) }));
+    }, [currentTermOption.value, evaluationScoreDeltas, scores]);
+    const currentTermEvaluationRecords = useMemo(() => evaluationRecords.filter(record => (
+        record.evaluation_date >= currentTermOption.startDate && record.evaluation_date <= currentTermOption.endDate
+    )).sort((left, right) => right.evaluation_date.localeCompare(left.evaluation_date)), [currentTermOption.endDate, currentTermOption.startDate, evaluationRecords]);
     const studentStatusLabel = student.status === 'left' ? '离校' : '在校';
     const formatCompactClassName = (className: string) => {
         const match = className.match(/^(\d{4}级)(.+)$/);
@@ -278,46 +338,59 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         return `${match[1]}${classNumberMap[classText] ?? classText}班`;
     };
 
-    const renderRecordTab = () => renderEvaluationTab();
-
     // --- Sub-renderers ---
 
-    const renderGrowthTab = () => (
+    const renderOverviewTab = () => (
         <div className="space-y-3 pb-24 animate-in fade-in duration-300">
-            {/* C. Term Selector */}
-            <div className="flex items-center gap-3">
-                <button className="flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] bg-white px-3 text-sm font-medium text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)] transition-all active:opacity-60">
-                    <span>2025-2026学年 上学期</span>
-                    <ChevronDownIcon className="h-3.5 w-3.5 text-[var(--tm-text-tertiary)]" />
-                </button>
-            </div>
-
-            <button
-                type="button"
-                onClick={onOpenStudentArchive}
-                className="flex min-h-[60px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-white px-4 text-left shadow-[var(--tm-shadow-card)] transition active:bg-[var(--tm-bg-surface-soft)]"
-            >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
-                    <BookOpenCheck className="h-4 w-4" />
-                </span>
-                <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">学生成长档案</span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
-            </button>
-
-            {/* D. Radar Chart Card */}
-            <div className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-white shadow-[var(--tm-shadow-card)]">
-                <div className="relative z-10 flex items-center justify-between px-5 pb-2 pt-4">
+            {/* C. Current Semester Five-Education Summary */}
+            <div className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]">
+                <div className="relative z-10 flex items-center justify-between px-4 pb-3 pt-4">
                     <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
                         <AwardIcon className="h-4 w-4 text-[var(--tm-brand-reward)]" />
-                        五育能力模型
+                        本学期五育积分
                     </h3>
+                    <span className="rounded-full bg-[var(--tm-status-positive-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--tm-status-positive-strong)]">实时</span>
                 </div>
-                <div className="relative z-0 flex w-full justify-center px-2 pb-4">
-                    <FiveEducationRadar scores={validScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
+
+                <div className="grid grid-cols-5 px-2 pb-4">
+                    {currentScores.map(score => {
+                        const tone = getFiveEducationTone(score.category);
+                        return (
+                            <div key={score.category} className="flex min-w-0 flex-col items-center px-1">
+                                <span className="text-[12px] font-medium text-[var(--tm-text-secondary)]">{score.label}</span>
+                                <span className="mt-1 text-[22px] font-bold leading-none tabular-nums" style={{ color: tone.strong }}>{score.score}</span>
+                                <span className="mt-2 h-1 w-5 rounded-full" style={{ backgroundColor: tone.main }} aria-hidden="true" />
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="border-t border-[var(--tm-border-subtle)] px-2 pb-3">
+                    <FiveEducationRadar scores={currentScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
+                </div>
+
+                <div className="border-t border-[var(--tm-border-subtle)] px-4">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSelectedTerm(currentTermOption.value);
+                            setShowEvaluationRecords(true);
+                        }}
+                        className="mx-auto flex min-h-[var(--tm-size-touch)] items-center gap-1.5 text-[13px] font-medium text-[var(--tm-brand-primary-strong)]"
+                    >
+                        评价记录 {currentTermEvaluationRecords.length}条
+                        <ChevronRightIcon className="h-3.5 w-3.5" />
+                    </button>
                 </div>
             </div>
+        </div>
+    );
 
-            <section className="overflow-hidden rounded-[var(--tm-radius-card)] bg-white shadow-[var(--tm-shadow-card)]">
+    const renderReportTab = () => (
+        <div className="space-y-3 pb-24 animate-in fade-in duration-300">
+            <StudentTermSelector value={selectedTerm} options={STUDENT_TERM_OPTIONS} onChange={setSelectedTerm} ariaLabel="选择成长报告学期" />
+
+            <section className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]">
                 <button
                     onClick={() => toggleSection('term_report')}
                     className="flex min-h-[60px] w-full items-center justify-between px-4 text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
@@ -332,11 +405,11 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 </button>
                 {expandedSections.has('term_report') && (
                     <div className="flex items-center justify-between border-t border-[var(--tm-border-subtle)] px-4 py-3 pl-[4.25rem]">
-                        <span className="text-xs text-[var(--tm-text-secondary)]">2025-2026学年 上学期</span>
+                        <span className="text-xs text-[var(--tm-text-secondary)]">{selectedTermOption.label}</span>
                         <button onClick={onViewTermReport} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-3 text-xs font-semibold text-[var(--tm-brand-primary-strong)] active:scale-95">查看</button>
                     </div>
                 )}
-                {growthReports.map((report) => (
+                {selectedTermOption.isCurrent ? growthReports.map((report) => (
                     <div key={report.id} className="border-t border-[var(--tm-border-subtle)]">
                     <button
                         onClick={() => toggleSection(`growth_${report.id}`)}
@@ -357,78 +430,28 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         </div>
                     )}
                 </div>
-                ))}
+                )) : (
+                    <div className="border-t border-[var(--tm-border-subtle)] px-4 py-8 text-center text-[13px] font-medium text-[var(--tm-text-tertiary)]">该学期暂无月度成长报告</div>
+                )}
             </section>
         </div>
     );
 
-    const renderEvaluationTab = () => (
-        <div className="space-y-3 pb-24 pt-2 animate-in fade-in duration-300">
-            {(MOCK_BEHAVIOR_RECORDS as any[]).map((rec) => {
-                const resultSurfaceClass = rec.isBad
-                    ? 'border-[var(--tm-record-negative-border)] bg-[var(--tm-record-negative-bg)]'
-                    : 'border-[var(--tm-record-positive-border)] bg-[var(--tm-record-positive-bg)]';
-                const resultTextClass = rec.isBad
-                    ? 'text-[var(--tm-record-negative-text)]'
-                    : 'text-[var(--tm-record-positive-text)]';
-                const isExpanded = expandedRecordId === rec.id;
-
-                return (
-                    <article key={rec.id} className={`rounded-[var(--tm-radius-inner)] border p-4 shadow-[var(--tm-shadow-card)] ${resultSurfaceClass}`}>
-                        <div className="flex items-center justify-between gap-3 text-[11px] font-medium text-[var(--tm-text-secondary)]">
-                            <span>{rec.evaluation_date} · {rec.teacherName}</span>
-                            <span className={`shrink-0 text-lg font-bold tabular-nums ${resultTextClass}`}>
-                                {rec.scoreChange > 0 ? `+${rec.scoreChange}` : rec.scoreChange}
-                            </span>
-                        </div>
-
-                        <div className="mt-3 flex items-center gap-2">
-                            <img src={ASSETS.MANAGEMENT.AI_BOT} alt="" className="h-6 w-6 object-contain" />
-                            <span className="text-sm font-semibold text-[var(--tm-text-primary)]">AI 智能解读</span>
-                        </div>
-
-                        <p className="mt-2 text-[14px] leading-relaxed text-[var(--tm-text-primary)]">
-                            {rec.aiComment}
-                        </p>
-
-                        <div className="mt-3 flex items-start justify-between gap-3 border-t border-black/5 pt-3">
-                            <span className="min-w-0 text-xs leading-relaxed text-[var(--tm-text-secondary)]">
-                                {rec.indicatorPath.join(' / ')}
-                            </span>
-                            <span className={`shrink-0 text-[13px] font-bold tabular-nums ${resultTextClass}`}>
-                                {rec.scoreChange > 0 ? `+${rec.scoreChange}` : rec.scoreChange}
-                            </span>
-                        </div>
-
-                        <button
-                            type="button"
-                            aria-expanded={isExpanded}
-                            onClick={() => setExpandedRecordId(isExpanded ? null : rec.id)}
-                            className="mt-1 flex min-h-11 w-full items-center justify-between text-left text-xs font-medium text-[var(--tm-text-secondary)]"
-                        >
-                            <span>原始记录</span>
-                            <ChevronDownIcon className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {isExpanded && (
-                            <div className="border-t border-black/5 pt-3 text-xs leading-relaxed text-[var(--tm-text-secondary)] animate-in slide-in-from-top-1">
-                                <p>{rec.description}</p>
-                                {rec.auditReason && (
-                                    <p className="mt-2">
-                                        <span className="font-semibold text-[var(--tm-text-primary)]">判定依据：</span>
-                                        {rec.auditReason}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                    </article>
-                );
-            })}
-            <div className="py-6 text-center text-xs text-[var(--tm-text-tertiary)]">
-                仅展示最近一年的记录
-            </div>
-        </div>
-    );
+    if (showEvaluationRecords) {
+        return (
+            <StudentEvaluationRecordsView
+                records={evaluationRecords}
+                selectedTerm={selectedTerm}
+                termOptions={STUDENT_TERM_OPTIONS}
+                currentTeacherId={currentTeacherId}
+                currentTeacherName={currentTeacherName}
+                canEditOtherTeachersRecords={canEditOtherTeachersEvaluationRecords}
+                onSelectedTermChange={setSelectedTerm}
+                onUpdateRecord={onUpdateEvaluationRecord}
+                onBack={() => setShowEvaluationRecords(false)}
+            />
+        );
+    }
 
     return (
         <div className="relative h-full min-h-0 overflow-hidden bg-transparent font-sans">
@@ -450,32 +473,44 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         <div className="flex items-center">
                             <button
                                 type="button"
-                                onClick={onEditBasicInfo}
-                                aria-label="编辑基础信息"
-                                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
+                                onClick={onOpenStudentArchive}
+                                aria-label="查看学生成长档案"
+                                className="flex h-11 items-center justify-center gap-1.5 rounded-full px-2 text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
                             >
-                                <Pencil className="h-4 w-4" />
+                                <FolderOpen className="h-4 w-4 shrink-0" />
+                                <span className="whitespace-nowrap text-xs font-medium">档案</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setShowStatusActionSheet(true)}
                                 aria-label="管理学籍状态"
-                                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                                className="flex h-11 items-center justify-center gap-1.5 rounded-full px-2 text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
                             >
-                                <MoreHorizontal className="h-5 w-5" />
+                                {student.status === 'left'
+                                    ? <AlertTriangle className="h-4 w-4 shrink-0" />
+                                    : <BadgeCheck className="h-4 w-4 shrink-0" />}
+                                <span className="whitespace-nowrap text-xs font-medium">学籍</span>
                             </button>
                         </div>
                     </div>
                     <div className="flex min-w-0 items-center gap-4">
-                        <div className="relative shrink-0">
-                            <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border-2 border-[var(--tm-brand-primary-soft-strong)] bg-white p-1 shadow-[var(--tm-shadow-avatar)]">
+                        <button
+                            type="button"
+                            onClick={onEditBasicInfo}
+                            aria-label="编辑基础信息"
+                            className="relative shrink-0 rounded-full text-left transition-transform active:scale-95"
+                        >
+                            <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border-2 border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-bg-surface)] p-1 shadow-[var(--tm-shadow-avatar)]">
                                 <img
-                                    src={student.avatar || (student.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.GENERIC_GIRL)}
+                                    src={student.avatar || (student.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.STUDENT_GIRL_DEFAULT)}
                                     alt={`${student.name}头像`}
                                     className="h-full w-full rounded-full object-cover"
                                 />
                             </div>
-                        </div>
+                            <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-icon)]" aria-hidden="true">
+                                <Camera className="h-4 w-4" strokeWidth={2.3} />
+                            </span>
+                        </button>
                         <div className="min-w-0 flex-1">
                             <h2 className="flex items-center gap-2 text-2xl font-bold text-[var(--tm-text-primary)]">
                                 <span className="truncate">{student.name}</span>
@@ -499,7 +534,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             {/* 2. Scrollable Content */}
             <div className="space-y-4 p-4">
                 {/* B. Assets Card */}
-                <div className="rounded-[var(--tm-radius-inner)] bg-white px-3 py-2 shadow-[var(--tm-shadow-card)]">
+                <div className="rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-3 py-2 shadow-[var(--tm-shadow-card)]">
                     <div className="flex min-h-[56px] items-center">
                         <div className="flex min-w-0 flex-1 items-center gap-2 px-2">
                             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
@@ -537,42 +572,42 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
                 {/* C. Tabs */}
                 <div className="sticky top-0 z-30 bg-[var(--tm-bg-page)] py-2">
-                    <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] p-1" role="tablist" aria-label="学生详情内容">
+                    <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)]" role="tablist" aria-label="学生详情内容">
                         <button
                             type="button"
                             role="tab"
-                            aria-selected={activeTab === 'growth'}
-                            onClick={() => setActiveTab('growth')}
-                            className={`rounded-lg px-1 text-[13px] font-semibold transition-all ${activeTab === 'growth' ? 'bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}
+                            aria-selected={activeTab === 'overview'}
+                            onClick={() => setActiveTab('overview')}
+                            className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            成长报告
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'overview' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>成长概览</span>
                         </button>
                         <button
                             type="button"
                             role="tab"
-                            aria-selected={activeTab === 'evaluation'}
-                            onClick={() => setActiveTab('evaluation')}
-                            className={`rounded-lg px-1 text-[13px] font-semibold transition-all ${activeTab === 'evaluation' ? 'bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}
+                            aria-selected={activeTab === 'report'}
+                            onClick={() => setActiveTab('report')}
+                            className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            评价记录
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>成长报告</span>
                         </button>
                         <button
                             type="button"
                             role="tab"
                             aria-selected={activeTab === 'collection'}
                             onClick={() => setActiveTab('collection')}
-                            className={`rounded-lg px-1 text-[13px] font-semibold transition-all ${activeTab === 'collection' ? 'bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}
+                            className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            采集记录
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'collection' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>采集记录</span>
                         </button>
                     </div>
                 </div>
 
                 {/* D. Content Area */}
                 <div className="min-h-[400px]">
-                    {activeTab === 'growth' && renderGrowthTab()}
-                    {activeTab === 'evaluation' && renderRecordTab()}
-                    {activeTab === 'collection' && <StudentCollectionHistoryTab items={collectionHistory} onOpen={onViewCollectionRecord} />}
+                    {activeTab === 'overview' && renderOverviewTab()}
+                    {activeTab === 'report' && renderReportTab()}
+                    {activeTab === 'collection' && <StudentCollectionHistoryTab items={collectionHistory} termOptions={STUDENT_TERM_OPTIONS} selectedTerm={selectedTerm} onSelectedTermChange={setSelectedTerm} onOpen={onViewCollectionRecord} />}
                 </div>
             </div>
             </div>
@@ -645,7 +680,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                     setShowStatusActionSheet(false);
                                     onBack?.();
                                 }}
-                                className="h-12 rounded-[var(--tm-radius-inner)] bg-[var(--tm-status-negative)] text-sm font-semibold text-white active:scale-[0.98]"
+                                className="h-12 rounded-[var(--tm-radius-inner)] bg-[var(--tm-status-negative)] text-sm font-semibold text-[var(--tm-text-inverse)] active:scale-[0.98]"
                             >
                                 确认离校
                             </button>

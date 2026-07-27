@@ -45,8 +45,14 @@ requireText(viewSource, "selectionGenderFilter === 'male'", '学生多选态应�
 requireText(viewSource, "selectionGenderFilter === 'female'", '学生多选态应提供女生筛选。');
 requireText(viewSource, 'handleSelectAllVisibleStudents', '学生多选态应提供全选当前可见学生。');
 requireText(viewSource, 'handleClearVisibleStudents', '学生多选态应提供取消全选当前可见学生。');
+requireText(viewSource, 'handleInvertVisibleStudents', '学生多选态应提供反选当前可见学生。');
+requireText(viewSource, 'visibleStudents.forEach(student => {', '反选必须只作用于当前可见学生。');
+requireText(viewSource, 'if (next.has(student.id)) next.delete(student.id);', '反选必须取消当前已选学生。');
+requireText(viewSource, 'else next.add(student.id);', '反选必须选中当前未选学生。');
+requireText(viewSource, 'onClick={handleInvertVisibleStudents}', '学生多选工具栏应接入反选操作。');
 requireText(viewSource, '全选', '学生多选工具栏应展示全选操作。');
 requireText(viewSource, '取消全选', '学生多选工具栏应展示取消全选操作。');
+requireText(viewSource, '反选', '学生多选工具栏应展示反选操作。');
 requireText(viewSource, "isSelectionMode ? '取消' : '多选'", '学生视图多选入口文案应精简为“多选”。');
 if (viewSource.includes('多选学生')) {
   failures.push('学生视图多选入口不应再显示“多选学生”，应显示“多选”。');

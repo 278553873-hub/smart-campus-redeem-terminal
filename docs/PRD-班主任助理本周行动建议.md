@@ -798,4 +798,3 @@ Demo 中不展示数据等级切换器，所有状态由班级 mock 数据驱动
 - 本周行动建议AI提示词：`docs/班主任助理_本周行动建议_内容生成提示词.md`
 - 我的评价复盘AI提示词：`docs/班主任助理_我的评价复盘_内容生成提示词.md`
 - 教师手机端UI规范：`design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md`
-- 教师手机端设计变量：`design-system/teacher-mobile/design-token.md`

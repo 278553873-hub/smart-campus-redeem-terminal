@@ -6,11 +6,12 @@ const canonical = fs.readFileSync(canonicalPath, 'utf8');
 const app = fs.readFileSync('mobile-app/App.tsx', 'utf8');
 const css = fs.readFileSync('mobile-app/index.css', 'utf8');
 const parent = fs.readFileSync('components/ParentApp.tsx', 'utf8');
-const guidelines = fs.readFileSync('design-system/teacher-mobile/design-token.md', 'utf8');
+const guidelines = fs.readFileSync('design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', 'utf8');
 
 assert.equal(fs.existsSync('mobile-app/styles/teacherBrandTokens.ts'), false);
 assert.equal(fs.existsSync('mobile-app/styles/phoneTokens.ts'), false);
 assert.equal(fs.existsSync('mobile-app/styles/teacherMobileTokens.css'), false);
+assert.equal(fs.existsSync('design-system/teacher-mobile/design-token.md'), false);
 
 for (const required of [
   "'--tm-brand-primary'",
@@ -21,8 +22,13 @@ for (const required of [
   "'--tm-radius-card'",
   "'--tm-shadow-card'",
   "'--tm-size-touch'",
+  "'--tm-size-floating-action'",
   "'--tm-border-control'",
   "'--tm-focus-ring'",
+  "'--tm-input-focus-ring'",
+  "'--tm-page-plain-header-bg'",
+  "'--tm-page-plain-content-bg'",
+  "'--tm-font-size-document-title'",
   "'--tm-font-size-compact'",
   "'--tm-font-size-metric'",
   "'--tm-audience-guardian-primary'",
@@ -40,6 +46,12 @@ assert.match(guidelines, /mobile-app\/styles\/teacherMobileTokens\.ts/);
 assert.match(canonical, /textTertiary: teacherBrandPalette\.neutral\[550\]/);
 assert.match(canonical, /'--tm-text-tertiary': teacherBrandSemantic\.textTertiary/);
 assert.match(canonical, /metric: 'text-\[24px\]/);
+assert.match(canonical, /negative: teacherBrandPalette\.red\[500\]/);
+assert.match(canonical, /negativeStrong: teacherBrandPalette\.red\[700\]/);
+assert.match(canonical, /negativeSoft: teacherBrandPalette\.red\[50\]/);
+assert.match(canonical, /'--tm-record-negative-border': teacherBrandPalette\.red\[100\]/);
+assert.doesNotMatch(canonical, /teacherBrandPalette\.rose|\brose:\s*\{/);
+assert.match(guidelines, /不得维护或引入独立暗红色板/);
 
 const luminance = hex => {
   const channels = [1, 3, 5].map(index => Number.parseInt(hex.slice(index, index + 2), 16) / 255);
@@ -54,6 +66,8 @@ const contrast = (foreground, background) => {
 };
 
 assert.ok(contrast('#BA352E', '#FFF1F1') >= 4.5, '学生模式浅底文字对比度不足');
+assert.ok(contrast('#FFFFFF', '#E02727') >= 4.5, '品牌主色上的白色小字对比度不足');
+assert.ok(contrast('#FFFFFF', '#BA352E') >= 4.5, '品牌深色上的白色小字对比度不足');
 assert.ok(contrast('#B83F00', '#FFF5EC') >= 4.5, '班级模式浅底文字对比度不足');
 assert.ok(contrast('#155B54', '#ECF8F6') >= 4.5, '学生受众浅底文字对比度不足');
 assert.ok(contrast('#126B5B', '#EFFAF7') >= 4.5, '班主任助理正文对比度不足');

@@ -1,9 +1,11 @@
-import type { FormLayoutMode, FormSection } from './formDefinition';
+import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode, type FormSection, type FormSubField } from './formDefinition';
 
 export type QuestionnaireStatus = 'draft' | 'active' | 'ended' | 'archived';
 export type QuestionnaireCollectionMode = 'guardian_questionnaire' | 'student_information' | 'teacher_questionnaire';
-export type QuestionnaireQuestionType = 'single' | 'multiple' | 'rating' | 'text' | 'short_text' | 'number' | 'date';
+export type QuestionnaireQuestionType = 'single' | 'multiple' | 'rating' | 'text' | 'short_text' | 'multi_fill' | 'number' | 'date';
 export type QuestionnaireTargetMode = 'all' | 'classes' | 'students';
+export type QuestionnaireTargetSyncPolicy = 'fixed' | 'follow_classes';
+export type QuestionnaireTargetScopeStatus = 'active' | 'exited';
 export type StudentCollectionRecordStatus = 'pending' | 'draft' | 'completed';
 export type StudentAssignmentMode = 'creator' | 'homeroom';
 
@@ -12,7 +14,11 @@ export interface QuestionnaireChoiceAnswer {
   customText: Record<string, string>;
 }
 
-export type QuestionnaireAnswer = string | string[] | number | QuestionnaireChoiceAnswer;
+export interface QuestionnaireMultiFillAnswer {
+  fillValues: Record<string, string>;
+}
+
+export type QuestionnaireAnswer = string | string[] | number | QuestionnaireChoiceAnswer | QuestionnaireMultiFillAnswer;
 
 export interface QuestionnaireQuestion {
   id: string;
@@ -21,7 +27,9 @@ export interface QuestionnaireQuestion {
   required: boolean;
   options: string[];
   customAnswerOptions?: string[];
+  subFields?: FormSubField[];
   sectionId?: string;
+  settings?: FormFieldSettings;
 }
 
 export interface QuestionnaireTarget {
@@ -31,6 +39,7 @@ export interface QuestionnaireTarget {
   classId: string;
   className: string;
   reachable: boolean;
+  scopeStatus?: QuestionnaireTargetScopeStatus;
 }
 
 export interface QuestionnaireSubmission {
@@ -69,6 +78,7 @@ export interface QuestionnaireRecord {
   studentAssignmentMode?: StudentAssignmentMode;
   targetMode?: QuestionnaireTargetMode;
   targetClassIds?: string[];
+  targetSyncPolicy?: QuestionnaireTargetSyncPolicy;
   layoutMode?: FormLayoutMode;
   sections?: FormSection[];
   questions: QuestionnaireQuestion[];
@@ -530,8 +540,20 @@ const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): Questionnair
     suggestedDeadline: rest.suggestedDeadline ?? deadline ?? '',
     collectionMode: rest.collectionMode ?? 'guardian_questionnaire',
     studentAssignmentMode: rest.studentAssignmentMode ?? 'creator',
+    targetSyncPolicy: rest.targetSyncPolicy ?? 'fixed',
     layoutMode: rest.layoutMode ?? 'flat',
     sections: rest.sections ?? [],
+    questions: rest.questions.map(question => ({
+      ...question,
+      options: [...question.options],
+      customAnswerOptions: [...(question.customAnswerOptions ?? [])],
+      subFields: question.subFields?.map(subField => ({ ...subField })),
+      settings: normalizeFormFieldSettings(question.type, question.settings, question.options),
+    })),
+    targets: rest.targets.map(target => ({
+      ...target,
+      scopeStatus: target.scopeStatus ?? 'active',
+    })),
     studentRecords: rest.studentRecords ?? [],
   };
 };
@@ -584,6 +606,109 @@ export const getQuestionnaireCollectionMode = (record: QuestionnaireRecord): Que
   record.collectionMode ?? 'guardian_questionnaire'
 );
 
+export const getActiveQuestionnaireTargets = (record: QuestionnaireRecord): QuestionnaireTarget[] => (
+  record.targets.filter(target => (target.scopeStatus ?? 'active') === 'active')
+);
+
+interface ReconcileQuestionnaireTargetsOptions {
+  resolveStudentAssignee?: (target: QuestionnaireTarget) => { id: string; name: string };
+}
+
+export const reconcileQuestionnaireTargets = (
+  record: QuestionnaireRecord,
+  currentClassTargets: QuestionnaireTarget[],
+  options: ReconcileQuestionnaireTargetsOptions = {},
+): QuestionnaireRecord => {
+  if (record.status !== 'active') return record;
+
+  const currentByStudentNo = new Map(currentClassTargets.map(target => [target.studentNo, target]));
+  if (record.targetSyncPolicy === 'fixed') {
+    let fixedTargetsChanged = false;
+    const nextFixedTargets = record.targets.map(target => {
+      const currentTarget = currentByStudentNo.get(target.studentNo);
+      if (!currentTarget) return target;
+      const nextTarget: QuestionnaireTarget = { ...target, ...currentTarget, scopeStatus: target.scopeStatus ?? 'active' };
+      if (
+        target.studentId !== nextTarget.studentId
+        || target.studentName !== nextTarget.studentName
+        || target.classId !== nextTarget.classId
+        || target.className !== nextTarget.className
+        || target.reachable !== nextTarget.reachable
+      ) fixedTargetsChanged = true;
+      return nextTarget;
+    });
+    return fixedTargetsChanged ? { ...record, targets: nextFixedTargets } : record;
+  }
+
+  if (record.targetSyncPolicy !== 'follow_classes' || !record.targetClassIds?.length) return record;
+
+  const followedClassIds = new Set(record.targetClassIds);
+  const followedCurrentByStudentNo = new Map(currentClassTargets
+    .filter(target => followedClassIds.has(target.classId))
+    .map(target => [target.studentNo, target]));
+  const existingByStudentNo = new Map(record.targets.map(target => [target.studentNo, target]));
+  let changed = false;
+
+  const nextTargets = record.targets.map(target => {
+    if (!followedClassIds.has(target.classId)) return target;
+    const currentTarget = followedCurrentByStudentNo.get(target.studentNo);
+    if (!currentTarget) {
+      if ((target.scopeStatus ?? 'active') === 'exited') return target;
+      changed = true;
+      return { ...target, scopeStatus: 'exited' as const };
+    }
+    followedCurrentByStudentNo.delete(target.studentNo);
+    const nextTarget: QuestionnaireTarget = { ...target, ...currentTarget, scopeStatus: 'active' };
+    if (
+      target.studentId !== nextTarget.studentId
+      || target.studentName !== nextTarget.studentName
+      || target.classId !== nextTarget.classId
+      || target.className !== nextTarget.className
+      || target.reachable !== nextTarget.reachable
+      || (target.scopeStatus ?? 'active') !== 'active'
+    ) changed = true;
+    return nextTarget;
+  });
+
+  followedCurrentByStudentNo.forEach(target => {
+    if (existingByStudentNo.has(target.studentNo)) return;
+    changed = true;
+    nextTargets.push({ ...target, scopeStatus: 'active' });
+  });
+
+  if (!changed) return record;
+
+  let nextStudentRecords = record.studentRecords;
+  if (getQuestionnaireCollectionMode(record) === 'student_information') {
+    const existingRecordNos = new Set((record.studentRecords ?? []).map(item => item.studentNo));
+    const additions = nextTargets.filter(target => (
+      (target.scopeStatus ?? 'active') === 'active' && !existingRecordNos.has(target.studentNo)
+    ));
+    nextStudentRecords = [
+      ...(record.studentRecords ?? []),
+      ...additions.map(target => {
+        const assignee = record.studentAssignmentMode === 'creator'
+          ? { id: record.creatorTeacherId ?? '', name: record.creatorName }
+          : options.resolveStudentAssignee?.(target);
+        return {
+          id: `${record.id}-${target.studentNo}`,
+          studentNo: target.studentNo,
+          studentName: target.studentName,
+          classId: target.classId,
+          className: target.className,
+          status: 'pending' as const,
+          updatedAt: '',
+          answers: {},
+          assigneeTeacherId: assignee?.id,
+          assigneeTeacherName: assignee?.name,
+        };
+      }),
+    ];
+  }
+
+  return { ...record, targets: nextTargets, studentRecords: nextStudentRecords };
+};
+
 const normalizeTeacherName = (name: string) => name.replace(/老师$/u, '').trim();
 
 const matchesTeacher = (
@@ -612,7 +737,7 @@ export const getStudentCollectionRecordsForTeacher = (
 ): StudentCollectionRecord[] => {
   if (getQuestionnaireCollectionMode(record) !== 'student_information') return [];
   const recordsByStudentNo = new Map((record.studentRecords ?? []).map(item => [item.studentNo, item]));
-  const studentRecords: StudentCollectionRecord[] = record.targets.map(target => recordsByStudentNo.get(target.studentNo) ?? {
+  const studentRecords: StudentCollectionRecord[] = getActiveQuestionnaireTargets(record).map(target => recordsByStudentNo.get(target.studentNo) ?? {
     id: `${record.id}-${target.studentNo}`,
     studentNo: target.studentNo,
     studentName: target.studentName,
@@ -712,15 +837,21 @@ export const getCompletedStudentCollectionHistory = (
   return history.sort((left, right) => right.completedAt.localeCompare(left.completedAt));
 };
 
-export const getStudentCollectionCompletedCount = (record: QuestionnaireRecord) => (
-  (record.studentRecords ?? []).filter(item => item.status === 'completed').length
-);
+export const getStudentCollectionCompletedCount = (record: QuestionnaireRecord) => {
+  const activeTargetNos = new Set(getActiveQuestionnaireTargets(record).map(target => target.studentNo));
+  return (record.studentRecords ?? []).filter(item => item.status === 'completed' && activeTargetNos.has(item.studentNo)).length;
+};
+
+export const getQuestionnaireCompletedCount = (record: QuestionnaireRecord) => {
+  const activeTargetNos = new Set(getActiveQuestionnaireTargets(record).map(target => target.studentNo));
+  return record.submissions.filter(submission => activeTargetNos.has(submission.studentNo)).length;
+};
 
 export const isQuestionnaireFullyCollected = (record: QuestionnaireRecord) => {
   const reachable = getReachableTargetCount(record);
   const completed = getQuestionnaireCollectionMode(record) === 'student_information'
     ? getStudentCollectionCompletedCount(record)
-    : record.submissions.length;
+    : getQuestionnaireCompletedCount(record);
   return reachable > 0 && completed >= reachable;
 };
 
@@ -766,9 +897,9 @@ export const submitQuestionnaireResponse = (
   const questionnaire = records.find(item => item.id === questionnaireId);
   const canSubmit = questionnaire?.status === 'active'
     && getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'
-    && questionnaire.targets.some(target => target.studentNo === submission.studentNo && target.reachable)
+    && getActiveQuestionnaireTargets(questionnaire).some(target => target.studentNo === submission.studentNo && target.reachable)
     && !questionnaire.submissions.some(existing => existing.studentNo === submission.studentNo);
-  if (!canSubmit) return false;
+  if (!canSubmit || questionnaire.questions.some(question => getQuestionnaireAnswerValidationError(question, submission.answers[question.id]))) return false;
 
   writeQuestionnaires(records.map(item => item.id === questionnaireId
     ? { ...item, submissions: [...item.submissions, submission] }
@@ -791,9 +922,10 @@ export const saveStudentCollectionRecord = (
   ).find(item => item.studentNo === studentRecord.studentNo);
   const canSave = questionnaire?.status === 'active'
     && getQuestionnaireCollectionMode(questionnaire) === 'student_information'
-    && questionnaire.targets.some(target => target.studentNo === studentRecord.studentNo)
+    && getActiveQuestionnaireTargets(questionnaire).some(target => target.studentNo === studentRecord.studentNo)
     && (!teacherId || !teacherName || Boolean(assignedRecord));
   if (!canSave || !questionnaire) return false;
+  if (studentRecord.status === 'completed' && questionnaire.questions.some(question => getQuestionnaireAnswerValidationError(question, studentRecord.answers[question.id]))) return false;
 
   const currentRecords = questionnaire.studentRecords ?? [];
   const exists = currentRecords.some(item => item.studentNo === studentRecord.studentNo);
@@ -816,15 +948,15 @@ export const isQuestionnaireOverdue = (record: QuestionnaireRecord, now = new Da
 
 export const getReachableTargetCount = (record: QuestionnaireRecord) => (
   getQuestionnaireCollectionMode(record) === 'student_information'
-    ? record.targets.length
-    : record.targets.filter(target => target.reachable).length
+    ? getActiveQuestionnaireTargets(record).length
+    : getActiveQuestionnaireTargets(record).filter(target => target.reachable).length
 );
 
 export const getCompletionRate = (record: QuestionnaireRecord) => {
   const reachable = getReachableTargetCount(record);
   const completed = getQuestionnaireCollectionMode(record) === 'student_information'
     ? getStudentCollectionCompletedCount(record)
-    : record.submissions.length;
+    : getQuestionnaireCompletedCount(record);
   return reachable === 0 ? 0 : Math.round((completed / reachable) * 100);
 };
 
@@ -836,6 +968,19 @@ export const isQuestionnaireChoiceAnswer = (answer: QuestionnaireAnswer | undefi
   && 'customText' in answer
 );
 
+export const isQuestionnaireMultiFillAnswer = (answer: QuestionnaireAnswer | undefined): answer is QuestionnaireMultiFillAnswer => (
+  Boolean(answer)
+  && typeof answer === 'object'
+  && !Array.isArray(answer)
+  && 'fillValues' in answer
+  && typeof answer.fillValues === 'object'
+  && answer.fillValues !== null
+);
+
+export const getQuestionnaireMultiFillValues = (answer: QuestionnaireAnswer | undefined): Record<string, string> => (
+  isQuestionnaireMultiFillAnswer(answer) ? answer.fillValues : {}
+);
+
 export const getQuestionnaireSelectedOptions = (answer: QuestionnaireAnswer | undefined): string[] => {
   if (isQuestionnaireChoiceAnswer(answer)) return answer.selectedOptions;
   if (Array.isArray(answer)) return answer;
@@ -843,7 +988,65 @@ export const getQuestionnaireSelectedOptions = (answer: QuestionnaireAnswer | un
   return [];
 };
 
-export const formatQuestionnaireAnswer = (answer: QuestionnaireAnswer | undefined) => {
+export const getQuestionnaireAnswerValidationError = (
+  question: QuestionnaireQuestion,
+  answer: QuestionnaireAnswer | undefined,
+): string => {
+  if (question.type === 'multi_fill') {
+    const subFields = question.subFields ?? [];
+    const fillValues = getQuestionnaireMultiFillValues(answer);
+    const missingRequired = subFields.find(subField => subField.required && !fillValues[subField.id]?.trim());
+    if (missingRequired) return `请填写“${question.title}”中的“${missingRequired.label}”`;
+    const hasAnswer = subFields.some(subField => Boolean(fillValues[subField.id]?.trim()));
+    if (question.required && !hasAnswer) return `请填写“${question.title}”`;
+    const tooLong = subFields.find(subField => (fillValues[subField.id] ?? '').length > 120);
+    if (tooLong) return `“${tooLong.label}”最多填写120个字符`;
+    return '';
+  }
+  const selectedOptions = getQuestionnaireSelectedOptions(answer);
+  const empty = question.type === 'single' || question.type === 'multiple'
+    ? selectedOptions.length === 0
+    : answer === undefined || String(answer).trim() === '';
+  if (question.required && empty) return `请填写“${question.title}”`;
+  if (empty) return '';
+
+  if (question.type === 'multiple') {
+    const settings = normalizeFormFieldSettings(question.type, question.settings, question.options);
+    const min = settings.minSelections ?? 1;
+    const max = settings.maxSelections ?? question.options.length;
+    if (selectedOptions.length < min || selectedOptions.length > max) return `“${question.title}”请选择${min}至${max}项`;
+  }
+  if (question.type === 'single' || question.type === 'multiple') {
+    const customText = isQuestionnaireChoiceAnswer(answer) ? answer.customText : {};
+    if (selectedOptions.some(option => question.customAnswerOptions?.includes(option) && !customText[option]?.trim())) return `请补充“${question.title}”中的填写内容`;
+  }
+  if (question.type === 'rating') {
+    const settings = normalizeFormFieldSettings(question.type, question.settings, question.options);
+    const value = Number(answer);
+    if (!Number.isFinite(value) || value < (settings.ratingMin ?? 1) || value > (settings.ratingMax ?? 5)) return `“${question.title}”评分超出范围`;
+  }
+  if (question.type === 'date') {
+    const format = normalizeFormFieldSettings(question.type, question.settings, question.options).dateFormat ?? 'ymd';
+    const pattern = format === 'year' ? /^\d{4}$/u : format === 'ym' ? /^\d{4}-\d{2}$/u : /^\d{4}-\d{2}-\d{2}$/u;
+    if (!pattern.test(String(answer))) return `“${question.title}”日期格式不正确`;
+  }
+  if (question.type === 'number') {
+    const text = String(answer).trim();
+    const value = Number(text);
+    const format = normalizeFormFieldSettings(question.type, question.settings, question.options).numberFormat ?? 'integer';
+    const decimalPlaces = text.includes('.') ? text.split('.')[1]?.length ?? 0 : 0;
+    const maxDecimals = format === 'integer' ? 0 : format === 'decimal-1' ? 1 : 2;
+    if (!Number.isFinite(value) || decimalPlaces > maxDecimals) return `“${question.title}”数字格式不正确`;
+  }
+  return '';
+};
+
+export const formatQuestionnaireAnswer = (answer: QuestionnaireAnswer | undefined, question?: QuestionnaireQuestion) => {
+  if (isQuestionnaireMultiFillAnswer(answer)) {
+    const subFields = question?.subFields ?? Object.keys(answer.fillValues).map(id => ({ id, label: id, required: false }));
+    if (subFields.length === 0) return '未填写';
+    return subFields.map(subField => `${subField.label}：${answer.fillValues[subField.id]?.trim() || '未填写'}`).join('；');
+  }
   if (isQuestionnaireChoiceAnswer(answer)) {
     return answer.selectedOptions.map(option => {
       const text = answer.customText[option]?.trim();

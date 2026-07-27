@@ -77,8 +77,8 @@ forbidText(viewSource, '基于学生素养表现，提示下周重点关注对�
 requireText(viewSource, 'homeroomClasses.length > 1', '多个带班班级时应先选择班级。');
 requireText(viewSource, '<HomeroomClassPickerSheet', '班主任助理应复用带班班级选择组件。');
 requireText(viewSource, 'if (homeroomClasses[0]) openAction(option.action, homeroomClasses[0].id);', '只有一个带班班级时应按所选能力直接进入报告。');
-requireText(viewSource, '上月评价复盘', '第二个选项应使用清晰的月度复盘名称。');
-requireText(viewSource, '根据上月记录，发现评价视角盲区。', '第二个选项应明确分析上月记录并发现评价盲区。');
+requireText(viewSource, '我的评价复盘', '第二个选项应与进入后的页面名称保持一致。');
+requireText(viewSource, '复盘上月记录，发现评价视角盲区。', '第二个选项应明确分析上月记录并发现评价盲区。');
 requireText(viewSource, "action: 'evaluationReview'", '第二个选项应接入评价复盘流程。');
 requireText(viewSource, "emphasis: 'secondary'", '阶段性评价复盘入口的视觉权重应低于本周行动建议。');
 requireText(viewSource, 'onOpenEvaluationReview(classId)', '选择班级后应打开对应班级的评价复盘。');

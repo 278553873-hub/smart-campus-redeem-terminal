@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Student, ClassInfo, GroupPlan } from '../types';
 import { GET_MOCK_GROUP_PLANS_FOR_CLASS } from '../constants';
 import { BackIcon, MaleIcon, FemaleIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, PlusIcon, EditIcon, CloseIcon } from '../components/Icons';
+import { ASSETS } from '../assets/images';
 
 interface ClassDetailViewProps {
     classInfo: ClassInfo;
@@ -121,6 +122,15 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         onSelectionChange(next);
     };
 
+    const handleInvertVisibleStudents = () => {
+        const next = new Set(selectedIds);
+        visibleStudents.forEach(student => {
+            if (next.has(student.id)) next.delete(student.id);
+            else next.add(student.id);
+        });
+        onSelectionChange(next);
+    };
+
 
     const handleRestoreSearchMode = () => {
         if (!isSelectionMode) return;
@@ -209,6 +219,12 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             >
                                 {isAllVisibleSelected ? '取消全选' : '全选'}
                             </button>
+                            <button
+                                onClick={handleInvertVisibleStudents}
+                                className="h-8 shrink-0 rounded-full border border-[var(--tm-border-subtle)] bg-white px-3 text-xs font-bold text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)] transition active:scale-95"
+                            >
+                                反选
+                            </button>
                             <button onClick={() => setSelectionGenderFilter('male')} aria-label="只选男生" className={`flex h-8 min-w-10 items-center justify-center rounded-full border px-2.5 shadow-[var(--tm-shadow-control)] transition active:scale-95 ${selectionGenderFilter === 'male' ? 'border-[var(--tm-gender-male)] bg-[var(--tm-gender-male)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-tag-jade-strong)]'}`}><MaleIcon className="h-4 w-4" /></button>
                             <button onClick={() => setSelectionGenderFilter('female')} aria-label="只选女生" className={`flex h-8 min-w-10 items-center justify-center rounded-full border px-2.5 shadow-[var(--tm-shadow-control)] transition active:scale-95 ${selectionGenderFilter === 'female' ? 'border-[var(--tm-gender-female)] bg-[var(--tm-gender-female)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-tag-orange-strong)]'}`}><FemaleIcon className="h-4 w-4" /></button>
                         </>
@@ -255,12 +271,14 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                 </div>
                             )}
 
-                            <div className={`w-12 h-12 rounded-full mb-2.5 flex items-center justify-center text-lg font-semibold shadow-sm relative shrink-0 transition-transform ${!student.avatar ? `${bgClass} ${textClass} border ${borderClass}` : 'bg-[var(--tm-bg-surface-soft)] border border-[var(--tm-border-subtle)]'}`}>
-                                {student.avatar ? (
-                                    <img src={student.avatar} alt="avatar" className="w-full h-full rounded-full object-cover" />
-                                ) : (
-                                    nameChar
-                                )}
+                            <div className={`w-12 h-12 rounded-full mb-2.5 flex items-center justify-center text-lg font-semibold shadow-sm relative shrink-0 transition-transform ${student.gender === 'male' && !student.avatar ? `${bgClass} ${textClass} border ${borderClass}` : 'bg-[var(--tm-bg-surface-soft)] border border-[var(--tm-border-subtle)]'}`}>
+                                {student.avatar || student.gender === 'female' ? (
+                                    <img
+                                        src={student.avatar || ASSETS.AVATAR.STUDENT_GIRL_DEFAULT}
+                                        alt={`${student.name}头像`}
+                                        className="w-full h-full rounded-full object-cover"
+                                    />
+                                ) : nameChar}
 
                                 <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center border border-white shadow-sm ${student.gender === 'male' ? 'bg-[var(--tm-gender-male)]' : 'bg-[var(--tm-gender-female)]'}`}>
                                     {student.gender === 'male'

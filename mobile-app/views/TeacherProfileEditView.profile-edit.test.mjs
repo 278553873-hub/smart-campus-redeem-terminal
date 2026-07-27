@@ -2,6 +2,7 @@ import fs from 'node:fs';
 
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const editSource = read('./TeacherProfileEditView.tsx');
+const classCascadeSource = read('../components/ui/MobileClassCascadePicker.tsx');
 const meSource = read('./MeView.tsx');
 const appSource = read('../App.tsx');
 const typesSource = read('../types.ts');
@@ -58,12 +59,13 @@ requireText(editSource, 'selectedSubject', '任教班级应在同一页面选择
 requireText(editSource, " : '保存'}", '选择类弹窗保存按钮文案应统一为保存。');
 requireText(editSource, '请先选择学科', '任教班级同页保存前应校验学科。');
 requireText(editSource, 'groupTeachingAssignmentsBySubject', '任教范围展示应按学科聚合。');
-requireText(editSource, '班级级联选择', '任教、班主任班级选择应采用级联选择。');
-requireText(editSource, '左侧先选年级', '班级级联左侧应先选择年级。');
-requireText(editSource, '右侧再选该年级下的班级', '班级级联右侧应展示当前年级下的班级。');
-requireText(editSource, 'min-h-0 overflow-y-auto overscroll-contain border-r', '左侧年级列表应支持上下滑动。');
-requireText(editSource, 'min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain', '右侧班级列表应支持上下滑动。');
-requireText(editSource, '{classInfo.name}', '班级选择应展示完整班级名称。');
+requireText(editSource, '<MobileClassCascadePicker', '个人信息页应复用统一班级级联组件。');
+requireText(classCascadeSource, "ariaLabel = '班级级联选择'", '任教、班主任班级选择应采用级联选择。');
+requireText(classCascadeSource, '左侧先选年级', '班级级联左侧应先选择年级。');
+requireText(classCascadeSource, '右侧再选该年级下的班级', '班级级联右侧应展示当前年级下的班级。');
+requireText(classCascadeSource, 'min-h-0 overflow-y-auto overscroll-contain border-r', '左侧年级列表应支持上下滑动。');
+requireText(classCascadeSource, 'min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain', '右侧班级列表应支持上下滑动。');
+requireText(classCascadeSource, '{classInfo.name}', '班级选择应展示完整班级名称。');
 requireText(editSource, '下方选择任教学科', '任教班级弹窗应在上方选班级，下方选科目。');
 requireText(editSource, 'homeroomClassIds', '编辑页应支持维护班主任班级。');
 requireText(editSource, '暂不选择', '选择类弹窗底部应提供弱化的暂不选择入口。');

@@ -42,9 +42,16 @@ requireText(settingsSource, '<FeaturePageBody>', '设置页应使用统一品牌
 
 const screenBackgroundList = appSource.match(/const hasScreenLevelBackground = \[([^\]]+)\]/)?.[1] ?? '';
 const phoneScreenBackgroundList = appSource.match(/if \(\[([^\]]+)\]\.includes\(currentView\)\) \{\s*return <TeacherMobileScreenBackground/)?.[1] ?? '';
-for (const viewName of ["'mine_settings'", "'subject_management'", "'department_management'", "'coin_issuance'", "'suggestion_feedback'"]) {
-  if (!screenBackgroundList.includes(viewName) || !phoneScreenBackgroundList.includes(viewName)) {
-    throw new Error(viewName + ' 应纳入屏幕级背景，标题栏才能与页面氛围光融为一体。');
+const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
+requireText(appSource, "const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView)", '纯色页面应通过统一壳层区分标题栏和内容区。');
+requireText(appSource, "hasPlainBackground ? 'bg-[var(--tm-page-plain-content-bg)]'", '纯色页面内容区应使用正式浅灰背景 Token 承托白色卡片。');
+requireText(appSource, 'h-11 bg-[var(--tm-page-plain-header-bg)]', '纯色页面标题栏底层应使用正式纯白背景 Token。');
+if (!screenBackgroundList.includes("'mine_settings'") || !phoneScreenBackgroundList.includes("'mine_settings'")) {
+  throw new Error('设置页应继续使用公共环境背景。');
+}
+for (const viewName of ["'subject_management'", "'department_management'", "'coin_issuance'", "'suggestion_feedback'"]) {
+  if (!screenBackgroundList.includes(viewName) || !plainBackgroundList.includes(viewName)) {
+    throw new Error(viewName + ' 应使用屏幕级纯色背景。');
   }
 }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, ChevronRight } from 'lucide-react';
 import {
   PRINCIPAL_REPORT_HISTORY,
   type PrincipalReportHistoryItem,
@@ -7,6 +7,7 @@ import {
 } from '../data/principalReportHistory';
 import PrincipalPeriodicReportView from './PrincipalPeriodicReportView';
 import PrincipalTermReportView from './PrincipalTermReportView';
+import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 
 interface PrincipalReportHistoryViewProps {
   kind: PrincipalReportHistoryKind;
@@ -31,8 +32,6 @@ const historyListLabel: Record<PrincipalReportHistoryKind, string> = {
   monthly: '往期学校复盘列表',
   term: '往期学期报告列表',
 };
-
-const noop = () => undefined;
 
 const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
   kind,
@@ -64,7 +63,6 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
           term={selectedReport.term}
           reportData={selectedReport.report}
           generated
-          onGenerated={noop}
           onBack={() => setSelectedReport(null)}
         />
       );
@@ -76,25 +74,18 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
         schoolName={schoolName}
         reportData={selectedReport.report}
         generated
-        onGenerated={noop}
         onBack={() => setSelectedReport(null)}
       />
     );
   }
 
   return (
-    <div className="ai-assistant-theme-principal min-h-full bg-[var(--tm-bg-page)] font-sans text-[var(--tm-text-primary)]">
-      <header className="sticky top-0 z-30 flex h-14 items-center border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 backdrop-blur-xl">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition active:scale-95 active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
-          aria-label="返回当前报告"
-        >
-          <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
-        </button>
-        <h1 className="pointer-events-none absolute inset-x-14 text-center text-[17px] font-semibold">{historyTitle[kind]}</h1>
-      </header>
+    <div className="ai-assistant-theme-principal principal-report-page min-h-full bg-transparent font-sans text-[var(--tm-text-primary)]">
+      <AssistantSubpageHeader
+        title={historyTitle[kind]}
+        onBack={onBack}
+        backLabel="返回当前报告"
+      />
 
       <main className="px-5 pb-10 pt-4">
         <p className="mb-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">{schoolName}</p>

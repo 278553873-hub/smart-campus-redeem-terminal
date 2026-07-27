@@ -16,7 +16,9 @@ import {
 } from 'lucide-react';
 import type { ClassInfo, Student, TeacherProfile } from '../../types';
 import FormBuilder, { type FormFieldTypeOption } from '../../components/form-builder/FormBuilder';
+import MobileFloatingCreateButton from '../../components/ui/MobileFloatingCreateButton';
 import type { ConfigurableFormField } from '../../../shared/formDefinition';
+import ArchiveFormRenderer from './ArchiveFormRenderer';
 import {
   BottomAction,
   BottomSheet,
@@ -32,6 +34,7 @@ import {
 } from './archivePagePrimitives';
 import {
   cloneRecommendedTemplate,
+  ARCHIVE_SELECTABLE_SYSTEM_FIELD_OPTIONS,
   ARCHIVE_SYSTEM_FIELD_OPTIONS,
   createBlankArchiveTemplate,
   createArchiveField,
@@ -84,6 +87,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
   const [pageMode, setPageMode] = useState<PageMode>('root');
   const [templateDraft, setTemplateDraft] = useState<ArchiveTemplate | null>(null);
   const [templateEditorMode, setTemplateEditorMode] = useState<TemplateEditorMode>('edit');
+  const [editingDisabledTemplate, setEditingDisabledTemplate] = useState(false);
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSystemFieldPicker, setShowSystemFieldPicker] = useState(false);
@@ -117,8 +121,14 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       ...template,
       systemFields: [...template.systemFields],
       sections: template.sections.map(item => ({ ...item })),
-      fields: template.fields.map(item => ({ ...item, options: [...item.options] })),
+      fields: template.fields.map(item => ({
+        ...item,
+        options: [...item.options],
+        customAnswerOptions: [...(item.customAnswerOptions ?? [])],
+        settings: item.settings ? { ...item.settings } : undefined,
+      })),
     });
+    setEditingDisabledTemplate(false);
     setTemplateEditorMode(editorMode);
     setPageMode('template-editor');
   };
@@ -129,13 +139,11 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
 
   const copyTemplate = (templateId: string) => {
     const result = cloneRecommendedTemplate(workspace, templateId);
-    updateWorkspace(result.workspace, '已创建校本档案');
     openTemplateFromWorkspace(result.workspace, result.templateId, 'create');
   };
 
   const createBlankTemplate = () => {
     const result = createBlankArchiveTemplate(workspace);
-    updateWorkspace(result.workspace, '已创建空白档案');
     openTemplateFromWorkspace(result.workspace, result.templateId, 'create');
   };
 
@@ -146,47 +154,74 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       ...template,
       systemFields: [...template.systemFields],
       sections: template.sections.map(item => ({ ...item })),
-      fields: template.fields.map(item => ({ ...item, options: [...item.options] })),
+      fields: template.fields.map(item => ({
+        ...item,
+        options: [...item.options],
+        customAnswerOptions: [...(item.customAnswerOptions ?? [])],
+        settings: item.settings ? { ...item.settings } : undefined,
+      })),
     });
+    setEditingDisabledTemplate(false);
     setTemplateEditorMode(editorMode);
     setPageMode('template-editor');
   };
 
-  const saveTemplate = (enable: boolean) => {
-    if (!templateDraft) return;
-    if (enable && !templateDraft.name.trim()) {
+  const validateTemplateForEnable = (template: ArchiveTemplate) => {
+    if (!template.name.trim()) {
       setToast('请先填写档案名称');
       window.setTimeout(() => setToast(''), 1800);
-      return;
+      return false;
     }
-    if (enable && templateDraft.gradeScopes.length === 0) {
+    if (template.gradeScopes.length === 0) {
       setToast('请至少选择一个适用年级');
       window.setTimeout(() => setToast(''), 1800);
-      return;
+      return false;
     }
-    if (enable && templateDraft.layoutMode === 'grouped' && templateDraft.sections.length === 0) {
+    if (template.layoutMode === 'grouped' && template.sections.length === 0) {
       setToast('请至少新增一个档案分组');
       window.setTimeout(() => setToast(''), 1800);
-      return;
+      return false;
     }
-    if (enable && templateDraft.fields.length === 0) {
+    if (template.fields.length === 0) {
       setToast('请至少新增一个档案字段');
       window.setTimeout(() => setToast(''), 1800);
-      return;
+      return false;
     }
-    if (enable && templateDraft.fields.some(field => !field.label.trim())) {
+    if (template.fields.some(field => !field.label.trim())) {
       setToast('请补充完整字段名称');
       window.setTimeout(() => setToast(''), 1800);
-      return;
+      return false;
     }
-    if (enable && templateDraft.layoutMode === 'grouped' && templateDraft.fields.some(field => !field.sectionId || !templateDraft.sections.some(section => section.id === field.sectionId))) {
+    if (template.fields.some(field => (
+      (field.type === 'single-select' || field.type === 'multiple-select')
+      && field.options.filter(option => option.trim()).length < 2
+    ))) {
+      setToast('单选和多选字段请至少填写2个选项');
+      window.setTimeout(() => setToast(''), 1800);
+      return false;
+    }
+    if (template.layoutMode === 'grouped' && template.fields.some(field => !field.sectionId || !template.sections.some(section => section.id === field.sectionId))) {
       setToast('请为所有字段选择分组');
       window.setTimeout(() => setToast(''), 1800);
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const saveTemplate = (enable: boolean) => {
+    if (!templateDraft || (enable && !validateTemplateForEnable(templateDraft))) return;
     const nextTemplate: ArchiveTemplate = { ...templateDraft, status: enable ? 'published' : 'draft' };
     const next = saveArchiveTemplate(workspace, nextTemplate);
     updateWorkspace(next, enable ? '档案已启用' : '草稿已保存');
+    setPageMode('root');
+  };
+
+  const saveDisabledTemplate = (enable: boolean) => {
+    if (!templateDraft || (enable && !validateTemplateForEnable(templateDraft))) return;
+    const nextTemplate: ArchiveTemplate = { ...templateDraft, status: enable ? 'published' : 'disabled' };
+    const next = saveArchiveTemplate(workspace, nextTemplate);
+    setEditingDisabledTemplate(false);
+    updateWorkspace(next, enable ? '档案已启用' : '修改已保存');
     setPageMode('root');
   };
 
@@ -240,7 +275,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
           })}
         </div>
         {school.length === 0 && (
-          <div className={`${sectionSurface} mt-2.5 px-4 py-8 text-center text-[14px] font-medium text-[var(--tm-text-secondary)]`}>还没有校本档案，点击上方“新建档案”开始</div>
+          <div className={`${sectionSurface} mt-2.5 px-4 py-8 text-center text-[14px] font-medium text-[var(--tm-text-secondary)]`}>暂无校本档案</div>
         )}
       </section>
     );
@@ -248,12 +283,12 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
 
   const renderRoot = () => {
     return (
-      <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`}>
+      <div className={`relative flex h-full min-h-0 flex-col ${pageBackground} pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]`}>
         <PageHeader title="档案设计" onBack={onBack} />
         <div className="flex-1 overflow-y-auto px-5 pb-8 pt-4 no-scrollbar">
-          <button type="button" onClick={() => setPageMode('template-create')} className={`${primaryButton} mb-6 w-full`}><Plus className="h-4.5 w-4.5" />新建档案</button>
           {renderTemplates()}
         </div>
+        <MobileFloatingCreateButton label="新建档案" onClick={() => setPageMode('template-create')} />
       </div>
     );
   };
@@ -287,17 +322,18 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
 
   const renderTemplateEditor = () => {
     if (!templateDraft) return renderRoot();
-    const readOnly = templateDraft.status !== 'draft';
+    const showFillPreview = templateDraft.status !== 'draft' && !editingDisabledTemplate;
     const isRecommendedPreview = templateEditorMode === 'preview';
     const isCreating = templateEditorMode === 'create';
-    const canDelete = templateDraft.origin === 'school' && (templateDraft.status === 'draft' || templateDraft.status === 'disabled');
+    const isPersisted = workspace.templates.some(template => template.id === templateDraft.id && !template.deletedAt);
+    const canDelete = !editingDisabledTemplate && isPersisted && templateDraft.origin === 'school' && (templateDraft.status === 'draft' || templateDraft.status === 'disabled');
     const headerAction = canDelete ? (
       <button type="button" onClick={() => setShowTemplateMenu(true)} className={iconButton} aria-label="档案操作">
         <MoreHorizontal className="h-5 w-5" />
       </button>
-    ) : templateDraft.status === 'draft' ? undefined : (
+    ) : editingDisabledTemplate ? (
       <StatusPill className={templateStatusMeta[templateDraft.status].className}>{templateStatusMeta[templateDraft.status].label}</StatusPill>
-    );
+    ) : undefined;
     const gradeOptions = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级', '高一', '高二', '高三'];
     const builderFields: Array<ConfigurableFormField<ArchiveFieldType>> = templateDraft.fields.map(field => ({
       id: field.id,
@@ -306,81 +342,115 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       required: field.required,
       options: field.options,
       sectionId: field.sectionId || undefined,
+      customAnswerOptions: field.customAnswerOptions,
+      settings: field.settings,
     }));
     return (
       <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`}>
-        <PageHeader title={isRecommendedPreview ? '模板预览' : isCreating ? '新建档案' : readOnly ? '档案详情' : '编辑档案'} onBack={() => setPageMode(isRecommendedPreview ? 'template-create' : 'root')} action={headerAction} />
-        <div className={`flex-1 overflow-y-auto px-5 pt-4 no-scrollbar ${readOnly ? 'pb-28' : 'pb-36'}`}>
-          <section className={`${sectionSurface} space-y-4 p-4`}>
-            <label className="block">
-              <span className="text-[12px] font-semibold text-[var(--tm-text-secondary)]">模板名称</span>
-              <input value={templateDraft.name} disabled={readOnly} onChange={event => setTemplateDraft({ ...templateDraft, name: event.target.value })} className={`${inputClass} mt-2 h-12 disabled:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-disabled)]`} />
-            </label>
-            <div>
-              <div className="mb-2 text-[12px] font-semibold text-[var(--tm-text-secondary)]">适用年级</div>
-              <div className="flex flex-wrap gap-2">
-                {gradeOptions.map(grade => {
-                  const selected = templateDraft.gradeScopes.includes(grade);
-                  return (
-                    <button key={grade} type="button" disabled={readOnly} onClick={() => setTemplateDraft({ ...templateDraft, gradeScopes: selected ? templateDraft.gradeScopes.filter(item => item !== grade) : [...templateDraft.gradeScopes, grade] })} className={`min-h-9 rounded-full px-3 text-[12px] font-semibold ${selected ? 'bg-[var(--tm-brand-primary)] text-white' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]'} disabled:opacity-80`}>
-                      {grade}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="border-t border-[var(--tm-border-subtle)] pt-4">
-              <button
-                type="button"
-                disabled={readOnly}
-                onClick={() => setShowSystemFieldPicker(true)}
-                className="flex min-h-12 w-full items-center justify-between gap-3 text-left disabled:cursor-default"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[13px] font-semibold text-[var(--tm-text-primary)]">自动带入</span>
-                  <span className="mt-1 block truncate text-[12px] font-medium text-[var(--tm-text-secondary)]">
-                    {templateDraft.systemFields.map(key => ARCHIVE_SYSTEM_FIELD_OPTIONS.find(item => item.key === key)?.label).filter(Boolean).join('、') || '未选择'}
-                  </span>
-                </span>
-                <span className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-[var(--tm-text-secondary)]">
-                  已选择 {templateDraft.systemFields.length} 项
-                  {!readOnly && <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />}
-                </span>
-              </button>
-            </div>
-          </section>
+        <PageHeader title={isRecommendedPreview ? '模板预览' : isCreating ? '新建档案' : showFillPreview ? '档案详情' : '编辑档案'} onBack={() => { setEditingDisabledTemplate(false); setPageMode(isRecommendedPreview ? 'template-create' : 'root'); }} action={headerAction} />
+        <div className={`flex-1 overflow-y-auto px-5 pt-4 no-scrollbar ${showFillPreview ? 'pb-28' : 'pb-36'}`}>
+          {showFillPreview ? (
+            <>
+              <section className={`${sectionSurface} overflow-hidden`}>
+                <div className="flex items-start gap-3 p-4">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="break-words text-[16px] font-bold text-[var(--tm-text-primary)]">{templateDraft.name}</h2>
+                    <p className="mt-1 text-[12px] font-medium text-[var(--tm-text-tertiary)]">{templateDraft.fields.length}个字段</p>
+                  </div>
+                  <StatusPill className={templateStatusMeta[templateDraft.status].className}>{templateStatusMeta[templateDraft.status].label}</StatusPill>
+                </div>
+                <dl className="divide-y divide-[var(--tm-border-subtle)] border-t border-[var(--tm-border-subtle)] px-4">
+                  <div className="flex min-h-[48px] items-center justify-between gap-4 py-2">
+                    <dt className="shrink-0 text-[12px] font-semibold text-[var(--tm-text-tertiary)]">适用年级</dt>
+                    <dd className="text-right text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{templateDraft.gradeScopes.join('、') || '未设置'}</dd>
+                  </div>
+                  <div className="flex min-h-[48px] items-center justify-between gap-4 py-2">
+                    <dt className="shrink-0 text-[12px] font-semibold text-[var(--tm-text-tertiary)]">自动带入</dt>
+                    <dd className="text-right text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{templateDraft.systemFields.map(key => ARCHIVE_SYSTEM_FIELD_OPTIONS.find(item => item.key === key)?.label).filter(Boolean).join('、') || '未设置'}</dd>
+                  </div>
+                </dl>
+              </section>
 
-          <section className="mt-6">
-            <FormBuilder
-              layoutMode={templateDraft.layoutMode}
-              sections={templateDraft.sections}
-              fields={builderFields}
-              itemLabel="字段"
-              fieldTypes={archiveFieldTypes}
-              readOnly={readOnly}
-              createField={(type, sectionId) => {
-                const field = createArchiveField(sectionId ?? '');
-                return { ...field, type };
-              }}
-              onChange={value => {
-                const originalFields = new Map(templateDraft.fields.map(field => [field.id, field]));
-                setTemplateDraft({
-                  ...templateDraft,
-                  layoutMode: value.layoutMode,
-                  sections: value.sections,
-                  fields: value.fields.map(field => ({
-                    id: field.id,
-                    semanticKey: originalFields.get(field.id)?.semanticKey ?? `custom-${field.id}`,
-                    label: field.label,
-                    type: field.type,
-                    sectionId: field.sectionId ?? '',
-                    required: field.required,
-                    options: field.options,
-                  })),
-                });
-              }}
-            />
-          </section>
+              <section className="mt-6">
+                <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">表单预览</h2>
+                <ArchiveFormRenderer definition={templateDraft} mode="preview" />
+              </section>
+            </>
+          ) : (
+            <>
+              <section className={`${sectionSurface} space-y-4 p-4`}>
+                <label className="block">
+                  <span className="text-[12px] font-semibold text-[var(--tm-text-secondary)]">模板名称</span>
+                  <input value={templateDraft.name} onChange={event => setTemplateDraft({ ...templateDraft, name: event.target.value })} className={`${inputClass} mt-2 h-12`} />
+                </label>
+                <div>
+                  <div className="mb-2 text-[12px] font-semibold text-[var(--tm-text-secondary)]">适用年级</div>
+                  <div className="flex flex-wrap gap-2">
+                    {gradeOptions.map(grade => {
+                      const selected = templateDraft.gradeScopes.includes(grade);
+                      return (
+                        <button key={grade} type="button" onClick={() => setTemplateDraft({ ...templateDraft, gradeScopes: selected ? templateDraft.gradeScopes.filter(item => item !== grade) : [...templateDraft.gradeScopes, grade] })} className={`min-h-9 rounded-full px-3 text-[12px] font-semibold ${selected ? 'bg-[var(--tm-brand-primary)] text-white' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]'}`}>
+                          {grade}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="border-t border-[var(--tm-border-subtle)] pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowSystemFieldPicker(true)}
+                    className="flex min-h-12 w-full items-center justify-between gap-3 text-left"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13px] font-semibold text-[var(--tm-text-primary)]">自动带入</span>
+                      <span className="mt-1 block truncate text-[12px] font-medium text-[var(--tm-text-secondary)]">
+                        {templateDraft.systemFields.map(key => ARCHIVE_SYSTEM_FIELD_OPTIONS.find(item => item.key === key)?.label).filter(Boolean).join('、') || '未选择'}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-[var(--tm-text-secondary)]">
+                      已选择 {templateDraft.systemFields.length} 项
+                      <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
+                    </span>
+                  </button>
+                </div>
+              </section>
+
+              <section className="mt-6">
+                <FormBuilder
+                  layoutMode={templateDraft.layoutMode}
+                  sections={templateDraft.sections}
+                  fields={builderFields}
+                  itemLabel="字段"
+                  fieldTypes={archiveFieldTypes}
+                  allowCustomAnswer
+                  createField={(type, sectionId) => {
+                    const field = createArchiveField(sectionId ?? '');
+                    return { ...field, type };
+                  }}
+                  onChange={value => {
+                    const originalFields = new Map(templateDraft.fields.map(field => [field.id, field]));
+                    setTemplateDraft({
+                      ...templateDraft,
+                      layoutMode: value.layoutMode,
+                      sections: value.sections,
+                      fields: value.fields.map(field => ({
+                        id: field.id,
+                        semanticKey: originalFields.get(field.id)?.semanticKey ?? `custom-${field.id}`,
+                        label: field.label,
+                        type: field.type,
+                        sectionId: field.sectionId ?? '',
+                        required: field.required,
+                        options: field.options,
+                        customAnswerOptions: field.customAnswerOptions,
+                        settings: field.settings,
+                      })),
+                    });
+                  }}
+                />
+              </section>
+            </>
+          )}
         </div>
         <BottomAction>
           {templateDraft.status === 'recommended' ? (
@@ -388,7 +458,17 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
           ) : templateDraft.status === 'published' ? (
             <button type="button" onClick={() => toggleTemplateStatus(templateDraft.id, false)} className={`${secondaryButton} w-full`}>禁用档案</button>
           ) : templateDraft.status === 'disabled' ? (
-            <button type="button" onClick={() => toggleTemplateStatus(templateDraft.id, true)} className={`${primaryButton} w-full`}>启用档案</button>
+            editingDisabledTemplate ? (
+              <div className="grid grid-cols-[0.85fr_1.15fr] gap-3">
+                <button type="button" onClick={() => saveDisabledTemplate(false)} className={secondaryButton}>保存修改</button>
+                <button type="button" onClick={() => saveDisabledTemplate(true)} className={primaryButton}>重新启用</button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-[0.85fr_1.15fr] gap-3">
+                <button type="button" onClick={() => setEditingDisabledTemplate(true)} className={secondaryButton}><FilePenLine className="h-4.5 w-4.5" />编辑档案</button>
+                <button type="button" onClick={() => toggleTemplateStatus(templateDraft.id, true)} className={primaryButton}>重新启用</button>
+              </div>
+            )
           ) : (
             <div className="grid grid-cols-[0.85fr_1.15fr] gap-3">
               <button type="button" onClick={() => saveTemplate(false)} className={secondaryButton}>保存草稿</button>
@@ -428,7 +508,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       <BottomSheet open={showSystemFieldPicker} label="选择自动带入字段" onDismiss={() => setShowSystemFieldPicker(false)}>
         <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">自动带入</h2>
         <div className="mt-4 divide-y divide-[var(--tm-border-subtle)]">
-          {ARCHIVE_SYSTEM_FIELD_OPTIONS.map(option => {
+          {ARCHIVE_SELECTABLE_SYSTEM_FIELD_OPTIONS.map(option => {
             const selected = templateDraft?.systemFields.includes(option.key) ?? false;
             return (
               <button

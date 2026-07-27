@@ -9,9 +9,12 @@ function requireText(source, text, message) {
 }
 
 requireText(appSource, "'class_list', 'class_detail', 'class_report', 'student_detail'", '班级详情页应纳入手机壳屏幕级背景页面。');
-requireText(appSource, 'return <TeacherMobileScreenBackground />;', '班级列表和班级详情应共用公共手机壳背景组件。');
-requireText(appSource, 'hasScreenLevelBackground ? \'bg-transparent\' : \'bg-white\'', '班级详情页内容外壳应透明，让底层背景覆盖状态栏和页面。');
-requireText(appSource, "hasScreenLevelBackground ? 'bg-white/38", '有屏幕级背景时顶部栏应为半透明玻璃，不应是白色实条。');
+const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
+requireText(plainBackgroundList, "'class_detail'", '班级学生列表应使用纯白标题栏、浅灰内容区背景。');
+requireText(appSource, '<TeacherMobileScreenBackground variant="plain" />', '班级学生列表应复用公共纯色屏幕背景组件。');
+requireText(appSource, "hasPlainBackground ? 'bg-[var(--tm-page-plain-content-bg)]'", '班级学生列表内容外壳应使用浅灰内容背景 Token。');
+requireText(appSource, 'h-11 bg-[var(--tm-page-plain-header-bg)]', '班级学生列表顶部应使用纯白标题栏背景 Token。');
+requireText(appSource, "hasPlainBackground ? 'z-[2]' : 'z-auto'", '班级学生列表内容层必须高于纯白标题背景，避免返回导航被遮挡。');
 requireText(detailSource, 'className="flex flex-col h-full bg-transparent"', '班级详情页根容器应透明，不能把背景写进滚动内容。');
 
 if (detailSource.includes('teacher-mobile-soft-page')) {
