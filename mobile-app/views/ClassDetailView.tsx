@@ -388,12 +388,24 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 ) : (
                     <div className="w-10" aria-hidden="true" />
                 )}
-                <div className="grid w-40 grid-cols-2 text-center text-[15px] font-bold text-[var(--tm-text-primary)]">
-                    <button onClick={() => handleSwitchView('student')} className="relative h-9 active:scale-95">
+                <div className="grid w-40 grid-cols-2 text-center text-[15px] font-bold" role="tablist" aria-label="班级成员视图">
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={activeView === 'student'}
+                        onClick={() => handleSwitchView('student')}
+                        className={`relative h-11 transition-colors active:scale-95 ${activeView === 'student' ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}
+                    >
                         学生
                         {activeView === 'student' && <span className="absolute bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]" />}
                     </button>
-                    <button onClick={() => handleSwitchView('group')} className="relative h-9 active:scale-95">
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={activeView === 'group'}
+                        onClick={() => handleSwitchView('group')}
+                        className={`relative h-11 transition-colors active:scale-95 ${activeView === 'group' ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}
+                    >
                         分组
                         {activeView === 'group' && <span className="absolute bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]" />}
                     </button>

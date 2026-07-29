@@ -195,7 +195,7 @@ const createDemoChild = (name: string, schoolCode: string, studentNo: string, in
     : `202501${(index + 1).toString().padStart(2, '0')}`;
   const scoreOffset = index % 2 === 0 ? 0 : 4;
   const gender = index % 2 === 0 ? 'male' : 'female';
-  const avatarPool = gender === 'male' ? ASSETS.AVATAR.BOYS : ASSETS.AVATAR.GIRLS;
+  const avatarPool = gender === 'male' ? ASSETS.AVATAR.SYSTEM_BOYS : ASSETS.AVATAR.SYSTEM_GIRLS;
   const now = Date.now();
   const dayAgo = (days: number) => now - days * 86400000;
   return {

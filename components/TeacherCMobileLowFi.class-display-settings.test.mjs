@@ -8,10 +8,10 @@ const requireText = (text, message) => {
 
 requireText("const [showPersonalClassDisplaySheet, setShowPersonalClassDisplaySheet] = useState(false);", '07A 应有首页班级显示设置弹窗状态。');
 requireText("const [showPersonalClassActionSheet, setShowPersonalClassActionSheet] = useState(false);", '07A 应有班级操作弹窗状态。');
-requireText("const [personalVisibleClassCodes, setPersonalVisibleClassCodes] = useState<string[]>(['58273914', '73948162']);", '07A 应用班级号记录首页显示班级。');
+requireText("const [personalVisibleClassCodes, setPersonalVisibleClassCodes] = useState<string[]>(['58273914']);", '07A 应只记录个人来源下我创建的班级。');
+requireText("const personalClassCards = classCards.filter((item) => item.isCreator);", '07A 个人来源应只包含我创建的班级。');
 requireText("const visiblePersonalClassCards = personalClassCards.filter((item) => personalVisibleClassCodes.includes(item.code));", '07A 首页列表应只展示已选择显示的班级。');
-requireText("const createdClassCards = visibleSourceClassCards.filter((item) => item.isCreator);", '07A 创建的班级分组应基于当前来源班级。');
-requireText("const joinedClassCards = visibleSourceClassCards.filter((item) => !item.isCreator);", '07A 加入的班级分组应基于当前来源班级。');
+requireText("{visibleSourceClassCards.map((item) => (", '07A 应直接展示当前班级来源下的班级。');
 requireText('aria-label="打开班级操作"', '07A 右上角应使用加号打开班级操作弹层。');
 requireText('<Plus size={20} />', '07A 右上角班级操作入口应使用加号 icon。');
 requireText('aria-label="班级操作"', '07A 班级操作应收敛到底部弹层。');
@@ -52,10 +52,8 @@ if (!classListRender.includes('className="flex items-center justify-between gap-
   failures.push('07A 加号入口应放在右上角，并保证 44px 触控热区。');
 }
 
-const createdSectionStart = classListRender.indexOf('创建的班级');
-const classListAfterSections = classListRender.slice(createdSectionStart);
-if (classListAfterSections.includes('设置首页显示班级') || classListAfterSections.includes('显示</button>')) {
-  failures.push('07A 班级分组标题右侧不应再展示显示按钮，显示设置应进入加号弹层。');
+if (classListRender.includes('创建的班级') || classListRender.includes('加入的班级')) {
+  failures.push('07A 已按班级来源筛选，不应再按创建或加入关系重复分组。');
 }
 
 if (failures.length) throw new Error(failures.join('\n'));

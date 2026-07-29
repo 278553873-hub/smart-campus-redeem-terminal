@@ -35,15 +35,7 @@ type AvatarSheetMode = 'system' | 'upload';
 
 const getSystemAvatarGroups = (gender: Student['gender']) => gender === 'female'
   ? ASSETS.AVATAR.SYSTEM_GIRL_GROUPS
-  : [{
-      id: 'boy',
-      label: '男生头像',
-      avatars: ASSETS.AVATAR.BOYS.map((src, index) => ({
-        id: `boy-${index + 1}`,
-        label: `男生头像${index + 1}`,
-        src,
-      })),
-    }];
+  : ASSETS.AVATAR.SYSTEM_BOY_GROUPS;
 
 const getInitialContacts = (student: Student): GuardianContact[] => {
   if (student.guardianContacts?.length) {

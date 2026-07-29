@@ -7,6 +7,20 @@ export interface RecordDistributionSummaryInput {
     gradeAverageNegative: number;
 }
 
+export interface RecordDistributionComparisonRow {
+    key: 'positive' | 'negative';
+    label: string;
+    tone: 'positive' | 'negative';
+    current: number;
+    previous: number;
+    gradeAverage: number;
+}
+
+export interface RecordDistributionOverview {
+    positivePercentage: number;
+    negativePercentage: number;
+}
+
 export interface EducationScoreSummaryItem {
     label: string;
     addScore: number;
@@ -60,19 +74,53 @@ const getRecordBenchmarkConclusion = (input: RecordDistributionSummaryInput) => 
     const negativeDifference = input.negative - input.gradeAverageNegative;
 
     if (positiveDifference < 0 && negativeDifference > 0) {
-        return '正向评价低于年级平均，负向事件则高于年级平均，建议先看看记录是否充分，再结合具体事件判断原因';
+        return '正向偏低且负向偏高，可先检查记录是否充分，再结合具体事件判断原因';
     }
     if (positiveDifference < 0) {
-        return '正向评价仍低于年级平均，建议查看记录是否充分、是否集中于少数学生，以及正向行为是否确有减少';
+        return '正向评价仍低于年级平均，可检查记录是否充分、是否集中于少数学生';
     }
     if (negativeDifference > 0) {
-        return '负向事件高于年级平均，建议看看是否集中在特定学生、场景或指标';
+        return '负向事件高于年级平均，可查看是否集中在特定学生、场景或指标';
     }
     if (positiveDifference === 0 && negativeDifference === 0) {
-        return '整体与年级平均持平，可以继续看看后续有没有变化';
+        return '整体与年级平均持平，可继续观察后续变化';
     }
-    return '整体达到或优于年级平均，可以继续看看这一趋势是否稳定';
+    return '整体达到或优于年级平均，可继续观察趋势是否稳定';
 };
+
+export const getRecordDistributionOverview = (
+    input: Pick<RecordDistributionSummaryInput, 'positive' | 'negative'>,
+): RecordDistributionOverview => {
+    const total = Math.max(0, input.positive) + Math.max(0, input.negative);
+    if (total === 0) return { positivePercentage: 0, negativePercentage: 0 };
+
+    const positivePercentage = Math.round((Math.max(0, input.positive) / total) * 100);
+    return {
+        positivePercentage,
+        negativePercentage: 100 - positivePercentage,
+    };
+};
+
+export const getRecordDistributionComparisonRows = (
+    input: RecordDistributionSummaryInput,
+): RecordDistributionComparisonRow[] => [
+    {
+        key: 'positive',
+        label: '正向事件',
+        tone: 'positive',
+        current: input.positive,
+        previous: input.previousPositive,
+        gradeAverage: input.gradeAveragePositive,
+    },
+    {
+        key: 'negative',
+        label: '负向事件',
+        tone: 'negative',
+        current: input.negative,
+        previous: input.previousNegative,
+        gradeAverage: input.gradeAverageNegative,
+    },
+];
 
 export const getRecordDistributionAnalysis = (input: RecordDistributionSummaryInput): ClassReportChartAnalysis => {
     const positiveDifference = input.positive - input.previousPositive;

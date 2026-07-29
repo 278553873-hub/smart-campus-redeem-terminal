@@ -103,17 +103,17 @@ if (!classListRender.includes('aria-label="打开班级操作"') || !classListRe
 if (classListRender.includes('<ClassEntryCard type="create"') || classListRender.includes('<ClassEntryCard type="join"')) {
   failures.push('07A 主页面不应继续展示创建班级和加入班级大入口卡片。');
 }
-if (!classListRender.includes('const personalClassCards = classCards') || !classListRender.includes('.sort((a, b) => Number(b.isCreator) - Number(a.isCreator));')) {
-  failures.push('07A 个人版班级列表应将我创建的班级固定排在我加入的班级上方。');
+if (!classListRender.includes('const personalClassCards = classCards.filter((item) => item.isCreator);')) {
+  failures.push('07A 选择我创建的班级来源时应只展示我创建的班级。');
 }
 if (source.includes("{isCreator ? '我创建' : '我加入'}")) {
   failures.push('07A/07B 班级卡片不应使用文字标签区分我创建和我加入。');
 }
-if (!classListRender.includes('const visiblePersonalClassCards = personalClassCards.filter((item) => personalVisibleClassCodes.includes(item.code));') || !classListRender.includes('const createdClassCards = visibleSourceClassCards.filter((item) => item.isCreator);') || !classListRender.includes('const joinedClassCards = visibleSourceClassCards.filter((item) => !item.isCreator);')) {
-  failures.push('07A 个人版班级列表应拆分创建的班级和加入的班级。');
+if (!classListRender.includes('const visiblePersonalClassCards = personalClassCards.filter((item) => personalVisibleClassCodes.includes(item.code));') || !classListRender.includes('{visibleSourceClassCards.map((item) => (')) {
+  failures.push('07A 应按当前班级来源直接展示班级。');
 }
-if (!classListRender.includes('创建的班级') || !classListRender.includes('加入的班级')) {
-  failures.push('07A 个人版班级列表应使用轻分组标题区分创建的班级和加入的班级。');
+if (classListRender.includes('创建的班级') || classListRender.includes('加入的班级')) {
+  failures.push('07A 已按班级来源筛选，不应再区分创建班级和加入班级。');
 }
 if (!source.includes('<div className="relative rounded-2xl bg-gray-50 p-4">')) {
   failures.push('班级卡片应保持统一卡片样式，不再通过卡片视觉层级区分关系。');
@@ -242,6 +242,7 @@ requirePrd('  - 不展示 AI 说明，不展示识别举例案例', 'PRD 应说�
 requirePrd('  - 展示语音记录引导：试试通过语音描述一下内容', 'PRD 应说明 13 记录页展示语音记录引导。');
 requirePrd('- 班级(个人版)', 'PRD 应拆出班级(个人版)流程。');
 requirePrd('  - 07A 班级列表（个人版）→ 创建班级 / 加入班级', 'PRD 应说明个人版班级列表保留创建班级和加入班级入口。');
+requirePrd('  - 班级来源为“我创建的班级”时，只展示我创建的班级，不再区分“创建的班级 / 加入的班级”分组', 'PRD 应说明 07A 我创建的班级来源不再重复按关系分组。');
 requirePrd('- 班级(学校版)', 'PRD 应新增班级(学校版)流程。');
 requirePrd('  - 07B 班级列表（学校版）不需要创建班级、加入班级', 'PRD 应说明学校版班级列表不需要创建班级和加入班级。');
 requirePrd('  - 学生列表 → 学生/分组切换、搜索、多选、性别筛选、学生详情', 'PRD 学生管理不应再把新增学生挂在学生列表路径中。');

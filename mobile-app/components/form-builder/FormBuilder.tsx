@@ -310,11 +310,10 @@ const FormBuilder = <TType extends string>({
   useEffect(() => {
     if (!expandedFieldId) return;
     const closeFieldEditor = (event: MouseEvent) => {
-      const target = event.target;
-      if (target instanceof Element) {
-        const fieldEditor = target.closest('[data-form-field-editor]');
-        if (fieldEditor instanceof HTMLElement && fieldEditor.dataset.formFieldEditor === expandedFieldId) return;
-      }
+      const fieldEditor = event.composedPath().find(node => (
+        node instanceof HTMLElement && node.dataset.formFieldEditor === expandedFieldId
+      ));
+      if (fieldEditor) return;
       setExpandedFieldId(current => current === expandedFieldId ? '' : current);
     };
     const listenerFrame = window.requestAnimationFrame(() => {
@@ -812,7 +811,7 @@ const FormBuilder = <TType extends string>({
               <SectionDropZone key={section.id} sectionId={section.id}>
                 <div className="mb-3 flex min-h-[var(--tm-size-touch)] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] px-3">
                   <span className="h-5 w-[3px] shrink-0 rounded-full bg-[var(--tm-brand-primary)]" aria-hidden="true" />
-                  <h3 className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">{section.label}</h3>
+                  <h3 className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-group-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{section.label}</h3>
                   {!readOnly && <IconButton label={`分组更多操作：${section.label}`} onClick={() => setActiveSectionMenuId(section.id)}><MoreHorizontal className="h-5 w-5" /></IconButton>}
                 </div>
                 <div className="min-h-2 space-y-3">

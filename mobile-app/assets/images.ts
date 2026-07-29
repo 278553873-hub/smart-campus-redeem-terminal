@@ -1,8 +1,6 @@
 
 import coverBoy from './resources/boy.png';
 import coverGirl from './resources/girl.png';
-import avatarBoy from './resources/avatar-boy.png';
-import avatarGirl from './resources/avatar-girl.png';
 import studentGirlDefaultAvatar from './resources/student-girl-default-avatar.png';
 import subjectReportIcon from './resources/subject-report.png';
 import termReportIcon from './resources/term-report.png';
@@ -29,22 +27,12 @@ import dailySportsVitalityMobileImg from './resources/highlight-defaults/daily-s
 import dailyArtCreativityMobileImg from './resources/highlight-defaults/daily-art-creativity.png';
 import schoolReportV2Icon from './resources/school-report-v2.png';
 import termReportV2Icon from './resources/term-report-v2.png';
-import { studentGirlAvatarGroups, studentGirlAvatars } from './studentAvatarCatalog';
-
-import avatarBoy1 from './resources/avatar_boy_1.png';
-import avatarBoy2 from './resources/avatar_boy_2.png';
-import avatarBoy3 from './resources/avatar_boy_3.png';
-import avatarBoy4 from './resources/avatar_boy_4.png';
-import avatarBoy5 from './resources/avatar_boy_5.png';
-import avatarBoy6 from './resources/avatar_boy_6.png';
-import avatarBoy7 from './resources/avatar_boy_7.png';
-import avatarGirl1 from './resources/avatar_girl_1.png';
-import avatarGirl2 from './resources/avatar_girl_2.png';
-import avatarGirl3 from './resources/avatar_girl_3.png';
-import avatarGirl4 from './resources/avatar_girl_4.png';
-import avatarGirl5 from './resources/avatar_girl_5.png';
-import avatarGirl6 from './resources/avatar_girl_6.png';
-import avatarGirl7 from './resources/avatar_girl_7.png';
+import {
+  studentBoyAvatarGroups,
+  studentBoyAvatars,
+  studentGirlAvatarGroups,
+  studentGirlAvatars,
+} from './studentAvatarCatalog';
 
 // Resource file for project images
 // Using Base64 SVGs to ensure images always load without external dependencies or local file setup.
@@ -55,29 +43,6 @@ const svgPrefix = "data:image/svg+xml;base64,";
 const encodeSVG = (svgString: string) => svgPrefix + btoa(unescape(encodeURIComponent(svgString)));
 
 // 1. Avatars
-const boyAvatarSVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="50" fill="#E5F1FF"/>
-  <circle cx="50" cy="45" r="20" fill="#3B82F6"/>
-  <path d="M30 85 Q50 100 70 85 V100 H30 Z" fill="#3B82F6"/>
-  <circle cx="50" cy="45" r="18" fill="#FFD7B5"/>
-  <path d="M30 35 Q50 10 70 35" fill="none" stroke="#1E3A8A" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="43" cy="45" r="2" fill="#1E3A8A"/>
-  <circle cx="57" cy="45" r="2" fill="#1E3A8A"/>
-  <path d="M45 55 Q50 60 55 55" fill="none" stroke="#1E3A8A" stroke-width="2" stroke-linecap="round"/>
-</svg>`;
-
-const girlAvatarSVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="50" fill="#FFF0F5"/>
-  <path d="M20 50 Q10 70 30 90 L70 90 Q90 70 80 50 Q90 30 50 10 Q10 30 20 50" fill="#EC4899"/>
-  <circle cx="50" cy="50" r="18" fill="#FFD7B5"/>
-  <circle cx="43" cy="50" r="2" fill="#831843"/>
-  <circle cx="57" cy="50" r="2" fill="#831843"/>
-  <path d="M45 60 Q50 63 55 60" fill="none" stroke="#831843" stroke-width="2" stroke-linecap="round"/>
-  <path d="M25 90 Q50 100 75 90" fill="#EC4899"/>
-</svg>`;
-
 const genericBoyAvatarSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <rect width="100" height="100" rx="20" fill="#E2E8F0"/>
@@ -148,15 +113,13 @@ const schoolSchoolSVG = `
 
 export const ASSETS = {
   AVATAR: {
-    BOY: avatarBoy,
-    GIRL: avatarGirl,
     GENERIC_BOY: encodeSVG(genericBoyAvatarSVG),
     GENERIC_GIRL: encodeSVG(genericGirlAvatarSVG),
     STUDENT_GIRL_DEFAULT: studentGirlDefaultAvatar,
+    SYSTEM_BOY_GROUPS: studentBoyAvatarGroups,
+    SYSTEM_BOYS: studentBoyAvatars,
     SYSTEM_GIRL_GROUPS: studentGirlAvatarGroups,
     SYSTEM_GIRLS: studentGirlAvatars,
-    BOYS: [avatarBoy1, avatarBoy2, avatarBoy3, avatarBoy4, avatarBoy5, avatarBoy6, avatarBoy7, avatarBoy],
-    GIRLS: [avatarGirl1, avatarGirl2, avatarGirl3, avatarGirl4, avatarGirl5, avatarGirl6, avatarGirl7, avatarGirl],
     TEACHER_WANG: encodeSVG(teacherWangSVG),
     TEACHER_LIN: encodeSVG(teacherLinSVG),
     TEACHER_DA_FEI: teacherDaFeiAvatarImg,

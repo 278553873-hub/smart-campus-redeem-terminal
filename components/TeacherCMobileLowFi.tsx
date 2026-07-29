@@ -1698,7 +1698,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [activeClassAction, setActiveClassAction] = useState<{ name: string; code: string } | null>(null);
   const [showPersonalClassActionSheet, setShowPersonalClassActionSheet] = useState(false);
   const [showPersonalClassDisplaySheet, setShowPersonalClassDisplaySheet] = useState(false);
-  const [personalVisibleClassCodes, setPersonalVisibleClassCodes] = useState<string[]>(['58273914', '73948162']);
+  const [personalVisibleClassCodes, setPersonalVisibleClassCodes] = useState<string[]>(['58273914']);
   const [inviteClass, setInviteClass] = useState<{ name: string; code: string; inviter: string }>({ name: '2025级1班', code: '58273914', inviter: '郭老师' });
   const [activeClassProfile, setActiveClassProfile] = useState<ClassProfile>({
     name: '2025级1班',
@@ -6544,14 +6544,10 @@ const TeacherCMobileLowFi: React.FC = () => {
         { name: '2024级2班', code: '73948162', stage: '小学' as const, entryYearValue: 2024, tags: ['数学'], count: 0, creatorName: '陈老师', isCreator: false },
         { name: '2023级3班', code: '41862753', stage: '小学' as const, entryYearValue: 2023, tags: ['英语'], count: 36, creatorName: '李老师', isCreator: false },
       ];
-      const personalClassCards = classCards
-        .slice(0, 2)
-        .sort((a, b) => Number(b.isCreator) - Number(a.isCreator));
+      const personalClassCards = classCards.filter((item) => item.isCreator);
       const collaborationClassCards = classCards.slice(2, 3);
       const visiblePersonalClassCards = personalClassCards.filter((item) => personalVisibleClassCodes.includes(item.code));
       const visibleSourceClassCards = currentSpace.type === 'collaboration' ? collaborationClassCards : visiblePersonalClassCards;
-      const createdClassCards = visibleSourceClassCards.filter((item) => item.isCreator);
-      const joinedClassCards = visibleSourceClassCards.filter((item) => !item.isCreator);
       const schoolVisibleClassCards = classCards.filter((item) => {
         const matchGrade = schoolClassGradeFilter === '全部' || inferGradeLabel(item.stage, item.entryYearValue) === schoolClassGradeFilter;
         const matchTeaching = !schoolClassTeachingOnly || item.tags.some((tag) => tag !== '班主任');
@@ -6626,22 +6622,9 @@ const TeacherCMobileLowFi: React.FC = () => {
               ))
             ) : (
               <>
-                {createdClassCards.length > 0 && (
-                  <section className="space-y-2">
-                    <div className="px-1 text-xs font-medium text-gray-500">创建的班级</div>
-                    {createdClassCards.map((item) => (
-                      <ClassCard key={item.code} {...item} />
-                    ))}
-                  </section>
-                )}
-                {joinedClassCards.length > 0 && (
-                  <section className="space-y-2">
-                    <div className="px-1 text-xs font-medium text-gray-500">{currentSpace.type === 'collaboration' ? `${currentSpace.title}的班级` : '加入的班级'}</div>
-                    {joinedClassCards.map((item) => (
-                      <ClassCard key={item.code} {...item} />
-                    ))}
-                  </section>
-                )}
+                {visibleSourceClassCards.map((item) => (
+                  <ClassCard key={item.code} {...item} />
+                ))}
                 {visibleSourceClassCards.length === 0 && (
                   <section className="rounded-2xl bg-gray-50 p-4 text-sm font-black text-gray-500">
                     暂无显示班级

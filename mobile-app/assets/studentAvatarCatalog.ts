@@ -18,6 +18,26 @@ import studentGirl17 from './resources/student-avatars/girls/student-girl-17.jpg
 import studentGirl18 from './resources/student-avatars/girls/student-girl-18.jpg';
 import studentGirl19 from './resources/student-avatars/girls/student-girl-19.jpg';
 import studentGirl20 from './resources/student-avatars/girls/student-girl-20.jpg';
+import studentBoy01 from './resources/student-avatars/boys/student-boy-avatar-01.jpg';
+import studentBoy02 from './resources/student-avatars/boys/student-boy-avatar-02.jpg';
+import studentBoy03 from './resources/student-avatars/boys/student-boy-avatar-03.jpg';
+import studentBoy04 from './resources/student-avatars/boys/student-boy-avatar-04.jpg';
+import studentBoy05 from './resources/student-avatars/boys/student-boy-avatar-05.jpg';
+import studentBoy06 from './resources/student-avatars/boys/student-boy-avatar-06.jpg';
+import studentBoy07 from './resources/student-avatars/boys/student-boy-avatar-07.jpg';
+import studentBoy08 from './resources/student-avatars/boys/student-boy-avatar-08.jpg';
+import studentBoy09 from './resources/student-avatars/boys/student-boy-avatar-09.jpg';
+import studentBoy10 from './resources/student-avatars/boys/student-boy-avatar-10.jpg';
+import studentBoy11 from './resources/student-avatars/boys/student-boy-avatar-11.jpg';
+import studentBoy12 from './resources/student-avatars/boys/student-boy-avatar-12.jpg';
+import studentBoy13 from './resources/student-avatars/boys/student-boy-avatar-13.jpg';
+import studentBoy14 from './resources/student-avatars/boys/student-boy-avatar-14.jpg';
+import studentBoy15 from './resources/student-avatars/boys/student-boy-avatar-15.jpg';
+import studentBoy16 from './resources/student-avatars/boys/student-boy-avatar-16.jpg';
+import studentBoy17 from './resources/student-avatars/boys/student-boy-avatar-17.jpg';
+import studentBoy18 from './resources/student-avatars/boys/student-boy-avatar-18.jpg';
+import studentBoy19 from './resources/student-avatars/boys/student-boy-avatar-19.jpg';
+import studentBoy20 from './resources/student-avatars/boys/student-boy-avatar-20.jpg';
 
 export interface StudentAvatarOption {
   id: string;
@@ -90,4 +110,63 @@ export const studentGirlAvatarGroups: StudentAvatarGroup[] = [
   },
 ];
 
+export const studentBoyAvatarGroups: StudentAvatarGroup[] = [
+  {
+    id: 'very-short',
+    label: '极短发',
+    avatars: [
+      { id: 'boy-01', label: '清爽圆寸', src: studentBoy01 },
+      { id: 'boy-02', label: '短寸碎顶', src: studentBoy02 },
+      { id: 'boy-03', label: '渐变短寸', src: studentBoy03 },
+    ],
+  },
+  {
+    id: 'textured-short',
+    label: '短碎发',
+    avatars: [
+      { id: 'boy-04', label: '活力短碎发', src: studentBoy04 },
+      { id: 'boy-05', label: '上扬碎发', src: studentBoy05 },
+      { id: 'boy-06', label: '自然乱碎发', src: studentBoy06 },
+      { id: 'boy-07', label: '立体短刺', src: studentBoy07 },
+      { id: 'boy-08', label: '斜刘海碎发', src: studentBoy08 },
+    ],
+  },
+  {
+    id: 'side-part',
+    label: '侧分',
+    avatars: [
+      { id: 'boy-09', label: '棕色侧分', src: studentBoy09 },
+      { id: 'boy-10', label: '经典左侧分', src: studentBoy10 },
+      { id: 'boy-11', label: '黑色右侧分', src: studentBoy11 },
+      { id: 'boy-12', label: '逗号刘海', src: studentBoy12 },
+      { id: 'boy-13', label: '顺滑侧扫', src: studentBoy13 },
+    ],
+  },
+  {
+    id: 'fringe',
+    label: '刘海',
+    avatars: [
+      { id: 'boy-14', label: '齐刘海锅盖', src: studentBoy14 },
+      { id: 'boy-15', label: '弧形蘑菇头', src: studentBoy15 },
+      { id: 'boy-16', label: '中分帘式', src: studentBoy16 },
+      { id: 'boy-17', label: '法式短刘海', src: studentBoy17 },
+    ],
+  },
+  {
+    id: 'curly',
+    label: '卷发',
+    avatars: [
+      { id: 'boy-18', label: '黑色自然卷', src: studentBoy18 },
+      { id: 'boy-19', label: '棕色波浪卷', src: studentBoy19 },
+      { id: 'boy-20', label: '黑色小卷', src: studentBoy20 },
+    ],
+  },
+];
+
 export const studentGirlAvatars = studentGirlAvatarGroups.flatMap(group => group.avatars.map(avatar => avatar.src));
+export const studentBoyAvatars = studentBoyAvatarGroups.flatMap(group => group.avatars.map(avatar => avatar.src));
+
+export const getSystemStudentAvatar = (gender: 'male' | 'female', seed: number) => {
+  const avatarPool = gender === 'male' ? studentBoyAvatars : studentGirlAvatars;
+  return avatarPool[Math.abs(seed) % avatarPool.length];
+};

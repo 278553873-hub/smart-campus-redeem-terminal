@@ -1,13 +1,10 @@
+import { questionnaireThemePalette } from '../../shared/questionnaireThemeTokens';
+
 export const teacherBrandPalette = {
   red: {
-    50: '#FFF1F1',
-    100: '#FFE2E2',
-    200: '#FFC7C7',
+    ...questionnaireThemePalette.red,
     300: '#F99A98',
     400: '#EE615F',
-    500: '#E02727',
-    600: '#CC2020',
-    700: '#BA352E',
     800: '#92221F',
     900: '#731B1A',
   },
@@ -48,28 +45,18 @@ export const teacherBrandPalette = {
     900: '#103D38',
   },
   neutral: {
-    0: '#FFFFFF',
+    ...questionnaireThemePalette.neutral,
     25: '#FFFCFA',
-    50: '#F8F6F5',
-    100: '#F1EEEC',
-    200: '#E7E2DF',
     300: '#D2CBC7',
-    400: '#A49C97',
-    450: '#918985',
-    500: '#6D6764',
-    550: '#7B7572',
     700: '#403C3A',
-    900: '#171513',
   },
   // 深薄荷：仅用于五育-美育分类，与玉石青受众色、体育绿区分。
   mint: {
     500: '#14A085',
   },
   green: {
-    50: '#F4FBF4',
+    ...questionnaireThemePalette.green,
     100: '#D4EAD5',
-    500: '#48A04D',
-    700: '#2E7D32',
   },
 } as const;
 
@@ -382,6 +369,8 @@ export const teacherBrandCssVariables = {
   '--tm-size-floating-action': '52px',
   '--tm-font-size-document-title': '26px',
   '--tm-font-size-page-title': '22px',
+  '--tm-font-size-group-title': '18px',
+  '--tm-font-size-form-group-label': '14px',
   '--tm-font-size-section-title': '17px',
   '--tm-font-size-card-title': '15px',
   '--tm-font-size-body': '14px',

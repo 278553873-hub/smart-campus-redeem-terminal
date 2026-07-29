@@ -12,10 +12,13 @@ const mobileBottomSheetSource = fs.readFileSync(new URL('../../components/ui/Mob
 const classCascadeSource = fs.readFileSync(new URL('../../components/ui/MobileClassCascadePicker.tsx', import.meta.url), 'utf8');
 const floatingCreateSource = fs.readFileSync(new URL('../../components/ui/MobileFloatingCreateButton.tsx', import.meta.url), 'utf8');
 const formDefinitionSource = fs.readFileSync(new URL('../../../shared/formDefinition.ts', import.meta.url), 'utf8');
+const questionnaireThemeSource = fs.readFileSync(new URL('../../../shared/questionnaireThemeTokens.ts', import.meta.url), 'utf8');
 const listSource = viewSource.slice(viewSource.indexOf('const renderList'), viewSource.indexOf('const renderCreate'));
 const listHeaderSource = listSource.slice(0, listSource.indexOf('<main'));
 const listCardsSource = listSource.slice(listSource.indexOf('{filteredRecords.map'), listSource.indexOf('{filteredRecords.length === 0'));
 const createSource = viewSource.slice(viewSource.indexOf('const renderCreate'), viewSource.indexOf('const renderStudentCollectionDetail'));
+const studentDetailSource = viewSource.slice(viewSource.indexOf('const renderStudentCollectionDetail'), viewSource.indexOf('const renderStudentRecordPage'));
+const createPreviewSource = viewSource.slice(viewSource.indexOf('const openCreatePreview'), viewSource.indexOf('const openDetailPreview'));
 const detailSource = viewSource.slice(viewSource.indexOf('const renderDetail'), viewSource.indexOf('const renderResponseDetail'));
 
 const requireText = (source, text, message) => {
@@ -79,28 +82,21 @@ if (viewSource.includes('添加第一题')) {
   throw new Error('0题状态不应重复展示第二个添加题目按钮。');
 }
 requireText(viewSource, '<FormBuilder', '问卷和学生采集必须接入共享表单构建器。');
-requireText(viewSource, "type BasicInfoField = 'title' | 'description' | null", '问卷标题和说明必须具备独立的展示态与编辑态。');
-requireText(viewSource, "activeBasicInfoField === 'title'", '点击问卷标题后必须切换到标题编辑态。');
-requireText(viewSource, "activeBasicInfoField === 'description'", '点击问卷说明后必须切换到说明编辑态。');
-requireText(viewSource, "setActiveBasicInfoField('title')", '问卷标题点击或校验失败后必须能够激活编辑态。');
-requireText(viewSource, "setActiveBasicInfoField('description')", '问卷说明点击后必须能够激活编辑态。');
-requireText(viewSource, 'titleInputRef.current?.focus()', '进入标题编辑态后必须自动激活光标。');
-requireText(viewSource, 'descriptionInputRef.current?.focus()', '进入说明编辑态后必须自动激活光标。');
-requireText(viewSource, "!target.closest('[data-basic-info-editor]')", '点击基础信息区之外必须退出标题或说明编辑态。');
-requireText(viewSource, "draftTitle || titlePlaceholder", '标题展示态必须直接展示内容或精简占位文案。');
+requireText(createSource, '<input id="survey-title"', '新建和草稿编辑页必须直接展示可编辑的标题输入框。');
+requireText(createSource, 'value={draftTitle} maxLength={40}', '问卷标题必须回显草稿内容并限制40字。');
+requireText(createSource, '<AutoResizeTextarea id="survey-description"', '新建和草稿编辑页必须直接展示可编辑的说明输入框。');
+requireText(viewSource, "setDraftTitle(record?.title ?? '')", '进入草稿编辑时必须回显问卷标题。');
+requireText(viewSource, "setDraftDescription(record?.description ?? '')", '进入草稿编辑时必须回显问卷说明。');
+forbidText(viewSource, 'activeBasicInfoField', '问卷基础信息不应再使用隐藏的点击编辑态。');
 requireText(viewSource, "isStudentCollection ? '请输入采集名称' : '请输入问卷名称'", '问卷与学生采集必须使用对应的名称占位文案。');
 requireText(viewSource, "isStudentCollection ? '请输入采集说明(非必填)' : '请输入问卷说明(非必填)'", '问卷与学生采集必须使用对应的非必填说明文案。');
-requireText(viewSource, 'draftDescription || descriptionPlaceholder', '说明展示态与编辑态必须复用同一占位文案。');
-requireText(viewSource, '<AutoResizeTextarea ref={descriptionInputRef}', '问卷说明必须单行起步并随内容自动增高。');
-requireText(createSource, 'maxLength={500} maxHeight={144}', '问卷说明必须支持500字并最多展开约六行。');
-requireText(createSource, '{draftDescription.length}/500', '问卷说明编辑态必须展示字数统计。');
-forbidText(createSource, 'line-clamp-2 whitespace-pre-wrap', '问卷说明失焦后必须完整展示，不能截断为两行。');
+requireText(createSource, 'maxLength={500} maxHeight={Number.POSITIVE_INFINITY}', '问卷说明必须支持500字并随内容完整增高。');
+requireText(createSource, '{draftDescription.length}/500', '问卷说明必须展示字数统计。');
 requireText(autoResizeTextareaSource, 'rows={1}', '自动增高输入框不应默认预留两行高度。');
 requireText(autoResizeTextareaSource, 'Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)', '自动增高输入框必须在触控高度与最大高度之间调整。');
 requireText(viewSource, 'text-[length:var(--tm-font-size-document-title)]', '问卷标题必须使用独立的文档标题层级。');
 requireText(teacherTokenSource, "'--tm-font-size-document-title': '26px'", '问卷名称字号必须按评审结果收紧为26像素。');
-requireText(viewSource, "stepOneTitleError) setActiveBasicInfoField('title')", '标题校验失败时必须先恢复输入控件再定位错误。');
-requireText(viewSource, "stepOneValidationAttempt && stepOneTitleError ? 'border-[var(--tm-status-negative-strong)]' : 'border-transparent'", '标题展示态默认不应出现横线，只有错误时保留负向下边框。');
+requireText(viewSource, "document.getElementById(stepOneTitleError ? 'survey-title'", '标题校验失败时必须定位到标题输入框。');
 forbidText(viewSource, '请输入问卷说明（选填）', '说明文案不应重复问卷语境或展示非必要的选填说明。');
 forbidText(viewSource, '<label htmlFor="survey-title"', '问卷标题不应重复展示可见字段标签。');
 forbidText(viewSource, '<label htmlFor="survey-description"', '问卷说明不应重复展示可见字段标签。');
@@ -156,6 +152,8 @@ requireText(formBuilderSource, 'data-form-field-editor={fieldId}', '每个题目
 requireText(formBuilderSource, "document.addEventListener('click', closeFieldEditor)", '点击当前题目之外的区域必须退出编辑态。');
 requireText(formBuilderSource, "const listenerFrame = window.requestAnimationFrame", '外部点击监听必须延后一帧挂载，不能吞掉进入题目编辑态的首次点击。');
 requireText(formBuilderSource, "current === expandedFieldId ? '' : current", '切换到另一题时不得被旧题目的外部点击逻辑再次关闭。');
+requireText(formBuilderSource, 'event.composedPath().find', '删除动态选项或添加“其他”时必须通过原始传播路径保持当前题目编辑态。');
+forbidText(formBuilderSource, "target.closest('[data-form-field-editor]')", '动态控件卸载后不能再通过当前 DOM 祖先判断题目边界。');
 requireText(formBuilderSource, 'border-0 border-b bg-transparent', '题干输入框只应保留下边框。');
 forbidText(formBuilderSource, '<ChevronUp', '题目编辑态不应展示收起箭头。');
 forbidText(formBuilderSource, "expanded ? <ChevronUp", '题目列表不应展示展开或收起箭头。');
@@ -175,7 +173,7 @@ requireText(createSource, 'showItemLabel={isStudentCollection}', '家长问卷�
 forbidText(formBuilderSource, 'min-h-[60px] items-center justify-between gap-4 px-4', '分组开关不应继续使用独立卡片。');
 requireText(formBuilderSource, 'setActiveSectionMenuId(section.id)', '分组低频操作必须通过更多菜单渐进披露。');
 requireText(formBuilderSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] px-3', '分组标题必须使用浅中性底标题行建立结构层级。');
-requireText(formBuilderSource, 'text-[length:var(--tm-font-size-card-title)] font-bold', '分组标题必须提升为卡片标题字号和加粗字重。');
+requireText(formBuilderSource, 'text-[length:var(--tm-font-size-group-title)] font-bold', '分组标题必须使用18像素独立层级和加粗字重。');
 const groupedFieldSection = formBuilderSource.slice(formBuilderSource.indexOf("<section className=\"mt-2\">", formBuilderSource.indexOf(") : (")), formBuilderSource.indexOf('</section>', formBuilderSource.indexOf("<section className=\"mt-2\">", formBuilderSource.indexOf(") : ("))));
 if (groupedFieldSection.indexOf('{renderGroupedFieldList()}') > groupedFieldSection.lastIndexOf('添加分组')) {
   throw new Error('分组模式的添加分组入口必须位于分组列表末尾。');
@@ -225,11 +223,44 @@ const assignedSource = fs.readFileSync(new URL('../../../components/parent-app/A
 requireText(assignedSource, 'showCustomInput', '家长端必须仅在选中可填写选项后展示输入框。');
 requireText(assignedSource, 'preview?: boolean', '家长问卷组件必须支持教师预览模式。');
 requireText(assignedSource, "preview ? '结束预览'", '教师预览必须提供明确的退出操作。');
-requireText(assignedSource, 'stepIndex === 0 && questionnaire.description', '真实家长填写和预览必须在首题完整展示问卷说明。');
+requireText(assignedSource, 'stepIndex === 0 && (', '真实家长填写和预览必须在首题展示独立文档头部。');
+requireText(assignedSource, 'text-[length:var(--tm-font-size-document-title)]', '问卷预览标题必须使用22像素文档标题层级。');
+requireText(assignedSource, 'currentSection && <div className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)]', '问卷填写态分组标签必须独立放在题目卡上方。');
+forbidText(assignedSource, 'currentSection && <div className="mb-3 rounded-[var(--tm-radius-control)]', '问卷填写态分组标签不得继续放在题目卡内。');
+requireText(assignedSource, 'text-[length:var(--tm-font-size-question-title)]', '问卷题目必须使用16像素题目层级。');
+requireText(assignedSource, 'text-[length:var(--tm-font-size-control)]', '问卷填写控件必须统一使用14像素文案。');
 requireText(assignedSource, 'whitespace-pre-wrap break-words', '问卷说明必须保留换行并完整换行展示。');
 requireText(assignedSource, 'placeholder="请补充填写"', '家长端自定义答案输入框应提供清晰占位文案。');
 requireText(assignedSource, "questionnaire.status !== 'active'", '家长填写页必须响应老师结束收集。');
 requireText(assignedSource, '问卷已结束或已经提交', '状态变化导致提交失败时必须提供明确反馈。');
+requireText(assignedSource, "import { questionnaireThemeCssVariables }", '教师预览和家长填写必须引用共享问卷主题 Token。');
+requireText(assignedSource, 'style={questionnaireThemeCssVariables as React.CSSProperties}', '共享问卷主题必须同时作用于教师预览和家长实际填写。');
+for (const token of ['--tm-brand-primary', '--tm-input-focus-ring', '--tm-questionnaire-progress']) {
+  requireText(assignedSource, token, `家长问卷填写态缺少共享语义 Token：${token}`);
+}
+requireText(assignedSource, 'bg-[var(--tm-questionnaire-progress)]', '问卷进度必须使用中性色进度 Token。');
+requireText(assignedSource, 'min-h-[52px]', '单选、多选和操作按钮必须保持至少52像素高度。');
+requireText(assignedSource, 'flex h-11 w-11 items-center justify-center rounded-full', '评分按钮必须保持44×44像素。');
+requireText(assignedSource, 'question.type !== \'multi_fill\'', '多项填空不得在整题标题重复展示必填标志。');
+requireText(assignedSource, 'aria-label="必填">*</span>', '必填题目和子字段必须使用星号标志。');
+forbidText(assignedSource, '>必答<', '填写态不得使用“必答”文字。');
+forbidText(assignedSource, '含必填项', '多项填空不得使用“含必填项”文字。');
+forbidText(assignedSource, 'bg-[var(--tm-brand-primary-soft)]', '题型标签和选项容器不得使用大面积浅红底。');
+for (const [pattern, message] of [
+  [/(?:#[0-9A-Fa-f]{3,8}\b|rgba?\()/, '家长问卷组件不得保留硬编码颜色。'],
+  [/\b(?:sky|cyan|blue|emerald|indigo|violet|purple)-[0-9]{2,3}(?:\/[0-9]+)?\b/, '家长问卷组件不得保留旧蓝青主题类。'],
+  [/gradient/, '家长问卷的品牌进度、选中态与主按钮不得继续使用蓝青渐变。'],
+]) {
+  if (pattern.test(assignedSource)) throw new Error(message);
+}
+requireText(questionnaireThemeSource, "'--tm-brand-primary': questionnaireThemePalette.red[500]", '共享问卷主题主色必须来自新红色色板。');
+requireText(questionnaireThemeSource, "'--tm-bg-page': questionnaireThemePalette.neutral[50]", '问卷填写页背景必须使用中性色。');
+requireText(questionnaireThemeSource, "'--tm-questionnaire-progress': questionnaireThemePalette.neutral[900]", '问卷进度必须使用独立中性色 Token。');
+for (const [token, value] of [['--tm-font-size-document-title', '22px'], ['--tm-font-size-group-title', '18px'], ['--tm-font-size-form-group-label', '14px'], ['--tm-font-size-question-title', '16px'], ['--tm-font-size-control', '14px']]) {
+  requireText(questionnaireThemeSource, `'${token}': '${value}'`, `共享问卷主题缺少排版 Token：${token}`);
+}
+requireText(teacherTokenSource, "'--tm-font-size-group-title': '18px'", '教师端创建页必须提供18像素分组标题 Token。');
+requireText(teacherTokenSource, "'--tm-font-size-form-group-label': '14px'", '教师端填写页必须提供14像素分组标签 Token。');
 requireText(viewSource, 'getQuestionnaireSelectedOptions(answer).includes(option)', '题目统计必须将自定义答案计入对应选项。');
 requireText(viewSource, "type DetailTab = 'data' | 'responses'", '问卷详情必须合并为数据和答卷两个页签。');
 requireText(viewSource, "'question-responses'", '简答题必须支持进入独立的全部回答页。');
@@ -246,9 +277,27 @@ requireText(viewSource, 'showEffectiveCount &&', '只有回答数与总答卷数
 requireText(viewSource, '<AssignedQuestionnaireView', '教师预览必须复用真实家长问卷组件。');
 requireText(viewSource, "setPageMode('preview')", '问卷详情必须提供预览入口。');
 requireText(viewSource, 'const openCreatePreview = () =>', '新建和编辑问卷必须提供当前内容预览。');
-requireText(viewSource, "showToast('添加题目后即可预览')", '空问卷预览必须提供可执行的下一步提示。');
+requireText(viewSource, "'添加题目后即可预览'", '空问卷预览必须提供可执行的下一步提示。');
+requireText(viewSource, "'添加字段后即可预览'", '空学生采集表预览必须提示先添加字段。');
 requireText(viewSource, "setPreviewReturnMode('create')", '从编辑页退出预览后必须返回原编辑流程。');
-requireText(createSource, 'label="预览问卷" onClick={openCreatePreview}', '家长问卷编辑页顶部必须提供预览入口。');
+requireText(createPreviewSource, 'collectionMode,', '创建预览必须保留当前采集类型，不能硬编码为家长问卷。');
+forbidText(createPreviewSource, "collectionMode: 'guardian_questionnaire'", '学生信息采集预览不能被错误地创建为家长问卷。');
+requireText(createSource, 'grid-cols-[44px_minmax(0,0.9fr)_minmax(0,1.35fr)]', '两类采集编辑页底部必须统一使用预览、保存草稿、下一步三段操作。');
+requireText(createSource, "label={isStudentCollection ? '预览采集表' : '预览问卷'}", '编辑页底部必须按采集类型提供44像素预览入口。');
+requireText(studentDetailSource, 'aria-label="预览采集表"', '学生采集详情首张内容卡必须提供预览入口。');
+requireText(viewSource, 'const StudentCollectionForm: React.FC<StudentCollectionFormProps>', '学生采集预览与真实填写必须复用业务字段组件。');
+if ((viewSource.match(/<StudentCollectionForm/g) ?? []).length < 2) {
+  throw new Error('学生采集预览与真实逐生填写必须共同调用字段组件。');
+}
+requireText(viewSource, 'const [previewAnswers, setPreviewAnswers] = useState<Record<string, QuestionnaireAnswer>>({});', '学生采集预览必须使用独立答案状态。');
+requireText(viewSource, 'onAnswerChange={(questionId, answer) => setPreviewAnswers', '学生采集预览输入只能写入预览答案状态。');
+requireText(viewSource, 'style={questionnaireThemeCssVariables as React.CSSProperties}', '学生采集预览必须使用共享红色主题 Token。');
+requireText(viewSource, '<h1 className="text-pretty text-[length:var(--tm-font-size-document-title)]', '学生采集预览标题必须使用独立文档标题层级。');
+requireText(viewSource, 'getStudentCollectionQuestionGroups(record).map(questionGroup', '学生采集必须按分组组织填写内容。');
+requireText(viewSource, 'questionGroup.label && <h2 className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)]', '学生采集分组标签必须使用14像素弱层级并位于题目卡外。');
+forbidText(viewSource, 'bg-[var(--tm-bg-surface-soft)] px-4 py-3 text-[length:var(--tm-font-size-group-title)]', '学生采集分组标签不得继续使用题目卡内的高层级底色标题行。');
+requireText(viewSource, 'text-[length:var(--tm-font-size-question-title)] font-bold', '学生采集字段名称必须使用16像素题目层级。');
+requireText(viewSource, 'min-h-[52px] items-center gap-2.5', '学生采集选项必须统一为至少52像素并显示选择控件。');
 requireText(detailSource, 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]', '问卷详情基本信息卡必须复用教师端公共卡片令牌。');
 requireText(teacherTokenSource, "'--tm-shadow-card'", '教师端唯一令牌源必须提供公共卡片阴影。');
 requireText(detailSource, 'aria-label="预览问卷"', '问卷预览必须保留清晰的无障碍名称。');
@@ -272,7 +321,7 @@ if (viewSource.includes('描述性统计') || viewSource.includes('不进行自�
 }
 requireText(viewSource, '建议完成时间', '创建与详情页必须使用建议完成时间。');
 requireText(viewSource, 'const [hasSuggestedDeadline, setHasSuggestedDeadline] = useState(false);', '新问卷默认不设置建议完成时间。');
-requireText(viewSource, '<SecondaryButton onClick={saveDraft}>', '创建流程的三个步骤都必须支持保存草稿。');
+requireText(viewSource, '<SecondaryButton onClick={saveDraft}', '创建流程的三个步骤都必须支持保存草稿。');
 requireText(viewSource, 'onClick={createStep === 3 ? publishQuestionnaire : advanceCreateStep}', '下一步必须可点击并主动触发校验。');
 requireText(viewSource, "target?.scrollIntoView({ behavior: 'smooth', block: 'center' })", '校验失败后必须滚动到首个错误。');
 requireText(viewSource, 'fieldErrors={stepOneValidationAttempt ? stepOneFieldErrors : undefined}', '题目错误必须在字段内就地展示。');
@@ -306,7 +355,7 @@ requireText(viewSource, 'icon: UserRoundCheck', '学生采集必须通过学生�
 requireText(listCardsSource, 'pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-r-full', '问卷卡片左侧必须使用不改变布局的短类型色条。');
 requireText(listCardsSource, '${modeMeta.badgeClass}', '问卷卡片必须同时展示类型标签，不能只靠颜色区分。');
 requireText(listCardsSource, "record.status === 'ended' ? 'bg-[var(--tm-text-disabled)]' : modeMeta.progressClass", '收集中卡片的短进度条应与采集类型保持一致。');
-requireText(listSource, "record.status === 'draft' ? 'min-h-[76px]' : 'min-h-[92px]'", '问卷卡片必须增加垂直留白。');
+requireText(listSource, "record.status === 'draft' ? 'min-h-[76px] pr-14' : 'min-h-[92px]'", '问卷卡片必须增加垂直留白，并为草稿更多操作预留空间。');
 requireText(listSource, 'active:scale-[0.96]', '可点击问卷卡片必须保留克制的按压反馈。');
 if (listCardsSource.includes('已提交') || listCardsSource.includes('>{completion}%</span>') || listCardsSource.includes('border-t') || listCardsSource.includes('<ChevronRight')) {
   throw new Error('问卷卡片不应显示解释文案、百分比、分割线或展开图标。');
@@ -325,7 +374,9 @@ requireText(listSource, 'mt-2 flex justify-end', '已归档入口必须右对齐
 if (listSource.includes('>{archivedRecords.length}</span>')) {
   throw new Error('已归档入口不应显示归档数量。');
 }
-requireText(viewSource, 'deleteDraftQuestionnaire(draftId)', '已有草稿必须支持永久删除。');
+requireText(viewSource, 'deleteDraftQuestionnaire(draftActionId)', '已有草稿必须支持从列表更多菜单永久删除。');
+requireText(listSource, 'setDraftActionId(record.id); setShowDraftMenu(true)', '草稿列表卡片必须通过更多菜单渐进披露删除操作。');
+forbidText(createSource, 'label="草稿操作"', '编辑页标题栏不应继续承载草稿删除入口。');
 requireText(storeSource, "record.status !== 'draft'", '数据层必须拒绝删除非草稿问卷。');
 requireText(storeSource, "active: ['ended']", '收集中问卷只能先结束收集，不能直接归档。');
 requireText(storeSource, "ended: ['active', 'archived']", '已结束问卷必须支持重新开放或归档。');
@@ -370,11 +421,12 @@ if (viewSource.includes('justify-between border-b border-[var(--tm-border-subtle
 if (viewSource.includes('overflow-hidden bg-[var(--tm-bg-page)]')) {
   throw new Error('问卷各页面容器不应再使用不透明底色，顶部氛围光应由屏幕级背景统一提供。');
 }
-requireText(viewSource, "actionSlots === 2", '问卷顶部必须支持预览与更多两个独立触控位。');
-requireText(viewSource, "'inset-x-16'", '单操作页面的问卷顶部标题必须保持居中安全区。');
+forbidText(viewSource.slice(viewSource.indexOf('const PageHeader'), viewSource.indexOf('const BottomAction')), 'action?: React.ReactNode', '问卷标题栏不得再提供业务操作插槽。');
+requireText(viewSource, 'absolute inset-x-16 truncate text-center', '问卷顶部标题必须保持居中安全区。');
 requireText(viewSource, '<ChevronLeft className="h-5 w-5" />', '问卷顶部返回图标必须与管理页保持一致。');
-requireText(viewSource, "'-mr-2 h-11 w-11'", '问卷顶部单操作必须保留44像素触控范围。');
-requireText(viewSource, "'-mr-2 h-11 w-[calc(var(--tm-size-touch)*2)]'", '问卷顶部双操作必须为两个按钮保留完整触控宽度。');
+requireText(viewSource, '<div className="h-11 w-11 shrink-0" aria-hidden="true" />', '问卷标题栏右侧必须完整留空给微信原生胶囊。');
+requireText(detailSource, '<IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}>', '问卷详情更多操作必须移入首张内容卡。');
+requireText(viewSource, '!assignedContext && <IconButton label="更多操作"', '学生采集详情更多操作必须移入首张内容卡。');
 requireText(viewSource, 'import MobileFloatingCreateButton', '问卷列表必须复用通用悬浮创建组件。');
 requireText(listSource, '<MobileFloatingCreateButton label="新建采集" onClick={() => setShowCreateTypeSheet(true)} />', '新建采集必须从右下角悬浮入口打开类型选择。');
 requireText(listSource, 'pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]', '问卷列表必须为悬浮创建按钮和底部安全区预留空间。');

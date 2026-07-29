@@ -572,7 +572,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
                 {/* C. Tabs */}
                 <div className="sticky top-0 z-30 bg-[var(--tm-bg-page)] py-2">
-                    <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)]" role="tablist" aria-label="学生详情内容">
+                    <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="学生详情内容">
                         <button
                             type="button"
                             role="tab"
@@ -580,7 +580,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('overview')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'overview' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>成长概览</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'overview' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长概览</span>
                         </button>
                         <button
                             type="button"
@@ -589,7 +589,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('report')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>成长报告</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长报告</span>
                         </button>
                         <button
                             type="button"
@@ -598,7 +598,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('collection')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'collection' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>采集记录</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'collection' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>采集记录</span>
                         </button>
                     </div>
                 </div>

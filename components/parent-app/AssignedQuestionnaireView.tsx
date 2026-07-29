@@ -11,12 +11,9 @@ import {
   type QuestionnaireRecord,
 } from '../../shared/questionnaireStore';
 import { normalizeFormFieldSettings } from '../../shared/formDefinition';
+import { questionnaireThemeCssVariables } from '../../shared/questionnaireThemeTokens';
 import {
   ParentBottomSheet,
-  ParentCard,
-  ParentPageShell,
-  ParentPrimaryButton,
-  ParentSecondaryButton,
 } from './ParentUI';
 
 interface AssignedQuestionnaireViewProps {
@@ -41,6 +38,11 @@ const getQuestionTypeLabel = (question: QuestionnaireQuestion) => ({
   number: '数字',
   date: '日期',
 }[question.type]);
+
+const questionnaireButtonBase = 'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold transition-[transform,background-color,box-shadow,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-input-focus-ring)]';
+const questionnairePrimaryButton = `${questionnaireButtonBase} bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]`;
+const questionnaireSecondaryButton = `${questionnaireButtonBase} border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]`;
+const questionnaireInputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-4 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-text-primary)] outline-none transition-[border-color,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] placeholder:text-[var(--tm-text-tertiary)] focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 
 const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   questionnaire,
@@ -74,18 +76,18 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
 
   if (!preview && questionnaire.status !== 'active') {
     return (
-      <ParentPageShell className="pb-8">
-        <header className="sticky top-0 z-40 border-b border-white/60 bg-white/78 px-4 py-3 backdrop-blur-xl">
-          <div className="flex min-h-10 items-center gap-3">
-            <button type="button" onClick={onBack} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm active:scale-[0.96]" aria-label="返回待办"><ArrowLeft size={18} /></button>
-            <div className="truncate text-[16px] font-black text-slate-800">{questionnaire.title}</div>
+      <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-8 text-[var(--tm-text-primary)] no-scrollbar" style={questionnaireThemeCssVariables as React.CSSProperties}>
+        <header className="sticky top-0 z-40 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 py-3 backdrop-blur-xl [padding-right:max(16px,var(--mini-program-capsule-right-inset,16px))]">
+          <div className="flex min-h-11 items-center gap-3">
+            <button type="button" onClick={onBack} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-transform active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)]" aria-label="返回待办"><ArrowLeft size={18} /></button>
+            <div className="truncate text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">{questionnaire.title}</div>
           </div>
         </header>
-        <ParentCard as="section" className="mx-5 mt-5 p-6 text-center">
-          <div className="text-[17px] font-black text-slate-800">问卷已结束</div>
-          <ParentSecondaryButton type="button" onClick={onBack} fullWidth className="mt-5 h-12">返回待办</ParentSecondaryButton>
-        </ParentCard>
-      </ParentPageShell>
+        <section className="mx-5 mt-5 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-6 text-center shadow-[var(--tm-shadow-card)]">
+          <div className="text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">问卷已结束</div>
+          <button type="button" onClick={onBack} className={`${questionnaireSecondaryButton} mt-5 w-full`}>返回待办</button>
+        </section>
+      </div>
     );
   }
 
@@ -145,35 +147,34 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   };
 
   return (
-    <ParentPageShell className="pb-36">
-      <header className="sticky top-0 z-40 border-b border-white/60 bg-white/78 px-4 py-3 backdrop-blur-xl">
-        <div className="flex min-h-10 items-center gap-3">
-          <button type="button" onClick={onBack} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm transition-transform active:scale-[0.96]" aria-label={preview ? '退出预览' : '返回待办'}>
+    <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-36 text-[var(--tm-text-primary)] antialiased no-scrollbar" style={questionnaireThemeCssVariables as React.CSSProperties}>
+      <header className="sticky top-0 z-40 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 py-3 backdrop-blur-xl [padding-right:max(16px,var(--mini-program-capsule-right-inset,16px))]">
+        <div className="flex min-h-11 items-center gap-3">
+          <button type="button" onClick={onBack} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-transform active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)]" aria-label={preview ? '退出预览' : '返回待办'}>
             <ArrowLeft size={18} />
           </button>
           <div className="min-w-0 flex-1">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <span className="truncate text-[13px] font-black text-slate-600">{questionnaire.title}</span>
-              <span className="shrink-0 tabular-nums text-[13px] font-black text-emerald-600">{stepIndex + 1}/{questionnaire.questions.length}</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
-              <div className="h-full rounded-full bg-gradient-to-r from-[#0DB4F1] to-[#18D0A8] transition-[width] duration-300" style={{ width: `${progress}%` }} />
+            <div className="mb-2 flex justify-end"><span className="shrink-0 tabular-nums text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{stepIndex + 1}/{questionnaire.questions.length}</span></div>
+            <div className="h-2 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+              <div className="h-full rounded-full bg-[var(--tm-questionnaire-progress)] transition-[width] [transition-duration:var(--tm-duration-panel)]" style={{ width: `${progress}%` }} />
             </div>
           </div>
         </div>
       </header>
 
-      <section className="mx-5 mt-4">
-        <ParentCard as="section" className="p-5">
-          {stepIndex === 0 && questionnaire.description && (
-            <p className="mb-5 whitespace-pre-wrap break-words text-[14px] font-medium leading-relaxed text-slate-600">{questionnaire.description}</p>
-          )}
-          {currentSection && <div className="mb-3 text-[12px] font-black text-slate-500">{currentSection.label}</div>}
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <span className="inline-flex rounded-full bg-sky-50 px-3 py-1.5 text-[12px] font-black text-sky-600">{getQuestionTypeLabel(question)}</span>
-            {question.required && <span className="text-[11px] font-bold text-slate-400">{question.type === 'multi_fill' ? '含必填项' : '必答'}</span>}
-          </div>
-          <h2 className="break-words text-[18px] font-black leading-[1.4] text-slate-950">{question.title}</h2>
+      <section className="mx-5 mt-5">
+        {stepIndex === 0 && (
+          <header className="mb-5 px-1">
+            <h1 className="break-words text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{questionnaire.title}</h1>
+            {questionnaire.description && <p className="mt-2 whitespace-pre-wrap break-words text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]">{questionnaire.description}</p>}
+          </header>
+        )}
+        {currentSection && <div className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{currentSection.label}</div>}
+        <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-5 shadow-[var(--tm-shadow-card)]">
+          <div className="mb-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-tertiary)]">{getQuestionTypeLabel(question)}</div>
+          <h2 className="break-words text-[length:var(--tm-font-size-question-title)] font-bold leading-[1.45] text-[var(--tm-text-primary)]">
+            {question.title}{question.required && question.type !== 'multi_fill' && <span className="ml-1 text-[var(--tm-status-negative-strong)]" aria-label="必填">*</span>}
+          </h2>
 
           {(question.type === 'single' || question.type === 'multiple') && (
             <div className="mt-5 space-y-2.5">
@@ -181,17 +182,17 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
                 const selected = selectedOptions.includes(option);
                 const showCustomInput = selected && question.customAnswerOptions?.includes(option);
                 return (
-                  <div key={option} className={`overflow-hidden rounded-[16px] border ${selected ? 'border-[#18D0A8] bg-emerald-50/60' : 'border-slate-100 bg-white'}`}>
+                  <div key={option} className={`overflow-hidden rounded-[var(--tm-radius-inner)] border ${selected ? 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
                     <button
                       type="button"
                       onClick={() => toggleOption(option)}
                       aria-pressed={selected}
-                      className="flex min-h-[56px] w-full items-center gap-3 px-4 py-3 text-left transition-transform active:scale-[0.98]"
+                      className="flex min-h-[52px] w-full items-center gap-3 px-4 py-3 text-left transition-transform active:scale-[0.98]"
                     >
-                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${question.type === 'single' ? 'rounded-full' : 'rounded-[6px]'} ${selected ? 'border-[#18D0A8] bg-[#18D0A8] text-white' : 'border-slate-300 bg-white'}`}>
+                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${question.type === 'single' ? 'rounded-full' : 'rounded-[6px]'} ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`}>
                         {selected && (question.type === 'single' ? <Circle size={9} fill="currentColor" /> : <Check size={13} strokeWidth={3} />)}
                       </span>
-                      <span className="text-[15px] font-bold leading-snug text-slate-800">{option}</span>
+                      <span className="text-[length:var(--tm-font-size-control)] font-medium leading-snug text-[var(--tm-text-primary)]">{option}</span>
                     </button>
                     {showCustomInput && (
                       <div className="px-4 pb-4">
@@ -201,7 +202,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
                           maxLength={120}
                           placeholder="请补充填写"
                           aria-label={`${option}补充内容`}
-                          className="h-12 w-full rounded-[14px] border border-emerald-100 bg-white px-3.5 text-[15px] font-bold text-slate-800 outline-none transition focus:border-[#0DB4F1] focus:ring-4 focus:ring-cyan-100/60"
+                          className={`${questionnaireInputClass} h-[52px] px-3.5`}
                         />
                       </div>
                     )}
@@ -213,16 +214,16 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
 
           {question.type === 'rating' && (
             <div className="mt-6">
-              <div className="grid grid-cols-5 gap-2.5">
+              <div className="grid grid-cols-5 justify-items-center gap-2.5">
                 {ratingValues.map(option => {
                   const value = Number(option);
                   const selected = Number(currentAnswer) === value;
                   return (
-                    <button key={value} type="button" onClick={() => toggleOption(String(value))} aria-pressed={selected} className={`flex aspect-square min-w-0 items-center justify-center rounded-full text-[16px] font-black transition active:scale-[0.96] ${selected ? 'bg-gradient-to-br from-[#0DB4F1] to-[#18D0A8] text-white shadow-[0_12px_24px_-16px_rgba(13,180,241,0.8)]' : 'bg-slate-50 text-slate-500 ring-1 ring-slate-100'}`}>{value}</button>
+                    <button key={value} type="button" onClick={() => toggleOption(String(value))} aria-pressed={selected} className={`flex h-11 w-11 items-center justify-center rounded-full text-[length:var(--tm-font-size-control)] font-semibold transition active:scale-[0.96] ${selected ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-control)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] ring-1 ring-[var(--tm-border-subtle)]'}`}>{value}</button>
                   );
                 })}
               </div>
-              <div className="mt-3 flex justify-between text-[11px] font-bold text-slate-400"><span>低</span><span>高</span></div>
+              <div className="mt-3 flex justify-between text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-tertiary)]"><span>低</span><span>高</span></div>
             </div>
           )}
 
@@ -233,7 +234,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
               rows={5}
               maxLength={300}
               placeholder="请输入您的回答"
-              className="mt-5 min-h-[132px] w-full resize-none rounded-[16px] border border-slate-100 bg-slate-50 px-4 py-3 text-[15px] font-bold leading-relaxed text-slate-800 outline-none transition focus:border-[#0DB4F1] focus:bg-white focus:ring-4 focus:ring-cyan-100/60"
+              className={`${questionnaireInputClass} mt-5 min-h-[132px] resize-none py-3 leading-relaxed`}
             />
           )}
 
@@ -241,7 +242,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
             <div className="mt-5 space-y-4">
               {(question.subFields ?? []).map((subField, subFieldIndex) => (
                 <label key={subField.id} className="block">
-                  <span className="text-[13px] font-bold text-slate-600">{subField.label}{subField.required && <span className="ml-1 text-rose-500" aria-hidden="true">*</span>}</span>
+                  <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{subField.label}{subField.required && <span className="ml-1 text-[var(--tm-status-negative-strong)]" aria-hidden="true">*</span>}</span>
                   <input
                     value={currentFillValues[subField.id] ?? ''}
                     onChange={event => updateFillValue(subField.id, event.target.value)}
@@ -249,7 +250,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
                     placeholder="请输入"
                     required={subField.required}
                     enterKeyHint={subFieldIndex === (question.subFields?.length ?? 0) - 1 ? 'done' : 'next'}
-                    className="mt-2 h-12 w-full rounded-[14px] border border-slate-100 bg-slate-50 px-3.5 text-[15px] font-bold text-slate-800 outline-none transition focus:border-[#0DB4F1] focus:bg-white focus:ring-4 focus:ring-cyan-100/60"
+                    className={`${questionnaireInputClass} mt-2 h-[52px] px-3.5`}
                   />
                 </label>
               ))}
@@ -258,45 +259,45 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
 
           {question.type === 'date' && (() => {
             const dateFormat = normalizeFormFieldSettings(question.type, question.settings, question.options).dateFormat ?? 'ymd';
-            return <input type={dateFormat === 'year' ? 'number' : dateFormat === 'ym' ? 'month' : 'date'} inputMode={dateFormat === 'year' ? 'numeric' : undefined} min={dateFormat === 'year' ? 1900 : undefined} max={dateFormat === 'year' ? 2100 : undefined} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} className="mt-5 h-12 w-full rounded-[16px] border border-slate-100 bg-slate-50 px-4 text-[15px] font-bold text-slate-800 outline-none transition focus:border-[#0DB4F1] focus:bg-white focus:ring-4 focus:ring-cyan-100/60" />;
+            return <input type={dateFormat === 'year' ? 'number' : dateFormat === 'ym' ? 'month' : 'date'} inputMode={dateFormat === 'year' ? 'numeric' : undefined} min={dateFormat === 'year' ? 1900 : undefined} max={dateFormat === 'year' ? 2100 : undefined} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} className={`${questionnaireInputClass} mt-5 h-[52px]`} />;
           })()}
 
           {question.type === 'number' && (() => {
             const numberFormat = normalizeFormFieldSettings(question.type, question.settings, question.options).numberFormat ?? 'integer';
             const step = numberFormat === 'integer' ? 1 : numberFormat === 'decimal-1' ? 0.1 : 0.01;
-            return <input type="number" inputMode="decimal" step={step} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} placeholder="请输入数字" className="mt-5 h-12 w-full rounded-[16px] border border-slate-100 bg-slate-50 px-4 text-[15px] font-bold text-slate-800 outline-none transition focus:border-[#0DB4F1] focus:bg-white focus:ring-4 focus:ring-cyan-100/60" />;
+            return <input type="number" inputMode="decimal" step={step} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} placeholder="请输入数字" className={`${questionnaireInputClass} mt-5 h-[52px]`} />;
           })()}
-        </ParentCard>
+        </section>
       </section>
 
-      <div className="absolute inset-x-0 bottom-0 z-30 border-t border-white/70 bg-white/88 px-5 pb-[calc(16px+env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl">
+      <div className="absolute inset-x-0 bottom-0 z-30 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 pb-[calc(16px+env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl">
         <div className="grid grid-cols-[0.8fr_1.2fr] gap-3">
-          <ParentSecondaryButton type="button" onClick={() => setStepIndex(index => Math.max(0, index - 1))} disabled={stepIndex === 0} className="h-[52px] text-[16px]">上一题</ParentSecondaryButton>
-          <ParentPrimaryButton
+          <button type="button" onClick={() => setStepIndex(index => Math.max(0, index - 1))} disabled={stepIndex === 0} className={questionnaireSecondaryButton}>上一题</button>
+          <button
             type="button"
             disabled={!preview && !canContinue}
             onClick={() => isLastQuestion ? preview ? onBack() : setShowSubmitConfirm(true) : setStepIndex(index => Math.min(questionnaire.questions.length - 1, index + 1))}
-            className="h-[52px] text-[16px]"
+            className={questionnairePrimaryButton}
           >
             {isLastQuestion ? preview ? '结束预览' : <><Send size={16} />提交</> : '下一题'}
-          </ParentPrimaryButton>
+          </button>
         </div>
       </div>
 
       {showSubmitConfirm && (
         <ParentBottomSheet title="确认提交" onClose={() => setShowSubmitConfirm(false)} className="pb-8">
-          <div className="rounded-[20px] bg-slate-50/90 p-4">
-            <div className="text-[16px] font-black leading-tight text-slate-900">{questionnaire.title}</div>
-            <div className="mt-2 text-[13px] font-bold leading-relaxed text-slate-500">提交后老师将看到本次答卷。</div>
+          <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-4">
+            <div className="text-[length:var(--tm-font-size-section-title)] font-bold leading-tight text-[var(--tm-text-primary)]">{questionnaire.title}</div>
+            <div className="mt-2 text-[length:var(--tm-font-size-compact)] font-semibold leading-relaxed text-[var(--tm-text-secondary)]">提交后老师将看到本次答卷。</div>
           </div>
-          {submitError && <div role="alert" className="mt-3 rounded-[14px] bg-rose-50 px-4 py-3 text-[13px] font-bold text-rose-600">{submitError}</div>}
+          {submitError && <div role="alert" className="mt-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative-soft)] px-4 py-3 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative-strong)]">{submitError}</div>}
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <ParentSecondaryButton type="button" onClick={() => setShowSubmitConfirm(false)} className="h-[52px] text-[16px]">我再看看</ParentSecondaryButton>
-            <ParentPrimaryButton type="button" onClick={submit} className="h-[52px] text-[16px]">确认提交</ParentPrimaryButton>
+            <button type="button" onClick={() => setShowSubmitConfirm(false)} className={questionnaireSecondaryButton}>我再看看</button>
+            <button type="button" onClick={submit} className={questionnairePrimaryButton}>确认提交</button>
           </div>
         </ParentBottomSheet>
       )}
-    </ParentPageShell>
+    </div>
   );
 };
 

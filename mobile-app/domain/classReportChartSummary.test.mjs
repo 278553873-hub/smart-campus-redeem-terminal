@@ -3,6 +3,8 @@ import {
     getEducationEventAnalysis,
     getEducationScoreAnalysis,
     getRecordDistributionAnalysis,
+    getRecordDistributionComparisonRows,
+    getRecordDistributionOverview,
 } from './classReportChartSummary.ts';
 
 const assertTwoPartAnalysis = (analysis, message) => {
@@ -26,9 +28,45 @@ const recordImprovement = getRecordDistributionAnalysis({
 
 assert.deepEqual(recordImprovement, {
     summary: '班级评价较上周期改善',
-    supplement: '正向评价仍低于年级平均，建议查看记录是否充分、是否集中于少数学生，以及正向行为是否确有减少',
+    supplement: '正向评价仍低于年级平均，可检查记录是否充分、是否集中于少数学生',
 });
 assertTwoPartAnalysis(recordImprovement, '评价记录改善场景');
+
+assert.deepEqual(getRecordDistributionComparisonRows({
+    positive: 375,
+    negative: 72,
+    previousPositive: 265,
+    previousNegative: 84,
+    gradeAveragePositive: 396,
+    gradeAverageNegative: 87,
+}), [
+    {
+        key: 'positive',
+        label: '正向事件',
+        tone: 'positive',
+        current: 375,
+        previous: 265,
+        gradeAverage: 396,
+    },
+    {
+        key: 'negative',
+        label: '负向事件',
+        tone: 'negative',
+        current: 72,
+        previous: 84,
+        gradeAverage: 87,
+    },
+], '评价记录对比详情应保留本周期、上周期和年级平均原始值');
+
+assert.deepEqual(getRecordDistributionOverview({ positive: 375, negative: 72 }), {
+    positivePercentage: 84,
+    negativePercentage: 16,
+}, '评价记录默认图形应表达正负事件占比');
+
+assert.deepEqual(getRecordDistributionOverview({ positive: 0, negative: 0 }), {
+    positivePercentage: 0,
+    negativePercentage: 0,
+}, '无记录时正负事件占比均应为0');
 
 const recordDecline = getRecordDistributionAnalysis({
     positive: 80,
@@ -41,7 +79,7 @@ const recordDecline = getRecordDistributionAnalysis({
 
 assert.deepEqual(recordDecline, {
     summary: '班级评价较上周期回落',
-    supplement: '正向评价低于年级平均，负向事件则高于年级平均，建议先看看记录是否充分，再结合具体事件判断原因',
+    supplement: '正向偏低且负向偏高，可先检查记录是否充分，再结合具体事件判断原因',
 });
 assertTwoPartAnalysis(recordDecline, '评价记录回落场景');
 
@@ -56,7 +94,7 @@ const recordMixed = getRecordDistributionAnalysis({
 
 assert.deepEqual(recordMixed, {
     summary: '正向和负向事件的变化不一致，暂时不判断整体趋势',
-    supplement: '整体与年级平均持平，可以继续看看后续有没有变化',
+    supplement: '整体与年级平均持平，可继续观察后续变化',
 });
 assertTwoPartAnalysis(recordMixed, '评价记录变化不一致场景');
 

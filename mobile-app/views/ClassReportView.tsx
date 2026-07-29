@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Quote, Triangle } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, ChevronUp, Quote, Triangle } from 'lucide-react';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import RecordDistributionComparison, { RecordDistributionDetails } from '../components/report/RecordDistributionComparison';
 import {
     TeacherReportBarChart,
     TeacherReportDonutChart,
@@ -11,6 +12,8 @@ import {
     getEducationEventAnalysis,
     getEducationScoreAnalysis,
     getRecordDistributionAnalysis,
+    getRecordDistributionComparisonRows,
+    getRecordDistributionOverview,
     type ClassReportChartAnalysis,
 } from '../domain/classReportChartSummary';
 import {
@@ -74,18 +77,25 @@ const reportSourceOptions: ReportSourceOption[] = [
 ];
 
 const cardClass = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]';
+const inactiveConditionFilterClass = 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]';
+const customDateInputClass = 'h-11 min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-2 text-[var(--tm-font-size-meta)] text-[var(--tm-text-primary)] outline-none transition-colors focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
+
 interface ReportSectionProps {
     id: string;
     title: string;
     children: React.ReactNode;
     className?: string;
+    action?: React.ReactNode;
 }
 
-const ReportSection = ({ id, title, children, className = 'p-4' }: ReportSectionProps) => (
+const ReportSection = ({ id, title, children, className = 'p-4', action }: ReportSectionProps) => (
     <section aria-labelledby={id} className={`${cardClass} ${className}`}>
-        <h2 id={id} className="mb-3 text-[var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">
-            {title}
-        </h2>
+        <div className="mb-3 flex min-h-6 items-center justify-between gap-3">
+            <h2 id={id} className="text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">
+                {title}
+            </h2>
+            {action}
+        </div>
         {children}
     </section>
 );
@@ -93,7 +103,7 @@ const ReportSection = ({ id, title, children, className = 'p-4' }: ReportSection
 const ChartAnalysis = ({ summary, supplement }: ClassReportChartAnalysis) => (
     <div
         role="note"
-        aria-label="图表解析"
+        aria-label="数据解析"
         className="relative mt-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-3"
     >
         <Triangle
@@ -142,23 +152,27 @@ const CoverageSortControls = ({
                 type="button"
                 aria-pressed={sortKey === item.key}
                 onClick={() => onSortKeyChange(item.key)}
-                className={`h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control)] px-2 text-[var(--tm-font-size-compact)] font-semibold shadow-[var(--tm-shadow-control)] transition duration-200 ${
-                    sortKey === item.key
-                        ? 'bg-[var(--tm-brand-primary)] text-white active:bg-[var(--tm-brand-primary-pressed)]'
-                        : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]'
-                }`}
+                className="flex h-[var(--tm-size-touch)] min-w-0 items-center justify-center"
             >
-                {item.label}
+                <span className={`flex h-8 w-full items-center justify-center rounded-[8px] border px-2 text-[var(--tm-font-size-compact)] font-semibold transition-colors duration-200 ${
+                    sortKey === item.key
+                        ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]'
+                        : inactiveConditionFilterClass
+                }`}>
+                    {item.label}
+                </span>
             </button>
         ))}
         <button
             type="button"
             onClick={onDirectionChange}
             aria-label={direction === 'asc' ? '当前从少到多，点击切换为从多到少' : '当前从多到少，点击切换为从少到多'}
-            className="flex h-[var(--tm-size-touch)] min-w-[76px] items-center justify-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-2 text-[var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)] transition active:bg-[var(--tm-bg-surface-soft)]"
+            className="flex h-[var(--tm-size-touch)] min-w-[76px] items-center justify-center"
         >
-            {direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-            {direction === 'asc' ? '少到多' : '多到少'}
+            <span className={`flex h-8 w-full items-center justify-center gap-1 rounded-[8px] border px-2 text-[var(--tm-font-size-meta)] font-semibold transition-colors ${inactiveConditionFilterClass}`}>
+                {direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                {direction === 'asc' ? '少到多' : '多到少'}
+            </span>
         </button>
     </div>
 );
@@ -221,6 +235,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     const [coverageSortKey, setCoverageSortKey] = useState<StudentCoverageSortKey>('evaluationCount');
     const [coverageSortDirection, setCoverageSortDirection] = useState<StudentCoverageSortDirection>('asc');
     const [showAllCoverage, setShowAllCoverage] = useState(false);
+    const [showRecordDistributionDetails, setShowRecordDistributionDetails] = useState(false);
 
     const totalStudents = students.length || classInfo.studentCount;
     const activeReportSource = reportSourceOptions.find(source => source.key === reportSourceKey) ?? reportSourceOptions[0];
@@ -279,24 +294,19 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         };
     }, [activeReportSource, customRange.end, customRange.start, students, timeRange, totalStudents]);
 
-    const recordDistributionSeries = useMemo<TeacherReportBarSeries[]>(() => [
-        {
-            name: '本周期',
-            values: [reportData.positiveRecords, reportData.negativeRecords],
-            color: 'positive',
-        },
-        {
-            name: '上周期',
-            values: [reportData.previousPositiveRecords, reportData.previousNegativeRecords],
-            color: 'positive',
-            muted: true,
-        },
-        {
-            name: '年级平均',
-            values: [reportData.gradeAveragePositiveRecords, reportData.gradeAverageNegativeRecords],
-            color: 'peer',
-        },
-    ], [reportData]);
+    const recordDistributionRows = useMemo(() => getRecordDistributionComparisonRows({
+        positive: reportData.positiveRecords,
+        negative: reportData.negativeRecords,
+        previousPositive: reportData.previousPositiveRecords,
+        previousNegative: reportData.previousNegativeRecords,
+        gradeAveragePositive: reportData.gradeAveragePositiveRecords,
+        gradeAverageNegative: reportData.gradeAverageNegativeRecords,
+    }), [reportData]);
+
+    const recordDistributionOverview = useMemo(() => getRecordDistributionOverview({
+        positive: reportData.positiveRecords,
+        negative: reportData.negativeRecords,
+    }), [reportData.negativeRecords, reportData.positiveRecords]);
 
     const educationScoreSeries = useMemo<TeacherReportBarSeries[]>(() => [
         { name: '加分', values: reportData.addScores, color: 'positive' },
@@ -385,8 +395,8 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
 
     return (
         <div className="min-h-full bg-transparent pb-8 text-[var(--tm-text-primary)]">
-            <header className="border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] pb-3 backdrop-blur-xl">
-                <div className="overflow-x-auto border-b border-[var(--tm-border-subtle)] no-scrollbar" role="tablist" aria-label="报告数据来源">
+            <header className="border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)]">
+                <div className="overflow-x-auto border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] no-scrollbar" role="tablist" aria-label="报告数据来源">
                     <div className="flex min-w-max px-2">
                         {reportSourceOptions.map(item => (
                             <button
@@ -400,7 +410,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                     setReportSourceKey(item.key);
                                     event.currentTarget.scrollIntoView({ block: 'nearest', inline: 'center' });
                                 }}
-                                className={`relative h-[var(--tm-size-touch)] min-w-[88px] whitespace-nowrap px-4 text-[var(--tm-font-size-compact)] font-medium transition-colors duration-200 ${
+                                className={`relative h-[var(--tm-size-touch)] min-w-[84px] whitespace-nowrap px-3 text-[length:var(--tm-font-size-compact)] font-medium transition-colors duration-200 ${
                                     reportSourceKey === item.key
                                         ? '!text-[var(--tm-brand-primary)]'
                                         : 'text-[var(--tm-text-secondary)]'
@@ -418,32 +428,36 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     </div>
                 </div>
 
-                <div className="mt-3 flex gap-2 overflow-x-auto px-5 py-1 no-scrollbar" aria-label="报告时间范围">
+                <div className="mx-4 grid h-11 grid-cols-5 bg-[var(--tm-bg-surface)]" aria-label="报告时间范围">
                     {timeRangeTabs.map(item => (
                         <button
                             key={item.key}
                             type="button"
                             aria-pressed={timeRange === item.key}
                             onClick={() => setTimeRange(item.key)}
-                            className={`h-[var(--tm-size-touch)] min-w-[64px] flex-1 whitespace-nowrap rounded-[var(--tm-radius-control)] px-2 text-[var(--tm-font-size-meta)] font-semibold shadow-[var(--tm-shadow-control)] transition duration-200 ${
-                                timeRange === item.key
-                                    ? 'bg-[var(--tm-brand-primary)] text-white active:bg-[var(--tm-brand-primary-pressed)]'
-                                    : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]'
-                            }`}
+                            className="flex h-[var(--tm-size-touch)] min-w-0 items-center justify-center whitespace-nowrap px-1"
                         >
-                            {item.label}
+                            <span
+                                className={`flex h-8 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] px-1 text-[length:var(--tm-font-size-meta)] transition-all duration-200 ${
+                                    timeRange === item.key
+                                        ? 'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]'
+                                        : 'font-medium text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'
+                                }`}
+                            >
+                                {item.label}
+                            </span>
                         </button>
                     ))}
                 </div>
 
                 {timeRange === 'custom' && (
-                    <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-5">
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-[var(--tm-bg-surface)] px-5 pb-3 pt-1">
                         <input
                             type="date"
                             aria-label="开始日期"
                             value={customRange.start}
                             onChange={event => setCustomRange(current => ({ ...current, start: event.target.value }))}
-                            className="h-11 min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-2 text-[var(--tm-font-size-meta)] text-[var(--tm-text-primary)] outline-none focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                            className={customDateInputClass}
                         />
                         <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">至</span>
                         <input
@@ -451,7 +465,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                             aria-label="结束日期"
                             value={customRange.end}
                             onChange={event => setCustomRange(current => ({ ...current, end: event.target.value }))}
-                            className="h-11 min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-2 text-[var(--tm-font-size-meta)] text-[var(--tm-text-primary)] outline-none focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                            className={customDateInputClass}
                         />
                     </div>
                 )}
@@ -483,17 +497,23 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     </div>
                 </ReportSection>
 
-                <ReportSection id="record-distribution-title" title="评价记录分布" className="px-3 pb-4 pt-4">
-                    <TeacherReportBarChart
-                        ariaLabel="正向事件和负向事件在本周期、上周期和年级平均的分组对比"
-                        categories={['正向事件', '负向事件']}
-                        categoryColors={['positive', 'negative']}
-                        series={recordDistributionSeries}
-                        optionKey={`records-${reportKey}`}
-                        className="h-52"
-                        showValueAxis={false}
-                        valueLabelSuffix="条"
-                    />
+                <ReportSection
+                    id="record-distribution-title"
+                    title="评价记录分布"
+                    className="px-3 pb-4 pt-4"
+                    action={(
+                        <button
+                            type="button"
+                            onClick={() => setShowRecordDistributionDetails(true)}
+                            className="-my-2 flex min-h-[var(--tm-size-touch)] items-center gap-0.5 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-brand-primary)] transition active:text-[var(--tm-brand-primary-pressed)]"
+                            aria-label="查看评价记录对比详情"
+                        >
+                            对比详情
+                            <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                        </button>
+                    )}
+                >
+                    <RecordDistributionComparison overview={recordDistributionOverview} />
                     <ChartAnalysis {...recordDistributionAnalysis} />
                 </ReportSection>
 
@@ -524,7 +544,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
 
                 <ReportSection id="ranking-title" title="排行榜" className="overflow-hidden p-3">
                     <div>
-                        <div className="mb-3 grid grid-cols-2 gap-2 py-1" aria-label="排行榜类型">
+                        <div className="mb-3 grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="排行榜类型">
                             {([
                                 { key: 'net' as const, label: '净得分排行' },
                                 { key: 'progress' as const, label: '进步排行' },
@@ -532,15 +552,18 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                 <button
                                     key={item.key}
                                     type="button"
-                                    aria-pressed={rankingMode === item.key}
+                                    role="tab"
+                                    aria-selected={rankingMode === item.key}
                                     onClick={() => setRankingMode(item.key)}
-                                    className={`h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control)] text-[var(--tm-font-size-compact)] font-semibold shadow-[var(--tm-shadow-control)] transition duration-200 ${
-                                        rankingMode === item.key
-                                            ? 'bg-[var(--tm-brand-primary)] text-white active:bg-[var(--tm-brand-primary-pressed)]'
-                                            : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]'
-                                    }`}
+                                    className="flex h-[var(--tm-size-touch)] items-center p-1 text-[var(--tm-font-size-compact)] font-semibold"
                                 >
-                                    {item.label}
+                                    <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all duration-200 ${
+                                        rankingMode === item.key
+                                            ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]'
+                                            : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'
+                                    }`}>
+                                        {item.label}
+                                    </span>
                                 </button>
                             ))}
                         </div>
@@ -583,13 +606,15 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                     type="button"
                                     aria-pressed={activeEducation === item.key}
                                     onClick={() => setActiveEducation(item.key)}
-                                    className={`h-[var(--tm-size-touch)] min-w-[56px] rounded-[var(--tm-radius-control)] px-3 text-[var(--tm-font-size-compact)] font-semibold shadow-[var(--tm-shadow-control)] transition duration-200 ${
-                                        activeEducation === item.key
-                                            ? 'bg-[var(--tm-brand-primary)] text-white active:bg-[var(--tm-brand-primary-pressed)]'
-                                            : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]'
-                                    }`}
+                                    className="flex h-[var(--tm-size-touch)] min-w-[60px] shrink-0 items-center justify-center"
                                 >
-                                    {item.label}
+                                    <span className={`flex h-8 w-full items-center justify-center rounded-[8px] border px-3 text-[var(--tm-font-size-compact)] font-semibold transition-colors duration-200 ${
+                                        activeEducation === item.key
+                                            ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]'
+                                            : inactiveConditionFilterClass
+                                    }`}>
+                                        {item.label}
+                                    </span>
                                 </button>
                             ))}
                         </div>
@@ -671,6 +696,14 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     )}
                 </ReportSection>
             </div>
+
+            <MobileBottomSheet
+                open={showRecordDistributionDetails}
+                title="评价记录对比"
+                onClose={() => setShowRecordDistributionDetails(false)}
+            >
+                <RecordDistributionDetails rows={recordDistributionRows} />
+            </MobileBottomSheet>
 
             <MobileBottomSheet
                 open={showAllCoverage}

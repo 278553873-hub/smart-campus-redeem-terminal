@@ -1,5 +1,6 @@
 import { Student, ScoreItem, SubjectGrade, GrowthReportItem, DetailedReportSection, ClassInfo, CampusCoinDetail, GroupPlan } from './types';
 import { ASSETS } from './assets/images';
+import { getSystemStudentAvatar } from './assets/studentAvatarCatalog';
 
 const GENERATE_MOCK_CLASSES = (): ClassInfo[] => {
   const grades = [
@@ -66,9 +67,7 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
 
   return Array.from({ length: count }).map((_, i) => {
     const nameObj = BASE_REALISTIC_NAMES[(seed + i) % BASE_REALISTIC_NAMES.length];
-
-    // Roughly 1 in 5 students lack a face setup (meaning they use the generic default avatar)
-    const isMissingFace = (i % 6) === 2;
+    const gender = nameObj.g as Student['gender'];
 
     return {
       id: `${cls.id.replace('c_', '').replace('_', '')}${(i + 1).toString().padStart(2, '0')}`,
@@ -83,14 +82,10 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
         ]
         : [{ phone: '13800001001', relation: '家长' }],
       name: nameObj.n,
-      gender: nameObj.g as 'male' | 'female',
+      gender,
       grade: cls.gradeLevel,
       class: cls.name,
-      avatar: isMissingFace
-        ? (nameObj.g === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.STUDENT_GIRL_DEFAULT)
-        : (nameObj.g === 'male'
-          ? ASSETS.AVATAR.BOYS[(seed + i) % ASSETS.AVATAR.BOYS.length]
-          : ASSETS.AVATAR.GIRLS[(seed + i) % ASSETS.AVATAR.GIRLS.length]),
+      avatar: getSystemStudentAvatar(gender, seed * 31 + i * 17),
     };
   });
 };

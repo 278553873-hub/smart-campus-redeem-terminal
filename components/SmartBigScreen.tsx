@@ -26,6 +26,7 @@ import {
   RotateCcw,
   CheckSquare
 } from 'lucide-react';
+import { getSystemStudentAvatar } from '../mobile-app/assets/studentAvatarCatalog';
 
 declare global { interface Window { confetti?: (options: Record<string, unknown>) => void; } }
 
@@ -34,6 +35,7 @@ interface StudentData {
   name: string;
   studentNo: string;
   gender: 'male' | 'female';
+  avatar: string;
   initial: string;
   surname: string;
 }
@@ -173,25 +175,20 @@ const GENERATE_MOCK_DATA = (className: string): StudentData[] => {
     const fullName = `${s}${n}`;
     if (!usedNames.has(fullName)) {
       usedNames.add(fullName);
+      const studentIndex = result.length;
+      const gender = Math.random() > 0.5 ? 'male' : 'female';
       result.push({
-        id: `${className}-${result.length + 1}`,
+        id: `${className}-${studentIndex + 1}`,
         name: fullName,
-        studentNo: `202501${(result.length + 1).toString().padStart(2, '0')}`,
-        gender: Math.random() > 0.5 ? 'male' : 'female',
+        studentNo: `202501${(studentIndex + 1).toString().padStart(2, '0')}`,
+        gender,
+        avatar: getSystemStudentAvatar(gender, studentIndex * 17),
         initial: INITIALS_MAP[s] || '?',
         surname: s
       });
     }
   }
   return result;
-};
-
-const getNameGradient = (name: string) => {
-  const surname = name.slice(0, 1);
-  const gradients = ['from-[#4c8bf5] to-[#3b7ae0]', 'from-[#f54c9b] to-[#e03b8a]', 'from-[#2ccb72] to-[#25b364]', 'from-[#f5a623] to-[#e08e0b]', 'from-[#9b4cf5] to-[#863be0]', 'from-[#4caaf5] to-[#3b93e0]'];
-  let hash = 0;
-  for (let i = 0; i < surname.length; i++) hash = surname.charCodeAt(i) + ((hash << 5) - hash);
-  return gradients[Math.abs(hash) % gradients.length];
 };
 
 const shuffleItems = <T,>(items: T[]): T[] => {
@@ -386,9 +383,11 @@ const StudentCard: React.FC<{
           <Check size={14} strokeWidth={3} />
         </div>
       )}
-      <div className={`w-16 h-16 rounded-[1.25rem] flex items-center justify-center text-white text-2xl font-black shadow-lg bg-gradient-to-br shrink-0 ${getNameGradient(student.name)}`}>
-        {student.name.slice(0, 1) || '?'}
-      </div>
+      <img
+        src={student.avatar}
+        alt={`${student.name}头像`}
+        className="h-16 w-16 shrink-0 rounded-[1.25rem] object-cover shadow-lg"
+      />
       <div className="text-center w-full flex flex-col items-center gap-2">
         <h3 className={`text-[17px] font-bold text-slate-800 tracking-tight leading-none truncate w-full ${isRolling ? 'opacity-80' : ''}`}>{student.name}</h3>
         <div className="flex items-center justify-center gap-2 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50 w-full max-w-[120px]">
@@ -1568,10 +1567,12 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br from-blue-500 to-blue-700">
                   <Users size={20} strokeWidth={2.5} />
                 </div>
-              ) : viewMode === 'student' || evalStudent ? (
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br ${getNameGradient(evalStudent?.name || '')}`}>
-                  {evalStudent?.name.slice(0, 1) || '?'}
-                </div>
+              ) : (viewMode === 'student' || evalStudent) && evalStudent ? (
+                <img
+                  src={evalStudent.avatar}
+                  alt={`${evalStudent.name}头像`}
+                  className="h-11 w-11 shrink-0 rounded-xl object-cover shadow-sm"
+                />
               ) : (
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br from-indigo-500 to-purple-600">
                   <Users size={20} strokeWidth={2.5} />
