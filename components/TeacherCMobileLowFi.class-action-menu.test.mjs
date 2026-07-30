@@ -25,7 +25,8 @@ requireText("if (item.key === 'inviteTeacher') return activeClassPermissions.can
 requireText("if (item.key === 'inviteParent') return activeClassPermissions.canInviteParent;", '普通老师不应看到邀请家长。');
 requireText("if (item.key === 'leftStudents') return activeClassPermissions.canManageLeftStudents;", '普通老师不应看到离校学生管理。');
 requireText("if (!permissions.canManageLeftStudents) return;", '离校学生管理操作触发时应再次校验角色权限。');
-requireText("const isManagerPreview = page === 'classListPersonalManagerActions' || page === 'classListSchoolManagerActions';", '07D/07F 应使用班主任和副班主任菜单预览状态。');
+requireText("const isOrdinaryTeacherPreview = next === 'classActionTeacherPreview';", '07C 应使用普通老师菜单预览状态，07D 使用班主任和副班主任菜单预览状态。');
+requireText('if (isClassActionPreviewPage(page)) {', '共享操作弹层应使用独立预览画布，不复用版本化班级列表。');
 if (source.includes("title: '校园币兑换'")) {
   failures.push('07 班级列表更多操作不应继续出现校园币兑换分组。');
 }

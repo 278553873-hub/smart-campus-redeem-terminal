@@ -20,18 +20,21 @@ requireSource("type ClassRole = 'headTeacher' | 'deputyHeadTeacher' | 'teacher';
 requireSource('const classRolePermissions: Record<ClassRole', '三角色权限必须集中维护，不能散落在页面判断中。');
 requireSource("| 'classDetailDeputy'", 'C 端原型应包含 08D 副班主任班级详情。');
 requireSource("| 'teacherListDeputy'", 'C 端原型应包含 09C 副班主任老师列表。');
-requireSource("| 'classListPersonalTeacherActions'", 'C 端原型应包含 07C 个人版普通老师更多操作。');
-requireSource("| 'classListPersonalManagerActions'", 'C 端原型应包含 07D 个人版班主任/副班主任更多操作。');
-requireSource("| 'classListSchoolTeacherActions'", 'C 端原型应包含 07E 学校版普通老师更多操作。');
-requireSource("| 'classListSchoolManagerActions'", 'C 端原型应包含 07F 学校版班主任/副班主任更多操作。');
-requireSource("if (pageKey === 'classListPersonalTeacherActions') return '07C';", '07C 应对应个人版普通老师更多操作。');
-requireSource("if (pageKey === 'classListPersonalManagerActions') return '07D';", '07D 应对应个人版班主任/副班主任更多操作。');
-requireSource("if (pageKey === 'classListSchoolTeacherActions') return '07E';", '07E 应对应学校版普通老师更多操作。');
-requireSource("if (pageKey === 'classListSchoolManagerActions') return '07F';", '07F 应对应学校版班主任/副班主任更多操作。');
-requireSource("{ text: '普通老师', pages: ['classListPersonalTeacherActions'] }", '07A 应分支到 07C 普通老师菜单。');
-requireSource("{ text: '班主任&副班主任', pages: ['classListPersonalManagerActions'] }", '07A 应分支到 07D 班主任/副班主任菜单。');
-requireSource("{ text: '普通老师', pages: ['classListSchoolTeacherActions'] }", '07B 应分支到 07E 普通老师菜单。');
-requireSource("{ text: '班主任&副班主任', pages: ['classListSchoolManagerActions'] }", '07B 应分支到 07F 班主任/副班主任菜单。');
+requireSource("| 'classActionTeacherPreview'", 'C 端原型应包含 07C 普通老师共享操作弹层。');
+requireSource("| 'classActionManagerPreview'", 'C 端原型应包含 07D 班主任/副班主任共享操作弹层。');
+requireSource("if (pageKey === 'classActionTeacherPreview') return '07C';", '07C 应对应普通老师共享操作弹层。');
+requireSource("if (pageKey === 'classActionManagerPreview') return '07D';", '07D 应对应班主任/副班主任共享操作弹层。');
+requireSource("{ title: '班级操作', pages: ['classActionTeacherPreview', 'classActionManagerPreview'], parallel: true }", '导航地图应只展示一组共用班级操作弹层。');
+if (
+  source.includes('classListPersonalTeacherActions')
+  || source.includes('classListPersonalManagerActions')
+  || source.includes('classListSchoolTeacherActions')
+  || source.includes('classListSchoolManagerActions')
+  || source.includes("return '07E'")
+  || source.includes("return '07F'")
+) {
+  failures.push('个人版和学校版相同的班级操作弹层不应继续拆成 07C/07D/07E/07F 四页。');
+}
 requireSource("if (pageKey === 'classDetailDeputy') return '08D';", '08D 应对应副班主任班级详情。');
 requireSource("if (pageKey === 'teacherListDeputy') return '09C';", '09C 应对应副班主任老师列表。');
 requireSource("{ text: '副班主任', pages: ['classDetailDeputy'] }", '班级流程必须单独展示副班主任详情分支。');
@@ -99,10 +102,10 @@ requireSource("if (item.key === 'leftStudents') return activeClassPermissions.ca
 requireSource("if (!permissions.canManageLeftStudents) return;", '离校学生管理操作必须再次校验角色权限。');
 requireSource("onClick={() => runClassAction('classInfo')}", '所有角色应从顶部班级名称行进入班级详情。');
 requireSource("if (key === 'classInfo')", '班级详情应统一进入按角色分流的班级详情页。');
-requireSource("const classActionPreviewPages: PageKey[] = [", '07C/07D/07E/07F 应使用统一的菜单预览页面集合。');
-requireSource("'classListPersonalManagerActions'", '菜单预览集合应包含 07D。');
-requireSource("'classListSchoolManagerActions'", '菜单预览集合应包含 07F。');
-requireSource("setActiveClassAction({ name: previewClass.name, code: previewClass.code });", '进入四个角色菜单页面时应默认展开班级更多操作。');
+requireSource('if (isClassActionPreviewPage(next)) {', '07C/07D 应使用统一的共享菜单预览判断。');
+requireSource("const isOrdinaryTeacherPreview = next === 'classActionTeacherPreview';", '07C 应使用普通老师权限预览。');
+requireSource("setActiveClassAction({ name: previewClass.name, code: previewClass.code });", '进入两个共享角色菜单页面时应默认展开班级更多操作。');
+requireSource('return <div className="h-full w-full bg-gray-50" aria-hidden="true" />;', '共享操作弹层预览应隐藏班级列表背景。');
 requireSource('teacher.isHeadTeacher && <span', '老师卡片应展示班主任标签。');
 requireSource('teacher.isDeputyHeadTeacher && <span', '老师卡片应展示副班主任标签。');
 requireSource('teacher.subjects.map((subject)', '老师卡片应展示多个任教学科。');
@@ -116,10 +119,12 @@ requirePrd('| 设置或取消副班主任 | 可以 | 不可以 | 不可以 |', '
 requirePrd('普通老师不展示编辑班级、邀请老师、邀请家长和离校学生管理入口', 'PRD 应要求普通老师无权限入口直接隐藏。');
 requirePrd('普通老师的班级卡片更多操作不展示批量修改学生、更新人脸数据、设置兑换密码、邀请老师加入、邀请家长加入和离校学生管理', 'PRD 应明确普通老师的班级卡片菜单差异。');
 requirePrd('所有角色都可点击更多操作弹层顶部班级名称行进入“班级详情”', 'PRD 应明确统一班级详情入口。');
-requirePrd('07C 普通老师更多操作（个人版）', 'PRD 应包含 07C 个人版普通老师菜单状态。');
-requirePrd('07D 班主任与副班主任更多操作（个人版）', 'PRD 应包含 07D 个人版管理角色菜单状态。');
-requirePrd('07E 普通老师更多操作（学校版）', 'PRD 应包含 07E 学校版普通老师菜单状态。');
-requirePrd('07F 班主任与副班主任更多操作（学校版）', 'PRD 应包含 07F 学校版管理角色菜单状态。');
+requirePrd('07C 普通老师更多操作', 'PRD 应包含 07C 普通老师共享菜单状态。');
+requirePrd('07D 班主任与副班主任更多操作', 'PRD 应包含 07D 管理角色共享菜单状态。');
+requirePrd('不渲染个人版或学校版班级列表背景', 'PRD 应明确共享弹层预览隐藏版本化背景页面。');
+if (prd.includes('07E 普通老师更多操作') || prd.includes('07F 班主任与副班主任更多操作')) {
+  failures.push('PRD 不应继续保留 07E/07F 重复菜单状态。');
+}
 requirePrd('09C 老师列表（副班主任）', 'PRD 应包含 09C 副班主任老师列表规则。');
 
 if (failures.length) throw new Error(failures.join('\n'));
