@@ -35,6 +35,8 @@ for (const required of [
   "'--tm-audience-student-primary'",
   "'--tm-role-headteacher-primary'",
   "'--tm-role-principal-primary'",
+  "'--tm-report-source-indicator-width'",
+  "'--tm-report-date-option-height-pinned'",
 ]) {
   assert.match(canonical, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 }

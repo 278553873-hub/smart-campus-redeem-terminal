@@ -48,6 +48,13 @@ if (studentAddBlock.includes('学生{index + 1}')) {
 if (fieldGroupIndex < 0 || clearButtonIndex < 0 || !(fieldGroupIndex < clearButtonIndex)) {
   failures.push('清除按钮应位于字段组之后的右侧留白区。');
 }
+if (!studentAddBlock.includes('<ScreenHeader title="添加学生" onBack={returnToTeacherHome} backLabel="返回首页" />')) {
+  failures.push('12 添加学生页顶部返回应直接回到首页。');
+}
+if (!studentAddBlock.includes('onClick={returnToTeacherHome}') || !studentAddBlock.includes('稍后添加')) {
+  failures.push('12 添加学生页底部应提供返回首页的“稍后添加”次按钮。');
+}
+requireText('底部提供“稍后添加”次按钮，点击后不保存当前未完成的学生行，返回首页并保持“确认学生”任务未完成', '页面规则应说明稍后添加不会保存未完成学生，并保持首页任务未完成。');
 
 if (failures.length) throw new Error(failures.join('\n'));
 console.log('TeacherCMobileLowFi student add assertions passed');

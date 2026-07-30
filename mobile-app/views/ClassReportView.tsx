@@ -1,5 +1,14 @@
-import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, ChevronUp, Quote, Triangle } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+    ArrowDownNarrowWide,
+    ArrowUpDown,
+    ArrowUpNarrowWide,
+    ChevronDown,
+    ChevronRight,
+    ChevronUp,
+    Quote,
+    Triangle,
+} from 'lucide-react';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import RecordDistributionComparison, { RecordDistributionDetails } from '../components/report/RecordDistributionComparison';
 import {
@@ -84,13 +93,12 @@ interface ReportSectionProps {
     id: string;
     title: string;
     children: React.ReactNode;
-    className?: string;
     action?: React.ReactNode;
 }
 
-const ReportSection = ({ id, title, children, className = 'p-4', action }: ReportSectionProps) => (
-    <section aria-labelledby={id} className={`${cardClass} ${className}`}>
-        <div className="mb-3 flex min-h-6 items-center justify-between gap-3">
+const ReportSection = ({ id, title, children, action }: ReportSectionProps) => (
+    <section aria-labelledby={id} className={`${cardClass} p-[var(--tm-report-card-padding)]`}>
+        <div className="mb-[var(--tm-report-card-content-gap)] flex min-h-6 items-center justify-between gap-3">
             <h2 id={id} className="text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">
                 {title}
             </h2>
@@ -129,84 +137,108 @@ const ChartAnalysis = ({ summary, supplement }: ClassReportChartAnalysis) => (
     </div>
 );
 
-interface CoverageSortControlsProps {
-    sortKey: StudentCoverageSortKey;
-    direction: StudentCoverageSortDirection;
-    onSortKeyChange: (sortKey: StudentCoverageSortKey) => void;
-    onDirectionChange: () => void;
-}
-
-const CoverageSortControls = ({
-    sortKey,
-    direction,
-    onSortKeyChange,
-    onDirectionChange,
-}: CoverageSortControlsProps) => (
-    <div className="grid grid-cols-[1fr_1fr_auto] gap-2 py-1" aria-label="学生覆盖排序">
-        {([
-            { key: 'evaluationCount' as const, label: '评价次数' },
-            { key: 'teacherCount' as const, label: '评价老师' },
-        ]).map(item => (
-            <button
-                key={item.key}
-                type="button"
-                aria-pressed={sortKey === item.key}
-                onClick={() => onSortKeyChange(item.key)}
-                className="flex h-[var(--tm-size-touch)] min-w-0 items-center justify-center"
-            >
-                <span className={`flex h-8 w-full items-center justify-center rounded-[8px] border px-2 text-[var(--tm-font-size-compact)] font-semibold transition-colors duration-200 ${
-                    sortKey === item.key
-                        ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]'
-                        : inactiveConditionFilterClass
-                }`}>
-                    {item.label}
-                </span>
-            </button>
-        ))}
-        <button
-            type="button"
-            onClick={onDirectionChange}
-            aria-label={direction === 'asc' ? '当前从少到多，点击切换为从多到少' : '当前从多到少，点击切换为从少到多'}
-            className="flex h-[var(--tm-size-touch)] min-w-[76px] items-center justify-center"
-        >
-            <span className={`flex h-8 w-full items-center justify-center gap-1 rounded-[8px] border px-2 text-[var(--tm-font-size-meta)] font-semibold transition-colors ${inactiveConditionFilterClass}`}>
-                {direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-                {direction === 'asc' ? '少到多' : '多到少'}
-            </span>
-        </button>
-    </div>
-);
-
 interface StudentCoverageListProps {
     rows: StudentCoverageRow[];
+    sortKey: StudentCoverageSortKey;
+    direction: StudentCoverageSortDirection;
+    onSort: (sortKey: StudentCoverageSortKey) => void;
     onSelectStudent: (student: Student) => void;
 }
 
-const StudentCoverageList = ({ rows, onSelectStudent }: StudentCoverageListProps) => (
+const coverageSortColumns: { key: StudentCoverageSortKey; label: string }[] = [
+    { key: 'evaluationCount', label: '评价次数' },
+    { key: 'teacherCount', label: '评价老师数' },
+];
+
+const StudentCoverageList = ({
+    rows,
+    sortKey,
+    direction,
+    onSort,
+    onSelectStudent,
+}: StudentCoverageListProps) => (
     <div>
-        <div className="grid grid-cols-[minmax(0,1fr)_64px_64px] items-center gap-1 px-2 pb-1 pt-3 text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">
-            <span>学生</span>
-            <span className="text-center">评价次数</span>
-            <span className="text-center">评价老师</span>
+        <div
+            className="grid min-h-[var(--tm-size-touch)] grid-cols-[28px_minmax(0,1fr)_84px_84px] items-center overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-meta)]"
+            aria-label="学生覆盖排序"
+        >
+            <span className="text-center font-semibold text-[var(--tm-text-tertiary)]">#</span>
+            <span className="pl-1 font-semibold text-[var(--tm-text-primary)]">学生姓名</span>
+            {coverageSortColumns.map(column => {
+                const selected = sortKey === column.key;
+                const nextDirection = selected && direction === 'asc' ? '从多到少' : '从少到多';
+                return (
+                    <span
+                        key={column.key}
+                        role="columnheader"
+                        aria-sort={selected ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+                        className="h-full"
+                    >
+                        <button
+                            type="button"
+                            aria-pressed={selected}
+                            aria-label={selected
+                                ? `${column.label}，当前${direction === 'asc' ? '从少到多' : '从多到少'}，点击切换为${nextDirection}`
+                                : `按${column.label}从少到多排序`}
+                            onClick={() => onSort(column.key)}
+                            className={`flex h-full w-full items-center justify-center gap-1 px-1 font-medium transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] ${
+                                selected
+                                    ? 'text-[var(--tm-brand-primary)]'
+                                    : 'text-[var(--tm-text-secondary)]'
+                            }`}
+                        >
+                            <span className="whitespace-nowrap">{column.label}</span>
+                            {selected ? (
+                                direction === 'asc'
+                                    ? <ArrowUpNarrowWide aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                                    : <ArrowDownNarrowWide aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                            ) : (
+                                <ArrowUpDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-tertiary)]" />
+                            )}
+                        </button>
+                    </span>
+                );
+            })}
         </div>
         <ol>
-            {rows.map((row, index) => (
-                <li key={row.student.id} className="border-b border-[var(--tm-border-subtle)] last:border-0">
-                    <button
-                        type="button"
-                        onClick={() => onSelectStudent(row.student)}
-                        aria-label={`查看${row.student.name}，评价${row.evaluationCount}次，${row.teacherCount}位老师评价`}
-                        className="grid min-h-[var(--tm-size-touch)] w-full grid-cols-[minmax(0,1fr)_64px_64px] items-center gap-1 rounded-[8px] px-2 text-left transition active:bg-[var(--tm-bg-surface-soft)]"
-                    >
-                        <span className="grid min-w-0 grid-cols-[24px_minmax(0,1fr)] items-center gap-1">
-                            <span className="text-center text-[var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{index + 1}</span>
-                            <span className="truncate text-[var(--tm-font-size-body)] font-medium">{row.student.name}</span>
-                        </span>
-                        <span className="text-center text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{row.evaluationCount}次</span>
-                        <span className="text-center text-[var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">{row.teacherCount}位</span>
-                    </button>
-                </li>
-            ))}
+            {rows.map((row, index) => {
+                const uncovered = row.evaluationCount === 0;
+                const evaluationSelected = sortKey === 'evaluationCount';
+                const teacherSelected = sortKey === 'teacherCount';
+                return (
+                    <li key={row.student.id} className="border-b border-[var(--tm-border-subtle)] last:border-0">
+                        <button
+                            type="button"
+                            onClick={() => onSelectStudent(row.student)}
+                            aria-label={`查看${row.student.name}，评价${row.evaluationCount}次，${row.teacherCount}位老师评价`}
+                            className="grid min-h-[var(--tm-size-touch)] w-full grid-cols-[28px_minmax(0,1fr)_84px_84px] items-center rounded-[6px] px-1 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+                        >
+                            <span className="text-center text-[length:var(--tm-font-size-meta)] tabular-nums text-[var(--tm-text-tertiary)]">{index + 1}</span>
+                            <span className="truncate pl-1 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{row.student.name}</span>
+                            <span
+                                className={`mx-auto flex h-7 w-16 items-center justify-center rounded-[8px] text-[length:var(--tm-font-size-compact)] tabular-nums ${
+                                    uncovered
+                                        ? 'bg-[var(--tm-chart-negative-soft)] font-semibold text-[var(--tm-chart-negative-text)]'
+                                        : evaluationSelected
+                                            ? 'bg-[var(--tm-bg-surface-soft)] font-semibold text-[var(--tm-text-primary)]'
+                                            : 'font-normal text-[var(--tm-text-secondary)]'
+                                }`}
+                            >
+                                {row.evaluationCount}次
+                            </span>
+                            <span
+                                className={`mx-auto flex h-7 w-16 items-center justify-center rounded-[8px] text-[length:var(--tm-font-size-compact)] tabular-nums ${
+                                    teacherSelected
+                                        ? 'bg-[var(--tm-bg-surface-soft)] font-semibold text-[var(--tm-text-primary)]'
+                                        : 'font-normal text-[var(--tm-text-secondary)]'
+                                }`}
+                            >
+                                {row.teacherCount}位
+                            </span>
+                        </button>
+                    </li>
+                );
+            })}
         </ol>
     </div>
 );
@@ -236,6 +268,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     const [coverageSortDirection, setCoverageSortDirection] = useState<StudentCoverageSortDirection>('asc');
     const [showAllCoverage, setShowAllCoverage] = useState(false);
     const [showRecordDistributionDetails, setShowRecordDistributionDetails] = useState(false);
+    const [isFilterPinned, setIsFilterPinned] = useState(false);
 
     const totalStudents = students.length || classInfo.studentCount;
     const activeReportSource = reportSourceOptions.find(source => source.key === reportSourceKey) ?? reportSourceOptions[0];
@@ -389,89 +422,150 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     ), [coverageSortDirection, coverageSortKey, studentCoverageRows]);
     const visibleCoverageRows = sortedCoverageRows.slice(0, 10);
     const coveredStudentCount = studentCoverageRows.filter(row => row.evaluationCount > 0).length;
-    const toggleCoverageSortDirection = () => setCoverageSortDirection(current => current === 'asc' ? 'desc' : 'asc');
+    const handleCoverageSort = (nextSortKey: StudentCoverageSortKey) => {
+        if (nextSortKey === coverageSortKey) {
+            setCoverageSortDirection(current => current === 'asc' ? 'desc' : 'asc');
+            return;
+        }
+        setCoverageSortKey(nextSortKey);
+        setCoverageSortDirection('asc');
+    };
+    const handleReportScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+        const nextPinned = event.currentTarget.scrollTop > 12;
+        setIsFilterPinned(current => (current === nextPinned ? current : nextPinned));
+    }, []);
 
     const reportKey = `${reportSourceKey}-${timeRange}-${customRange.start}-${customRange.end}`;
 
     return (
-        <div className="min-h-full bg-transparent pb-8 text-[var(--tm-text-primary)]">
-            <header className="border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)]">
-                <div className="overflow-x-auto border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] no-scrollbar" role="tablist" aria-label="报告数据来源">
-                    <div className="flex min-w-max px-2">
-                        {reportSourceOptions.map(item => (
-                            <button
-                                key={item.key}
-                                type="button"
-                                role="tab"
-                                aria-selected={reportSourceKey === item.key}
-                                aria-controls="class-report-content"
-                                aria-label={item.key === 'mine' ? `我的记录，${currentTeacherName}` : item.label}
-                                onClick={event => {
-                                    setReportSourceKey(item.key);
-                                    event.currentTarget.scrollIntoView({ block: 'nearest', inline: 'center' });
-                                }}
-                                className={`relative h-[var(--tm-size-touch)] min-w-[84px] whitespace-nowrap px-3 text-[length:var(--tm-font-size-compact)] font-medium transition-colors duration-200 ${
-                                    reportSourceKey === item.key
-                                        ? '!text-[var(--tm-brand-primary)]'
-                                        : 'text-[var(--tm-text-secondary)]'
-                                }`}
-                            >
-                                {item.label}
-                                <span
-                                    aria-hidden="true"
-                                    className={`absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[var(--tm-brand-primary)] transition-opacity duration-200 ${
-                                        reportSourceKey === item.key ? 'opacity-100' : 'opacity-0'
-                                    }`}
+        <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent text-[var(--tm-text-primary)]">
+            <div className="min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar" onScroll={handleReportScroll}>
+                <header className={`sticky top-0 z-30 transition-all [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
+                    isFilterPinned
+                        ? 'border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] pb-[var(--tm-space-1)] shadow-[var(--tm-shadow-card)]'
+                        : 'bg-transparent'
+                }`}>
+                    <div
+                        className={`overflow-x-auto bg-[var(--tm-bg-surface)] no-scrollbar transition-all [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
+                            isFilterPinned
+                                ? 'py-0'
+                                : 'pb-[var(--tm-report-source-area-padding-bottom)] pt-[var(--tm-report-source-area-padding-top)] shadow-[var(--tm-shadow-control)]'
+                        }`}
+                        role="tablist"
+                        aria-label="报告数据来源"
+                    >
+                        <div className={`flex min-w-max transition-all [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
+                            isFilterPinned
+                                ? 'px-[var(--tm-report-source-list-inline-pinned)]'
+                                : 'px-[var(--tm-report-source-list-inline)]'
+                        }`}>
+                            {reportSourceOptions.map(item => {
+                                const selected = reportSourceKey === item.key;
+                                return (
+                                    <button
+                                        key={item.key}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={selected}
+                                        aria-controls="class-report-content"
+                                        aria-label={item.key === 'mine' ? `我的记录，${currentTeacherName}` : item.label}
+                                        onClick={event => {
+                                            setReportSourceKey(item.key);
+                                            const sourceScroller = event.currentTarget.parentElement?.parentElement;
+                                            if (sourceScroller) {
+                                                const centeredLeft = event.currentTarget.offsetLeft
+                                                    - (sourceScroller.clientWidth - event.currentTarget.offsetWidth) / 2;
+                                                sourceScroller.scrollTo({ left: Math.max(0, centeredLeft), behavior: 'smooth' });
+                                            }
+                                        }}
+                                        className={`relative flex h-[var(--tm-size-touch)] shrink-0 justify-center whitespace-nowrap transition-[width,padding,font-size,color] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
+                                            isFilterPinned
+                                                ? `w-[var(--tm-report-source-item-width-pinned)] items-center px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] ${selected ? 'font-semibold' : 'font-medium'}`
+                                                : `w-[var(--tm-report-source-item-width)] items-center px-[var(--tm-space-1)] ${selected ? 'text-[length:var(--tm-font-size-section-title)] font-bold' : 'text-[length:var(--tm-font-size-body)] font-medium'}`
+                                        } ${selected ? '!text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                    >
+                                        <span className={`relative inline-flex items-center ${
+                                            isFilterPinned
+                                                ? 'pb-[var(--tm-report-source-indicator-gap-pinned)]'
+                                                : 'h-[var(--tm-report-source-visual-height)] pb-[var(--tm-report-source-indicator-gap)]'
+                                        }`}>
+                                            {item.label}
+                                            <span
+                                                aria-hidden="true"
+                                                className={`absolute bottom-0 left-1/2 w-[var(--tm-report-source-indicator-width)] -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)] transition-[height,opacity] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
+                                                    isFilterPinned
+                                                        ? 'h-[var(--tm-report-source-indicator-height-pinned)]'
+                                                        : 'h-[var(--tm-report-source-indicator-height)]'
+                                                } ${selected ? 'opacity-100' : 'opacity-0'}`}
+                                            />
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className={`bg-[var(--tm-bg-surface)] transition-all [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
+                        isFilterPinned
+                            ? 'mx-[var(--tm-report-date-card-inline-pinned)] mt-[var(--tm-report-filter-gap-pinned)] rounded-[var(--tm-radius-control)] px-[var(--tm-report-date-card-padding)] shadow-[var(--tm-shadow-control)]'
+                            : 'mx-[var(--tm-report-page-inline)] mt-[var(--tm-report-filter-gap)] rounded-[var(--tm-radius-card)] p-[var(--tm-report-date-card-padding)] shadow-[var(--tm-shadow-card)]'
+                    }`}>
+                        <div className="grid h-[var(--tm-size-touch)] grid-cols-5" aria-label="报告时间范围">
+                            {timeRangeTabs.map(item => (
+                                <button
+                                    key={item.key}
+                                    type="button"
+                                    aria-pressed={timeRange === item.key}
+                                    onClick={() => setTimeRange(item.key)}
+                                    className="flex h-[var(--tm-size-touch)] min-w-0 items-center justify-center whitespace-nowrap px-[var(--tm-space-1)]"
+                                >
+                                    <span
+                                        className={`flex items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] px-[var(--tm-space-1)] transition-all [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
+                                            isFilterPinned
+                                                ? 'h-[var(--tm-report-date-option-height-pinned)] w-[var(--tm-report-date-option-width-pinned)] text-[length:var(--tm-font-size-meta)]'
+                                                : 'h-[var(--tm-report-date-option-height)] w-[var(--tm-report-date-option-width)] text-[length:var(--tm-font-size-compact)]'
+                                        } ${
+                                            timeRange === item.key
+                                                ? 'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]'
+                                                : 'font-medium text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'
+                                        }`}
+                                    >
+                                        {item.label}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {timeRange === 'custom' && (
+                            <div className={`grid grid-cols-[1fr_auto_1fr] items-center gap-[var(--tm-space-2)] transition-all [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
+                                isFilterPinned
+                                    ? 'px-[var(--tm-space-1)] pb-[var(--tm-space-1)] pt-[var(--tm-space-1)]'
+                                    : 'px-[var(--tm-space-1)] pb-[var(--tm-space-1)] pt-[var(--tm-space-2)]'
+                            }`}>
+                                <input
+                                    type="date"
+                                    aria-label="开始日期"
+                                    value={customRange.start}
+                                    onChange={event => setCustomRange(current => ({ ...current, start: event.target.value }))}
+                                    className={customDateInputClass}
                                 />
-                            </button>
-                        ))}
+                                <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">至</span>
+                                <input
+                                    type="date"
+                                    aria-label="结束日期"
+                                    value={customRange.end}
+                                    onChange={event => setCustomRange(current => ({ ...current, end: event.target.value }))}
+                                    className={customDateInputClass}
+                                />
+                            </div>
+                        )}
                     </div>
-                </div>
+                </header>
 
-                <div className="mx-4 grid h-11 grid-cols-5 bg-[var(--tm-bg-surface)]" aria-label="报告时间范围">
-                    {timeRangeTabs.map(item => (
-                        <button
-                            key={item.key}
-                            type="button"
-                            aria-pressed={timeRange === item.key}
-                            onClick={() => setTimeRange(item.key)}
-                            className="flex h-[var(--tm-size-touch)] min-w-0 items-center justify-center whitespace-nowrap px-1"
-                        >
-                            <span
-                                className={`flex h-8 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] px-1 text-[length:var(--tm-font-size-meta)] transition-all duration-200 ${
-                                    timeRange === item.key
-                                        ? 'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]'
-                                        : 'font-medium text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'
-                                }`}
-                            >
-                                {item.label}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-
-                {timeRange === 'custom' && (
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-[var(--tm-bg-surface)] px-5 pb-3 pt-1">
-                        <input
-                            type="date"
-                            aria-label="开始日期"
-                            value={customRange.start}
-                            onChange={event => setCustomRange(current => ({ ...current, start: event.target.value }))}
-                            className={customDateInputClass}
-                        />
-                        <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">至</span>
-                        <input
-                            type="date"
-                            aria-label="结束日期"
-                            value={customRange.end}
-                            onChange={event => setCustomRange(current => ({ ...current, end: event.target.value }))}
-                            className={customDateInputClass}
-                        />
-                    </div>
-                )}
-            </header>
-
-            <div id="class-report-content" className="space-y-6 px-5 pt-5">
+            <div
+                id="class-report-content"
+                className="space-y-[var(--tm-report-card-gap)] px-[var(--tm-report-page-inline)] pt-[var(--tm-report-card-gap)]"
+            >
                 <ReportSection id="class-report-overview-title" title="概况">
                     <div className="grid grid-cols-2">
                         <div className="border-r border-[var(--tm-border-subtle)] pr-4">
@@ -500,7 +594,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                 <ReportSection
                     id="record-distribution-title"
                     title="评价记录分布"
-                    className="px-3 pb-4 pt-4"
                     action={(
                         <button
                             type="button"
@@ -517,7 +610,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     <ChartAnalysis {...recordDistributionAnalysis} />
                 </ReportSection>
 
-                <ReportSection id="education-score-title" title="五育得分分布" className="px-3 pb-4 pt-4">
+                <ReportSection id="education-score-title" title="五育得分分布">
                     <TeacherReportBarChart
                         ariaLabel="德育、智育、体育、美育、劳育的加分、扣分与净得分对比"
                         categories={educationDimensions.map(item => item.label)}
@@ -528,7 +621,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     <ChartAnalysis {...educationScoreAnalysis} />
                 </ReportSection>
 
-                <ReportSection id="education-event-title" title="五育事件分布" className="px-3 pb-4 pt-4">
+                <ReportSection id="education-event-title" title="五育事件分布">
                     <TeacherReportDonutChart
                         ariaLabel="德育、智育、体育、美育、劳育的评价事件占比"
                         data={reportData.educationEvents.map(item => ({
@@ -542,7 +635,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     <ChartAnalysis {...educationEventAnalysis} />
                 </ReportSection>
 
-                <ReportSection id="ranking-title" title="排行榜" className="overflow-hidden p-3">
+                <ReportSection id="ranking-title" title="排行榜">
                     <div>
                         <div className="mb-3 grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="排行榜类型">
                             {([
@@ -597,7 +690,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     </div>
                 </ReportSection>
 
-                <ReportSection id="focus-students-title" title="重点关注对象" className="p-3">
+                <ReportSection id="focus-students-title" title="重点关注对象">
                     <div>
                         <div className="mb-3 flex gap-2 overflow-x-auto py-1 no-scrollbar" aria-label="重点关注维度">
                             {[{ key: 'all' as const, label: '全部' }, ...educationDimensions].map(item => (
@@ -671,19 +764,25 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     </div>
                 </ReportSection>
 
-                <ReportSection id="student-coverage-title" title="学生覆盖情况" className="p-3">
-                    <div className="mb-3 flex justify-end px-1">
-                        <span className="rounded-full bg-[var(--tm-chart-data-default-soft)] px-3 py-1.5 text-[var(--tm-font-size-meta)] font-semibold text-[var(--tm-chart-data-default-text)]">
-                            已覆盖 {coveredStudentCount}/{totalStudents}
+                <ReportSection
+                    id="student-coverage-title"
+                    title="学生覆盖情况"
+                    action={(
+                        <span className="rounded-full bg-[var(--tm-chart-data-default-soft)] px-2.5 py-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-chart-data-default-text)]">
+                            已覆盖{' '}
+                            <strong className="font-semibold tabular-nums">
+                                {coveredStudentCount}/{totalStudents}
+                            </strong>
                         </span>
-                    </div>
-                    <CoverageSortControls
+                    )}
+                >
+                    <StudentCoverageList
+                        rows={visibleCoverageRows}
                         sortKey={coverageSortKey}
                         direction={coverageSortDirection}
-                        onSortKeyChange={setCoverageSortKey}
-                        onDirectionChange={toggleCoverageSortDirection}
+                        onSort={handleCoverageSort}
+                        onSelectStudent={onSelectStudent}
                     />
-                    <StudentCoverageList rows={visibleCoverageRows} onSelectStudent={onSelectStudent} />
                     {sortedCoverageRows.length > 10 && (
                         <button
                             type="button"
@@ -695,6 +794,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         </button>
                     )}
                 </ReportSection>
+            </div>
             </div>
 
             <MobileBottomSheet
@@ -710,13 +810,13 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                 title="全部学生覆盖情况"
                 onClose={() => setShowAllCoverage(false)}
             >
-                <CoverageSortControls
+                <StudentCoverageList
+                    rows={sortedCoverageRows}
                     sortKey={coverageSortKey}
                     direction={coverageSortDirection}
-                    onSortKeyChange={setCoverageSortKey}
-                    onDirectionChange={toggleCoverageSortDirection}
+                    onSort={handleCoverageSort}
+                    onSelectStudent={onSelectStudent}
                 />
-                <StudentCoverageList rows={sortedCoverageRows} onSelectStudent={onSelectStudent} />
             </MobileBottomSheet>
         </div>
     );

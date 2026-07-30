@@ -8,6 +8,7 @@ export type QuestionnaireTargetSyncPolicy = 'fixed' | 'follow_classes';
 export type QuestionnaireTargetScopeStatus = 'active' | 'exited';
 export type StudentCollectionRecordStatus = 'pending' | 'draft' | 'completed';
 export type StudentAssignmentMode = 'creator' | 'homeroom';
+export type GrowthCollectionTemplate = 'height_weight' | 'semester_goal';
 
 export interface QuestionnaireChoiceAnswer {
   selectedOptions: string[];
@@ -75,6 +76,10 @@ export interface QuestionnaireRecord {
   status: QuestionnaireStatus;
   creatorTeacherId?: string;
   collectionMode?: QuestionnaireCollectionMode;
+  growthTemplate?: GrowthCollectionTemplate;
+  growthMeasurementDate?: string;
+  growthTerm?: string;
+  growthDimensionOptions?: string[];
   studentAssignmentMode?: StudentAssignmentMode;
   targetMode?: QuestionnaireTargetMode;
   targetClassIds?: string[];

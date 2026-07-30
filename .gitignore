@@ -37,3 +37,4 @@ tmp/
 
 # Local QA artifacts
 .codex-artifacts/
+artifacts/

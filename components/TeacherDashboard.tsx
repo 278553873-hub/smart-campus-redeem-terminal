@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Cascader, DatePicker, Input, Select as ArcoSelect, Table, Popconfirm } from '@arco-design/web-react';
+import { Button, Cascader, DatePicker, Input, Message, Select as ArcoSelect, Switch, Table, Popconfirm } from '@arco-design/web-react';
 import {
     LayoutDashboard, FileText, ClipboardList, PenTool,
     Settings, Users, BookOpen, Database, Download,
@@ -8,6 +8,7 @@ import {
     Info, Search, Plus, Sparkles,
     Check, Upload, KeyRound, Eye, Move
 } from 'lucide-react';
+import HealthDataImportView from './HealthDataImportView';
 
 interface TeacherDashboardProps {
     onNavigateBigScreen?: () => void;
@@ -51,6 +52,14 @@ interface TermReportModuleConfig {
     description: string;
 }
 
+interface TermReportDataModuleConfig {
+    id: string;
+    name: string;
+    source: string;
+    enabled: boolean;
+    permissionLabel?: string;
+}
+
 interface StudentScoreDetailRow {
     id: string;
     term: string;
@@ -84,6 +93,15 @@ const defaultTermReportModules: TermReportModuleConfig[] = [
     { id: 'overallEvaluation', name: '总体评价', enabled: true, description: '汇总学生本学期综合表现。' },
     { id: 'growthSuggestions', name: '成长建议', enabled: true, description: '给出下一阶段可执行提升建议。' },
     { id: 'parentChildActivityGuide', name: '亲子活动指南', enabled: true, description: '提供家庭共育活动方向。' }
+];
+
+const defaultTermReportDataModules: TermReportDataModuleConfig[] = [
+    { id: 'goalProgress', name: '目标达成', source: '学期目标计划与期末回顾', enabled: true },
+    { id: 'dailyPerformance', name: '日常表现', source: '本学期评价记录', enabled: true },
+    { id: 'academicPerformance', name: '学业表现', source: '考试与作业数据', enabled: true },
+    { id: 'bodyGrowth', name: '身体成长', source: '身高、体重与身体质量指数趋势', enabled: false, permissionLabel: '健康数据' },
+    { id: 'healthOverview', name: '健康概览', source: '体检日期与结构化健康标签', enabled: false, permissionLabel: '健康数据' },
+    { id: 'teacherEvaluation', name: '教师评价', source: '教师期末评价与已确认档案', enabled: true },
 ];
 
 const buildExamLevelColorStyle = (color: string): React.CSSProperties => ({
@@ -138,15 +156,15 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         {
             title: '基础信息配置', icon: <Settings size={18} />,
-            children: ['学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '角色管理', '学生管理', '学生成绩管理', '考试等级管理', '期末报告配置']
+            children: ['学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '角色管理', '学生管理', '学生成绩管理', '考试等级管理']
         },
         {
             title: '报告配置', icon: <FileText size={18} />,
-            children: ['学科指标']
+            children: ['学科指标', '期末报告配置']
         },
         {
             title: '数据中心', icon: <Database size={18} />,
-            children: ['资料文件', '考试数据', '作业数据']
+            children: ['资料文件', '考试数据', '作业数据', '体检数据']
         }
     ];
     const activeMenuGroup = menus.find(menu => menu.children.includes(activeMenu))?.title || '货柜机配置中心';
@@ -302,6 +320,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [isDraggingGradeCells, setIsDraggingGradeCells] = useState(false);
     const [draggedGradeSubject, setDraggedGradeSubject] = useState<string | null>(null);
     const [termReportModules, setTermReportModules] = useState<TermReportModuleConfig[]>(defaultTermReportModules);
+    const [termReportDataModules, setTermReportDataModules] = useState<TermReportDataModuleConfig[]>(defaultTermReportDataModules);
     const [draggedTermReportModuleId, setDraggedTermReportModuleId] = useState<string | null>(null);
     
     const demoGradeExamSubjects = ['语文', '数学', '英语', '科学', '道德与法治', '体育', '音乐', '美术', '信息科技', '劳动'];
@@ -618,6 +637,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
     const handleToggleTermReportModule = (moduleId: string) => {
         setTermReportModules(modules => modules.map(module => (
+            module.id === moduleId ? { ...module, enabled: !module.enabled } : module
+        )));
+    };
+
+    const handleToggleTermReportDataModule = (moduleId: string) => {
+        setTermReportDataModules(modules => modules.map(module => (
             module.id === moduleId ? { ...module, enabled: !module.enabled } : module
         )));
     };
@@ -1830,10 +1855,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 )}
 
                 {/* 内容区 - 采用精致的高端设计 */}
-                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' || activeMenu === '学生得分明细表' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
+                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '体检数据' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' || activeMenu === '学生得分明细表' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
 
                     {/* 页面主标题 */}
-                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
+                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '体检数据' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
                     <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
                         <div>
                             {activeMenu === '考试数据' ? (
@@ -3291,61 +3316,63 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     {activeMenu === '期末报告配置' && (
                         <div className="w-full font-sans text-sm text-[#4E5969] px-6 py-5 flex flex-col gap-4">
                             <div className="flex h-5 items-center text-[13px] leading-[20px] text-[#86909C] mb-1">
-                                <span className="hover:text-[#1D2129] cursor-pointer">基础信息配置</span>
+                                <span className="hover:text-[#1D2129] cursor-pointer">报告配置</span>
                                 <span className="mx-2 text-[#C9CDD4]">/</span>
                                 <span className="text-[#1D2129]">期末报告配置</span>
                             </div>
 
                             <div className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-6 shadow-[0_4px_10px_rgba(0,0,0,0.02)] flex flex-col">
-                                <h2 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">期末报告配置</h2>
-                                <div className="mt-3 w-full max-w-[720px]">
-                                    <div className="mb-5 flex min-h-8 w-full items-start rounded border border-[#BEDAFF] bg-[#E8F3FF] px-3 py-1.5 text-[13px] leading-5 text-[#4E5969]">
-                                        <Info size={14} className="mr-2 mt-[3px] shrink-0 text-[#165DFF]" />
-                                        <ol className="m-0 list-none p-0">
-                                            <li>1、拖动排序标记进行板块调整排序</li>
-                                        </ol>
+                                <div className="flex items-center justify-between">
+                                    <h2 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">期末报告配置</h2>
+                                    <Button type="primary" onClick={() => Message.success('期末报告配置已保存')}>保存配置</Button>
+                                </div>
+
+                                <div className="mt-6 w-full max-w-[920px]">
+                                    <div className="mb-3 flex items-center justify-between">
+                                        <h3 className="m-0 text-sm font-semibold text-[#1D2129]">报告使用内容</h3>
+                                        <span className="text-xs text-[#86909C]">已选 {termReportDataModules.filter(module => module.enabled).length} 项</span>
+                                    </div>
+                                    <div className="overflow-hidden rounded border border-[#E5E6EB]">
+                                        {termReportDataModules.map((module, index) => (
+                                            <div key={module.id} className={`grid min-h-[58px] grid-cols-[160px_minmax(260px,1fr)_120px_52px] items-center gap-4 px-4 ${index > 0 ? 'border-t border-[#E5E6EB]' : ''}`}>
+                                                <span className="font-medium text-[#1D2129]">{module.name}</span>
+                                                <span className="text-[13px] text-[#4E5969]">{module.source}</span>
+                                                <span className="text-xs text-[#86909C]">{module.permissionLabel ? `${module.permissionLabel}权限` : '标准内容'}</span>
+                                                <Switch size="small" checked={module.enabled} onChange={() => handleToggleTermReportDataModule(module.id)} aria-label={`${module.enabled ? '停用' : '启用'}${module.name}`} />
+                                            </div>
+                                        ))}
                                     </div>
 
-                                    <div className="flex flex-col gap-3">
-                                    {termReportModules.map((module, index) => (
-                                        <div
-                                            key={module.id}
-                                            draggable
-                                            onDragStart={() => setDraggedTermReportModuleId(module.id)}
-                                            onDragOver={(event) => event.preventDefault()}
-                                            onDrop={() => handleDropTermReportModule(module.id)}
-                                            onDragEnd={() => setDraggedTermReportModuleId(null)}
-                                            className={`flex min-h-[56px] items-center gap-4 rounded border px-4 py-3 transition-all ${draggedTermReportModuleId === module.id ? 'border-[#165DFF] bg-[#E8F3FF]' : 'border-[#E5E6EB] bg-white hover:border-[#B8C7E8]'}`}
-                                            title="拖拽排序"
-                                        >
-                                            <div className="w-8 shrink-0 text-center text-[13px] font-semibold text-[#86909C]">
-                                                {String(index + 1).padStart(2, '0')}
-                                            </div>
-                                            <div className="flex h-9 w-9 shrink-0 cursor-move items-center justify-center rounded border border-[#C9CDD4] bg-[#F7F8FA] text-[#4E5969]" aria-label="拖拽排序">
-                                                <Move size={18} strokeWidth={2.2} />
-                                            </div>
-                                            <div className="flex min-w-0 flex-1 items-center gap-2">
-                                                <span className="text-sm font-semibold leading-[22px] text-[#1D2129]">{module.name}</span>
-                                                {!module.enabled && (
-                                                    <span className="rounded bg-[#F2F3F5] px-2 py-0.5 text-xs font-normal text-[#86909C]">未展示</span>
-                                                )}
-                                            </div>
-                                            <button
-                                                type="button"
-                                                role="switch"
-                                                aria-checked={module.enabled}
-                                                onClick={() => handleToggleTermReportModule(module.id)}
-                                                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 ${module.enabled ? 'bg-[#165DFF]' : 'bg-[#C9CDD4]'}`}
+                                    <div className="mb-3 mt-7 flex items-center justify-between">
+                                        <h3 className="m-0 text-sm font-semibold text-[#1D2129]">报告展示板块</h3>
+                                        <span className="text-xs text-[#86909C]">拖动左侧图标调整顺序</span>
+                                    </div>
+                                    <div className="overflow-hidden rounded border border-[#E5E6EB]">
+                                        {termReportModules.map((module, index) => (
+                                            <div
+                                                key={module.id}
+                                                draggable
+                                                onDragStart={() => setDraggedTermReportModuleId(module.id)}
+                                                onDragOver={(event) => event.preventDefault()}
+                                                onDrop={() => handleDropTermReportModule(module.id)}
+                                                onDragEnd={() => setDraggedTermReportModuleId(null)}
+                                                className={`flex min-h-[58px] items-center gap-4 px-4 transition-colors ${index > 0 ? 'border-t border-[#E5E6EB]' : ''} ${draggedTermReportModuleId === module.id ? 'bg-[#E8F3FF]' : 'bg-white'}`}
                                             >
-                                                <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-transform ${module.enabled ? 'translate-x-[20px]' : 'translate-x-0'}`} />
-                                            </button>
-                                        </div>
-                                    ))}
+                                                <button type="button" className="flex h-8 w-8 cursor-move items-center justify-center text-[#86909C]" aria-label={`拖动${module.name}排序`}>
+                                                    <Move size={17} />
+                                                </button>
+                                                <span className="w-6 text-xs tabular-nums text-[#86909C]">{String(index + 1).padStart(2, '0')}</span>
+                                                <span className="min-w-0 flex-1 font-medium text-[#1D2129]">{module.name}</span>
+                                                <Switch size="small" checked={module.enabled} onChange={() => handleToggleTermReportModule(module.id)} aria-label={`${module.enabled ? '隐藏' : '展示'}${module.name}`} />
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
+
+                    {activeMenu === '体检数据' && <HealthDataImportView />}
 
                     {/* 考试等级管理 */}
                     {activeMenu === '考试等级管理' && (

@@ -57,7 +57,8 @@ if (appSource.includes("setStudentDetailInitialTab('growth')")) {
 }
 
 requireText(dashboardSource, 'onEditBasicInfo', '学生详情总览应接收基础信息编辑入口。');
-requireText(appSource, "'class_detail', 'student_detail', 'student_archive'", '学生详情页应在手机屏幕内自行管理滚动。');
+const scrollHandledViews = appSource.match(/const viewHandlesScroll = \[([^\]]+)\]/)?.[1] ?? '';
+requireText(scrollHandledViews, "'student_detail'", '学生详情页应在手机屏幕内自行管理滚动。');
 requireText(dashboardSource, 'relative h-full min-h-0 overflow-hidden bg-transparent', '学生详情根容器应占满屏幕并保持透明，让公共背景完整显示。');
 requireText(dashboardSource, 'h-full overflow-y-auto pb-safe no-scrollbar', '学生详情内容应独立滚动，避免底部抽屉挂到长页面底部。');
 requireText(dashboardSource, 'aria-label="编辑基础信息"', '学生头像编辑入口必须保留无障碍标签。');
@@ -287,6 +288,8 @@ requireText(basicEditSource, 'confirmSystemAvatar', '基础信息编辑页应确
 requireText(basicEditSource, '保存基础信息', '基础信息编辑页应提供明确保存按钮。');
 requireText(basicEditSource, 'h-full min-h-0 overflow-hidden', '基础信息编辑子页面应使用手机壳内高度，避免底部按钮裁切。');
 requireText(basicEditSource, 'StudentBasicEditView', '基础信息编辑页应独立封装。');
+requireText(basicEditSource, 'const birthDate = event.currentTarget.value;', '出生日期更新必须在状态更新前读取输入值，避免页面白屏。');
+requireText(basicEditSource, 'onInput={updateBirthDate}', '出生日期输入必须使用安全的独立更新方法。');
 if (basicEditSource.includes('学生基础资料') || basicEditSource.includes('本次 Demo 保存后在当前会话内生效') || basicEditSource.includes('UserRound')) {
   throw new Error('基础信息编辑页不应展示顶部说明卡，应直接进入表单。');
 }

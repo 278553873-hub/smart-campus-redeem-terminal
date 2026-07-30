@@ -51,6 +51,7 @@ interface TeacherClassAccessContext {
     membership: TeacherClassMembership;
     teachingClassIds: Set<string>;
     homeroomClassIds: Set<string>;
+    deputyHomeroomClassIds?: Set<string>;
 }
 
 const ALL_MANAGEMENT_TOOLS: TeacherManagementToolId[] = [
@@ -122,19 +123,19 @@ export const getTeacherClassActionPolicy = ({
     membership,
     teachingClassIds,
     homeroomClassIds,
+    deputyHomeroomClassIds = new Set<string>(),
 }: TeacherClassAccessContext): TeacherClassActionPolicy => {
-    const isSchoolManager = space.type === 'school' && (space.role === 'administrator' || space.role === 'leader');
     const isClassOwner = membership === 'created' && space.type === 'personal' && space.role === 'owner';
     const isHomeroomTeacher = space.type === 'school' && homeroomClassIds.has(classId);
-    const isAssignedTeacher = teachingClassIds.has(classId) || isHomeroomTeacher;
-    const canManageClass = isSchoolManager || isClassOwner || isHomeroomTeacher;
-    const canCollaborate = canManageClass || membership === 'joined' || space.type === 'collaboration' || space.type === 'school' || isAssignedTeacher;
+    const isDeputyHomeroomTeacher = space.type === 'school' && deputyHomeroomClassIds.has(classId);
+    const isAssignedTeacher = teachingClassIds.has(classId) || isHomeroomTeacher || isDeputyHomeroomTeacher;
+    const canManageClass = isClassOwner || isHomeroomTeacher || isDeputyHomeroomTeacher;
 
     return {
         canUseDailyActions: canManageClass || isAssignedTeacher || membership === 'joined' || space.type === 'collaboration' || space.type === 'school',
         canUpdateStudents: canManageClass,
         canMaintainClass: canManageClass,
-        canInviteTeacher: canCollaborate,
-        canInviteParent: canCollaborate,
+        canInviteTeacher: canManageClass,
+        canInviteParent: canManageClass,
     };
 };

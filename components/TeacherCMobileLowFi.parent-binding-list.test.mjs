@@ -10,7 +10,7 @@ requireText("title: '家长绑定列表'", '10A/10B 标题应为家长绑定列�
 requireText("if (pageKey === 'parentBindingList') return '10A';", '班主任家长绑定列表编号应为 10A。');
 requireText("if (pageKey === 'parentBindingListMember') return '10B';", '非班主任家长绑定列表编号应为 10B。');
 requireText("if (page === 'parentBindingList' || page === 'parentBindingListMember') {", '页面渲染应同时承接 10A/10B。');
-requireText("navigate(isHeadTeacherDetail ? 'parentBindingList' : 'parentBindingListMember')", '班级详情进入家长绑定列表应按班主任/非班主任分流到 10A/10B。');
+requireText("const parentBindingPage: PageKey = permissions.canManageParentBindings ? 'parentBindingList' : 'parentBindingListMember';", '班级详情进入家长绑定列表应按班主任/副班主任/普通老师权限分流到 10A/10B。');
 requireText("未绑定/已绑定", '页面应有未绑定/已绑定 tab 或统计。');
 requireText("邀请家长绑定按钮固定在页面底部", 'PRD 应说明邀请按钮固定底部。');
 requireText("mock 数据为 48/50", 'PRD 应说明家长绑定 mock 数据为 48/50。');
@@ -120,7 +120,7 @@ if (parentBindingCardBlock.includes("'break-words font-black leading-5'")) {
   failures.push('家长绑定卡片学生姓名不应换行展示。');
 }
 
-const classDetailStart = source.indexOf("if (page === 'classDetail' || page === 'classDetailMember')");
+const classDetailStart = source.indexOf("if (page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead' || page === 'classDetailDeputy')");
 const classDetailEnd = source.indexOf("if (page === 'teacherList')", classDetailStart);
 const classDetailBlock = classDetailStart >= 0 && classDetailEnd > classDetailStart
   ? source.slice(classDetailStart, classDetailEnd)

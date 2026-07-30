@@ -13,6 +13,8 @@ const classCascadeSource = fs.readFileSync(new URL('../../components/ui/MobileCl
 const floatingCreateSource = fs.readFileSync(new URL('../../components/ui/MobileFloatingCreateButton.tsx', import.meta.url), 'utf8');
 const formDefinitionSource = fs.readFileSync(new URL('../../../shared/formDefinition.ts', import.meta.url), 'utf8');
 const questionnaireThemeSource = fs.readFileSync(new URL('../../../shared/questionnaireThemeTokens.ts', import.meta.url), 'utf8');
+const growthFormsSource = fs.readFileSync(new URL('./GrowthCollectionForms.tsx', import.meta.url), 'utf8');
+const studentGrowthStoreSource = fs.readFileSync(new URL('../../../shared/studentGrowthStore.ts', import.meta.url), 'utf8');
 const listSource = viewSource.slice(viewSource.indexOf('const renderList'), viewSource.indexOf('const renderCreate'));
 const listHeaderSource = listSource.slice(0, listSource.indexOf('<main'));
 const listCardsSource = listSource.slice(listSource.indexOf('{filteredRecords.map'), listSource.indexOf('{filteredRecords.length === 0'));
@@ -428,7 +430,7 @@ requireText(viewSource, '<div className="h-11 w-11 shrink-0" aria-hidden="true" 
 requireText(detailSource, '<IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}>', '问卷详情更多操作必须移入首张内容卡。');
 requireText(viewSource, '!assignedContext && <IconButton label="更多操作"', '学生采集详情更多操作必须移入首张内容卡。');
 requireText(viewSource, 'import MobileFloatingCreateButton', '问卷列表必须复用通用悬浮创建组件。');
-requireText(listSource, '<MobileFloatingCreateButton label="新建采集" onClick={() => setShowCreateTypeSheet(true)} />', '新建采集必须从右下角悬浮入口打开类型选择。');
+requireText(listSource, '<MobileFloatingCreateButton label="新建采集" onClick={() => { setCreateSheetStage(\'root\'); setShowCreateTypeSheet(true); }} />', '新建采集必须从右下角悬浮入口打开类型选择。');
 requireText(listSource, 'pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]', '问卷列表必须为悬浮创建按钮和底部安全区预留空间。');
 forbidText(listHeaderSource, '待我填写', '问卷列表顶部不得重复展示待我填写快捷入口。');
 forbidText(listHeaderSource, '新建采集', '问卷列表顶部不得承载新建采集入口。');
@@ -442,6 +444,21 @@ requireText(viewSource, '{activeSubmission.studentName}<span className="ml-2 tex
 for (const mode of ['家长问卷', '学生信息采集']) {
   requireText(viewSource, mode, `新建采集类型缺少：${mode}`);
 }
+for (const mode of ['成长信息', '问卷调查', '身高体重采集', '新学期目标清单']) {
+  requireText(viewSource, mode, `新建采集业务入口缺少：${mode}`);
+}
+requireText(viewSource, "setCreateSheetStage('growth')", '成长信息必须通过第二层模板选择渐进披露。');
+requireText(viewSource, "startGrowthSetup('height_weight')", '身高体重平台模板必须可以进入采集设置。');
+requireText(viewSource, "startGrowthSetup('semester_goal')", '学期目标平台模板必须可以进入采集设置。');
+requireText(viewSource, 'const targets = buildTargets(true);', '成长采集必须使用学校花名册姓名，不能沿用普通问卷的演示别名。');
+requireText(viewSource, 'record.growthTemplate ? student.name : demoLinkedStudentName(student)', '成长采集范围对账时必须持续使用花名册姓名。');
+requireText(viewSource, 'shouldSyncRosterName', '已有成长采集的逐生记录必须迁移为花名册姓名。');
+requireText(viewSource, 'saveBodyMeasurementRecord', '身高体重完成后必须写入学生成长数据。');
+requireText(viewSource, 'saveSemesterGoalPlan', '学期目标完成后必须写入学生成长数据。');
+requireText(storeSource, 'growthTemplate?: GrowthCollectionTemplate', '采集任务必须保存平台成长模板类型。');
+requireText(growthFormsSource, 'HeightWeightCollectionForm', '成长采集必须提供身高体重逐生表单。');
+requireText(growthFormsSource, 'SemesterGoalCollectionForm', '成长采集必须提供学期目标逐生表单。');
+requireText(studentGrowthStoreSource, 'sourceRecordId', '成长记录必须保留采集来源记录以支持重复保存而不重复新增。');
 if (viewSource.includes('即将开放') || viewSource.includes('<LockKeyhole')) {
   throw new Error('未开放的教师问卷不应侵入新建采集高频流程。');
 }

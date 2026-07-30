@@ -31,6 +31,8 @@ import {
     type TeacherClassMembership,
     type TeacherSpaceOption,
 } from '../domain/teacherSpaceAccess';
+import { formatClassCode } from '../domain/classInfo';
+import { copyText } from '../utils/copyText';
 
 interface ClassListViewProps {
     classes: ClassInfo[];
@@ -78,8 +80,6 @@ const actionToneClass: Record<ClassActionTone, string> = {
     positive: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]',
     neutral: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]',
 };
-
-const formatClassCode = (classCode: string) => classCode.replace(/(\d{4})(?=\d)/, '$1 ');
 
 const ClassListView: React.FC<ClassListViewProps> = ({
     classes,
@@ -172,6 +172,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         membership: getMembership(classId),
         teachingClassIds,
         homeroomClassIds,
+        deputyHomeroomClassIds,
     });
 
     const closeActionSheet = () => setActiveActionClassId(null);
@@ -225,23 +226,23 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 },
             ],
         } : null,
-        activeActionPolicy.canMaintainClass ? {
-            title: '班级维护',
+        {
+            title: activeActionPolicy.canMaintainClass ? '班级维护' : '班级信息',
             items: [
-                {
+                ...(activeActionPolicy.canMaintainClass ? [{
                     label: '离校学生',
                     icon: UsersIcon,
-                    tone: 'neutral',
+                    tone: 'neutral' as const,
                     onClick: () => runClassAction(setLeftStudentClassId),
-                },
+                }] : []),
                 {
-                    label: '编辑班级信息',
+                    label: activeActionPolicy.canMaintainClass ? '编辑班级信息' : '查看班级信息',
                     icon: EditIcon,
                     tone: 'brand',
                     onClick: () => runClassAction(onEditClassInfo),
                 },
             ],
-        } : null,
+        },
         activeActionPolicy.canInviteTeacher || activeActionPolicy.canInviteParent ? {
             title: '协同管理',
             items: [
@@ -262,13 +263,12 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     ].filter((group): group is ClassActionGroup => Boolean(group)) : [];
 
     const copyClassCode = async (classInfo: ClassInfo) => {
-        try {
-            if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
-            await navigator.clipboard.writeText(classInfo.classCode);
+        const success = await copyText(classInfo.classCode);
+        if (success) {
             setCopyFeedback({ classId: classInfo.id, message: '班级号已复制', success: true });
-        } catch {
-            setCopyFeedback({ classId: classInfo.id, message: '复制失败，请重试', success: false });
+            return;
         }
+        setCopyFeedback({ classId: classInfo.id, message: '复制失败，请重试', success: false });
     };
 
     const toggleClassVisibility = (classId: string) => {
@@ -544,7 +544,18 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         <div className="mb-4 flex items-center justify-between">
                             <div className="min-w-0">
                                 <h3 className="truncate text-[18px] font-semibold text-[var(--tm-text-primary)]">{activeActionClass.name}</h3>
-                                <p className="mt-0.5 text-xs font-medium tabular-nums text-[var(--tm-text-disabled)]">班级号 {formatClassCode(activeActionClass.classCode)}</p>
+                                <button
+                                    type="button"
+                                    onClick={() => copyClassCode(activeActionClass)}
+                                    className="-ml-2 mt-0.5 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-xs font-medium text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
+                                    aria-label={`复制${activeActionClass.name}班级号${activeActionClass.classCode}`}
+                                >
+                                    <span>班级号</span>
+                                    <span className="tabular-nums text-[var(--tm-text-primary)]">{formatClassCode(activeActionClass.classCode)}</span>
+                                    {copyFeedback?.classId === activeActionClass.id && copyFeedback.success
+                                        ? <Check className="h-3.5 w-3.5 text-[var(--tm-status-positive)]" />
+                                        : <Copy className="h-3.5 w-3.5" />}
+                                </button>
                             </div>
                             <button onClick={closeActionSheet} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭">
                                 <CloseIcon className="h-5 w-5" />

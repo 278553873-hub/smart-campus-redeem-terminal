@@ -36,13 +36,14 @@ assert.deepEqual(policyFor('school', 'teacher'), {
   moreTools: ['suggestionFeedback', 'questionnaire'],
 });
 
-const classPolicyFor = ({ type, role, membership = 'school', classId = 'class-1', teaching = [], homeroom = [] }) => (
+const classPolicyFor = ({ type, role, membership = 'school', classId = 'class-1', teaching = [], homeroom = [], deputyHomeroom = [] }) => (
   getTeacherClassActionPolicy({
     space: { id: `${type}-${role}`, title: '测试来源', type, role },
     classId,
     membership,
     teachingClassIds: new Set(teaching),
     homeroomClassIds: new Set(homeroom),
+    deputyHomeroomClassIds: new Set(deputyHomeroom),
   })
 );
 
@@ -64,22 +65,30 @@ assert.deepEqual(classPolicyFor({ type: 'personal', role: 'owner', membership: '
   canUseDailyActions: true,
   canUpdateStudents: false,
   canMaintainClass: false,
-  canInviteTeacher: true,
-  canInviteParent: true,
+  canInviteTeacher: false,
+  canInviteParent: false,
 });
 
 assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1', teaching: ['class-1'] }), {
   canUseDailyActions: true,
   canUpdateStudents: false,
   canMaintainClass: false,
-  canInviteTeacher: true,
-  canInviteParent: true,
+  canInviteTeacher: false,
+  canInviteParent: false,
 });
 
 assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1' }), {
   canUseDailyActions: true,
   canUpdateStudents: false,
   canMaintainClass: false,
+  canInviteTeacher: false,
+  canInviteParent: false,
+});
+
+assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1', deputyHomeroom: ['class-1'] }), {
+  canUseDailyActions: true,
+  canUpdateStudents: true,
+  canMaintainClass: true,
   canInviteTeacher: true,
   canInviteParent: true,
 });

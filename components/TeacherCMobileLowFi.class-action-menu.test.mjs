@@ -18,6 +18,11 @@ requireText("openStudentBatchEdit();", '批量修改学生入口应打开独立�
 requireText("{ key: 'face' as const, label: '更新人脸数据', icon: ScanFace }", '学生信息更新应包含更新人脸数据。');
 requireText("{ key: 'password' as const, label: '设置兑换密码', icon: Shield }", '学生信息更新应包含设置兑换密码。');
 requireText("{ key: 'leftStudents' as const, label: '离校学生管理', icon: Users }", '班级维护应将离校学生入口命名为离校学生管理。');
+requireText("const isPersonalOrdinaryTeacher = isPersonalClassListPage(page) && isOrdinaryTeacher;", '个人版普通老师应在 07A 和 07C 使用独立的班级更多操作菜单。');
+requireText("{ key: 'viewClass' as const, label: '查看班级信息', icon: Eye }", '个人版普通老师应保留查看班级信息入口。');
+requireText("return item.key === 'homework' || item.key === 'reward' || item.key === 'viewClass';", '个人版普通老师只应看到日常操作和查看班级信息。');
+requireText("if (item.key === 'viewClass') return isOrdinaryTeacher;", '个人版和学校版普通老师都应看到查看班级信息。');
+requireText("const isSchoolOrdinaryTeacherPreview = page === 'classListSchoolTeacherActions';", '07D 应使用学校版普通老师预览状态。');
 if (source.includes("title: '校园币兑换'")) {
   failures.push('07 班级列表更多操作不应继续出现校园币兑换分组。');
 }

@@ -147,6 +147,11 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
     });
   };
 
+  const updateBirthDate = (event: React.FormEvent<HTMLInputElement>) => {
+    const birthDate = event.currentTarget.value;
+    setDraft(previous => ({ ...previous, birthDate }));
+  };
+
   const saveBasicInfo = () => {
     const guardianContacts = normalizeContacts(draft.guardianContacts ?? []);
     onSave({
@@ -225,7 +230,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
 
             <label className="block">
               <span className={labelClass}>出生日期</span>
-              <input type="date" className={fieldInputClass} value={draft.birthDate ?? ''} onInput={event => setDraft(prev => ({ ...prev, birthDate: event.currentTarget.value }))} />
+              <input type="date" className={fieldInputClass} value={draft.birthDate ?? ''} onInput={updateBirthDate} />
             </label>
 
             <div>

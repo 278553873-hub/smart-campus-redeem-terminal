@@ -1,9 +1,11 @@
 import type { ClassInfo, Student } from '../mobile-app/types';
 import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode, type FormSection } from './formDefinition';
+import { readStudentGrowthProfile } from './studentGrowthStore';
 
 export type ArchiveTemplateStatus = 'recommended' | 'draft' | 'published' | 'disabled';
 export type ArchiveFieldType = 'text' | 'single-select' | 'multiple-select' | 'date' | 'number';
 export type ArchiveSystemFieldKey = 'name' | 'studentNo' | 'gender' | 'birthDate' | 'grade' | 'class';
+export type ArchiveGrowthModuleKey = 'body_growth' | 'health_check' | 'semester_goal' | 'daily_performance';
 
 export const ARCHIVE_SYSTEM_FIELD_OPTIONS: Array<{ key: ArchiveSystemFieldKey; label: string }> = [
   { key: 'name', label: '姓名' },
@@ -15,6 +17,17 @@ export const ARCHIVE_SYSTEM_FIELD_OPTIONS: Array<{ key: ArchiveSystemFieldKey; l
 ];
 
 export const ARCHIVE_SELECTABLE_SYSTEM_FIELD_OPTIONS = ARCHIVE_SYSTEM_FIELD_OPTIONS.filter(option => option.key !== 'grade');
+
+export const ARCHIVE_GROWTH_MODULE_OPTIONS: Array<{
+  key: ArchiveGrowthModuleKey;
+  label: string;
+  description: string;
+}> = [
+  { key: 'body_growth', label: '身体成长', description: '身高、体重与身体质量指数' },
+  { key: 'health_check', label: '健康检查', description: '体检日期、视力与健康结论' },
+  { key: 'semester_goal', label: '本学期目标', description: '目标清单、约定与确认' },
+  { key: 'daily_performance', label: '日常表现', description: '本学期评价记录' },
+];
 
 const DEFAULT_ARCHIVE_SYSTEM_FIELDS: ArchiveSystemFieldKey[] = ['name', 'class'];
 
@@ -39,6 +52,21 @@ export interface ArchiveChoiceAnswer {
 
 export type ArchiveAnswer = string | ArchiveChoiceAnswer;
 
+export interface ArchiveGrowthModuleConfig {
+  key: ArchiveGrowthModuleKey;
+  required: boolean;
+}
+
+export interface ArchiveGrowthModuleSnapshot {
+  key: ArchiveGrowthModuleKey;
+  label: string;
+  status: 'available' | 'missing';
+  occurredAt: string;
+  sourceLabel: string;
+  sourceVersion: number;
+  items: Array<{ label: string; value: string }>;
+}
+
 export interface ArchiveTemplate {
   id: string;
   spaceId: string;
@@ -49,6 +77,7 @@ export interface ArchiveTemplate {
   layoutMode: FormLayoutMode;
   gradeScopes: string[];
   systemFields: ArchiveSystemFieldKey[];
+  growthModules: ArchiveGrowthModuleConfig[];
   sections: ArchiveSection[];
   fields: ArchiveField[];
   updatedAt: string;
@@ -60,6 +89,7 @@ export interface ArchiveTemplateSnapshot {
   version: number;
   layoutMode: FormLayoutMode;
   systemFields: ArchiveSystemFieldKey[];
+  growthModules: ArchiveGrowthModuleConfig[];
   sections: ArchiveSection[];
   fields: ArchiveField[];
 }
@@ -95,6 +125,7 @@ export interface ArchiveSnapshot {
   createdAt: string;
   createdBy: string;
   systemValues: Partial<Record<ArchiveSystemFieldKey, string>>;
+  growthSnapshots: ArchiveGrowthModuleSnapshot[];
   answers: Record<string, ArchiveAnswer>;
   revisionOf?: string;
   correctionReason?: string;
@@ -111,7 +142,7 @@ export interface ArchiveAuditEvent {
 }
 
 export interface ArchiveWorkspace {
-  schemaVersion: 6;
+  schemaVersion: 7;
   spaceId: string;
   templates: ArchiveTemplate[];
   drafts: ArchiveDraft[];
@@ -214,12 +245,18 @@ const cloneFields = (items: ArchiveField[]) => items.map(item => ({
   settings: normalizeFormFieldSettings(item.type, item.settings, item.options),
 }));
 const cloneSections = (items: ArchiveSection[]) => items.map(item => ({ ...item }));
+const cloneGrowthModules = (items: ArchiveGrowthModuleConfig[]) => items.map(item => ({ ...item }));
+const cloneGrowthSnapshots = (items: ArchiveGrowthModuleSnapshot[]) => items.map(item => ({
+  ...item,
+  items: item.items.map(value => ({ ...value })),
+}));
 
 const createTemplateSnapshot = (template: ArchiveTemplate): ArchiveTemplateSnapshot => ({
   name: template.name,
   version: template.version,
   layoutMode: template.layoutMode,
   systemFields: [...template.systemFields],
+  growthModules: cloneGrowthModules(template.growthModules),
   sections: cloneSections(template.sections),
   fields: cloneFields(template.fields),
 });
@@ -227,6 +264,7 @@ const createTemplateSnapshot = (template: ArchiveTemplate): ArchiveTemplateSnaps
 const cloneTemplateSnapshot = (snapshot: ArchiveTemplateSnapshot): ArchiveTemplateSnapshot => ({
   ...snapshot,
   systemFields: [...snapshot.systemFields],
+  growthModules: cloneGrowthModules(snapshot.growthModules),
   sections: cloneSections(snapshot.sections),
   fields: cloneFields(snapshot.fields),
 });
@@ -257,6 +295,10 @@ const createRecommendedTemplates = (spaceId: string): ArchiveTemplate[] => [
     layoutMode: 'grouped',
     gradeScopes: ['一年级'],
     systemFields: ['name', 'class', 'birthDate'],
+    growthModules: [
+      { key: 'semester_goal', required: false },
+      { key: 'daily_performance', required: false },
+    ],
     sections: cloneSections(entrySections),
     fields: cloneFields(entryFields),
     updatedAt: '2026-07-01',
@@ -271,6 +313,12 @@ const createRecommendedTemplates = (spaceId: string): ArchiveTemplate[] => [
     layoutMode: 'grouped',
     gradeScopes: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
     systemFields: ['name', 'class', 'birthDate'],
+    growthModules: [
+      { key: 'body_growth', required: false },
+      { key: 'health_check', required: false },
+      { key: 'semester_goal', required: false },
+      { key: 'daily_performance', required: false },
+    ],
     sections: cloneSections(termSections),
     fields: cloneFields([...coreFields, ...termFields]),
     updatedAt: '2026-07-01',
@@ -285,6 +333,12 @@ const createRecommendedTemplates = (spaceId: string): ArchiveTemplate[] => [
     layoutMode: 'grouped',
     gradeScopes: ['六年级'],
     systemFields: ['name', 'studentNo', 'class'],
+    growthModules: [
+      { key: 'body_growth', required: false },
+      { key: 'health_check', required: false },
+      { key: 'semester_goal', required: false },
+      { key: 'daily_performance', required: false },
+    ],
     sections: cloneSections(transitionSections),
     fields: cloneFields([...coreFields, ...transitionFields]),
     updatedAt: '2026-07-01',
@@ -422,6 +476,78 @@ export const getArchiveSystemValues = (student: Student): Partial<Record<Archive
   class: student.class,
 });
 
+const getGrowthModuleLabel = (key: ArchiveGrowthModuleKey) => (
+  ARCHIVE_GROWTH_MODULE_OPTIONS.find(option => option.key === key)?.label ?? key
+);
+
+export const buildArchiveGrowthModuleSnapshots = (
+  studentId: string,
+  modules: ArchiveGrowthModuleConfig[],
+): ArchiveGrowthModuleSnapshot[] => {
+  const profile = readStudentGrowthProfile(studentId);
+  const latestMeasurement = profile.bodyMeasurements[0];
+  const latestHealthExam = profile.healthExamRecords[0];
+  const goalPlan = profile.semesterGoalPlan;
+
+  return modules.map(module => {
+    if (module.key === 'body_growth' && latestMeasurement) {
+      return {
+        key: module.key,
+        label: getGrowthModuleLabel(module.key),
+        status: 'available',
+        occurredAt: latestMeasurement.measuredAt,
+        sourceLabel: latestMeasurement.sourceLabel,
+        sourceVersion: latestMeasurement.version,
+        items: [
+          { label: '身高', value: `${latestMeasurement.heightCm}厘米` },
+          { label: '体重', value: `${latestMeasurement.weightKg}千克` },
+          { label: '身体质量指数', value: String(latestMeasurement.bmi) },
+        ],
+      };
+    }
+    if (module.key === 'health_check' && latestHealthExam) {
+      return {
+        key: module.key,
+        label: getGrowthModuleLabel(module.key),
+        status: 'available',
+        occurredAt: latestHealthExam.examDate,
+        sourceLabel: latestHealthExam.sourceLabel,
+        sourceVersion: latestHealthExam.version,
+        items: [
+          { label: '裸眼视力', value: `左${latestHealthExam.nakedVisionLeft || '--'} · 右${latestHealthExam.nakedVisionRight || '--'}` },
+          { label: '戴镜类型', value: latestHealthExam.glassesType },
+          { label: '体检结论', value: latestHealthExam.conclusion || '未填写' },
+        ],
+      };
+    }
+    if (module.key === 'semester_goal' && goalPlan) {
+      return {
+        key: module.key,
+        label: getGrowthModuleLabel(module.key),
+        status: 'available',
+        occurredAt: goalPlan.updatedAt,
+        sourceLabel: goalPlan.sourceLabel ?? '新学期目标清单',
+        sourceVersion: goalPlan.version,
+        items: [
+          { label: '学期', value: goalPlan.term },
+          ...goalPlan.goals.map((goal, index) => ({ label: `目标${index + 1}·${goal.dimension}`, value: goal.action })),
+          { label: '共同约定', value: goalPlan.agreement || '未填写' },
+          { label: '确认情况', value: `${goalPlan.confirmations.length}/3方已确认` },
+        ],
+      };
+    }
+    return {
+      key: module.key,
+      label: getGrowthModuleLabel(module.key),
+      status: 'missing',
+      occurredAt: '',
+      sourceLabel: '',
+      sourceVersion: 0,
+      items: [],
+    };
+  });
+};
+
 const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, getStudentsForClass }: ArchiveWorkspaceContext): ArchiveWorkspace => {
   const recommended = createRecommendedTemplates(spaceId);
   const termRecommended = recommended.find(template => template.id === 'recommended-term-v1')!;
@@ -484,6 +610,7 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
       createdAt: '2025-09-28',
       createdBy: '张林老师',
       systemValues: getArchiveSystemValues(student),
+      growthSnapshots: buildArchiveGrowthModuleSnapshots(student.id, entryRecommended.growthModules),
       answers: { ...previousAnswerSeed },
     };
     if (index >= 7) return [entry];
@@ -502,6 +629,7 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
       createdAt: '2026-07-11',
       createdBy: teacherName,
       systemValues: getArchiveSystemValues(student),
+      growthSnapshots: buildArchiveGrowthModuleSnapshots(student.id, schoolTermTemplate.growthModules),
       answers: { ...termAnswerSeed },
     };
     return [entry, term];
@@ -514,7 +642,7 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
   ] : [];
 
   return {
-    schemaVersion: 6,
+    schemaVersion: 7,
     spaceId,
     templates: [...recommended, schoolTermTemplate, schoolEntryTemplate],
     drafts,
@@ -528,10 +656,28 @@ type LegacyField = Omit<ArchiveField, 'type'> & {
   group?: 'core' | 'stage';
 };
 
+const getLegacyTemplateGrowthModules = (template: ArchiveTemplate): ArchiveGrowthModuleConfig[] => {
+  if (template.id === 'recommended-entry-v1' || template.id === 'school-entry-draft-v1') {
+    return [
+      { key: 'semester_goal', required: false },
+      { key: 'daily_performance', required: false },
+    ];
+  }
+  if (
+    template.id === 'recommended-term-v1'
+    || template.id === 'recommended-transition-v1'
+    || template.id === 'school-term-growth-v2'
+  ) {
+    return ARCHIVE_GROWTH_MODULE_OPTIONS.map(option => ({ key: option.key, required: false }));
+  }
+  return [];
+};
+
 const normalizeTemplate = (template: ArchiveTemplate): ArchiveTemplate => ({
   ...template,
   layoutMode: template.layoutMode ?? ((template.sections ?? []).length > 0 ? 'grouped' : 'flat'),
   systemFields: [...(template.systemFields ?? DEFAULT_ARCHIVE_SYSTEM_FIELDS)].filter(key => key !== 'grade'),
+  growthModules: cloneGrowthModules(template.growthModules ?? getLegacyTemplateGrowthModules(template)),
   sections: (template.sections ?? []).map(item => ({ id: item.id, label: item.label })),
   fields: ((template.fields ?? []) as LegacyField[]).map(item => ({
     id: item.id,
@@ -546,16 +692,21 @@ const normalizeTemplate = (template: ArchiveTemplate): ArchiveTemplate => ({
   })),
 });
 
-type StoredTemplateSnapshot = Omit<ArchiveTemplateSnapshot, 'systemFields'> & { systemFields?: ArchiveSystemFieldKey[] };
+type StoredTemplateSnapshot = Omit<ArchiveTemplateSnapshot, 'systemFields' | 'growthModules'> & {
+  systemFields?: ArchiveSystemFieldKey[];
+  growthModules?: ArchiveGrowthModuleConfig[];
+};
 type StoredArchiveDraft = Omit<ArchiveDraft, 'templateSnapshot'> & { templateSnapshot?: StoredTemplateSnapshot };
-type StoredArchiveSnapshot = Omit<ArchiveSnapshot, 'templateSnapshot' | 'systemValues'> & {
+type StoredArchiveSnapshot = Omit<ArchiveSnapshot, 'templateSnapshot' | 'systemValues' | 'growthSnapshots'> & {
   templateSnapshot?: StoredTemplateSnapshot;
   systemValues?: Partial<Record<ArchiveSystemFieldKey, string>>;
+  growthSnapshots?: ArchiveGrowthModuleSnapshot[];
 };
 
 const normalizeTemplateSnapshot = (snapshot: StoredTemplateSnapshot): ArchiveTemplateSnapshot => ({
   ...snapshot,
   systemFields: [...(snapshot.systemFields ?? DEFAULT_ARCHIVE_SYSTEM_FIELDS)],
+  growthModules: cloneGrowthModules(snapshot.growthModules ?? []),
   sections: cloneSections(snapshot.sections),
   fields: cloneFields(snapshot.fields),
 });
@@ -563,8 +714,16 @@ const normalizeTemplateSnapshot = (snapshot: StoredTemplateSnapshot): ArchiveTem
 const resolveStoredTemplateSnapshot = (
   record: StoredArchiveDraft | StoredArchiveSnapshot,
   templates: ArchiveTemplate[],
+  useCurrentTemplateGrowthModules = false,
 ): ArchiveTemplateSnapshot => {
-  if (record.templateSnapshot) return normalizeTemplateSnapshot(record.templateSnapshot);
+  if (record.templateSnapshot) {
+    const normalized = normalizeTemplateSnapshot(record.templateSnapshot);
+    if (useCurrentTemplateGrowthModules && record.templateSnapshot.growthModules === undefined) {
+      const template = templates.find(item => item.id === record.templateId && item.version === record.templateVersion);
+      normalized.growthModules = cloneGrowthModules(template?.growthModules ?? []);
+    }
+    return normalized;
+  }
   const template = templates.find(item => item.id === record.templateId && item.version === record.templateVersion);
   if (template) return createTemplateSnapshot(template);
   return {
@@ -572,6 +731,7 @@ const resolveStoredTemplateSnapshot = (
     version: record.templateVersion,
     layoutMode: 'flat',
     systemFields: [...DEFAULT_ARCHIVE_SYSTEM_FIELDS],
+    growthModules: [],
     sections: [],
     fields: Object.keys(record.answers).map((semanticKey, index) => ({
       id: `field-restored-${index}`,
@@ -592,7 +752,7 @@ const hydrateStudentArchiveRecords = (
 ): Pick<ArchiveWorkspace, 'drafts' | 'snapshots'> => ({
   drafts: drafts.map(record => ({
     ...record,
-    templateSnapshot: resolveStoredTemplateSnapshot(record, templates),
+    templateSnapshot: resolveStoredTemplateSnapshot(record, templates, true),
   })),
   snapshots: snapshots.map(record => ({
     ...record,
@@ -601,6 +761,7 @@ const hydrateStudentArchiveRecords = (
       name: record.studentName,
       class: record.className,
     },
+    growthSnapshots: cloneGrowthSnapshots(record.growthSnapshots ?? []),
   })),
 });
 
@@ -618,11 +779,11 @@ export const readArchiveWorkspace = (context: ArchiveWorkspaceContext): ArchiveW
       snapshots?: StoredArchiveSnapshot[];
       auditEvents?: ArchiveAuditEvent[];
     };
-    if (parsed.schemaVersion === 3 || parsed.schemaVersion === 4 || parsed.schemaVersion === 5 || parsed.schemaVersion === 6) {
+    if (parsed.schemaVersion === 3 || parsed.schemaVersion === 4 || parsed.schemaVersion === 5 || parsed.schemaVersion === 6 || parsed.schemaVersion === 7) {
       const templates = (parsed.templates ?? []).map(normalizeTemplate);
       const records = hydrateStudentArchiveRecords(parsed.drafts ?? [], parsed.snapshots ?? [], templates);
       return {
-        schemaVersion: 6,
+        schemaVersion: 7,
         spaceId: parsed.spaceId ?? context.spaceId,
         templates,
         ...records,
@@ -695,7 +856,7 @@ export const readArchiveWorkspace = (context: ArchiveWorkspaceContext): ArchiveW
     const templates = [...recommended, ...migratedTemplates.map(normalizeTemplate)];
     const records = hydrateStudentArchiveRecords(drafts, parsed.snapshots ?? [], templates);
     return {
-      schemaVersion: 6,
+      schemaVersion: 7,
       spaceId: parsed.spaceId ?? context.spaceId,
       templates,
       ...records,
@@ -725,6 +886,7 @@ export const cloneRecommendedTemplate = (workspace: ArchiveWorkspace, templateId
     version: 1,
     updatedAt: isoDate(),
     systemFields: [...source.systemFields],
+    growthModules: cloneGrowthModules(source.growthModules),
     sections: cloneSections(source.sections),
     fields: cloneFields(source.fields),
   };
@@ -743,6 +905,7 @@ export const createBlankArchiveTemplate = (workspace: ArchiveWorkspace): { works
     layoutMode: 'flat',
     gradeScopes: [],
     systemFields: [...DEFAULT_ARCHIVE_SYSTEM_FIELDS],
+    growthModules: [],
     sections: [],
     fields: [],
     updatedAt: isoDate(),
@@ -840,6 +1003,7 @@ export const saveStudentArchiveDraft = (
   submit: boolean,
   operator: string,
   systemValues: Partial<Record<ArchiveSystemFieldKey, string>> = {},
+  growthSnapshots: ArchiveGrowthModuleSnapshot[] = [],
 ): ArchiveWorkspace => {
   const draft = workspace.drafts.find(item => item.id === draftId);
   if (!draft) return workspace;
@@ -865,6 +1029,7 @@ export const saveStudentArchiveDraft = (
     createdAt: isoDate(),
     createdBy: operator,
     systemValues: { ...systemValues },
+    growthSnapshots: cloneGrowthSnapshots(growthSnapshots),
     answers: cloneArchiveAnswers(answers),
   };
   const audit: ArchiveAuditEvent = {
@@ -901,6 +1066,7 @@ export const requestSnapshotCorrection = (
     revisionOf: source.id,
     correctionReason: reason,
     templateSnapshot: cloneTemplateSnapshot(source.templateSnapshot),
+    growthSnapshots: cloneGrowthSnapshots(source.growthSnapshots),
     answers: cloneArchiveAnswers(source.answers),
   };
   const audit: ArchiveAuditEvent = {

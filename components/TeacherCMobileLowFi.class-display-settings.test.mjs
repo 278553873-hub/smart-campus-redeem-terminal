@@ -29,8 +29,8 @@ requireText('aria-pressed={checked}', '班级显示项应有选中状态。');
 requireText('暂无显示班级', '隐藏全部班级后 07A 应有极简空状态。');
 requireText('完成</button>', '底部弹窗应提供完成按钮。');
 
-const classListRenderStart = source.indexOf("if (page === 'classListPersonal' || page === 'classListSchool')");
-const classListRenderEnd = source.indexOf("if (page === 'classDetail' || page === 'classDetailMember'", classListRenderStart);
+const classListRenderStart = source.indexOf("if (isPersonalClassListPage(page) || isSchoolClassListPage(page))");
+const classListRenderEnd = source.indexOf("if (page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead' || page === 'classDetailDeputy')", classListRenderStart);
 const classListRender = source.slice(classListRenderStart, classListRenderEnd);
 const personalOnlyStart = classListRender.indexOf('aria-label="打开班级操作"') - 500;
 const personalOnlyEnd = classListRender.indexOf('{isSchoolList && (', personalOnlyStart);

@@ -23,7 +23,10 @@ const GENERATE_MOCK_CLASSES = (): ClassInfo[] => {
         classCode: `${g.year}${String(idx + 1).padStart(4, '0')}`,
         gradeLevel: g.level,
         studentCount: 60,
-        tags: idx === 0 ? ['班主任', '数学', '劳动'] : (idx % 2 === 0 ? ['数学'] : ['劳动'])
+        tags: idx === 0 ? ['班主任', '数学', '劳动'] : (idx % 2 === 0 ? ['数学'] : ['劳动']),
+        educationStage: 'primary',
+        admissionYear: g.year,
+        classNumber: idx + 1,
       });
     });
   });

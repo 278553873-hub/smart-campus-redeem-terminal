@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowLeftRight, BookOpen, Building2, CalendarDays, Camera, ChartNoAxesColumnIncreasing, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Clock, Coins, Copy, Edit3, Eye, EyeOff, FileText, Gift, GripVertical, ImagePlus, KeyRound, LogIn, LogOut, MessageCircle, Mic, MoreHorizontal, Phone, Plus, ScanFace, ScanLine, Settings, Shield, SlidersHorizontal, Sparkles, Trash2, Type, UserPlus, Users } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, BookOpen, Building2, CalendarDays, Camera, ChartNoAxesColumnIncreasing, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Clock, Coins, Copy, Edit3, Eye, EyeOff, FileText, Gift, GripVertical, ImagePlus, KeyRound, LogIn, LogOut, MessageCircle, Mic, MoreHorizontal, Phone, Plus, ScanFace, ScanLine, Settings, Shield, SlidersHorizontal, Sparkles, Trash2, Type, UserPlus, Users, X } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 
 type PageKey =
   | 'login'
   | 'profile'
+  | 'profileInvite'
   | 'home'
   | 'classCreate'
   | 'classJoin'
@@ -16,11 +17,15 @@ type PageKey =
   | 'editResult'
   | 'classListPersonal'
   | 'classListSchool'
+  | 'classListPersonalTeacherActions'
+  | 'classListSchoolTeacherActions'
   | 'classDetail'
   | 'classDetailMember'
   | 'classDetailSchoolHead'
+  | 'classDetailDeputy'
   | 'teacherList'
   | 'teacherListMember'
+  | 'teacherListDeputy'
   | 'parentBindingList'
   | 'parentBindingListMember'
   | 'studentList'
@@ -45,10 +50,11 @@ type RecordStage = 'idle' | 'recording' | 'transcribing' | 'identifying' | 'save
 type Priority = 'P0' | 'P1' | 'P2' | 'P3';
 type PhoneLoginTab = 'sms' | 'password';
 type SchoolAdminLoginTab = 'password' | 'sms' | 'scan';
-type ClassActionKey = 'reward' | 'batchStudents' | 'password' | 'face' | 'homework' | 'leftStudents' | 'inviteTeacher' | 'inviteParent' | 'editClass';
+type ClassActionKey = 'reward' | 'batchStudents' | 'password' | 'face' | 'homework' | 'leftStudents' | 'inviteTeacher' | 'inviteParent' | 'editClass' | 'viewClass';
 type TeachingGrade = '2025级' | '2024级' | '2023级';
 type WechatInviteMode = 'select' | 'confirm' | 'received';
 type InviteAudience = 'teacher' | 'parent';
+type ClassRole = 'headTeacher' | 'deputyHeadTeacher' | 'teacher';
 type CEndSurface = 'summary' | 'teacher' | 'parent' | 'versionCompare' | 'schoolAdmin' | 'ops';
 type ParentPageKey = 'wechatCard' | 'login' | 'bindSelfMatched' | 'bindSelfUnmatched' | 'bindInviteMatched' | 'bindInviteUnmatched' | 'bindInviteBoundUnmatched' | 'bindingLimitNotice' | 'bindingTotalLimitNotice' | 'bindingNotice' | 'parentIdentity' | 'landing';
 type ParentBindMode = 'school' | 'class';
@@ -77,8 +83,10 @@ type ClassProfile = {
   count: number;
   creatorName: string;
   isCreator: boolean;
+  role: ClassRole;
 };
 type ClassTeacherProfile = {
+  id: string;
   name: string;
   subjects: string[];
   isHeadTeacher: boolean;
@@ -161,11 +169,15 @@ const pageOrder: PageKey[] = [
   'classJoin',
   'classListPersonal',
   'classListSchool',
+  'classListPersonalTeacherActions',
+  'classListSchoolTeacherActions',
   'classDetail',
   'classDetailMember',
   'classDetailSchoolHead',
+  'classDetailDeputy',
   'teacherList',
   'teacherListMember',
+  'teacherListDeputy',
   'parentBindingList',
   'parentBindingListMember',
   'studentList',
@@ -191,24 +203,26 @@ const flowLanes: FlowLane[] = [
   { title: '登录', pages: ['login', 'profile', 'home', 'classCreate', 'classJoin', 'studentAdd', 'record'] },
   {
     title: '班级(个人版)',
-    pages: ['classListPersonal'],
+    pages: ['classListPersonal', 'classListPersonalTeacherActions'],
     branchGroups: [
       {
         branches: [
           { text: '班主任', pages: ['classDetail'] },
-          { text: '非班主任&副班主任', pages: ['classDetailMember'] },
+          { text: '副班主任', pages: ['classDetailDeputy'] },
+          { text: '普通老师', pages: ['classDetailMember'] },
         ],
       },
       {
         branches: [
           { text: '班主任', pages: ['teacherList'] },
-          { text: '非班主任&副班主任', pages: ['teacherListMember'] },
+          { text: '副班主任', pages: ['teacherListDeputy'] },
+          { text: '普通老师', pages: ['teacherListMember'] },
         ],
       },
       {
         branches: [
           { text: '班主任&副班主任', pages: ['parentBindingList'] },
-          { text: '非班主任', pages: ['parentBindingListMember'] },
+          { text: '普通老师', pages: ['parentBindingListMember'] },
         ],
       },
     ],
@@ -216,24 +230,26 @@ const flowLanes: FlowLane[] = [
   },
   {
     title: '班级(学校版)',
-    pages: ['classListSchool'],
+    pages: ['classListSchool', 'classListSchoolTeacherActions'],
     branchGroups: [
       {
         branches: [
           { text: '班主任', pages: ['classDetailSchoolHead'] },
-          { text: '非班主任&副班主任', pages: ['classDetailMember'] },
+          { text: '副班主任', pages: ['classDetailDeputy'] },
+          { text: '普通老师', pages: ['classDetailMember'] },
         ],
       },
       {
         branches: [
           { text: '班主任', pages: ['teacherList'] },
-          { text: '非班主任&副班主任', pages: ['teacherListMember'] },
+          { text: '副班主任', pages: ['teacherListDeputy'] },
+          { text: '普通老师', pages: ['teacherListMember'] },
         ],
       },
       {
         branches: [
           { text: '班主任&副班主任', pages: ['parentBindingList'] },
-          { text: '非班主任', pages: ['parentBindingListMember'] },
+          { text: '普通老师', pages: ['parentBindingListMember'] },
         ],
       },
     ],
@@ -244,13 +260,19 @@ const flowLanes: FlowLane[] = [
 ];
 
 const pageNumberLabel = (pageKey: PageKey) => {
+  if (pageKey === 'profile') return '02A';
+  if (pageKey === 'profileInvite') return '02B';
   if (pageKey === 'classListPersonal') return '07A';
   if (pageKey === 'classListSchool') return '07B';
+  if (pageKey === 'classListPersonalTeacherActions') return '07C';
+  if (pageKey === 'classListSchoolTeacherActions') return '07D';
   if (pageKey === 'classDetail') return '08A';
   if (pageKey === 'classDetailMember') return '08B';
   if (pageKey === 'classDetailSchoolHead') return '08C';
+  if (pageKey === 'classDetailDeputy') return '08D';
   if (pageKey === 'teacherList') return '09A';
   if (pageKey === 'teacherListMember') return '09B';
+  if (pageKey === 'teacherListDeputy') return '09C';
   if (pageKey === 'parentBindingList') return '10A';
   if (pageKey === 'parentBindingListMember') return '10B';
   if (pageKey === 'studentList') return '11';
@@ -273,6 +295,8 @@ const pageNumberLabel = (pageKey: PageKey) => {
 
 type PathTarget =
   | { type: 'page'; page: PageKey }
+  | { type: 'classInviteProfile' }
+  | { type: 'classInviteJoined' }
   | { type: 'classInviteConfirm' }
   | { type: 'inviteWechat' }
   | { type: 'wechatChatConfirm' }
@@ -281,8 +305,9 @@ type PathTarget =
 const invitePathNodes: Array<{ label: string; desc: string; target: PathTarget }> = [
   { label: '收到卡片', desc: '微信聊天对话', target: { type: 'wechatReceivedCard' } },
   { label: '未登录打开', desc: '进入 01 登录页', target: { type: 'page', page: 'login' } },
-  { label: '已登录已加入', desc: '进入班级页', target: { type: 'page', page: 'classListSchool' } },
-  { label: '已登录未加入', desc: '班级页弹窗', target: { type: 'classInviteConfirm' } },
+  { label: '已登录资料不完整', desc: '进入 02B 完善信息', target: { type: 'classInviteProfile' } },
+  { label: '已登录已加入', desc: '进入班级列表', target: { type: 'classInviteJoined' } },
+  { label: '已登录未加入', desc: '班级列表弹窗', target: { type: 'classInviteConfirm' } },
 ];
 
 const parentPageLabels: Record<ParentPageKey, { number: string; title: string }> = {
@@ -594,17 +619,32 @@ const pageMeta: Record<PageKey, PageMeta> = {
   },
   profile: {
     title: '完善信息',
-    subtitle: '首次体验填写姓名和学校。',
+    subtitle: '首次登录时补全教师基础资料。',
     modules: ['页面标题', '姓名输入框', '学校输入框', '进入体验按钮'],
     ctas: [
       { label: '进入体验', priority: 'P0', position: '页面底部主按钮' },
     ],
     states: {
-      normal: '展示姓名和学校字段，学校只收文本名称，不做强校验。',
+      normal: '展示姓名和学校，填写完成后进入个人版新手首页。',
       loading: '保存中。',
       empty: '姓名或学校为空时进入体验按钮不可用。',
       network: '保存失败，保留表单。',
       denied: '登录失效时返回注册登录页。',
+    },
+  },
+  profileInvite: {
+    title: '完善信息',
+    subtitle: '接受班级邀请前补全教师资料。',
+    modules: ['页面标题', '邀请摘要', '姓名输入框', '学校输入框', '任教学科选填', '下一步按钮'],
+    ctas: [
+      { label: '下一步', priority: 'P0', position: '页面底部主按钮' },
+    ],
+    states: {
+      normal: '邀请摘要只展示邀请人和班级，不重复学校名称；学校字段默认带入邀请方学校且允许修改，并支持选填任教学科。',
+      loading: '保存中。',
+      empty: '姓名或学校为空时下一步按钮不可用。',
+      network: '保存失败，保留表单和邀请上下文。',
+      denied: '登录失效时返回登录页，重新登录后继续处理邀请。',
     },
   },
   home: {
@@ -662,6 +702,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
       { label: '扫码识别表格', priority: 'P0', position: '学生录入列表上方' },
       { label: '完成', priority: 'P0', position: '页面底部主按钮' },
       { label: '添加一名', priority: 'P1', position: '录入表单下方' },
+      { label: '稍后添加', priority: 'P2', position: '页面底部次按钮' },
       { label: '清除该学生', priority: 'P2', position: '多行录入时学生行右侧留白区' },
     ],
     states: {
@@ -758,6 +799,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
     modules: ['班级操作入口', '班级显示设置', '班级卡片', '班级名称', '推断年级', '任教标签', '8 位数字班级号', '班级人数'],
     ctas: [
       { label: '班级操作', priority: 'P0', position: '页面右上角' },
+      { label: '复制班级号', priority: 'P1', position: '班级卡片班级号' },
       { label: '学生列表', priority: 'P1', position: '班级卡片底部' },
       { label: '班级报告', priority: 'P1', position: '班级卡片底部' },
     ],
@@ -774,6 +816,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
     subtitle: '查看学校统一管理的班级。',
     modules: ['班级卡片', '班级名称', '推断年级', '任教标签', '8 位数字班级号', '班级人数'],
     ctas: [
+      { label: '复制班级号', priority: 'P1', position: '班级卡片班级号' },
       { label: '学生列表', priority: 'P1', position: '班级卡片底部' },
       { label: '班级报告', priority: 'P1', position: '班级卡片底部' },
     ],
@@ -783,6 +826,44 @@ const pageMeta: Record<PageKey, PageMeta> = {
       empty: '暂无可查看班级。',
       network: '加载失败，提供重试。',
       denied: '无权限时提示联系学校管理员。',
+    },
+  },
+  classListPersonalTeacherActions: {
+    title: '普通老师更多操作（个人版）',
+    subtitle: '直接查看个人版普通老师可使用的班级卡片操作。',
+    modules: ['普通老师班级卡片', '班级更多操作弹层', '日常操作', '班级信息'],
+    ctas: [
+      { label: '作业录入', priority: 'P0', position: '更多操作弹层日常操作' },
+      { label: '兑换奖励', priority: 'P0', position: '更多操作弹层日常操作' },
+      { label: '查看班级信息', priority: 'P1', position: '更多操作弹层班级信息' },
+    ],
+    states: {
+      normal: '默认展开个人版普通老师的班级更多操作。',
+      loading: '班级操作加载中。',
+      empty: '无可操作班级时不展示更多操作弹层。',
+      network: '加载失败，关闭弹层并提供重试。',
+      denied: '无班级成员关系时返回班级列表。',
+    },
+  },
+  classListSchoolTeacherActions: {
+    title: '普通老师更多操作（学校版）',
+    subtitle: '直接查看学校版普通老师可使用的班级卡片操作。',
+    modules: ['普通老师班级卡片', '班级更多操作弹层', '日常操作', '学生信息更新', '班级维护'],
+    ctas: [
+      { label: '作业录入', priority: 'P0', position: '更多操作弹层日常操作' },
+      { label: '兑换奖励', priority: 'P0', position: '更多操作弹层日常操作' },
+      { label: '批量修改学生', priority: 'P1', position: '更多操作弹层学生信息更新' },
+      { label: '更新人脸数据', priority: 'P1', position: '更多操作弹层学生信息更新' },
+      { label: '设置兑换密码', priority: 'P1', position: '更多操作弹层学生信息更新' },
+      { label: '离校学生管理', priority: 'P1', position: '更多操作弹层班级维护' },
+      { label: '查看班级信息', priority: 'P1', position: '更多操作弹层班级维护' },
+    ],
+    states: {
+      normal: '默认展开学校版普通老师的班级更多操作。',
+      loading: '班级操作加载中。',
+      empty: '无可操作班级时不展示更多操作弹层。',
+      network: '加载失败，关闭弹层并提供重试。',
+      denied: '无学校班级查看权限时返回班级列表。',
     },
   },
   classDetail: {
@@ -809,11 +890,10 @@ const pageMeta: Record<PageKey, PageMeta> = {
   },
   classDetailMember: {
     title: '班级详情',
-    subtitle: '非班主任可查看班级基础信息、协同老师，并退出班级。',
+    subtitle: '普通老师只读查看班级基础信息、老师和家长绑定情况，并可退出班级。',
     modules: ['班级基本信息卡片', '班级名称', '班级学段', '8 位数字班级号', '老师列表卡片', '家长绑定列表卡片', '退出班级'],
     ctas: [
       { label: '复制班级号', priority: 'P1', position: '班级号右侧 icon' },
-      { label: '邀请老师', priority: 'P0', position: '老师列表卡片内' },
       { label: '更多老师', priority: 'P1', position: '老师列表卡片右上角' },
       { label: '更多家长绑定情况', priority: 'P1', position: '家长绑定列表卡片右上角' },
       { label: '退出班级', priority: 'P3', position: '页面底部' },
@@ -821,7 +901,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
     states: {
       normal: '展示非班主任视角的班级详情和退出班级按钮，不展示编辑班级入口。',
       loading: '班级详情加载中。',
-      empty: '老师列表为空时保留邀请老师入口。',
+      empty: '老师列表为空时展示空状态，不提供邀请入口。',
       network: '加载失败，提供重试。',
       denied: '无班级查看权限时返回班级页。',
     },
@@ -845,6 +925,25 @@ const pageMeta: Record<PageKey, PageMeta> = {
       empty: '老师列表为空时保留邀请老师入口。',
       network: '加载失败，提供重试。',
       denied: '无班级管理权限时返回班级页。',
+    },
+  },
+  classDetailDeputy: {
+    title: '班级详情',
+    subtitle: '副班主任可编辑班级基本信息并邀请老师或家长，不可管理副班主任。',
+    modules: ['班级基本信息卡片', '班级名称', '班级学段', '8 位数字班级号', '老师列表卡片', '家长绑定列表卡片', '退出班级'],
+    ctas: [
+      { label: '编辑班级信息', priority: 'P1', position: '班级名称右侧 icon' },
+      { label: '复制班级号', priority: 'P1', position: '班级号右侧 icon' },
+      { label: '邀请老师', priority: 'P0', position: '老师列表卡片内' },
+      { label: '邀请家长绑定', priority: 'P0', position: '家长绑定列表卡片内' },
+      { label: '退出班级', priority: 'P3', position: '页面底部' },
+    ],
+    states: {
+      normal: '展示副班主任视角，可编辑班级并邀请老师或家长，不展示班主任专属管理操作。',
+      loading: '班级详情加载中。',
+      empty: '老师或家长绑定为空时保留对应邀请入口。',
+      network: '加载失败，提供重试。',
+      denied: '无班级查看权限时返回班级页。',
     },
   },
   teacherList: {
@@ -871,6 +970,21 @@ const pageMeta: Record<PageKey, PageMeta> = {
       normal: '展示全部已加入老师，不展示操作入口。',
       loading: '老师列表加载中。',
       empty: '无其他老师时只展示当前老师。',
+      network: '加载失败，提供重试。',
+      denied: '无权限查看时返回班级详情。',
+    },
+  },
+  teacherListDeputy: {
+    title: '老师列表',
+    subtitle: '副班主任可查看老师列表并邀请老师，不可设置副班主任或移除老师。',
+    modules: ['老师列表', '头像', '姓名', '班主任标签', '副班主任标签', '多学科标签'],
+    ctas: [
+      { label: '邀请老师', priority: 'P0', position: '页面底部固定按钮' },
+    ],
+    states: {
+      normal: '展示全部已加入老师和邀请入口，不展示老师更多操作。',
+      loading: '老师列表加载中。',
+      empty: '无其他老师时保留邀请老师入口。',
       network: '加载失败，提供重试。',
       denied: '无权限查看时返回班级详情。',
     },
@@ -1200,28 +1314,77 @@ const priorityClass: Record<Priority, string> = {
 
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ');
 
+const isPersonalClassListPage = (pageKey: PageKey) => (
+  pageKey === 'classListPersonal' || pageKey === 'classListPersonalTeacherActions'
+);
+
+const isSchoolClassListPage = (pageKey: PageKey) => (
+  pageKey === 'classListSchool' || pageKey === 'classListSchoolTeacherActions'
+);
+
+const classRolePermissions: Record<ClassRole, {
+  canEditClass: boolean;
+  canInviteTeacher: boolean;
+  canInviteParent: boolean;
+  canManageDeputy: boolean;
+  canManageTeachers: boolean;
+  canManageParentBindings: boolean;
+}> = {
+  headTeacher: {
+    canEditClass: true,
+    canInviteTeacher: true,
+    canInviteParent: true,
+    canManageDeputy: true,
+    canManageTeachers: true,
+    canManageParentBindings: true,
+  },
+  deputyHeadTeacher: {
+    canEditClass: true,
+    canInviteTeacher: true,
+    canInviteParent: true,
+    canManageDeputy: false,
+    canManageTeachers: false,
+    canManageParentBindings: true,
+  },
+  teacher: {
+    canEditClass: false,
+    canInviteTeacher: false,
+    canInviteParent: false,
+    canManageDeputy: false,
+    canManageTeachers: false,
+    canManageParentBindings: false,
+  },
+};
+
+const getClassRoleForPage = (pageKey: PageKey): ClassRole => {
+  if (pageKey === 'classDetail' || pageKey === 'classDetailSchoolHead' || pageKey === 'teacherList') return 'headTeacher';
+  if (pageKey === 'classDetailDeputy' || pageKey === 'teacherListDeputy' || pageKey === 'parentBindingList') return 'deputyHeadTeacher';
+  return 'teacher';
+};
+
 const classDetailComparisonPrdBlocks: PrdBlock[] = [
   { type: 'h1', text: '08 班级详情差异对比' },
   { type: 'p', text: '这组 PRD 重点说明页面差异、权限边界和路由条件，不重复低保真图上已经可见的按钮和卡片。' },
   { type: 'h2', text: '页面分工' },
   { type: 'list', items: [
     '08A 个人版班主任：个人老师自己创建或拥有班主任权限的班级，允许编辑班级、转移班主任、管理老师角色，并可解散个人版班级。',
-    '08B 非班主任：任课老师或被邀请加入的协作老师，只能查看班级资料、邀请老师/家长、进入老师列表和学生列表，不能编辑班级，也不能解散班级。',
+    '08B 普通老师：任课老师或被邀请加入的普通协作老师，只能查看班级资料、老师列表和家长绑定情况，不能编辑班级、邀请成员或管理老师角色。',
     '08C 学校版班主任：学校统一管理下的班主任，允许维护班级协作和转移班主任，但班级归属学校，不允许在手机端解散。',
-    '08D 暂不落独立页面：如果后续需要区分“学校版非班主任”，可作为 08D；当前它与 08B 权限一致，继续复用 08B，避免为了概念完整而增加低价值页面。',
+    '08D 副班主任：个人版和学校版共用，可编辑班级基本信息并邀请老师或家长；不能设置副班主任、移除老师或转移班主任。',
   ] },
   { type: 'h2', text: '进入条件' },
   { type: 'list', items: [
-    '从 07A 个人版班级列表进入时，如果当前老师是班主任，进入 08A；否则进入 08B。',
-    '从 07B 学校版班级列表进入时，如果当前老师是班主任，进入 08C；否则仍进入 08B。',
-    '被邀请老师已加入班级后再次打开邀请卡片，按是否班主任和当前版本归属落到 08A、08B 或 08C，不新增邀请承接页。',
+    '从 07A 个人版班级列表进入时，班主任进入 08A，副班主任进入 08D，普通老师进入 08B。',
+    '从 07B 学校版班级列表进入时，班主任进入 08C，副班主任进入 08D，普通老师进入 08B。',
+    '被邀请老师已加入班级后再次打开邀请卡片，按班级角色和当前版本归属落到 08A、08B、08C 或 08D，不新增邀请承接页。',
   ] },
   { type: 'h2', text: '核心差异' },
   { type: 'list', items: [
-    '编辑班级信息：08A、08C 可以编辑；08B 不展示编辑入口。',
-    '老师角色管理：08A、08C 进入 09A，可设置副班主任、移除老师、转移班主任；08B 进入 09B，只查看老师和邀请老师。',
-    '家长绑定：三者都可查看家长绑定概览并邀请家长；完整管理能力收敛到 10 家长绑定列表，不在 08 页面展开。',
-    '危险操作：08A 是解散班级；08B 是退出班级；08C 也是退出班级，因为学校版班级由学校统一管理。',
+    '编辑班级信息：08A、08C、08D 可以编辑；08B 不展示编辑入口。',
+    '邀请权限：08A、08C、08D 可以邀请老师和家长；08B 不展示任何邀请入口。',
+    '老师角色管理：08A、08C 进入 09A，可设置副班主任、移除老师、转移班主任；08D 进入 09C，只查看和邀请；08B 进入 09B，只查看。',
+    '家长绑定：08A、08C、08D 进入 10A，可维护并邀请家长；08B 进入 10B，只读查看。',
+    '危险操作：08A 是解散班级；08B、08C、08D 是退出班级。',
   ] },
   { type: 'h2', text: '确认规则' },
   { type: 'list', items: [
@@ -1234,9 +1397,9 @@ const classDetailComparisonPrdBlocks: PrdBlock[] = [
   ] },
   { type: 'h2', text: '设计取舍' },
   { type: 'list', items: [
-    '08A/08B/08C 保持同一信息骨架，是为了让老师切换身份时认知成本最低；差异只体现在权限和危险操作。',
+    '08A/08B/08C/08D 保持同一信息骨架，是为了让老师切换身份时认知成本最低；差异只体现在权限和危险操作。',
     '不把所有角色差异都拆成页面，是为了避免页面地图变复杂；只有会影响关键权限或学校/个人版归属的状态才独立编号。',
-    '08D 先作为预留口径记录在 PRD 中，等学校版非班主任出现独特能力时再落页面。',
+    '普通老师的无权限操作直接隐藏，不使用禁用按钮或额外权限说明占用真实页面空间。',
   ] },
 ];
 
@@ -1245,18 +1408,21 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     { type: 'h2', text: '登录流程' },
     { type: 'list', items: [
       '页面导航地图中，01 登录页后合并展示三条分支：新用户首次登录、新用户已填写姓名但未完成新手引导、老用户登录。',
-      '新用户首次登录时进入 02 完善信息 → 03 新手首页。',
+      '新用户首次登录时进入 02A 完善信息 → 03 新手首页。',
       '新用户已填写姓名但未完成新手引导时直接进入 03 新手首页，后续节点不重复展示。',
       '老用户登录时直接进入 13 记录页。',
       '空间选择不作为首次进入流程中的独立页面节点。',
       '已登录老师再次进入时，系统按上次使用空间直接进入对应首页。',
+      '个人版在账号注册成功时自动创建；从邀请入口注册时后台创建但不打断受邀流程。',
     ] },
     { type: 'h2', text: '邀请入口未登录' },
     { type: 'list', items: [
       '老师从微信小程序卡片或邀请链接进入时，如果未登录，直接进入 01 登录页。',
       '登录页不展示额外邀请承接内容，保持登录主流程简洁。',
-      '完成微信或手机号授权后，继续校验是否已加入被邀请班级。',
-      '如果已加入该班级，进入班级页；如果未加入该班级，进入班级页并展示加入确认弹窗。',
+      '完成微信或手机号授权后，先校验教师资料是否完整，再校验是否已加入被邀请班级。',
+      '资料不完整时进入 02B 受邀完善信息，资料完整后再进入加入确认。',
+      '如果已加入该班级，进入邀请方学校的班级列表；如果未加入该班级，进入同一列表并展示加入确认弹窗。',
+      '班级邀请只授予目标班级权限，不自动授予邀请方学校的全校权限。',
     ] },
   ],
   minePersonal: [
@@ -1311,7 +1477,10 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '创建班级、加入班级和显示设置均收敛到底部操作弹层中，07A 主页面不再展示大入口卡片。',
       '班级名称右侧展示基于学段和入学年份推断的年级。',
       '班级名下方展示当前登录账号的任教标签，例如班主任、语文、数学。',
-      '班级号和人数在同一行展示。',
+      '班级号和人数在同一行展示，点击班级号可直接复制。',
+      '班级更多操作弹窗的班级号同样支持复制。',
+      '个人版普通老师的班级更多操作只展示作业录入、兑换奖励和查看班级信息；查看班级信息进入 08B 只读详情。',
+      '个人版普通老师不展示学生信息更新、协同管理和班级维护操作；班主任、副班主任继续按角色权限展示对应入口。',
       '卡片 CTA 为学生列表和班级报告。',
     ] },
     { type: 'h2', text: '邀请老师加入' },
@@ -1321,19 +1490,29 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '通过微信邀请展示“推荐”标签；选择后调用微信原生“选择聊天”页，包含关闭、多选、搜索、最近转发、最近聊天。',
       '选择二维码邀请时展示加入班级图片，图片包含“加入AI素养评价”标题、小程序二维码和邀请文案，图片下方提供“保存图片”。',
       '选择任意聊天后进入微信原生发送确认半屏，展示接收人、小程序卡片、消息输入、取消和发送。',
-      '点击发送后完成转发，小程序卡片打开后按登录态和班级关系直接进入登录页或班级页。',
+      '点击发送后完成转发，小程序卡片打开后按登录态和资料状态进入登录页、02B 受邀完善信息或班级列表。',
       '被邀请方先在微信聊天对话中看到小程序卡片，点击卡片后再进入小程序。',
       '选择链接邀请时只展示可复制文案，文案包含班级名称和快速加入链接。',
-      '邀请链接打开后不出现额外承接页：未登录进登录页，已登录进班级页。',
-      '已登录但没有该班级时，班级页展示加入确认弹窗。',
+      '邀请链接打开后不出现额外承接页：未登录进登录页，资料不完整进 02B，资料完整后进入邀请方学校的班级列表。',
+      '已登录但没有该班级时，邀请方学校的班级列表展示加入确认弹窗。',
       '右侧页面总览下方的“被邀请”用于展示被邀请方路径，从微信聊天对话收到小程序卡片开始。',
     ] },
     { type: 'h2', text: '被邀请方路由' },
     { type: 'list', items: [
-      '已登录且已有该班级：直接进入班级页，不展示加入确认。',
-      '已登录但没有该班级：进入班级页，并在页面上展示加入确认弹窗。',
+      '已登录且已有该班级：直接进入邀请方学校的班级列表，不展示加入确认。',
+      '已登录但没有该班级：进入邀请方学校的班级列表，并在列表上展示加入确认弹窗。',
       '确认弹窗说明邀请老师、班级名称和加入后可共同管理学生日常评价。',
-      '点击同意加入后关闭弹窗并留在班级页；点击暂不加入后关闭弹窗，不加入班级。',
+      '点击同意加入后关闭弹窗并停留在邀请方学校的班级列表；点击暂不加入后进入个人版新手首页。',
+    ] },
+  ],
+  classListPersonalTeacherActions: [
+    { type: 'h2', text: '07C 个人版普通老师菜单' },
+    { type: 'list', items: [
+      '07C 是 07A 的普通老师更多操作验收状态，复用同一班级列表和底部操作弹层，不新增真实业务页面。',
+      '进入 07C 时定位到协作班级中的普通老师身份，并默认展开目标班级的更多操作。',
+      '只展示作业录入、兑换奖励和查看班级信息。',
+      '不展示学生信息更新、邀请老师、邀请家长、离校学生管理和编辑班级信息。',
+      '查看班级信息进入 08B 普通老师只读班级详情。',
     ] },
   ],
   classListSchool: [
@@ -1342,8 +1521,19 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '学校版班级列表不展示创建班级和加入班级入口。',
       '班级名称右侧展示基于学段和入学年份推断的年级。',
       '班级名下方展示当前登录账号的任教标签，例如班主任、语文、数学。',
-      '班级号和人数在同一行展示。',
+      '班级号和人数在同一行展示，点击班级号可直接复制。',
+      '班级更多操作弹窗的班级号同样支持复制。',
       '卡片 CTA 为学生列表和班级报告。',
+    ] },
+  ],
+  classListSchoolTeacherActions: [
+    { type: 'h2', text: '07D 学校版普通老师菜单' },
+    { type: 'list', items: [
+      '07D 是 07B 的普通老师更多操作验收状态，复用同一班级列表和底部操作弹层，不新增真实业务页面。',
+      '进入 07D 时只展示当前普通老师任教的目标班级，并默认展开更多操作。',
+      '保留学校版普通老师的作业录入、兑换奖励、学生信息更新、离校学生管理和查看班级信息。',
+      '不展示邀请老师、邀请家长和编辑班级信息。',
+      '查看班级信息进入 08B 普通老师只读班级详情。',
     ] },
   ],
   classDetail: [
@@ -1367,7 +1557,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '点击家长绑定列表右上角 icon 进入完整列表，通过 tab 查看未绑定和已绑定学生。',
       '完整家长绑定列表不展示学号；未绑定卡片展示学生头像、学生姓名和“待绑定”标签。',
       '已绑定预览按学生聚合展示，例如“王小明”卡片内展示“爸爸、姑姑”等关系标签；08A/08B 预览不展示电话 icon。',
-      '班级详情和完整家长绑定列表均提供“邀请家长绑定”按钮，层级同老师列表板块的邀请老师。',
+      '班主任和副班主任视角的班级详情、完整家长绑定列表均提供“邀请家长绑定”按钮，普通老师视角不展示。',
       '邀请家长绑定流程完成后回到发起邀请的当前页面。',
       '点击邀请老师复用班级邀请流程。',
       '08A 班主任可点击“转移班主任”，从底部老师列表弹窗中选择一位非班主任老师。',
@@ -1392,14 +1582,25 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
   ],
   classDetailMember: [
     ...classDetailComparisonPrdBlocks,
-    { type: 'h2', text: '非班主任补充' },
+    { type: 'h2', text: '普通老师补充' },
     { type: 'list', items: [
-      '从 07A/07B 班级列表进入非班主任身份的班级时，跳转到 08B 班级详情（非班主任）。',
-      '非班主任可以查看班级基础信息、复制班级号、邀请老师和查看老师列表，但不能修改班级详情。',
+      '从 07A/07B 班级列表进入普通老师身份的班级时，跳转到 08B 班级详情。',
+      '普通老师可以查看班级基础信息、复制班级号、老师列表和家长绑定情况，但不能修改班级详情，也不能邀请老师或家长。',
       '班级卡片沿用班主任详情结构：不展示班主任字段，班级号和人数同一行。',
       '页面底部不展示解散班级，只展示退出班级。',
-      '退出班级需要二次确认；确认后当前老师不再管理该班级，班级数据仍由创建人保留。',
+      '退出班级需要二次确认；确认后当前老师不再管理该班级，班级数据仍由班主任保留。',
       '08A 点击老师列表 icon 进入 09A 班主任老师列表，08B 点击老师列表 icon 进入 09B 非班主任老师列表。',
+    ] },
+  ],
+  classDetailDeputy: [
+    ...classDetailComparisonPrdBlocks,
+    { type: 'h2', text: '副班主任补充' },
+    { type: 'list', items: [
+      '从 07A/07B 班级列表进入副班主任身份的班级时，跳转到 08D 班级详情。',
+      '副班主任可以编辑班级基本信息、邀请老师和邀请家长。',
+      '副班主任进入 09C 老师列表，可查看并邀请老师，但不能设置或取消副班主任、移除老师、转移班主任。',
+      '副班主任进入 10A 家长绑定列表，可沿用现有家长绑定维护权限。',
+      '页面底部只展示退出班级，不展示解散班级或转移班主任。',
     ] },
   ],
   teacherList: [
@@ -1417,9 +1618,18 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
   teacherListMember: [
     { type: 'h2', text: '09B 老师列表规则' },
     { type: 'list', items: [
-      '09B 是非班主任视角。',
+      '09B 是普通老师视角。',
       '老师卡片包含头像、姓名、班主任标签、副班主任标签和多个任教学科标签。',
-      '非班主任可查看老师列表，班主任和副班主任置顶并用横线分隔其余老师；列表可滚动，底部展示邀请老师按钮；不展示移除或更多操作。',
+      '普通老师只可查看老师列表；班主任和副班主任置顶并用横线分隔其余老师，不展示邀请、移除或更多操作。',
+    ] },
+  ],
+  teacherListDeputy: [
+    { type: 'h2', text: '09C 老师列表规则' },
+    { type: 'list', items: [
+      '09C 是副班主任视角。',
+      '老师卡片与 09A/09B 使用同一信息结构，班主任和副班主任置顶。',
+      '副班主任可邀请老师，邀请按钮固定在页面底部。',
+      '副班主任不展示老师卡片更多操作，不能设置或取消副班主任，也不能移除老师。',
     ] },
   ],
   parentBindingList: [
@@ -1437,7 +1647,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '10A 详情弹窗提供“编辑”入口；点击编辑后才激活关系和手机号输入框，底部只展示左侧移除绑定和右侧保存修改，不再展示拨打电话。',
       '家长身份来自信息确认页的爸爸、妈妈、爷爷、奶奶、外公、外婆或其他文本。',
       '一个学生可以被多个家长绑定，班主任和副班主任可以移除单个家长绑定关系；详情弹窗和移除确认均展示完整手机号，帮助确认是否绑定错误。',
-      '从 08A/08B 班级详情进入时，邀请家长绑定流程完成后回到当前页。',
+      '从 08A/08C/08D 班级详情进入时，邀请家长绑定流程完成后回到当前页。',
       '邀请家长绑定弹窗同样提供通过微信邀请、二维码邀请和通过链接邀请；二维码使用“素养指南针”小程序二维码，链接文案不再引导输入班级号。',
     ] },
   ],
@@ -1484,6 +1694,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '每一行的姓名、学号和性别填写完成后，底部完成按钮才可点击；学号必填。',
       '学号必填，填写后可支持学号进行评价，例如“1号和3号同学打架”。',
       '当存在多行时，每个学生行右侧留白区展示清除 icon，用于删除误添加的整条学生数据；不展示学生序号文案。',
+      '底部提供“稍后添加”次按钮，点击后不保存当前未完成的学生行，返回首页并保持“确认学生”任务未完成；老师后续可再次进入本页使用扫码识别表格。',
       '不提供批量粘贴入口。',
     ] },
   ],
@@ -1684,6 +1895,8 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [pendingInviteAfterLogin, setPendingInviteAfterLogin] = useState(false);
   const [inviteeLoggedIn, setInviteeLoggedIn] = useState(false);
   const [inviteeAlreadyJoined, setInviteeAlreadyJoined] = useState(false);
+  const [inviteTeachingSubjects, setInviteTeachingSubjects] = useState<string[]>([]);
+  const [hasOtherClassMemberships, setHasOtherClassMemberships] = useState(true);
   const [editingTeachingIndex, setEditingTeachingIndex] = useState<number | null>(null);
   const [teachingGrade, setTeachingGrade] = useState<TeachingGrade>('2025级');
   const [teachingSelectedClasses, setTeachingSelectedClasses] = useState<string[]>(['2025级1班', '2025级2班']);
@@ -1699,7 +1912,12 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [showPersonalClassActionSheet, setShowPersonalClassActionSheet] = useState(false);
   const [showPersonalClassDisplaySheet, setShowPersonalClassDisplaySheet] = useState(false);
   const [personalVisibleClassCodes, setPersonalVisibleClassCodes] = useState<string[]>(['58273914']);
-  const [inviteClass, setInviteClass] = useState<{ name: string; code: string; inviter: string }>({ name: '2025级1班', code: '58273914', inviter: '郭老师' });
+  const [inviteClass, setInviteClass] = useState<{ name: string; code: string; inviter: string; school: string }>({
+    name: '2025级1班',
+    code: '58273914',
+    inviter: '郭老师',
+    school: '成都七中初中附属小学',
+  });
   const [activeClassProfile, setActiveClassProfile] = useState<ClassProfile>({
     name: '2025级1班',
     code: '58273914',
@@ -1708,6 +1926,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     count: 2,
     creatorName: '郭老师',
     isCreator: true,
+    role: 'headTeacher',
   });
   const [showClassExitSheet, setShowClassExitSheet] = useState(false);
   const [classDissolveStep, setClassDissolveStep] = useState<ClassDissolveStep>('check');
@@ -1723,7 +1942,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [isEditingParentBinding, setIsEditingParentBinding] = useState(false);
   const [showTransferHeadTeacherSheet, setShowTransferHeadTeacherSheet] = useState(false);
   const [transferHeadTeacherCandidate, setTransferHeadTeacherCandidate] = useState<ClassTeacherProfile | null>(null);
-  const [classHeadTeacherName, setClassHeadTeacherName] = useState('郭老师');
+  const [classHeadTeacherId, setClassHeadTeacherId] = useState('teacher-current');
   const [classActionToast, setClassActionToast] = useState('');
   const classActionToastTimerRef = useRef<number | null>(null);
   const [parentPage, setParentPage] = useState<ParentPageKey>('wechatCard');
@@ -1764,6 +1983,17 @@ const TeacherCMobileLowFi: React.FC = () => {
       classActionToastTimerRef.current = null;
     }, 2000);
   };
+
+  const copyClassCode = async (code: string) => {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(code);
+      showClassActionToast('班级号已复制');
+    } catch {
+      showClassActionToast('复制失败，请重试');
+    }
+  };
+
   const demoAcademicStartYear = 2025;
   const normalizedClassNumber = classNumber.trim();
   const classDisplayName = entryYear && normalizedClassNumber ? buildClassName(entryYear, normalizedClassNumber) : '';
@@ -1776,19 +2006,18 @@ const TeacherCMobileLowFi: React.FC = () => {
     { name: '周子航', no: '20250104', gender: '男' as const },
   ];
   const currentTeacherDisplayName = teacherName.trim() || '郭老师';
-  const activeHeadTeacherName = classHeadTeacherName === '郭老师' ? currentTeacherDisplayName : classHeadTeacherName;
   const classTeachers: ClassTeacherProfile[] = [
-    { name: currentTeacherDisplayName, subjects: ['语文', '道德与法治'], isHeadTeacher: false, isDeputyHeadTeacher: false },
-    { name: '陈老师', subjects: ['语文', '书法'], isHeadTeacher: false, isDeputyHeadTeacher: true },
-    { name: '李老师', subjects: ['数学', '科学'], isHeadTeacher: false, isDeputyHeadTeacher: false },
-    { name: '王老师', subjects: ['英语'], isHeadTeacher: false, isDeputyHeadTeacher: false },
-    { name: '赵老师', subjects: ['体育', '劳动'], isHeadTeacher: false, isDeputyHeadTeacher: true },
-    { name: '刘老师', subjects: ['美术'], isHeadTeacher: false, isDeputyHeadTeacher: false },
-    { name: '马老师', subjects: ['信息科技'], isHeadTeacher: false, isDeputyHeadTeacher: false },
-    { name: '高老师', subjects: ['综合实践'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { id: 'teacher-current', name: currentTeacherDisplayName, subjects: inviteTeachingSubjects.length > 0 ? inviteTeachingSubjects : ['语文', '道德与法治'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { id: 'teacher-chen', name: '陈老师', subjects: ['语文', '书法'], isHeadTeacher: false, isDeputyHeadTeacher: true },
+    { id: 'teacher-li', name: '李老师', subjects: ['数学', '科学'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { id: 'teacher-wang', name: '王老师', subjects: ['英语'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { id: 'teacher-zhao', name: '赵老师', subjects: ['体育', '劳动'], isHeadTeacher: false, isDeputyHeadTeacher: true },
+    { id: 'teacher-liu', name: '刘老师', subjects: ['美术'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { id: 'teacher-ma', name: '马老师', subjects: ['信息科技'], isHeadTeacher: false, isDeputyHeadTeacher: false },
+    { id: 'teacher-gao', name: '高老师', subjects: ['综合实践'], isHeadTeacher: false, isDeputyHeadTeacher: false },
   ].map((teacher) => ({
     ...teacher,
-    isHeadTeacher: teacher.name === activeHeadTeacherName,
+    isHeadTeacher: teacher.id === classHeadTeacherId,
   }));
   const transferHeadTeacherCandidates = classTeachers.filter((teacher) => !teacher.isHeadTeacher);
   const primaryClassTeachers = classTeachers.filter((teacher) => teacher.isHeadTeacher || teacher.isDeputyHeadTeacher);
@@ -1995,6 +2224,22 @@ const TeacherCMobileLowFi: React.FC = () => {
     setActiveTeacherAction(null);
     setClassActionToast('');
     setHistory([]);
+    if (next === 'classListPersonalTeacherActions' || next === 'classListSchoolTeacherActions') {
+      const ordinaryTeacherClass = {
+        name: '2023级3班',
+        code: '41862753',
+        stage: '小学' as const,
+        entryYearValue: 2023,
+        count: 36,
+        creatorName: '李老师',
+        isCreator: false,
+        role: 'teacher' as const,
+      };
+      setCurrentSpaceId(next === 'classListPersonalTeacherActions' ? 'collabLi' : defaultTeacherSpaceId);
+      setUserHasMultipleClassSources(true);
+      setActiveClassProfile(ordinaryTeacherClass);
+      setActiveClassAction({ name: ordinaryTeacherClass.name, code: ordinaryTeacherClass.code });
+    }
     if (next === 'classDetail' || next === 'classDetailSchoolHead') {
       setActiveClassProfile({
         name: '2025级1班',
@@ -2004,9 +2249,11 @@ const TeacherCMobileLowFi: React.FC = () => {
         count: 2,
         creatorName: teacherName.trim() || '郭老师',
         isCreator: true,
+        role: 'headTeacher',
       });
     }
     if (next === 'classDetailMember') {
+      setHasOtherClassMemberships(true);
       setActiveClassProfile({
         name: '2024级2班',
         code: '73948162',
@@ -2015,6 +2262,19 @@ const TeacherCMobileLowFi: React.FC = () => {
         count: 0,
         creatorName: '陈老师',
         isCreator: false,
+        role: 'teacher',
+      });
+    }
+    if (next === 'classDetailDeputy') {
+      setActiveClassProfile({
+        name: '2024级2班',
+        code: '73948162',
+        stage: '初中',
+        entryYearValue: 2024,
+        count: 32,
+        creatorName: '陈老师',
+        isCreator: false,
+        role: 'deputyHeadTeacher',
       });
     }
     if (next === 'minePersonal') {
@@ -2039,6 +2299,8 @@ const TeacherCMobileLowFi: React.FC = () => {
       setPendingInviteAfterLogin(false);
       setInviteeLoggedIn(false);
       setInviteeAlreadyJoined(false);
+      setInviteTeachingSubjects([]);
+      setHasOtherClassMemberships(true);
       setStudentInputRows([{ id: 1, name: '', no: '', gender: '男' }]);
       setStudentBatchEditRows([]);
       return;
@@ -2055,7 +2317,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       return;
     }
     if (!teacherName.trim()) setTeacherName('郭');
-    if (next !== 'profile') setClassCreated(true);
+    if (next !== 'profile' && next !== 'profileInvite') setClassCreated(true);
     if (['record', 'aiResult', 'editResult', 'classReport', 'termReport', 'studentDetail'].includes(next)) {
       setStudentCount((count) => Math.max(count, 2));
       setRecordCount((count) => Math.max(count, 2));
@@ -2071,10 +2333,47 @@ const TeacherCMobileLowFi: React.FC = () => {
     }
   };
 
+  const getInvitedSchoolSpaceId = (): TeacherSpaceId => (
+    teacherSpaces.find((space) => space.type === 'school' && space.title === inviteClass.school)?.id
+      ?? defaultTeacherSpaceId
+  );
+
+  const openInvitedClassList = (showJoinConfirm = false) => {
+    setCurrentSpaceId(getInvitedSchoolSpaceId());
+    navigate('classListSchool');
+    if (showJoinConfirm) setShowInviteConfirmSheet(true);
+  };
+
   const jumpToPath = (target: PathTarget) => {
     if (target.type === 'page') {
       jumpToPage(target.page);
       if (target.page === 'login') setPendingInviteAfterLogin(true);
+      return;
+    }
+
+    if (target.type === 'classInviteProfile') {
+      jumpToPage('profileInvite');
+      setInviteeLoggedIn(true);
+      setPendingInviteAfterLogin(true);
+      setTeacherName('');
+      setTeacherSchoolName(inviteClass.school);
+      setInviteTeachingSubjects([]);
+      return;
+    }
+
+    if (target.type === 'classInviteJoined') {
+      setInviteeLoggedIn(true);
+      setInviteeAlreadyJoined(true);
+      setHasOtherClassMemberships(false);
+      openInvitedClassList();
+      return;
+    }
+
+    if (target.type === 'classInviteConfirm') {
+      setInviteeLoggedIn(true);
+      setInviteeAlreadyJoined(false);
+      setHasOtherClassMemberships(false);
+      openInvitedClassList(true);
       return;
     }
 
@@ -2108,6 +2407,12 @@ const TeacherCMobileLowFi: React.FC = () => {
   const getClassListPageForCurrentSpace = (): PageKey => {
     const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
     return currentSpace.type === 'school' ? 'classListSchool' : 'classListPersonal';
+  };
+
+  const getClassDetailPageForProfile = (profile: ClassProfile): PageKey => {
+    if (profile.role === 'deputyHeadTeacher') return 'classDetailDeputy';
+    if (profile.role === 'teacher') return 'classDetailMember';
+    return getClassListPageForCurrentSpace() === 'classListSchool' ? 'classDetailSchoolHead' : 'classDetail';
   };
 
   const selectTeacherSpace = (spaceId: TeacherSpaceId, targetPage?: PageKey) => {
@@ -2177,19 +2482,44 @@ const TeacherCMobileLowFi: React.FC = () => {
     setViewState('normal');
   };
 
+  const returnToTeacherHome = () => {
+    setHistory([]);
+    setShowStudentScanSheet(false);
+    setPage('home');
+    setViewState('normal');
+    setRecordStage('idle');
+  };
+
   const completeLogin = () => {
     if (!pendingInviteAfterLogin) {
       navigate('profile');
       return;
     }
     setInviteeLoggedIn(true);
-    setPendingInviteAfterLogin(false);
-    if (inviteeAlreadyJoined) {
-      navigate(getClassListPageForCurrentSpace());
+    if (!teacherName.trim() || !teacherSchoolName.trim()) {
+      setTeacherSchoolName((schoolName) => schoolName.trim() || inviteClass.school);
+      navigate('profileInvite');
       return;
     }
-    navigate(getClassListPageForCurrentSpace());
-    setShowInviteConfirmSheet(true);
+    if (inviteeAlreadyJoined) {
+      setPendingInviteAfterLogin(false);
+      openInvitedClassList();
+      return;
+    }
+    setPendingInviteAfterLogin(false);
+    setHasOtherClassMemberships(false);
+    openInvitedClassList(true);
+  };
+
+  const completeTeacherProfile = () => {
+    if (page === 'profile') {
+      setPendingInviteAfterLogin(false);
+      navigate('home');
+      return;
+    }
+    setPendingInviteAfterLogin(false);
+    setHasOtherClassMemberships(false);
+    openInvitedClassList(true);
   };
 
   const openStudentAdd = () => {
@@ -2387,17 +2717,20 @@ const TeacherCMobileLowFi: React.FC = () => {
     );
   };
 
-  const ScreenHeader = ({ title, sub }: { title: string; sub?: string }) => (
-    <header className="flex h-16 items-center gap-3 border-b border-gray-100 bg-white px-4">
-      <button type="button" onClick={history.length ? back : undefined} className="flex h-11 w-11 items-center justify-center rounded-xl active:bg-gray-100 disabled:opacity-30" disabled={!history.length} aria-label="返回">
-        <ArrowLeft size={18} />
-      </button>
-      <div className="min-w-0 flex-1 text-center">
-        <h2 className="truncate text-base font-black">{title}</h2>
-      </div>
-      <div className="h-11 w-11" aria-hidden="true" />
-    </header>
-  );
+  const ScreenHeader = ({ title, sub, onBack, backLabel = '返回' }: { title: string; sub?: string; onBack?: () => void; backLabel?: string }) => {
+    const backAction = onBack ?? (history.length ? back : undefined);
+    return (
+      <header className="flex h-16 items-center gap-3 border-b border-gray-100 bg-white px-4">
+        <button type="button" onClick={backAction} className="flex h-11 w-11 items-center justify-center rounded-xl active:bg-gray-100 disabled:opacity-30" disabled={!backAction} aria-label={backLabel}>
+          <ArrowLeft size={18} />
+        </button>
+        <div className="min-w-0 flex-1 text-center">
+          <h2 className="truncate text-base font-black">{title}</h2>
+        </div>
+        <div className="h-11 w-11" aria-hidden="true" />
+      </header>
+    );
+  };
 
   const TabHeader = ({ title }: { title: string }) => (
     <header className="flex h-16 items-center justify-center border-b border-gray-100 bg-white px-4">
@@ -2427,7 +2760,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const BottomNav = () => (
     <nav className="absolute inset-x-4 bottom-4 grid h-14 grid-cols-3 rounded-2xl border border-gray-100 bg-white shadow-[0_-8px_28px_rgba(15,23,42,0.06)] text-center text-[11px] font-black">
       <button type="button" onClick={() => navigate('home')} className={cx('rounded-l-[14px]', (page === 'home' || page === 'record') && 'bg-gray-950 text-white')}>记录</button>
-      <button type="button" onClick={() => navigate(getClassListPageForCurrentSpace())} className={cx((page === 'classListPersonal' || page === 'classListSchool') && 'bg-gray-950 text-white')}>班级</button>
+      <button type="button" onClick={() => navigate(getClassListPageForCurrentSpace())} className={cx((isPersonalClassListPage(page) || isSchoolClassListPage(page)) && 'bg-gray-950 text-white')}>班级</button>
       <button type="button" onClick={() => navigate(userHasMultipleClassSources ? 'mineSchool' : 'minePersonal')} className={cx('rounded-r-[14px]', (page === 'minePersonal' || page === 'mineSchool') && 'bg-gray-950 text-white')}>我的</button>
     </nav>
   );
@@ -2555,13 +2888,18 @@ const TeacherCMobileLowFi: React.FC = () => {
   );
 
   const openInviteForClass = (audience: InviteAudience, returnPage: PageKey, classInfo?: { name: string; code: string }) => {
-    setInviteClass({ ...(classInfo ?? { name: activeClassProfile.name, code: activeClassProfile.code }), inviter: teacherName.trim() || '郭老师' });
+    const targetClass = classInfo ?? { name: activeClassProfile.name, code: activeClassProfile.code };
+    const inviteSchool = teacherSpaces.find((space) => space.id === currentSpaceId && space.type === 'school')?.title
+      || teacherSchoolName.trim()
+      || '成都七中初中附属小学';
+    setInviteClass({ ...targetClass, inviter: teacherName.trim() || '郭老师', school: inviteSchool });
     setInviteAudience(audience);
     setInviteReturnPage(returnPage);
     setShowInviteOptionsSheet(true);
   };
 
   const runClassAction = (key: ClassActionKey) => {
+    const permissions = classRolePermissions[activeClassProfile.role];
     if (key === 'batchStudents') {
       openStudentBatchEdit();
       return;
@@ -2570,16 +2908,21 @@ const TeacherCMobileLowFi: React.FC = () => {
       navigate('studentList');
       return;
     }
-    if (key === 'editClass') {
+    if (key === 'editClass' || key === 'viewClass') {
+      if (key === 'editClass' && !permissions.canEditClass) return;
+      if (key === 'viewClass' && activeClassProfile.role !== 'teacher') return;
+      setActiveClassAction(null);
       navigate(getClassDetailPageForProfile(activeClassProfile));
       return;
     }
     if (key === 'inviteTeacher' || key === 'inviteParent') {
+      const canInvite = key === 'inviteTeacher' ? permissions.canInviteTeacher : permissions.canInviteParent;
+      if (!canInvite) return;
       openInviteForClass(key === 'inviteTeacher' ? 'teacher' : 'parent', getClassListPageForCurrentSpace(), activeClassAction ?? undefined);
       setActiveClassAction(null);
       return;
     }
-    const toastMap: Record<Exclude<ClassActionKey, 'reward' | 'homework' | 'batchStudents' | 'leftStudents' | 'editClass' | 'inviteTeacher' | 'inviteParent'>, string> = {
+    const toastMap: Record<Exclude<ClassActionKey, 'reward' | 'homework' | 'batchStudents' | 'leftStudents' | 'editClass' | 'viewClass' | 'inviteTeacher' | 'inviteParent'>, string> = {
       password: '设置兑换密码',
       face: '更新人脸数据',
     };
@@ -2612,6 +2955,9 @@ const TeacherCMobileLowFi: React.FC = () => {
     setShowClassEditSheet(false);
   };
 
+  const activeClassPermissions = classRolePermissions[activeClassProfile.role];
+  const isOrdinaryTeacher = activeClassProfile.role === 'teacher';
+  const isPersonalOrdinaryTeacher = isPersonalClassListPage(page) && isOrdinaryTeacher;
   const classActionGroups = [
     {
       title: '日常操作',
@@ -2636,21 +2982,34 @@ const TeacherCMobileLowFi: React.FC = () => {
       ],
     },
     {
-      title: '班级维护',
+      title: isPersonalOrdinaryTeacher ? '班级信息' : '班级维护',
       items: [
         { key: 'leftStudents' as const, label: '离校学生管理', icon: Users },
         { key: 'editClass' as const, label: '编辑班级信息', icon: Edit3 },
+        { key: 'viewClass' as const, label: '查看班级信息', icon: Eye },
       ],
     },
-  ];
+  ].map((group) => ({
+    ...group,
+    items: group.items.filter((item) => {
+      if (isPersonalOrdinaryTeacher) {
+        return item.key === 'homework' || item.key === 'reward' || item.key === 'viewClass';
+      }
+      if (item.key === 'viewClass') return isOrdinaryTeacher;
+      if (item.key === 'inviteTeacher') return activeClassPermissions.canInviteTeacher;
+      if (item.key === 'inviteParent') return activeClassPermissions.canInviteParent;
+      if (item.key === 'editClass') return activeClassPermissions.canEditClass;
+      return true;
+    }),
+  })).filter((group) => group.items.length > 0);
 
-  const ClassCard = ({ name, code, stage, entryYearValue, tags, count, creatorName, isCreator }: { name: string; code: string; stage: '小学' | '初中' | '高中'; entryYearValue: number; tags: string[]; count: number; creatorName: string; isCreator: boolean }) => (
+  const ClassCard = ({ name, code, stage, entryYearValue, tags, count, creatorName, isCreator, role }: { name: string; code: string; stage: '小学' | '初中' | '高中'; entryYearValue: number; tags: string[]; count: number; creatorName: string; isCreator: boolean; role: ClassRole }) => (
     <div className="relative rounded-2xl bg-gray-50 p-4">
       <button
         type="button"
         aria-label={`${name}更多操作`}
         onClick={() => {
-          setActiveClassProfile({ name, code, stage, entryYearValue, count, creatorName, isCreator });
+          setActiveClassProfile({ name, code, stage, entryYearValue, count, creatorName, isCreator, role });
           setActiveClassAction({ name, code });
         }}
         className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white active:bg-gray-100"
@@ -2665,8 +3024,16 @@ const TeacherCMobileLowFi: React.FC = () => {
           <span key={tag} className="rounded-lg bg-white px-2 py-1 text-xs font-black">{tag}</span>
         ))}
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3 text-xs font-medium text-gray-600">
-        <span>班级号：{formatClassCode(code)}</span>
+      <div className="mt-1 flex min-h-11 items-center justify-between gap-3 text-xs font-medium text-gray-600">
+        <button
+          type="button"
+          onClick={() => void copyClassCode(code)}
+          className="inline-flex min-h-11 min-w-0 items-center gap-1.5 text-left tabular-nums active:text-gray-950"
+          aria-label={`复制${name}班级号${code}`}
+        >
+          <span className="shrink-0 whitespace-nowrap">班级号：{formatClassCode(code)}</span>
+          <Copy size={13} className="shrink-0 text-gray-500" />
+        </button>
         <span className="shrink-0 text-right">{count}人</span>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2">
@@ -2679,13 +3046,21 @@ const TeacherCMobileLowFi: React.FC = () => {
   const renderClassActionSheet = () => {
     if (!activeClassAction) return null;
     return (
-      <div className={cx(bottomSheetBackdropClass, 'z-40 bg-black/35')}>
+      <div className={cx(bottomSheetBackdropClass, 'z-40 bg-black/35')} role="dialog" aria-modal="true" aria-label="班级更多操作">
         <button type="button" aria-label="关闭班级更多操作" className="absolute inset-0" onClick={() => setActiveClassAction(null)} />
         <div className={cx(bottomSheetPanelClass, 'rounded-t-3xl bg-white p-5 shadow-[0_-18px_44px_rgba(15,23,42,0.18)]')}>
           <div className="mb-4 flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="truncate text-lg font-black">{activeClassAction.name}</div>
-              <div className="mt-1 text-xs font-medium text-gray-500">班级号：{formatClassCode(activeClassAction.code)}</div>
+              <button
+                type="button"
+                onClick={() => void copyClassCode(activeClassAction.code)}
+                className="mt-0.5 inline-flex min-h-11 items-center gap-1.5 text-left text-xs font-medium tabular-nums text-gray-500 active:text-gray-950"
+                aria-label={`复制${activeClassAction.name}班级号${activeClassAction.code}`}
+              >
+                <span className="shrink-0 whitespace-nowrap">班级号：{formatClassCode(activeClassAction.code)}</span>
+                <Copy size={13} className="shrink-0" />
+              </button>
             </div>
             <button type="button" onClick={() => setActiveClassAction(null)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-lg font-black active:bg-gray-100">×</button>
           </div>
@@ -2720,7 +3095,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   };
 
   const renderTeacherActionSheet = () => {
-    if (!activeTeacherAction) return null;
+    if (!activeTeacherAction || !classRolePermissions[getClassRoleForPage(page)].canManageDeputy) return null;
     const deputyHeadTeacherActionLabel = activeTeacherAction.isDeputyHeadTeacher ? '取消副班主任' : '设为副班主任';
     return (
       <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="老师更多操作">
@@ -2990,7 +3365,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
             {transferHeadTeacherCandidates.map((teacher) => (
               <button
-                key={teacher.name}
+                key={teacher.id}
                 type="button"
                 onClick={() => {
                   setShowTransferHeadTeacherSheet(false);
@@ -3030,7 +3405,7 @@ const TeacherCMobileLowFi: React.FC = () => {
             <button
               type="button"
               onClick={() => {
-                setClassHeadTeacherName(transferHeadTeacherCandidate.name);
+                setClassHeadTeacherId(transferHeadTeacherCandidate.id);
                 showClassActionToast(`班主任已转移给${transferHeadTeacherCandidate.name}`);
                 close();
               }}
@@ -3329,6 +3704,15 @@ const TeacherCMobileLowFi: React.FC = () => {
   const renderInviteConfirmSheet = () => {
     if (!showInviteConfirmSheet) return null;
     const close = () => setShowInviteConfirmSheet(false);
+    const declineInvite = () => {
+      close();
+      if (inviteAudience !== 'teacher') return;
+      setCurrentSpaceId('personal');
+      setUserHasMultipleClassSources(false);
+      setClassCreated(false);
+      setJoinedClassHasStudents(false);
+      navigate('home');
+    };
 
     return (
       <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="确认加入班级">
@@ -3338,16 +3722,19 @@ const TeacherCMobileLowFi: React.FC = () => {
           <h3 className="text-base font-black">{inviteAudience === 'teacher' ? '加入班级邀请' : '绑定学生邀请'}</h3>
           <p className="mt-3 text-sm font-medium leading-7 text-gray-700">{inviteCopy.confirmText}</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">暂不加入</button>
+            <button type="button" onClick={declineInvite} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">暂不加入</button>
             <button
               type="button"
               onClick={() => {
                 close();
                 setInviteeAlreadyJoined(true);
+                setHasOtherClassMemberships(false);
+                setCurrentSpaceId(getInvitedSchoolSpaceId());
+                setUserHasMultipleClassSources(true);
                 setClassCreated(true);
                 setJoinedClassHasStudents(true);
                 setStudentCount((count) => Math.max(count, 2));
-                navigate(getClassListPageForCurrentSpace());
+                navigate('classListSchool');
               }}
               className="h-12 rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white"
             >
@@ -3439,6 +3826,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     };
     const isCreator = activeClassProfile.isCreator;
     const isSchoolHead = page === 'classDetailSchoolHead';
+    const exitDataOwner = page === 'classDetail' ? '创建人' : '班主任';
     const canDissolve = classDeleteConfirmText.trim() === 'delete';
     const isDissolveMode = isCreator && !isSchoolHead;
     const dissolvePrimaryLabel = classDissolveStep === 'check' ? '已确认，继续' : '确认解散班级';
@@ -3487,7 +3875,7 @@ const TeacherCMobileLowFi: React.FC = () => {
             </div>
           ) : (
             <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
-              退出后，你将不再管理「{activeClassProfile.name}」，该班级数据仍由创建人保留。
+              退出后，你将无法查看和记录「{activeClassProfile.name}」的数据，该班级仍由{exitDataOwner}保留。你的个人资料和个人版不会受到影响。
             </p>
           )}
           <div className="mt-4 grid grid-cols-2 gap-2">
@@ -3502,6 +3890,15 @@ const TeacherCMobileLowFi: React.FC = () => {
                 }
                 close();
                 showClassActionToast(isDissolveMode ? '已解散班级' : '已退出班级');
+                if (!isDissolveMode && !hasOtherClassMemberships) {
+                  setInviteeAlreadyJoined(false);
+                  setCurrentSpaceId('personal');
+                  setUserHasMultipleClassSources(false);
+                  setClassCreated(false);
+                  setJoinedClassHasStudents(false);
+                  navigate('home');
+                  return;
+                }
                 navigate(getClassListPageForCurrentSpace());
               }}
               className={cx(
@@ -3538,7 +3935,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       {teacher.isHeadTeacher && <span className="rounded-lg bg-gray-900 px-2 py-0.5 text-[11px] font-black text-white">班主任</span>}
       {teacher.isDeputyHeadTeacher && <span className="rounded-lg bg-gray-300 px-2 py-0.5 text-[11px] font-black text-gray-900">副班主任</span>}
       {teacher.subjects.map((subject) => (
-        <span key={`${teacher.name}-${subject}`} className="rounded-lg border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-bold text-gray-600">{subject}</span>
+        <span key={`${teacher.id}-${subject}`} className="rounded-lg border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-bold text-gray-600">{subject}</span>
       ))}
     </div>
   );
@@ -3550,7 +3947,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const getParentGuardianLabel = (guardian: ParentBindingProfile['guardians'][number]) => (
     guardian.relation === '其他' ? guardian.relationOther?.trim() || '其他' : guardian.relation
   );
-  const canRemoveParentBinding = activeClassProfile.isCreator || classTeachers.some((teacher) => teacher.name === currentTeacherDisplayName && (teacher.isHeadTeacher || teacher.isDeputyHeadTeacher));
+  const canRemoveParentBinding = activeClassProfile.isCreator || classTeachers.some((teacher) => teacher.id === 'teacher-current' && (teacher.isHeadTeacher || teacher.isDeputyHeadTeacher));
 
   const ParentBindingCard = ({ student, compact = false }: { student: ParentBindingProfile; compact?: boolean }) => {
     const guardians = student.guardians;
@@ -3805,11 +4202,16 @@ const TeacherCMobileLowFi: React.FC = () => {
             <div className="grid shrink-0 gap-2">
               {([
                 { cond: '未登录打开', node: invitePathNodes[1], idx: 1 },
-                { cond: '已登录已加入', node: invitePathNodes[2], idx: 2 },
-                { cond: '已登录未加入', node: invitePathNodes[3], idx: 3 },
+                { cond: '已登录资料不完整', node: invitePathNodes[2], idx: 2 },
+                { cond: '已登录已加入', node: invitePathNodes[3], idx: 3 },
+                { cond: '已登录未加入', node: invitePathNodes[4], idx: 4 },
               ] as const).map((branch) => {
                 const destActive = activeInviteNode === branch.idx;
-                const destPage = branch.node.target.type === 'page' ? branch.node.target.page : 'classListSchool';
+                const destPage = branch.node.target.type === 'page'
+                  ? branch.node.target.page
+                  : branch.node.target.type === 'classInviteProfile'
+                    ? 'profileInvite'
+                    : 'classListSchool';
                 return (
                   <div key={branch.cond} className="flex items-center gap-2">
                     <div className="flex w-fit max-w-[180px] items-center gap-2 text-[11px] font-black leading-4 text-gray-500">
@@ -5210,7 +5612,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           {renderStateContent()}
           {renderPhonePage()}
           {classActionToast && (
-            <div className="absolute inset-x-12 top-20 z-50 rounded-2xl bg-gray-950 px-4 py-3 text-center text-xs font-black text-white shadow-[0_16px_36px_rgba(15,23,42,0.2)]">
+            <div role="status" aria-live="polite" className="absolute inset-x-12 top-20 z-50 rounded-2xl bg-gray-950 px-4 py-3 text-center text-xs font-black text-white shadow-[0_16px_36px_rgba(15,23,42,0.2)]">
               {classActionToast}
             </div>
           )}
@@ -5262,7 +5664,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     if (surface === 'schoolAdmin') return renderStaticPrdPanel(schoolAdminPrdBlocks);
     if (surface === 'ops') return renderStaticPrdPanel(opsPrdBlocks);
 
-    const isClassDetailPrd = page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead';
+    const isClassDetailPrd = page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead' || page === 'classDetailDeputy';
     const blocks: PrdBlock[] = [
       ...(!isClassDetailPrd ? [
         { type: 'h1' as const, text: meta.title },
@@ -5347,27 +5749,39 @@ const TeacherCMobileLowFi: React.FC = () => {
       setShowPhoneLoginSheet(false);
       completeLogin();
     };
+    const dismissPhoneLoginKeyboard = () => {
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement) activeElement.blur();
+    };
 
     return (
       <div className={cx(bottomSheetBackdropClass, 'z-[120] bg-gray-900/45')} role="dialog" aria-modal="true" aria-label="手机号登录注册">
-        <button type="button" aria-label="关闭手机号登录弹窗" className="absolute inset-0 cursor-default" onClick={() => setShowPhoneLoginSheet(false)} />
-        <section className={cx(bottomSheetPanelClass, 'rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
+        <div aria-hidden="true" className="absolute inset-0" onPointerDown={dismissPhoneLoginKeyboard} />
+        <section className={cx(bottomSheetPanelClass, 'relative rounded-t-[28px] border border-gray-200 bg-white px-5 pb-7 pt-5 shadow-[0_-16px_40px_rgba(0,0,0,0.10)]')}>
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
+          <button
+            type="button"
+            aria-label="关闭手机号登录弹窗"
+            onClick={() => setShowPhoneLoginSheet(false)}
+            className="absolute right-3 top-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 active:bg-gray-100"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
 
-          <div className="grid grid-cols-2 rounded-2xl bg-gray-50 p-1 text-sm font-black">
+          <div className="mt-4 grid grid-cols-2 rounded-2xl bg-gray-50 p-1 text-sm font-black">
             <button
               type="button"
               onClick={() => setPhoneLoginTab('sms')}
               className={cx('h-10 rounded-xl', phoneLoginTab === 'sms' ? 'bg-white shadow-sm' : 'text-gray-500')}
             >
-              手机号登录
+              验证码登录
             </button>
             <button
               type="button"
               onClick={() => setPhoneLoginTab('password')}
               className={cx('h-10 rounded-xl', phoneLoginTab === 'password' ? 'bg-white shadow-sm' : 'text-gray-500')}
             >
-              账号登录
+              密码登录
             </button>
           </div>
 
@@ -6026,13 +6440,36 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
-    if (page === 'profile') {
+    if (page === 'profile' || page === 'profileInvite') {
       const canEnterExperience = Boolean(teacherName.trim() && teacherSchoolName.trim());
+      const isInviteProfile = page === 'profileInvite';
+      const inviteProfileSummary = `${inviteClass.inviter}邀请你加入「${inviteClass.name}」`;
+      const inviteSubjectOptions = ['语文', '数学', '英语', '科学', '体育', '艺术'];
+      const toggleInviteSubject = (subject: string) => {
+        setInviteTeachingSubjects((subjects) => (
+          subjects.includes(subject) ? subjects.filter((item) => item !== subject) : [...subjects, subject]
+        ));
+      };
       return (
         <>
           <ScreenHeader title="完善信息" />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
-            <div className="flex-1 space-y-3">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-4">
+              {isInviteProfile && (
+                <section className="rounded-2xl bg-gray-50 p-4" aria-label="班级邀请信息">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-700">
+                      <Building2 size={18} aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-black leading-5">{inviteClass.name}</div>
+                      <div className="mt-1 text-xs font-medium leading-5 text-gray-600">
+                        {inviteProfileSummary}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
               <label className="block rounded-2xl bg-gray-50 p-3 text-xs font-black">
                 姓名
                 <input
@@ -6050,19 +6487,40 @@ const TeacherCMobileLowFi: React.FC = () => {
                   className="mt-2 h-11 w-full border border-gray-200 px-2 text-sm font-normal"
                   placeholder="请输入学校名称"
                 />
-                <span className="mt-2 block text-xs font-normal text-gray-500">填写学校后，可更快找到同校老师创建的班级</span>
+                {!isInviteProfile && <span className="mt-2 block text-xs font-normal text-gray-500">填写学校后，可更快找到同校老师创建的班级</span>}
               </label>
+              {isInviteProfile && (
+                <fieldset className="rounded-2xl bg-gray-50 p-3">
+                  <legend className="px-1 text-xs font-black">任教学科（选填）</legend>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {inviteSubjectOptions.map((subject) => {
+                      const selected = inviteTeachingSubjects.includes(subject);
+                      return (
+                        <button
+                          key={subject}
+                          type="button"
+                          onClick={() => toggleInviteSubject(subject)}
+                          className={cx('min-h-11 rounded-xl border text-xs font-black', selected ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700 active:bg-gray-100')}
+                          aria-pressed={selected}
+                        >
+                          {subject}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              )}
             </div>
             <button
               type="button"
               disabled={!canEnterExperience}
-              onClick={() => navigate('home')}
+              onClick={completeTeacherProfile}
               className={cx(
                 'h-12 w-full rounded-2xl border border-gray-200 text-sm font-black',
                 canEnterExperience ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400'
               )}
             >
-              进入体验
+              {isInviteProfile ? '下一步' : '进入体验'}
             </button>
           </div>
         </>
@@ -6141,7 +6599,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     if (page === 'classCreate') {
       return (
         <>
-          <ScreenHeader title="创建班级" />
+          <ScreenHeader title="创建班级" onBack={returnToTeacherHome} backLabel="返回首页" />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
             <div className="flex-1 space-y-3">
               <label className="block rounded-2xl bg-gray-50 p-3 text-xs font-black">
@@ -6207,19 +6665,6 @@ const TeacherCMobileLowFi: React.FC = () => {
             >
               保存并添加学生
             </button>
-            <button
-              type="button"
-              disabled={!canSaveClass}
-              onClick={() => {
-                if (!canSaveClass) return;
-                setClassCreated(true);
-                setJoinedClassHasStudents(false);
-                navigate('home');
-              }}
-              className="h-11 w-full text-center text-sm font-black text-gray-400 active:text-gray-600"
-            >
-              稍后添加
-            </button>
           </div>
         </>
       );
@@ -6235,7 +6680,7 @@ const TeacherCMobileLowFi: React.FC = () => {
 
       return (
         <>
-          <ScreenHeader title="加入班级" />
+          <ScreenHeader title="加入班级" onBack={returnToTeacherHome} backLabel="返回首页" />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
             <div className="flex-1 space-y-3">
               <label className="block rounded-2xl bg-gray-50 p-3 text-xs font-black">
@@ -6272,7 +6717,7 @@ const TeacherCMobileLowFi: React.FC = () => {
 
       return (
         <>
-          <ScreenHeader title="添加学生" />
+          <ScreenHeader title="添加学生" onBack={returnToTeacherHome} backLabel="返回首页" />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
             <div className="flex-1 space-y-3 overflow-y-auto pb-4">
               <button
@@ -6338,6 +6783,13 @@ const TeacherCMobileLowFi: React.FC = () => {
               className={cx('h-12 w-full rounded-2xl border border-gray-200 text-sm font-black', canSubmitStudents ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400')}
             >
               完成
+            </button>
+            <button
+              type="button"
+              onClick={returnToTeacherHome}
+              className="h-11 w-full text-center text-sm font-black text-gray-400 active:text-gray-600"
+            >
+              稍后添加
             </button>
           </div>
           {showStudentScanSheet && (
@@ -6534,15 +6986,16 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
-    if (page === 'classListPersonal' || page === 'classListSchool') {
-      const isSchoolList = page === 'classListSchool';
+    if (isPersonalClassListPage(page) || isSchoolClassListPage(page)) {
+      const isSchoolList = isSchoolClassListPage(page);
+      const isSchoolOrdinaryTeacherPreview = page === 'classListSchoolTeacherActions';
       const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
       const isPersonalOwnedSource = currentSpace.type === 'personal';
       const gradeFilterOptions: SchoolClassGradeFilter[] = ['全部', '一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三', '高一', '高二', '高三'];
       const classCards = [
-        { name: '2025级1班', code: '58273914', stage: '小学' as const, entryYearValue: 2025, tags: ['班主任', '语文'], count: 2, creatorName: teacherName.trim() || '郭老师', isCreator: true },
-        { name: '2024级2班', code: '73948162', stage: '小学' as const, entryYearValue: 2024, tags: ['数学'], count: 0, creatorName: '陈老师', isCreator: false },
-        { name: '2023级3班', code: '41862753', stage: '小学' as const, entryYearValue: 2023, tags: ['英语'], count: 36, creatorName: '李老师', isCreator: false },
+        { name: '2025级1班', code: '58273914', stage: '小学' as const, entryYearValue: 2025, tags: ['班主任', '语文'], count: 2, creatorName: teacherName.trim() || '郭老师', isCreator: true, role: 'headTeacher' as const },
+        { name: '2024级2班', code: '73948162', stage: '小学' as const, entryYearValue: 2024, tags: ['副班主任', '数学'], count: 32, creatorName: '陈老师', isCreator: false, role: 'deputyHeadTeacher' as const },
+        { name: '2023级3班', code: '41862753', stage: '小学' as const, entryYearValue: 2023, tags: ['英语'], count: 36, creatorName: '李老师', isCreator: false, role: 'teacher' as const },
       ];
       const personalClassCards = classCards.filter((item) => item.isCreator);
       const collaborationClassCards = classCards.slice(2, 3);
@@ -6553,7 +7006,9 @@ const TeacherCMobileLowFi: React.FC = () => {
         const matchTeaching = !schoolClassTeachingOnly || item.tags.some((tag) => tag !== '班主任');
         return matchGrade && matchTeaching;
       });
-      const visibleClassCards = isSchoolList ? schoolVisibleClassCards : personalClassCards;
+      const visibleClassCards = isSchoolList
+        ? schoolVisibleClassCards.filter((item) => !isSchoolOrdinaryTeacherPreview || item.role === 'teacher')
+        : personalClassCards;
 
       return (
         <>
@@ -6720,24 +7175,26 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
-    if (page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead') {
-      const isHeadTeacherDetail = page === 'classDetail' || page === 'classDetailSchoolHead';
+    if (page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead' || page === 'classDetailDeputy') {
+      const classRole = getClassRoleForPage(page);
+      const permissions = classRolePermissions[classRole];
       const openInviteFromDetail = () => {
         openInviteForClass('teacher', page);
       };
       const openInviteParentFromDetail = () => {
         openInviteForClass('parent', page);
       };
-      const isSchoolVersionHead = page === 'classDetailSchoolHead';
-      const classDangerLabel = isHeadTeacherDetail ? (isSchoolVersionHead ? '退出班级' : '解散班级') : '退出班级';
+      const classDangerLabel = page === 'classDetail' ? '解散班级' : '退出班级';
+      const teacherListPage: PageKey = classRole === 'headTeacher' ? 'teacherList' : classRole === 'deputyHeadTeacher' ? 'teacherListDeputy' : 'teacherListMember';
+      const parentBindingPage: PageKey = permissions.canManageParentBindings ? 'parentBindingList' : 'parentBindingListMember';
 
       return (
         <>
-          <ScreenHeader title={isHeadTeacherDetail ? '班级详情（班主任）' : '班级详情（非班主任）'} />
+          <ScreenHeader title="班级详情" />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
             <div className="flex-1 space-y-3 overflow-y-auto pb-4">
               <section className="relative rounded-3xl border border-gray-200 bg-gray-50 p-4">
-                {isHeadTeacherDetail && (
+                {permissions.canEditClass && (
                   <button type="button" onClick={openClassEditSheet} className="absolute right-4 top-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white active:bg-gray-100" aria-label="编辑班级信息">
                     <Edit3 size={16} />
                   </button>
@@ -6748,8 +7205,8 @@ const TeacherCMobileLowFi: React.FC = () => {
                     <div className="mt-3 flex items-center justify-between gap-3 text-xs font-medium text-gray-600">
                       <button
                         type="button"
-                        onClick={() => showClassActionToast('已复制班级号')}
-                        className="flex min-w-0 items-center gap-1.5 text-left tabular-nums active:text-gray-950"
+                        onClick={() => void copyClassCode(activeClassProfile.code)}
+                        className="flex min-h-11 min-w-0 items-center gap-1.5 text-left tabular-nums active:text-gray-950"
                         aria-label="复制班级号"
                       >
                         <span className="shrink-0 whitespace-nowrap">班级号：{formatClassCode(activeClassProfile.code)}</span>
@@ -6764,28 +7221,30 @@ const TeacherCMobileLowFi: React.FC = () => {
               <section className="rounded-2xl bg-gray-50 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-black">老师列表<CountText>({classTeachers.length}人)</CountText></div>
-                  <button type="button" onClick={() => navigate(isHeadTeacherDetail ? 'teacherList' : 'teacherListMember')} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white active:bg-gray-100" aria-label="查看更多老师">
+                  <button type="button" onClick={() => navigate(teacherListPage)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white active:bg-gray-100" aria-label="查看更多老师">
                     <ChevronRight size={17} />
                   </button>
                 </div>
                 <div className="mt-3 flex gap-2 overflow-hidden">
                   {classTeachers.slice(0, 5).map((teacher) => (
-                    <div key={teacher.name} className="w-[62px] shrink-0 text-center">
+                    <div key={teacher.id} className="w-[62px] shrink-0 text-center">
                       <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-sm font-black">{teacher.name.slice(0, 1)}</div>
                       <div className="mt-1 truncate text-xs font-black">{teacher.name}</div>
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={openInviteFromDetail} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-xs font-black active:bg-gray-100">
-                  <UserPlus size={16} />
-                  邀请老师
-                </button>
+                {permissions.canInviteTeacher && (
+                  <button type="button" onClick={openInviteFromDetail} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-xs font-black active:bg-gray-100">
+                    <UserPlus size={16} />
+                    邀请老师
+                  </button>
+                )}
               </section>
 
               <section className="rounded-2xl bg-gray-50 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-black">家长绑定列表<CountText>({boundParentCount}/{parentBindingRows.length})</CountText></div>
-                  <button type="button" onClick={() => navigate(isHeadTeacherDetail ? 'parentBindingList' : 'parentBindingListMember')} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white active:bg-gray-100" aria-label="查看更多家长绑定情况">
+                  <button type="button" onClick={() => navigate(parentBindingPage)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white active:bg-gray-100" aria-label="查看更多家长绑定情况">
                     <ChevronRight size={17} />
                   </button>
                 </div>
@@ -6794,13 +7253,15 @@ const TeacherCMobileLowFi: React.FC = () => {
                     <ParentBindingCard key={student.no} student={student} compact />
                   ))}
                 </div>
-                <button type="button" onClick={openInviteParentFromDetail} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-xs font-black active:bg-gray-100">
-                  <UserPlus size={16} />
-                  邀请家长绑定
-                </button>
+                {permissions.canInviteParent && (
+                  <button type="button" onClick={openInviteParentFromDetail} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-xs font-black active:bg-gray-100">
+                    <UserPlus size={16} />
+                    邀请家长绑定
+                  </button>
+                )}
               </section>
           </div>
-            {isHeadTeacherDetail && (
+            {permissions.canManageDeputy && (
               <button type="button" onClick={() => setShowTransferHeadTeacherSheet(true)} className="mb-2 h-12 w-full rounded-2xl border border-gray-200 bg-white text-sm font-black text-gray-950 active:bg-gray-100">
                 转移班主任
               </button>
@@ -6813,89 +7274,42 @@ const TeacherCMobileLowFi: React.FC = () => {
       );
     }
 
-    if (page === 'teacherList') {
+    if (page === 'teacherList' || page === 'teacherListDeputy' || page === 'teacherListMember') {
+      const classRole = getClassRoleForPage(page);
+      const permissions = classRolePermissions[classRole];
       const openInviteFromList = () => {
-        openInviteForClass('teacher', 'teacherList', { name: '2025级1班', code: '58273914' });
+        openInviteForClass('teacher', page, { name: activeClassProfile.name, code: activeClassProfile.code });
       };
-
-      return (
-        <>
-          <ScreenHeader title="老师列表" />
-          <div className="flex h-[calc(100%-64px)] flex-col p-5">
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-3">
-              {primaryClassTeachers.map((teacher) => (
-                <div key={teacher.name} className="flex min-h-[92px] items-center gap-3 rounded-2xl bg-gray-50 p-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black">{teacher.name.slice(0, 1)}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-black">{teacher.name}</div>
-                    <TeacherRoleTags teacher={teacher} />
-                  </div>
-                  {teacher.name !== currentTeacherDisplayName && (
-                    <button type="button" onClick={() => setActiveTeacherAction(teacher)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 active:bg-gray-100" aria-label={`${teacher.name}更多操作`}>
-                      <MoreHorizontal size={17} />
-                    </button>
-                  )}
-                </div>
-              ))}
-              {primaryClassTeachers.length > 0 && otherClassTeachers.length > 0 && <div className="h-px bg-gray-200" />}
-              {otherClassTeachers.map((teacher) => (
-                <div key={teacher.name} className="flex min-h-[92px] items-center gap-3 rounded-2xl bg-gray-50 p-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black">{teacher.name.slice(0, 1)}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-black">{teacher.name}</div>
-                    <TeacherRoleTags teacher={teacher} />
-                  </div>
-                  {teacher.name !== currentTeacherDisplayName && (
-                    <button type="button" onClick={() => setActiveTeacherAction(teacher)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 active:bg-gray-100" aria-label={`${teacher.name}更多操作`}>
-                      <MoreHorizontal size={17} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            <button type="button" onClick={openInviteFromList} className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">
-              <UserPlus size={16} />
-              邀请老师
-            </button>
+      const renderTeacherRow = (teacher: ClassTeacherProfile) => (
+        <div key={teacher.id} className="flex min-h-[92px] items-center gap-3 rounded-2xl bg-gray-50 p-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black">{teacher.name.slice(0, 1)}</div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-black">{teacher.name}</div>
+            <TeacherRoleTags teacher={teacher} />
           </div>
-        </>
+          {permissions.canManageTeachers && teacher.id !== 'teacher-current' && (
+            <button type="button" onClick={() => setActiveTeacherAction(teacher)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 active:bg-gray-100" aria-label={`${teacher.name}更多操作`}>
+              <MoreHorizontal size={17} />
+            </button>
+          )}
+        </div>
       );
-    }
-
-    if (page === 'teacherListMember') {
-      const openInviteFromMemberList = () => {
-        openInviteForClass('teacher', 'teacherListMember', { name: activeClassProfile.name, code: activeClassProfile.code });
-      };
 
       return (
         <>
           <ScreenHeader title="老师列表" />
           <div className="flex h-[calc(100%-64px)] flex-col p-5">
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-3">
-              {primaryClassTeachers.map((teacher) => (
-                <div key={teacher.name} className="flex min-h-[92px] items-center gap-3 rounded-2xl bg-gray-50 p-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black">{teacher.name.slice(0, 1)}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-black">{teacher.name}</div>
-                    <TeacherRoleTags teacher={teacher} />
-                  </div>
-                </div>
-              ))}
+              {primaryClassTeachers.map(renderTeacherRow)}
               {primaryClassTeachers.length > 0 && otherClassTeachers.length > 0 && <div className="h-px bg-gray-200" />}
-              {otherClassTeachers.map((teacher) => (
-                <div key={teacher.name} className="flex min-h-[92px] items-center gap-3 rounded-2xl bg-gray-50 p-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black">{teacher.name.slice(0, 1)}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-black">{teacher.name}</div>
-                    <TeacherRoleTags teacher={teacher} />
-                  </div>
-                </div>
-              ))}
+              {otherClassTeachers.map(renderTeacherRow)}
             </div>
-            <button type="button" onClick={openInviteFromMemberList} className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">
-              <UserPlus size={16} />
-              邀请老师
-            </button>
+            {permissions.canInviteTeacher && (
+              <button type="button" onClick={openInviteFromList} className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">
+                <UserPlus size={16} />
+                邀请老师
+              </button>
+            )}
           </div>
         </>
       );

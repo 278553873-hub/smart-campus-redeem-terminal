@@ -36,6 +36,21 @@ export interface HealthExamRecord {
   corrections: HealthExamCorrection[];
 }
 
+export interface BodyMeasurementRecord {
+  id: string;
+  studentId: string;
+  measuredAt: string;
+  heightCm: number;
+  weightKg: number;
+  bmi: number;
+  sourceType: 'health-exam' | 'growth-collection' | 'mobile-entry';
+  sourceLabel: string;
+  sourceRecordId: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SemesterGoalItem {
   id: string;
   type: '继续闪亮' | '尝试新方向' | '其他挑战';
@@ -67,6 +82,8 @@ export interface SemesterGoalPlan {
   confirmations: GoalConfirmation[];
   interviewRecorder?: string;
   interviewRecordedAt?: string;
+  sourceRecordId?: string;
+  sourceLabel?: string;
   version: number;
   updatedAt: string;
 }
@@ -86,14 +103,16 @@ export interface HealthImportBatch {
 }
 
 export interface StudentGrowthWorkspace {
-  schemaVersion: 1;
+  schemaVersion: 2;
   healthExamRecords: HealthExamRecord[];
+  bodyMeasurements: BodyMeasurementRecord[];
   semesterGoalPlans: SemesterGoalPlan[];
   importBatches: HealthImportBatch[];
 }
 
 export interface StudentGrowthProfile {
   healthExamRecords: HealthExamRecord[];
+  bodyMeasurements: BodyMeasurementRecord[];
   semesterGoalPlan?: SemesterGoalPlan;
 }
 
@@ -110,9 +129,36 @@ export interface HealthExamInput {
   conclusion: string;
 }
 
+export interface BodyMeasurementInput {
+  measuredAt: string;
+  heightCm: number;
+  weightKg: number;
+  sourceRecordId: string;
+  sourceLabel: string;
+  sourceType?: BodyMeasurementRecord['sourceType'];
+}
+
+export interface SemesterGoalPlanInput {
+  term: string;
+  status: GoalPlanStatus;
+  previousReflection: string;
+  goals: SemesterGoalItem[];
+  studentMessage: string;
+  teacherMessage: string;
+  parentMessage: string;
+  agreement: string;
+  confirmations: GoalConfirmation[];
+  interviewRecorder?: string;
+  interviewRecordedAt?: string;
+  sourceRecordId: string;
+  sourceLabel: string;
+}
+
 const nowText = () => new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
 const createId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+const clone = <T,>(value: T): T => (
+  value === undefined ? value : JSON.parse(JSON.stringify(value)) as T
+);
 
 export const calculateBmi = (heightCm: number, weightKg: number) => {
   if (!heightCm || !weightKg) return 0;
@@ -186,6 +232,21 @@ const seedHealthRecords = (studentId: string): HealthExamRecord[] => {
   ];
 };
 
+const measurementFromHealthExam = (record: HealthExamRecord): BodyMeasurementRecord => ({
+  id: `measurement-${record.id}`,
+  studentId: record.studentId,
+  measuredAt: record.examDate,
+  heightCm: record.heightCm,
+  weightKg: record.weightKg,
+  bmi: record.bmi,
+  sourceType: 'health-exam',
+  sourceLabel: record.sourceLabel,
+  sourceRecordId: record.id,
+  version: record.version,
+  createdAt: record.createdAt,
+  updatedAt: record.updatedAt,
+});
+
 const seedSemesterGoalPlan = (studentId: string): SemesterGoalPlan => ({
   id: `goal-plan-${studentId}-2026-spring`,
   studentId,
@@ -234,9 +295,16 @@ const seedSemesterGoalPlan = (studentId: string): SemesterGoalPlan => ({
   updatedAt: '2026-02-25 20:08',
 });
 
+const getLatestSemesterGoalPlan = (plans: SemesterGoalPlan[], studentId: string) => (
+  plans
+    .filter(plan => plan.studentId === studentId)
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt, 'zh-CN', { numeric: true }))[0]
+);
+
 const createInitialWorkspace = (): StudentGrowthWorkspace => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   healthExamRecords: [],
+  bodyMeasurements: [],
   semesterGoalPlans: [],
   importBatches: [
     {
@@ -258,10 +326,35 @@ const createInitialWorkspace = (): StudentGrowthWorkspace => ({
 const isWorkspace = (value: unknown): value is StudentGrowthWorkspace => {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<StudentGrowthWorkspace>;
-  return candidate.schemaVersion === 1
+  return candidate.schemaVersion === 2
     && Array.isArray(candidate.healthExamRecords)
+    && Array.isArray(candidate.bodyMeasurements)
     && Array.isArray(candidate.semesterGoalPlans)
     && Array.isArray(candidate.importBatches);
+};
+
+const migrateWorkspace = (value: unknown): StudentGrowthWorkspace | null => {
+  if (isWorkspace(value)) return value;
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as {
+    schemaVersion?: number;
+    healthExamRecords?: HealthExamRecord[];
+    semesterGoalPlans?: SemesterGoalPlan[];
+    importBatches?: HealthImportBatch[];
+  };
+  if (
+    candidate.schemaVersion !== 1
+    || !Array.isArray(candidate.healthExamRecords)
+    || !Array.isArray(candidate.semesterGoalPlans)
+    || !Array.isArray(candidate.importBatches)
+  ) return null;
+  return {
+    schemaVersion: 2,
+    healthExamRecords: candidate.healthExamRecords,
+    bodyMeasurements: candidate.healthExamRecords.map(measurementFromHealthExam),
+    semesterGoalPlans: candidate.semesterGoalPlans,
+    importBatches: candidate.importBatches,
+  };
 };
 
 export const readStudentGrowthWorkspace = (): StudentGrowthWorkspace => {
@@ -270,7 +363,7 @@ export const readStudentGrowthWorkspace = (): StudentGrowthWorkspace => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return createInitialWorkspace();
     const parsed = JSON.parse(raw) as unknown;
-    return isWorkspace(parsed) ? parsed : createInitialWorkspace();
+    return migrateWorkspace(parsed) ?? createInitialWorkspace();
   } catch {
     return createInitialWorkspace();
   }
@@ -285,18 +378,44 @@ export const writeStudentGrowthWorkspace = (workspace: StudentGrowthWorkspace) =
 export const ensureStudentGrowthProfile = (studentId: string): StudentGrowthProfile => {
   const workspace = readStudentGrowthWorkspace();
   const hasHealthRecords = workspace.healthExamRecords.some(record => record.studentId === studentId);
+  const hasBodyMeasurements = workspace.bodyMeasurements.some(record => record.studentId === studentId);
   const hasGoalPlan = workspace.semesterGoalPlans.some(plan => plan.studentId === studentId);
 
-  if (!hasHealthRecords) workspace.healthExamRecords.push(...seedHealthRecords(studentId));
+  if (!hasHealthRecords) {
+    const records = seedHealthRecords(studentId);
+    workspace.healthExamRecords.push(...records);
+    workspace.bodyMeasurements.push(...records.map(measurementFromHealthExam));
+  } else if (!hasBodyMeasurements) {
+    workspace.bodyMeasurements.push(...workspace.healthExamRecords.filter(record => record.studentId === studentId).map(measurementFromHealthExam));
+  }
   if (!hasGoalPlan) workspace.semesterGoalPlans.push(seedSemesterGoalPlan(studentId));
-  if (!hasHealthRecords || !hasGoalPlan) writeStudentGrowthWorkspace(workspace);
+  if (!hasHealthRecords || !hasBodyMeasurements || !hasGoalPlan) writeStudentGrowthWorkspace(workspace);
 
   return {
     healthExamRecords: workspace.healthExamRecords
       .filter(record => record.studentId === studentId)
       .sort((left, right) => right.examDate.localeCompare(left.examDate))
       .map(clone),
-    semesterGoalPlan: clone(workspace.semesterGoalPlans.find(plan => plan.studentId === studentId)),
+    bodyMeasurements: workspace.bodyMeasurements
+      .filter(record => record.studentId === studentId)
+      .sort((left, right) => right.measuredAt.localeCompare(left.measuredAt))
+      .map(clone),
+    semesterGoalPlan: clone(getLatestSemesterGoalPlan(workspace.semesterGoalPlans, studentId)),
+  };
+};
+
+export const readStudentGrowthProfile = (studentId: string): StudentGrowthProfile => {
+  const workspace = readStudentGrowthWorkspace();
+  return {
+    healthExamRecords: workspace.healthExamRecords
+      .filter(record => record.studentId === studentId)
+      .sort((left, right) => right.examDate.localeCompare(left.examDate))
+      .map(clone),
+    bodyMeasurements: workspace.bodyMeasurements
+      .filter(record => record.studentId === studentId)
+      .sort((left, right) => right.measuredAt.localeCompare(left.measuredAt))
+      .map(clone),
+    semesterGoalPlan: clone(getLatestSemesterGoalPlan(workspace.semesterGoalPlans, studentId)),
   };
 };
 
@@ -379,8 +498,109 @@ export const saveHealthExamRecord = (
     workspace.healthExamRecords.push(nextRecord);
   }
 
+  const measurementIndex = workspace.bodyMeasurements.findIndex(record => record.sourceRecordId === nextRecord.id);
+  const measurement = measurementFromHealthExam(nextRecord);
+  if (measurementIndex >= 0) workspace.bodyMeasurements[measurementIndex] = measurement;
+  else workspace.bodyMeasurements.push(measurement);
+
   writeStudentGrowthWorkspace(workspace);
   return clone(nextRecord);
+};
+
+export const saveBodyMeasurementRecord = (
+  studentId: string,
+  input: BodyMeasurementInput,
+  operator?: string,
+): BodyMeasurementRecord => {
+  const workspace = readStudentGrowthWorkspace();
+  const existingIndex = workspace.bodyMeasurements.findIndex(record => (
+    record.studentId === studentId && record.sourceRecordId === input.sourceRecordId
+  ));
+  const timestamp = nowText();
+  const existing = existingIndex >= 0 ? workspace.bodyMeasurements[existingIndex] : undefined;
+  const record: BodyMeasurementRecord = {
+    id: existing?.id ?? createId('measurement'),
+    studentId,
+    measuredAt: input.measuredAt,
+    heightCm: Number(input.heightCm),
+    weightKg: Number(input.weightKg),
+    bmi: calculateBmi(Number(input.heightCm), Number(input.weightKg)),
+    sourceType: input.sourceType ?? 'growth-collection',
+    sourceLabel: input.sourceLabel,
+    sourceRecordId: input.sourceRecordId,
+    version: (existing?.version ?? 0) + 1,
+    createdAt: existing?.createdAt ?? timestamp,
+    updatedAt: timestamp,
+  };
+  if (existingIndex >= 0) workspace.bodyMeasurements[existingIndex] = record;
+  else workspace.bodyMeasurements.push(record);
+
+  if (existing?.sourceType === 'health-exam') {
+    const healthIndex = workspace.healthExamRecords.findIndex(item => (
+      item.studentId === studentId && item.id === existing.sourceRecordId
+    ));
+    if (healthIndex >= 0) {
+      const healthRecord = workspace.healthExamRecords[healthIndex];
+      const changedFields = ['examDate', 'heightCm', 'weightKg'].filter(field => {
+        if (field === 'examDate') return healthRecord.examDate !== input.measuredAt;
+        return healthRecord[field] !== Number(input[field]);
+      });
+      workspace.healthExamRecords[healthIndex] = {
+        ...healthRecord,
+        examDate: input.measuredAt,
+        heightCm: Number(input.heightCm),
+        weightKg: Number(input.weightKg),
+        bmi: calculateBmi(Number(input.heightCm), Number(input.weightKg)),
+        version: healthRecord.version + 1,
+        updatedAt: timestamp,
+        corrections: changedFields.length
+          ? [...healthRecord.corrections, {
+            id: createId('health-correction'),
+            operator: operator ?? '教师手机端',
+            correctedAt: timestamp,
+            changedFields,
+          }]
+          : healthRecord.corrections,
+      };
+    }
+  }
+  writeStudentGrowthWorkspace(workspace);
+  return clone(record);
+};
+
+export const saveSemesterGoalPlan = (
+  studentId: string,
+  input: SemesterGoalPlanInput,
+): SemesterGoalPlan => {
+  const workspace = readStudentGrowthWorkspace();
+  const existingIndex = workspace.semesterGoalPlans.findIndex(plan => (
+    plan.studentId === studentId
+    && (plan.sourceRecordId === input.sourceRecordId || plan.term === input.term)
+  ));
+  const existing = existingIndex >= 0 ? workspace.semesterGoalPlans[existingIndex] : undefined;
+  const plan: SemesterGoalPlan = {
+    id: existing?.id ?? createId('goal-plan'),
+    studentId,
+    term: input.term,
+    status: input.status,
+    previousReflection: input.previousReflection.trim(),
+    goals: input.goals.map(goal => ({ ...goal })),
+    studentMessage: input.studentMessage.trim(),
+    teacherMessage: input.teacherMessage.trim(),
+    parentMessage: input.parentMessage.trim(),
+    agreement: input.agreement.trim(),
+    confirmations: input.confirmations.map(confirmation => ({ ...confirmation })),
+    interviewRecorder: input.interviewRecorder,
+    interviewRecordedAt: input.interviewRecordedAt,
+    sourceRecordId: input.sourceRecordId,
+    sourceLabel: input.sourceLabel,
+    version: (existing?.version ?? 0) + 1,
+    updatedAt: nowText(),
+  };
+  if (existingIndex >= 0) workspace.semesterGoalPlans[existingIndex] = plan;
+  else workspace.semesterGoalPlans.push(plan);
+  writeStudentGrowthWorkspace(workspace);
+  return clone(plan);
 };
 
 export const readHealthImportBatches = () => (

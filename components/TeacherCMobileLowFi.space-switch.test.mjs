@@ -17,10 +17,21 @@ requireSource("新用户已填写姓名，但未完成新手引导", '01 登录�
 requireSource("老用户登录", '01 登录页后应展示老用户登录分支。');
 requireSource("<PageNodeButton item=\"login\" lane={lane.title} />", '登录流程应以普通页面节点展示 01 登录页。');
 requireSource("<PageNodeButton item=\"record\" lane={lane.title} />", '登录流程应以普通页面节点展示 13 记录页。');
-requireSource("title: '班级(个人版)',\n    pages: ['classListPersonal'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetail'] },\n          { text: '非班主任&副班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任&副班主任', pages: ['teacherListMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任&副班主任', pages: ['parentBindingList'] },\n          { text: '非班主任', pages: ['parentBindingListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['studentList', 'studentBatchEdit'],", '个人版班级流程应从 07A 后并行进入 08A/08B、09A/09B、10A/10B，且不应包含 12 添加学生。');
-requireSource("title: '班级(学校版)',\n    pages: ['classListSchool'],\n    branchGroups: [\n      {\n        branches: [\n          { text: '班主任', pages: ['classDetailSchoolHead'] },\n          { text: '非班主任&副班主任', pages: ['classDetailMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任', pages: ['teacherList'] },\n          { text: '非班主任&副班主任', pages: ['teacherListMember'] },\n        ],\n      },\n      {\n        branches: [\n          { text: '班主任&副班主任', pages: ['parentBindingList'] },\n          { text: '非班主任', pages: ['parentBindingListMember'] },\n        ],\n      },\n    ],\n    tailPages: ['studentList', 'studentBatchEdit'],", '学校版班级流程应从 07B 后并行进入 08C/08B、09A/09B、10A/10B。');
+requireSource("title: '班级(个人版)',", '页面导航地图应保留个人版班级流程。');
+requireSource("title: '班级(学校版)',", '页面导航地图应保留学校版班级流程。');
+requireSource("{ text: '班主任', pages: ['classDetail'] }", '个人版班主任应进入 08A。');
+requireSource("{ text: '班主任', pages: ['classDetailSchoolHead'] }", '学校版班主任应进入 08C。');
+requireSource("{ text: '副班主任', pages: ['classDetailDeputy'] }", '副班主任应进入 08D。');
+requireSource("{ text: '普通老师', pages: ['classDetailMember'] }", '普通老师应进入 08B。');
+requireSource("{ text: '副班主任', pages: ['teacherListDeputy'] }", '副班主任应进入 09C。');
+requireSource("{ text: '普通老师', pages: ['teacherListMember'] }", '普通老师应进入 09B。');
+requireSource("{ text: '班主任&副班主任', pages: ['parentBindingList'] }", '班主任和副班主任应进入可管理的 10A。');
+requireSource("{ text: '普通老师', pages: ['parentBindingListMember'] }", '普通老师应进入只读的 10B。');
+requireSource("tailPages: ['studentList', 'studentBatchEdit']", '班级流程尾部应保留学生列表和批量修改学生。');
 requireSource("if (pageKey === 'classListPersonal') return '07A';", '个人版班级列表应编号为 07A。');
 requireSource("if (pageKey === 'classListSchool') return '07B';", '学校版班级列表应编号为 07B。');
+requireSource("if (pageKey === 'classListPersonalTeacherActions') return '07C';", '个人版普通老师更多操作应编号为 07C。');
+requireSource("if (pageKey === 'classListSchoolTeacherActions') return '07D';", '学校版普通老师更多操作应编号为 07D。');
 requireSource("const [schoolClassTeachingOnly, setSchoolClassTeachingOnly] = useState(false);", '07B 学校版班级列表应支持只显示任教班级筛选状态。');
 requireSource("<PageNodeButton item={item} lane={lane.title} />", '班级流程应使用普通页面节点列表，不使用共用虚拟分组。');
 requireSource("grid min-w-full grid-cols-[96px_max-content]", '页面导航地图流程名称列应保持 96px，右侧内容由整体地图横向撑开。');
@@ -64,11 +75,11 @@ if (source.includes("{ title: '班级', pages: ['classList'")) {
 if (source.includes("| 'classList'\n") || source.includes("'classList',")) {
   failures.push('页面类型不应再保留未区分版本的 classList，应使用 classListPersonal/classListSchool。');
 }
-const classListRenderStart = source.indexOf("if (page === 'classListPersonal' || page === 'classListSchool')");
-const classListRenderEnd = source.indexOf("if (page === 'classDetail' || page === 'classDetailMember')", classListRenderStart);
+const classListRenderStart = source.indexOf("if (isPersonalClassListPage(page) || isSchoolClassListPage(page))");
+const classListRenderEnd = source.indexOf("if (page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead' || page === 'classDetailDeputy')", classListRenderStart);
 const classListRender = source.slice(classListRenderStart, classListRenderEnd);
-if (!classListRender.includes("const isSchoolList = page === 'classListSchool';")) {
-  failures.push('班级列表页必须通过 07A/07B 页面状态区分个人版和学校版。');
+if (!classListRender.includes("const isSchoolList = isSchoolClassListPage(page);")) {
+  failures.push('班级列表页必须通过共用页面判断区分 07A/07C 个人版和 07B/07D 学校版。');
 }
 if (!classListRender.includes("!isSchoolList && isPersonalOwnedSource && (")) {
   failures.push('07A 个人来源班级列表页应在右侧展示班级操作入口，协作和学校来源不展示该入口。');
@@ -228,12 +239,12 @@ requirePrd('  - 01 登录页后分为三条分支', 'PRD 应说明 01 登录页�
 requirePrd('  - 分支条件：新用户首次登录', 'PRD 应说明新用户首次登录分支条件。');
 requirePrd('  - 分支条件：新用户已填写姓名，但未完成新手引导', 'PRD 应说明新用户已填写姓名但未完成新手引导分支条件。');
 requirePrd('  - 分支条件：老用户登录', 'PRD 应说明老用户登录分支条件。');
-requirePrd('  - 新用户首次登录 → 02 完善信息 → 03 新手首页', 'PRD 应说明新用户首次登录分支进入完善信息和新手首页。');
+requirePrd('  - 新用户首次登录 → 02A 首次登录完善信息 → 03 新手首页', 'PRD 应说明新用户首次登录分支进入 02A 和新手首页。');
 requirePrd('  - 新用户已填写姓名，但未完成新手引导 → 03 新手首页；页面导航地图中该分支后续节点不用画出来', 'PRD 应说明已填写姓名但未完成新手引导分支只画到 03。');
 requireSource('页面导航地图中，01 登录页后合并展示三条分支：新用户首次登录、新用户已填写姓名但未完成新手引导、老用户登录。', '页面详情应同步说明登录流程三条分支。');
 requirePrd('  - 03 新手首页 → 04 创建班级 / 05 加入班级', 'PRD 应说明 03 后平行进入 04/05。');
 requirePrd('  - 04 创建班级、05 加入班级为平行路径，后续都接入 12 添加学生', 'PRD 应说明 04/05 共同接入 12 添加学生。');
-requirePrd('  - 12 添加学生 → 13 记录页', 'PRD 应说明 12 添加学生后进入 13 记录页。');
+requirePrd('  - 12 添加学生完成录入 → 13 记录页；选择“稍后添加”→ 03 新手首页', 'PRD 应说明 12 完成录入与稍后添加的两个去向。');
 requirePrd('  - 老用户登录 → 13 记录页', 'PRD 应说明老用户登录分支直接进入记录页。');
 requirePrd('- 13 记录页', 'PRD 应给记录页对应编号 13。');
 requirePrd('  - 03 新手首页只保留 2 个步骤：获得班级、确认学生；不再要求完成第 3 个“首次记录”步骤', 'PRD 应说明 03 新手首页只保留两步。');
@@ -311,9 +322,36 @@ if (recordRender.includes('<ScreenHeader title="记录"')) {
   failures.push('13 记录页顶部不应展示返回按钮。');
 }
 
-requireSource("navigate('home');", '04 创建班级页「稍后添加」应保存后返回 03 新手首页（即 home）。');
-requireSource("保存并添加学生", '04 创建班级页应保留主按钮「保存并添加学生」。');
-requireSource("稍后添加", '04 创建班级页应展示次要入口「稍后添加」。');
+const classCreateRenderStart = source.indexOf("if (page === 'classCreate')");
+const classCreateRenderEnd = source.indexOf("if (page === 'classJoin')", classCreateRenderStart);
+const classCreateRender = source.slice(classCreateRenderStart, classCreateRenderEnd);
+const classJoinRenderStart = classCreateRenderEnd;
+const classJoinRenderEnd = source.indexOf("if (page === 'studentAdd')", classJoinRenderStart);
+const classJoinRender = source.slice(classJoinRenderStart, classJoinRenderEnd);
+
+if (!classCreateRender.includes('<ScreenHeader title="创建班级" onBack={returnToTeacherHome} backLabel="返回首页" />')) {
+  failures.push('04 创建班级页顶部返回应直接回到首页。');
+}
+if (!classCreateRender.includes('保存并添加学生')) {
+  failures.push('04 创建班级页应保留主按钮“保存并添加学生”。');
+}
+if (classCreateRender.includes('稍后添加')) {
+  failures.push('04 创建班级页不应继续展示“稍后添加”。');
+}
+if (!classJoinRender.includes('<ScreenHeader title="加入班级" onBack={returnToTeacherHome} backLabel="返回首页" />')) {
+  failures.push('05 加入班级页顶部返回应直接回到首页。');
+}
+const returnHomeStart = source.indexOf('const returnToTeacherHome = () =>');
+const returnHomeEnd = source.indexOf('const completeLogin = () =>', returnHomeStart);
+const returnHomeRender = source.slice(returnHomeStart, returnHomeEnd);
+if (!returnHomeRender.includes('setHistory([]);') || !returnHomeRender.includes("setPage('home');")) {
+  failures.push('04、05、12 返回首页时应清空页面历史并直接进入首页。');
+}
+if (returnHomeRender.includes('setClassCreated(false)') || returnHomeRender.includes('setJoinedClassHasStudents(false)')) {
+  failures.push('返回首页不应清除已经创建或加入的班级状态。');
+}
+requirePrd('  - 04 创建班级只保留主按钮「保存并添加学生」→ 12 添加学生，不提供「稍后添加」', 'PRD 应说明 04 移除稍后添加。');
+requirePrd('  - 04 创建班级、05 加入班级、12 添加学生顶部返回均直接回到 03 新手首页，不逐级返回，并保留已创建或已加入的班级状态', 'PRD 应说明 04、05、12 顶部统一返回首页。');
 
 if (source.includes("{ title: '老用户', pages: ['login', 'record'] }")) {
   failures.push('页面导航地图不应再保留独立老用户流程，应合并到登录流程分支。');

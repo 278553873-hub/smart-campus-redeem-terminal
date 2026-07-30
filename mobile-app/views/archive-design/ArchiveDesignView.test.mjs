@@ -139,7 +139,7 @@ requireText(archiveFormRendererSource, 'settings.numberFormat', '档案数字字
 requireText(viewSource, '<ArchiveFormRenderer', '档案详情必须使用真实表单预览。');
 requireText(studentViewSource, '<ArchiveFormRenderer', '学生档案填写页必须复用档案表单渲染器。');
 requireText(viewSource, 'mode="preview"', '档案详情必须使用不可填写的表单预览模式。');
-requireText(viewSource, '表单预览', '档案详情必须明确展示表单预览。');
+requireText(viewSource, '老师填写内容', '档案详情必须明确区分老师填写内容。');
 requireText(archiveFormRendererSource, "mode: 'preview'", '档案表单渲染器必须区分预览和填写模式。');
 requireText(archiveFormRendererSource, "previewMode ? `${fields.length}题`", '预览分组必须展示题目数量，不展示无意义的完成进度。');
 forbidText(viewSource, 'previewAnswers', '档案预览不应维护临时答案状态。');
@@ -204,7 +204,7 @@ for (const field of ['优势特点', '兴趣倾向', '学习习惯', '情绪状�
 requireText(storeSource, 'createBlankArchiveTemplate', '新建档案必须支持从空白草稿开始。');
 requireText(viewSource, 'previewRecommendedTemplate', '从模板创建必须先进入模板预览。');
 requireText(viewSource, '请至少新增一个档案分组', '空白档案启用前必须校验档案分组。');
-requireText(viewSource, '请至少新增一个档案字段', '空白档案启用前必须校验档案字段。');
+requireText(viewSource, '请至少选择一项成长记录或新增一个填写字段', '空白档案启用前必须校验档案内容。');
 requireText(storeSource, "layoutMode: 'flat'", '空白档案默认应关闭分组。');
 requireText(storeSource, "layoutMode: 'grouped'", '推荐档案模板应保留分组结构。');
 requireText(storeSource, "template.status === 'published'", '教师新建档案时只能选择已启用模板。');
@@ -221,6 +221,14 @@ requireText(studentViewSource, 'onUpdateStudent', '档案内补充信息必须�
 requireText(studentViewSource, 'missingSystemField', '确认成档前必须校验自动带入字段。');
 requireText(studentViewSource, 'activeSnapshot.systemValues', '历史档案必须展示成档时的学生信息快照。');
 requireText(storeSource, 'systemValues: { ...systemValues }', '确认成档必须保存自动带入字段值快照。');
+requireText(viewSource, 'ARCHIVE_GROWTH_MODULE_OPTIONS', '档案设计必须提供平台预置成长记录选择。');
+requireText(viewSource, '已选择 {templateDraft.growthModules.length} 项', '成长记录入口必须展示已选数量。');
+requireText(viewSource, '成档必需', '成长记录模块必须支持设置为成档必需。');
+requireText(storeSource, 'buildArchiveGrowthModuleSnapshots', '档案必须从学生成长数据构建引用模块。');
+requireText(studentViewSource, 'currentGrowthSnapshots', '档案草稿必须读取当前成长记录。');
+requireText(studentViewSource, 'missingGrowthModule', '确认成档前必须校验必需成长记录。');
+requireText(storeSource, 'growthSnapshots: cloneGrowthSnapshots(growthSnapshots)', '确认成档必须冻结成长记录快照。');
+requireText(studentViewSource, 'activeSnapshot.growthSnapshots', '历史档案必须读取冻结后的成长记录。');
 requireText(viewSource, "isCreating ? '新建档案'", '新建档案编辑器顶部必须显示“新建档案”。');
 requireText(viewSource, 'action={headerAction}', '档案编辑页必须按状态提供右上角操作，不固定展示草稿标签。');
 requireText(viewSource, '学生已有草稿和已成档记录不受影响', '删除已禁用档案前必须说明学生档案不受影响。');

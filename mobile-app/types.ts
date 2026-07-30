@@ -75,7 +75,12 @@ export interface ClassInfo {
   gradeLevel: string;
   studentCount: number;
   tags: string[]; // e.g. "班主任", "数学"
+  educationStage?: EducationStage;
+  admissionYear?: number;
+  classNumber?: number;
 }
+
+export type EducationStage = 'primary' | 'middle' | 'high';
 
 export interface TeacherTeachingAssignment {
   classId: string;
