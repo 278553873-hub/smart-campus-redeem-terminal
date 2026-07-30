@@ -670,7 +670,10 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
       questionnaire.status === 'active'
       && getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'
       && getActiveQuestionnaireTargets(questionnaire).some(target => target.studentNo === activeChild.studentNo && target.reachable)
-      && !questionnaire.submissions.some(submission => submission.studentNo === activeChild.studentNo)
+      && !questionnaire.submissions.some(submission => (
+        submission.studentNo === activeChild.studentNo
+        && submission.reviewStatus !== 'returned'
+      ))
     ));
   }, [activeChild, sharedQuestionnaires]);
   const activeSharedQuestionnaire = sharedQuestionnaires.find(item => item.id === activeSharedQuestionnaireId) ?? null;
@@ -2406,7 +2409,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
                       : '不限时间'}
                   </span>
                 </span>
-                <span className="flex h-10 min-w-[62px] shrink-0 items-center justify-center rounded-[14px] border border-[#BFEAED] bg-white px-3 text-[15px] font-black text-[#0797A8] shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">填写</span>
+                <span className="flex h-10 min-w-[62px] shrink-0 items-center justify-center rounded-[14px] border border-[#BFEAED] bg-white px-3 text-[15px] font-black text-[#0797A8] shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">{questionnaire.submissions.some(submission => submission.studentNo === activeChild.studentNo && submission.reviewStatus === 'returned') ? '修改' : '填写'}</span>
               </button>
             </ParentCard>
           ))}
@@ -2455,7 +2458,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
           onBack={() => setScreen('todo')}
           onSubmitted={() => {
             setSharedQuestionnaires(readQuestionnaires());
-            setSubmitSuccessMessage('问卷提交成功');
+            setSubmitSuccessMessage(activeSharedQuestionnaire.growthTemplate === 'semester_goal' ? '目标已提交，等待老师确认' : '提交成功');
             setScreen('growth');
           }}
         />

@@ -29,6 +29,10 @@ export const persistGrowthCollectionAnswers = (
   studentNo: string,
   answers: Record<string, QuestionnaireAnswer>,
   completedAt: string,
+  options?: {
+    semesterGoalStatus?: 'pending-confirmation' | 'active';
+    reviewerName?: string;
+  },
 ) => {
   if (!questionnaire.growthTemplate) return false;
   const target = questionnaire.targets.find(item => item.studentNo === studentNo);
@@ -73,9 +77,17 @@ export const persistGrowthCollectionAnswers = (
     const name = answerText(answers, id);
     return name ? [{ role, name, method, confirmedAt: `${signatureDate} 00:00` }] : [];
   });
+  if (options?.reviewerName && !confirmations.some(item => item.role === '教师')) {
+    confirmations.push({
+      role: '教师',
+      name: options.reviewerName,
+      method: '账号确认',
+      confirmedAt: completedAt,
+    });
+  }
   saveSemesterGoalPlan(target.studentId, {
     term: questionnaire.growthTerm ?? '',
-    status: confirmations.length >= 3 ? 'active' : 'pending-confirmation',
+    status: options?.semesterGoalStatus ?? (confirmations.length >= 3 ? 'active' : 'pending-confirmation'),
     previousReflection: answerText(answers, GOAL_FIELD_IDS.previousReflection),
     goals,
     studentMessage: answerText(answers, GOAL_FIELD_IDS.studentMessage),

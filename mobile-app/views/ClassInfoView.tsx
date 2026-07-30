@@ -874,7 +874,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
             </label>
           )
         ) : (
-          <p className={`${phoneText.body} pb-[var(--tm-space-2)] text-[var(--tm-text-secondary)]`}>退出后，你将无法继续查看和记录“{displayClassName}”的数据，该班级仍由班主任保留。</p>
+          <p className={`${phoneText.body} pb-[var(--tm-space-2)] text-[var(--tm-text-secondary)]`}>退出后，你将无法查看和记录「{displayClassName}」的数据。</p>
         )}
       </MobileBottomSheet>
     </div>

@@ -54,8 +54,16 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   onSubmitted,
   preview = false,
 }) => {
+  const returnedSubmission = questionnaire.growthTemplate === 'semester_goal'
+    ? questionnaire.submissions.find(submission => (
+        submission.studentNo === child.studentNo
+        && submission.reviewStatus === 'returned'
+      ))
+    : undefined;
   const [stepIndex, setStepIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, QuestionnaireAnswer>>({});
+  const [answers, setAnswers] = useState<Record<string, QuestionnaireAnswer>>(() => ({
+    ...(returnedSubmission?.answers ?? {}),
+  }));
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -146,7 +154,15 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
       return;
     }
     if (getQuestionnaireContentType(questionnaire) === 'growth') {
-      persistGrowthCollectionAnswers(questionnaire, child.studentNo, answers, submittedAt);
+      persistGrowthCollectionAnswers(
+        questionnaire,
+        child.studentNo,
+        answers,
+        submittedAt,
+        questionnaire.growthTemplate === 'semester_goal'
+          ? { semesterGoalStatus: 'pending-confirmation' }
+          : undefined,
+      );
     }
     setShowSubmitConfirm(false);
     onSubmitted();
@@ -294,7 +310,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
         <ParentBottomSheet title="确认提交" onClose={() => setShowSubmitConfirm(false)} className="pb-8">
           <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-4">
             <div className="text-[length:var(--tm-font-size-section-title)] font-bold leading-tight text-[var(--tm-text-primary)]">{questionnaire.title}</div>
-            <div className="mt-2 text-[length:var(--tm-font-size-compact)] font-semibold leading-relaxed text-[var(--tm-text-secondary)]">{getQuestionnaireContentType(questionnaire) === 'growth' ? '提交后将更新孩子的成长信息。' : '提交后老师将看到本次答卷。'}</div>
+            <div className="mt-2 text-[length:var(--tm-font-size-compact)] font-semibold leading-relaxed text-[var(--tm-text-secondary)]">{questionnaire.growthTemplate === 'semester_goal' ? '提交后由老师确认，确认后进入成长档案。' : getQuestionnaireContentType(questionnaire) === 'growth' ? '提交后将更新孩子的成长信息。' : '提交后老师将看到本次答卷。'}</div>
           </div>
           {submitError && <div role="alert" className="mt-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative-soft)] px-4 py-3 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative-strong)]">{submitError}</div>}
           <div className="mt-4 grid grid-cols-2 gap-3">

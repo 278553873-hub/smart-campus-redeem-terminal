@@ -1,4 +1,5 @@
 import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode, type FormSection, type FormSubField } from './formDefinition';
+import { createGrowthCollectionQuestions } from './growthCollectionDefinition';
 
 export type QuestionnaireStatus = 'draft' | 'active' | 'ended' | 'archived';
 export type QuestionnaireCollectionMode = 'guardian_questionnaire' | 'student_information' | 'teacher_questionnaire';
@@ -11,6 +12,7 @@ export type QuestionnaireTargetScopeStatus = 'active' | 'exited';
 export type StudentCollectionRecordStatus = 'pending' | 'draft' | 'completed';
 export type StudentAssignmentMode = 'creator' | 'homeroom';
 export type GrowthCollectionTemplate = 'height_weight' | 'semester_goal';
+export type QuestionnaireReviewStatus = 'pending' | 'confirmed' | 'returned';
 
 export interface QuestionnaireChoiceAnswer {
   selectedOptions: string[];
@@ -52,6 +54,11 @@ export interface QuestionnaireSubmission {
   guardianRelation: string;
   submittedAt: string;
   answers: Record<string, QuestionnaireAnswer>;
+  reviewStatus?: QuestionnaireReviewStatus;
+  reviewerName?: string;
+  reviewedAt?: string;
+  teacherMessage?: string;
+  returnReason?: string;
 }
 
 export interface StudentCollectionRecord {
@@ -280,6 +287,56 @@ const schoolEnrollmentRecords = createStudentCollectionRecords(
 });
 
 const seedQuestionnaires: QuestionnaireRecord[] = [
+  {
+    id: 'growth-semester-goal-2026-autumn',
+    title: '2026年秋季学期目标制定',
+    description: '',
+    creatorName: '刘飞飞老师',
+    creatorTeacherId: 'school-star:刘飞',
+    spaceId: 'school-star',
+    createdAt: '2026-07-28 09:10',
+    suggestedDeadline: '',
+    status: 'active',
+    contentType: 'growth',
+    respondentRole: 'guardian',
+    collectionMode: 'guardian_questionnaire',
+    growthTemplate: 'semester_goal',
+    growthTerm: '2026年秋季学期',
+    growthDimensionOptions: ['明德', '善学', '健体', '尚美', '力行'],
+    targetMode: 'classes',
+    targetClassIds: ['c_2025_1'],
+    targetSyncPolicy: 'follow_classes',
+    layoutMode: 'flat',
+    sections: [],
+    questions: createGrowthCollectionQuestions('semester_goal', ['明德', '善学', '健体', '尚美', '力行'], 'guardian'),
+    targets: seedTargets.slice(0, 6).map(target => ({ ...target, reachable: true })),
+    submissions: [{
+      id: 'goal-submission-pending-20250101',
+      studentNo: seedTargets[0].studentNo,
+      studentName: seedTargets[0].studentName,
+      guardianRelation: '妈妈',
+      submittedAt: '2026-07-29 20:16',
+      reviewStatus: 'pending',
+      answers: {
+        'goal-previous-reflection': '上学期我开始主动帮助同学，也更敢在课堂上表达。',
+        'goal-1-dimension': '明德',
+        'goal-1-reason': '帮助别人时我也会感到快乐。',
+        'goal-1-action': '每周主动帮助同学2次。',
+        'goal-1-assessment': '我能做到',
+        'goal-2-dimension': '善学',
+        'goal-2-reason': '我想让课堂表达更清楚。',
+        'goal-2-action': '每周至少主动举手发言3次。',
+        'goal-2-assessment': '我需要努力',
+        'goal-student-message': '希望老师提醒我坚持记录。',
+        'goal-parent-message': '我们会每周和孩子一起回顾一次。',
+        'goal-agreement': '每周日一起回顾目标完成情况。',
+        'goal-student-signature': seedTargets[0].studentName,
+        'goal-parent-signature': '妈妈',
+        'goal-signature-date': '2026-07-29',
+      },
+    }],
+    studentRecords: [],
+  },
   {
     id: 'collection-school-enrollment-202607',
     title: '一年级新生入学资料补充',
@@ -915,16 +972,62 @@ export const submitQuestionnaireResponse = (
 ) => {
   const records = readQuestionnaires();
   const questionnaire = records.find(item => item.id === questionnaireId);
+  const existingSubmission = questionnaire?.submissions.find(existing => existing.studentNo === submission.studentNo);
+  const canResubmitReturnedGoal = questionnaire?.growthTemplate === 'semester_goal'
+    && existingSubmission?.reviewStatus === 'returned';
   const canSubmit = questionnaire?.status === 'active'
     && getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'
     && getActiveQuestionnaireTargets(questionnaire).some(target => target.studentNo === submission.studentNo && target.reachable)
-    && !questionnaire.submissions.some(existing => existing.studentNo === submission.studentNo);
+    && (!existingSubmission || canResubmitReturnedGoal);
   if (!canSubmit || questionnaire.questions.some(question => getQuestionnaireAnswerValidationError(question, submission.answers[question.id]))) return false;
 
+  const normalizedSubmission: QuestionnaireSubmission = questionnaire.growthTemplate === 'semester_goal'
+    ? { ...submission, reviewStatus: 'pending' }
+    : submission;
   writeQuestionnaires(records.map(item => item.id === questionnaireId
-    ? { ...item, submissions: [...item.submissions, submission] }
+    ? {
+        ...item,
+        submissions: existingSubmission
+          ? item.submissions.map(existing => existing.studentNo === submission.studentNo ? normalizedSubmission : existing)
+          : [...item.submissions, normalizedSubmission],
+      }
     : item));
   return true;
+};
+
+export const reviewSemesterGoalSubmission = (
+  questionnaireId: string,
+  submissionId: string,
+  action: 'confirm' | 'return',
+  payload: { reviewerName: string; teacherMessage?: string; returnReason?: string },
+) => {
+  const records = readQuestionnaires();
+  const questionnaire = records.find(item => item.id === questionnaireId);
+  const submission = questionnaire?.submissions.find(item => item.id === submissionId);
+  const canReview = questionnaire
+    && questionnaire.growthTemplate === 'semester_goal'
+    && getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'
+    && (questionnaire.status === 'active' || questionnaire.status === 'ended')
+    && submission?.reviewStatus === 'pending';
+  const requiredComment = action === 'confirm' ? payload.teacherMessage : payload.returnReason;
+  if (!canReview || !submission || !payload.reviewerName.trim() || !requiredComment?.trim()) return null;
+
+  const reviewedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
+  const reviewedSubmission: QuestionnaireSubmission = {
+    ...submission,
+    reviewStatus: action === 'confirm' ? 'confirmed' : 'returned',
+    reviewerName: payload.reviewerName.trim(),
+    reviewedAt,
+    teacherMessage: action === 'confirm' ? payload.teacherMessage?.trim() : undefined,
+    returnReason: action === 'return' ? payload.returnReason?.trim() : undefined,
+  };
+  writeQuestionnaires(records.map(item => item.id === questionnaireId
+    ? {
+        ...item,
+        submissions: item.submissions.map(existing => existing.id === submissionId ? reviewedSubmission : existing),
+      }
+    : item));
+  return reviewedSubmission;
 };
 
 export const saveStudentCollectionRecord = (

@@ -276,7 +276,7 @@ const MeView: React.FC<MeViewProps> = ({
         },
         {
             id: 'questionnaire',
-            title: '问卷采集',
+            title: '采集管理',
             icon: ClipboardList,
             onClick: onOpenQuestionnaire,
         },

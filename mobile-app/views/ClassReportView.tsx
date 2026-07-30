@@ -159,11 +159,10 @@ const StudentCoverageList = ({
 }: StudentCoverageListProps) => (
     <div>
         <div
-            className="grid min-h-[var(--tm-size-touch)] grid-cols-[28px_minmax(0,1fr)_84px_84px] items-center overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-meta)]"
+            className="grid min-h-[var(--tm-size-touch)] grid-cols-[minmax(0,1fr)_var(--tm-report-coverage-evaluation-column)_var(--tm-report-coverage-teacher-column)] items-center overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-compact)] font-semibold"
             aria-label="学生覆盖排序"
         >
-            <span className="text-center font-semibold text-[var(--tm-text-tertiary)]">#</span>
-            <span className="pl-1 font-semibold text-[var(--tm-text-primary)]">学生姓名</span>
+            <span role="columnheader" className="pl-[var(--tm-report-coverage-name-inset)] text-[var(--tm-text-primary)]">学生姓名</span>
             {coverageSortColumns.map(column => {
                 const selected = sortKey === column.key;
                 const nextDirection = selected && direction === 'asc' ? '从多到少' : '从少到多';
@@ -181,7 +180,7 @@ const StudentCoverageList = ({
                                 ? `${column.label}，当前${direction === 'asc' ? '从少到多' : '从多到少'}，点击切换为${nextDirection}`
                                 : `按${column.label}从少到多排序`}
                             onClick={() => onSort(column.key)}
-                            className={`flex h-full w-full items-center justify-center gap-1 px-1 font-medium transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] ${
+                            className={`flex h-full w-full items-center justify-center gap-1 px-1 font-semibold transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] ${
                                 selected
                                     ? 'text-[var(--tm-brand-primary)]'
                                     : 'text-[var(--tm-text-secondary)]'
@@ -190,56 +189,52 @@ const StudentCoverageList = ({
                             <span className="whitespace-nowrap">{column.label}</span>
                             {selected ? (
                                 direction === 'asc'
-                                    ? <ArrowUpNarrowWide aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                                    : <ArrowDownNarrowWide aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                                    ? <ArrowUpNarrowWide aria-hidden="true" className="h-3 w-3 shrink-0" />
+                                    : <ArrowDownNarrowWide aria-hidden="true" className="h-3 w-3 shrink-0" />
                             ) : (
-                                <ArrowUpDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-tertiary)]" />
+                                <ArrowUpDown aria-hidden="true" className="h-3 w-3 shrink-0 text-[var(--tm-text-tertiary)]" />
                             )}
                         </button>
                     </span>
                 );
             })}
         </div>
-        <ol>
-            {rows.map((row, index) => {
-                const uncovered = row.evaluationCount === 0;
-                const evaluationSelected = sortKey === 'evaluationCount';
-                const teacherSelected = sortKey === 'teacherCount';
+        <ul>
+            {rows.map(row => {
+                const evaluationMissing = row.evaluationCount === 0;
+                const teacherMissing = row.teacherCount === 0;
                 return (
                     <li key={row.student.id} className="border-b border-[var(--tm-border-subtle)] last:border-0">
                         <button
                             type="button"
                             onClick={() => onSelectStudent(row.student)}
                             aria-label={`查看${row.student.name}，评价${row.evaluationCount}次，${row.teacherCount}位老师评价`}
-                            className="grid min-h-[var(--tm-size-touch)] w-full grid-cols-[28px_minmax(0,1fr)_84px_84px] items-center rounded-[6px] px-1 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+                            className="grid min-h-[var(--tm-report-coverage-row-height)] w-full grid-cols-[minmax(0,1fr)_var(--tm-report-coverage-evaluation-column)_var(--tm-report-coverage-teacher-column)] items-center rounded-[6px] text-left transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                         >
-                            <span className="text-center text-[length:var(--tm-font-size-meta)] tabular-nums text-[var(--tm-text-tertiary)]">{index + 1}</span>
-                            <span className="truncate pl-1 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{row.student.name}</span>
+                            <span className="truncate pl-[var(--tm-report-coverage-name-inset)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{row.student.name}</span>
                             <span
-                                className={`mx-auto flex h-7 w-16 items-center justify-center rounded-[8px] text-[length:var(--tm-font-size-compact)] tabular-nums ${
-                                    uncovered
-                                        ? 'bg-[var(--tm-chart-negative-soft)] font-semibold text-[var(--tm-chart-negative-text)]'
-                                        : evaluationSelected
-                                            ? 'bg-[var(--tm-bg-surface-soft)] font-semibold text-[var(--tm-text-primary)]'
-                                            : 'font-normal text-[var(--tm-text-secondary)]'
-                                }`}
-                            >
-                                {row.evaluationCount}次
-                            </span>
-                            <span
-                                className={`mx-auto flex h-7 w-16 items-center justify-center rounded-[8px] text-[length:var(--tm-font-size-compact)] tabular-nums ${
-                                    teacherSelected
-                                        ? 'bg-[var(--tm-bg-surface-soft)] font-semibold text-[var(--tm-text-primary)]'
+                                className={`flex h-[var(--tm-report-coverage-value-height)] items-center justify-center text-[length:var(--tm-font-size-compact)] tabular-nums ${
+                                    evaluationMissing
+                                        ? 'font-semibold text-[var(--tm-chart-negative-text)]'
                                         : 'font-normal text-[var(--tm-text-secondary)]'
                                 }`}
                             >
-                                {row.teacherCount}位
+                                {row.evaluationCount}
+                            </span>
+                            <span
+                                className={`flex h-[var(--tm-report-coverage-value-height)] items-center justify-center text-[length:var(--tm-font-size-compact)] tabular-nums ${
+                                    teacherMissing
+                                        ? 'font-semibold text-[var(--tm-chart-negative-text)]'
+                                        : 'font-normal text-[var(--tm-text-secondary)]'
+                                }`}
+                            >
+                                {row.teacherCount}
                             </span>
                         </button>
                     </li>
                 );
             })}
-        </ol>
+        </ul>
     </div>
 );
 
@@ -787,10 +782,10 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         <button
                             type="button"
                             onClick={() => setShowAllCoverage(true)}
-                            className="mt-2 flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] transition active:bg-[var(--tm-bg-surface-muted)]"
+                            className="mt-1 flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-1 text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] transition-colors active:text-[var(--tm-brand-primary-pressed)]"
                         >
                             查看全部{sortedCoverageRows.length}名学生
-                            <ChevronUp className="h-4 w-4" />
+                            <ChevronRight aria-hidden="true" className="h-4 w-4" />
                         </button>
                     )}
                 </ReportSection>

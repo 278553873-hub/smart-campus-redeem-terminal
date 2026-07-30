@@ -30,7 +30,10 @@ requireSource("navigate('classListSchool');", '受邀老师确认加入前后都
 requireSource("const getInvitedSchoolSpaceId = (): TeacherSpaceId =>", '受邀流程应集中解析邀请方对应的学校空间。');
 requireSource("space.type === 'school' && space.title === inviteClass.school", '受邀流程应按邀请方学校匹配学校空间。');
 requireSource("个人版在账号注册成功时自动创建", '原型 PRD 应明确个人版创建时机。');
-requireSource("你的个人资料和个人版不会受到影响", '退出班级确认应明确资料与个人版保留。');
+requireSource("退出后，你将无法查看和记录「{activeClassProfile.name}」的数据。", '退出班级确认应只保留无法继续查看和记录班级数据的核心影响。');
+if (source.includes('该班级仍由') || source.includes('你的个人资料和个人版不会受到影响')) {
+  failures.push('退出班级确认不应继续展示班级归属或个人资料说明。');
+}
 requireSource("setCurrentSpaceId('personal');", '退出最后一个受邀班级后应切换到个人空间。');
 requireSource("navigate('home');", '退出最后一个受邀班级后应回到个人版新手首页。');
 

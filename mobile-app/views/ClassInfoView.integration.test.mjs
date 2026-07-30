@@ -32,6 +32,8 @@ assert.match(viewSource, />取消<[\s\S]*>\s*完成\s*</, '编辑抽屉底部应
 assert.match(viewSource, /转移班主任/, '班主任详情页应保留转移班主任操作。');
 assert.match(viewSource, /解散班级/, '个人版班主任详情页应保留解散班级操作。');
 assert.match(viewSource, /退出班级/, '学校版及成员详情页应保留退出班级操作。');
+assert.match(viewSource, /退出后，你将无法查看和记录「\{displayClassName\}」的数据。/, '退出班级确认应与 C 端改造统一，只保留无法查看和记录班级数据的核心影响。');
+assert.doesNotMatch(viewSource, /该班级仍由班主任保留|你的个人资料和个人版不会受到影响/, '退出班级确认不应继续展示班级归属或个人资料说明。');
 assert.match(viewSource, /pb-\[calc\(var\(--tm-space-4\)\+env\(safe-area-inset-bottom\)\)\]/, '底部班级操作区应保留 Token 间距并兼容手机安全区。');
 assert.match(viewSource, /--tm-page-plain-header-bg/, '班级信息页应使用教师手机端设计 Token。');
 assert.match(viewSource, /border-\[var\(--tm-border-subtle\)\]/, '班级信息页的普通控件应复用班级报告自定义日期的浅边框 Token。');

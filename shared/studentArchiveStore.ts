@@ -574,7 +574,10 @@ export const buildArchiveGrowthModuleSnapshots = (
   const profile = readStudentGrowthProfile(studentId);
   const latestMeasurement = profile.bodyMeasurements[0];
   const latestHealthExam = profile.healthExamRecords[0];
-  const goalPlan = profile.semesterGoalPlan;
+  const goalPlan = profile.semesterGoalPlan
+    && ['active', 'adjusted', 'reviewed'].includes(profile.semesterGoalPlan.status)
+    ? profile.semesterGoalPlan
+    : undefined;
   const selectedKeys = new Set(fields.map(field => field.key));
 
   return ARCHIVE_GROWTH_FIELD_GROUPS.flatMap(group => {

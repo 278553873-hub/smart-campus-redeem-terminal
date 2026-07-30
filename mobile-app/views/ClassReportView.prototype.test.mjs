@@ -32,6 +32,11 @@ for (const [token, value] of [
     ['--tm-report-card-gap', 'var(--tm-space-6)'],
     ['--tm-report-card-padding', 'var(--tm-space-4)'],
     ['--tm-report-card-content-gap', 'var(--tm-space-4)'],
+    ['--tm-report-coverage-row-height', '48px'],
+    ['--tm-report-coverage-value-height', '24px'],
+    ['--tm-report-coverage-name-inset', 'var(--tm-space-4)'],
+    ['--tm-report-coverage-evaluation-column', '76px'],
+    ['--tm-report-coverage-teacher-column', '104px'],
     ['--tm-report-source-item-width', '95px'],
     ['--tm-report-source-item-width-pinned', '76px'],
     ['--tm-report-source-visual-height', '40px'],
@@ -86,9 +91,16 @@ assert.ok(viewSource.includes("aria-sort={selected ? (direction === 'asc' ? 'asc
 assert.ok(!viewSource.includes('CoverageSortControls'), '学生覆盖情况不应保留独立排序 Tab。');
 assert.ok(viewSource.includes('rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)]'), '学生覆盖列表应使用与页面协调的无边框圆角表头。');
 assert.ok(!viewSource.includes('rounded-[6px] border-y border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-muted)]'), '学生覆盖表头不应继续使用生硬的边框与深灰底。');
-assert.ok(viewSource.includes('grid-cols-[28px_minmax(0,1fr)_84px_84px]') && viewSource.includes('学生姓名'), '学生覆盖表格应明确区分序号、学生姓名和两个数值列。');
-assert.ok(viewSource.includes('const uncovered = row.evaluationCount === 0') && viewSource.includes('bg-[var(--tm-chart-negative-soft)] font-semibold text-[var(--tm-chart-negative-text)]'), '学生覆盖表格只应对真正未覆盖的0次评价进行负向提醒。');
-assert.ok(viewSource.includes("const evaluationSelected = sortKey === 'evaluationCount'") && viewSource.includes("const teacherSelected = sortKey === 'teacherCount'"), '学生覆盖数据列的视觉焦点应跟随当前排序字段。');
+assert.ok(viewSource.includes('grid-cols-[minmax(0,1fr)_var(--tm-report-coverage-evaluation-column)_var(--tm-report-coverage-teacher-column)]') && viewSource.includes('学生姓名'), '学生覆盖表格应使用令牌控制三列布局，并为末列表头保留空间。');
+assert.ok(!viewSource.includes('grid-cols-[28px_minmax(0,1fr)_84px_84px]') && viewSource.includes('<ul>\n            {rows.map(row => {'), '学生覆盖表格不应展示没有业务含义的序号。');
+assert.ok(viewSource.includes('<span role="columnheader" className="pl-[var(--tm-report-coverage-name-inset)] text-[var(--tm-text-primary)]">学生姓名</span>'), '学生姓名应使用一致的表头语义与令牌化左侧缓冲。');
+assert.ok(viewSource.includes('text-[length:var(--tm-font-size-compact)] font-semibold') && viewSource.includes('px-1 font-semibold'), '学生覆盖表头应统一使用13像素半粗字重，并为排序标题保留横向留白。');
+assert.ok(viewSource.includes('const evaluationMissing = row.evaluationCount === 0') && viewSource.includes('const teacherMissing = row.teacherCount === 0'), '评价次数和评价老师数应分别判断零值。');
+assert.ok(viewSource.includes("teacherMissing\n                                        ? 'font-semibold text-[var(--tm-chart-negative-text)]'"), '两个指标的零值应使用一致的负向文字样式。');
+assert.ok(!viewSource.includes("const evaluationSelected = sortKey === 'evaluationCount'") && !viewSource.includes("const teacherSelected = sortKey === 'teacherCount'"), '排序状态只应由表头表达，不应给整列数据重复增加视觉背景。');
+assert.ok(viewSource.includes('h-[var(--tm-report-coverage-value-height)]') && !viewSource.includes('mx-auto flex h-7 w-16'), '学生覆盖数值应使用更扁的令牌化区域，避免胶囊控件感。');
+assert.ok(viewSource.includes('>\n                                {row.evaluationCount}\n                            </span>') && viewSource.includes('>\n                                {row.teacherCount}\n                            </span>'), '学生覆盖数据单元应只展示数字，不重复表头已有的单位。');
+assert.ok(viewSource.includes('评价${row.evaluationCount}次，${row.teacherCount}位老师评价'), '视觉精简后仍应为读屏保留完整单位。');
 assert.ok(!viewSource.includes('rounded-full bg-[var(--tm-chart-negative-soft)]'), '学生覆盖序号不应使用Top 3排名徽标。');
 assert.ok(viewSource.includes('已覆盖{\' \'}') && viewSource.includes('{coveredStudentCount}/{totalStudents}'), '已覆盖人数应与学生覆盖情况标题在同一行展示。');
 assert.ok(viewSource.includes('rounded-full bg-[var(--tm-chart-data-default-soft)]') && viewSource.includes('text-[var(--tm-chart-data-default-text)]'), '已覆盖人数应使用克制的普通数据标签建立信息层级。');
@@ -96,6 +108,7 @@ assert.ok(viewSource.includes('text-[length:var(--tm-font-size-meta)] font-mediu
 assert.ok(viewSource.includes('transition-[color,background-color,scale]') && viewSource.includes('active:scale-[0.96]'), '学生覆盖排序表头应使用明确属性过渡和克制按压反馈。');
 assert.ok(viewSource.includes('tabular-nums'), '学生覆盖数值应使用等宽数字保持纵向对齐。');
 assert.ok(viewSource.includes('查看全部{sortedCoverageRows.length}名学生'), '学生覆盖情况应提供查看全部入口。');
+assert.ok(viewSource.includes('mt-1 flex min-h-[var(--tm-size-touch)]') && viewSource.includes('<ChevronRight aria-hidden="true"') && !viewSource.includes('onClick={() => setShowAllCoverage(true)}\n                            className="mt-2'), '查看全部学生应使用无底色文字入口并保持完整触控区。');
 assert.ok(viewSource.includes('<MobileBottomSheet') && viewSource.includes('title="全部学生覆盖情况"'), '完整学生覆盖清单应使用共享底部抽屉。');
 assert.ok(viewSource.includes('rows={sortedCoverageRows}'), '底部抽屉应展示完整排序结果。');
 assert.ok(viewSource.includes("useState<ReportSourceKey>('all')"), '班级报告应默认展示全班汇总。');
@@ -136,9 +149,11 @@ assert.ok(bottomSheetSource.includes('role="dialog"') && bottomSheetSource.inclu
 assert.ok(bottomSheetSource.includes("createPortal") && bottomSheetSource.includes("getElementById('teacher-mobile-overlay-root')"), '共享底部抽屉应挂载到手机端统一浮层，避免受页面滚动与动画变换影响。');
 assert.ok(appSource.includes('id="teacher-mobile-overlay-root"'), '教师手机端壳层应提供统一浮层挂载点。');
 assert.ok(viewSource.includes('min-h-[var(--tm-size-touch)]'), '学生覆盖清单行应使用教师端触控尺寸令牌。');
-assert.ok(viewSource.includes('min-h-[var(--tm-size-touch)] grid-cols-[28px_minmax(0,1fr)_84px_84px]'), '学生覆盖表头应使用教师端触控尺寸令牌并保持固定序号与数值列宽。');
+assert.ok(viewSource.includes('min-h-[var(--tm-size-touch)] grid-cols-[minmax(0,1fr)_var(--tm-report-coverage-evaluation-column)_var(--tm-report-coverage-teacher-column)]'), '学生覆盖表头应使用教师端触控尺寸令牌并保持稳定的数值列宽。');
 assert.ok(uiGuidelineSource.includes('列表不设置独立的排序 Tab') && uiGuidelineSource.includes('无边框的浅中性圆角表面'), '教师手机端规范应固化学生覆盖的表头排序交互与视觉层级。');
-assert.ok(uiGuidelineSource.includes('只有评价次数为 0') && uiGuidelineSource.includes('视觉焦点跟随列切换'), '教师手机端规范应固化未覆盖提醒与排序列视觉焦点。');
+assert.ok(uiGuidelineSource.includes('三个表头统一使用 13 像素半粗字重') && uiGuidelineSource.includes('数据单元只展示裸数字') && uiGuidelineSource.includes('不增加胶囊背景'), '教师手机端规范应固化三列表头、裸数字和无胶囊零值提醒。');
+assert.ok(uiGuidelineSource.includes('排序状态只通过表头文字色') && uiGuidelineSource.includes('48/24 像素的舒展比例'), '教师手机端规范应固化排序状态与数据行节奏。');
+assert.ok(uiGuidelineSource.includes('主卡片与“全部学生覆盖情况”底部抽屉复用同一列表组件'), '教师手机端规范应要求主卡与完整列表保持一致。');
 assert.ok(uiGuidelineSource.includes('--tm-report-page-inline') && uiGuidelineSource.includes('--tm-report-card-content-gap'), '教师手机端规范应固化班级报告卡片间距令牌。');
 assert.ok(viewSource.includes('min-h-11'), '班级报告交互控件应满足44像素触控高度。');
 for (const pinnedInteraction of [

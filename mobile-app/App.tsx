@@ -884,7 +884,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'department_management': return '部门管理';
             case 'coin_issuance': return '货币发放';
             case 'suggestion_feedback': return '建议反馈';
-            case 'questionnaire': return '问卷采集';
+            case 'questionnaire': return '采集管理';
             case 'archive_design': return '档案设计';
             case 'ai_headteacher_assistant': return 'AI班主任助理';
             case 'weekly_action_advice': return '本周行动建议';
