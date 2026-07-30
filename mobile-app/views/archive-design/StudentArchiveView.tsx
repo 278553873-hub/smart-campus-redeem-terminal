@@ -13,6 +13,7 @@ import {
 import type { ClassInfo, Student, TeacherProfile } from '../../types';
 import {
   appendArchiveViewAudit,
+  ARCHIVE_GROWTH_FIELD_GROUPS,
   buildArchiveGrowthModuleSnapshots,
   createStudentArchiveDraft,
   formatArchiveAnswer,
@@ -26,6 +27,7 @@ import {
   saveStudentArchiveDraft,
   type ArchiveAnswer,
   type ArchiveDraft,
+  type ArchiveGrowthFieldKey,
   type ArchiveGrowthModuleSnapshot,
   type ArchiveSnapshot,
   type ArchiveSystemFieldKey,
@@ -117,7 +119,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   const activeSnapshot = workspace.snapshots.find(item => item.id === activeSnapshotId);
   const currentSystemValues = getArchiveSystemValues(student);
   const currentGrowthSnapshots = activeTemplate
-    ? buildArchiveGrowthModuleSnapshots(student.id, activeTemplate.growthModules)
+    ? buildArchiveGrowthModuleSnapshots(student.id, activeTemplate.growthFields)
     : [];
 
   const openDraft = (draft: ArchiveDraft) => {
@@ -151,12 +153,14 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
       window.setTimeout(() => setToast(''), 1800);
       return;
     }
-    const missingGrowthModule = activeTemplate.growthModules.find(module => (
-      module.required && currentGrowthSnapshots.find(snapshot => snapshot.key === module.key)?.status !== 'available'
+    const missingGrowthField = activeTemplate.growthFields.find(field => (
+      field.required && !currentGrowthSnapshots.some(snapshot => (
+        snapshot.status === 'available' && snapshot.items.some(item => item.key === field.key)
+      ))
     ));
-    if (submit && missingGrowthModule) {
-      const snapshot = currentGrowthSnapshots.find(item => item.key === missingGrowthModule.key);
-      setToast(`请先补充“${snapshot?.label ?? '成长记录'}”`);
+    if (submit && missingGrowthField) {
+      const fieldLabel = ARCHIVE_GROWTH_FIELD_GROUPS.flatMap(group => group.fields).find(field => field.key === missingGrowthField.key)?.label;
+      setToast(`请先补充“${fieldLabel ?? '成长数据'}”`);
       window.setTimeout(() => setToast(''), 1800);
       return;
     }
@@ -236,7 +240,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     </section>
   );
 
-  const renderGrowthSnapshots = (values: ArchiveGrowthModuleSnapshot[], requiredKeys: Set<string>) => {
+  const renderGrowthSnapshots = (values: ArchiveGrowthModuleSnapshot[], requiredFieldKeys: Set<ArchiveGrowthFieldKey>) => {
     if (values.length === 0) return null;
     return (
       <section className="space-y-2.5">
@@ -252,8 +256,6 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
               </span>
               {value.status === 'missing' ? (
                 <StatusPill className="bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">待补充</StatusPill>
-              ) : requiredKeys.has(value.key) ? (
-                <StatusPill className="bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]">成档必需</StatusPill>
               ) : null}
             </div>
             {value.status === 'available' && value.items.length > 0 && (
@@ -261,7 +263,10 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
                 {value.items.map((item, index) => (
                   <div key={`${item.label}-${index}`} className="flex min-h-[44px] items-start justify-between gap-4 py-2.5">
                     <span className="shrink-0 text-[11px] font-semibold text-[var(--tm-text-tertiary)]">{item.label}</span>
-                    <span className="text-right text-[13px] font-medium leading-5 text-[var(--tm-text-primary)]">{item.value}</span>
+                    <span className="flex min-w-0 items-start justify-end gap-2 text-right">
+                      <span className="text-[13px] font-medium leading-5 text-[var(--tm-text-primary)]">{item.value}</span>
+                      {item.key && requiredFieldKeys.has(item.key) && <StatusPill className="shrink-0 bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]">必需</StatusPill>}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -349,7 +354,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><BookOpenCheck className="h-5 w-5" /></span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[15px] font-semibold text-[var(--tm-text-primary)]">{template.name}</span>
-                <span className="mt-1.5 block text-[12px] font-medium text-[var(--tm-text-secondary)]">{template.growthModules.length}项成长记录 · {template.fields.length}个填写字段</span>
+                <span className="mt-1.5 block text-[12px] font-medium text-[var(--tm-text-secondary)]">{template.growthFields.length}项成长数据 · {template.fields.length}个手动填写</span>
               </span>
               <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-disabled)]" />
             </button>
@@ -370,10 +375,10 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
         <div className="flex-1 overflow-y-auto px-5 pb-36 pt-4 no-scrollbar">
           {renderSystemFields(activeTemplate.systemFields, currentSystemValues, true)}
 
-          {activeTemplate.growthModules.length > 0 && (
+          {activeTemplate.growthFields.length > 0 && (
             <div className="mt-5">
-              <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">成长记录</h2>
-              {renderGrowthSnapshots(currentGrowthSnapshots, new Set(activeTemplate.growthModules.filter(module => module.required).map(module => module.key)))}
+              <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">成长数据</h2>
+              {renderGrowthSnapshots(currentGrowthSnapshots, new Set(activeTemplate.growthFields.filter(field => field.required).map(field => field.key)))}
             </div>
           )}
 
@@ -431,7 +436,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
             )}
             {activeSnapshot.growthSnapshots.length > 0 && renderGrowthSnapshots(
               activeSnapshot.growthSnapshots,
-              new Set(activeSnapshot.templateSnapshot.growthModules.filter(module => module.required).map(module => module.key)),
+              new Set(activeSnapshot.templateSnapshot.growthFields.filter(field => field.required).map(field => field.key)),
             )}
             {template && template.fields.length === 0 ? null : template?.layoutMode === 'flat' ? (
               <article className={`${sectionSurface} p-4`}>

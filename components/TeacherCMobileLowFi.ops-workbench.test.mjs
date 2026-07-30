@@ -23,10 +23,10 @@ requireText("schoolAdmin: 60,", '学校后台端应有独立 60% 默认宽度。
 requireText("ops: 60,", '运营端应有独立 60% 默认宽度。');
 requireText("const prototypeWidth = prototypeWidths[surface];", '当前原型宽度应来自当前 tab 的独立状态。');
 requireText("setPrototypeWidths((widths) => ({", '拖动滑块时应只更新当前 tab 的宽度。');
-requireText("const getPrototypeWidthMax = (currentSurface: CEndSurface) => (currentSurface === 'ops' || currentSurface === 'schoolAdmin' ? 82 : 52);", '运营端和学校后台端应使用更高拖动上限。');
+requireText("currentSurface === 'ops' || currentSurface === 'schoolAdmin' || currentSurface === 'permissionCompare' ? 82 : 52", '运营端、学校后台端和权限对比应使用更高拖动上限。');
 requireText("[surface]: Math.min(getPrototypeWidthMax(surface), Math.max(24, drag.startWidth + deltaPercent)),", '当前 tab 拖动宽度应按自身上限更新。');
 requireText("style={{ '--prototype-width': `${prototypeWidth}%` } as React.CSSProperties}", '拖动滑块后应直接使用当前原型宽度。');
-requireText("currentSurface === 'ops' || currentSurface === 'schoolAdmin' ? 82 : 52", '运营端和学校后台端拖拽展示区上限应高于手机端原型。');
+requireText("currentSurface === 'ops' || currentSurface === 'schoolAdmin' || currentSurface === 'permissionCompare' ? 82 : 52", '运营端、学校后台端和权限对比拖拽展示区上限应高于手机端原型。');
 requireText("{ key: 'home' as const, label: '首页' }", '运营端内部菜单应包含首页。');
 requireText("{ key: 'personalUsers' as const, label: '个人用户管理' }", '运营端内部菜单应包含个人用户管理。');
 requireText("{ key: 'suggestionFeedback' as const, label: '建议反馈' }", '运营端内部菜单应包含建议反馈。');

@@ -37,7 +37,7 @@ import {
   Toast,
 } from './archivePagePrimitives';
 import {
-  ARCHIVE_GROWTH_MODULE_OPTIONS,
+  ARCHIVE_GROWTH_FIELD_GROUPS,
   cloneRecommendedTemplate,
   ARCHIVE_SELECTABLE_SYSTEM_FIELD_OPTIONS,
   ARCHIVE_SYSTEM_FIELD_OPTIONS,
@@ -48,7 +48,9 @@ import {
   readArchiveWorkspace,
   saveArchiveTemplate,
   setArchiveTemplateStatus,
+  getArchiveGrowthModulesForFields,
   type ArchiveFieldType,
+  type ArchiveGrowthFieldConfig,
   type ArchiveGrowthModuleKey,
   type ArchiveSystemFieldKey,
   type ArchiveTemplate,
@@ -104,7 +106,6 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSystemFieldPicker, setShowSystemFieldPicker] = useState(false);
-  const [showGrowthModulePicker, setShowGrowthModulePicker] = useState(false);
   const [toast, setToast] = useState('');
 
   const updateWorkspace = (next: ArchiveWorkspace, message?: string) => {
@@ -135,6 +136,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       ...template,
       systemFields: [...template.systemFields],
       growthModules: template.growthModules.map(item => ({ ...item })),
+      growthFields: template.growthFields.map(item => ({ ...item })),
       sections: template.sections.map(item => ({ ...item })),
       fields: template.fields.map(item => ({
         ...item,
@@ -169,6 +171,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       ...template,
       systemFields: [...template.systemFields],
       growthModules: template.growthModules.map(item => ({ ...item })),
+      growthFields: template.growthFields.map(item => ({ ...item })),
       sections: template.sections.map(item => ({ ...item })),
       fields: template.fields.map(item => ({
         ...item,
@@ -198,8 +201,8 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       window.setTimeout(() => setToast(''), 1800);
       return false;
     }
-    if (template.fields.length === 0 && template.growthModules.length === 0) {
-      setToast('请至少选择一项成长记录或新增一个填写字段');
+    if (template.fields.length === 0 && template.growthFields.length === 0) {
+      setToast('请至少添加一项档案内容');
       window.setTimeout(() => setToast(''), 1800);
       return false;
     }
@@ -262,6 +265,84 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
     setPageMode('root');
   };
 
+  const updateGrowthFields = (growthFields: ArchiveGrowthFieldConfig[]) => {
+    if (!templateDraft) return;
+    setTemplateDraft({
+      ...templateDraft,
+      growthFields,
+      growthModules: getArchiveGrowthModulesForFields(growthFields),
+    });
+  };
+
+  const renderGrowthDataPicker = (close: () => void) => (
+    <div>
+      <div className="max-h-[52vh] overflow-y-auto no-scrollbar">
+        {ARCHIVE_GROWTH_FIELD_GROUPS.map(group => {
+          const GroupIcon = growthModuleIcons[group.key];
+          return (
+            <section key={group.key} className="border-b border-[var(--tm-border-subtle)] py-3 first:pt-0 last:border-b-0">
+              <div className="flex min-h-11 items-center gap-2 px-1">
+                <GroupIcon className="h-4.5 w-4.5 text-[var(--tm-text-tertiary)]" />
+                <h3 className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{group.label}</h3>
+              </div>
+              <div>
+                {group.fields.map(field => {
+                  const config = templateDraft?.growthFields.find(item => item.key === field.key);
+                  const selected = Boolean(config);
+                  return (
+                    <div key={field.key} className="flex min-h-[52px] items-center gap-2 pl-7">
+                      <button
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => updateGrowthFields(selected
+                          ? (templateDraft?.growthFields ?? []).filter(item => item.key !== field.key)
+                          : [...(templateDraft?.growthFields ?? []), { key: field.key, required: false }])}
+                        className="flex min-h-[52px] min-w-0 flex-1 items-center justify-between gap-3 text-left"
+                      >
+                        <span className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{field.label}</span>
+                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-white' : 'border-[var(--tm-border-control)] text-transparent'}`}><Check className="h-4 w-4" /></span>
+                      </button>
+                      {selected && (
+                        <button
+                          type="button"
+                          aria-pressed={config?.required ?? false}
+                          onClick={() => updateGrowthFields((templateDraft?.growthFields ?? []).map(item => item.key === field.key ? { ...item, required: !item.required } : item))}
+                          className={`min-h-11 shrink-0 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${config?.required ? 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}
+                        >
+                          {config?.required ? '成档必需' : '选填'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+      <button type="button" onClick={close} className={`${primaryButton} mt-4 w-full`}>完成</button>
+    </div>
+  );
+
+  const renderSelectedGrowthFields = (template: ArchiveTemplate) => {
+    if (template.growthFields.length === 0) return null;
+    return (
+      <div className={`${sectionSurface} mb-3 divide-y divide-[var(--tm-border-subtle)] px-4`}>
+        {template.growthFields.map(config => {
+          const field = ARCHIVE_GROWTH_FIELD_GROUPS.flatMap(group => group.fields).find(item => item.key === config.key);
+          return (
+            <div key={config.key} className="flex min-h-[56px] items-center gap-3 py-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><Activity className="h-4.5 w-4.5" /></span>
+              <span className="min-w-0 flex-1 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{field?.label ?? config.key}</span>
+              <span className="shrink-0 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-tertiary)]">系统带入</span>
+              {config.required && <StatusPill className="bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">必需</StatusPill>}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderTemplates = () => {
     const school = workspace.templates.filter(template => template.origin === 'school' && !template.deletedAt);
     return (
@@ -283,7 +364,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                     <span className="truncate text-[15px] font-bold text-[var(--tm-text-primary)]">{template.name}</span>
                     <StatusPill className={meta.className}>{meta.label}</StatusPill>
                   </span>
-                  <span className="mt-1.5 block text-[12px] font-medium text-[var(--tm-text-secondary)]">{template.growthModules.length}项成长记录 · {template.fields.length}个填写字段</span>
+                  <span className="mt-1.5 block text-[12px] font-medium text-[var(--tm-text-secondary)]">{template.growthFields.length}项成长数据 · {template.fields.length}个手动填写</span>
                 </span>
                 <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-disabled)]" />
               </button>
@@ -326,7 +407,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
             {recommended.map(template => (
               <button key={template.id} type="button" onClick={() => previewRecommendedTemplate(template.id)} className={`${sectionSurface} flex min-h-[82px] w-full items-center gap-3 px-4 text-left transition active:scale-[0.985]`}>
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><Files className="h-5 w-5" /></span>
-                <span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-semibold text-[var(--tm-text-primary)]">{template.name}</span><span className="mt-1.5 block text-[12px] font-medium text-[var(--tm-text-secondary)]">{template.growthModules.length}项成长记录 · {template.fields.length}个填写字段</span></span>
+                <span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-semibold text-[var(--tm-text-primary)]">{template.name}</span><span className="mt-1.5 block text-[12px] font-medium text-[var(--tm-text-secondary)]">{template.growthFields.length}项成长数据 · {template.fields.length}个手动填写</span></span>
                 <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-disabled)]" />
               </button>
             ))}
@@ -371,7 +452,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                 <div className="flex items-start gap-3 p-4">
                   <div className="min-w-0 flex-1">
                     <h2 className="break-words text-[16px] font-bold text-[var(--tm-text-primary)]">{templateDraft.name}</h2>
-                    <p className="mt-1 text-[12px] font-medium text-[var(--tm-text-tertiary)]">{templateDraft.growthModules.length}项成长记录 · {templateDraft.fields.length}个填写字段</p>
+                    <p className="mt-1 text-[12px] font-medium text-[var(--tm-text-tertiary)]">{templateDraft.growthFields.length}项成长数据 · {templateDraft.fields.length}个手动填写</p>
                   </div>
                   <StatusPill className={templateStatusMeta[templateDraft.status].className}>{templateStatusMeta[templateDraft.status].label}</StatusPill>
                 </div>
@@ -385,35 +466,23 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                     <dd className="text-right text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{templateDraft.systemFields.map(key => ARCHIVE_SYSTEM_FIELD_OPTIONS.find(item => item.key === key)?.label).filter(Boolean).join('、') || '未设置'}</dd>
                   </div>
                   <div className="flex min-h-[48px] items-center justify-between gap-4 py-2">
-                    <dt className="shrink-0 text-[12px] font-semibold text-[var(--tm-text-tertiary)]">成长记录</dt>
-                    <dd className="text-right text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{templateDraft.growthModules.map(module => ARCHIVE_GROWTH_MODULE_OPTIONS.find(option => option.key === module.key)?.label).filter(Boolean).join('、') || '未设置'}</dd>
+                    <dt className="shrink-0 text-[12px] font-semibold text-[var(--tm-text-tertiary)]">成长数据</dt>
+                    <dd className="text-right text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{templateDraft.growthFields.length > 0 ? `${templateDraft.growthFields.length}项` : '未设置'}</dd>
                   </div>
                 </dl>
               </section>
 
-              {templateDraft.growthModules.length > 0 && (
+              {templateDraft.growthFields.length > 0 && (
                 <section className="mt-6">
-                  <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">成长记录</h2>
-                  <div className={`${sectionSurface} divide-y divide-[var(--tm-border-subtle)] px-4`}>
-                    {templateDraft.growthModules.map(module => {
-                      const option = ARCHIVE_GROWTH_MODULE_OPTIONS.find(item => item.key === module.key);
-                      const ModuleIcon = growthModuleIcons[module.key];
-                      return (
-                        <div key={module.key} className="flex min-h-[60px] items-center gap-3 py-2">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]"><ModuleIcon className="h-4.5 w-4.5" /></span>
-                          <span className="min-w-0 flex-1"><span className="block text-[14px] font-semibold text-[var(--tm-text-primary)]">{option?.label}</span><span className="mt-0.5 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{option?.description}</span></span>
-                          {module.required && <StatusPill className="bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">成档必需</StatusPill>}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">成长数据</h2>
+                  {renderSelectedGrowthFields(templateDraft)}
                 </section>
               )}
 
-              <section className="mt-6">
-                <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">老师填写内容</h2>
+              {templateDraft.fields.length > 0 && <section className="mt-6">
+                <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">手动填写</h2>
                 <ArchiveFormRenderer definition={templateDraft} mode="preview" />
-              </section>
+              </section>}
             </>
           ) : (
             <>
@@ -453,33 +522,21 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                     </span>
                   </button>
                 </div>
-                <div className="border-t border-[var(--tm-border-subtle)] pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowGrowthModulePicker(true)}
-                    className="flex min-h-12 w-full items-center justify-between gap-3 text-left"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[13px] font-semibold text-[var(--tm-text-primary)]">成长记录</span>
-                      <span className="mt-1 block truncate text-[12px] font-medium text-[var(--tm-text-secondary)]">
-                        {templateDraft.growthModules.map(module => ARCHIVE_GROWTH_MODULE_OPTIONS.find(option => option.key === module.key)?.label).filter(Boolean).join('、') || '未选择'}
-                      </span>
-                    </span>
-                    <span className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-[var(--tm-text-secondary)]">
-                      已选择 {templateDraft.growthModules.length} 项
-                      <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                    </span>
-                  </button>
-                </div>
               </section>
 
               <section className="mt-6">
-                <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">老师填写内容</h2>
+                <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">档案内容</h2>
+                {renderSelectedGrowthFields(templateDraft)}
                 <FormBuilder
                   layoutMode={templateDraft.layoutMode}
                   sections={templateDraft.sections}
                   fields={builderFields}
                   itemLabel="字段"
+                  showItemLabel={false}
+                  addButtonLabel="内容"
+                  typePickerTitle="添加内容"
+                  typePickerPrimaryLabel="手动填写"
+                  typePickerSecondaryTab={{ label: '成长数据', render: close => renderGrowthDataPicker(close) }}
                   fieldTypes={archiveFieldTypes}
                   allowCustomAnswer
                   createField={(type, sectionId) => {
@@ -590,55 +647,6 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
           })}
         </div>
         <button type="button" onClick={() => setShowSystemFieldPicker(false)} className={`${primaryButton} mt-4 w-full`}>完成</button>
-      </BottomSheet>
-      <BottomSheet open={showGrowthModulePicker} label="选择成长记录" onDismiss={() => setShowGrowthModulePicker(false)}>
-        <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">成长记录</h2>
-        <div className="mt-4 divide-y divide-[var(--tm-border-subtle)]">
-          {ARCHIVE_GROWTH_MODULE_OPTIONS.map(option => {
-            const config = templateDraft?.growthModules.find(module => module.key === option.key);
-            const selected = Boolean(config);
-            const ModuleIcon = growthModuleIcons[option.key];
-            return (
-              <div key={option.key} className="flex min-h-[68px] items-center gap-3 py-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!templateDraft) return;
-                    const nextModules = selected
-                      ? templateDraft.growthModules.filter(module => module.key !== option.key)
-                      : [...templateDraft.growthModules, { key: option.key, required: false }];
-                    setTemplateDraft({ ...templateDraft, growthModules: nextModules });
-                  }}
-                  className="flex min-h-[52px] min-w-0 flex-1 items-center gap-3 text-left"
-                  aria-pressed={selected}
-                >
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${selected ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]'}`}><ModuleIcon className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[14px] font-semibold text-[var(--tm-text-primary)]">{option.label}</span><span className="mt-0.5 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{option.description}</span></span>
-                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-white' : 'border-[var(--tm-border-control)] text-transparent'}`}><Check className="h-4 w-4" /></span>
-                </button>
-                {selected && (
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={config?.required ?? false}
-                    aria-label={`${option.label}设为成档必需`}
-                    onClick={() => {
-                      if (!templateDraft) return;
-                      setTemplateDraft({
-                        ...templateDraft,
-                        growthModules: templateDraft.growthModules.map(module => module.key === option.key ? { ...module, required: !module.required } : module),
-                      });
-                    }}
-                    className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${config?.required ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-muted)]'}`}
-                  >
-                    <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-[var(--tm-shadow-control)] transition-transform ${config?.required ? 'left-6' : 'left-1'}`} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <button type="button" onClick={() => setShowGrowthModulePicker(false)} className={`${primaryButton} mt-4 w-full`}>完成</button>
       </BottomSheet>
       <Toast message={toast} />
     </div>

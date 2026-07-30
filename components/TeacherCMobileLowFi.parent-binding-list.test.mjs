@@ -14,7 +14,8 @@ requireText("const parentBindingPage: PageKey = permissions.canManageParentBindi
 requireText("未绑定/已绑定", '页面应有未绑定/已绑定 tab 或统计。');
 requireText("邀请家长绑定按钮固定在页面底部", 'PRD 应说明邀请按钮固定底部。');
 requireText("mock 数据为 48/50", 'PRD 应说明家长绑定 mock 数据为 48/50。');
-requireText("邀请家长绑定弹窗同样提供通过微信邀请、二维码邀请和通过链接邀请", 'PRD 应说明家长邀请三种方式。');
+requireText("邀请家长绑定弹窗仅提供二维码邀请和通过链接邀请", 'PRD 应说明家长邀请仅保留二维码和链接两种方式。');
+requireText("教师端小程序无法发出学生端小程序的微信邀请", 'PRD 应说明取消家长微信邀请的平台限制原因。');
 requireText("二维码使用“素养指南针”小程序二维码", 'PRD 应说明家长二维码邀请使用素养指南针二维码。');
 requireText("链接文案不再引导输入班级号", 'PRD 应说明家长链接邀请不再引导输入班级号。');
 requireText("reservedPhone: '15200001332'", 'mock 数据应包含已预留手机号但未绑定的学生。');
@@ -74,9 +75,13 @@ requireText("renderRemoveParentBindingConfirmSheet", '移除家长绑定应有�
 requireText("确认移除绑定", '移除家长绑定二次确认弹窗应明确标题。');
 requireText("showClassActionToast(`已移除${removeParentBindingCandidate.studentName}${removeParentBindingCandidate.guardianLabel}绑定`)", '确认移除后才应展示移除成功反馈。');
 requireText("codeTitle: '链接邀请'", '家长和老师的链接邀请标题应统一为链接邀请。');
-requireText("家长您好，${inviteClass.inviter}邀请您绑定「${inviteClass.name}」学生，查看孩子的日常评价记录和成长报告。点击链接 ai-literacy://bind-student?code=${inviteClass.code}，直接完成绑定。", '家长链接邀请文案应按新口径展示。');
+requireText("家长您好，${inviteClass.inviter}邀请您绑定「${inviteClass.name}」的学生，查看孩子的日常评价记录和成长报告。点击链接 ai-literacy://bind-student?code=${inviteClass.code}，直接完成绑定。", '家长链接邀请文案应按新口径展示。');
+requireText("const currentTeacherFullName = teacherName.trim() || '郭';", '家长邀请应使用当前老师的完整姓名。');
+requireText("const inviter = currentTeacherFullName.endsWith('老师') ? currentTeacherFullName : `${currentTeacherFullName}老师`;", '家长邀请中的完整姓名应补充老师称谓且不重复。');
+requireText("{inviteAudience === 'teacher' && (", '通过微信邀请应只对邀请老师展示。');
 requireText("const qrInviteTitle = inviteAudience === 'teacher' ? '加入AI素养评价' : '绑定学生';", '家长二维码邀请图片标题应为绑定学生。');
 requireText("const qrInviteImage = inviteAudience === 'teacher' ? '/assets/ai_literacy_qr.png' : '/assets/compass_qr.png';", '家长二维码邀请应使用素养指南针二维码。');
+requireText("家长您好，${inviteClass.inviter}邀请您绑定「${inviteClass.name}」的学生", '家长二维码邀请文案应展示当前老师完整姓名。');
 requireText("微信扫描上方二维码即可完成绑定。", '家长二维码邀请图片下方应展示扫码完成绑定文案。');
 
 // 不应存在 activeParentRemove

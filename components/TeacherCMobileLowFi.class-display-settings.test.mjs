@@ -14,6 +14,8 @@ requireText("const visiblePersonalClassCards = personalClassCards.filter((item) 
 requireText("{visibleSourceClassCards.map((item) => (", '07A 应直接展示当前班级来源下的班级。');
 requireText('aria-label="打开班级操作"', '07A 右上角应使用加号打开班级操作弹层。');
 requireText('<Plus size={20} />', '07A 右上角班级操作入口应使用加号 icon。');
+requireText("const canCreateClassInTeacherSpace = (spaceId: TeacherSpaceId) => (", '创建班级权限应由班级来源统一判断。');
+requireText("if (next === 'classCreate' && !canCreateClassInTeacherSpace(currentSpaceId)) return;", '非本人班级来源不得通过跳转进入创建班级页。');
 requireText('aria-label="班级操作"', '07A 班级操作应收敛到底部弹层。');
 requireText('<h3 className="text-base font-black">班级操作</h3>', '班级操作弹层应有明确标题。');
 requireText('<span className="flex items-center gap-2"><Plus size={17} />创建班级</span>', '班级操作弹层应包含创建班级。');

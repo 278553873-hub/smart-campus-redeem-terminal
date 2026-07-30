@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Activity,
-  AlignLeft,
   Archive,
   ArchiveRestore,
   CalendarDays,
@@ -66,7 +65,9 @@ import {
   getQuestionnaireMultiFillValues,
   getCompletionRate,
   getQuestionnaireCompletedCount,
+  getQuestionnaireContentType,
   getQuestionnaireCollectionMode,
+  getQuestionnaireRespondentRole,
   getPendingAssignedStudentCollections,
   getQuestionnaireSelectedOptions,
   getReachableTargetCount,
@@ -84,6 +85,8 @@ import {
   type QuestionnaireQuestion,
   type QuestionnaireQuestionType,
   type QuestionnaireCollectionMode,
+  type QuestionnaireContentType,
+  type QuestionnaireRespondentRole,
   type QuestionnaireAnswer,
   type QuestionnaireRecord,
   type QuestionnaireSubmission,
@@ -151,15 +154,6 @@ const questionnaireFieldTypes: Array<FormFieldTypeOption<QuestionnaireQuestionTy
   { value: 'number', label: '数字', icon: Hash },
 ];
 
-const collectionFieldTypes: Array<FormFieldTypeOption<QuestionnaireQuestionType>> = [
-  { value: 'short_text', label: '单行文本', icon: TextCursorInput },
-  { value: 'single', label: '单选', icon: CircleDot, choice: true },
-  { value: 'date', label: '日期', icon: CalendarDays },
-  { value: 'text', label: '多行文本', icon: AlignLeft },
-  { value: 'number', label: '数字', icon: Hash },
-  { value: 'multiple', label: '多选', icon: ListChecks, choice: true },
-];
-
 const collectionModeMeta: Record<QuestionnaireCollectionMode, {
   label: string;
   shortLabel: string;
@@ -202,6 +196,10 @@ const growthCollectionMeta = {
   badgeClass: 'border border-[var(--tm-status-positive-border)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]',
   progressClass: 'bg-[var(--tm-status-positive)]',
 };
+
+const getCollectionBadgeLabel = (record: QuestionnaireRecord) => (
+  `${getQuestionnaireContentType(record) === 'growth' ? '成长信息' : '普通问卷'} · ${getQuestionnaireRespondentRole(record) === 'teacher' ? '老师填写' : '家长填写'}`
+);
 
 const createRatingOptions = (count: number) => Array.from({ length: count }, (_, index) => String(index + 1));
 
@@ -342,7 +340,7 @@ const SecondaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> =
 const StepIndicator: React.FC<{ current: number; mode: QuestionnaireCollectionMode }> = ({ current, mode }) => (
   <div className="grid grid-cols-3 gap-2 px-5 py-4" aria-label={`创建进度，第${current}步，共3步`}>
     {(mode === 'student_information'
-      ? ['编辑采集表', '学生范围', '确认开始']
+      ? ['编辑问卷', '学生范围', '确认开始']
       : ['编辑问卷', '发送范围', '确认发布']).map((label, index) => {
       const step = index + 1;
       const active = step === current;
@@ -490,6 +488,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [visibleQuestionResponseCount, setVisibleQuestionResponseCount] = useState(20);
   const [responseFilter, setResponseFilter] = useState<'completed' | 'pending' | 'unreachable'>('completed');
   const [createStep, setCreateStep] = useState(1);
+  const [contentType, setContentType] = useState<QuestionnaireContentType>('ordinary');
+  const [respondentRole, setRespondentRole] = useState<QuestionnaireRespondentRole>('guardian');
   const [collectionMode, setCollectionMode] = useState<QuestionnaireCollectionMode>('guardian_questionnaire');
   const [studentAssignmentMode, setStudentAssignmentMode] = useState<StudentAssignmentMode>('creator');
   const [draftId, setDraftId] = useState('');
@@ -574,7 +574,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   );
   const stepOneFieldErrors = useMemo(() => Object.fromEntries(draftQuestions.flatMap(question => {
     const error: { label?: string; options?: string; subFields?: string } = {};
-    if (!question.title.trim()) error.label = `请输入${collectionMode === 'student_information' ? '字段' : '题目'}名称`;
+    if (!question.title.trim()) error.label = '请输入题目名称';
     if (!['text', 'short_text', 'multi_fill', 'number', 'date'].includes(question.type) && question.options.filter(option => option.trim()).length < 2) {
       error.options = '请至少填写2个选项';
     }
@@ -587,16 +587,16 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       else if (new Set(labels).size !== labels.length) error.subFields = '填空项名称不能重复';
     }
     return error.label || error.options || error.subFields ? [[question.id, error] as const] : [];
-  })), [collectionMode, draftQuestions]);
+  })), [draftQuestions]);
   const stepOneTitleError = !draftTitle.trim()
-    ? `请输入${collectionMode === 'student_information' ? '采集名称' : '标题'}`
+    ? '请输入标题'
     : '';
   const stepOneListError = draftLayoutMode === 'grouped' && draftSections.length === 0
     ? '请先添加分组'
     : draftQuestions.length === 0
-      ? `请至少添加1个${collectionMode === 'student_information' ? '字段' : '题目'}`
+      ? '请至少添加1个题目'
       : !validStructure
-        ? `请为所有${collectionMode === 'student_information' ? '字段' : '题目'}选择分组`
+        ? '请为所有题目选择分组'
         : '';
   const validStepOne = !stepOneTitleError && !stepOneListError && Object.keys(stepOneFieldErrors).length === 0;
 
@@ -624,8 +624,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setPageMode('question-responses');
   };
 
-  const startCreate = (record?: QuestionnaireRecord, nextMode: QuestionnaireCollectionMode = 'guardian_questionnaire') => {
-    const resolvedMode = record ? getQuestionnaireCollectionMode(record) : nextMode;
+  const startCreate = (record?: QuestionnaireRecord, nextRespondentRole: QuestionnaireRespondentRole = 'guardian') => {
+    const resolvedRole = record ? getQuestionnaireRespondentRole(record) : nextRespondentRole;
+    const resolvedMode: QuestionnaireCollectionMode = resolvedRole === 'teacher' ? 'student_information' : 'guardian_questionnaire';
+    setContentType(record ? getQuestionnaireContentType(record) : 'ordinary');
+    setRespondentRole(resolvedRole);
     setCollectionMode(resolvedMode);
     setStudentAssignmentMode(record?.studentAssignmentMode ?? 'creator');
     setDraftId(record?.id ?? '');
@@ -662,6 +665,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setGrowthTemplate(template);
     setGrowthMeasurementDate(currentDate());
     setGrowthTerm(getDefaultGrowthTerm());
+    setContentType('growth');
+    setRespondentRole('teacher');
     setCollectionMode('student_information');
     setStudentAssignmentMode('creator');
     setSelectedClassIds(new Set(preferredClass ? [preferredClass.id] : []));
@@ -682,21 +687,21 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       studentName: useRosterName ? student.name : demoLinkedStudentName(student),
       classId: classInfo.id,
       className: classInfo.name,
-      reachable: collectionMode === 'student_information'
+      reachable: respondentRole === 'teacher'
         || Boolean(student.guardianContacts?.length) && !student.studentNo?.endsWith('07'),
       scopeStatus: 'active',
     }));
 
   const openCreatePreview = () => {
     if (draftQuestions.length === 0) {
-      showToast(collectionMode === 'student_information' ? '添加字段后即可预览' : '添加题目后即可预览');
+      showToast('添加题目后即可预览');
       return;
     }
     const targets = buildTargets();
     const existing = records.find(record => record.id === draftId);
     setPreviewRecord({
       id: draftId || 'questionnaire-preview',
-      title: draftTitle.trim() || (collectionMode === 'student_information' ? '未命名采集表' : '未命名问卷'),
+      title: draftTitle.trim() || '未命名问卷',
       description: draftDescription.trim(),
       creatorName: teacherName,
       creatorTeacherId: teacherId,
@@ -704,6 +709,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       createdAt: existing?.createdAt ?? nowText(),
       suggestedDeadline: hasSuggestedDeadline ? suggestedDeadline.replace('T', ' ') : '',
       status: 'draft',
+      contentType,
+      respondentRole,
       collectionMode,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
@@ -712,7 +719,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       sections: draftSections,
       questions: draftQuestions.map((question, index) => ({
         ...question,
-        title: question.title.trim() || `未填写${collectionMode === 'student_information' ? '字段' : '题目'} ${index + 1}`,
+        title: question.title.trim() || `未填写题目 ${index + 1}`,
       })),
       targets,
       submissions: existing?.submissions ?? [],
@@ -773,7 +780,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           studentName: record.growthTemplate ? student.name : demoLinkedStudentName(student),
           classId: classInfo.id,
           className: classInfo.name,
-          reachable: getQuestionnaireCollectionMode(record) === 'student_information'
+          reachable: getQuestionnaireRespondentRole(record) === 'teacher'
             || Boolean(student.guardianContacts?.length) && !student.studentNo?.endsWith('07'),
           scopeStatus: 'active' as const,
         }));
@@ -846,7 +853,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const title = growthTemplate === 'height_weight'
       ? `${scopeLabel}身高体重采集`
       : `${growthTerm}新学期目标清单`;
-    const questions = createGrowthCollectionQuestions(growthTemplate, DEFAULT_GROWTH_DIMENSIONS);
+    const questions = createGrowthCollectionQuestions(growthTemplate, DEFAULT_GROWTH_DIMENSIONS, respondentRole);
+    const routedCollectionMode: QuestionnaireCollectionMode = respondentRole === 'teacher' ? 'student_information' : 'guardian_questionnaire';
     const record: QuestionnaireRecord = {
       id,
       title,
@@ -857,12 +865,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       createdAt: nowText(),
       suggestedDeadline: '',
       status: 'active',
-      collectionMode: 'student_information',
+      contentType: 'growth',
+      respondentRole,
+      collectionMode: routedCollectionMode,
       growthTemplate,
       growthMeasurementDate: growthTemplate === 'height_weight' ? growthMeasurementDate : undefined,
       growthTerm: growthTemplate === 'semester_goal' ? growthTerm.trim() : undefined,
       growthDimensionOptions: growthTemplate === 'semester_goal' ? [...DEFAULT_GROWTH_DIMENSIONS] : undefined,
-      studentAssignmentMode: 'creator',
+      studentAssignmentMode: respondentRole === 'teacher' ? 'creator' : undefined,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
       targetSyncPolicy: 'follow_classes',
@@ -871,7 +881,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       questions,
       targets,
       submissions: [],
-      studentRecords: targets.map(target => ({
+      studentRecords: respondentRole === 'teacher' ? targets.map(target => ({
         id: `${id}-${target.studentNo}`,
         studentNo: target.studentNo,
         studentName: target.studentName,
@@ -882,7 +892,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         answers: {},
         assigneeTeacherId: teacherId,
         assigneeTeacherName: teacherName,
-      })),
+      })) : [],
     };
     upsertQuestionnaire(record);
     setRecords(readQuestionnaires());
@@ -890,7 +900,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setRecordOrigin('list');
     setDetailTab('data');
     setPageMode('detail');
-    showToast('已开始采集');
+    showToast(respondentRole === 'teacher' ? '已开始采集' : '已发布到家长端');
   };
 
   const saveDraft = () => {
@@ -898,7 +908,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const targets = buildTargets();
     const record: QuestionnaireRecord = {
       id: draftId || createQuestionnaireId(),
-      title: draftTitle.trim() || (collectionMode === 'student_information' ? '未命名采集表' : '未命名问卷'),
+      title: draftTitle.trim() || '未命名问卷',
       description: draftDescription.trim(),
       creatorName: teacherName,
       creatorTeacherId: teacherId,
@@ -906,8 +916,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       createdAt: existing?.createdAt ?? nowText(),
       suggestedDeadline: hasSuggestedDeadline ? suggestedDeadline.replace('T', ' ') : '',
       status: 'draft',
+      contentType,
+      respondentRole,
       collectionMode,
-      studentAssignmentMode: collectionMode === 'student_information' ? studentAssignmentMode : undefined,
+      studentAssignmentMode: respondentRole === 'teacher' ? studentAssignmentMode : undefined,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
       targetSyncPolicy: 'follow_classes',
@@ -916,7 +928,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       questions: draftQuestions,
       targets,
       submissions: existing?.submissions ?? [],
-      studentRecords: collectionMode === 'student_information' ? buildStudentRecords(targets, existing) : [],
+      studentRecords: respondentRole === 'teacher' ? buildStudentRecords(targets, existing) : [],
     };
     upsertQuestionnaire(record);
     setRecords(readQuestionnaires());
@@ -938,8 +950,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       createdAt: existing?.createdAt ?? nowText(),
       suggestedDeadline: hasSuggestedDeadline ? suggestedDeadline.replace('T', ' ') : '',
       status: 'active',
+      contentType,
+      respondentRole,
       collectionMode,
-      studentAssignmentMode: collectionMode === 'student_information' ? studentAssignmentMode : undefined,
+      studentAssignmentMode: respondentRole === 'teacher' ? studentAssignmentMode : undefined,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
       targetSyncPolicy: 'follow_classes',
@@ -948,14 +962,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       questions: draftQuestions,
       targets,
       submissions: existing?.submissions ?? [],
-      studentRecords: collectionMode === 'student_information' ? buildStudentRecords(targets, existing) : [],
+      studentRecords: respondentRole === 'teacher' ? buildStudentRecords(targets, existing) : [],
     };
     upsertQuestionnaire(record);
     setRecords(readQuestionnaires());
     setActiveRecordId(record.id);
     setDetailTab('data');
     setPageMode('detail');
-    showToast(collectionMode === 'student_information' ? '已开始采集' : '问卷已发布到家长端');
+    showToast(respondentRole === 'teacher' ? '已开始采集' : '问卷已发布到家长端');
   };
 
   const toggleClass = (classId: string) => {
@@ -1225,7 +1239,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                     {record.status !== 'draft' && (
                       <div className="mt-3.5 flex min-w-0 items-center justify-between gap-3 text-[length:var(--tm-font-size-meta)]">
                         <div className="flex min-w-0 items-center gap-2 font-medium">
-                          <span className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5" />{modeMeta.shortLabel}</span>
+                          <span className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5" />{getCollectionBadgeLabel(record)}</span>
                           <span className={`truncate ${overdue ? 'text-[var(--tm-brand-reward-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>{record.growthTemplate === 'height_weight' ? record.growthMeasurementDate : record.growthTemplate === 'semester_goal' ? record.growthTerm : mode === 'student_information' ? formatCollectionDate(record.createdAt) : record.suggestedDeadline ? formatSuggestedDeadline(record.suggestedDeadline) : '不限时间'}</span>
                         </div>
                         <div className="flex shrink-0 items-center gap-2.5">
@@ -1236,7 +1250,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                         </div>
                       </div>
                     )}
-                    {record.status === 'draft' && <div className="mt-2"><span className={`inline-flex h-6 items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5" />{modeMeta.shortLabel}</span></div>}
+                    {record.status === 'draft' && <div className="mt-2"><span className={`inline-flex h-6 items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5" />{getCollectionBadgeLabel(record)}</span></div>}
                   </button>
                   {record.status === 'draft' && (
                     <IconButton
@@ -1267,34 +1281,34 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               </button>
             )}
             <h2 className="text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">
-              {createSheetStage === 'root' ? '新建采集' : createSheetStage === 'growth' ? '选择成长内容' : '选择问卷类型'}
+              {createSheetStage === 'root' ? '选择采集内容' : createSheetStage === 'growth' ? '选择成长内容' : '谁来填写'}
             </h2>
           </div>
           <div className="mt-3 overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
             {createSheetStage === 'root' && (
               <>
-                <button type="button" onClick={() => setCreateSheetStage('growth')} className="flex min-h-[72px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-status-positive-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><Activity className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">成长信息</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">身高体重、学期目标</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
                 <button type="button" onClick={() => setCreateSheetStage('questionnaire')} className="flex min-h-[72px] w-full items-center gap-3 px-4 text-left active:bg-[var(--tm-bg-surface-soft)]">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]"><FileText className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">问卷调查</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">家长问卷、学生信息采集</span></span>
+                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">普通问卷</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">意见、情况与反馈</span></span>
+                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
+                </button>
+                <button type="button" onClick={() => setCreateSheetStage('growth')} className="flex min-h-[72px] w-full items-center gap-3 border-t border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-status-positive-soft)]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><Activity className="h-5 w-5" /></span>
+                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">成长信息</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">身高体重、学期目标</span></span>
                   <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
                 </button>
               </>
             )}
             {createSheetStage === 'questionnaire' && (
               <>
-                <button type="button" onClick={() => startCreate(undefined, 'guardian_questionnaire')} className="flex min-h-[68px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-audience-guardian-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-guardian-soft)] text-[var(--tm-audience-guardian-strong)]"><UsersRound className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">家长问卷</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">由家长填写</span></span>
+                <button type="button" onClick={() => startCreate(undefined, 'teacher')} className="flex min-h-[68px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-audience-student-soft)]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-student-soft)] text-[var(--tm-audience-student-strong)]"><UserRoundCheck className="h-5 w-5" /></span>
+                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">老师填写</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">老师逐生完成</span></span>
                   <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
                 </button>
-                <button type="button" onClick={() => startCreate(undefined, 'student_information')} className="flex min-h-[68px] w-full items-center gap-3 px-4 text-left active:bg-[var(--tm-audience-student-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-student-soft)] text-[var(--tm-audience-student-strong)]"><UserRoundCheck className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">学生信息采集</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">由老师逐生填写</span></span>
+                <button type="button" onClick={() => startCreate(undefined, 'guardian')} className="flex min-h-[68px] w-full items-center gap-3 px-4 text-left active:bg-[var(--tm-audience-guardian-soft)]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-guardian-soft)] text-[var(--tm-audience-guardian-strong)]"><UsersRound className="h-5 w-5" /></span>
+                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">家长填写</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">发布到家长端</span></span>
                   <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
                 </button>
               </>
@@ -1395,7 +1409,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 <div className="line-clamp-2 text-pretty text-[length:var(--tm-font-size-card-title)] font-bold leading-[22px] text-[var(--tm-text-primary)]">{record.title}</div>
                 <div className="mt-3.5 flex min-w-0 items-center justify-between gap-3 text-[length:var(--tm-font-size-meta)]">
                   <div className="flex min-w-0 items-center gap-2 font-medium text-[var(--tm-text-tertiary)]">
-                    <span className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5" />{modeMeta.shortLabel}</span>
+                    <span className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5" />{getCollectionBadgeLabel(record)}</span>
                     <span className="truncate">{record.growthTemplate === 'height_weight' ? record.growthMeasurementDate : record.growthTemplate === 'semester_goal' ? record.growthTerm : mode === 'student_information' ? formatCollectionDate(record.createdAt) : record.suggestedDeadline ? formatSuggestedDeadline(record.suggestedDeadline) : '不限时间'}</span>
                   </div>
                   <div className="flex shrink-0 items-center gap-2.5">
@@ -1442,6 +1456,29 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             )}
           </section>
 
+          <section className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
+            <div className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">填写方式</div>
+            <div className="mt-3 grid grid-cols-2 gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
+              {([['teacher', '老师填写'], ['guardian', '家长填写']] as const).map(([role, label]) => {
+                const selected = respondentRole === role;
+                return (
+                  <button
+                    key={role}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => {
+                      setRespondentRole(role);
+                      setCollectionMode(role === 'teacher' ? 'student_information' : 'guardian_questionnaire');
+                    }}
+                    className={`min-h-11 rounded-[calc(var(--tm-radius-control)-4px)] px-2 text-[length:var(--tm-font-size-body)] font-semibold transition ${selected ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]">
             <div className="px-4 pt-4">
               <div className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">选择班级</div>
@@ -1467,16 +1504,16 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           </section>
         </main>
         <BottomAction>
-          <PrimaryButton onClick={publishGrowthCollection} className="w-full"><ClipboardCheck className="h-4.5 w-4.5" />开始采集</PrimaryButton>
+          <PrimaryButton onClick={publishGrowthCollection} className="w-full">{respondentRole === 'teacher' ? <><ClipboardCheck className="h-4.5 w-4.5" />开始采集</> : <><Send className="h-4.5 w-4.5" />发布到家长端</>}</PrimaryButton>
         </BottomAction>
       </div>
     );
   };
 
   const renderCreate = () => {
-    const isStudentCollection = collectionMode === 'student_information';
-    const titlePlaceholder = isStudentCollection ? '请输入采集名称' : '请输入问卷名称';
-    const descriptionPlaceholder = isStudentCollection ? '请输入采集说明(非必填)' : '请输入问卷说明(非必填)';
+    const isTeacherRespondent = respondentRole === 'teacher';
+    const titlePlaceholder = '请输入问卷名称';
+    const descriptionPlaceholder = '请输入问卷说明(非必填)';
     const targets = buildTargets();
     const reachableCount = targets.filter(target => target.reachable).length;
     const unreachableCount = targets.length - reachableCount;
@@ -1496,7 +1533,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24">
         <PageHeader
-          title={draftId ? (isStudentCollection ? '编辑采集表' : '编辑问卷') : (isStudentCollection ? '新建采集表' : '新建问卷')}
+          title={draftId ? '编辑问卷' : '新建问卷'}
           onBack={() => createStep > 1 ? setCreateStep(step => step - 1) : setPageMode('list')}
         />
         <StepIndicator current={createStep} mode={collectionMode} />
@@ -1504,10 +1541,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           {createStep === 1 && (
             <div className="space-y-4">
               <section className="-mx-5 bg-[var(--tm-bg-surface)] px-5 py-4">
-                <input id="survey-title" aria-label={isStudentCollection ? '采集名称' : '问卷标题'} value={draftTitle} maxLength={40} onChange={event => setDraftTitle(event.target.value)} placeholder={titlePlaceholder} aria-invalid={Boolean(stepOneValidationAttempt && stepOneTitleError)} aria-describedby={stepOneValidationAttempt && stepOneTitleError ? 'survey-title-error' : undefined} className={`min-h-[var(--tm-size-touch)] w-full border-0 border-b bg-transparent px-0 py-1 text-[length:var(--tm-font-size-document-title)] font-bold leading-9 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:font-medium placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:ring-0 ${stepOneValidationAttempt && stepOneTitleError ? 'border-[var(--tm-status-negative-strong)] focus:border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-border-control)] focus:border-[var(--tm-brand-primary)]'}`} />
+                <input id="survey-title" aria-label="问卷标题" value={draftTitle} maxLength={40} onChange={event => setDraftTitle(event.target.value)} placeholder={titlePlaceholder} aria-invalid={Boolean(stepOneValidationAttempt && stepOneTitleError)} aria-describedby={stepOneValidationAttempt && stepOneTitleError ? 'survey-title-error' : undefined} className={`min-h-[var(--tm-size-touch)] w-full border-0 border-b bg-transparent px-0 py-1 text-[length:var(--tm-font-size-document-title)] font-bold leading-9 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:font-medium placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:ring-0 ${stepOneValidationAttempt && stepOneTitleError ? 'border-[var(--tm-status-negative-strong)] focus:border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-border-control)] focus:border-[var(--tm-brand-primary)]'}`} />
                 {stepOneValidationAttempt > 0 && stepOneTitleError && <p id="survey-title-error" className="mt-1.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{stepOneTitleError}</p>}
                 <div className="mt-[var(--tm-space-4)]">
-                  <AutoResizeTextarea id="survey-description" aria-label={isStudentCollection ? '采集说明' : '问卷说明'} value={draftDescription} maxLength={500} maxHeight={Number.POSITIVE_INFINITY} onChange={event => setDraftDescription(event.target.value)} placeholder={descriptionPlaceholder} className="min-h-[var(--tm-size-touch)] w-full resize-none border-0 border-b border-[var(--tm-border-control)] bg-transparent px-0 py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:border-[var(--tm-brand-primary)] focus:ring-0" />
+                  <AutoResizeTextarea id="survey-description" aria-label="问卷说明" value={draftDescription} maxLength={500} maxHeight={Number.POSITIVE_INFINITY} onChange={event => setDraftDescription(event.target.value)} placeholder={descriptionPlaceholder} className="min-h-[var(--tm-size-touch)] w-full resize-none border-0 border-b border-[var(--tm-border-control)] bg-transparent px-0 py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:border-[var(--tm-brand-primary)] focus:ring-0" />
                   <div className="mt-1 text-right text-[length:var(--tm-font-size-badge)] font-medium tabular-nums text-[var(--tm-text-tertiary)]" aria-live="polite">{draftDescription.length}/500</div>
                 </div>
               </section>
@@ -1515,9 +1552,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 layoutMode={draftLayoutMode}
                 sections={draftSections}
                 fields={builderFields}
-                itemLabel={isStudentCollection ? '字段' : '题目'}
-                showItemLabel={isStudentCollection}
-                fieldTypes={isStudentCollection ? collectionFieldTypes : questionnaireFieldTypes}
+                itemLabel="题目"
+                showItemLabel={false}
+                fieldTypes={questionnaireFieldTypes}
                 allowCustomAnswer
                 fieldErrors={stepOneValidationAttempt ? stepOneFieldErrors : undefined}
                 listError={stepOneValidationAttempt ? stepOneListError : ''}
@@ -1547,7 +1584,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           )}
 
           {createStep === 2 && (
-            <section aria-label={isStudentCollection ? '学生范围' : '发送范围'} className="-mx-5 bg-[var(--tm-bg-surface)] px-5 pb-5">
+            <section aria-label={isTeacherRespondent ? '学生范围' : '发送范围'} className="-mx-5 bg-[var(--tm-bg-surface)] px-5 pb-5">
               {availableClasses.length > 0 ? (
                 <>
                   <button type="button" role="checkbox" onClick={toggleAllClasses} aria-checked={allClassesSelected ? true : hasSelectedClasses ? 'mixed' : false} className="flex min-h-[60px] w-full items-center gap-3 text-left active:bg-[var(--tm-bg-surface-soft)]">
@@ -1580,15 +1617,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               <section className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
                 <h2 className="text-[length:var(--tm-font-size-card-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{draftTitle}</h2>
                 {draftDescription && <p className="mt-2 text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">{draftDescription}</p>}
-                <div className={`mt-4 grid gap-2 border-t border-[var(--tm-border-subtle)] pt-4 text-center ${isStudentCollection ? 'grid-cols-2' : 'grid-cols-3'}`}>
-                  {(isStudentCollection
-                    ? [['字段', draftQuestions.length], ['学生', targets.length]]
+                <div className={`mt-4 grid gap-2 border-t border-[var(--tm-border-subtle)] pt-4 text-center ${isTeacherRespondent ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                  {(isTeacherRespondent
+                    ? [['题目', draftQuestions.length], ['学生', targets.length]]
                     : [['题目', draftQuestions.length], ['目标学生', targets.length], ['可送达', reachableCount]]).map(([label, value]) => (
                     <div key={String(label)}><div className="text-[length:var(--tm-font-size-page-title)] font-bold tabular-nums text-[var(--tm-text-primary)]">{value}</div><div className="mt-1 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{label}</div></div>
                   ))}
                 </div>
               </section>
-              {isStudentCollection && (
+              {isTeacherRespondent && (
                 <section className="overflow-hidden rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]">
                   <button type="button" onClick={() => setShowAssignmentSheet(true)} className="flex min-h-[58px] w-full items-center justify-between gap-4 px-4 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)]">
                     <span className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">填写分工</span>
@@ -1599,7 +1636,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   </button>
                 </section>
               )}
-              {!isStudentCollection && <section className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
+              {!isTeacherRespondent && <section className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
                 <div className="flex min-h-11 items-center justify-between gap-4">
                   <div><div className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">建议完成时间</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">选填</div></div>
                   <button
@@ -1620,7 +1657,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   <input aria-label="建议完成时间" type="datetime-local" value={suggestedDeadline} onChange={event => setSuggestedDeadline(event.target.value)} className="mt-3 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
                 )}
               </section>}
-              {!isStudentCollection && unreachableCount > 0 && (
+              {!isTeacherRespondent && unreachableCount > 0 && (
                 <section className="flex min-h-11 items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-brand-reward)]/20 bg-[var(--tm-brand-reward-soft)] px-4 py-3">
                   <UsersRound className="h-5 w-5 shrink-0 text-[var(--tm-brand-reward-strong)]" />
                   <div className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-brand-reward-strong)]">{unreachableCount}名学生未绑定家长</div>
@@ -1632,7 +1669,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
         <BottomAction>
           <div className="grid grid-cols-[44px_minmax(0,0.9fr)_minmax(0,1.35fr)] items-center gap-2.5">
-            <IconButton label={isStudentCollection ? '预览采集表' : '预览问卷'} onClick={openCreatePreview} className="border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-control)]">
+            <IconButton label="预览问卷" onClick={openCreatePreview} className="border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-control)]">
               <Eye className="h-5 w-5" />
             </IconButton>
             <SecondaryButton onClick={saveDraft} className="px-2">
@@ -1644,7 +1681,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               className="px-3"
             >
               {createStep === 3
-                ? isStudentCollection ? <><ClipboardCheck className="h-4 w-4" />开始采集</> : <><Send className="h-4 w-4" />确认发布</>
+                ? isTeacherRespondent ? <><ClipboardCheck className="h-4 w-4" />开始采集</> : <><Send className="h-4 w-4" />确认发布</>
                 : '下一步'}
             </PrimaryButton>
           </div>

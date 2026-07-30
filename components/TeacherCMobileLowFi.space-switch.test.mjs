@@ -86,6 +86,9 @@ if (!classListRender.includes("const isSchoolList = isSchoolClassListPage(page);
 if (!classListRender.includes("!isSchoolList && isPersonalOwnedSource && (")) {
   failures.push('07A 个人来源班级列表页应在右侧展示班级操作入口，协作和学校来源不展示该入口。');
 }
+if (!source.includes("const canCreateClassInTeacherSpace = (spaceId: TeacherSpaceId) => (") || !source.includes("if (next === 'classCreate' && !canCreateClassInTeacherSpace(currentSpaceId)) return;")) {
+  failures.push('创建班级必须同时校验当前为“我创建的班级”来源，不能只隐藏入口。');
+}
 if (!classListRender.includes("const gradeFilterOptions: SchoolClassGradeFilter[] = ['全部', '一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三', '高一', '高二', '高三'];")) {
   failures.push('07B 学校版班级列表顶部应提供覆盖 K12 的年级筛选选项。');
 }
@@ -255,6 +258,7 @@ requirePrd('  - 不展示 AI 说明，不展示识别举例案例', 'PRD 应说�
 requirePrd('  - 展示语音记录引导：试试通过语音描述一下内容', 'PRD 应说明 13 记录页展示语音记录引导。');
 requirePrd('- 班级(个人版)', 'PRD 应拆出班级(个人版)流程。');
 requirePrd('  - 07A 班级列表（个人版）→ 创建班级 / 加入班级', 'PRD 应说明个人版班级列表保留创建班级和加入班级入口。');
+requirePrd('  - 只有“我创建的班级”来源可以创建班级；其他老师的协作来源和学校来源不展示创建入口，跳转层同时拒绝进入 04 创建班级', 'PRD 应明确只有本人班级来源可以创建班级。');
 requirePrd('  - 班级来源为“我创建的班级”时，只展示我创建的班级，不再区分“创建的班级 / 加入的班级”分组', 'PRD 应说明 07A 我创建的班级来源不再重复按关系分组。');
 requirePrd('- 班级(学校版)', 'PRD 应新增班级(学校版)流程。');
 requirePrd('  - 07B 班级列表（学校版）不需要创建班级、加入班级', 'PRD 应说明学校版班级列表不需要创建班级和加入班级。');

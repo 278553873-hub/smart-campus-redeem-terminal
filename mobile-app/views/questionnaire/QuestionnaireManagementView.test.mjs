@@ -14,6 +14,8 @@ const floatingCreateSource = fs.readFileSync(new URL('../../components/ui/Mobile
 const formDefinitionSource = fs.readFileSync(new URL('../../../shared/formDefinition.ts', import.meta.url), 'utf8');
 const questionnaireThemeSource = fs.readFileSync(new URL('../../../shared/questionnaireThemeTokens.ts', import.meta.url), 'utf8');
 const growthFormsSource = fs.readFileSync(new URL('./GrowthCollectionForms.tsx', import.meta.url), 'utf8');
+const growthDefinitionSource = fs.readFileSync(new URL('../../../shared/growthCollectionDefinition.ts', import.meta.url), 'utf8');
+const growthPersistenceSource = fs.readFileSync(new URL('../../../shared/growthCollectionPersistence.ts', import.meta.url), 'utf8');
 const studentGrowthStoreSource = fs.readFileSync(new URL('../../../shared/studentGrowthStore.ts', import.meta.url), 'utf8');
 const listSource = viewSource.slice(viewSource.indexOf('const renderList'), viewSource.indexOf('const renderCreate'));
 const listHeaderSource = listSource.slice(0, listSource.indexOf('<main'));
@@ -76,7 +78,7 @@ for (const mockId of ['survey-autumn-trip-202607', 'survey-uniform-202607', 'sur
 requireText(storeSource, "cloneSeed().filter(record => !storedIds.has(record.id) && !deletedDraftIds.has(record.id))", '新增演示问卷必须增量补齐，同时不能恢复已删除草稿。');
 requireText(parentSource, "setScreen('questionnaireForm')", '家长端必须复用现有问卷填写页打开教师发布问卷。');
 requireText(parentSource, 'pendingAssignedQuestionnaires', '家长端待办必须读取教师发布的共享问卷。');
-requireText(parentSource, "getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'", '家长端只能接收家长问卷，不能收到学生信息采集。');
+requireText(parentSource, "getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'", '家长端只能接收家长填写任务，不能收到老师填写任务。');
 requireText(parentSource, 'setSharedQuestionnaires(readQuestionnaires())', '家长提交后必须刷新共享问卷状态。');
 requireText(viewSource, 'useState<QuestionnaireQuestion[]>([])', '新建问卷不应默认创建单选题。');
 requireText(viewSource, "const nextQuestions = record?.questions.length ? record.questions : [];", '新问卷必须从空题目状态开始。');
@@ -90,8 +92,8 @@ requireText(createSource, '<AutoResizeTextarea id="survey-description"', '新建
 requireText(viewSource, "setDraftTitle(record?.title ?? '')", '进入草稿编辑时必须回显问卷标题。');
 requireText(viewSource, "setDraftDescription(record?.description ?? '')", '进入草稿编辑时必须回显问卷说明。');
 forbidText(viewSource, 'activeBasicInfoField', '问卷基础信息不应再使用隐藏的点击编辑态。');
-requireText(viewSource, "isStudentCollection ? '请输入采集名称' : '请输入问卷名称'", '问卷与学生采集必须使用对应的名称占位文案。');
-requireText(viewSource, "isStudentCollection ? '请输入采集说明(非必填)' : '请输入问卷说明(非必填)'", '问卷与学生采集必须使用对应的非必填说明文案。');
+requireText(viewSource, "const titlePlaceholder = '请输入问卷名称'", '普通问卷不应因填写人不同而改变内容名称。');
+requireText(viewSource, "const descriptionPlaceholder = '请输入问卷说明(非必填)'", '普通问卷应统一使用问卷说明文案。');
 requireText(createSource, 'maxLength={500} maxHeight={Number.POSITIVE_INFINITY}', '问卷说明必须支持500字并随内容完整增高。');
 requireText(createSource, '{draftDescription.length}/500', '问卷说明必须展示字数统计。');
 requireText(autoResizeTextareaSource, 'rows={1}', '自动增高输入框不应默认预留两行高度。');
@@ -106,9 +108,9 @@ requireText(viewSource, 'allowCustomAnswer', '问卷和学生信息采集的单�
 if (viewSource.includes('allowCustomAnswer={!isStudentCollection}')) {
   throw new Error('学生信息采集不应单独关闭“其他”选项。');
 }
-requireText(formBuilderSource, '添加{itemLabel}', '共享构建器必须保留清晰的添加入口。');
+requireText(formBuilderSource, '添加{addButtonLabel ?? itemLabel}', '共享构建器必须保留可由业务命名的添加入口。');
 const flatFieldSection = formBuilderSource.slice(formBuilderSource.indexOf("{layoutMode === 'flat' ? ("), formBuilderSource.indexOf(") : (", formBuilderSource.indexOf("{layoutMode === 'flat' ? (")));
-if (flatFieldSection.indexOf('{renderFieldList(fields)}') > flatFieldSection.lastIndexOf('添加{itemLabel}')) {
+if (flatFieldSection.indexOf('{renderFieldList(fields)}') > flatFieldSection.lastIndexOf('添加{addButtonLabel ?? itemLabel}')) {
   throw new Error('平铺模式的添加入口必须位于题目列表末尾。');
 }
 requireText(formBuilderSource, 'const copyField =', '题目更多菜单必须支持复制题目。');
@@ -171,7 +173,7 @@ requireText(formBuilderSource, 'if (visibleInput)', '同一错误重复校验时
 requireText(formBuilderSource, '使用分组', '共享构建器必须提供分组开关。');
 requireText(formBuilderSource, '<h2 className="text-[length:var(--tm-font-size-card-title)]', '题目标题必须与分组开关共用紧凑标题行。');
 requireText(formBuilderSource, 'showItemLabel = true', '共享构建器必须通过配置控制题目或字段标题显隐，不能写死业务规则。');
-requireText(createSource, 'showItemLabel={isStudentCollection}', '家长问卷必须隐藏重复的题目标题，同时保留学生采集字段标题。');
+requireText(createSource, 'showItemLabel={false}', '普通问卷不应因老师或家长填写而重复展示题目标题。');
 forbidText(formBuilderSource, 'min-h-[60px] items-center justify-between gap-4 px-4', '分组开关不应继续使用独立卡片。');
 requireText(formBuilderSource, 'setActiveSectionMenuId(section.id)', '分组低频操作必须通过更多菜单渐进披露。');
 requireText(formBuilderSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] px-3', '分组标题必须使用浅中性底标题行建立结构层级。');
@@ -184,7 +186,7 @@ if (formBuilderSource.includes('默认分组') || formBuilderSource.includes('{s
   throw new Error('开启分组后只应提供添加分组入口，不应展示默认分组或分组数量。');
 }
 requireText(formBuilderSource, 'fields.map(field => ({ ...field, sectionId: nextSection.id }))', '创建首个分组后必须将已有题目自动归入该组。');
-requireText(formBuilderSource, '添加{itemLabel}到本组', '组内添加动作必须明确说明题目或字段将加入当前分组。');
+requireText(formBuilderSource, '添加{addButtonLabel ?? itemLabel}到本组', '组内添加动作必须明确说明内容将加入当前分组。');
 requireText(formBuilderSource, '<FolderPlus', '添加分组必须使用区别于添加题目的结构型图标。');
 requireText(formBuilderSource, 'bg-[var(--tm-bg-surface-muted)]', '添加分组必须使用中性表面，与组内品牌色添加动作拉开层级。');
 forbidText(mobileBottomSheetSource, 'backdrop-blur', '底部抽屉蒙层不应模糊背景内容。');
@@ -280,12 +282,11 @@ requireText(viewSource, '<AssignedQuestionnaireView', '教师预览必须复用�
 requireText(viewSource, "setPageMode('preview')", '问卷详情必须提供预览入口。');
 requireText(viewSource, 'const openCreatePreview = () =>', '新建和编辑问卷必须提供当前内容预览。');
 requireText(viewSource, "'添加题目后即可预览'", '空问卷预览必须提供可执行的下一步提示。');
-requireText(viewSource, "'添加字段后即可预览'", '空学生采集表预览必须提示先添加字段。');
 requireText(viewSource, "setPreviewReturnMode('create')", '从编辑页退出预览后必须返回原编辑流程。');
 requireText(createPreviewSource, 'collectionMode,', '创建预览必须保留当前采集类型，不能硬编码为家长问卷。');
 forbidText(createPreviewSource, "collectionMode: 'guardian_questionnaire'", '学生信息采集预览不能被错误地创建为家长问卷。');
 requireText(createSource, 'grid-cols-[44px_minmax(0,0.9fr)_minmax(0,1.35fr)]', '两类采集编辑页底部必须统一使用预览、保存草稿、下一步三段操作。');
-requireText(createSource, "label={isStudentCollection ? '预览采集表' : '预览问卷'}", '编辑页底部必须按采集类型提供44像素预览入口。');
+requireText(createSource, 'label="预览问卷"', '普通问卷编辑页底部必须提供44像素预览入口。');
 requireText(studentDetailSource, 'aria-label="预览采集表"', '学生采集详情首张内容卡必须提供预览入口。');
 requireText(viewSource, 'const StudentCollectionForm: React.FC<StudentCollectionFormProps>', '学生采集预览与真实填写必须复用业务字段组件。');
 if ((viewSource.match(/<StudentCollectionForm/g) ?? []).length < 2) {
@@ -441,12 +442,17 @@ if (viewSource.includes('subtitle?: string') || viewSource.includes('subtitle={`
 }
 requireText(viewSource, '{activeSubmission.studentName}<span className="ml-2 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{activeSubmission.guardianRelation}</span>', '答卷学生与家长关系信息必须移入内容区。');
 
-for (const mode of ['家长问卷', '学生信息采集']) {
-  requireText(viewSource, mode, `新建采集类型缺少：${mode}`);
+for (const mode of ['普通问卷', '成长信息', '老师填写', '家长填写']) {
+  requireText(viewSource, mode, `二维采集入口缺少：${mode}`);
 }
-for (const mode of ['成长信息', '问卷调查', '身高体重采集', '新学期目标清单']) {
+for (const mode of ['身高体重采集', '新学期目标清单']) {
   requireText(viewSource, mode, `新建采集业务入口缺少：${mode}`);
 }
+requireText(storeSource, "QuestionnaireContentType = 'ordinary' | 'growth'", '底层必须独立保存普通问卷和成长信息。');
+requireText(storeSource, "QuestionnaireRespondentRole = 'teacher' | 'guardian'", '底层必须独立保存老师填写和家长填写。');
+requireText(storeSource, 'getQuestionnaireContentType', '旧采集数据必须可兼容读取内容类型。');
+requireText(storeSource, 'getQuestionnaireRespondentRole', '旧采集数据必须可兼容读取填写方式。');
+requireText(viewSource, 'getCollectionBadgeLabel(record)', '采集列表必须同时展示内容类型与填写方式。');
 requireText(viewSource, "setCreateSheetStage('growth')", '成长信息必须通过第二层模板选择渐进披露。');
 requireText(viewSource, "startGrowthSetup('height_weight')", '身高体重平台模板必须可以进入采集设置。');
 requireText(viewSource, "startGrowthSetup('semester_goal')", '学期目标平台模板必须可以进入采集设置。');
@@ -458,6 +464,11 @@ requireText(viewSource, 'saveSemesterGoalPlan', '学期目标完成后必须写�
 requireText(storeSource, 'growthTemplate?: GrowthCollectionTemplate', '采集任务必须保存平台成长模板类型。');
 requireText(growthFormsSource, 'HeightWeightCollectionForm', '成长采集必须提供身高体重逐生表单。');
 requireText(growthFormsSource, 'SemesterGoalCollectionForm', '成长采集必须提供学期目标逐生表单。');
+requireText(growthDefinitionSource, 'respondentRole: QuestionnaireRespondentRole', '成长模板必须根据填写方式生成对应字段。');
+requireText(growthDefinitionSource, "if (respondentRole === 'teacher')", '家长填写学期目标时不应要求填写教师留言和签名。');
+requireText(assignedSource, "getQuestionnaireContentType(questionnaire) === 'growth'", '家长提交后必须区分普通问卷与成长信息。');
+requireText(assignedSource, 'persistGrowthCollectionAnswers(questionnaire, child.studentNo, answers, submittedAt)', '家长提交成长信息后必须同步学生成长数据。');
+requireText(growthPersistenceSource, 'target.studentId', '家长成长信息必须通过问卷目标匹配到真实学生。');
 requireText(studentGrowthStoreSource, 'sourceRecordId', '成长记录必须保留采集来源记录以支持重复保存而不重复新增。');
 if (viewSource.includes('即将开放') || viewSource.includes('<LockKeyhole')) {
   throw new Error('未开放的教师问卷不应侵入新建采集高频流程。');
@@ -467,8 +478,9 @@ requireText(viewSource, "['unreachable', '未绑定']", '家长问卷答卷筛�
 if (viewSource.includes('未送达')) {
   throw new Error('教师端不应使用容易被理解为通知失败的“未送达”。');
 }
-requireText(viewSource, "startCreate(undefined, 'student_information')", '学生信息采集必须可以从新建类型浮层进入。');
-requireText(viewSource, '由老师逐生填写', '学生信息采集类型必须明确填写方。');
+requireText(viewSource, "startCreate(undefined, 'teacher')", '普通问卷必须支持老师填写。');
+requireText(viewSource, "startCreate(undefined, 'guardian')", '普通问卷必须支持家长填写。');
+requireText(viewSource, '老师逐生完成', '老师填写必须明确采用逐生记录。');
 for (const fieldType of ["short_text: { label: '单行文本'", "number: { label: '数字'", "date: { label: '日期'"]) {
   requireText(viewSource, fieldType, `学生信息采集缺少字段类型：${fieldType}`);
 }
@@ -481,8 +493,8 @@ requireText(storeSource, 'QuestionnaireMultiFillAnswer', '底层必须使用独�
 requireText(storeSource, 'getQuestionnaireMultiFillValues', '多项填空答案读取必须收敛到共享方法。');
 requireText(assignedSource, "question.type === 'multi_fill'", '家长端必须渲染多项填空输入控件。');
 requireText(viewSource, 'openQuestionResponses(question.id, subField.id)', '多项填空统计必须支持按子项查看全部回答。');
-requireText(viewSource, "{ value: 'text', label: '多行文本', icon: AlignLeft }", '字段类型选择必须直接展示多行文本。');
-requireText(viewSource, "{ value: 'multiple', label: '多选', icon: ListChecks, choice: true }", '字段类型选择必须直接展示多选。');
+requireText(viewSource, "{ value: 'text', label: '问答题', icon: MessageSquareText }", '普通问卷题型必须提供问答题。');
+requireText(viewSource, "{ value: 'multiple', label: '多选题', icon: ListChecks, choice: true }", '普通问卷题型必须提供多选题。');
 requireText(viewSource, "type StudentRecordFilter = 'all' | 'incomplete' | 'completed'", '学生信息采集必须使用任务视角的三类筛选。');
 requireText(viewSource, "studentRecordFilter === 'incomplete' ? item.status !== 'completed'", '待完成必须合并未填写和草稿记录。');
 requireText(viewSource, "[['all', '全部'], ['incomplete', '待完成'], ['completed', '已完成']]", '逐生记录顶部只保留全部、待完成和已完成。');

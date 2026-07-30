@@ -108,7 +108,7 @@ import {
     TEACHER_EVALUATION_REVIEW_CURRENT_BY_CLASS,
 } from './data/teacherEvaluationReview';
 import { CURRENT_PRINCIPAL_TERM } from './data/principalTermReport';
-import { canTeacherSpaceRecordClass } from './domain/teacherSpaceAccess';
+import { canManagePersonalClasses, canTeacherSpaceRecordClass } from './domain/teacherSpaceAccess';
 import { useReportGenerationTask } from './hooks/useReportGenerationTask';
 
 const TERMS = [
@@ -635,6 +635,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     };
 
     const handleCreateClass = () => {
+        if (!canManagePersonalClasses(activeTeacherSpace)) return;
         alert('创建班级流程演示中');
     };
 
@@ -1132,8 +1133,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     students={getMergedStudentsForClass(selectedClassInfo.id)}
                                     onBack={goBack}
                                     onSave={handleSaveClassInfo}
-                                    onInviteTeacher={() => handleInviteTeacher(selectedClassInfo.id)}
-                                    onInviteParent={() => handleInviteParent(selectedClassInfo.id)}
                                 />
                             )}
 

@@ -84,6 +84,13 @@ interface FormBuilderProps<TType extends string> extends FormBuilderValue<TType>
   listError?: string;
   validationAttempt?: number;
   focusInvalidField?: boolean;
+  addButtonLabel?: string;
+  typePickerTitle?: string;
+  typePickerPrimaryLabel?: string;
+  typePickerSecondaryTab?: {
+    label: string;
+    render: (close: () => void, sectionId?: string) => React.ReactNode;
+  };
 }
 
 const defaultIconMap: Record<string, FieldIcon> = {
@@ -255,10 +262,15 @@ const FormBuilder = <TType extends string>({
   listError = '',
   validationAttempt = 0,
   focusInvalidField = false,
+  addButtonLabel,
+  typePickerTitle,
+  typePickerPrimaryLabel = '手动填写',
+  typePickerSecondaryTab,
 }: FormBuilderProps<TType>) => {
   const [expandedFieldId, setExpandedFieldId] = useState('');
   const [typeSheetSectionId, setTypeSheetSectionId] = useState<string | null>(null);
   const [showMoreTypes, setShowMoreTypes] = useState(false);
+  const [typePickerTab, setTypePickerTab] = useState<'primary' | 'secondary'>('primary');
   const [activeFieldMenuId, setActiveFieldMenuId] = useState('');
   const [activeSectionMenuId, setActiveSectionMenuId] = useState('');
   const [sectionDraft, setSectionDraft] = useState<FormSection | null>(null);
@@ -817,7 +829,7 @@ const FormBuilder = <TType extends string>({
                 <div className="min-h-2 space-y-3">
                   {sectionFields.map(field => renderField(field, (fieldNumberById.get(field.id) ?? 1) - 1))}
                 </div>
-                {!readOnly && <button type="button" aria-label={`在${section.label}中添加${itemLabel}`} onClick={() => { setShowMoreTypes(false); setTypeSheetSectionId(section.id); }} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-colors active:bg-[var(--tm-brand-primary-soft-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"><Plus className="h-4 w-4" />添加{itemLabel}到本组</button>}
+                {!readOnly && <button type="button" aria-label={`在${section.label}中添加${addButtonLabel ?? itemLabel}`} onClick={() => { setShowMoreTypes(false); setTypePickerTab('primary'); setTypeSheetSectionId(section.id); }} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-colors active:bg-[var(--tm-brand-primary-soft-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"><Plus className="h-4 w-4" />添加{addButtonLabel ?? itemLabel}到本组</button>}
                 {sectionIndex < sections.length - 1 && <div className="mt-2 h-px bg-[var(--tm-border-subtle)]" />}
               </SectionDropZone>
             );
@@ -843,7 +855,7 @@ const FormBuilder = <TType extends string>({
         <section className="mt-2">
           {renderFieldList(fields)}
           {listError && <p id="form-builder-list-error" tabIndex={-1} className="mt-2 px-1 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{listError}</p>}
-          {!readOnly && <button type="button" onClick={() => { setShowMoreTypes(false); setTypeSheetSectionId(''); }} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]"><Plus className="h-4 w-4" />添加{itemLabel}</button>}
+          {!readOnly && <button type="button" onClick={() => { setShowMoreTypes(false); setTypePickerTab('primary'); setTypeSheetSectionId(''); }} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]"><Plus className="h-4 w-4" />添加{addButtonLabel ?? itemLabel}</button>}
         </section>
       ) : (
         <section className="mt-2">
@@ -853,19 +865,30 @@ const FormBuilder = <TType extends string>({
         </section>
       )}
 
-      <BottomSheet open={typeSheetSectionId !== null} label={`选择${itemLabel}类型`} onDismiss={() => setTypeSheetSectionId(null)}>
-        <div className="grid grid-cols-2 gap-3">
-          {visibleTypes.map(type => {
-            const TypeIcon = type.icon ?? defaultIconMap[type.value] ?? TextCursorInput;
-            return (
-              <button key={type.value} type="button" onClick={() => addField(type.value)} className="flex min-h-[76px] items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)]">
-                <span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]"><TypeIcon className="h-5 w-5" /></span>
-                <span className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{type.label}</span>
-              </button>
-            );
-          })}
-        </div>
-        {hasSecondaryTypes && <button type="button" onClick={() => setShowMoreTypes(value => !value)} className="mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]">{showMoreTypes ? '常用类型' : '更多类型'}<ChevronDown className={`h-4 w-4 transition-transform ${showMoreTypes ? 'rotate-180' : ''}`} /></button>}
+      <BottomSheet open={typeSheetSectionId !== null} label={typePickerTitle ?? `选择${itemLabel}类型`} onDismiss={() => setTypeSheetSectionId(null)}>
+        {typePickerSecondaryTab && (
+          <div className="mb-4 grid grid-cols-2 gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label={typePickerTitle ?? `选择${itemLabel}类型`}>
+            {([['primary', typePickerPrimaryLabel], ['secondary', typePickerSecondaryTab.label]] as const).map(([value, label]) => (
+              <button key={value} type="button" role="tab" aria-selected={typePickerTab === value} onClick={() => setTypePickerTab(value)} className={`min-h-11 rounded-[calc(var(--tm-radius-control)-4px)] px-2 text-[length:var(--tm-font-size-body)] font-semibold ${typePickerTab === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>
+            ))}
+          </div>
+        )}
+        {typePickerTab === 'primary' || !typePickerSecondaryTab ? (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {visibleTypes.map(type => {
+                const TypeIcon = type.icon ?? defaultIconMap[type.value] ?? TextCursorInput;
+                return (
+                  <button key={type.value} type="button" onClick={() => addField(type.value)} className="flex min-h-[76px] items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)]">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]"><TypeIcon className="h-5 w-5" /></span>
+                    <span className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{type.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {hasSecondaryTypes && <button type="button" onClick={() => setShowMoreTypes(value => !value)} className="mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]">{showMoreTypes ? '常用类型' : '更多类型'}<ChevronDown className={`h-4 w-4 transition-transform ${showMoreTypes ? 'rotate-180' : ''}`} /></button>}
+          </>
+        ) : typePickerSecondaryTab.render(() => setTypeSheetSectionId(null), typeSheetSectionId || undefined)}
       </BottomSheet>
 
       <BottomSheet open={Boolean(activeField)} label={`${itemLabel}设置`} onDismiss={() => setActiveFieldMenuId('')}>

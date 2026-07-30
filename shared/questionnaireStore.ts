@@ -2,6 +2,8 @@ import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode
 
 export type QuestionnaireStatus = 'draft' | 'active' | 'ended' | 'archived';
 export type QuestionnaireCollectionMode = 'guardian_questionnaire' | 'student_information' | 'teacher_questionnaire';
+export type QuestionnaireContentType = 'ordinary' | 'growth';
+export type QuestionnaireRespondentRole = 'teacher' | 'guardian';
 export type QuestionnaireQuestionType = 'single' | 'multiple' | 'rating' | 'text' | 'short_text' | 'multi_fill' | 'number' | 'date';
 export type QuestionnaireTargetMode = 'all' | 'classes' | 'students';
 export type QuestionnaireTargetSyncPolicy = 'fixed' | 'follow_classes';
@@ -75,6 +77,8 @@ export interface QuestionnaireRecord {
   suggestedDeadline: string;
   status: QuestionnaireStatus;
   creatorTeacherId?: string;
+  contentType?: QuestionnaireContentType;
+  respondentRole?: QuestionnaireRespondentRole;
   collectionMode?: QuestionnaireCollectionMode;
   growthTemplate?: GrowthCollectionTemplate;
   growthMeasurementDate?: string;
@@ -540,10 +544,13 @@ type StoredQuestionnaireRecord = Omit<QuestionnaireRecord, 'suggestedDeadline'> 
 
 const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): QuestionnaireRecord => {
   const { deadline, ...rest } = record;
+  const collectionMode = rest.collectionMode ?? 'guardian_questionnaire';
   return {
     ...rest,
     suggestedDeadline: rest.suggestedDeadline ?? deadline ?? '',
-    collectionMode: rest.collectionMode ?? 'guardian_questionnaire',
+    contentType: rest.contentType ?? (rest.growthTemplate ? 'growth' : 'ordinary'),
+    respondentRole: rest.respondentRole ?? (collectionMode === 'guardian_questionnaire' ? 'guardian' : 'teacher'),
+    collectionMode,
     studentAssignmentMode: rest.studentAssignmentMode ?? 'creator',
     targetSyncPolicy: rest.targetSyncPolicy ?? 'fixed',
     layoutMode: rest.layoutMode ?? 'flat',
@@ -608,7 +615,15 @@ export const upsertQuestionnaire = (record: QuestionnaireRecord) => {
 };
 
 export const getQuestionnaireCollectionMode = (record: QuestionnaireRecord): QuestionnaireCollectionMode => (
-  record.collectionMode ?? 'guardian_questionnaire'
+  record.collectionMode ?? (record.respondentRole === 'teacher' ? 'student_information' : 'guardian_questionnaire')
+);
+
+export const getQuestionnaireContentType = (record: QuestionnaireRecord): QuestionnaireContentType => (
+  record.contentType ?? (record.growthTemplate ? 'growth' : 'ordinary')
+);
+
+export const getQuestionnaireRespondentRole = (record: QuestionnaireRecord): QuestionnaireRespondentRole => (
+  record.respondentRole ?? (getQuestionnaireCollectionMode(record) === 'guardian_questionnaire' ? 'guardian' : 'teacher')
 );
 
 export const getActiveQuestionnaireTargets = (record: QuestionnaireRecord): QuestionnaireTarget[] => (

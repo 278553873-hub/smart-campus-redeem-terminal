@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ArrowLeft, Check, Circle, Send } from 'lucide-react';
 import {
   getQuestionnaireAnswerValidationError,
+  getQuestionnaireContentType,
   getQuestionnaireMultiFillValues,
   getQuestionnaireSelectedOptions,
   isQuestionnaireChoiceAnswer,
@@ -10,6 +11,7 @@ import {
   type QuestionnaireQuestion,
   type QuestionnaireRecord,
 } from '../../shared/questionnaireStore';
+import { persistGrowthCollectionAnswers } from '../../shared/growthCollectionPersistence';
 import { normalizeFormFieldSettings } from '../../shared/formDefinition';
 import { questionnaireThemeCssVariables } from '../../shared/questionnaireThemeTokens';
 import {
@@ -130,17 +132,21 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   };
 
   const submit = () => {
+    const submittedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
     const submitted = submitQuestionnaireResponse(questionnaire.id, {
       id: `${questionnaire.id}-${child.studentNo}-${Date.now()}`,
       studentNo: child.studentNo,
       studentName: child.name,
       guardianRelation,
-      submittedAt: new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-'),
+      submittedAt,
       answers,
     });
     if (!submitted) {
       setSubmitError('问卷已结束或已经提交');
       return;
+    }
+    if (getQuestionnaireContentType(questionnaire) === 'growth') {
+      persistGrowthCollectionAnswers(questionnaire, child.studentNo, answers, submittedAt);
     }
     setShowSubmitConfirm(false);
     onSubmitted();
@@ -288,7 +294,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
         <ParentBottomSheet title="确认提交" onClose={() => setShowSubmitConfirm(false)} className="pb-8">
           <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-4">
             <div className="text-[length:var(--tm-font-size-section-title)] font-bold leading-tight text-[var(--tm-text-primary)]">{questionnaire.title}</div>
-            <div className="mt-2 text-[length:var(--tm-font-size-compact)] font-semibold leading-relaxed text-[var(--tm-text-secondary)]">提交后老师将看到本次答卷。</div>
+            <div className="mt-2 text-[length:var(--tm-font-size-compact)] font-semibold leading-relaxed text-[var(--tm-text-secondary)]">{getQuestionnaireContentType(questionnaire) === 'growth' ? '提交后将更新孩子的成长信息。' : '提交后老师将看到本次答卷。'}</div>
           </div>
           {submitError && <div role="alert" className="mt-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative-soft)] px-4 py-3 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative-strong)]">{submitError}</div>}
           <div className="mt-4 grid grid-cols-2 gap-3">

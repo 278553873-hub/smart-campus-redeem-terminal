@@ -94,10 +94,10 @@ requireSource("if (!activeTeacherAction || !classRolePermissions[getClassRoleFor
 requireSource("activeTeacherAction.isDeputyHeadTeacher ? '取消副班主任' : '设为副班主任'", '班主任应支持设置或取消副班主任。');
 requireSource("if (item.key === 'inviteTeacher') return activeClassPermissions.canInviteTeacher;", '班级更多操作必须按角色过滤邀请老师。');
 requireSource("if (item.key === 'inviteParent') return activeClassPermissions.canInviteParent;", '班级更多操作必须按角色过滤邀请家长。');
-requireSource("if (isOrdinaryTeacher && (item.key === 'batchStudents' || item.key === 'face' || item.key === 'password')) return false;", '个人版和学校版普通老师都不能看到学生信息更新操作。');
-requireSource("if (item.key === 'leftStudents') return activeClassPermissions.canManageLeftStudents;", '个人版和学校版普通老师都不能看到离校学生。');
-requireSource("if (!permissions.canManageLeftStudents) return;", '离校学生操作必须再次校验角色权限。');
-requireSource("{ key: 'classInfo' as const, label: '班级详情', icon: Settings }", '所有角色应使用统一的班级详情入口。');
+requireSource("if (isOrdinaryTeacher && (item.key === 'batchStudents' || item.key === 'face' || item.key === 'password')) return false;", '个人版和学校版普通老师都不能看到学生管理操作。');
+requireSource("if (item.key === 'leftStudents') return activeClassPermissions.canManageLeftStudents;", '个人版和学校版普通老师都不能看到离校学生管理。');
+requireSource("if (!permissions.canManageLeftStudents) return;", '离校学生管理操作必须再次校验角色权限。');
+requireSource("onClick={() => runClassAction('classInfo')}", '所有角色应从顶部班级名称行进入班级详情。');
 requireSource("if (key === 'classInfo')", '班级详情应统一进入按角色分流的班级详情页。');
 requireSource("const classActionPreviewPages: PageKey[] = [", '07C/07D/07E/07F 应使用统一的菜单预览页面集合。');
 requireSource("'classListPersonalManagerActions'", '菜单预览集合应包含 07D。');
@@ -113,9 +113,9 @@ requirePrd('| 编辑班级基本信息 | 可以 | 可以 | 不可以 |', 'PRD �
 requirePrd('| 邀请老师 | 可以 | 可以 | 不可以 |', 'PRD 应明确邀请老师权限。');
 requirePrd('| 邀请家长绑定 | 可以 | 可以 | 不可以 |', 'PRD 应明确邀请家长权限。');
 requirePrd('| 设置或取消副班主任 | 可以 | 不可以 | 不可以 |', 'PRD 应明确副班主任设置权限。');
-requirePrd('普通老师不展示编辑班级、邀请老师、邀请家长和离校学生入口', 'PRD 应要求普通老师无权限入口直接隐藏。');
-requirePrd('普通老师的班级卡片更多操作不展示批量修改学生、更新人脸数据、设置兑换密码、邀请老师加入、邀请家长加入和离校学生', 'PRD 应明确普通老师的班级卡片菜单差异。');
-requirePrd('所有角色统一展示“班级详情”入口', 'PRD 应明确统一班级详情入口。');
+requirePrd('普通老师不展示编辑班级、邀请老师、邀请家长和离校学生管理入口', 'PRD 应要求普通老师无权限入口直接隐藏。');
+requirePrd('普通老师的班级卡片更多操作不展示批量修改学生、更新人脸数据、设置兑换密码、邀请老师加入、邀请家长加入和离校学生管理', 'PRD 应明确普通老师的班级卡片菜单差异。');
+requirePrd('所有角色都可点击更多操作弹层顶部班级名称行进入“班级详情”', 'PRD 应明确统一班级详情入口。');
 requirePrd('07C 普通老师更多操作（个人版）', 'PRD 应包含 07C 个人版普通老师菜单状态。');
 requirePrd('07D 班主任与副班主任更多操作（个人版）', 'PRD 应包含 07D 个人版管理角色菜单状态。');
 requirePrd('07E 普通老师更多操作（学校版）', 'PRD 应包含 07E 学校版普通老师菜单状态。');

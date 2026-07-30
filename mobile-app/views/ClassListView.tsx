@@ -20,7 +20,6 @@ import {
     ShieldIcon,
     FileTextIcon,
     CloseIcon,
-    EditIcon,
     UserPlusIcon,
 } from '../components/Icons';
 import ClassSourceTrigger from '../components/ClassSourceTrigger';
@@ -190,59 +189,48 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             title: '日常操作',
             items: [
                 {
-                    label: '兑换奖励',
-                    icon: GiftIcon,
-                    tone: 'reward',
-                    onClick: () => runClassAction(onViewRewardVerification),
-                },
-                {
                     label: '作业录入',
                     icon: FileTextIcon,
                     tone: 'brand',
                     onClick: () => runClassAction(onViewHomeworkEntry),
                 },
+                {
+                    label: '兑换奖励',
+                    icon: GiftIcon,
+                    tone: 'reward',
+                    onClick: () => runClassAction(onViewRewardVerification),
+                },
             ],
         } : null,
-        activeActionPolicy.canUpdateStudents ? {
-            title: '学生信息更新',
+        activeActionPolicy.canUpdateStudents || activeActionPolicy.canMaintainClass ? {
+            title: '学生管理',
             items: [
-                {
+                ...(activeActionPolicy.canUpdateStudents ? [{
                     label: '批量修改学生',
                     icon: UsersIcon,
-                    tone: 'neutral',
+                    tone: 'neutral' as const,
                     onClick: () => runClassAction(onSelectClass),
-                },
-                {
-                    label: '设置兑换密码',
-                    icon: ShieldIcon,
-                    tone: 'secondary',
-                    onClick: () => runClassAction(onViewBankPassword),
                 },
                 {
                     label: '更新人脸数据',
                     icon: ScanFaceIcon,
-                    tone: 'positive',
+                    tone: 'positive' as const,
                     onClick: () => runClassAction(onViewFaceUpdate),
                 },
-            ],
-        } : null,
-        {
-            title: activeActionPolicy.canMaintainClass ? '班级维护' : '班级信息',
-            items: [
+                {
+                    label: '设置兑换密码',
+                    icon: ShieldIcon,
+                    tone: 'secondary' as const,
+                    onClick: () => runClassAction(onViewBankPassword),
+                }] : []),
                 ...(activeActionPolicy.canMaintainClass ? [{
-                    label: '离校学生',
+                    label: '离校学生管理',
                     icon: UsersIcon,
                     tone: 'neutral' as const,
                     onClick: () => runClassAction(setLeftStudentClassId),
                 }] : []),
-                {
-                    label: activeActionPolicy.canMaintainClass ? '编辑班级信息' : '查看班级信息',
-                    icon: EditIcon,
-                    tone: 'brand',
-                    onClick: () => runClassAction(onEditClassInfo),
-                },
             ],
-        },
+        } : null,
         activeActionPolicy.canInviteTeacher || activeActionPolicy.canInviteParent ? {
             title: '协同管理',
             items: [
@@ -464,7 +452,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 )}
             </div>
 
-            {showPersonalClassActions && (
+            {canManagePersonal && showPersonalClassActions && (
                 <div className="fixed inset-0 z-[145] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="班级操作">
                     <button aria-label="关闭班级操作" className="absolute inset-0" onClick={() => setShowPersonalClassActions(false)} />
                     <section className="relative w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-3 shadow-[var(--tm-shadow-sheet)]">
@@ -541,13 +529,21 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 <div className="fixed inset-0 z-[145] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label={`${activeActionClass.name}更多操作`}>
                     <button aria-label="关闭班级更多操作" className="absolute inset-0" onClick={closeActionSheet} />
                     <div className="relative w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-4 shadow-[var(--tm-shadow-sheet)] animate-in slide-in-from-bottom-4 fade-in [animation-duration:var(--tm-duration-standard)]">
-                        <div className="mb-4 flex items-center justify-between">
+                        <div className="mb-4 flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                                <h3 className="truncate text-[18px] font-semibold text-[var(--tm-text-primary)]">{activeActionClass.name}</h3>
+                                <button
+                                    type="button"
+                                    onClick={() => runClassAction(onEditClassInfo)}
+                                    className="-ml-2 flex min-h-11 max-w-full items-center gap-1 rounded-[var(--tm-radius-control)] px-2 text-left active:bg-[var(--tm-bg-surface-soft)]"
+                                    aria-label={`查看${activeActionClass.name}班级详情`}
+                                >
+                                    <span className="truncate text-[18px] font-semibold text-[var(--tm-text-primary)]">{activeActionClass.name}</span>
+                                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" aria-hidden="true" />
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => copyClassCode(activeActionClass)}
-                                    className="-ml-2 mt-0.5 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-xs font-medium text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
+                                    className="-ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-xs font-medium text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
                                     aria-label={`复制${activeActionClass.name}班级号${activeActionClass.classCode}`}
                                 >
                                     <span>班级号</span>

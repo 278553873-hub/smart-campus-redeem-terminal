@@ -73,7 +73,7 @@ forbidText(viewSource, 'className={`${primaryButton} mb-6 w-full`}', '档案设�
 requireText(floatingCreateSource, 'bg-[var(--tm-brand-primary)]', '通用悬浮创建按钮必须使用教师端品牌令牌。');
 requireText(floatingCreateSource, 'shadow-[var(--tm-shadow-floating)]', '通用悬浮创建按钮必须使用教师端悬浮阴影令牌。');
 
-for (const required of ['使用分组', '添加分组', '编辑分组', '分组排序', '添加{itemLabel}']) {
+for (const required of ['使用分组', '添加分组', '编辑分组', '分组排序', '添加{addButtonLabel ?? itemLabel}']) {
   requireText(formBuilderSource, required, `共享表单构建器缺少：${required}`);
 }
 forbidText(formBuilderSource, '默认分组', '开启分组后不应自动创建或展示默认分组。');
@@ -96,7 +96,7 @@ requireText(formBuilderSource, 'renderFieldPreview(field, choice, rating, usesSu
 requireText(formBuilderSource, 'const toggleFieldEditor =', '点击字段内容区必须统一控制进入和退出编辑态。');
 requireText(formBuilderSource, "document.addEventListener('click', closeFieldEditor)", '点击当前字段之外的区域必须退出编辑态。');
 requireText(formBuilderSource, "const listenerFrame = window.requestAnimationFrame", '外部点击监听不得吞掉进入字段编辑态的首次点击。');
-requireText(formBuilderSource, '添加{itemLabel}到本组', '组内添加字段动作必须明确当前分组语境。');
+requireText(formBuilderSource, '添加{addButtonLabel ?? itemLabel}到本组', '组内添加动作必须明确当前分组语境。');
 requireText(formBuilderSource, '<FolderPlus', '添加分组必须与添加字段使用不同图标。');
 requireText(formBuilderSource, 'border-0 border-b bg-transparent', '字段名称输入框只应保留下边框。');
 forbidText(formBuilderSource, '<ChevronUp', '字段编辑态不应展示收起箭头。');
@@ -139,7 +139,7 @@ requireText(archiveFormRendererSource, 'settings.numberFormat', '档案数字字
 requireText(viewSource, '<ArchiveFormRenderer', '档案详情必须使用真实表单预览。');
 requireText(studentViewSource, '<ArchiveFormRenderer', '学生档案填写页必须复用档案表单渲染器。');
 requireText(viewSource, 'mode="preview"', '档案详情必须使用不可填写的表单预览模式。');
-requireText(viewSource, '老师填写内容', '档案详情必须明确区分老师填写内容。');
+requireText(viewSource, '手动填写', '档案详情必须明确区分手动填写与成长数据。');
 requireText(archiveFormRendererSource, "mode: 'preview'", '档案表单渲染器必须区分预览和填写模式。');
 requireText(archiveFormRendererSource, "previewMode ? `${fields.length}题`", '预览分组必须展示题目数量，不展示无意义的完成进度。');
 forbidText(viewSource, 'previewAnswers', '档案预览不应维护临时答案状态。');
@@ -204,7 +204,7 @@ for (const field of ['优势特点', '兴趣倾向', '学习习惯', '情绪状�
 requireText(storeSource, 'createBlankArchiveTemplate', '新建档案必须支持从空白草稿开始。');
 requireText(viewSource, 'previewRecommendedTemplate', '从模板创建必须先进入模板预览。');
 requireText(viewSource, '请至少新增一个档案分组', '空白档案启用前必须校验档案分组。');
-requireText(viewSource, '请至少选择一项成长记录或新增一个填写字段', '空白档案启用前必须校验档案内容。');
+requireText(viewSource, '请至少添加一项档案内容', '空白档案启用前必须校验档案内容。');
 requireText(storeSource, "layoutMode: 'flat'", '空白档案默认应关闭分组。');
 requireText(storeSource, "layoutMode: 'grouped'", '推荐档案模板应保留分组结构。');
 requireText(storeSource, "template.status === 'published'", '教师新建档案时只能选择已启用模板。');
@@ -221,12 +221,18 @@ requireText(studentViewSource, 'onUpdateStudent', '档案内补充信息必须�
 requireText(studentViewSource, 'missingSystemField', '确认成档前必须校验自动带入字段。');
 requireText(studentViewSource, 'activeSnapshot.systemValues', '历史档案必须展示成档时的学生信息快照。');
 requireText(storeSource, 'systemValues: { ...systemValues }', '确认成档必须保存自动带入字段值快照。');
-requireText(viewSource, 'ARCHIVE_GROWTH_MODULE_OPTIONS', '档案设计必须提供平台预置成长记录选择。');
-requireText(viewSource, '已选择 {templateDraft.growthModules.length} 项', '成长记录入口必须展示已选数量。');
-requireText(viewSource, '成档必需', '成长记录模块必须支持设置为成档必需。');
-requireText(storeSource, 'buildArchiveGrowthModuleSnapshots', '档案必须从学生成长数据构建引用模块。');
+requireText(viewSource, 'ARCHIVE_GROWTH_FIELD_GROUPS', '档案设计必须提供平台预置的具体成长字段。');
+for (const required of ['addButtonLabel="内容"', 'typePickerTitle="添加内容"', 'typePickerPrimaryLabel="手动填写"', "typePickerSecondaryTab={{ label: '成长数据'"]) {
+  requireText(viewSource, required, `档案添加内容入口缺少：${required}`);
+}
+for (const field of ['测量日期', '身高', '体重', '身体质量指数', '目标清单', '共同约定']) {
+  requireText(storeSource, field, `成长数据选择缺少具体字段：${field}`);
+}
+requireText(viewSource, 'templateDraft.growthFields.length', '档案页必须按具体成长字段统计已选数量。');
+requireText(viewSource, '成档必需', '具体成长字段必须支持设置为成档必需。');
+requireText(storeSource, 'buildArchiveGrowthModuleSnapshots', '档案必须从学生成长数据构建字段快照。');
 requireText(studentViewSource, 'currentGrowthSnapshots', '档案草稿必须读取当前成长记录。');
-requireText(studentViewSource, 'missingGrowthModule', '确认成档前必须校验必需成长记录。');
+requireText(studentViewSource, 'missingGrowthField', '确认成档前必须逐字段校验必需成长数据。');
 requireText(storeSource, 'growthSnapshots: cloneGrowthSnapshots(growthSnapshots)', '确认成档必须冻结成长记录快照。');
 requireText(studentViewSource, 'activeSnapshot.growthSnapshots', '历史档案必须读取冻结后的成长记录。');
 requireText(viewSource, "isCreating ? '新建档案'", '新建档案编辑器顶部必须显示“新建档案”。');

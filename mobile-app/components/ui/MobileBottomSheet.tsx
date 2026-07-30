@@ -90,7 +90,11 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ open, title, onCl
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 no-scrollbar">{children}</div>
-        {footer && <footer className="shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-4 pb-safe pt-3">{footer}</footer>}
+        {footer && (
+          <footer className="shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-4 pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-3">
+            {footer}
+          </footer>
+        )}
       </section>
     </div>,
     portalRoot,

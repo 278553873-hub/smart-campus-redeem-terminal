@@ -21,6 +21,7 @@ requireText(classListSource, 'const showLeaderboard = canViewClassLeaderboard(cu
 requireText(classListSource, '{showLeaderboard && (', '排行榜入口必须按条件渲染。');
 requireText(classListSource, 'const canManagePersonal = canManagePersonalClasses(currentSpace);', '个人版加号必须来自统一空间权限规则。');
 requireText(classListSource, '{canManagePersonal && (', '只有个人创建来源显示班级操作加号。');
+requireText(classListSource, '{canManagePersonal && showPersonalClassActions && (', '班级操作弹窗也必须校验当前为本人创建来源。');
 requireText(classListSource, "{ label: '创建班级', icon: Plus, onClick: onCreateClass }", '个人版操作弹窗应包含创建班级。');
 requireText(classListSource, "{ label: '加入班级', icon: LogIn, onClick: onJoinClass }", '个人版操作弹窗应包含加入班级。');
 requireText(classListSource, "{ label: '显示设置', icon: SlidersHorizontal, onClick: () => setShowDisplaySettings(true) }", '个人版操作弹窗应包含显示设置。');
@@ -41,5 +42,6 @@ assert.ok(!appSource.includes("c_2024_2: 'joined'"), '加入的班级应通过�
 requireText(appSource, "activeTeacherSpace.type === 'school'", '学校来源应保留学校班级集合。');
 requireText(appSource, 'classes={activeSpaceClasses}', '班级列表必须接收当前来源对应的班级。');
 requireText(appSource, "currentView === 'class_list'", '班级页必须能够打开统一来源切换弹窗。');
+requireText(appSource, 'if (!canManagePersonalClasses(activeTeacherSpace)) return;', '创建班级回调必须拒绝其他老师的协作来源和学校来源。');
 
 console.log('ClassListView source, version and permission model assertions passed');

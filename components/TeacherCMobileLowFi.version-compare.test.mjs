@@ -1,13 +1,19 @@
 import fs from 'node:fs';
 
 const source = fs.readFileSync(new URL('./TeacherCMobileLowFi.tsx', import.meta.url), 'utf8');
+const permissionMatrixSource = fs.readFileSync(new URL('./TeacherPermissionMatrix.tsx', import.meta.url), 'utf8');
 const failures = [];
 
 const requireSource = (text, message) => {
   if (!source.includes(text)) failures.push(message);
 };
 
+const requirePermissionSource = (text, message) => {
+  if (!permissionMatrixSource.includes(text)) failures.push(message);
+};
+
 requireSource("{ key: 'versionCompare', label: '版本对比' }", 'C端改造顶部导航应包含版本对比。');
+requireSource("{ key: 'permissionCompare', label: '权限对比' }", 'C端改造顶部导航应在版本对比后增加权限对比。');
 requireSource("const versionCompareRows: Array<{ type: string; items: string[]; personal: string; school: string }> = [", '版本对比应使用按类型合并后的双版本数据结构。');
 requireSource("版本能力对比", '版本对比原型标题应改为能力对比。');
 
@@ -18,8 +24,41 @@ const surfaceTabKeys = [...surfaceTabsBlock.matchAll(/\{ key: '([^']+)', label: 
 if (surfaceTabsBlock.includes("label: '改造点整理'") || surfaceTabKeys.includes('summary')) {
   failures.push('C端改造右侧导航不应展示“改造点整理”。');
 }
-if (surfaceTabKeys.at(-1) !== 'versionCompare') {
-  failures.push('C端改造右侧导航中“版本对比”应放在最后。');
+if (surfaceTabKeys.at(-1) !== 'permissionCompare' || surfaceTabKeys.at(-2) !== 'versionCompare') {
+  failures.push('C端改造右侧导航中“权限对比”应紧跟在“版本对比”后。');
+}
+
+requireSource("import TeacherPermissionMatrix from './TeacherPermissionMatrix';", '权限对比应使用独立业务组件。');
+requireSource('const renderPermissionComparePrototype = () => <TeacherPermissionMatrix />;', '权限对比应直接渲染权限矩阵组件。');
+if (source.includes('permissionMatrixHtml') || source.includes('srcDoc=') || source.includes('?raw')) {
+  failures.push('权限对比不应继续依赖独立 HTML 或 iframe 内嵌实现。');
+}
+requireSource('permissionCompare: 72', '权限矩阵默认应获得更宽的原型展示区。');
+requireSource('const surfaceTabsRef = useRef<HTMLDivElement>(null);', '顶部导航变窄后应保留滚动容器引用。');
+requireSource('?.scrollIntoView({ block: \'nearest\', inline: \'nearest\' });', '切换页面后应把当前顶部导航项滚入可视区。');
+
+[
+  '班级来源与归属',
+  '日常操作',
+  '学生与班级管理',
+  '老师与家长协同',
+  '班主任专属管理',
+  '创建班级',
+  "conditional('仅本人来源')",
+  '编辑班级基本信息',
+  '离校学生管理',
+  '邀请老师',
+  '邀请家长',
+  '设置或取消副班主任',
+].forEach((text) => {
+  requirePermissionSource(text, `权限矩阵组件应完整展示权限口径：${text}`);
+});
+requirePermissionSource("const [versionFilter, setVersionFilter] = useState<VersionFilter>('all');", '权限矩阵应支持按版本筛选。');
+requirePermissionSource('const [differencesOnly, setDifferencesOnly] = useState(false);', '权限矩阵应支持仅看差异。');
+
+const capabilityCount = (permissionMatrixSource.match(/capability: '/g) || []).length;
+if (capabilityCount !== 24) {
+  failures.push(`权限矩阵应包含 24 项权限，当前为 ${capabilityCount} 项。`);
 }
 
 [

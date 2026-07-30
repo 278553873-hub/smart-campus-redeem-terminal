@@ -24,7 +24,7 @@ requireText(classListSource, 'leftStudents', '班级列表页应在当前页维�
 requireText(classListSource, 'showLeftStudentSheet', '班级列表页应在当前页打开离校学生轻量抽屉。');
 requireText(classListSource, 'relative h-full overflow-hidden', '班级列表页应固定为手机屏幕高度，避免离校学生弹窗挂到长列表底部看不见。');
 requireText(classListSource, 'h-full space-y-4 overflow-y-auto', '班级列表内容应自己滚动，让弹窗覆盖当前手机屏幕。');
-requireText(classListSource, '离校学生', '班级卡片更多操作里应提供离校学生入口。');
+requireText(classListSource, "label: '离校学生管理'", '班级卡片更多操作里应提供离校学生管理入口。');
 requireText(classListSource, 'activeActionClass &&', '班级更多操作应通过当前屏幕的底部弹窗展示。');
 requireText(classListSource, 'z-[145] flex items-end', '班级更多操作弹窗应覆盖班级列表层级。');
 if (classDetailSource.includes('离校学生{leftStudents.length')) {
