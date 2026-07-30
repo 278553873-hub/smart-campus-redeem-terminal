@@ -31,7 +31,9 @@ requireSource("tailPages: ['studentList', 'studentBatchEdit']", '班级流程尾
 requireSource("if (pageKey === 'classListPersonal') return '07A';", '个人版班级列表应编号为 07A。');
 requireSource("if (pageKey === 'classListSchool') return '07B';", '学校版班级列表应编号为 07B。');
 requireSource("if (pageKey === 'classListPersonalTeacherActions') return '07C';", '个人版普通老师更多操作应编号为 07C。');
-requireSource("if (pageKey === 'classListSchoolTeacherActions') return '07D';", '学校版普通老师更多操作应编号为 07D。');
+requireSource("if (pageKey === 'classListPersonalManagerActions') return '07D';", '个人版班主任/副班主任更多操作应编号为 07D。');
+requireSource("if (pageKey === 'classListSchoolTeacherActions') return '07E';", '学校版普通老师更多操作应编号为 07E。');
+requireSource("if (pageKey === 'classListSchoolManagerActions') return '07F';", '学校版班主任/副班主任更多操作应编号为 07F。');
 requireSource("const [schoolClassTeachingOnly, setSchoolClassTeachingOnly] = useState(false);", '07B 学校版班级列表应支持只显示任教班级筛选状态。');
 requireSource("<PageNodeButton item={item} lane={lane.title} />", '班级流程应使用普通页面节点列表，不使用共用虚拟分组。');
 requireSource("grid min-w-full grid-cols-[96px_max-content]", '页面导航地图流程名称列应保持 96px，右侧内容由整体地图横向撑开。');
@@ -79,7 +81,7 @@ const classListRenderStart = source.indexOf("if (isPersonalClassListPage(page) |
 const classListRenderEnd = source.indexOf("if (page === 'classDetail' || page === 'classDetailMember' || page === 'classDetailSchoolHead' || page === 'classDetailDeputy')", classListRenderStart);
 const classListRender = source.slice(classListRenderStart, classListRenderEnd);
 if (!classListRender.includes("const isSchoolList = isSchoolClassListPage(page);")) {
-  failures.push('班级列表页必须通过共用页面判断区分 07A/07C 个人版和 07B/07D 学校版。');
+  failures.push('班级列表页必须通过共用页面判断区分 07A/07C/07D 个人版和 07B/07E/07F 学校版。');
 }
 if (!classListRender.includes("!isSchoolList && isPersonalOwnedSource && (")) {
   failures.push('07A 个人来源班级列表页应在右侧展示班级操作入口，协作和学校来源不展示该入口。');

@@ -60,9 +60,9 @@ const createDraft = (classInfo: ClassInfo): EditDraft => ({
   classNumber: String(inferClassNumber(classInfo)),
 });
 
-const fieldClass = 'h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] outline-none transition focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
+const fieldClass = 'h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] outline-none transition focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 const iconButtonClass = 'flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]';
-const secondaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]';
+const secondaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]';
 
 const getRoleLabel = (role: ClassInfoRole): string => {
   if (role === 'headTeacher') return '班主任';
@@ -71,10 +71,11 @@ const getRoleLabel = (role: ClassInfoRole): string => {
 };
 
 const buildTeachers = (teacherProfile: TeacherProfile, classRole: ClassInfoRole): ClassTeacherItem[] => {
+  const currentSubjects = Array.from(new Set(teacherProfile.teachingAssignments.map(item => item.subject))).slice(0, 2);
   const currentTeacher: ClassTeacherItem = {
     id: 'current',
     name: teacherProfile.name,
-    subjects: teacherProfile.teachingAssignments.slice(0, 2).map(item => item.subject),
+    subjects: currentSubjects,
     role: classRole,
   };
   const sampleTeachers: ClassTeacherItem[] = [
@@ -139,6 +140,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
   );
   const classNumber = Number(draft.classNumber);
   const canCompleteEdit = /^\d{1,2}$/.test(draft.classNumber) && classNumber > 0;
+  const displayClassName = buildClassName(inferAdmissionYear(classInfo), inferClassNumber(classInfo));
   const title = page === 'teachers' ? '老师列表' : page === 'parents' ? '家长绑定列表' : '班级详情';
 
   useEffect(() => {
@@ -222,7 +224,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
           </button>
         )}
         <h2 className={`${phoneText.pageTitle} truncate text-[var(--tm-text-primary)] ${canEdit ? 'pr-[calc(var(--tm-size-touch)+var(--tm-space-2))]' : ''}`}>
-          {classInfo.name}（{classInfo.gradeLevel}）
+          {displayClassName}（{classInfo.gradeLevel}）
         </h2>
         <div className="mt-[var(--tm-space-3)] flex min-h-[var(--tm-size-touch)] items-center justify-between gap-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">
           <button
@@ -237,7 +239,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
               ? <Check className="h-4 w-4 shrink-0 text-[var(--tm-status-positive)]" />
               : <Copy className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" />}
           </button>
-          <span className="shrink-0 tabular-nums">{activeStudents.length}人</span>
+          <span className="shrink-0 tabular-nums">{classInfo.studentCount}人</span>
         </div>
       </MobileCard>
 
@@ -344,14 +346,14 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
         <h1 className={`${phoneText.navTitle} pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[var(--tm-text-primary)]`}>{title}</h1>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-5)] py-[var(--tm-space-4)] no-scrollbar">
+      <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-5)] py-[var(--tm-space-4)] no-scrollbar">
         {page === 'detail' && renderDetail()}
         {page === 'teachers' && renderTeacherList()}
         {page === 'parents' && renderParentList()}
-      </main>
+      </div>
 
       {page === 'detail' && (
-        <footer className="shrink-0 space-y-[var(--tm-space-2)] border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-safe pt-[var(--tm-space-3)]">
+        <footer className="shrink-0 space-y-[var(--tm-space-2)] border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]">
           {canTransfer && (
             <button type="button" onClick={() => setShowTransferSheet(true)} className={secondaryButtonClass}>
               <Repeat2 className="h-[18px] w-[18px]" />转移班主任
@@ -421,7 +423,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
 
           <label className="block">
             <span className={`${phoneText.label} text-[var(--tm-text-tertiary)]`}>班号</span>
-            <div className="mt-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] items-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] focus-within:border-[var(--tm-brand-primary)] focus-within:ring-2 focus-within:ring-[var(--tm-input-focus-ring)]">
+            <div className="mt-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] items-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] focus-within:border-[var(--tm-brand-primary)] focus-within:ring-2 focus-within:ring-[var(--tm-input-focus-ring)]">
               <span className="shrink-0 text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]">{draft.admissionYear}级</span>
               <input
                 value={draft.classNumber}
@@ -486,8 +488,8 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
       >
         <p className={`${phoneText.body} pb-[var(--tm-space-2)] text-[var(--tm-text-secondary)]`}>
           {isPersonalOwner
-            ? `解散后将清空“${classInfo.name}”的班级与学生信息，且无法恢复。`
-            : `退出后，你将无法继续查看和记录“${classInfo.name}”的数据。`}
+            ? `解散后将清空“${displayClassName}”的班级与学生信息，且无法恢复。`
+            : `退出后，你将无法继续查看和记录“${displayClassName}”的数据。`}
         </p>
       </MobileBottomSheet>
     </div>

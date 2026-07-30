@@ -18,7 +18,9 @@ type PageKey =
   | 'classListPersonal'
   | 'classListSchool'
   | 'classListPersonalTeacherActions'
+  | 'classListPersonalManagerActions'
   | 'classListSchoolTeacherActions'
+  | 'classListSchoolManagerActions'
   | 'classDetail'
   | 'classDetailMember'
   | 'classDetailSchoolHead'
@@ -50,7 +52,7 @@ type RecordStage = 'idle' | 'recording' | 'transcribing' | 'identifying' | 'save
 type Priority = 'P0' | 'P1' | 'P2' | 'P3';
 type PhoneLoginTab = 'sms' | 'password';
 type SchoolAdminLoginTab = 'password' | 'sms' | 'scan';
-type ClassActionKey = 'reward' | 'batchStudents' | 'password' | 'face' | 'homework' | 'leftStudents' | 'inviteTeacher' | 'inviteParent' | 'editClass' | 'viewClass';
+type ClassActionKey = 'reward' | 'batchStudents' | 'password' | 'face' | 'homework' | 'leftStudents' | 'inviteTeacher' | 'inviteParent' | 'classInfo';
 type TeachingGrade = '2025级' | '2024级' | '2023级';
 type WechatInviteMode = 'select' | 'confirm' | 'received';
 type InviteAudience = 'teacher' | 'parent';
@@ -170,7 +172,9 @@ const pageOrder: PageKey[] = [
   'classListPersonal',
   'classListSchool',
   'classListPersonalTeacherActions',
+  'classListPersonalManagerActions',
   'classListSchoolTeacherActions',
+  'classListSchoolManagerActions',
   'classDetail',
   'classDetailMember',
   'classDetailSchoolHead',
@@ -203,8 +207,14 @@ const flowLanes: FlowLane[] = [
   { title: '登录', pages: ['login', 'profile', 'home', 'classCreate', 'classJoin', 'studentAdd', 'record'] },
   {
     title: '班级(个人版)',
-    pages: ['classListPersonal', 'classListPersonalTeacherActions'],
+    pages: ['classListPersonal'],
     branchGroups: [
+      {
+        branches: [
+          { text: '普通老师', pages: ['classListPersonalTeacherActions'] },
+          { text: '班主任&副班主任', pages: ['classListPersonalManagerActions'] },
+        ],
+      },
       {
         branches: [
           { text: '班主任', pages: ['classDetail'] },
@@ -230,8 +240,14 @@ const flowLanes: FlowLane[] = [
   },
   {
     title: '班级(学校版)',
-    pages: ['classListSchool', 'classListSchoolTeacherActions'],
+    pages: ['classListSchool'],
     branchGroups: [
+      {
+        branches: [
+          { text: '普通老师', pages: ['classListSchoolTeacherActions'] },
+          { text: '班主任&副班主任', pages: ['classListSchoolManagerActions'] },
+        ],
+      },
       {
         branches: [
           { text: '班主任', pages: ['classDetailSchoolHead'] },
@@ -265,7 +281,9 @@ const pageNumberLabel = (pageKey: PageKey) => {
   if (pageKey === 'classListPersonal') return '07A';
   if (pageKey === 'classListSchool') return '07B';
   if (pageKey === 'classListPersonalTeacherActions') return '07C';
-  if (pageKey === 'classListSchoolTeacherActions') return '07D';
+  if (pageKey === 'classListPersonalManagerActions') return '07D';
+  if (pageKey === 'classListSchoolTeacherActions') return '07E';
+  if (pageKey === 'classListSchoolManagerActions') return '07F';
   if (pageKey === 'classDetail') return '08A';
   if (pageKey === 'classDetailMember') return '08B';
   if (pageKey === 'classDetailSchoolHead') return '08C';
@@ -831,11 +849,11 @@ const pageMeta: Record<PageKey, PageMeta> = {
   classListPersonalTeacherActions: {
     title: '普通老师更多操作（个人版）',
     subtitle: '直接查看个人版普通老师可使用的班级卡片操作。',
-    modules: ['普通老师班级卡片', '班级更多操作弹层', '日常操作', '班级信息'],
+    modules: ['普通老师班级卡片', '班级更多操作弹层', '日常操作', '班级维护'],
     ctas: [
       { label: '作业录入', priority: 'P0', position: '更多操作弹层日常操作' },
       { label: '兑换奖励', priority: 'P0', position: '更多操作弹层日常操作' },
-      { label: '查看班级信息', priority: 'P1', position: '更多操作弹层班级信息' },
+      { label: '班级详情', priority: 'P1', position: '更多操作弹层班级维护' },
     ],
     states: {
       normal: '默认展开个人版普通老师的班级更多操作。',
@@ -845,18 +863,37 @@ const pageMeta: Record<PageKey, PageMeta> = {
       denied: '无班级成员关系时返回班级列表。',
     },
   },
-  classListSchoolTeacherActions: {
-    title: '普通老师更多操作（学校版）',
-    subtitle: '直接查看学校版普通老师可使用的班级卡片操作。',
-    modules: ['普通老师班级卡片', '班级更多操作弹层', '日常操作', '学生信息更新', '班级维护'],
+  classListPersonalManagerActions: {
+    title: '班主任/副班主任更多操作（个人版）',
+    subtitle: '直接查看个人版班主任和副班主任可使用的班级卡片操作。',
+    modules: ['班主任/副班主任班级卡片', '班级更多操作弹层', '日常操作', '学生信息更新', '协同管理', '班级维护'],
     ctas: [
       { label: '作业录入', priority: 'P0', position: '更多操作弹层日常操作' },
       { label: '兑换奖励', priority: 'P0', position: '更多操作弹层日常操作' },
       { label: '批量修改学生', priority: 'P1', position: '更多操作弹层学生信息更新' },
       { label: '更新人脸数据', priority: 'P1', position: '更多操作弹层学生信息更新' },
       { label: '设置兑换密码', priority: 'P1', position: '更多操作弹层学生信息更新' },
-      { label: '离校学生管理', priority: 'P1', position: '更多操作弹层班级维护' },
-      { label: '查看班级信息', priority: 'P1', position: '更多操作弹层班级维护' },
+      { label: '邀请老师加入', priority: 'P1', position: '更多操作弹层协同管理' },
+      { label: '邀请家长加入', priority: 'P1', position: '更多操作弹层协同管理' },
+      { label: '离校学生', priority: 'P1', position: '更多操作弹层班级维护' },
+      { label: '班级详情', priority: 'P1', position: '更多操作弹层班级维护' },
+    ],
+    states: {
+      normal: '默认展开个人版班主任/副班主任的班级更多操作。',
+      loading: '班级操作加载中。',
+      empty: '无可操作班级时不展示更多操作弹层。',
+      network: '加载失败，关闭弹层并提供重试。',
+      denied: '班级管理权限失效时按最新角色刷新菜单。',
+    },
+  },
+  classListSchoolTeacherActions: {
+    title: '普通老师更多操作（学校版）',
+    subtitle: '直接查看学校版普通老师可使用的班级卡片操作。',
+    modules: ['普通老师班级卡片', '班级更多操作弹层', '日常操作', '班级维护'],
+    ctas: [
+      { label: '作业录入', priority: 'P0', position: '更多操作弹层日常操作' },
+      { label: '兑换奖励', priority: 'P0', position: '更多操作弹层日常操作' },
+      { label: '班级详情', priority: 'P1', position: '更多操作弹层班级维护' },
     ],
     states: {
       normal: '默认展开学校版普通老师的班级更多操作。',
@@ -864,6 +901,29 @@ const pageMeta: Record<PageKey, PageMeta> = {
       empty: '无可操作班级时不展示更多操作弹层。',
       network: '加载失败，关闭弹层并提供重试。',
       denied: '无学校班级查看权限时返回班级列表。',
+    },
+  },
+  classListSchoolManagerActions: {
+    title: '班主任/副班主任更多操作（学校版）',
+    subtitle: '直接查看学校版班主任和副班主任可使用的班级卡片操作。',
+    modules: ['班主任/副班主任班级卡片', '班级更多操作弹层', '日常操作', '学生信息更新', '协同管理', '班级维护'],
+    ctas: [
+      { label: '作业录入', priority: 'P0', position: '更多操作弹层日常操作' },
+      { label: '兑换奖励', priority: 'P0', position: '更多操作弹层日常操作' },
+      { label: '批量修改学生', priority: 'P1', position: '更多操作弹层学生信息更新' },
+      { label: '更新人脸数据', priority: 'P1', position: '更多操作弹层学生信息更新' },
+      { label: '设置兑换密码', priority: 'P1', position: '更多操作弹层学生信息更新' },
+      { label: '邀请老师加入', priority: 'P1', position: '更多操作弹层协同管理' },
+      { label: '邀请家长加入', priority: 'P1', position: '更多操作弹层协同管理' },
+      { label: '离校学生', priority: 'P1', position: '更多操作弹层班级维护' },
+      { label: '班级详情', priority: 'P1', position: '更多操作弹层班级维护' },
+    ],
+    states: {
+      normal: '默认展开学校版班主任/副班主任的班级更多操作。',
+      loading: '班级操作加载中。',
+      empty: '无可操作班级时不展示更多操作弹层。',
+      network: '加载失败，关闭弹层并提供重试。',
+      denied: '班级管理权限失效时按最新角色刷新菜单。',
     },
   },
   classDetail: {
@@ -1315,11 +1375,15 @@ const priorityClass: Record<Priority, string> = {
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ');
 
 const isPersonalClassListPage = (pageKey: PageKey) => (
-  pageKey === 'classListPersonal' || pageKey === 'classListPersonalTeacherActions'
+  pageKey === 'classListPersonal'
+  || pageKey === 'classListPersonalTeacherActions'
+  || pageKey === 'classListPersonalManagerActions'
 );
 
 const isSchoolClassListPage = (pageKey: PageKey) => (
-  pageKey === 'classListSchool' || pageKey === 'classListSchoolTeacherActions'
+  pageKey === 'classListSchool'
+  || pageKey === 'classListSchoolTeacherActions'
+  || pageKey === 'classListSchoolManagerActions'
 );
 
 const classRolePermissions: Record<ClassRole, {
@@ -1329,6 +1393,7 @@ const classRolePermissions: Record<ClassRole, {
   canManageDeputy: boolean;
   canManageTeachers: boolean;
   canManageParentBindings: boolean;
+  canManageLeftStudents: boolean;
 }> = {
   headTeacher: {
     canEditClass: true,
@@ -1337,6 +1402,7 @@ const classRolePermissions: Record<ClassRole, {
     canManageDeputy: true,
     canManageTeachers: true,
     canManageParentBindings: true,
+    canManageLeftStudents: true,
   },
   deputyHeadTeacher: {
     canEditClass: true,
@@ -1345,6 +1411,7 @@ const classRolePermissions: Record<ClassRole, {
     canManageDeputy: false,
     canManageTeachers: false,
     canManageParentBindings: true,
+    canManageLeftStudents: true,
   },
   teacher: {
     canEditClass: false,
@@ -1353,6 +1420,7 @@ const classRolePermissions: Record<ClassRole, {
     canManageDeputy: false,
     canManageTeachers: false,
     canManageParentBindings: false,
+    canManageLeftStudents: false,
   },
 };
 
@@ -1479,8 +1547,8 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '班级名下方展示当前登录账号的任教标签，例如班主任、语文、数学。',
       '班级号和人数在同一行展示，点击班级号可直接复制。',
       '班级更多操作弹窗的班级号同样支持复制。',
-      '个人版普通老师的班级更多操作只展示作业录入、兑换奖励和查看班级信息；查看班级信息进入 08B 只读详情。',
-      '个人版普通老师不展示学生信息更新、协同管理和班级维护操作；班主任、副班主任继续按角色权限展示对应入口。',
+      '普通老师不展示批量修改学生、更新人脸数据、设置兑换密码、邀请老师加入、邀请家长加入和离校学生。',
+      '所有角色统一展示班级详情入口；普通老师进入 08B 只读详情，班主任、副班主任进入对应可编辑详情。',
       '卡片 CTA 为学生列表和班级报告。',
     ] },
     { type: 'h2', text: '邀请老师加入' },
@@ -1510,9 +1578,17 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     { type: 'list', items: [
       '07C 是 07A 的普通老师更多操作验收状态，复用同一班级列表和底部操作弹层，不新增真实业务页面。',
       '进入 07C 时定位到协作班级中的普通老师身份，并默认展开目标班级的更多操作。',
-      '只展示作业录入、兑换奖励和查看班级信息。',
-      '不展示学生信息更新、邀请老师、邀请家长、离校学生管理和编辑班级信息。',
-      '查看班级信息进入 08B 普通老师只读班级详情。',
+      '普通老师不展示批量修改学生、更新人脸数据、设置兑换密码、邀请老师加入、邀请家长加入和离校学生。',
+      '班级详情进入 08B 普通老师只读班级详情。',
+    ] },
+  ],
+  classListPersonalManagerActions: [
+    { type: 'h2', text: '07D 个人版班主任/副班主任菜单' },
+    { type: 'list', items: [
+      '07D 是 07A 的班主任/副班主任更多操作验收状态，复用同一班级列表和底部操作弹层。',
+      '进入 07D 时定位到副班主任身份，并默认展开目标班级的更多操作；班主任在该菜单中的能力相同。',
+      '展示学生信息更新、邀请老师加入、邀请家长加入、离校学生和班级详情。',
+      '班级详情按实际角色进入 08A 或 08D，进入后再区分可编辑范围。',
     ] },
   ],
   classListSchool: [
@@ -1527,20 +1603,28 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     ] },
   ],
   classListSchoolTeacherActions: [
-    { type: 'h2', text: '07D 学校版普通老师菜单' },
+    { type: 'h2', text: '07E 学校版普通老师菜单' },
     { type: 'list', items: [
-      '07D 是 07B 的普通老师更多操作验收状态，复用同一班级列表和底部操作弹层，不新增真实业务页面。',
-      '进入 07D 时只展示当前普通老师任教的目标班级，并默认展开更多操作。',
-      '保留学校版普通老师的作业录入、兑换奖励、学生信息更新、离校学生管理和查看班级信息。',
-      '不展示邀请老师、邀请家长和编辑班级信息。',
-      '查看班级信息进入 08B 普通老师只读班级详情。',
+      '07E 是 07B 的普通老师更多操作验收状态，复用同一班级列表和底部操作弹层，不新增真实业务页面。',
+      '进入 07E 时只展示当前普通老师任教的目标班级，并默认展开更多操作。',
+      '普通老师不展示批量修改学生、更新人脸数据、设置兑换密码、邀请老师加入、邀请家长加入和离校学生。',
+      '班级详情进入 08B 普通老师只读班级详情。',
+    ] },
+  ],
+  classListSchoolManagerActions: [
+    { type: 'h2', text: '07F 学校版班主任/副班主任菜单' },
+    { type: 'list', items: [
+      '07F 是 07B 的班主任/副班主任更多操作验收状态，复用同一班级列表和底部操作弹层。',
+      '进入 07F 时定位到副班主任身份，并默认展开目标班级的更多操作；班主任在该菜单中的能力相同。',
+      '展示学生信息更新、邀请老师加入、邀请家长加入、离校学生和班级详情。',
+      '班级详情按实际角色进入 08C 或 08D，进入后再区分可编辑范围。',
     ] },
   ],
   classDetail: [
     ...classDetailComparisonPrdBlocks,
     { type: 'h2', text: '共用细节规则' },
     { type: 'list', items: [
-      '从班级卡片更多操作点击“编辑班级信息”进入。',
+      '从班级卡片更多操作点击“班级详情”进入；所有角色使用同一入口，进入后再按角色区分编辑权限。',
       '班级基本信息以班级卡片展示，班级名称格式为“2025级1班（一年级）”，不单独展示学段标签。',
       '班级详情不展示班主任、语文等任教标签，这些标签属于当前登录账号与班级的关系，不属于班级基础信息。',
       '卡片右上角只有一个编辑 icon，点击从底部上滑编辑弹窗。',
@@ -2224,21 +2308,39 @@ const TeacherCMobileLowFi: React.FC = () => {
     setActiveTeacherAction(null);
     setClassActionToast('');
     setHistory([]);
-    if (next === 'classListPersonalTeacherActions' || next === 'classListSchoolTeacherActions') {
-      const ordinaryTeacherClass = {
-        name: '2023级3班',
-        code: '41862753',
-        stage: '小学' as const,
-        entryYearValue: 2023,
-        count: 36,
-        creatorName: '李老师',
-        isCreator: false,
-        role: 'teacher' as const,
-      };
-      setCurrentSpaceId(next === 'classListPersonalTeacherActions' ? 'collabLi' : defaultTeacherSpaceId);
+    const classActionPreviewPages: PageKey[] = [
+      'classListPersonalTeacherActions',
+      'classListPersonalManagerActions',
+      'classListSchoolTeacherActions',
+      'classListSchoolManagerActions',
+    ];
+    if (classActionPreviewPages.includes(next)) {
+      const isOrdinaryTeacherPreview = next === 'classListPersonalTeacherActions' || next === 'classListSchoolTeacherActions';
+      const previewClass = isOrdinaryTeacherPreview
+        ? {
+            name: '2023级3班',
+            code: '41862753',
+            stage: '小学' as const,
+            entryYearValue: 2023,
+            count: 36,
+            creatorName: '李老师',
+            isCreator: false,
+            role: 'teacher' as const,
+          }
+        : {
+            name: '2024级2班',
+            code: '73948162',
+            stage: '小学' as const,
+            entryYearValue: 2024,
+            count: 32,
+            creatorName: '陈老师',
+            isCreator: false,
+            role: 'deputyHeadTeacher' as const,
+          };
+      setCurrentSpaceId(isPersonalClassListPage(next) ? 'collabLi' : defaultTeacherSpaceId);
       setUserHasMultipleClassSources(true);
-      setActiveClassProfile(ordinaryTeacherClass);
-      setActiveClassAction({ name: ordinaryTeacherClass.name, code: ordinaryTeacherClass.code });
+      setActiveClassProfile(previewClass);
+      setActiveClassAction({ name: previewClass.name, code: previewClass.code });
     }
     if (next === 'classDetail' || next === 'classDetailSchoolHead') {
       setActiveClassProfile({
@@ -2904,13 +3006,16 @@ const TeacherCMobileLowFi: React.FC = () => {
       openStudentBatchEdit();
       return;
     }
-    if (key === 'reward' || key === 'homework' || key === 'leftStudents') {
+    if (key === 'leftStudents') {
+      if (!permissions.canManageLeftStudents) return;
       navigate('studentList');
       return;
     }
-    if (key === 'editClass' || key === 'viewClass') {
-      if (key === 'editClass' && !permissions.canEditClass) return;
-      if (key === 'viewClass' && activeClassProfile.role !== 'teacher') return;
+    if (key === 'reward' || key === 'homework') {
+      navigate('studentList');
+      return;
+    }
+    if (key === 'classInfo') {
       setActiveClassAction(null);
       navigate(getClassDetailPageForProfile(activeClassProfile));
       return;
@@ -2922,7 +3027,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       setActiveClassAction(null);
       return;
     }
-    const toastMap: Record<Exclude<ClassActionKey, 'reward' | 'homework' | 'batchStudents' | 'leftStudents' | 'editClass' | 'viewClass' | 'inviteTeacher' | 'inviteParent'>, string> = {
+    const toastMap: Record<Exclude<ClassActionKey, 'reward' | 'homework' | 'batchStudents' | 'leftStudents' | 'classInfo' | 'inviteTeacher' | 'inviteParent'>, string> = {
       password: '设置兑换密码',
       face: '更新人脸数据',
     };
@@ -2957,7 +3062,6 @@ const TeacherCMobileLowFi: React.FC = () => {
 
   const activeClassPermissions = classRolePermissions[activeClassProfile.role];
   const isOrdinaryTeacher = activeClassProfile.role === 'teacher';
-  const isPersonalOrdinaryTeacher = isPersonalClassListPage(page) && isOrdinaryTeacher;
   const classActionGroups = [
     {
       title: '日常操作',
@@ -2982,23 +3086,19 @@ const TeacherCMobileLowFi: React.FC = () => {
       ],
     },
     {
-      title: isPersonalOrdinaryTeacher ? '班级信息' : '班级维护',
+      title: '班级维护',
       items: [
-        { key: 'leftStudents' as const, label: '离校学生管理', icon: Users },
-        { key: 'editClass' as const, label: '编辑班级信息', icon: Edit3 },
-        { key: 'viewClass' as const, label: '查看班级信息', icon: Eye },
+        { key: 'leftStudents' as const, label: '离校学生', icon: Users },
+        { key: 'classInfo' as const, label: '班级详情', icon: Settings },
       ],
     },
   ].map((group) => ({
     ...group,
     items: group.items.filter((item) => {
-      if (isPersonalOrdinaryTeacher) {
-        return item.key === 'homework' || item.key === 'reward' || item.key === 'viewClass';
-      }
-      if (item.key === 'viewClass') return isOrdinaryTeacher;
+      if (isOrdinaryTeacher && (item.key === 'batchStudents' || item.key === 'face' || item.key === 'password')) return false;
       if (item.key === 'inviteTeacher') return activeClassPermissions.canInviteTeacher;
       if (item.key === 'inviteParent') return activeClassPermissions.canInviteParent;
-      if (item.key === 'editClass') return activeClassPermissions.canEditClass;
+      if (item.key === 'leftStudents') return activeClassPermissions.canManageLeftStudents;
       return true;
     }),
   })).filter((group) => group.items.length > 0);
@@ -6988,7 +7088,9 @@ const TeacherCMobileLowFi: React.FC = () => {
 
     if (isPersonalClassListPage(page) || isSchoolClassListPage(page)) {
       const isSchoolList = isSchoolClassListPage(page);
-      const isSchoolOrdinaryTeacherPreview = page === 'classListSchoolTeacherActions';
+      const isOrdinaryTeacherPreview = page === 'classListPersonalTeacherActions' || page === 'classListSchoolTeacherActions';
+      const isManagerPreview = page === 'classListPersonalManagerActions' || page === 'classListSchoolManagerActions';
+      const isClassActionPreview = isOrdinaryTeacherPreview || isManagerPreview;
       const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
       const isPersonalOwnedSource = currentSpace.type === 'personal';
       const gradeFilterOptions: SchoolClassGradeFilter[] = ['全部', '一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三', '高一', '高二', '高三'];
@@ -7000,14 +7102,16 @@ const TeacherCMobileLowFi: React.FC = () => {
       const personalClassCards = classCards.filter((item) => item.isCreator);
       const collaborationClassCards = classCards.slice(2, 3);
       const visiblePersonalClassCards = personalClassCards.filter((item) => personalVisibleClassCodes.includes(item.code));
-      const visibleSourceClassCards = currentSpace.type === 'collaboration' ? collaborationClassCards : visiblePersonalClassCards;
+      const visibleSourceClassCards = isClassActionPreview
+        ? classCards.filter((item) => item.role === (isOrdinaryTeacherPreview ? 'teacher' : 'deputyHeadTeacher'))
+        : currentSpace.type === 'collaboration' ? collaborationClassCards : visiblePersonalClassCards;
       const schoolVisibleClassCards = classCards.filter((item) => {
         const matchGrade = schoolClassGradeFilter === '全部' || inferGradeLabel(item.stage, item.entryYearValue) === schoolClassGradeFilter;
         const matchTeaching = !schoolClassTeachingOnly || item.tags.some((tag) => tag !== '班主任');
         return matchGrade && matchTeaching;
       });
       const visibleClassCards = isSchoolList
-        ? schoolVisibleClassCards.filter((item) => !isSchoolOrdinaryTeacherPreview || item.role === 'teacher')
+        ? schoolVisibleClassCards.filter((item) => !isClassActionPreview || item.role === (isOrdinaryTeacherPreview ? 'teacher' : 'deputyHeadTeacher'))
         : personalClassCards;
 
       return (

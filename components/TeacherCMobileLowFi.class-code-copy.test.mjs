@@ -16,7 +16,7 @@ requireText('onClick={() => void copyClassCode(code)}', '班级卡片的班级�
 requireText('onClick={() => void copyClassCode(activeClassAction.code)}', '班级更多操作弹窗的班级号应支持复制。');
 requireText('role="dialog" aria-modal="true" aria-label="班级更多操作"', '班级更多操作弹窗应具备完整的对话框语义。');
 requireText('onClick={() => void copyClassCode(activeClassProfile.code)}', '班级详情的班级号应支持复制。');
-requireText('const getClassDetailPageForProfile = (profile: ClassProfile): PageKey => {', '编辑班级信息应能根据空间和身份进入班级详情。');
+requireText('const getClassDetailPageForProfile = (profile: ClassProfile): PageKey => {', '班级详情应能根据空间和身份进入对应详情页。');
 requireText("if (profile.role === 'deputyHeadTeacher') return 'classDetailDeputy';", '副班主任应进入对应班级详情。');
 requireText("if (profile.role === 'teacher') return 'classDetailMember';", '普通老师应进入只读班级详情。');
 requireText("return getClassListPageForCurrentSpace() === 'classListSchool' ? 'classDetailSchoolHead' : 'classDetail';", '班主任班级详情应区分学校版和个人版。');

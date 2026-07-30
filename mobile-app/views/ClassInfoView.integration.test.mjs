@@ -17,7 +17,10 @@ assert.match(viewSource, />取消<[\s\S]*>\s*完成\s*</, '编辑抽屉底部应
 assert.match(viewSource, /转移班主任/, '班主任详情页应保留转移班主任操作。');
 assert.match(viewSource, /解散班级/, '个人版班主任详情页应保留解散班级操作。');
 assert.match(viewSource, /退出班级/, '学校版及成员详情页应保留退出班级操作。');
+assert.match(viewSource, /pb-\[calc\(var\(--tm-space-4\)\+env\(safe-area-inset-bottom\)\)\]/, '底部班级操作区应保留 Token 间距并兼容手机安全区。');
 assert.match(viewSource, /--tm-page-plain-header-bg/, '班级信息页应使用教师手机端设计 Token。');
+assert.match(viewSource, /border-\[var\(--tm-border-subtle\)\]/, '班级信息页的普通控件应复用班级报告自定义日期的浅边框 Token。');
+assert.doesNotMatch(viewSource, /border-\[var\(--tm-border-control\)\]/, '班级信息页不应使用偏深的控件边框。');
 assert.doesNotMatch(viewSource, /#[\da-fA-F]{3,8}\b/, '班级信息页不应硬编码颜色。');
 
 assert.match(listSource, /copyText\(classInfo\.classCode\)/, '班级卡片应使用通用复制能力。');
