@@ -358,7 +358,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                   role="tab"
                   aria-selected={avatarSheetMode === option.value}
                   onClick={() => setAvatarSheetMode(option.value as AvatarSheetMode)}
-                  className={`rounded-[calc(var(--tm-radius-control)-4px)] text-sm font-semibold transition-all ${avatarSheetMode === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                  className={`rounded-[calc(var(--tm-radius-control)-4px)] text-sm font-semibold transition-all ${avatarSheetMode === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                 >
                   {option.label}
                 </button>
@@ -385,7 +385,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                         >
                           <img src={avatar.src} alt="" className="h-full w-full object-cover" />
                           {isSelected && (
-                            <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--tm-brand-primary)] text-white shadow-[var(--tm-shadow-icon)]" aria-hidden="true">
+                            <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--tm-brand-primary)] text-white [box-shadow:var(--tm-shadow-icon)]" aria-hidden="true">
                               <Check className="h-3.5 w-3.5" strokeWidth={3} />
                             </span>
                           )}
@@ -418,7 +418,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
           )}
         </MobileBottomSheet>
 
-        <div className="absolute inset-x-0 bottom-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 pb-5 pt-3 shadow-[var(--tm-shadow-navigation)] backdrop-blur-md">
+        <div className="absolute inset-x-0 bottom-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 pb-5 pt-3 [box-shadow:var(--tm-shadow-navigation)] backdrop-blur-md">
           <button onClick={saveBasicInfo} className="h-12 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)]">
             保存基础信息
           </button>

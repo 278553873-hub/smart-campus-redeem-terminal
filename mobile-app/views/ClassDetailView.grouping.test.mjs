@@ -83,7 +83,7 @@ requireText(viewSource, 'onClick={handleRestoreSearchMode}', '压缩搜索按钮
 requireText(viewSource, "isAllVisibleSelected ? '取消全选' : '全选'", '全选按钮应只在已全选后变为取消全选。');
 requireText(viewSource, 'bg-white/92', '学生工具栏应使用柔和白色玻璃背景融入页面。');
 requireText(viewSource, 'bg-white pl-9 pr-3', '搜索框应使用白底加轻阴影的真实产品方案，避免原型感灰底。');
-requireText(viewSource, 'shadow-[var(--tm-shadow-control)] outline-none', '搜索框应使用教师端控件阴影 Token。');
+requireText(viewSource, '[box-shadow:var(--tm-shadow-control)] outline-none', '搜索框应使用教师端控件阴影 Token。');
 requireText(viewSource, 'border border-[var(--tm-border-subtle)] bg-white text-[var(--tm-text-primary)]', '多选按钮应使用白底中性方案，避免黑色重按钮。');
 if (viewSource.includes('bg-[#FFD43B]') || viewSource.includes('bg-amber-400')) {
   failures.push('学生工具栏主按钮不应继续使用高饱和黄色，应改为更贴合页面的中性色方案。');

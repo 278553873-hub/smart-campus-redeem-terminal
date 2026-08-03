@@ -339,7 +339,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [weeklyAdviceClassId, setWeeklyAdviceClassId] = useState(DEFAULT_WEEKLY_ADVICE_CLASS_ID);
     const principalWeeklyReportTask = useReportGenerationTask({ stepCount: 4 });
     const principalMonthlyReportTask = useReportGenerationTask({ stepCount: 4 });
-    const principalTermReportTask = useReportGenerationTask({ stepCount: 4 });
+    const principalTermReportTask = useReportGenerationTask({ stepCount: 4, initialStatus: 'generated' });
     const [currentTeacherSpaceId, setCurrentTeacherSpaceId] = useState(DEFAULT_TEACHER_SPACE_ID);
     const activeTeacherSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === currentTeacherSpaceId) ?? TEACHER_SPACE_OPTIONS[0];
     const hasMultipleTeacherSpaces = TEACHER_SPACE_OPTIONS.length > 1;
@@ -367,6 +367,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             || activeTeacherSpace.role === 'administrator'
             || teacherProfile.homeroomClassIds.includes(activeStudentClassId));
     const [questionnaireEntryMode, setQuestionnaireEntryMode] = useState<'owned' | 'assigned'>('owned');
+    const [questionnaireInitialArchiveTemplateId, setQuestionnaireInitialArchiveTemplateId] = useState('');
     const [pendingCollectionCount, setPendingCollectionCount] = useState(0);
     const [showTeacherSpaceSheet, setShowTeacherSpaceSheet] = useState(false);
     const [schoolSubjects, setSchoolSubjects] = useState<SchoolSubjectItem[]>(INITIAL_SCHOOL_SUBJECTS);
@@ -1024,6 +1025,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView);
+    const hasStudentDetailBackground = currentView === 'student_detail';
     const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'class_archive_batch', 'student_detail', 'student_archive', 'student_body_measurements', 'student_health_records', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design'].includes(currentView) || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const getBottomNavTone = (index: number) => activeIndex === index
         ? 'text-[var(--tm-brand-primary)]'
@@ -1032,6 +1034,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const getPhoneScreenBackground = () => {
         if (currentView === 'home_log') {
             return <TeacherMobileScreenBackground variant="record" recordMode={activeLogTab} />;
+        }
+
+        if (hasStudentDetailBackground) {
+            return <TeacherMobileScreenBackground variant="student-detail" />;
         }
 
         if (hasPrincipalReportBackground) {
@@ -1077,8 +1083,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                 screenBackground={getPhoneScreenBackground()}
             >
 
-                    <div className={`flex-1 flex flex-col relative overflow-hidden ${hasPlainBackground ? 'bg-[var(--tm-page-plain-content-bg)]' : hasScreenLevelBackground ? 'bg-transparent' : 'bg-white'}`}>
-                        {hasPlainBackground && (
+                    <div className={`flex-1 flex flex-col relative overflow-hidden ${hasStudentDetailBackground ? 'bg-transparent' : hasPlainBackground ? 'bg-[var(--tm-page-plain-content-bg)]' : hasScreenLevelBackground ? 'bg-transparent' : 'bg-white'}`}>
+                        {hasPlainBackground && !hasStudentDetailBackground && (
                             <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-11 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />
                         )}
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
@@ -1328,6 +1334,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     classes={activeSpaceClasses}
                                     getStudentsForClass={getMergedStudentsForClass}
                                     onUpdateStudent={handleUpdateStudentFromArchive}
+                                    onUpdateArchive={templateId => {
+                                        setQuestionnaireEntryMode('owned');
+                                        setQuestionnaireInitialArchiveTemplateId(templateId);
+                                        navigateTo('questionnaire');
+                                    }}
                                 />
                             )}
 
@@ -1376,9 +1387,9 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onOpenDepartmentManagement={() => navigateTo('department_management')}
                                     onOpenCoinIssuance={() => navigateTo('coin_issuance')}
                                     onOpenSuggestionFeedback={() => navigateTo('suggestion_feedback')}
-                                    onOpenQuestionnaire={() => { setQuestionnaireEntryMode('owned'); navigateTo('questionnaire'); }}
+                                    onOpenQuestionnaire={() => { setQuestionnaireEntryMode('owned'); setQuestionnaireInitialArchiveTemplateId(''); navigateTo('questionnaire'); }}
                                     pendingCollectionCount={pendingCollectionCount}
-                                    onOpenAssignedCollections={() => { setQuestionnaireEntryMode('assigned'); navigateTo('questionnaire'); }}
+                                    onOpenAssignedCollections={() => { setQuestionnaireEntryMode('assigned'); setQuestionnaireInitialArchiveTemplateId(''); navigateTo('questionnaire'); }}
                                     onOpenArchiveDesign={() => navigateTo('archive_design')}
                                     onOpenAiHeadteacherAssistant={() => navigateTo('ai_headteacher_assistant')}
                                     onOpenAiPrincipalAssistant={() => navigateTo('ai_principal_assistant')}
@@ -1461,13 +1472,14 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                             {currentView === 'questionnaire' && (
                                 <QuestionnaireManagementView
-                                    key={`${activeTeacherId}-${questionnaireEntryMode}`}
+                                    key={`${activeTeacherId}-${questionnaireEntryMode}-${questionnaireInitialArchiveTemplateId || 'default'}`}
                                     onBack={goBack}
                                     teacherId={activeTeacherId}
                                     teacherName={teacherProfile.name}
                                     spaceId={activeTeacherSpace.id}
                                     homeroomClassIds={teacherProfile.homeroomClassIds}
                                     initialMode={questionnaireEntryMode}
+                                    initialArchiveTemplateId={questionnaireInitialArchiveTemplateId || undefined}
                                     classes={questionnaireAuthorizedClasses}
                                     allScopeLabel={hasSchoolWideQuestionnaireAccess ? '全部年级' : '全部班级'}
                                     getStudentsForClass={getMergedStudentsForClass}
@@ -1857,7 +1869,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                         </button>
                                         <button
                                             onClick={handleConfirmGenerate}
-                                            className="flex-1 rounded-xl bg-[var(--tm-brand-primary)] py-3.5 text-sm font-bold text-white shadow-[var(--tm-shadow-control)] transition-all active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)]"
+                                            className="flex-1 rounded-xl bg-[var(--tm-brand-primary)] py-3.5 text-sm font-bold text-white [box-shadow:var(--tm-shadow-control)] transition-all active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)]"
                                         >
                                             立即生成
                                         </button>
@@ -1874,7 +1886,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     {/* Shimmer effect */}
                                     <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none"></div>
 
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-icon)] ring-2 ring-white/10">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-icon)] ring-2 ring-white/10">
                                         <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>

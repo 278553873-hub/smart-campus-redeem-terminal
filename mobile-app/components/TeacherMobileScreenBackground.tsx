@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type TeacherMobileScreenBackgroundVariant = 'ambient' | 'plain' | 'record';
+export type TeacherMobileScreenBackgroundVariant = 'ambient' | 'plain' | 'record' | 'student-detail';
 export type TeacherMobileRecordMode = 'student' | 'class';
 
 interface TeacherMobileScreenBackgroundProps {
@@ -35,6 +35,15 @@ const TeacherMobileScreenBackground: React.FC<TeacherMobileScreenBackgroundProps
 }) => {
     if (variant === 'plain') {
         return <div className="absolute inset-0 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />;
+    }
+
+    if (variant === 'student-detail') {
+        return (
+            <div className="absolute inset-0 overflow-hidden bg-[var(--tm-page-plain-content-bg)]" aria-hidden="true">
+                <div className="absolute inset-x-0 top-0 h-[var(--tm-student-detail-header-height)] bg-[linear-gradient(135deg,var(--tm-bg-surface)_0%,var(--tm-brand-primary-soft)_100%)]" />
+                <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--tm-brand-primary)_14%,transparent),transparent_70%)]" />
+            </div>
+        );
     }
 
     return (

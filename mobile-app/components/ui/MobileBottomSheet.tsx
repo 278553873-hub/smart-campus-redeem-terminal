@@ -82,7 +82,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({ open, title, onCl
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="relative z-10 flex max-h-[86%] w-full max-w-md flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)]"
+        className="relative z-10 flex max-h-[86%] w-full max-w-md flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)]"
       >
         {showHandle && <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />}
         {header ?? (

@@ -12,6 +12,7 @@ import {
   type QuestionnaireRecord,
 } from '../../shared/questionnaireStore';
 import { persistGrowthCollectionAnswers } from '../../shared/growthCollectionPersistence';
+import { persistArchiveCollectionAnswers } from '../../shared/archiveCollectionPersistence';
 import { normalizeFormFieldSettings } from '../../shared/formDefinition';
 import { questionnaireThemeCssVariables } from '../../shared/questionnaireThemeTokens';
 import {
@@ -155,6 +156,9 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
     }
     if (getQuestionnaireContentType(questionnaire) !== 'ordinary') {
       persistGrowthCollectionAnswers(questionnaire, child.studentNo, answers, submittedAt);
+    }
+    if (questionnaire.archiveTemplateId) {
+      persistArchiveCollectionAnswers(questionnaire, child.studentNo, answers, guardianRelation);
     }
     setShowSubmitConfirm(false);
     onSubmitted();

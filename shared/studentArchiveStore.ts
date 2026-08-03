@@ -382,7 +382,7 @@ const cloneGrowthSnapshots = (items: ArchiveGrowthModuleSnapshot[]) => items.map
   items: item.items.map(value => ({ ...value })),
 }));
 
-const createTemplateSnapshot = (template: ArchiveTemplate): ArchiveTemplateSnapshot => ({
+export const createArchiveTemplateSnapshot = (template: ArchiveTemplate): ArchiveTemplateSnapshot => ({
   name: template.name,
   version: template.version,
   dataRangeMode: template.dataRangeMode,
@@ -834,7 +834,7 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
     templateId: schoolTermTemplate.id,
     templateName: schoolTermTemplate.name,
     templateVersion: schoolTermTemplate.version,
-    templateSnapshot: createTemplateSnapshot(schoolTermTemplate),
+    templateSnapshot: createArchiveTemplateSnapshot(schoolTermTemplate),
     answers: index === 0 ? { ...termAnswerSeed, 'next-strategy': '' } : index === 1 ? { ...termAnswerSeed } : {},
     createdAt: '2026-07-09',
     updatedAt: index === 0 ? '2026-07-13' : '2026-07-09',
@@ -851,7 +851,7 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
       templateId: 'recommended-entry-v1',
       templateName: '一年级初始成长档案',
       templateVersion: 1,
-      templateSnapshot: createTemplateSnapshot(entryRecommended),
+      templateSnapshot: createArchiveTemplateSnapshot(entryRecommended),
       period: entryRange.label,
       periodStart: entryRange.startDate,
       periodEnd: entryRange.endDate,
@@ -872,7 +872,7 @@ const createSeedWorkspace = ({ spaceId, teacherName, classes, homeroomClassIds, 
       templateId: schoolTermTemplate.id,
       templateName: schoolTermTemplate.name,
       templateVersion: schoolTermTemplate.version,
-      templateSnapshot: createTemplateSnapshot(schoolTermTemplate),
+      templateSnapshot: createArchiveTemplateSnapshot(schoolTermTemplate),
       period: termRange.label,
       periodStart: termRange.startDate,
       periodEnd: termRange.endDate,
@@ -991,7 +991,7 @@ const resolveStoredTemplateSnapshot = (
     return normalized;
   }
   const template = templates.find(item => item.id === record.templateId && item.version === record.templateVersion);
-  if (template) return createTemplateSnapshot(template);
+  if (template) return createArchiveTemplateSnapshot(template);
   return {
     name: record.templateName,
     version: record.templateVersion,
@@ -1308,6 +1308,9 @@ export const createStudentArchiveDraft = (
   if (!template || template.status !== 'published') return { workspace, draftId: '' };
   const existing = workspace.drafts.find(item => item.studentId === student.id && item.templateId === templateId);
   if (existing) return { workspace, draftId: existing.id };
+  const latestSnapshot = workspace.snapshots
+    .filter(item => item.status === 'archived' && item.studentId === student.id && item.templateId === templateId)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
   const draftId = `draft-${student.id}-${Date.now()}`;
   const draft: ArchiveDraft = {
     id: draftId,
@@ -1318,13 +1321,83 @@ export const createStudentArchiveDraft = (
     templateId: template.id,
     templateName: template.name,
     templateVersion: template.version,
-    templateSnapshot: createTemplateSnapshot(template),
-    answers: {},
+    templateSnapshot: createArchiveTemplateSnapshot(template),
+    answers: cloneArchiveAnswers(latestSnapshot?.answers ?? {}),
     createdAt: isoDate(),
     updatedAt: isoDate(),
     createdBy: operator,
   };
   return { workspace: { ...workspace, drafts: [draft, ...workspace.drafts] }, draftId };
+};
+
+export interface ArchiveCollectionTarget {
+  studentId: string;
+  studentName: string;
+  classId: string;
+  className: string;
+}
+
+export interface ArchiveCollectionUpdate {
+  templateId: string;
+  templateName: string;
+  templateVersion: number;
+  templateSnapshot: ArchiveTemplateSnapshot;
+  target: ArchiveCollectionTarget;
+  answers: Record<string, ArchiveAnswer>;
+  operator: string;
+}
+
+export const upsertStudentArchiveCollectionAnswers = (
+  workspace: ArchiveWorkspace,
+  update: ArchiveCollectionUpdate,
+): { workspace: ArchiveWorkspace; updated: boolean } => {
+  if (Object.keys(update.answers).length === 0) return { workspace, updated: false };
+
+  const existingDraft = workspace.drafts.find(item => (
+    item.studentId === update.target.studentId
+    && item.templateId === update.templateId
+  ));
+  if (existingDraft) {
+    return {
+      updated: true,
+      workspace: {
+        ...workspace,
+        drafts: workspace.drafts.map(item => item.id === existingDraft.id ? {
+          ...item,
+          ...(update.templateVersion > item.templateVersion ? {
+            templateName: update.templateName,
+            templateVersion: update.templateVersion,
+            templateSnapshot: cloneTemplateSnapshot(update.templateSnapshot),
+          } : {}),
+          answers: cloneArchiveAnswers({ ...item.answers, ...update.answers }),
+          updatedAt: isoDate(),
+        } : item),
+      },
+    };
+  }
+
+  const latestSnapshot = workspace.snapshots
+    .filter(item => item.status === 'archived' && item.studentId === update.target.studentId && item.templateId === update.templateId)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+  const draft: ArchiveDraft = {
+    id: `draft-${update.target.studentId}-${Date.now()}`,
+    studentId: update.target.studentId,
+    studentName: update.target.studentName,
+    classId: update.target.classId,
+    className: update.target.className,
+    templateId: update.templateId,
+    templateName: update.templateName,
+    templateVersion: update.templateVersion,
+    templateSnapshot: cloneTemplateSnapshot(update.templateSnapshot),
+    answers: cloneArchiveAnswers({ ...(latestSnapshot?.answers ?? {}), ...update.answers }),
+    createdAt: isoDate(),
+    updatedAt: isoDate(),
+    createdBy: update.operator,
+  };
+  return {
+    updated: true,
+    workspace: { ...workspace, drafts: [draft, ...workspace.drafts] },
+  };
 };
 
 export const saveStudentArchiveDraft = (

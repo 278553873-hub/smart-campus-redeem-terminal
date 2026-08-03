@@ -26,6 +26,7 @@ requireText(appSource, "onOpenAiPrincipalAssistant={() => navigateTo('ai_princip
 requireText(appSource, "{currentView === 'ai_principal_assistant' && (", 'App 应渲染 AI 校长助理页面。');
 requireText(appSource, 'termConfig={CURRENT_PRINCIPAL_TERM}', 'AI 校长助理应读取当前学期起止时间。');
 requireText(appSource, "hasTermReportTask={principalTermReportTask.status !== 'idle'}", 'AI 校长助理应允许重新进入正在生成或已完成的学期任务。');
+requireText(appSource, "useReportGenerationTask({ stepCount: 4, initialStatus: 'generated' })", '演示环境应直接读取已生成的当前学期报告。');
 requireText(appSource, 'principalWeeklyReportTask.start();', 'AI 校长助理应在应用层启动本周管理建议任务。');
 requireText(appSource, 'principalMonthlyReportTask.start();', 'AI 校长助理应在应用层启动上月学校复盘任务。');
 requireText(appSource, 'principalTermReportTask.start();', 'AI 校长助理应在应用层启动学期学校报告任务。');

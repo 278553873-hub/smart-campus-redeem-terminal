@@ -1,5 +1,6 @@
 import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode, type FormSection, type FormSubField } from './formDefinition';
 import type { GrowthInputFieldKey } from './studentGrowthFieldCatalog';
+import type { ArchiveTemplateSnapshot } from './studentArchiveStore';
 import {
   createGrowthCollectionQuestions,
   isGrowthCollectionQuestion,
@@ -42,6 +43,9 @@ export interface QuestionnaireQuestion {
   settings?: FormFieldSettings;
   growthFieldKey?: GrowthInputFieldKey;
   growthRecordedAt?: boolean;
+  archiveTemplateId?: string;
+  archiveFieldId?: string;
+  archiveFieldSemanticKey?: string;
 }
 
 export interface QuestionnaireTarget {
@@ -99,6 +103,10 @@ export interface QuestionnaireRecord {
   growthMeasurementDate?: string;
   growthTerm?: string;
   growthDimensionOptions?: string[];
+  archiveTemplateId?: string;
+  archiveTemplateName?: string;
+  archiveTemplateVersion?: number;
+  archiveTemplateSnapshot?: ArchiveTemplateSnapshot;
   studentAssignmentMode?: StudentAssignmentMode;
   targetMode?: QuestionnaireTargetMode;
   targetClassIds?: string[];

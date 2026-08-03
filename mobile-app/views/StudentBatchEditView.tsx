@@ -46,7 +46,7 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ classInfo, 
           <span className="shrink-0 tabular-nums">{drafts.length}人</span>
         </div>
 
-        <div className="divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]">
+        <div className="divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
           {drafts.map(student => (
             <div key={student.id} className="grid grid-cols-[minmax(0,1fr)_104px] gap-[var(--tm-space-2)] p-[var(--tm-space-3)]">
               <input
@@ -73,7 +73,7 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ classInfo, 
                       key={gender}
                       type="button"
                       onClick={() => updateStudent(student.id, { gender })}
-                      className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-compact)] font-semibold ${selected ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                      className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-compact)] font-semibold ${selected ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                       aria-pressed={selected}
                     >
                       {gender === 'male' ? '男' : '女'}

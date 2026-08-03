@@ -148,7 +148,7 @@ assert.ok(viewSource.includes('text-[length:var(--tm-font-size-badge)] font-medi
 assert.ok(viewSource.includes("maxTeacherCount: reportSourceKey === 'all'"), '全班汇总应统计多位老师，个人老师视角应按一位老师计算。');
 assert.ok(viewSource.includes('gap-[var(--tm-report-source-item-gap)] px-[var(--tm-report-source-list-inline)]'), '来源列表应使用令牌化外边距与项目间距。');
 assert.ok(viewSource.includes('h-[var(--tm-report-source-pill-height)]') && viewSource.includes('px-[var(--tm-report-source-pill-inline)]') && viewSource.includes('px-[var(--tm-report-source-item-inline)]'), '来源项与选中胶囊应分别消费稳定高度和水平内边距令牌。');
-assert.ok(viewSource.includes("'bg-[var(--tm-brand-primary)] px-[var(--tm-report-source-pill-inline)] font-semibold text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]'"), '当前来源应使用主题红实底、反白文字和轻阴影。');
+assert.ok(viewSource.includes("'bg-[var(--tm-brand-primary)] px-[var(--tm-report-source-pill-inline)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]'"), '当前来源应使用主题红实底、反白文字和轻阴影。');
 assert.ok(viewSource.includes('grid h-[var(--tm-size-touch)] grid-cols-5') && !viewSource.includes('<div className="border-b border-[var(--tm-border-subtle)]">'), '时间范围应使用开放式五等分文字标签，日期与来源之间不增加干扰线。');
 assert.ok(viewSource.includes('bg-[var(--tm-page-plain-header-bg)]'), '班级报告顶部筛选容器应使用纯白标题栏背景。');
 assert.ok(viewSource.includes('h-[var(--tm-report-date-indicator-height)] w-[var(--tm-report-date-indicator-width)]') && viewSource.includes('h-[var(--tm-size-touch)]'), '日期选中项应使用令牌化短线并保留44像素触控区域。');
@@ -162,7 +162,7 @@ for (const filterLabel of ['积分排行类型', '需要关注维度']) {
     assert.ok(viewSource.includes(`aria-label="${filterLabel}"`), `班级报告缺少${filterLabel}筛选语义。`);
 }
 assert.ok(!viewSource.includes('bg-[var(--tm-brand-primary-soft)]'), '班级报告筛选与展开操作不应继续使用浅粉背景。');
-assert.ok(viewSource.includes("'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]'"), '积分排行与需要关注内容分段选中项应使用主题红文字。');
+assert.ok(viewSource.includes("'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]'"), '积分排行与需要关注内容分段选中项应使用主题红文字。');
 assert.ok(viewSource.includes("const inactiveConditionFilterClass = 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]"), '次级条件筛选未选项应使用白底浅边界和次级文字，避免描边抢占视觉重点。');
 assert.ok(viewSource.includes("const customDateInputClass = 'h-12 w-full") && viewSource.includes('border border-[var(--tm-input-border)]') && viewSource.includes('bg-[var(--tm-input-bg)]') && viewSource.includes('focus:border-[var(--tm-input-focus-border)]') && viewSource.includes('focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]') && viewSource.includes('disabled:bg-[var(--tm-input-disabled-bg)]') && viewSource.includes('read-only:bg-[var(--tm-input-readonly-bg)]'), '弹窗内的自定义日期输入应使用白色可编辑默认态，并明确区分聚焦、禁用和只读状态。');
 assert.ok(viewSource.includes('open={showCustomDatePicker}') && viewSource.includes('title="选择日期范围"') && viewSource.includes('应用日期'), '自定义日期应通过公共底部抽屉渐进披露并在确认后应用。');
@@ -188,7 +188,7 @@ for (const pinnedInteraction of [
     'onScroll={handleReportScroll}',
     'sticky top-0 z-30',
     'transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-panel)] ease-out',
-    "'border-[var(--tm-border-subtle)] shadow-[var(--tm-shadow-control)]'",
+    "'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]'",
     "'py-[var(--tm-report-filter-padding-pinned)]'",
     "'pb-[var(--tm-report-filter-padding-bottom)] pt-[var(--tm-report-filter-padding-top)]'",
 ]) {

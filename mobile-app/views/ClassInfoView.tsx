@@ -518,7 +518,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
               role="tab"
               aria-selected={parentTab === item.key}
               onClick={() => setParentTab(item.key)}
-              className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums ${parentTab === item.key ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+              className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums ${parentTab === item.key ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
             >
               {item.label}({item.count})
             </button>
@@ -553,7 +553,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
                 key={guardian.id}
                 type="button"
                 onClick={() => openGuardianDetail({ studentId: student.id, guardianId: guardian.id })}
-                className="flex min-h-[76px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] py-[var(--tm-space-3)] text-left shadow-[var(--tm-shadow-card)] active:bg-[var(--tm-bg-surface-soft)]"
+                className="flex min-h-[76px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] py-[var(--tm-space-3)] text-left [box-shadow:var(--tm-shadow-card)] active:bg-[var(--tm-bg-surface-soft)]"
                 aria-label={`查看${student.name}的${getGuardianLabel(guardian)}绑定详情`}
               >
                 <StudentAvatar student={student} />
@@ -662,7 +662,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
 
       {toast && (
         <div className="pointer-events-none absolute inset-x-[var(--tm-space-5)] top-[var(--tm-space-3)] z-[80] flex justify-center" role="status" aria-live="polite">
-          <div className={`rounded-[var(--tm-radius-control)] px-[var(--tm-space-4)] py-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-card-raised)] ${toast.success ? 'bg-[var(--tm-text-primary)]' : 'bg-[var(--tm-status-negative)]'}`}>
+          <div className={`rounded-[var(--tm-radius-control)] px-[var(--tm-space-4)] py-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)] ${toast.success ? 'bg-[var(--tm-text-primary)]' : 'bg-[var(--tm-status-negative)]'}`}>
             {toast.message}
           </div>
         </div>
@@ -689,7 +689,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
                   type="button"
                   onClick={() => updateEducationStage(option.value)}
                   aria-pressed={draft.educationStage === option.value}
-                  className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-body)] font-semibold transition ${draft.educationStage === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                  className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-body)] font-semibold transition ${draft.educationStage === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                 >
                   {option.label}
                 </button>

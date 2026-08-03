@@ -34,7 +34,7 @@ requireText(sheetSource, 'bg-[var(--tm-mask)] backdrop-blur-[1px]', '遮罩应�
 requireText(sheetSource, 'bg-[var(--tm-bg-page-glass)]', '抽屉面板应使用暖白轻玻璃底。');
 requireText(sheetSource, 'bg-[var(--tm-brand-primary-soft-strong)]', '底部抽屉拖拽条应使用品牌红浅色。');
 requireText(sheetSource, 'bg-[var(--tm-brand-primary-soft)]', '当前来源卡片应使用浅红选中底。');
-requireText(sheetSource, 'ring-[1.5px] ring-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-card)]', '当前来源卡片应使用品牌红描边与统一卡片阴影。');
+requireText(sheetSource, 'ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]', '当前来源卡片应使用品牌红描边与统一卡片阴影。');
 requireText(sheetSource, 'bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-white', '当前来源胶囊应使用品牌红。');
 requireText(sheetSource, 'transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96]', '抽屉内按钮应使用快速动效令牌和 0.96 按压反馈。');
 forbidText(sheetSource, 'aria-label="切换学校"', '不应继续使用切换学校语义。');

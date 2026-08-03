@@ -147,10 +147,10 @@ const HomeworkEntryView: React.FC<HomeworkEntryViewProps> = ({ classInfo, studen
         <div className="mb-[var(--tm-space-3)] flex items-center justify-between text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]"><span className="truncate">{classInfo.name}</span><span>已录入 {completedCount}/{students.length}</span></div>
 
         <div className="mb-[var(--tm-space-3)] grid grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-[var(--tm-space-1)]" role="tablist" aria-label="学科">
-          {subjectOptions.map(item => <button key={item} type="button" role="tab" aria-selected={subject === item} onClick={() => setSubject(item)} className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-body)] font-semibold ${subject === item ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{item}</button>)}
+          {subjectOptions.map(item => <button key={item} type="button" role="tab" aria-selected={subject === item} onClick={() => setSubject(item)} className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-body)] font-semibold ${subject === item ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{item}</button>)}
         </div>
 
-        <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] shadow-[var(--tm-shadow-card)]">
+        <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
           <div className="mb-[var(--tm-space-2)] flex items-center justify-between">
             <div className="flex items-center">
               <button type="button" onClick={() => setCalendarMonth(current => addMonths(current, -1))} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="上个月"><ChevronLeft className="h-[18px] w-[18px]" /></button>
@@ -171,7 +171,7 @@ const HomeworkEntryView: React.FC<HomeworkEntryViewProps> = ({ classInfo, studen
           <input value={homeworkName} onChange={event => setHomeworkName(event.target.value)} placeholder="作业名称（选填）" className="mt-[var(--tm-space-3)] h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]" />
         </section>
 
-        <section className="mt-[var(--tm-space-3)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] shadow-[var(--tm-shadow-card)]">
+        <section className="mt-[var(--tm-space-3)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
           <div className="mb-[var(--tm-space-2)] flex items-center justify-between"><h2 className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">批量操作</h2><span className="text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">实时保存</span></div>
           <div className="grid grid-cols-5 gap-[var(--tm-space-1)]">{statusOptions.map(status => <button key={status} type="button" onClick={() => applyQuickStatus(status)} className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control)] border text-[length:var(--tm-font-size-meta)] font-semibold ${activeStatusTone[status]}`}>{status}</button>)}</div>
 

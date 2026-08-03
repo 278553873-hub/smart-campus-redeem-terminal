@@ -362,7 +362,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     const renderOverviewTab = () => (
         <div className="space-y-3 pb-24 animate-in fade-in duration-300">
             {/* C. Current Semester Five-Education Summary */}
-            <div className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]">
+            <div className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
                 <div className="relative z-10 flex items-center justify-between px-4 pb-3 pt-4">
                     <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
                         <AwardIcon className="h-4 w-4 text-[var(--tm-brand-reward)]" />
@@ -403,7 +403,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
             </div>
 
-            <button type="button" onClick={onViewBodyMeasurements} className="w-full overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left shadow-[var(--tm-shadow-card)] transition active:scale-[0.985]">
+            <button type="button" onClick={onViewBodyMeasurements} className="w-full overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985]">
                 <div className="flex min-h-[58px] items-center justify-between px-4">
                     <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]"><Ruler className="h-4.5 w-4.5 text-[var(--tm-status-positive)]" />成长数据</h3>
                     <span className="flex items-center gap-1 text-xs font-medium text-[var(--tm-text-tertiary)]">{latestMeasurement?.measuredAt ?? '待补充'}<ChevronRight className="h-4 w-4" /></span>
@@ -417,7 +417,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 ) : <div className="border-t border-[var(--tm-border-subtle)] px-4 py-4 text-sm text-[var(--tm-text-secondary)]">暂无测量记录</div>}
             </button>
 
-            <button type="button" onClick={onViewHealthRecords} className="flex min-h-[88px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 text-left shadow-[var(--tm-shadow-card)] transition active:scale-[0.985]">
+            <button type="button" onClick={onViewHealthRecords} className="flex min-h-[88px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985]">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]"><HeartPulse className="h-5 w-5" /></span>
                 <span className="min-w-0 flex-1"><span className="block text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">健康检查</span><span className="mt-1 block truncate text-xs font-medium text-[var(--tm-text-secondary)]">{latestHealthRecord ? `裸眼视力 左${latestHealthRecord.nakedVisionLeft || '--'} · 右${latestHealthRecord.nakedVisionRight || '--'} · ${latestHealthRecord.glassesType}` : '暂无体检记录'}</span>{latestHealthRecord?.conclusionTags.length ? <span className="mt-1 block truncate text-[11px] font-semibold text-[var(--tm-brand-reward-strong)]">{latestHealthRecord.conclusionTags.join('、')}</span> : null}</span>
                 <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
@@ -429,7 +429,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="space-y-3 pb-24 animate-in fade-in duration-300">
             <StudentTermSelector value={selectedTerm} options={STUDENT_TERM_OPTIONS} onChange={setSelectedTerm} ariaLabel="选择成长报告学期" />
 
-            <section className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]">
+            <section className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
                 <button
                     onClick={() => toggleSection('term_report')}
                     className="flex min-h-[60px] w-full items-center justify-between px-4 text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
@@ -496,67 +496,71 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="relative h-full min-h-0 overflow-hidden bg-transparent font-sans">
             <div className="h-full overflow-y-auto pb-safe no-scrollbar">
 
+            {/* Student Detail Navigation */}
+            <header className="px-4 pt-[var(--mini-program-status-bar-height,0px)]">
+                <div className="flex h-11 items-center">
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        aria-label="返回"
+                        className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+                    </button>
+                </div>
+            </header>
+
             {/* A. Student Profile Card */}
-            <div className="relative w-full overflow-hidden rounded-b-[var(--tm-radius-card)] bg-[linear-gradient(135deg,var(--tm-bg-surface)_0%,var(--tm-brand-primary-soft)_100%)] px-4 pb-4 pt-[calc(var(--mini-program-status-bar-height,0px)+var(--tm-space-2))] shadow-[var(--tm-shadow-card)]">
-                <div className="pointer-events-none absolute -right-14 -top-16 h-44 w-44 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--tm-brand-primary)_14%,transparent),transparent_70%)]" aria-hidden="true" />
-                <div className="relative">
-                    <div className="mb-3 flex h-11 items-center justify-between [padding-right:var(--mini-program-capsule-right-inset,0px)]">
-                        <button
-                            type="button"
-                            onClick={onBack}
-                            aria-label="返回"
-                            className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
-                        >
-                            <ChevronLeft className="h-5 w-5" />
-                        </button>
-                        <div className="flex items-center">
-                            <button
-                                type="button"
-                                onClick={onOpenStudentArchive}
-                                aria-label="查看学生成长档案"
-                                className="flex h-11 items-center justify-center gap-1.5 rounded-full px-2 text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
-                            >
-                                <FolderOpen className="h-4 w-4 shrink-0" />
-                                <span className="whitespace-nowrap text-xs font-medium">档案</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setShowStatusActionSheet(true)}
-                                aria-label="管理学籍状态"
-                                className="flex h-11 items-center justify-center gap-1.5 rounded-full px-2 text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
-                            >
-                                {student.status === 'left'
-                                    ? <AlertTriangle className="h-4 w-4 shrink-0" />
-                                    : <BadgeCheck className="h-4 w-4 shrink-0" />}
-                                <span className="whitespace-nowrap text-xs font-medium">学籍</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div className="flex min-w-0 items-center gap-4">
+            <section className="mx-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-glass)] p-4 [box-shadow:var(--tm-shadow-card)] backdrop-blur-xl">
+                    <div className="flex min-w-0 items-start gap-4">
                         <button
                             type="button"
                             onClick={onEditBasicInfo}
                             aria-label="编辑基础信息"
                             className="relative shrink-0 rounded-full text-left transition-transform active:scale-95"
                         >
-                            <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border-2 border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-bg-surface)] p-1 shadow-[var(--tm-shadow-avatar)]">
+                            <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border-2 border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-bg-surface)] p-1 [box-shadow:var(--tm-shadow-avatar)]">
                                 <img
                                     src={student.avatar || (student.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.STUDENT_GIRL_DEFAULT)}
                                     alt={`${student.name}头像`}
                                     className="h-full w-full rounded-full object-cover"
                                 />
                             </div>
-                            <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-icon)]" aria-hidden="true">
+                            <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-white text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-icon)]" aria-hidden="true">
                                 <Camera className="h-4 w-4" strokeWidth={2.3} />
                             </span>
                         </button>
                         <div className="min-w-0 flex-1">
-                            <h2 className="flex items-center gap-2 text-2xl font-bold text-[var(--tm-text-primary)]">
-                                <span className="truncate">{student.name}</span>
-                                {student.gender === 'male'
-                                    ? <MaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-male)]" />
-                                    : <FemaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-female)]" />}
-                            </h2>
+                            <div className="flex min-w-0 items-center justify-between gap-2">
+                                <h2 className="flex min-w-0 items-center gap-2 text-2xl font-bold text-[var(--tm-text-primary)]">
+                                    <span className="truncate">{student.name}</span>
+                                    {student.gender === 'male'
+                                        ? <MaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-male)]" />
+                                        : <FemaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-female)]" />}
+                                </h2>
+                                <div className="flex shrink-0 items-center">
+                                    <button
+                                        type="button"
+                                        onClick={onOpenStudentArchive}
+                                        aria-label="查看学生成长档案"
+                                        className="flex h-11 items-center justify-center gap-1 rounded-full px-1.5 text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                                    >
+                                        <FolderOpen className="h-4 w-4 shrink-0" />
+                                        <span className="whitespace-nowrap text-xs font-medium">档案</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowStatusActionSheet(true)}
+                                        aria-label="管理学籍状态"
+                                        className="flex h-11 items-center justify-center gap-1 rounded-full px-1.5 text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                                    >
+                                        {student.status === 'left'
+                                            ? <AlertTriangle className="h-4 w-4 shrink-0" />
+                                            : <BadgeCheck className="h-4 w-4 shrink-0" />}
+                                        <span className="whitespace-nowrap text-xs font-medium">学籍</span>
+                                    </button>
+                                </div>
+                            </div>
                             <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                 <span className="flex items-center gap-1 rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]"><School className="h-3 w-3" />{formatCompactClassName(student.class)}</span>
                                 <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">ID: {student.id}</span>
@@ -592,8 +596,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             明细 <ChevronRight size={14} strokeWidth={2.5} />
                         </button>
                     </div>
-                </div>
-            </div>
+            </section>
 
             {/* 2. Scrollable Content */}
             <div className="space-y-4 p-4">
@@ -607,7 +610,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('overview')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'overview' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长概览</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'overview' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长概览</span>
                         </button>
                         <button
                             type="button"
@@ -616,7 +619,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('report')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长报告</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长报告</span>
                         </button>
                         <button
                             type="button"
@@ -625,7 +628,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('collection')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'collection' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>采集记录</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'collection' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>采集记录</span>
                         </button>
                     </div>
                 </div>
@@ -647,7 +650,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     aria-modal="true"
                     aria-label="管理学籍状态"
                 >
-                    <div className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+                    <div className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 [box-shadow:var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
                         <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" />
                         <div className="mb-4 flex items-center gap-3">
                             <span className={`flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]'}`}>
@@ -683,7 +686,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     aria-labelledby="leave-student-confirm-title"
                     aria-describedby="leave-student-confirm-description"
                 >
-                    <div className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+                    <div className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 [box-shadow:var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
                         <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" />
                         <div className="py-1">
                             <h3 id="leave-student-confirm-title" className="text-[17px] font-semibold text-[var(--tm-text-primary)]">确认设为离校？</h3>

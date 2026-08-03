@@ -25,7 +25,7 @@ const StudentTimeRangeSelector: React.FC<StudentTimeRangeSelectorProps> = ({
       value={value}
       onChange={event => onChange(event.target.value)}
       aria-label={ariaLabel}
-      className="h-11 w-full appearance-none rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] pl-10 pr-10 text-[13px] font-medium text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)] outline-none transition focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+      className="h-11 w-full appearance-none rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] pl-10 pr-10 text-[13px] font-medium text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] outline-none transition focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
     >
       {options.map(option => (
         <option key={option.value} value={option.value}>{option.label}</option>

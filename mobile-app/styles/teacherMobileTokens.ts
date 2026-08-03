@@ -326,8 +326,8 @@ export const teacherBrandCssVariables = {
   '--tm-mask': teacherBrandSemantic.mask,
   '--tm-shadow-brand-color': 'rgba(224, 39, 39, 0.30)',
   '--tm-shadow-neutral-color': 'rgba(64, 60, 58, 0.18)',
-  '--tm-shadow-card': '0 10px 28px -20px rgba(64, 60, 58, 0.18)',
-  '--tm-shadow-card-raised': '0 12px 32px -26px rgba(64, 60, 58, 0.18)',
+  '--tm-shadow-card': '0 0 0 1px rgba(64, 60, 58, 0.07)',
+  '--tm-shadow-card-raised': '0 0 0 1px rgba(64, 60, 58, 0.075), 0 3px 8px -3px rgba(64, 60, 58, 0.06)',
   '--tm-shadow-control': '0 6px 16px -12px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-icon': '0 10px 22px -16px rgba(224, 39, 39, 0.24)',
   '--tm-shadow-avatar': '0 18px 28px -18px rgba(224, 39, 39, 0.24)',
@@ -378,6 +378,7 @@ export const teacherBrandCssVariables = {
   '--tm-radius-sheet': '28px',
   '--tm-size-touch': '44px',
   '--tm-size-floating-action': '52px',
+  '--tm-student-detail-header-height': '272px',
   '--tm-font-size-document-title': '26px',
   '--tm-font-size-page-title': '22px',
   '--tm-font-size-group-title': '18px',
@@ -445,10 +446,10 @@ export const phoneRadius = {
 
 export const phoneShadow = {
   none: 'shadow-none',
-  card: 'shadow-[var(--tm-shadow-card)]',
-  raised: 'shadow-[var(--tm-shadow-card-raised)]',
-  floating: 'shadow-[var(--tm-shadow-floating)]',
-  modal: 'shadow-[var(--tm-shadow-sheet)]',
+  card: '[box-shadow:var(--tm-shadow-card)]',
+  raised: '[box-shadow:var(--tm-shadow-card-raised)]',
+  floating: '[box-shadow:var(--tm-shadow-floating)]',
+  modal: '[box-shadow:var(--tm-shadow-sheet)]',
 } as const;
 
 export const phoneSpace = {

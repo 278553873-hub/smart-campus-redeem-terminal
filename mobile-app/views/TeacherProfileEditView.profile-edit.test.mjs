@@ -154,7 +154,7 @@ for (const legacyColor of ['slate-', 'blue-', 'indigo-', 'violet-', 'purple-', '
 for (const requiredToken of [
   'bg-[var(--tm-bg-page)]',
   'bg-[var(--tm-mask)]',
-  'shadow-[var(--tm-shadow-sheet)]',
+  '[box-shadow:var(--tm-shadow-sheet)]',
   'bg-[var(--tm-brand-primary)]',
   'bg-[var(--tm-brand-primary-soft)]',
   'border-[var(--tm-border-subtle)]',

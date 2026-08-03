@@ -68,7 +68,7 @@ const secondaryIconClass = 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-bra
 const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)] transition active:scale-95 active:text-[var(--tm-brand-primary)]';
 const reportToolImageClass = 'h-16 w-16 max-w-none rounded-[var(--tm-radius-inner)] object-cover';
 const assistantToolImageClass = 'h-12 w-12 rounded-[var(--tm-radius-inner)] object-cover';
-const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)] shadow-[var(--tm-shadow-card-raised)] backdrop-blur-sm';
+const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-card)] backdrop-blur-sm';
 
 const ToolSection: React.FC<ToolSectionProps> = ({ title, children }) => (
     <section className={`relative overflow-hidden rounded-[var(--tm-radius-card)] p-5 ${toolCardSurfaceClass}`}>
@@ -98,10 +98,10 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                                 <img
                                     src={item.imageSrc}
                                     alt={item.imageAlt ?? item.title}
-                                    className={item.imageClassName ?? 'h-12 w-12 rounded-[var(--tm-radius-inner)] object-cover shadow-[var(--tm-shadow-icon)]'}
+                                    className={item.imageClassName ?? 'h-12 w-12 rounded-[var(--tm-radius-inner)] object-cover [box-shadow:var(--tm-shadow-icon)]'}
                                 />
                             ) : (
-                                <span className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-[var(--tm-radius-inner)] bg-[linear-gradient(145deg,var(--tm-brand-primary-soft),var(--tm-brand-secondary-soft))] shadow-[var(--tm-shadow-icon)] ring-1 ring-[var(--tm-brand-primary-soft-strong)]">
+                                <span className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-[var(--tm-radius-inner)] bg-[linear-gradient(145deg,var(--tm-brand-primary-soft),var(--tm-brand-secondary-soft))] [box-shadow:var(--tm-shadow-icon)] ring-1 ring-[var(--tm-brand-primary-soft-strong)]">
                                     <img src={item.imageSrc} alt={item.imageAlt ?? item.title} className={item.imageClassName ?? 'relative h-11 w-11 object-contain'} />
                                 </span>
                             )}
@@ -148,7 +148,7 @@ export const ClassSourceSheet: React.FC<{
         onClick={onClose}
     >
         <section
-            className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-page-glass)] px-5 pb-[calc(16px+env(safe-area-inset-bottom))] pt-2.5 shadow-[var(--tm-shadow-sheet)] backdrop-blur-xl"
+            className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-page-glass)] px-5 pb-[calc(16px+env(safe-area-inset-bottom))] pt-2.5 [box-shadow:var(--tm-shadow-sheet)] backdrop-blur-xl"
             onClick={(event) => event.stopPropagation()}
             aria-label="切换班级来源"
         >
@@ -165,7 +165,7 @@ export const ClassSourceSheet: React.FC<{
                             key={space.id}
                             type="button"
                             onClick={() => onSelectSpace(space.id)}
-                            className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-inner)] px-4 text-left transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-card)]' : 'bg-white/92 ring-1 ring-[var(--tm-border-subtle)] shadow-[var(--tm-shadow-card)]'}`}
+                            className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-inner)] px-4 text-left transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]' : 'bg-white/92 ring-1 ring-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-card)]'}`}
                         >
                             <span className="min-w-0 truncate text-[17px] font-semibold leading-[22px] text-[var(--tm-text-primary)]">{space.title}</span>
                             <span className="ml-3 flex shrink-0 items-center gap-2">
@@ -308,7 +308,7 @@ const MeView: React.FC<MeViewProps> = ({
                             className="relative shrink-0 overflow-visible rounded-full text-left transition-transform active:scale-95"
                             aria-label="编辑教师信息"
                         >
-                            <div className="h-20 w-20 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] shadow-[var(--tm-shadow-avatar)] ring-1 ring-white/90">
+                            <div className="h-20 w-20 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
                                 <span className="block h-full w-full overflow-hidden rounded-full bg-white">
                                     <img
                                         src={displayAvatar}
@@ -317,7 +317,7 @@ const MeView: React.FC<MeViewProps> = ({
                                     />
                                 </span>
                             </div>
-                            <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-icon)]" aria-hidden="true">
+                            <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-white text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-icon)]" aria-hidden="true">
                                 <Camera className="h-4 w-4" strokeWidth={2.3} />
                             </span>
                         </button>

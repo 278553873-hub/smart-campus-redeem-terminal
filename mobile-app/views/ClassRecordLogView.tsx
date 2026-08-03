@@ -33,7 +33,7 @@ type LogStatus = 'processing' | 'done';
 type LogType = 'file' | 'voice' | 'camera' | 'text';
 
 const recordSheetBackdropClass = 'fixed inset-0 z-[1000] flex items-end justify-center bg-[var(--tm-mask)] backdrop-blur-sm animate-in fade-in [animation-duration:var(--tm-duration-standard)]';
-const recordSheetSurfaceClass = 'flex w-full max-w-md flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)]';
+const recordSheetSurfaceClass = 'flex w-full max-w-md flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)]';
 interface LogItem {
     id: string;
     type: LogType;
@@ -253,7 +253,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             </button>
 
             {activeCardMenu === id && (
-                <div className="absolute right-0 top-11 z-30 w-32 origin-top-right animate-in rounded-[var(--tm-radius-control)] bg-white p-1 shadow-[var(--tm-shadow-floating)] ring-1 ring-[var(--tm-border-subtle)] fade-in zoom-in duration-200">
+                <div className="absolute right-0 top-11 z-30 w-32 origin-top-right animate-in rounded-[var(--tm-radius-control)] bg-white p-1 [box-shadow:var(--tm-shadow-floating)] ring-1 ring-[var(--tm-border-subtle)] fade-in zoom-in duration-200">
                     <button className="flex min-h-11 w-full items-center gap-2 rounded-[8px] px-2 text-left text-xs font-medium text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]" onClick={() => setActiveCardMenu(null)}>
                         <RetryIcon className="w-3.5 h-3.5" /> 重新识别
                     </button>
@@ -308,7 +308,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                 ? 'text-[var(--tm-record-class-text)]'
                 : 'text-[var(--tm-record-student-text)]';
             return (
-                <div key={log.id} className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-white p-4 shadow-[var(--tm-shadow-card)] animate-in fade-in slide-in-from-top-5 duration-500">
+                <div key={log.id} className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-white p-4 [box-shadow:var(--tm-shadow-card)] animate-in fade-in slide-in-from-top-5 duration-500">
                     <div className="relative z-10 mb-4 flex items-center justify-between">
                         <div className={`flex items-center gap-2.5 ${processingTone}`}>
                             <Loader2 className="h-5 w-5 animate-spin" />
@@ -327,7 +327,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         // 2. DONE STATE - FILE
         if (log.type === 'file') {
             return (
-                <div key={log.id} className="relative rounded-[var(--tm-radius-card)] bg-white p-4 shadow-[var(--tm-shadow-card)]">
+                <div key={log.id} className="relative rounded-[var(--tm-radius-card)] bg-white p-4 [box-shadow:var(--tm-shadow-card)]">
                     <TeacherRecordHeader id={log.id} time={log.time} />
                     <div className="mb-1 flex items-center gap-3 rounded-2xl bg-[var(--tm-bg-surface-soft)] p-3.5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--tm-brand-primary)]">
@@ -359,7 +359,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             : 'border border-[var(--tm-record-positive-border)] bg-white/90 text-[var(--tm-status-positive)]';
 
         return (
-            <div key={log.id} className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-white p-4 shadow-[var(--tm-shadow-card)] animate-in fade-in duration-500">
+            <div key={log.id} className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-white p-4 [box-shadow:var(--tm-shadow-card)] animate-in fade-in duration-500">
                 <TeacherRecordHeader id={log.id} time={log.time} />
 
                 {log.type === 'voice' && <VoicePlayback active={log.scope} duration={log.audioDuration} />}
@@ -472,7 +472,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                 {canRecordClass && (
                     <div className="grid grid-cols-[224px_minmax(0,1fr)] items-end gap-3 px-5 pb-3 pt-1.5">
                         <div className="w-full">
-                            <div className="flex h-full rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-glass)] p-1 shadow-[var(--tm-shadow-control)]">
+                            <div className="flex h-full rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-glass)] p-1 [box-shadow:var(--tm-shadow-control)]">
                                 <button
                                     onClick={() => onTabChange('student')}
                                     className={`min-h-11 flex-1 rounded-[var(--tm-radius-control)] px-2 text-[14px] font-semibold transition-[background-color,color] [transition-duration:var(--tm-duration-standard)] ${activeTab === 'student' ? 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}

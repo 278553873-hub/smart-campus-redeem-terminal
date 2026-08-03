@@ -26,7 +26,7 @@ requireText(recordSource, '{canRecordClass && (', '记录对象切换应只对�
 requireText(recordSource, 'grid-cols-[224px_minmax(0,1fr)]', '双记录对象来源应使用稳定宽度的分段控件和弹性指标列。');
 requireText(recordSource, 'items-end gap-3 px-5 pb-3 pt-1.5', '指标入口应与记录对象分段控件底部对齐。');
 requireText(recordSource, 'items-center justify-self-end gap-0.5', '指标入口应对齐下方记录卡右边界。');
-requireText(recordSource, 'bg-[var(--tm-bg-surface-glass)] p-1 shadow-[var(--tm-shadow-control)]', '分段控件应使用无边框轻表面和克制阴影。');
+requireText(recordSource, 'bg-[var(--tm-bg-surface-glass)] p-1 [box-shadow:var(--tm-shadow-control)]', '分段控件应使用无边框轻表面和克制阴影。');
 forbidText(recordSource, 'ring-1 ring-inset ring-[var(--tm-border-subtle)]', '无边框圆角体系不应为记录对象分段控件单独增加描边。');
 forbidText(recordSource, 'bg-[var(--tm-bg-surface-muted)] p-1', '记录对象未选中态不应使用类似禁用状态的灰色底板。');
 requireText(recordSource, '!canRecordClass && (', '单一记录对象时应直接展示学生指标入口。');

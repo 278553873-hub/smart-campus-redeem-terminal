@@ -106,7 +106,7 @@ const defaultIconMap: Record<string, FieldIcon> = {
   date: CalendarDays,
 };
 
-const inputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] shadow-[var(--tm-shadow-control)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
+const inputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 const sectionDropId = (sectionId: string) => `form-section:${sectionId}`;
 const sectionSortId = (sectionId: string) => `form-section-sort:${sectionId}`;
 
@@ -149,7 +149,7 @@ const Toggle: React.FC<{ checked: boolean; label: string; onChange: () => void; 
     className="flex h-11 w-14 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] disabled:opacity-50"
   >
     <span className={`flex h-7 w-12 rounded-full p-0.5 transition-colors ${checked ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-border-control)]'}`}>
-      <span className={`h-6 w-6 rounded-full bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-control)] transition-transform ${checked ? 'translate-x-5' : ''}`} />
+      <span className={`h-6 w-6 rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-control)] transition-transform ${checked ? 'translate-x-5' : ''}`} />
     </span>
   </button>
 );
@@ -179,7 +179,7 @@ const SortableFieldCard: React.FC<{
       ref={setNodeRef}
       data-form-field-editor={fieldId}
       style={{ transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 20 : undefined }}
-      className={`${className} relative ${isDragging ? 'opacity-[0.85] shadow-[var(--tm-shadow-sheet)]' : ''}`}
+      className={`${className} relative ${isDragging ? 'opacity-[0.85] [box-shadow:var(--tm-shadow-sheet)]' : ''}`}
     >
       <div className="grid min-w-0 grid-cols-[48px_minmax(0,1fr)] items-stretch">
         {!readOnly ? (
@@ -229,7 +229,7 @@ const SortableSectionRow: React.FC<{ section: FormSection }> = ({ section }) => 
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 20 : undefined }}
-      className={`flex min-h-[56px] items-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] ${isDragging ? 'opacity-[0.85] shadow-[var(--tm-shadow-sheet)]' : ''}`}
+      className={`flex min-h-[56px] items-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] ${isDragging ? 'opacity-[0.85] [box-shadow:var(--tm-shadow-sheet)]' : ''}`}
     >
       <button
         type="button"
@@ -629,7 +629,7 @@ const FormBuilder = <TType extends string>({
         required={field.required}
         readOnly={readOnly}
         itemLabel={itemLabel}
-        className={`overflow-hidden rounded-[var(--tm-radius-card)] border bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)] transition-colors ${fieldError ? 'border-[var(--tm-status-negative-strong)]' : expanded ? 'border-[var(--tm-brand-primary)]' : 'border-transparent'}`}
+        className={`overflow-hidden rounded-[var(--tm-radius-card)] border bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)] transition-colors ${fieldError ? 'border-[var(--tm-status-negative-strong)]' : expanded ? 'border-[var(--tm-brand-primary)]' : 'border-transparent'}`}
         header={<button
           type="button"
           disabled={readOnly}
@@ -759,7 +759,7 @@ const FormBuilder = <TType extends string>({
 
             <div className="mt-2 flex min-h-11 items-center justify-between">
               {!usesSubFields ? <button type="button" onClick={() => updateField(field.id, { required: !field.required })} className="flex min-h-11 items-center gap-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]" aria-pressed={field.required}>
-                <span className={`flex h-6 w-10 rounded-full p-0.5 transition ${field.required ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-border-control)]'}`}><span className={`h-5 w-5 rounded-full bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-control)] transition ${field.required ? 'translate-x-4' : ''}`} /></span>
+                <span className={`flex h-6 w-10 rounded-full p-0.5 transition ${field.required ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-border-control)]'}`}><span className={`h-5 w-5 rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-control)] transition ${field.required ? 'translate-x-4' : ''}`} /></span>
                 必填
               </button> : <span />}
               <IconButton label={`${itemLabel}更多设置`} onClick={() => setActiveFieldMenuId(field.id)}><MoreHorizontal className="h-5 w-5" /></IconButton>
@@ -869,7 +869,7 @@ const FormBuilder = <TType extends string>({
         {typePickerSecondaryTab && (
           <div className="mb-4 grid grid-cols-2 gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label={typePickerTitle ?? `选择${itemLabel}类型`}>
             {([['primary', typePickerPrimaryLabel], ['secondary', typePickerSecondaryTab.label]] as const).map(([value, label]) => (
-              <button key={value} type="button" role="tab" aria-selected={typePickerTab === value} onClick={() => setTypePickerTab(value)} className={`min-h-11 rounded-[calc(var(--tm-radius-control)-4px)] px-2 text-[length:var(--tm-font-size-body)] font-semibold ${typePickerTab === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>
+              <button key={value} type="button" role="tab" aria-selected={typePickerTab === value} onClick={() => setTypePickerTab(value)} className={`min-h-11 rounded-[calc(var(--tm-radius-control)-4px)] px-2 text-[length:var(--tm-font-size-body)] font-semibold ${typePickerTab === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>
             ))}
           </div>
         )}
@@ -880,7 +880,7 @@ const FormBuilder = <TType extends string>({
                 const TypeIcon = type.icon ?? defaultIconMap[type.value] ?? TextCursorInput;
                 return (
                   <button key={type.value} type="button" onClick={() => addField(type.value)} className="flex min-h-[76px] items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)]">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]"><TypeIcon className="h-5 w-5" /></span>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]"><TypeIcon className="h-5 w-5" /></span>
                     <span className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{type.label}</span>
                   </button>
                 );
@@ -937,7 +937,7 @@ const FormBuilder = <TType extends string>({
               <section>
                 <div className="mb-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">日期格式</div>
                 <div className="grid grid-cols-3 gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
-                  {([['ymd', '年-月-日'], ['ym', '年-月'], ['year', '年份']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={activeFieldSettings.dateFormat === value} onClick={() => updateField(activeField.id, { settings: { ...activeFieldSettings, dateFormat: value } })} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${activeFieldSettings.dateFormat === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
+                  {([['ymd', '年-月-日'], ['ym', '年-月'], ['year', '年份']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={activeFieldSettings.dateFormat === value} onClick={() => updateField(activeField.id, { settings: { ...activeFieldSettings, dateFormat: value } })} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${activeFieldSettings.dateFormat === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
                 </div>
               </section>
             )}
@@ -946,7 +946,7 @@ const FormBuilder = <TType extends string>({
               <section>
                 <div className="mb-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">数字格式</div>
                 <div className="grid grid-cols-3 gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
-                  {([['integer', '整数'], ['decimal-1', '1位小数'], ['decimal-2', '2位小数']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={activeFieldSettings.numberFormat === value} onClick={() => updateField(activeField.id, { settings: { ...activeFieldSettings, numberFormat: value } })} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${activeFieldSettings.numberFormat === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
+                  {([['integer', '整数'], ['decimal-1', '1位小数'], ['decimal-2', '2位小数']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={activeFieldSettings.numberFormat === value} onClick={() => updateField(activeField.id, { settings: { ...activeFieldSettings, numberFormat: value } })} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${activeFieldSettings.numberFormat === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
                 </div>
               </section>
             )}

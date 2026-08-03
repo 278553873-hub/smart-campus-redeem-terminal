@@ -18,7 +18,7 @@ requireText(classListSource, "isSchoolSpace && gradeFilter !== '全部'", '年�
 requireText(classListSource, 'isSchoolSpace && showTeachingOnly && !assignedClassIds.has(classInfo.id)', '任教筛选只能作用于学校版，并依据真实任教关系过滤。');
 requireText(classListSource, 'className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control)]', '任教班级筛选按钮应使用统一控件圆角，并保留完整触控热区。');
 requireText(classListSource, 'min-h-11 w-full appearance-none rounded-[var(--tm-radius-control)]', '学校版年级筛选应提供至少 44px 触控高度。');
-requireText(classListSource, 'rounded-[var(--tm-radius-card)] bg-white px-4 py-3 shadow-[var(--tm-shadow-card)]', '班级卡片应使用统一圆角与普通卡片阴影令牌。');
+requireText(classListSource, 'rounded-[var(--tm-radius-card)] bg-white px-4 py-3 [box-shadow:var(--tm-shadow-card)]', '班级卡片应使用统一圆角与普通卡片阴影令牌。');
 requireText(classListSource, 'flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)]', '班级卡片底部操作按钮应满足 44px 最小触控高度。');
 requireText(appSource, 'teacherProfile={teacherProfile}', 'App 应把当前教师资料传给班级列表。');
 

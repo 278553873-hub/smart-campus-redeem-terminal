@@ -5,6 +5,8 @@ const appSource = read('../App.tsx');
 const typesSource = read('../types.ts');
 const constantsSource = read('../constants.ts');
 const dashboardSource = read('./DashboardView.tsx');
+const screenBackgroundSource = read('../components/TeacherMobileScreenBackground.tsx');
+const tokenSource = read('../styles/teacherMobileTokens.ts');
 const basicEditSource = read('./StudentBasicEditView.tsx');
 const coinDetailSource = read('./StudentCoinDetailView.tsx');
 const evaluationRecordsSource = read('./StudentEvaluationRecordsView.tsx');
@@ -39,13 +41,17 @@ requireText(appSource, '<StudentCoinDetailView', 'App 应渲染校园币详情�
 requireText(appSource, 'onEditBasicInfo={() => navigateTo(\'student_basic_edit\')}', '学生详情页应能进入基础信息编辑页。');
 requireText(appSource, 'onViewCampusCoins={() => navigateTo(\'student_coin_detail\')}', '学生详情页资产区应能进入校园币详情页。');
 requireText(appSource, 'currentView !== \'student_detail\'', '学生详情页不应再显示独立页面标题栏。');
-requireText(appSource, 'onBack={goBack}', '学生详情页返回入口应并入首个学生信息卡。');
+requireText(appSource, 'onBack={goBack}', '学生详情页必须保留返回能力。');
 requireText(appSource, "'student_detail'", '学生详情页应具备独立沉浸背景判断。');
 requireText(appSource, 'TeacherMobileScreenBackground', '应提供教师手机端公共屏幕背景组件。');
 requireText(appSource, "'student_detail', 'student_archive'", '学生详情页应纳入屏幕级背景页面集合。');
 const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
 requireText(plainBackgroundList, "'student_detail'", '学生详情页应使用纯白标题栏、浅灰内容区背景。');
 requireText(appSource, '<TeacherMobileScreenBackground variant="plain" />', '学生详情页所属页面集合应返回公共纯色屏幕背景。');
+requireText(appSource, '<TeacherMobileScreenBackground variant="student-detail" />', '学生详情页应使用独立的沉浸顶部公共背景。');
+requireText(screenBackgroundSource, "variant === 'student-detail'", '公共屏幕背景组件应实现学生详情背景变体。');
+requireText(screenBackgroundSource, 'h-[var(--tm-student-detail-header-height)]', '学生详情顶部渐变高度应由组件 Token 管理。');
+requireText(tokenSource, "'--tm-student-detail-header-height'", '教师手机端 Token 应定义学生详情顶部渐变高度。');
 requireText(appSource, "hasPlainBackground ? 'z-[2]' : 'z-auto'", '学生详情内容层必须高于纯白标题背景，避免返回、档案和学籍入口被遮挡。');
 requireText(appSource, "'student_collection_detail'", 'App 路由应包含学生采集记录详情页。');
 requireText(appSource, 'getCompletedStudentCollectionHistory(', '学生详情必须从问卷数据层读取已完成采集记录。');
@@ -66,8 +72,8 @@ requireText(dashboardSource, '<Camera', '学生头像右下角必须展示相机
 if (dashboardSource.includes('<Pencil')) {
   throw new Error('学生身份卡顶部不应继续展示独立铅笔编辑按钮。');
 }
-if (dashboardSource.indexOf('aria-label="编辑基础信息"') < dashboardSource.indexOf('<div className="flex min-w-0 items-center gap-4">')) {
-  throw new Error('基础信息编辑入口必须绑定在学生头像上，而不是学生卡片顶部操作区。');
+if (dashboardSource.indexOf('aria-label="编辑基础信息"') < dashboardSource.indexOf('<div className="flex min-w-0 items-start gap-4">')) {
+  throw new Error('基础信息编辑入口必须绑定在学生卡片的头像上。');
 }
 if (dashboardSource.includes('>编辑基础信息<')) {
   throw new Error('学生详情页不应额外显示“编辑基础信息”文字操作。');
@@ -93,12 +99,11 @@ if (dashboardSource.includes('bg-blue-50 px-3 text-[11px] font-bold text-blue-60
 }
 requireText(dashboardSource, 'formatCoinAmount', '学生详情页金额应使用统一校园币格式化函数。');
 requireText(dashboardSource, 'A. Student Profile Card', '学生信息卡应独立置顶。');
-requireText(dashboardSource, 'aria-label="返回"', '学生详情页返回按钮应并入首个学生信息卡。');
-requireText(dashboardSource, '<ChevronLeft', '学生详情页首个卡片应包含返回图标。');
-requireText(dashboardSource, 'linear-gradient(135deg,var(--tm-bg-surface)', '首个学生信息区应使用品牌浅红单向浅渐变承接公共暖白背景。');
-if (/gradient\([^)]*#[0-9a-fA-F]{3,8}/.test(dashboardSource)) {
-  throw new Error('学生身份区渐变不应使用硬编码色值，只允许品牌 Token 渐变，禁止蓝黄绿混合渐变。');
-}
+requireText(dashboardSource, 'Student Detail Navigation', '学生详情页应提供独立导航层。');
+requireText(dashboardSource, 'aria-label="返回"', '学生详情独立导航层必须保留返回按钮。');
+requireText(dashboardSource, '<ChevronLeft', '学生详情独立导航层应使用返回图标。');
+requireText(dashboardSource, 'mx-4 overflow-hidden rounded-[var(--tm-radius-card)]', '学生基本信息应呈现为有左右留白的独立卡片。');
+requireText(dashboardSource, 'bg-[var(--tm-bg-surface-glass)]', '学生信息卡应使用教师端轻玻璃表面 Token。');
 if (dashboardSource.includes('mt-4 text-xs font-medium text-slate-500')) {
   throw new Error('学生状态不应单独占一行，应移动到姓名下方的信息标签组。');
 }
@@ -115,8 +120,7 @@ if (dashboardSource.includes('总资产') || dashboardSource.includes('totalCamp
   throw new Error('资产卡不应展示总资产，只展示钱包、存款和查看明细。');
 }
 requireText(dashboardSource, 'mt-3 flex min-h-[var(--tm-size-touch)] items-center border-t', '资产信息应并入学生卡底部，并压缩为一行。');
-requireText(dashboardSource, '--mini-program-status-bar-height', '学生详情渐变应延伸到模拟手机状态栏区域。');
-requireText(dashboardSource, '--mini-program-capsule-right-inset', '学生详情顶部操作应避让微信胶囊。');
+requireText(dashboardSource, 'pt-[var(--mini-program-status-bar-height,0px)]', '学生详情导航应避让模拟手机状态栏。');
 requireText(appSource, "contentTopInsetMode={currentView === 'student_detail' ? 'none' : 'status-bar'}", '学生详情应独立接管顶部安全区，其他页面保持原有状态栏内缩。');
 requireText(dashboardSource, '<StudentTermSelector value={selectedTerm}', '成长报告必须使用学期选择器。');
 requireText(termSelectorSource, '<StudentTimeRangeSelector', '学期筛选必须复用学生详情通用时间选择器。');
@@ -221,7 +225,7 @@ requireText(dashboardSource, '<FolderOpen', '学生成长档案入口应使用�
 requireText(dashboardSource, '>档案</span>', '学生成长档案入口必须显示中文“档案”。');
 const studentHeaderActionsSource = dashboardSource.slice(
   dashboardSource.indexOf('aria-label="查看学生成长档案"'),
-  dashboardSource.indexOf('<div className="flex min-w-0 items-center gap-4">'),
+  dashboardSource.indexOf('<div className="mt-2 flex flex-wrap items-center gap-1.5">'),
 );
 if ((studentHeaderActionsSource.match(/text-\[var\(--tm-text-secondary\)\]/g) || []).length !== 2) {
   throw new Error('学生卡片顶部的“档案”和“学籍”应统一使用中性深灰。');
@@ -234,6 +238,14 @@ if (dashboardSource.includes('BookOpenCheck')) {
 }
 if (dashboardSource.indexOf('aria-label="查看学生成长档案"') > dashboardSource.indexOf('{/* 2. Scrollable Content */}')) {
   throw new Error('学生成长档案入口必须位于学生身份卡顶部。');
+}
+const studentCardStart = dashboardSource.indexOf('{/* A. Student Profile Card */}');
+const studentCardEnd = dashboardSource.indexOf('{/* 2. Scrollable Content */}');
+for (const actionLabel of ['aria-label="查看学生成长档案"', 'aria-label="管理学籍状态"']) {
+  const actionIndex = dashboardSource.indexOf(actionLabel);
+  if (actionIndex < studentCardStart || actionIndex > studentCardEnd) {
+    throw new Error(`学生卡片操作未放入卡片内部：${actionLabel}`);
+  }
 }
 if (dashboardSource.includes('>学生成长档案</span>')) {
   throw new Error('学生成长档案不应继续作为更多操作抽屉中的文字菜单项。');

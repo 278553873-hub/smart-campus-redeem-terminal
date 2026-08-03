@@ -243,7 +243,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     const renderSheetFrame = (title: string, children: React.ReactNode, footer: React.ReactNode) => (
         <div className="absolute inset-0 z-[120] flex items-end bg-[var(--tm-mask)]" onClick={() => setMode('idle')}>
             <div
-                className="bottom-sheet flex max-h-[86%] w-full min-h-0 flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-sheet)]"
+                className="bottom-sheet flex max-h-[86%] w-full min-h-0 flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)]"
                 role="dialog"
                 aria-modal="true"
                 aria-label={title}
@@ -306,7 +306,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     type="button"
                     disabled={primaryDisabled}
                     onClick={onPrimary}
-                    className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white shadow-[var(--tm-shadow-icon)] transition-all active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] disabled:shadow-none"
+                    className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white [box-shadow:var(--tm-shadow-icon)] transition-all active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] disabled:shadow-none"
                 >
                     {primaryDisabled ? (selectedClassIds.size === 0 ? '请先选择班级' : '请先选择学科') : '保存'}
                 </button>
@@ -334,7 +334,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                 type="button"
                                 onClick={() => toggleGrade(grade)}
                                 aria-pressed={selected}
-                                className={`flex min-h-14 items-center justify-center rounded-[var(--tm-radius-inner)] border px-3 text-sm font-bold transition-all active:scale-95 ${selected ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)] shadow-[var(--tm-shadow-control)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)]'}`}
+                                className={`flex min-h-14 items-center justify-center rounded-[var(--tm-radius-inner)] border px-3 text-sm font-bold transition-all active:scale-95 ${selected ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)] [box-shadow:var(--tm-shadow-control)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)]'}`}
                             >
                                 {grade}
                             </button>
@@ -346,7 +346,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <button
                     type="button"
                     onClick={saveGradeLeaderGrades}
-                    className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white shadow-[var(--tm-shadow-icon)] transition-all active:scale-[0.98]"
+                    className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white [box-shadow:var(--tm-shadow-icon)] transition-all active:scale-[0.98]"
                 >
                     保存
                 </button>
@@ -374,7 +374,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                 type="button"
                                 onClick={() => setSelectedDepartmentId(department.id)}
                                 aria-pressed={selected}
-                                className={`flex min-h-14 w-full items-center justify-between rounded-[var(--tm-radius-inner)] border px-4 text-left transition-all active:scale-[0.99] ${selected ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)]'}`}
+                                className={`flex min-h-14 w-full items-center justify-between rounded-[var(--tm-radius-inner)] border px-4 text-left transition-all active:scale-[0.99] ${selected ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]'}`}
                             >
                                 <span className="text-sm font-bold">{department.name}</span>
                                 {selected && <span className="rounded-full bg-[var(--tm-brand-primary)] px-2.5 py-1 text-[11px] font-bold text-white">当前</span>}
@@ -388,7 +388,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     type="button"
                     disabled={!selectedDepartmentId}
                     onClick={saveDepartment}
-                    className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white shadow-[var(--tm-shadow-icon)] transition-all active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] disabled:shadow-none"
+                    className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-extrabold text-white [box-shadow:var(--tm-shadow-icon)] transition-all active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] disabled:shadow-none"
                 >
                     保存
                 </button>
@@ -405,7 +405,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
 
     const renderAvatarSheet = () => (
         <div className="absolute inset-0 z-[130] flex items-end bg-[var(--tm-mask)] px-4 pb-5" onClick={() => setMode('idle')}>
-            <div className="w-full rounded-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+            <div className="w-full rounded-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
                 <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[var(--tm-brand-primary-soft-strong)]" aria-hidden="true" />
                 <h3 className={`px-2 text-center ${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>更换头像</h3>
                 <div className="mt-5 space-y-2">
@@ -441,7 +441,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
 
     const renderNameDialog = () => (
         <div className="absolute inset-0 z-[130] flex items-center bg-[var(--tm-mask)] px-5" onClick={() => setMode('idle')}>
-            <div className="w-full rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-5 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+            <div className="w-full rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-5 [box-shadow:var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
                 <h3 className={`text-center ${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>修改姓名</h3>
                 <input
                     value={nameDraft}
@@ -464,7 +464,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
 
     const renderSchoolDialog = () => (
         <div className="absolute inset-0 z-[130] flex items-center bg-[var(--tm-mask)] px-5" onClick={() => setMode('idle')}>
-            <div className="w-full rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-5 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+            <div className="w-full rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-5 [box-shadow:var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
                 <h3 className={`text-center ${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>修改学校</h3>
                 <input
                     value={schoolDraft}
@@ -503,7 +503,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
             <input ref={albumInputRef} type="file" accept="image/*" className="hidden" onChange={readAvatarFile} />
 
             <div className="shrink-0 px-5 pt-3">
-                <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)] ring-1 ring-[var(--tm-border-subtle)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回">
+                <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] ring-1 ring-[var(--tm-border-subtle)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回">
                     <ChevronLeft className="h-5 w-5" />
                 </button>
             </div>
@@ -511,11 +511,11 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
             <div className="flex-1 space-y-3 overflow-y-auto px-5 pb-8 pt-2">
                 <MobileCard variant="hero" padding="lg" className="teacher-avatar-card text-center">
                     <button type="button" onClick={() => setMode('avatar')} className="group mx-auto block" aria-label="更换头像">
-                        <div className="relative mx-auto h-24 w-24 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] shadow-[var(--tm-shadow-avatar)] ring-1 ring-white/90">
+                        <div className="relative mx-auto h-24 w-24 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
                             <span className="block h-full w-full overflow-hidden rounded-full bg-[var(--tm-bg-surface)]">
                                 <img src={displayAvatar} alt="老师头像" className="h-full w-full object-cover object-center" />
                             </span>
-                            <span className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[var(--tm-brand-primary)] text-white shadow-[var(--tm-shadow-icon)] transition-transform group-active:scale-95">
+                            <span className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[var(--tm-brand-primary)] text-white [box-shadow:var(--tm-shadow-icon)] transition-transform group-active:scale-95">
                                 <Camera className="h-4 w-4" />
                             </span>
                         </div>

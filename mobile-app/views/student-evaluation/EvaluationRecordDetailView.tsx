@@ -47,7 +47,7 @@ const EvaluationRecordDetailView: React.FC<EvaluationRecordDetailViewProps> = ({
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-10 pt-4 no-scrollbar">
-        <article className={`rounded-[var(--tm-radius-inner)] border p-4 shadow-[var(--tm-shadow-card)] ${resultSurfaceClass}`}>
+        <article className={`rounded-[var(--tm-radius-inner)] border p-4 [box-shadow:var(--tm-shadow-card)] ${resultSurfaceClass}`}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[12px] font-medium text-[var(--tm-text-secondary)]">{record.evaluation_date}</p>
@@ -67,7 +67,7 @@ const EvaluationRecordDetailView: React.FC<EvaluationRecordDetailViewProps> = ({
           </div>
         </article>
 
-        <section className="mt-4 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
+        <section className="mt-4 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
           <div className="flex items-center gap-2">
             <LockKeyhole className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
             <h2 className="text-[14px] font-semibold text-[var(--tm-text-primary)]">原始记录</h2>
@@ -77,7 +77,7 @@ const EvaluationRecordDetailView: React.FC<EvaluationRecordDetailViewProps> = ({
         </section>
 
         {revisions.length > 0 && (
-          <section className="mt-4 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
+          <section className="mt-4 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
             <div className="flex items-center gap-2">
               <History className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
               <h2 className="text-[14px] font-semibold text-[var(--tm-text-primary)]">修改记录</h2>

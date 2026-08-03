@@ -45,9 +45,9 @@ export const useReportGenerationTask = ({
   const reset = useCallback(() => {
     startedAtRef.current = null;
     resultRef.current = 'generated';
-    setVisibleStepCount(1);
-    setStatus('idle');
-  }, []);
+    setVisibleStepCount(initialStatus === 'generated' ? stepCount : 1);
+    setStatus(initialStatus);
+  }, [initialStatus, stepCount]);
 
   useEffect(() => {
     if (status !== 'generating') return;

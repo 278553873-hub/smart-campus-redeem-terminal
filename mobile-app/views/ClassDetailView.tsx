@@ -206,7 +206,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         onChange={(event) => setSearchQuery(event.target.value)}
                         placeholder="搜索姓名、学号"
                         disabled={isSelectionMode}
-                        className={`h-9 w-full rounded-full border border-[var(--tm-border-subtle)] bg-white pl-9 pr-3 text-[13px] font-medium text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)] outline-none placeholder:text-[var(--tm-text-disabled)] transition-all duration-300 ease-out focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)] ${isSelectionMode ? 'pointer-events-none pr-0 text-transparent placeholder:text-transparent' : ''}`}
+                        className={`h-9 w-full rounded-full border border-[var(--tm-border-subtle)] bg-white pl-9 pr-3 text-[13px] font-medium text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] outline-none placeholder:text-[var(--tm-text-disabled)] transition-all duration-300 ease-out focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)] ${isSelectionMode ? 'pointer-events-none pr-0 text-transparent placeholder:text-transparent' : ''}`}
                     />
                 </button>
 
@@ -215,18 +215,18 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         <>
                             <button
                                 onClick={isAllVisibleSelected ? handleClearVisibleStudents : handleSelectAllVisibleStudents}
-                                className="h-8 shrink-0 rounded-full border border-[var(--tm-border-subtle)] bg-white px-3 text-xs font-bold text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)] transition active:scale-95"
+                                className="h-8 shrink-0 rounded-full border border-[var(--tm-border-subtle)] bg-white px-3 text-xs font-bold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-95"
                             >
                                 {isAllVisibleSelected ? '取消全选' : '全选'}
                             </button>
                             <button
                                 onClick={handleInvertVisibleStudents}
-                                className="h-8 shrink-0 rounded-full border border-[var(--tm-border-subtle)] bg-white px-3 text-xs font-bold text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)] transition active:scale-95"
+                                className="h-8 shrink-0 rounded-full border border-[var(--tm-border-subtle)] bg-white px-3 text-xs font-bold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-95"
                             >
                                 反选
                             </button>
-                            <button onClick={() => setSelectionGenderFilter('male')} aria-label="只选男生" className={`flex h-8 min-w-10 items-center justify-center rounded-full border px-2.5 shadow-[var(--tm-shadow-control)] transition active:scale-95 ${selectionGenderFilter === 'male' ? 'border-[var(--tm-gender-male)] bg-[var(--tm-gender-male)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-tag-jade-strong)]'}`}><MaleIcon className="h-4 w-4" /></button>
-                            <button onClick={() => setSelectionGenderFilter('female')} aria-label="只选女生" className={`flex h-8 min-w-10 items-center justify-center rounded-full border px-2.5 shadow-[var(--tm-shadow-control)] transition active:scale-95 ${selectionGenderFilter === 'female' ? 'border-[var(--tm-gender-female)] bg-[var(--tm-gender-female)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-tag-orange-strong)]'}`}><FemaleIcon className="h-4 w-4" /></button>
+                            <button onClick={() => setSelectionGenderFilter('male')} aria-label="只选男生" className={`flex h-8 min-w-10 items-center justify-center rounded-full border px-2.5 [box-shadow:var(--tm-shadow-control)] transition active:scale-95 ${selectionGenderFilter === 'male' ? 'border-[var(--tm-gender-male)] bg-[var(--tm-gender-male)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-tag-jade-strong)]'}`}><MaleIcon className="h-4 w-4" /></button>
+                            <button onClick={() => setSelectionGenderFilter('female')} aria-label="只选女生" className={`flex h-8 min-w-10 items-center justify-center rounded-full border px-2.5 [box-shadow:var(--tm-shadow-control)] transition active:scale-95 ${selectionGenderFilter === 'female' ? 'border-[var(--tm-gender-female)] bg-[var(--tm-gender-female)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-tag-orange-strong)]'}`}><FemaleIcon className="h-4 w-4" /></button>
                         </>
                     )}
 
@@ -239,7 +239,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             }
                             onToggleSelectionMode();
                         }}
-                        className={`h-9 shrink-0 rounded-full px-3.5 text-[13px] font-bold transition-all active:scale-95 ${isSelectionMode ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'border border-[var(--tm-border-subtle)] bg-white text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)]'}`}
+                        className={`h-9 shrink-0 rounded-full px-3.5 text-[13px] font-bold transition-all active:scale-95 ${isSelectionMode ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'border border-[var(--tm-border-subtle)] bg-white text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]'}`}
                     >
                         {isSelectionMode ? '取消' : '多选'}
                     </button>
@@ -260,7 +260,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         <div
                             key={student.id}
                             onClick={() => handleStudentClick(student)}
-                            className={`relative rounded-[16px] p-3 flex flex-col items-center transition-all duration-200 cursor-pointer select-none group ${isSelectionMode && isSelected ? 'bg-[var(--tm-brand-primary-soft)] ring-1.5 ring-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'bg-white/95 border border-[var(--tm-border-subtle)]'}`}
+                            className={`relative rounded-[16px] p-3 flex flex-col items-center transition-all duration-200 cursor-pointer select-none group ${isSelectionMode && isSelected ? 'bg-[var(--tm-brand-primary-soft)] ring-1.5 ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'bg-white/95 border border-[var(--tm-border-subtle)]'}`}
                         >
                             {isSelectionMode && (
                                 <div className="absolute top-2 right-2 z-10 animate-in fade-in zoom-in duration-200">
@@ -333,7 +333,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             setIsGroupSelectionMode(prev => !prev);
                             setGroupSelectionIds(new Set());
                         }}
-                        className={`h-10 rounded-full px-4 text-sm font-bold active:scale-95 ${isGroupSelectionMode ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'border border-[var(--tm-border-subtle)] bg-white text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)]'}`}
+                        className={`h-10 rounded-full px-4 text-sm font-bold active:scale-95 ${isGroupSelectionMode ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'border border-[var(--tm-border-subtle)] bg-white text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]'}`}
                     >
                         {isGroupSelectionMode ? '取消' : '多选分组'}
                     </button>
@@ -350,7 +350,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             <button
                                 key={group.id}
                                 onClick={() => isGroupSelectionMode && handleToggleGroupSelection(group.id)}
-                                className={`relative w-full rounded-2xl border bg-white p-4 text-left shadow-[var(--tm-shadow-card)] transition active:scale-[0.99] ${isSelected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft)]' : 'border-[var(--tm-border-subtle)]'}`}
+                                className={`relative w-full rounded-2xl border bg-white p-4 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.99] ${isSelected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft)]' : 'border-[var(--tm-border-subtle)]'}`}
                             >
                                 {isGroupSelectionMode && (
                                     <div className="absolute right-3 top-3">
@@ -423,7 +423,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             {showGroupPlanSheet && (
                 <div className="absolute inset-0 z-50 flex items-end bg-[var(--tm-mask)]">
                     <button aria-label="关闭分组方案" className="absolute inset-0" onClick={() => setShowGroupPlanSheet(false)} />
-                    <div className="relative max-h-[72%] w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-5 shadow-[var(--tm-shadow-sheet)]">
+                    <div className="relative max-h-[72%] w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-5 [box-shadow:var(--tm-shadow-sheet)]">
                         <div className="mb-4 flex items-center justify-center">
                             <h3 className="text-[20px] font-black text-[var(--tm-text-primary)]">分组方案</h3>
                             <button onClick={() => setShowGroupPlanSheet(false)} aria-label="关闭" className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full active:bg-[var(--tm-bg-surface-soft)]">

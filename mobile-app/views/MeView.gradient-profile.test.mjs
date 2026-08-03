@@ -54,7 +54,7 @@ requireText(source, '科目管理', '更多工具应包含科目管理。');
 requireText(source, '部门管理', '更多工具应包含部门管理。');
 requireText(source, '货币发放', '更多工具应包含货币发放。');
 requireText(source, '建议反馈', '更多工具应包含建议反馈。');
-requireText(source, "const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)] shadow-[var(--tm-shadow-card-raised)] backdrop-blur-sm';", '卡片应使用无显性描边的暖白轻玻璃底与统一阴影 Token。');
+requireText(source, "const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-card)] backdrop-blur-sm';", '“我的”页工具卡应使用干净的普通卡片阴影 Token。');
 requireText(source, 'rounded-[var(--tm-radius-card)] p-5 ${toolCardSurfaceClass}', '管理工具、更多工具卡片应共享统一圆角和卡片表面。');
 requireText(source, 'active:bg-[var(--tm-brand-primary-soft)] ${toolCardSurfaceClass}', '待填写采集卡片应共享无显性描边的卡片表面。');
 requireText(source, 'onClick={onEditTeacherProfile}', '头像和编辑按钮应进入编辑教师信息页。');

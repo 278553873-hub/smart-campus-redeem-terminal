@@ -256,7 +256,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
           setRecordPage('detail');
         }}
         aria-label={`查看${record.teacherName}的评价详情`}
-        className={`w-full rounded-[var(--tm-radius-inner)] border p-4 text-left shadow-[var(--tm-shadow-card)] transition-transform active:scale-[0.99] ${resultSurfaceClass}`}
+        className={`w-full rounded-[var(--tm-radius-inner)] border p-4 text-left [box-shadow:var(--tm-shadow-card)] transition-transform active:scale-[0.99] ${resultSurfaceClass}`}
       >
         <span className="flex items-start justify-between gap-3">
           <span className="text-[12px] font-medium text-[var(--tm-text-secondary)]">{record.evaluation_date} · {record.teacherName}</span>
@@ -294,7 +294,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
             onClick={() => setShowTimeFilterSheet(true)}
             aria-label={`选择记录时间，当前${timeFilterLabel}`}
             title={timeFilterLabel}
-            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold shadow-[var(--tm-shadow-control)] ${timeFilter.type !== 'all'
+            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${timeFilter.type !== 'all'
               ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
               : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
           >
@@ -307,7 +307,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
             onClick={() => setShowTeacherFilterSheet(true)}
             aria-label={`选择评价人，当前${teacherFilterLabel}`}
             title={teacherFilterLabel}
-            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold shadow-[var(--tm-shadow-control)] ${teacherFilterId !== 'all'
+            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${teacherFilterId !== 'all'
               ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
               : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
           >
@@ -320,7 +320,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
             onClick={() => setShowIndicatorFilterSheet(true)}
             aria-label={`选择指标，当前${indicatorFilterPath.length > 0 ? indicatorFilterPath.join('、') : indicatorFilterLabel}`}
             title={indicatorFilterPath.join(' / ') || indicatorFilterLabel}
-            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold shadow-[var(--tm-shadow-control)] ${indicatorFilterPath.length > 0
+            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${indicatorFilterPath.length > 0
               ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
               : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
           >
@@ -333,7 +333,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
 
         <div className="mt-3 space-y-4">
           {filteredRecords.length === 0 ? (
-            <div className="flex min-h-64 flex-col items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-6 text-center shadow-[var(--tm-shadow-card)]">
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-6 text-center [box-shadow:var(--tm-shadow-card)]">
               <span className="flex h-12 w-12 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-tertiary)]"><ClipboardList className="h-5 w-5" /></span>
               <p className="mt-3 text-sm font-medium text-[var(--tm-text-secondary)]">没有符合条件的评价记录</p>
               {hasActiveFilter && (

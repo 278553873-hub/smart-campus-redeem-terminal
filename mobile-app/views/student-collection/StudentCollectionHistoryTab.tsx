@@ -117,7 +117,7 @@ const StudentCollectionHistoryTab: React.FC<StudentCollectionHistoryTabProps> = 
                         key={item.id}
                         type="button"
                         onClick={() => onOpen(item)}
-                        className="relative min-h-[88px] w-full overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 py-4 text-left shadow-[var(--tm-shadow-card)] transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"
+                        className="relative min-h-[88px] w-full overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 py-4 text-left [box-shadow:var(--tm-shadow-card)] transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"
                       >
                         <span className={`pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-r-full ${meta.accentClass}`} aria-hidden="true" />
                         <span className="line-clamp-2 block text-pretty text-[15px] font-semibold leading-[21px] text-[var(--tm-text-primary)]">{item.title}</span>

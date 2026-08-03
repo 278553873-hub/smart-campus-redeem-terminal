@@ -58,6 +58,7 @@ interface StudentArchiveViewProps {
   classes: ClassInfo[];
   getStudentsForClass: (classId: string) => Student[];
   onUpdateStudent: (student: Student) => void;
+  onUpdateArchive: (templateId: string) => void;
 }
 
 type PageMode = 'root' | 'fill' | 'detail';
@@ -71,6 +72,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   classes,
   getStudentsForClass,
   onUpdateStudent,
+  onUpdateArchive,
 }) => {
   const readWorkspace = () => readArchiveWorkspace({
     spaceId,
@@ -146,7 +148,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     }
     setTransientDraft(draft);
     setActiveDraftId(draft.id);
-    setAnswers({});
+    setAnswers({ ...draft.answers });
     setPageMode('fill');
   };
 
@@ -373,7 +375,11 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     if (!activeDraft || !activeTemplate) return renderRoot();
     return (
       <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`}>
-        <PageHeader title={activeTemplate.name} onBack={closeFill} />
+        <PageHeader
+          title={activeTemplate.name}
+          onBack={closeFill}
+          action={<button type="button" onClick={() => onUpdateArchive(activeDraft.templateId)} className="flex h-11 items-center px-2 text-[13px] font-semibold text-[var(--tm-brand-primary-strong)] active:text-[var(--tm-brand-primary-pressed)]">更新档案</button>}
+        />
         <div className="flex-1 overflow-y-auto px-5 pb-36 pt-4 no-scrollbar">
           {activeDataRange && (
             <section className={`${sectionSurface} mb-4 flex min-h-[52px] items-center gap-3 px-4`}>

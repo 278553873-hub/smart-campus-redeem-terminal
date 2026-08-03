@@ -28,7 +28,7 @@ const ClassSourceTrigger: React.FC<ClassSourceTriggerProps> = ({
     const SourceIcon = SOURCE_ICONS[type];
     const variantClass = variant === 'quiet'
         ? 'gap-1.5 rounded-[var(--tm-radius-control)] px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] shadow-none active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]'
-        : 'gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3.5 text-[13px] font-semibold text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]';
+        : 'gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3.5 text-[13px] font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]';
 
     return (
         <button

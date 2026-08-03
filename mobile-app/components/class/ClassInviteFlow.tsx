@@ -17,7 +17,7 @@ interface ClassInviteFlowProps {
 }
 
 const actionClass = 'flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]';
-const iconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]';
+const iconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]';
 const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
 
 const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, classInfo, inviterName, schoolName, onClose }) => {
@@ -110,7 +110,7 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
               const selected = selectedChats.includes(chat);
               return (
                 <button key={chat} type="button" onClick={() => toggleChat(chat)} className={`flex min-h-[56px] items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-inner)] px-[var(--tm-space-3)] text-left text-[length:var(--tm-font-size-body)] font-semibold ${selected ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-primary)]'}`} aria-pressed={selected}>
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-compact)] shadow-[var(--tm-shadow-control)]">{chat.slice(0, 1)}</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-compact)] [box-shadow:var(--tm-shadow-control)]">{chat.slice(0, 1)}</span>
                   <span className="min-w-0 flex-1 truncate">{chat}</span>
                   {selected && <Check className="h-4 w-4 shrink-0" />}
                 </button>
@@ -128,7 +128,7 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
           <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)]">
             <div className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">发送给</div>
             <div className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{selectedChats.join('、')}</div>
-            <div className="mt-[var(--tm-space-4)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] shadow-[var(--tm-shadow-control)]">
+            <div className="mt-[var(--tm-space-4)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-control)]">
               <div className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">AI素养评价</div>
               <div className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{inviter}邀请你加入「{classInfo.name}」</div>
             </div>

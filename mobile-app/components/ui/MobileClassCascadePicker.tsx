@@ -46,7 +46,7 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = ({
               type="button"
               onClick={() => onActiveGradeChange(group.gradeLabel)}
               aria-pressed={active}
-              className={`mb-2 flex min-h-11 w-full flex-col items-center justify-center rounded-[var(--tm-radius-control)] text-xs font-extrabold transition-all last:mb-0 active:scale-95 ${active ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-icon)]' : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-brand-primary-soft)] active:text-[var(--tm-brand-primary-pressed)]'}`}
+              className={`mb-2 flex min-h-11 w-full flex-col items-center justify-center rounded-[var(--tm-radius-control)] text-xs font-extrabold transition-all last:mb-0 active:scale-95 ${active ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-icon)]' : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-brand-primary-soft)] active:text-[var(--tm-brand-primary-pressed)]'}`}
             >
               <span>{group.gradeLabel}</span>
               {selectedCount > 0 && (

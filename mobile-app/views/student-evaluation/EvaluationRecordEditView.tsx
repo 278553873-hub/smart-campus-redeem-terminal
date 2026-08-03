@@ -101,7 +101,7 @@ const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
 
           <section>
             <h2 className="text-[13px] font-semibold text-[var(--tm-text-primary)]">评价分值</h2>
-            <div className="mt-2 flex h-12 items-center justify-between rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-1 shadow-[var(--tm-shadow-control)]">
+            <div className="mt-2 flex h-12 items-center justify-between rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-1 [box-shadow:var(--tm-shadow-control)]">
               <button type="button" onClick={() => updateScore(scoreChange - 1)} disabled={scoreChange <= -5} aria-label="减少评价分值" className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-disabled)]">
                 <Minus className="h-4 w-4" />
               </button>

@@ -123,7 +123,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({ classIn
                 type="button"
                 onClick={() => toggleStudentSelection(student.id)}
                 aria-pressed={selected}
-                className={`relative flex min-h-[116px] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-card)] border p-[var(--tm-space-2)] text-center shadow-[var(--tm-shadow-control)] transition active:scale-[0.98] ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}
+                className={`relative flex min-h-[116px] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-card)] border p-[var(--tm-space-2)] text-center [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}
               >
                 <span className={`absolute right-[var(--tm-space-2)] top-[var(--tm-space-2)] flex h-4 w-4 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>{selected && <Check className="h-3 w-3" />}</span>
                 <img src={student.avatar} alt="" className="h-11 w-11 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" />
@@ -151,7 +151,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({ classIn
               const canAfford = selectedStudents.every(student => student.campusCoins >= good.price);
               return (
                 <div key={good.id} className="flex min-h-[68px] items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-lg shadow-[var(--tm-shadow-control)]">{good.icon}</span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-lg [box-shadow:var(--tm-shadow-control)]">{good.icon}</span>
                   <span className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{good.name}</strong><small className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-reward-strong)]">{good.price} 币 / 人</small></span>
                   <button type="button" disabled={!canAfford} onClick={() => redeemGood(good)} className="min-h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">{canAfford ? '兑换' : '余额不足'}</button>
                 </div>
@@ -189,7 +189,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({ classIn
         )}
       </MobileBottomSheet>
 
-      {showSuccess && <div role="status" className="pointer-events-none absolute inset-x-[var(--tm-space-4)] top-[calc(var(--tm-size-touch)+var(--tm-space-4))] z-50 flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-chart-tooltip)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-floating)]"><Check className="h-[18px] w-[18px]" />兑换成功</div>}
+      {showSuccess && <div role="status" className="pointer-events-none absolute inset-x-[var(--tm-space-4)] top-[calc(var(--tm-size-touch)+var(--tm-space-4))] z-50 flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-chart-tooltip)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-floating)]"><Check className="h-[18px] w-[18px]" />兑换成功</div>}
     </div>
   );
 };

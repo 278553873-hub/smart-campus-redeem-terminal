@@ -73,7 +73,7 @@ requireText(viewSource, '>暂无校本档案</div>', '档案设计空状态必�
 forbidText(viewSource, '点击上方“新建档案”开始', '档案设计空状态不得保留失效的入口位置说明。');
 forbidText(viewSource, 'className={`${primaryButton} mb-6 w-full`}', '档案设计首页不得继续使用全宽新建按钮。');
 requireText(floatingCreateSource, 'bg-[var(--tm-brand-primary)]', '通用悬浮创建按钮必须使用教师端品牌令牌。');
-requireText(floatingCreateSource, 'shadow-[var(--tm-shadow-floating)]', '通用悬浮创建按钮必须使用教师端悬浮阴影令牌。');
+requireText(floatingCreateSource, '[box-shadow:var(--tm-shadow-floating)]', '通用悬浮创建按钮必须使用教师端悬浮阴影令牌。');
 
 for (const required of ['使用分组', '添加分组', '编辑分组', '分组排序', '添加{addButtonLabel ?? itemLabel}']) {
   requireText(formBuilderSource, required, `共享表单构建器缺少：${required}`);
@@ -157,6 +157,7 @@ requireText(studentViewSource, 'setTransientDraft(null);', '退出或保存后�
 
 for (const required of [
   '当前档案',
+  '更新档案',
   '待继续',
   '保存草稿',
   '完成并留档',
@@ -165,6 +166,9 @@ for (const required of [
 ]) {
   requireText(studentViewSource, required, `学生档案流程缺少：${required}`);
 }
+requireText(appSource, 'onUpdateArchive={templateId =>', '当前档案的更新入口必须进入统一采集流程。');
+requireText(appSource, 'initialArchiveTemplateId={questionnaireInitialArchiveTemplateId || undefined}', '从档案进入采集时必须预选当前档案。');
+requireText(storeSource, 'upsertStudentArchiveCollectionAnswers', '采集提交必须合并更新学生当前档案。');
 forbidText(studentViewSource, 'aria-label="新建档案"', '学生档案首页不应再提供新建入口。');
 forbidText(studentViewSource, 'PageHeader title="选择档案"', '学生档案首页不应再进入模板选择页。');
 requireText(studentViewSource, 'enabledTemplates.map(template =>', '学生档案首页必须直接展示已启用模板形成的实时档案。');
@@ -213,7 +217,7 @@ requireText(storeSource, 'workspace.drafts.find', '同一模板已有草稿时�
 requireText(studentViewSource, 'workspace.drafts', '禁用后已有草稿必须仍可进入填写。');
 requireText(storeSource, 'appendArchiveViewAudit', '完整档案查看必须写入审计记录。');
 requireText(storeSource, "template.status === 'draft' || template.status === 'disabled'", '只允许删除草稿或已禁用档案设计。');
-requireText(storeSource, 'templateSnapshot: createTemplateSnapshot(template)', '新建学生档案时必须保存不可变结构快照。');
+requireText(storeSource, 'templateSnapshot: createArchiveTemplateSnapshot(template)', '新建学生档案时必须保存不可变结构快照。');
 requireText(storeSource, 'templateSnapshot: cloneTemplateSnapshot(draft.templateSnapshot)', '确认成档时必须继承草稿的结构快照。');
 requireText(studentViewSource, 'activeDraft?.templateSnapshot', '学生草稿必须使用自身结构快照继续填写。');
 requireText(studentViewSource, 'activeSnapshot.templateSnapshot', '历史档案必须使用自身结构快照展示。');

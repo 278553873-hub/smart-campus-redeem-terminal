@@ -81,7 +81,7 @@ const timeRangeTabs: { key: TimeRange; label: string }[] = [
     { key: 'custom', label: '自定义' },
 ];
 
-const cardClass = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]';
+const cardClass = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]';
 const inactiveConditionFilterClass = 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]';
 const customDateInputClass = 'h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition-[border-color,background-color,box-shadow] [transition-duration:var(--tm-duration-standard)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 
@@ -576,7 +576,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             <div className="min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar" onScroll={handleReportScroll}>
                 <header className={`sticky top-0 z-30 border-b bg-[var(--tm-page-plain-header-bg)] transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
                     isFilterPinned
-                        ? 'border-[var(--tm-border-subtle)] shadow-[var(--tm-shadow-control)]'
+                        ? 'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]'
                         : 'border-transparent'
                 }`}>
                     <div className={`px-[var(--tm-report-page-inline)] transition-[padding] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
@@ -627,7 +627,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                         type="button"
                                         onClick={openCustomDatePicker}
                                         aria-label="修改自定义日期范围"
-                                        className="relative flex h-8 shrink-0 items-center gap-0.5 rounded-full bg-[var(--tm-bg-surface)] px-1.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)] transition-[color,scale] [transition-duration:var(--tm-duration-standard)] after:absolute after:-inset-y-1.5 after:inset-x-0 active:scale-[0.96] active:text-[var(--tm-text-primary)] motion-reduce:transform-none"
+                                        className="relative flex h-8 shrink-0 items-center gap-0.5 rounded-full bg-[var(--tm-bg-surface)] px-1.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition-[color,scale] [transition-duration:var(--tm-duration-standard)] after:absolute after:-inset-y-1.5 after:inset-x-0 active:scale-[0.96] active:text-[var(--tm-text-primary)] motion-reduce:transform-none"
                                     >
                                         修改日期
                                         <PencilLine aria-hidden="true" className="h-3 w-3" />
@@ -669,7 +669,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                         >
                                             <span className={`inline-flex h-[var(--tm-report-source-pill-height)] items-center rounded-full transition-[background-color,color,box-shadow,scale] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transform-none ${
                                                 selected
-                                                    ? 'bg-[var(--tm-brand-primary)] px-[var(--tm-report-source-pill-inline)] font-semibold text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]'
+                                                    ? 'bg-[var(--tm-brand-primary)] px-[var(--tm-report-source-pill-inline)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]'
                                                     : 'px-[var(--tm-report-source-item-inline)] font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]'
                                             }`}>
                                                 {item.label}
@@ -779,7 +779,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                 >
                                     <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all duration-200 ${
                                         rankingMode === item.key
-                                            ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]'
+                                            ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]'
                                             : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'
                                     }`}>
                                         {item.label}

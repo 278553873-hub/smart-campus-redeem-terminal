@@ -298,7 +298,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         const hasMoreActions = Object.values(classActionPolicy).some(Boolean);
 
         return (
-            <article key={classInfo.id} className="relative rounded-[var(--tm-radius-card)] bg-white px-4 py-3 shadow-[var(--tm-shadow-card)]">
+            <article key={classInfo.id} className="relative rounded-[var(--tm-radius-card)] bg-white px-4 py-3 [box-shadow:var(--tm-shadow-card)]">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                         <h3 className="truncate text-lg font-semibold text-[var(--tm-text-primary)]">{classInfo.name}</h3>
@@ -373,7 +373,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 <div
                     role="status"
                     aria-live="polite"
-                    className={`pointer-events-none absolute left-1/2 top-20 z-[80] -translate-x-1/2 whitespace-nowrap rounded-[var(--tm-radius-control)] px-4 py-2 text-[13px] font-semibold text-white shadow-[var(--tm-shadow-card-raised)] ${copyFeedback.success ? 'bg-[var(--tm-text-primary)]' : 'bg-[var(--tm-status-negative)]'}`}
+                    className={`pointer-events-none absolute left-1/2 top-20 z-[80] -translate-x-1/2 whitespace-nowrap rounded-[var(--tm-radius-control)] px-4 py-2 text-[13px] font-semibold text-white [box-shadow:var(--tm-shadow-card-raised)] ${copyFeedback.success ? 'bg-[var(--tm-text-primary)]' : 'bg-[var(--tm-status-negative)]'}`}
                 >
                     {copyFeedback.message}
                 </div>
@@ -398,7 +398,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setShowPersonalClassActions(true)}
-                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)] active:scale-95 active:bg-[var(--tm-brand-primary-soft)]"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)] active:scale-95 active:bg-[var(--tm-brand-primary-soft)]"
                                 aria-label="打开班级操作"
                             >
                                 <Plus className="h-5 w-5" strokeWidth={2.4} />
@@ -448,7 +448,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 {visibleClasses.map(renderClassCard)}
 
                 {visibleClasses.length === 0 && (
-                    <section className="rounded-[var(--tm-radius-card)] bg-white p-6 text-center shadow-[var(--tm-shadow-card)]">
+                    <section className="rounded-[var(--tm-radius-card)] bg-white p-6 text-center [box-shadow:var(--tm-shadow-card)]">
                         <p className="text-sm font-semibold text-[var(--tm-text-primary)]">{isSchoolSpace ? '没有符合条件的班级' : '暂无显示班级'}</p>
                         <button
                             type="button"
@@ -486,7 +486,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 }}
                                 className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-left active:bg-[var(--tm-bg-surface-muted)]"
                             >
-                                <span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]"><Icon className="h-[18px] w-[18px]" /></span>
+                                <span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]"><Icon className="h-[18px] w-[18px]" /></span>
                                 <span className="flex-1 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{item.label}</span>
                                 <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
                             </button>
@@ -509,7 +509,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             >
                                 <span className="min-w-0 truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{classInfo.name}</span>
                                 <span className={`flex h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors ${visible ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-muted)] ring-1 ring-inset ring-[var(--tm-border-subtle)]'}`}>
-                                    <span className={`h-5 w-5 rounded-full bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-control)] transition-transform ${visible ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    <span className={`h-5 w-5 rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-control)] transition-transform ${visible ? 'translate-x-5' : 'translate-x-0'}`} />
                                 </span>
                             </button>
                         );

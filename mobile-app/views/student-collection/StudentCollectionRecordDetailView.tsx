@@ -45,7 +45,7 @@ const StudentCollectionRecordDetailView: React.FC<StudentCollectionRecordDetailV
       </header>
 
       <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 no-scrollbar">
-        <section className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
+        <section className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
           <h2 className="text-balance text-[18px] font-bold leading-6 text-slate-950">{item.title}</h2>
           {item.description && <p className="mt-1 line-clamp-2 text-pretty text-[13px] font-medium leading-5 text-slate-500">{item.description}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] font-medium text-slate-500">

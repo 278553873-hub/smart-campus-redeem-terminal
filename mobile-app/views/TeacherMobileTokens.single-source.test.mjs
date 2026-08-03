@@ -8,6 +8,12 @@ const css = fs.readFileSync('mobile-app/index.css', 'utf8');
 const parent = fs.readFileSync('components/ParentApp.tsx', 'utf8');
 const guidelines = fs.readFileSync('design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', 'utf8');
 
+const collectTeacherMobileSources = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const path = `${directory}/${entry.name}`;
+  if (entry.isDirectory()) return collectTeacherMobileSources(path);
+  return /\.(?:ts|tsx)$/.test(entry.name) ? [path] : [];
+});
+
 assert.equal(fs.existsSync('mobile-app/styles/teacherBrandTokens.ts'), false);
 assert.equal(fs.existsSync('mobile-app/styles/phoneTokens.ts'), false);
 assert.equal(fs.existsSync('mobile-app/styles/teacherMobileTokens.css'), false);
@@ -57,6 +63,8 @@ assert.match(app, /from '\.\/styles\/teacherMobileTokens'/);
 assert.doesNotMatch(app, /\b(?:blue|indigo|violet|purple)-\d+/);
 assert.doesNotMatch(parent, /teacherMobileTokens/);
 assert.match(guidelines, /mobile-app\/styles\/teacherMobileTokens\.ts/);
+assert.match(guidelines, /清晰细边界/);
+assert.match(guidelines, /\[box-shadow:var\(--tm-shadow-card\)\]/);
 assert.match(canonical, /textTertiary: teacherBrandPalette\.neutral\[550\]/);
 assert.match(canonical, /'--tm-text-tertiary': teacherBrandSemantic\.textTertiary/);
 assert.match(canonical, /'--tm-input-bg': teacherBrandSemantic\.surface/);
@@ -71,6 +79,14 @@ assert.match(canonical, /negativeSoft: teacherBrandPalette\.red\[50\]/);
 assert.match(canonical, /'--tm-record-negative-border': teacherBrandPalette\.red\[100\]/);
 assert.doesNotMatch(canonical, /teacherBrandPalette\.rose|\brose:\s*\{/);
 assert.match(guidelines, /不得维护或引入独立暗红色板/);
+assert.match(canonical, /'--tm-shadow-card': '0 0 0 1px rgba\([^']+\)'/);
+assert.match(canonical, /'--tm-shadow-card-raised': '0 0 0 1px rgba\([^']+\), 0 3px 8px -3px rgba\([^']+\)'/);
+
+const invalidFullShadowConsumer = /shadow-\[var\(--tm-shadow-(?:card|card-raised|control|icon|avatar|floating|navigation|sheet)\)\]/;
+for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
+  const source = fs.readFileSync(sourcePath, 'utf8');
+  assert.doesNotMatch(source, invalidFullShadowConsumer, `${sourcePath} 使用了无效的完整阴影 Token 工具类。`);
+}
 
 const luminance = hex => {
   const channels = [1, 3, 5].map(index => Number.parseInt(hex.slice(index, index + 2), 16) / 255);

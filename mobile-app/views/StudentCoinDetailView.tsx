@@ -161,7 +161,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4 no-scrollbar" aria-label={`${student.name}的校园币收支记录`}>
-          <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 shadow-[var(--tm-shadow-card)]" aria-label="校园币资产">
+          <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 [box-shadow:var(--tm-shadow-card)]" aria-label="校园币资产">
             <div className="grid min-h-[58px] grid-cols-2 divide-x divide-[var(--tm-border-subtle)]">
               <div className="flex items-center gap-3 pr-4">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
@@ -194,7 +194,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                   aria-pressed={activeFilter === option.value}
                   className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                 >
-                  <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition ${activeFilter === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>
+                  <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition ${activeFilter === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>
                     {option.label}
                   </span>
                 </button>
@@ -204,7 +204,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
               type="button"
               onClick={() => setShowFilterSheet(true)}
               aria-label="筛选校园币流水"
-              className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] shadow-[var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]"
+              className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]"
             >
               <SlidersHorizontal className="h-4 w-4" />
             </button>
@@ -217,7 +217,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
           </div>
 
           {groupedFlowItems.length === 0 ? (
-            <div className="flex min-h-64 flex-col items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-tertiary)] shadow-[var(--tm-shadow-card)]">
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-tertiary)] [box-shadow:var(--tm-shadow-card)]">
               <Clock className="h-9 w-9 text-[var(--tm-text-disabled)]" />
               <p className="mt-3 text-sm font-medium">暂无符合条件的流水记录</p>
             </div>
@@ -226,7 +226,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
               {groupedFlowItems.map(group => (
                 <section key={group.month}>
                   <h2 className="mb-2 px-1 text-[13px] font-semibold text-[var(--tm-text-secondary)]">{formatMonthLabel(group.month)}</h2>
-                  <div className="divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 shadow-[var(--tm-shadow-card)]">
+                  <div className="divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 [box-shadow:var(--tm-shadow-card)]">
                     {group.items.map(item => (
                       <div key={item.id} className="flex min-h-[78px] items-start gap-3 py-3">
                         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${getFlowIconSurface(item.type)}`}>
@@ -259,7 +259,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
           aria-modal="true"
           aria-label="筛选校园币流水"
         >
-          <div className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
+          <div className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 [box-shadow:var(--tm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
             <div className="mx-auto mb-2 h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" />
             <div className="flex min-h-11 items-center justify-between">
               <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">筛选</h2>
