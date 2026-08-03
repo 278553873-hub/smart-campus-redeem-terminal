@@ -16,13 +16,13 @@ import RewardVerificationView from './views/reward-verification/RewardVerificati
 import FaceUpdateView from './views/face-update/FaceUpdateView';
 import { BankPasswordView } from './views/bank-password/BankPasswordView';
 import HomeworkEntryView from './views/HomeworkEntryView';
+import StudentBatchEditView from './views/StudentBatchEditView';
 import TeacherProfileEditView from './views/TeacherProfileEditView';
 import StudentBasicEditView from './views/StudentBasicEditView';
 import StudentCoinDetailView from './views/StudentCoinDetailView';
 import StudentCollectionRecordDetailView from './views/student-collection/StudentCollectionRecordDetailView';
 import StudentBodyMeasurementsView from './views/student-growth/StudentBodyMeasurementsView';
 import StudentHealthRecordsView from './views/student-growth/StudentHealthRecordsView';
-import SemesterGoalPlanView from './views/student-growth/SemesterGoalPlanView';
 import type { StudentEvaluationRecord } from './views/student-evaluation/types';
 import AiHeadteacherAssistantView from './views/AiHeadteacherAssistantView';
 import WeeklyActionAdviceView from './views/WeeklyActionAdviceView';
@@ -36,6 +36,7 @@ import PrincipalTermReportView from './views/PrincipalTermReportView';
 import QuestionnaireManagementView from './views/questionnaire/QuestionnaireManagementView';
 import ArchiveDesignView from './views/archive-design/ArchiveDesignView';
 import StudentArchiveView from './views/archive-design/StudentArchiveView';
+import ClassArchiveBatchView from './views/archive-design/ClassArchiveBatchView';
 import {
     CoinIssuanceView,
     DeleteConfirmSheet,
@@ -261,7 +262,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_info' | 'class_detail' | 'class_report' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_health_records' | 'student_goal_plan' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'ai_headteacher_assistant' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'class_list' | 'class_info' | 'class_detail' | 'class_report' | 'student_batch_edit' | 'class_archive_batch' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_health_records' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'ai_headteacher_assistant' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'leader_report' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
 
 const PRINCIPAL_REPORT_VIEWS: ViewState[] = [
     'principal_weekly_report',
@@ -272,14 +273,26 @@ const PRINCIPAL_REPORT_VIEWS: ViewState[] = [
     'principal_term_history',
 ];
 
+const HEADTEACHER_REPORT_VIEWS: ViewState[] = [
+    'weekly_action_advice',
+    'weekly_action_history',
+    'teacher_evaluation_review',
+    'teacher_evaluation_review_history',
+];
+
 const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
     'class_info',
     'class_detail',
     'class_report',
+    'student_batch_edit',
+    'class_archive_batch',
+    'reward_verification',
+    'face_update',
+    'bank_password',
+    'homework_entry',
     'student_detail',
     'student_body_measurements',
     'student_health_records',
-    'student_goal_plan',
     'subject_management',
     'department_management',
     'coin_issuance',
@@ -301,7 +314,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'record_input') return 0;
-        if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'class_report' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_health_records' || view === 'student_goal_plan' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
+        if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'class_report' || view === 'student_batch_edit' || view === 'class_archive_batch' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_health_records' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
         if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'ai_headteacher_assistant' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
         return 0;
     };
@@ -624,14 +637,25 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         navigateTo('homework_entry');
     };
 
-    const handleInviteTeacher = (classId: string) => {
-        const className = classes.find(c => c.id === classId)?.name || '当前班级';
-        alert(`已生成${className}老师邀请链接`);
+    const handleViewStudentBatchEdit = (classId: string) => {
+        setSelectedClassId(classId);
+        navigateTo('student_batch_edit');
     };
 
-    const handleInviteParent = (classId: string) => {
-        const className = classes.find(c => c.id === classId)?.name || '当前班级';
-        alert(`已生成${className}家长邀请链接`);
+    const handleViewClassArchiveBatch = (classId: string) => {
+        setSelectedClassId(classId);
+        navigateTo('class_archive_batch');
+    };
+
+    const handleSaveStudentBatch = (students: Student[]) => {
+        setStudentOverrides(current => {
+            const next = { ...current };
+            students.forEach(student => {
+                next[student.id] = student;
+            });
+            return next;
+        });
+        setCurrentView('class_detail');
     };
 
     const handleCreateClass = () => {
@@ -871,6 +895,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'class_report': return '班级报告';
             case 'student_detail': return '学生详情';
             case 'student_archive': return '学生成长档案';
+            case 'class_archive_batch': return '批量留档';
             case 'student_collection_detail': return '采集详情';
             case 'student_basic_edit': return '基础信息编辑';
             case 'student_coin_detail': return '校园币详情';
@@ -995,10 +1020,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView);
     const primaryTabViewKey = showTabBar ? 'teacher-primary-tabs' : currentView;
     const pageTransitionClass = showTabBar ? '' : 'animate-page-enter';
-    const viewHandlesScroll = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_health_records', 'student_goal_plan', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'questionnaire', 'archive_design'].includes(currentView);
+    const viewHandlesScroll = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'student_batch_edit', 'class_archive_batch', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_health_records', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'face_update', 'bank_password', 'homework_entry', 'questionnaire', 'archive_design'].includes(currentView);
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
+    const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView);
-    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'student_health_records', 'student_goal_plan', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design'].includes(currentView) || hasPrincipalReportBackground;
+    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'class_archive_batch', 'student_detail', 'student_archive', 'student_body_measurements', 'student_health_records', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design'].includes(currentView) || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const getBottomNavTone = (index: number) => activeIndex === index
         ? 'text-[var(--tm-brand-primary)]'
         : 'text-[var(--tm-nav-item-default)]';
@@ -1010,6 +1036,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
         if (hasPrincipalReportBackground) {
             return <div className="ai-assistant-theme-principal principal-report-screen-background absolute inset-0 overflow-hidden" aria-hidden="true" />;
+        }
+
+        if (hasHeadteacherReportBackground) {
+            return <div className="ai-assistant-theme-headteacher headteacher-report-screen-background absolute inset-0 overflow-hidden" aria-hidden="true" />;
         }
 
         if (hasPlainBackground) {
@@ -1043,7 +1073,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         >
             <PhoneMockup
                 showDeviceFrame={showPhoneShell}
-                contentTopInsetMode="status-bar"
+                contentTopInsetMode={currentView === 'student_detail' ? 'none' : 'status-bar'}
                 screenBackground={getPhoneScreenBackground()}
             >
 
@@ -1052,7 +1082,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-11 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />
                         )}
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_health_records' && currentView !== 'student_goal_plan' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'ai_headteacher_assistant' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_batch_edit' && currentView !== 'class_archive_batch' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_health_records' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'reward_verification' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'ai_headteacher_assistant' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -1115,11 +1145,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onViewClassReport={handleViewClassReport}
                                     onViewLeaderboard={handleViewLeaderboard}
                                     onViewRewardVerification={handleViewRewardVerification}
+                                    onBatchEditStudents={handleViewStudentBatchEdit}
+                                    onBatchArchiveStudents={handleViewClassArchiveBatch}
                                     onViewFaceUpdate={handleViewFaceUpdate}
                                     onViewBankPassword={handleViewBankPassword}
                                     onViewHomeworkEntry={handleViewHomeworkEntry}
-                                    onInviteTeacher={handleInviteTeacher}
-                                    onInviteParent={handleInviteParent}
                                     onEditClassInfo={handleEditClassInfo}
                                 />
                             )}
@@ -1152,6 +1182,27 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 />
                             )}
 
+                            {currentView === 'student_batch_edit' && selectedClassInfo && (
+                                <StudentBatchEditView
+                                    classInfo={selectedClassInfo}
+                                    students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
+                                    onBack={goBack}
+                                    onSave={handleSaveStudentBatch}
+                                />
+                            )}
+
+                            {currentView === 'class_archive_batch' && selectedClassInfo && (
+                                <ClassArchiveBatchView
+                                    onBack={goBack}
+                                    classInfo={selectedClassInfo}
+                                    students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
+                                    teacherProfile={teacherProfile}
+                                    spaceId={activeTeacherSpace.id}
+                                    classes={activeSpaceClasses}
+                                    getStudentsForClass={getMergedStudentsForClass}
+                                />
+                            )}
+
                             {currentView === 'class_report' && (
                                 <ClassReportView
                                     classInfo={classes.find(c => c.id === selectedClassId)!}
@@ -1173,23 +1224,26 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 />
                             )}
 
-                            {currentView === 'reward_verification' && (
+                            {currentView === 'reward_verification' && selectedClassInfo && (
                                 <RewardVerificationView
-                                    classId={selectedClassId}
+                                    classInfo={selectedClassInfo}
+                                    students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
                                     onBack={goBack}
                                 />
                             )}
 
-                            {currentView === 'face_update' && (
+                            {currentView === 'face_update' && selectedClassInfo && (
                                 <FaceUpdateView
-                                    classId={selectedClassId}
+                                    classInfo={selectedClassInfo}
+                                    students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
                                     onBack={goBack}
                                 />
                             )}
 
-                            {currentView === 'bank_password' && (
+                            {currentView === 'bank_password' && selectedClassInfo && (
                                 <BankPasswordView
-                                    classId={selectedClassId}
+                                    classInfo={selectedClassInfo}
+                                    students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
                                     onBack={goBack}
                                 />
                             )}
@@ -1235,7 +1289,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     growthProfile={growthProfile}
                                     onViewBodyMeasurements={() => navigateTo('student_body_measurements')}
                                     onViewHealthRecords={() => navigateTo('student_health_records')}
-                                    onViewGoalPlan={() => navigateTo('student_goal_plan')}
                                 />
                             )}
 
@@ -1243,7 +1296,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 <StudentBodyMeasurementsView
                                     studentId={activeStudent.id}
                                     studentName={activeStudent.name}
-                                    records={growthProfile.bodyMeasurements}
+                                    spaceId={activeTeacherSpace.id}
+                                    records={growthProfile.growthDataRecords}
                                     canEdit={canEditStudentHealth}
                                     operator={`${teacherProfile.name}老师`}
                                     onBack={goBack}
@@ -1263,12 +1317,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 />
                             )}
 
-                            {currentView === 'student_goal_plan' && (
-                                <SemesterGoalPlanView
-                                    plan={growthProfile.semesterGoalPlan}
-                                    onBack={goBack}
-                                />
-                            )}
 
                             {currentView === 'student_archive' && (
                                 <StudentArchiveView

@@ -41,7 +41,7 @@ for (const required of [
   'report.findingsTitle',
   'report.actionsTitle',
   'report.notice',
-  "label: kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘'",
+  "label={kind === 'weekly' ? '往期建议' : '往期复盘'}",
   'reportData?: PrincipalPeriodicReportContent;',
   "status === 'empty'",
   "status === 'failed'",
@@ -53,6 +53,7 @@ for (const required of [
 requireText(feedbackSource, '重新生成', '报告生成失败后应提供明确的重试操作。');
 requireText(headerSource, "backLabel = '返回'", '校长报告共享标题栏应提供明确返回入口。');
 requireText(headerSource, 'focus-visible:ring-2', '校长报告共享标题栏应保留键盘焦点。');
+requireText(viewSource, '<AssistantHistoryLink', '校长周月报告应使用图标加文字的历史入口。');
 requireText(cssSource, '.principal-report-screen-background', '校长报告应使用屏幕级统一渐变背景。');
 requireText(cssSource, 'var(--tm-role-principal-accent-soft)', '校长报告渐变应引用管理金角色令牌。');
 

@@ -24,6 +24,17 @@ for (const required of [
   "'--tm-size-touch'",
   "'--tm-size-floating-action'",
   "'--tm-border-control'",
+  "'--tm-input-bg'",
+  "'--tm-input-border'",
+  "'--tm-input-text'",
+  "'--tm-input-placeholder'",
+  "'--tm-input-disabled-bg'",
+  "'--tm-input-disabled-border'",
+  "'--tm-input-disabled-text'",
+  "'--tm-input-readonly-bg'",
+  "'--tm-input-readonly-border'",
+  "'--tm-input-readonly-text'",
+  "'--tm-input-focus-border'",
   "'--tm-focus-ring'",
   "'--tm-input-focus-ring'",
   "'--tm-page-plain-header-bg'",
@@ -35,8 +46,9 @@ for (const required of [
   "'--tm-audience-student-primary'",
   "'--tm-role-headteacher-primary'",
   "'--tm-role-principal-primary'",
-  "'--tm-report-source-indicator-width'",
-  "'--tm-report-date-option-height-pinned'",
+  "'--tm-report-source-pill-height'",
+  "'--tm-report-date-indicator-width'",
+  "'--tm-report-filter-padding-pinned'",
 ]) {
   assert.match(canonical, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 }
@@ -47,6 +59,11 @@ assert.doesNotMatch(parent, /teacherMobileTokens/);
 assert.match(guidelines, /mobile-app\/styles\/teacherMobileTokens\.ts/);
 assert.match(canonical, /textTertiary: teacherBrandPalette\.neutral\[550\]/);
 assert.match(canonical, /'--tm-text-tertiary': teacherBrandSemantic\.textTertiary/);
+assert.match(canonical, /'--tm-input-bg': teacherBrandSemantic\.surface/);
+assert.match(canonical, /'--tm-input-border': teacherBrandSemantic\.borderControl/);
+assert.match(canonical, /'--tm-input-disabled-bg': teacherBrandSemantic\.surfaceMuted/);
+assert.match(canonical, /'--tm-input-readonly-bg': teacherBrandSemantic\.surfaceSoft/);
+assert.match(guidelines, /禁止把可编辑输入框默认画成灰底/);
 assert.match(canonical, /metric: 'text-\[24px\]/);
 assert.match(canonical, /negative: teacherBrandPalette\.red\[500\]/);
 assert.match(canonical, /negativeStrong: teacherBrandPalette\.red\[700\]/);

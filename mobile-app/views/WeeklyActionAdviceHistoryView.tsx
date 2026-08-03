@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
 import { WEEKLY_ACTION_ADVICE_HISTORY_BY_CLASS, type WeeklyActionAdviceReport } from '../data/weeklyActionAdvice';
 import type { ClassInfo } from '../types';
@@ -68,23 +69,14 @@ const WeeklyActionAdviceHistoryView: React.FC<WeeklyActionAdviceHistoryViewProps
     }
 
     return (
-        <div className="relative min-h-full overflow-hidden bg-[linear-gradient(180deg,#F7FCFF_0%,#EEF8FF_42%,#FFFFFF_100%)] font-sans text-slate-950">
-            <div className="pointer-events-none absolute -left-24 top-5 h-72 w-72 rounded-full bg-cyan-200/38 blur-3xl" aria-hidden="true" />
-            <div className="pointer-events-none absolute -right-28 top-20 h-72 w-72 rounded-full bg-violet-200/34 blur-3xl" aria-hidden="true" />
+        <div className="ai-assistant-theme-headteacher relative min-h-full overflow-hidden bg-transparent font-sans text-slate-950">
+            <AssistantSubpageHeader
+                title="往期建议"
+                onBack={onBack}
+                backLabel="返回本周行动建议"
+            />
 
-            <header className="relative z-10 flex h-14 items-center px-4">
-                <button
-                    type="button"
-                    onClick={onBack}
-                    className="flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition active:scale-95 active:bg-white/70"
-                    aria-label="返回本周行动建议"
-                >
-                    <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
-                </button>
-                <h1 className="pointer-events-none absolute inset-x-14 text-center text-[17px] font-bold text-slate-900">往期建议</h1>
-            </header>
-
-            <main className="relative z-10 px-5 pb-10 pt-2">
+            <main className="relative z-10 px-5 pb-10 pt-1">
                 {activeClass && (
                     classes.length > 1 ? (
                         <button

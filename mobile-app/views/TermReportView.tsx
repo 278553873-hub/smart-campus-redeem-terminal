@@ -1722,7 +1722,7 @@ const PageWeaknessImprovement = ({ mode = 'a4', id }: { mode?: 'a4' | 'mobile', 
             area: "习作表达深度",
             issue: "在期末检测的作文部分，内容相对简短，细节描写和情感表达还有提升空间。",
             plan: "每周完成一篇随笔，家长协助选择感兴趣的主题。阅读优秀范文时，重点关注描写技巧和修辞手法。",
-            timeline: "本学期目标：积累10篇优质习作",
+            timeline: "建议周期：本学期积累10篇优质习作",
             icon: PenLine,
             priority: "高"
         },
@@ -1740,7 +1740,7 @@ const PageWeaknessImprovement = ({ mode = 'a4', id }: { mode?: 'a4' | 'mobile', 
             area: "体能持久力",
             issue: "在体能测试的耐力项目中表现略显薄弱，需要加强日常锻炼。",
             plan: "每天坚持10分钟晨跑或跳绳，周末可进行户外运动。制定运动打卡表，家长监督执行。",
-            timeline: "下学期目标：体能测试达到良好",
+            timeline: "建议周期：下学期体能测试达到良好",
             icon: Dumbbell,
             priority: "中"
         }

@@ -48,7 +48,7 @@ for (const required of [
   'h-11 shrink-0',
   'bg-[var(--tm-bg-page-glass)]',
   'backdrop-blur-xl',
-  'inset-x-16 truncate text-center',
+  'var(--mini-program-capsule-right-inset,0px)',
 ]) {
   requireText(headerSource, required, `校长历史页标题栏未与教师端子页面规范对齐：${required}`);
 }
@@ -68,7 +68,7 @@ for (const required of [
 }
 
 for (const required of [
-  '周、月、学期报告生成完成后，正式报告页右上角均展示历史图标',
+  '学校上下文行右侧展示“历史图标＋短文案”入口',
   '三类历史报告分别展示，不混在同一列表',
   '历史详情 → 历史列表 → 当前报告',
   '历史报告始终读取生成时保存的内容和数据快照',

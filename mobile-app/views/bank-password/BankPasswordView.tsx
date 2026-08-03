@@ -1,191 +1,108 @@
 import React, { useState } from 'react';
-import { BackIcon, CheckCircleIcon, LockIcon, ShieldIcon, SearchIcon, EyeIcon, EyeOffIcon, EditIcon } from '../../components/Icons';
-import { MOCK_STUDENTS_CLASS_1 } from '../../constants';
-
-// 模拟自动生成 6 位随机数字密码
-const generateRandomPassword = () => Math.floor(100000 + Math.random() * 900000).toString();
+import { Check, ChevronLeft, Edit3, Eye, EyeOff, Search } from 'lucide-react';
+import type { ClassInfo, Student } from '../../types';
 
 interface BankPasswordViewProps {
-    classId: string;
-    onBack: () => void;
+  classInfo: ClassInfo;
+  students: Student[];
+  onBack: () => void;
 }
 
-export const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classId, onBack }) => {
-    // 初始化时为所有学生分配随机密码
-    const [students, setStudents] = useState(
-        MOCK_STUDENTS_CLASS_1.map(s => ({
-            ...s,
-            password: generateRandomPassword(),
-            showPassword: false
-        }))
-    );
-    const [searchTerm, setSearchTerm] = useState('');
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [tempPassword, setTempPassword] = useState('');
+interface PasswordStudent extends Student {
+  password: string;
+  showPassword: boolean;
+}
 
-    const filteredStudents = students.filter(s =>
-        s.name.includes(searchTerm) || s.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const handleTogglePassword = (id: string) => {
-        setStudents(prev => prev.map(s => s.id === id ? { ...s, showPassword: !s.showPassword } : s));
-    };
-
-    const handleStartEdit = (id: string, current: string) => {
-        setEditingId(id);
-        setTempPassword(current);
-    };
-
-    const handleSaveEdit = () => {
-        if (editingId) {
-            if (tempPassword.length !== 6 || !/^\d+$/.test(tempPassword)) {
-                alert('密码必须为 6 位数字');
-                return;
-            }
-            setStudents(prev => prev.map(s => s.id === editingId ? { ...s, password: tempPassword } : s));
-            setEditingId(null);
-        }
-    };
-
-    return (
-        <div className="flex flex-col h-full bg-slate-50 relative">
-            {/* Header - Fixed */}
-            <div className="flex items-center justify-between px-4 py-2 bg-white sticky top-0 z-30 h-[44px] border-b border-slate-100">
-                <div className="flex-1 flex justify-start">
-                    <button onClick={onBack} className="p-1 -ml-2 text-slate-900 active:bg-slate-100 rounded-full transition-colors">
-                        <BackIcon className="w-5 h-5" />
-                    </button>
-                </div>
-                <div className="text-[17px] font-bold text-slate-900 flex-none">设置兑换密码</div>
-<div className="flex-1" aria-hidden="true"></div>
-            </div>
-
-            {/* Scrollable Container */}
-            <div className="flex-1 overflow-y-auto">
-                {/* Top Info Card - Will scroll away */}
-                <div className="p-3">
-                    <div className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-100">
-                        <div className="flex justify-between items-start mb-2">
-                            <div className="flex flex-col gap-0.5">
-                                <span className="text-blue-100/70 text-[11px] font-semibold tracking-wide">Security</span>
-                                <h2 className="text-lg font-bold">兑换认证密码</h2>
-                            </div>
-                            <div className="p-2 bg-white/10 rounded-xl backdrop-blur-md">
-                                <ShieldIcon className="w-4 h-4 text-white" />
-                            </div>
-                        </div>
-                        
-                        <div className="bg-black/10 rounded-xl p-2.5 border border-white/10">
-                            <p className="text-xs leading-relaxed text-blue-50/75">
-                                该密码用于货柜机兑换身份认证。系统已自动初始化。您可以点击眼睛图标查看，或点击编辑图标进行调整。
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Search Bar - Sticky at top after card scrolls away */}
-                <div className="sticky top-0 z-20 px-3 py-2 bg-slate-50/95 backdrop-blur-md">
-                    <div className="relative group">
-                        <input
-                            type="text"
-                            placeholder="搜索学生姓名或学号..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all pl-10"
-                        />
-                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                            <SearchIcon className="w-3.5 h-3.5" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Student List */}
-                <div className="px-3 pb-20 space-y-2">
-                    {filteredStudents.length > 0 ? (
-                        filteredStudents.map(student => (
-                            <div key={student.id} className="bg-white rounded-xl px-3 py-2.5 shadow-sm border border-slate-100 flex items-center justify-between group active:bg-slate-50 transition-colors">
-                                <div className="flex items-center gap-2.5 text-slate-800">
-                                    <div className="w-9 h-9 rounded-full border border-indigo-50 p-0.5 shadow-sm">
-                                        <img 
-                                            src={student.avatar || `https://i.pravatar.cc/150?u=${student.id}`} 
-                                            alt="" 
-                                            className="w-full h-full object-cover rounded-full" 
-                                        />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <div className="font-medium text-sm leading-tight">{student.name}</div>
-                                        {/* 学号字体调整为与货柜机一致的 Baloo 2 */}
-                                        <div className="text-[11px] font-normal opacity-60 mt-0.5" style={{ fontFamily: '"Baloo 2", cursive' }}>
-                                            {student.id}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    {editingId === student.id ? (
-                                        <div className="flex items-center gap-1.5 animate-in slide-in-from-right-4 duration-200">
-                                            <input
-                                                autoFocus
-                                                type="text"
-                                                inputMode="numeric"
-                                                maxLength={6}
-                                                value={tempPassword}
-                                                onChange={(e) => setTempPassword(e.target.value.replace(/\D/g, ''))}
-                                                className="w-[80px] bg-slate-50 border-2 border-blue-400 rounded-lg px-2 py-1 text-center font-semibold text-blue-600 focus:outline-none text-sm shadow-sm"
-                                                style={{ fontFamily: '"Baloo 2", cursive' }}
-                                            />
-                                            <button
-                                                onClick={handleSaveEdit}
-                                                className="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200 active:scale-90"
-                                            >
-                                                <CheckCircleIcon className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="flex items-center gap-1">
-                                                {/* 密码字体也同步调整，且密文改为更纤细的样式 */}
-                                                <div 
-                                                    className={`text-lg font-semibold text-slate-800 italic tracking-[0.05em] flex items-center`}
-                                                    style={{ fontFamily: student.showPassword ? '"Baloo 2", cursive' : 'inherit' }}
-                                                >
-                                                    {student.showPassword ? student.password : (
-                                                        <div className="flex gap-0.5 translate-y-[1px]">
-                                                            {[1,2,3,4,5,6].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-slate-800/80" />)}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <button 
-                                                    onClick={() => handleTogglePassword(student.id)}
-                                                    className="p-1 text-slate-300 active:text-blue-500 transition-colors"
-                                                >
-                                                    {student.showPassword ? <EyeOffIcon className="w-3.5 h-3.5" /> : <EyeIcon className="w-3.5 h-3.5" />}
-                                                </button>
-                                            </div>
-                                            <button
-                                                onClick={() => handleStartEdit(student.id, student.password)}
-                                                className="w-8 h-8 bg-slate-50 text-blue-500 border border-blue-100 flex items-center justify-center rounded-lg transition-all active:scale-90 shadow-sm"
-                                                title="修改密码"
-                                            >
-                                                <EditIcon className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="pt-20 flex flex-col items-center justify-center text-slate-400 gap-4">
-                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-                                <SearchIcon className="w-8 h-8 opacity-20" />
-                            </div>
-                            <p className="text-sm font-bold">未找到相关学生</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+const generateStablePassword = (studentId: string) => {
+  const hash = Array.from(studentId).reduce((value, character) => ((value * 31) + character.charCodeAt(0)) % 900000, 173);
+  return String(100000 + hash).slice(-6);
 };
 
+const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classInfo, students: classStudents, onBack }) => {
+  const [students, setStudents] = useState<PasswordStudent[]>(() => classStudents.map(student => ({
+    ...student,
+    password: generateStablePassword(student.id),
+    showPassword: false,
+  })));
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [tempPassword, setTempPassword] = useState('');
+  const [validationMessage, setValidationMessage] = useState('');
+
+  const filteredStudents = students.filter(student => {
+    const keyword = searchTerm.trim().toLocaleLowerCase();
+    return student.name.toLocaleLowerCase().includes(keyword)
+      || (student.studentNo ?? student.id).toLocaleLowerCase().includes(keyword);
+  });
+
+  const startEditing = (student: PasswordStudent) => {
+    setEditingId(student.id);
+    setTempPassword(student.password);
+    setValidationMessage('');
+  };
+
+  const savePassword = () => {
+    if (!editingId) return;
+    if (!/^\d{6}$/.test(tempPassword)) {
+      setValidationMessage('请输入6位数字密码');
+      return;
+    }
+    setStudents(current => current.map(student => student.id === editingId ? { ...student, password: tempPassword } : student));
+    setEditingId(null);
+    setValidationMessage('');
+  };
+
+  return (
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent">
+      <header className="relative flex h-[var(--tm-size-touch)] shrink-0 items-center bg-[var(--tm-page-plain-header-bg)] pl-[var(--tm-space-4)] [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]">
+        <button type="button" onClick={onBack} className="-ml-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回班级列表"><ChevronLeft className="h-5 w-5" /></button>
+        <h1 className="pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">设置兑换密码</h1>
+      </header>
+
+      <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
+        <div className="px-[var(--tm-space-4)] pt-[var(--tm-space-3)]">
+          <div className="flex items-center justify-between rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] shadow-[var(--tm-shadow-card)]">
+            <div className="min-w-0"><h2 className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{classInfo.name}</h2><p className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">共 {students.length} 名学生</p></div>
+            <span className="rounded-full bg-[var(--tm-brand-primary-soft)] px-[var(--tm-space-3)] py-[var(--tm-space-1)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary)]">6位数字</span>
+          </div>
+        </div>
+
+        <div className="sticky top-0 z-20 bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] py-[var(--tm-space-3)]">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-[var(--tm-space-3)] top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
+            <input type="search" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="搜索姓名或学号" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] pl-10 pr-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
+          </label>
+        </div>
+
+        <div className="space-y-[var(--tm-space-2)] px-[var(--tm-space-4)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))]">
+          {filteredStudents.map(student => (
+            <article key={student.id} className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] py-[var(--tm-space-2)] shadow-[var(--tm-shadow-control)]">
+              <div className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)]">
+                {student.avatar ? <img src={student.avatar} alt="" className="h-10 w-10 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--tm-brand-primary-soft)] font-semibold text-[var(--tm-brand-primary)]">{student.name.slice(0, 1)}</span>}
+                <div className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{student.name}</strong><small className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{student.studentNo ?? student.id}</small></div>
+
+                {editingId === student.id ? (
+                  <div className="flex items-center gap-[var(--tm-space-1)]">
+                    <input autoFocus inputMode="numeric" maxLength={6} value={tempPassword} onChange={event => { setTempPassword(event.target.value.replace(/\D/g, '')); setValidationMessage(''); }} className="h-[var(--tm-size-touch)] w-[86px] rounded-[var(--tm-radius-control)] border border-[var(--tm-input-focus-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-center text-[length:var(--tm-font-size-body)] font-semibold tabular-nums text-[var(--tm-input-text)] outline-none ring-2 ring-[var(--tm-input-focus-ring)]" aria-label={`修改${student.name}兑换密码`} />
+                    <button type="button" onClick={savePassword} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]" aria-label="保存密码"><Check className="h-[18px] w-[18px]" /></button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-[var(--tm-space-1)]">
+                    <span className="min-w-[58px] text-center text-[length:var(--tm-font-size-body)] font-semibold tabular-nums text-[var(--tm-text-primary)]">{student.showPassword ? student.password : '••••••'}</span>
+                    <button type="button" onClick={() => setStudents(current => current.map(item => item.id === student.id ? { ...item, showPassword: !item.showPassword } : item))} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label={`${student.showPassword ? '隐藏' : '查看'}${student.name}兑换密码`}>{student.showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}</button>
+                    <button type="button" onClick={() => startEditing(student)} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft-strong)]" aria-label={`修改${student.name}兑换密码`}><Edit3 className="h-[18px] w-[18px]" /></button>
+                  </div>
+                )}
+              </div>
+              {editingId === student.id && validationMessage && <p role="alert" className="pb-[var(--tm-space-1)] pt-[var(--tm-space-2)] text-right text-[length:var(--tm-font-size-meta)] text-[var(--tm-status-negative)]">{validationMessage}</p>}
+            </article>
+          ))}
+          {filteredStudents.length === 0 && <div className="py-20 text-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-tertiary)]">未找到相关学生</div>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export { BankPasswordView };
 export default BankPasswordView;

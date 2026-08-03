@@ -1,10 +1,15 @@
 import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode, type FormSection, type FormSubField } from './formDefinition';
-import { createGrowthCollectionQuestions } from './growthCollectionDefinition';
+import type { GrowthInputFieldKey } from './studentGrowthFieldCatalog';
+import {
+  createGrowthCollectionQuestions,
+  isGrowthCollectionQuestion,
+} from './growthCollectionDefinition';
 
 export type QuestionnaireStatus = 'draft' | 'active' | 'ended' | 'archived';
 export type QuestionnaireCollectionMode = 'guardian_questionnaire' | 'student_information' | 'teacher_questionnaire';
-export type QuestionnaireContentType = 'ordinary' | 'growth';
+export type QuestionnaireContentType = 'ordinary' | 'growth' | 'mixed';
 export type QuestionnaireRespondentRole = 'teacher' | 'guardian';
+export type GrowthRecordDateMode = 'respondent' | 'fixed';
 export type QuestionnaireQuestionType = 'single' | 'multiple' | 'rating' | 'text' | 'short_text' | 'multi_fill' | 'number' | 'date';
 export type QuestionnaireTargetMode = 'all' | 'classes' | 'students';
 export type QuestionnaireTargetSyncPolicy = 'fixed' | 'follow_classes';
@@ -35,6 +40,8 @@ export interface QuestionnaireQuestion {
   subFields?: FormSubField[];
   sectionId?: string;
   settings?: FormFieldSettings;
+  growthFieldKey?: GrowthInputFieldKey;
+  growthRecordedAt?: boolean;
 }
 
 export interface QuestionnaireTarget {
@@ -88,6 +95,7 @@ export interface QuestionnaireRecord {
   respondentRole?: QuestionnaireRespondentRole;
   collectionMode?: QuestionnaireCollectionMode;
   growthTemplate?: GrowthCollectionTemplate;
+  growthRecordDateMode?: GrowthRecordDateMode;
   growthMeasurementDate?: string;
   growthTerm?: string;
   growthDimensionOptions?: string[];
@@ -605,7 +613,7 @@ const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): Questionnair
   return {
     ...rest,
     suggestedDeadline: rest.suggestedDeadline ?? deadline ?? '',
-    contentType: rest.contentType ?? (rest.growthTemplate ? 'growth' : 'ordinary'),
+    contentType: inferQuestionnaireContentType(rest.questions, rest.growthTemplate),
     respondentRole: rest.respondentRole ?? (collectionMode === 'guardian_questionnaire' ? 'guardian' : 'teacher'),
     collectionMode,
     studentAssignmentMode: rest.studentAssignmentMode ?? 'creator',
@@ -676,7 +684,24 @@ export const getQuestionnaireCollectionMode = (record: QuestionnaireRecord): Que
 );
 
 export const getQuestionnaireContentType = (record: QuestionnaireRecord): QuestionnaireContentType => (
-  record.contentType ?? (record.growthTemplate ? 'growth' : 'ordinary')
+  inferQuestionnaireContentType(record.questions, record.growthTemplate)
+);
+
+export const isBodyGrowthQuestion = isGrowthCollectionQuestion;
+
+export const inferQuestionnaireContentType = (
+  questions: QuestionnaireQuestion[],
+  legacyTemplate?: GrowthCollectionTemplate,
+): QuestionnaireContentType => {
+  if (legacyTemplate === 'semester_goal') return 'growth';
+  const hasGrowthFields = questions.some(isBodyGrowthQuestion);
+  const hasOrdinaryFields = questions.some(question => !isBodyGrowthQuestion(question));
+  if (hasGrowthFields && hasOrdinaryFields) return 'mixed';
+  return hasGrowthFields || legacyTemplate === 'height_weight' ? 'growth' : 'ordinary';
+};
+
+export const hasGrowthCollectionFields = (record: QuestionnaireRecord) => (
+  getQuestionnaireContentType(record) !== 'ordinary'
 );
 
 export const getQuestionnaireRespondentRole = (record: QuestionnaireRecord): QuestionnaireRespondentRole => (
@@ -1156,10 +1181,13 @@ export const getQuestionnaireAnswerValidationError = (
   if (question.type === 'number') {
     const text = String(answer).trim();
     const value = Number(text);
-    const format = normalizeFormFieldSettings(question.type, question.settings, question.options).numberFormat ?? 'integer';
+    const settings = normalizeFormFieldSettings(question.type, question.settings, question.options);
+    const format = settings.numberFormat ?? 'integer';
     const decimalPlaces = text.includes('.') ? text.split('.')[1]?.length ?? 0 : 0;
     const maxDecimals = format === 'integer' ? 0 : format === 'decimal-1' ? 1 : 2;
     if (!Number.isFinite(value) || decimalPlaces > maxDecimals) return `“${question.title}”数字格式不正确`;
+    if (settings.minValue !== undefined && value < settings.minValue) return `“${question.title}”不能小于${settings.minValue}`;
+    if (settings.maxValue !== undefined && value > settings.maxValue) return `“${question.title}”不能大于${settings.maxValue}`;
   }
   return '';
 };

@@ -2,7 +2,6 @@ import React from 'react';
 import {
   CalendarDays,
   CircleAlert,
-  History,
   ListChecks,
   Sparkles,
   TrendingUp,
@@ -13,6 +12,7 @@ import {
   type PrincipalPeriodicReportContent,
 } from '../data/principalPeriodicReports';
 import AssistantReportFeedback from '../components/AssistantReportFeedback';
+import AssistantHistoryLink from '../components/AssistantHistoryLink';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import type { ReportGenerationTaskStatus } from '../hooks/useReportGenerationTask';
 
@@ -52,11 +52,6 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
       <AssistantSubpageHeader
         title={report.pageTitle}
         onBack={onBack}
-        action={onOpenHistory && status === 'generated' ? {
-          label: kind === 'weekly' ? '查看往期管理建议' : '查看往期学校复盘',
-          icon: <History className="h-5 w-5" strokeWidth={2.2} />,
-          onClick: onOpenHistory,
-        } : undefined}
       />
 
       {status === 'empty' ? (
@@ -97,7 +92,15 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
               <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
               {report.eyebrow}
             </span>
-            <p className="mt-4 text-[13px] text-[var(--tm-text-secondary)]">{schoolName}</p>
+            <div className="mt-2 flex min-h-11 items-center justify-between gap-3">
+              <p className="min-w-0 truncate text-[13px] text-[var(--tm-text-secondary)]">{schoolName}</p>
+              {onOpenHistory && (
+                <AssistantHistoryLink
+                  label={kind === 'weekly' ? '往期建议' : '往期复盘'}
+                  onClick={onOpenHistory}
+                />
+              )}
+            </div>
             <h2 className="mt-1.5 text-[24px] font-bold leading-8">{report.reportTitle}</h2>
             <div className="mt-3 flex items-start gap-2 text-[12px] leading-5 text-[var(--tm-text-tertiary)]">
               <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />

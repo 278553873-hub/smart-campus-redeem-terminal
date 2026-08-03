@@ -8,7 +8,7 @@ interface PhoneMockupProps {
   safeAreaTop?: boolean;
   screenBackground?: React.ReactNode;
   showDeviceFrame?: boolean;
-  contentTopInsetMode?: 'full-chrome' | 'status-bar';
+  contentTopInsetMode?: 'full-chrome' | 'status-bar' | 'none';
 }
 
 const PhoneMockup: React.FC<PhoneMockupProps> = ({ 
@@ -51,8 +51,13 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   }, [screenWidth, screenHeight]);
 
   const shouldShowNativeChrome = showDeviceFrame && safeAreaTop;
-  const nativeChromeTopInset = contentTopInsetMode === 'status-bar' ? 54 : 106;
+  const nativeChromeTopInset = contentTopInsetMode === 'none'
+    ? 0
+    : contentTopInsetMode === 'status-bar'
+      ? 54
+      : 106;
   const simulatedChromeTopInset = shouldShowNativeChrome ? nativeChromeTopInset : 0;
+  const simulatedStatusBarHeight = shouldShowNativeChrome ? 54 : 0;
   const simulatedCapsuleRightInset = shouldShowNativeChrome ? 112 : 0;
   const deviceFrameVisibility = showDeviceFrame ? 'opacity-100' : 'opacity-0';
   const nativeChromeVisibility = shouldShowNativeChrome ? 'opacity-100' : 'opacity-0';
@@ -63,6 +68,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
       style={{
         width: `${screenWidth}px`,
         height: `${screenHeight}px`,
+        '--mini-program-status-bar-height': `${simulatedStatusBarHeight}px`,
         '--mini-program-capsule-right-inset': `${simulatedCapsuleRightInset}px`,
       } as React.CSSProperties}
     >
@@ -72,7 +78,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
           </div>
         )}
         
-        {/* 模拟真实手机环境时，可按业务场景选择只避让状态栏，或完整避让微信胶囊行。 */}
+        {/* 模拟真实手机环境时，可统一避让顶部原生区域，也可由沉浸页面自行接管安全区。 */}
         <div
           className="absolute inset-0 z-10 flex flex-col"
           style={{ paddingTop: `${simulatedChromeTopInset}px` }}

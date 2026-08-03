@@ -79,6 +79,18 @@
     );
 }
 
+.headteacher-report-screen-background {
+  background:
+    radial-gradient(circle at 14% -2%, var(--tm-role-headteacher-glow-primary), transparent 34%),
+    radial-gradient(circle at 90% 10%, var(--tm-role-headteacher-glow-secondary), transparent 32%),
+    linear-gradient(
+      180deg,
+      var(--tm-role-headteacher-soft) 0%,
+      var(--tm-bg-page) 68%,
+      var(--tm-bg-page-low) 100%
+    );
+}
+
 .ai-assistant-typewriter-shine {
   color: var(--tm-assistant-role-text);
   background:

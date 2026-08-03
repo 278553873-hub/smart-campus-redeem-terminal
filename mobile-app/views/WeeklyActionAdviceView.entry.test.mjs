@@ -61,10 +61,12 @@ requireText(viewSource, '正在分析评价详情', '生成等待应分析上一
 forbidText(viewSource, '继续参考前一周', '页面不应向前追溯两周。');
 forbidText(viewSource, '前四周', '页面不应向前追溯四周。');
 requireText(viewSource, 'visibleStepCount', '生成等待文案应逐步出现。');
-requireText(viewSource, 'aria-label="查看往期建议"', '右上角历史图标应有清晰的无障碍名称。');
-requireText(viewSource, "const showHeaderTitle = title !== '本周行动建议';", '当前行动建议详情不应重复展示顶部标题。');
-requireText(viewSource, '{showHeaderTitle && (', '历史详情和报告示例仍应按需展示标题。');
-requireText(viewSource, 'h-11 w-11', '返回与历史图标应提供44像素触控区域。');
+requireText(viewSource, '<AssistantHistoryLink', '行动建议应复用带文字的历史入口组件。');
+requireText(viewSource, 'label="往期建议"', '行动建议历史入口应显示明确文案。');
+requireText(viewSource, "const showHeaderTitle = title !== '本周行动建议';", '当前行动建议应区分班级标题与历史详情标题。');
+requireText(viewSource, 'title={showHeaderTitle ? title : className}', '当前行动建议标题栏应展示班级名，历史详情和报告示例应展示报告标题。');
+requireText(viewSource, 'surface="transparent"', '班主任助理报告标题栏应保持透明。');
+requireText(viewSource, '<AssistantSubpageHeader', '行动建议应复用避让微信胶囊的标题栏。');
 requireText(viewSource, 'rounded-[22px]', '报告与进度面板应遵循教师手机端圆角规范。');
 requireText(viewSource, 'waa-card-enter', '报告卡片应保留语义入场动画。');
 requireText(cssSource, '@keyframes waa-fade-up', '应定义报告卡片入场动画。');

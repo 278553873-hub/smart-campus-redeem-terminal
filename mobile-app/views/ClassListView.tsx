@@ -4,10 +4,12 @@ import {
     ChevronDown,
     ChevronRight,
     Copy,
+    FolderArchive,
     LogIn,
     MessageCircle,
     Plus,
     SlidersHorizontal,
+    X,
 } from 'lucide-react';
 import { ClassInfo, Student, TeacherProfile } from '../types';
 import {
@@ -19,10 +21,11 @@ import {
     ScanFaceIcon,
     ShieldIcon,
     FileTextIcon,
-    CloseIcon,
     UserPlusIcon,
 } from '../components/Icons';
 import ClassSourceTrigger from '../components/ClassSourceTrigger';
+import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/ClassInviteFlow';
+import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import {
     canManagePersonalClasses,
     canViewClassLeaderboard,
@@ -50,11 +53,11 @@ interface ClassListViewProps {
     onViewClassReport: (classId: string) => void;
     onViewLeaderboard: () => void;
     onViewRewardVerification: (classId: string) => void;
+    onBatchEditStudents: (classId: string) => void;
+    onBatchArchiveStudents: (classId: string) => void;
     onViewFaceUpdate: (classId: string) => void;
     onViewBankPassword: (classId: string) => void;
     onViewHomeworkEntry: (classId: string) => void;
-    onInviteTeacher: (classId: string) => void;
-    onInviteParent: (classId: string) => void;
     onEditClassInfo: (classId: string) => void;
 }
 
@@ -97,11 +100,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onViewClassReport,
     onViewLeaderboard,
     onViewRewardVerification,
+    onBatchEditStudents,
+    onBatchArchiveStudents,
     onViewFaceUpdate,
     onViewBankPassword,
     onViewHomeworkEntry,
-    onInviteTeacher,
-    onInviteParent,
     onEditClassInfo,
 }) => {
     const [activeActionClassId, setActiveActionClassId] = useState<string | null>(null);
@@ -112,6 +115,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const [showDisplaySettings, setShowDisplaySettings] = useState(false);
     const [hiddenClassIdsBySpace, setHiddenClassIdsBySpace] = useState<Record<string, string[]>>({});
     const [copyFeedback, setCopyFeedback] = useState<{ classId: string; message: string; success: boolean } | null>(null);
+    const [inviteContext, setInviteContext] = useState<{ audience: ClassInviteAudience; classInfo: ClassInfo } | null>(null);
 
     const teachingClassIds = useMemo(() => (
         new Set(teacherProfile.teachingAssignments.map(assignment => assignment.classId))
@@ -183,21 +187,27 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         action(classId);
     };
 
+    const openInviteFlow = (audience: ClassInviteAudience) => {
+        if (!activeActionClass) return;
+        setInviteContext({ audience, classInfo: activeActionClass });
+        closeActionSheet();
+    };
+
     const activeActionPolicy = activeActionClass ? getActionPolicy(activeActionClass.id) : null;
-    const actionGroups: ClassActionGroup[] = activeActionClass && activeActionPolicy ? [
+    const actionGroups: ClassActionGroup[] = activeActionClass && activeActionPolicy ? ([
         activeActionPolicy.canUseDailyActions ? {
             title: '日常操作',
             items: [
                 {
                     label: '作业录入',
                     icon: FileTextIcon,
-                    tone: 'brand',
+                    tone: 'brand' as const,
                     onClick: () => runClassAction(onViewHomeworkEntry),
                 },
                 {
                     label: '兑换奖励',
                     icon: GiftIcon,
-                    tone: 'reward',
+                    tone: 'reward' as const,
                     onClick: () => runClassAction(onViewRewardVerification),
                 },
             ],
@@ -209,7 +219,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     label: '批量修改学生',
                     icon: UsersIcon,
                     tone: 'neutral' as const,
-                    onClick: () => runClassAction(onSelectClass),
+                    onClick: () => runClassAction(onBatchEditStudents),
                 },
                 {
                     label: '更新人脸数据',
@@ -222,7 +232,13 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     icon: ShieldIcon,
                     tone: 'secondary' as const,
                     onClick: () => runClassAction(onViewBankPassword),
-                }] : []),
+                },
+                ...(isSchoolSpace ? [{
+                    label: '批量留档',
+                    icon: FolderArchive,
+                    tone: 'positive' as const,
+                    onClick: () => runClassAction(onBatchArchiveStudents),
+                }] : [])] : []),
                 ...(activeActionPolicy.canMaintainClass ? [{
                     label: '离校学生管理',
                     icon: UsersIcon,
@@ -238,17 +254,17 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     label: '邀请老师加入',
                     icon: UserPlusIcon,
                     tone: 'secondary' as const,
-                    onClick: () => runClassAction(onInviteTeacher),
+                    onClick: () => openInviteFlow('teacher'),
                 }] : []),
                 ...(activeActionPolicy.canInviteParent ? [{
                     label: '邀请家长加入',
                     icon: MessageCircle,
                     tone: 'brand' as const,
-                    onClick: () => runClassAction(onInviteParent),
+                    onClick: () => openInviteFlow('parent'),
                 }] : []),
             ],
         } : null,
-    ].filter((group): group is ClassActionGroup => Boolean(group)) : [];
+    ] as Array<ClassActionGroup | null>).filter((group): group is ClassActionGroup => group !== null) : [];
 
     const copyClassCode = async (classInfo: ClassInfo) => {
         const success = await copyText(classInfo.classCode);
@@ -452,117 +468,107 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 )}
             </div>
 
-            {canManagePersonal && showPersonalClassActions && (
-                <div className="fixed inset-0 z-[145] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="班级操作">
-                    <button aria-label="关闭班级操作" className="absolute inset-0" onClick={() => setShowPersonalClassActions(false)} />
-                    <section className="relative w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-3 shadow-[var(--tm-shadow-sheet)]">
-                        <div className="mx-auto h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />
-                        <div className="mt-2 flex min-h-12 items-center justify-between">
-                            <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">班级操作</h2>
-                            <button type="button" onClick={() => setShowPersonalClassActions(false)} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭">
-                                <CloseIcon className="h-5 w-5" />
+            <MobileBottomSheet open={canManagePersonal && showPersonalClassActions} title="班级操作" onClose={() => setShowPersonalClassActions(false)}>
+                <div className="space-y-[var(--tm-space-2)]">
+                    {[
+                        { label: '创建班级', icon: Plus, onClick: onCreateClass },
+                        { label: '加入班级', icon: LogIn, onClick: onJoinClass },
+                        { label: '显示设置', icon: SlidersHorizontal, onClick: () => setShowDisplaySettings(true) },
+                    ].map(item => {
+                        const Icon = item.icon;
+                        return (
+                            <button
+                                key={item.label}
+                                type="button"
+                                onClick={() => {
+                                    setShowPersonalClassActions(false);
+                                    item.onClick();
+                                }}
+                                className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-left active:bg-[var(--tm-bg-surface-muted)]"
+                            >
+                                <span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]"><Icon className="h-[18px] w-[18px]" /></span>
+                                <span className="flex-1 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{item.label}</span>
+                                <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
                             </button>
-                        </div>
-                        <div className="mt-2 space-y-2">
-                            {[
-                                { label: '创建班级', icon: Plus, onClick: onCreateClass },
-                                { label: '加入班级', icon: LogIn, onClick: onJoinClass },
-                                { label: '显示设置', icon: SlidersHorizontal, onClick: () => setShowDisplaySettings(true) },
-                            ].map(item => {
-                                const Icon = item.icon;
-                                return (
-                                    <button
-                                        key={item.label}
-                                        type="button"
-                                        onClick={() => {
-                                            setShowPersonalClassActions(false);
-                                            item.onClick();
-                                        }}
-                                        className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 text-left active:bg-[var(--tm-bg-surface-muted)]"
-                                    >
-                                        <span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-white text-[var(--tm-brand-primary)]"><Icon className="h-[18px] w-[18px]" /></span>
-                                        <span className="flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">{item.label}</span>
-                                        <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </section>
+                        );
+                    })}
                 </div>
-            )}
+            </MobileBottomSheet>
 
-            {showDisplaySettings && (
-                <div className="fixed inset-0 z-[150] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="显示班级">
-                    <button aria-label="关闭显示设置" className="absolute inset-0" onClick={() => setShowDisplaySettings(false)} />
-                    <section className="relative max-h-[72%] w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-3 shadow-[var(--tm-shadow-sheet)]">
-                        <div className="mx-auto h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />
-                        <div className="mt-2 flex min-h-12 items-center justify-between">
-                            <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">显示班级</h2>
-                            <button type="button" onClick={() => setShowDisplaySettings(false)} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭">
-                                <CloseIcon className="h-5 w-5" />
+            <MobileBottomSheet open={showDisplaySettings} title="显示班级" onClose={() => setShowDisplaySettings(false)}>
+                <div className="space-y-[var(--tm-space-2)]">
+                    {classes.map(classInfo => {
+                        const visible = !hiddenClassIds.has(classInfo.id);
+                        return (
+                            <button
+                                key={classInfo.id}
+                                type="button"
+                                onClick={() => toggleClassVisibility(classInfo.id)}
+                                className="flex min-h-[56px] w-full items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left active:bg-[var(--tm-bg-surface-muted)]"
+                                aria-pressed={visible}
+                            >
+                                <span className="min-w-0 truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{classInfo.name}</span>
+                                <span className={`flex h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors ${visible ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-muted)] ring-1 ring-inset ring-[var(--tm-border-subtle)]'}`}>
+                                    <span className={`h-5 w-5 rounded-full bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-control)] transition-transform ${visible ? 'translate-x-5' : 'translate-x-0'}`} />
+                                </span>
                             </button>
-                        </div>
-                        <div className="mt-2 max-h-[48vh] space-y-2 overflow-y-auto pb-1 no-scrollbar">
-                            {classes.map(classInfo => {
-                                const visible = !hiddenClassIds.has(classInfo.id);
-                                return (
-                                    <button
-                                        key={classInfo.id}
-                                        type="button"
-                                        onClick={() => toggleClassVisibility(classInfo.id)}
-                                        className="flex min-h-[56px] w-full items-center justify-between gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left active:bg-[var(--tm-bg-surface-muted)]"
-                                        aria-pressed={visible}
-                                    >
-                                        <span className="min-w-0 truncate text-sm font-semibold text-[var(--tm-text-primary)]">{classInfo.name}</span>
-                                        <span className={`flex h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors ${visible ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-muted)] ring-1 ring-inset ring-[var(--tm-border-subtle)]'}`}>
-                                            <span className={`h-5 w-5 rounded-full bg-white shadow-[var(--tm-shadow-control)] transition-transform ${visible ? 'translate-x-5' : 'translate-x-0'}`} />
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </section>
+                        );
+                    })}
                 </div>
-            )}
+            </MobileBottomSheet>
 
-            {activeActionClass && actionGroups.length > 0 && (
-                <div className="fixed inset-0 z-[145] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label={`${activeActionClass.name}更多操作`}>
-                    <button aria-label="关闭班级更多操作" className="absolute inset-0" onClick={closeActionSheet} />
-                    <div className="relative w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-4 shadow-[var(--tm-shadow-sheet)] animate-in slide-in-from-bottom-4 fade-in [animation-duration:var(--tm-duration-standard)]">
-                        <div className="mb-4 flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                                <button
-                                    type="button"
-                                    onClick={() => runClassAction(onEditClassInfo)}
-                                    className="-ml-2 flex min-h-11 max-w-full items-center gap-1 rounded-[var(--tm-radius-control)] px-2 text-left active:bg-[var(--tm-bg-surface-soft)]"
-                                    aria-label={`查看${activeActionClass.name}班级详情`}
-                                >
-                                    <span className="truncate text-[18px] font-semibold text-[var(--tm-text-primary)]">{activeActionClass.name}</span>
-                                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" aria-hidden="true" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => copyClassCode(activeActionClass)}
-                                    className="-ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-xs font-medium text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
-                                    aria-label={`复制${activeActionClass.name}班级号${activeActionClass.classCode}`}
-                                >
-                                    <span>班级号</span>
-                                    <span className="tabular-nums text-[var(--tm-text-primary)]">{formatClassCode(activeActionClass.classCode)}</span>
-                                    {copyFeedback?.classId === activeActionClass.id && copyFeedback.success
-                                        ? <Check className="h-3.5 w-3.5 text-[var(--tm-status-positive)]" />
-                                        : <Copy className="h-3.5 w-3.5" />}
-                                </button>
-                            </div>
-                            <button onClick={closeActionSheet} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭">
-                                <CloseIcon className="h-5 w-5" />
+            <MobileBottomSheet
+                open={Boolean(activeActionClass && actionGroups.length > 0)}
+                title="班级更多操作"
+                onClose={closeActionSheet}
+                showHandle={false}
+                header={activeActionClass ? (
+                    <header className="shrink-0 px-[var(--tm-space-4)] pb-[var(--tm-space-4)] pt-[var(--tm-space-5)]">
+                        <div className="flex items-center gap-[var(--tm-space-2)]">
+                            <button
+                                type="button"
+                                onClick={() => runClassAction(onEditClassInfo)}
+                                className="flex min-h-[var(--tm-size-touch)] min-w-0 flex-1 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] text-left active:bg-[var(--tm-bg-surface-soft)]"
+                                aria-label={`查看${activeActionClass.name}班级详情`}
+                            >
+                                <span className="flex min-w-0 items-baseline gap-[var(--tm-space-2)]">
+                                    <span className="min-w-0 truncate text-[length:var(--tm-font-size-group-title)] font-semibold text-[var(--tm-text-primary)]">{activeActionClass.name}</span>
+                                    <span className="flex shrink-0 items-center gap-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]">
+                                        详情
+                                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                                    </span>
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={closeActionSheet}
+                                className="-mr-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                                aria-label="关闭班级更多操作"
+                            >
+                                <X className="h-5 w-5" />
                             </button>
                         </div>
-
-                        <div className="max-h-[58vh] space-y-4 overflow-y-auto pb-1 no-scrollbar">
+                        <button
+                            type="button"
+                            onClick={() => copyClassCode(activeActionClass)}
+                            className="inline-flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-brand-primary)]"
+                            aria-label={`复制${activeActionClass.name}班级号${activeActionClass.classCode}`}
+                        >
+                            <span>班级号</span>
+                            <span className="tabular-nums text-[var(--tm-text-primary)]">{formatClassCode(activeActionClass.classCode)}</span>
+                            {copyFeedback?.classId === activeActionClass.id && copyFeedback.success
+                                ? <Check className="h-4 w-4 text-[var(--tm-status-positive)]" />
+                                : <Copy className="h-4 w-4" />}
+                        </button>
+                    </header>
+                ) : undefined}
+            >
+                {activeActionClass && (
+                    <div className="space-y-[var(--tm-space-4)]">
                             {actionGroups.map(group => (
                                 <section key={group.title}>
-                                    <h4 className="mb-2 px-1 text-xs font-semibold text-[var(--tm-text-disabled)]">{group.title}</h4>
-                                    <div className="grid grid-cols-2 gap-2.5">
+                                    <h4 className="mb-[var(--tm-space-2)] px-[var(--tm-space-1)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-tertiary)]">{group.title}</h4>
+                                    <div className="grid grid-cols-2 gap-[var(--tm-space-2)]">
                                         {group.items.map(item => {
                                             const Icon = item.icon;
                                             return (
@@ -570,54 +576,53 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                                     key={item.label}
                                                     type="button"
                                                     onClick={item.onClick}
-                                                    className="relative flex min-h-[56px] items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 text-left transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-muted)]"
+                                                    className="relative flex min-h-[56px] items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-left transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-muted)]"
                                                 >
-                                                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] ${actionToneClass[item.tone]}`}>
+                                                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${actionToneClass[item.tone]}`}>
                                                         <Icon className="h-[18px] w-[18px]" />
                                                     </span>
-                                                    <span className="min-w-0 flex-1 text-[14px] font-semibold leading-snug text-[var(--tm-text-primary)]">{item.label}</span>
+                                                    <span className="min-w-0 flex-1 text-[length:var(--tm-font-size-body)] font-semibold leading-snug text-[var(--tm-text-primary)]">{item.label}</span>
                                                 </button>
                                             );
                                         })}
                                     </div>
                                 </section>
                             ))}
-                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </MobileBottomSheet>
 
-            {showLeftStudentSheet && (
-                <div className="fixed inset-0 z-[150] flex items-end bg-[var(--tm-mask)] backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="离校学生">
-                    <button aria-label="关闭离校学生" className="absolute inset-0" onClick={() => setLeftStudentClassId(null)} />
-                    <div className="relative max-h-[72%] w-full rounded-t-[var(--tm-radius-sheet)] bg-white px-5 pb-5 pt-5 shadow-[var(--tm-shadow-sheet)]">
-                        <div className="mb-4 flex items-center justify-center">
-                            <h3 className="text-[20px] font-semibold text-[var(--tm-text-primary)]">离校学生</h3>
-                            <button onClick={() => setLeftStudentClassId(null)} className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭">
-                                <CloseIcon className="h-5 w-5 text-[var(--tm-text-disabled)]" />
+            <MobileBottomSheet open={showLeftStudentSheet} title="离校学生" onClose={() => setLeftStudentClassId(null)}>
+                <div className="space-y-[var(--tm-space-3)]">
+                    {leftStudents.length === 0 && (
+                        <div className="rounded-[var(--tm-radius-card)] border border-dashed border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-8)] text-center text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)]">
+                            暂无离校学生
+                        </div>
+                    )}
+                    {leftStudents.map(student => (
+                        <div key={student.id} className="flex items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]">
+                            <img src={student.avatar} alt={`${student.name}头像`} className="h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 rounded-full bg-[var(--tm-bg-surface)] object-cover" />
+                            <div className="min-w-0 flex-1">
+                                <div className="text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{student.name}</div>
+                                <div className="mt-[var(--tm-space-1)] truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{student.studentNo || student.id} · {leftStudentClass?.name || student.class}</div>
+                            </div>
+                            <button type="button" onClick={() => onRestoreStudentStatus(student)} className="min-h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-positive-strong)] active:scale-95">
+                                恢复
                             </button>
                         </div>
-                        <div className="max-h-[440px] space-y-3 overflow-y-auto pb-4">
-                            {leftStudents.length === 0 && (
-                                <div className="rounded-[var(--tm-radius-card)] border border-dashed border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-8 text-center text-sm font-semibold text-[var(--tm-text-secondary)]">
-                                    暂无离校学生
-                                </div>
-                            )}
-                            {leftStudents.map(student => (
-                                <div key={student.id} className="flex items-center gap-3 rounded-[var(--tm-radius-inner)] bg-white p-3 shadow-[var(--tm-shadow-card)]">
-                                    <img src={student.avatar} alt={`${student.name}头像`} className="h-11 w-11 shrink-0 rounded-full bg-[var(--tm-bg-surface-soft)] object-cover" />
-                                    <div className="min-w-0 flex-1">
-                                        <div className="text-[15px] font-semibold text-[var(--tm-text-primary)]">{student.name}</div>
-                                        <div className="mt-1 truncate text-xs font-medium text-[var(--tm-text-disabled)]">{student.studentNo || student.id} · {leftStudentClass?.name || student.class}</div>
-                                    </div>
-                                    <button type="button" onClick={() => onRestoreStudentStatus(student)} className="min-h-11 shrink-0 rounded-full bg-[var(--tm-status-positive-soft)] px-3 text-xs font-semibold text-[var(--tm-status-positive-strong)] active:scale-95">
-                                        恢复
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    ))}
                 </div>
+            </MobileBottomSheet>
+
+            {inviteContext && (
+                <ClassInviteFlow
+                    open
+                    audience={inviteContext.audience}
+                    classInfo={inviteContext.classInfo}
+                    inviterName={teacherProfile.name}
+                    schoolName={currentSpace.title}
+                    onClose={() => setInviteContext(null)}
+                />
             )}
         </div>
     );

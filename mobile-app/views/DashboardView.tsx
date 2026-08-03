@@ -5,7 +5,7 @@ import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
     AwardIcon, GrowthIcon
 } from '../components/Icons';
-import { AlertTriangle, BadgeCheck, Camera, ChevronLeft, ChevronRight, FolderOpen, HeartPulse, Ruler, School, Target } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Camera, ChevronLeft, ChevronRight, FolderOpen, HeartPulse, Ruler, School } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
@@ -40,7 +40,6 @@ interface DashboardViewProps {
     growthProfile: StudentGrowthProfile;
     onViewBodyMeasurements: () => void;
     onViewHealthRecords: () => void;
-    onViewGoalPlan: () => void;
     initialTab?: 'overview' | 'report' | 'collection';
 }
 
@@ -281,7 +280,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     growthProfile,
     onViewBodyMeasurements,
     onViewHealthRecords,
-    onViewGoalPlan,
     initialTab = 'overview',
 }) => {
     const [activeTab, setActiveTab] = useState<'overview' | 'report' | 'collection'>(initialTab);
@@ -328,11 +326,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         record.evaluation_date >= currentTermOption.startDate && record.evaluation_date <= currentTermOption.endDate
     )).sort((left, right) => right.evaluation_date.localeCompare(left.evaluation_date)), [currentTermOption.endDate, currentTermOption.startDate, evaluationRecords]);
     const latestMeasurement = growthProfile.bodyMeasurements[0];
-    const previousMeasurement = growthProfile.bodyMeasurements[1];
+    const latestHeightMeasurement = growthProfile.bodyMeasurements.find(record => record.heightCm !== undefined);
+    const latestWeightMeasurement = growthProfile.bodyMeasurements.find(record => record.weightKg !== undefined);
+    const latestBmiMeasurement = growthProfile.bodyMeasurements.find(record => record.bmi !== undefined);
     const latestHealthRecord = growthProfile.healthExamRecords[0];
-    const goalPlan = growthProfile.semesterGoalPlan;
-    const heightDelta = latestMeasurement && previousMeasurement
-        ? Number((latestMeasurement.heightCm - previousMeasurement.heightCm).toFixed(1))
+    const latestHeightIndex = latestHeightMeasurement ? growthProfile.bodyMeasurements.indexOf(latestHeightMeasurement) : -1;
+    const previousHeightMeasurement = latestHeightIndex >= 0
+        ? growthProfile.bodyMeasurements.slice(latestHeightIndex + 1).find(record => record.heightCm !== undefined)
+        : undefined;
+    const heightDelta = latestHeightMeasurement?.heightCm !== undefined && previousHeightMeasurement?.heightCm !== undefined
+        ? Number((latestHeightMeasurement.heightCm - previousHeightMeasurement.heightCm).toFixed(1))
         : null;
     const studentStatusLabel = student.status === 'left' ? '离校' : '在校';
     const formatCompactClassName = (className: string) => {
@@ -402,33 +405,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
             <button type="button" onClick={onViewBodyMeasurements} className="w-full overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left shadow-[var(--tm-shadow-card)] transition active:scale-[0.985]">
                 <div className="flex min-h-[58px] items-center justify-between px-4">
-                    <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]"><Ruler className="h-4.5 w-4.5 text-[var(--tm-status-positive)]" />身体成长</h3>
+                    <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]"><Ruler className="h-4.5 w-4.5 text-[var(--tm-status-positive)]" />成长数据</h3>
                     <span className="flex items-center gap-1 text-xs font-medium text-[var(--tm-text-tertiary)]">{latestMeasurement?.measuredAt ?? '待补充'}<ChevronRight className="h-4 w-4" /></span>
                 </div>
                 {latestMeasurement ? (
                     <div className="grid grid-cols-3 border-t border-[var(--tm-border-subtle)] px-3 py-4 text-center">
-                        <div><div className="text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{latestMeasurement.heightCm}</div><div className="mt-1 text-xs text-[var(--tm-text-secondary)]">身高（厘米）</div>{heightDelta !== null && <div className="mt-1 text-[11px] font-semibold text-[var(--tm-status-positive-strong)]">较上次 {heightDelta >= 0 ? '+' : ''}{heightDelta}</div>}</div>
-                        <div><div className="text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{latestMeasurement.weightKg}</div><div className="mt-1 text-xs text-[var(--tm-text-secondary)]">体重（千克）</div></div>
-                        <div><div className="text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{latestMeasurement.bmi}</div><div className="mt-1 text-xs text-[var(--tm-text-secondary)]">身体质量指数</div></div>
+                        <div><div className="text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{latestHeightMeasurement?.heightCm ?? '--'}</div><div className="mt-1 text-xs text-[var(--tm-text-secondary)]">身高（厘米）</div>{heightDelta !== null && <div className="mt-1 text-[11px] font-semibold text-[var(--tm-status-positive-strong)]">较上次 {heightDelta >= 0 ? '+' : ''}{heightDelta}</div>}</div>
+                        <div><div className="text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{latestWeightMeasurement?.weightKg ?? '--'}</div><div className="mt-1 text-xs text-[var(--tm-text-secondary)]">体重（千克）</div></div>
+                        <div><div className="text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{latestBmiMeasurement?.bmi ?? '--'}</div><div className="mt-1 text-xs text-[var(--tm-text-secondary)]">身体质量指数</div></div>
                     </div>
                 ) : <div className="border-t border-[var(--tm-border-subtle)] px-4 py-4 text-sm text-[var(--tm-text-secondary)]">暂无测量记录</div>}
-            </button>
-
-            <button type="button" onClick={onViewGoalPlan} className="w-full overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left shadow-[var(--tm-shadow-card)] transition active:scale-[0.985]">
-                <div className="flex min-h-[58px] items-center justify-between px-4">
-                    <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]"><Target className="h-4.5 w-4.5 text-[var(--tm-brand-primary)]" />本学期目标</h3>
-                    <span className="flex items-center gap-1 text-xs font-medium text-[var(--tm-text-tertiary)]">{goalPlan?.goals.length ?? 0}个目标<ChevronRight className="h-4 w-4" /></span>
-                </div>
-                {goalPlan?.goals.length ? (
-                    <div className="divide-y divide-[var(--tm-border-subtle)] border-t border-[var(--tm-border-subtle)] px-4">
-                        {goalPlan.goals.slice(0, 2).map(goal => (
-                            <div key={goal.id} className="flex min-h-[56px] items-center gap-3">
-                                <span className="shrink-0 rounded-full bg-[var(--tm-brand-primary-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--tm-brand-primary-strong)]">{goal.dimension}</span>
-                                <span className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--tm-text-primary)]">{goal.action}</span>
-                            </div>
-                        ))}
-                    </div>
-                ) : <div className="border-t border-[var(--tm-border-subtle)] px-4 py-4 text-sm text-[var(--tm-text-secondary)]">暂无学期目标</div>}
             </button>
 
             <button type="button" onClick={onViewHealthRecords} className="flex min-h-[88px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 text-left shadow-[var(--tm-shadow-card)] transition active:scale-[0.985]">
@@ -511,10 +497,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="h-full overflow-y-auto pb-safe no-scrollbar">
 
             {/* A. Student Profile Card */}
-            <div className="relative w-full overflow-hidden rounded-b-[var(--tm-radius-card)] bg-[linear-gradient(135deg,var(--tm-bg-surface)_0%,var(--tm-brand-primary-soft)_100%)] px-4 pb-4 pt-2 shadow-[var(--tm-shadow-card)]">
+            <div className="relative w-full overflow-hidden rounded-b-[var(--tm-radius-card)] bg-[linear-gradient(135deg,var(--tm-bg-surface)_0%,var(--tm-brand-primary-soft)_100%)] px-4 pb-4 pt-[calc(var(--mini-program-status-bar-height,0px)+var(--tm-space-2))] shadow-[var(--tm-shadow-card)]">
                 <div className="pointer-events-none absolute -right-14 -top-16 h-44 w-44 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--tm-brand-primary)_14%,transparent),transparent_70%)]" aria-hidden="true" />
                 <div className="relative">
-                    <div className="mb-3 flex h-11 items-center justify-between">
+                    <div className="mb-3 flex h-11 items-center justify-between [padding-right:var(--mini-program-capsule-right-inset,0px)]">
                         <button
                             type="button"
                             onClick={onBack}
@@ -581,48 +567,36 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            {/* 2. Scrollable Content */}
-            <div className="space-y-4 p-4">
-                {/* B. Assets Card */}
-                <div className="rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-3 py-2 shadow-[var(--tm-shadow-card)]">
-                    <div className="flex min-h-[56px] items-center">
-                        <div className="flex min-w-0 flex-1 items-center gap-2 px-2">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
-                                <img src="/assets/coin.png" className="h-5 w-5" alt="" />
+                    <div className="mt-3 flex min-h-[var(--tm-size-touch)] items-center border-t border-[var(--tm-border-subtle)]">
+                        <div className="flex min-w-0 flex-1 items-center gap-1.5 pr-2">
+                            <img src="/assets/coin.png" className="h-4 w-4 shrink-0" alt="" />
+                            <span className="text-[11px] font-medium text-[var(--tm-text-secondary)]">钱包</span>
+                            <span className="truncate text-sm font-bold tabular-nums text-[var(--tm-brand-reward-strong)]">
+                                {formatCoinAmount(campusCoinDetail.balance)}
                             </span>
-                            <div className="min-w-0">
-                                <div className="text-[11px] font-medium text-[var(--tm-text-secondary)]">钱包</div>
-                                <span className="block truncate text-base font-bold tabular-nums text-[var(--tm-brand-reward-strong)]">
-                                    {formatCoinAmount(campusCoinDetail.balance)}
-                                </span>
-                            </div>
                         </div>
-                        <div className="h-8 w-px bg-[var(--tm-border-subtle)]" aria-hidden="true" />
-                        <div className="flex min-w-0 flex-1 items-center gap-2 px-3">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
-                                <img src="/assets/coin.png" className="h-5 w-5" alt="" />
+                        <div className="h-5 w-px bg-[var(--tm-border-subtle)]" aria-hidden="true" />
+                        <div className="flex min-w-0 flex-1 items-center gap-1.5 px-2">
+                            <img src="/assets/coin.png" className="h-4 w-4 shrink-0" alt="" />
+                            <span className="text-[11px] font-medium text-[var(--tm-text-secondary)]">存款</span>
+                            <span className="truncate text-sm font-bold tabular-nums text-[var(--tm-brand-reward-strong)]">
+                                {formatCoinAmount(campusCoinDetail.bankDeposit)}
                             </span>
-                            <div className="min-w-0">
-                                <div className="text-[11px] font-medium text-[var(--tm-text-secondary)]">存款</div>
-                                <span className="block truncate text-base font-bold tabular-nums text-[var(--tm-brand-reward-strong)]">
-                                    {formatCoinAmount(campusCoinDetail.bankDeposit)}
-                                </span>
-                            </div>
                         </div>
                         <button
                             type="button"
                             onClick={onViewCampusCoins}
                             aria-label="查看校园币明细"
-                            className="flex h-11 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]"
+                            className="flex h-11 shrink-0 items-center gap-0.5 rounded-full px-2 text-[11px] font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]"
                         >
-                            查看明细 <ChevronRight size={14} strokeWidth={2.5} />
+                            明细 <ChevronRight size={14} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
+            </div>
 
+            {/* 2. Scrollable Content */}
+            <div className="space-y-4 p-4">
                 {/* C. Tabs */}
                 <div className="sticky top-0 z-30 bg-[var(--tm-bg-page)] py-2">
                     <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="学生详情内容">

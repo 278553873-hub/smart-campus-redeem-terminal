@@ -15,6 +15,8 @@ export interface FormFieldSettings {
   ratingMax?: number;
   dateFormat?: FormDateFormat;
   numberFormat?: FormNumberFormat;
+  minValue?: number;
+  maxValue?: number;
 }
 
 export interface FormSubField {

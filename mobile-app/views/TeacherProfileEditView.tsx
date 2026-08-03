@@ -451,7 +451,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     }}
                     autoFocus
                     maxLength={20}
-                    className="mt-5 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-4 text-base font-bold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                    className="mt-5 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-base font-bold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                     aria-label="教师姓名"
                 />
                 <div className="mt-4 flex gap-3">
@@ -474,7 +474,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     }}
                     autoFocus
                     maxLength={30}
-                    className="mt-5 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-4 text-base font-bold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                    className="mt-5 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-base font-bold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                     aria-label="学校名称"
                 />
                 <div className="mt-4 flex gap-3">

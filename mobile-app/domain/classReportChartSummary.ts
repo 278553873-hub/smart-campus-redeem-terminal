@@ -151,36 +151,36 @@ const buildEducationScoreAnalysis = (items: EducationScoreSummaryItem[]): ClassR
 
     if (netScoresAreEqual && highestDeduction.value === 0) {
         return {
-            summary: '五育净得分较为均衡',
+            summary: '五育总分较为均衡',
             supplement: '各维度暂无扣分，可以继续观察后续表现',
         };
     }
     if (netScoresAreEqual && highestDeduction.items.length === items.length) {
         return {
-            summary: '五育净得分和扣分均较为均衡',
+            summary: '五育总分和扣分均较为均衡',
             supplement: '可以继续观察各维度后续表现',
         };
     }
     if (netScoresAreEqual) {
         return {
-            summary: '五育净得分较为均衡',
+            summary: '五育总分较为均衡',
             supplement: `${deductionLabels}扣分相对较多，建议结合具体事件看看原因`,
         };
     }
     if (highestDeduction.value === 0) {
         return {
-            summary: `${highestLabels}净得分相对较高`,
+            summary: `${highestLabels}总分相对较高`,
             supplement: `${lowestLabels}相对较低，建议结合记录看看，是评价频次有差异，还是实际表现确有不同`,
         };
     }
     if (lowestLabels === deductionLabels) {
         return {
-            summary: `${highestLabels}净得分相对较高`,
-            supplement: `${lowestLabels}净得分较低且扣分较多，建议结合具体事件看看原因`,
+            summary: `${highestLabels}总分相对较高`,
+            supplement: `${lowestLabels}总分较低且扣分较多，建议结合具体事件看看原因`,
         };
     }
     return {
-        summary: `${highestLabels}净得分相对较高`,
+        summary: `${highestLabels}总分相对较高`,
         supplement: `建议结合具体记录看看${lowestLabels}得分偏低、${deductionLabels}扣分较多的原因`,
     };
 };

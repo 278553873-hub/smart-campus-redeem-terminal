@@ -86,7 +86,7 @@ if (dashboardSource.includes('发放、消耗与本月结算预估') || dashboar
   throw new Error('学生详情总览页不应再展示校园币发放、消耗或月预估信息。');
 }
 requireText(dashboardSource, 'onViewCampusCoins', '学生详情顶部资产区应保留查看明细入口回调。');
-requireText(dashboardSource, '查看明细', '钱包和存款应放在同一资产区域并提供查看明细按钮。');
+requireText(dashboardSource, '明细 <ChevronRight size={14}', '钱包和存款应放在同一资产行并提供紧凑明细入口。');
 requireText(dashboardSource, 'text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]', '查看明细操作应使用教师端低视觉权重 Token。');
 if (dashboardSource.includes('bg-blue-50 px-3 text-[11px] font-bold text-blue-600')) {
   throw new Error('查看明细操作不应使用蓝色强调按钮样式。');
@@ -108,11 +108,16 @@ if (dashboardSource.includes('BadgeCheck className="h-3 w-3"')) {
 if (dashboardSource.includes('w-full bg-white px-5 pb-5 pt-3')) {
   throw new Error('首个学生信息卡不应继续使用纯白背景。');
 }
-requireText(dashboardSource, 'B. Assets Card', '资产展示应独立为第二张卡片。');
+if (dashboardSource.includes('B. Assets Card')) {
+  throw new Error('资产展示不应继续占用独立卡片，应并入学生信息卡。');
+}
 if (dashboardSource.includes('总资产') || dashboardSource.includes('totalCampusAssets')) {
   throw new Error('资产卡不应展示总资产，只展示钱包、存款和查看明细。');
 }
-requireText(dashboardSource, 'flex min-h-[56px] items-center', '资产卡应压缩为单行展示。');
+requireText(dashboardSource, 'mt-3 flex min-h-[var(--tm-size-touch)] items-center border-t', '资产信息应并入学生卡底部，并压缩为一行。');
+requireText(dashboardSource, '--mini-program-status-bar-height', '学生详情渐变应延伸到模拟手机状态栏区域。');
+requireText(dashboardSource, '--mini-program-capsule-right-inset', '学生详情顶部操作应避让微信胶囊。');
+requireText(appSource, "contentTopInsetMode={currentView === 'student_detail' ? 'none' : 'status-bar'}", '学生详情应独立接管顶部安全区，其他页面保持原有状态栏内缩。');
 requireText(dashboardSource, '<StudentTermSelector value={selectedTerm}', '成长报告必须使用学期选择器。');
 requireText(termSelectorSource, '<StudentTimeRangeSelector', '学期筛选必须复用学生详情通用时间选择器。');
 requireText(timeRangeSelectorSource, 'h-11 w-full', '时间选择器必须满足 44px 触控高度。');

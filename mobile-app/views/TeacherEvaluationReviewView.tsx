@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    ChevronLeft,
     ChevronRight,
     Eye,
     FileSearch,
-    History,
     ListChecks,
     ScanSearch,
     Tags,
 } from 'lucide-react';
+import AssistantHistoryLink from '../components/AssistantHistoryLink';
+import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import {
     CURRENT_TEACHER_EVALUATION_REVIEW,
     TEACHER_EVALUATION_REVIEW_SAMPLE,
@@ -217,35 +217,28 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
     const showHeaderTitle = title !== '我的评价复盘';
 
     return (
-        <div className="relative min-h-full overflow-hidden bg-[linear-gradient(180deg,#F7FCFF_0%,#F1F8FC_42%,#FFFFFF_100%)] font-sans text-slate-950">
-            <header className="relative z-20 flex h-14 items-center px-4">
-                <button
-                    type="button"
-                    onClick={viewingExample ? () => setViewingExample(false) : onBack}
-                    className="flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition active:scale-95 active:bg-white/70"
-                    aria-label={viewingExample ? '返回我的评价复盘' : '返回'}
-                >
-                    <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
-                </button>
-                {showHeaderTitle && (
-                    <h1 className="pointer-events-none absolute inset-x-14 text-center text-[17px] font-bold text-slate-900">{title}</h1>
-                )}
-                {!viewingExample && onOpenHistory && (
-                    <button
-                        type="button"
-                        onClick={onOpenHistory}
-                        className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition active:scale-95 active:bg-white/70"
-                        aria-label="查看往期评价复盘"
-                        title="查看往期评价复盘"
-                    >
-                        <History className="h-5 w-5" strokeWidth={2.2} />
-                    </button>
-                )}
-            </header>
+        <div className="ai-assistant-theme-headteacher relative min-h-full overflow-hidden bg-transparent font-sans text-slate-950">
+            <AssistantSubpageHeader
+                title={showHeaderTitle ? title : className}
+                onBack={viewingExample ? () => setViewingExample(false) : onBack}
+                backLabel={viewingExample ? '返回我的评价复盘' : '返回'}
+                surface="transparent"
+            />
 
-            <main className="relative z-10 px-5 pb-10 pt-1">
-                <section className="pb-1 text-center">
-                    <p className="text-[15px] font-bold text-slate-900">{className}</p>
+            <main className="relative z-10 px-5 pb-10">
+                <section className="relative pb-1 text-center">
+                    <div className="relative flex min-h-11 items-center justify-center">
+                        {showHeaderTitle && (
+                            <p className="min-w-0 truncate px-2 text-[15px] font-bold text-slate-900">{className}</p>
+                        )}
+                        {!viewingExample && onOpenHistory && (
+                            <AssistantHistoryLink
+                                label="往期复盘"
+                                onClick={onOpenHistory}
+                                className="absolute right-0 top-0"
+                            />
+                        )}
+                    </div>
                     {!loading && activeReport && (
                         <p className="mt-1 text-[12px] text-slate-500">
                             {viewingExample ? '示例内容 · ' : ''}根据你在{dataRange}的评价记录生成

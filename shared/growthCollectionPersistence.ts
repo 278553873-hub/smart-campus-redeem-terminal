@@ -5,18 +5,13 @@ import {
   type QuestionnaireRecord,
 } from './questionnaireStore';
 import {
-  GOAL_FIELD_IDS,
-  HEIGHT_QUESTION_ID,
-  WEIGHT_QUESTION_ID,
-  getGoalFieldId,
+  MEASUREMENT_DATE_QUESTION_ID,
+  getBodyGrowthFieldKeys,
 } from './growthCollectionDefinition';
 import {
-  saveBodyMeasurementRecord,
-  saveSemesterGoalPlan,
-  type GoalConfirmation,
-  type GoalSelfAssessment,
-  type SemesterGoalItem,
+  saveStudentGrowthDataRecord,
 } from './studentGrowthStore';
+import type { GrowthInputFieldKey } from './studentGrowthFieldCatalog';
 
 const answerText = (answers: Record<string, QuestionnaireAnswer>, id: string) => {
   const answer = answers[id];
@@ -28,77 +23,40 @@ export const persistGrowthCollectionAnswers = (
   questionnaire: QuestionnaireRecord,
   studentNo: string,
   answers: Record<string, QuestionnaireAnswer>,
-  completedAt: string,
-  options?: {
+  _completedAt: string,
+  _options?: {
     semesterGoalStatus?: 'pending-confirmation' | 'active';
     reviewerName?: string;
   },
 ) => {
-  if (!questionnaire.growthTemplate) return false;
   const target = questionnaire.targets.find(item => item.studentNo === studentNo);
   if (!target) return false;
+  const growthFieldKeys = getBodyGrowthFieldKeys(questionnaire.questions);
+  if (growthFieldKeys.length === 0) return false;
   const respondentRole = getQuestionnaireRespondentRole(questionnaire);
   const sourceLabel = respondentRole === 'guardian' ? '家庭填报' : questionnaire.title;
   const sourceRecordId = `${questionnaire.id}-${studentNo}`;
+  const values = Object.fromEntries(growthFieldKeys.flatMap(key => {
+    const question = questionnaire.questions.find(item => item.growthFieldKey === key)
+      ?? questionnaire.questions.find(item => item.id === (key === 'height_cm' ? 'growth-height-cm' : key === 'weight_kg' ? 'growth-weight-kg' : `growth-field-${key}`));
+    if (!question) return [];
+    const value = answerText(answers, question.id);
+    if (value === '') return [];
+    return [[key, question.type === 'number' ? Number(value) : value] as const];
+  })) as Partial<Record<GrowthInputFieldKey, string | number>>;
+  if (Object.keys(values).length === 0) return false;
 
-  if (questionnaire.growthTemplate === 'height_weight') {
-    saveBodyMeasurementRecord(target.studentId, {
-      measuredAt: questionnaire.growthMeasurementDate ?? completedAt.slice(0, 10),
-      heightCm: Number(answerText(answers, HEIGHT_QUESTION_ID)),
-      weightKg: Number(answerText(answers, WEIGHT_QUESTION_ID)),
-      sourceRecordId,
-      sourceLabel,
-      sourceType: 'growth-collection',
-    }, respondentRole === 'guardian' ? '家长' : questionnaire.creatorName);
-    return true;
-  }
+  const recordedAt = questionnaire.growthRecordDateMode === 'fixed'
+    ? questionnaire.growthMeasurementDate ?? ''
+    : answerText(answers, questionnaire.questions.find(question => question.growthRecordedAt)?.id ?? MEASUREMENT_DATE_QUESTION_ID);
+  if (!recordedAt) return false;
 
-  const goals: SemesterGoalItem[] = [0, 1, 2].flatMap(index => {
-    const dimension = answerText(answers, getGoalFieldId(index, 'dimension'));
-    const action = answerText(answers, getGoalFieldId(index, 'action'));
-    if (!dimension && !action) return [];
-    return [{
-      id: `goal-${index + 1}`,
-      type: (['继续闪亮', '尝试新方向', '其他挑战'] as const)[index],
-      dimension,
-      reason: answerText(answers, getGoalFieldId(index, 'reason')),
-      action,
-      selfAssessment: (answerText(answers, getGoalFieldId(index, 'assessment')) || '我需要努力') as GoalSelfAssessment,
-      optional: index === 2,
-    }];
-  });
-  const signatureDate = answerText(answers, GOAL_FIELD_IDS.signatureDate) || completedAt.slice(0, 10);
-  const confirmationInputs = [
-    ['学生', GOAL_FIELD_IDS.studentSignature, '访谈确认'],
-    ['教师', GOAL_FIELD_IDS.teacherSignature, '账号确认'],
-    ['家长', GOAL_FIELD_IDS.parentSignature, '账号确认'],
-  ] as const;
-  const confirmations: GoalConfirmation[] = confirmationInputs.flatMap(([role, id, method]) => {
-    const name = answerText(answers, id);
-    return name ? [{ role, name, method, confirmedAt: `${signatureDate} 00:00` }] : [];
-  });
-  if (options?.reviewerName && !confirmations.some(item => item.role === '教师')) {
-    confirmations.push({
-      role: '教师',
-      name: options.reviewerName,
-      method: '账号确认',
-      confirmedAt: completedAt,
-    });
-  }
-  saveSemesterGoalPlan(target.studentId, {
-    term: questionnaire.growthTerm ?? '',
-    status: options?.semesterGoalStatus ?? (confirmations.length >= 3 ? 'active' : 'pending-confirmation'),
-    previousReflection: answerText(answers, GOAL_FIELD_IDS.previousReflection),
-    goals,
-    studentMessage: answerText(answers, GOAL_FIELD_IDS.studentMessage),
-    teacherMessage: answerText(answers, GOAL_FIELD_IDS.teacherMessage),
-    parentMessage: answerText(answers, GOAL_FIELD_IDS.parentMessage),
-    agreement: answerText(answers, GOAL_FIELD_IDS.agreement),
-    confirmations,
-    interviewRecorder: respondentRole === 'teacher' ? questionnaire.creatorName : undefined,
-    interviewRecordedAt: respondentRole === 'teacher' ? completedAt : undefined,
+  saveStudentGrowthDataRecord(target.studentId, {
+    recordedAt,
+    values,
     sourceRecordId,
     sourceLabel,
-  });
+    sourceType: 'growth-collection',
+  }, respondentRole === 'guardian' ? '家长' : questionnaire.creatorName);
   return true;
 };

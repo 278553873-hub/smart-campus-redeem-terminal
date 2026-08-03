@@ -9,6 +9,7 @@ import {
     Check, Upload, KeyRound, Eye, Move
 } from 'lucide-react';
 import HealthDataImportView from './HealthDataImportView';
+import GrowthDataSettingsView from './GrowthDataSettingsView';
 
 interface TeacherDashboardProps {
     onNavigateBigScreen?: () => void;
@@ -96,11 +97,11 @@ const defaultTermReportModules: TermReportModuleConfig[] = [
 ];
 
 const defaultTermReportDataModules: TermReportDataModuleConfig[] = [
-    { id: 'goalProgress', name: '目标达成', source: '学期目标计划与期末回顾', enabled: true },
     { id: 'dailyPerformance', name: '日常表现', source: '本学期评价记录', enabled: true },
     { id: 'academicPerformance', name: '学业表现', source: '考试与作业数据', enabled: true },
-    { id: 'bodyGrowth', name: '身体成长', source: '身高、体重与身体质量指数趋势', enabled: false, permissionLabel: '健康数据' },
-    { id: 'healthOverview', name: '健康概览', source: '体检日期与结构化健康标签', enabled: false, permissionLabel: '健康数据' },
+    { id: 'bodyGrowth', name: '身体成长', source: '学校启用的身高、体重与身体质量指数趋势', enabled: false, permissionLabel: '健康数据' },
+    { id: 'physicalFitness', name: '体能表现', source: '学校启用的肺活量、跑跳与柔韧数据', enabled: false, permissionLabel: '健康数据' },
+    { id: 'healthOverview', name: '健康概览', source: '学校启用的视力与结构化健康数据', enabled: false, permissionLabel: '健康数据' },
     { id: 'teacherEvaluation', name: '教师评价', source: '教师期末评价与已确认档案', enabled: true },
 ];
 
@@ -164,7 +165,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         {
             title: '数据中心', icon: <Database size={18} />,
-            children: ['资料文件', '考试数据', '作业数据', '体检数据']
+            children: ['资料文件', '考试数据', '作业数据', '成长数据设置', '成长数据导入']
         }
     ];
     const activeMenuGroup = menus.find(menu => menu.children.includes(activeMenu))?.title || '货柜机配置中心';
@@ -1846,7 +1847,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 <Monitor size={16} />
                                 <span>进入大屏展示</span>
                             </button>
-                            <span className="text-slate-600">欢迎，管理员 [成都七中初中附属小学]</span>
+                            <span className="text-slate-600">欢迎，管理员 [星河实验小学]</span>
                             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white cursor-pointer hover:opacity-90 shadow-sm">
                                 <User size={16} />
                             </div>
@@ -1855,10 +1856,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 )}
 
                 {/* 内容区 - 采用精致的高端设计 */}
-                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '体检数据' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' || activeMenu === '学生得分明细表' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
+                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '成长数据设置' || activeMenu === '成长数据导入' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' || activeMenu === '学生得分明细表' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
 
                     {/* 页面主标题 */}
-                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '体检数据' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
+                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '成长数据设置' && activeMenu !== '成长数据导入' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
                     <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
                         <div>
                             {activeMenu === '考试数据' ? (
@@ -3372,7 +3373,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         </div>
                     )}
 
-                    {activeMenu === '体检数据' && <HealthDataImportView />}
+                    {activeMenu === '成长数据设置' && <GrowthDataSettingsView spaceId="school-star" />}
+                    {activeMenu === '成长数据导入' && <HealthDataImportView spaceId="school-star" />}
 
                     {/* 考试等级管理 */}
                     {activeMenu === '考试等级管理' && (

@@ -12,7 +12,7 @@ interface EvaluationRecordEditViewProps {
   onSave: (update: StudentEvaluationRecordUpdate) => void;
 }
 
-const fieldClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3.5 text-[14px] font-medium text-[var(--tm-text-primary)] outline-none transition focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]';
+const fieldClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[14px] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 
 const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
   record,
@@ -93,7 +93,7 @@ const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
               {['一级指标', '二级指标', '三级指标'].map((label, index) => (
                 <label key={label} className="block">
                   <span className="sr-only">{label}</span>
-                  <input value={indicatorPath[index]} onChange={event => updateIndicator(index, event.target.value)} placeholder={label} className="h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3.5 text-[14px] font-medium text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-tertiary)] focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]" />
+                  <input value={indicatorPath[index]} onChange={event => updateIndicator(index, event.target.value)} placeholder={label} className="h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[14px] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
                 </label>
               ))}
             </div>
@@ -117,7 +117,7 @@ const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
           <section>
             <label className="text-[13px] font-semibold text-[var(--tm-text-primary)]">
               评价内容
-              <textarea value={aiComment} onChange={event => setAiComment(event.target.value)} rows={5} className="mt-2 min-h-[132px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3.5 py-3 text-[14px] font-medium leading-6 text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]" />
+              <textarea value={aiComment} onChange={event => setAiComment(event.target.value)} rows={5} className="mt-2 min-h-[132px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 py-3 text-[14px] font-medium leading-6 text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
             </label>
           </section>
 
@@ -125,7 +125,7 @@ const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
             <section>
               <label className="text-[13px] font-semibold text-[var(--tm-text-primary)]">
                 修改原因
-                <textarea value={reason} onChange={event => setReason(event.target.value)} rows={3} placeholder="请简要说明修改原因" className="mt-2 min-h-[88px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3.5 py-3 text-[14px] font-medium leading-5 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-tertiary)] focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]" />
+                <textarea value={reason} onChange={event => setReason(event.target.value)} rows={3} placeholder="请简要说明修改原因" className="mt-2 min-h-[88px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 py-3 text-[14px] font-medium leading-5 text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
               </label>
             </section>
           )}

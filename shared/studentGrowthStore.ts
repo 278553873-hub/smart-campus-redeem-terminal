@@ -1,5 +1,7 @@
 export const STUDENT_GROWTH_STORE_EVENT = 'student-growth-store-updated';
 
+import type { GrowthInputFieldKey } from './studentGrowthFieldCatalog';
+
 const STORAGE_KEY = 'teacher-student-growth-workspace-v1';
 
 export type HealthExamSourceType = 'pc-import' | 'mobile-entry';
@@ -40,10 +42,25 @@ export interface BodyMeasurementRecord {
   id: string;
   studentId: string;
   measuredAt: string;
-  heightCm: number;
-  weightKg: number;
-  bmi: number;
+  heightCm?: number;
+  weightKg?: number;
+  bmi?: number;
   sourceType: 'health-exam' | 'growth-collection' | 'mobile-entry';
+  sourceLabel: string;
+  sourceRecordId: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type StudentGrowthFieldValue = string | number;
+
+export interface StudentGrowthDataRecord {
+  id: string;
+  studentId: string;
+  recordedAt: string;
+  values: Partial<Record<GrowthInputFieldKey, StudentGrowthFieldValue>>;
+  sourceType: 'health-exam' | 'growth-collection' | 'mobile-entry' | 'pc-import';
   sourceLabel: string;
   sourceRecordId: string;
   version: number;
@@ -103,9 +120,10 @@ export interface HealthImportBatch {
 }
 
 export interface StudentGrowthWorkspace {
-  schemaVersion: 2;
+  schemaVersion: 3;
   healthExamRecords: HealthExamRecord[];
   bodyMeasurements: BodyMeasurementRecord[];
+  growthDataRecords: StudentGrowthDataRecord[];
   semesterGoalPlans: SemesterGoalPlan[];
   importBatches: HealthImportBatch[];
 }
@@ -113,6 +131,7 @@ export interface StudentGrowthWorkspace {
 export interface StudentGrowthProfile {
   healthExamRecords: HealthExamRecord[];
   bodyMeasurements: BodyMeasurementRecord[];
+  growthDataRecords: StudentGrowthDataRecord[];
   semesterGoalPlan?: SemesterGoalPlan;
 }
 
@@ -131,11 +150,19 @@ export interface HealthExamInput {
 
 export interface BodyMeasurementInput {
   measuredAt: string;
-  heightCm: number;
-  weightKg: number;
+  heightCm?: number;
+  weightKg?: number;
   sourceRecordId: string;
   sourceLabel: string;
   sourceType?: BodyMeasurementRecord['sourceType'];
+}
+
+export interface StudentGrowthDataInput {
+  recordedAt: string;
+  values: Partial<Record<GrowthInputFieldKey, StudentGrowthFieldValue>>;
+  sourceRecordId: string;
+  sourceLabel: string;
+  sourceType?: StudentGrowthDataRecord['sourceType'];
 }
 
 export interface SemesterGoalPlanInput {
@@ -156,14 +183,22 @@ export interface SemesterGoalPlanInput {
 
 const nowText = () => new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
 const createId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+const compareRecordDateAndVersion = (
+  left: { version: number },
+  right: { version: number },
+  leftDate: string,
+  rightDate: string,
+) => rightDate.localeCompare(leftDate) || right.version - left.version;
 const clone = <T,>(value: T): T => (
   value === undefined ? value : JSON.parse(JSON.stringify(value)) as T
 );
 
-export const calculateBmi = (heightCm: number, weightKg: number) => {
-  if (!heightCm || !weightKg) return 0;
+export function calculateBmi(heightCm: number, weightKg: number): number;
+export function calculateBmi(heightCm: number | undefined, weightKg: number | undefined): number | undefined;
+export function calculateBmi(heightCm: number | undefined, weightKg: number | undefined) {
+  if (!heightCm || !weightKg) return undefined;
   return Number((weightKg / ((heightCm / 100) ** 2)).toFixed(1));
-};
+}
 
 export const extractHealthConclusionTags = (conclusion: string) => {
   const candidates = ['视力异常', '龋齿', '偏瘦', '超重', '肥胖', '心动过缓', '淋巴结肿大'];
@@ -247,6 +282,41 @@ const measurementFromHealthExam = (record: HealthExamRecord): BodyMeasurementRec
   updatedAt: record.updatedAt,
 });
 
+const growthDataFromHealthExam = (record: HealthExamRecord): StudentGrowthDataRecord => ({
+  id: `growth-data-${record.id}`,
+  studentId: record.studentId,
+  recordedAt: record.examDate,
+  values: {
+    height_cm: record.heightCm,
+    weight_kg: record.weightKg,
+    naked_vision_left: record.nakedVisionLeft,
+    naked_vision_right: record.nakedVisionRight,
+    corrected_vision_left: record.correctedVisionLeft,
+    corrected_vision_right: record.correctedVisionRight,
+    glasses_type: record.glassesType,
+    health_conclusion: record.conclusion,
+  },
+  sourceType: 'health-exam',
+  sourceLabel: record.sourceLabel,
+  sourceRecordId: record.id,
+  version: record.version,
+  createdAt: record.createdAt,
+  updatedAt: record.updatedAt,
+});
+
+const seedFitnessValues = (studentId: string): Partial<Record<GrowthInputFieldKey, StudentGrowthFieldValue>> => {
+  const seed = hashStudentId(studentId);
+  return {
+    lung_capacity_ml: 1850 + seed % 900,
+    sprint_50m_seconds: Number((8.4 + (seed % 24) / 10).toFixed(1)),
+    sit_and_reach_cm: Number((4.2 + (seed % 86) / 10).toFixed(1)),
+    rope_skipping_1min_count: 88 + seed % 72,
+    sit_up_1min_count: 28 + seed % 24,
+    standing_long_jump_cm: 128 + seed % 52,
+    endurance_run_seconds: 220 + seed % 85,
+  };
+};
+
 const seedSemesterGoalPlan = (studentId: string): SemesterGoalPlan => ({
   id: `goal-plan-${studentId}-2026-spring`,
   studentId,
@@ -302,9 +372,10 @@ const getLatestSemesterGoalPlan = (plans: SemesterGoalPlan[], studentId: string)
 );
 
 const createInitialWorkspace = (): StudentGrowthWorkspace => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   healthExamRecords: [],
   bodyMeasurements: [],
+  growthDataRecords: [],
   semesterGoalPlans: [],
   importBatches: [
     {
@@ -326,9 +397,10 @@ const createInitialWorkspace = (): StudentGrowthWorkspace => ({
 const isWorkspace = (value: unknown): value is StudentGrowthWorkspace => {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<StudentGrowthWorkspace>;
-  return candidate.schemaVersion === 2
+  return candidate.schemaVersion === 3
     && Array.isArray(candidate.healthExamRecords)
     && Array.isArray(candidate.bodyMeasurements)
+    && Array.isArray(candidate.growthDataRecords)
     && Array.isArray(candidate.semesterGoalPlans)
     && Array.isArray(candidate.importBatches);
 };
@@ -339,19 +411,23 @@ const migrateWorkspace = (value: unknown): StudentGrowthWorkspace | null => {
   const candidate = value as {
     schemaVersion?: number;
     healthExamRecords?: HealthExamRecord[];
+    bodyMeasurements?: BodyMeasurementRecord[];
     semesterGoalPlans?: SemesterGoalPlan[];
     importBatches?: HealthImportBatch[];
   };
   if (
-    candidate.schemaVersion !== 1
+    candidate.schemaVersion !== 1 && candidate.schemaVersion !== 2
     || !Array.isArray(candidate.healthExamRecords)
     || !Array.isArray(candidate.semesterGoalPlans)
     || !Array.isArray(candidate.importBatches)
   ) return null;
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     healthExamRecords: candidate.healthExamRecords,
-    bodyMeasurements: candidate.healthExamRecords.map(measurementFromHealthExam),
+    bodyMeasurements: candidate.schemaVersion === 2 && Array.isArray(candidate.bodyMeasurements)
+      ? candidate.bodyMeasurements
+      : candidate.healthExamRecords.map(measurementFromHealthExam),
+    growthDataRecords: candidate.healthExamRecords.map(growthDataFromHealthExam),
     semesterGoalPlans: candidate.semesterGoalPlans,
     importBatches: candidate.importBatches,
   };
@@ -379,26 +455,40 @@ export const ensureStudentGrowthProfile = (studentId: string): StudentGrowthProf
   const workspace = readStudentGrowthWorkspace();
   const hasHealthRecords = workspace.healthExamRecords.some(record => record.studentId === studentId);
   const hasBodyMeasurements = workspace.bodyMeasurements.some(record => record.studentId === studentId);
-  const hasGoalPlan = workspace.semesterGoalPlans.some(plan => plan.studentId === studentId);
+  const hasGrowthData = workspace.growthDataRecords.some(record => record.studentId === studentId);
 
   if (!hasHealthRecords) {
     const records = seedHealthRecords(studentId);
     workspace.healthExamRecords.push(...records);
     workspace.bodyMeasurements.push(...records.map(measurementFromHealthExam));
+    workspace.growthDataRecords.push(...records.map((record, index) => ({
+      ...growthDataFromHealthExam(record),
+      values: index === 0 ? { ...growthDataFromHealthExam(record).values, ...seedFitnessValues(studentId) } : growthDataFromHealthExam(record).values,
+    })));
   } else if (!hasBodyMeasurements) {
     workspace.bodyMeasurements.push(...workspace.healthExamRecords.filter(record => record.studentId === studentId).map(measurementFromHealthExam));
   }
-  if (!hasGoalPlan) workspace.semesterGoalPlans.push(seedSemesterGoalPlan(studentId));
-  if (!hasHealthRecords || !hasBodyMeasurements || !hasGoalPlan) writeStudentGrowthWorkspace(workspace);
+  if (hasHealthRecords && !hasGrowthData) {
+    const records = workspace.healthExamRecords.filter(record => record.studentId === studentId);
+    workspace.growthDataRecords.push(...records.map((record, index) => ({
+      ...growthDataFromHealthExam(record),
+      values: index === 0 ? { ...growthDataFromHealthExam(record).values, ...seedFitnessValues(studentId) } : growthDataFromHealthExam(record).values,
+    })));
+  }
+  if (!hasHealthRecords || !hasBodyMeasurements || !hasGrowthData) writeStudentGrowthWorkspace(workspace);
 
   return {
     healthExamRecords: workspace.healthExamRecords
       .filter(record => record.studentId === studentId)
-      .sort((left, right) => right.examDate.localeCompare(left.examDate))
+      .sort((left, right) => compareRecordDateAndVersion(left, right, left.examDate, right.examDate))
       .map(clone),
     bodyMeasurements: workspace.bodyMeasurements
       .filter(record => record.studentId === studentId)
-      .sort((left, right) => right.measuredAt.localeCompare(left.measuredAt))
+      .sort((left, right) => compareRecordDateAndVersion(left, right, left.measuredAt, right.measuredAt))
+      .map(clone),
+    growthDataRecords: workspace.growthDataRecords
+      .filter(record => record.studentId === studentId)
+      .sort((left, right) => compareRecordDateAndVersion(left, right, left.recordedAt, right.recordedAt))
       .map(clone),
     semesterGoalPlan: clone(getLatestSemesterGoalPlan(workspace.semesterGoalPlans, studentId)),
   };
@@ -409,11 +499,15 @@ export const readStudentGrowthProfile = (studentId: string): StudentGrowthProfil
   return {
     healthExamRecords: workspace.healthExamRecords
       .filter(record => record.studentId === studentId)
-      .sort((left, right) => right.examDate.localeCompare(left.examDate))
+      .sort((left, right) => compareRecordDateAndVersion(left, right, left.examDate, right.examDate))
       .map(clone),
     bodyMeasurements: workspace.bodyMeasurements
       .filter(record => record.studentId === studentId)
-      .sort((left, right) => right.measuredAt.localeCompare(left.measuredAt))
+      .sort((left, right) => compareRecordDateAndVersion(left, right, left.measuredAt, right.measuredAt))
+      .map(clone),
+    growthDataRecords: workspace.growthDataRecords
+      .filter(record => record.studentId === studentId)
+      .sort((left, right) => compareRecordDateAndVersion(left, right, left.recordedAt, right.recordedAt))
       .map(clone),
     semesterGoalPlan: clone(getLatestSemesterGoalPlan(workspace.semesterGoalPlans, studentId)),
   };
@@ -444,6 +538,72 @@ const comparableHealthFields: Array<keyof HealthExamInput> = [
   'glassesType',
   'conclusion',
 ];
+
+const upsertGrowthDataRecordInWorkspace = (
+  workspace: StudentGrowthWorkspace,
+  studentId: string,
+  input: StudentGrowthDataInput,
+  timestamp = nowText(),
+): StudentGrowthDataRecord => {
+  const existingIndex = workspace.growthDataRecords.findIndex(record => (
+    record.studentId === studentId && record.sourceRecordId === input.sourceRecordId
+  ));
+  const existing = existingIndex >= 0 ? workspace.growthDataRecords[existingIndex] : undefined;
+  const values = Object.fromEntries(Object.entries({ ...existing?.values, ...input.values }).filter(([, value]) => value !== '' && value !== undefined)) as StudentGrowthDataRecord['values'];
+  const record: StudentGrowthDataRecord = {
+    id: existing?.id ?? createId('growth-data'),
+    studentId,
+    recordedAt: input.recordedAt,
+    values,
+    sourceType: input.sourceType ?? 'growth-collection',
+    sourceLabel: input.sourceLabel,
+    sourceRecordId: input.sourceRecordId,
+    version: (existing?.version ?? 0) + 1,
+    createdAt: existing?.createdAt ?? timestamp,
+    updatedAt: timestamp,
+  };
+  if (existingIndex >= 0) workspace.growthDataRecords[existingIndex] = record;
+  else workspace.growthDataRecords.push(record);
+  return record;
+};
+
+export const saveStudentGrowthDataRecord = (
+  studentId: string,
+  input: StudentGrowthDataInput,
+  _operator?: string,
+): StudentGrowthDataRecord => {
+  const workspace = readStudentGrowthWorkspace();
+  const timestamp = nowText();
+  const record = upsertGrowthDataRecordInWorkspace(workspace, studentId, input, timestamp);
+  const heightValue = record.values.height_cm;
+  const weightValue = record.values.weight_kg;
+  const heightCm = heightValue === undefined ? undefined : Number(heightValue);
+  const weightKg = weightValue === undefined ? undefined : Number(weightValue);
+  if (Number.isFinite(heightCm) || Number.isFinite(weightKg)) {
+    const existingIndex = workspace.bodyMeasurements.findIndex(item => (
+      item.studentId === studentId && item.sourceRecordId === input.sourceRecordId
+    ));
+    const existing = existingIndex >= 0 ? workspace.bodyMeasurements[existingIndex] : undefined;
+    const measurement: BodyMeasurementRecord = {
+      id: existing?.id ?? createId('measurement'),
+      studentId,
+      measuredAt: input.recordedAt,
+      heightCm: Number.isFinite(heightCm) ? heightCm : existing?.heightCm,
+      weightKg: Number.isFinite(weightKg) ? weightKg : existing?.weightKg,
+      bmi: calculateBmi(Number.isFinite(heightCm) ? heightCm : existing?.heightCm, Number.isFinite(weightKg) ? weightKg : existing?.weightKg),
+      sourceType: input.sourceType === 'mobile-entry' ? 'mobile-entry' : input.sourceType === 'health-exam' || input.sourceType === 'pc-import' ? 'health-exam' : 'growth-collection',
+      sourceLabel: input.sourceLabel,
+      sourceRecordId: input.sourceRecordId,
+      version: (existing?.version ?? 0) + 1,
+      createdAt: existing?.createdAt ?? timestamp,
+      updatedAt: timestamp,
+    };
+    if (existingIndex >= 0) workspace.bodyMeasurements[existingIndex] = measurement;
+    else workspace.bodyMeasurements.push(measurement);
+  }
+  writeStudentGrowthWorkspace(workspace);
+  return clone(record);
+};
 
 export const saveHealthExamRecord = (
   studentId: string,
@@ -503,6 +663,14 @@ export const saveHealthExamRecord = (
   if (measurementIndex >= 0) workspace.bodyMeasurements[measurementIndex] = measurement;
   else workspace.bodyMeasurements.push(measurement);
 
+  upsertGrowthDataRecordInWorkspace(workspace, studentId, {
+    recordedAt: nextRecord.examDate,
+    values: growthDataFromHealthExam(nextRecord).values,
+    sourceRecordId: nextRecord.id,
+    sourceLabel: nextRecord.sourceLabel,
+    sourceType: 'health-exam',
+  }, timestamp);
+
   writeStudentGrowthWorkspace(workspace);
   return clone(nextRecord);
 };
@@ -518,13 +686,15 @@ export const saveBodyMeasurementRecord = (
   ));
   const timestamp = nowText();
   const existing = existingIndex >= 0 ? workspace.bodyMeasurements[existingIndex] : undefined;
+  const heightCm = input.heightCm ?? existing?.heightCm;
+  const weightKg = input.weightKg ?? existing?.weightKg;
   const record: BodyMeasurementRecord = {
     id: existing?.id ?? createId('measurement'),
     studentId,
     measuredAt: input.measuredAt,
-    heightCm: Number(input.heightCm),
-    weightKg: Number(input.weightKg),
-    bmi: calculateBmi(Number(input.heightCm), Number(input.weightKg)),
+    heightCm,
+    weightKg,
+    bmi: calculateBmi(heightCm, weightKg),
     sourceType: input.sourceType ?? 'growth-collection',
     sourceLabel: input.sourceLabel,
     sourceRecordId: input.sourceRecordId,
@@ -543,14 +713,14 @@ export const saveBodyMeasurementRecord = (
       const healthRecord = workspace.healthExamRecords[healthIndex];
       const changedFields = ['examDate', 'heightCm', 'weightKg'].filter(field => {
         if (field === 'examDate') return healthRecord.examDate !== input.measuredAt;
-        return healthRecord[field] !== Number(input[field]);
+        return healthRecord[field] !== (field === 'heightCm' ? heightCm : weightKg);
       });
       workspace.healthExamRecords[healthIndex] = {
         ...healthRecord,
         examDate: input.measuredAt,
-        heightCm: Number(input.heightCm),
-        weightKg: Number(input.weightKg),
-        bmi: calculateBmi(Number(input.heightCm), Number(input.weightKg)),
+        heightCm: heightCm ?? healthRecord.heightCm,
+        weightKg: weightKg ?? healthRecord.weightKg,
+        bmi: calculateBmi(heightCm ?? healthRecord.heightCm, weightKg ?? healthRecord.weightKg),
         version: healthRecord.version + 1,
         updatedAt: timestamp,
         corrections: changedFields.length
@@ -564,6 +734,16 @@ export const saveBodyMeasurementRecord = (
       };
     }
   }
+  upsertGrowthDataRecordInWorkspace(workspace, studentId, {
+    recordedAt: record.measuredAt,
+    values: {
+      ...(record.heightCm === undefined ? {} : { height_cm: record.heightCm }),
+      ...(record.weightKg === undefined ? {} : { weight_kg: record.weightKg }),
+    },
+    sourceRecordId: record.sourceRecordId,
+    sourceLabel: record.sourceLabel,
+    sourceType: record.sourceType,
+  }, timestamp);
   writeStudentGrowthWorkspace(workspace);
   return clone(record);
 };

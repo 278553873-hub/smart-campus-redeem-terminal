@@ -7,6 +7,8 @@ import {
   ChevronRight,
   FilePenLine,
   Files,
+  Dumbbell,
+  Eye,
   Plus,
   CircleDot,
   ListChecks,
@@ -49,6 +51,10 @@ import {
   saveArchiveTemplate,
   setArchiveTemplateStatus,
   getArchiveGrowthModulesForFields,
+  getArchiveGrowthFieldGroups,
+  getArchiveDataRangeModeLabel,
+  resolveArchiveDataRange,
+  type ArchiveDataRangeMode,
   type ArchiveFieldType,
   type ArchiveGrowthFieldConfig,
   type ArchiveGrowthModuleKey,
@@ -78,6 +84,8 @@ const archiveFieldTypes: Array<FormFieldTypeOption<ArchiveFieldType>> = [
 
 const growthModuleIcons: Record<ArchiveGrowthModuleKey, React.ComponentType<{ className?: string }>> = {
   body_growth: Activity,
+  vision_health: Eye,
+  physical_fitness: Dumbbell,
   health_check: HeartPulse,
   semester_goal: Target,
   daily_performance: NotebookTabs,
@@ -106,7 +114,9 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSystemFieldPicker, setShowSystemFieldPicker] = useState(false);
+  const [showDataRangePicker, setShowDataRangePicker] = useState(false);
   const [toast, setToast] = useState('');
+  const archiveGrowthFieldGroups = getArchiveGrowthFieldGroups(spaceId);
 
   const updateWorkspace = (next: ArchiveWorkspace, message?: string) => {
     setWorkspace(next);
@@ -219,6 +229,16 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       window.setTimeout(() => setToast(''), 1800);
       return false;
     }
+    if (template.dataRangeMode === 'custom' && (!template.customDataRangeStart || !template.customDataRangeEnd)) {
+      setToast('请设置完整的数据范围');
+      window.setTimeout(() => setToast(''), 1800);
+      return false;
+    }
+    if (template.dataRangeMode === 'custom' && template.customDataRangeStart! > template.customDataRangeEnd!) {
+      setToast('开始日期不能晚于结束日期');
+      window.setTimeout(() => setToast(''), 1800);
+      return false;
+    }
     if (template.layoutMode === 'grouped' && template.fields.some(field => !field.sectionId || !template.sections.some(section => section.id === field.sectionId))) {
       setToast('请为所有字段选择分组');
       window.setTimeout(() => setToast(''), 1800);
@@ -277,7 +297,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
   const renderGrowthDataPicker = (close: () => void) => (
     <div>
       <div className="max-h-[52vh] overflow-y-auto no-scrollbar">
-        {ARCHIVE_GROWTH_FIELD_GROUPS.map(group => {
+        {archiveGrowthFieldGroups.map(group => {
           const GroupIcon = growthModuleIcons[group.key];
           return (
             <section key={group.key} className="border-b border-[var(--tm-border-subtle)] py-3 first:pt-0 last:border-b-0">
@@ -466,6 +486,10 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                     <dd className="text-right text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{templateDraft.systemFields.map(key => ARCHIVE_SYSTEM_FIELD_OPTIONS.find(item => item.key === key)?.label).filter(Boolean).join('、') || '未设置'}</dd>
                   </div>
                   <div className="flex min-h-[48px] items-center justify-between gap-4 py-2">
+                    <dt className="shrink-0 text-[12px] font-semibold text-[var(--tm-text-tertiary)]">数据范围</dt>
+                    <dd className="text-right text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{resolveArchiveDataRange(templateDraft).label}</dd>
+                  </div>
+                  <div className="flex min-h-[48px] items-center justify-between gap-4 py-2">
                     <dt className="shrink-0 text-[12px] font-semibold text-[var(--tm-text-tertiary)]">成长数据</dt>
                     <dd className="text-right text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{templateDraft.growthFields.length > 0 ? `${templateDraft.growthFields.length}项` : '未设置'}</dd>
                   </div>
@@ -518,6 +542,22 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                     </span>
                     <span className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-[var(--tm-text-secondary)]">
                       已选择 {templateDraft.systemFields.length} 项
+                      <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
+                    </span>
+                  </button>
+                </div>
+                <div className="border-t border-[var(--tm-border-subtle)] pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowDataRangePicker(true)}
+                    className="flex min-h-12 w-full items-center justify-between gap-3 text-left"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13px] font-semibold text-[var(--tm-text-primary)]">数据范围</span>
+                      <span className="mt-1 block truncate text-[12px] font-medium text-[var(--tm-text-secondary)]">{resolveArchiveDataRange(templateDraft).label}</span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-[var(--tm-text-secondary)]">
+                      {getArchiveDataRangeModeLabel(templateDraft.dataRangeMode)}
                       <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
                     </span>
                   </button>
@@ -647,6 +687,62 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
           })}
         </div>
         <button type="button" onClick={() => setShowSystemFieldPicker(false)} className={`${primaryButton} mt-4 w-full`}>完成</button>
+      </BottomSheet>
+      <BottomSheet open={showDataRangePicker} label="选择数据范围" onDismiss={() => setShowDataRangePicker(false)}>
+        <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">数据范围</h2>
+        <div className="mt-4 divide-y divide-[var(--tm-border-subtle)]">
+          {([
+            ['semester', '本学期'],
+            ['school_year', '本学年'],
+            ['custom', '自定义日期'],
+          ] as Array<[ArchiveDataRangeMode, string]>).map(([mode, label]) => {
+            const selected = templateDraft?.dataRangeMode === mode;
+            return (
+              <button
+                key={mode}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => templateDraft && setTemplateDraft({ ...templateDraft, dataRangeMode: mode })}
+                className="flex min-h-[52px] w-full items-center justify-between text-left text-[14px] font-semibold text-[var(--tm-text-primary)]"
+              >
+                <span>{label}</span>
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-white' : 'border-[var(--tm-border-subtle)] text-transparent'}`}>
+                  <Check className="h-4 w-4" />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {templateDraft?.dataRangeMode === 'custom' && (
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-[12px] font-semibold text-[var(--tm-text-secondary)]">开始日期</span>
+              <input
+                type="date"
+                value={templateDraft.customDataRangeStart ?? ''}
+                onInput={event => setTemplateDraft({ ...templateDraft, customDataRangeStart: event.currentTarget.value })}
+                className={`${inputClass} mt-2 h-12 min-w-0`}
+              />
+            </label>
+            <label className="block">
+              <span className="text-[12px] font-semibold text-[var(--tm-text-secondary)]">结束日期</span>
+              <input
+                type="date"
+                value={templateDraft.customDataRangeEnd ?? ''}
+                onInput={event => setTemplateDraft({ ...templateDraft, customDataRangeEnd: event.currentTarget.value })}
+                className={`${inputClass} mt-2 h-12 min-w-0`}
+              />
+            </label>
+          </div>
+        )}
+        <button
+          type="button"
+          disabled={templateDraft?.dataRangeMode === 'custom' && (!templateDraft.customDataRangeStart || !templateDraft.customDataRangeEnd || templateDraft.customDataRangeStart > templateDraft.customDataRangeEnd)}
+          onClick={() => setShowDataRangePicker(false)}
+          className={`${primaryButton} mt-5 w-full disabled:opacity-40`}
+        >
+          完成
+        </button>
       </BottomSheet>
       <Toast message={toast} />
     </div>

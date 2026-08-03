@@ -33,14 +33,17 @@ requireText(viewSource, "title: '评价视角'", '报告应展示评价视角洞
 requireText(viewSource, "title: '指标与表达'", '报告应展示指标与表达洞察。');
 requireText(viewSource, "title: '下月记录建议'", '报告应输出下月可执行记录建议。');
 requireText(viewSource, '以上内容由AI基于你的评价记录生成，仅供参考', '月度复盘应明确由AI生成并保留参考声明。');
-requireText(viewSource, 'aria-label="查看往期评价复盘"', '当前复盘应提供历史入口。');
+requireText(viewSource, '<AssistantHistoryLink', '当前复盘应复用带文字的历史入口组件。');
+requireText(viewSource, 'label="往期复盘"', '当前复盘历史入口应显示明确文案。');
+requireText(viewSource, 'title={showHeaderTitle ? title : className}', '当前评价复盘标题栏应展示班级名。');
+requireText(viewSource, 'surface="transparent"', '当前评价复盘标题栏应保持透明。');
 requireText(viewSource, '上月记录不足', '数据不足时应明确上月记录不足。');
 requireText(viewSource, '查看报告示例', '数据不足时应允许查看有意义的报告示例。');
 requireText(viewSource, '!loading && activeReport', '只有真实或示例报告生成后才能显示数据来源。');
 forbidText(viewSource, '正向占比', '复盘正文不应退化为现有统计报表。');
 forbidText(viewSource, '负向占比', '复盘正文不应退化为现有统计报表。');
 
-requireText(historySource, '>往期复盘</h1>', '历史页标题应为往期复盘。');
+requireText(historySource, 'title="往期复盘"', '历史页标题应为往期复盘。');
 requireText(historySource, 'formatReviewMonth', '历史列表应按自然月展示。');
 requireText(historySource, 'TeacherEvaluationReviewView', '历史记录应能进入只读详情。');
 requireText(historySource, '<HomeroomClassPickerSheet', '历史页应支持切换带班班级。');

@@ -668,6 +668,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
     if (!activeChild) return [];
     return sharedQuestionnaires.filter(questionnaire => (
       questionnaire.status === 'active'
+      && questionnaire.growthTemplate !== 'semester_goal'
       && getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'
       && getActiveQuestionnaireTargets(questionnaire).some(target => target.studentNo === activeChild.studentNo && target.reachable)
       && !questionnaire.submissions.some(submission => (
@@ -2458,7 +2459,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
           onBack={() => setScreen('todo')}
           onSubmitted={() => {
             setSharedQuestionnaires(readQuestionnaires());
-            setSubmitSuccessMessage(activeSharedQuestionnaire.growthTemplate === 'semester_goal' ? '目标已提交，等待老师确认' : '提交成功');
+            setSubmitSuccessMessage('提交成功');
             setScreen('growth');
           }}
         />

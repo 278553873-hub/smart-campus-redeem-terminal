@@ -10,6 +10,7 @@ const summaryRuleSource = fs.readFileSync(new URL('../domain/classReportChartSum
 const chartRuleDocument = fs.readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_CHART_RULES.md', import.meta.url), 'utf8');
 const uiGuidelineSource = fs.readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', import.meta.url), 'utf8');
 const coverageDomainSource = fs.readFileSync(new URL('../domain/classStudentCoverage.ts', import.meta.url), 'utf8');
+const reportSourceDomainSource = fs.readFileSync(new URL('../domain/classReportSource.ts', import.meta.url), 'utf8');
 const bottomSheetSource = fs.readFileSync(new URL('../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
 
 for (const section of [
@@ -17,8 +18,8 @@ for (const section of [
     '评价记录分布',
     '五育得分分布',
     '五育事件分布',
-    '排行榜',
-    '重点关注对象',
+    '积分排行',
+    '需要关注',
     '学生覆盖情况',
 ]) {
     assert.ok(viewSource.includes(section), `班级报告缺少原型功能区块：${section}`);
@@ -37,26 +38,19 @@ for (const [token, value] of [
     ['--tm-report-coverage-name-inset', 'var(--tm-space-4)'],
     ['--tm-report-coverage-evaluation-column', '76px'],
     ['--tm-report-coverage-teacher-column', '104px'],
-    ['--tm-report-source-item-width', '95px'],
-    ['--tm-report-source-item-width-pinned', '76px'],
-    ['--tm-report-source-visual-height', '40px'],
+    ['--tm-report-filter-padding-top', '0px'],
+    ['--tm-report-filter-padding-bottom', '0px'],
+    ['--tm-report-filter-padding-pinned', '0px'],
+    ['--tm-report-date-indicator-width', '56px'],
+    ['--tm-report-date-indicator-height', '3px'],
+    ['--tm-report-custom-range-height', '40px'],
     ['--tm-report-source-list-inline', 'var(--tm-space-2)'],
-    ['--tm-report-source-list-inline-pinned', 'var(--tm-space-1)'],
-    ['--tm-report-source-area-padding-top', 'var(--tm-space-3)'],
-    ['--tm-report-source-area-padding-bottom', 'var(--tm-space-1)'],
-    ['--tm-report-source-indicator-width', '40%'],
-    ['--tm-report-source-indicator-height', '4px'],
-    ['--tm-report-source-indicator-height-pinned', '3px'],
-    ['--tm-report-source-indicator-gap', 'var(--tm-space-2)'],
-    ['--tm-report-source-indicator-gap-pinned', '10px'],
-    ['--tm-report-filter-gap', 'var(--tm-space-3)'],
-    ['--tm-report-filter-gap-pinned', '0px'],
-    ['--tm-report-date-card-inline-pinned', 'var(--tm-space-2)'],
-    ['--tm-report-date-card-padding', 'var(--tm-space-1)'],
-    ['--tm-report-date-option-height', 'var(--tm-space-8)'],
-    ['--tm-report-date-option-height-pinned', '28px'],
-    ['--tm-report-date-option-width', '100%'],
-    ['--tm-report-date-option-width-pinned', '84%'],
+    ['--tm-report-source-item-gap', 'var(--tm-space-2)'],
+    ['--tm-report-source-item-inline', '6px'],
+    ['--tm-report-source-padding-top', '0px'],
+    ['--tm-report-source-padding-bottom', '0px'],
+    ['--tm-report-source-pill-height', '28px'],
+    ['--tm-report-source-pill-inline', '6px'],
 ]) {
     assert.ok(tokenSource.includes(`'${token}': '${value}'`), `班级报告缺少组件令牌：${token}`);
 }
@@ -76,8 +70,31 @@ assert.ok(!viewSource.includes('chartSummaryClass'), '图表解析不应继续�
 
 assert.ok(!viewSource.includes('{classInfo.name}') && !viewSource.includes('{totalStudents}名学生'), '班级报告内容区不应重复展示班级名称和班级人数。');
 assert.ok(!viewSource.includes("classInfo.tags.includes('班主任')"), '班级报告不应展示班主任或任课老师身份。');
-assert.ok(viewSource.includes('showAllRanking'), '排行榜应支持渐进披露前10名。');
-assert.ok(viewSource.includes('showAllFocus'), '重点关注对象应支持渐进披露完整Top 10。');
+assert.ok(viewSource.includes('const visibleRankingRows = showAllRanking ? rankingRows : rankingRows.slice(0, 10)'), '积分排行应默认展示前10名，展开后展示当前班级全部学生。');
+assert.ok(viewSource.includes('rankingRows.length > 10') && viewSource.includes('`查看全部${rankingRows.length}名`'), '积分排行仅在超过10人时展示包含总人数的查看全部入口。');
+assert.ok(viewSource.includes('aria-expanded={showAllRanking}') && viewSource.includes('aria-controls="class-ranking-list"'), '积分排行展开入口应向辅助技术表达展开状态并关联排行列表。');
+assert.ok(viewSource.includes("import rankingCrownIcon from '../assets/resources/ranking-crown-icon.png'") && viewSource.includes('<RankingPosition position={index + 1} />'), '积分排行前3名应使用自定义生成的皇冠图片承载名次。');
+assert.ok(viewSource.includes('WebkitMaskImage: `url(${rankingCrownIcon})`') && viewSource.includes("maskSize: 'contain'"), '生成的皇冠图片应通过遮罩复用教师端排名语义色。');
+assert.ok(!viewSource.includes('<Crown'), '积分排行不应继续使用图标库内置皇冠。');
+assert.ok(viewSource.includes('if (position > 3)') && viewSource.includes('aria-label={`第${position}名`}'), '积分排行第4名起应保持普通数字，前三名皇冠应保留明确的无障碍排名语义。');
+for (const rankingToken of ['--tm-brand-reward-strong', '--tm-text-secondary', '--tm-brand-secondary-strong']) {
+    assert.ok(viewSource.includes(rankingToken), `积分排行前三名应使用教师端语义Token：${rankingToken}`);
+}
+assert.ok(viewSource.includes("{ key: 'net' as const, label: '总分' }") && viewSource.includes("{ key: 'progress' as const, label: '进步幅度' }"), '积分排行应使用老师易理解的总分与进步幅度文案。');
+assert.ok(!viewSource.includes('净得分排行') && !viewSource.includes('进步排行'), '积分排行不应继续使用难理解或重复的旧文案。');
+assert.ok(viewSource.includes('reportData.previousRecords / reportData.totalRecords') && viewSource.includes('progress: net - (previousPlus - previousMinus)'), '进步幅度必须按本周期总分相对上周期总分的变化计算。');
+assert.ok(viewSource.includes("row.progress >= 0 ? '+' : ''") && viewSource.includes("(rankingMode === 'net' ? row.net : row.progress) >= 0"), '进步幅度应正确展示正负号与对应语义色。');
+assert.ok(viewSource.includes('<FocusStudentList rows={focusRows.positive}') && viewSource.includes('<FocusStudentList rows={focusRows.negative}'), '需要关注应在主卡双栏直接展示完整前10名。');
+assert.ok(!viewSource.includes('showFocusDetails') && !viewSource.includes('focusListMode') && !viewSource.includes('查看完整榜单'), '需要关注不应再通过按钮和底部抽屉二次展开前10名。');
+assert.ok(viewSource.includes('加分TOP10') && viewSource.includes('扣分TOP10'), '需要关注双栏应使用约定的加分TOP10与扣分TOP10榜单名。');
+assert.ok(!viewSource.includes('加分前10名') && !viewSource.includes('扣分前10名'), '需要关注不应保留旧榜单名称。');
+assert.ok(viewSource.includes('表现突出') && viewSource.includes('需关注'), '需要关注应将教师判断作为榜单依据后的次级结论。');
+assert.ok(viewSource.includes('text-[length:var(--tm-font-size-body)] font-bold') && viewSource.includes('text-[length:var(--tm-font-size-badge)] font-medium'), '榜单标题与辅助判断应通过字号和字重拉开层级。');
+assert.ok(viewSource.includes('text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]'), '双栏学生姓名应使用正文级字号和半粗字重提升可读性。');
+assert.ok(!viewSource.includes('<CirclePlus') && !viewSource.includes('<CircleMinus'), '加分和扣分榜单标题不应使用额外的加减图标。');
+assert.ok(viewSource.includes('bg-[var(--tm-chart-positive-soft)]') && viewSource.includes('bg-[var(--tm-chart-negative-soft)]'), '需要关注应使用无重边框的正负语义浅色分区。');
+assert.ok(viewSource.includes("tone === 'positive' ? 'text-[var(--tm-chart-positive-text)]' : 'text-[var(--tm-chart-negative-text)]'"), '榜单分值必须使用教师端正向与负向文字Token。');
+assert.ok(!viewSource.includes('重点关注对象') && !viewSource.includes('双向榜单'), '需要关注不应保留旧板块名称或冗余标签。');
 assert.ok(!viewSource.includes('未点评学生清单'), '班级报告不应继续使用旧的未点评学生清单。');
 assert.ok(viewSource.includes("useState<StudentCoverageSortKey>('evaluationCount')"), '学生覆盖情况应默认按评价次数排序。');
 assert.ok(viewSource.includes("useState<StudentCoverageSortDirection>('asc')"), '学生覆盖情况应默认从少到多展示。');
@@ -112,36 +129,45 @@ assert.ok(viewSource.includes('mt-1 flex min-h-[var(--tm-size-touch)]') && viewS
 assert.ok(viewSource.includes('<MobileBottomSheet') && viewSource.includes('title="全部学生覆盖情况"'), '完整学生覆盖清单应使用共享底部抽屉。');
 assert.ok(viewSource.includes('rows={sortedCoverageRows}'), '底部抽屉应展示完整排序结果。');
 assert.ok(viewSource.includes("useState<ReportSourceKey>('all')"), '班级报告应默认展示全班汇总。');
-assert.ok(viewSource.includes("{ key: 'all', label: '全班汇总', recordShare: 1 },\n    { key: 'mine', label: '我的记录', recordShare: 0.42 },\n    ...evaluatingTeacherSources"), '数据来源顺序应为全班汇总、我的记录、其他评价老师。');
-assert.ok(viewSource.includes("{ key: 'teacher:zhang-yi', label: '张怡'"), '班级报告应展示参与评价的其他老师。');
-assert.ok(viewSource.includes('evaluatingTeacherSources.filter(source => source.recordShare > 0)'), '数据来源只应展示有评价记录的老师。');
-assert.ok(viewSource.includes('role="tablist"') && viewSource.includes('aria-label="报告数据来源"'), '报告数据来源应使用可横向滚动的标签栏语义。');
-assert.ok(viewSource.includes('role="tab"') && viewSource.includes('aria-selected={selected}'), '每个数据来源应具备标签选中状态。');
-assert.ok(viewSource.includes('overflow-x-auto') && viewSource.includes('min-w-max'), '老师较多时数据来源标签栏应支持横向滚动。');
-assert.ok(viewSource.includes('w-[var(--tm-report-source-item-width)]') && viewSource.includes('h-[var(--tm-report-source-visual-height)]') && viewSource.includes('w-[var(--tm-report-source-item-width-pinned)]'), '数据来源首屏应使用固定视觉容器令牌，吸顶后再收紧，避免选中字号变化导致布局抖动。');
-assert.ok(viewSource.includes('pb-[var(--tm-report-source-indicator-gap)]') && viewSource.includes('pb-[var(--tm-report-source-indicator-gap-pinned)]'), '数据来源文字与选中线的距离应分别由首屏和吸顶令牌控制。');
+assert.ok(reportSourceDomainSource.includes("{ key: 'all', label: '全班汇总'") && reportSourceDomainSource.indexOf("key: 'all'") < reportSourceDomainSource.indexOf("key: 'mine'"), '数据来源顺序应为全班汇总、我的记录、其他评价老师。');
+assert.ok(reportSourceDomainSource.includes("{ key: 'teacher:zhang-yi', label: '张怡'"), '班级报告应维护参与评价的其他老师。');
+assert.ok(reportSourceDomainSource.includes("source.key === 'all' || source.key === 'mine' || source.recordShare > 0"), '全班汇总和我的记录应固定展示，其他老师只展示当前周期内有记录的来源。');
+assert.ok(viewSource.includes('getReportSourceOptions(resolvedReportPeriod)') && viewSource.includes('[resolvedReportPeriod]'), '来源列表应由已应用日期范围动态生成。');
+assert.ok(viewSource.includes('resolveReportSourceKey(nextSourceOptions, reportSourceKey)') && reportSourceDomainSource.includes("? currentSourceKey\n  : 'all'"), '日期变化导致当前来源失效时应回到全班汇总。');
+assert.ok(viewSource.includes("if (nextTimeRange === 'custom')") && viewSource.includes('setShowCustomDatePicker(true)') && viewSource.includes('setAppliedCustomRange({ ...draftCustomRange, days: nextDays })') && viewSource.includes('if (nextDays == null) return'), '预设日期应立即应用，自定义日期应通过弹窗确认后提交已应用范围。');
+assert.ok(viewSource.includes('appliedCustomRange == null') && viewSource.includes('appliedCustomRange.days / 7'), '报告数据应使用已应用自定义范围，而不是输入中的半成品日期。');
+assert.ok(viewSource.indexOf('aria-label="报告时间范围"') < viewSource.indexOf('aria-label="当前日期范围的数据来源"'), '筛选顺序必须为日期在上、来源在下。');
+assert.ok(viewSource.includes('role="tablist"') && viewSource.includes('aria-label="当前日期范围的数据来源"'), '报告来源应使用可连续切换的横向标签语义。');
+assert.ok(viewSource.includes('role="tab"') && viewSource.includes('aria-selected={selected}') && viewSource.includes('aria-controls="class-report-content"'), '每个来源应具备标签选中状态和内容关联。');
+assert.ok(viewSource.includes('sourceScrollerRef') && viewSource.includes('data-report-source-key={item.key}') && viewSource.includes('overflow-x-auto'), '超过一屏的来源应支持横向滚动和选中项定位。');
 assert.ok(viewSource.includes('currentTeacherName: string;') && appSource.includes('currentTeacherName={teacherProfile.name}'), '我的记录应关联当前登录老师身份。');
 assert.ok(viewSource.includes('activeReportSource.recordShare'), '切换老师后所有报告数据应使用对应老师的数据占比。');
+assert.ok(viewSource.includes('getReportSourceRecordCount(source, currentPeriodRecordCount)') && viewSource.includes('({displayedRecordCount})'), '我的记录和其他老师名称后应使用紧凑括号展示当前日期范围的评价条数。');
+assert.ok(viewSource.includes('formatReportSourceRecordCount(item.recordCount)') && reportSourceDomainSource.includes("recordCount > 999 ? '999+'"), '来源条数超过999时应封顶显示为999+。');
+assert.ok(viewSource.includes('text-[length:var(--tm-font-size-badge)] font-medium tabular-nums'), '来源条数应使用11像素中等字重和等宽数字。');
 assert.ok(viewSource.includes("maxTeacherCount: reportSourceKey === 'all'"), '全班汇总应统计多位老师，个人老师视角应按一位老师计算。');
-assert.ok(viewSource.includes("'!text-[var(--tm-brand-primary)]'"), '数据来源选中项文字应使用主题红。');
-assert.ok(viewSource.includes("selected ? 'opacity-100' : 'opacity-0'"), '数据来源选中项应使用主题色下划线。');
-assert.ok(viewSource.includes('w-[var(--tm-report-source-indicator-width)] -translate-x-1/2') && viewSource.includes('h-[var(--tm-report-source-indicator-height)]') && viewSource.includes('h-[var(--tm-report-source-indicator-height-pinned)]'), '数据来源选中线的宽度与双状态高度应全部消费组件令牌。');
-assert.ok(viewSource.includes('sourceScroller.scrollTo') && !viewSource.includes('scrollIntoView'), '切换数据来源时应只平滑调整横向位置，不应触发纵向滚动和吸顶状态抖动。');
-assert.ok(viewSource.includes('aria-label="报告时间范围"'), '时间范围应使用独立的筛选标签组。');
+assert.ok(viewSource.includes('gap-[var(--tm-report-source-item-gap)] px-[var(--tm-report-source-list-inline)]'), '来源列表应使用令牌化外边距与项目间距。');
+assert.ok(viewSource.includes('h-[var(--tm-report-source-pill-height)]') && viewSource.includes('px-[var(--tm-report-source-pill-inline)]') && viewSource.includes('px-[var(--tm-report-source-item-inline)]'), '来源项与选中胶囊应分别消费稳定高度和水平内边距令牌。');
+assert.ok(viewSource.includes("'bg-[var(--tm-brand-primary)] px-[var(--tm-report-source-pill-inline)] font-semibold text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]'"), '当前来源应使用主题红实底、反白文字和轻阴影。');
+assert.ok(viewSource.includes('grid h-[var(--tm-size-touch)] grid-cols-5') && !viewSource.includes('<div className="border-b border-[var(--tm-border-subtle)]">'), '时间范围应使用开放式五等分文字标签，日期与来源之间不增加干扰线。');
 assert.ok(viewSource.includes('bg-[var(--tm-page-plain-header-bg)]'), '班级报告顶部筛选容器应使用纯白标题栏背景。');
-assert.ok(viewSource.includes('h-[var(--tm-report-date-option-height)] w-[var(--tm-report-date-option-width)]') && viewSource.includes('h-[var(--tm-report-date-option-height-pinned)] w-[var(--tm-report-date-option-width-pinned)]') && viewSource.includes('h-[var(--tm-size-touch)]'), '时间范围双状态视觉尺寸应消费组件令牌，并始终保留44像素触控区域。');
-assert.ok(viewSource.includes('mx-[var(--tm-report-page-inline)] mt-[var(--tm-report-filter-gap)]') && viewSource.includes('p-[var(--tm-report-date-card-padding)]'), '首屏日期卡片应与内容卡片共用页面左右留白，并消费筛选间距和内边距令牌。');
+assert.ok(viewSource.includes('h-[var(--tm-report-date-indicator-height)] w-[var(--tm-report-date-indicator-width)]') && viewSource.includes('h-[var(--tm-size-touch)]'), '日期选中项应使用令牌化短线并保留44像素触控区域。');
+assert.ok(viewSource.includes('px-[var(--tm-report-page-inline)]') && viewSource.includes('pb-[var(--tm-report-filter-padding-bottom)] pt-[var(--tm-report-filter-padding-top)]'), '顶部工具区应与报告卡片共用左右基线并消费默认态上下留白令牌。');
+assert.ok(viewSource.includes('pt-[var(--tm-report-source-padding-top)]') && viewSource.includes('pb-[var(--tm-report-source-padding-bottom)]') && viewSource.includes('h-[var(--tm-size-touch)] shrink-0'), '来源标签栏应消费上下留白令牌并保留44像素触控高度。');
 assert.ok(viewSource.includes('pt-[var(--tm-report-card-gap)]'), '日期筛选卡片到概况卡片的间距应复用正文板块间距令牌。');
-assert.ok(viewSource.includes("'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]'"), '时间范围选中项应使用紧凑主题红实底和反白文字。');
-assert.ok(viewSource.includes("'font-medium text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'"), '时间范围未选中项应使用次级文字和轻按压反馈。');
+assert.ok(viewSource.includes("'font-semibold text-[var(--tm-brand-primary)]'") && viewSource.includes("timeRange === item.key ? 'opacity-100' : 'opacity-0'"), '日期选中项应使用品牌文字和短下划线。');
+assert.ok(viewSource.includes("'font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]'"), '日期未选项应使用中等字重次级文字和按压反馈。');
 assert.ok(!viewSource.includes('bg-[var(--tm-bg-page-glass)] pb-3 backdrop-blur-xl'), '班级报告顶部筛选不应继续使用玻璃背景。');
-for (const filterLabel of ['排行榜类型', '重点关注维度']) {
+for (const filterLabel of ['积分排行类型', '需要关注维度']) {
     assert.ok(viewSource.includes(`aria-label="${filterLabel}"`), `班级报告缺少${filterLabel}筛选语义。`);
 }
 assert.ok(!viewSource.includes('bg-[var(--tm-brand-primary-soft)]'), '班级报告筛选与展开操作不应继续使用浅粉背景。');
-assert.ok(viewSource.includes("'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]'"), '排行榜内容分段选中项应使用主题红文字。');
+assert.ok(viewSource.includes("'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] shadow-[var(--tm-shadow-control)]'"), '积分排行与需要关注内容分段选中项应使用主题红文字。');
 assert.ok(viewSource.includes("const inactiveConditionFilterClass = 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]"), '次级条件筛选未选项应使用白底浅边界和次级文字，避免描边抢占视觉重点。');
-assert.ok(viewSource.includes("const customDateInputClass = 'h-11 min-w-0") && viewSource.includes('border border-[var(--tm-border-subtle)]') && viewSource.includes('focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]'), '自定义日期输入默认应使用浅边界，仅在聚焦时使用品牌红边界和浅红外环。');
+assert.ok(viewSource.includes("const customDateInputClass = 'h-12 w-full") && viewSource.includes('border border-[var(--tm-input-border)]') && viewSource.includes('bg-[var(--tm-input-bg)]') && viewSource.includes('focus:border-[var(--tm-input-focus-border)]') && viewSource.includes('focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]') && viewSource.includes('disabled:bg-[var(--tm-input-disabled-bg)]') && viewSource.includes('read-only:bg-[var(--tm-input-readonly-bg)]'), '弹窗内的自定义日期输入应使用白色可编辑默认态，并明确区分聚焦、禁用和只读状态。');
+assert.ok(viewSource.includes('open={showCustomDatePicker}') && viewSource.includes('title="选择日期范围"') && viewSource.includes('应用日期'), '自定义日期应通过公共底部抽屉渐进披露并在确认后应用。');
+assert.ok(viewSource.includes('aria-label={`当前自定义日期范围：${appliedCustomRange.start}至${appliedCustomRange.end}`}') && viewSource.includes('--tm-report-custom-range-height') && viewSource.includes('自定义时间：') && viewSource.includes('修改日期'), '已应用自定义日期应在日期下方通过紧凑摘要回显，并允许重新修改。');
+assert.ok(!viewSource.includes("timeRange === 'custom' && (\n                            <div className=\"grid grid-cols-[1fr_auto_1fr]"), '页面顶部不应继续直接展开两个日期输入框。');
 assert.equal((viewSource.match(/inactiveConditionFilterClass/g) ?? []).length, 2, '重点关注筛选应复用统一浅边界未选样式。');
 assert.ok(coverageDomainSource.includes('evaluationCount') && coverageDomainSource.includes('teacherCount'), '学生覆盖统计层应同时维护评价次数和评价老师数。');
 assert.ok(coverageDomainSource.includes('sortStudentCoverageRows'), '学生覆盖排序应收敛到独立领域模块。');
@@ -157,21 +183,21 @@ assert.ok(uiGuidelineSource.includes('主卡片与“全部学生覆盖情况”
 assert.ok(uiGuidelineSource.includes('--tm-report-page-inline') && uiGuidelineSource.includes('--tm-report-card-content-gap'), '教师手机端规范应固化班级报告卡片间距令牌。');
 assert.ok(viewSource.includes('min-h-11'), '班级报告交互控件应满足44像素触控高度。');
 for (const pinnedInteraction of [
-    "useState(false)",
+    'const [isFilterPinned, setIsFilterPinned] = useState(false)',
     'handleReportScroll',
     'onScroll={handleReportScroll}',
     'sticky top-0 z-30',
-    'transition-all [transition-duration:var(--tm-duration-panel)] ease-out',
-    "'border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] pb-[var(--tm-space-1)] shadow-[var(--tm-shadow-card)]'",
-    "'py-0'",
-    "'pb-[var(--tm-report-source-area-padding-bottom)] pt-[var(--tm-report-source-area-padding-top)] shadow-[var(--tm-shadow-control)]'",
-    "'mx-[var(--tm-report-date-card-inline-pinned)] mt-[var(--tm-report-filter-gap-pinned)] rounded-[var(--tm-radius-control)] px-[var(--tm-report-date-card-padding)] shadow-[var(--tm-shadow-control)]'",
+    'transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-panel)] ease-out',
+    "'border-[var(--tm-border-subtle)] shadow-[var(--tm-shadow-control)]'",
+    "'py-[var(--tm-report-filter-padding-pinned)]'",
+    "'pb-[var(--tm-report-filter-padding-bottom)] pt-[var(--tm-report-filter-padding-top)]'",
 ]) {
     assert.ok(viewSource.includes(pinnedInteraction), `班级报告顶部筛选需要首屏/吸顶双状态与微动画，缺少：${pinnedInteraction}`);
 }
-assert.ok(viewSource.includes("selected ? 'text-[length:var(--tm-font-size-section-title)] font-bold' : 'text-[length:var(--tm-font-size-body)] font-medium'"), '首屏数据来源选中项应使用17像素粗体，未选项使用14像素中等字重。');
-assert.ok(viewSource.includes("text-[length:var(--tm-font-size-compact)] ${selected ? 'font-semibold' : 'font-medium'}"), '吸顶后数据来源字号应恢复紧凑尺寸。');
-assert.ok(uiGuidelineSource.includes('--tm-report-source-indicator-width') && uiGuidelineSource.includes('--tm-report-date-option-height-pinned'), '教师手机端规范应固化班级报告顶部筛选的双状态组件令牌。');
+assert.ok(!viewSource.includes('tm-report-date-option-height-pinned') && !viewSource.includes('tm-report-date-option-width-pinned'), '吸顶状态不应改变日期字号、视觉高度或选项宽度。');
+assert.ok(uiGuidelineSource.includes('--tm-report-source-pill-height') && uiGuidelineSource.includes('--tm-report-filter-padding-pinned'), '教师手机端规范应固化来源胶囊高度和吸顶垂直留白令牌。');
+assert.ok(uiGuidelineSource.includes('视觉顺序、DOM 顺序和吸顶顺序都必须保持“日期 → 来源 → 报告内容”') && uiGuidelineSource.includes('来源失效时自动回到“全班汇总”'), '教师手机端规范应固化日期与来源的父子依赖。');
+assert.ok(uiGuidelineSource.includes('点击“应用日期”后才更新') && uiGuidelineSource.includes('常见 4 至 5 个来源'), '教师手机端规范应固化自定义日期应用时机与来源舒展展示策略。');
 assert.ok(appSource.includes("'class_detail', 'class_report', 'student_detail'"), '班级报告应改为页面内部滚动，保证筛选吸顶和底部抽屉层级稳定。');
 assert.ok(viewSource.includes('TeacherReportBarChart'), '五育得分应使用通用柱状图组件。');
 assert.ok(viewSource.includes('<RecordDistributionComparison overview={recordDistributionOverview} />'), '评价记录分布默认态应使用正负事件占比图。');
@@ -248,7 +274,7 @@ assert.ok(!chartSource.includes('PictorialBarChart'), '评价记录改为直接�
 assert.ok(uiGuidelineSource.includes('百分比堆叠条') && uiGuidelineSource.includes('纯文字数值对照表'), '教师手机端规范应固化评价记录分布的简洁默认态与文字详情结构。');
 assert.ok(chartSource.includes('labelColors'), '清亮图形填充应与深色数值标签分层。');
 assert.ok(!chartSource.includes('ScatterChart'), '删除子弹图后不应继续加载散点图运行时。');
-assert.ok(viewSource.includes("{ name: '净得分', values: reportData.netScores, color: 'data' }"), '净得分应使用清亮普通数据蓝。');
+assert.ok(viewSource.includes("{ name: '总分', values: reportData.netScores, color: 'data' }"), '总分应使用清亮普通数据蓝。');
 for (const color of ['#43B0F6', '#5BD65D', '#FF9B3D', '#FF8176', '#AFBDCB']) {
     assert.ok(tokenSource.includes(color), `班级报告缺少已确认的清亮图表色：${color}`);
 }

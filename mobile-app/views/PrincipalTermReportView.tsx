@@ -4,7 +4,6 @@ import {
   Building2,
   CalendarDays,
   CircleAlert,
-  History,
   LayoutGrid,
   ListChecks,
   Sparkles,
@@ -16,6 +15,7 @@ import {
   type PrincipalTermReportContent,
 } from '../data/principalTermReport';
 import AssistantReportFeedback from '../components/AssistantReportFeedback';
+import AssistantHistoryLink from '../components/AssistantHistoryLink';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import type { ReportGenerationTaskStatus } from '../hooks/useReportGenerationTask';
 
@@ -62,11 +62,6 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
       <AssistantSubpageHeader
         title="学期学校报告"
         onBack={onBack}
-        action={onOpenHistory && status === 'generated' ? {
-          label: '查看往期学期报告',
-          icon: <History className="h-5 w-5" strokeWidth={2.2} />,
-          onClick: onOpenHistory,
-        } : undefined}
       />
 
       {status === 'empty' ? (
@@ -109,7 +104,12 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
               <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
               AI学期综合分析
             </div>
-            <p className="mt-5 text-[13px] font-medium text-[var(--tm-text-secondary)]">{schoolName}</p>
+            <div className="mt-3 flex min-h-11 items-center justify-between gap-3">
+              <p className="min-w-0 truncate text-[13px] font-medium text-[var(--tm-text-secondary)]">{schoolName}</p>
+              {onOpenHistory && (
+                <AssistantHistoryLink label="往期报告" onClick={onOpenHistory} />
+              )}
+            </div>
             <h1 className="mt-1.5 text-[24px] font-bold leading-8">学生综合素质评价系统学期运营报告</h1>
             <div className="mt-4 flex items-center gap-2 text-[12px] text-[var(--tm-text-secondary)]">
               <CalendarDays className="h-4 w-4" strokeWidth={2} />

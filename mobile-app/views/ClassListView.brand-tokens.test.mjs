@@ -8,9 +8,8 @@ assert.match(classList, /bg-\[var\(--tm-brand-primary-soft\)\] text-\[var\(--tm-
 assert.match(classList, /bg-\[var\(--tm-brand-secondary-soft\)\] text-\[var\(--tm-brand-secondary-strong\)\]/);
 assert.match(classList, /bg-\[var\(--tm-status-positive-soft\)\]/);
 assert.match(classList, /bg-\[var\(--tm-status-negative\)\]/);
-assert.match(classList, /bg-\[var\(--tm-mask\)\]/);
-assert.match(classList, /fixed inset-0 z-\[145\] flex items-end bg-\[var\(--tm-mask\)\]/);
-assert.match(classList, /fixed inset-0 z-\[150\] flex items-end bg-\[var\(--tm-mask\)\]/);
+assert.match(classList, /import MobileBottomSheet/);
+assert.ok((classList.match(/<MobileBottomSheet/g) ?? []).length >= 4, '班级页弹层应统一复用公共底部抽屉。');
 
 assert.doesNotMatch(classList, /(?:bg|text|border|shadow)-(?:cyan|blue|indigo|violet)-/);
 assert.doesNotMatch(classList, /bg-gradient/);

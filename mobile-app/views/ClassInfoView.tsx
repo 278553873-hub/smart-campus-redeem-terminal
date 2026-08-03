@@ -91,7 +91,7 @@ const createDraft = (classInfo: ClassInfo): EditDraft => ({
   classNumber: String(inferClassNumber(classInfo)),
 });
 
-const fieldClass = 'h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] outline-none transition focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
+const fieldClass = 'h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 const iconButtonClass = 'flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]';
 const secondaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]';
 const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
@@ -706,7 +706,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
 
           <label className="block">
             <span className={`${phoneText.label} text-[var(--tm-text-tertiary)]`}>班号</span>
-            <div className="mt-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] items-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] focus-within:border-[var(--tm-brand-primary)] focus-within:ring-2 focus-within:ring-[var(--tm-input-focus-ring)]">
+            <div className="mt-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] items-center rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] focus-within:border-[var(--tm-input-focus-border)] focus-within:ring-2 focus-within:ring-[var(--tm-input-focus-ring)]">
               <span className="shrink-0 text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]">{draft.admissionYear}级</span>
               <input
                 value={draft.classNumber}

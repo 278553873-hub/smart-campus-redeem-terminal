@@ -21,7 +21,7 @@ requireText(classListSource, 'const showLeaderboard = canViewClassLeaderboard(cu
 requireText(classListSource, '{showLeaderboard && (', '排行榜入口必须按条件渲染。');
 requireText(classListSource, 'const canManagePersonal = canManagePersonalClasses(currentSpace);', '个人版加号必须来自统一空间权限规则。');
 requireText(classListSource, '{canManagePersonal && (', '只有个人创建来源显示班级操作加号。');
-requireText(classListSource, '{canManagePersonal && showPersonalClassActions && (', '班级操作弹窗也必须校验当前为本人创建来源。');
+requireText(classListSource, 'open={canManagePersonal && showPersonalClassActions}', '班级操作弹窗也必须校验当前为本人创建来源。');
 requireText(classListSource, "{ label: '创建班级', icon: Plus, onClick: onCreateClass }", '个人版操作弹窗应包含创建班级。');
 requireText(classListSource, "{ label: '加入班级', icon: LogIn, onClick: onJoinClass }", '个人版操作弹窗应包含加入班级。');
 requireText(classListSource, "{ label: '显示设置', icon: SlidersHorizontal, onClick: () => setShowDisplaySettings(true) }", '个人版操作弹窗应包含显示设置。');

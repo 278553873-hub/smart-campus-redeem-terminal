@@ -34,7 +34,10 @@ ssh_keys/
 # Local generated artifacts
 output/
 tmp/
+assets/generated/
 
 # Local QA artifacts
 .codex-artifacts/
 artifacts/
+.codex/audit/
+.codex/audits/

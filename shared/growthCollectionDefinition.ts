@@ -3,9 +3,84 @@ import type {
   QuestionnaireQuestion,
   QuestionnaireRespondentRole,
 } from './questionnaireStore';
+import {
+  PLATFORM_GROWTH_FIELD_CATALOG,
+  getGrowthFieldDefinition,
+  type GrowthInputFieldKey,
+} from './studentGrowthFieldCatalog';
 
 export const HEIGHT_QUESTION_ID = 'growth-height-cm';
 export const WEIGHT_QUESTION_ID = 'growth-weight-kg';
+export const MEASUREMENT_DATE_QUESTION_ID = 'growth-measured-at';
+
+export type BodyGrowthFieldKey = GrowthInputFieldKey;
+
+export const BODY_GROWTH_FIELD_OPTIONS = PLATFORM_GROWTH_FIELD_CATALOG;
+
+export const getBodyGrowthFieldKeys = (questions: QuestionnaireQuestion[]): BodyGrowthFieldKey[] => {
+  const keys = questions.flatMap(question => {
+    if (question.growthFieldKey) return [question.growthFieldKey];
+    if (question.id === HEIGHT_QUESTION_ID) return ['height_cm' as const];
+    if (question.id === WEIGHT_QUESTION_ID) return ['weight_kg' as const];
+    return [];
+  });
+  return Array.from(new Set(keys));
+};
+
+export const isGrowthCollectionQuestion = (question: QuestionnaireQuestion) => (
+  Boolean(question.growthFieldKey)
+  || Boolean(question.growthRecordedAt)
+  || question.id === MEASUREMENT_DATE_QUESTION_ID
+  || question.id === HEIGHT_QUESTION_ID
+  || question.id === WEIGHT_QUESTION_ID
+  || question.id.startsWith('growth-field-')
+);
+
+export const createBodyGrowthQuestions = (
+  fields: BodyGrowthFieldKey[],
+  includeRecordedAt = true,
+): QuestionnaireQuestion[] => {
+  if (fields.length === 0) return [];
+  const questions: QuestionnaireQuestion[] = includeRecordedAt ? [
+    {
+      id: MEASUREMENT_DATE_QUESTION_ID,
+      type: 'date',
+      title: '记录日期',
+      required: true,
+      options: [],
+      settings: { dateFormat: 'ymd' },
+      growthRecordedAt: true,
+    },
+  ] : [];
+  fields.forEach(key => {
+    const definition = getGrowthFieldDefinition(key);
+    if (!definition) return;
+    const type = definition.valueType === 'number'
+      ? 'number'
+      : definition.valueType === 'single-select'
+        ? 'single'
+        : 'text';
+    const numberFormat = definition.decimalPlaces === 2
+      ? 'decimal-2'
+      : definition.decimalPlaces === 1
+        ? 'decimal-1'
+        : 'integer';
+    questions.push({
+      id: key === 'height_cm' ? HEIGHT_QUESTION_ID : key === 'weight_kg' ? WEIGHT_QUESTION_ID : `growth-field-${key}`,
+      type,
+      title: definition.unit ? `${definition.label}（${definition.unit}）` : definition.label,
+      required: true,
+      options: definition.options ? [...definition.options] : [],
+      settings: type === 'number' ? {
+        numberFormat,
+        minValue: definition.minValue,
+        maxValue: definition.maxValue,
+      } : undefined,
+      growthFieldKey: key,
+    });
+  });
+  return questions;
+};
 
 export const GOAL_FIELD_IDS = {
   previousReflection: 'goal-previous-reflection',
@@ -29,10 +104,7 @@ export const createGrowthCollectionQuestions = (
   respondentRole: QuestionnaireRespondentRole = 'teacher',
 ): QuestionnaireQuestion[] => {
   if (template === 'height_weight') {
-    return [
-      { id: HEIGHT_QUESTION_ID, type: 'number', title: '身高（厘米）', required: true, options: [], settings: { numberFormat: 'decimal-1' } },
-      { id: WEIGHT_QUESTION_ID, type: 'number', title: '体重（千克）', required: true, options: [], settings: { numberFormat: 'decimal-1' } },
-    ];
+    return createBodyGrowthQuestions(['height_cm', 'weight_kg']);
   }
 
   const questions: QuestionnaireQuestion[] = [

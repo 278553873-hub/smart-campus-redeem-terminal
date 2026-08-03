@@ -153,16 +153,8 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
       setSubmitError('问卷已结束或已经提交');
       return;
     }
-    if (getQuestionnaireContentType(questionnaire) === 'growth') {
-      persistGrowthCollectionAnswers(
-        questionnaire,
-        child.studentNo,
-        answers,
-        submittedAt,
-        questionnaire.growthTemplate === 'semester_goal'
-          ? { semesterGoalStatus: 'pending-confirmation' }
-          : undefined,
-      );
+    if (getQuestionnaireContentType(questionnaire) !== 'ordinary') {
+      persistGrowthCollectionAnswers(questionnaire, child.studentNo, answers, submittedAt);
     }
     setShowSubmitConfirm(false);
     onSubmitted();
@@ -285,9 +277,10 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
           })()}
 
           {question.type === 'number' && (() => {
-            const numberFormat = normalizeFormFieldSettings(question.type, question.settings, question.options).numberFormat ?? 'integer';
+            const settings = normalizeFormFieldSettings(question.type, question.settings, question.options);
+            const numberFormat = settings.numberFormat ?? 'integer';
             const step = numberFormat === 'integer' ? 1 : numberFormat === 'decimal-1' ? 0.1 : 0.01;
-            return <input type="number" inputMode="decimal" step={step} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} placeholder="请输入数字" className={`${questionnaireInputClass} mt-5 h-[52px]`} />;
+            return <input type="number" inputMode="decimal" min={settings.minValue} max={settings.maxValue} step={step} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} placeholder="请输入数字" className={`${questionnaireInputClass} mt-5 h-[52px]`} />;
           })()}
         </section>
       </section>
@@ -310,7 +303,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
         <ParentBottomSheet title="确认提交" onClose={() => setShowSubmitConfirm(false)} className="pb-8">
           <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-4">
             <div className="text-[length:var(--tm-font-size-section-title)] font-bold leading-tight text-[var(--tm-text-primary)]">{questionnaire.title}</div>
-            <div className="mt-2 text-[length:var(--tm-font-size-compact)] font-semibold leading-relaxed text-[var(--tm-text-secondary)]">{questionnaire.growthTemplate === 'semester_goal' ? '提交后由老师确认，确认后进入成长档案。' : getQuestionnaireContentType(questionnaire) === 'growth' ? '提交后将更新孩子的成长信息。' : '提交后老师将看到本次答卷。'}</div>
+            <div className="mt-2 text-[length:var(--tm-font-size-compact)] font-semibold leading-relaxed text-[var(--tm-text-secondary)]">{getQuestionnaireContentType(questionnaire) === 'ordinary' ? '提交后老师将看到本次答卷。' : '提交后将同时更新孩子的成长信息。'}</div>
           </div>
           {submitError && <div role="alert" className="mt-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative-soft)] px-4 py-3 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative-strong)]">{submitError}</div>}
           <div className="mt-4 grid grid-cols-2 gap-3">

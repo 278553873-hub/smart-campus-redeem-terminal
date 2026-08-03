@@ -14,7 +14,7 @@ interface StudentBasicEditViewProps {
   onSave: (student: Student) => void;
 }
 
-const fieldInputClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-4 text-sm font-medium text-[var(--tm-text-primary)] outline-none transition-all focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]';
+const fieldInputClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-sm font-medium text-[var(--tm-input-text)] outline-none transition-all placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 const labelClass = `${phoneText.label} text-[var(--tm-text-tertiary)]`;
 
 const guardianRelationOptions: GuardianRelation[] = ['家长', '爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他'];
@@ -298,14 +298,14 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                   </button>
                   <div className="grid grid-cols-[minmax(0,1fr)_92px] gap-2 pr-5">
                     <input
-                      className="h-12 min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 text-sm font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                      className="h-12 min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-sm font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                       value={contact.phone}
                       onChange={event => updateContact(index, { phone: event.target.value })}
                       placeholder="请输入手机号"
                       inputMode="tel"
                     />
                     <select
-                      className="h-12 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-sm font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                      className="h-12 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-sm font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                       value={contact.relation}
                       onChange={event => updateContact(index, { relation: event.target.value as GuardianRelation })}
                       aria-label="家长关系"
@@ -317,7 +317,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                   </div>
                   {contact.relation === '其他' && (
                     <input
-                      className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-sm font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                      className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-sm font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                       value={contact.relationOther ?? ''}
                       onChange={event => updateContact(index, { relationOther: event.target.value })}
                       placeholder="请输入关系"

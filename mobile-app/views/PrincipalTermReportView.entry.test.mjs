@@ -45,7 +45,8 @@ for (const required of [
 }
 
 requireText(headerSource, "backLabel = '返回'", '学期报告页应通过共享标题栏提供明确返回入口。');
-requireText(viewSource, "label: '查看往期学期报告'", '学期报告页应提供往期报告入口。');
+requireText(viewSource, 'label="往期报告"', '学期报告页应提供带文字的往期报告入口。');
+requireText(viewSource, '<AssistantHistoryLink', '学期报告应复用图标加文字的历史入口。');
 requireText(viewSource, 'reportData?: PrincipalTermReportContent;', '学期报告页应支持复用历史报告内容。');
 requireText(headerSource, 'focus-visible:ring-2', '学期报告交互控件应保留键盘焦点。');
 requireText(viewSource, "status === 'empty'", '学期报告应处理无有效数据状态。');

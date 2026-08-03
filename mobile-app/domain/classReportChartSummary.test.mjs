@@ -107,7 +107,7 @@ const educationScore = getEducationScoreAnalysis([
 ]);
 
 assert.deepEqual(educationScore, {
-    summary: '体育净得分相对较高',
+    summary: '体育总分相对较高',
     supplement: '建议结合具体记录看看德育得分偏低、美育扣分较多的原因',
 });
 assertTwoPartAnalysis(educationScore, '五育得分常规场景');

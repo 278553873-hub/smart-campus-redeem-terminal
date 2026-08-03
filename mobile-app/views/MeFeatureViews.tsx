@@ -238,7 +238,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                 <FeaturePanel className="space-y-4 p-4">
                     <label className="block">
                         <span className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">发放周期</span>
-                        <select value={config.period} onChange={(event) => update({ period: event.target.value as CoinIssuanceConfig['period'] })} className="mt-2 h-12 w-full rounded-2xl border-0 bg-[var(--tm-bg-surface-soft)] px-4 text-[14px] font-semibold text-[var(--tm-text-primary)] outline-none focus:ring-2 focus:ring-[var(--tm-brand-primary-soft-strong)]">
+                        <select value={config.period} onChange={(event) => update({ period: event.target.value as CoinIssuanceConfig['period'] })} className="mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[14px] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]">
                             <option value="weekly">每周一发放</option>
                             <option value="monthly">每月一号发放</option>
                         </select>
@@ -246,7 +246,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
 
                     <label className="block">
                         <span className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">班级总预算</span>
-                        <div className="mt-2 flex min-h-12 items-center gap-2 rounded-2xl bg-[var(--tm-bg-surface-soft)] px-4 focus-within:ring-2 focus-within:ring-[var(--tm-brand-primary-soft-strong)]">
+                        <div className="mt-2 flex min-h-12 items-center gap-2 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 focus-within:border-[var(--tm-input-focus-border)] focus-within:ring-2 focus-within:ring-[var(--tm-input-focus-ring)]">
                             <input type="number" min={0} value={config.classBudget} onChange={(event) => update({ classBudget: Number(event.target.value || 0) })} className="h-9 min-w-0 flex-1 border-0 bg-transparent px-1 text-left text-[14px] font-bold tabular-nums text-[var(--tm-text-primary)] outline-none" aria-label="班级总预算" />
                             <span className="shrink-0 text-[13px] font-semibold text-[var(--tm-brand-reward-strong)]">币/班</span>
                         </div>
@@ -358,7 +358,7 @@ export const TextEditSheet: React.FC<EditSheetProps> = ({ title, value, placehol
                     完成
                 </button>
             </div>
-            <input value={value} onChange={(event) => onChange(event.target.value)} autoFocus placeholder={placeholder} className="h-12 w-full rounded-2xl border-0 bg-[var(--tm-bg-surface-soft)] px-4 text-[14px] font-semibold text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-disabled)] focus:ring-2 focus:ring-[var(--tm-brand-primary-soft-strong)]" />
+            <input value={value} onChange={(event) => onChange(event.target.value)} autoFocus placeholder={placeholder} className="h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[14px] font-semibold text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
         </section>
     </div>
 );

@@ -48,13 +48,6 @@ import {
 } from '../../../shared/formDefinition';
 import { questionnaireThemeCssVariables } from '../../../shared/questionnaireThemeTokens';
 import {
-  saveBodyMeasurementRecord,
-  saveSemesterGoalPlan,
-  type GoalConfirmation,
-  type GoalSelfAssessment,
-  type SemesterGoalItem,
-} from '../../../shared/studentGrowthStore';
-import {
   QUESTIONNAIRE_STORE_EVENT,
   createQuestionId,
   createQuestionnaireId,
@@ -68,6 +61,9 @@ import {
   getQuestionnaireContentType,
   getQuestionnaireCollectionMode,
   getQuestionnaireRespondentRole,
+  hasGrowthCollectionFields,
+  inferQuestionnaireContentType,
+  isBodyGrowthQuestion,
   getPendingAssignedStudentCollections,
   getQuestionnaireSelectedOptions,
   getReachableTargetCount,
@@ -78,7 +74,6 @@ import {
   isQuestionnaireFullyCollected,
   reconcileQuestionnaireTargets,
   readQuestionnaires,
-  reviewSemesterGoalSubmission,
   saveStudentCollectionRecord,
   updateQuestionnaireStatus,
   upsertQuestionnaire,
@@ -86,7 +81,7 @@ import {
   type QuestionnaireQuestion,
   type QuestionnaireQuestionType,
   type QuestionnaireCollectionMode,
-  type QuestionnaireContentType,
+  type GrowthRecordDateMode,
   type QuestionnaireRespondentRole,
   type QuestionnaireAnswer,
   type QuestionnaireRecord,
@@ -96,18 +91,19 @@ import {
   type StudentCollectionRecord,
   type StudentCollectionRecordStatus,
   type StudentAssignmentMode,
-  type GrowthCollectionTemplate,
 } from '../../../shared/questionnaireStore';
 import { persistGrowthCollectionAnswers } from '../../../shared/growthCollectionPersistence';
 import {
-  GOAL_FIELD_IDS,
-  HEIGHT_QUESTION_ID,
-  WEIGHT_QUESTION_ID,
-  HeightWeightCollectionForm,
-  SemesterGoalCollectionForm,
-  createGrowthCollectionQuestions,
-  getGoalFieldId,
-} from './GrowthCollectionForms';
+  createBodyGrowthQuestions,
+  getBodyGrowthFieldKeys,
+  type BodyGrowthFieldKey,
+} from '../../../shared/growthCollectionDefinition';
+import {
+  GROWTH_FIELD_CONFIG_EVENT,
+  getEnabledGrowthFields,
+  getGrowthFieldDefinition,
+  type GrowthFieldDefinition,
+} from '../../../shared/studentGrowthFieldCatalog';
 
 interface QuestionnaireManagementViewProps {
   onBack: () => void;
@@ -123,10 +119,9 @@ interface QuestionnaireManagementViewProps {
 
 type ListFilter = 'active' | 'ended' | 'draft';
 type DetailTab = 'data' | 'responses';
-type PageMode = 'list' | 'assigned-list' | 'archived-list' | 'create' | 'growth-setup' | 'detail' | 'response' | 'preview' | 'question-responses' | 'student-record';
+type PageMode = 'list' | 'assigned-list' | 'archived-list' | 'create' | 'detail' | 'response' | 'preview' | 'question-responses' | 'student-record';
 type StudentRecordFilter = 'all' | 'incomplete' | 'completed';
 type PreviewReturnMode = 'create' | 'detail';
-type CreateSheetStage = 'root' | 'ordinary-method' | 'height-method' | 'goal-method';
 
 const statusMeta: Record<QuestionnaireStatus, { label: string }> = {
   active: { label: '收集中' },
@@ -201,9 +196,16 @@ const growthCollectionMeta = {
 
 const getCollectionBadgeLabel = (record: QuestionnaireRecord) => {
   const role = getQuestionnaireRespondentRole(record);
-  if (record.growthTemplate === 'height_weight') return `身高体重 · ${role === 'teacher' ? '老师现场采集' : '家长上报'}`;
-  if (record.growthTemplate === 'semester_goal') return `学期目标 · ${role === 'teacher' ? '老师访谈录入' : '家长与孩子制定'}`;
-  return `普通问卷 · ${role === 'teacher' ? '老师逐生填写' : '发给家长填写'}`;
+  const typeLabel = getQuestionnaireContentType(record) === 'mixed'
+    ? '混合采集'
+    : getQuestionnaireContentType(record) === 'growth'
+      ? '成长采集'
+      : '普通采集';
+  return `${typeLabel} · ${role === 'teacher' ? '老师填写' : '家长填写'}`;
+};
+
+const getSubmissionDetailTitle = (record: QuestionnaireRecord) => {
+  return getQuestionnaireContentType(record) === 'ordinary' ? '答卷详情' : '采集内容详情';
 };
 
 const createRatingOptions = (count: number) => Array.from({ length: count }, (_, index) => String(index + 1));
@@ -237,15 +239,6 @@ const getDefaultSuggestedDeadline = () => {
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}`;
 };
 const nowText = () => new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
-const currentDate = () => new Date().toISOString().slice(0, 10);
-const DEFAULT_GROWTH_DIMENSIONS = ['求真', '从善', '尚美', '学活', '乐健', '悦群'];
-const getDefaultGrowthTerm = () => {
-  const now = new Date();
-  const startsNewSchoolYear = now.getMonth() >= 6;
-  const startYear = startsNewSchoolYear ? now.getFullYear() : now.getFullYear() - 1;
-  const semester = startsNewSchoolYear || now.getMonth() === 0 ? '上学期' : '下学期';
-  return `${startYear}-${startYear + 1}学年${semester}`;
-};
 const demoLinkedStudentName = (student: Student) => {
   if (student.studentNo === '20250101') return '郑小磊';
   if (student.studentNo === '20250102') return '林小满';
@@ -342,11 +335,9 @@ const SecondaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> =
   </button>
 );
 
-const StepIndicator: React.FC<{ current: number; mode: QuestionnaireCollectionMode }> = ({ current, mode }) => (
+const StepIndicator: React.FC<{ current: number }> = ({ current }) => (
   <div className="grid grid-cols-3 gap-2 px-5 py-4" aria-label={`创建进度，第${current}步，共3步`}>
-    {(mode === 'student_information'
-      ? ['编辑问卷', '学生范围', '确认开始']
-      : ['编辑问卷', '发送范围', '确认发布']).map((label, index) => {
+    {['编辑内容', '学生范围', '确认发布'].map((label, index) => {
       const step = index + 1;
       const active = step === current;
       const complete = step < current;
@@ -415,10 +406,10 @@ const StudentCollectionForm: React.FC<StudentCollectionFormProps> = ({
         <label htmlFor={['short_text', 'text', 'number', 'date'].includes(question.type) ? inputId : undefined} className="block text-[length:var(--tm-font-size-question-title)] font-bold leading-[1.45] text-[var(--tm-text-primary)]">
           {index + 1}. {question.title}{question.required && <span className="ml-1 text-[var(--tm-status-negative-strong)]" aria-label="必填">*</span>}
         </label>
-        {question.type === 'short_text' && <input id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-secondary)]" />}
-        {question.type === 'text' && <textarea id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} rows={4} className="mt-3 min-h-[120px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 py-3 text-[length:var(--tm-font-size-control)] font-medium leading-6 text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-secondary)]" />}
-        {question.type === 'number' && <input id={inputId} disabled={!editable} type="number" inputMode="decimal" step={settings.numberFormat === 'decimal-1' ? 0.1 : settings.numberFormat === 'decimal-2' ? 0.01 : 1} value={typeof answer === 'number' || typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-control)] font-medium tabular-nums text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-secondary)]" />}
-        {question.type === 'date' && <input id={inputId} disabled={!editable} type={settings.dateFormat === 'year' ? 'number' : settings.dateFormat === 'ym' ? 'month' : 'date'} inputMode={settings.dateFormat === 'year' ? 'numeric' : undefined} min={settings.dateFormat === 'year' ? 1900 : undefined} max={settings.dateFormat === 'year' ? 2100 : undefined} value={typeof answer === 'string' || typeof answer === 'number' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-secondary)]" />}
+        {question.type === 'short_text' && <input id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
+        {question.type === 'text' && <textarea id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} rows={4} className="mt-3 min-h-[120px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 py-3 text-[length:var(--tm-font-size-control)] font-medium leading-6 text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
+        {question.type === 'number' && <input id={inputId} disabled={!editable} type="number" inputMode="decimal" min={settings.minValue} max={settings.maxValue} step={settings.numberFormat === 'decimal-1' ? 0.1 : settings.numberFormat === 'decimal-2' ? 0.01 : 1} value={typeof answer === 'number' || typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium tabular-nums text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
+        {question.type === 'date' && <input id={inputId} disabled={!editable} type={settings.dateFormat === 'year' ? 'number' : settings.dateFormat === 'ym' ? 'month' : 'date'} inputMode={settings.dateFormat === 'year' ? 'numeric' : undefined} min={settings.dateFormat === 'year' ? 1900 : undefined} max={settings.dateFormat === 'year' ? 2100 : undefined} value={typeof answer === 'string' || typeof answer === 'number' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
         {(question.type === 'single' || question.type === 'multiple') && (
           <div className="mt-3 grid grid-cols-2 gap-2" role="group" aria-label={question.title}>
             {question.options.map(option => {
@@ -493,7 +484,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [visibleQuestionResponseCount, setVisibleQuestionResponseCount] = useState(20);
   const [responseFilter, setResponseFilter] = useState<'completed' | 'pending' | 'unreachable'>('completed');
   const [createStep, setCreateStep] = useState(1);
-  const [contentType, setContentType] = useState<QuestionnaireContentType>('ordinary');
   const [respondentRole, setRespondentRole] = useState<QuestionnaireRespondentRole>('guardian');
   const [collectionMode, setCollectionMode] = useState<QuestionnaireCollectionMode>('guardian_questionnaire');
   const [studentAssignmentMode, setStudentAssignmentMode] = useState<StudentAssignmentMode>('creator');
@@ -503,6 +493,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [draftLayoutMode, setDraftLayoutMode] = useState<FormLayoutMode>('flat');
   const [draftSections, setDraftSections] = useState<FormSection[]>([]);
   const [draftQuestions, setDraftQuestions] = useState<QuestionnaireQuestion[]>([]);
+  const [draftGrowthFields, setDraftGrowthFields] = useState<BodyGrowthFieldKey[]>([]);
+  const [draftGrowthDateMode, setDraftGrowthDateMode] = useState<GrowthRecordDateMode>('respondent');
+  const [draftGrowthFixedDate, setDraftGrowthFixedDate] = useState('');
+  const [enabledGrowthFields, setEnabledGrowthFields] = useState<GrowthFieldDefinition[]>(() => getEnabledGrowthFields(spaceId));
+  const [draftGrowthSectionId, setDraftGrowthSectionId] = useState('');
   const [previewRecord, setPreviewRecord] = useState<QuestionnaireRecord | null>(null);
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, QuestionnaireAnswer>>({});
   const [previewReturnMode, setPreviewReturnMode] = useState<PreviewReturnMode>('detail');
@@ -510,18 +505,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [activeScopeGrade, setActiveScopeGrade] = useState(classes[0]?.gradeLevel ?? '');
   const [hasSuggestedDeadline, setHasSuggestedDeadline] = useState(false);
   const [suggestedDeadline, setSuggestedDeadline] = useState('');
-  const [showCreateTypeSheet, setShowCreateTypeSheet] = useState(false);
-  const [createSheetStage, setCreateSheetStage] = useState<CreateSheetStage>('root');
-  const [growthTemplate, setGrowthTemplate] = useState<GrowthCollectionTemplate>('height_weight');
-  const [growthMeasurementDate, setGrowthMeasurementDate] = useState(currentDate);
-  const [growthTerm, setGrowthTerm] = useState(getDefaultGrowthTerm);
   const [showAssignmentSheet, setShowAssignmentSheet] = useState(false);
+  const [showGrowthDateSheet, setShowGrowthDateSheet] = useState(false);
   const [showRecordMenu, setShowRecordMenu] = useState(false);
   const [showDraftMenu, setShowDraftMenu] = useState(false);
   const [showDeleteDraftConfirm, setShowDeleteDraftConfirm] = useState(false);
-  const [showGoalReturnSheet, setShowGoalReturnSheet] = useState(false);
-  const [goalTeacherMessage, setGoalTeacherMessage] = useState('');
-  const [goalReturnReason, setGoalReturnReason] = useState('');
   const [draftActionId, setDraftActionId] = useState('');
   const [studentRecordFilter, setStudentRecordFilter] = useState<StudentRecordFilter>('all');
   const [studentRecordSearch, setStudentRecordSearch] = useState('');
@@ -539,6 +527,17 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       window.removeEventListener('storage', refresh);
     };
   }, []);
+
+  useEffect(() => {
+    const refresh = () => setEnabledGrowthFields(getEnabledGrowthFields(spaceId));
+    refresh();
+    window.addEventListener(GROWTH_FIELD_CONFIG_EVENT, refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener(GROWTH_FIELD_CONFIG_EVENT, refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, [spaceId]);
 
   useEffect(() => {
     if (!toast) return;
@@ -571,14 +570,34 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   }, [allAvailableStudents]);
   const activeRecord = records.find(record => record.id === activeRecordId) ?? null;
   const ownedRecords = records.filter(record => (
-    record.spaceId === spaceId && isQuestionnaireCreatedByTeacher(record, teacherId, teacherName)
+    record.spaceId === spaceId
+    && record.growthTemplate !== 'semester_goal'
+    && isQuestionnaireCreatedByTeacher(record, teacherId, teacherName)
   ));
   const filteredRecords = ownedRecords.filter(record => record.status === listFilter);
   const archivedRecords = ownedRecords.filter(record => record.status === 'archived');
-  const assignedRecords = getPendingAssignedStudentCollections(records, teacherId, teacherName, spaceId);
+  const assignedRecords = getPendingAssignedStudentCollections(records, teacherId, teacherName, spaceId)
+    .filter(record => record.growthTemplate !== 'semester_goal');
+  const availableGrowthFieldOptions = useMemo(() => {
+    const enabledKeys = new Set(enabledGrowthFields.map(item => item.key));
+    const legacySelected = draftGrowthFields
+      .filter(key => !enabledKeys.has(key))
+      .map(getGrowthFieldDefinition)
+      .filter((item): item is GrowthFieldDefinition => Boolean(item));
+    return [...enabledGrowthFields, ...legacySelected];
+  }, [draftGrowthFields, enabledGrowthFields]);
+  const getDraftGrowthQuestions = () => {
+    const sectionId = draftLayoutMode === 'grouped'
+      ? draftSections.some(section => section.id === draftGrowthSectionId)
+        ? draftGrowthSectionId
+        : draftSections[0]?.id
+      : undefined;
+    return createBodyGrowthQuestions(draftGrowthFields, draftGrowthDateMode === 'respondent').map(question => ({ ...question, sectionId }));
+  };
+  const getAllDraftQuestions = () => [...draftQuestions, ...getDraftGrowthQuestions()];
   const validStructure = draftLayoutMode === 'flat' || (
     draftSections.length > 0
-    && draftQuestions.every(question => Boolean(question.sectionId) && draftSections.some(section => section.id === question.sectionId))
+    && getAllDraftQuestions().every(question => Boolean(question.sectionId) && draftSections.some(section => section.id === question.sectionId))
   );
   const stepOneFieldErrors = useMemo(() => Object.fromEntries(draftQuestions.flatMap(question => {
     const error: { label?: string; options?: string; subFields?: string } = {};
@@ -601,12 +620,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     : '';
   const stepOneListError = draftLayoutMode === 'grouped' && draftSections.length === 0
     ? '请先添加分组'
-    : draftQuestions.length === 0
+    : getAllDraftQuestions().length === 0
       ? '请至少添加1个题目'
       : !validStructure
         ? '请为所有题目选择分组'
         : '';
-  const validStepOne = !stepOneTitleError && !stepOneListError && Object.keys(stepOneFieldErrors).length === 0;
+  const stepOneGrowthDateError = draftGrowthFields.length > 0 && draftGrowthDateMode === 'fixed' && !draftGrowthFixedDate
+    ? '请设置本次统一日期'
+    : '';
+  const validStepOne = !stepOneTitleError && !stepOneListError && !stepOneGrowthDateError && Object.keys(stepOneFieldErrors).length === 0;
 
   const showToast = (message: string) => setToast(message);
 
@@ -635,7 +657,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const startCreate = (record?: QuestionnaireRecord, nextRespondentRole: QuestionnaireRespondentRole = 'guardian') => {
     const resolvedRole = record ? getQuestionnaireRespondentRole(record) : nextRespondentRole;
     const resolvedMode: QuestionnaireCollectionMode = resolvedRole === 'teacher' ? 'student_information' : 'guardian_questionnaire';
-    setContentType(record ? getQuestionnaireContentType(record) : 'ordinary');
     setRespondentRole(resolvedRole);
     setCollectionMode(resolvedMode);
     setStudentAssignmentMode(record?.studentAssignmentMode ?? 'creator');
@@ -644,8 +665,12 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setDraftDescription(record?.description ?? '');
     setDraftLayoutMode(record?.layoutMode ?? 'flat');
     setDraftSections((record?.sections ?? []).map(section => ({ ...section })));
-    const nextQuestions = record?.questions.length ? record.questions : [];
-    setDraftQuestions(nextQuestions);
+    const nextQuestions = record?.questions ?? [];
+    setDraftGrowthFields(getBodyGrowthFieldKeys(nextQuestions));
+    setDraftGrowthDateMode(record?.growthRecordDateMode ?? (record?.growthMeasurementDate ? 'fixed' : 'respondent'));
+    setDraftGrowthFixedDate(record?.growthMeasurementDate ?? '');
+    setDraftGrowthSectionId(nextQuestions.find(isBodyGrowthQuestion)?.sectionId ?? '');
+    setDraftQuestions(nextQuestions.filter(question => !isBodyGrowthQuestion(question)));
     setPreviewRecord(null);
     setPreviewAnswers({});
     const nextTargetMode = record?.targetMode ?? 'classes';
@@ -663,25 +688,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setSuggestedDeadline((record?.suggestedDeadline ?? '').replace(' ', 'T'));
     setCreateStep(1);
     setStepOneValidationAttempt(0);
-    setShowCreateTypeSheet(false);
-    setCreateSheetStage('root');
     setPageMode('create');
-  };
-
-  const startGrowthSetup = (template: GrowthCollectionTemplate, role: QuestionnaireRespondentRole) => {
-    const preferredClass = availableClasses.find(classInfo => homeroomClassIds.includes(classInfo.id)) ?? availableClasses[0];
-    setGrowthTemplate(template);
-    setGrowthMeasurementDate(currentDate());
-    setGrowthTerm(getDefaultGrowthTerm());
-    setContentType('growth');
-    setRespondentRole(role);
-    setCollectionMode(role === 'teacher' ? 'student_information' : 'guardian_questionnaire');
-    setStudentAssignmentMode('creator');
-    setSelectedClassIds(new Set(preferredClass ? [preferredClass.id] : []));
-    setActiveScopeGrade(preferredClass?.gradeLevel ?? gradeGroups[0]?.gradeLevel ?? '');
-    setShowCreateTypeSheet(false);
-    setCreateSheetStage('root');
-    setPageMode('growth-setup');
   };
 
   const buildTargets = (useRosterName = false): QuestionnaireTarget[] => allAvailableStudents
@@ -701,7 +708,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     }));
 
   const openCreatePreview = () => {
-    if (draftQuestions.length === 0) {
+    const allQuestions = getAllDraftQuestions();
+    if (allQuestions.length === 0) {
       showToast('添加题目后即可预览');
       return;
     }
@@ -717,15 +725,17 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       createdAt: existing?.createdAt ?? nowText(),
       suggestedDeadline: hasSuggestedDeadline ? suggestedDeadline.replace('T', ' ') : '',
       status: 'draft',
-      contentType,
+      contentType: inferQuestionnaireContentType(allQuestions),
       respondentRole,
       collectionMode,
+      growthRecordDateMode: draftGrowthFields.length > 0 ? draftGrowthDateMode : undefined,
+      growthMeasurementDate: draftGrowthFields.length > 0 && draftGrowthDateMode === 'fixed' ? draftGrowthFixedDate : undefined,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
       targetSyncPolicy: 'follow_classes',
       layoutMode: draftLayoutMode,
       sections: draftSections,
-      questions: draftQuestions.map((question, index) => ({
+      questions: allQuestions.map((question, index) => ({
         ...question,
         title: question.title.trim() || `未填写题目 ${index + 1}`,
       })),
@@ -749,7 +759,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       setStepOneValidationAttempt(attempt => attempt + 1);
       if (!validStepOne) {
         window.requestAnimationFrame(() => {
-          const target = document.getElementById(stepOneTitleError ? 'survey-title' : stepOneListError ? 'form-builder-list-error' : '');
+          const target = document.getElementById(stepOneTitleError ? 'survey-title' : stepOneGrowthDateError ? 'growth-record-date' : stepOneListError ? 'form-builder-list-error' : '');
           target?.focus({ preventScroll: true });
           target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
@@ -785,7 +795,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         .map(({ classInfo, student }) => ({
           studentId: student.id,
           studentNo: student.studentNo!,
-          studentName: record.growthTemplate ? student.name : demoLinkedStudentName(student),
+          studentName: hasGrowthCollectionFields(record) ? student.name : demoLinkedStudentName(student),
           classId: classInfo.id,
           className: classInfo.name,
           reachable: getQuestionnaireRespondentRole(record) === 'teacher'
@@ -795,7 +805,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       const reconciledRecord = reconcileQuestionnaireTargets(record, currentClassTargets, {
         resolveStudentAssignee: target => getHomeroomAssignee(target.classId),
       });
-      if (!record.growthTemplate || !reconciledRecord.studentRecords) return reconciledRecord;
+      if (!hasGrowthCollectionFields(record) || !reconciledRecord.studentRecords) return reconciledRecord;
       const currentTargetByStudentNo = new Map(currentClassTargets.map(target => [target.studentNo, target]));
       const shouldSyncRosterName = reconciledRecord.studentRecords.some(item => {
         const target = currentTargetByStudentNo.get(item.studentNo);
@@ -837,83 +847,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     });
   };
 
-  const publishGrowthCollection = () => {
-    if (selectedClassIds.size === 0) {
-      showToast('请先选择班级');
-      return;
-    }
-    if (growthTemplate === 'height_weight' && !growthMeasurementDate) {
-      showToast('请选择测量日期');
-      return;
-    }
-    if (growthTemplate === 'semester_goal' && !growthTerm.trim()) {
-      showToast('请填写学期');
-      return;
-    }
-    const targets = buildTargets(true);
-    if (targets.length === 0) {
-      showToast('所选班级暂无学生');
-      return;
-    }
-    const id = createQuestionnaireId();
-    const classNames = availableClasses.filter(item => selectedClassIds.has(item.id)).map(item => item.name);
-    const scopeLabel = classNames.length === 1 ? classNames[0] : `${classNames.length}个班`;
-    const title = growthTemplate === 'height_weight'
-      ? `${scopeLabel}身高体重采集`
-      : `${growthTerm}新学期目标清单`;
-    const questions = createGrowthCollectionQuestions(growthTemplate, DEFAULT_GROWTH_DIMENSIONS, respondentRole);
-    const routedCollectionMode: QuestionnaireCollectionMode = respondentRole === 'teacher' ? 'student_information' : 'guardian_questionnaire';
-    const record: QuestionnaireRecord = {
-      id,
-      title,
-      description: '',
-      creatorName: teacherName,
-      creatorTeacherId: teacherId,
-      spaceId,
-      createdAt: nowText(),
-      suggestedDeadline: '',
-      status: 'active',
-      contentType: 'growth',
-      respondentRole,
-      collectionMode: routedCollectionMode,
-      growthTemplate,
-      growthMeasurementDate: growthTemplate === 'height_weight' ? growthMeasurementDate : undefined,
-      growthTerm: growthTemplate === 'semester_goal' ? growthTerm.trim() : undefined,
-      growthDimensionOptions: growthTemplate === 'semester_goal' ? [...DEFAULT_GROWTH_DIMENSIONS] : undefined,
-      studentAssignmentMode: respondentRole === 'teacher' ? 'creator' : undefined,
-      targetMode: 'classes',
-      targetClassIds: Array.from(selectedClassIds),
-      targetSyncPolicy: 'follow_classes',
-      layoutMode: 'flat',
-      sections: [],
-      questions,
-      targets,
-      submissions: [],
-      studentRecords: respondentRole === 'teacher' ? targets.map(target => ({
-        id: `${id}-${target.studentNo}`,
-        studentNo: target.studentNo,
-        studentName: target.studentName,
-        classId: target.classId,
-        className: target.className,
-        status: 'pending',
-        updatedAt: '',
-        answers: {},
-        assigneeTeacherId: teacherId,
-        assigneeTeacherName: teacherName,
-      })) : [],
-    };
-    upsertQuestionnaire(record);
-    setRecords(readQuestionnaires());
-    setActiveRecordId(record.id);
-    setRecordOrigin('list');
-    setDetailTab('data');
-    setPageMode('detail');
-    showToast(respondentRole === 'teacher' ? '已开始采集' : '已发布到家长端');
-  };
-
   const saveDraft = () => {
     const existing = records.find(record => record.id === draftId);
-    const targets = buildTargets();
+    const questions = getAllDraftQuestions();
+    const targets = buildTargets(draftGrowthFields.length > 0);
     const record: QuestionnaireRecord = {
       id: draftId || createQuestionnaireId(),
       title: draftTitle.trim() || '未命名问卷',
@@ -924,16 +861,18 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       createdAt: existing?.createdAt ?? nowText(),
       suggestedDeadline: hasSuggestedDeadline ? suggestedDeadline.replace('T', ' ') : '',
       status: 'draft',
-      contentType,
+      contentType: inferQuestionnaireContentType(questions),
       respondentRole,
       collectionMode,
+      growthRecordDateMode: draftGrowthFields.length > 0 ? draftGrowthDateMode : undefined,
+      growthMeasurementDate: draftGrowthFields.length > 0 && draftGrowthDateMode === 'fixed' ? draftGrowthFixedDate : undefined,
       studentAssignmentMode: respondentRole === 'teacher' ? studentAssignmentMode : undefined,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
       targetSyncPolicy: 'follow_classes',
       layoutMode: draftLayoutMode,
       sections: draftSections,
-      questions: draftQuestions,
+      questions,
       targets,
       submissions: existing?.submissions ?? [],
       studentRecords: respondentRole === 'teacher' ? buildStudentRecords(targets, existing) : [],
@@ -947,7 +886,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
   const publishQuestionnaire = () => {
     const existing = records.find(record => record.id === draftId);
-    const targets = buildTargets();
+    const questions = getAllDraftQuestions();
+    const targets = buildTargets(draftGrowthFields.length > 0);
     const record: QuestionnaireRecord = {
       id: draftId || createQuestionnaireId(),
       title: draftTitle.trim(),
@@ -958,16 +898,18 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       createdAt: existing?.createdAt ?? nowText(),
       suggestedDeadline: hasSuggestedDeadline ? suggestedDeadline.replace('T', ' ') : '',
       status: 'active',
-      contentType,
+      contentType: inferQuestionnaireContentType(questions),
       respondentRole,
       collectionMode,
+      growthRecordDateMode: draftGrowthFields.length > 0 ? draftGrowthDateMode : undefined,
+      growthMeasurementDate: draftGrowthFields.length > 0 && draftGrowthDateMode === 'fixed' ? draftGrowthFixedDate : undefined,
       studentAssignmentMode: respondentRole === 'teacher' ? studentAssignmentMode : undefined,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
       targetSyncPolicy: 'follow_classes',
       layoutMode: draftLayoutMode,
       sections: draftSections,
-      questions: draftQuestions,
+      questions,
       targets,
       submissions: existing?.submissions ?? [],
       studentRecords: respondentRole === 'teacher' ? buildStudentRecords(targets, existing) : [],
@@ -1085,14 +1027,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const openStudentRecord = (record: QuestionnaireRecord, studentNo: string) => {
     const studentRecord = getStudentRecord(record, studentNo);
     if (!studentRecord) return;
-    const nextAnswers = { ...studentRecord.answers };
-    if (record.growthTemplate === 'semester_goal') {
-      nextAnswers[GOAL_FIELD_IDS.studentSignature] ??= studentRecord.studentName;
-      nextAnswers[GOAL_FIELD_IDS.teacherSignature] ??= teacherName;
-      nextAnswers[GOAL_FIELD_IDS.signatureDate] ??= currentDate();
-    }
     setActiveStudentNo(studentNo);
-    setStudentRecordAnswers(nextAnswers);
+    setStudentRecordAnswers({ ...studentRecord.answers });
     setPageMode('student-record');
   };
 
@@ -1105,90 +1041,23 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       showToast(validationError);
       return;
     }
-    const answerText = (id: string) => {
-      const answer = studentRecordAnswers[id];
-      return typeof answer === 'string' || typeof answer === 'number' ? String(answer).trim() : '';
-    };
-    if (status === 'completed' && activeRecord.growthTemplate === 'height_weight') {
-      const height = Number(answerText(HEIGHT_QUESTION_ID));
-      const weight = Number(answerText(WEIGHT_QUESTION_ID));
-      if (!Number.isFinite(height) || height < 80 || height > 220) {
-        showToast('身高请输入80至220厘米');
-        return;
-      }
-      if (!Number.isFinite(weight) || weight < 10 || weight > 200) {
-        showToast('体重请输入10至200千克');
-        return;
-      }
-    }
+    const completedAt = nowText();
     const saved = saveStudentCollectionRecord(activeRecord.id, {
       ...studentRecord,
       status,
-      updatedAt: nowText(),
+      updatedAt: completedAt,
       answers: studentRecordAnswers,
     }, teacherId, teacherName);
     if (!saved) {
       showToast('当前采集不可编辑');
       return;
     }
-    if (status === 'completed' && activeRecord.growthTemplate) {
-      const target = activeRecord.targets.find(item => item.studentNo === studentRecord.studentNo);
-      if (target && activeRecord.growthTemplate === 'height_weight') {
-        saveBodyMeasurementRecord(target.studentId, {
-          measuredAt: activeRecord.growthMeasurementDate ?? currentDate(),
-          heightCm: Number(answerText(HEIGHT_QUESTION_ID)),
-          weightKg: Number(answerText(WEIGHT_QUESTION_ID)),
-          sourceRecordId: studentRecord.id,
-          sourceLabel: activeRecord.title,
-          sourceType: 'growth-collection',
-        });
-      }
-      if (target && activeRecord.growthTemplate === 'semester_goal') {
-        const goals = [0, 1, 2].flatMap<SemesterGoalItem>(index => {
-          const dimension = answerText(getGoalFieldId(index, 'dimension'));
-          const reason = answerText(getGoalFieldId(index, 'reason'));
-          const action = answerText(getGoalFieldId(index, 'action'));
-          const selfAssessment = answerText(getGoalFieldId(index, 'assessment')) as GoalSelfAssessment;
-          if (index === 2 && !dimension && !reason && !action && !selfAssessment) return [];
-          return [{
-            id: `${studentRecord.id}-goal-${index + 1}`,
-            type: index === 0 ? '继续闪亮' : index === 1 ? '尝试新方向' : '其他挑战',
-            dimension,
-            reason,
-            action,
-            selfAssessment: selfAssessment || '我需要努力',
-            optional: index === 2,
-          }];
-        });
-        const signatureDate = answerText(GOAL_FIELD_IDS.signatureDate) || currentDate();
-        const confirmations = ([
-          ['学生', GOAL_FIELD_IDS.studentSignature, '访谈确认'],
-          ['教师', GOAL_FIELD_IDS.teacherSignature, '账号确认'],
-          ['家长', GOAL_FIELD_IDS.parentSignature, '访谈确认'],
-        ] as const).flatMap<GoalConfirmation>(([role, id, method]) => {
-          const name = answerText(id);
-          return name ? [{ role, name, confirmedAt: `${signatureDate} 00:00`, method }] : [];
-        });
-        saveSemesterGoalPlan(target.studentId, {
-          term: activeRecord.growthTerm ?? getDefaultGrowthTerm(),
-          status: confirmations.length === 3 ? 'active' : 'pending-confirmation',
-          previousReflection: answerText(GOAL_FIELD_IDS.previousReflection),
-          goals,
-          studentMessage: answerText(GOAL_FIELD_IDS.studentMessage),
-          teacherMessage: answerText(GOAL_FIELD_IDS.teacherMessage),
-          parentMessage: answerText(GOAL_FIELD_IDS.parentMessage),
-          agreement: answerText(GOAL_FIELD_IDS.agreement),
-          confirmations,
-          interviewRecorder: teacherName,
-          interviewRecordedAt: `${signatureDate} 00:00`,
-          sourceRecordId: studentRecord.id,
-          sourceLabel: activeRecord.title,
-        });
-      }
+    if (status === 'completed' && hasGrowthCollectionFields(activeRecord)) {
+      persistGrowthCollectionAnswers(activeRecord, studentRecord.studentNo, studentRecordAnswers, completedAt);
     }
     setRecords(readQuestionnaires());
     setPageMode('detail');
-    showToast(status === 'completed' && activeRecord.growthTemplate ? '已保存到学生成长数据' : status === 'completed' ? '已完成' : '草稿已保存');
+    showToast(status === 'completed' && hasGrowthCollectionFields(activeRecord) ? '已完成并更新成长数据' : status === 'completed' ? '已完成' : '草稿已保存');
   };
 
   const renderList = () => {
@@ -1196,7 +1065,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]">
         <PageHeader title="采集管理" onBack={onBack} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 pt-4 no-scrollbar">
-          <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="问卷状态">
+          <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="采集状态">
             {([['active', '收集中'], ['ended', '已结束'], ['draft', '草稿']] as const).map(([value, label]) => (
               <button
                 key={value}
@@ -1229,7 +1098,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <section className={`${listFilter === 'ended' && archivedRecords.length > 0 ? 'mt-1' : 'mt-3'} space-y-2.5`}>
             {filteredRecords.map(record => {
               const mode = getQuestionnaireCollectionMode(record);
-              const modeMeta = record.growthTemplate ? growthCollectionMeta : collectionModeMeta[mode];
+              const modeMeta = getQuestionnaireContentType(record) === 'ordinary' ? collectionModeMeta[mode] : growthCollectionMeta;
               const ModeIcon = modeMeta.icon;
               const reachable = getReachableTargetCount(record);
               const completion = getCompletionRate(record);
@@ -1248,7 +1117,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                       <div className="mt-3.5 flex min-w-0 items-center justify-between gap-3 text-[length:var(--tm-font-size-meta)]">
                         <div className="flex min-w-0 items-center gap-2 font-medium">
                           <span className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5" />{getCollectionBadgeLabel(record)}</span>
-                          <span className={`truncate ${overdue ? 'text-[var(--tm-brand-reward-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>{record.growthTemplate === 'height_weight' ? record.growthMeasurementDate : record.growthTemplate === 'semester_goal' ? record.growthTerm : mode === 'student_information' ? formatCollectionDate(record.createdAt) : record.suggestedDeadline ? formatSuggestedDeadline(record.suggestedDeadline) : '不限时间'}</span>
+                          <span className={`truncate ${overdue ? 'text-[var(--tm-brand-reward-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>{mode === 'student_information' ? formatCollectionDate(record.createdAt) : record.suggestedDeadline ? formatSuggestedDeadline(record.suggestedDeadline) : '不限时间'}</span>
                         </div>
                         <div className="flex shrink-0 items-center gap-2.5">
                           <div className="h-1.5 w-12 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" aria-hidden="true">
@@ -1280,82 +1149,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             )}
           </section>
         </main>
-        <MobileFloatingCreateButton label="新建采集" onClick={() => { setCreateSheetStage('root'); setShowCreateTypeSheet(true); }} />
-        <BottomSheet open={showCreateTypeSheet} label="新建采集" onDismiss={() => { setShowCreateTypeSheet(false); setCreateSheetStage('root'); }}>
-          <div className="flex min-h-11 items-center gap-2">
-            {createSheetStage !== 'root' && (
-              <button type="button" onClick={() => setCreateSheetStage('root')} className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]" aria-label="返回采集类型">
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-            )}
-            <h2 className="text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">
-              {createSheetStage === 'root' ? '选择采集内容' : '选择完成方式'}
-            </h2>
-          </div>
-          <div className="mt-3 overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
-            {createSheetStage === 'root' && (
-              <>
-                <button type="button" onClick={() => setCreateSheetStage('ordinary-method')} className="flex min-h-[72px] w-full items-center gap-3 px-4 text-left active:bg-[var(--tm-bg-surface-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]"><FileText className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">普通问卷</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">意见、情况与反馈</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
-                <button type="button" onClick={() => setCreateSheetStage('height-method')} className="flex min-h-[72px] w-full items-center gap-3 border-t border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-status-positive-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><Ruler className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">身高体重</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">记录测量日期、身高与体重</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
-                <button type="button" onClick={() => setCreateSheetStage('goal-method')} className="flex min-h-[72px] w-full items-center gap-3 border-t border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-brand-primary-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]"><Target className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">学期目标</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">回顾、目标与共同约定</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
-              </>
-            )}
-            {createSheetStage === 'ordinary-method' && (
-              <>
-                <button type="button" onClick={() => startCreate(undefined, 'teacher')} className="flex min-h-[68px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-audience-student-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-student-soft)] text-[var(--tm-audience-student-strong)]"><UserRoundCheck className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">老师逐生填写</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">老师为每名学生完成问卷</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
-                <button type="button" onClick={() => startCreate(undefined, 'guardian')} className="flex min-h-[68px] w-full items-center gap-3 px-4 text-left active:bg-[var(--tm-audience-guardian-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-guardian-soft)] text-[var(--tm-audience-guardian-strong)]"><UsersRound className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">发给家长填写</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">家长在手机端提交</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
-              </>
-            )}
-            {createSheetStage === 'height-method' && (
-              <>
-                <button type="button" onClick={() => startGrowthSetup('height_weight', 'teacher')} className="flex min-h-[68px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-audience-student-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-student-soft)] text-[var(--tm-audience-student-strong)]"><UserRoundCheck className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">老师现场采集</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">老师测量并逐生记录</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
-                <button type="button" onClick={() => startGrowthSetup('height_weight', 'guardian')} className="flex min-h-[68px] w-full items-center gap-3 px-4 text-left active:bg-[var(--tm-audience-guardian-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-guardian-soft)] text-[var(--tm-audience-guardian-strong)]"><UsersRound className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">家长上报</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">家长测量后在手机端填写</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
-              </>
-            )}
-            {createSheetStage === 'goal-method' && (
-              <>
-                <button type="button" onClick={() => startGrowthSetup('semester_goal', 'teacher')} className="flex min-h-[68px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-audience-student-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-student-soft)] text-[var(--tm-audience-student-strong)]"><UserRoundCheck className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">老师访谈录入</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">访谈学生后由老师记录</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
-                <button type="button" onClick={() => startGrowthSetup('semester_goal', 'guardian')} className="flex min-h-[68px] w-full items-center gap-3 px-4 text-left active:bg-[var(--tm-audience-guardian-soft)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-guardian-soft)] text-[var(--tm-audience-guardian-strong)]"><UsersRound className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">家长与孩子制定</span><span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">家长提交后由老师确认</span></span>
-                  <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                </button>
-              </>
-            )}
-          </div>
-        </BottomSheet>
+        <MobileFloatingCreateButton label="新建采集" onClick={() => startCreate()} />
         <BottomSheet open={showDraftMenu} label="草稿操作" onDismiss={() => setShowDraftMenu(false)}>
           <button type="button" onClick={() => { setShowDraftMenu(false); setShowDeleteDraftConfirm(true); }} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]">
             <Trash2 className="h-5 w-5" />删除草稿
@@ -1420,7 +1214,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         <section className="space-y-2.5">
           {archivedRecords.map(record => {
             const mode = getQuestionnaireCollectionMode(record);
-            const modeMeta = record.growthTemplate ? growthCollectionMeta : collectionModeMeta[mode];
+            const modeMeta = getQuestionnaireContentType(record) === 'ordinary' ? collectionModeMeta[mode] : growthCollectionMeta;
             const ModeIcon = modeMeta.icon;
             const reachable = getReachableTargetCount(record);
             const completion = getCompletionRate(record);
@@ -1437,7 +1231,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 <div className="mt-3.5 flex min-w-0 items-center justify-between gap-3 text-[length:var(--tm-font-size-meta)]">
                   <div className="flex min-w-0 items-center gap-2 font-medium text-[var(--tm-text-tertiary)]">
                     <span className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5" />{getCollectionBadgeLabel(record)}</span>
-                    <span className="truncate">{record.growthTemplate === 'height_weight' ? record.growthMeasurementDate : record.growthTemplate === 'semester_goal' ? record.growthTerm : mode === 'student_information' ? formatCollectionDate(record.createdAt) : record.suggestedDeadline ? formatSuggestedDeadline(record.suggestedDeadline) : '不限时间'}</span>
+                    <span className="truncate">{mode === 'student_information' ? formatCollectionDate(record.createdAt) : record.suggestedDeadline ? formatSuggestedDeadline(record.suggestedDeadline) : '不限时间'}</span>
                   </div>
                   <div className="flex shrink-0 items-center gap-2.5">
                     <div className="h-1.5 w-12 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" aria-hidden="true">
@@ -1452,7 +1246,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           {archivedRecords.length === 0 && (
             <div className="py-16 text-center">
               <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]"><Archive className="h-6 w-6" /></span>
-              <div className="mt-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-secondary)]">暂无已归档问卷</div>
+              <div className="mt-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-secondary)]">暂无已归档采集</div>
             </div>
           )}
         </section>
@@ -1460,65 +1254,12 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     </div>
   );
 
-  const renderGrowthSetup = () => {
-    const targets = buildTargets();
-    const allClassesSelected = availableClasses.length > 0 && availableClasses.every(classInfo => selectedClassIds.has(classInfo.id));
-    const hasSelectedClasses = selectedClassIds.size > 0;
-    const title = growthTemplate === 'height_weight' ? '身高体重采集' : '新学期目标清单';
-    return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24">
-        <PageHeader title={title} onBack={() => setPageMode('list')} />
-        <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-28 pt-4 no-scrollbar">
-          <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
-            {growthTemplate === 'height_weight' ? (
-              <label>
-                <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">测量日期</span>
-                <input type="date" value={growthMeasurementDate} onChange={event => setGrowthMeasurementDate(event.target.value)} className="h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]" />
-              </label>
-            ) : (
-              <label>
-                <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">学期</span>
-                <input value={growthTerm} onChange={event => setGrowthTerm(event.target.value)} className="h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]" placeholder="请输入学期" />
-              </label>
-            )}
-          </section>
-
-          <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]">
-            <div className="px-4 pt-4">
-              <div className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">选择班级</div>
-              <button type="button" role="checkbox" onClick={toggleAllClasses} aria-checked={allClassesSelected ? true : hasSelectedClasses ? 'mixed' : false} className="mt-2 flex min-h-[56px] w-full items-center gap-3 border-t border-[var(--tm-border-subtle)] text-left active:bg-[var(--tm-bg-surface-soft)]">
-                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border ${allClassesSelected || hasSelectedClasses ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`}>
-                  {allClassesSelected ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : hasSelectedClasses ? <Minus className="h-3.5 w-3.5" strokeWidth={3} /> : null}
-                </span>
-                <span className="min-w-0 flex-1 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{allScopeLabel}</span>
-                <span className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">{targets.length}名学生</span>
-              </button>
-            </div>
-            <div className="mx-4 mb-4 h-[360px] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)]">
-              <MobileClassCascadePicker
-                groups={gradeGroups.map(group => ({ gradeLabel: group.gradeLevel, classes: group.classes }))}
-                selectedClassIds={selectedClassIds}
-                activeGrade={activeScopeGrade}
-                onActiveGradeChange={setActiveScopeGrade}
-                onToggleClass={toggleClass}
-                getClassMeta={classInfo => `${activeStudentCountByClassId.get(classInfo.id) ?? 0}人`}
-                ariaLabel={`${title}班级级联选择`}
-              />
-            </div>
-          </section>
-        </main>
-        <BottomAction>
-          <PrimaryButton onClick={publishGrowthCollection} className="w-full">{respondentRole === 'teacher' ? <><ClipboardCheck className="h-4.5 w-4.5" />开始采集</> : <><Send className="h-4.5 w-4.5" />发布到家长端</>}</PrimaryButton>
-        </BottomAction>
-      </div>
-    );
-  };
-
   const renderCreate = () => {
     const isTeacherRespondent = respondentRole === 'teacher';
-    const titlePlaceholder = '请输入问卷名称';
-    const descriptionPlaceholder = '请输入问卷说明(非必填)';
-    const targets = buildTargets();
+    const titlePlaceholder = '请输入采集名称';
+    const descriptionPlaceholder = '请输入采集说明(非必填)';
+    const targets = buildTargets(draftGrowthFields.length > 0);
+    const allQuestions = getAllDraftQuestions();
     const reachableCount = targets.filter(target => target.reachable).length;
     const unreachableCount = targets.length - reachableCount;
     const allClassesSelected = availableClasses.length > 0 && availableClasses.every(classInfo => selectedClassIds.has(classInfo.id));
@@ -1537,27 +1278,88 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24">
         <PageHeader
-          title={draftId ? '编辑问卷' : '新建问卷'}
+          title={draftId ? '编辑采集' : '新建采集'}
           onBack={() => createStep > 1 ? setCreateStep(step => step - 1) : setPageMode('list')}
         />
-        <StepIndicator current={createStep} mode={collectionMode} />
+        <StepIndicator current={createStep} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-28 no-scrollbar">
           {createStep === 1 && (
             <div className="space-y-4">
               <section className="-mx-5 bg-[var(--tm-bg-surface)] px-5 py-4">
-                <input id="survey-title" aria-label="问卷标题" value={draftTitle} maxLength={40} onChange={event => setDraftTitle(event.target.value)} placeholder={titlePlaceholder} aria-invalid={Boolean(stepOneValidationAttempt && stepOneTitleError)} aria-describedby={stepOneValidationAttempt && stepOneTitleError ? 'survey-title-error' : undefined} className={`min-h-[var(--tm-size-touch)] w-full border-0 border-b bg-transparent px-0 py-1 text-[length:var(--tm-font-size-document-title)] font-bold leading-9 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:font-medium placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:ring-0 ${stepOneValidationAttempt && stepOneTitleError ? 'border-[var(--tm-status-negative-strong)] focus:border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-border-control)] focus:border-[var(--tm-brand-primary)]'}`} />
+                <input id="survey-title" aria-label="采集标题" value={draftTitle} maxLength={40} onChange={event => setDraftTitle(event.target.value)} placeholder={titlePlaceholder} aria-invalid={Boolean(stepOneValidationAttempt && stepOneTitleError)} aria-describedby={stepOneValidationAttempt && stepOneTitleError ? 'survey-title-error' : undefined} className={`min-h-[var(--tm-size-touch)] w-full border-0 border-b bg-transparent px-0 py-1 text-[length:var(--tm-font-size-document-title)] font-bold leading-9 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:font-medium placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:ring-0 ${stepOneValidationAttempt && stepOneTitleError ? 'border-[var(--tm-status-negative-strong)] focus:border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-border-control)] focus:border-[var(--tm-brand-primary)]'}`} />
                 {stepOneValidationAttempt > 0 && stepOneTitleError && <p id="survey-title-error" className="mt-1.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{stepOneTitleError}</p>}
                 <div className="mt-[var(--tm-space-4)]">
-                  <AutoResizeTextarea id="survey-description" aria-label="问卷说明" value={draftDescription} maxLength={500} maxHeight={Number.POSITIVE_INFINITY} onChange={event => setDraftDescription(event.target.value)} placeholder={descriptionPlaceholder} className="min-h-[var(--tm-size-touch)] w-full resize-none border-0 border-b border-[var(--tm-border-control)] bg-transparent px-0 py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:border-[var(--tm-brand-primary)] focus:ring-0" />
+                  <AutoResizeTextarea id="survey-description" aria-label="采集说明" value={draftDescription} maxLength={500} maxHeight={Number.POSITIVE_INFINITY} onChange={event => setDraftDescription(event.target.value)} placeholder={descriptionPlaceholder} className="min-h-[var(--tm-size-touch)] w-full resize-none border-0 border-b border-[var(--tm-border-control)] bg-transparent px-0 py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:border-[var(--tm-brand-primary)] focus:ring-0" />
                   <div className="mt-1 text-right text-[length:var(--tm-font-size-badge)] font-medium tabular-nums text-[var(--tm-text-tertiary)]" aria-live="polite">{draftDescription.length}/500</div>
                 </div>
               </section>
+              {draftGrowthFields.length > 0 && (
+                <section className="overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]" aria-label="已选成长数据">
+                  <button
+                    id="growth-record-date"
+                    type="button"
+                    onClick={() => setShowGrowthDateSheet(true)}
+                    aria-invalid={Boolean(stepOneValidationAttempt && stepOneGrowthDateError)}
+                    className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
+                  >
+                    <CalendarDays className="h-4.5 w-4.5 shrink-0 text-[var(--tm-status-positive-strong)]" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">记录日期</span>
+                      <span className={`mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium ${stepOneValidationAttempt && stepOneGrowthDateError ? 'text-[var(--tm-status-negative-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>
+                        {draftGrowthDateMode === 'respondent' ? '填写人选择' : draftGrowthFixedDate || '待设置'}
+                      </span>
+                    </span>
+                    <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-disabled)]" />
+                  </button>
+                  {availableGrowthFieldOptions.filter(option => draftGrowthFields.includes(option.key)).map(option => (
+                    <div key={option.key} className="flex min-h-[56px] items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 last:border-b-0">
+                      {option.key === 'height_cm' ? <Ruler className="h-4.5 w-4.5 shrink-0 text-[var(--tm-status-positive-strong)]" /> : <Activity className="h-4.5 w-4.5 shrink-0 text-[var(--tm-status-positive-strong)]" />}
+                      <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{option.label}</span>{option.unit && <span className="mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{option.unit}</span>}</span>
+                      <IconButton label={`移除${option.label}`} onClick={() => setDraftGrowthFields(fields => fields.filter(key => key !== option.key))}><Trash2 className="h-4.5 w-4.5" /></IconButton>
+                    </div>
+                  ))}
+                </section>
+              )}
               <FormBuilder
                 layoutMode={draftLayoutMode}
                 sections={draftSections}
                 fields={builderFields}
                 itemLabel="题目"
                 showItemLabel={false}
+                addButtonLabel="内容"
+                typePickerTitle="添加内容"
+                typePickerPrimaryLabel="普通题型"
+                typePickerSecondaryTab={{
+                  label: '成长数据',
+                  render: (close, sectionId) => (
+                    <div>
+                      <div className="overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
+                        {availableGrowthFieldOptions.map(option => {
+                          const selected = draftGrowthFields.includes(option.key);
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              role="checkbox"
+                              aria-checked={selected}
+                              onClick={() => {
+                                setDraftGrowthSectionId(sectionId ?? '');
+                                setDraftGrowthFields(fields => selected
+                                  ? fields.filter(key => key !== option.key)
+                                  : [...fields, option.key]);
+                              }}
+                              className="flex min-h-[64px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-status-positive-soft)]"
+                            >
+                              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border ${selected ? 'border-[var(--tm-status-positive)] bg-[var(--tm-status-positive)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`}>{selected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}</span>
+                              <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{option.label}</span><span className="mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{option.groupLabel}{option.unit ? ` · ${option.unit}` : ''}</span></span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <PrimaryButton onClick={close} className="mt-4 w-full">完成</PrimaryButton>
+                    </div>
+                  ),
+                }}
                 fieldTypes={questionnaireFieldTypes}
                 allowCustomAnswer
                 fieldErrors={stepOneValidationAttempt ? stepOneFieldErrors : undefined}
@@ -1588,7 +1390,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           )}
 
           {createStep === 2 && (
-            <section aria-label={isTeacherRespondent ? '学生范围' : '发送范围'} className="-mx-5 bg-[var(--tm-bg-surface)] px-5 pb-5">
+            <section aria-label="学生范围" className="-mx-5 bg-[var(--tm-bg-surface)] px-5 pb-5">
               {availableClasses.length > 0 ? (
                 <>
                   <button type="button" role="checkbox" onClick={toggleAllClasses} aria-checked={allClassesSelected ? true : hasSelectedClasses ? 'mixed' : false} className="flex min-h-[60px] w-full items-center gap-3 text-left active:bg-[var(--tm-bg-surface-soft)]">
@@ -1606,7 +1408,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                       onActiveGradeChange={setActiveScopeGrade}
                       onToggleClass={toggleClass}
                       getClassMeta={classInfo => `${activeStudentCountByClassId.get(classInfo.id) ?? 0}人`}
-                      ariaLabel="问卷发送范围班级级联选择"
+                      ariaLabel="采集范围班级级联选择"
                     />
                   </div>
                 </>
@@ -1623,9 +1425,29 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 {draftDescription && <p className="mt-2 text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">{draftDescription}</p>}
                 <div className={`mt-4 grid gap-2 border-t border-[var(--tm-border-subtle)] pt-4 text-center ${isTeacherRespondent ? 'grid-cols-2' : 'grid-cols-3'}`}>
                   {(isTeacherRespondent
-                    ? [['题目', draftQuestions.length], ['学生', targets.length]]
-                    : [['题目', draftQuestions.length], ['目标学生', targets.length], ['可送达', reachableCount]]).map(([label, value]) => (
+                    ? [['内容', allQuestions.length], ['学生', targets.length]]
+                    : [['内容', allQuestions.length], ['目标学生', targets.length], ['可送达', reachableCount]]).map(([label, value]) => (
                     <div key={String(label)}><div className="text-[length:var(--tm-font-size-page-title)] font-bold tabular-nums text-[var(--tm-text-primary)]">{value}</div><div className="mt-1 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{label}</div></div>
+                  ))}
+                </div>
+              </section>
+              <section className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
+                <h2 className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">填写人</h2>
+                <div className="mt-3 grid grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label="选择填写人">
+                  {([['teacher', '老师填写'], ['guardian', '家长填写']] as const).map(([role, label]) => (
+                    <button
+                      key={role}
+                      type="button"
+                      role="tab"
+                      aria-selected={respondentRole === role}
+                      onClick={() => {
+                        setRespondentRole(role);
+                        setCollectionMode(role === 'teacher' ? 'student_information' : 'guardian_questionnaire');
+                      }}
+                      className={`min-h-11 rounded-[calc(var(--tm-radius-control)-4px)] px-2 text-[length:var(--tm-font-size-body)] font-semibold ${respondentRole === role ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                    >
+                      {label}
+                    </button>
                   ))}
                 </div>
               </section>
@@ -1658,7 +1480,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   </button>
                 </div>
                 {hasSuggestedDeadline && (
-                  <input aria-label="建议完成时间" type="datetime-local" value={suggestedDeadline} onChange={event => setSuggestedDeadline(event.target.value)} className="mt-3 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
+                  <input aria-label="建议完成时间" type="datetime-local" value={suggestedDeadline} onChange={event => setSuggestedDeadline(event.target.value)} className="mt-3 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
                 )}
               </section>}
               {!isTeacherRespondent && unreachableCount > 0 && (
@@ -1711,6 +1533,39 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             })}
           </div>
         </BottomSheet>
+        <BottomSheet open={showGrowthDateSheet} label="记录日期" onDismiss={() => setShowGrowthDateSheet(false)}>
+          <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">记录日期</h2>
+          <div className="mt-4 overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
+            {([['respondent', '填写人选择'], ['fixed', '本次统一日期']] as const).map(([value, label]) => {
+              const selected = draftGrowthDateMode === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setDraftGrowthDateMode(value)}
+                  className="flex min-h-[56px] w-full items-center justify-between border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-bg-surface-soft)]"
+                  role="radio"
+                  aria-checked={selected}
+                >
+                  <span className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{label}</span>
+                  <span className={`flex h-5 w-5 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)]' : 'border-[var(--tm-border-control)]'}`}>
+                    {selected && <span className="h-2.5 w-2.5 rounded-full bg-[var(--tm-brand-primary)]" />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {draftGrowthDateMode === 'fixed' && (
+            <input
+              type="date"
+              aria-label="本次统一日期"
+              value={draftGrowthFixedDate}
+              onChange={event => setDraftGrowthFixedDate(event.target.value)}
+              className="mt-4 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
+            />
+          )}
+          <PrimaryButton disabled={draftGrowthDateMode === 'fixed' && !draftGrowthFixedDate} onClick={() => setShowGrowthDateSheet(false)} className="mt-4 w-full">完成</PrimaryButton>
+        </BottomSheet>
       </div>
     );
   };
@@ -1753,17 +1608,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 {record.description && <p className="mt-1 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">{record.description}</p>}
               </div>
               <div className="-mr-2 -mt-2 flex shrink-0 items-center">
-                {!record.growthTemplate && (
-                  <button
-                    type="button"
-                    aria-label="预览采集表"
-                    title="预览采集表"
-                    onClick={() => openDetailPreview(record)}
-                    className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-[transform,background-color] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
-                  >
-                    <Eye className="h-4 w-4" />预览
-                  </button>
-                )}
+                <button
+                  type="button"
+                  aria-label="预览采集表"
+                  title="预览采集表"
+                  onClick={() => openDetailPreview(record)}
+                  className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-[transform,background-color] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
+                >
+                  <Eye className="h-4 w-4" />预览
+                </button>
                 {!assignedContext && <IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}><MoreHorizontal className="h-5 w-5" /></IconButton>}
               </div>
             </div>
@@ -1777,7 +1630,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <div className="sticky top-0 z-20 -mx-1 mt-4 bg-[var(--tm-bg-page-glass)] px-1 py-3 backdrop-blur-md">
             <label className="relative block">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
-              <input value={studentRecordSearch} onChange={event => setStudentRecordSearch(event.target.value)} placeholder="搜索学生" aria-label="搜索学生" className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] pl-10 pr-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]" />
+              <input value={studentRecordSearch} onChange={event => setStudentRecordSearch(event.target.value)} placeholder="搜索学生" aria-label="搜索学生" className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] pl-10 pr-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
             </label>
             <div className="mt-2 grid grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label="填写进度">
               {([['all', '全部'], ['incomplete', '待完成'], ['completed', '已完成']] as const).map(([value, label]) => (
@@ -1800,7 +1653,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
         <BottomSheet open={!assignedContext && showRecordMenu} label="采集操作" onDismiss={() => setShowRecordMenu(false)}>
           {record.status === 'archived' && <button type="button" onClick={restoreActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><ArchiveRestore className="h-5 w-5" />恢复到已结束</button>}
-          {!record.growthTemplate && <button type="button" onClick={duplicateActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><Copy className="h-5 w-5 text-[var(--tm-text-tertiary)]" />复制为新采集表</button>}
+          <button type="button" onClick={duplicateActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><Copy className="h-5 w-5 text-[var(--tm-text-tertiary)]" />复制为新采集表</button>
           {record.status === 'active' && <button type="button" onClick={closeActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]"><ClipboardCheck className="h-5 w-5" />结束采集</button>}
           {record.status === 'ended' && (
             <>
@@ -1828,30 +1681,12 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             <div className="truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)]">{activeRecord.title}</div>
             <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{studentRecord.className}</div>
           </div>
-          {activeRecord.growthTemplate === 'height_weight' ? (
-            <HeightWeightCollectionForm
-              answers={studentRecordAnswers}
-              editable={editable}
-              measurementDate={activeRecord.growthMeasurementDate ?? currentDate()}
-              onAnswerChange={updateAnswer}
-            />
-          ) : activeRecord.growthTemplate === 'semester_goal' ? (
-            <SemesterGoalCollectionForm
-              answers={studentRecordAnswers}
-              editable={editable}
-              dimensions={activeRecord.growthDimensionOptions ?? DEFAULT_GROWTH_DIMENSIONS}
-              studentName={studentRecord.studentName}
-              teacherName={teacherName}
-              onAnswerChange={updateAnswer}
-            />
-          ) : (
-            <StudentCollectionForm
-              record={activeRecord}
-              answers={studentRecordAnswers}
-              editable={editable}
-              onAnswerChange={updateAnswer}
-            />
-          )}
+          <StudentCollectionForm
+            record={activeRecord}
+            answers={studentRecordAnswers}
+            editable={editable}
+            onAnswerChange={updateAnswer}
+          />
         </main>
         {editable && (
           <BottomAction>
@@ -1909,16 +1744,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return (
       <div>
         <div className="grid grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
-          {([['completed', record.growthTemplate === 'semester_goal' ? '已提交' : '已完成'], ['pending', '未完成'], ['unreachable', '未绑定']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setResponseFilter(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${responseFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
+          {([['completed', '已完成'], ['pending', '未完成'], ['unreachable', '未绑定']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setResponseFilter(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${responseFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
         </div>
         <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] shadow-[var(--tm-shadow-card)]">
           {rows.map(row => {
             const isSubmission = 'answers' in row;
             return (
-              <button key={isSubmission ? row.id : row.studentNo} type="button" disabled={!isSubmission} onClick={() => { if (isSubmission) { setActiveSubmission(row); setGoalTeacherMessage(row.teacherMessage ?? ''); setGoalReturnReason(''); setPageMode('response'); } }} className="flex min-h-[62px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-bg-surface-soft)] disabled:cursor-default">
+              <button key={isSubmission ? row.id : row.studentNo} type="button" disabled={!isSubmission} onClick={() => { if (isSubmission) { setActiveSubmission(row); setPageMode('response'); } }} className="flex min-h-[62px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-bg-surface-soft)] disabled:cursor-default">
                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${isSubmission ? 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' : responseFilter === 'unreachable' ? 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]'}`}>{isSubmission ? <CheckCircle2 className="h-4.5 w-4.5" /> : <UserRoundCheck className="h-4.5 w-4.5" />}</span>
                 <span className="min-w-0 flex-1"><span className="block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{row.studentName}</span><span className="mt-0.5 block truncate text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{isSubmission ? `${row.guardianRelation} · ${row.submittedAt}` : row.className}</span></span>
-                {isSubmission && record.growthTemplate === 'semester_goal' && <span className={`shrink-0 rounded-full px-2 py-1 text-[length:var(--tm-font-size-badge)] font-bold ${row.reviewStatus === 'confirmed' ? 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' : row.reviewStatus === 'returned' ? 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'}`}>{row.reviewStatus === 'confirmed' ? '已确认' : row.reviewStatus === 'returned' ? '待修改' : '待确认'}</span>}
                 {isSubmission && <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />}
               </button>
             );
@@ -2038,9 +1872,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const renderDetail = () => {
     if (!activeRecord) return renderList();
     if (getQuestionnaireCollectionMode(activeRecord) === 'student_information') return renderStudentCollectionDetail(activeRecord);
+    const detailPreviewLabel = '预览采集内容';
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
-        <PageHeader title="问卷详情" onBack={() => setPageMode(activeRecord.status === 'archived' ? 'archived-list' : 'list')} />
+        <PageHeader title="采集详情" onBack={() => setPageMode(activeRecord.status === 'archived' ? 'archived-list' : 'list')} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 no-scrollbar">
           <section className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
             <div className="flex items-start gap-3">
@@ -2051,8 +1886,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               <div className="-mr-2 -mt-2 flex shrink-0 items-center">
                 <button
                   type="button"
-                  aria-label="预览问卷"
-                  title="预览问卷"
+                  aria-label={detailPreviewLabel}
+                  title={detailPreviewLabel}
                   onClick={() => openDetailPreview(activeRecord)}
                   className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-[transform,background-color] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
                 >
@@ -2089,119 +1924,24 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     );
   };
 
-  const confirmActiveSemesterGoal = () => {
-    if (!activeRecord || !activeSubmission || !goalTeacherMessage.trim()) {
-      showToast('请先填写老师寄语');
-      return;
-    }
-    const reviewed = reviewSemesterGoalSubmission(activeRecord.id, activeSubmission.id, 'confirm', {
-      reviewerName: teacherName,
-      teacherMessage: goalTeacherMessage,
-    });
-    if (!reviewed) {
-      showToast('当前目标状态已变化');
-      return;
-    }
-    const reviewedAnswers = {
-      ...reviewed.answers,
-      [GOAL_FIELD_IDS.teacherMessage]: goalTeacherMessage.trim(),
-      [GOAL_FIELD_IDS.teacherSignature]: teacherName,
-      [GOAL_FIELD_IDS.signatureDate]: reviewed.answers[GOAL_FIELD_IDS.signatureDate] || currentDate(),
-    };
-    persistGrowthCollectionAnswers(
-      activeRecord,
-      reviewed.studentNo,
-      reviewedAnswers,
-      reviewed.reviewedAt ?? nowText(),
-      { semesterGoalStatus: 'active', reviewerName: teacherName },
-    );
-    setActiveSubmission(reviewed);
-    setRecords(readQuestionnaires());
-    showToast('目标已确认并进入成长档案');
-  };
-
-  const returnActiveSemesterGoal = () => {
-    if (!activeRecord || !activeSubmission || !goalReturnReason.trim()) {
-      showToast('请填写退回原因');
-      return;
-    }
-    const reviewed = reviewSemesterGoalSubmission(activeRecord.id, activeSubmission.id, 'return', {
-      reviewerName: teacherName,
-      returnReason: goalReturnReason,
-    });
-    if (!reviewed) {
-      showToast('当前目标状态已变化');
-      return;
-    }
-    setActiveSubmission(reviewed);
-    setRecords(readQuestionnaires());
-    setShowGoalReturnSheet(false);
-    showToast('已退回家长修改');
-  };
-
   const renderResponseDetail = () => {
     if (!activeRecord || !activeSubmission) return renderDetail();
-    const isSemesterGoalReview = activeRecord.growthTemplate === 'semester_goal'
-      && getQuestionnaireRespondentRole(activeRecord) === 'guardian';
-    const reviewStatus = activeSubmission.reviewStatus ?? 'pending';
-    const reviewMeta = reviewStatus === 'confirmed'
-      ? { label: '老师已确认', className: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' }
-      : reviewStatus === 'returned'
-        ? { label: '已退回修改', className: 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]' }
-        : { label: '等待老师确认', className: 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' };
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
-        <PageHeader title="答卷详情" onBack={() => setPageMode('detail')} />
-        <main className={`min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain px-5 py-4 no-scrollbar ${isSemesterGoalReview && reviewStatus === 'pending' ? 'pb-32' : ''}`}>
-          <div className={`flex items-center gap-3 rounded-[var(--tm-radius-control)] px-4 py-3 ${isSemesterGoalReview ? reviewMeta.className : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]'}`}>
+        <PageHeader title={getSubmissionDetailTitle(activeRecord)} onBack={() => setPageMode('detail')} />
+        <main className="min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain px-5 py-4 no-scrollbar">
+          <div className="flex items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] px-4 py-3 text-[var(--tm-status-positive-strong)]">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">{activeSubmission.studentName}<span className="ml-2 text-[length:var(--tm-font-size-meta)] font-medium text-current opacity-75">{activeSubmission.guardianRelation}</span></div>
-              <div className="mt-0.5 truncate text-[length:var(--tm-font-size-badge)] font-semibold">{isSemesterGoalReview ? reviewMeta.label : '已提交'} · {activeSubmission.submittedAt}</div>
+              <div className="mt-0.5 truncate text-[length:var(--tm-font-size-badge)] font-semibold">已提交 · {activeSubmission.submittedAt}</div>
             </div>
           </div>
           {activeRecord.questions.map((question, index) => {
             const answer = activeSubmission.answers[question.id];
             return <section key={question.id} className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]"><div className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary-strong)]">第{index + 1}题 · {questionTypeMeta[question.type].label}</div><h3 className="mt-2 text-balance text-[length:var(--tm-font-size-body)] font-bold leading-5 text-[var(--tm-text-primary)]">{question.title}</h3><div className="mt-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-pretty text-[length:var(--tm-font-size-compact)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{formatQuestionnaireAnswer(answer, question)}</div></section>;
           })}
-          {isSemesterGoalReview && reviewStatus === 'pending' && (
-            <label className="block rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
-              <span className="mb-2 block text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">老师寄语</span>
-              <AutoResizeTextarea value={goalTeacherMessage} onChange={event => setGoalTeacherMessage(event.target.value)} minHeight={88} maxHeight={144} placeholder="写下对学生本学期目标的期待" className="w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3.5 py-3 text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]" />
-            </label>
-          )}
-          {isSemesterGoalReview && reviewStatus === 'confirmed' && activeSubmission.teacherMessage && (
-            <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 shadow-[var(--tm-shadow-card)]">
-              <div className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">老师寄语</div>
-              <p className="mt-2 whitespace-pre-wrap text-[length:var(--tm-font-size-compact)] font-medium leading-6 text-[var(--tm-text-secondary)]">{activeSubmission.teacherMessage}</p>
-            </section>
-          )}
-          {isSemesterGoalReview && reviewStatus === 'returned' && activeSubmission.returnReason && (
-            <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-brand-reward-soft)] p-4">
-              <div className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-brand-reward-strong)]">退回原因</div>
-              <p className="mt-2 whitespace-pre-wrap text-[length:var(--tm-font-size-compact)] font-medium leading-6 text-[var(--tm-text-secondary)]">{activeSubmission.returnReason}</p>
-            </section>
-          )}
         </main>
-        {isSemesterGoalReview && reviewStatus === 'pending' && (
-          <BottomAction>
-            <div className="grid grid-cols-[0.85fr_1.15fr] gap-3">
-              <SecondaryButton onClick={() => setShowGoalReturnSheet(true)}>退回修改</SecondaryButton>
-              <PrimaryButton onClick={confirmActiveSemesterGoal}><Check className="h-4.5 w-4.5" />确认目标</PrimaryButton>
-            </div>
-          </BottomAction>
-        )}
-        <BottomSheet open={showGoalReturnSheet} label="退回修改" onDismiss={() => setShowGoalReturnSheet(false)}>
-          <h2 className="text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">退回修改</h2>
-          <label className="mt-4 block">
-            <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">退回原因</span>
-            <AutoResizeTextarea value={goalReturnReason} onChange={event => setGoalReturnReason(event.target.value)} minHeight={88} maxHeight={124} placeholder="请说明需要修改的内容" className="w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3.5 py-3 text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]" />
-          </label>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <SecondaryButton onClick={() => setShowGoalReturnSheet(false)}>取消</SecondaryButton>
-            <PrimaryButton onClick={returnActiveSemesterGoal}>确认退回</PrimaryButton>
-          </div>
-        </BottomSheet>
       </div>
     );
   };
@@ -2251,11 +1991,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             <div className={`grid gap-2 ${classOptions.length > 1 ? 'grid-cols-[minmax(0,1fr)_120px]' : 'grid-cols-1'}`}>
               <label className="relative block">
                 <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
-                <input value={questionResponseSearch} onChange={event => { setQuestionResponseSearch(event.target.value); setVisibleQuestionResponseCount(20); }} placeholder="搜索回答或学生" aria-label="搜索回答或学生" className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] pl-10 pr-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]" />
+                <input value={questionResponseSearch} onChange={event => { setQuestionResponseSearch(event.target.value); setVisibleQuestionResponseCount(20); }} placeholder="搜索回答或学生" aria-label="搜索回答或学生" className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] pl-10 pr-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
               </label>
               {classOptions.length > 1 && (
                 <label className="relative block">
-                  <select value={questionResponseClass} onChange={event => { setQuestionResponseClass(event.target.value); setVisibleQuestionResponseCount(20); }} aria-label="按班级筛选回答" className="h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] pl-3 pr-8 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]">
+                  <select value={questionResponseClass} onChange={event => { setQuestionResponseClass(event.target.value); setVisibleQuestionResponseCount(20); }} aria-label="按班级筛选回答" className="h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] pl-3 pr-8 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]">
                     <option value="all">全部班级</option>
                     {classOptions.map(className => <option key={className} value={className}>{className}</option>)}
                   </select>
@@ -2331,7 +2071,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     if (pageMode === 'assigned-list') return renderAssignedList();
     if (pageMode === 'archived-list') return renderArchivedList();
     if (pageMode === 'create') return renderCreate();
-    if (pageMode === 'growth-setup') return renderGrowthSetup();
     if (pageMode === 'detail') return renderDetail();
     if (pageMode === 'preview') return renderPreview();
     if (pageMode === 'question-responses') return renderQuestionResponses();
