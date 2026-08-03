@@ -584,6 +584,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [showAssignmentSheet, setShowAssignmentSheet] = useState(false);
   const [showGrowthDateSheet, setShowGrowthDateSheet] = useState(false);
   const [showArchiveTemplateSheet, setShowArchiveTemplateSheet] = useState(false);
+  const [showArchiveFieldSheet, setShowArchiveFieldSheet] = useState(false);
   const [showRecordMenu, setShowRecordMenu] = useState(false);
   const [showDraftMenu, setShowDraftMenu] = useState(false);
   const [showDeleteDraftConfirm, setShowDeleteDraftConfirm] = useState(false);
@@ -833,6 +834,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const nextSnapshot = template ? createArchiveTemplateSnapshot(template) : null;
     setDraftArchiveTemplateId(template?.id ?? '');
     setDraftArchiveTemplateSnapshot(nextSnapshot);
+    setShowArchiveFieldSheet(false);
     if (!draftTitle.trim() || draftTitle === previousAutoTitle) {
       setDraftTitle(nextSnapshot ? `更新${nextSnapshot.name}` : '');
     }
@@ -1496,7 +1498,20 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   {draftArchiveTemplateSnapshot && (
                     <div className="space-y-2 border-b border-[var(--tm-border-subtle)] py-3 text-[length:var(--tm-font-size-meta)] leading-5">
                       {draftArchiveSystemLabels.length > 0 && <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-2"><span className="font-semibold text-[var(--tm-text-tertiary)]">自动带入</span><span className="font-medium text-[var(--tm-text-secondary)]">{draftArchiveSystemLabels.join('、')}</span></div>}
-                      {draftArchiveInputLabels.length > 0 && <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-2"><span className="font-semibold text-[var(--tm-text-tertiary)]">本次填写</span><span className="font-medium text-[var(--tm-text-secondary)]">{draftArchiveInputLabels.join('、')}</span></div>}
+                      {draftArchiveInputLabels.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowArchiveFieldSheet(true)}
+                          className="grid min-h-11 w-full grid-cols-[64px_minmax(0,1fr)_20px] items-center gap-2 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
+                          aria-label={`查看本次填写的${draftArchiveInputLabels.length}项内容`}
+                        >
+                          <span className="font-semibold text-[var(--tm-text-tertiary)]">本次填写</span>
+                          <span className="truncate font-medium text-[var(--tm-text-secondary)]">
+                            {draftArchiveInputLabels.slice(0, 3).join('、')}{draftArchiveInputLabels.length > 3 ? `等${draftArchiveInputLabels.length}项` : `，共${draftArchiveInputLabels.length}项`}
+                          </span>
+                          <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1806,6 +1821,20 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             })}
           </div>
           {availableArchiveTemplates.length === 0 && <div className="py-12 text-center text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-tertiary)]">暂无可用档案</div>}
+        </MobileBottomSheet>
+        <MobileBottomSheet
+          open={showArchiveFieldSheet}
+          title={`本次填写 · ${draftArchiveInputLabels.length}项`}
+          onClose={() => setShowArchiveFieldSheet(false)}
+        >
+          <ol className="overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
+            {draftArchiveInputLabels.map((label, index) => (
+              <li key={`${label}-${index}`} className="grid min-h-11 grid-cols-[28px_minmax(0,1fr)] items-center gap-2 border-b border-[var(--tm-border-subtle)] px-3 last:border-b-0">
+                <span className="text-center text-[length:var(--tm-font-size-badge)] font-semibold tabular-nums text-[var(--tm-text-tertiary)]">{index + 1}</span>
+                <span className="text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{label}</span>
+              </li>
+            ))}
+          </ol>
         </MobileBottomSheet>
       </div>
     );

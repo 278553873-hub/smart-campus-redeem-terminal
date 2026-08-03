@@ -63,7 +63,7 @@ assert.match(app, /from '\.\/styles\/teacherMobileTokens'/);
 assert.doesNotMatch(app, /\b(?:blue|indigo|violet|purple)-\d+/);
 assert.doesNotMatch(parent, /teacherMobileTokens/);
 assert.match(guidelines, /mobile-app\/styles\/teacherMobileTokens\.ts/);
-assert.match(guidelines, /清晰细边界/);
+assert.match(guidelines, /无线条表面分层/);
 assert.match(guidelines, /\[box-shadow:var\(--tm-shadow-card\)\]/);
 assert.match(canonical, /textTertiary: teacherBrandPalette\.neutral\[550\]/);
 assert.match(canonical, /'--tm-text-tertiary': teacherBrandSemantic\.textTertiary/);
@@ -79,8 +79,10 @@ assert.match(canonical, /negativeSoft: teacherBrandPalette\.red\[50\]/);
 assert.match(canonical, /'--tm-record-negative-border': teacherBrandPalette\.red\[100\]/);
 assert.doesNotMatch(canonical, /teacherBrandPalette\.rose|\brose:\s*\{/);
 assert.match(guidelines, /不得维护或引入独立暗红色板/);
-assert.match(canonical, /'--tm-shadow-card': '0 0 0 1px rgba\([^']+\)'/);
-assert.match(canonical, /'--tm-shadow-card-raised': '0 0 0 1px rgba\([^']+\), 0 3px 8px -3px rgba\([^']+\)'/);
+assert.match(canonical, /page: '#F8F6F5'/);
+assert.match(canonical, /surfaceGlass: 'rgba\(255, 255, 255, 0\.96\)'/);
+assert.match(canonical, /'--tm-shadow-card': '0 12px 28px -20px rgba\([^']+\)'/);
+assert.match(canonical, /'--tm-shadow-card-raised': '0 14px 32px -20px rgba\([^']+\)'/);
 
 const invalidFullShadowConsumer = /shadow-\[var\(--tm-shadow-(?:card|card-raised|control|icon|avatar|floating|navigation|sheet)\)\]/;
 for (const sourcePath of collectTeacherMobileSources('mobile-app')) {

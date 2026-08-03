@@ -488,7 +488,8 @@ requireText(assignedSource, 'persistGrowthCollectionAnswers(', '家长提交成�
 requireText(growthPersistenceSource, 'target.studentId', '家长成长信息必须通过问卷目标匹配到真实学生。');
 requireText(createStepOneSource, '>更新档案</h2>', '新建采集第一步必须允许选择要更新的档案。');
 requireText(createSource, 'title="选择要更新的档案"', '档案选择必须复用公共底部抽屉。');
-requireText(createStepOneSource, 'draftArchiveInputLabels.join', '选中档案后必须展示本次会填写的具体字段。');
+requireText(createStepOneSource, "draftArchiveInputLabels.slice(0, 3).join('、')", '选中档案后必须展示本次会填写的具体字段摘要。');
+requireText(createSource, 'title={`本次填写 · ${draftArchiveInputLabels.length}项`}', '完整档案字段必须通过公共底部抽屉渐进披露。');
 requireText(storeSource, 'archiveFieldSemanticKey?: string', '采集字段必须保存对应的档案字段标识。');
 requireText(storeSource, 'archiveTemplateSnapshot?: ArchiveTemplateSnapshot', '采集任务发布时必须冻结档案字段定义。');
 requireText(viewSource, 'persistArchiveCollectionAnswers(activeRecord', '老师完成采集后必须更新学生当前档案。');

@@ -51,6 +51,7 @@ requireText(appSource, '<TeacherMobileScreenBackground variant="plain" />', '学
 requireText(appSource, '<TeacherMobileScreenBackground variant="student-detail" />', '学生详情页应使用独立的沉浸顶部公共背景。');
 requireText(screenBackgroundSource, "variant === 'student-detail'", '公共屏幕背景组件应实现学生详情背景变体。');
 requireText(screenBackgroundSource, 'h-[var(--tm-student-detail-header-height)]', '学生详情顶部渐变高度应由组件 Token 管理。');
+requireText(screenBackgroundSource, 'linear-gradient(135deg,var(--tm-bg-surface-soft)_0%,var(--tm-brand-primary-soft)_100%)', '学生详情顶部应从浅暖灰过渡到品牌浅红，避免白色学生卡融入背景。');
 requireText(tokenSource, "'--tm-student-detail-header-height'", '教师手机端 Token 应定义学生详情顶部渐变高度。');
 requireText(appSource, "hasPlainBackground ? 'z-[2]' : 'z-auto'", '学生详情内容层必须高于纯白标题背景，避免返回、档案和学籍入口被遮挡。');
 requireText(appSource, "'student_collection_detail'", 'App 路由应包含学生采集记录详情页。');
