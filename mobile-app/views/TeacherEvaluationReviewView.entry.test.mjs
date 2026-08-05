@@ -6,6 +6,9 @@ const dataSource = fs.readFileSync(new URL('../data/teacherEvaluationReview.ts',
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_我的评价复盘_内容生成提示词.md', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
+const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
+const contractSource = fs.readFileSync(new URL('../domain/assistantReport.ts', import.meta.url), 'utf8');
+const footerSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportFooter.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -27,12 +30,12 @@ requireText(dataSource, 'indicatorAndExpressionInsights', 'AI报告应分析指�
 requireText(viewSource, '正在整理上月评价记录', 'AI等待阶段应明确分析上月记录。');
 requireText(viewSource, '正在分析关注对象', 'AI等待阶段应体现关注对象分析。');
 requireText(viewSource, '正在核对指标与表达', 'AI等待阶段应体现指标与表达分析。');
-requireText(viewSource, "title: '本月评价画像'", '报告应先给出解释性的评价画像。');
-requireText(viewSource, "title: '关注对象'", '报告应展示关注对象洞察。');
-requireText(viewSource, "title: '评价视角'", '报告应展示评价视角洞察。');
-requireText(viewSource, "title: '指标与表达'", '报告应展示指标与表达洞察。');
-requireText(viewSource, "title: '下月记录建议'", '报告应输出下月可执行记录建议。');
-requireText(viewSource, '以上内容由AI基于你的评价记录生成，仅供参考', '月度复盘应明确由AI生成并保留参考声明。');
+for (const required of ["key: 'actions'", "key: 'review_summary'", "key: 'attention_insights'", "key: 'perspective_insights'", "key: 'indicator_insights'"]) {
+  requireText(adapterSource, required, `评价复盘适配器缺少区块：${required}`);
+}
+requireText(contractSource, "cardOrder: ['actions', 'review_summary', 'attention_insights', 'perspective_insights', 'indicator_insights']", '评价复盘应优先展示下月记录建议。');
+requireText(viewSource, '<AssistantReportCards', '评价复盘应使用共享报告卡片。');
+requireText(footerSource, 'document.notice', '月度复盘应明确由AI生成并保留参考声明。');
 requireText(viewSource, '<AssistantHistoryLink', '当前复盘应复用带文字的历史入口组件。');
 requireText(viewSource, 'label="往期复盘"', '当前复盘历史入口应显示明确文案。');
 requireText(viewSource, 'title={showHeaderTitle ? title : className}', '当前评价复盘标题栏应展示班级名。');

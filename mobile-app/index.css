@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.student-roster-grid {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+
 .teacher-record-soft-page {
   background:
     radial-gradient(circle at 12% 0%, var(--tm-glow-primary), transparent 32%),
@@ -417,8 +421,21 @@
   animation: waa-fade-up 0.5s ease-out both;
 }
 
+@keyframes tm-toast-fade {
+  0%, 100% { opacity: 0; }
+  12%, 78% { opacity: 1; }
+}
+
+.tm-mobile-toast {
+  animation: tm-toast-fade 1.8s ease-in-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .waa-card-enter {
+    animation: none;
+  }
+
+  .tm-mobile-toast {
     animation: none;
   }
 }

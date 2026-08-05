@@ -325,18 +325,26 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     const currentTermEvaluationRecords = useMemo(() => evaluationRecords.filter(record => (
         record.evaluation_date >= currentTermOption.startDate && record.evaluation_date <= currentTermOption.endDate
     )).sort((left, right) => right.evaluation_date.localeCompare(left.evaluation_date)), [currentTermOption.endDate, currentTermOption.startDate, evaluationRecords]);
-    const latestMeasurement = growthProfile.bodyMeasurements[0];
     const latestHeightMeasurement = growthProfile.bodyMeasurements.find(record => record.heightCm !== undefined);
     const latestWeightMeasurement = growthProfile.bodyMeasurements.find(record => record.weightKg !== undefined);
     const latestBmiMeasurement = growthProfile.bodyMeasurements.find(record => record.bmi !== undefined);
     const latestHealthRecord = growthProfile.healthExamRecords[0];
-    const latestHeightIndex = latestHeightMeasurement ? growthProfile.bodyMeasurements.indexOf(latestHeightMeasurement) : -1;
-    const previousHeightMeasurement = latestHeightIndex >= 0
-        ? growthProfile.bodyMeasurements.slice(latestHeightIndex + 1).find(record => record.heightCm !== undefined)
-        : undefined;
-    const heightDelta = latestHeightMeasurement?.heightCm !== undefined && previousHeightMeasurement?.heightCm !== undefined
-        ? Number((latestHeightMeasurement.heightCm - previousHeightMeasurement.heightCm).toFixed(1))
-        : null;
+    const bodyGrowthMetrics = [
+        latestHeightMeasurement?.heightCm !== undefined
+            ? { key: 'height', label: '身高', value: latestHeightMeasurement.heightCm, unit: '厘米', recordedAt: latestHeightMeasurement.measuredAt }
+            : null,
+        latestWeightMeasurement?.weightKg !== undefined
+            ? { key: 'weight', label: '体重', value: latestWeightMeasurement.weightKg, unit: '千克', recordedAt: latestWeightMeasurement.measuredAt }
+            : null,
+        latestBmiMeasurement?.bmi !== undefined
+            ? { key: 'bmi', label: '身体质量指数', value: latestBmiMeasurement.bmi, unit: '', recordedAt: latestBmiMeasurement.measuredAt }
+            : null,
+    ].filter((item): item is { key: string; label: string; value: number; unit: string; recordedAt: string } => item !== null);
+    const latestHealthSummary = latestHealthRecord ? [
+        latestHealthRecord.nakedVisionLeft ? `左${latestHealthRecord.nakedVisionLeft}` : '',
+        latestHealthRecord.nakedVisionRight ? `右${latestHealthRecord.nakedVisionRight}` : '',
+        latestHealthRecord.glassesType || '',
+    ].filter(Boolean).join(' · ') : '';
     const studentStatusLabel = student.status === 'left' ? '离校' : '在校';
     const formatCompactClassName = (className: string) => {
         const match = className.match(/^(\d{4}级)(.+)$/);
@@ -403,25 +411,35 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
             </div>
 
-            <button type="button" onClick={onViewBodyMeasurements} className="w-full overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985]">
-                <div className="flex min-h-[58px] items-center justify-between px-4">
-                    <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]"><Ruler className="h-4.5 w-4.5 text-[var(--tm-status-positive)]" />成长数据</h3>
-                    <span className="flex items-center gap-1 text-xs font-medium text-[var(--tm-text-tertiary)]">{latestMeasurement?.measuredAt ?? '待补充'}<ChevronRight className="h-4 w-4" /></span>
-                </div>
-                {latestMeasurement ? (
-                    <div className="grid grid-cols-3 border-t border-[var(--tm-border-subtle)] px-3 py-4 text-center">
-                        <div><div className="text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{latestHeightMeasurement?.heightCm ?? '--'}</div><div className="mt-1 text-xs text-[var(--tm-text-secondary)]">身高（厘米）</div>{heightDelta !== null && <div className="mt-1 text-[11px] font-semibold text-[var(--tm-status-positive-strong)]">较上次 {heightDelta >= 0 ? '+' : ''}{heightDelta}</div>}</div>
-                        <div><div className="text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{latestWeightMeasurement?.weightKg ?? '--'}</div><div className="mt-1 text-xs text-[var(--tm-text-secondary)]">体重（千克）</div></div>
-                        <div><div className="text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{latestBmiMeasurement?.bmi ?? '--'}</div><div className="mt-1 text-xs text-[var(--tm-text-secondary)]">身体质量指数</div></div>
+            {bodyGrowthMetrics.length > 0 && (
+                <button type="button" onClick={onViewBodyMeasurements} className="w-full overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985]">
+                    <div className="flex min-h-[58px] items-center justify-between px-4">
+                        <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]"><Ruler className="h-4.5 w-4.5 text-[var(--tm-status-positive)]" />成长数据</h3>
+                        <ChevronRight className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
                     </div>
-                ) : <div className="border-t border-[var(--tm-border-subtle)] px-4 py-4 text-sm text-[var(--tm-text-secondary)]">暂无测量记录</div>}
-            </button>
+                    <div className={`grid border-t border-[var(--tm-border-subtle)] px-3 py-4 text-center ${bodyGrowthMetrics.length === 1 ? 'grid-cols-1' : bodyGrowthMetrics.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                        {bodyGrowthMetrics.map(metric => (
+                            <div key={metric.key} className="min-w-0 px-1">
+                                <div className="truncate text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{metric.value}</div>
+                                <div className="mt-1 truncate text-xs text-[var(--tm-text-secondary)]">{metric.label}{metric.unit ? `（${metric.unit}）` : ''}</div>
+                                <div className="mt-1 text-[10px] font-medium text-[var(--tm-text-tertiary)]">{metric.recordedAt}</div>
+                            </div>
+                        ))}
+                    </div>
+                </button>
+            )}
 
-            <button type="button" onClick={onViewHealthRecords} className="flex min-h-[88px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985]">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]"><HeartPulse className="h-5 w-5" /></span>
-                <span className="min-w-0 flex-1"><span className="block text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">健康检查</span><span className="mt-1 block truncate text-xs font-medium text-[var(--tm-text-secondary)]">{latestHealthRecord ? `裸眼视力 左${latestHealthRecord.nakedVisionLeft || '--'} · 右${latestHealthRecord.nakedVisionRight || '--'} · ${latestHealthRecord.glassesType}` : '暂无体检记录'}</span>{latestHealthRecord?.conclusionTags.length ? <span className="mt-1 block truncate text-[11px] font-semibold text-[var(--tm-brand-reward-strong)]">{latestHealthRecord.conclusionTags.join('、')}</span> : null}</span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
-            </button>
+            {latestHealthRecord && (
+                <button type="button" onClick={onViewHealthRecords} className="flex min-h-[88px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]"><HeartPulse className="h-5 w-5" /></span>
+                    <span className="min-w-0 flex-1">
+                        <span className="flex items-center justify-between gap-2"><span className="text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">健康检查</span><span className="shrink-0 text-[10px] font-medium text-[var(--tm-text-tertiary)]">{latestHealthRecord.examDate}</span></span>
+                        <span className="mt-1 block truncate text-xs font-medium text-[var(--tm-text-secondary)]">{latestHealthSummary || latestHealthRecord.conclusion || '健康检查记录'}</span>
+                        {latestHealthRecord.conclusionTags.length ? <span className="mt-1 block truncate text-[11px] font-semibold text-[var(--tm-brand-reward-strong)]">{latestHealthRecord.conclusionTags.join('、')}</span> : null}
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
+                </button>
+            )}
         </div>
     );
 

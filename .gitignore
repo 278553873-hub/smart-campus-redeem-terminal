@@ -35,6 +35,7 @@ ssh_keys/
 output/
 tmp/
 assets/generated/
+deliverables/
 
 # Local QA artifacts
 .codex-artifacts/

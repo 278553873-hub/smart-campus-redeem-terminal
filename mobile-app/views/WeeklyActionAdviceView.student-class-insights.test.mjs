@@ -4,6 +4,8 @@ const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_本周�
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const dataSource = fs.readFileSync(new URL('../data/weeklyActionAdvice.ts', import.meta.url), 'utf8');
 const viewSource = fs.readFileSync(new URL('./WeeklyActionAdviceView.tsx', import.meta.url), 'utf8');
+const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
+const cardsSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportCards.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -51,8 +53,9 @@ for (const insightType of ['strength', 'context_contrast', 'context_pattern']) {
   requireText(dataSource, `insightType: '${insightType}'`, `演示数据缺少洞察类型：${insightType}`);
 }
 
-requireText(viewSource, 'formatStudentInsight', '页面应格式化结构化学生洞察。');
-requireText(viewSource, 'formatClassInsight', '页面应格式化结构化班级洞察。');
-requireText(viewSource, '核实重点：', '页面应把核实重点与具体执行动作区分开。');
+requireText(adapterSource, 'report.content.studentInsights.map', '适配层应格式化结构化学生洞察。');
+requireText(adapterSource, 'report.content.classInsights.map', '适配层应格式化结构化班级洞察。');
+requireText(adapterSource, 'verification:', '适配层应把核实重点与具体执行动作区分开。');
+requireText(cardsSource, "{ label: '核实重点', value: item.verification }", '共享证据抽屉应展示核实重点。');
 
 console.log('WeeklyActionAdvice student and class insight assertions passed');

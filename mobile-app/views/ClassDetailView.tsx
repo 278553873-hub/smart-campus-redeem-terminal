@@ -3,6 +3,13 @@ import { Student, ClassInfo, GroupPlan } from '../types';
 import { GET_MOCK_GROUP_PLANS_FOR_CLASS } from '../constants';
 import { BackIcon, MaleIcon, FemaleIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, PlusIcon, EditIcon, CloseIcon } from '../components/Icons';
 import { ASSETS } from '../assets/images';
+import StudentPerformanceAvatar from '../components/student-performance/StudentPerformanceAvatar';
+import StudentPerformanceMeta from '../components/student-performance/StudentPerformanceMeta';
+import {
+    createDemoStudentPerformanceSummary,
+    getStudentPerformanceLevel,
+    type StudentPerformanceSummary,
+} from '../domain/studentPerformance';
 
 interface ClassDetailViewProps {
     classInfo: ClassInfo;
@@ -16,6 +23,7 @@ interface ClassDetailViewProps {
     onStartRecord?: (studentIds: string[]) => void;
     onViewRecords?: () => void;
     onBack?: () => void;
+    performanceByStudentId?: Record<string, StudentPerformanceSummary>;
 }
 
 type StudentGenderFilter = 'all' | 'male' | 'female';
@@ -40,6 +48,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     selectedIds,
     onSelectionChange,
     onBack,
+    performanceByStudentId = {},
 }) => {
     const [activeView, setActiveView] = useState<'student' | 'group'>('student');
     const [searchQuery, setSearchQuery] = useState('');
@@ -249,54 +258,52 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     );
 
     const renderStudentGrid = () => (
-        <div className="flex-1 overflow-y-auto p-4 pb-40">
-            <div className="grid grid-cols-3 gap-3">
+        <div className="flex-1 overflow-y-auto px-3 pb-40 pt-3">
+            <div className="student-roster-grid grid gap-x-2.5 gap-y-3">
                 {visibleStudents.map((student, index) => {
                     const isSelected = selectedIds.has(student.id);
                     const [bgClass, textClass, borderClass] = getAvatarStyle(student, index);
                     const nameChar = student.name.slice(-1);
+                    const studentNo = student.studentNo || student.id;
+                    const performance = performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student);
+                    const level = getStudentPerformanceLevel(performance.netScore);
 
                     return (
-                        <div
+                        <button
+                            type="button"
                             key={student.id}
                             onClick={() => handleStudentClick(student)}
-                            className={`relative rounded-[16px] p-3 flex flex-col items-center transition-all duration-200 cursor-pointer select-none group ${isSelectionMode && isSelected ? 'bg-[var(--tm-brand-primary-soft)] ring-1.5 ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'bg-white/95 border border-[var(--tm-border-subtle)]'}`}
+                            aria-pressed={isSelectionMode ? isSelected : undefined}
+                            aria-label={`${student.name}，学号${studentNo}，净得分${performance.netScore}分，被表扬${performance.praiseCount}次，被批评${performance.criticismCount}次`}
+                            className={`relative flex h-[136px] min-w-0 select-none flex-col items-center overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] pt-1.5 text-center [box-shadow:var(--tm-shadow-card)] transition-[transform,box-shadow,background-color] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transition-none ${isSelectionMode && isSelected ? 'bg-[var(--tm-brand-primary-soft)] ring-2 ring-inset ring-[var(--tm-brand-primary)]' : ''}`}
                         >
                             {isSelectionMode && (
-                                <div className="absolute top-2 right-2 z-10 animate-in fade-in zoom-in duration-200">
+                                <div className="absolute right-1 top-1 z-10 animate-in fade-in zoom-in duration-200">
                                     {isSelected
-                                        ? <CheckCircleIcon className="w-5 h-5 text-[var(--tm-brand-primary)] fill-white" />
-                                        : <CircleIcon className="w-5 h-5 text-[var(--tm-border-subtle)] fill-white" />
+                                        ? <CheckCircleIcon className="h-4 w-4 fill-white text-[var(--tm-brand-primary)]" />
+                                        : <CircleIcon className="h-4 w-4 fill-white text-[var(--tm-border-subtle)]" />
                                     }
                                 </div>
                             )}
 
-                            <div className={`w-12 h-12 rounded-full mb-2.5 flex items-center justify-center text-lg font-semibold shadow-sm relative shrink-0 transition-transform ${student.gender === 'male' && !student.avatar ? `${bgClass} ${textClass} border ${borderClass}` : 'bg-[var(--tm-bg-surface-soft)] border border-[var(--tm-border-subtle)]'}`}>
-                                {student.avatar || student.gender === 'female' ? (
-                                    <img
-                                        src={student.avatar || ASSETS.AVATAR.STUDENT_GIRL_DEFAULT}
-                                        alt={`${student.name}头像`}
-                                        className="w-full h-full rounded-full object-cover"
-                                    />
-                                ) : nameChar}
+                            <span className={`block h-[11px] w-full truncate px-5 font-mono text-[9px] font-normal leading-[11px] tracking-normal ${isSelected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-tertiary)]'}`} aria-label={`学号${studentNo}`}>
+                                {studentNo}
+                            </span>
 
-                                <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center border border-white shadow-sm ${student.gender === 'male' ? 'bg-[var(--tm-gender-male)]' : 'bg-[var(--tm-gender-female)]'}`}>
-                                    {student.gender === 'male'
-                                        ? <MaleIcon className="w-2.5 h-2.5 text-white" />
-                                        : <FemaleIcon className="w-2.5 h-2.5 text-white" />
-                                    }
-                                </div>
-                            </div>
+                            <StudentPerformanceAvatar
+                                student={{ ...student, avatar: student.avatar || (student.gender === 'female' ? ASSETS.AVATAR.STUDENT_GIRL_DEFAULT : undefined) }}
+                                fallbackText={nameChar}
+                                fallbackClassName={`${bgClass} ${textClass} border ${borderClass}`}
+                                level={level}
+                            />
 
-                            <div className="w-full text-center flex flex-col items-center">
-                                <div className={`text-[14px] font-bold leading-tight mb-1.5 w-full break-words ${isSelected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-primary)]'}`}>
+                            <span className="mt-0.5 flex min-h-0 w-full min-w-0 flex-1 flex-col items-center">
+                                <span className={`w-full truncate text-[13px] font-bold leading-4 ${isSelected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-primary)]'}`}>
                                     {student.name}
-                                </div>
-                                <div className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md tracking-tight w-fit max-w-full ${isSelected ? 'bg-white/80 text-[var(--tm-brand-primary-strong)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-tertiary)]'}`}>
-                                    {student.studentNo || student.id}
-                                </div>
-                            </div>
-                        </div>
+                                </span>
+                                <StudentPerformanceMeta level={level} summary={performance} />
+                            </span>
+                        </button>
                     );
                 })}
             </div>
@@ -305,9 +312,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 <div className="mt-16 rounded-3xl border border-dashed border-[var(--tm-border-subtle)] bg-white/80 p-8 text-center text-sm font-medium text-[var(--tm-text-tertiary)]">没有匹配的学生</div>
             )}
 
-            <div className="h-10 text-center mt-8">
-                <span className="text-xs text-[var(--tm-text-disabled)] tracking-wide opacity-60">- {visibleStudents.length} Students -</span>
-            </div>
+            <div className="h-10" aria-hidden="true" />
         </div>
     );
 

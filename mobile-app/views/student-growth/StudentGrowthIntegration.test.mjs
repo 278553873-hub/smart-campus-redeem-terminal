@@ -31,6 +31,12 @@ requireText(dashboardSource, 'onViewHealthRecords', '健康检查摘要应进入
 requireText(dashboardSource, 'latestHeightMeasurement', '成长概览必须独立读取最近一次身高。');
 requireText(dashboardSource, 'latestWeightMeasurement', '成长概览必须独立读取最近一次体重。');
 requireText(dashboardSource, 'latestBmiMeasurement', '身体质量指数必须读取最近一次完整测量记录。');
+requireText(dashboardSource, 'bodyGrowthMetrics.length > 0 &&', '学生没有成长数据时不应渲染空模块。');
+requireText(dashboardSource, '{latestHealthRecord && (', '学生没有体检数据时不应渲染空模块。');
+requireText(dashboardSource, 'metric.recordedAt', '不同成长指标必须分别展示自己的记录日期。');
+if (dashboardSource.includes("latestMeasurement?.measuredAt ?? '待补充'") || dashboardSource.includes('暂无测量记录') || dashboardSource.includes('暂无体检记录')) {
+  throw new Error('学生详情不应把非必填成长数据表达为待补充或空卡片。');
+}
 
 requireText(bodySource, "type PageMode = 'list' | 'detail' | 'form'", '身体成长页面应支持列表、详情和编辑。');
 requireText(bodySource, 'saveStudentGrowthDataRecord', '成长数据页面应把新增和修正写回统一成长记录。');

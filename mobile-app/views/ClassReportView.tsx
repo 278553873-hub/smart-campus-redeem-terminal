@@ -13,6 +13,9 @@ import {
 } from 'lucide-react';
 import rankingCrownIcon from '../assets/resources/ranking-crown-icon.png';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import ClassReportIndicatorDrilldown, {
+    type ClassReportIndicatorDrilldownMode,
+} from '../components/report/ClassReportIndicatorDrilldown';
 import RecordDistributionComparison, { RecordDistributionDetails } from '../components/report/RecordDistributionComparison';
 import {
     TeacherReportBarChart,
@@ -47,6 +50,8 @@ import {
     type ReportSourceKey,
     type ReportTimeRange,
 } from '../domain/classReportSource';
+import { classReportIndicatorDemoPaths } from '../data/classReportIndicatorDemo';
+import { buildClassReportIndicatorTree } from '../domain/classReportIndicatorTree';
 import { ClassInfo, Student } from '../types';
 
 interface ClassReportViewProps {
@@ -57,20 +62,17 @@ interface ClassReportViewProps {
 }
 
 type TimeRange = ReportTimeRange;
-type EducationKey = 'all' | 'virtue' | 'wisdom' | 'fitness' | 'aesthetic' | 'labor';
+type EducationKey = 'all' | string;
 type RankingMode = 'net' | 'progress';
 type FocusTone = 'positive' | 'negative';
 
-const educationDimensions: {
-    key: Exclude<EducationKey, 'all'>;
-    label: string;
-    color: TeacherReportChartColor;
-}[] = [
-    { key: 'virtue', label: '德育', color: 'virtue' },
-    { key: 'wisdom', label: '智育', color: 'wisdom' },
-    { key: 'fitness', label: '体育', color: 'fitness' },
-    { key: 'aesthetic', label: '美育', color: 'aesthetic' },
-    { key: 'labor', label: '劳育', color: 'labor' },
+const indicatorChartColors: TeacherReportChartColor[] = [
+    'indicator1',
+    'indicator2',
+    'indicator3',
+    'indicator4',
+    'indicator5',
+    'indicator6',
 ];
 
 const timeRangeTabs: { key: TimeRange; label: string }[] = [
@@ -194,25 +196,26 @@ interface FocusStudentListProps {
 const FocusStudentList = ({ rows, tone, onSelectStudent }: FocusStudentListProps) => (
     <ol>
         {rows.map((row, index) => (
-            <li key={row.student.id}>
+            <li
+                key={row.student.id}
+                className="grid min-h-[var(--tm-size-touch)] grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-1 px-1"
+            >
+                <span className="text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
+                    {index + 1}
+                </span>
                 <button
                     type="button"
                     onClick={() => onSelectStudent(row.student)}
-                    aria-label={`${index + 1}，${row.student.name}，${tone === 'positive' ? '加' : '扣'}${row.score}分`}
-                    className="grid min-h-[var(--tm-size-touch)] w-full grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-1 rounded-[8px] px-1 text-left transition-colors active:bg-[var(--tm-bg-surface)]"
+                    aria-label={`查看${row.student.name}学生详情`}
+                    className="flex min-h-[var(--tm-size-touch)] min-w-0 items-center rounded-[6px] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-input-focus-ring)]"
                 >
-                    <span className="text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
-                        {index + 1}
-                    </span>
-                    <span className="truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">
-                        {row.student.name}
-                    </span>
-                    <span className={`text-[length:var(--tm-font-size-body)] font-semibold tabular-nums ${
-                        tone === 'positive' ? 'text-[var(--tm-chart-positive-text)]' : 'text-[var(--tm-chart-negative-text)]'
-                    }`}>
-                        {tone === 'positive' ? '+' : '-'}{row.score}
-                    </span>
+                    <span className="truncate">{row.student.name}</span>
                 </button>
+                <span className={`text-[length:var(--tm-font-size-body)] font-semibold tabular-nums ${
+                    tone === 'positive' ? 'text-[var(--tm-chart-positive-text)]' : 'text-[var(--tm-chart-negative-text)]'
+                }`}>
+                    {tone === 'positive' ? '+' : '-'}{row.score}
+                </span>
             </li>
         ))}
     </ol>
@@ -278,14 +281,17 @@ const StudentCoverageList = ({
                 const teacherMissing = row.teacherCount === 0;
                 return (
                     <li key={row.student.id} className="border-b border-[var(--tm-border-subtle)] last:border-0">
-                        <button
-                            type="button"
-                            onClick={() => onSelectStudent(row.student)}
-                            aria-label={`查看${row.student.name}，评价${row.evaluationCount}次，${row.teacherCount}位老师评价`}
-                            className="grid min-h-[var(--tm-report-coverage-row-height)] w-full grid-cols-[minmax(0,1fr)_var(--tm-report-coverage-evaluation-column)_var(--tm-report-coverage-teacher-column)] items-center rounded-[6px] text-left transition-colors active:bg-[var(--tm-bg-surface-soft)]"
-                        >
-                            <span className="truncate pl-[var(--tm-report-coverage-name-inset)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{row.student.name}</span>
+                        <div className="grid min-h-[var(--tm-report-coverage-row-height)] grid-cols-[minmax(0,1fr)_var(--tm-report-coverage-evaluation-column)_var(--tm-report-coverage-teacher-column)] items-center">
+                            <button
+                                type="button"
+                                onClick={() => onSelectStudent(row.student)}
+                                aria-label={`查看${row.student.name}学生详情`}
+                                className="flex min-h-[var(--tm-report-coverage-row-height)] min-w-0 items-center rounded-[6px] pl-[var(--tm-report-coverage-name-inset)] text-left text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-input-focus-ring)]"
+                            >
+                                <span className="truncate">{row.student.name}</span>
+                            </button>
                             <span
+                                aria-label={`评价${row.evaluationCount}次`}
                                 className={`flex h-[var(--tm-report-coverage-value-height)] items-center justify-center text-[length:var(--tm-font-size-compact)] tabular-nums ${
                                     evaluationMissing
                                         ? 'font-semibold text-[var(--tm-chart-negative-text)]'
@@ -295,6 +301,7 @@ const StudentCoverageList = ({
                                 {row.evaluationCount}
                             </span>
                             <span
+                                aria-label={`${row.teacherCount}位老师评价`}
                                 className={`flex h-[var(--tm-report-coverage-value-height)] items-center justify-center text-[length:var(--tm-font-size-compact)] tabular-nums ${
                                     teacherMissing
                                         ? 'font-semibold text-[var(--tm-chart-negative-text)]'
@@ -303,7 +310,7 @@ const StudentCoverageList = ({
                             >
                                 {row.teacherCount}
                             </span>
-                        </button>
+                        </div>
                     </li>
                 );
             })}
@@ -330,6 +337,14 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     const [coverageSortDirection, setCoverageSortDirection] = useState<StudentCoverageSortDirection>('asc');
     const [showAllCoverage, setShowAllCoverage] = useState(false);
     const [showRecordDistributionDetails, setShowRecordDistributionDetails] = useState(false);
+    const [indicatorDrilldown, setIndicatorDrilldown] = useState<{
+        mode: ClassReportIndicatorDrilldownMode;
+        initialPath: string[];
+    } | null>(null);
+    const [lastIndicatorRootByMode, setLastIndicatorRootByMode] = useState<Record<ClassReportIndicatorDrilldownMode, string | null>>({
+        score: null,
+        event: null,
+    });
     const [isFilterPinned, setIsFilterPinned] = useState(false);
     const [resolvedReportPeriod, setResolvedReportPeriod] = useState<ReportPeriodKey>('week');
     const sourceScrollerRef = useRef<HTMLDivElement>(null);
@@ -377,14 +392,16 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         const gradeAverageNegativeRecords = gradeAverageRecords - gradeAveragePositiveRecords;
         const previousCovered = Math.max(0, Math.min(totalStudents, coveredStudents - Math.max(0, Math.round(totalStudents * 0.04))));
 
-        const eventWeights = [0.22, 0.2, 0.18, 0.21, 0.19];
-        const educationEvents = educationDimensions.map((dimension, index) => ({
-            ...dimension,
-            value: Math.max(0, Math.round(totalRecords * eventWeights[index])),
+        const indicatorTree = buildClassReportIndicatorTree(classReportIndicatorDemoPaths, totalRecords);
+        const educationEvents = indicatorTree.map((node, index) => ({
+            key: node.id,
+            label: node.label,
+            color: indicatorChartColors[index % indicatorChartColors.length],
+            value: node.metrics.eventCount,
         }));
-        const addScores = [116, 175, 394, 332, 288].map(value => Math.max(0, Math.round(value * dataMultiplier)));
-        const deductScores = [13, 21, 46, 80, 32].map(value => Math.max(0, Math.round(value * dataMultiplier)));
-        const netScores = addScores.map((value, index) => value - deductScores[index]);
+        const addScores = indicatorTree.map(node => node.metrics.addScore);
+        const deductScores = indicatorTree.map(node => node.metrics.deductScore);
+        const netScores = indicatorTree.map(node => node.metrics.netScore);
 
         return {
             totalRecords,
@@ -398,6 +415,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             previousRecords,
             previousCovered,
             dataMultiplier,
+            indicatorTree,
             educationEvents,
             addScores,
             deductScores,
@@ -435,7 +453,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     }), [reportData]);
 
     const educationScoreAnalysis = useMemo(() => getEducationScoreAnalysis(
-        educationDimensions.map((item, index) => ({
+        reportData.indicatorTree.map((item, index) => ({
             label: item.label,
             addScore: reportData.addScores[index],
             deductScore: reportData.deductScores[index],
@@ -472,7 +490,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     }, [rankingMode, reportData.dataMultiplier, reportData.previousRecords, reportData.totalRecords, students]);
 
     const focusRows = useMemo(() => {
-        const dimensionOffset = Math.max(0, educationDimensions.findIndex(item => item.key === activeEducation));
+        const dimensionOffset = Math.max(0, reportData.indicatorTree.findIndex(item => item.id === activeEducation));
         const orderedStudents = [...students].sort((a, b) => a.id.localeCompare(b.id));
         const rotatedStudents = orderedStudents.map((_, index) => orderedStudents[(index + dimensionOffset * 3) % orderedStudents.length]);
 
@@ -486,7 +504,21 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                 score: Math.max(1, Math.round((14 - index) * Math.max(0.4, reportData.dataMultiplier))),
             })),
         };
-    }, [activeEducation, reportData.dataMultiplier, students]);
+    }, [activeEducation, reportData.dataMultiplier, reportData.indicatorTree, students]);
+
+    const openIndicatorDrilldown = useCallback((
+        mode: ClassReportIndicatorDrilldownMode,
+        selectedLabel?: string,
+    ) => {
+        const selectedNode = selectedLabel
+            ? reportData.indicatorTree.find(node => node.label === selectedLabel)
+            : reportData.indicatorTree.find(node => node.id === lastIndicatorRootByMode[mode])
+                ?? reportData.indicatorTree[0];
+        if (!selectedNode) return;
+
+        setLastIndicatorRootByMode(current => ({ ...current, [mode]: selectedNode.id }));
+        setIndicatorDrilldown({ mode, initialPath: [selectedNode.id] });
+    }, [lastIndicatorRootByMode, reportData.indicatorTree]);
 
     const visibleRankingRows = showAllRanking ? rankingRows : rankingRows.slice(0, 10);
     const studentCoverageRows = useMemo(() => buildStudentCoverageRows({
@@ -737,20 +769,49 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     <ChartAnalysis {...recordDistributionAnalysis} />
                 </ReportSection>
 
-                <ReportSection id="education-score-title" title="五育得分分布">
+                <ReportSection
+                    id="education-score-title"
+                    title="五育得分分布"
+                    action={(
+                        <button
+                            type="button"
+                            onClick={() => openIndicatorDrilldown('score')}
+                            className="-my-2 flex min-h-[var(--tm-size-touch)] items-center gap-0.5 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-brand-primary)] transition-colors active:text-[var(--tm-brand-primary-pressed)]"
+                            aria-label="查看五育得分二级和三级指标明细"
+                        >
+                            查看明细
+                            <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                        </button>
+                    )}
+                >
                     <TeacherReportBarChart
-                        ariaLabel="德育、智育、体育、美育、劳育的加分、扣分与总分对比"
-                        categories={educationDimensions.map(item => item.label)}
+                        ariaLabel={`${reportData.indicatorTree.map(item => item.label).join('、')}的加分、扣分与总分对比`}
+                        categories={reportData.indicatorTree.map(item => item.label)}
                         series={educationScoreSeries}
                         optionKey={`scores-${reportKey}`}
                         className="h-64"
+                        onCategorySelect={label => openIndicatorDrilldown('score', label)}
                     />
                     <ChartAnalysis {...educationScoreAnalysis} />
                 </ReportSection>
 
-                <ReportSection id="education-event-title" title="五育事件分布">
+                <ReportSection
+                    id="education-event-title"
+                    title="五育事件分布"
+                    action={(
+                        <button
+                            type="button"
+                            onClick={() => openIndicatorDrilldown('event')}
+                            className="-my-2 flex min-h-[var(--tm-size-touch)] items-center gap-0.5 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-brand-primary)] transition-colors active:text-[var(--tm-brand-primary-pressed)]"
+                            aria-label="查看五育事件二级和三级指标明细"
+                        >
+                            查看明细
+                            <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                        </button>
+                    )}
+                >
                     <TeacherReportDonutChart
-                        ariaLabel="德育、智育、体育、美育、劳育的评价事件占比"
+                        ariaLabel={`${reportData.indicatorTree.map(item => item.label).join('、')}的评价事件占比`}
                         data={reportData.educationEvents.map(item => ({
                             name: item.label,
                             value: item.value,
@@ -758,6 +819,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         }))}
                         optionKey={`events-${reportKey}`}
                         className="h-64"
+                        onCategorySelect={label => openIndicatorDrilldown('event', label)}
                     />
                     <ChartAnalysis {...educationEventAnalysis} />
                 </ReportSection>
@@ -828,16 +890,16 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                 <ReportSection id="attention-students-title" title="需要关注">
                     <div>
                         <div className="mb-3 flex gap-2 overflow-x-auto py-1 no-scrollbar" aria-label="需要关注维度">
-                            {[{ key: 'all' as const, label: '全部' }, ...educationDimensions].map(item => (
+                            {[{ id: 'all', label: '全部' }, ...reportData.indicatorTree].map(item => (
                                 <button
-                                    key={item.key}
+                                    key={item.id}
                                     type="button"
-                                    aria-pressed={activeEducation === item.key}
-                                    onClick={() => setActiveEducation(item.key)}
+                                    aria-pressed={activeEducation === item.id}
+                                    onClick={() => setActiveEducation(item.id)}
                                     className="flex h-[var(--tm-size-touch)] min-w-[60px] shrink-0 items-center justify-center"
                                 >
                                     <span className={`flex h-8 w-full items-center justify-center rounded-[8px] border px-3 text-[var(--tm-font-size-compact)] font-semibold transition-colors duration-200 ${
-                                        activeEducation === item.key
+                                        activeEducation === item.id
                                             ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]'
                                             : inactiveConditionFilterClass
                                     }`}>
@@ -960,6 +1022,18 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             >
                 <RecordDistributionDetails rows={recordDistributionRows} />
             </MobileBottomSheet>
+
+            <ClassReportIndicatorDrilldown
+                open={indicatorDrilldown != null}
+                mode={indicatorDrilldown?.mode ?? 'score'}
+                roots={reportData.indicatorTree}
+                initialPath={indicatorDrilldown?.initialPath}
+                onClose={() => setIndicatorDrilldown(null)}
+                onRootChange={rootId => setLastIndicatorRootByMode(current => ({
+                    ...current,
+                    [indicatorDrilldown?.mode ?? 'score']: rootId,
+                }))}
+            />
 
             <MobileBottomSheet
                 open={showAllCoverage}

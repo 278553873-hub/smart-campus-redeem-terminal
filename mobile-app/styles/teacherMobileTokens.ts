@@ -120,6 +120,11 @@ export const teacherReportChartSemantic = {
   dataDefault: teacherReportChartPalette.sky.fill,
   dataDefaultText: teacherReportChartPalette.sky.text,
   dataDefaultSoft: teacherReportChartPalette.sky.soft,
+  percentage: {
+    low: teacherReportChartPalette.coral,
+    medium: teacherReportChartPalette.orange,
+    high: teacherReportChartPalette.spring,
+  },
   positive: teacherReportChartPalette.spring.fill,
   positiveText: teacherReportChartPalette.spring.text,
   positiveSoft: teacherReportChartPalette.spring.soft,
@@ -140,9 +145,17 @@ export const teacherReportChartSemantic = {
     aesthetic: teacherReportChartPalette.cyan.fill,
     labor: teacherReportChartPalette.amber.fill,
   },
+  indicators: [
+    teacherReportChartPalette.coral.fill,
+    teacherReportChartPalette.sky.fill,
+    teacherReportChartPalette.spring.fill,
+    teacherReportChartPalette.cyan.fill,
+    teacherReportChartPalette.amber.fill,
+    teacherBrandPalette.red[700],
+  ],
 } as const;
 
-// 五育是固定分类（德智体美劳），可以固定配色；全部取自品牌色板，与学校自定义指标区分。
+// 标准德智体美劳图表仍可使用固定配色；班级报告的学校自定义一级指标使用 indicators 循环色板。
 // 分类色必须满足白底 3:1 图形对比度：美育使用深薄荷，劳育使用深金。
 // 体育与覆盖率同属绿色系是有意设计：分类场景（五育图表）与比例场景（覆盖进度）不共存于同一图表。
 export const teacherFiveEducationSemantic = {
@@ -164,6 +177,16 @@ export const teacherTagTones = {
 export const teacherGenderSemantic = {
   male: teacherBrandPalette.jade[400],
   female: teacherBrandPalette.orange[500],
+} as const;
+
+export const teacherStudentLevelSemantic = {
+  reward: teacherBrandPalette.gold[600],
+  progress: teacherBrandPalette.gold[500],
+  track: teacherBrandPalette.neutral[100],
+  praise: teacherBrandPalette.green[700],
+  praiseSoft: teacherBrandPalette.green[50],
+  criticism: teacherBrandPalette.red[700],
+  criticismSoft: teacherBrandPalette.red[50],
 } as const;
 
 export const teacherAssistantRoleSemantic = {
@@ -267,6 +290,13 @@ export const teacherBrandCssVariables = {
   '--tm-tag-gold-border': teacherTagTones.gold.border,
   '--tm-gender-male': teacherGenderSemantic.male,
   '--tm-gender-female': teacherGenderSemantic.female,
+  '--tm-student-level-reward': teacherStudentLevelSemantic.reward,
+  '--tm-student-level-progress': teacherStudentLevelSemantic.progress,
+  '--tm-student-level-track': teacherStudentLevelSemantic.track,
+  '--tm-student-praise': teacherStudentLevelSemantic.praise,
+  '--tm-student-praise-soft': teacherStudentLevelSemantic.praiseSoft,
+  '--tm-student-criticism': teacherStudentLevelSemantic.criticism,
+  '--tm-student-criticism-soft': teacherStudentLevelSemantic.criticismSoft,
   '--tm-bg-page': teacherBrandSemantic.page,
   '--tm-bg-page-mid': teacherBrandSemantic.pageMid,
   '--tm-bg-page-low': teacherBrandSemantic.pageLow,
@@ -300,6 +330,15 @@ export const teacherBrandCssVariables = {
   '--tm-chart-data-default': teacherReportChartSemantic.dataDefault,
   '--tm-chart-data-default-text': teacherReportChartSemantic.dataDefaultText,
   '--tm-chart-data-default-soft': teacherReportChartSemantic.dataDefaultSoft,
+  '--tm-chart-percentage-low': teacherReportChartSemantic.percentage.low.fill,
+  '--tm-chart-percentage-low-text': teacherReportChartSemantic.percentage.low.text,
+  '--tm-chart-percentage-low-soft': teacherReportChartSemantic.percentage.low.soft,
+  '--tm-chart-percentage-medium': teacherReportChartSemantic.percentage.medium.fill,
+  '--tm-chart-percentage-medium-text': teacherReportChartSemantic.percentage.medium.text,
+  '--tm-chart-percentage-medium-soft': teacherReportChartSemantic.percentage.medium.soft,
+  '--tm-chart-percentage-high': teacherReportChartSemantic.percentage.high.fill,
+  '--tm-chart-percentage-high-text': teacherReportChartSemantic.percentage.high.text,
+  '--tm-chart-percentage-high-soft': teacherReportChartSemantic.percentage.high.soft,
   '--tm-chart-positive': teacherReportChartSemantic.positive,
   '--tm-chart-positive-text': teacherReportChartSemantic.positiveText,
   '--tm-chart-positive-soft': teacherReportChartSemantic.positiveSoft,
@@ -314,6 +353,12 @@ export const teacherBrandCssVariables = {
   '--tm-chart-edu-fitness': teacherReportChartSemantic.education.fitness,
   '--tm-chart-edu-aesthetic': teacherReportChartSemantic.education.aesthetic,
   '--tm-chart-edu-labor': teacherReportChartSemantic.education.labor,
+  '--tm-chart-indicator-1': teacherReportChartSemantic.indicators[0],
+  '--tm-chart-indicator-2': teacherReportChartSemantic.indicators[1],
+  '--tm-chart-indicator-3': teacherReportChartSemantic.indicators[2],
+  '--tm-chart-indicator-4': teacherReportChartSemantic.indicators[3],
+  '--tm-chart-indicator-5': teacherReportChartSemantic.indicators[4],
+  '--tm-chart-indicator-6': teacherReportChartSemantic.indicators[5],
   '--tm-chart-grid': teacherReportChartSemantic.grid,
   '--tm-chart-tooltip': teacherReportChartSemantic.tooltip,
   '--tm-chart-hover': teacherBrandSemantic.chartHover,
@@ -409,6 +454,11 @@ export const teacherBrandCssVariables = {
   '--tm-report-filter-padding-top': '0px',
   '--tm-report-filter-padding-bottom': '0px',
   '--tm-report-filter-padding-pinned': '0px',
+  '--tm-report-filter-row-height': 'var(--tm-size-touch)',
+  '--tm-report-type-font-size': 'var(--tm-font-size-card-title)',
+  '--tm-report-period-font-size': 'var(--tm-font-size-compact)',
+  '--tm-report-period-pill-height': '28px',
+  '--tm-report-period-pill-inline': 'var(--tm-space-2)',
   '--tm-report-date-indicator-width': '56px',
   '--tm-report-date-indicator-height': '3px',
   '--tm-report-custom-range-height': '40px',

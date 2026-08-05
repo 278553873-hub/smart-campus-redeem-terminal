@@ -18,19 +18,21 @@ const toneTextClasses: Record<RecordDistributionComparisonRow['tone'], string> =
 };
 
 const RecordDistributionComparison: React.FC<RecordDistributionComparisonProps> = ({ overview }) => (
-    <div
-        role="img"
-        aria-label={`本周期正向事件占${overview.positivePercentage}%，负向事件占${overview.negativePercentage}%`}
-    >
-        <div className="flex h-4 overflow-hidden rounded-[4px] bg-[var(--tm-bg-surface-muted)]" aria-hidden="true">
-            <span
-                className="h-full bg-[var(--tm-chart-positive)]"
-                style={{ width: `${overview.positivePercentage}%` }}
-            />
-            <span
-                className="h-full bg-[var(--tm-chart-negative)]"
-                style={{ width: `${overview.negativePercentage}%` }}
-            />
+    <div>
+        <div
+            role="img"
+            aria-label={`本周期正向事件占${overview.positivePercentage}%，负向事件占${overview.negativePercentage}%`}
+        >
+            <div className="flex h-4 overflow-hidden rounded-[4px] bg-[var(--tm-bg-surface-muted)]" aria-hidden="true">
+                <span
+                    className="h-full bg-[var(--tm-chart-positive)]"
+                    style={{ width: `${overview.positivePercentage}%` }}
+                />
+                <span
+                    className="h-full bg-[var(--tm-chart-negative)]"
+                    style={{ width: `${overview.negativePercentage}%` }}
+                />
+            </div>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-4">

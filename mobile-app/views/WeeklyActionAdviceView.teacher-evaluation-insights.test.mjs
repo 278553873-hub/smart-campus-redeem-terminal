@@ -4,6 +4,7 @@ const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_本周�
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const dataSource = fs.readFileSync(new URL('../data/weeklyActionAdvice.ts', import.meta.url), 'utf8');
 const viewSource = fs.readFileSync(new URL('./WeeklyActionAdviceView.tsx', import.meta.url), 'utf8');
+const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -38,6 +39,6 @@ for (const insightType of ['participation', 'orientation', 'target_scope']) {
   requireText(dataSource, `insightType: '${insightType}'`, `演示内容缺少教师评价洞察类型：${insightType}`);
 }
 
-requireText(viewSource, 'formatTeacherEvaluationInsight', '页面应将结构化教师评价洞察转换为可读内容。');
+requireText(adapterSource, 'report.content.evaluationInsights.map', '适配层应将结构化教师评价洞察转换为统一卡片内容。');
 
 console.log('WeeklyActionAdvice teacher evaluation insight assertions passed');

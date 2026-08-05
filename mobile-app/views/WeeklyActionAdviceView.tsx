@@ -1,88 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-    ChevronDown,
-    ChevronRight,
-    ListChecks,
-    MessageSquare,
-    School,
-    Users,
-} from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import AssistantHistoryLink from '../components/AssistantHistoryLink';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
+import AssistantReportCards from '../components/assistant-report/AssistantReportCards';
+import AssistantReportContractError from '../components/assistant-report/AssistantReportContractError';
+import AssistantReportFooter from '../components/assistant-report/AssistantReportFooter';
+import {
+    adaptWeeklyActionAdviceReport,
+    resolveAssistantReportDocument,
+} from '../domain/assistantReportAdapters';
 import {
     CURRENT_WEEKLY_ACTION_ADVICE,
     WEEKLY_ACTION_ADVICE_SAMPLE_REPORT,
     getWeeklyAdviceTarget,
-    type ClassAdviceInsight,
-    type StudentAdviceInsight,
-    type TeacherEvaluationInsight,
     type WeeklyActionAdviceInsufficient,
     type WeeklyActionAdvicePageData,
     type WeeklyActionAdviceReport,
 } from '../data/weeklyActionAdvice';
-
-type IconType = React.ComponentType<{ className?: string; strokeWidth?: number }>;
-
-interface PresentationSection {
-    title: string;
-    icon: IconType;
-    gradient: string;
-    items: PresentationItem[];
-    variant?: 'list';
-}
-
-interface PresentationItem {
-    key: string;
-    summary: string;
-    details?: string;
-}
-
-const SectionCard: React.FC<{ section: PresentationSection; index: number }> = ({ section, index }) => {
-    const Icon = section.icon;
-
-    return (
-        <section
-            className="waa-card-enter rounded-[22px] border border-white/90 bg-white/95 px-4 py-4 shadow-[0_18px_42px_-34px_rgba(35,96,145,0.34)] ring-1 ring-slate-100/70"
-            style={{ animationDelay: `${index * 80}ms` }}
-        >
-            <div className="flex items-center gap-2.5">
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-gradient-to-br ${section.gradient} text-white shadow-[0_12px_24px_-18px_rgba(30,154,170,0.8)]`}>
-                    <Icon className="h-[18px] w-[18px]" strokeWidth={2.2} />
-                </span>
-                <h2 className="text-[15px] font-bold text-slate-900">{section.title}</h2>
-            </div>
-
-            {section.variant === 'list' ? (
-                <ol className="mt-3 space-y-2.5">
-                    {section.items.map((item, index) => (
-                        <li key={item.key} className="flex gap-2.5">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-[11px] font-bold text-cyan-700">{index + 1}</span>
-                            <p className="text-[14px] leading-[1.7] text-slate-600">{item.summary}</p>
-                        </li>
-                    ))}
-                </ol>
-            ) : (
-                <div className="mt-3 divide-y divide-[var(--tm-border-subtle)]">
-                    {section.items.map((item) => item.details ? (
-                        <details key={item.key} className="group py-1 first:pt-0 last:pb-0">
-                            <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                                <p className="text-[14px] leading-[1.72] text-slate-600">{item.summary}</p>
-                                <span className="flex min-h-11 items-center gap-1.5 text-[12px] font-medium text-[var(--tm-text-secondary)]">
-                                    <span className="group-open:hidden">查看依据</span>
-                                    <span className="hidden group-open:inline">收起依据</span>
-                                    <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" strokeWidth={2} aria-hidden="true" />
-                                </span>
-                            </summary>
-                            <p className="mb-3 border-l-2 border-[var(--tm-border-subtle)] pl-3 text-[13px] leading-[1.7] text-[var(--tm-text-secondary)]">{item.details}</p>
-                        </details>
-                    ) : (
-                        <p key={item.key} className="py-2 text-[14px] leading-[1.72] text-slate-600 first:pt-0 last:pb-0">{item.summary}</p>
-                    ))}
-                </div>
-            )}
-        </section>
-    );
-};
 
 const ANALYSIS_STEPS = [
     '正在整理上周评价记录',
@@ -91,24 +25,6 @@ const ANALYSIS_STEPS = [
     '正在生成本周行动建议',
 ];
 
-const formatTeacherEvaluationInsight = (insight: TeacherEvaluationInsight, index: number): PresentationItem => ({
-    key: `teacher-${insight.teacherNames.join('-')}-${index}`,
-    summary: `${insight.teacherNames.join('、')}：${insight.finding}。${insight.evidence}。`,
-    details: `说明：${insight.implication}。`,
-});
-
-const formatStudentInsight = (insight: StudentAdviceInsight, index: number): PresentationItem => ({
-    key: `student-${insight.studentNames.join('-')}-${index}`,
-    summary: `${insight.studentNames.join('、')}：${insight.finding}。${insight.evidence}。`,
-    details: `解读：${insight.interpretation}。${insight.needVerify && insight.verificationFocus ? `核实重点：${insight.verificationFocus}。` : ''}`,
-});
-
-const formatClassInsight = (insight: ClassAdviceInsight, index: number): PresentationItem => ({
-    key: `class-${insight.insightType}-${index}`,
-    summary: `${insight.finding}。${insight.evidence}。`,
-    details: `${insight.condition ? `发生条件：${insight.condition}。` : ''}说明：${insight.implication}。`,
-});
-
 const AnalysisProgress: React.FC<{ visibleStepCount: number }> = ({ visibleStepCount }) => (
     <div className="mx-auto mt-8 min-h-[190px] max-w-[280px]" role="status" aria-live="polite" aria-label="正在生成本周行动建议">
         <div className="space-y-4">
@@ -116,42 +32,14 @@ const AnalysisProgress: React.FC<{ visibleStepCount: number }> = ({ visibleStepC
                 const active = index === visibleStepCount - 1;
                 return (
                     <div key={step} className="animate-in fade-in slide-in-from-bottom-1 flex items-start gap-3 duration-300">
-                        <span className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${active ? 'animate-pulse bg-[#1E9AAA]' : 'bg-slate-300'}`} aria-hidden="true" />
-                        <p className={`text-[13px] font-normal leading-5 ${active ? 'text-slate-600' : 'text-slate-400'}`}>{step}</p>
+                        <span className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${active ? 'animate-pulse bg-[var(--tm-assistant-role-primary)]' : 'bg-[var(--tm-border-subtle)]'}`} aria-hidden="true" />
+                        <p className={`text-[length:var(--tm-font-size-meta)] font-normal leading-5 ${active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-tertiary)]'}`}>{step}</p>
                     </div>
                 );
             })}
         </div>
     </div>
 );
-
-const getPresentationSections = (report: WeeklyActionAdviceReport): PresentationSection[] => [
-    {
-        title: '学生洞察',
-        icon: Users,
-        gradient: 'from-teal-400 to-cyan-500',
-        items: report.content.studentInsights.map(formatStudentInsight),
-    },
-    {
-        title: '评价洞察',
-        icon: MessageSquare,
-        gradient: 'from-violet-400 to-indigo-500',
-        items: report.content.evaluationInsights.map(formatTeacherEvaluationInsight),
-    },
-    {
-        title: '班级洞察',
-        icon: School,
-        gradient: 'from-blue-400 to-violet-500',
-        items: report.content.classInsights.map(formatClassInsight),
-    },
-    {
-        title: '本周重点行动',
-        icon: ListChecks,
-        gradient: 'from-cyan-500 to-teal-500',
-        items: report.content.actions.map((action, index) => ({ key: `action-${index}`, summary: action })),
-        variant: 'list',
-    },
-].filter((section) => section.items.length > 0) as PresentationSection[];
 
 const RequirementRow: React.FC<{
     label: string;
@@ -163,11 +51,11 @@ const RequirementRow: React.FC<{
 
     return (
         <div className="flex min-h-14 items-center gap-3 py-2.5">
-            <span className="w-[72px] shrink-0 text-[13px] text-slate-600">{label}</span>
-            <span className="min-w-0 flex-1 text-[15px] font-bold tabular-nums text-slate-900">
-                {current}<span className="mx-1 text-[12px] font-medium text-slate-300">/</span>{target}
+            <span className="w-[72px] shrink-0 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{label}</span>
+            <span className="min-w-0 flex-1 text-[length:var(--tm-font-size-card-title)] font-bold tabular-nums text-[var(--tm-text-primary)]">
+                {current}<span className="mx-1 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">/</span>{target}
             </span>
-            <span className={`shrink-0 text-[12px] font-medium ${gap === 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+            <span className={`shrink-0 text-[length:var(--tm-font-size-compact)] font-medium ${gap === 0 ? 'text-[var(--tm-status-positive-strong)]' : 'text-[var(--tm-status-negative-strong)]'}`}>
                 {gap === 0 ? '已达标' : `还差${gap}${unit}`}
             </span>
         </div>
@@ -221,19 +109,19 @@ const InsufficientContent: React.FC<{
     return (
         <div className="mt-5">
             <section className="px-2 text-center">
-                <h2 className="mx-auto min-h-[60px] max-w-[300px] text-[20px] font-bold leading-[30px] text-slate-900">
+                <h2 className="mx-auto min-h-[60px] max-w-[300px] text-[20px] font-bold leading-[30px] text-[var(--tm-text-primary)]">
                     <span aria-hidden="true">
                         <span className="block">
                             {visibleFirstLine}
                             {visibleMessageLength < INSUFFICIENT_MESSAGE_FIRST_LINE.length && (
-                                <span className="ml-0.5 inline-block h-5 w-px animate-pulse bg-[#1E9AAA] align-[-3px]" />
+                                <span className="ml-0.5 inline-block h-5 w-px animate-pulse bg-[var(--tm-assistant-role-primary)] align-[-3px]" />
                             )}
                         </span>
                         <span className="block">
                             {visibleSecondLine}
                             {visibleMessageLength >= INSUFFICIENT_MESSAGE_FIRST_LINE.length
                                 && visibleMessageLength < INSUFFICIENT_MESSAGE.length && (
-                                <span className="ml-0.5 inline-block h-5 w-px animate-pulse bg-[#1E9AAA] align-[-3px]" />
+                                <span className="ml-0.5 inline-block h-5 w-px animate-pulse bg-[var(--tm-assistant-role-primary)] align-[-3px]" />
                             )}
                         </span>
                     </span>
@@ -242,8 +130,8 @@ const InsufficientContent: React.FC<{
             </section>
 
             {visibleRequirementCount > 0 && (
-                <section className="waa-card-enter mt-6 rounded-[22px] border border-white/90 bg-white/95 px-4 py-3 shadow-[0_18px_42px_-34px_rgba(35,96,145,0.34)] ring-1 ring-slate-100/70">
-                    <h2 className="text-[15px] font-bold text-slate-900">上周数据</h2>
+                <section className="waa-card-enter mt-6 rounded-[var(--tm-radius-card)] border border-[var(--tm-assistant-role-border)] bg-[var(--tm-bg-surface-glass)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
+                    <h2 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">上周数据</h2>
                     <div className="mt-1 divide-y divide-slate-100">
                         <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
                             <RequirementRow label="记录条数" current={data.previousWeek.records} target={previousTarget.records} unit="条" />
@@ -259,7 +147,7 @@ const InsufficientContent: React.FC<{
 
             {visibleRequirementCount === 2 && (
                 <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
-                    <p className="mt-5 px-2 text-[13px] leading-6 text-slate-500">
+                    <p className="mt-5 px-2 text-[length:var(--tm-font-size-meta)] leading-6 text-[var(--tm-text-secondary)]">
                         {readyForNextWeek
                             ? '本周已达到以上条件，下周进入班主任助理即可生成。'
                             : '本周达到以上条件后，下周进入班主任助理即可生成。'}
@@ -268,11 +156,11 @@ const InsufficientContent: React.FC<{
                     <button
                         type="button"
                         onClick={onViewSample}
-                        className="mt-2 flex h-11 w-full items-center justify-between px-2 text-left text-[14px] font-medium text-slate-500 transition active:text-[#1E9AAA]"
+                        className="mt-2 flex h-11 w-full items-center justify-between px-2 text-left text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)] transition active:text-[var(--tm-assistant-role-text)]"
                         aria-label="查看报告示例"
                     >
                         <span>查看报告示例</span>
-                        <ChevronRight className="h-4 w-4 text-slate-300" strokeWidth={2} />
+                        <ChevronRight className="h-4 w-4 text-[var(--tm-text-tertiary)]" strokeWidth={2} />
                     </button>
                 </div>
             )}
@@ -285,6 +173,8 @@ interface WeeklyActionAdviceViewProps {
     onOpenHistory?: () => void;
     data?: WeeklyActionAdvicePageData;
     report?: WeeklyActionAdviceReport;
+    reportPayload?: unknown;
+    onRetry?: () => void;
     simulateLoading?: boolean;
 }
 
@@ -293,6 +183,8 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
     onOpenHistory,
     data,
     report,
+    reportPayload,
+    onRetry,
     simulateLoading = true,
 }) => {
     const pageData = data ?? report ?? CURRENT_WEEKLY_ACTION_ADVICE;
@@ -303,7 +195,12 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
     const shouldSimulateLoading = Boolean(activeReport && !viewingExample && simulateLoading);
     const [loading, setLoading] = useState(shouldSimulateLoading);
     const [visibleStepCount, setVisibleStepCount] = useState(shouldSimulateLoading ? 1 : ANALYSIS_STEPS.length);
-    const sections = useMemo(() => activeReport ? getPresentationSections(activeReport) : [], [activeReport]);
+    const reportResolution = useMemo(() => activeReport
+        ? resolveAssistantReportDocument(
+            viewingExample ? undefined : reportPayload,
+            adaptWeeklyActionAdviceReport(activeReport),
+        )
+        : { document: null, issues: [] as string[] }, [activeReport, reportPayload, viewingExample]);
 
     useEffect(() => {
         if (!shouldSimulateLoading) {
@@ -339,7 +236,7 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
     const showHeaderTitle = title !== '本周行动建议';
 
     return (
-        <div className="ai-assistant-theme-headteacher relative min-h-full overflow-hidden bg-transparent font-sans text-slate-950">
+        <div className="ai-assistant-theme-headteacher relative min-h-full overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
             <AssistantSubpageHeader
                 title={showHeaderTitle ? title : className}
                 onBack={viewingExample ? () => setViewingExample(false) : onBack}
@@ -351,7 +248,7 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
                 <section className="relative pb-1 text-center">
                     <div className="relative flex min-h-11 items-center justify-center">
                         {showHeaderTitle && (
-                            <p className={`min-w-0 truncate px-2 ${activeReport ? 'text-[15px] font-bold text-slate-900' : 'text-[13px] font-medium text-slate-500'}`}>{className}</p>
+                            <p className={`min-w-0 truncate px-2 ${activeReport ? 'text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]' : 'text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]'}`}>{className}</p>
                         )}
                         {!viewingExample && onOpenHistory && (
                             <AssistantHistoryLink
@@ -362,7 +259,7 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
                         )}
                     </div>
                     {!loading && activeReport && (
-                        <p className="mt-1 text-[12px] text-slate-500">
+                        <p className="mt-1 text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">
                             {viewingExample ? '示例内容 · ' : ''}根据{activeReport.dataRange}评价记录生成
                         </p>
                     )}
@@ -371,12 +268,10 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
                 {activeReport ? (
                     loading ? (
                         <AnalysisProgress visibleStepCount={visibleStepCount} />
+                    ) : reportResolution.document ? (
+                        <AssistantReportCards document={reportResolution.document} className="mt-[var(--tm-space-4)]" />
                     ) : (
-                        <div className="mt-4 space-y-3">
-                            {sections.map((section, index) => (
-                                <SectionCard key={section.title} section={section} index={index} />
-                            ))}
-                        </div>
+                        <AssistantReportContractError onRetry={onRetry} />
                     )
                 ) : (
                     <InsufficientContent
@@ -385,10 +280,8 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
                     />
                 )}
 
-                {!loading && activeReport && (
-                    <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-400">
-                        {viewingExample ? '示例内容，仅用于展示报告结构' : '以上内容由AI基于评价记录生成，仅供参考'}
-                    </p>
+                {!loading && activeReport && reportResolution.document && (
+                    <AssistantReportFooter document={reportResolution.document} example={viewingExample} className="mx-0" />
                 )}
             </main>
         </div>

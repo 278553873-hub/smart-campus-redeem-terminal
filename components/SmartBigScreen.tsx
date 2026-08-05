@@ -27,6 +27,17 @@ import {
   CheckSquare
 } from 'lucide-react';
 import { getSystemStudentAvatar } from '../mobile-app/assets/studentAvatarCatalog';
+import {
+  applyStudentPerformanceEvent,
+  createDemoStudentPerformanceSummary,
+  getStudentPerformanceLevel,
+  revertStudentPerformanceEvent,
+  type StudentPerformanceSummary,
+} from '../mobile-app/domain/studentPerformance';
+import {
+  ClassroomStudentAvatar,
+  ClassroomStudentMeta,
+} from './student-performance/ClassroomStudentPerformance';
 
 declare global { interface Window { confetti?: (options: Record<string, unknown>) => void; } }
 
@@ -49,6 +60,7 @@ interface EvaluationOption {
 
 interface EvalRecord {
   id: string;
+  studentIds: string[];
   studentNames: string[];
   optionLabel: string;
   type: 'positive' | 'negative';
@@ -57,6 +69,7 @@ interface EvalRecord {
   originalInput: string;
   aiScorePath: string;
   aiScoreValue: string;
+  scoreChange: number;
 }
 
 interface GroupData {
@@ -356,6 +369,7 @@ const GroupCard: React.FC<{
 
 const StudentCard: React.FC<{
   student: StudentData;
+  performance: StudentPerformanceSummary;
   selected?: boolean;
   isSelectable?: boolean;
   isFocused?: boolean;
@@ -363,37 +377,42 @@ const StudentCard: React.FC<{
   onClick?: () => void;
 }> = ({
   student,
+  performance,
   selected = false,
   isSelectable = false,
   isFocused = false,
   isRolling = false,
   onClick
 }) => {
-  const genderIcon = student.gender === 'male'
-    ? <Mars size={12} className="text-[#4c8bf5]" strokeWidth={3} />
-    : <Venus size={12} className="text-[#f54c9b]" strokeWidth={3} />;
+  const level = getStudentPerformanceLevel(performance.netScore);
 
   return (
     <div
       onClick={onClick}
-      className={`w-[160px] h-[180px] relative bg-white rounded-[2rem] p-5 pt-6 flex flex-col items-center gap-3.5 border-2 shadow-[0_8px_20px_rgba(0,0,0,0.03)] ${isFocused ? 'border-blue-400 bg-blue-50/30' : 'border-white hover:border-blue-500 hover:shadow-xl'} ${selected ? 'border-blue-500 shadow-lg z-10' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95 transition-all' : ''}`}
+      aria-label={`${student.name}，学号${student.studentNo}，净得分${performance.netScore}分，被表扬${performance.praiseCount}次，被批评${performance.criticismCount}次`}
+      className={`w-[160px] h-[208px] relative bg-white rounded-[2rem] px-4 py-3 flex flex-col items-center border-2 shadow-[0_8px_20px_rgba(0,0,0,0.03)] ${isFocused ? 'border-blue-400 bg-blue-50/30' : 'border-white hover:border-blue-500 hover:shadow-xl'} ${selected ? 'border-blue-500 shadow-lg z-10' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95 transition-all' : ''}`}
     >
       {isSelectable && (
         <div className={`absolute top-3 right-3 w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${selected ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-200 bg-white/80 text-slate-300'}`}>
           <Check size={14} strokeWidth={3} />
         </div>
       )}
-      <img
-        src={student.avatar}
-        alt={`${student.name}头像`}
-        className="h-16 w-16 shrink-0 rounded-[1.25rem] object-cover shadow-lg"
+      <div className="mb-1 flex h-4 w-full items-center justify-center px-6">
+        <span className="truncate font-mono text-[10px] font-semibold tracking-normal text-slate-400">{student.studentNo}</span>
+      </div>
+      <ClassroomStudentAvatar
+        name={student.name}
+        avatar={student.avatar}
+        level={level}
       />
-      <div className="text-center w-full flex flex-col items-center gap-2">
-        <h3 className={`text-[17px] font-bold text-slate-800 tracking-tight leading-none truncate w-full ${isRolling ? 'opacity-80' : ''}`}>{student.name}</h3>
-        <div className="flex items-center justify-center gap-2 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50 w-full max-w-[120px]">
-          <span className="text-[11px] font-bold text-slate-400 font-mono tracking-tighter">{student.studentNo}</span>
-          {genderIcon}
+      <div className="mt-1.5 flex w-full flex-1 flex-col items-center text-center">
+        <div className="flex h-5 w-full items-center justify-center gap-1">
+          <h3 className={`max-w-[108px] truncate text-[17px] font-bold leading-5 tracking-normal text-slate-800 ${isRolling ? 'opacity-80' : ''}`}>{student.name}</h3>
+          {student.gender === 'male'
+            ? <Mars aria-hidden="true" size={15} className="shrink-0 text-[#3b82f6]" strokeWidth={3.2} />
+            : <Venus aria-hidden="true" size={15} className="shrink-0 text-[#ec4899]" strokeWidth={3.2} />}
         </div>
+        <ClassroomStudentMeta level={level} summary={performance} />
       </div>
     </div>
   );
@@ -443,6 +462,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [randomTick, setRandomTick] = useState(0);
   const [rollingIndices, setRollingIndices] = useState<number[]>([]);
   const [evalRecords, setEvalRecords] = useState<EvalRecord[]>([]);
+  const [performanceByStudentId, setPerformanceByStudentId] = useState<Record<string, StudentPerformanceSummary>>({});
   const [historyOpen, setHistoryOpen] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
@@ -475,6 +495,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [deckContainerWidth, setDeckContainerWidth] = useState(0);
 
   const students = useMemo(() => GENERATE_MOCK_DATA(currentClass), [currentClass]);
+  const studentById = useMemo(() => new Map(students.map(student => [student.id, student])), [students]);
   const studentNameById = useMemo(() => new Map(students.map(student => [student.id, student.name])), [students]);
   const groupPlans = useMemo(() => GENERATE_MOCK_GROUP_PLANS(currentClass, students), [currentClass, students]);
   const activeGroupPlan = useMemo(
@@ -485,6 +506,31 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const getGroupMemberNames = (group: GroupData) => group.memberIds
     .map(id => studentNameById.get(id))
     .filter((name): name is string => Boolean(name));
+
+  const getStudentPerformance = (student: StudentData) => performanceByStudentId[student.id]
+    ?? createDemoStudentPerformanceSummary(student);
+
+  const updateStudentPerformance = (
+    studentIds: string[],
+    scoreChange: number,
+    mode: 'apply' | 'revert' = 'apply',
+  ) => {
+    const uniqueStudentIds = [...new Set(studentIds)].filter(id => studentById.has(id));
+    if (uniqueStudentIds.length === 0) return;
+
+    setPerformanceByStudentId(previous => {
+      const next = { ...previous };
+      uniqueStudentIds.forEach(studentId => {
+        const student = studentById.get(studentId);
+        if (!student) return;
+        const currentSummary = next[studentId] ?? createDemoStudentPerformanceSummary(student);
+        next[studentId] = mode === 'apply'
+          ? applyStudentPerformanceEvent(currentSummary, scoreChange)
+          : revertStudentPerformanceEvent(currentSummary, scoreChange);
+      });
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (demoRecordClassRef.current === currentClass || students.length < 3) return;
@@ -498,6 +544,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     setEvalRecords([
       {
         id: `demo-voice-${currentClass}`,
+        studentIds: [firstStudent.id, secondStudent.id],
         studentNames: [firstStudent.name, secondStudent.name],
         optionLabel: '积极举手',
         type: 'positive',
@@ -505,10 +552,12 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         source: 'voice',
         originalInput: `${firstStudent.name}和${secondStudent.name}这节课主动举手发言，表达也很清楚`,
         aiScorePath: '智育-课堂表现-积极参与',
-        aiScoreValue: '+1'
+        aiScoreValue: '+1',
+        scoreChange: 1
       },
       {
         id: `demo-manual-${currentClass}`,
+        studentIds: [thirdStudent.id],
         studentNames: [thirdStudent.name],
         optionLabel: '专注听讲',
         type: 'positive',
@@ -516,7 +565,8 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         source: 'manual',
         originalInput: `${thirdStudent.name}｜专注听讲`,
         aiScorePath: '智育-课堂表现-积极参与',
-        aiScoreValue: '+1'
+        aiScoreValue: '+1',
+        scoreChange: 1
       }
     ]);
   }, [currentClass, students]);
@@ -705,12 +755,29 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
   const handleEvaluationSelect = (option: EvaluationOption) => {
     const now = new Date();
-    const studentNames = viewMode === 'student' 
-      ? (isMultiSelect ? students.filter(s => selectedIds.includes(s.id)).map(s => s.name) : [evalStudent!.name])
-      : (isMultiSelect ? groups.filter(g => selectedIds.includes(g.id)).map(g => g.name) : [evalGroup!.name]);
+    const selectedStudents = isMultiSelect ? students.filter(student => selectedIds.includes(student.id)) : [];
+    const selectedGroups = isMultiSelect ? groups.filter(group => selectedIds.includes(group.id)) : [];
+    const targetStudentIds = selectedStudents.length > 0
+      ? selectedStudents.map(student => student.id)
+      : selectedGroups.length > 0
+        ? [...new Set(selectedGroups.flatMap(group => group.memberIds))]
+        : evalStudent
+          ? [evalStudent.id]
+          : evalGroup?.memberIds ?? [];
+    const studentNames = selectedStudents.length > 0
+      ? selectedStudents.map(student => student.name)
+      : selectedGroups.length > 0
+        ? selectedGroups.map(group => group.name)
+        : evalStudent
+          ? [evalStudent.name]
+          : evalGroup
+            ? [evalGroup.name]
+            : [];
+    const scoreChange = option.type === 'positive' ? 1 : -1;
 
     const newRecord = {
       id: Date.now().toString(),
+      studentIds: targetStudentIds,
       studentNames,
       optionLabel: option.label,
       type: option.type,
@@ -718,9 +785,11 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       source: 'manual' as const,
       originalInput: `${studentNames.join('、')}｜${option.label}`,
       aiScorePath: '智育-课堂表现-积极参与',
-      aiScoreValue: option.type === 'positive' ? '+1' : '-1'
+      aiScoreValue: scoreChange > 0 ? `+${scoreChange}` : String(scoreChange),
+      scoreChange,
     };
     setEvalRecords(prev => [newRecord, ...prev].slice(0, 15));
+    updateStudentPerformance(targetStudentIds, scoreChange);
 
     if (option.type === 'positive') {
       fireCelebration();
@@ -842,8 +911,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     }
 
     const option = inferVoiceOption(label);
+    const scoreChange = option.type === 'positive' ? 1 : -1;
     setEvalRecords(prev => [{
       id: `voice-${Date.now()}`,
+      studentIds: targets.studentIds,
       studentNames: targets.names,
       optionLabel: option.label,
       type: option.type,
@@ -851,8 +922,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       source: 'voice',
       originalInput: label,
       aiScorePath: '智育-课堂表现-积极参与',
-      aiScoreValue: option.type === 'positive' ? '+1' : '-1'
+      aiScoreValue: scoreChange > 0 ? `+${scoreChange}` : String(scoreChange),
+      scoreChange,
     }, ...prev].slice(0, 15));
+    updateStudentPerformance(targets.studentIds, scoreChange);
 
     if (option.type === 'positive') {
       fireCelebration();
@@ -1403,6 +1476,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                       <StudentCard
                         key={student.id}
                         student={student}
+                        performance={getStudentPerformance(student)}
                         selected={selectedIds.includes(student.id)}
                         isSelectable={isMultiSelect}
                         isFocused={isFocused}
@@ -1513,6 +1587,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                       <button
                         onClick={() => {
                           setEvalRecords(prev => prev.filter(r => r.id !== record.id));
+                          updateStudentPerformance(record.studentIds, record.scoreChange, 'revert');
                           setToastMsg(`已撤销点评「${record.optionLabel}」`);
                           setTimeout(() => setToastMsg(null), 3000);
                         }}
@@ -1701,6 +1776,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                   <StudentCard 
                     key={id}
                     student={student}
+                    performance={getStudentPerformance(student)}
                     selected={selectedGroupMemberIds.includes(id)}
                     isSelectable={true}
                     onClick={() => {
@@ -1787,6 +1863,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                             {viewMode === 'student' ? (
                               <StudentCard 
                                 student={student!} 
+                                performance={getStudentPerformance(student!)}
                                 isRolling={false} 
                                 isSelectable={!isRolling}
                                 selected={selectedIds.includes(student!.id)}

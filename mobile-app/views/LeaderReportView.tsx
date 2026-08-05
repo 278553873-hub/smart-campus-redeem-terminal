@@ -3,6 +3,7 @@ import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import {
     Calendar,
     ChevronLeft,
+    ChevronRight,
     ClipboardList,
     Info,
     Trophy,
@@ -12,10 +13,9 @@ import {
 } from 'lucide-react';
 
 import {
-    phoneShadow,
     teacherBrandCssVariables,
     teacherBrandSemantic,
-    teacherFiveEducationSemantic,
+    teacherReportChartSemantic,
 } from '../styles/teacherMobileTokens';
 import {
     getLeaderReportSnapshot,
@@ -48,38 +48,88 @@ interface LeaderReportViewProps {
     onBack: () => void;
 }
 
-type CoverageLevel = 'low' | 'medium' | 'high';
+type PercentageLevel = 'low' | 'medium' | 'high';
 
-const coverageToneMap = {
+const reportCardClassName = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]';
+const reportSectionActionClassName = '-my-2 flex min-h-[var(--tm-size-touch)] shrink-0 items-center gap-1.5 whitespace-nowrap text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-brand-primary)] transition-colors active:text-[var(--tm-brand-primary-pressed)]';
+
+const ReportSectionAction = ({
+    label,
+    onClick,
+}: {
+    label: string;
+    onClick: () => void;
+}) => (
+    <button type="button" onClick={onClick} className={reportSectionActionClassName}>
+        <span>{label}</span>
+        <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2.25} />
+    </button>
+);
+const coveragePercentageToneMap: Record<PercentageLevel, { bar: string; text: string; shell: string }> = {
     low: {
-        bar: 'bg-[var(--tm-status-negative)]',
-        text: 'text-[var(--tm-status-negative-strong)]',
-        shell: 'bg-[var(--tm-status-negative-soft)]',
+        bar: 'bg-[var(--tm-chart-percentage-low)]',
+        text: 'text-[var(--tm-chart-percentage-low-text)]',
+        shell: 'bg-[var(--tm-chart-percentage-low-soft)]',
     },
     medium: {
-        bar: 'bg-[var(--tm-brand-secondary)]',
-        text: 'text-[var(--tm-brand-secondary-strong)]',
-        shell: 'bg-[var(--tm-brand-secondary-soft)]',
+        bar: 'bg-[var(--tm-chart-percentage-medium)]',
+        text: 'text-[var(--tm-chart-percentage-medium-text)]',
+        shell: 'bg-[var(--tm-chart-percentage-medium-soft)]',
     },
     high: {
-        bar: 'bg-[var(--tm-status-positive)]',
-        text: 'text-[var(--tm-status-positive-strong)]',
-        shell: 'bg-[var(--tm-status-positive-soft)]',
+        bar: 'bg-[var(--tm-chart-percentage-high)]',
+        text: 'text-[var(--tm-chart-percentage-high-text)]',
+        shell: 'bg-[var(--tm-chart-percentage-high-soft)]',
     },
 } as const;
-
-const coverageChartColorMap: Record<CoverageLevel, string> = {
-    low: teacherBrandSemantic.negative,
-    medium: teacherBrandSemantic.secondary,
-    high: teacherBrandSemantic.positive,
-};
-
-const getCoverageLevel = (percent: number): CoverageLevel => (
+const getPercentageLevel = (percent: number): PercentageLevel => (
     percent >= 80 ? 'high' : percent >= 60 ? 'medium' : 'low'
 );
+const getCoveragePercentageTone = (percent: number) => coveragePercentageToneMap[getPercentageLevel(percent)];
+const getCoverageChartColor = (percent: number) => teacherReportChartSemantic.percentage[getPercentageLevel(percent)].fill;
 
-const getCoverageTone = (percent: number) => coverageToneMap[getCoverageLevel(percent)];
-const getCoverageChartColor = (percent: number) => coverageChartColorMap[getCoverageLevel(percent)];
+const reportTypeTabs: { key: ReportTab; label: string }[] = [
+    { key: 'teacher', label: '教师使用' },
+    { key: 'event', label: '事件分布' },
+];
+
+const ReportTypeTabs = ({
+    value,
+    onChange,
+}: {
+    value: ReportTab;
+    onChange: (value: ReportTab) => void;
+}) => (
+    <div
+        role="tablist"
+        aria-label="学校报表类型"
+        className="grid h-[var(--tm-report-filter-row-height)] grid-cols-2 bg-[var(--tm-bg-surface)]"
+    >
+        {reportTypeTabs.map(tab => {
+            const selected = value === tab.key;
+            return (
+                <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => onChange(tab.key)}
+                    className={`relative flex min-w-0 items-center justify-center text-[length:var(--tm-report-type-font-size)] ${selected
+                        ? 'font-semibold text-[var(--tm-brand-primary)]'
+                        : 'font-medium text-[var(--tm-text-secondary)]'}`}
+                >
+                    {tab.label}
+                    {selected && (
+                        <span
+                            aria-hidden="true"
+                            className="absolute bottom-0 left-1/2 h-[var(--tm-report-date-indicator-height)] w-[var(--tm-report-date-indicator-width)] -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]"
+                        />
+                    )}
+                </button>
+            );
+        })}
+    </div>
+);
 
 const useAnimatedNumber = (targetValue: number, duration = 650, replayKey?: string) => {
     const target = Number.isFinite(targetValue) ? targetValue : 0;
@@ -190,7 +240,7 @@ const MetricUnit = ({
     const numberReplayKey = showProgress ? animationKey : `${animationKey ?? label}-value`;
 
     return (
-        <div className="min-w-0 rounded-2xl border border-[var(--tm-border-subtle)] bg-white p-3.5">
+        <div className="min-w-0 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-3.5">
             <div className="flex items-center justify-between gap-2">
                 <div className="truncate text-xs font-medium text-[var(--tm-text-secondary)]">{label}</div>
                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${theme.icon}`}>
@@ -219,7 +269,7 @@ const MetricUnit = ({
 };
 
 const OverviewCard = ({ snapshot, animationKey }: { snapshot: LeaderReportSnapshot | null; animationKey: string }) => (
-    <section className={`rounded-3xl bg-white p-4 ${phoneShadow.raised} border border-white/80`}>
+    <section className={reportCardClassName}>
         <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">数据总览</h2>
         <div className="mt-3 grid grid-cols-1 gap-3">
             <div className="grid grid-cols-2 gap-3">
@@ -269,7 +319,7 @@ const TeacherRow: React.FC<TeacherRowProps> = ({
     rank,
     showAward,
 }) => (
-    <div className="grid min-h-[48px] grid-cols-[minmax(0,1.15fr)_56px_64px] items-center gap-2 rounded-2xl border border-[var(--tm-border-subtle)] bg-white px-3 py-2.5 text-xs">
+    <div className="grid min-h-[48px] grid-cols-[minmax(0,1.15fr)_56px_64px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
         <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{teacher.name}</span>
             {showAward && <TeacherRankBadge rank={rank} />}
@@ -280,7 +330,7 @@ const TeacherRow: React.FC<TeacherRowProps> = ({
 );
 
 const FullTeacherRow: React.FC<TeacherRowProps> = ({ teacher, rank, showAward }) => (
-    <div className="grid min-h-[48px] grid-cols-[minmax(0,1.15fr)_56px_64px_72px] items-center gap-2 rounded-2xl border border-[var(--tm-border-subtle)] bg-white px-3 py-2.5 text-xs">
+    <div className="grid min-h-[48px] grid-cols-[minmax(0,1.15fr)_56px_64px_72px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
         <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{teacher.name}</span>
             {showAward && <TeacherRankBadge rank={rank} />}
@@ -294,13 +344,13 @@ const FullTeacherRow: React.FC<TeacherRowProps> = ({ teacher, rank, showAward })
 const scoreSortTabs: { key: ScoreRankingSort; label: string }[] = [
     { key: 'plus', label: '加分' },
     { key: 'minus', label: '减分' },
-    { key: 'net', label: '净赋分' },
+    { key: 'net', label: '总分' },
 ];
 
 const fiveEducationScoreTabs: { key: ScoreRankingSort; label: string }[] = [
     { key: 'plus', label: '加分' },
     { key: 'minus', label: '减分' },
-    { key: 'net', label: '净得分' },
+    { key: 'net', label: '总分' },
 ];
 
 const eventDistributionTabs: { key: EventDistributionMetric; label: string }[] = [
@@ -342,16 +392,16 @@ const fiveEducationScoreValueKeyMap: Record<ScoreRankingSort, FiveEducationChart
 const fiveEducationScoreYAxisNameMap: Record<ScoreRankingSort, string> = {
     plus: '加分',
     minus: '减分',
-    net: '净得分',
+    net: '总分',
 };
 
 const formatPlusScore = (value: number) => `+${value}`;
 const formatMinusScore = (value: number) => value === 0 ? '0' : `-${value}`;
 const formatNetScore = (value: number) => value > 0 ? `+${value}` : `${value}`;
 const netScoreTone = (value: number) => value > 0
-    ? 'text-[var(--tm-status-positive)]'
+    ? 'text-[var(--tm-chart-positive-text)]'
     : value < 0
-        ? 'text-[var(--tm-status-negative)]'
+        ? 'text-[var(--tm-chart-negative-text)]'
         : 'text-[var(--tm-text-secondary)]';
 
 const toDateInputValue = (date: Date) => {
@@ -531,7 +581,7 @@ const getIndicatorUsageItems = (
 };
 
 const IndicatorUsageRow = ({ item }: { item: IndicatorUsageListItem }) => (
-    <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-2xl border border-[var(--tm-border-subtle)] bg-white px-3 py-2">
+    <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2">
         <div className="min-w-0 truncate text-[15px] font-semibold text-[var(--tm-text-primary)]">{item.path}</div>
         <div className={`w-14 shrink-0 text-right text-xl font-black tabular-nums ${item.count > 0 ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}>{item.count}</div>
     </div>
@@ -556,13 +606,13 @@ const SegmentedTabs = <T extends string>({
     onChange: (value: T) => void;
     tabs: { key: T; label: string }[];
 }) => (
-    <div className="flex rounded-2xl bg-[var(--tm-brand-primary-soft)] p-1">
+    <div className="flex rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-muted)] p-1">
         {tabs.map(tab => (
             <button
                 key={tab.key}
                 type="button"
                 onClick={() => onChange(tab.key)}
-                className={`min-h-[34px] rounded-xl px-3 text-sm font-semibold transition-all ${value === tab.key ? 'bg-white text-[var(--tm-brand-primary)] shadow-sm' : 'text-[var(--tm-brand-primary-pressed)]'}`}
+                className={`min-h-[34px] rounded-[var(--tm-radius-control)] px-3 text-sm font-semibold transition-all ${value === tab.key ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
             >
                 {tab.label}
             </button>
@@ -589,10 +639,10 @@ const EventDistributionTabs = ({
 }) => <SegmentedTabs value={value} onChange={onChange} tabs={eventDistributionTabs} />;
 
 const TeacherScoreRow: React.FC<{ item: LeaderReportTeacherScoreSummary }> = ({ item }) => (
-    <div className="grid min-h-[44px] grid-cols-[minmax(0,1.1fr)_56px_56px_64px] items-center gap-2 rounded-2xl border border-[var(--tm-border-subtle)] bg-white px-3 py-2.5 text-xs">
+    <div className="grid min-h-[44px] grid-cols-[minmax(0,1.1fr)_56px_56px_64px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
         <div className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{item.teacherName}</div>
-        <div className="text-right font-semibold text-[var(--tm-status-positive)]">{formatPlusScore(item.plusScore)}</div>
-        <div className="text-right font-semibold text-[var(--tm-status-negative)]">{formatMinusScore(item.minusScore)}</div>
+        <div className="text-right font-semibold text-[var(--tm-chart-positive-text)]">{formatPlusScore(item.plusScore)}</div>
+        <div className="text-right font-semibold text-[var(--tm-chart-negative-text)]">{formatMinusScore(item.minusScore)}</div>
         <div className={`text-right font-bold ${netScoreTone(item.netScore)}`}>{formatNetScore(item.netScore)}</div>
     </div>
 );
@@ -611,10 +661,10 @@ const TeacherScoreRankingCard = ({
     const visibleItems = getSortedTeacherScores(items, sort).slice(0, 10);
 
     return (
-        <section className="rounded-3xl border border-white/80 bg-white p-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-between gap-3">
+        <section className={reportCardClassName}>
+            <div className="mb-[var(--tm-report-card-content-gap)] flex items-center justify-between gap-3">
                 <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">教师赋分排行榜</h2>
-                <button className="shrink-0 text-xs font-medium text-[var(--tm-brand-primary)] active:opacity-70" onClick={onViewAll}>查看全部</button>
+                <ReportSectionAction label="查看全部" onClick={onViewAll} />
             </div>
             <div className="mb-3 flex items-center justify-between gap-3">
                 <ScoreSortTabs value={sort} onChange={onSortChange} />
@@ -623,7 +673,7 @@ const TeacherScoreRankingCard = ({
                 <span>老师</span>
                 <span className="text-right">加分</span>
                 <span className="text-right">减分</span>
-                <span className="text-right">净赋分</span>
+                <span className="text-right">总分</span>
             </div>
             <div className="space-y-2.5">
                 {visibleItems.map(item => <TeacherScoreRow key={item.teacherId} item={item} />)}
@@ -680,11 +730,11 @@ const getEvaluationRecordsAxis = (values: number[]) => {
 };
 
 const fiveEducationColors: Record<LeaderReportFiveEducationStat['key'], string> = {
-    virtue: teacherFiveEducationSemantic.virtue,
-    wisdom: teacherFiveEducationSemantic.wisdom,
-    fitness: teacherFiveEducationSemantic.fitness,
-    aesthetic: teacherFiveEducationSemantic.aesthetic,
-    labor: teacherFiveEducationSemantic.labor,
+    virtue: teacherReportChartSemantic.education.virtue,
+    wisdom: teacherReportChartSemantic.education.wisdom,
+    fitness: teacherReportChartSemantic.education.fitness,
+    aesthetic: teacherReportChartSemantic.education.aesthetic,
+    labor: teacherReportChartSemantic.education.labor,
 };
 
 const toZeroBarDatum = (datum: unknown) => {
@@ -843,7 +893,7 @@ const FiveEducationBarChart = ({
                 axisLabel: { color: teacherBrandSemantic.textSecondary, fontSize: 10 },
                 axisLine: { show: false },
                 axisTick: { show: false },
-                splitLine: { lineStyle: { color: teacherBrandSemantic.gridLine, type: 'solid' } },
+                splitLine: { lineStyle: { color: teacherReportChartSemantic.grid, type: 'solid' } },
             },
             series: [
                 {
@@ -857,7 +907,7 @@ const FiveEducationBarChart = ({
                                 show: true,
                                 position: value < 0 ? 'bottom' : 'top',
                                 formatter: (params: { value?: number }) => formatDisplayValue(params.value),
-                                color: value < 0 ? teacherBrandSemantic.negative : teacherBrandSemantic.textPrimary,
+                                color: value < 0 ? teacherReportChartSemantic.negativeText : teacherBrandSemantic.textPrimary,
                                 fontSize: 12,
                                 fontWeight: 800,
                                 valueAnimation: true,
@@ -884,7 +934,7 @@ const FiveEducationBarChart = ({
     }, [animationKey, chartReady, data, valueKey, yAxisName]);
 
     return (
-        <div className="rounded-3xl border border-white/80 bg-white p-4 shadow-sm">
+        <div className={reportCardClassName}>
             <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">{title}</h2>
             {toolbar && (
                 <div className="mt-3 flex items-center">
@@ -997,7 +1047,7 @@ const FiveEducationDonutChart = ({
                 triggerOn: 'click',
                 alwaysShowContent: selectedDonutKey !== null,
                 confine: true,
-                backgroundColor: teacherBrandSemantic.chartTooltip,
+                backgroundColor: teacherReportChartSemantic.tooltip,
                 borderWidth: 0,
                 borderRadius: 12,
                 padding: [8, 10],
@@ -1066,7 +1116,7 @@ const FiveEducationDonutChart = ({
     }, [animationKey, chartItems, chartReady, metricLabel, selectedDonutKey, showDonutTip, totalEvents]);
 
     return (
-        <div className="rounded-3xl border border-white/80 bg-white p-4 shadow-sm">
+        <div className={reportCardClassName}>
             <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">{title}</h2>
             {toolbar && (
                 <div className="mt-3 flex items-center">
@@ -1129,30 +1179,22 @@ const IndicatorUsageSummaryCard = ({
             label: '二级指标覆盖率',
             coverageRate: secondSummary.coverageRate,
             uncovered: secondSummary.uncovered,
-            tone: 'brand',
         },
         {
             key: 'third',
             label: '三级指标覆盖率',
             coverageRate: thirdSummary.coverageRate,
             uncovered: thirdSummary.uncovered,
-            tone: 'secondary',
         },
     ] as const;
 
     return (
-        <section className="rounded-3xl border border-white/80 bg-white p-4 shadow-sm">
+        <section className={reportCardClassName}>
             <div className="flex items-center justify-between gap-3">
                 <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">指标使用情况</h2>
-                <button
-                    type="button"
-                    onClick={onViewAll}
-                    className="shrink-0 rounded-full bg-[var(--tm-brand-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]"
-                >
-                    查看完整名单
-                </button>
+                <ReportSectionAction label="查看完整名单" onClick={onViewAll} />
             </div>
-            <div className="mt-3 space-y-3 rounded-3xl">
+            <div className="mt-[var(--tm-report-card-content-gap)] space-y-3 rounded-3xl">
                 {coverageItems.map(item => (
                     <React.Fragment key={item.key}>
                         <IndicatorCoverageChartRow item={item} />
@@ -1170,22 +1212,9 @@ const IndicatorCoverageChartRow = ({
         label: string;
         coverageRate: number;
         uncovered: number;
-        tone: 'brand' | 'secondary';
     };
 }) => {
-    const tone = item.tone === 'brand'
-        ? {
-            shell: 'bg-[var(--tm-brand-primary-soft)]',
-            track: 'bg-[var(--tm-brand-primary-soft-strong)]',
-            bar: 'bg-gradient-to-r from-[var(--tm-brand-primary)] to-[var(--tm-brand-primary-hover)]',
-            text: 'text-[var(--tm-brand-primary-pressed)]',
-        }
-        : {
-            shell: 'bg-[var(--tm-brand-secondary-soft)]',
-            track: 'bg-white/70',
-            bar: 'bg-gradient-to-r from-[var(--tm-brand-secondary)] to-[var(--tm-brand-secondary-strong)]',
-            text: 'text-[var(--tm-brand-secondary-strong)]',
-        };
+    const tone = getCoveragePercentageTone(item.coverageRate);
 
     return (
         <div className={`rounded-2xl p-3 ${tone.shell}`}>
@@ -1199,7 +1228,7 @@ const IndicatorCoverageChartRow = ({
                     <span className="ml-0.5 text-sm font-semibold">%</span>
                 </div>
             </div>
-            <div className={`mt-3 h-3 overflow-hidden rounded-full ${tone.track}`} aria-label={`${item.label}${item.coverageRate}%`}>
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-[var(--tm-chart-grid)]" aria-label={`${item.label}${item.coverageRate}%`}>
                 <div className={`h-full rounded-full ${tone.bar} transition-all duration-700 ease-out`} style={{ width: `${item.coverageRate}%` }} />
             </div>
             <div className="mt-2 flex justify-between text-[10px] font-semibold text-[var(--tm-text-secondary)]">
@@ -1379,7 +1408,7 @@ const GradeCoverageChart = ({
                 alwaysShowContent: false,
                 axisPointer: { type: 'shadow', shadowStyle: { color: teacherBrandSemantic.chartHover } },
                 confine: true,
-                backgroundColor: teacherBrandSemantic.chartTooltip,
+                backgroundColor: teacherReportChartSemantic.tooltip,
                 borderWidth: 0,
                 borderRadius: 12,
                 padding: [8, 10],
@@ -1418,7 +1447,7 @@ const GradeCoverageChart = ({
                 },
                 axisLine: { show: false },
                 axisTick: { show: false },
-                splitLine: { lineStyle: { color: teacherBrandSemantic.gridLine, type: 'dashed' } },
+                splitLine: { lineStyle: { color: teacherReportChartSemantic.grid, type: 'dashed' } },
             },
             series: [
                 {
@@ -1492,7 +1521,7 @@ const GradeCoverageChart = ({
 
 const ClassCoverageRow: React.FC<{ item: LeaderReportClassCoverage }> = ({ item }) => {
     const percent = rate(item.covered, item.total);
-    const tone = getCoverageTone(percent);
+    const tone = getCoveragePercentageTone(percent);
 
     return (
         <div className="rounded-2xl bg-white/80 p-3">
@@ -1586,7 +1615,7 @@ const GradeEvaluationRecordsChart = ({
                 alwaysShowContent: false,
                 axisPointer: { type: 'shadow', shadowStyle: { color: teacherBrandSemantic.chartHover } },
                 confine: true,
-                backgroundColor: teacherBrandSemantic.chartTooltip,
+                backgroundColor: teacherReportChartSemantic.tooltip,
                 borderWidth: 0,
                 borderRadius: 12,
                 padding: [8, 10],
@@ -1624,7 +1653,7 @@ const GradeEvaluationRecordsChart = ({
                 },
                 axisLine: { show: false },
                 axisTick: { show: false },
-                splitLine: { lineStyle: { color: teacherBrandSemantic.gridLine, type: 'dashed' } },
+                splitLine: { lineStyle: { color: teacherReportChartSemantic.grid, type: 'dashed' } },
             },
             series: [
                 {
@@ -1632,10 +1661,7 @@ const GradeEvaluationRecordsChart = ({
                     data: grades.map(grade => ({
                         value: grade.evaluationRecords,
                         itemStyle: {
-                            color: new echartsCore.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: teacherBrandSemantic.primary },
-                                { offset: 1, color: `${teacherBrandSemantic.primaryHover}CC` },
-                            ]),
+                            color: teacherReportChartSemantic.dataDefault,
                             borderRadius: [10, 10, 4, 4],
                             opacity: 0.96,
                         },
@@ -1643,7 +1669,7 @@ const GradeEvaluationRecordsChart = ({
                             show: true,
                             position: 'top',
                             formatter: '{c}条',
-                            color: teacherBrandSemantic.primaryPressed,
+                            color: teacherReportChartSemantic.dataDefaultText,
                             fontSize: 12,
                             fontWeight: 800,
                             valueAnimation: true,
@@ -1766,7 +1792,7 @@ const ClassCoverageChart = ({ classes, animationKey }: { classes: LeaderReportCl
                 alwaysShowContent: false,
                 axisPointer: { type: 'shadow', shadowStyle: { color: teacherBrandSemantic.chartHover } },
                 confine: true,
-                backgroundColor: teacherBrandSemantic.chartTooltip,
+                backgroundColor: teacherReportChartSemantic.tooltip,
                 borderWidth: 0,
                 borderRadius: 12,
                 padding: [8, 10],
@@ -1794,15 +1820,14 @@ const ClassCoverageChart = ({ classes, animationKey }: { classes: LeaderReportCl
                 axisLabel: { color: teacherBrandSemantic.textDisabled, fontSize: 10, formatter: '{value}%' },
                 axisLine: { show: false },
                 axisTick: { show: false },
-                splitLine: { lineStyle: { color: teacherBrandSemantic.gridLine, type: 'dashed' } },
+                splitLine: { lineStyle: { color: teacherReportChartSemantic.grid, type: 'dashed' } },
             },
             series: [
                 {
                     type: 'bar',
                     data: sortedClasses.map(item => {
-                        const targetPercent = rate(item.covered, item.total);
                         const percent = Math.round(rate(item.covered, item.total) * displayedProgress);
-                        const baseColor = getCoverageChartColor(targetPercent);
+                        const baseColor = getCoverageChartColor(rate(item.covered, item.total));
                         return {
                             value: percent,
                             itemStyle: {
@@ -1926,7 +1951,7 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
                 alwaysShowContent: false,
                 axisPointer: { type: 'shadow', shadowStyle: { color: teacherBrandSemantic.chartHover } },
                 confine: true,
-                backgroundColor: teacherBrandSemantic.chartTooltip,
+                backgroundColor: teacherReportChartSemantic.tooltip,
                 borderWidth: 0,
                 borderRadius: 12,
                 padding: [8, 10],
@@ -1954,7 +1979,7 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
                 axisLabel: { color: teacherBrandSemantic.textDisabled, fontSize: 10, formatter: '{value}' },
                 axisLine: { show: false },
                 axisTick: { show: false },
-                splitLine: { lineStyle: { color: teacherBrandSemantic.gridLine, type: 'dashed' } },
+                splitLine: { lineStyle: { color: teacherReportChartSemantic.grid, type: 'dashed' } },
             },
             series: [
                 {
@@ -1962,17 +1987,14 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
                     data: sortedClasses.map(item => ({
                         value: Math.round(item.evaluationRecords * displayedProgress),
                         itemStyle: {
-                            color: new echartsCore.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: teacherBrandSemantic.secondary },
-                                { offset: 1, color: `${teacherBrandSemantic.secondaryStrong}CC` },
-                            ]),
+                            color: teacherReportChartSemantic.dataDefault,
                             borderRadius: [8, 8, 3, 3],
                         },
                         label: {
                             show: true,
                             position: 'top',
                             formatter: '{c}条',
-                            color: teacherBrandSemantic.secondaryStrong,
+                            color: teacherReportChartSemantic.dataDefaultText,
                             fontSize: 12,
                             fontWeight: 800,
                             valueAnimation: true,
@@ -2033,7 +2055,6 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
     const [selectedEvaluationGradeId, setSelectedEvaluationGradeId] = useState<string | null>(null);
     const [showClassEvaluationRecordsSheet, setShowClassEvaluationRecordsSheet] = useState(false);
     const [showEvaluationRecordsHelp, setShowEvaluationRecordsHelp] = useState(false);
-    const [isFilterPinned, setIsFilterPinned] = useState(false);
     const [showCustomDateSheet, setShowCustomDateSheet] = useState(false);
     const [draftDateRange, setDraftDateRange] = useState<LeaderReportDateRange>(() => getPresetDateRange('week'));
     const [confirmedDateRange, setConfirmedDateRange] = useState<LeaderReportDateRange | null>(null);
@@ -2098,10 +2119,6 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
         setSelectedEvaluationGradeId(gradeId ?? selectedEvaluationGradeId ?? fallbackGrade.id);
         setShowClassEvaluationRecordsSheet(true);
     };
-    const handleReportScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-        const nextPinned = event.currentTarget.scrollTop > 12;
-        setIsFilterPinned(current => (current === nextPinned ? current : nextPinned));
-    }, []);
     const handlePresetPeriodChange = (period: Exclude<LeaderReportPeriod, 'custom'>) => {
         setActivePeriod(period);
     };
@@ -2118,150 +2135,77 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
 
     return (
         <div
-            className="relative flex h-full min-h-full flex-col overflow-hidden bg-[var(--tm-bg-page)] text-[var(--tm-text-primary)]"
+            className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-page-plain-content-bg)] text-[var(--tm-text-primary)]"
             style={teacherBrandCssVariables as React.CSSProperties}
         >
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_18%_0%,var(--tm-glow-primary),transparent_36%),radial-gradient(circle_at_88%_6%,var(--tm-glow-secondary),transparent_34%)]" />
-            <div className="relative z-40 flex h-[44px] shrink-0 items-center justify-between border-b border-white/50 bg-white/90 px-4 py-2 backdrop-blur-xl">
-                <button onClick={onBack} className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-muted)]">
+            <div className="relative z-40 flex h-11 shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] px-4">
+                <button onClick={onBack} aria-label="返回" className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-muted)]">
                     <ChevronLeft className="h-5 w-5" />
                 </button>
                 <div className="absolute left-1/2 -translate-x-1/2 text-[17px] font-bold tracking-tight">学校数据报表</div>
                 <div className="w-10" aria-hidden="true" />
             </div>
 
-            <div className="relative flex-1 space-y-4 overflow-y-auto px-4 pb-8 pt-0 no-scrollbar" onScroll={handleReportScroll}>
-                {isLoading && (
-                    <div className="mt-4 rounded-3xl bg-white/80 px-4 py-3 text-center text-xs text-[var(--tm-text-secondary)] shadow-sm">数据加载中...</div>
-                )}
-                <div className={`sticky top-0 z-50 -mx-4 px-4 transition-all duration-300 ease-out ${isFilterPinned
-                    ? 'h-[108px] bg-white pb-0 pt-0 shadow-[0_18px_42px_-30px_var(--tm-shadow-neutral)]'
-                    : 'h-[202px] bg-transparent pb-0 pt-4'}`}
-                >
-                    {/* 完整筛选：首屏保留两层完整信息，滚动后收起 */}
-                    <div className={`space-y-3 transition-all duration-300 ease-out ${isFilterPinned ? 'pointer-events-none -translate-y-4 scale-[0.94] opacity-0 blur-[2px]' : 'translate-y-0 scale-100 opacity-100 blur-0'}`}>
-                        <section className={`rounded-3xl bg-white p-1.5 transition-all duration-300 ease-out ${isFilterPinned ? 'shadow-md shadow-[var(--tm-shadow-neutral)]' : 'shadow-[0_14px_38px_-28px_var(--tm-shadow-neutral)]'}`}>
-                            <div className="grid grid-cols-2 gap-1.5">
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveReportTab('teacher')}
-                                    className={`rounded-2xl text-[15px] font-semibold transition-all active:scale-[0.98] ${isFilterPinned ? 'min-h-[38px]' : 'min-h-[48px]'} ${activeReportTab === 'teacher'
-                                        ? 'bg-[var(--tm-brand-primary)] text-white shadow-[0_8px_18px_-12px_var(--tm-shadow-brand)]'
-                                        : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]'}`}
-                                >
-                                    教师使用
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveReportTab('event')}
-                                    className={`rounded-2xl text-[15px] font-semibold transition-all active:scale-[0.98] ${isFilterPinned ? 'min-h-[38px]' : 'min-h-[48px]'} ${activeReportTab === 'event'
-                                        ? 'bg-[var(--tm-brand-primary)] text-white shadow-[0_8px_18px_-12px_var(--tm-shadow-brand)]'
-                                        : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]'}`}
-                                >
-                                    事件分布
-                                </button>
-                            </div>
-                        </section>
-
-                        <section className={`rounded-[22px] bg-white p-2 transition-all duration-300 ease-out ${isFilterPinned ? 'shadow-[0_14px_34px_-26px_var(--tm-shadow-brand)]' : 'shadow-[0_12px_30px_-22px_var(--tm-shadow-neutral)]'}`}>
-                            <div className={`grid grid-cols-4 rounded-[18px] transition-all duration-300 ease-out ${isFilterPinned ? 'gap-1.5 p-1' : 'gap-2'}`}>
-                                {leaderReportPeriods.map(period => (
-                                    <button
-                                        key={period.key}
-                                        onClick={() => handlePresetPeriodChange(period.key)}
-                                        className={`rounded-[16px] border text-[14px] font-semibold transition-all active:scale-95 ${isFilterPinned ? 'min-h-[34px]' : 'min-h-[38px]'} ${activePeriod === period.key
-                                            ? 'border-transparent bg-[var(--tm-brand-primary)] text-white shadow-sm'
-                                            : 'border-transparent bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)] shadow-[0_4px_14px_-12px_var(--tm-shadow-neutral)] active:bg-[var(--tm-brand-primary-soft-strong)]'}`}
-                                    >
-                                        {period.label}
-                                    </button>
-                                ))}
-                            </div>
+            <div className="relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar">
+                <div className="sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)] pt-px">
+                    <ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />
+                    <div className="grid h-[var(--tm-report-filter-row-height)] grid-cols-5" role="group" aria-label="学校报表时间范围">
+                        {leaderReportPeriods.map(period => (
                             <button
+                                key={period.key}
                                 type="button"
-                                onClick={openCustomDateSheet}
-                                aria-label="打开自定义时间段选择"
-                                className={`mt-2 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-2xl border px-3.5 text-left transition-all active:scale-[0.98] ${activePeriod === 'custom'
-                                    ? 'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)] shadow-[0_10px_24px_-18px_var(--tm-shadow-brand)]'
-                                    : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
+                                aria-pressed={activePeriod === period.key}
+                                onClick={() => handlePresetPeriodChange(period.key)}
+                                className="flex min-w-0 items-center justify-center px-[var(--tm-space-1)]"
                             >
-                                <span className="flex min-w-0 items-center gap-2">
-                                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${activePeriod === 'custom' ? 'bg-[var(--tm-brand-primary)] text-white' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]'}`}>
-                                        <Calendar className="h-4 w-4" />
-                                    </span>
-                                    <span className="block text-[14px] font-semibold">自定义时间段</span>
+                                <span className={`flex h-[var(--tm-report-period-pill-height)] min-w-0 items-center justify-center rounded-[var(--tm-radius-control)] px-[var(--tm-report-period-pill-inline)] text-[length:var(--tm-report-period-font-size)] ${activePeriod === period.key
+                                    ? 'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)]'
+                                    : 'font-medium text-[var(--tm-text-secondary)]'}`}
+                                >
+                                    {period.label.replace('本学期', '学期')}
                                 </span>
-                                {activePeriod === 'custom' && (
-                                    <span className="shrink-0 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-bold text-[var(--tm-brand-primary-pressed)]">
-                                        {customCompactLabel}
-                                    </span>
-                                )}
                             </button>
-                        </section>
+                        ))}
+                        <button
+                            type="button"
+                            aria-pressed={activePeriod === 'custom'}
+                            onClick={openCustomDateSheet}
+                            aria-label="打开自定义时间段选择"
+                            className="flex min-w-0 items-center justify-center px-[var(--tm-space-1)]"
+                        >
+                            <span className={`flex h-[var(--tm-report-period-pill-height)] min-w-0 items-center justify-center rounded-[var(--tm-radius-control)] px-[var(--tm-report-period-pill-inline)] text-[length:var(--tm-report-period-font-size)] ${activePeriod === 'custom'
+                                ? 'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)]'
+                                : 'font-medium text-[var(--tm-text-secondary)]'}`}
+                            >
+                                自定义
+                            </span>
+                        </button>
                     </div>
-
-                    {/* 紧凑筛选：吸顶后压缩成单条胶囊，类似货柜机入口卡片收束后的操作区 */}
-                    <div className={`pointer-events-none absolute inset-x-0 top-0 transition-all duration-300 ease-out ${isFilterPinned ? 'opacity-100 translate-y-0 scale-100 blur-0' : 'opacity-0 translate-y-4 scale-[1.04] blur-[2px]'}`}>
-                        <div className={`${isFilterPinned ? 'pointer-events-auto' : 'pointer-events-none'} flex flex-col gap-1.5 rounded-b-none border-b border-[var(--tm-border-subtle)] bg-white px-4 pb-2 pt-3 shadow-[0_14px_34px_-24px_var(--tm-shadow-neutral)]`}>
-                            <div className="grid h-12 grid-cols-2 rounded-[22px] bg-[var(--tm-brand-primary-soft)] p-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveReportTab('teacher')}
-                                    aria-label="教师使用报表"
-                                    className={`rounded-[16px] text-[14px] font-semibold transition-all active:scale-95 ${activeReportTab === 'teacher' ? 'bg-[var(--tm-brand-primary)] text-white shadow-sm' : 'text-[var(--tm-brand-primary-pressed)] active:bg-white/80'}`}
-                                >
-                                    教师使用
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveReportTab('event')}
-                                    aria-label="事件分布报表"
-                                    className={`rounded-[16px] text-[14px] font-semibold transition-all active:scale-95 ${activeReportTab === 'event' ? 'bg-[var(--tm-brand-primary)] text-white shadow-sm' : 'text-[var(--tm-brand-primary-pressed)] active:bg-white/80'}`}
-                                >
-                                    事件分布
-                                </button>
-                            </div>
-                            <div className="flex min-w-0 gap-1">
-                                <div className="grid h-9 min-w-0 grid-cols-4 gap-1 rounded-[18px] bg-white p-0.5 flex-1">
-                                    {leaderReportPeriods.map(period => (
-                                        <button
-                                            key={period.key}
-                                            onClick={() => handlePresetPeriodChange(period.key)}
-                                            className={`rounded-[14px] text-[14px] font-semibold transition-all active:scale-95 ${activePeriod === period.key
-                                                ? 'bg-[var(--tm-brand-primary)] text-white shadow-sm'
-                                                : 'text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft)]'}`}
-                                        >
-                                            {period.label.replace('本学期', '学期')}
-                                        </button>
-                                    ))}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={openCustomDateSheet}
-                                    aria-label="打开自定义时间段选择"
-                                    className={`h-9 min-w-[70px] shrink-0 rounded-[18px] px-2 text-[13px] font-semibold transition-all active:scale-95 ${activePeriod === 'custom' ? 'bg-[var(--tm-brand-primary)] text-white shadow-sm' : 'bg-white text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft)]'}`}
-                                >
-                                    {activePeriod === 'custom' ? customCompactLabel : '自定义'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    {activePeriod === 'custom' && confirmedDateRange && (
+                        <button
+                            type="button"
+                            onClick={openCustomDateSheet}
+                            aria-label={`当前自定义时间段${customCompactLabel}，点击修改`}
+                            className="flex h-[var(--tm-report-custom-range-height)] w-full items-center justify-center gap-1 border-t border-[var(--tm-border-subtle)] text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]"
+                        >
+                            <Calendar aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span className="tabular-nums">{customCompactLabel}</span>
+                        </button>
+                    )}
                 </div>
 
-                {activeReportTab === 'teacher' ? (
+                <div className="space-y-[var(--tm-report-card-gap)] px-[var(--tm-report-page-inline)] pt-[var(--tm-report-card-gap)]">
+                    {isLoading && (
+                        <div className="rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 py-3 text-center text-xs text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-card)]">数据加载中...</div>
+                    )}
+                    {activeReportTab === 'teacher' ? (
                     <>
                 <OverviewCard snapshot={snapshot} animationKey={`${reportAnimationKey}-overview`} />
 
-                <section className="rounded-3xl border border-white/80 bg-white p-4 shadow-sm">
-                    <div className="mb-3 flex items-center justify-between gap-3">
+                <section className={reportCardClassName}>
+                    <div className="mb-[var(--tm-report-card-content-gap)] flex items-center justify-between gap-3">
                         <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">年级覆盖率</h2>
-                        <button
-                            type="button"
-                            onClick={() => openClassCoverageSheet()}
-                            className="rounded-full bg-[var(--tm-brand-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]"
-                        >
-                            查看班级明细
-                        </button>
+                        <ReportSectionAction label="查看班级明细" onClick={() => openClassCoverageSheet()} />
                     </div>
                     <GradeCoverageChart
                         grades={snapshot?.gradeCoverages ?? []}
@@ -2272,8 +2216,8 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                     />
                 </section>
 
-                <section className="rounded-3xl border border-white/80 bg-white p-4 shadow-sm">
-                    <div className="mb-3 flex items-center justify-between gap-3">
+                <section className={reportCardClassName}>
+                    <div className="mb-[var(--tm-report-card-content-gap)] flex items-center justify-between gap-3">
                         <div className="relative flex min-w-0 items-center gap-1.5">
                             <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">年级评价数</h2>
                             <button
@@ -2296,13 +2240,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                                 </div>
                             )}
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => openClassEvaluationRecordsSheet()}
-                            className="rounded-full bg-[var(--tm-brand-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]"
-                        >
-                            查看班级明细
-                        </button>
+                        <ReportSectionAction label="查看班级明细" onClick={() => openClassEvaluationRecordsSheet()} />
                     </div>
                     <GradeEvaluationRecordsChart
                         grades={snapshot?.gradeCoverages ?? []}
@@ -2314,29 +2252,24 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                 </section>
 
 
-                <section className="rounded-3xl border border-white/80 bg-white p-4 shadow-sm">
-                    <div className="mb-3 flex items-center justify-between gap-3">
+                <section className={reportCardClassName}>
+                    <div className="mb-[var(--tm-report-card-content-gap)] flex items-center justify-between gap-3">
                         <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">教师使用排行榜</h2>
-                        <button
-                            className="shrink-0 text-xs font-medium text-[var(--tm-brand-primary)] active:opacity-70"
-                            onClick={() => setFullRankingType(rankingTab)}
-                        >
-                            查看全部
-                        </button>
+                        <ReportSectionAction label="查看全部" onClick={() => setFullRankingType(rankingTab)} />
                     </div>
                     <div className="mb-3">
-                        <div className="inline-flex rounded-2xl bg-[var(--tm-brand-primary-soft)] p-1">
+                        <div className="inline-flex rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-muted)] p-1">
                             <button
                                 type="button"
                                 onClick={() => setRankingTab('active')}
-                                className={`min-h-[36px] rounded-xl px-4 text-sm font-semibold transition-all ${rankingTab === 'active' ? 'bg-white text-[var(--tm-brand-primary)] shadow-sm' : 'text-[var(--tm-brand-primary-pressed)]'}`}
+                                className={`min-h-[36px] rounded-[var(--tm-radius-control)] px-4 text-sm font-semibold transition-all ${rankingTab === 'active' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                             >
                                 积极使用
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setRankingTab('low')}
-                                className={`min-h-[36px] rounded-xl px-4 text-sm font-semibold transition-all ${rankingTab === 'low' ? 'bg-white text-[var(--tm-brand-secondary-strong)] shadow-sm' : 'text-[var(--tm-brand-primary-pressed)]'}`}
+                                className={`min-h-[36px] rounded-[var(--tm-radius-control)] px-4 text-sm font-semibold transition-all ${rankingTab === 'low' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-secondary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                             >
                                 使用较少
                             </button>
@@ -2368,7 +2301,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
 
                     </>
                 ) : (
-                    <section className="space-y-3">
+                    <section className="space-y-[var(--tm-report-card-gap)]">
                         <FiveEducationBarChart
                             title="五育得分对比图"
                             yAxisName={fiveEducationScoreYAxisNameMap[fiveEducationScoreMetric]}
@@ -2402,6 +2335,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                         />
                     </section>
                 )}
+                </div>
             </div>
 
             {showCustomDateSheet && (
@@ -2506,7 +2440,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                             <div className="mb-2 flex items-center justify-between px-1">
                                 <div className="text-base font-semibold text-[var(--tm-text-primary)]">{selectedGrade.name}班级覆盖率</div>
                                 <div className="text-right">
-                                    <span className={`text-xl font-black leading-none ${getCoverageTone(rate(selectedGrade.covered, selectedGrade.total)).text}`}>
+                                    <span className={`text-xl font-black leading-none ${getCoveragePercentageTone(rate(selectedGrade.covered, selectedGrade.total)).text}`}>
                                         <AnimatedNumber value={rate(selectedGrade.covered, selectedGrade.total)} replayKey={`${selectedGrade.id}-${selectedGrade.covered}/${selectedGrade.total}-summary`} />%
                                     </span>
                                 </div>
@@ -2566,7 +2500,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                         <div className="flex items-center justify-between border-b border-[var(--tm-border-subtle)] px-5 py-4">
                             <div>
                                 <h3 className="text-lg font-semibold text-[var(--tm-text-primary)]">教师赋分完整榜单</h3>
-                                <p className="mt-0.5 text-xs text-[var(--tm-text-secondary)]">可按加分、减分、净赋分排序</p>
+                                <p className="mt-0.5 text-xs text-[var(--tm-text-secondary)]">可按加分、减分、总分排序</p>
                             </div>
                             <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]" onClick={() => setShowFullScoreRanking(false)}>
                                 <X className="h-5 w-5" />
@@ -2580,7 +2514,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                                 <span>老师</span>
                                 <span className="text-right">加分</span>
                                 <span className="text-right">减分</span>
-                                <span className="text-right">净赋分</span>
+                                <span className="text-right">总分</span>
                             </div>
                         </div>
                         <div className="max-h-[58vh] space-y-2.5 overflow-y-auto p-4 pb-8">

@@ -4,6 +4,9 @@ const viewSource = fs.readFileSync(new URL('./PrincipalPeriodicReportView.tsx', 
 const dataSource = fs.readFileSync(new URL('../data/principalPeriodicReports.ts', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const feedbackSource = fs.readFileSync(new URL('../components/AssistantReportFeedback.tsx', import.meta.url), 'utf8');
+const cardsSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportCards.tsx', import.meta.url), 'utf8');
+const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
+const contractSource = fs.readFileSync(new URL('../domain/assistantReport.ts', import.meta.url), 'utf8');
 const headerSource = fs.readFileSync(new URL('../components/AssistantSubpageHeader.tsx', import.meta.url), 'utf8');
 const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
 
@@ -36,19 +39,23 @@ for (const required of [
 for (const required of [
   'report.analysisSteps.slice(0, visibleStepCount)',
   'report.loadingTitle',
-  'report.metricsTitle',
-  'report.judgementTitle',
-  'report.findingsTitle',
-  'report.actionsTitle',
-  'report.notice',
   "label={kind === 'weekly' ? '往期建议' : '往期复盘'}",
   'reportData?: PrincipalPeriodicReportContent;',
+  'reportPayload?: unknown;',
+  '<AssistantReportCards',
+  'resolveAssistantReportDocument(',
   "status === 'empty'",
   "status === 'failed'",
   'principal-report-page',
 ]) {
   requireText(viewSource, required, `校长周月报告页缺少状态、内容或无障碍能力：${required}`);
 }
+
+for (const required of ["key: 'judgement'", "key: 'actions'", "key: 'metrics'", "key: 'progress'", "key: 'findings'"]) {
+  requireText(adapterSource, required, `校长周月报告适配器缺少结构化区块：${required}`);
+}
+requireText(contractSource, "cardOrder: ['judgement', 'actions', 'metrics', 'progress', 'findings']", '校长周月报告应先展示判断和管理动作。');
+requireText(cardsSource, '<MobileBottomSheet', '校长报告证据应通过公共底部抽屉渐进披露。');
 
 requireText(feedbackSource, '重新生成', '报告生成失败后应提供明确的重试操作。');
 requireText(headerSource, "backLabel = '返回'", '校长报告共享标题栏应提供明确返回入口。');

@@ -5,6 +5,8 @@ const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_本周�
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const dataSource = fs.readFileSync(new URL('../data/weeklyActionAdvice.ts', import.meta.url), 'utf8');
 const viewSource = fs.readFileSync(new URL('./WeeklyActionAdviceView.tsx', import.meta.url), 'utf8');
+const cardsSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportCards.tsx', import.meta.url), 'utf8');
+const contractSource = fs.readFileSync(new URL('../domain/assistantReport.ts', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -20,9 +22,10 @@ for (const source of [promptSource, prdSource, dataSource, viewSource]) {
 }
 forbidText(viewSource, "title: '班级速览'", '页面不应继续展示班级速览。');
 
-for (const required of ['<details', '<summary', '查看依据', '收起依据', 'min-h-11', 'var(--tm-border-subtle)', 'var(--tm-text-secondary)']) {
-  requireText(viewSource, required, `渐进披露交互缺少：${required}`);
+for (const required of ['<MobileBottomSheet', '查看依据', 'min-h-11', 'var(--tm-border-subtle)', 'var(--tm-text-secondary)']) {
+  requireText(cardsSource, required, `渐进披露交互缺少：${required}`);
 }
+requireText(contractSource, "cardOrder: ['actions', 'student_insights', 'class_insights', 'evaluation_insights']", '本周报告应优先展示行动卡片。');
 requireText(promptSource, '默认展开的报告正文控制在500至700个汉字以内', '提示词应约束默认展开正文长度。');
 requireText(prdSource, '默认展开的报告正文长度', 'PRD 应记录紧凑正文指标。');
 

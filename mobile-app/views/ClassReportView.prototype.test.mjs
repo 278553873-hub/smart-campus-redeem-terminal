@@ -12,6 +12,9 @@ const uiGuidelineSource = fs.readFileSync(new URL('../../design-system/teacher-m
 const coverageDomainSource = fs.readFileSync(new URL('../domain/classStudentCoverage.ts', import.meta.url), 'utf8');
 const reportSourceDomainSource = fs.readFileSync(new URL('../domain/classReportSource.ts', import.meta.url), 'utf8');
 const bottomSheetSource = fs.readFileSync(new URL('../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
+const indicatorDemoSource = fs.readFileSync(new URL('../data/classReportIndicatorDemo.ts', import.meta.url), 'utf8');
+const indicatorTreeSource = fs.readFileSync(new URL('../domain/classReportIndicatorTree.ts', import.meta.url), 'utf8');
+const indicatorDrilldownSource = fs.readFileSync(new URL('../components/report/ClassReportIndicatorDrilldown.tsx', import.meta.url), 'utf8');
 
 for (const section of [
     '概况',
@@ -85,6 +88,7 @@ assert.ok(!viewSource.includes('净得分排行') && !viewSource.includes('进�
 assert.ok(viewSource.includes('reportData.previousRecords / reportData.totalRecords') && viewSource.includes('progress: net - (previousPlus - previousMinus)'), '进步幅度必须按本周期总分相对上周期总分的变化计算。');
 assert.ok(viewSource.includes("row.progress >= 0 ? '+' : ''") && viewSource.includes("(rankingMode === 'net' ? row.net : row.progress) >= 0"), '进步幅度应正确展示正负号与对应语义色。');
 assert.ok(viewSource.includes('<FocusStudentList rows={focusRows.positive}') && viewSource.includes('<FocusStudentList rows={focusRows.negative}'), '需要关注应在主卡双栏直接展示完整前10名。');
+assert.ok(viewSource.includes('<FocusStudentList rows={focusRows.positive} tone="positive" onSelectStudent={onSelectStudent}') && viewSource.includes('aria-label={`查看${row.student.name}学生详情`}'), '需要关注中的学生姓名应能直接进入学生详情。');
 assert.ok(!viewSource.includes('showFocusDetails') && !viewSource.includes('focusListMode') && !viewSource.includes('查看完整榜单'), '需要关注不应再通过按钮和底部抽屉二次展开前10名。');
 assert.ok(viewSource.includes('加分TOP10') && viewSource.includes('扣分TOP10'), '需要关注双栏应使用约定的加分TOP10与扣分TOP10榜单名。');
 assert.ok(!viewSource.includes('加分前10名') && !viewSource.includes('扣分前10名'), '需要关注不应保留旧榜单名称。');
@@ -117,7 +121,7 @@ assert.ok(viewSource.includes("teacherMissing\n                                 
 assert.ok(!viewSource.includes("const evaluationSelected = sortKey === 'evaluationCount'") && !viewSource.includes("const teacherSelected = sortKey === 'teacherCount'"), '排序状态只应由表头表达，不应给整列数据重复增加视觉背景。');
 assert.ok(viewSource.includes('h-[var(--tm-report-coverage-value-height)]') && !viewSource.includes('mx-auto flex h-7 w-16'), '学生覆盖数值应使用更扁的令牌化区域，避免胶囊控件感。');
 assert.ok(viewSource.includes('>\n                                {row.evaluationCount}\n                            </span>') && viewSource.includes('>\n                                {row.teacherCount}\n                            </span>'), '学生覆盖数据单元应只展示数字，不重复表头已有的单位。');
-assert.ok(viewSource.includes('评价${row.evaluationCount}次，${row.teacherCount}位老师评价'), '视觉精简后仍应为读屏保留完整单位。');
+assert.ok(viewSource.includes('aria-label={`评价${row.evaluationCount}次`}') && viewSource.includes('aria-label={`${row.teacherCount}位老师评价`}'), '视觉精简后仍应为读屏保留完整单位。');
 assert.ok(!viewSource.includes('rounded-full bg-[var(--tm-chart-negative-soft)]'), '学生覆盖序号不应使用Top 3排名徽标。');
 assert.ok(viewSource.includes('已覆盖{\' \'}') && viewSource.includes('{coveredStudentCount}/{totalStudents}'), '已覆盖人数应与学生覆盖情况标题在同一行展示。');
 assert.ok(viewSource.includes('rounded-full bg-[var(--tm-chart-data-default-soft)]') && viewSource.includes('text-[var(--tm-chart-data-default-text)]'), '已覆盖人数应使用克制的普通数据标签建立信息层级。');
@@ -198,14 +202,42 @@ assert.ok(!viewSource.includes('tm-report-date-option-height-pinned') && !viewSo
 assert.ok(uiGuidelineSource.includes('--tm-report-source-pill-height') && uiGuidelineSource.includes('--tm-report-filter-padding-pinned'), '教师手机端规范应固化来源胶囊高度和吸顶垂直留白令牌。');
 assert.ok(uiGuidelineSource.includes('视觉顺序、DOM 顺序和吸顶顺序都必须保持“日期 → 来源 → 报告内容”') && uiGuidelineSource.includes('来源失效时自动回到“全班汇总”'), '教师手机端规范应固化日期与来源的父子依赖。');
 assert.ok(uiGuidelineSource.includes('点击“应用日期”后才更新') && uiGuidelineSource.includes('常见 4 至 5 个来源'), '教师手机端规范应固化自定义日期应用时机与来源舒展展示策略。');
-assert.ok(appSource.includes("'class_detail', 'class_report', 'student_detail'"), '班级报告应改为页面内部滚动，保证筛选吸顶和底部抽屉层级稳定。');
+for (const internallyScrolledView of ["'class_detail'", "'class_report'", "'student_detail'"]) {
+    assert.ok(appSource.includes(internallyScrolledView), `页面内部滚动列表缺少${internallyScrolledView}，无法保证筛选吸顶和底部抽屉层级稳定。`);
+}
 assert.ok(viewSource.includes('TeacherReportBarChart'), '五育得分应使用通用柱状图组件。');
-assert.ok(viewSource.includes('<RecordDistributionComparison overview={recordDistributionOverview} />'), '评价记录分布默认态应使用正负事件占比图。');
+assert.ok(viewSource.includes('<RecordDistributionComparison') && viewSource.includes('overview={recordDistributionOverview}'), '评价记录分布默认态应使用正负事件占比图。');
+assert.ok(!viewSource.includes('onToneSelect=') && !recordComparisonSource.includes('onToneSelect'), '评价记录分布只展示占比，不应提供记录下钻。');
 assert.ok(viewSource.includes('aria-label="查看评价记录对比详情"') && viewSource.includes('对比详情'), '评价记录分布应提供轻量对比详情入口。');
 assert.ok(viewSource.includes('open={showRecordDistributionDetails}') && viewSource.includes('title="评价记录对比"'), '评价记录精确值应通过公共底部抽屉渐进披露。');
 assert.ok(viewSource.includes('<RecordDistributionDetails rows={recordDistributionRows} />'), '评价记录对比抽屉应展示完整数值对照。');
 assert.ok(!viewSource.includes('TeacherReportBulletChart'), '评价记录分布不应继续使用横向子弹图。');
 assert.ok(viewSource.includes('TeacherReportDonutChart'), '五育事件应使用通用环形图组件。');
+assert.ok(viewSource.includes('buildClassReportIndicatorTree(classReportIndicatorDemoPaths, totalRecords)'), '两张五育图表应复用学校配置的三级指标树。');
+for (const label of ['崇德', '求知', '向阳', '尚美', '躬行', '乐创']) {
+    assert.ok(indicatorDemoSource.includes(`'${label}'`), `真实学校指标 Demo 缺少一级指标：${label}`);
+}
+assert.ok(indicatorTreeSource.includes('paths: readonly ClassReportIndicatorPath[]'), '指标领域层不得把一级指标固定为五项。');
+assert.ok(indicatorTreeSource.includes('aggregateNode') && indicatorTreeSource.includes('addMetrics'), '二级、一级数据必须从三级指标向上汇总。');
+assert.ok(viewSource.includes("onCategorySelect={label => openIndicatorDrilldown('score', label)}"), '点击得分图一级指标应直达对应二级明细。');
+assert.ok(viewSource.includes("onCategorySelect={label => openIndicatorDrilldown('event', label)}"), '点击事件图一级指标应直达对应二级明细。');
+assert.ok(viewSource.includes('查看五育得分二级和三级指标明细') && viewSource.includes('查看五育事件二级和三级指标明细'), '两张图都应提供可访问的查看明细入口。');
+assert.ok(viewSource.includes('<ClassReportIndicatorDrilldown') && indicatorDrilldownSource.includes('MobileBottomSheet'), '五育下钻应复用公共底部抽屉。');
+assert.ok(!viewSource.includes('ClassReportEvidenceSheet') && !viewSource.includes('openAttentionEvidence') && !viewSource.includes('openCoverageEvidence'), '需要关注和学生覆盖不应提供记录下钻。');
+assert.ok(!viewSource.includes('onSelectRow') && !viewSource.includes("label: '去记录'"), '主卡和全部学生覆盖清单都不应恢复整行记录下钻。');
+assert.equal((viewSource.match(/onSelectStudent=\{onSelectStudent\}/g) ?? []).length, 4, '需要关注双栏、学生覆盖主卡和完整清单都应复用学生详情入口。');
+assert.ok(uiGuidelineSource.includes('占比色块只承载数据表达') && uiGuidelineSource.includes('完整清单只扩展汇总数据范围'), '教师手机端规范应明确长周期汇总板块不下钻记录。');
+assert.ok(viewSource.includes("[{ id: 'all', label: '全部' }, ...reportData.indicatorTree]"), '需要关注筛选应与五育图表复用学校一级指标配置。');
+assert.ok(chartSource.includes("chart.on('click', handleItemSelect)") && chartSource.includes("chart.off('click', handleItemSelect)"), '通用图表应提供可清理的分类点击回调。');
+assert.ok(chartSource.includes("if (!chart.isDisposed()) chart.off('click', handleItemSelect)"), '图表卸载时不应对已释放实例重复解绑事件。');
+assert.ok(chartSource.includes("params.componentType === 'xAxis'") && chartSource.includes('triggerEvent: Boolean(onCategorySelect)'), '可下钻柱状图应同时支持点击柱组和横轴指标名称。');
+assert.ok(chartSource.includes("formatter: onCategorySelect ? (value: string) => `{label|${value}} {arrow|›}`") && chartSource.includes('label: { color: theme.textPrimary') && chartSource.includes('arrow: { color: theme.textSecondary'), '可下钻柱状图的指标名应使用主文字黑色，箭头使用次级灰色。');
+assert.ok(indicatorDrilldownSource.includes('TeacherReportBarChart') && indicatorDrilldownSource.includes("{ name: '加分'") && indicatorDrilldownSource.includes("{ name: '扣分'") && indicatorDrilldownSource.includes("{ name: '总分'"), '得分一级、二级、三级应保持三系列柱状图语义一致。');
+assert.ok(indicatorDrilldownSource.includes('<ScoreLegend />') && indicatorDrilldownSource.includes('showLegend={false}'), '得分下钻横向滚动时图例应固定在滚动区上方。');
+assert.ok(indicatorDrilldownSource.includes('TeacherReportDonutChart') && indicatorDrilldownSource.includes("optionKey={`indicator-event-${path.join('-')}`}") && indicatorDrilldownSource.includes('value: node.metrics.eventCount'), '事件一级、二级、三级应保持环形图语义一致。');
+assert.ok(indicatorDrilldownSource.includes('aria-label="一级指标切换"') && indicatorDrilldownSource.includes('pathNodes.length > 1'), '下钻抽屉应使用一级指标切换栏，并只在三级显示返回路径。');
+assert.ok(viewSource.includes('lastIndicatorRootByMode') && viewSource.includes('reportData.indicatorTree[0]') && viewSource.includes('onRootChange={rootId =>'), '查看明细应直达首个或最近查看的一级指标二级数据。');
+assert.ok(uiGuidelineSource.includes('“五育”是国家“五育并举”育人理念下的固定业务名称') && uiGuidelineSource.includes('一级指标必须读取学校当前启用的指标配置'), '教师端规范应明确五育名称固定、一级指标可配置。');
 
 for (const token of [
     '--tm-bg-page-glass',
@@ -240,7 +272,7 @@ for (const legacyStyle of ['bg-blue-', 'text-blue-', 'from-blue-', 'to-indigo-',
 
 assert.ok(chartSource.includes("import('echarts/core')"), '报表图表应复用专业图表引擎。');
 assert.ok(recordComparisonSource.includes('positivePercentage') && recordComparisonSource.includes('negativePercentage'), '评价记录默认图形应直接展示正负事件占比。');
-assert.ok(recordComparisonSource.includes('role="img"') && recordComparisonSource.includes('h-4 overflow-hidden'), '评价记录默认态应使用一条可读的百分比堆叠图。');
+assert.ok(recordComparisonSource.includes('role="img"') && recordComparisonSource.includes('h-4 overflow-hidden'), '评价记录默认态应使用一条只读、可访问的百分比堆叠图。');
 assert.ok(summaryRuleSource.includes("label: '正向事件'") && summaryRuleSource.includes("label: '负向事件'"), '评价记录对比详情应保留正向和负向事件分类。');
 assert.ok(viewSource.includes('previousPositiveRecords'), '评价记录分布应提供上周期正向事件。');
 assert.ok(viewSource.includes('previousNegativeRecords'), '评价记录分布应提供上周期负向事件。');
@@ -272,6 +304,7 @@ for (const unrelatedSection of ['通用图表规则', '颜色', '代码映射'])
 }
 assert.ok(!chartSource.includes('PictorialBarChart'), '评价记录改为直接对比后不应保留无用的象形柱图运行时。');
 assert.ok(uiGuidelineSource.includes('百分比堆叠条') && uiGuidelineSource.includes('纯文字数值对照表'), '教师手机端规范应固化评价记录分布的简洁默认态与文字详情结构。');
+assert.ok(uiGuidelineSource.includes('占比色块只承载数据表达') && uiGuidelineSource.includes('不设置整行点击或记录下钻') && uiGuidelineSource.includes('学生姓名可直接进入学生详情') && uiGuidelineSource.includes('禁止在该板块内直接加载规模不可预测的评价记录'), '教师手机端规范应明确长周期汇总板块不加载记录明细，仅允许姓名进入学生详情。');
 assert.ok(chartSource.includes('labelColors'), '清亮图形填充应与深色数值标签分层。');
 assert.ok(!chartSource.includes('ScatterChart'), '删除子弹图后不应继续加载散点图运行时。');
 assert.ok(viewSource.includes("{ name: '总分', values: reportData.netScores, color: 'data' }"), '总分应使用清亮普通数据蓝。');
@@ -280,7 +313,7 @@ for (const color of ['#43B0F6', '#5BD65D', '#FF9B3D', '#FF8176', '#AFBDCB']) {
 }
 assert.ok(!chartSource.includes("readToken(style, '--tm-status-positive')"), '班级报告图形不应继续直接读取全局正向色。');
 assert.ok(!chartSource.includes("readToken(style, '--tm-status-negative')"), '班级报告图形不应继续直接读取全局负向色。');
-assert.ok(appSource.includes("'class_report', 'student_detail'"), '班级报告应接入教师手机端统一页面背景。');
+assert.ok(appSource.includes("'class_report'") && appSource.includes("'student_detail'"), '班级报告应接入教师手机端统一页面背景。');
 const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
 assert.ok(plainBackgroundList.includes("'class_report'"), '班级报告应使用纯白标题栏、浅灰内容区背景。');
 

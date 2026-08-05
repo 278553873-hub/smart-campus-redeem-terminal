@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('./LeaderReportView.tsx', import.meta.url), 'utf8');
+const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 
 const slice = (startMarker, endMarker) => {
   const start = source.indexOf(startMarker);
@@ -16,43 +17,90 @@ const donut = slice('const FiveEducationDonutChart', 'const IndicatorUsageSummar
 const teacherRows = slice('const TeacherUsageRankingHeader', 'const scoreSortTabs');
 const fullScoreSheet = source.slice(source.indexOf('教师赋分完整榜单'), source.indexOf('{showIndicatorUsageSheet'));
 const fullTeacherSheet = source.slice(source.indexOf('教师使用完整榜单'), source.indexOf('export default'));
+const reportTypeTabs = slice('const ReportTypeTabs', 'const useAnimatedNumber');
 const leaderView = slice('const LeaderReportView', 'export default LeaderReportView');
 
+if ((source.match(/label: '总分'/g) ?? []).length < 1 || !source.includes("net: '总分'")) {
+  throw new Error('学校数据报表的净得分展示文案必须统一为「总分」');
+}
+if (source.includes("label: '净得分'") || source.includes("net: '净得分'") || source.includes('净赋分')) {
+  throw new Error('学校数据报表不应继续向教师展示「净得分」或「净赋分」');
+}
+
 for (const required of [
-  'isFilterPinned',
-  'handleReportScroll',
-  'onScroll={handleReportScroll}',
-  'overflow-y-auto px-4 pb-8 pt-0',
-  'sticky top-0 z-50',
-  '紧凑筛选',
-  '完整筛选',
-  'rounded-3xl bg-white p-1.5',
-  'rounded-[22px] bg-white p-2',
-  'border-transparent bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-pressed)]',
-  'border-transparent bg-[var(--tm-brand-primary)] text-white shadow-sm',
-  'pointer-events-none absolute inset-x-0 top-0',
-  'h-[108px] bg-white',
-  'bg-white px-4 pb-2 pt-3',
-  'rounded-b-none border-b border-[var(--tm-border-subtle)]',
-  'flex flex-col gap-1.5',
-  'grid h-12 grid-cols-2 rounded-[22px] bg-[var(--tm-brand-primary-soft)] p-1',
-  'grid h-9 min-w-0 grid-cols-4 gap-1 rounded-[18px] bg-white p-0.5',
-  'text-[var(--tm-brand-primary-pressed)] active:bg-white/80',
-  '教师使用',
-  '事件分布',
-  'text-[14px] font-semibold',
-  "isFilterPinned ? 'pointer-events-none",
-  "isFilterPinned ? 'opacity-100",
-  'shadow-[0_18px_42px_-30px_var(--tm-shadow-neutral)]',
-  'transition-all duration-300 ease-out',
+  'role="tablist"',
+  'aria-label="学校报表类型"',
+  'role="tab"',
+  'aria-selected={selected}',
+  'h-[var(--tm-report-filter-row-height)]',
+  'text-[length:var(--tm-report-type-font-size)]',
+  'h-[var(--tm-report-date-indicator-height)]',
+  'w-[var(--tm-report-date-indicator-width)]',
+  "? 'font-semibold text-[var(--tm-brand-primary)]'",
+  "'font-medium text-[var(--tm-text-secondary)]'",
+  'selected && (',
 ]) {
-  if (!leaderView.includes(required)) {
-    throw new Error(`学校数据报表顶部筛选需要滑动吸顶和微动画，缺少：${required}`);
+  if (!reportTypeTabs.includes(required)) {
+    throw new Error(`学校数据报表类型需要使用班级报告同款开放式页签，缺少：${required}`);
   }
 }
 
-if (leaderView.includes('bg-emerald') || leaderView.includes('text-emerald')) {
-  throw new Error('吸顶紧凑态教师/事件筛选不应残留旧绿色，应统一使用品牌红 Token');
+for (const forbidden of ['transition-', 'active:scale', 'compact', 'interactive']) {
+  if (reportTypeTabs.includes(forbidden)) {
+    throw new Error(`学校数据报表类型页签应直接切换数据，不保留微交互或双状态结构：${forbidden}`);
+  }
+}
+if (reportTypeTabs.includes('border-b') || reportTypeTabs.includes('border-[var(--tm-border-subtle)]')) {
+  throw new Error('学校数据报表类型切换与时间切换之间不应保留分割线');
+}
+
+for (const required of [
+  'relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar',
+  'px-[var(--tm-report-page-inline)]',
+  'space-y-[var(--tm-report-card-gap)]',
+  '<ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />',
+  'sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)]',
+  'grid h-[var(--tm-report-filter-row-height)] grid-cols-5',
+  'aria-label="学校报表时间范围"',
+  'aria-pressed={activePeriod === period.key}',
+  'h-[var(--tm-report-period-pill-height)]',
+  'px-[var(--tm-report-period-pill-inline)]',
+  'text-[length:var(--tm-report-period-font-size)]',
+  'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)]',
+  'font-medium text-[var(--tm-text-secondary)]',
+  'activePeriod === \'custom\' && confirmedDateRange',
+  '教师使用',
+  '事件分布',
+]) {
+  if (!leaderView.includes(required)) {
+    throw new Error(`学校数据报表顶部筛选需要使用单层静态结构并复用班级报告间距，缺少：${required}`);
+  }
+}
+
+if ((leaderView.match(/<ReportTypeTabs/g) ?? []).length !== 1) {
+  throw new Error('学校数据报表只应渲染一套报表类型页签');
+}
+
+for (const forbidden of ['isFilterPinned', 'handleReportScroll', '紧凑筛选', '完整筛选', 'blur-[2px]']) {
+  if (leaderView.includes(forbidden)) {
+    throw new Error(`学校数据报表顶部不应保留滚动变形或双层筛选：${forbidden}`);
+  }
+}
+if ((source.match(/h-\[var\(--tm-report-filter-row-height\)\]/g) ?? []).length < 2) {
+  throw new Error('报表类型与时间筛选必须使用同一个行高 Token');
+}
+if ((source.match(/h-\[var\(--tm-report-period-pill-height\)\]/g) ?? []).length < 2) {
+  throw new Error('预设周期与自定义周期必须复用紧凑选中色块高度 Token');
+}
+if (!leaderView.includes('relative flex h-full min-h-0 flex-col overflow-hidden')) {
+  throw new Error('学校数据报表根容器必须锁定为单一内部滚动层，避免标题栏与吸顶筛选之间穿模');
+}
+if (!leaderView.includes('relative z-40 flex h-11 shrink-0 items-center') || leaderView.includes('relative z-40 flex h-[44px] shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] px-4 py-2')) {
+  throw new Error('学校数据报表标题栏必须使用完整 44 像素盒模型，不得通过上下内边距撑破高度');
+}
+const scrollHandledViews = appSource.match(/const viewHandlesScroll = \[([^\]]+)\]/)?.[1] ?? '';
+if (!scrollHandledViews.includes("'leader_report'")) {
+  throw new Error('学校数据报表必须由页面内部管理滚动，禁止与 App 外层形成双滚动穿模');
 }
 
 for (const chart of [gradeChart, classChart]) {
@@ -111,7 +159,7 @@ for (const required of [
   'showDonutTip',
   '占比',
   "triggerOn: 'click'",
-  'backgroundColor: teacherBrandSemantic.chartTooltip',
+  'backgroundColor: teacherReportChartSemantic.tooltip',
   "chart.dispatchAction({ type: 'showTip'",
   'aria-label={`查看${item.name}事件占比`}',
 ]) {

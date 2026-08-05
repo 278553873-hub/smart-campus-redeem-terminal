@@ -11,6 +11,7 @@ const autoResizeTextareaSource = fs.readFileSync(new URL('../../components/ui/Au
 const mobileBottomSheetSource = fs.readFileSync(new URL('../../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
 const classCascadeSource = fs.readFileSync(new URL('../../components/ui/MobileClassCascadePicker.tsx', import.meta.url), 'utf8');
 const floatingCreateSource = fs.readFileSync(new URL('../../components/ui/MobileFloatingCreateButton.tsx', import.meta.url), 'utf8');
+const growthFieldPickerSource = fs.readFileSync(new URL('../../components/growth/GrowthFieldCategoryPicker.tsx', import.meta.url), 'utf8');
 const formDefinitionSource = fs.readFileSync(new URL('../../../shared/formDefinition.ts', import.meta.url), 'utf8');
 const questionnaireThemeSource = fs.readFileSync(new URL('../../../shared/questionnaireThemeTokens.ts', import.meta.url), 'utf8');
 const growthFormsSource = fs.readFileSync(new URL('./GrowthCollectionForms.tsx', import.meta.url), 'utf8');
@@ -179,8 +180,10 @@ requireText(formBuilderSource, '使用分组', '共享构建器必须提供分�
 requireText(formBuilderSource, '<h2 className="text-[length:var(--tm-font-size-card-title)]', '题目标题必须与分组开关共用紧凑标题行。');
 requireText(formBuilderSource, 'showItemLabel = true', '共享构建器必须通过配置控制题目或字段标题显隐，不能写死业务规则。');
 requireText(createSource, 'showItemLabel={false}', '普通问卷不应因老师或家长填写而重复展示题目标题。');
-requireText(viewSource, "['填写人和内容', '学生范围', '确认发布']", '创建进度第一步必须明确先选择填写人再编辑内容。');
-requireText(createStepOneSource, "{([['teacher', '老师填写'], ['guardian', '家长填写']] as const).map", '老师填写和家长填写必须在第一步分流。');
+requireText(viewSource, "['采集内容', '学生范围', '确认发布']", '填写人已在进入编辑器前选择，创建进度第一步只应表达采集内容。');
+requireText(viewSource, "title=\"谁来填写\"", '点击新建采集后必须先选择老师填写或家长填写。');
+forbidText(createStepOneSource, '填写人，当前', '填写人已在入口确定，采集内容编辑页不应重复展示或修改。');
+forbidText(createStepOneSource, "setRespondentSheetMode('edit')", '采集内容编辑页不应再次打开填写人选择。');
 forbidText(createStepThreeSource, 'aria-labelledby="respondent-role-title"', '确认发布页只能确认填写人，不能再次切换填写人。');
 requireText(createStepThreeSource, "{isTeacherRespondent ? '老师填写' : '家长填写'}", '确认发布页必须展示第一步已经选择的填写人。');
 forbidText(formBuilderSource, 'min-h-[60px] items-center justify-between gap-4 px-4', '分组开关不应继续使用独立卡片。');
@@ -441,8 +444,9 @@ requireText(viewSource, '<div className="h-11 w-11 shrink-0" aria-hidden="true" 
 requireText(detailSource, '<IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}>', '问卷详情更多操作必须移入首张内容卡。');
 requireText(viewSource, '!assignedContext && <IconButton label="更多操作"', '学生采集详情更多操作必须移入首张内容卡。');
 requireText(viewSource, 'import MobileFloatingCreateButton', '问卷列表必须复用通用悬浮创建组件。');
-requireText(listSource, '<MobileFloatingCreateButton label="新建采集" onClick={() => startCreate()} />', '新建采集必须从右下角悬浮入口直接进入统一编辑器。');
-requireText(listSource, 'pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]', '问卷列表必须为悬浮创建按钮和底部安全区预留空间。');
+requireText(listSource, 'setRespondentSheetMode(\'entry\')', '新建采集必须从右下角悬浮入口先选择填写人。');
+requireText(listSource, '<div className="relative flex h-full min-h-0 flex-col overflow-hidden">', '问卷列表外层不得为悬浮按钮增加固定底部占位。');
+requireText(listSource, '<main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))] pt-4 no-scrollbar">', '悬浮按钮避让空间必须放在可滚动列表内部。');
 forbidText(listHeaderSource, '待我填写', '问卷列表顶部不得重复展示待我填写快捷入口。');
 forbidText(listHeaderSource, '新建采集', '问卷列表顶部不得承载新建采集入口。');
 requireText(floatingCreateSource, 'h-[var(--tm-size-floating-action)] w-[var(--tm-size-floating-action)]', '通用悬浮创建按钮必须使用教师端组件尺寸令牌。');
@@ -454,29 +458,41 @@ requireText(viewSource, '{activeSubmission.studentName}<span className="ml-2 tex
 
 requireText(viewSource, 'typePickerPrimaryLabel="普通题型"', '添加内容必须提供普通题型页签。');
 requireText(viewSource, "label: '成长数据'", '添加内容必须提供成长数据页签。');
-requireText(viewSource, 'availableGrowthFieldOptions.map', '成长数据页签必须展示学校已启用的预置字段。');
+requireText(viewSource, 'fields={availableGrowthFieldOptions}', '成长数据页签必须把学校已启用字段传入统一分类选择器。');
 requireText(viewSource, 'getEnabledGrowthFields(spaceId)', '成长数据页签必须按学校空间读取启用字段。');
+requireText(viewSource, '<GrowthFieldCategoryPicker', '采集管理必须复用成长字段分类选择器。');
+requireText(growthFieldPickerSource, 'role="tablist" aria-label="成长数据分类"', '成长字段必须通过分类标签切换。');
+requireText(growthFieldPickerSource, 'activeGroup.fields.map', '分类选择器只应展示当前分类的字段。');
+requireText(growthFieldPickerSource, 'selectedCount > 0', '分类标签必须反馈跨分类已选数量。');
 requireText(growthCatalogSource, "key: 'height_cm', label: '身高'", '平台预置字段必须包含身高。');
 requireText(growthCatalogSource, "key: 'weight_kg', label: '体重'", '平台预置字段必须包含体重。');
-requireText(growthCatalogSource, "key: 'lung_capacity_ml', label: '肺活量'", '平台预置字段必须包含体能测试字段。');
-requireText(growthDefinitionSource, "MEASUREMENT_DATE_QUESTION_ID = 'growth-measured-at'", '选择身体成长字段后必须使用标准测量日期字段。');
-requireText(storeSource, "GrowthRecordDateMode = 'respondent' | 'fixed'", '成长采集必须支持填写人选择和本次统一日期。');
+requireText(growthCatalogSource, "key: 'lung_capacity_ml', label: '肺活量'", '平台预置字段必须包含体质测试字段。');
+for (const groupLabel of ['生长发育', '视力健康', '体质测试', '健康体检']) {
+  requireText(growthCatalogSource, `label: '${groupLabel}'`, `平台成长字段目录缺少分类：${groupLabel}`);
+}
+requireText(growthDefinitionSource, "MEASUREMENT_DATE_QUESTION_ID = 'growth-measured-at'", '底层必须保留历史答卷日期题的标准字段标识。');
+requireText(storeSource, "GrowthRecordDateMode = 'respondent' | 'fixed'", '底层必须保留历史填写人日期模式的数据兼容。');
 requireText(viewSource, 'setShowGrowthDateSheet(true)', '成长字段卡必须提供任务级记录日期设置。');
-requireText(viewSource, "[['respondent', '填写人选择'], ['fixed', '本次统一日期']]", '记录日期浮层必须提供两种日期方式。');
-requireText(viewSource, "createBodyGrowthQuestions(effectiveGrowthFields, draftGrowthDateMode === 'respondent')", '本次统一日期时填写端不得重复展示日期题。');
-requireText(viewSource, 'growthRecordDateMode: effectiveGrowthFields.length > 0 ? draftGrowthDateMode : undefined', '保存和发布必须写入任务级日期规则。');
+forbidText(viewSource, "[['respondent', '填写人选择'], ['fixed', '本次统一日期']]", '本期记录日期不应再提供模式选择。');
+forbidText(viewSource, 'draftGrowthDateMode', '采集编辑器不应保留记录日期模式状态。');
+requireText(viewSource, 'createBodyGrowthQuestions(effectiveGrowthFields, false)', '填写端不得生成成长记录日期题。');
+requireText(viewSource, "growthRecordDateMode: effectiveGrowthFields.length > 0 ? 'fixed' : undefined", '保存和发布必须统一写入老师选择的任务记录日期。');
+requireText(viewSource, "const stepOneGrowthDateError = effectiveGrowthFields.length > 0 && !draftGrowthRecordDate", '包含成长字段时记录日期必须填写。');
+requireText(viewSource, 'aria-label="记录日期"', '记录日期浮层必须直接提供日期选择。');
 requireText(growthPersistenceSource, "questionnaire.growthRecordDateMode === 'fixed'", '成长记录必须按任务日期规则读取记录日期。');
 requireText(growthPersistenceSource, 'if (!recordedAt) return false;', '记录日期缺失时必须阻止写入成长数据。');
 forbidText(growthPersistenceSource, 'recordedAt: _completedAt', '提交时间不得作为成长记录日期兜底。');
 forbidText(createSource, '添加成长数据组', '一份任务不应提供第二个成长数据组。');
 requireText(growthDefinitionSource, "HEIGHT_QUESTION_ID = 'growth-height-cm'", '身高必须使用标准字段标识。');
 requireText(growthDefinitionSource, "WEIGHT_QUESTION_ID = 'growth-weight-kg'", '体重必须使用标准字段标识。');
-requireText(viewSource, 'const getAllDraftQuestions = () => [...getDraftGrowthQuestions(), ...getDraftArchiveQuestions(), ...draftQuestions]', '同一采集任务必须允许混合档案字段、成长字段与普通题目。');
+requireText(viewSource, 'const questions = [...getDraftGrowthQuestions(), ...getDraftArchiveQuestions(), ...draftQuestions]', '统一读取逻辑必须兼容档案采集、自定义采集和历史混合任务。');
 requireText(storeSource, "QuestionnaireContentType = 'ordinary' | 'growth' | 'mixed'", '底层必须区分普通、成长和混合采集。');
 requireText(storeSource, "QuestionnaireRespondentRole = 'teacher' | 'guardian'", '底层必须独立保存老师填写和家长填写。');
 requireText(storeSource, 'getQuestionnaireContentType', '旧采集数据必须可兼容读取内容类型。');
 requireText(storeSource, 'getQuestionnaireRespondentRole', '旧采集数据必须可兼容读取填写方式。');
-requireText(viewSource, 'getCollectionBadgeLabel(record)', '采集列表必须同时展示内容类型与填写方式。');
+requireText(viewSource, 'getCollectionBadgeLabel(record)', '采集列表必须展示填写方式。');
+requireText(viewSource, "return role === 'teacher' ? '老师填写' : '家长填写';", '采集列表标签只区分老师填写和家长填写。');
+forbidText(viewSource, "shortLabel: '成长采集'", '成长、普通和混合属于内部数据类型，不应作为采集列表标签。');
 requireText(viewSource, 'buildTargets(effectiveGrowthFields.length > 0 || Boolean(draftArchiveTemplateId))', '包含成长或档案字段的采集必须使用学校花名册姓名。');
 requireText(viewSource, 'hasGrowthCollectionFields(record) || Boolean(record.archiveTemplateId)', '包含成长或档案字段的已有采集必须持续使用花名册姓名。');
 requireText(viewSource, 'shouldSyncRosterName', '已有成长采集的逐生记录必须迁移为花名册姓名。');
@@ -486,17 +502,60 @@ requireText(storeSource, 'growthTemplate?: GrowthCollectionTemplate', '采集任
 requireText(assignedSource, "getQuestionnaireContentType(questionnaire) !== 'ordinary'", '家长提交后必须识别成长或混合采集。');
 requireText(assignedSource, 'persistGrowthCollectionAnswers(', '家长提交成长信息后必须同步学生成长数据。');
 requireText(growthPersistenceSource, 'target.studentId', '家长成长信息必须通过问卷目标匹配到真实学生。');
-requireText(createStepOneSource, '>更新档案</h2>', '新建采集第一步必须允许选择要更新的档案。');
-requireText(createSource, 'title="选择要更新的档案"', '档案选择必须复用公共底部抽屉。');
-requireText(createStepOneSource, "draftArchiveInputLabels.slice(0, 3).join('、')", '选中档案后必须展示本次会填写的具体字段摘要。');
-requireText(createSource, 'title={`本次填写 · ${draftArchiveInputLabels.length}项`}', '完整档案字段必须通过公共底部抽屉渐进披露。');
+requireText(viewSource, 'title="选择采集内容"', '选择填写人后必须继续选择按档案采集或自定义采集。');
+requireText(viewSource, '>自定义采集</h3>', '自定义采集必须使用独立区块标题。');
+requireText(viewSource, '>从空白创建</span>', '自定义采集必须提供明确的创建入口。');
+requireText(viewSource, '>按档案采集</h3>', '已启用档案必须使用独立区块展示。');
+if (viewSource.indexOf('>自定义采集</h3>') > viewSource.indexOf('>按档案采集</h3>')) {
+  throw new Error('自定义采集必须位于按档案采集之前。');
+}
+requireText(viewSource, '{availableArchiveTemplates.length}份', '按档案采集区块必须展示可用档案数量。');
+requireText(mobileBottomSheetSource, 'min-h-0 flex-1 overflow-y-auto', '多个档案必须在底部抽屉内容区自然滚动。');
+requireText(viewSource, "record?.layoutMode ?? archiveTemplateSnapshot?.layoutMode ?? 'flat'", '从档案开始必须继承档案的布局模式。');
+requireText(viewSource, 'record?.sections ?? archiveTemplateSnapshot?.sections ?? []', '从档案开始必须继承档案分组。');
+requireText(viewSource, 'sectionId: field.sectionId', '档案成长字段必须继承档案中的实际分组。');
+forbidText(viewSource, "inheritedSections.unshift({ id: archiveGrowthSectionId, label: '成长数据' })", '按档案采集不得额外创建成长数据分组。');
+requireText(viewSource, "getArchiveGrowthMissingPolicy(field) === 'required'", '档案成长字段必须继承档案自身的必填规则。');
+requireText(viewSource, 'draftSections.some(section => section.id === field.sectionId)', '档案自定义字段必须保留原分组。');
+requireText(createStepOneSource, 'readOnly={isArchiveCollection}', '按档案采集必须使用表单构建器只读态。');
+requireText(createStepOneSource, 'if (isArchiveCollection) return;', '按档案采集必须在数据回调层阻止结构变更。');
+forbidText(createStepOneSource, '内容固定', '按档案采集不应增加解释内容不可修改的状态行。');
+requireText(viewSource, 'setDraftTitle(`${archiveTemplateSnapshot.name}采集`)', '按档案采集默认名称必须使用档案名称加采集。');
+requireText(formBuilderSource, 'getLockedFieldSubtitle', '共享表单构建器必须支持展示锁定字段。');
+requireText(formBuilderSource, 'readOnly && (choice || rating || usesSubFields) && renderFieldPreview', '只读档案必须完整展示选择项、评分和多项填空内容。');
+requireText(formBuilderSource, '!readOnly && <IconButton label={`从本次采集中移除', '只读表单必须隐藏字段移除操作。');
+requireText(formBuilderSource, '!readOnly && <button type="button" aria-label={`在${section.label}中添加', '只读表单必须隐藏组内添加操作。');
+requireText(formBuilderSource, '{(showItemLabel || !readOnly) && (', '无标题的只读表单不得保留空操作栏。');
+forbidText(createStepOneSource, 'draftArchiveTemplateSnapshot.fields.flatMap', '按档案采集不应再改写档案字段快照。');
+requireText(createStepOneSource, 'setDraftQuestionOrderIds(value.fields.map(field => field.id))', '自定义采集必须保留题目和成长字段排序。');
+forbidText(createStepOneSource, '自动带入', '创建页不应向老师暴露系统自动带入概念。');
 requireText(storeSource, 'archiveFieldSemanticKey?: string', '采集字段必须保存对应的档案字段标识。');
 requireText(storeSource, 'archiveTemplateSnapshot?: ArchiveTemplateSnapshot', '采集任务发布时必须冻结档案字段定义。');
+requireText(storeSource, 'archiveSkippedStudentNos?: string[]', '按档案采集任务必须保存因已有待填写而跳过的学生。');
+requireText(viewSource, "archivePeriodKey: draftArchiveTemplateSnapshot ? 'current' : undefined", '同一学生和同一档案必须固定写入当前档案。');
+requireText(viewSource, '>按档案采集</span>', '发布确认页必须明确本次使用的档案。');
+requireText(viewSource, '建立档案', '发布确认页必须展示建立档案人数。');
+requireText(viewSource, '更新档案', '发布确认页必须展示更新档案人数。');
+requireText(viewSource, '已有待填写', '发布确认页必须展示已有待填写人数。');
+requireText(viewSource, '{inputCount}项内容', '按档案采集列表必须只展示内容数量。');
 requireText(viewSource, 'persistArchiveCollectionAnswers(activeRecord', '老师完成采集后必须更新学生当前档案。');
 requireText(assignedSource, 'persistArchiveCollectionAnswers(questionnaire', '家长提交采集后必须更新学生当前档案。');
 requireText(archivePersistenceSource, 'question.archiveFieldSemanticKey', '档案写回必须只处理明确绑定的字段。');
+requireText(viewSource, "template.origin === 'school' && template.status === 'published'", '新建采集只能使用本校已启用的档案模板。');
+forbidText(createStepOneSource, 'draftArchiveGrowthFieldSet', '按档案采集锁定后不应在成长字段选择器中维护档案去重状态。');
+requireText(viewSource, 'getArchiveCollectionPrefillAnswers(record, studentNo)', '老师打开学生采集记录时必须读取当前档案自定义字段。');
+requireText(assignedSource, 'getArchiveCollectionPrefillAnswers(questionnaire, child.studentNo)', '家长打开采集任务时必须读取当前档案自定义字段。');
+requireText(viewSource, 'getArchiveCollectionTargetPlan(candidate, records, archiveWorkspace)', '发布前必须按学生规划建立、更新和已有待填写。');
+requireText(viewSource, 'targets: eligibleTargets', '已有待填写学生必须从本次发布目标中跳过。');
+requireText(viewSource, 'archiveSkippedStudentNos: archivePlan.pendingStudentNos', '跳过学生必须保存在任务中，避免动态班级同步重新加入。');
+requireText(archivePersistenceSource, "record.status === 'active'", '已有待填写判断只能读取仍在收集中的任务。');
+requireText(archivePersistenceSource, '!hasCompletedArchiveCollection(record, target.studentNo)', '已经完成原任务的学生必须允许再次采集。');
+requireText(archivePersistenceSource, 'currentDraft?.answers ?? latestSnapshot?.answers ?? {}', '档案自定义字段必须优先读取当前档案，没有当前档案时读取最近留档。');
+forbidText(studentArchiveStoreSource, 'respondentRole', '档案模板和档案分组不应重复保存问卷填写人。');
 requireText(archivePersistenceSource, 'upsertStudentArchiveCollectionAnswers', '档案写回必须合并到学生当前档案。');
 requireText(studentArchiveStoreSource, 'latestSnapshot?.answers', '新一轮当前档案必须继承最近一次留档内容。');
+requireText(archivePersistenceSource, 'item.sourceRecordId === sourceRecordId', '档案成长快照必须只冻结本次采集生成的成长记录。');
+requireText(studentArchiveStoreSource, 'mergeArchiveGrowthSnapshots(item.growthSnapshots, update.growthSnapshots)', '重复采集必须更新同一份档案的成长快照。');
 forbidText(createSource, '学期目标', '学期目标暂缓后，不应出现在新建采集流程。');
 requireText(studentGrowthStoreSource, 'sourceRecordId', '成长记录必须保留采集来源记录以支持重复保存而不重复新增。');
 if (viewSource.includes('即将开放') || viewSource.includes('<LockKeyhole')) {
@@ -507,7 +566,8 @@ requireText(viewSource, "['unreachable', '未绑定']", '家长问卷答卷筛�
 if (viewSource.includes('未送达')) {
   throw new Error('教师端不应使用容易被理解为通知失败的“未送达”。');
 }
-requireText(viewSource, "[['teacher', '老师填写'], ['guardian', '家长填写']]", '统一采集任务必须支持老师或家长填写。');
+requireText(viewSource, "['teacher', '老师填写', '由老师逐个学生填写']", '统一采集任务必须支持老师填写。');
+requireText(viewSource, "['guardian', '家长填写', '发送给家长填写']", '统一采集任务必须支持家长填写。');
 requireText(viewSource, "studentRecords: respondentRole === 'teacher'", '老师填写必须按学生建立逐生记录。');
 for (const fieldType of ["short_text: { label: '单行文本'", "number: { label: '数字'", "date: { label: '日期'"]) {
   requireText(viewSource, fieldType, `学生信息采集缺少字段类型：${fieldType}`);

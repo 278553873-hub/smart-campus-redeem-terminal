@@ -2,17 +2,21 @@ import React from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import {
   getArchiveSelectedOptions,
+  formatArchiveAnswer,
   isArchiveAnswerFilled,
   isArchiveChoiceAnswer,
   type ArchiveAnswer,
   type ArchiveField,
+  type ArchiveGrowthFieldConfig,
   type ArchiveTemplateSnapshot,
 } from '../../../shared/studentArchiveStore';
-import { inputClass, sectionSurface } from './archivePagePrimitives';
+import { inputClass, readonlyFieldClass, sectionSurface } from './archivePagePrimitives';
 import { normalizeFormFieldSettings } from '../../../shared/formDefinition';
 
 interface ArchiveFormRendererBaseProps {
-  definition: Pick<ArchiveTemplateSnapshot, 'layoutMode' | 'sections' | 'fields'>;
+  definition: Pick<ArchiveTemplateSnapshot, 'layoutMode' | 'sections' | 'fields' | 'growthFields'>;
+  renderGrowthField?: (field: ArchiveGrowthFieldConfig, number: number) => React.ReactNode;
+  isGrowthFieldFilled?: (field: ArchiveGrowthFieldConfig) => boolean;
 }
 
 type ArchiveFormRendererProps = ArchiveFormRendererBaseProps & (
@@ -26,28 +30,34 @@ type ArchiveFormRendererProps = ArchiveFormRendererBaseProps & (
     answers: Record<string, ArchiveAnswer>;
     onAnswersChange: (answers: Record<string, ArchiveAnswer>) => void;
   }
+  | {
+    mode: 'readonly';
+    answers: Record<string, ArchiveAnswer>;
+    onAnswersChange?: never;
+  }
 );
 
 const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
   const { definition } = props;
   const previewMode = props.mode === 'preview';
+  const readonlyMode = props.mode === 'readonly';
   const answers = previewMode ? {} : props.answers;
   const updateAnswers = (nextAnswers: Record<string, ArchiveAnswer>) => {
-    if (props.mode !== 'preview') props.onAnswersChange(nextAnswers);
+    if (props.mode !== 'preview' && props.mode !== 'readonly') props.onAnswersChange(nextAnswers);
   };
 
   const renderFieldInput = (field: ArchiveField) => {
     const settings = normalizeFormFieldSettings(field.type, field.settings, field.options);
     if (previewMode) {
       if (field.type === 'text') {
-        return <div className={`${inputClass} min-h-[92px] py-3 text-[var(--tm-text-tertiary)]`}>请输入</div>;
+        return <div className={`${readonlyFieldClass} min-h-[92px] py-3 text-[var(--tm-input-readonly-text)]`}>请输入</div>;
       }
       if (field.type === 'date' || field.type === 'number') {
         const placeholder = field.type === 'date'
           ? settings.dateFormat === 'year' ? '年份' : settings.dateFormat === 'ym' ? '年-月' : '年-月-日'
           : settings.numberFormat === 'decimal-1' ? '请输入数字（1位小数）' : settings.numberFormat === 'decimal-2' ? '请输入数字（2位小数）' : '请输入整数';
         return (
-          <div className={`${inputClass} flex h-12 items-center text-[var(--tm-text-tertiary)]`}>
+          <div className={`${readonlyFieldClass} flex h-12 items-center text-[var(--tm-input-readonly-text)]`}>
             {placeholder}
           </div>
         );
@@ -68,6 +78,13 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
     }
 
     const answer = answers[field.semanticKey];
+    if (readonlyMode) {
+      return (
+        <div className={`${readonlyFieldClass} min-h-12 py-3 leading-6 ${isArchiveAnswerFilled(answer) ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-input-readonly-text)]'}`}>
+          {isArchiveAnswerFilled(answer) ? formatArchiveAnswer(answer) : '未填写'}
+        </div>
+      );
+    }
     const value = typeof answer === 'string' ? answer : '';
     if (field.type === 'text') {
       return <textarea value={value} onChange={event => updateAnswers({ ...answers, [field.semanticKey]: event.target.value })} rows={3} placeholder="请输入" className={`${inputClass} min-h-[92px] py-3`} />;
@@ -114,7 +131,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
           return (
             <div key={`${field.id}-${optionIndex}`} className={`overflow-hidden rounded-[var(--tm-radius-control)] border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
               <button type="button" role={field.type === 'single-select' ? 'radio' : 'checkbox'} aria-checked={selected} disabled={maxReached} onClick={() => toggleOption(option)} className={`flex min-h-12 w-full items-center gap-2.5 px-3 text-left text-[13px] font-medium disabled:opacity-45 ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}>
-                <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${field.type === 'single-select' ? 'rounded-full' : 'rounded-[5px]'} ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-white' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-transparent'}`} aria-hidden="true">
+                <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${field.type === 'single-select' ? 'rounded-full' : 'rounded-[5px]'} ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-transparent'}`} aria-hidden="true">
                   {field.type === 'single-select' ? <span className="h-2 w-2 rounded-full bg-current" /> : <Check className="h-3.5 w-3.5" />}
                 </span>
                 <span className="min-w-0 flex-1">{option}</span>
@@ -146,19 +163,46 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
     );
   };
 
+  type ArchiveContentItem =
+    | { kind: 'field'; order: number; sectionId?: string; field: ArchiveField }
+    | { kind: 'growth'; order: number; sectionId?: string; field: ArchiveGrowthFieldConfig };
+
+  const contentItems: ArchiveContentItem[] = [
+    ...definition.fields.map((field, index) => ({
+      kind: 'field' as const,
+      order: field.order ?? definition.growthFields.length + index,
+      sectionId: field.sectionId,
+      field,
+    })),
+    ...(props.renderGrowthField ? definition.growthFields.map((field, index) => ({
+      kind: 'growth' as const,
+      order: field.order ?? index,
+      sectionId: field.sectionId,
+      field,
+    })) : []),
+  ].sort((left, right) => left.order - right.order);
+
+  const renderContentItem = (item: ArchiveContentItem, number: number) => item.kind === 'growth'
+    ? props.renderGrowthField?.(item.field, number)
+    : (
+      <div>
+        {renderFieldHeading(item.field, number)}
+        {renderFieldInput(item.field)}
+      </div>
+    );
+
   const grouped = definition.layoutMode === 'grouped';
-  const orderedFields = grouped
-    ? definition.sections.flatMap(section => definition.fields.filter(field => field.sectionId === section.id))
-    : definition.fields;
-  const fieldNumberById = new Map(orderedFields.map((field, index) => [field.id, index + 1]));
+  const orderedItems = grouped
+    ? definition.sections.flatMap(section => contentItems.filter(item => item.sectionId === section.id))
+    : contentItems;
+  const itemNumber = new Map(orderedItems.map((item, index) => [item.kind === 'growth' ? `growth:${item.field.key}` : `field:${item.field.id}`, index + 1]));
   if (!grouped) {
     return (
       <section className={`${sectionSurface} space-y-5 p-4`}>
-        {definition.fields.map((field, index) => (
-          <div key={field.id}>
-            {renderFieldHeading(field, index + 1)}
-            {renderFieldInput(field)}
-          </div>
+        {contentItems.map((item, index) => (
+          <React.Fragment key={item.kind === 'growth' ? `growth:${item.field.key}` : `field:${item.field.id}`}>
+            {renderContentItem(item, index + 1)}
+          </React.Fragment>
         ))}
       </section>
     );
@@ -166,25 +210,25 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
 
   return (
     <section className="space-y-3">
-      {definition.sections.map((section, sectionIndex) => {
-        const fields = definition.fields.filter(field => field.sectionId === section.id);
-        const completed = previewMode ? 0 : fields.filter(field => isArchiveAnswerFilled(answers[field.semanticKey])).length;
+      {definition.sections.map(section => {
+        const items = contentItems.filter(item => item.sectionId === section.id);
+        const completed = previewMode ? 0 : items.filter(item => item.kind === 'growth'
+          ? props.isGrowthFieldFilled?.(item.field)
+          : isArchiveAnswerFilled(answers[item.field.semanticKey])).length;
         return (
-          <details key={section.id} className={`${sectionSurface} overflow-hidden`} open={!previewMode || sectionIndex === 0}>
+          <details key={section.id} className={`${sectionSurface} overflow-hidden`} open>
             <summary className="flex min-h-[60px] cursor-pointer list-none items-center gap-3 px-4">
               <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-[var(--tm-text-primary)]">{section.label}</span>
-              <span className={`text-[12px] font-bold tabular-nums ${!previewMode && completed === fields.length ? 'text-[var(--tm-status-positive-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>
-                {previewMode ? `${fields.length}题` : `${completed}/${fields.length}`}
+              <span className={`text-[12px] font-bold tabular-nums ${!previewMode && completed === items.length ? 'text-[var(--tm-status-positive-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>
+                {previewMode ? `${items.length}项` : `${completed}/${items.length}`}
               </span>
               <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
             </summary>
             <div className="space-y-5 border-t border-[var(--tm-border-subtle)] px-4 py-4">
-              {fields.map(field => (
-                <div key={field.id}>
-                  {renderFieldHeading(field, fieldNumberById.get(field.id) ?? 1)}
-                  {renderFieldInput(field)}
-                </div>
-              ))}
+              {items.map(item => {
+                const key = item.kind === 'growth' ? `growth:${item.field.key}` : `field:${item.field.id}`;
+                return <React.Fragment key={key}>{renderContentItem(item, itemNumber.get(key) ?? 1)}</React.Fragment>;
+              })}
             </div>
           </details>
         );

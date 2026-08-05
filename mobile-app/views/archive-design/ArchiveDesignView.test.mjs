@@ -4,12 +4,14 @@ const viewSource = fs.readFileSync(new URL('./ArchiveDesignView.tsx', import.met
 const studentViewSource = fs.readFileSync(new URL('./StudentArchiveView.tsx', import.meta.url), 'utf8');
 const classBatchViewSource = fs.readFileSync(new URL('./ClassArchiveBatchView.tsx', import.meta.url), 'utf8');
 const archiveFormRendererSource = fs.readFileSync(new URL('./ArchiveFormRenderer.tsx', import.meta.url), 'utf8');
+const archiveGrowthRendererSource = fs.readFileSync(new URL('./ArchiveGrowthDataRenderer.tsx', import.meta.url), 'utf8');
 const storeSource = fs.readFileSync(new URL('../../../shared/studentArchiveStore.ts', import.meta.url), 'utf8');
 const dashboardSource = fs.readFileSync(new URL('../DashboardView.tsx', import.meta.url), 'utf8');
 const meSource = fs.readFileSync(new URL('../MeView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../../App.tsx', import.meta.url), 'utf8');
 const primitivesSource = fs.readFileSync(new URL('./archivePagePrimitives.tsx', import.meta.url), 'utf8');
 const floatingCreateSource = fs.readFileSync(new URL('../../components/ui/MobileFloatingCreateButton.tsx', import.meta.url), 'utf8');
+const growthFieldPickerSource = fs.readFileSync(new URL('../../components/growth/GrowthFieldCategoryPicker.tsx', import.meta.url), 'utf8');
 const accessSource = fs.readFileSync(new URL('../../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const formBuilderSource = fs.readFileSync(new URL('../../components/form-builder/FormBuilder.tsx', import.meta.url), 'utf8');
 const formDefinitionSource = fs.readFileSync(new URL('../../../shared/formDefinition.ts', import.meta.url), 'utf8');
@@ -31,9 +33,13 @@ requireText(appSource, "'archive_design'", '教师端导航必须注册档案设
 const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
 requireText(plainBackgroundList, "'archive_design'", '档案设计应使用屏幕级纯色背景。');
 requireText(primitivesSource, "export const pageBackground = 'bg-transparent'", '档案设计页面容器应保持透明，由屏幕级背景统一提供底色。');
-requireText(primitivesSource, 'justify-between bg-white/38 pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md', '档案设计标题栏应使用轻薄玻璃并避让微信胶囊安全区。');
+requireText(primitivesSource, 'justify-between bg-[var(--tm-bg-surface-glass)] pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md', '档案设计标题栏应使用表面玻璃令牌并避让微信胶囊安全区。');
 forbidText(primitivesSource, 'border-b border-white/70', '档案设计顶部标题栏不应保留分割线，应依靠毛玻璃与内容自然分层。');
 forbidText(primitivesSource, 'slate-', '档案设计基础组件不应残留旧灰色系。');
+requireText(primitivesSource, "export const sectionSurface = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]'", '档案普通卡片必须使用无线条表面分层。');
+requireText(primitivesSource, 'border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]', '档案次按钮必须使用浅边界令牌。');
+requireText(primitivesSource, '[box-shadow:var(--tm-shadow-control)]', '档案次按钮必须使用控件阴影令牌。');
+requireText(primitivesSource, "export const readonlyFieldClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)]", '档案只读字段必须使用只读输入令牌。');
 requireText(primitivesSource, 'focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '档案输入框应使用轻量输入焦点环。');
 forbidText(primitivesSource, 'focus:ring-4', '档案输入框不应使用4像素粗焦点环。');
 requireText(formBuilderSource, 'focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '共享表单输入框应使用轻量输入焦点环。');
@@ -61,7 +67,7 @@ for (const required of [
   '高一',
   '高三',
   '启用档案',
-  '禁用档案',
+  '停用档案',
 ]) {
   requireText(viewSource, required, `档案设计流程缺少：${required}`);
 }
@@ -85,7 +91,7 @@ requireText(formBuilderSource, '<GripVertical', '每个字段前必须提供拖�
 requireText(formBuilderSource, 'onDragEnd={reorderGroupedFields}', '分组模式下字段拖动必须支持写回跨组顺序。');
 requireText(formBuilderSource, 'sectionId: targetSectionId', '字段拖到其他分组后必须更新所属分组。');
 requireText(formBuilderSource, 'fieldNumberById.get(field.id)', '分组模式下字段序号必须按整份表单连续计算。');
-requireText(archiveFormRendererSource, 'fieldNumberById.get(field.id)', '档案填写与预览时字段序号必须跨分组连续计算。');
+requireText(archiveFormRendererSource, 'itemNumber.get(key)', '档案填写与预览时普通字段和成长字段的序号必须跨分组连续计算。');
 requireText(formBuilderSource, 'onDragEnd={reorderSections}', '分组排序必须通过独立拖动列表完成。');
 requireText(formBuilderSource, 'setActiveSectionMenuId(section.id)', '分组编辑、排序和删除必须收进更多菜单。');
 requireText(formBuilderSource, 'label={`分组更多操作：${section.label}`}', '分组更多按钮必须提供明确的无障碍名称。');
@@ -95,6 +101,8 @@ requireText(formBuilderSource, 'const copyField =', '字段更多菜单必须支
 requireText(formBuilderSource, "setDeleteTarget({ type: 'field', id: activeField.id", '字段更多菜单删除后必须进入二次确认。');
 requireText(formBuilderSource, 'fieldNumber={index + 1}', '字段序号必须单独显示在最左侧。');
 requireText(formBuilderSource, 'renderFieldPreview(field, choice, rating, usesSubFields)', '字段列表态必须展示真实填写控件预览。');
+requireText(formBuilderSource, "const readonlyPreviewSurfaceClass = 'rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)]", '共享表单的文字预览必须使用只读输入令牌。');
+forbidText(formBuilderSource, 'min-h-[72px] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)]', '文字字段预览不得使用较深的交互控件边框。');
 requireText(formBuilderSource, 'const toggleFieldEditor =', '点击字段内容区必须统一控制进入和退出编辑态。');
 requireText(formBuilderSource, "document.addEventListener('click', closeFieldEditor)", '点击当前字段之外的区域必须退出编辑态。');
 requireText(formBuilderSource, "const listenerFrame = window.requestAnimationFrame", '外部点击监听不得吞掉进入字段编辑态的首次点击。');
@@ -112,10 +120,8 @@ requireText(formDefinitionSource, "FormLayoutMode = 'flat' | 'grouped'", '中台
 for (const fieldType of ["label: '日期'", "label: '数字'"]) {
   requireText(viewSource, fieldType, `档案字段类型缺少：${fieldType}`);
 }
-requireText(viewSource, 'ARCHIVE_SYSTEM_FIELD_OPTIONS', '档案设计必须提供自动带入字段选择。');
-requireText(viewSource, '已选择 {templateDraft.systemFields.length} 项', '自动带入入口必须展示已选数量。');
-requireText(storeSource, "ARCHIVE_SYSTEM_FIELD_OPTIONS.filter(option => option.key !== 'grade')", '自动带入候选必须合并年级和班级语义，只保留班级。');
-requireText(viewSource, 'ARCHIVE_SELECTABLE_SYSTEM_FIELD_OPTIONS.map', '自动带入浮层必须使用不含年级的候选列表。');
+forbidText(viewSource, '自动带入', '档案设计不应让老师配置学生身份信息。');
+forbidText(viewSource, 'showSystemFieldPicker', '档案设计不应保留学生身份字段选择浮层。');
 
 requireText(storeSource, "label: ''", '新增档案字段必须保持空值并使用提示文字。');
 requireText(formBuilderSource, 'placeholder="请输入选项名称"', '新增普通选项必须使用提示文字而非默认名称。');
@@ -133,17 +139,25 @@ requireText(storeSource, 'selectedOptions: string[]', '档案选择答案必须�
 requireText(storeSource, 'customText: Record<string, string>', '档案选择答案必须保存补充文本。');
 requireText(archiveFormRendererSource, 'showCustomInput', '学生填写档案时必须仅在选中可填写项后展示文本框。');
 requireText(archiveFormRendererSource, 'placeholder="请补充填写"', '档案可填写项必须提供清晰提示文字。');
-requireText(studentViewSource, 'getArchiveAnswerValidationError', '确认成档前必须统一校验必填、可填写项与字段格式。');
+requireText(studentViewSource, 'getArchiveAnswerValidationError', '保存档案前必须统一校验必填、可填写项与字段格式。');
 requireText(storeSource, 'minSelections', '档案多选字段必须保存并校验选择上下限。');
 requireText(archiveFormRendererSource, 'settings.dateFormat', '档案日期字段必须按配置渲染。');
 requireText(archiveFormRendererSource, 'settings.numberFormat', '档案数字字段必须按配置渲染。');
 
-requireText(viewSource, '<ArchiveFormRenderer', '档案详情必须使用真实表单预览。');
+requireText(viewSource, '<FormBuilder', '档案详情必须使用统一内容预览。');
 requireText(studentViewSource, '<ArchiveFormRenderer', '学生档案填写页必须复用档案表单渲染器。');
-requireText(viewSource, 'mode="preview"', '档案详情必须使用不可填写的表单预览模式。');
-requireText(viewSource, '手动填写', '档案详情必须明确区分手动填写与成长数据。');
+requireText(viewSource, 'lockedFieldIds={lockedGrowthFieldIds}', '档案详情必须在统一分组内识别成长字段。');
+forbidText(viewSource, '项成长数据 ·', '档案列表和详情不应展示成长数据与手动填写统计。');
+forbidText(viewSource, '>成长数据</h2>', '档案详情不应额外生成成长数据展示分组。');
+forbidText(viewSource, '>手动填写</h2>', '档案详情不应额外生成手动填写展示分组。');
 requireText(archiveFormRendererSource, "mode: 'preview'", '档案表单渲染器必须区分预览和填写模式。');
-requireText(archiveFormRendererSource, "previewMode ? `${fields.length}题`", '预览分组必须展示题目数量，不展示无意义的完成进度。');
+requireText(archiveFormRendererSource, '`${readonlyFieldClass} min-h-[92px]', '档案文字字段预览必须使用只读字段样式。');
+requireText(archiveFormRendererSource, '`${readonlyFieldClass} min-h-12', '档案历史内容必须使用只读字段样式。');
+forbidText(archiveFormRendererSource, '`${inputClass} min-h-[92px] py-3 text-[var(--tm-text-tertiary)]`', '档案文字预览不得复用可编辑输入框样式。');
+requireText(archiveFormRendererSource, "previewMode ? `${items.length}项`", '预览分组必须展示内容数量，不展示无意义的完成进度。');
+requireText(archiveFormRendererSource, 'definition.growthFields.map', '学生档案必须按实际分组合并成长字段与手动字段。');
+requireText(storeSource, 'sectionId?: string', '成长字段必须保存所属档案分组。');
+requireText(storeSource, 'order?: number', '档案内容必须保存跨类型排序。');
 forbidText(viewSource, 'previewAnswers', '档案预览不应维护临时答案状态。');
 forbidText(viewSource, 'onAnswersChange={setPreviewAnswers}', '档案预览不应接收答案写入能力。');
 forbidText(viewSource, 'readOnly={readOnly}', '档案详情不应继续使用禁用编辑器模拟预览。');
@@ -157,12 +171,11 @@ requireText(studentViewSource, 'setTransientDraft(null);', '退出或保存后�
 
 for (const required of [
   '当前档案',
-  '更新档案',
-  '待继续',
-  '保存草稿',
-  '完成并留档',
-  '留档记录',
-  '档案详情',
+  '发起采集',
+  '保存修改',
+  '更新记录',
+  '已建立',
+  '待采集',
 ]) {
   requireText(studentViewSource, required, `学生档案流程缺少：${required}`);
 }
@@ -171,16 +184,16 @@ requireText(appSource, 'initialArchiveTemplateId={questionnaireInitialArchiveTem
 requireText(storeSource, 'upsertStudentArchiveCollectionAnswers', '采集提交必须合并更新学生当前档案。');
 forbidText(studentViewSource, 'aria-label="新建档案"', '学生档案首页不应再提供新建入口。');
 forbidText(studentViewSource, 'PageHeader title="选择档案"', '学生档案首页不应再进入模板选择页。');
-requireText(studentViewSource, 'enabledTemplates.map(template =>', '学生档案首页必须直接展示已启用模板形成的实时档案。');
-requireText(studentViewSource, 'getStudentArchiveReadiness', '学生档案首页必须展示当前资料完整状态。');
+requireText(studentViewSource, 'enabledTemplates.map(template =>', '学生档案首页必须直接展示已启用档案。');
+requireText(studentViewSource, 'const hasArchive = Boolean(draft || latestSnapshot)', '学生档案首页必须区分待采集和已建立状态。');
 requireText(studentViewSource, '当前年级暂无可用档案', '学生档案空状态必须说明当前年级没有可用档案。');
 forbidText(studentViewSource, 'action={<StatusPill className="bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">草稿</StatusPill>}', '学生档案填写页标题栏不应重复展示草稿标签。');
-requireText(archiveFormRendererSource, 'open={!previewMode || sectionIndex === 0}', '学生档案填写时必须默认展开全部分组，预览仍默认展开首个分组。');
-forbidText(studentViewSource, '>历史档案</h2>', '学生成长档案首页应使用“留档记录”区分历史快照。');
+requireText(archiveFormRendererSource, 'className={`${sectionSurface} overflow-hidden`} open', '档案填写和预览必须默认展开全部分组，方便核对完整内容。');
+forbidText(studentViewSource, '>历史档案</h2>', '学生成长档案首页应使用“更新记录”承载低频历史版本。');
 forbidText(studentViewSource, '>已成档</StatusPill>', '学生档案详情标题栏不应重复展示已成档标签。');
 
 for (const required of [
-  "export type ArchiveTemplateStatus = 'recommended' | 'draft' | 'published' | 'disabled'",
+  "export type ArchiveTemplateStatus = 'recommended' | 'draft' | 'ready' | 'published' | 'disabled'",
   'export interface ArchiveDraft',
   'templateVersion: number',
   "status: 'archived' | 'revision-draft'",
@@ -216,17 +229,22 @@ requireText(storeSource, "template.status === 'published'", '实时档案只能�
 requireText(storeSource, 'workspace.drafts.find', '同一模板已有草稿时必须继续原草稿。');
 requireText(studentViewSource, 'workspace.drafts', '禁用后已有草稿必须仍可进入填写。');
 requireText(storeSource, 'appendArchiveViewAudit', '完整档案查看必须写入审计记录。');
-requireText(storeSource, "template.status === 'draft' || template.status === 'disabled'", '只允许删除草稿或已禁用档案设计。');
+requireText(storeSource, "template.status === 'draft' || template.status === 'ready' || template.status === 'disabled'", '只允许删除草稿、待启用或已停用档案设计。');
 requireText(storeSource, 'templateSnapshot: createArchiveTemplateSnapshot(template)', '新建学生档案时必须保存不可变结构快照。');
 requireText(storeSource, 'templateSnapshot: cloneTemplateSnapshot(draft.templateSnapshot)', '确认成档时必须继承草稿的结构快照。');
 requireText(studentViewSource, 'activeDraft?.templateSnapshot', '学生草稿必须使用自身结构快照继续填写。');
 requireText(studentViewSource, 'activeSnapshot.templateSnapshot', '历史档案必须使用自身结构快照展示。');
-requireText(studentViewSource, '保存并带入', '缺失的学生信息必须支持在档案填写页补充。');
-requireText(studentViewSource, 'onUpdateStudent', '档案内补充信息必须同步学生资料。');
-requireText(studentViewSource, 'missingSystemField', '确认成档前必须校验自动带入字段。');
-requireText(studentViewSource, 'activeSnapshot.systemValues', '历史档案必须展示成档时的学生信息快照。');
-requireText(storeSource, 'systemValues: { ...systemValues }', '确认成档必须保存自动带入字段值快照。');
-requireText(viewSource, 'getArchiveGrowthFieldGroups(spaceId)', '档案设计必须读取当前学校已启用的成长字段。');
+forbidText(studentViewSource, '补充学生信息', '档案填写页不应承担学生资料维护。');
+forbidText(studentViewSource, 'onUpdateStudent', '档案填写页不应修改学生基本资料。');
+forbidText(studentViewSource, 'missingSystemField', '学生身份信息缺失不应阻止留档。');
+forbidText(studentViewSource, 'templateSnapshot.systemFields', '学生详情内的档案不应重复展示身份信息。');
+requireText(studentViewSource, 'getArchiveSystemValues(student)', '正式留档必须由系统自动保存学生身份快照。');
+requireText(storeSource, 'systemValues: { ...systemValues }', '确认成档必须由系统保存学生身份信息快照。');
+requireText(viewSource, 'getEnabledGrowthFields(spaceId)', '档案设计必须读取当前学校已启用的成长字段。');
+requireText(viewSource, '<GrowthFieldCategoryPicker', '档案设计必须复用成长字段分类选择器。');
+requireText(growthFieldPickerSource, 'role="tablist" aria-label="成长数据分类"', '档案成长字段必须通过分类标签切换。');
+requireText(growthFieldPickerSource, 'activeGroup.fields.map', '档案成长字段只应展示当前分类内容。');
+requireText(viewSource, 'renderFieldAccessory={field =>', '档案分类选择器必须保留字段必填设置。');
 for (const required of ['addButtonLabel="内容"', 'typePickerTitle="添加内容"', 'typePickerPrimaryLabel="手动填写"', "typePickerSecondaryTab={{ label: '成长数据'"]) {
   requireText(viewSource, required, `档案添加内容入口缺少：${required}`);
 }
@@ -239,21 +257,30 @@ const selectableGrowthSource = storeSource.slice(
 );
 forbidText(selectableGrowthSource, '学期目标', '学期目标暂缓后，不应出现在档案成长数据选择中。');
 requireText(viewSource, 'templateDraft.growthFields.length', '档案页必须按具体成长字段统计已选数量。');
-requireText(viewSource, '成档必需', '具体成长字段必须支持设置为成档必需。');
+for (const policy of ['选填', '必填']) requireText(viewSource, policy, `具体成长字段缺少必填状态：${policy}`);
+for (const removedPolicy of ['有则带入', '缺失可补', '本档案必填']) forbidText(viewSource, removedPolicy, `档案设计不应保留旧带入策略：${removedPolicy}`);
+requireText(storeSource, "export type ArchiveGrowthMissingPolicy = 'omit' | 'supplement' | 'required'", '档案数据层必须明确三种缺失处理策略。');
+requireText(storeSource, "missingPolicy: 'supplement'", '新增成长字段必须默认为缺失可补。');
 requireText(storeSource, 'buildArchiveGrowthModuleSnapshots', '档案必须从学生成长数据构建字段快照。');
-requireText(studentViewSource, 'currentGrowthSnapshots', '档案草稿必须读取当前成长记录。');
-requireText(studentViewSource, 'missingGrowthField', '确认成档前必须逐字段校验必需成长数据。');
-requireText(storeSource, 'growthSnapshots: cloneGrowthSnapshots(growthSnapshots)', '确认成档必须冻结成长记录快照。');
+requireText(studentViewSource, 'activeDraft?.growthSnapshots ?? []', '学生档案必须读取该档案已经冻结的成长数据快照。');
+requireText(studentViewSource, 'missingGrowthField', '保存档案前必须逐字段校验必需成长数据。');
+requireText(studentViewSource, "sourceLabel: `档案补录·${activeDraft.templateName}`", '档案补录必须保存可识别的数据来源。');
+requireText(studentViewSource, 'saveStudentGrowthDataRecord(student.id', '档案补录必须写入统一成长数据。');
+requireText(studentViewSource, 'availableGrowthSnapshots', '保存档案前必须过滤未填写的空字段。');
+forbidText(studentViewSource, 'value: event.currentTarget.value', '档案补录不得在函数式状态更新中延迟读取事件对象，否则输入后会导致页面崩溃。');
+forbidText(studentViewSource, 'recordedAt: event.currentTarget.value', '档案补录日期不得在函数式状态更新中延迟读取事件对象。');
+requireText(storeSource, 'growthSnapshots: cloneGrowthSnapshots(growthSnapshots)', '保存档案必须冻结成长记录快照。');
 requireText(studentViewSource, 'activeSnapshot.growthSnapshots', '历史档案必须读取冻结后的成长记录。');
-requireText(storeSource, "export type ArchiveDataRangeMode = 'semester' | 'school_year' | 'custom'", '档案数据层必须支持本学期、本学年和自定义日期范围。');
-requireText(viewSource, 'setShowDataRangePicker(true)', '档案基础设置必须通过底部浮层渐进披露数据范围。');
-requireText(viewSource, 'resolveArchiveDataRange(templateDraft).label', '档案编辑和预览必须展示实际数据范围。');
-requireText(storeSource, 'const snapshotRange = resolveArchiveDataRange(draft.templateSnapshot)', '完成留档时必须解析当前档案数据范围。');
-requireText(storeSource, 'periodStart: snapshotRange.startDate', '留档快照必须冻结实际开始日期。');
-requireText(storeSource, 'periodEnd: snapshotRange.endDate', '留档快照必须冻结实际结束日期。');
+forbidText(viewSource, '成长数据范围', '档案设计不应再配置成长数据范围。');
+forbidText(viewSource, 'setShowDataRangePicker', '档案设计不应保留成长数据范围浮层。');
+requireText(storeSource, "return { key: 'current', label: '', startDate: '', endDate: '' }", '同一学生和同一档案必须统一写入当前档案。');
+requireText(storeSource, 'item.studentId === update.target.studentId', '采集写回必须按学生定位当前档案。');
+requireText(storeSource, 'item.templateId === update.templateId', '采集写回必须按档案模板定位当前档案。');
+requireText(storeSource, 'mergeArchiveGrowthSnapshots(item.growthSnapshots, update.growthSnapshots)', '重复采集必须更新档案自身的成长快照。');
+forbidText(studentViewSource, '档案归属', '学生当前档案不应展示抽象归属周期。');
 requireText(storeSource, 'sourceRecordId?: string', '成长字段快照必须保存来源记录。');
 requireText(storeSource, 'sourceVersion?: number', '成长字段快照必须保存来源版本。');
-requireText(studentViewSource, 'item.recordedAt', '实时档案和历史档案必须逐字段展示记录日期。');
+requireText(archiveGrowthRendererSource, 'item.recordedAt', '实时档案和历史档案必须逐字段展示记录日期。');
 
 for (const required of ['可留档', '待补充', '已留档', '批量留档 {selectedStudentIds.size} 人']) {
   requireText(classBatchViewSource, required, `班级批量留档流程缺少：${required}`);
@@ -262,9 +289,24 @@ requireText(storeSource, 'getStudentArchiveReadiness', '单人和批量留档必
 requireText(storeSource, 'batchArchiveStudents', '档案数据层必须提供班级批量留档能力。');
 requireText(classListSource, "label: '批量留档'", '班级更多操作的学生管理分组必须提供批量留档入口。');
 requireText(appSource, '<ClassArchiveBatchView', '教师端必须注册班级批量留档页面。');
-requireText(viewSource, "isCreating ? '新建档案'", '新建档案编辑器顶部必须显示“新建档案”。');
-requireText(viewSource, 'action={headerAction}', '档案编辑页必须按状态提供右上角操作，不固定展示草稿标签。');
-requireText(viewSource, '学生已有草稿和已成档记录不受影响', '删除已禁用档案前必须说明学生档案不受影响。');
+requireText(viewSource, "? '新建档案'", '新建档案编辑器顶部必须显示“新建档案”。');
+forbidText(viewSource, 'action={headerAction}', '档案标题栏不应承载预览、更多或状态操作。');
+requireText(viewSource, "ready: { label: '待启用'", '档案列表和详情必须提供待启用状态。');
+requireText(viewSource, "published: { label: '使用中'", '已启用档案应使用老师可理解的“使用中”状态。');
+requireText(viewSource, "disabled: { label: '已停用'", '禁用状态应使用老师可理解的“已停用”文案。');
+requireText(viewSource, 'const completeTemplateDesign = () =>', '档案编辑器必须提供独立的完成设计动作。');
+requireText(viewSource, "status: 'ready'", '完成设计必须保存为待启用状态。');
+requireText(viewSource, "setTemplateEditorMode('detail')", '完成设计后必须直接进入档案详情。');
+requireText(viewSource, '>完成设计</button>', '档案编辑页主按钮必须为完成设计。');
+requireText(viewSource, 'aria-label="预览档案"', '档案编辑页底部必须提供独立预览入口。');
+requireText(viewSource, '>继续编辑</button>', '待启用详情必须提供继续编辑入口。');
+requireText(viewSource, '>启用档案</button>', '待启用详情必须保留启用入口。');
+requireText(studentViewSource, 'renderGrowthField={(config, number) =>', '学生档案必须在实际分组内渲染成长字段。');
+requireText(archiveGrowthRendererSource, '待采集', '档案成长数据预览必须展示真实待采集状态。');
+forbidText(viewSource, '<dt className="shrink-0 text-[12px] font-semibold text-[var(--tm-text-tertiary)]">档案周期</dt>', '待启用详情不应提前展示使用周期。');
+requireText(viewSource, '学生已有档案和更新记录不受影响', '删除已禁用档案前必须说明学生档案不受影响。');
+requireText(viewSource, '启用后，老师可以在采集管理中按此档案发起采集。', '启用确认必须只说明启用后的直接结果。');
+requireText(viewSource, '确认启用', '待启用档案必须能够直接确认启用。');
 requireText(viewSource, 'showDeleteConfirm', '删除档案设计必须二次确认。');
 requireText(viewSource, 'editingDisabledTemplate', '已禁用档案必须提供独立的查看态和编辑态。');
 requireText(viewSource, '保存修改', '已禁用档案编辑后必须支持保存修改且保持禁用。');
@@ -296,6 +338,10 @@ forbidText(viewSource, '多行文字', '字段类型不应区分多行文字。'
 forbidText(viewSource, '分组说明', '分组不应配置分组说明。');
 forbidText(viewSource, '调整顺序', '顺序调整应在列表上直接操作，不出现在弹窗中。');
 forbidText(studentViewSource, '上期：', 'MVP 填写页不应展示上期对比内容。');
+const archiveVisualSources = [viewSource, studentViewSource, classBatchViewSource, archiveFormRendererSource, archiveGrowthRendererSource, primitivesSource].join('\n');
+for (const rawStyle of ['text-white', 'bg-white/38', 'shadow-sm', 'shadow-[', 'backdrop-blur-[2px]']) {
+  forbidText(archiveVisualSources, rawStyle, `档案页面不得残留未收敛到设计令牌的样式：${rawStyle}`);
+}
 requireText(archiveFormRendererSource, "role={field.type === 'single-select' ? 'radio' : 'checkbox'}", '档案选项必须使用可识别的单选或多选语义。');
 requireText(archiveFormRendererSource, "field.type === 'single-select' ? 'rounded-full'", '单选项必须使用圆形选择符号。');
 forbidText(storeSource, "group: 'core' | 'stage'", '字段模型不应保留成长对比分组。');

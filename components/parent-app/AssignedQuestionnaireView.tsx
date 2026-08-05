@@ -12,7 +12,10 @@ import {
   type QuestionnaireRecord,
 } from '../../shared/questionnaireStore';
 import { persistGrowthCollectionAnswers } from '../../shared/growthCollectionPersistence';
-import { persistArchiveCollectionAnswers } from '../../shared/archiveCollectionPersistence';
+import {
+  getArchiveCollectionPrefillAnswers,
+  persistArchiveCollectionAnswers,
+} from '../../shared/archiveCollectionPersistence';
 import { normalizeFormFieldSettings } from '../../shared/formDefinition';
 import { questionnaireThemeCssVariables } from '../../shared/questionnaireThemeTokens';
 import {
@@ -63,6 +66,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
     : undefined;
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, QuestionnaireAnswer>>(() => ({
+    ...(!preview ? getArchiveCollectionPrefillAnswers(questionnaire, child.studentNo) : {}),
     ...(returnedSubmission?.answers ?? {}),
   }));
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);

@@ -7,6 +7,9 @@ const assistantSource = fs.readFileSync(new URL('./AiHeadteacherAssistantView.ts
 const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
 const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_本周行动建议_内容生成提示词.md', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
+const cardsSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportCards.tsx', import.meta.url), 'utf8');
+const footerSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportFooter.tsx', import.meta.url), 'utf8');
+const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -52,7 +55,7 @@ forbidText(viewSource, '准备下周建议', '页面不应替老师预设准备�
 requireText(dataSource, 'Math.ceil(normalizedClassSize * 0.6)', '记录目标应按班级人数60%动态计算。');
 requireText(dataSource, 'Math.ceil(normalizedClassSize * 0.5)', '覆盖目标应按班级人数50%动态计算。');
 forbidText(dataSource, 'target: { records: 36, covered: 30 }', 'Mock 不应把60人班级目标写死。');
-requireText(viewSource, '示例内容，仅用于展示报告结构', '报告示例应与真实报告明确区分。');
+requireText(footerSource, '示例内容，仅用于展示报告结构。', '报告示例应与真实报告明确区分。');
 forbidText(viewSource, '下周将为你生成', '页面不能暗示下周自动生成。');
 forbidText(viewSource, '即可生成本周建议', '页面不能暗示本周补录后可补生成。');
 
@@ -67,11 +70,11 @@ requireText(viewSource, "const showHeaderTitle = title !== '本周行动建议';
 requireText(viewSource, 'title={showHeaderTitle ? title : className}', '当前行动建议标题栏应展示班级名，历史详情和报告示例应展示报告标题。');
 requireText(viewSource, 'surface="transparent"', '班主任助理报告标题栏应保持透明。');
 requireText(viewSource, '<AssistantSubpageHeader', '行动建议应复用避让微信胶囊的标题栏。');
-requireText(viewSource, 'rounded-[22px]', '报告与进度面板应遵循教师手机端圆角规范。');
-requireText(viewSource, 'waa-card-enter', '报告卡片应保留语义入场动画。');
+requireText(cardsSource, 'rounded-[var(--tm-radius-card)]', '报告与进度面板应消费教师手机端圆角令牌。');
+requireText(cardsSource, 'waa-card-enter', '报告卡片应保留语义入场动画。');
 requireText(cssSource, '@keyframes waa-fade-up', '应定义报告卡片入场动画。');
 requireText(cssSource, 'prefers-reduced-motion: reduce', '动画应支持减少动态效果。');
-requireText(viewSource, '以上内容由AI基于评价记录生成，仅供参考', '真实报告应保留精简的AI参考声明。');
+requireText(footerSource, 'document.notice', '真实报告应保留精简的AI参考声明。');
 
 requireText(assistantSource, '根据上周记录，整理本周班级重点。', '班主任助理入口应明确使用上周数据。');
 forbidText(assistantSource, '根据近期评价', '入口不应继续使用模糊的近期口径。');
@@ -96,7 +99,7 @@ requireText(dataSource, 'export interface TeacherEvaluationInsight', '演示数�
 requireText(dataSource, "insightType: 'participation'", '演示内容应包含教师参与结构洞察。');
 requireText(dataSource, "insightType: 'orientation'", '演示内容应包含鼓励与纠偏方式洞察。');
 requireText(dataSource, "insightType: 'target_scope'", '演示内容应包含评价对象粒度洞察。');
-requireText(viewSource, 'formatTeacherEvaluationInsight', '页面应将结构化教师评价洞察转换为可读内容。');
+requireText(adapterSource, 'report.content.evaluationInsights.map', '适配层应将结构化教师评价洞察转换为统一卡片内容。');
 
 for (const framework of ['学生投入三维框架', '控制-价值', '自我决定理论', '挑战-能力匹配框架', '功能性行为评估框架']) {
   requireText(promptSource, framework, `生成提示词应写明研究框架：${framework}`);

@@ -45,9 +45,9 @@ for (const required of [
   requireText(viewSource, required, `学校数据报表自定义时间段交互缺少：${required}`);
 }
 
-if (viewSource.includes('grid-cols-5')) {
-  throw new Error('时间筛选不应把五个选项硬塞进五等分网格，手机端容易误触');
-}
+requireText(viewSource, 'grid h-[var(--tm-report-filter-row-height)] grid-cols-5', '学校报表时间筛选应使用与类型切换相同高度的五等分单行布局');
+requireText(viewSource, 'h-[var(--tm-report-period-pill-height)]', '五等分时间筛选需要使用独立 Token 控制紧凑选中色块高度');
+requireText(viewSource, 'px-[var(--tm-report-period-pill-inline)]', '时间筛选色块需要随文字宽度收敛并复用水平留白 Token');
 
 for (const forbidden of [
   '按开始日期和结束日期统计',
@@ -81,7 +81,7 @@ for (const required of [
   'max-h-[82%]',
   'bg-[var(--tm-mask)] backdrop-blur-sm',
   'disabled={Boolean(dateRangeError)}',
-  "isFilterPinned ? 'pointer-events-auto' : 'pointer-events-none'",
+  "activePeriod === 'custom' && confirmedDateRange",
 ]) {
-  requireText(viewSource, required, `自定义时间段底部抽屉或吸顶筛选需要满足手机触控和状态细节，缺少：${required}`);
+  requireText(viewSource, required, `自定义时间段底部抽屉或静态筛选需要满足手机触控和状态细节，缺少：${required}`);
 }

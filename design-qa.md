@@ -47,3 +47,52 @@
 4. 滑动提示：老师标签宽度收敛，使下一位老师的姓名在首屏右侧部分露出，不增加说明文字或额外图标。
 
 final result: passed
+
+---
+
+# 学校数据报表设计验收
+
+- Source visual truth:
+  - `/var/folders/6j/jzy6dm_s61sfd605jnldswbh0000gn/T/codex-clipboard-14c9e0a7-884d-4264-9137-44d558fddd94.png`
+  - `/var/folders/6j/jzy6dm_s61sfd605jnldswbh0000gn/T/codex-clipboard-2274a1ff-2157-4742-a7d6-9434560c34dd.png`
+- Implementation screenshots:
+  - `/tmp/leader-report-seam-top-fixed.png`
+  - `/tmp/leader-report-seam-scrolled-fixed.png`
+- Viewport: 393 x 852 phone surface, rendered in the Codex in-app browser.
+- State: Teacher usage report, default state and sticky state after 650px inner scroll.
+
+## Full-view comparison evidence
+
+- The title bar, report-type tabs, and period filters remain a compact continuous white surface.
+- The report content scrolls beneath the sticky filters without showing through between the title bar and filters.
+- Section actions remain secondary to 17px card headings and do not wrap or collide with titles.
+
+## Focused region comparison evidence
+
+- Section actions use 14px medium brand-red text, a 16px library chevron, 6px text/icon spacing, transparent background, and a 44px touch target.
+- The fixed title bar and sticky filter overlap by approximately 1 CSS pixel. Browser measurements after scrolling showed the app outer scroll at 0, inner report scroll at 650, and no positive seam between the two surfaces.
+
+## Comparison history
+
+1. Earlier P2: section action text was visually smaller than the reference and the arrow sat too close to the label.
+   - Fix: increased the action from 13px to 14px and spacing from 4px to 6px.
+   - Post-fix evidence: all five section actions share the same component and measured styles.
+2. Earlier P1: the title bar and sticky filter could expose scrolling content through their boundary.
+   - Fix: removed the app-level second scroll layer, corrected the 44px title-bar box model, and overlapped the sticky surface by 1px.
+   - Post-fix evidence: outer overflow is hidden; title/filter seam measured below zero at both default and scrolled states.
+
+## Required fidelity surfaces
+
+- Fonts and typography: passed; action hierarchy remains below card titles.
+- Spacing and layout rhythm: passed; section actions align consistently and the top surfaces are continuous.
+- Colors and visual tokens: passed; actions use the teacher-mobile brand token with no local hardcoded color.
+- Image quality and asset fidelity: passed; no raster asset is required, and the arrow uses the existing icon library.
+- Copy and content: passed; `查看班级明细`, `查看全部`, and `查看完整名单` remain unchanged.
+- Primary interactions: passed; class detail and indicator full-list drawers open correctly.
+- Console errors: none.
+
+## Findings
+
+No remaining P0, P1, or P2 visual mismatch was found.
+
+final result: passed

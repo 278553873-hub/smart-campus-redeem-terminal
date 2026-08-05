@@ -7,7 +7,7 @@ import {
   getStudentArchiveReadiness,
   persistArchiveWorkspace,
   readArchiveWorkspace,
-  resolveArchiveDataRange,
+  resolveArchivePeriod,
   type ArchiveTemplate,
   type ArchiveWorkspace,
 } from '../../../shared/studentArchiveStore';
@@ -130,7 +130,7 @@ const ClassArchiveBatchView: React.FC<ClassArchiveBatchViewProps> = ({
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><Archive className="h-4.5 w-4.5" /></span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[14px] font-bold text-[var(--tm-text-primary)]">{activeTemplate.name}</span>
-                <span className="mt-1 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{classInfo.name} · {resolveArchiveDataRange(activeTemplate).label}</span>
+                <span className="mt-1 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{classInfo.name} · {resolveArchivePeriod(activeTemplate).label}</span>
               </span>
               <ChevronDown className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
             </button>
@@ -177,7 +177,7 @@ const ClassArchiveBatchView: React.FC<ClassArchiveBatchViewProps> = ({
                       {activeFilter === 'missing' && <span className="mt-1 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{readiness.missingLabels.slice(0, 3).join('、')}</span>}
                     </span>
                     {activeFilter === 'ready' ? (
-                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-white' : 'border-[var(--tm-border-control)] text-transparent'}`}><Check className="h-4 w-4" /></span>
+                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] text-transparent'}`}><Check className="h-4 w-4" /></span>
                     ) : activeFilter === 'missing' ? (
                       <StatusPill className="bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">缺{readiness.missingLabels.length}项</StatusPill>
                     ) : (
@@ -220,9 +220,9 @@ const ClassArchiveBatchView: React.FC<ClassArchiveBatchViewProps> = ({
               >
                 <span className="min-w-0">
                   <span className="block truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{template.name}</span>
-                  <span className="mt-1 block text-[11px] font-medium text-[var(--tm-text-tertiary)]">{resolveArchiveDataRange(template).label}</span>
+                  <span className="mt-1 block text-[11px] font-medium text-[var(--tm-text-tertiary)]">{resolveArchivePeriod(template).label}</span>
                 </span>
-                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-white' : 'border-[var(--tm-border-control)] text-transparent'}`}><Check className="h-4 w-4" /></span>
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] text-transparent'}`}><Check className="h-4 w-4" /></span>
               </button>
             );
           })}

@@ -107,6 +107,9 @@ export interface QuestionnaireRecord {
   archiveTemplateName?: string;
   archiveTemplateVersion?: number;
   archiveTemplateSnapshot?: ArchiveTemplateSnapshot;
+  archivePeriodKey?: string;
+  archivePeriodLabel?: string;
+  archiveSkippedStudentNos?: string[];
   studentAssignmentMode?: StudentAssignmentMode;
   targetMode?: QuestionnaireTargetMode;
   targetClassIds?: string[];

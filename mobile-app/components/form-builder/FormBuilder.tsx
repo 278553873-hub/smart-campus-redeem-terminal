@@ -91,6 +91,8 @@ interface FormBuilderProps<TType extends string> extends FormBuilderValue<TType>
     label: string;
     render: (close: () => void, sectionId?: string) => React.ReactNode;
   };
+  lockedFieldIds?: ReadonlySet<string>;
+  getLockedFieldSubtitle?: (field: ConfigurableFormField<TType>) => string | undefined;
 }
 
 const defaultIconMap: Record<string, FieldIcon> = {
@@ -107,6 +109,7 @@ const defaultIconMap: Record<string, FieldIcon> = {
 };
 
 const inputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
+const readonlyPreviewSurfaceClass = 'rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] text-[var(--tm-input-readonly-text)]';
 const sectionDropId = (sectionId: string) => `form-section:${sectionId}`;
 const sectionSortId = (sectionId: string) => `form-section-sort:${sectionId}`;
 
@@ -266,6 +269,8 @@ const FormBuilder = <TType extends string>({
   typePickerTitle,
   typePickerPrimaryLabel = '手动填写',
   typePickerSecondaryTab,
+  lockedFieldIds,
+  getLockedFieldSubtitle,
 }: FormBuilderProps<TType>) => {
   const [expandedFieldId, setExpandedFieldId] = useState('');
   const [typeSheetSectionId, setTypeSheetSectionId] = useState<string | null>(null);
@@ -394,6 +399,11 @@ const FormBuilder = <TType extends string>({
         settings: normalizeFormFieldSettings(next.type, next.settings, next.options),
       };
     }) });
+  };
+
+  const removeField = (id: string) => {
+    emit({ fields: fields.filter(field => field.id !== id) });
+    if (expandedFieldId === id) setExpandedFieldId('');
   };
 
   const copyField = (field: ConfigurableFormField<TType>) => {
@@ -567,7 +577,7 @@ const FormBuilder = <TType extends string>({
           {(field.subFields ?? []).map((subField, subFieldIndex) => (
             <div key={subField.id} className="flex min-h-8 items-end gap-2.5">
               <span className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">{subField.label || `填空项${subFieldIndex + 1}`}</span>
-              <span className="h-7 w-24 shrink-0 border-b border-[var(--tm-border-control)]" />
+              <span className="h-7 w-24 shrink-0 border-b border-[var(--tm-input-readonly-border)]" />
             </div>
           ))}
         </div>
@@ -575,16 +585,16 @@ const FormBuilder = <TType extends string>({
     }
     if (field.type === 'date') {
       const placeholder: Record<FormDateFormat, string> = { ymd: '年-月-日', ym: '年-月', year: '年份' };
-      return <div className="mt-4 flex h-10 items-center justify-between border-b border-[var(--tm-border-control)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-tertiary)]" aria-hidden="true"><span>{placeholder[settings.dateFormat ?? 'ymd']}</span><CalendarDays className="h-4.5 w-4.5" /></div>;
+      return <div className="mt-4 flex h-10 items-center justify-between border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-readonly-text)]" aria-hidden="true"><span>{placeholder[settings.dateFormat ?? 'ymd']}</span><CalendarDays className="h-4.5 w-4.5" /></div>;
     }
     if (field.type === 'number') {
       const placeholder: Record<FormNumberFormat, string> = { integer: '请输入整数', 'decimal-1': '请输入数字（1位小数）', 'decimal-2': '请输入数字（2位小数）' };
-      return <div className="mt-4 flex h-10 items-center justify-between border-b border-[var(--tm-border-control)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-tertiary)]" aria-hidden="true"><span>{placeholder[settings.numberFormat ?? 'integer']}</span><Hash className="h-4.5 w-4.5" /></div>;
+      return <div className="mt-4 flex h-10 items-center justify-between border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-readonly-text)]" aria-hidden="true"><span>{placeholder[settings.numberFormat ?? 'integer']}</span><Hash className="h-4.5 w-4.5" /></div>;
     }
     if (field.type === 'short_text') {
-      return <div className="mt-4 h-10 border-b border-[var(--tm-border-control)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-tertiary)]" aria-hidden="true">请输入内容</div>;
+      return <div className="mt-4 h-10 border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-readonly-text)]" aria-hidden="true">请输入内容</div>;
     }
-    return <div className="mt-3 min-h-[72px] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]" aria-hidden="true">请输入内容</div>;
+    return <div className={`mt-3 min-h-[72px] px-3 py-2.5 text-[length:var(--tm-font-size-compact)] font-medium ${readonlyPreviewSurfaceClass}`} aria-hidden="true">请输入内容</div>;
   };
 
   const setRatingRange = (field: ConfigurableFormField<TType>, ratingMin: number, ratingMax: number) => {
@@ -603,7 +613,7 @@ const FormBuilder = <TType extends string>({
     : {};
 
   const toggleFieldEditor = (field: ConfigurableFormField<TType>) => {
-    if (readOnly) return;
+    if (readOnly || lockedFieldIds?.has(field.id)) return;
     if (expandedFieldId === field.id) {
       setExpandedFieldId('');
       return;
@@ -614,6 +624,7 @@ const FormBuilder = <TType extends string>({
 
   const renderField = (field: ConfigurableFormField<TType>, index: number) => {
     const expanded = expandedFieldId === field.id;
+    const locked = Boolean(lockedFieldIds?.has(field.id));
     const meta = typeMeta.get(field.type);
     const TypeIcon = meta?.icon ?? defaultIconMap[field.type] ?? TextCursorInput;
     const choice = Boolean(meta?.choice);
@@ -630,25 +641,34 @@ const FormBuilder = <TType extends string>({
         readOnly={readOnly}
         itemLabel={itemLabel}
         className={`overflow-hidden rounded-[var(--tm-radius-card)] border bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)] transition-colors ${fieldError ? 'border-[var(--tm-status-negative-strong)]' : expanded ? 'border-[var(--tm-brand-primary)]' : 'border-transparent'}`}
-        header={<button
-          type="button"
-          disabled={readOnly}
-          onClick={() => toggleFieldEditor(field)}
-          aria-expanded={expanded}
-          aria-label={`${expanded ? '收起' : readOnly ? '查看' : '编辑'}${itemLabel}详情：${field.label || `未命名${itemLabel}`}`}
-          className={`flex w-full gap-3 px-3 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)] disabled:cursor-default ${expanded && !readOnly ? 'min-h-11 items-center py-2' : 'min-h-[76px] items-start py-3.5'}`}
-        >
-          {expanded && !readOnly ? (
-            <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]"><TypeIcon className="h-4 w-4 shrink-0" />{meta?.label ?? field.type}</span>
-          ) : (
-              <span className="min-w-0 flex-1 pb-1">
-                <span className="block break-words text-[length:var(--tm-font-size-body)] font-semibold leading-5 text-[var(--tm-text-primary)]">{field.label || `未命名${itemLabel}`}</span>
-                {renderFieldPreview(field, choice, rating, usesSubFields)}
-              </span>
-          )}
-        </button>}
+        header={locked ? (
+          <div className="flex min-h-[76px] items-center gap-2 px-3 py-3.5">
+            <div className="min-w-0 flex-1">
+              <span className="block break-words text-[length:var(--tm-font-size-body)] font-semibold leading-5 text-[var(--tm-text-primary)]">{field.label || `未命名${itemLabel}`}</span>
+              <span className="mt-1 flex items-center gap-1.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]"><TypeIcon className="h-3.5 w-3.5 shrink-0" />{getLockedFieldSubtitle?.(field) ?? meta?.label ?? field.type}</span>
+              {readOnly && (choice || rating || usesSubFields) && renderFieldPreview(field, choice, rating, usesSubFields)}
+            </div>
+            {!readOnly && <IconButton label={`从本次采集中移除${field.label || itemLabel}`} onClick={() => removeField(field.id)}><Trash2 className="h-4.5 w-4.5" /></IconButton>}
+          </div>
+        ) : <button
+            type="button"
+            disabled={readOnly}
+            onClick={() => toggleFieldEditor(field)}
+            aria-expanded={expanded}
+            aria-label={`${expanded ? '收起' : readOnly ? '查看' : '编辑'}${itemLabel}详情：${field.label || `未命名${itemLabel}`}`}
+            className={`flex w-full gap-3 px-3 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)] disabled:cursor-default ${expanded && !readOnly ? 'min-h-11 items-center py-2' : 'min-h-[76px] items-start py-3.5'}`}
+          >
+            {expanded && !readOnly ? (
+              <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]"><TypeIcon className="h-4 w-4 shrink-0" />{meta?.label ?? field.type}</span>
+            ) : (
+                <span className="min-w-0 flex-1 pb-1">
+                  <span className="block break-words text-[length:var(--tm-font-size-body)] font-semibold leading-5 text-[var(--tm-text-primary)]">{field.label || `未命名${itemLabel}`}</span>
+                  {renderFieldPreview(field, choice, rating, usesSubFields)}
+                </span>
+            )}
+          </button>}
       >
-        {expanded && !readOnly && (
+        {expanded && !readOnly && !locked && (
           <div className="px-4 pb-4">
             <AutoResizeTextarea
               id={`form-field-${field.id}`}
@@ -841,15 +861,17 @@ const FormBuilder = <TType extends string>({
 
   return (
     <div>
-      <section className={`flex min-h-[var(--tm-size-touch)] items-center gap-4 px-1 ${showItemLabel ? 'justify-between' : 'justify-end'}`}>
-        {showItemLabel && <h2 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">{itemLabel}</h2>}
-        {!readOnly && (
-          <div className="flex items-center gap-1">
-            <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">分组</span>
-            <Toggle checked={layoutMode === 'grouped'} label="使用分组" disabled={readOnly} onChange={toggleGrouping} />
-          </div>
-        )}
-      </section>
+      {(showItemLabel || !readOnly) && (
+        <section className={`flex min-h-[var(--tm-size-touch)] items-center gap-4 px-1 ${showItemLabel ? 'justify-between' : 'justify-end'}`}>
+          {showItemLabel && <h2 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">{itemLabel}</h2>}
+          {!readOnly && (
+            <div className="flex items-center gap-1">
+              <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">分组</span>
+              <Toggle checked={layoutMode === 'grouped'} label="使用分组" disabled={readOnly} onChange={toggleGrouping} />
+            </div>
+          )}
+        </section>
+      )}
 
       {layoutMode === 'flat' ? (
         <section className="mt-2">
@@ -993,7 +1015,7 @@ const FormBuilder = <TType extends string>({
           <>
             <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">删除“{deleteTarget.label}”？</h2>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setDeleteTarget(null)} className="min-h-[52px] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)]">取消</button>
+              <button type="button" onClick={() => setDeleteTarget(null)} className="min-h-[52px] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)]">取消</button>
               <button type="button" onClick={confirmDelete} className="min-h-[52px] rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative-strong)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)]">删除</button>
             </div>
           </>

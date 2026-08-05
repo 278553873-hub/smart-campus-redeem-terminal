@@ -1,11 +1,5 @@
-import React from 'react';
-import {
-  CalendarDays,
-  CircleAlert,
-  ListChecks,
-  Sparkles,
-  TrendingUp,
-} from 'lucide-react';
+import React, { useMemo } from 'react';
+import { CalendarDays, Sparkles } from 'lucide-react';
 import {
   PRINCIPAL_PERIODIC_REPORTS,
   type PrincipalPeriodicReportKind,
@@ -14,6 +8,13 @@ import {
 import AssistantReportFeedback from '../components/AssistantReportFeedback';
 import AssistantHistoryLink from '../components/AssistantHistoryLink';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
+import AssistantReportCards from '../components/assistant-report/AssistantReportCards';
+import AssistantReportContractError from '../components/assistant-report/AssistantReportContractError';
+import AssistantReportFooter from '../components/assistant-report/AssistantReportFooter';
+import {
+  adaptPrincipalPeriodicReport,
+  resolveAssistantReportDocument,
+} from '../domain/assistantReportAdapters';
 import type { ReportGenerationTaskStatus } from '../hooks/useReportGenerationTask';
 
 interface PrincipalPeriodicReportViewProps {
@@ -26,6 +27,7 @@ interface PrincipalPeriodicReportViewProps {
   onBack: () => void;
   onOpenHistory?: () => void;
   reportData?: PrincipalPeriodicReportContent;
+  reportPayload?: unknown;
 }
 
 const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = ({
@@ -38,6 +40,7 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
   onBack,
   onOpenHistory,
   reportData,
+  reportPayload,
 }) => {
   const report = reportData ?? PRINCIPAL_PERIODIC_REPORTS[kind];
   const status = statusProp ?? (generated ? 'generated' : 'generating');
@@ -46,6 +49,10 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
   const emptyMessage = kind === 'weekly'
     ? '上一个完整自然周没有有效评价记录，本周管理建议不会调用人工智能生成。'
     : '上一个完整自然月没有有效评价记录，本次学校复盘不会调用人工智能生成。';
+  const reportResolution = useMemo(() => resolveAssistantReportDocument(
+    reportPayload,
+    adaptPrincipalPeriodicReport(report, schoolName),
+  ), [report, reportPayload, schoolName]);
 
   return (
     <div className="ai-assistant-theme-principal principal-report-page min-h-full bg-transparent font-sans text-[var(--tm-text-primary)]">
@@ -108,85 +115,17 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
             </div>
           </section>
 
-          <section className="border-b border-[var(--tm-border-subtle)] px-5 py-6">
-            <h2 className="text-[17px] font-semibold">{report.metricsTitle}</h2>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {report.metrics.map((metric) => (
-                <article key={metric.label} className="min-h-[124px] rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-3.5 [box-shadow:var(--tm-shadow-card)]">
-                  <p className="text-[12px] text-[var(--tm-text-tertiary)]">{metric.label}</p>
-                  <p className="mt-2 text-[22px] font-bold tabular-nums">{metric.value}</p>
-                  <p className="mt-1 text-[11px] font-medium text-[var(--tm-role-principal-strong)]">{metric.change}</p>
-                  <p className="mt-1.5 text-[11px] leading-4 text-[var(--tm-text-secondary)]">{metric.detail}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="border-b border-[var(--tm-border-subtle)] px-5 py-6">
-            <div className="flex items-center gap-2.5">
-              <Sparkles className="h-5 w-5 text-[var(--tm-role-principal-strong)]" strokeWidth={2} />
-              <h2 className="text-[17px] font-semibold">{report.judgementTitle}</h2>
-            </div>
-            <p className="mt-3 text-[14px] leading-7 text-[var(--tm-text-secondary)]">{report.judgement}</p>
-          </section>
-
-          {report.progress.length > 0 && (
-            <section className="border-b border-[var(--tm-border-subtle)] px-5 py-6">
-              <div className="flex items-center gap-2.5">
-                <TrendingUp className="h-5 w-5 text-[var(--tm-status-positive-strong)]" strokeWidth={2} />
-                <h2 className="text-[17px] font-semibold">{report.progressTitle}</h2>
-              </div>
-              <div className="mt-4 space-y-5">
-                {report.progress.map((item, index) => (
-                  <article key={item.title} className="border-l-2 border-[var(--tm-status-positive)] pl-3.5">
-                    <h3 className="text-[15px] font-semibold">{index + 1}. {item.title}</h3>
-                    <p className="mt-2 text-[14px] leading-6 text-[var(--tm-text-secondary)]">{item.detail}</p>
-                    <p className="mt-2 text-[12px] leading-5 text-[var(--tm-status-positive-strong)]">依据：{item.evidence}</p>
-                  </article>
-                ))}
-              </div>
-            </section>
+          {reportResolution.document ? (
+            <>
+              <AssistantReportCards
+                document={reportResolution.document}
+                className="px-[var(--tm-report-page-inline)] py-[var(--tm-report-card-gap)]"
+              />
+              <AssistantReportFooter document={reportResolution.document} />
+            </>
+          ) : (
+            <AssistantReportContractError onRetry={onRetry} />
           )}
-
-          <section className="border-b border-[var(--tm-border-subtle)] px-5 py-6">
-            <div className="flex items-center gap-2.5">
-              <CircleAlert className="h-5 w-5 text-[var(--tm-role-principal-accent-strong)]" strokeWidth={2} />
-              <h2 className="text-[17px] font-semibold">{report.findingsTitle}</h2>
-            </div>
-            <div className="mt-4 space-y-5">
-              {report.findings.map((item, index) => (
-                <article key={item.title} className="border-l-2 border-[var(--tm-role-principal-accent-border)] pl-3.5">
-                  <h3 className="text-[15px] font-semibold">{index + 1}. {item.title}</h3>
-                  <p className="mt-2 text-[14px] leading-6 text-[var(--tm-text-secondary)]">{item.detail}</p>
-                  <p className="mt-2 text-[12px] leading-5 text-[var(--tm-role-principal-accent-strong)]">依据：{item.evidence}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="px-5 py-6">
-            <div className="flex items-center gap-2.5">
-              <ListChecks className="h-5 w-5 text-[var(--tm-role-principal-strong)]" strokeWidth={2} />
-              <h2 className="text-[17px] font-semibold">{report.actionsTitle}</h2>
-            </div>
-            <ol className="mt-4 space-y-5">
-              {report.actions.map((item, index) => (
-                <li key={item.title} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--tm-role-principal-soft)] text-[12px] font-bold text-[var(--tm-role-principal-strong)]">{index + 1}</span>
-                  <div>
-                    <h3 className="text-[15px] font-semibold">{item.title}</h3>
-                    <p className="mt-1.5 text-[14px] leading-6 text-[var(--tm-text-secondary)]">{item.detail}</p>
-                    <p className="mt-2 text-[12px] leading-5 text-[var(--tm-text-tertiary)]">责任：{item.owner}</p>
-                    <p className="text-[12px] leading-5 text-[var(--tm-text-tertiary)]">节点：{item.checkpoint} · 检查：{item.metric}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          <footer className="mx-5 border-t border-[var(--tm-border-subtle)] py-5 text-[11px] leading-5 text-[var(--tm-text-tertiary)]">
-            {report.notice} 生成日期：{report.generatedDate}
-          </footer>
         </main>
       )}
     </div>

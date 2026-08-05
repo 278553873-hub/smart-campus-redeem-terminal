@@ -41,6 +41,12 @@ export type TeacherReportChartColor =
     | 'fitness'
     | 'aesthetic'
     | 'labor'
+    | 'indicator1'
+    | 'indicator2'
+    | 'indicator3'
+    | 'indicator4'
+    | 'indicator5'
+    | 'indicator6'
     | 'peer'
     | 'total';
 
@@ -74,6 +80,12 @@ const readChartTheme = (element: HTMLElement): TeacherReportChartTheme => {
             fitness: readToken(style, '--tm-chart-edu-fitness'),
             aesthetic: readToken(style, '--tm-chart-edu-aesthetic'),
             labor: readToken(style, '--tm-chart-edu-labor'),
+            indicator1: readToken(style, '--tm-chart-indicator-1'),
+            indicator2: readToken(style, '--tm-chart-indicator-2'),
+            indicator3: readToken(style, '--tm-chart-indicator-3'),
+            indicator4: readToken(style, '--tm-chart-indicator-4'),
+            indicator5: readToken(style, '--tm-chart-indicator-5'),
+            indicator6: readToken(style, '--tm-chart-indicator-6'),
             peer: readToken(style, '--tm-chart-series-peer'),
             total: readToken(style, '--tm-chart-series-total'),
         },
@@ -90,6 +102,12 @@ const readChartTheme = (element: HTMLElement): TeacherReportChartTheme => {
             fitness: readToken(style, '--tm-text-primary'),
             aesthetic: readToken(style, '--tm-text-primary'),
             labor: readToken(style, '--tm-text-primary'),
+            indicator1: readToken(style, '--tm-text-primary'),
+            indicator2: readToken(style, '--tm-text-primary'),
+            indicator3: readToken(style, '--tm-text-primary'),
+            indicator4: readToken(style, '--tm-text-primary'),
+            indicator5: readToken(style, '--tm-text-primary'),
+            indicator6: readToken(style, '--tm-text-primary'),
             peer: readToken(style, '--tm-text-secondary'),
             total: readToken(style, '--tm-chart-series-total'),
         },
@@ -107,6 +125,7 @@ interface TeacherReportChartProps {
     className: string;
     optionKey: string;
     createOption: (theme: TeacherReportChartTheme) => EChartsCoreOption;
+    onItemSelect?: (name: string) => void;
 }
 
 const TeacherReportChart: React.FC<TeacherReportChartProps> = ({
@@ -114,6 +133,7 @@ const TeacherReportChart: React.FC<TeacherReportChartProps> = ({
     className,
     optionKey,
     createOption,
+    onItemSelect,
 }) => {
     const chartRef = useRef<HTMLDivElement | null>(null);
     const chartInstanceRef = useRef<EChartsType | null>(null);
@@ -154,6 +174,30 @@ const TeacherReportChart: React.FC<TeacherReportChartProps> = ({
         chart.setOption(createOption(readChartTheme(element)), true);
     }, [chartReady, createOption, optionKey]);
 
+    useEffect(() => {
+        const chart = chartInstanceRef.current;
+        if (!chartReady || !chart || !onItemSelect) return undefined;
+
+        const handleItemSelect = (params: {
+            componentType?: string;
+            name?: string;
+            value?: string | number;
+        }) => {
+            if (params.componentType === 'series' && params.name) {
+                onItemSelect(params.name);
+                return;
+            }
+
+            if (params.componentType === 'xAxis' && typeof params.value === 'string') {
+                onItemSelect(params.value);
+            }
+        };
+        chart.on('click', handleItemSelect);
+        return () => {
+            if (!chart.isDisposed()) chart.off('click', handleItemSelect);
+        };
+    }, [chartReady, onItemSelect]);
+
     return (
         <div className={`relative ${className}`}>
             <div ref={chartRef} className="h-full w-full" role="img" aria-label={ariaLabel} />
@@ -184,7 +228,9 @@ interface TeacherReportBarChartProps {
     categoryColors?: TeacherReportChartColor[];
     // 柱顶已有精确值时，可关闭手机端冗余的纵轴标尺与网格。
     showValueAxis?: boolean;
+    showLegend?: boolean;
     valueLabelSuffix?: string;
+    onCategorySelect?: (name: string) => void;
 }
 
 export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
@@ -195,7 +241,9 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
     className = 'h-56',
     categoryColors,
     showValueAxis = true,
+    showLegend = true,
     valueLabelSuffix = '',
+    onCategorySelect,
 }) => {
     const useCategoryColors = Boolean(categoryColors && categoryColors.length > 0);
     const hasNegativeValue = series.some(item => item.values.some(value => value < 0));
@@ -211,6 +259,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
             axisPointer: { type: 'shadow' },
         },
         legend: {
+            show: showLegend,
             top: 0,
             itemWidth: 12,
             itemHeight: 8,
@@ -226,13 +275,24 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                 })),
             } : {}),
         },
-        grid: { left: showValueAxis ? 38 : 8, right: 8, top: 42, bottom: 30 },
+        grid: { left: showValueAxis ? 38 : 8, right: 8, top: showLegend ? 42 : 10, bottom: 30 },
         xAxis: {
             type: 'category',
             data: categories,
+            triggerEvent: Boolean(onCategorySelect),
             axisTick: { show: false },
             axisLine: { lineStyle: { color: theme.gridLine } },
-            axisLabel: { color: theme.textSecondary, fontSize: 11, interval: 0 },
+            axisLabel: {
+                color: theme.textPrimary,
+                fontSize: 11,
+                fontWeight: onCategorySelect ? 600 : 400,
+                interval: 0,
+                formatter: onCategorySelect ? (value: string) => `{label|${value}} {arrow|›}` : undefined,
+                rich: onCategorySelect ? {
+                    label: { color: theme.textPrimary, fontSize: 11, fontWeight: 600 },
+                    arrow: { color: theme.textSecondary, fontSize: 11, fontWeight: 400 },
+                } : undefined,
+            },
         },
         yAxis: {
             type: 'value',
@@ -249,6 +309,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
         series: series.map(item => ({
             name: item.name,
             type: 'bar',
+            cursor: onCategorySelect ? 'pointer' : 'default',
             data: item.values.map((value, index) => ({
                 value,
                 ...(useCategoryColors && item.color !== 'peer'
@@ -268,6 +329,9 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                 borderRadius: [4, 4, 0, 0],
                 opacity: item.muted ? theme.mutedOpacity : 1,
             },
+            emphasis: onCategorySelect ? {
+                itemStyle: { opacity: 0.72 },
+            } : undefined,
             label: {
                 show: true,
                 position: 'top',
@@ -279,7 +343,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                 fontWeight: 600,
             },
         })),
-    }), [categories, series, useCategoryColors, categoryColors, hasNegativeValue, showValueAxis, valueLabelSuffix]);
+    }), [categories, series, useCategoryColors, categoryColors, hasNegativeValue, showValueAxis, showLegend, valueLabelSuffix, onCategorySelect]);
 
     return (
         <TeacherReportChart
@@ -287,6 +351,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
             className={className}
             optionKey={optionKey}
             createOption={createOption}
+            onItemSelect={onCategorySelect}
         />
     );
 };
@@ -302,6 +367,7 @@ interface TeacherReportDonutChartProps {
     data: TeacherReportDonutDatum[];
     optionKey: string;
     className?: string;
+    onCategorySelect?: (name: string) => void;
 }
 
 export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = ({
@@ -309,6 +375,7 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
     data,
     optionKey,
     className = 'h-64',
+    onCategorySelect,
 }) => {
     const createOption = React.useCallback((theme: TeacherReportChartTheme): EChartsCoreOption => ({
         animationDuration: 500,
@@ -332,6 +399,7 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
         series: [{
             name: '五育事件',
             type: 'pie',
+            cursor: onCategorySelect ? 'pointer' : 'default',
             center: ['50%', '43%'],
             radius: ['43%', '66%'],
             avoidLabelOverlap: true,
@@ -344,7 +412,7 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
             labelLine: { length: 8, length2: 6 },
             data: data.map(item => ({ name: item.name, value: item.value })),
         }],
-    }), [data]);
+    }), [data, onCategorySelect]);
 
     return (
         <TeacherReportChart
@@ -352,6 +420,7 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
             className={className}
             optionKey={optionKey}
             createOption={createOption}
+            onItemSelect={onCategorySelect}
         />
     );
 };

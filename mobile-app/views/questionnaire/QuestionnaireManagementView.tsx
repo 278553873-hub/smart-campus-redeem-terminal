@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Activity,
   Archive,
   ArchiveRestore,
   CalendarDays,
@@ -22,7 +21,6 @@ import {
   Minus,
   MoreHorizontal,
   RotateCcw,
-  Ruler,
   Save,
   Search,
   Send,
@@ -35,10 +33,12 @@ import {
 } from 'lucide-react';
 import type { ClassInfo, Student } from '../../types';
 import FormBuilder, { type FormFieldTypeOption } from '../../components/form-builder/FormBuilder';
+import GrowthFieldCategoryPicker from '../../components/growth/GrowthFieldCategoryPicker';
 import AutoResizeTextarea from '../../components/ui/AutoResizeTextarea';
 import MobileClassCascadePicker from '../../components/ui/MobileClassCascadePicker';
 import MobileFloatingCreateButton from '../../components/ui/MobileFloatingCreateButton';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
+import MobileToast from '../../components/ui/MobileToast';
 import AssignedQuestionnaireView from '../../../components/parent-app/AssignedQuestionnaireView';
 import {
   normalizeFormFieldSettings,
@@ -83,7 +83,6 @@ import {
   type QuestionnaireQuestion,
   type QuestionnaireQuestionType,
   type QuestionnaireCollectionMode,
-  type GrowthRecordDateMode,
   type QuestionnaireRespondentRole,
   type QuestionnaireAnswer,
   type QuestionnaireRecord,
@@ -95,7 +94,11 @@ import {
   type StudentAssignmentMode,
 } from '../../../shared/questionnaireStore';
 import { persistGrowthCollectionAnswers } from '../../../shared/growthCollectionPersistence';
-import { persistArchiveCollectionAnswers } from '../../../shared/archiveCollectionPersistence';
+import {
+  getArchiveCollectionTargetPlan,
+  getArchiveCollectionPrefillAnswers,
+  persistArchiveCollectionAnswers,
+} from '../../../shared/archiveCollectionPersistence';
 import {
   createBodyGrowthQuestions,
   getBodyGrowthFieldKeys,
@@ -108,12 +111,12 @@ import {
   type GrowthFieldDefinition,
 } from '../../../shared/studentGrowthFieldCatalog';
 import {
-  ARCHIVE_GROWTH_FIELD_GROUPS,
   ARCHIVE_STORE_EVENT,
   createArchiveTemplateSnapshot,
-  getArchiveSystemFieldLabel,
+  getArchiveGrowthMissingPolicy,
   persistArchiveWorkspace,
   readArchiveWorkspace,
+  resolveArchivePeriod,
   type ArchiveField,
   type ArchiveTemplate,
   type ArchiveTemplateSnapshot,
@@ -137,6 +140,7 @@ type DetailTab = 'data' | 'responses';
 type PageMode = 'list' | 'assigned-list' | 'archived-list' | 'create' | 'detail' | 'response' | 'preview' | 'question-responses' | 'student-record';
 type StudentRecordFilter = 'all' | 'incomplete' | 'completed';
 type PreviewReturnMode = 'create' | 'detail';
+type RespondentSheetMode = 'entry';
 
 const statusMeta: Record<QuestionnaireStatus, { label: string }> = {
   active: { label: '收集中' },
@@ -200,25 +204,9 @@ const collectionModeMeta: Record<QuestionnaireCollectionMode, {
   },
 };
 
-const growthCollectionMeta = {
-  label: '成长信息',
-  shortLabel: '成长采集',
-  icon: Activity,
-  accentClass: 'bg-[var(--tm-status-positive)]',
-  badgeClass: 'border border-[var(--tm-status-positive-border)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]',
-  progressClass: 'bg-[var(--tm-status-positive)]',
-};
-
 const getCollectionBadgeLabel = (record: QuestionnaireRecord) => {
   const role = getQuestionnaireRespondentRole(record);
-  const typeLabel = record.archiveTemplateId
-    ? '档案采集'
-    : getQuestionnaireContentType(record) === 'mixed'
-    ? '混合采集'
-    : getQuestionnaireContentType(record) === 'growth'
-      ? '成长采集'
-      : '普通采集';
-  return `${typeLabel} · ${role === 'teacher' ? '老师填写' : '家长填写'}`;
+  return role === 'teacher' ? '老师填写' : '家长填写';
 };
 
 const getSubmissionDetailTitle = (record: QuestionnaireRecord) => {
@@ -354,7 +342,7 @@ const SecondaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> =
 
 const StepIndicator: React.FC<{ current: number }> = ({ current }) => (
   <div className="grid grid-cols-3 gap-2 px-5 py-4" aria-label={`创建进度，第${current}步，共3步`}>
-    {['填写人和内容', '学生范围', '确认发布'].map((label, index) => {
+    {['采集内容', '学生范围', '确认发布'].map((label, index) => {
       const step = index + 1;
       const active = step === current;
       const complete = step < current;
@@ -567,13 +555,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [draftLayoutMode, setDraftLayoutMode] = useState<FormLayoutMode>('flat');
   const [draftSections, setDraftSections] = useState<FormSection[]>([]);
   const [draftQuestions, setDraftQuestions] = useState<QuestionnaireQuestion[]>([]);
+  const [draftQuestionOrderIds, setDraftQuestionOrderIds] = useState<string[]>([]);
   const [draftGrowthFields, setDraftGrowthFields] = useState<BodyGrowthFieldKey[]>([]);
-  const [draftGrowthDateMode, setDraftGrowthDateMode] = useState<GrowthRecordDateMode>('respondent');
-  const [draftGrowthFixedDate, setDraftGrowthFixedDate] = useState('');
+  const [draftGrowthRecordDate, setDraftGrowthRecordDate] = useState('');
   const [enabledGrowthFields, setEnabledGrowthFields] = useState<GrowthFieldDefinition[]>(() => getEnabledGrowthFields(spaceId));
-  const [draftGrowthSectionId, setDraftGrowthSectionId] = useState('');
+  const [draftGrowthSectionIds, setDraftGrowthSectionIds] = useState<Record<string, string>>({});
   const [draftArchiveTemplateId, setDraftArchiveTemplateId] = useState('');
   const [draftArchiveTemplateSnapshot, setDraftArchiveTemplateSnapshot] = useState<ArchiveTemplateSnapshot | null>(null);
+  const [draftArchivePeriodKey, setDraftArchivePeriodKey] = useState('');
+  const [draftArchivePeriodLabel, setDraftArchivePeriodLabel] = useState('');
   const [previewRecord, setPreviewRecord] = useState<QuestionnaireRecord | null>(null);
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, QuestionnaireAnswer>>({});
   const [previewReturnMode, setPreviewReturnMode] = useState<PreviewReturnMode>('detail');
@@ -583,8 +573,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [suggestedDeadline, setSuggestedDeadline] = useState('');
   const [showAssignmentSheet, setShowAssignmentSheet] = useState(false);
   const [showGrowthDateSheet, setShowGrowthDateSheet] = useState(false);
-  const [showArchiveTemplateSheet, setShowArchiveTemplateSheet] = useState(false);
-  const [showArchiveFieldSheet, setShowArchiveFieldSheet] = useState(false);
+  const [respondentSheetMode, setRespondentSheetMode] = useState<RespondentSheetMode | null>(null);
+  const [showCreateSourceSheet, setShowCreateSourceSheet] = useState(false);
+  const [pendingCreateRespondentRole, setPendingCreateRespondentRole] = useState<QuestionnaireRespondentRole>('guardian');
+  const [createEntryArchiveTemplateId, setCreateEntryArchiveTemplateId] = useState('');
   const [showRecordMenu, setShowRecordMenu] = useState(false);
   const [showDraftMenu, setShowDraftMenu] = useState(false);
   const [showDeleteDraftConfirm, setShowDeleteDraftConfirm] = useState(false);
@@ -683,16 +675,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     ...draftArchiveGrowthFields,
     ...draftGrowthFields,
   ])), [draftArchiveGrowthFields, draftGrowthFields]);
-  const draftArchiveGrowthFieldSet = useMemo(() => new Set(draftArchiveGrowthFields), [draftArchiveGrowthFields]);
-  const draftArchiveSystemLabels = useMemo(() => (draftArchiveTemplateSnapshot?.systemFields ?? []).map(getArchiveSystemFieldLabel), [draftArchiveTemplateSnapshot]);
-  const draftArchiveInputLabels = useMemo(() => [
-    ...(draftArchiveTemplateSnapshot?.growthFields ?? []).map(field => (
-      getGrowthFieldDefinition(field.key as BodyGrowthFieldKey)?.label
-      ?? ARCHIVE_GROWTH_FIELD_GROUPS.flatMap(group => group.fields).find(item => item.key === field.key)?.label
-      ?? String(field.key)
-    )),
-    ...(draftArchiveTemplateSnapshot?.fields ?? []).map(field => field.label),
-  ], [draftArchiveTemplateSnapshot]);
   const availableGrowthFieldOptions = useMemo(() => {
     const enabledKeys = new Set(enabledGrowthFields.map(item => item.key));
     const legacySelected = effectiveGrowthFields
@@ -702,21 +684,58 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return [...enabledGrowthFields, ...legacySelected];
   }, [effectiveGrowthFields, enabledGrowthFields]);
   const getDraftGrowthQuestions = () => {
-    const sectionId = draftLayoutMode === 'grouped'
-      ? draftSections.some(section => section.id === draftGrowthSectionId)
-        ? draftGrowthSectionId
-        : draftSections[0]?.id
-      : undefined;
-    return createBodyGrowthQuestions(effectiveGrowthFields, draftGrowthDateMode === 'respondent').map(question => ({ ...question, sectionId }));
+    const fallbackSectionId = draftLayoutMode === 'grouped' ? draftSections[0]?.id : undefined;
+    const archiveGrowthRequiredByKey = new Map((draftArchiveTemplateSnapshot?.growthFields ?? []).map(field => (
+      [field.key, getArchiveGrowthMissingPolicy(field) === 'required'] as const
+    )));
+    const firstGrowthSectionId = effectiveGrowthFields
+      .map(key => draftGrowthSectionIds[key])
+      .find(sectionId => draftSections.some(section => section.id === sectionId));
+    return createBodyGrowthQuestions(effectiveGrowthFields, false).map(question => ({
+      ...question,
+      required: question.growthFieldKey
+        ? archiveGrowthRequiredByKey.get(question.growthFieldKey) ?? question.required
+        : question.required,
+      sectionId: draftLayoutMode === 'grouped'
+        ? question.growthRecordedAt
+          ? firstGrowthSectionId ?? fallbackSectionId
+          : draftSections.some(section => section.id === draftGrowthSectionIds[question.growthFieldKey ?? ''])
+            ? draftGrowthSectionIds[question.growthFieldKey ?? '']
+            : fallbackSectionId
+        : undefined,
+    }));
   };
   const getDraftArchiveQuestions = () => (draftArchiveTemplateSnapshot?.fields ?? []).map(field => (
     createArchiveQuestion(
       draftArchiveTemplateId,
       field,
-      draftLayoutMode === 'grouped' ? draftSections[0]?.id : undefined,
+      draftLayoutMode === 'grouped' && draftSections.some(section => section.id === field.sectionId)
+        ? field.sectionId
+        : draftLayoutMode === 'grouped'
+          ? draftSections[0]?.id
+          : undefined,
     )
   ));
-  const getAllDraftQuestions = () => [...getDraftGrowthQuestions(), ...getDraftArchiveQuestions(), ...draftQuestions];
+  const getAllDraftQuestions = () => {
+    const questions = [...getDraftGrowthQuestions(), ...getDraftArchiveQuestions(), ...draftQuestions];
+    const recordedAtQuestions = questions.filter(question => question.growthRecordedAt);
+    const visibleQuestions = questions.filter(question => !question.growthRecordedAt);
+    const orderIndex = new Map(draftQuestionOrderIds.map((id, index) => [id, index]));
+    const sourceIndex = new Map(visibleQuestions.map((question, index) => [question.id, index]));
+    const orderedVisibleQuestions = [...visibleQuestions].sort((left, right) => (
+      (orderIndex.get(left.id) ?? draftQuestionOrderIds.length + (sourceIndex.get(left.id) ?? 0))
+      - (orderIndex.get(right.id) ?? draftQuestionOrderIds.length + (sourceIndex.get(right.id) ?? 0))
+    ));
+    const orderedQuestions = [...recordedAtQuestions, ...orderedVisibleQuestions];
+    if (draftLayoutMode !== 'grouped') return orderedQuestions;
+    const assignedIds = new Set<string>();
+    const grouped = draftSections.flatMap(section => orderedQuestions.filter(question => {
+      if (question.sectionId !== section.id) return false;
+      assignedIds.add(question.id);
+      return true;
+    }));
+    return [...grouped, ...orderedQuestions.filter(question => !assignedIds.has(question.id))];
+  };
   const validStructure = draftLayoutMode === 'flat' || (
     draftSections.length > 0
     && getAllDraftQuestions().every(question => Boolean(question.sectionId) && draftSections.some(section => section.id === question.sectionId))
@@ -747,8 +766,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       : !validStructure
         ? '请为所有题目选择分组'
         : '';
-  const stepOneGrowthDateError = effectiveGrowthFields.length > 0 && draftGrowthDateMode === 'fixed' && !draftGrowthFixedDate
-    ? '请设置本次统一日期'
+  const stepOneGrowthDateError = effectiveGrowthFields.length > 0 && !draftGrowthRecordDate
+    ? '请选择记录日期'
     : '';
   const validStepOne = !stepOneTitleError && !stepOneListError && !stepOneGrowthDateError && Object.keys(stepOneFieldErrors).length === 0;
 
@@ -785,25 +804,92 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const resolvedMode: QuestionnaireCollectionMode = resolvedRole === 'teacher' ? 'student_information' : 'guardian_questionnaire';
     const archiveTemplateId = record?.archiveTemplateId ?? nextArchiveTemplateId;
     const archiveTemplate = archiveWorkspace.templates.find(item => item.id === archiveTemplateId && !item.deletedAt);
-    const archiveTemplateSnapshot = record?.archiveTemplateSnapshot
+    const baseArchiveTemplateSnapshot = record?.archiveTemplateSnapshot
       ?? (archiveTemplate ? createArchiveTemplateSnapshot(archiveTemplate) : null);
+    const recordArchiveSectionByFieldId = new Map((record?.questions ?? []).flatMap(question => (
+      question.archiveFieldId && question.sectionId ? [[question.archiveFieldId, question.sectionId] as const] : []
+    )));
+    const recordArchiveSectionByGrowthKey = new Map((record?.questions ?? []).flatMap(question => (
+      question.growthFieldKey && question.sectionId ? [[question.growthFieldKey, question.sectionId] as const] : []
+    )));
+    const archiveTemplateSnapshot = baseArchiveTemplateSnapshot ? {
+      ...baseArchiveTemplateSnapshot,
+      sections: baseArchiveTemplateSnapshot.sections.map(section => ({ ...section })),
+      growthFields: baseArchiveTemplateSnapshot.growthFields.map(field => ({
+        ...field,
+        sectionId: recordArchiveSectionByGrowthKey.get(field.key as BodyGrowthFieldKey) ?? field.sectionId,
+      })),
+      growthModules: baseArchiveTemplateSnapshot.growthModules.map(module => ({ ...module })),
+      fields: baseArchiveTemplateSnapshot.fields.map(field => ({
+        ...field,
+        sectionId: recordArchiveSectionByFieldId.get(field.id) ?? field.sectionId,
+      })),
+    } : null;
+    const archivePeriod = archiveTemplateSnapshot
+      ? resolveArchivePeriod(
+          archiveTemplateSnapshot,
+          record && record.status !== 'draft' ? record.createdAt.slice(0, 10) : undefined,
+        )
+      : null;
     setRespondentRole(resolvedRole);
     setCollectionMode(resolvedMode);
     setStudentAssignmentMode(record?.studentAssignmentMode ?? 'creator');
     setDraftId(record?.id ?? '');
     setDraftTitle(record?.title ?? '');
-    if (!record && archiveTemplateSnapshot) setDraftTitle(`更新${archiveTemplateSnapshot.name}`);
+    if (!record && archiveTemplateSnapshot) setDraftTitle(`${archiveTemplateSnapshot.name}采集`);
     setDraftDescription(record?.description ?? '');
-    setDraftLayoutMode(record?.layoutMode ?? 'flat');
-    setDraftSections((record?.sections ?? []).map(section => ({ ...section })));
+    const inheritedLayoutMode = record?.layoutMode ?? archiveTemplateSnapshot?.layoutMode ?? 'flat';
+    const inheritedSections = (record?.sections ?? archiveTemplateSnapshot?.sections ?? []).map(section => ({ ...section }));
+    setDraftLayoutMode(inheritedLayoutMode);
+    setDraftSections(inheritedSections);
     const nextQuestions = record?.questions ?? [];
-    setDraftGrowthFields(getBodyGrowthFieldKeys(nextQuestions));
-    setDraftGrowthDateMode(record?.growthRecordDateMode ?? (record?.growthMeasurementDate ? 'fixed' : 'respondent'));
-    setDraftGrowthFixedDate(record?.growthMeasurementDate ?? '');
-    setDraftGrowthSectionId(nextQuestions.find(isBodyGrowthQuestion)?.sectionId ?? '');
+    const archiveGrowthKeys = new Set((archiveTemplateSnapshot?.growthFields ?? []).map(field => field.key));
+    setDraftGrowthFields(getBodyGrowthFieldKeys(nextQuestions).filter(key => !archiveGrowthKeys.has(key)));
+    setDraftGrowthRecordDate(record?.growthMeasurementDate ?? '');
+    const nextGrowthSectionIds = Object.fromEntries(nextQuestions.flatMap(question => (
+      question.growthFieldKey && question.sectionId ? [[question.growthFieldKey, question.sectionId]] : []
+    )));
+    if (!record && archiveTemplateSnapshot) {
+      archiveTemplateSnapshot?.growthFields.forEach(field => {
+        if (!getGrowthFieldDefinition(field.key as BodyGrowthFieldKey)) return;
+        nextGrowthSectionIds[field.key] = inheritedLayoutMode === 'grouped'
+          ? inheritedSections.some(section => section.id === field.sectionId)
+            ? field.sectionId ?? ''
+            : inheritedSections[0]?.id ?? ''
+          : '';
+      });
+    }
+    setDraftGrowthSectionIds(nextGrowthSectionIds);
     setDraftArchiveTemplateId(archiveTemplateId);
     setDraftArchiveTemplateSnapshot(archiveTemplateSnapshot);
+    const frozenArchivePeriod = record && record.status !== 'draft'
+      ? {
+          key: record.archivePeriodKey ?? archivePeriod?.key ?? '',
+          label: record.archivePeriodLabel ?? archivePeriod?.label ?? '',
+        }
+      : archivePeriod;
+    setDraftArchivePeriodKey(frozenArchivePeriod?.key ?? '');
+    setDraftArchivePeriodLabel(frozenArchivePeriod?.label ?? '');
     setDraftQuestions(nextQuestions.filter(question => !isBodyGrowthQuestion(question) && !question.archiveFieldSemanticKey));
+    const initialArchiveGrowthQuestions = createBodyGrowthQuestions(
+      (archiveTemplateSnapshot?.growthFields ?? []).flatMap(field => (
+        getGrowthFieldDefinition(field.key as BodyGrowthFieldKey) ? [field.key as BodyGrowthFieldKey] : []
+      )),
+      false,
+    );
+    const initialArchiveQuestionOrder = [
+      ...(archiveTemplateSnapshot?.growthFields ?? []).flatMap((field, index) => {
+        const question = initialArchiveGrowthQuestions.find(item => item.growthFieldKey === field.key);
+        return question ? [{ id: question.id, order: field.order ?? index }] : [];
+      }),
+      ...(archiveTemplateSnapshot?.fields ?? []).map((field, index) => ({
+        id: `archive-${archiveTemplateId}-${field.id}`,
+        order: field.order ?? (archiveTemplateSnapshot?.growthFields.length ?? 0) + index,
+      })),
+    ].sort((left, right) => left.order - right.order).map(item => item.id);
+    setDraftQuestionOrderIds(record
+      ? nextQuestions.filter(question => !question.growthRecordedAt).map(question => question.id)
+      : initialArchiveQuestionOrder);
     setPreviewRecord(null);
     setPreviewAnswers({});
     const nextTargetMode = record?.targetMode ?? 'classes';
@@ -819,6 +905,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setActiveScopeGrade(firstSelectedClass?.gradeLevel ?? gradeGroups[0]?.gradeLevel ?? '');
     setHasSuggestedDeadline(Boolean(record?.suggestedDeadline));
     setSuggestedDeadline((record?.suggestedDeadline ?? '').replace(' ', 'T'));
+    setRespondentSheetMode(null);
+    setShowCreateSourceSheet(false);
+    setCreateEntryArchiveTemplateId('');
     setCreateStep(1);
     setStepOneValidationAttempt(0);
     setPageMode('create');
@@ -826,19 +915,18 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
   useEffect(() => {
     if (!initialArchiveTemplateId) return;
-    startCreate(undefined, 'teacher', initialArchiveTemplateId);
+    setCreateEntryArchiveTemplateId(initialArchiveTemplateId);
+    setRespondentSheetMode('entry');
   }, [initialArchiveTemplateId]);
 
-  const selectArchiveTemplate = (template?: ArchiveTemplate) => {
-    const previousAutoTitle = draftArchiveTemplateSnapshot ? `更新${draftArchiveTemplateSnapshot.name}` : '';
-    const nextSnapshot = template ? createArchiveTemplateSnapshot(template) : null;
-    setDraftArchiveTemplateId(template?.id ?? '');
-    setDraftArchiveTemplateSnapshot(nextSnapshot);
-    setShowArchiveFieldSheet(false);
-    if (!draftTitle.trim() || draftTitle === previousAutoTitle) {
-      setDraftTitle(nextSnapshot ? `更新${nextSnapshot.name}` : '');
+  const chooseRespondentRole = (role: QuestionnaireRespondentRole) => {
+    setPendingCreateRespondentRole(role);
+    setRespondentSheetMode(null);
+    if (createEntryArchiveTemplateId) {
+      startCreate(undefined, role, createEntryArchiveTemplateId);
+      return;
     }
-    setShowArchiveTemplateSheet(false);
+    setShowCreateSourceSheet(true);
   };
 
   const buildTargets = (useRosterName = false): QuestionnaireTarget[] => allAvailableStudents
@@ -878,12 +966,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       contentType: inferQuestionnaireContentType(allQuestions),
       respondentRole,
       collectionMode,
-      growthRecordDateMode: effectiveGrowthFields.length > 0 ? draftGrowthDateMode : undefined,
-      growthMeasurementDate: effectiveGrowthFields.length > 0 && draftGrowthDateMode === 'fixed' ? draftGrowthFixedDate : undefined,
+      growthRecordDateMode: effectiveGrowthFields.length > 0 ? 'fixed' : undefined,
+      growthMeasurementDate: effectiveGrowthFields.length > 0 ? draftGrowthRecordDate : undefined,
       archiveTemplateId: draftArchiveTemplateId || undefined,
       archiveTemplateName: draftArchiveTemplateSnapshot?.name,
       archiveTemplateVersion: draftArchiveTemplateSnapshot?.version,
       archiveTemplateSnapshot: draftArchiveTemplateSnapshot ?? undefined,
+      archivePeriodKey: draftArchivePeriodKey || undefined,
+      archivePeriodLabel: draftArchivePeriodLabel || undefined,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
       targetSyncPolicy: 'follow_classes',
@@ -943,9 +1033,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       const followedClassIds = new Set(record.targetClassIds);
       const existingTargetNos = new Set(record.targets.map(target => target.studentNo));
       const currentClassTargets = allAvailableStudents
-        .filter(({ classInfo, student }) => Boolean(student.studentNo) && (
-          followedClassIds.has(classInfo.id) || existingTargetNos.has(student.studentNo!)
-        ))
+        .filter(({ classInfo, student }) => Boolean(student.studentNo)
+          && !record.archiveSkippedStudentNos?.includes(student.studentNo!)
+          && (followedClassIds.has(classInfo.id) || existingTargetNos.has(student.studentNo!)))
         .map(({ classInfo, student }) => ({
           studentId: student.id,
           studentNo: student.studentNo!,
@@ -1018,12 +1108,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       contentType: inferQuestionnaireContentType(questions),
       respondentRole,
       collectionMode,
-      growthRecordDateMode: effectiveGrowthFields.length > 0 ? draftGrowthDateMode : undefined,
-      growthMeasurementDate: effectiveGrowthFields.length > 0 && draftGrowthDateMode === 'fixed' ? draftGrowthFixedDate : undefined,
+      growthRecordDateMode: effectiveGrowthFields.length > 0 ? 'fixed' : undefined,
+      growthMeasurementDate: effectiveGrowthFields.length > 0 ? draftGrowthRecordDate : undefined,
       archiveTemplateId: draftArchiveTemplateId || undefined,
       archiveTemplateName: draftArchiveTemplateSnapshot?.name,
       archiveTemplateVersion: draftArchiveTemplateSnapshot?.version,
       archiveTemplateSnapshot: draftArchiveTemplateSnapshot ?? undefined,
+      archivePeriodKey: draftArchivePeriodKey || undefined,
+      archivePeriodLabel: draftArchivePeriodLabel || undefined,
       studentAssignmentMode: respondentRole === 'teacher' ? studentAssignmentMode : undefined,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
@@ -1047,7 +1139,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const existing = records.find(record => record.id === draftId);
     const questions = getAllDraftQuestions();
     const targets = buildTargets(effectiveGrowthFields.length > 0 || Boolean(draftArchiveTemplateId));
-    const record: QuestionnaireRecord = {
+    const candidate: QuestionnaireRecord = {
       id: draftId || createQuestionnaireId(),
       title: draftTitle.trim(),
       description: draftDescription.trim(),
@@ -1060,12 +1152,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       contentType: inferQuestionnaireContentType(questions),
       respondentRole,
       collectionMode,
-      growthRecordDateMode: effectiveGrowthFields.length > 0 ? draftGrowthDateMode : undefined,
-      growthMeasurementDate: effectiveGrowthFields.length > 0 && draftGrowthDateMode === 'fixed' ? draftGrowthFixedDate : undefined,
+      growthRecordDateMode: effectiveGrowthFields.length > 0 ? 'fixed' : undefined,
+      growthMeasurementDate: effectiveGrowthFields.length > 0 ? draftGrowthRecordDate : undefined,
       archiveTemplateId: draftArchiveTemplateId || undefined,
       archiveTemplateName: draftArchiveTemplateSnapshot?.name,
       archiveTemplateVersion: draftArchiveTemplateSnapshot?.version,
       archiveTemplateSnapshot: draftArchiveTemplateSnapshot ?? undefined,
+      archivePeriodKey: draftArchiveTemplateSnapshot ? 'current' : undefined,
+      archivePeriodLabel: undefined,
       studentAssignmentMode: respondentRole === 'teacher' ? studentAssignmentMode : undefined,
       targetMode: 'classes',
       targetClassIds: Array.from(selectedClassIds),
@@ -1076,6 +1170,19 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       targets,
       submissions: existing?.submissions ?? [],
       studentRecords: respondentRole === 'teacher' ? buildStudentRecords(targets, existing) : [],
+    };
+    const archivePlan = getArchiveCollectionTargetPlan(candidate, records, archiveWorkspace);
+    const pendingSet = new Set(archivePlan.pendingStudentNos);
+    const eligibleTargets = candidate.targets.filter(target => !pendingSet.has(target.studentNo));
+    if (candidate.archiveTemplateId && eligibleTargets.length === 0) {
+      showToast('所选学生均已在其他任务中待填写');
+      return;
+    }
+    const record: QuestionnaireRecord = {
+      ...candidate,
+      targets: eligibleTargets,
+      archiveSkippedStudentNos: archivePlan.pendingStudentNos,
+      studentRecords: respondentRole === 'teacher' ? buildStudentRecords(eligibleTargets, existing) : [],
     };
     if (draftArchiveTemplateId) persistArchiveWorkspace(archiveWorkspace);
     upsertQuestionnaire(record);
@@ -1192,7 +1299,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const studentRecord = getStudentRecord(record, studentNo);
     if (!studentRecord) return;
     setActiveStudentNo(studentNo);
-    setStudentRecordAnswers({ ...studentRecord.answers });
+    setStudentRecordAnswers({
+      ...getArchiveCollectionPrefillAnswers(record, studentNo),
+      ...studentRecord.answers,
+    });
     setPageMode('student-record');
   };
 
@@ -1231,9 +1341,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
   const renderList = () => {
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
         <PageHeader title="采集管理" onBack={onBack} />
-        <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 pt-4 no-scrollbar">
+        <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))] pt-4 no-scrollbar">
           <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="采集状态">
             {([['active', '收集中'], ['ended', '已结束'], ['draft', '草稿']] as const).map(([value, label]) => (
               <button
@@ -1267,7 +1377,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <section className={`${listFilter === 'ended' && archivedRecords.length > 0 ? 'mt-1' : 'mt-3'} space-y-2.5`}>
             {filteredRecords.map(record => {
               const mode = getQuestionnaireCollectionMode(record);
-              const modeMeta = getQuestionnaireContentType(record) === 'ordinary' ? collectionModeMeta[mode] : growthCollectionMeta;
+              const modeMeta = collectionModeMeta[mode];
               const ModeIcon = modeMeta.icon;
               const reachable = getReachableTargetCount(record);
               const completion = getCompletionRate(record);
@@ -1318,7 +1428,13 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             )}
           </section>
         </main>
-        <MobileFloatingCreateButton label="新建采集" onClick={() => startCreate()} />
+        <MobileFloatingCreateButton
+          label="新建采集"
+          onClick={() => {
+            setCreateEntryArchiveTemplateId('');
+            setRespondentSheetMode('entry');
+          }}
+        />
         <BottomSheet open={showDraftMenu} label="草稿操作" onDismiss={() => setShowDraftMenu(false)}>
           <button type="button" onClick={() => { setShowDraftMenu(false); setShowDeleteDraftConfirm(true); }} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]">
             <Trash2 className="h-5 w-5" />删除草稿
@@ -1383,7 +1499,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         <section className="space-y-2.5">
           {archivedRecords.map(record => {
             const mode = getQuestionnaireCollectionMode(record);
-            const modeMeta = getQuestionnaireContentType(record) === 'ordinary' ? collectionModeMeta[mode] : growthCollectionMeta;
+            const modeMeta = collectionModeMeta[mode];
             const ModeIcon = modeMeta.icon;
             const reachable = getReachableTargetCount(record);
             const completion = getCompletionRate(record);
@@ -1425,17 +1541,38 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
   const renderCreate = () => {
     const isTeacherRespondent = respondentRole === 'teacher';
+    const isArchiveCollection = Boolean(draftArchiveTemplateSnapshot);
     const titlePlaceholder = '请输入采集名称';
     const descriptionPlaceholder = '请输入采集说明(非必填)';
     const targets = buildTargets(effectiveGrowthFields.length > 0 || Boolean(draftArchiveTemplateId));
     const allQuestions = getAllDraftQuestions();
     const reachableCount = targets.filter(target => target.reachable).length;
+    const archiveTargetPlan = isArchiveCollection ? getArchiveCollectionTargetPlan({
+      id: draftId || 'archive-target-plan',
+      title: draftTitle,
+      description: draftDescription,
+      creatorName: teacherName,
+      creatorTeacherId: teacherId,
+      spaceId,
+      createdAt: nowText(),
+      suggestedDeadline: '',
+      status: 'draft',
+      respondentRole,
+      collectionMode,
+      archiveTemplateId: draftArchiveTemplateId,
+      archiveTemplateSnapshot: draftArchiveTemplateSnapshot ?? undefined,
+      questions: allQuestions,
+      targets,
+      submissions: [],
+    }, records, archiveWorkspace) : null;
     const unreachableCount = targets.length - reachableCount;
     const allClassesSelected = availableClasses.length > 0 && availableClasses.every(classInfo => selectedClassIds.has(classInfo.id));
     const hasSelectedClasses = selectedClassIds.size > 0;
-    const builderFields: Array<ConfigurableFormField<QuestionnaireQuestionType>> = draftQuestions.map(question => ({
+    const builderQuestions = allQuestions.filter(question => !question.growthRecordedAt);
+    const builderQuestionById = new Map(builderQuestions.map(question => [question.id, question]));
+    const builderFields: Array<ConfigurableFormField<QuestionnaireQuestionType>> = builderQuestions.map(question => ({
       id: question.id,
-      label: question.title,
+      label: question.growthFieldKey ? getGrowthFieldDefinition(question.growthFieldKey)?.label ?? question.title : question.title,
       type: question.type,
       required: question.required,
       options: question.options,
@@ -1444,6 +1581,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       settings: question.settings,
       subFields: question.subFields,
     }));
+    const lockedFieldIds = new Set(builderQuestions
+      .filter(question => Boolean(question.growthFieldKey || question.archiveFieldSemanticKey))
+      .map(question => question.id));
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24">
         <PageHeader
@@ -1455,66 +1595,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           {createStep === 1 && (
             <div className="space-y-4">
               <section className="-mx-5 bg-[var(--tm-bg-surface)] px-5 py-4">
-                <div className="mb-5">
-                  <h2 id="respondent-role-title" className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">填写人</h2>
-                  <div className="mt-3 grid grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-labelledby="respondent-role-title">
-                    {([['teacher', '老师填写'], ['guardian', '家长填写']] as const).map(([role, label]) => {
-                      const RoleIcon = role === 'teacher' ? UserRoundCheck : UsersRound;
-                      return (
-                        <button
-                          key={role}
-                          type="button"
-                          role="tab"
-                          aria-selected={respondentRole === role}
-                          onClick={() => {
-                            setRespondentRole(role);
-                            setCollectionMode(role === 'teacher' ? 'student_information' : 'guardian_questionnaire');
-                          }}
-                          className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[calc(var(--tm-radius-control)-4px)] px-2 text-[length:var(--tm-font-size-body)] font-semibold transition ${respondentRole === role ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
-                        >
-                          <RoleIcon className="h-4 w-4 shrink-0" />
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="mb-5">
-                  <h2 className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">更新档案</h2>
-                  <button
-                    type="button"
-                    onClick={() => setShowArchiveTemplateSheet(true)}
-                    className="mt-3 flex min-h-[60px] w-full items-center gap-3 border-y border-[var(--tm-border-subtle)] py-2.5 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
-                  >
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${draftArchiveTemplateSnapshot ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]'}`}>
-                      <Archive className="h-4.5 w-4.5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{draftArchiveTemplateSnapshot?.name ?? '不更新档案'}</span>
-                      <span className="mt-0.5 block truncate text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{draftArchiveTemplateSnapshot ? `${draftArchiveInputLabels.length}项需填写` : '仅保留本次采集结果'}</span>
-                    </span>
-                    <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-disabled)]" />
-                  </button>
-                  {draftArchiveTemplateSnapshot && (
-                    <div className="space-y-2 border-b border-[var(--tm-border-subtle)] py-3 text-[length:var(--tm-font-size-meta)] leading-5">
-                      {draftArchiveSystemLabels.length > 0 && <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-2"><span className="font-semibold text-[var(--tm-text-tertiary)]">自动带入</span><span className="font-medium text-[var(--tm-text-secondary)]">{draftArchiveSystemLabels.join('、')}</span></div>}
-                      {draftArchiveInputLabels.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setShowArchiveFieldSheet(true)}
-                          className="grid min-h-11 w-full grid-cols-[64px_minmax(0,1fr)_20px] items-center gap-2 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
-                          aria-label={`查看本次填写的${draftArchiveInputLabels.length}项内容`}
-                        >
-                          <span className="font-semibold text-[var(--tm-text-tertiary)]">本次填写</span>
-                          <span className="truncate font-medium text-[var(--tm-text-secondary)]">
-                            {draftArchiveInputLabels.slice(0, 3).join('、')}{draftArchiveInputLabels.length > 3 ? `等${draftArchiveInputLabels.length}项` : `，共${draftArchiveInputLabels.length}项`}
-                          </span>
-                          <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
                 <input id="survey-title" aria-label="采集标题" value={draftTitle} maxLength={40} onChange={event => setDraftTitle(event.target.value)} placeholder={titlePlaceholder} aria-invalid={Boolean(stepOneValidationAttempt && stepOneTitleError)} aria-describedby={stepOneValidationAttempt && stepOneTitleError ? 'survey-title-error' : undefined} className={`min-h-[var(--tm-size-touch)] w-full border-0 border-b bg-transparent px-0 py-1 text-[length:var(--tm-font-size-document-title)] font-bold leading-9 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:font-medium placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:ring-0 ${stepOneValidationAttempt && stepOneTitleError ? 'border-[var(--tm-status-negative-strong)] focus:border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-border-control)] focus:border-[var(--tm-brand-primary)]'}`} />
                 {stepOneValidationAttempt > 0 && stepOneTitleError && <p id="survey-title-error" className="mt-1.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{stepOneTitleError}</p>}
                 <div className="mt-[var(--tm-space-4)]">
@@ -1523,30 +1603,23 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 </div>
               </section>
               {effectiveGrowthFields.length > 0 && (
-                <section className="overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]" aria-label="已选成长数据">
+                <section className="overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]" aria-label="记录日期">
                   <button
                     id="growth-record-date"
                     type="button"
                     onClick={() => setShowGrowthDateSheet(true)}
                     aria-invalid={Boolean(stepOneValidationAttempt && stepOneGrowthDateError)}
-                    className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
+                    className="flex min-h-[56px] w-full items-center gap-3 px-4 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
                   >
                     <CalendarDays className="h-4.5 w-4.5 shrink-0 text-[var(--tm-status-positive-strong)]" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">记录日期</span>
                       <span className={`mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium ${stepOneValidationAttempt && stepOneGrowthDateError ? 'text-[var(--tm-status-negative-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>
-                        {draftGrowthDateMode === 'respondent' ? '填写人选择' : draftGrowthFixedDate || '待设置'}
+                        {draftGrowthRecordDate || '请选择'}
                       </span>
                     </span>
                     <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-disabled)]" />
                   </button>
-                  {availableGrowthFieldOptions.filter(option => draftGrowthFields.includes(option.key) && !draftArchiveGrowthFieldSet.has(option.key)).map(option => (
-                    <div key={option.key} className="flex min-h-[56px] items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 last:border-b-0">
-                      {option.key === 'height_cm' ? <Ruler className="h-4.5 w-4.5 shrink-0 text-[var(--tm-status-positive-strong)]" /> : <Activity className="h-4.5 w-4.5 shrink-0 text-[var(--tm-status-positive-strong)]" />}
-                      <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{option.label}</span>{option.unit && <span className="mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{option.unit}</span>}</span>
-                      <IconButton label={`移除${option.label}`} onClick={() => setDraftGrowthFields(fields => fields.filter(key => key !== option.key))}><Trash2 className="h-4.5 w-4.5" /></IconButton>
-                    </div>
-                  ))}
                 </section>
               )}
               <FormBuilder
@@ -1555,6 +1628,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 fields={builderFields}
                 itemLabel="题目"
                 showItemLabel={false}
+                readOnly={isArchiveCollection}
                 addButtonLabel="内容"
                 typePickerTitle="添加内容"
                 typePickerPrimaryLabel="普通题型"
@@ -1562,34 +1636,32 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   label: '成长数据',
                   render: (close, sectionId) => (
                     <div>
-                      <div className="overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
-                        {availableGrowthFieldOptions.map(option => {
-                          const selected = effectiveGrowthFields.includes(option.key);
-                          const lockedByArchive = draftArchiveGrowthFieldSet.has(option.key);
-                          return (
-                            <button
-                              key={option.key}
-                              type="button"
-                              role="checkbox"
-                              aria-checked={selected}
-                              disabled={lockedByArchive}
-                              onClick={() => {
-                                setDraftGrowthSectionId(sectionId ?? '');
-                                setDraftGrowthFields(fields => selected
-                                  ? fields.filter(key => key !== option.key)
-                                  : [...fields, option.key]);
-                              }}
-                              className="flex min-h-[64px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-status-positive-soft)] disabled:opacity-70"
-                            >
-                              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border ${selected ? 'border-[var(--tm-status-positive)] bg-[var(--tm-status-positive)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`}>{selected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}</span>
-                              <span className="min-w-0 flex-1"><span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{option.label}</span><span className="mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{lockedByArchive ? `来自${draftArchiveTemplateSnapshot?.name}` : `${option.groupLabel}${option.unit ? ` · ${option.unit}` : ''}`}</span></span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <GrowthFieldCategoryPicker
+                        fields={availableGrowthFieldOptions}
+                        isSelected={field => effectiveGrowthFields.includes(field.key)}
+                        getFieldHint={field => field.unit}
+                        onToggle={field => {
+                          const selected = effectiveGrowthFields.includes(field.key);
+                          setDraftGrowthSectionIds(sectionIds => selected
+                            ? Object.fromEntries(Object.entries(sectionIds).filter(([key]) => key !== field.key))
+                            : { ...sectionIds, [field.key]: sectionId ?? '' });
+                          setDraftGrowthFields(fields => selected
+                            ? fields.filter(key => key !== field.key)
+                            : [...fields, field.key]);
+                        }}
+                      />
                       <PrimaryButton onClick={close} className="mt-4 w-full">完成</PrimaryButton>
                     </div>
                   ),
+                }}
+                lockedFieldIds={lockedFieldIds}
+                getLockedFieldSubtitle={field => {
+                  const question = builderQuestionById.get(field.id);
+                  if (question?.growthFieldKey) {
+                    const definition = getGrowthFieldDefinition(question.growthFieldKey);
+                    return `成长数据${definition?.unit ? ` · ${definition.unit}` : ''}`;
+                  }
+                  return questionTypeMeta[field.type]?.label;
                 }}
                 fieldTypes={questionnaireFieldTypes}
                 allowCustomAnswer
@@ -1602,9 +1674,21 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   return { ...question, label: question.title };
                 }}
                 onChange={value => {
+                  if (isArchiveCollection) return;
                   setDraftLayoutMode(value.layoutMode);
                   setDraftSections(value.sections);
-                  setDraftQuestions(value.fields.map(field => ({
+                  setDraftQuestionOrderIds(value.fields.map(field => field.id));
+                  const nextGrowthKeys = new Set<BodyGrowthFieldKey>();
+                  const nextGrowthSections: Record<string, string> = {};
+                  value.fields.forEach(field => {
+                    const question = builderQuestionById.get(field.id);
+                    if (!question?.growthFieldKey) return;
+                    nextGrowthKeys.add(question.growthFieldKey);
+                    nextGrowthSections[question.growthFieldKey] = field.sectionId ?? '';
+                  });
+                  setDraftGrowthSectionIds(nextGrowthSections);
+                  setDraftGrowthFields(fields => fields.filter(key => nextGrowthKeys.has(key)));
+                  setDraftQuestions(value.fields.filter(field => !lockedFieldIds.has(field.id)).map(field => ({
                     id: field.id,
                     type: field.type,
                     title: field.label,
@@ -1659,9 +1743,21 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   {isTeacherRespondent ? '老师填写' : '家长填写'}
                 </div>
                 {draftArchiveTemplateSnapshot && (
-                  <div className="mt-3 flex min-h-11 items-center gap-2 border-t border-[var(--tm-border-subtle)] pt-3 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">
-                    <Archive className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary-strong)]" />
-                    <span className="truncate">更新{draftArchiveTemplateSnapshot.name}</span>
+                  <div className="mt-3 border-t border-[var(--tm-border-subtle)] pt-3">
+                    <div className="flex min-h-11 items-center gap-2">
+                      <Archive className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary-strong)]" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">按档案采集</span>
+                        <span className="mt-0.5 block truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{draftArchiveTemplateSnapshot.name}</span>
+                      </span>
+                    </div>
+                    {archiveTargetPlan && (
+                      <div className={`mt-3 grid gap-2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-center ${archiveTargetPlan.pendingStudentNos.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                        <div><div className="text-[length:var(--tm-font-size-card-title)] font-bold tabular-nums text-[var(--tm-text-primary)]">{archiveTargetPlan.createStudentNos.length}</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">建立档案</div></div>
+                        <div><div className="text-[length:var(--tm-font-size-card-title)] font-bold tabular-nums text-[var(--tm-text-primary)]">{archiveTargetPlan.updateStudentNos.length}</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">更新档案</div></div>
+                        {archiveTargetPlan.pendingStudentNos.length > 0 && <div><div className="text-[length:var(--tm-font-size-card-title)] font-bold tabular-nums text-[var(--tm-brand-reward-strong)]">{archiveTargetPlan.pendingStudentNos.length}</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">已有待填写</div></div>}
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className={`mt-4 grid gap-2 border-t border-[var(--tm-border-subtle)] pt-4 text-center ${isTeacherRespondent ? 'grid-cols-2' : 'grid-cols-3'}`}>
@@ -1756,86 +1852,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         </BottomSheet>
         <BottomSheet open={showGrowthDateSheet} label="记录日期" onDismiss={() => setShowGrowthDateSheet(false)}>
           <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">记录日期</h2>
-          <div className="mt-4 overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
-            {([['respondent', '填写人选择'], ['fixed', '本次统一日期']] as const).map(([value, label]) => {
-              const selected = draftGrowthDateMode === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setDraftGrowthDateMode(value)}
-                  className="flex min-h-[56px] w-full items-center justify-between border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-bg-surface-soft)]"
-                  role="radio"
-                  aria-checked={selected}
-                >
-                  <span className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{label}</span>
-                  <span className={`flex h-5 w-5 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)]' : 'border-[var(--tm-border-control)]'}`}>
-                    {selected && <span className="h-2.5 w-2.5 rounded-full bg-[var(--tm-brand-primary)]" />}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {draftGrowthDateMode === 'fixed' && (
-            <input
-              type="date"
-              aria-label="本次统一日期"
-              value={draftGrowthFixedDate}
-              onChange={event => setDraftGrowthFixedDate(event.target.value)}
-              className="mt-4 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
-            />
-          )}
-          <PrimaryButton disabled={draftGrowthDateMode === 'fixed' && !draftGrowthFixedDate} onClick={() => setShowGrowthDateSheet(false)} className="mt-4 w-full">完成</PrimaryButton>
+          <input
+            type="date"
+            aria-label="记录日期"
+            value={draftGrowthRecordDate}
+            onChange={event => setDraftGrowthRecordDate(event.target.value)}
+            className="mt-4 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
+          />
+          <PrimaryButton disabled={!draftGrowthRecordDate} onClick={() => setShowGrowthDateSheet(false)} className="mt-4 w-full">完成</PrimaryButton>
         </BottomSheet>
-        <MobileBottomSheet open={showArchiveTemplateSheet} title="选择要更新的档案" onClose={() => setShowArchiveTemplateSheet(false)}>
-          <div className="overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
-            <button
-              type="button"
-              onClick={() => selectArchiveTemplate()}
-              className="flex min-h-[60px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left active:bg-[var(--tm-bg-surface-soft)]"
-              aria-pressed={!draftArchiveTemplateId}
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]"><ClipboardList className="h-4.5 w-4.5" /></span>
-              <span className="min-w-0 flex-1 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">不更新档案</span>
-              {!draftArchiveTemplateId && <Check className="h-5 w-5 shrink-0 text-[var(--tm-brand-primary-strong)]" strokeWidth={2.5} />}
-            </button>
-            {availableArchiveTemplates.map(template => {
-              const selected = draftArchiveTemplateId === template.id;
-              const inputCount = template.growthFields.length + template.fields.length;
-              return (
-                <button
-                  key={template.id}
-                  type="button"
-                  onClick={() => selectArchiveTemplate(template)}
-                  className="flex min-h-[72px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-brand-primary-soft)]"
-                  aria-pressed={selected}
-                >
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${selected ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]'}`}><Archive className="h-4.5 w-4.5" /></span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{template.name}</span>
-                    <span className="mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{inputCount}项需填写 · {template.systemFields.length}项自动带入</span>
-                  </span>
-                  {selected && <Check className="h-5 w-5 shrink-0 text-[var(--tm-brand-primary-strong)]" strokeWidth={2.5} />}
-                </button>
-              );
-            })}
-          </div>
-          {availableArchiveTemplates.length === 0 && <div className="py-12 text-center text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-tertiary)]">暂无可用档案</div>}
-        </MobileBottomSheet>
-        <MobileBottomSheet
-          open={showArchiveFieldSheet}
-          title={`本次填写 · ${draftArchiveInputLabels.length}项`}
-          onClose={() => setShowArchiveFieldSheet(false)}
-        >
-          <ol className="overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
-            {draftArchiveInputLabels.map((label, index) => (
-              <li key={`${label}-${index}`} className="grid min-h-11 grid-cols-[28px_minmax(0,1fr)] items-center gap-2 border-b border-[var(--tm-border-subtle)] px-3 last:border-b-0">
-                <span className="text-center text-[length:var(--tm-font-size-badge)] font-semibold tabular-nums text-[var(--tm-text-tertiary)]">{index + 1}</span>
-                <span className="text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{label}</span>
-              </li>
-            ))}
-          </ol>
-        </MobileBottomSheet>
       </div>
     );
   };
@@ -2351,7 +2376,79 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   return (
     <div className="relative h-full min-h-0 overflow-hidden font-sans text-[var(--tm-text-primary)]">
       {renderPage()}
-      {toast && <div className="pointer-events-none absolute left-1/2 top-16 z-[70] -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--tm-text-primary)] px-4 py-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
+      <MobileBottomSheet
+        open={Boolean(respondentSheetMode)}
+        title="谁来填写"
+        onClose={() => {
+          const shouldReturn = respondentSheetMode === 'entry' && Boolean(createEntryArchiveTemplateId);
+          setRespondentSheetMode(null);
+          setCreateEntryArchiveTemplateId('');
+          if (shouldReturn) onBack();
+        }}
+      >
+        <div className="overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
+          {([['teacher', '老师填写', '由老师逐个学生填写'], ['guardian', '家长填写', '发送给家长填写']] as const).map(([role, label, description]) => {
+            const RoleIcon = role === 'teacher' ? UserRoundCheck : UsersRound;
+            return (
+              <button
+                key={role}
+                type="button"
+                onClick={() => chooseRespondentRole(role)}
+                className="flex min-h-[72px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]">
+                  <RoleIcon className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{label}</span>
+                  <span className="mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{description}</span>
+                </span>
+                <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-disabled)]" />
+              </button>
+            );
+          })}
+        </div>
+      </MobileBottomSheet>
+      <MobileBottomSheet open={showCreateSourceSheet} title="选择采集内容" onClose={() => setShowCreateSourceSheet(false)}>
+        <h3 className="mb-2 px-1 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">自定义采集</h3>
+        <button
+          type="button"
+          onClick={() => startCreate(undefined, pendingCreateRespondentRole)}
+          className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 text-left active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]"><FileText className="h-5 w-5" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">从空白创建</span>
+            <span className="mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">自由添加普通题目和成长数据</span>
+          </span>
+          <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-disabled)]" />
+        </button>
+        <div className="mb-2 mt-5 flex items-center justify-between gap-3 px-1">
+          <h3 className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">按档案采集</h3>
+          {availableArchiveTemplates.length > 0 && <span className="text-[length:var(--tm-font-size-badge)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">{availableArchiveTemplates.length}份</span>}
+        </div>
+        <div className="overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
+          {availableArchiveTemplates.length > 0 ? availableArchiveTemplates.map(template => {
+            const inputCount = template.growthFields.length + template.fields.length;
+            return (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => startCreate(undefined, pendingCreateRespondentRole, template.id)}
+                className="flex min-h-[72px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]"><Archive className="h-5 w-5" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{template.name}</span>
+                  <span className="mt-0.5 block truncate text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{inputCount}项内容</span>
+                </span>
+                <ChevronRight className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-disabled)]" />
+              </button>
+            );
+          }) : <div className="flex min-h-[60px] items-center px-4 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">暂无已启用档案</div>}
+        </div>
+      </MobileBottomSheet>
+      <MobileToast message={toast} />
     </div>
   );
 };

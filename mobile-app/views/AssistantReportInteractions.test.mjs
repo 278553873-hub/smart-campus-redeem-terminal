@@ -6,13 +6,17 @@ const pickerSource = fs.readFileSync(new URL('../components/HomeroomClassPickerS
 const headerSource = fs.readFileSync(new URL('../components/AssistantSubpageHeader.tsx', import.meta.url), 'utf8');
 const historyLinkSource = fs.readFileSync(new URL('../components/AssistantHistoryLink.tsx', import.meta.url), 'utf8');
 const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
+const weeklyHistorySource = fs.readFileSync(new URL('./WeeklyActionAdviceHistoryView.tsx', import.meta.url), 'utf8');
+const reviewHistorySource = fs.readFileSync(new URL('./TeacherEvaluationReviewHistoryView.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
 };
+const forbidText = (source, needle, message) => {
+  if (source.includes(needle)) throw new Error(message);
+};
 
 for (const required of [
-  'simulateLoading={false}',
   'scrollPositionsRef',
   'pendingScrollTopRef',
   'rememberCurrentScroll()',
@@ -20,6 +24,10 @@ for (const required of [
 ]) {
   requireText(appSource, required, `助理报告导航缺少缓存直开或滚动恢复：${required}`);
 }
+
+forbidText(appSource, 'simulateLoading={false}', '当前班主任助理报告必须展示虚拟生成进度。');
+requireText(weeklyHistorySource, 'simulateLoading={false}', '往期行动建议详情应直接展示，不重复模拟生成。');
+requireText(reviewHistorySource, 'simulateLoading={false}', '往期评价复盘详情应直接展示，不重复模拟生成。');
 
 for (const required of [
   "'principal_weekly_report'",

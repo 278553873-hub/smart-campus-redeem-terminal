@@ -105,17 +105,36 @@ if (!teacherUsageSection.includes('查看全部')) {
 if (teacherUsageSection.includes('<Trophy') || teacherUsageSection.includes('<ClipboardList')) {
   throw new Error('教师使用排行榜 Tab 不应使用图标，应与其他排行榜筛选样式统一为纯文字');
 }
-if (!teacherUsageSection.includes('className={`min-h-[36px] rounded-xl px-4 text-sm font-semibold')) {
+if (!teacherUsageSection.includes('className={`min-h-[36px] rounded-[var(--tm-radius-control)] px-4 text-sm font-semibold')) {
   throw new Error('教师使用排行榜 Tab 需要使用纯文字分段控件样式');
 }
 
 
-if (!teacherUsageSection.includes('className="inline-flex rounded-2xl bg-[var(--tm-brand-primary-soft)] p-1"')) {
+if (!teacherUsageSection.includes('className="inline-flex rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-muted)] p-1"')) {
   throw new Error('教师使用排行榜筛选外层应使用 inline-flex，避免背景铺满溢出');
 }
 if (teacherUsageSection.includes('text-emerald') || teacherUsageSection.includes('text-orange')) {
   throw new Error('教师使用排行榜不应残留旧绿色或工具类橙色，应统一引用品牌 Token');
 }
-if (!teacherUsageSection.includes('className="shrink-0 text-xs font-medium text-[var(--tm-brand-primary)] active:opacity-70"')) {
-  throw new Error('教师使用排行榜「查看全部」应与其他板块统一为品牌红文字按钮');
+if (!source.includes('const reportSectionActionClassName')) {
+  throw new Error('学校报表标题右侧入口需要抽象统一样式');
+}
+if (!source.includes('const ReportSectionAction')) {
+  throw new Error('学校报表标题右侧入口需要抽象统一组件');
+}
+for (const required of [
+  'text-[var(--tm-brand-primary)]',
+  'active:text-[var(--tm-brand-primary-pressed)]',
+  'text-[length:var(--tm-font-size-body)]',
+  '<ChevronRight aria-hidden="true"',
+]) {
+  if (!source.includes(required)) {
+    throw new Error(`学校报表标题右侧入口需要使用品牌文字与右箭头样式，缺少：${required}`);
+  }
+}
+if (!teacherUsageSection.includes('<ReportSectionAction label="查看全部"')) {
+  throw new Error('教师使用排行榜「查看全部」应复用统一文字入口样式');
+}
+if ((source.match(/<ReportSectionAction label=/g) ?? []).length < 5) {
+  throw new Error('年级覆盖率、年级评价数、教师使用排行榜、教师赋分排行榜和指标使用情况应复用同一标题入口样式');
 }

@@ -111,6 +111,7 @@ import {
 import { CURRENT_PRINCIPAL_TERM } from './data/principalTermReport';
 import { canManagePersonalClasses, canTeacherSpaceRecordClass } from './domain/teacherSpaceAccess';
 import { useReportGenerationTask } from './hooks/useReportGenerationTask';
+import { summarizeStudentPerformance } from './domain/studentPerformance';
 
 const TERMS = [
     "2025-2026学年 下学期",
@@ -587,11 +588,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         goBack();
     };
 
-    const handleUpdateStudentFromArchive = (student: Student) => {
-        setStudentOverrides(prev => ({ ...prev, [student.id]: student }));
-        setSelectedStudent(student);
-    };
-
     const handleRestoreStudentStatus = (student: Student) => {
         const nextStudent = { ...student, status: 'active' as const };
         setStudentOverrides(prev => ({ ...prev, [student.id]: nextStudent }));
@@ -1021,7 +1017,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView);
     const primaryTabViewKey = showTabBar ? 'teacher-primary-tabs' : currentView;
     const pageTransitionClass = showTabBar ? '' : 'animate-page-enter';
-    const viewHandlesScroll = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'student_batch_edit', 'class_archive_batch', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_health_records', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'face_update', 'bank_password', 'homework_entry', 'questionnaire', 'archive_design'].includes(currentView);
+    const viewHandlesScroll = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'leader_report', 'student_batch_edit', 'class_archive_batch', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_health_records', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'face_update', 'bank_password', 'homework_entry', 'questionnaire', 'archive_design'].includes(currentView);
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView);
@@ -1185,6 +1181,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     selectedIds={multiSelectIds}
                                     onSelectionChange={handleMultiSelectionChange}
                                     onBack={goBack}
+                                    performanceByStudentId={Object.fromEntries(
+                                        Object.entries(evaluationRecordsByStudentId).map(([studentId, records]) => [
+                                            studentId,
+                                            summarizeStudentPerformance(records),
+                                        ]),
+                                    )}
                                 />
                             )}
 
@@ -1333,7 +1335,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     spaceId={activeTeacherSpace.id}
                                     classes={activeSpaceClasses}
                                     getStudentsForClass={getMergedStudentsForClass}
-                                    onUpdateStudent={handleUpdateStudentFromArchive}
                                     onUpdateArchive={templateId => {
                                         setQuestionnaireEntryMode('owned');
                                         setQuestionnaireInitialArchiveTemplateId(templateId);
@@ -1518,7 +1519,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'weekly_action_advice' && (
                                 <WeeklyActionAdviceView
                                     data={activeWeeklyAdvice}
-                                    simulateLoading={false}
                                     onBack={goBack}
                                     onOpenHistory={() => navigateTo('weekly_action_history')}
                                 />
@@ -1535,7 +1535,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'teacher_evaluation_review' && (
                                 <TeacherEvaluationReviewView
                                     data={activeEvaluationReview}
-                                    simulateLoading={false}
                                     onBack={goBack}
                                     onOpenHistory={() => navigateTo('teacher_evaluation_review_history')}
                                 />
