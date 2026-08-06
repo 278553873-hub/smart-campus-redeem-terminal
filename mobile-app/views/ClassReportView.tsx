@@ -361,6 +361,9 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             ? periodMultiplier[resolvedReportPeriod]
             : Math.max(0.2, appliedCustomRange.days / 7)
         : periodMultiplier[timeRange];
+    const selectedPeriodDays = timeRange === 'custom'
+        ? appliedCustomRange?.days ?? ({ day: 1, week: 7, month: 30, semester: 126 } as const)[resolvedReportPeriod]
+        : ({ day: 1, week: 7, month: 30, semester: 126 } as const)[timeRange];
     const currentPeriodRecordCount = Math.max(0, Math.round(447 * selectedPeriodMultiplier));
     const reportSourceOptions = useMemo(
         () => getReportSourceOptions(resolvedReportPeriod).map(source => ({
@@ -391,6 +394,21 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         const gradeAveragePositiveRecords = Math.round(gradeAverageRecords * 0.82);
         const gradeAverageNegativeRecords = gradeAverageRecords - gradeAveragePositiveRecords;
         const previousCovered = Math.max(0, Math.min(totalStudents, coveredStudents - Math.max(0, Math.round(totalStudents * 0.04))));
+        const gradeBenchmarkCoveredStudents = gradeAverageRecords === 0
+            ? 0
+            : Math.min(totalStudents, Math.max(Math.ceil(totalStudents * 0.5), coveredStudents));
+        const gradeBenchmarks = [0.8, 0.82, 0.84].map((positiveShare, index) => {
+            const positive = Math.round(gradeAverageRecords * positiveShare);
+            return {
+                classId: `grade-peer-${index + 1}`,
+                positive,
+                negative: gradeAverageRecords - positive,
+                coveredStudents: gradeBenchmarkCoveredStudents,
+                totalStudents,
+                periodDays: selectedPeriodDays,
+                sourceKey: activeReportSource.key,
+            };
+        });
 
         const indicatorTree = buildClassReportIndicatorTree(classReportIndicatorDemoPaths, totalRecords);
         const educationEvents = indicatorTree.map((node, index) => ({
@@ -414,6 +432,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             coveredStudents,
             previousRecords,
             previousCovered,
+            gradeBenchmarks,
             dataMultiplier,
             indicatorTree,
             educationEvents,
@@ -421,7 +440,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             deductScores,
             netScores,
         };
-    }, [activeReportSource, currentPeriodRecordCount, selectedPeriodMultiplier, totalStudents]);
+    }, [activeReportSource, currentPeriodRecordCount, selectedPeriodDays, selectedPeriodMultiplier, totalStudents]);
 
     const recordDistributionRows = useMemo(() => getRecordDistributionComparisonRows({
         positive: reportData.positiveRecords,
@@ -444,17 +463,31 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     ], [reportData]);
 
     const recordDistributionAnalysis = useMemo(() => getRecordDistributionAnalysis({
-        positive: reportData.positiveRecords,
-        negative: reportData.negativeRecords,
-        previousPositive: reportData.previousPositiveRecords,
-        previousNegative: reportData.previousNegativeRecords,
-        gradeAveragePositive: reportData.gradeAveragePositiveRecords,
-        gradeAverageNegative: reportData.gradeAverageNegativeRecords,
-    }), [reportData]);
+        currentClassId: classInfo.id,
+        current: {
+            positive: reportData.positiveRecords,
+            negative: reportData.negativeRecords,
+            coveredStudents: reportData.coveredStudents,
+            totalStudents,
+            periodDays: selectedPeriodDays,
+            sourceKey: activeReportSource.key,
+        },
+        previous: {
+            positive: reportData.previousPositiveRecords,
+            negative: reportData.previousNegativeRecords,
+            coveredStudents: reportData.previousCovered,
+            totalStudents,
+            periodDays: selectedPeriodDays,
+            sourceKey: activeReportSource.key,
+        },
+        gradeBenchmarks: reportData.gradeBenchmarks,
+    }), [activeReportSource.key, classInfo.id, reportData, selectedPeriodDays, totalStudents]);
 
     const educationScoreAnalysis = useMemo(() => getEducationScoreAnalysis(
         reportData.indicatorTree.map((item, index) => ({
+            id: item.id,
             label: item.label,
+            eventCount: item.metrics.eventCount,
             addScore: reportData.addScores[index],
             deductScore: reportData.deductScores[index],
             netScore: reportData.netScores[index],
@@ -462,7 +495,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     ), [reportData]);
 
     const educationEventAnalysis = useMemo(() => getEducationEventAnalysis(
-        reportData.educationEvents.map(item => ({ label: item.label, value: item.value })),
+        reportData.educationEvents.map(item => ({ id: item.key, label: item.label, value: item.value })),
     ), [reportData]);
 
     const rankingRows = useMemo(() => {

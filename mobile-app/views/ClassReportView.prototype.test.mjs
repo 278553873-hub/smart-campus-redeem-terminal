@@ -295,7 +295,23 @@ for (const redundantComparison of ['增加', '减少', '还差', '优于', '多�
 }
 assert.ok(!recordComparisonSource.includes('shadow-'), '评价记录对比行内部不应增加卡片阴影。');
 assert.ok(!recordComparisonSource.includes('图例') && !recordComparisonSource.includes('坐标轴'), '评价记录对比行不应继续依赖图例或坐标轴。');
-assert.ok(summaryRuleSource.includes('正向和负向事件的变化不一致'), '固定规则应覆盖正向和负向事件变化不一致的情况。');
+for (const executableRule of [
+    'MIN_COMPARABLE_RECORDS = 30',
+    'MIN_STUDENT_COVERAGE = 0.5',
+    'MIN_GRADE_BENCHMARK_CLASSES = 3',
+    '正向记录占比较上周期上升',
+    '正负向记录构成变化不大',
+    'Math.max(MIN_COMPARABLE_RECORDS, items.length * MIN_RECORDS_PER_INDICATOR)',
+    'shareRange <= BASIC_SHARE_CHANGE',
+]) {
+    assert.ok(summaryRuleSource.includes(executableRule), `班级报告领域层缺少可执行规则：${executableRule}`);
+}
+for (const removedConclusion of ['班级评价较上周期改善', '班级评价较上周期回落', '正向和负向事件的变化不一致']) {
+    assert.ok(!summaryRuleSource.includes(removedConclusion), `班级报告领域层仍残留越界结论：${removedConclusion}`);
+}
+for (const analysisInput of ['currentClassId: classInfo.id', 'gradeBenchmarks: reportData.gradeBenchmarks', 'coveredStudents:', 'totalStudents,', 'periodDays:', 'sourceKey:', 'eventCount: item.metrics.eventCount', 'id: item.id']) {
+    assert.ok(viewSource.includes(analysisInput), `班级报告页面缺少规则输入：${analysisInput}`);
+}
 for (const chartSection of ['评价记录分布', '五育得分分布', '五育事件分布']) {
     assert.ok(chartRuleDocument.includes(`## ${chartSection}`), `图表话术文档缺少${chartSection}规则。`);
 }
