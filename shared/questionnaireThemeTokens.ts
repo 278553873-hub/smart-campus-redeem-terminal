@@ -1,3 +1,8 @@
+import learningHeader from '../mobile-app/assets/resources/highlight-defaults/daily-classroom-thinking.png';
+import growthHeader from '../mobile-app/assets/resources/highlight-defaults/daily-default-growth.png';
+import sportsHeader from '../mobile-app/assets/resources/highlight-defaults/daily-sports-vitality.png';
+import creativityHeader from '../mobile-app/assets/resources/highlight-defaults/daily-art-creativity.png';
+
 export const questionnaireThemePalette = {
   red: {
     50: '#FFF1F1',
@@ -25,19 +30,89 @@ export const questionnaireThemePalette = {
   },
 } as const;
 
-export const questionnaireThemeCssVariables = {
-  '--tm-brand-primary': questionnaireThemePalette.red[500],
-  '--tm-brand-primary-strong': questionnaireThemePalette.red[700],
-  '--tm-brand-primary-pressed': questionnaireThemePalette.red[700],
-  '--tm-brand-primary-soft': questionnaireThemePalette.red[50],
-  '--tm-brand-primary-soft-strong': questionnaireThemePalette.red[100],
+export type QuestionnaireThemeId = 'classic-red' | 'growth-green' | 'learning-blue';
+export type QuestionnaireHeaderImageId = 'none' | 'learning' | 'growth' | 'sports' | 'creativity';
+
+export const questionnaireHeaderImageOptions: Array<{
+  id: QuestionnaireHeaderImageId;
+  label: string;
+  image?: string;
+}> = [
+  { id: 'none', label: '无头图' },
+  { id: 'learning', label: '学习探索', image: learningHeader },
+  { id: 'growth', label: '成长记录', image: growthHeader },
+  { id: 'sports', label: '活力运动', image: sportsHeader },
+  { id: 'creativity', label: '兴趣创造', image: creativityHeader },
+];
+
+export const getQuestionnaireHeaderImage = (headerImageId: QuestionnaireHeaderImageId = 'none') => (
+  questionnaireHeaderImageOptions.find(option => option.id === headerImageId)?.image
+);
+
+export const getQuestionnaireThemeIdForArchiveTheme = (themeId?: string): QuestionnaireThemeId => ({
+  sky: 'learning-blue',
+  leaf: 'growth-green',
+}[themeId ?? ''] as QuestionnaireThemeId | undefined) ?? 'classic-red';
+
+export const questionnaireThemeOptions: Array<{
+  id: QuestionnaireThemeId;
+  label: string;
+  swatch: string;
+}> = [
+  { id: 'classic-red', label: '经典红', swatch: '#E02727' },
+  { id: 'growth-green', label: '成长绿', swatch: '#4D8F63' },
+  { id: 'learning-blue', label: '学习蓝', swatch: '#477EAE' },
+];
+
+const questionnaireThemeAccent: Record<QuestionnaireThemeId, {
+  primary: string;
+  strong: string;
+  soft: string;
+  softStrong: string;
+  page: string;
+  focusRing: string;
+}> = {
+  'classic-red': {
+    primary: questionnaireThemePalette.red[500],
+    strong: questionnaireThemePalette.red[700],
+    soft: questionnaireThemePalette.red[50],
+    softStrong: questionnaireThemePalette.red[100],
+    page: questionnaireThemePalette.neutral[50],
+    focusRing: 'rgba(224, 39, 39, 0.16)',
+  },
+  'growth-green': {
+    primary: '#4D8F63',
+    strong: '#356D49',
+    soft: '#EEF7F0',
+    softStrong: '#DCECDF',
+    page: '#F5F9F5',
+    focusRing: 'rgba(77, 143, 99, 0.18)',
+  },
+  'learning-blue': {
+    primary: '#477EAE',
+    strong: '#315F88',
+    soft: '#EEF5FA',
+    softStrong: '#DCEAF4',
+    page: '#F4F8FB',
+    focusRing: 'rgba(71, 126, 174, 0.18)',
+  },
+};
+
+export const getQuestionnaireThemeCssVariables = (themeId: QuestionnaireThemeId = 'classic-red') => {
+  const accent = questionnaireThemeAccent[themeId] ?? questionnaireThemeAccent['classic-red'];
+  return {
+  '--tm-brand-primary': accent.primary,
+  '--tm-brand-primary-strong': accent.strong,
+  '--tm-brand-primary-pressed': accent.strong,
+  '--tm-brand-primary-soft': accent.soft,
+  '--tm-brand-primary-soft-strong': accent.softStrong,
   '--tm-status-positive': questionnaireThemePalette.green[500],
   '--tm-status-positive-strong': questionnaireThemePalette.green[700],
   '--tm-status-positive-soft': questionnaireThemePalette.green[50],
   '--tm-status-negative': questionnaireThemePalette.red[500],
   '--tm-status-negative-strong': questionnaireThemePalette.red[700],
   '--tm-status-negative-soft': questionnaireThemePalette.red[50],
-  '--tm-bg-page': questionnaireThemePalette.neutral[50],
+  '--tm-bg-page': accent.page,
   '--tm-bg-surface': questionnaireThemePalette.neutral[0],
   '--tm-bg-surface-soft': questionnaireThemePalette.neutral[50],
   '--tm-bg-surface-muted': questionnaireThemePalette.neutral[100],
@@ -51,7 +126,8 @@ export const questionnaireThemeCssVariables = {
   '--tm-border-subtle': questionnaireThemePalette.neutral[200],
   '--tm-border-control': questionnaireThemePalette.neutral[450],
   '--tm-questionnaire-progress': questionnaireThemePalette.neutral[900],
-  '--tm-input-focus-ring': 'rgba(224, 39, 39, 0.16)',
+  '--tm-input-focus-border': accent.primary,
+  '--tm-input-focus-ring': accent.focusRing,
   '--tm-mask': 'rgba(23, 21, 19, 0.42)',
   '--tm-shadow-card': '0 10px 28px -20px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-control': '0 6px 16px -12px rgba(64, 60, 58, 0.18)',
@@ -76,3 +152,6 @@ export const questionnaireThemeCssVariables = {
   '--tm-duration-fast': '150ms',
   '--tm-duration-panel': '300ms',
 } satisfies Record<`--${string}`, string>;
+};
+
+export const questionnaireThemeCssVariables = getQuestionnaireThemeCssVariables();

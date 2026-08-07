@@ -20,6 +20,7 @@ const formDefinitionSource = fs.readFileSync(new URL('../../../shared/formDefini
 const growthCatalogSource = fs.readFileSync(new URL('../../../shared/studentGrowthFieldCatalog.ts', import.meta.url), 'utf8');
 const classListSource = fs.readFileSync(new URL('../ClassListView.tsx', import.meta.url), 'utf8');
 const archiveAppearanceSource = fs.readFileSync(new URL('./archiveAppearance.ts', import.meta.url), 'utf8');
+const questionnaireThemeSource = fs.readFileSync(new URL('../../../shared/questionnaireThemeTokens.ts', import.meta.url), 'utf8');
 const assetsSource = fs.readFileSync(new URL('../../assets/images.ts', import.meta.url), 'utf8');
 
 const requireText = (source, text, message) => {
@@ -248,7 +249,8 @@ requireText(viewSource, '>档案更新规则</h3>', '基础设置必须提供档
 requireText(viewSource, "[['once', '仅填写一次'], ['continuous', '可重复填写']]", '档案更新规则必须收敛为两种老师可理解的模式。');
 requireText(storeSource, 'hasArchiveDesignDraftContent', '档案草稿必须提供统一的有效内容判断。');
 requireText(viewSource, 'if (!hasArchiveDesignDraftContent(templateDraft))', '完全空白的新建档案不得自动保存草稿。');
-for (const preset of ['learning', 'growth', 'sports', 'creativity']) requireText(archiveAppearanceSource, `id: '${preset}'`, `档案头图缺少系统预设：${preset}`);
+requireText(archiveAppearanceSource, 'questionnaireHeaderImageOptions', '档案和采集必须复用同一套系统头图。');
+for (const preset of ['learning', 'growth', 'sports', 'creativity']) requireText(questionnaireThemeSource, `id: '${preset}'`, `档案头图缺少系统预设：${preset}`);
 
 for (const required of [
   '当前档案',

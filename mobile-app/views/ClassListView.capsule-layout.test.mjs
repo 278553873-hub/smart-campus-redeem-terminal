@@ -10,9 +10,12 @@ assert.ok(
   '顶部来源行必须消费微信胶囊右侧安全区。',
 );
 assert.ok(
-  classListSource.includes('h-[var(--mini-program-title-bar-height,44px)] items-center justify-between'),
-  '顶部来源行必须使用微信标题栏高度，并让来源切换与添加按钮上下居中。',
+  classListSource.includes('h-[var(--mini-program-title-bar-height,44px)] items-center [padding-right:var(--mini-program-capsule-right-inset,0px)]'),
+  '顶部来源行必须使用微信标题栏高度，并让来源切换上下居中。',
 );
+assert.ok(!classListSource.includes('aria-label="打开班级操作"'), '标题栏不得继续放置添加班级按钮。');
+assert.ok(classListSource.includes('班级管理'), '个人来源应在标题栏下方提供语义明确的班级管理入口。');
+assert.ok(!classListSource.includes('<MobileFloatingCreateButton'), '班级页不得使用语义不完整的悬浮加号。');
 assert.ok(
   classListSource.includes("addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'"),
   '真实手机效果下不得在状态栏后额外增加顶部留白。',

@@ -20,11 +20,14 @@ assert.ok(!classListSource.includes("renderClassSection('协作班级'"), '协�
 requireText(classListSource, 'const showLeaderboard = canViewClassLeaderboard(currentSpace);', '排行榜显示条件必须来自统一空间权限规则。');
 requireText(classListSource, '{showLeaderboard && (', '排行榜入口必须按条件渲染。');
 requireText(classListSource, 'const canManagePersonal = canManagePersonalClasses(currentSpace);', '个人版加号必须来自统一空间权限规则。');
-requireText(classListSource, '{canManagePersonal && (', '只有个人创建来源显示班级操作加号。');
-requireText(classListSource, 'open={canManagePersonal && showPersonalClassActions}', '班级操作弹窗也必须校验当前为本人创建来源。');
+requireText(classListSource, '显示${visibleClasses.length}/${classes.length}个班级', '个人来源的管理工具行应同时反馈班级显示数量。');
+requireText(classListSource, 'open={canManagePersonal && showClassManagement}', '班级管理弹窗也必须校验当前为本人创建来源。');
+assert.ok(!classListSource.includes('showPersonalClassActions'), '班级页不应残留旧的班级操作状态引用。');
+assert.ok(!classListSource.includes('showAddClassActions'), '班级页不应残留仅表达添加语义的状态引用。');
 requireText(classListSource, "{ label: '创建班级', icon: Plus, onClick: onCreateClass }", '个人版操作弹窗应包含创建班级。');
 requireText(classListSource, "{ label: '加入班级', icon: LogIn, onClick: onJoinClass }", '个人版操作弹窗应包含加入班级。');
-requireText(classListSource, "{ label: '显示设置', icon: SlidersHorizontal, onClick: () => setShowDisplaySettings(true) }", '个人版操作弹窗应包含显示设置。');
+requireText(classListSource, "{ label: '显示设置', icon: SlidersHorizontal, onClick: () => setShowDisplaySettings(true) }", '班级操作弹窗必须保留显示设置。');
+requireText(classListSource, 'canManagePersonal && classes.length > 0', '已有个人班级时才显示班级管理工具行。');
 
 requireText(classListSource, 'getTeacherClassActionPolicy({', '更多操作必须根据来源、版本和班级角色生成。');
 requireText(classListSource, 'activeActionPolicy.canMaintainClass', '班级维护操作必须受权限控制。');

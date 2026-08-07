@@ -1,6 +1,7 @@
 import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode, type FormSection, type FormSubField } from './formDefinition';
 import type { GrowthInputFieldKey } from './studentGrowthFieldCatalog';
 import type { ArchiveTemplateSnapshot } from './studentArchiveStore';
+import type { QuestionnaireHeaderImageId, QuestionnaireThemeId } from './questionnaireThemeTokens';
 import {
   createGrowthCollectionQuestions,
   isGrowthCollectionQuestion,
@@ -111,6 +112,8 @@ export interface QuestionnaireRecord {
   archivePeriodLabel?: string;
   archiveSkippedStudentNos?: string[];
   studentAssignmentMode?: StudentAssignmentMode;
+  themeId?: QuestionnaireThemeId;
+  headerImageId?: QuestionnaireHeaderImageId;
   targetMode?: QuestionnaireTargetMode;
   targetClassIds?: string[];
   targetSyncPolicy?: QuestionnaireTargetSyncPolicy;
@@ -627,6 +630,8 @@ const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): Questionnair
     contentType: inferQuestionnaireContentType(rest.questions, rest.growthTemplate),
     respondentRole: rest.respondentRole ?? (collectionMode === 'guardian_questionnaire' ? 'guardian' : 'teacher'),
     collectionMode,
+    themeId: rest.themeId ?? 'classic-red',
+    headerImageId: rest.headerImageId ?? 'none',
     studentAssignmentMode: rest.studentAssignmentMode ?? 'creator',
     targetSyncPolicy: rest.targetSyncPolicy ?? 'fixed',
     layoutMode: rest.layoutMode ?? 'flat',
@@ -647,7 +652,14 @@ const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): Questionnair
 };
 
 const cloneSeed = () => (JSON.parse(JSON.stringify(seedQuestionnaires)) as StoredQuestionnaireRecord[])
-  .map(normalizeQuestionnaire);
+  .map(normalizeQuestionnaire)
+  .filter(record => record.status !== 'draft');
+
+const LEGACY_SEED_DRAFT_IDS = new Set([
+  'collection-health-draft',
+  'survey-summer-draft',
+  'survey-home-visit-draft',
+]);
 
 export const readQuestionnaires = (): QuestionnaireRecord[] => {
   if (typeof window === 'undefined') return cloneSeed();
@@ -657,7 +669,9 @@ export const readQuestionnaires = (): QuestionnaireRecord[] => {
     const parsed = JSON.parse(stored);
     if (!Array.isArray(parsed)) return cloneSeed();
     const deletedDraftIds = new Set<string>(JSON.parse(window.localStorage.getItem(DELETED_DRAFT_IDS_STORAGE_KEY) ?? '[]'));
-    const storedRecords = (parsed as StoredQuestionnaireRecord[]).map(normalizeQuestionnaire);
+    const storedRecords = (parsed as StoredQuestionnaireRecord[])
+      .map(normalizeQuestionnaire)
+      .filter(record => !LEGACY_SEED_DRAFT_IDS.has(record.id));
     const storedIds = new Set(storedRecords.map(record => record.id));
     return [
       ...storedRecords,
@@ -688,6 +702,36 @@ export const upsertQuestionnaire = (record: QuestionnaireRecord) => {
   return writeQuestionnaires(exists
     ? current.map(item => item.id === record.id ? record : item)
     : [record, ...current]);
+};
+
+type QuestionnaireDraftSource = Pick<QuestionnaireRecord, 'spaceId' | 'creatorTeacherId' | 'creatorName' | 'respondentRole' | 'collectionMode'>;
+
+const getStoredRespondentRole = (record: Pick<QuestionnaireRecord, 'respondentRole' | 'collectionMode'>): QuestionnaireRespondentRole => (
+  record.respondentRole ?? (record.collectionMode === 'student_information' ? 'teacher' : 'guardian')
+);
+
+const matchesQuestionnaireDraftSource = (
+  record: QuestionnaireRecord,
+  source: QuestionnaireDraftSource,
+) => record.status === 'draft'
+  && record.spaceId === source.spaceId
+  && (source.creatorTeacherId
+    ? record.creatorTeacherId === source.creatorTeacherId
+    : record.creatorName === source.creatorName)
+  && getStoredRespondentRole(record) === getStoredRespondentRole(source);
+
+export const upsertQuestionnaireDraftForSource = (record: QuestionnaireRecord) => {
+  if (record.status !== 'draft') return upsertQuestionnaire(record);
+  const current = readQuestionnaires();
+  return writeQuestionnaires([
+    record,
+    ...current.filter(item => item.id !== record.id && !matchesQuestionnaireDraftSource(item, record)),
+  ]);
+};
+
+export const deleteQuestionnaireDraftsForSource = (source: QuestionnaireDraftSource) => {
+  const current = readQuestionnaires();
+  return writeQuestionnaires(current.filter(record => !matchesQuestionnaireDraftSource(record, source)));
 };
 
 export const getQuestionnaireCollectionMode = (record: QuestionnaireRecord): QuestionnaireCollectionMode => (

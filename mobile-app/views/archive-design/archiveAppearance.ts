@@ -1,8 +1,5 @@
-import learningHeader from '../../assets/resources/highlight-defaults/daily-classroom-thinking.png';
-import growthHeader from '../../assets/resources/highlight-defaults/daily-default-growth.png';
-import sportsHeader from '../../assets/resources/highlight-defaults/daily-sports-vitality.png';
-import creativityHeader from '../../assets/resources/highlight-defaults/daily-art-creativity.png';
 import type { CSSProperties } from 'react';
+import { questionnaireHeaderImageOptions } from '../../../shared/questionnaireThemeTokens';
 import type {
   ArchiveAppearance,
   ArchiveHeaderImageId,
@@ -46,13 +43,7 @@ export const archiveHeaderImageOptions: Array<{
   id: ArchiveHeaderImageId;
   label: string;
   image?: string;
-}> = [
-  { id: 'none', label: '无头图' },
-  { id: 'learning', label: '学习探索', image: learningHeader },
-  { id: 'growth', label: '成长记录', image: growthHeader },
-  { id: 'sports', label: '活力运动', image: sportsHeader },
-  { id: 'creativity', label: '兴趣创造', image: creativityHeader },
-];
+}> = questionnaireHeaderImageOptions;
 
 export const getArchiveTheme = (appearance: ArchiveAppearance) => (
   archiveThemeOptions.find(option => option.id === appearance.themeId) ?? archiveThemeOptions[0]

@@ -17,7 +17,8 @@ import {
   persistArchiveCollectionAnswers,
 } from '../../shared/archiveCollectionPersistence';
 import { normalizeFormFieldSettings } from '../../shared/formDefinition';
-import { questionnaireThemeCssVariables } from '../../shared/questionnaireThemeTokens';
+import { getQuestionnaireThemeCssVariables } from '../../shared/questionnaireThemeTokens';
+import QuestionnaireHeaderImage from '../questionnaire/QuestionnaireHeaderImage';
 import {
   ParentBottomSheet,
 } from './ParentUI';
@@ -91,13 +92,14 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
 
   if (!preview && questionnaire.status !== 'active') {
     return (
-      <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-8 text-[var(--tm-text-primary)] no-scrollbar" style={questionnaireThemeCssVariables as React.CSSProperties}>
+      <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-8 text-[var(--tm-text-primary)] no-scrollbar" style={getQuestionnaireThemeCssVariables(questionnaire.themeId) as React.CSSProperties}>
         <header className="sticky top-0 z-40 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 py-3 backdrop-blur-xl [padding-right:max(16px,var(--mini-program-capsule-right-inset,16px))]">
           <div className="flex min-h-11 items-center gap-3">
             <button type="button" onClick={onBack} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-transform active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)]" aria-label="返回待办"><ArrowLeft size={18} /></button>
             <div className="truncate text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">{questionnaire.title}</div>
           </div>
         </header>
+        <QuestionnaireHeaderImage headerImageId={questionnaire.headerImageId} />
         <section className="mx-5 mt-5 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-6 text-center shadow-[var(--tm-shadow-card)]">
           <div className="text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">问卷已结束</div>
           <button type="button" onClick={onBack} className={`${questionnaireSecondaryButton} mt-5 w-full`}>返回待办</button>
@@ -169,7 +171,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   };
 
   return (
-    <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-36 text-[var(--tm-text-primary)] antialiased no-scrollbar" style={questionnaireThemeCssVariables as React.CSSProperties}>
+    <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-36 text-[var(--tm-text-primary)] antialiased no-scrollbar" style={getQuestionnaireThemeCssVariables(questionnaire.themeId) as React.CSSProperties}>
       <header className="sticky top-0 z-40 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 py-3 backdrop-blur-xl [padding-right:max(16px,var(--mini-program-capsule-right-inset,16px))]">
         <div className="flex min-h-11 items-center gap-3">
           <button type="button" onClick={onBack} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-transform active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)]" aria-label={preview ? '退出预览' : '返回待办'}>
@@ -183,6 +185,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
           </div>
         </div>
       </header>
+      <QuestionnaireHeaderImage headerImageId={questionnaire.headerImageId} />
 
       <section className="mx-5 mt-5">
         {stepIndex === 0 && (

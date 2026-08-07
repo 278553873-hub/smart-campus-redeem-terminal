@@ -113,7 +113,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const [showTeachingOnly, setShowTeachingOnly] = useState(false);
     const [gradeFilter, setGradeFilter] = useState('全部');
     const [leftStudentClassId, setLeftStudentClassId] = useState<string | null>(null);
-    const [showPersonalClassActions, setShowPersonalClassActions] = useState(false);
+    const [showClassManagement, setShowClassManagement] = useState(false);
     const [showDisplaySettings, setShowDisplaySettings] = useState(false);
     const [hiddenClassIdsBySpace, setHiddenClassIdsBySpace] = useState<Record<string, string[]>>({});
     const [copyFeedback, setCopyFeedback] = useState<{ classId: string; message: string; success: boolean } | null>(null);
@@ -155,7 +155,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     useEffect(() => {
         setActiveActionClassId(null);
         setLeftStudentClassId(null);
-        setShowPersonalClassActions(false);
+        setShowClassManagement(false);
         setShowDisplaySettings(false);
         setGradeFilter('全部');
         setShowTeachingOnly(false);
@@ -381,8 +381,8 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 </div>
             )}
             <div className={`relative z-10 h-full space-y-4 overflow-y-auto px-4 pb-40 no-scrollbar ${addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'}`}>
-                <section className="space-y-3 px-1">
-                    <div className="flex h-[var(--mini-program-title-bar-height,44px)] items-center justify-between gap-2 [padding-right:var(--mini-program-capsule-right-inset,0px)]">
+                <section className={`${isSchoolSpace ? 'space-y-3' : 'space-y-0'} px-1`}>
+                    <div className="flex h-[var(--mini-program-title-bar-height,44px)] items-center [padding-right:var(--mini-program-capsule-right-inset,0px)]">
                         {showClassSourceSwitcher ? (
                             <ClassSourceTrigger
                                 name={currentSpace.title}
@@ -396,17 +396,26 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             <h1 className="truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{currentSpace.title}</h1>
                         )}
 
-                        {canManagePersonal && (
+                    </div>
+
+                    {canManagePersonal && classes.length > 0 && (
+                        <div className="flex min-h-11 items-center justify-between gap-3">
+                            <span className="text-[13px] font-medium text-[var(--tm-text-tertiary)]">
+                                {hiddenClassIds.size > 0
+                                    ? `显示${visibleClasses.length}/${classes.length}个班级`
+                                    : `共${classes.length}个班级`}
+                            </span>
                             <button
                                 type="button"
-                                onClick={() => setShowPersonalClassActions(true)}
-                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)] active:scale-95 active:bg-[var(--tm-brand-primary-soft)]"
-                                aria-label="打开班级操作"
+                                onClick={() => setShowClassManagement(true)}
+                                className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
                             >
-                                <Plus className="h-5 w-5" strokeWidth={2.4} />
+                                <SlidersHorizontal className="h-4 w-4" />
+                                班级管理
+                                <ChevronRight className="h-3.5 w-3.5" />
                             </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {isSchoolSpace && (
                         <div className={`grid gap-2 ${showLeaderboard ? 'grid-cols-[minmax(72px,1fr)_auto_auto]' : 'grid-cols-[minmax(0,1fr)_auto]'}`}>
@@ -453,28 +462,33 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     <section className="px-2 py-6 text-center">
                         <MobileEmptyState
                             imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
-                            title={isSchoolSpace ? '没有符合条件的班级' : '暂无显示班级'}
+                            title={isSchoolSpace ? '没有符合条件的班级' : classes.length === 0 ? '暂无班级' : '暂无显示班级'}
                             imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
                         />
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (isSchoolSpace) {
+                        {isSchoolSpace ? (
+                            <button
+                                type="button"
+                                onClick={() => {
                                     setGradeFilter('全部');
                                     setShowTeachingOnly(false);
-                                } else {
-                                    setShowDisplaySettings(true);
-                                }
-                            }}
-                            className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]"
-                        >
-                            {isSchoolSpace ? '清除筛选' : '调整显示'}
-                        </button>
+                                }}
+                                className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]"
+                            >
+                                清除筛选
+                            </button>
+                        ) : classes.length === 0 ? (
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                                <button type="button" onClick={onCreateClass} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-3 text-sm font-semibold text-white active:bg-[var(--tm-brand-primary-pressed)]">创建班级</button>
+                                <button type="button" onClick={onJoinClass} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 text-sm font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]">加入已有班级</button>
+                            </div>
+                        ) : (
+                            <button type="button" onClick={() => setShowDisplaySettings(true)} className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]">调整显示</button>
+                        )}
                     </section>
                 )}
             </div>
 
-            <MobileBottomSheet open={canManagePersonal && showPersonalClassActions} title="班级操作" onClose={() => setShowPersonalClassActions(false)}>
+            <MobileBottomSheet open={canManagePersonal && showClassManagement} title="班级管理" onClose={() => setShowClassManagement(false)}>
                 <div className="space-y-[var(--tm-space-2)]">
                     {[
                         { label: '创建班级', icon: Plus, onClick: onCreateClass },
@@ -487,7 +501,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 key={item.label}
                                 type="button"
                                 onClick={() => {
-                                    setShowPersonalClassActions(false);
+                                    setShowClassManagement(false);
                                     item.onClick();
                                 }}
                                 className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-left active:bg-[var(--tm-bg-surface-muted)]"

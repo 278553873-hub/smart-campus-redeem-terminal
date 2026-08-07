@@ -7,7 +7,11 @@ interface MobileFloatingCreateButtonProps {
   emphasis?: 'default' | 'raised';
 }
 
-const MobileFloatingCreateButton: React.FC<MobileFloatingCreateButtonProps> = ({ label, onClick, emphasis = 'default' }) => (
+const MobileFloatingCreateButton: React.FC<MobileFloatingCreateButtonProps> = ({
+  label,
+  onClick,
+  emphasis = 'default',
+}) => (
   <button
     type="button"
     aria-label={label}

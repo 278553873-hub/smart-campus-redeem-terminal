@@ -9,13 +9,13 @@ import {
     ImagePlus,
     KeyRound,
     Lock,
+    Plus,
     Shield,
     Trash2,
     X,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
-import MobileFloatingCreateButton from '../components/ui/MobileFloatingCreateButton';
 
 export interface SchoolSubjectItem {
     id: string;
@@ -71,11 +71,10 @@ interface SuggestionFeedbackViewProps {
     onSubmit: () => void;
 }
 
-const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode; floatingAction?: React.ReactNode; contentClassName?: string }> = ({ children, footer, floatingAction, contentClassName = '' }) => (
+const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode; contentClassName?: string }> = ({ children, footer, contentClassName = '' }) => (
     <div className="relative flex h-full min-h-0 flex-col text-[var(--tm-text-primary)]">
-        <div className={`min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : floatingAction ? 'pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]' : 'pb-8'} ${contentClassName}`}>{children}</div>
+        <div className={`min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : 'pb-8'} ${contentClassName}`}>{children}</div>
         {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 py-4 shadow-[0_-10px_28px_-24px_var(--tm-shadow-neutral-color)] backdrop-blur-xl">{footer}</div>}
-        {floatingAction}
     </div>
 );
 
@@ -86,7 +85,7 @@ const FeaturePanel: React.FC<{ children: React.ReactNode; className?: string; al
 );
 
 const featurePrimaryButtonClass = 'flex h-12 w-full items-center justify-center gap-2 rounded-[20px] bg-[var(--tm-brand-primary)] text-[14px] font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)] transition active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)]';
-const featureListRowClass = 'flex min-h-[60px] items-center gap-1 border-b border-[var(--tm-border-subtle)]/70 px-3 last:border-b-0';
+const featureListRowClass = 'flex min-h-[60px] items-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 [box-shadow:var(--tm-shadow-control)]';
 const featureEditButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition active:bg-[var(--tm-brand-primary-soft)] active:text-[var(--tm-brand-primary)]';
 const featureDeleteButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-status-negative)] transition active:bg-[var(--tm-status-negative-soft)]';
 
@@ -139,10 +138,15 @@ export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => (
 export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ subjects, draggingSubjectId, onAdd, onEdit, onDelete, onDragStart, onDragOver, onDragEnd }) => (
     <FeaturePageBody
         contentClassName={subjects.length === 0 ? 'flex min-h-0 flex-col' : ''}
-        floatingAction={<MobileFloatingCreateButton label="新增科目" emphasis="raised" onClick={onAdd} />}
+        footer={(
+            <button type="button" onClick={onAdd} className={featurePrimaryButtonClass}>
+                <Plus className="h-4 w-4" />
+                新增科目
+            </button>
+        )}
     >
         {subjects.length > 0 ? (
-            <FeaturePanel>
+            <section className="space-y-2">
                 {subjects.map(item => (
                     <div
                         key={item.id}
@@ -153,7 +157,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ su
                             onDragOver(item.id);
                         }}
                         onDragEnd={onDragEnd}
-                        className={`${featureListRowClass} transition ${draggingSubjectId === item.id ? 'bg-[var(--tm-brand-primary-soft)] opacity-70' : 'bg-transparent opacity-100'}`}
+                        className={`${featureListRowClass} transition ${draggingSubjectId === item.id ? 'bg-[var(--tm-brand-primary-soft)] opacity-70' : 'opacity-100'}`}
                     >
                         <span className="flex h-11 w-9 shrink-0 cursor-grab items-center justify-center text-[var(--tm-text-disabled)] active:cursor-grabbing active:text-[var(--tm-brand-primary)]" aria-label="拖动排序">
                             <GripVertical className="h-4.5 w-4.5" />
@@ -167,7 +171,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ su
                         </button>
                     </div>
                 ))}
-            </FeaturePanel>
+            </section>
         ) : (
             <MobileEmptyState
                 imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD}
@@ -182,10 +186,15 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ su
 export const DepartmentManagementView: React.FC<DepartmentManagementViewProps> = ({ departments, onAdd, onEdit, onDelete }) => (
     <FeaturePageBody
         contentClassName={departments.length === 0 ? 'flex min-h-0 flex-col' : ''}
-        floatingAction={<MobileFloatingCreateButton label="新增部门" emphasis="raised" onClick={onAdd} />}
+        footer={(
+            <button type="button" onClick={onAdd} className={featurePrimaryButtonClass}>
+                <Plus className="h-4 w-4" />
+                新增部门
+            </button>
+        )}
     >
         {departments.length > 0 ? (
-            <FeaturePanel>
+            <section className="space-y-2">
                 {departments.map(item => (
                     <div key={item.id} className={`${featureListRowClass} pl-4`}>
                         <button type="button" onClick={() => onEdit(item)} className="min-w-0 flex-1 truncate text-left text-[14px] font-semibold text-[var(--tm-text-primary)]">{item.name}</button>
@@ -197,7 +206,7 @@ export const DepartmentManagementView: React.FC<DepartmentManagementViewProps> =
                         </button>
                     </div>
                 ))}
-            </FeaturePanel>
+            </section>
         ) : (
             <MobileEmptyState
                 imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD}

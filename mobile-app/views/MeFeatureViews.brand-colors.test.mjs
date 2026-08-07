@@ -91,11 +91,39 @@ if ((featureSource.match(/imageClassName="w-\[72%\] min-w-\[188px\] max-w-\[236p
 }
 
 for (const required of [
-  'floatingAction={<MobileFloatingCreateButton label="新增科目" emphasis="raised" onClick={onAdd} />}',
-  'floatingAction={<MobileFloatingCreateButton label="新增部门" emphasis="raised" onClick={onAdd} />}',
-  'pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]',
+  '<Plus className="h-4 w-4" />',
+  '新增科目',
+  '新增部门',
+  "${footer ? 'pb-28' : 'pb-8'}",
 ]) {
-  requireText(source, required, `科目与部门页缺少稳定的底部悬浮新增交互：${required}`);
+  requireText(source, required, `科目与部门页缺少固定底部新增交互：${required}`);
+}
+
+requireText(source, "const featureListRowClass = 'flex min-h-[60px] items-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)]", '科目与部门数据必须使用独立条目块。');
+if (source.includes("const featureListRowClass = 'flex min-h-[60px] items-center gap-1 border-b")) {
+  throw new Error('科目与部门数据不应继续使用大卡片内分隔线列表。');
+}
+if (source.includes("'bg-transparent opacity-100'")) {
+  throw new Error('科目普通状态不得使用透明背景覆盖公共白色条目背景。');
+}
+if ((source.match(/<section className="space-y-2">/g) ?? []).length < 2) {
+  throw new Error('科目与部门列表必须通过条目间距分组。');
+}
+
+for (const [startText, endText, label] of [
+  ['export const SubjectManagementView', 'export const DepartmentManagementView', '新增科目'],
+  ['export const DepartmentManagementView', 'export const CoinIssuanceView', '新增部门'],
+]) {
+  const viewSource = source.slice(source.indexOf(startText), source.indexOf(endText));
+  const footerIndex = viewSource.indexOf('footer={(');
+  const labelIndex = viewSource.indexOf(label);
+  if (footerIndex < 0 || labelIndex < footerIndex) {
+    throw new Error(`${label}必须放在固定底部操作栏内。`);
+  }
+}
+
+if (source.includes('floatingAction={<MobileFloatingCreateButton label="新增科目"') || source.includes('floatingAction={<MobileFloatingCreateButton label="新增部门"')) {
+  throw new Error('科目与部门页不得使用遮挡内容的悬浮新增按钮。');
 }
 
 for (const [startText, endText, label] of [
