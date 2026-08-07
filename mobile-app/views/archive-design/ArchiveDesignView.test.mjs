@@ -80,7 +80,9 @@ requireText(viewSource, '<MobileFloatingCreateButton label="新建档案" emphas
 requireText(viewSource, 'pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]', '档案设计列表必须为悬浮创建按钮和底部安全区预留空间。');
 requireText(viewSource, 'const listHeaderImage = getArchiveHeaderImage(template.appearance);', '档案列表卡片必须展示档案头图。');
 requireText(viewSource, 'className="block aspect-[16/7] w-full object-cover"', '档案列表头图必须使用稳定比例并铺满卡片。');
-requireText(viewSource, '适用年级：{formatTemplateGradeScope(template.gradeScopes)}', '档案列表卡片必须展示适用年级。');
+requireText(viewSource, 'line-clamp-2 min-h-12 text-[length:var(--tm-font-size-card-title)] font-bold leading-6', '档案列表名称必须使用清晰的卡片标题层级并预留两行高度。');
+requireText(viewSource, '{formatTemplateGradeScope(template.gradeScopes)}', '档案列表卡片必须展示适用年级内容。');
+forbidText(viewSource, '适用年级：{formatTemplateGradeScope(template.gradeScopes)}', '档案列表卡片不应重复展示适用年级标签。');
 requireText(viewSource, '<StatusPill className={meta.className}>{meta.label}</StatusPill>', '档案列表卡片必须展示状态标签。');
 requireText(viewSource, 'className="grid grid-cols-2 gap-3"', '档案设计列表必须使用一行两张的紧凑卡片布局。');
 forbidText(viewSource, 'className={`${sectionSurface} flex min-h-[76px]', '档案列表不应继续使用图标式横向摘要卡片。');

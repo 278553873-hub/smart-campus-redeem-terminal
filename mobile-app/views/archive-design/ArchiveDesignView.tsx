@@ -469,10 +469,10 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                       <ImageOff className="h-5 w-5" />
                     </span>
                   )}
-                  <span className="flex min-h-[112px] flex-col p-3">
-                    <span className="line-clamp-2 min-h-10 text-[length:var(--tm-font-size-compact)] font-bold leading-5 text-[var(--tm-text-primary)]">{template.name}</span>
+                  <span className="flex min-h-[120px] flex-col p-3">
+                    <span className="line-clamp-2 min-h-12 text-[length:var(--tm-font-size-card-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{template.name}</span>
                     <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">
-                      适用年级：{formatTemplateGradeScope(template.gradeScopes)}
+                      {formatTemplateGradeScope(template.gradeScopes)}
                     </span>
                     <span className="mt-auto pt-2">
                       <StatusPill className={meta.className}>{meta.label}</StatusPill>
