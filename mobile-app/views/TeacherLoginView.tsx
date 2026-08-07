@@ -133,7 +133,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
           <h1 className="mt-[var(--tm-space-6)] text-[length:var(--tm-font-size-page-title)] font-bold leading-tight">欢迎使用 AI素养评价</h1>
         </div>
 
-        <div className="mt-[calc(var(--tm-space-8)*3)] flex w-full flex-col items-center">
+        <div className="mt-[calc(var(--tm-space-8)*4)] flex w-full flex-col items-center">
           <button type="button" onClick={loginWithRecentAccount} disabled={submitting} className={recentLoginButtonClass}>
             <span className="text-[length:var(--tm-font-size-card-title)] font-bold leading-5">最近登录</span>
             <span className="mt-0.5 text-[length:var(--tm-font-size-meta)] font-medium leading-4 opacity-80">190****0000</span>

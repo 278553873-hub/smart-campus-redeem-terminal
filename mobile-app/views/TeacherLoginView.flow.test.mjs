@@ -35,6 +35,7 @@ assert.match(loginSource, /recentLoginButtonClass = '[^']*flex-col[^']*bg-\[var\
 assert.match(loginSource, /wechatLoginButtonClass = '[^']*h-14/, '微信登录按钮高度应为 56px。');
 assert.match(loginSource, /recentLoginButtonClass = '[^']*h-14/, '最近登录按钮高度应为 56px。');
 assert.match(loginSource, /text-\[length:var\(--tm-font-size-card-title\)\][^>]*>最近登录</, '最近登录标题应使用 15px 字号 Token。');
+assert.match(loginSource, /mt-\[calc\(var\(--tm-space-8\)\*4\)\] flex w-full flex-col items-center/, '登录主操作区应下移到更易触达的位置。');
 assert.match(loginSource, /wechatLoginButtonClass} mt-\[var\(--tm-space-5\)\]/, '最近登录与微信登录之间应使用 20px 间距。');
 assert.equal((loginSource.match(/role="tablist"/g) ?? []).length, 1, '手机号登录方式只应在弹窗顶部展示一次。');
 assert.match(loginSource, /role="tab"[\s\S]*text-\[length:var\(--tm-font-size-section-title\)\]/, '手机号登录方式应上移到弹窗顶部并使用 17px 字号 Token。');
