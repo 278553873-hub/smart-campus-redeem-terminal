@@ -90,12 +90,12 @@ const GrowthFieldCategoryPicker: React.FC<GrowthFieldCategoryPickerProps> = ({
                 onClick={() => onToggle(field)}
                 className="flex min-h-[56px] min-w-0 flex-1 items-center gap-3 text-left disabled:opacity-70"
               >
-                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border ${selected ? 'border-[var(--tm-status-positive)] bg-[var(--tm-status-positive)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-transparent'}`}>
+                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-transparent'}`}>
                   <Check className="h-3.5 w-3.5" strokeWidth={3} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{field.label}</span>
-                  {hint && <span className="mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{hint}</span>}
+                  {hint && <span className="mt-0.5 block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{hint}</span>}
                 </span>
               </button>
               {renderFieldAccessory?.(field)}

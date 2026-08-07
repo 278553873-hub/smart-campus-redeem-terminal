@@ -25,5 +25,10 @@ requireText(pickerSource, 'activeGroup.fields.map', '页面只应渲染当前分
 requireText(pickerSource, 'selectedCount > 0', '分类标签必须显示已选数量。');
 requireText(pickerSource, 'min-h-[var(--tm-size-touch)]', '分类页签触控高度必须使用教师端触控令牌。');
 requireText(pickerSource, '学校暂未启用成长数据', '没有启用字段时必须提供明确空状态。');
+requireText(pickerSource, "selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)]", '成长字段勾选态必须使用品牌主色。');
+requireText(pickerSource, 'text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]', '成长字段单位提示必须使用统一辅助文字层级。');
+if (pickerSource.includes("selected ? 'border-[var(--tm-status-positive)]")) {
+  throw new Error('成长字段勾选态不应使用成功状态色。');
+}
 
 console.log('Growth field category picker assertions passed');

@@ -15,24 +15,27 @@ const catalogSource = read('../../../shared/studentGrowthFieldCatalog.ts');
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
 };
+const forbidText = (source, needle, message) => {
+  if (source.includes(needle)) throw new Error(message);
+};
 
-for (const route of ['student_body_measurements', 'student_health_records']) {
-  requireText(appSource, `'${route}'`, `教师手机端缺少${route}路由。`);
-}
+requireText(appSource, "'student_body_measurements'", '教师手机端缺少成长数据路由。');
+forbidText(appSource, "'student_health_records'", '教师手机端不应保留健康检查页面路由。');
+forbidText(appSource, 'StudentHealthRecordsView', '教师手机端不应挂载健康检查页面。');
 if (appSource.includes("'student_goal_plan'") || dashboardSource.includes('本学期目标')) {
   throw new Error('学期目标暂缓后，不应继续出现在学生详情可见流程中。');
 }
 requireText(appSource, 'ensureStudentGrowthProfile(activeStudent.id)', '学生切换后应读取统一成长数据。');
 requireText(appSource, 'STUDENT_GROWTH_STORE_EVENT', '成长数据修改后应刷新学生详情。');
 requireText(dashboardSource, '成长数据', '成长概览应展示成长数据摘要。');
-requireText(dashboardSource, '健康检查', '成长概览应展示健康检查摘要。');
 requireText(dashboardSource, 'onViewBodyMeasurements', '身体成长摘要应进入独立的身体成长记录。');
-requireText(dashboardSource, 'onViewHealthRecords', '健康检查摘要应进入体检详情。');
+forbidText(dashboardSource, '健康检查', '成长概览不应展示健康检查相关信息。');
+forbidText(dashboardSource, 'onViewHealthRecords', '成长概览不应保留健康检查入口。');
+forbidText(dashboardSource, 'latestHealthRecord', '成长概览不应读取健康检查摘要。');
 requireText(dashboardSource, 'latestHeightMeasurement', '成长概览必须独立读取最近一次身高。');
 requireText(dashboardSource, 'latestWeightMeasurement', '成长概览必须独立读取最近一次体重。');
 requireText(dashboardSource, 'latestBmiMeasurement', '身体质量指数必须读取最近一次完整测量记录。');
 requireText(dashboardSource, 'bodyGrowthMetrics.length > 0 &&', '学生没有成长数据时不应渲染空模块。');
-requireText(dashboardSource, '{latestHealthRecord && (', '学生没有体检数据时不应渲染空模块。');
 requireText(dashboardSource, 'metric.recordedAt', '不同成长指标必须分别展示自己的记录日期。');
 if (dashboardSource.includes("latestMeasurement?.measuredAt ?? '待补充'") || dashboardSource.includes('暂无测量记录') || dashboardSource.includes('暂无体检记录')) {
   throw new Error('学生详情不应把非必填成长数据表达为待补充或空卡片。');
@@ -42,9 +45,16 @@ requireText(bodySource, "type PageMode = 'list' | 'detail' | 'form'", '身体成
 requireText(bodySource, 'saveStudentGrowthDataRecord', '成长数据页面应把新增和修正写回统一成长记录。');
 requireText(bodySource, 'record.sourceLabel', '身体成长历史应展示问卷、体检或手机录入来源。');
 requireText(bodySource, 'h-11 w-11', '身体成长图标操作必须满足44像素触控尺寸。');
-requireText(bodySource, '请至少填写一项成长数据', '手机端成长数据应允许任意启用字段独立录入。');
-requireText(bodySource, 'getEnabledGrowthFields(spaceId)', '手机端成长数据必须读取学校启用字段。');
-requireText(bodySource, '选择本次录入内容', '手机端新增记录应先渐进选择本次字段。');
+requireText(bodySource, "const BODY_GROWTH_FIELD_KEYS: GrowthInputFieldKey[] = ['height_cm', 'weight_kg']", '手机端成长数据只能录入身高和体重。');
+requireText(bodySource, "label: 'BMI'", '手机端成长数据必须展示自动计算的BMI。');
+forbidText(bodySource, 'getEnabledGrowthFields(spaceId)', '学生详情成长数据不应扩展学校启用的健康或体测字段。');
+requireText(bodySource, 'title="新增成长数据"', '手机端新增记录应直接打开成长数据弹窗。');
+requireText(bodySource, 'setSelectedFieldKeys(BODY_GROWTH_FIELD_KEYS)', '新增弹窗必须直接提供身高和体重。');
+requireText(bodySource, 'const canSave = Boolean(formValue.recordedAt && hasGrowthValue)', '记录日期存在且身高或体重任一有值时才允许保存。');
+requireText(bodySource, 'const currentBmi = calculateBmi(currentHeight, currentWeight)', '身高和体重都有值后必须实时计算BMI。');
+requireText(bodySource, 'current.getFullYear()', '新增记录默认日期必须使用手机本地日期。');
+forbidText(bodySource, '选择本次录入内容', '手机端新增记录不应先选择填写字段。');
+forbidText(bodySource, 'showFieldPicker', '手机端不应保留成长字段选择弹窗状态。');
 
 requireText(healthSource, "type PageMode = 'list' | 'detail' | 'form'", '体检页面应支持列表、详情和完整表单。');
 requireText(healthSource, 'validateHealthExamInput', '保存体检记录前应校验日期和数值。');

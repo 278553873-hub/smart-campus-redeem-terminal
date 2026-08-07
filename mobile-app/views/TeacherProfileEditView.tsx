@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import type { ClassInfo, TeacherDepartment, TeacherProfile, TeacherTeachingAssignment } from '../types';
 import type { TeacherSpaceOption } from './MeView';
-import { ASSETS } from '../assets/images';
 import { MobileCard } from '../components/ui/MobileCard';
 import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker';
 import { phoneText } from '../styles/teacherMobileTokens';
@@ -487,9 +486,6 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
 
     const roleSummary = (ids: string[]) => ids.length > 0 ? summarizeClassIds(ids, classes) : '暂未选择';
     const gradeLeaderSummary = draft.gradeLeaderGrades.length > 0 ? draft.gradeLeaderGrades.join('、') : '暂未选择';
-    const displayAvatar = draft.avatar === ASSETS.AVATAR.TEACHER_LIU
-        ? ASSETS.AVATAR.TEACHER_LIU_RAW
-        : draft.avatar;
     const renderConfigValue = (value: string, selected: boolean) => (
         <p className={`min-w-0 truncate text-right text-sm ${selected ? 'font-bold text-[var(--tm-text-primary)]' : 'font-normal text-[var(--tm-text-tertiary)]'}`}>{value}</p>
     );
@@ -513,7 +509,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     <button type="button" onClick={() => setMode('avatar')} className="group mx-auto block" aria-label="更换头像">
                         <div className="relative mx-auto h-24 w-24 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
                             <span className="block h-full w-full overflow-hidden rounded-full bg-[var(--tm-bg-surface)]">
-                                <img src={displayAvatar} alt="老师头像" className="h-full w-full object-cover object-center" />
+                                <img src={draft.avatar} alt="老师头像" className="h-full w-full object-cover object-center" />
                             </span>
                             <span className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[var(--tm-brand-primary)] text-white [box-shadow:var(--tm-shadow-icon)] transition-transform group-active:scale-95">
                                 <Camera className="h-4 w-4" />

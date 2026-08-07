@@ -10,7 +10,6 @@ import {
   ChevronRight,
   CircleDot,
   ClipboardCheck,
-  ClipboardList,
   Copy,
   Eye,
   FileText,
@@ -38,7 +37,10 @@ import AutoResizeTextarea from '../../components/ui/AutoResizeTextarea';
 import MobileClassCascadePicker from '../../components/ui/MobileClassCascadePicker';
 import MobileFloatingCreateButton from '../../components/ui/MobileFloatingCreateButton';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
+import MobileDocumentTitleInput from '../../components/ui/MobileDocumentTitleInput';
+import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileToast from '../../components/ui/MobileToast';
+import { ASSETS } from '../../assets/images';
 import AssignedQuestionnaireView from '../../../components/parent-app/AssignedQuestionnaireView';
 import {
   normalizeFormFieldSettings,
@@ -1421,10 +1423,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               );
             })}
             {filteredRecords.length === 0 && (
-              <div className="py-16 text-center">
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]"><ClipboardList className="h-6 w-6" /></span>
-                <div className="mt-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-secondary)]">暂无{statusMeta[listFilter].label}内容</div>
-              </div>
+              <MobileEmptyState
+                imageSrc={ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD}
+                title={`暂无${statusMeta[listFilter].label}内容`}
+                className="py-10"
+              />
             )}
           </section>
         </main>
@@ -1482,10 +1485,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             );
           })}
           {assignedRecords.length === 0 && (
-            <div className="py-16 text-center">
-              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]"><ClipboardCheck className="h-6 w-6" /></span>
-              <div className="mt-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-secondary)]">暂无待填写采集</div>
-            </div>
+            <MobileEmptyState
+              imageSrc={ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD}
+              title="暂无待填写采集"
+              className="py-10"
+            />
           )}
         </section>
       </main>
@@ -1529,10 +1533,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             );
           })}
           {archivedRecords.length === 0 && (
-            <div className="py-16 text-center">
-              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]"><Archive className="h-6 w-6" /></span>
-              <div className="mt-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-secondary)]">暂无已归档采集</div>
-            </div>
+            <MobileEmptyState
+              imageSrc={ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD}
+              title="暂无已归档采集"
+              className="py-10"
+            />
           )}
         </section>
       </main>
@@ -1595,8 +1600,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           {createStep === 1 && (
             <div className="space-y-4">
               <section className="-mx-5 bg-[var(--tm-bg-surface)] px-5 py-4">
-                <input id="survey-title" aria-label="采集标题" value={draftTitle} maxLength={40} onChange={event => setDraftTitle(event.target.value)} placeholder={titlePlaceholder} aria-invalid={Boolean(stepOneValidationAttempt && stepOneTitleError)} aria-describedby={stepOneValidationAttempt && stepOneTitleError ? 'survey-title-error' : undefined} className={`min-h-[var(--tm-size-touch)] w-full border-0 border-b bg-transparent px-0 py-1 text-[length:var(--tm-font-size-document-title)] font-bold leading-9 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:font-medium placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:ring-0 ${stepOneValidationAttempt && stepOneTitleError ? 'border-[var(--tm-status-negative-strong)] focus:border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-border-control)] focus:border-[var(--tm-brand-primary)]'}`} />
-                {stepOneValidationAttempt > 0 && stepOneTitleError && <p id="survey-title-error" className="mt-1.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{stepOneTitleError}</p>}
+                <MobileDocumentTitleInput id="survey-title" ariaLabel="采集标题" value={draftTitle} maxLength={40} onChange={setDraftTitle} placeholder={titlePlaceholder} error={stepOneValidationAttempt > 0 ? stepOneTitleError : undefined} />
                 <div className="mt-[var(--tm-space-4)]">
                   <AutoResizeTextarea id="survey-description" aria-label="采集说明" value={draftDescription} maxLength={500} maxHeight={Number.POSITIVE_INFINITY} onChange={event => setDraftDescription(event.target.value)} placeholder={descriptionPlaceholder} className="min-h-[var(--tm-size-touch)] w-full resize-none border-0 border-b border-[var(--tm-border-control)] bg-transparent px-0 py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:border-[var(--tm-brand-primary)] focus:ring-0" />
                   <div className="mt-1 text-right text-[length:var(--tm-font-size-badge)] font-medium tabular-nums text-[var(--tm-text-tertiary)]" aria-live="polite">{draftDescription.length}/500</div>
@@ -1634,6 +1638,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 typePickerPrimaryLabel="普通题型"
                 typePickerSecondaryTab={{
                   label: '成长数据',
+                  description: '成长数据用于持续记录身高、视力等学生信息，可在多个成长场景复用；字段名称和选项由系统统一定义，不能修改。',
                   render: (close, sectionId) => (
                     <div>
                       <GrowthFieldCategoryPicker

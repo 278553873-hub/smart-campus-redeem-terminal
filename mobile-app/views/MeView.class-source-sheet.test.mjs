@@ -61,7 +61,7 @@ requireText(appSource, "import MeView, { ClassSourceSheet, type TeacherSpaceOpti
 requireText(appSource, 'const INITIAL_TEACHER_PROFILES_BY_SPACE: Record<string, TeacherProfile>', '教师资料应按班级来源分别保存。');
 requireText(appSource, "name: '刘飞'", '学校版教师资料应使用刘飞姓名。');
 requireText(appSource, "name: '大飞'", '个人版教师资料应使用大飞姓名。');
-requireText(appSource, 'avatar: ASSETS.AVATAR.TEACHER_DA_FEI', '个人版教师资料应使用独立头像。');
+requireText(appSource, 'avatar: ASSETS.AVATAR.TEACHER_DEFAULT', '不同班级来源的教师资料应统一继承小鹿默认头像。');
 requireText(appSource, 'const teacherProfile = teacherProfilesBySpace[activeTeacherSpace.id]', '切换来源后应读取对应教师资料。');
 requireText(appSource, '[activeTeacherSpace.id]: nextProfile', '编辑教师资料时只应更新当前来源。');
 requireText(appSource, "'school-qinghe': {", '普通任课老师学校应有独立教师资料。');

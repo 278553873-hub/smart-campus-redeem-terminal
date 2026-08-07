@@ -26,6 +26,8 @@ import {
 import ClassSourceTrigger from '../components/ClassSourceTrigger';
 import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/ClassInviteFlow';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileEmptyState from '../components/ui/MobileEmptyState';
+import { ASSETS } from '../assets/images';
 import {
     canManagePersonalClasses,
     canViewClassLeaderboard,
@@ -378,9 +380,9 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     {copyFeedback.message}
                 </div>
             )}
-            <div className={`relative z-10 h-full space-y-4 overflow-y-auto px-4 pb-40 no-scrollbar ${addDemoTopBreathingSpace ? 'pt-5' : 'pt-3'}`}>
+            <div className={`relative z-10 h-full space-y-4 overflow-y-auto px-4 pb-40 no-scrollbar ${addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'}`}>
                 <section className="space-y-3 px-1">
-                    <div className="flex min-h-11 items-center justify-between gap-2 [padding-right:var(--mini-program-capsule-right-inset,0px)]">
+                    <div className="flex h-[var(--mini-program-title-bar-height,44px)] items-center justify-between gap-2 [padding-right:var(--mini-program-capsule-right-inset,0px)]">
                         {showClassSourceSwitcher ? (
                             <ClassSourceTrigger
                                 name={currentSpace.title}
@@ -448,8 +450,12 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 {visibleClasses.map(renderClassCard)}
 
                 {visibleClasses.length === 0 && (
-                    <section className="rounded-[var(--tm-radius-card)] bg-white p-6 text-center [box-shadow:var(--tm-shadow-card)]">
-                        <p className="text-sm font-semibold text-[var(--tm-text-primary)]">{isSchoolSpace ? '没有符合条件的班级' : '暂无显示班级'}</p>
+                    <section className="px-2 py-6 text-center">
+                        <MobileEmptyState
+                            imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
+                            title={isSchoolSpace ? '没有符合条件的班级' : '暂无显示班级'}
+                            imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
+                        />
                         <button
                             type="button"
                             onClick={() => {

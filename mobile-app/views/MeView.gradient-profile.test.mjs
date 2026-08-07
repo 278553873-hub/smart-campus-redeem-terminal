@@ -8,16 +8,14 @@ const requireText = (haystack, needle, message) => {
   if (!haystack.includes(needle)) throw new Error(message);
 };
 
-requireText(assetsSource, 'teacher-liu-avatar.png', '学校版刘飞头像应使用真实中国女教师头像资源。');
-requireText(assetsSource, 'teacher-da-fei-avatar.png', '个人版大飞应使用独立的真实女教师头像资源。');
+requireText(assetsSource, 'teacher-default-avatar.png', '老师默认头像应使用统一的小鹿 IP 资源。');
 requireText(source, 'teacherProfile.avatar', '头像必须保持独立真实数据区域，不能固化在整卡图片里。');
-requireText(source, 'const displayAvatar = teacherProfile.avatar === ASSETS.AVATAR.TEACHER_LIU', '我的页默认教师头像应使用无外框原图展示，避免头像内容被资源留白压小。');
-requireText(source, 'ASSETS.AVATAR.TEACHER_LIU_RAW', '默认教师头像展示应回退到无外框原图，由页面圆形容器负责边框与裁切。');
+requireText(source, 'src={teacherProfile.avatar}', '我的页应直接展示教师资料头像，以支持老师自行更换。');
 requireText(source, 'object-cover object-center', '教师头像图片应覆盖圆形容器，不能使用 object-contain 留白。');
 requireText(source, "teacherProfile.name || '刘飞'", '姓名应保持独立文本区域，并使用学校版姓名作为缺省值。');
 requireText(appSource, "name: '刘飞'", '学校版教师姓名应为刘飞。');
 requireText(appSource, "name: '大飞'", '个人版教师姓名应为大飞。');
-requireText(appSource, 'avatar: ASSETS.AVATAR.TEACHER_DA_FEI', '个人版应使用独立头像。');
+requireText(appSource, 'avatar: ASSETS.AVATAR.TEACHER_DEFAULT', '所有老师资料应统一继承小鹿默认头像。');
 requireText(source, 'text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]', '我的页面教师姓名字号应保持 22px，并使用品牌中性色 Token。');
 requireText(source, '编辑教师信息', '编辑按钮应保持独立可点击区域。');
 requireText(appSource, 'return <TeacherMobileScreenBackground />', '我的页面屏幕级背景应统一使用公共背景组件。');

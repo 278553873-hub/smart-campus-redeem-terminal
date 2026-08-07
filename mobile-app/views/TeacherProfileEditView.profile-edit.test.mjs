@@ -42,8 +42,7 @@ requireText(editSource, 'renderSchoolDialog', '班级来源非学校时应通过
 requireText(editSource, 'aria-label="修改学校"', '学校字段可编辑时应提供明确的编辑按钮。');
 requireText(editSource, '!schoolNameLocked &&', '班级来源为学校时不应展示学校编辑按钮。');
 requireText(editSource, '更换头像', '编辑页应提供更换头像入口。');
-requireText(editSource, 'const displayAvatar = draft.avatar === ASSETS.AVATAR.TEACHER_LIU', '编辑页默认教师头像应使用无外框原图展示，避免头像内容被资源留白压小。');
-requireText(editSource, 'ASSETS.AVATAR.TEACHER_LIU_RAW', '编辑页默认教师头像展示应回退到无外框原图。');
+requireText(editSource, 'src={draft.avatar}', '编辑页应直接展示当前头像，以支持老师自行更换。');
 requireText(editSource, 'object-cover object-center', '编辑页教师头像图片应覆盖圆形容器，不能使用 object-contain 留白。');
 requireText(editSource, '拍照', '头像动作面板应提供拍照。');
 requireText(editSource, '从相册选择', '头像动作面板应提供从相册选择。');

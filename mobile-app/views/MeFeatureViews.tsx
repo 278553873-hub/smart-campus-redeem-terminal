@@ -9,11 +9,13 @@ import {
     ImagePlus,
     KeyRound,
     Lock,
-    Plus,
     Shield,
     Trash2,
     X,
 } from 'lucide-react';
+import { ASSETS } from '../assets/images';
+import MobileEmptyState from '../components/ui/MobileEmptyState';
+import MobileFloatingCreateButton from '../components/ui/MobileFloatingCreateButton';
 
 export interface SchoolSubjectItem {
     id: string;
@@ -69,10 +71,11 @@ interface SuggestionFeedbackViewProps {
     onSubmit: () => void;
 }
 
-const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode }> = ({ children, footer }) => (
-    <div className="relative flex min-h-full flex-col text-[var(--tm-text-primary)]">
-        <div className={`flex-1 space-y-4 overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : 'pb-8'}`}>{children}</div>
+const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode; floatingAction?: React.ReactNode; contentClassName?: string }> = ({ children, footer, floatingAction, contentClassName = '' }) => (
+    <div className="relative flex h-full min-h-0 flex-col text-[var(--tm-text-primary)]">
+        <div className={`min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : floatingAction ? 'pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]' : 'pb-8'} ${contentClassName}`}>{children}</div>
         {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 py-4 shadow-[0_-10px_28px_-24px_var(--tm-shadow-neutral-color)] backdrop-blur-xl">{footer}</div>}
+        {floatingAction}
     </div>
 );
 
@@ -134,9 +137,12 @@ export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => (
 );
 
 export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ subjects, draggingSubjectId, onAdd, onEdit, onDelete, onDragStart, onDragOver, onDragEnd }) => (
-    <FeaturePageBody>
-        <FeaturePanel>
-            <div>
+    <FeaturePageBody
+        contentClassName={subjects.length === 0 ? 'flex min-h-0 flex-col' : ''}
+        floatingAction={<MobileFloatingCreateButton label="新增科目" emphasis="raised" onClick={onAdd} />}
+    >
+        {subjects.length > 0 ? (
+            <FeaturePanel>
                 {subjects.map(item => (
                     <div
                         key={item.id}
@@ -161,19 +167,25 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ su
                         </button>
                     </div>
                 ))}
-            </div>
-        </FeaturePanel>
-        <button type="button" onClick={onAdd} className={featurePrimaryButtonClass}>
-            <Plus className="h-4 w-4" />
-            新增科目
-        </button>
+            </FeaturePanel>
+        ) : (
+            <MobileEmptyState
+                imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD}
+                title="暂无科目"
+                className="min-h-0 flex-1 pb-14"
+                imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
+            />
+        )}
     </FeaturePageBody>
 );
 
 export const DepartmentManagementView: React.FC<DepartmentManagementViewProps> = ({ departments, onAdd, onEdit, onDelete }) => (
-    <FeaturePageBody>
-        <FeaturePanel>
-            <div>
+    <FeaturePageBody
+        contentClassName={departments.length === 0 ? 'flex min-h-0 flex-col' : ''}
+        floatingAction={<MobileFloatingCreateButton label="新增部门" emphasis="raised" onClick={onAdd} />}
+    >
+        {departments.length > 0 ? (
+            <FeaturePanel>
                 {departments.map(item => (
                     <div key={item.id} className={`${featureListRowClass} pl-4`}>
                         <button type="button" onClick={() => onEdit(item)} className="min-w-0 flex-1 truncate text-left text-[14px] font-semibold text-[var(--tm-text-primary)]">{item.name}</button>
@@ -185,12 +197,15 @@ export const DepartmentManagementView: React.FC<DepartmentManagementViewProps> =
                         </button>
                     </div>
                 ))}
-            </div>
-        </FeaturePanel>
-        <button type="button" onClick={onAdd} className={featurePrimaryButtonClass}>
-            <Plus className="h-4 w-4" />
-            新增部门
-        </button>
+            </FeaturePanel>
+        ) : (
+            <MobileEmptyState
+                imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD}
+                title="暂无部门"
+                className="min-h-0 flex-1 pb-14"
+                imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
+            />
+        )}
     </FeaturePageBody>
 );
 

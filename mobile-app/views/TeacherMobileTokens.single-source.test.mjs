@@ -27,6 +27,7 @@ for (const required of [
   "'--tm-nav-item-default'",
   "'--tm-radius-card'",
   "'--tm-shadow-card'",
+  "'--tm-shadow-card-on-white'",
   "'--tm-size-touch'",
   "'--tm-size-floating-action'",
   "'--tm-border-control'",
@@ -55,9 +56,24 @@ for (const required of [
   "'--tm-report-source-pill-height'",
   "'--tm-report-date-indicator-width'",
   "'--tm-report-filter-padding-pinned'",
+  "'--tm-archive-theme-clean-bg'",
+  "'--tm-archive-theme-sky-bg'",
+  "'--tm-archive-theme-leaf-bg'",
+  "'--tm-archive-theme-sunny-bg'",
+  "'--tm-archive-theme-clean-accent'",
+  "'--tm-archive-theme-sky-accent'",
+  "'--tm-archive-theme-leaf-accent'",
+  "'--tm-archive-theme-sunny-accent'",
+  "'--tm-archive-theme-clean-accent-soft'",
+  "'--tm-archive-theme-sky-accent-soft'",
+  "'--tm-archive-theme-leaf-accent-soft'",
+  "'--tm-archive-theme-sunny-accent-soft'",
 ]) {
   assert.match(canonical, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 }
+
+const archiveAppearance = fs.readFileSync('mobile-app/views/archive-design/archiveAppearance.ts', 'utf8');
+assert.doesNotMatch(archiveAppearance, /#[0-9A-Fa-f]{6}/, '档案外观配置不得绕过教师端设计 Token 写死颜色。');
 
 assert.match(app, /from '\.\/styles\/teacherMobileTokens'/);
 assert.doesNotMatch(app, /\b(?:blue|indigo|violet|purple)-\d+/);
@@ -83,8 +99,9 @@ assert.match(canonical, /page: '#F8F6F5'/);
 assert.match(canonical, /surfaceGlass: 'rgba\(255, 255, 255, 0\.96\)'/);
 assert.match(canonical, /'--tm-shadow-card': '0 12px 28px -20px rgba\([^']+\)'/);
 assert.match(canonical, /'--tm-shadow-card-raised': '0 14px 32px -20px rgba\([^']+\)'/);
+assert.match(canonical, /'--tm-shadow-card-on-white': '0 1px 4px rgba\([^']+\), 0 12px 28px -14px rgba\([^']+\)'/);
 
-const invalidFullShadowConsumer = /shadow-\[var\(--tm-shadow-(?:card|card-raised|control|icon|avatar|floating|navigation|sheet)\)\]/;
+const invalidFullShadowConsumer = /shadow-\[var\(--tm-shadow-(?:card|card-raised|card-on-white|control|icon|avatar|floating|navigation|sheet)\)\]/;
 for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
   const source = fs.readFileSync(sourcePath, 'utf8');
   assert.doesNotMatch(source, invalidFullShadowConsumer, `${sourcePath} 使用了无效的完整阴影 Token 工具类。`);
@@ -117,6 +134,9 @@ assert.ok(contrast('#C88100', '#FFFFFF') >= 3, '五育劳育分类色白底对�
 assert.ok(contrast('#48A04D', '#FFFFFF') >= 3, '五育体育分类色白底对比度不足');
 assert.ok(contrast('#E02727', '#FFFFFF') >= 3, '五育德育分类色白底对比度不足');
 assert.ok(contrast('#F75C03', '#FFFFFF') >= 3, '五育智育分类色白底对比度不足');
+assert.ok(contrast('#2F789C', '#FFFFFF') >= 4.5, '学习蓝主题按钮对比度不足');
+assert.ok(contrast('#4F7A43', '#FFFFFF') >= 4.5, '成长绿主题按钮对比度不足');
+assert.ok(contrast('#A86716', '#FFFFFF') >= 4.5, '温暖黄主题按钮对比度不足');
 
 for (const legacy of [
   '--ai-primary',

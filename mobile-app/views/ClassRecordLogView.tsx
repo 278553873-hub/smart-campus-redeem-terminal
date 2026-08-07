@@ -7,8 +7,6 @@ import {
 import { MOCK_STUDENTS_CLASS_1, MOCK_CLASS_RECORD_LOGS } from '../constants';
 import { ASSETS } from '../assets/images';
 import { Loader2, Sparkles } from 'lucide-react'; // Import directly if needed for icons not in components
-import ClassSourceTrigger from '../components/ClassSourceTrigger';
-import type { TeacherSpaceType } from '../domain/teacherSpaceAccess';
 
 interface ClassRecordLogViewProps {
     classNameStr?: string;
@@ -21,11 +19,7 @@ interface ClassRecordLogViewProps {
     addDemoTopBreathingSpace?: boolean;
     activeTab: 'student' | 'class';
     onTabChange: (tab: 'student' | 'class') => void;
-    classSourceName?: string;
-    classSourceType?: TeacherSpaceType;
-    showClassSourceSwitcher?: boolean;
     canRecordClass?: boolean;
-    onOpenClassSourceSwitcher?: () => void;
 }
 
 // Data Models
@@ -138,9 +132,7 @@ const INITIAL_LOGS: LogItem[] = [
 
 const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     classNameStr, onBack, onStartRecord, isMainView = false, newRecordData, onClearNewRecord, onToggleModal,
-    addDemoTopBreathingSpace = false, activeTab, onTabChange, classSourceName = '',
-    classSourceType = 'personal', showClassSourceSwitcher = false, canRecordClass = false,
-    onOpenClassSourceSwitcher
+    addDemoTopBreathingSpace = false, activeTab, onTabChange, canRecordClass = false
 }) => {
     // State
     const [logs, setLogs] = useState<LogItem[]>(INITIAL_LOGS);
@@ -298,6 +290,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     const modeSoftTone = activeTab === 'class'
         ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]'
         : 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]';
+    const visibleLogs = logs.filter(log => log.scope === activeTab);
 
     // --- Render Log Item Logic ---
     // --- Render Log Item Logic ---
@@ -427,6 +420,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         </div>
                     )}
                 </button>
+                <p className="mt-2 px-0.5 text-right text-[11px] font-medium leading-4 text-[var(--tm-text-disabled)]">内容由AI生成</p>
             </div>
         );
     };
@@ -437,7 +431,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         <div className="relative flex h-full flex-col overflow-hidden bg-transparent">
             {/* Header (Top-most Integration) */}
             <div className={`sticky top-0 z-30 ${addDemoTopBreathingSpace ? 'pt-2' : ''}`}>
-                <div className="px-5 pt-3">
+                <div className="px-5 pt-0">
                     {/* Left: Back (if needed) */}
                     {!isMainView && (
                         <div className="mb-2 w-10 shrink-0">
@@ -447,66 +441,47 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         </div>
                     )}
 
-                    <div className={`flex min-h-11 items-center gap-3 ${canRecordClass ? '' : 'justify-between'}`}>
-                        {showClassSourceSwitcher && classSourceName && (
-                            <ClassSourceTrigger
-                                name={classSourceName}
-                                type={classSourceType}
-                                onClick={onOpenClassSourceSwitcher}
-                                variant="quiet"
-                            />
-                        )}
-                        {!canRecordClass && (
-                            <button
-                                type="button"
-                                className="ml-auto flex min-h-11 shrink-0 items-center gap-0.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-medium text-[var(--tm-text-secondary)] transition-colors duration-200 active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
-                                aria-label="查看学生指标"
-                            >
-                                <span>学生指标</span>
-                                <ChevronRightIcon className="h-3.5 w-3.5 opacity-60" />
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {canRecordClass && (
-                    <div className="grid grid-cols-[224px_minmax(0,1fr)] items-end gap-3 px-5 pb-3 pt-1.5">
-                        <div className="w-full">
-                            <div className="flex h-full rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-glass)] p-1 [box-shadow:var(--tm-shadow-control)]">
+                    <div className="[padding-right:var(--mini-program-capsule-right-inset,0px)]">
+                        {canRecordClass && (
+                            <div className="relative flex h-[var(--mini-program-title-bar-height,44px)] w-[176px] items-center" role="group" aria-label="记录对象">
+                                <div className="pointer-events-none absolute inset-x-0 top-1/2 h-[var(--tm-record-scope-visual-height)] -translate-y-1/2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-control)]" aria-hidden="true" />
                                 <button
                                     onClick={() => onTabChange('student')}
-                                    className={`min-h-11 flex-1 rounded-[var(--tm-radius-control)] px-2 text-[14px] font-semibold transition-[background-color,color] [transition-duration:var(--tm-duration-standard)] ${activeTab === 'student' ? 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
+                                    className="relative z-10 flex h-[var(--tm-size-touch)] flex-1 items-center justify-center px-0.5 text-[14px] font-semibold"
                                     aria-pressed={activeTab === 'student'}
                                 >
-                                    记录学生
+                                    <span className={`flex h-8 w-full items-center justify-center rounded-[var(--tm-radius-control)] transition-[background-color,color] [transition-duration:var(--tm-duration-standard)] ${activeTab === 'student' ? 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}>记录学生</span>
                                 </button>
                                 <button
                                     onClick={() => onTabChange('class')}
-                                    className={`min-h-11 flex-1 rounded-[var(--tm-radius-control)] px-2 text-[14px] font-semibold transition-[background-color,color] [transition-duration:var(--tm-duration-standard)] ${activeTab === 'class' ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
+                                    className="relative z-10 flex h-[var(--tm-size-touch)] flex-1 items-center justify-center px-0.5 text-[14px] font-semibold"
                                     aria-pressed={activeTab === 'class'}
                                 >
-                                    记录班级
+                                    <span className={`flex h-8 w-full items-center justify-center rounded-[var(--tm-radius-control)] transition-[background-color,color] [transition-duration:var(--tm-duration-standard)] ${activeTab === 'class' ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}>记录班级</span>
                                 </button>
                             </div>
+                        )}
+                        <div className="flex h-[var(--mini-program-title-bar-height,44px)] items-center">
+                            <button
+                                type="button"
+                                className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-0.5 rounded-[var(--tm-radius-control)] px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] transition-[background-color,color,transform] duration-200 active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
+                                aria-label={`查看${activeTab === 'student' ? '学生' : '班级'}指标`}
+                            >
+                                <span>指标</span>
+                                <ChevronRightIcon className="h-3.5 w-3.5 opacity-60" />
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            className="flex min-h-11 shrink-0 items-center justify-self-end gap-0.5 rounded-[var(--tm-radius-control)] pl-3 pr-2.5 text-[13px] font-medium text-[var(--tm-text-secondary)] transition-[background-color,color,transform] duration-200 active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
-                            aria-label={`查看${activeTab === 'student' ? '学生' : '班级'}指标`}
-                        >
-                            <span>{activeTab === 'student' ? '学生指标' : '班级指标'}</span>
-                            <ChevronRightIcon className="h-3.5 w-3.5 opacity-60" />
-                        </button>
                     </div>
-                )}
+                </div>
             </div>
 
             {/* List Content */}
-            <div className="relative z-10 flex-1 min-h-0 space-y-3.5 overflow-y-auto px-5 pb-44 pt-0 no-scrollbar">
-                {logs
-                    .filter(log => log.scope === activeTab)
-                    .map(log => renderLogItem(log))}
-                {logs.filter(log => log.scope === activeTab).length === 0 && (
+            <div className="relative z-10 flex-1 min-h-0 overflow-y-auto px-5 pb-44 pt-0 no-scrollbar">
+                {visibleLogs.length > 0 ? (
+                    <div className="space-y-3.5">
+                        {visibleLogs.map(log => renderLogItem(log))}
+                    </div>
+                ) : (
                     <div className="flex flex-col items-center justify-center py-20 opacity-40">
                         <div className="w-16 h-16 bg-white/50 rounded-full flex items-center justify-center mb-4">
                             <Sparkles className="w-8 h-8 text-slate-300" />

@@ -10,6 +10,18 @@ assert.ok(
   '顶部来源行必须消费微信胶囊右侧安全区。',
 );
 assert.ok(
+  classListSource.includes('h-[var(--mini-program-title-bar-height,44px)] items-center justify-between'),
+  '顶部来源行必须使用微信标题栏高度，并让来源切换与添加按钮上下居中。',
+);
+assert.ok(
+  classListSource.includes("addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'"),
+  '真实手机效果下不得在状态栏后额外增加顶部留白。',
+);
+assert.ok(
+  !classListSource.includes("addDemoTopBreathingSpace ? 'pt-5' : 'pt-3'"),
+  '班级页不得继续通过 12 像素补白将标题栏控件整体下移。',
+);
+assert.ok(
   classListSource.includes("grid-cols-[minmax(72px,1fr)_auto_auto]"),
   '已开通排行榜的学校来源应在筛选行展示三个紧凑控件。',
 );
@@ -24,6 +36,7 @@ assert.ok(!toolbarSource.includes('ring-[var(--tm-border-subtle)]'), '年级、�
 assert.ok(toolbarSource.match(/\[box-shadow:var\(--tm-shadow-control\)\]/g)?.length >= 3, '三个筛选工具应统一使用控件阴影 Token。');
 
 assert.ok(phoneMockupSource.includes("'--mini-program-capsule-right-inset'"), '演示手机壳必须注入胶囊安全区变量。');
+assert.ok(phoneMockupSource.includes("'--mini-program-title-bar-height'"), '演示手机壳必须注入微信标题栏高度变量。');
 assert.ok(phoneMockupSource.includes('simulatedCapsuleRightInset'), '胶囊安全区应跟随手机壳显示状态。');
 assert.ok(guidelineSource.includes('wx.getMenuButtonBoundingClientRect()'), '教师手机端规范应记录真机胶囊定位规则。');
 

@@ -60,8 +60,10 @@ for (const required of [
   'onDragStart={() => onDragStart(item.id)}',
   'onDragOver(item.id)',
   '新增科目',
+  'title="暂无科目"',
   'export const DepartmentManagementView',
   '新增部门',
+  'title="暂无部门"',
   'export const CoinIssuanceView',
   'onPointerDown={() => setShowIssuanceHelp(true)}',
   'role="tooltip"',
@@ -78,6 +80,35 @@ for (const required of [
   'border border-dashed border-[var(--tm-brand-primary-soft-strong)] bg-white',
 ]) {
   requireText(featureSource, required, `管理子页面迁移后缺少原有能力或语义色：${required}`);
+}
+
+if ((featureSource.match(/ASSETS\.DEFAULT_STATE\.BOX_CLIPBOARD/g) ?? []).length !== 2) {
+  throw new Error('科目与部门为空时必须统一使用箱子清单缺省图。');
+}
+
+if ((featureSource.match(/imageClassName="w-\[72%\] min-w-\[188px\] max-w-\[236px\]"/g) ?? []).length !== 2) {
+  throw new Error('科目与部门缺省图应复用档案设计页的展示尺寸。');
+}
+
+for (const required of [
+  'floatingAction={<MobileFloatingCreateButton label="新增科目" emphasis="raised" onClick={onAdd} />}',
+  'floatingAction={<MobileFloatingCreateButton label="新增部门" emphasis="raised" onClick={onAdd} />}',
+  'pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))]',
+]) {
+  requireText(source, required, `科目与部门页缺少稳定的底部悬浮新增交互：${required}`);
+}
+
+for (const [startText, endText, label] of [
+  ['export const SubjectManagementView', 'export const DepartmentManagementView', '科目'],
+  ['export const DepartmentManagementView', 'export const CoinIssuanceView', '部门'],
+]) {
+  const viewSource = source.slice(source.indexOf(startText), source.indexOf(endText));
+  const emptyStateIndex = viewSource.indexOf('<MobileEmptyState');
+  const nearestPanelIndex = viewSource.lastIndexOf('<FeaturePanel', emptyStateIndex);
+  const nearestPanelCloseIndex = viewSource.lastIndexOf('</FeaturePanel>', emptyStateIndex);
+  if (nearestPanelIndex > nearestPanelCloseIndex) {
+    throw new Error(`${label}空状态不应包在白色卡片内。`);
+  }
 }
 
 if (featureSource.includes('accent-[var(--tm-brand-primary)]')) {

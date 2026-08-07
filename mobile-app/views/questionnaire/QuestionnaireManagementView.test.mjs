@@ -8,6 +8,7 @@ const storeSource = fs.readFileSync(new URL('../../../shared/questionnaireStore.
 const teacherTokenSource = fs.readFileSync(new URL('../../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const formBuilderSource = fs.readFileSync(new URL('../../components/form-builder/FormBuilder.tsx', import.meta.url), 'utf8');
 const autoResizeTextareaSource = fs.readFileSync(new URL('../../components/ui/AutoResizeTextarea.tsx', import.meta.url), 'utf8');
+const mobileDocumentTitleInputSource = fs.readFileSync(new URL('../../components/ui/MobileDocumentTitleInput.tsx', import.meta.url), 'utf8');
 const mobileBottomSheetSource = fs.readFileSync(new URL('../../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
 const classCascadeSource = fs.readFileSync(new URL('../../components/ui/MobileClassCascadePicker.tsx', import.meta.url), 'utf8');
 const floatingCreateSource = fs.readFileSync(new URL('../../components/ui/MobileFloatingCreateButton.tsx', import.meta.url), 'utf8');
@@ -52,6 +53,12 @@ requireText(appSource, "'questionnaire'", '教师端导航必须注册问卷调�
 requireText(appSource, "case 'questionnaire': return '采集管理'", '教师端导航标题必须统一为采集管理。');
 const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
 requireText(plainBackgroundList, "'questionnaire'", '采集管理应使用屏幕级纯色背景。');
+if ((viewSource.match(/ASSETS\.DEFAULT_STATE\.WORRIED_CLIPBOARD/g) ?? []).length !== 3) {
+  throw new Error('采集管理主列表、待填写和已归档空状态必须统一使用担忧清单缺省图。');
+}
+requireText(viewSource, 'title={`暂无${statusMeta[listFilter].label}内容`}', '采集管理筛选空状态必须保留当前状态文案。');
+requireText(viewSource, 'title="暂无待填写采集"', '待填写采集空状态必须保留明确文案。');
+requireText(viewSource, 'title="暂无已归档采集"', '已归档采集空状态必须保留明确文案。');
 
 for (const required of [
   '编辑采集',
@@ -92,8 +99,8 @@ if (viewSource.includes('添加第一题')) {
   throw new Error('0题状态不应重复展示第二个添加题目按钮。');
 }
 requireText(viewSource, '<FormBuilder', '问卷和学生采集必须接入共享表单构建器。');
-requireText(createSource, '<input id="survey-title"', '新建和草稿编辑页必须直接展示可编辑的标题输入框。');
-requireText(createSource, 'value={draftTitle} maxLength={40}', '问卷标题必须回显草稿内容并限制40字。');
+requireText(createSource, '<MobileDocumentTitleInput id="survey-title"', '新建和草稿编辑页必须复用公共文档标题输入。');
+requireText(createSource, 'value={draftTitle} maxLength={40}', '采集名称必须回显草稿内容并限制40字。');
 requireText(createSource, '<AutoResizeTextarea id="survey-description"', '新建和草稿编辑页必须直接展示可编辑的说明输入框。');
 requireText(viewSource, "setDraftTitle(record?.title ?? '')", '进入草稿编辑时必须回显问卷标题。');
 requireText(viewSource, "setDraftDescription(record?.description ?? '')", '进入草稿编辑时必须回显问卷说明。');
@@ -104,7 +111,8 @@ requireText(createSource, 'maxLength={500} maxHeight={Number.POSITIVE_INFINITY}'
 requireText(createSource, '{draftDescription.length}/500', '问卷说明必须展示字数统计。');
 requireText(autoResizeTextareaSource, 'rows={1}', '自动增高输入框不应默认预留两行高度。');
 requireText(autoResizeTextareaSource, 'Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)', '自动增高输入框必须在触控高度与最大高度之间调整。');
-requireText(viewSource, 'text-[length:var(--tm-font-size-document-title)]', '问卷标题必须使用独立的文档标题层级。');
+requireText(mobileDocumentTitleInputSource, 'text-[length:var(--tm-font-size-document-title)]', '公共文档标题输入必须使用独立的文档标题层级。');
+requireText(mobileDocumentTitleInputSource, 'aria-describedby={error ? errorId : undefined}', '公共文档标题输入必须将错误文案关联到输入框。');
 requireText(teacherTokenSource, "'--tm-font-size-document-title': '26px'", '问卷名称字号必须按评审结果收紧为26像素。');
 requireText(viewSource, "document.getElementById(stepOneTitleError ? 'survey-title'", '标题校验失败时必须定位到标题输入框。');
 forbidText(viewSource, '请输入问卷说明（选填）', '说明文案不应重复问卷语境或展示非必要的选填说明。');
@@ -126,7 +134,7 @@ requireText(formBuilderSource, 'pendingFocusId.current = field.id', '选择题�
 requireText(formBuilderSource, 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]', '题目和选项输入框必须使用教师端控件边框与表面令牌。');
 requireText(formBuilderSource, '>{optionIndex + 1}</span>', '选项编辑器应使用中性序号，不应模拟填写控件。');
 requireText(formBuilderSource, '<GripVertical', '每道题目前必须提供拖动排序标识。');
-requireText(formBuilderSource, 'useSortable({ id: fieldId, disabled: readOnly })', '拖动标识必须接入真实排序能力。');
+requireText(formBuilderSource, 'useSortable({ id: fieldId, disabled: readOnly || !sortable })', '拖动标识必须接入可切换的真实排序能力。');
 requireText(formBuilderSource, 'sortableKeyboardCoordinates', '拖动排序必须支持键盘操作。');
 requireText(formBuilderSource, 'touch-none cursor-grab', '拖动把手必须适配手机触控。');
 requireText(formBuilderSource, "onDragStart={() => setExpandedFieldId('')}", '开始拖动时必须收起展开题目，缩短手机端拖动距离。');
@@ -154,8 +162,10 @@ if (formBuilderSource.includes('addCustomOption(activeField)')) {
 requireText(formBuilderSource, "let label = '其他（请填写）'", '可填写项生成后必须直接表达填写含义。');
 requireText(formBuilderSource, '选中后需填写', '特殊填写项应明确展示其填写状态。');
 requireText(formBuilderSource, '<AutoResizeTextarea', '题目名称输入框必须根据内容自动增高。');
-requireText(formBuilderSource, "expanded && !readOnly ? 'min-h-11 items-center py-2'", '展开态题型行必须收紧，让题干输入框直接承接在下方。');
-requireText(formBuilderSource, "children ? 'row-span-2' : ''", '展开态题号列不得撑高题型行并制造空白区域。');
+requireText(viewSource, '成长数据用于持续记录身高、视力等学生信息', '自定义采集的成长数据页签必须说明其作用和系统约束。');
+forbidText(formBuilderSource, "expanded && !readOnly ? 'min-h-11 items-center py-2'", '展开态不应继续保留题型顶部行。');
+requireText(formBuilderSource, ') : expanded && !readOnly ? null : <button', '题目展开后必须直接从题干输入框开始。');
+requireText(formBuilderSource, "children ? 'row-span-2' : ''", '展开态题号列必须稳定跨越完整编辑内容。');
 requireText(formBuilderSource, 'const toggleFieldEditor =', '点击题目内容区必须统一控制进入和退出编辑态。');
 requireText(formBuilderSource, 'pendingFocusId.current = field.id', '每次进入题目编辑态都必须自动聚焦题干。');
 requireText(formBuilderSource, 'data-form-field-editor={fieldId}', '每个题目必须提供可识别的编辑态边界。');
@@ -525,7 +535,7 @@ requireText(formBuilderSource, 'getLockedFieldSubtitle', '共享表单构建器�
 requireText(formBuilderSource, 'readOnly && (choice || rating || usesSubFields) && renderFieldPreview', '只读档案必须完整展示选择项、评分和多项填空内容。');
 requireText(formBuilderSource, '!readOnly && <IconButton label={`从本次采集中移除', '只读表单必须隐藏字段移除操作。');
 requireText(formBuilderSource, '!readOnly && <button type="button" aria-label={`在${section.label}中添加', '只读表单必须隐藏组内添加操作。');
-requireText(formBuilderSource, '{(showItemLabel || !readOnly) && (', '无标题的只读表单不得保留空操作栏。');
+requireText(formBuilderSource, '{(showItemLabel || (!readOnly && showLayoutControl)) && (', '无标题的只读表单或隐藏分组控制的表单不得保留空操作栏。');
 forbidText(createStepOneSource, 'draftArchiveTemplateSnapshot.fields.flatMap', '按档案采集不应再改写档案字段快照。');
 requireText(createStepOneSource, 'setDraftQuestionOrderIds(value.fields.map(field => field.id))', '自定义采集必须保留题目和成长字段排序。');
 forbidText(createStepOneSource, '自动带入', '创建页不应向老师暴露系统自动带入概念。');

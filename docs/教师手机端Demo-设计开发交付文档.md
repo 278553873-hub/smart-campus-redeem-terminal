@@ -165,7 +165,7 @@
 - 身份卡底部资产行：钱包、存款、明细；
 - 一级页签：成长概览、成长报告、采集记录。
 
-成长概览固定展示本学期实时五育积分、五育雷达图、评价记录数量入口与成长数据入口。评价记录点击后进入独立二级页，通过时间、评价人、指标三个入口筛选。
+成长概览固定展示本学期实时五育积分、五育雷达图、评价记录数量入口与成长数据入口。成长数据仅展示身高、体重和自动计算的 BMI（身体质量指数），不展示健康检查相关卡片与入口。新增成长记录直接打开底部弹窗，默认使用手机本地当天作为记录日期并允许修改；身高、体重任意一项有效即可保存，两项均有效时实时展示 BMI。评价记录点击后进入独立二级页，通过时间、评价人、指标三个入口筛选。
 
 成长报告与采集记录共用学期筛选。采集记录在学期内按月份分组，不再增加月份或自定义时间筛选。学生详情不把兑换记录作为一级页签，校园币详情只保留收入、支出与按月流水。
 
@@ -446,6 +446,7 @@ import { teacherBrandCssVariables } from './styles/teacherMobileTokens';
   --tm-shadow-neutral-color: rgba(64, 60, 58, 0.18);
   --tm-shadow-card: 0 12px 28px -20px rgba(64, 60, 58, 0.12);
   --tm-shadow-card-raised: 0 14px 32px -20px rgba(64, 60, 58, 0.16);
+  --tm-shadow-card-on-white: 0 1px 4px rgba(64, 60, 58, 0.10), 0 12px 28px -14px rgba(64, 60, 58, 0.16);
   --tm-shadow-control: 0 6px 16px -12px rgba(64, 60, 58, 0.18);
   --tm-shadow-icon: 0 10px 22px -16px rgba(224, 39, 39, 0.24);
   --tm-shadow-avatar: 0 18px 28px -18px rgba(224, 39, 39, 0.24);
@@ -566,7 +567,7 @@ import { teacherBrandCssVariables } from './styles/teacherMobileTokens';
 
 | 资源 | 文件或对象 | 用途 |
 | --- | --- | --- |
-| 教师头像 | `teacher-da-fei-avatar.png`、`teacher-liu-avatar.png`、`teacher-liu-avatar-framed.png` | 我的、报告上下文 |
+| 教师默认头像 | `teacher-default-avatar.png` | 我的、资料编辑、报告上下文；老师自行更换后展示自定义头像 |
 | 学生默认头像 | `student-girl-default-avatar.png`、`studentAvatarCatalog.ts` | 学生列表、学生详情、头像选择 |
 | 班主任助理 | `ai-headteacher-assistant-character.png`、`ai-headteacher-assistant-icon.png` | 助理入口与角色页面 |
 | 校长助理 | `ai-principal-assistant-character.png`、`ai-principal-assistant-icon.png` | 助理入口与角色页面 |

@@ -65,7 +65,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
       return (
         <div className="space-y-2">
           {field.options.map((option, optionIndex) => (
-            <div key={`${field.id}-${optionIndex}`} className="flex min-h-12 items-center gap-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[13px] font-medium text-[var(--tm-text-secondary)]">
+            <div key={`${field.id}-${optionIndex}`} className="flex min-h-12 items-center gap-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
               <span className={`h-5 w-5 shrink-0 border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] ${field.type === 'single-select' ? 'rounded-full' : 'rounded-[5px]'}`} aria-hidden="true" />
               <span className="min-w-0 flex-1">{option}</span>
               {field.customAnswerOptions?.includes(option) && (
@@ -130,7 +130,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
           const maxReached = field.type === 'multiple-select' && !selected && selectedOptions.length >= (settings.maxSelections ?? field.options.length);
           return (
             <div key={`${field.id}-${optionIndex}`} className={`overflow-hidden rounded-[var(--tm-radius-control)] border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
-              <button type="button" role={field.type === 'single-select' ? 'radio' : 'checkbox'} aria-checked={selected} disabled={maxReached} onClick={() => toggleOption(option)} className={`flex min-h-12 w-full items-center gap-2.5 px-3 text-left text-[13px] font-medium disabled:opacity-45 ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}>
+              <button type="button" role={field.type === 'single-select' ? 'radio' : 'checkbox'} aria-checked={selected} disabled={maxReached} onClick={() => toggleOption(option)} className={`flex min-h-12 w-full items-center gap-2.5 px-3 text-left text-[length:var(--tm-font-size-compact)] font-medium disabled:opacity-45 ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}>
                 <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${field.type === 'single-select' ? 'rounded-full' : 'rounded-[5px]'} ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-transparent'}`} aria-hidden="true">
                   {field.type === 'single-select' ? <span className="h-2 w-2 rounded-full bg-current" /> : <Check className="h-3.5 w-3.5" />}
                 </span>
@@ -157,7 +157,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
 
   const renderFieldHeading = (field: ArchiveField, number: number) => {
     return (
-      <div className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[14px] font-semibold text-[var(--tm-text-primary)]">
+      <div className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
         <span>{number}. {field.label}{field.required && <span className="ml-1 text-[var(--tm-status-negative-strong)]">*</span>}</span>
       </div>
     );
@@ -218,8 +218,8 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
         return (
           <details key={section.id} className={`${sectionSurface} overflow-hidden`} open>
             <summary className="flex min-h-[60px] cursor-pointer list-none items-center gap-3 px-4">
-              <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-[var(--tm-text-primary)]">{section.label}</span>
-              <span className={`text-[12px] font-bold tabular-nums ${!previewMode && completed === items.length ? 'text-[var(--tm-status-positive-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>
+              <span className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">{section.label}</span>
+              <span className={`text-[length:var(--tm-font-size-meta)] font-bold tabular-nums ${!previewMode && completed === items.length ? 'text-[var(--tm-status-positive-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>
                 {previewMode ? `${items.length}项` : `${completed}/${items.length}`}
               </span>
               <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />

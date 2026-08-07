@@ -33,6 +33,7 @@ ssh_keys/
 
 # Local generated artifacts
 output/
+outputs/
 tmp/
 assets/generated/
 deliverables/

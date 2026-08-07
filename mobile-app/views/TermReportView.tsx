@@ -302,7 +302,7 @@ const PageTeacherAttention = ({ mode = 'a4', id }: { mode?: 'a4' | 'mobile', id?
             role: "体育",
             tag: "最放心你自我管理的老师",
             quote: "他注意到你课间操动作标准、节奏稳定，结束后还会主动提醒同学拉伸，于是点评:'既自律又贴心。'刘老师说，体育课上你虽然不是跑得最快的，但一定是最坚持的那一个。冬季长跑训练时，你从不缺席，还会主动帮助其他同学调整呼吸节奏，这种自律和互助的精神让老师非常欣慰。",
-            icon: ASSETS.AVATAR.TEACHER_LIU
+            icon: ASSETS.AVATAR.TEACHER_DEFAULT
         }
     ];
 

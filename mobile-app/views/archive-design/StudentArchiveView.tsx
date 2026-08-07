@@ -4,6 +4,7 @@ import {
   ChevronRight,
   FilePenLine,
   History,
+  Plus,
   Save,
   Send,
 } from 'lucide-react';
@@ -46,6 +47,8 @@ import {
   Toast,
 } from './archivePagePrimitives';
 import ArchiveFormRenderer from './ArchiveFormRenderer';
+import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
+import { getArchiveHeaderImage, getArchiveTheme, getArchiveThemeStyle } from './archiveAppearance';
 
 interface StudentArchiveViewProps {
   onBack: () => void;
@@ -87,6 +90,8 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   const [activeDraftId, setActiveDraftId] = useState('');
   const [transientDraft, setTransientDraft] = useState<ArchiveDraft | null>(null);
   const [activeSnapshotId, setActiveSnapshotId] = useState('');
+  const [newArchiveTemplateId, setNewArchiveTemplateId] = useState('');
+  const [newArchiveDataDate, setNewArchiveDataDate] = useState('');
   const [answers, setAnswers] = useState<Record<string, ArchiveAnswer>>({});
   const [editingGrowthField, setEditingGrowthField] = useState<GrowthFieldDefinition | null>(null);
   const [growthFieldDraft, setGrowthFieldDraft] = useState<GrowthFieldDraft>({ recordedAt: '', value: '' });
@@ -114,7 +119,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const snapshots = workspace.snapshots
     .filter(item => item.studentId === student.id && item.status === 'archived')
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    .sort((a, b) => b.dataUpdatedAt.localeCompare(a.dataUpdatedAt) || b.createdAt.localeCompare(a.createdAt));
   const enabledTemplates = getEnabledTemplatesForGrade(workspace, student.grade);
   const activeDraft = transientDraft?.id === activeDraftId
     ? transientDraft
@@ -144,6 +149,44 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     if (!template) return;
     const result = createStudentArchiveDraft(workspace, template.id, student, classInfo, teacherProfile.name);
     if (!result.draftId) return;
+    const draft = result.workspace.drafts.find(item => item.id === result.draftId);
+    if (!draft) return;
+    const persistedDraft = workspace.drafts.find(item => item.id === draft.id);
+    if (persistedDraft) {
+      openDraft(persistedDraft);
+      return;
+    }
+    setTransientDraft(draft);
+    setActiveDraftId(draft.id);
+    setAnswers({ ...draft.answers });
+    setPageMode('fill');
+  };
+
+  const openNewArchive = (templateId: string) => {
+    setNewArchiveTemplateId(templateId);
+    setNewArchiveDataDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const createNewArchive = () => {
+    const template = enabledTemplates.find(item => item.id === newArchiveTemplateId);
+    if (!template || !newArchiveDataDate) return;
+    const result = createStudentArchiveDraft(workspace, template.id, student, classInfo, teacherProfile.name, {
+      createNew: true,
+      dataUpdatedAt: newArchiveDataDate,
+    });
+    const draft = result.workspace.drafts.find(item => item.id === result.draftId);
+    if (!draft) return;
+    setNewArchiveTemplateId('');
+    setTransientDraft(draft);
+    setActiveDraftId(draft.id);
+    setAnswers({ ...draft.answers });
+    setPageMode('fill');
+  };
+
+  const editSnapshot = (snapshot: ArchiveSnapshot) => {
+    const template = workspace.templates.find(item => item.id === snapshot.templateId && item.origin === 'school');
+    if (!template) return;
+    const result = createStudentArchiveDraft(workspace, template.id, student, classInfo, teacherProfile.name, { snapshotId: snapshot.id });
     const draft = result.workspace.drafts.find(item => item.id === result.draftId);
     if (!draft) return;
     const persistedDraft = workspace.drafts.find(item => item.id === draft.id);
@@ -265,28 +308,36 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">当前档案</h2>
-            <span className="text-[12px] font-semibold text-[var(--tm-text-tertiary)]">{enabledTemplates.length}份</span>
+            <span className="text-[12px] font-semibold text-[var(--tm-text-tertiary)]">共{snapshots.length}份</span>
           </div>
           <div className="space-y-2.5">
             {enabledTemplates.map(template => {
               const draft = drafts.find(item => item.templateId === template.id);
               const latestSnapshot = snapshots.find(item => item.templateId === template.id);
+              const archiveCount = snapshots.filter(item => item.templateId === template.id).length;
               const hasArchive = Boolean(draft || latestSnapshot);
               const statusMeta = hasArchive
                 ? { label: '已建立', className: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' }
                 : { label: '待采集', className: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' };
               return (
-              <button key={template.id} type="button" onClick={() => openLiveArchive(template.id)} className={`${sectionSurface} flex min-h-[82px] w-full items-center gap-3 px-4 text-left transition active:scale-[0.985]`}>
-                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${hasArchive ? 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]'}`}>
-                  {hasArchive ? <BookOpenCheck className="h-4.5 w-4.5" /> : <FilePenLine className="h-4.5 w-4.5" />}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{template.name}</span>
-                  <span className="mt-1 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{draft ? `更新于 ${draft.updatedAt}` : latestSnapshot ? `采集于 ${latestSnapshot.createdAt}` : `${template.growthFields.length + template.fields.length}项内容`}</span>
-                </span>
-                <StatusPill className={statusMeta.className}>{statusMeta.label}</StatusPill>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" />
-              </button>
+                <div key={template.id} className={`${sectionSurface} flex min-h-[82px] items-center`}>
+                  <button type="button" onClick={() => openLiveArchive(template.id)} className="flex min-h-[82px] min-w-0 flex-1 items-center gap-3 px-4 text-left transition active:scale-[0.985]">
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${hasArchive ? 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]'}`}>
+                      {hasArchive ? <BookOpenCheck className="h-4.5 w-4.5" /> : <FilePenLine className="h-4.5 w-4.5" />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{template.name}</span>
+                      <span className="mt-1 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{draft ? `数据更新于 ${draft.dataUpdatedAt}` : latestSnapshot ? `数据更新于 ${latestSnapshot.dataUpdatedAt}` : `${template.growthFields.length + template.fields.length}项内容`}</span>
+                    </span>
+                    <StatusPill className={statusMeta.className}>{archiveCount > 1 ? `${archiveCount}份` : statusMeta.label}</StatusPill>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" />
+                  </button>
+                  {template.generationMode === 'continuous' && hasArchive && (
+                    <button type="button" onClick={() => openNewArchive(template.id)} className="mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]" aria-label={`新增一份${template.name}`} title="新增一份">
+                      <Plus className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
               );
             })}
             {enabledTemplates.length === 0 && <div className={`${sectionSurface} px-4 py-8 text-center text-[14px] font-medium text-[var(--tm-text-secondary)]`}>当前年级暂无可用档案</div>}
@@ -296,8 +347,8 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
         {snapshots.length > 0 && (
           <section className="mt-6">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">更新记录</h2>
-              <span className="text-[12px] font-semibold text-[var(--tm-text-tertiary)]">{snapshots.length}条</span>
+              <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">档案记录</h2>
+              <span className="text-[12px] font-semibold text-[var(--tm-text-tertiary)]">{snapshots.length}份</span>
             </div>
             <div className="space-y-2.5">
               {snapshots.map(snapshot => (
@@ -305,7 +356,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><History className="h-4.5 w-4.5" /></span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{snapshot.templateName}</span>
-                    <span className="mt-1 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{snapshot.createdAt} · {snapshot.createdBy}</span>
+                    <span className="mt-1 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">数据更新于 {snapshot.dataUpdatedAt}</span>
                   </span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" />
                 </button>
@@ -319,16 +370,28 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
 
   const renderFill = () => {
     if (!activeDraft || !activeTemplate) return renderRoot();
+    const appearanceTheme = getArchiveTheme(activeTemplate.appearance);
+    const headerImage = getArchiveHeaderImage(activeTemplate.appearance);
+    const appearanceStyle = getArchiveThemeStyle(activeTemplate.appearance);
     const growthItemByKey = new Map(currentGrowthSnapshots.flatMap(snapshot => (
       snapshot.items.flatMap(item => item.key ? [[item.key, item] as const] : [])
     )));
     return (
-      <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`}>
+      <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`} style={appearanceStyle}>
         <PageHeader
           title={activeTemplate.name}
           onBack={closeFill}
         />
-        <div className="flex-1 overflow-y-auto px-5 pb-36 pt-4 no-scrollbar">
+        <div className="flex-1 overflow-y-auto px-5 pb-36 pt-4 no-scrollbar" style={{ backgroundColor: appearanceTheme.background }}>
+          {headerImage && (
+            <div className="-mx-5 -mt-4 mb-4 aspect-[16/7] overflow-hidden">
+              <img src={headerImage} alt="" className="block h-full w-full object-cover" />
+            </div>
+          )}
+          <div className={`${sectionSurface} mb-4 flex min-h-12 items-center justify-between gap-4 px-4 py-3`}>
+            <span className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">数据更新日期</span>
+            <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{activeDraft.dataUpdatedAt}</span>
+          </div>
           <button type="button" onClick={() => onUpdateArchive(activeDraft.templateId)} className={`${sectionSurface} mb-4 flex min-h-[56px] w-full items-center gap-3 px-4 text-left transition active:scale-[0.985]`}>
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]"><Send className="h-4.5 w-4.5" /></span>
             <span className="min-w-0 flex-1 text-[14px] font-semibold text-[var(--tm-text-primary)]">发起采集</span>
@@ -380,19 +443,27 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   const renderDetail = () => {
     if (!activeSnapshot) return renderRoot();
     const template = activeSnapshot.templateSnapshot;
+    const appearanceTheme = getArchiveTheme(template.appearance);
+    const headerImage = getArchiveHeaderImage(template.appearance);
+    const appearanceStyle = getArchiveThemeStyle(template.appearance);
     const growthItemByKey = new Map(activeSnapshot.growthSnapshots.flatMap(snapshot => (
       snapshot.items.flatMap(item => item.key ? [[item.key, item] as const] : [])
     )));
     return (
-      <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`}>
-        <PageHeader title="更新记录" onBack={() => setPageMode('root')} />
-        <div className="flex-1 overflow-y-auto px-5 pb-8 pt-4 no-scrollbar">
+      <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`} style={appearanceStyle}>
+        <PageHeader title="档案详情" onBack={() => setPageMode('root')} />
+        <div className="flex-1 overflow-y-auto px-5 pb-28 pt-4 no-scrollbar" style={{ backgroundColor: appearanceTheme.background }}>
+          {headerImage && (
+            <div className="-mx-5 -mt-4 mb-4 aspect-[16/7] overflow-hidden">
+              <img src={headerImage} alt="" className="block h-full w-full object-cover" />
+            </div>
+          )}
           <section className={`${sectionSurface} p-4`}>
             <div className="flex items-start gap-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><History className="h-5 w-5" /></span>
               <div className="min-w-0 flex-1">
                 <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">{activeSnapshot.templateName}</h2>
-                <p className="mt-1.5 text-[12px] font-medium text-[var(--tm-text-secondary)]">{activeSnapshot.createdBy} · {activeSnapshot.createdAt}</p>
+                <p className="mt-1.5 text-[12px] font-medium text-[var(--tm-text-secondary)]">数据更新于 {activeSnapshot.dataUpdatedAt}</p>
               </div>
             </div>
           </section>
@@ -423,6 +494,9 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
             />
           </section>
         </div>
+        <BottomAction>
+          <button type="button" onClick={() => editSnapshot(activeSnapshot)} className={`${primaryButton} w-full`}><FilePenLine className="h-4.5 w-4.5" />编辑档案</button>
+        </BottomAction>
       </div>
     );
   };
@@ -435,6 +509,18 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   return (
     <div className="relative h-full min-h-0 overflow-hidden font-sans text-[var(--tm-text-primary)]">
       {content}
+      <MobileBottomSheet open={Boolean(newArchiveTemplateId)} title="新增一份档案" onClose={() => setNewArchiveTemplateId('')}>
+        <label className="block pb-2">
+          <span className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">数据更新日期</span>
+          <input
+            type="date"
+            value={newArchiveDataDate}
+            onInput={event => setNewArchiveDataDate(event.currentTarget.value)}
+            className={`${inputClass} mt-2 h-12`}
+          />
+        </label>
+        <button type="button" disabled={!newArchiveDataDate} onClick={createNewArchive} className={`${primaryButton} mt-4 w-full`}>开始填写</button>
+      </MobileBottomSheet>
       <BottomSheet open={editingGrowthField !== null} label="填写成长数据" onDismiss={() => setEditingGrowthField(null)}>
         <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">
           填写{editingGrowthField?.label ?? ''}

@@ -5,7 +5,7 @@ import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
     AwardIcon, GrowthIcon
 } from '../components/Icons';
-import { AlertTriangle, BadgeCheck, Camera, ChevronLeft, ChevronRight, FolderOpen, HeartPulse, Ruler, School } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Camera, ChevronLeft, ChevronRight, FolderOpen, Ruler, School } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
@@ -39,7 +39,6 @@ interface DashboardViewProps {
     onOpenStudentArchive: () => void;
     growthProfile: StudentGrowthProfile;
     onViewBodyMeasurements: () => void;
-    onViewHealthRecords: () => void;
     initialTab?: 'overview' | 'report' | 'collection';
 }
 
@@ -279,7 +278,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onOpenStudentArchive,
     growthProfile,
     onViewBodyMeasurements,
-    onViewHealthRecords,
     initialTab = 'overview',
 }) => {
     const [activeTab, setActiveTab] = useState<'overview' | 'report' | 'collection'>(initialTab);
@@ -328,7 +326,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     const latestHeightMeasurement = growthProfile.bodyMeasurements.find(record => record.heightCm !== undefined);
     const latestWeightMeasurement = growthProfile.bodyMeasurements.find(record => record.weightKg !== undefined);
     const latestBmiMeasurement = growthProfile.bodyMeasurements.find(record => record.bmi !== undefined);
-    const latestHealthRecord = growthProfile.healthExamRecords[0];
     const bodyGrowthMetrics = [
         latestHeightMeasurement?.heightCm !== undefined
             ? { key: 'height', label: '身高', value: latestHeightMeasurement.heightCm, unit: '厘米', recordedAt: latestHeightMeasurement.measuredAt }
@@ -337,14 +334,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             ? { key: 'weight', label: '体重', value: latestWeightMeasurement.weightKg, unit: '千克', recordedAt: latestWeightMeasurement.measuredAt }
             : null,
         latestBmiMeasurement?.bmi !== undefined
-            ? { key: 'bmi', label: '身体质量指数', value: latestBmiMeasurement.bmi, unit: '', recordedAt: latestBmiMeasurement.measuredAt }
+            ? { key: 'bmi', label: 'BMI', value: latestBmiMeasurement.bmi, unit: '', recordedAt: latestBmiMeasurement.measuredAt }
             : null,
     ].filter((item): item is { key: string; label: string; value: number; unit: string; recordedAt: string } => item !== null);
-    const latestHealthSummary = latestHealthRecord ? [
-        latestHealthRecord.nakedVisionLeft ? `左${latestHealthRecord.nakedVisionLeft}` : '',
-        latestHealthRecord.nakedVisionRight ? `右${latestHealthRecord.nakedVisionRight}` : '',
-        latestHealthRecord.glassesType || '',
-    ].filter(Boolean).join(' · ') : '';
     const studentStatusLabel = student.status === 'left' ? '离校' : '在校';
     const formatCompactClassName = (className: string) => {
         const match = className.match(/^(\d{4}级)(.+)$/);
@@ -429,17 +421,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 </button>
             )}
 
-            {latestHealthRecord && (
-                <button type="button" onClick={onViewHealthRecords} className="flex min-h-[88px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985]">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]"><HeartPulse className="h-5 w-5" /></span>
-                    <span className="min-w-0 flex-1">
-                        <span className="flex items-center justify-between gap-2"><span className="text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">健康检查</span><span className="shrink-0 text-[10px] font-medium text-[var(--tm-text-tertiary)]">{latestHealthRecord.examDate}</span></span>
-                        <span className="mt-1 block truncate text-xs font-medium text-[var(--tm-text-secondary)]">{latestHealthSummary || latestHealthRecord.conclusion || '健康检查记录'}</span>
-                        {latestHealthRecord.conclusionTags.length ? <span className="mt-1 block truncate text-[11px] font-semibold text-[var(--tm-brand-reward-strong)]">{latestHealthRecord.conclusionTags.join('、')}</span> : null}
-                    </span>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
-                </button>
-            )}
         </div>
     );
 

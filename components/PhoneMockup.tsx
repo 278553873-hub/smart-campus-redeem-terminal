@@ -21,6 +21,10 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
 }) => {
   const screenWidth = 393;
   const screenHeight = 852;
+  const simulatedStatusBarHeightValue = 54;
+  const simulatedCapsuleTop = 60;
+  const simulatedCapsuleHeight = 32;
+  const simulatedTitleBarHeight = (simulatedCapsuleTop - simulatedStatusBarHeightValue) * 2 + simulatedCapsuleHeight;
   const [currentTime, setCurrentTime] = useState("09:41");
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,7 +61,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
       ? 54
       : 106;
   const simulatedChromeTopInset = shouldShowNativeChrome ? nativeChromeTopInset : 0;
-  const simulatedStatusBarHeight = shouldShowNativeChrome ? 54 : 0;
+  const simulatedStatusBarHeight = shouldShowNativeChrome ? simulatedStatusBarHeightValue : 0;
   const simulatedCapsuleRightInset = shouldShowNativeChrome ? 112 : 0;
   const deviceFrameVisibility = showDeviceFrame ? 'opacity-100' : 'opacity-0';
   const nativeChromeVisibility = shouldShowNativeChrome ? 'opacity-100' : 'opacity-0';
@@ -69,6 +73,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
         width: `${screenWidth}px`,
         height: `${screenHeight}px`,
         '--mini-program-status-bar-height': `${simulatedStatusBarHeight}px`,
+        '--mini-program-title-bar-height': `${simulatedTitleBarHeight}px`,
         '--mini-program-capsule-right-inset': `${simulatedCapsuleRightInset}px`,
       } as React.CSSProperties}
     >

@@ -5,18 +5,18 @@ import MobileToast from '../../components/ui/MobileToast';
 // 页面容器保持透明，顶部氛围光由屏幕级背景（TeacherMobileScreenBackground）统一提供。
 export const pageBackground = 'bg-transparent';
 export const sectionSurface = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]';
-export const primaryButton = 'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[15px] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none';
-export const secondaryButton = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 text-[14px] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-45';
+export const primaryButton = 'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none';
+export const secondaryButton = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-45';
 export const iconButton = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)]';
-export const inputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[14px] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
-export const readonlyFieldClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] px-3.5 text-[14px] font-medium';
+export const inputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
+export const readonlyFieldClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium';
 
 export const PageHeader: React.FC<{ title: string; onBack: () => void; action?: React.ReactNode }> = ({ title, onBack, action }) => (
   <header className="sticky top-0 z-40 flex h-11 shrink-0 items-center justify-between bg-[var(--tm-bg-surface-glass)] pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md">
-    <button type="button" onClick={onBack} className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回">
+    <button type="button" onClick={onBack} className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回">
       <ChevronLeft className="h-5 w-5" />
     </button>
-    <h1 className="pointer-events-none absolute inset-x-16 truncate text-center text-[17px] font-bold text-[var(--tm-text-primary)]">{title}</h1>
+    <h1 className="pointer-events-none absolute inset-x-16 truncate text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">{title}</h1>
     <div className="-mr-2 flex h-10 min-w-10 items-center justify-end whitespace-nowrap pl-1">{action}</div>
   </header>
 );
@@ -40,7 +40,7 @@ export const BottomSheet: React.FC<{ open: boolean; label: string; onDismiss: ()
 };
 
 export const StatusPill: React.FC<{ children: React.ReactNode; className: string }> = ({ children, className }) => (
-  <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 text-[11px] font-bold ${className}`}>{children}</span>
+  <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 text-[length:var(--tm-font-size-badge)] font-bold ${className}`}>{children}</span>
 );
 
 export const Toast = MobileToast;

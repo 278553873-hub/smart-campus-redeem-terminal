@@ -15,9 +15,11 @@ import aiPrincipalAssistantCharacterImg from './resources/ai-principal-assistant
 import aiPrincipalAssistantIcon from './resources/ai-principal-assistant-icon.png';
 import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
 import teacherMePageBg from './resources/teacher-me-page-bg.png';
-import teacherDaFeiAvatarImg from './resources/teacher-da-fei-avatar.png';
-import teacherLiuAvatarImg from './resources/teacher-liu-avatar.png';
-import teacherLiuAvatarFramedImg from './resources/teacher-liu-avatar-framed.png';
+import teacherDefaultAvatarImg from './resources/teacher-default-avatar.png';
+import defaultStateWorriedClipboardImg from './resources/default-states/default-state-giraffe-worried-clipboard-3d-color-v1.png';
+import defaultStateChairImg from './resources/default-states/default-state-giraffe-chair-3d-color-v1.png';
+import defaultStateMagnifierImg from './resources/default-states/default-state-giraffe-magnifier-3d-color-v1.png';
+import defaultStateBoxClipboardImg from './resources/default-states/default-state-giraffe-box-clipboard-3d-color-v1.png';
 import awardCertificateDefaultMobileImg from './resources/highlight-defaults/award-certificate-default.png';
 import dailyDefaultGrowthMobileImg from './resources/highlight-defaults/daily-default-growth.png';
 import dailyKindnessCollaborationMobileImg from './resources/highlight-defaults/daily-kindness-collaboration.png';
@@ -122,9 +124,7 @@ export const ASSETS = {
     SYSTEM_GIRLS: studentGirlAvatars,
     TEACHER_WANG: encodeSVG(teacherWangSVG),
     TEACHER_LIN: encodeSVG(teacherLinSVG),
-    TEACHER_DA_FEI: teacherDaFeiAvatarImg,
-    TEACHER_LIU: teacherLiuAvatarFramedImg,
-    TEACHER_LIU_RAW: teacherLiuAvatarImg,
+    TEACHER_DEFAULT: teacherDefaultAvatarImg,
   },
   COVER: {
     BOY: coverBoy,
@@ -148,6 +148,12 @@ export const ASSETS = {
     AI_PRINCIPAL_ASSISTANT: aiPrincipalAssistantIcon,
     TEACHER_ME_HERO_BG: teacherMeHeroBg,
     TEACHER_ME_PAGE_BG: teacherMePageBg,
+  },
+  DEFAULT_STATE: {
+    WORRIED_CLIPBOARD: defaultStateWorriedClipboardImg,
+    CHAIR: defaultStateChairImg,
+    MAGNIFIER: defaultStateMagnifierImg,
+    BOX_CLIPBOARD: defaultStateBoxClipboardImg,
   },
   HIGHLIGHTS: {
     CERTIFICATE: certificateImg,

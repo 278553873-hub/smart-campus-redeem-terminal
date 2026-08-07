@@ -291,9 +291,6 @@ const MeView: React.FC<MeViewProps> = ({
 
     const teacherName = teacherProfile.name || '刘飞';
     const classSourceName = currentSpace.title || '成都市未来实验小学';
-    const displayAvatar = teacherProfile.avatar === ASSETS.AVATAR.TEACHER_LIU
-        ? ASSETS.AVATAR.TEACHER_LIU_RAW
-        : teacherProfile.avatar;
 
     return (
         <div
@@ -311,7 +308,7 @@ const MeView: React.FC<MeViewProps> = ({
                             <div className="h-20 w-20 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
                                 <span className="block h-full w-full overflow-hidden rounded-full bg-white">
                                     <img
-                                        src={displayAvatar}
+                                        src={teacherProfile.avatar}
                                         alt={`${teacherName}头像`}
                                         className="h-full w-full object-cover object-center"
                                     />

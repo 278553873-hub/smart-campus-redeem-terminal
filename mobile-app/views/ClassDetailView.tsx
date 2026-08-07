@@ -3,6 +3,7 @@ import { Student, ClassInfo, GroupPlan } from '../types';
 import { GET_MOCK_GROUP_PLANS_FOR_CLASS } from '../constants';
 import { BackIcon, MaleIcon, FemaleIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, PlusIcon, EditIcon, CloseIcon } from '../components/Icons';
 import { ASSETS } from '../assets/images';
+import MobileEmptyState from '../components/ui/MobileEmptyState';
 import StudentPerformanceAvatar from '../components/student-performance/StudentPerformanceAvatar';
 import StudentPerformanceMeta from '../components/student-performance/StudentPerformanceMeta';
 import {
@@ -59,6 +60,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     const [isGroupSelectionMode, setIsGroupSelectionMode] = useState(false);
     const [groupSelectionIds, setGroupSelectionIds] = useState<Set<string>>(new Set());
     const activeStudents = useMemo(() => students.filter(student => (student.status ?? 'active') === 'active'), [students]);
+    const hasSearchQuery = searchQuery.trim().length > 0;
 
     useEffect(() => {
         const nextPlans = GET_MOCK_GROUP_PLANS_FOR_CLASS(classInfo.id, activeStudents);
@@ -258,8 +260,8 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     );
 
     const renderStudentGrid = () => (
-        <div className="flex-1 overflow-y-auto px-3 pb-40 pt-3">
-            <div className="student-roster-grid grid gap-x-2.5 gap-y-3">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-40 pt-3">
+            <div className="student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3">
                 {visibleStudents.map((student, index) => {
                     const isSelected = selectedIds.has(student.id);
                     const [bgClass, textClass, borderClass] = getAvatarStyle(student, index);
@@ -309,10 +311,15 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             </div>
 
             {visibleStudents.length === 0 && (
-                <div className="mt-16 rounded-3xl border border-dashed border-[var(--tm-border-subtle)] bg-white/80 p-8 text-center text-sm font-medium text-[var(--tm-text-tertiary)]">没有匹配的学生</div>
+                <MobileEmptyState
+                    imageSrc={hasSearchQuery ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR}
+                    title={hasSearchQuery ? '没有匹配的学生' : '暂无学生'}
+                    className="flex-1 pb-14"
+                    imageClassName="w-[68%] min-w-[178px] max-w-[224px]"
+                />
             )}
 
-            <div className="h-10" aria-hidden="true" />
+            <div className="h-10 shrink-0" aria-hidden="true" />
         </div>
     );
 
@@ -379,6 +386,13 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         );
                     })}
                 </div>
+                {(activeGroupPlan?.groups.length ?? 0) === 0 && (
+                    <MobileEmptyState
+                        imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
+                        title="暂无分组"
+                        className="min-h-[360px] py-8"
+                    />
+                )}
             </div>
         </div>
     );

@@ -44,10 +44,10 @@ interface SimStudent { name: string; score: number; tier: TierLevel; reward: num
 interface TeacherProfile { name: string; role: string; school: string; avatar?: string; }
 
 const DEMO_TEACHER_PROFILES: TeacherProfile[] = [
-  { name: '郭老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_LIU },
-  { name: '周老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_LIU },
-  { name: '王老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_LIU },
-  { name: '曹老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_LIU },
+  { name: '郭老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_DEFAULT },
+  { name: '周老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_DEFAULT },
+  { name: '王老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_DEFAULT },
+  { name: '曹老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_DEFAULT },
 ];
 
 const resolveTeacherProfile = (loginId: string): TeacherProfile => {

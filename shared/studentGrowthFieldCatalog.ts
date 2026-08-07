@@ -56,7 +56,7 @@ const field = (
 });
 
 export const PLATFORM_GROWTH_FIELD_CATALOG: GrowthFieldDefinition[] = [
-  field({ key: 'height_cm', label: '身高', groupKey: 'body_growth', valueType: 'number', unit: '厘米', minValue: 50, maxValue: 250, decimalPlaces: 1 }),
+  field({ key: 'height_cm', label: '身高', groupKey: 'body_growth', valueType: 'number', unit: '厘米', minValue: 50, maxValue: 250, decimalPlaces: 2 }),
   field({ key: 'weight_kg', label: '体重', groupKey: 'body_growth', valueType: 'number', unit: '千克', minValue: 10, maxValue: 250, decimalPlaces: 1 }),
   field({ key: 'naked_vision_left', label: '左眼裸眼视力', groupKey: 'vision_health', valueType: 'number', minValue: 3, maxValue: 5.3, decimalPlaces: 1 }),
   field({ key: 'naked_vision_right', label: '右眼裸眼视力', groupKey: 'vision_health', valueType: 'number', minValue: 3, maxValue: 5.3, decimalPlaces: 1 }),
