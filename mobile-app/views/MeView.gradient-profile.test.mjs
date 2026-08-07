@@ -89,8 +89,8 @@ if ((source.match(/imageClassName: reportToolImageClass/g) ?? []).length !== 2) 
   throw new Error('学校报表和期末报告应同时使用放大图标样式。');
 }
 
-if ((source.match(/imageClassName: assistantToolImageClass/g) ?? []).length !== 2) {
-  throw new Error('班主任助理和校长助理应同时使用无边框图标样式。');
+if ((source.match(/imageClassName: assistantToolImageClass/g) ?? []).length !== 3) {
+  throw new Error('两个班主任助理入口和校长助理应同时使用无边框图标样式。');
 }
 
 if (source.includes('top-11 h-px bg-gradient-to-r')) {

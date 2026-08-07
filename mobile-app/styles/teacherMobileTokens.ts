@@ -60,6 +60,18 @@ export const teacherBrandPalette = {
   },
 } as const;
 
+export const teacherPlatformPalette = {
+  wechat: {
+    500: '#07C160',
+    600: '#06AD56',
+  },
+} as const;
+
+export const teacherPlatformSemantic = {
+  wechat: teacherPlatformPalette.wechat[500],
+  wechatPressed: teacherPlatformPalette.wechat[600],
+} as const;
+
 export const teacherBrandSemantic = {
   primary: teacherBrandPalette.red[500],
   primaryStrong: teacherBrandPalette.red[700],
@@ -292,6 +304,8 @@ export const teacherBrandCssVariables = {
   '--tm-brand-reward': teacherBrandSemantic.reward,
   '--tm-brand-reward-strong': teacherBrandSemantic.rewardStrong,
   '--tm-brand-reward-soft': teacherBrandSemantic.rewardSoft,
+  '--tm-platform-wechat': teacherPlatformSemantic.wechat,
+  '--tm-platform-wechat-pressed': teacherPlatformSemantic.wechatPressed,
   '--tm-status-positive': teacherBrandSemantic.positive,
   '--tm-status-positive-strong': teacherBrandSemantic.positiveStrong,
   '--tm-status-positive-soft': teacherBrandSemantic.positiveSoft,

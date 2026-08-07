@@ -14,12 +14,14 @@ export interface TeacherSpaceOption {
     type: TeacherSpaceType;
     role: TeacherSpaceRole;
     classRecordEnabled?: boolean;
+    enabledManagementTools?: TeacherManagementToolId[];
 }
 
 export type TeacherManagementToolId =
     | 'schoolReport'
     | 'termReport'
     | 'headteacherAssistant'
+    | 'headteacherAssistantV2'
     | 'principalAssistant';
 
 export type TeacherMoreToolId =
@@ -100,7 +102,9 @@ const SPACE_MENU_POLICIES: Record<TeacherSpaceRole, TeacherSpaceMenuPolicy> = {
 export const getTeacherSpaceMenuPolicy = (space: TeacherSpaceOption): TeacherSpaceMenuPolicy => {
     const policy = SPACE_MENU_POLICIES[space.role];
     return {
-        managementTools: [...policy.managementTools],
+        managementTools: space.enabledManagementTools
+            ? [...space.enabledManagementTools]
+            : [...policy.managementTools],
         moreTools: [...policy.moreTools],
     };
 };

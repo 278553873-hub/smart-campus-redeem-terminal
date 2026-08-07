@@ -41,6 +41,7 @@ interface MeViewProps {
     onOpenAssignedCollections: () => void;
     onOpenArchiveDesign: () => void;
     onOpenAiHeadteacherAssistant: () => void;
+    onOpenAiHeadteacherAssistantV2: () => void;
     onOpenAiPrincipalAssistant: () => void;
     onToggleSpaceSheet: () => void;
 }
@@ -124,7 +125,7 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                     ) : (
                         null
                     )}
-                    <span className="max-w-[72px] whitespace-nowrap text-[12px] font-semibold leading-[18px] text-[var(--tm-text-primary)]">{item.title}</span>
+                    <span className="flex min-h-9 max-w-[92px] items-start justify-center text-balance text-[12px] font-semibold leading-[18px] text-[var(--tm-text-primary)]">{item.title}</span>
                 </button>
             );
         })}
@@ -198,6 +199,7 @@ const MeView: React.FC<MeViewProps> = ({
     onOpenAssignedCollections,
     onOpenArchiveDesign,
     onOpenAiHeadteacherAssistant,
+    onOpenAiHeadteacherAssistantV2,
     onOpenAiPrincipalAssistant,
     onToggleSpaceSheet,
 }) => {
@@ -234,6 +236,17 @@ const MeView: React.FC<MeViewProps> = ({
             imageBadgeAlt: 'AI标签',
             plainImage: true,
             onClick: onOpenAiHeadteacherAssistant,
+        },
+        {
+            id: 'headteacherAssistantV2',
+            title: '班主任助理 V2',
+            imageSrc: ASSETS.MANAGEMENT.AI_HEADTEACHER_ASSISTANT,
+            imageAlt: '班主任助理 V2图标',
+            imageClassName: assistantToolImageClass,
+            imageBadgeSrc: ASSETS.MANAGEMENT.AI_ART_BADGE,
+            imageBadgeAlt: 'AI标签',
+            plainImage: true,
+            onClick: onOpenAiHeadteacherAssistantV2,
         },
         {
             id: 'principalAssistant',
@@ -359,7 +372,7 @@ const MeView: React.FC<MeViewProps> = ({
                 )}
                 {primaryTools.length > 0 && (
                     <ToolSection title="管理工具">
-                        <ToolGrid items={primaryTools} columns={4} />
+                        <ToolGrid items={primaryTools} columns={primaryTools.length === 4 ? 4 : 3} />
                     </ToolSection>
                 )}
 

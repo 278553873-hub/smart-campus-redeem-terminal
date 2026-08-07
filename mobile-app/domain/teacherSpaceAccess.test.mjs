@@ -36,6 +36,27 @@ assert.deepEqual(policyFor('school', 'teacher'), {
   moreTools: ['suggestionFeedback', 'questionnaire'],
 });
 
+const schoolWithTools = (enabledManagementTools) => getTeacherSpaceMenuPolicy({
+  id: 'school-configured',
+  title: '配置学校',
+  type: 'school',
+  role: 'homeroomTeacher',
+  enabledManagementTools,
+});
+
+assert.deepEqual(schoolWithTools(['headteacherAssistant']), {
+  managementTools: ['headteacherAssistant'],
+  moreTools: ['suggestionFeedback', 'questionnaire'],
+});
+assert.deepEqual(schoolWithTools(['headteacherAssistantV2']), {
+  managementTools: ['headteacherAssistantV2'],
+  moreTools: ['suggestionFeedback', 'questionnaire'],
+});
+assert.deepEqual(schoolWithTools(['headteacherAssistant', 'headteacherAssistantV2']), {
+  managementTools: ['headteacherAssistant', 'headteacherAssistantV2'],
+  moreTools: ['suggestionFeedback', 'questionnaire'],
+});
+
 const classPolicyFor = ({ type, role, membership = 'school', classId = 'class-1', teaching = [], homeroom = [], deputyHomeroom = [] }) => (
   getTeacherClassActionPolicy({
     space: { id: `${type}-${role}`, title: '测试来源', type, role },

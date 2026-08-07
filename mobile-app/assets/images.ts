@@ -15,6 +15,7 @@ import aiPrincipalAssistantCharacterImg from './resources/ai-principal-assistant
 import aiPrincipalAssistantIcon from './resources/ai-principal-assistant-icon.png';
 import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
 import teacherMePageBg from './resources/teacher-me-page-bg.png';
+import teacherLoginIconImg from './resources/teacher-login-icon.jpg';
 import teacherDefaultAvatarImg from './resources/teacher-default-avatar.png';
 import defaultStateWorriedClipboardImg from './resources/default-states/default-state-giraffe-worried-clipboard-3d-color-v1.png';
 import defaultStateChairImg from './resources/default-states/default-state-giraffe-chair-3d-color-v1.png';
@@ -148,6 +149,7 @@ export const ASSETS = {
     AI_PRINCIPAL_ASSISTANT: aiPrincipalAssistantIcon,
     TEACHER_ME_HERO_BG: teacherMeHeroBg,
     TEACHER_ME_PAGE_BG: teacherMePageBg,
+    TEACHER_LOGIN_ICON: teacherLoginIconImg,
   },
   DEFAULT_STATE: {
     WORRIED_CLIPBOARD: defaultStateWorriedClipboardImg,
