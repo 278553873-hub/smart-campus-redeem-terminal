@@ -181,7 +181,7 @@ const TeacherReportChart: React.FC<TeacherReportChartProps> = ({
         const handleItemSelect = (params: {
             componentType?: string;
             name?: string;
-            value?: string | number;
+            value?: unknown;
         }) => {
             if (params.componentType === 'series' && params.name) {
                 onItemSelect(params.name);
@@ -217,6 +217,109 @@ export interface TeacherReportBarSeries {
     // 弱化系列（如上周期）：同色系按 --tm-chart-series-muted-opacity 降低透明度。
     muted?: boolean;
 }
+
+export interface TeacherReportHorizontalBarDatum {
+    name: string;
+    value: number;
+    valueLabel: string;
+    color: TeacherReportChartColor;
+}
+
+interface TeacherReportHorizontalBarChartProps {
+    ariaLabel: string;
+    data: TeacherReportHorizontalBarDatum[];
+    optionKey: string;
+    maxValue: number;
+    className?: string;
+    onCategorySelect?: (name: string) => void;
+}
+
+export const TeacherReportHorizontalBarChart: React.FC<TeacherReportHorizontalBarChartProps> = ({
+    ariaLabel,
+    data,
+    optionKey,
+    maxValue,
+    className = 'h-60',
+    onCategorySelect,
+}) => {
+    const createOption = React.useCallback((theme: TeacherReportChartTheme): EChartsCoreOption => ({
+        animationDuration: 500,
+        animationDurationUpdate: 250,
+        tooltip: {
+            trigger: 'item',
+            backgroundColor: theme.tooltip,
+            borderWidth: 0,
+            textStyle: { color: theme.surface, fontSize: 12 },
+            formatter: ({ name, data: item }: { name?: string; data?: { valueLabel?: string } }) => (
+                `${name ?? ''}<br/>${item?.valueLabel ?? ''}`
+            ),
+        },
+        grid: { left: 76, right: 72, top: 8, bottom: 18 },
+        xAxis: {
+            type: 'value',
+            min: 0,
+            max: maxValue,
+            splitNumber: 2,
+            axisLabel: { color: theme.textSecondary, fontSize: 9 },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            splitLine: { lineStyle: { color: theme.gridLine, type: 'dashed' } },
+        },
+        yAxis: {
+            type: 'category',
+            inverse: true,
+            data: data.map(item => item.name),
+            axisTick: { show: false },
+            axisLine: { show: false },
+            axisLabel: {
+                color: theme.textPrimary,
+                fontSize: 11,
+                fontWeight: 600,
+                width: 68,
+                overflow: 'truncate',
+            },
+        },
+        series: [{
+            name: '评比得分',
+            type: 'bar',
+            cursor: onCategorySelect ? 'pointer' : 'default',
+            barWidth: 15,
+            barMinHeight: 2,
+            data: data.map(item => ({
+                name: item.name,
+                value: item.value,
+                valueLabel: item.valueLabel,
+                itemStyle: {
+                    color: theme.colors[item.color],
+                    borderRadius: [0, 5, 5, 0],
+                },
+                label: { color: theme.textPrimary },
+            })),
+            label: {
+                show: true,
+                position: 'right',
+                distance: 7,
+                formatter: ({ data: item }: { data?: { valueLabel?: string } }) => item?.valueLabel ?? '',
+                color: theme.textPrimary,
+                fontSize: 10,
+                fontWeight: 600,
+            },
+            emphasis: onCategorySelect ? {
+                itemStyle: { opacity: 0.72 },
+            } : undefined,
+        }],
+    }), [data, maxValue, onCategorySelect]);
+
+    return (
+        <TeacherReportChart
+            ariaLabel={ariaLabel}
+            className={className}
+            optionKey={optionKey}
+            createOption={createOption}
+            onItemSelect={onCategorySelect}
+        />
+    );
+};
 
 interface TeacherReportBarChartProps {
     ariaLabel: string;

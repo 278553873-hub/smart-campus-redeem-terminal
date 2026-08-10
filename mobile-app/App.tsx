@@ -1055,7 +1055,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView);
     const hasStudentDetailBackground = currentView === 'student_detail';
-    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'class_archive_batch', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design'].includes(currentView) || hasPrincipalReportBackground || hasHeadteacherReportBackground;
+    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'class_archive_batch', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'ai_headteacher_assistant_v2'].includes(currentView) || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const getBottomNavTone = (index: number) => activeIndex === index
         ? 'text-[var(--tm-brand-primary)]'
         : 'text-[var(--tm-nav-item-default)]';
@@ -1075,6 +1075,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
         if (hasHeadteacherReportBackground) {
             return <div className="ai-assistant-theme-headteacher headteacher-report-screen-background absolute inset-0 overflow-hidden" aria-hidden="true" />;
+        }
+
+        if (currentView === 'ai_headteacher_assistant_v2') {
+            return <div className="ai-assistant-theme-headteacher headteacher-agent-gradient-page absolute inset-0 overflow-hidden" aria-hidden="true" />;
         }
 
         if (hasPlainBackground) {

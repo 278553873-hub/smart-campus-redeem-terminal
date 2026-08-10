@@ -50,6 +50,51 @@ final result: passed
 
 ---
 
+# 班主任助理 V2 输入栏与评比图表设计验收
+
+- source visual truth path: `/var/folders/6j/jzy6dm_s61sfd605jnldswbh0000gn/T/codex-clipboard-f25b5b3a-36e7-4f69-87d8-6fec3dc6ccea.png`
+- implementation screenshot path: 未生成，内置浏览器阻止刷新 `http://localhost:4176/`
+- viewport: `393 × 852` 手机屏幕
+- state: 班主任助理 V2 首页默认语音输入态；本周数据展开后的五项评比图表态
+
+## Full-view comparison evidence
+
+参考图已打开并确认：输入栏为单行白色胶囊，左侧独立键盘圆键，中间文字居中，右侧添加按钮按用户要求删除。最新版实现无法通过内置浏览器刷新并截图，因此没有可用于全屏视觉比较的实现证据。
+
+## Focused region comparison evidence
+
+未完成。缺少最新版输入栏和展开图表的浏览器截图，不能从源码或构建结果替代视觉比较。
+
+## Findings
+
+- P1：视觉验收阻塞。
+  - Location: 班主任助理 V2 底部输入栏、五项评比展开区。
+  - Evidence: 参考图可用，但本地实现截图不可用。
+  - Impact: 无法确认胶囊比例、文字视觉居中、图表标签密度以及展开后的屏幕节奏是否达到目标。
+  - Fix: 在本地页面手动刷新后提供默认输入栏与五项数据展开态截图，再按相同状态完成对比和校准。
+
+## Required fidelity surfaces
+
+- Fonts and typography: 待浏览器截图确认。
+- Spacing and layout rhythm: 待浏览器截图确认。
+- Colors and visual tokens: 实现使用教师手机端 Token，视觉结果待确认。
+- Image quality and asset fidelity: 参考组件只包含图标与界面元素，键盘图标复用现有图标库；视觉结果待确认。
+- Copy and content: 默认文案为“按住说话”，已删除添加按钮；图表展示大项得分和排名。
+
+## Primary interactions tested
+
+- 源码断言覆盖语音/文字切换、无添加按钮、横向条形图与逐项扣分下钻。
+- 生产构建通过。
+- 浏览器交互测试未执行，原因同上。
+
+## Comparison history
+
+1. 首轮：参考图已确认；实现截图获取被浏览器策略阻止，未进入视觉差异修复循环。
+
+final result: blocked
+
+---
+
 # 学校数据报表设计验收
 
 - Source visual truth:
@@ -96,3 +141,12 @@ final result: passed
 No remaining P0, P1, or P2 visual mismatch was found.
 
 final result: passed
+
+---
+
+# 当前 Product Design 验收状态
+
+- active review: 班主任助理 V2 输入栏与评比图表
+- blocker: 缺少内置浏览器渲染截图，详细证据与待办见上方同名验收章节
+
+final result: blocked

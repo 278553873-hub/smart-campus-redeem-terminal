@@ -3,6 +3,7 @@ import { ChevronLeft } from 'lucide-react';
 
 interface AssistantSubpageHeaderProps {
   title?: string;
+  centerContent?: React.ReactNode;
   onBack: () => void;
   backLabel?: string;
   surface?: 'glass' | 'transparent';
@@ -10,6 +11,7 @@ interface AssistantSubpageHeaderProps {
 
 const AssistantSubpageHeader: React.FC<AssistantSubpageHeaderProps> = ({
   title,
+  centerContent,
   onBack,
   backLabel = '返回',
   surface = 'glass',
@@ -24,11 +26,15 @@ const AssistantSubpageHeader: React.FC<AssistantSubpageHeaderProps> = ({
       <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
     </button>
 
-    {title && (
+    {centerContent ? (
+      <div className="absolute left-16 [right:max(calc(var(--tm-size-touch)+var(--tm-space-5)),var(--mini-program-capsule-right-inset,0px))] flex min-w-0 justify-center">
+        {centerContent}
+      </div>
+    ) : title ? (
       <h1 className="pointer-events-none absolute left-16 [right:max(calc(var(--tm-size-touch)+var(--tm-space-5)),var(--mini-program-capsule-right-inset,0px))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">
         {title}
       </h1>
-    )}
+    ) : null}
   </header>
 );
 

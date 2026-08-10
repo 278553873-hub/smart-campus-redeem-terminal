@@ -24,11 +24,14 @@ assert.equal(snapshot.classDeduction, 3.4);
 assert.equal(snapshot.teacherDeduction, 1.1);
 assert.equal(snapshot.recordCount, 8);
 assert.ok(
-  getClassEvaluationRecords('c_2025_4').every(record => record.date <= '2026-07-18'),
+  getClassEvaluationRecords('c_2025_4').every(record => record.date <= '2026-08-07'),
   '进行中周的模拟明细不得晚于面板所示的数据截止时间',
 );
 
 assert.equal(CLASS_EVALUATION_WEEKS.length, 3, '周评面板应提供当前周和两个历史周。');
+assert.equal(CLASS_EVALUATION_WEEKS[0].label, '8月3日-8月9日');
+assert.equal(CLASS_EVALUATION_WEEKS[0].dataRangeLabel, '8月3日-8月7日');
+assert.equal(CLASS_EVALUATION_WEEKS[0].overallRank, 2);
 for (const week of CLASS_EVALUATION_WEEKS) {
   assert.equal(week.dimensionRankings.length, 5, `${week.label} 应包含五个一级指标。`);
   const dimensionTotal = week.dimensionRankings.reduce((sum, item) => sum + item.score, 0);
