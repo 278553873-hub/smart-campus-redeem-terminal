@@ -164,7 +164,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
       persistGrowthCollectionAnswers(questionnaire, child.studentNo, answers, submittedAt);
     }
     if (questionnaire.archiveTemplateId) {
-      persistArchiveCollectionAnswers(questionnaire, child.studentNo, answers, guardianRelation);
+      persistArchiveCollectionAnswers(questionnaire, child.studentNo, answers, submittedAt, guardianRelation);
     }
     setShowSubmitConfirm(false);
     onSubmitted();

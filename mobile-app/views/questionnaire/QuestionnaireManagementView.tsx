@@ -151,6 +151,7 @@ interface QuestionnaireManagementViewProps {
   getStudentsForClass: (classId: string) => Student[];
   initialMode?: 'owned' | 'assigned';
   initialArchiveTemplateId?: string;
+  initialRecordId?: string;
 }
 
 type ListFilter = 'active' | 'ended';
@@ -558,12 +559,13 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   getStudentsForClass,
   initialMode = 'owned',
   initialArchiveTemplateId,
+  initialRecordId,
 }) => {
   const [records, setRecords] = useState<QuestionnaireRecord[]>(() => readQuestionnaires());
-  const [pageMode, setPageMode] = useState<PageMode>(initialMode === 'assigned' ? 'assigned-list' : 'list');
+  const [pageMode, setPageMode] = useState<PageMode>(initialRecordId ? 'detail' : initialMode === 'assigned' ? 'assigned-list' : 'list');
   const [recordOrigin, setRecordOrigin] = useState<'list' | 'assigned-list'>('list');
   const [listFilter, setListFilter] = useState<ListFilter>('active');
-  const [activeRecordId, setActiveRecordId] = useState('');
+  const [activeRecordId, setActiveRecordId] = useState(initialRecordId ?? '');
   const [detailTab, setDetailTab] = useState<DetailTab>('data');
   const [activeSubmission, setActiveSubmission] = useState<QuestionnaireSubmission | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState('');
@@ -1466,7 +1468,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       ? persistGrowthCollectionAnswers(activeRecord, studentRecord.studentNo, studentRecordAnswers, completedAt)
       : false;
     const archiveUpdated = status === 'completed' && Boolean(activeRecord.archiveTemplateId)
-      ? persistArchiveCollectionAnswers(activeRecord, studentRecord.studentNo, studentRecordAnswers, teacherName)
+      ? persistArchiveCollectionAnswers(activeRecord, studentRecord.studentNo, studentRecordAnswers, completedAt, teacherName)
       : false;
     setRecords(readQuestionnaires());
     setPageMode('detail');
@@ -1478,7 +1480,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const renderList = () => {
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
-        <PageHeader title="采集管理" onBack={onBack} />
+        <PageHeader title="问卷采集" onBack={onBack} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))] pt-4 no-scrollbar">
           <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="采集状态">
             {([['active', '收集中'], ['ended', '已结束']] as const).map(([value, label]) => (

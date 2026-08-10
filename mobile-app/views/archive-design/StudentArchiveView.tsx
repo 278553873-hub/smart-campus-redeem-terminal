@@ -4,11 +4,12 @@ import {
   ChevronRight,
   FilePenLine,
   History,
-  Plus,
   Save,
   Send,
 } from 'lucide-react';
 import type { ClassInfo, Student, TeacherProfile } from '../../types';
+import { getPendingArchiveCollectionsForStudent } from '../../../shared/archiveCollectionPersistence';
+import { readQuestionnaires } from '../../../shared/questionnaireStore';
 import {
   appendArchiveViewAudit,
   ARCHIVE_GROWTH_FIELD_GROUPS,
@@ -43,11 +44,13 @@ import {
   primaryButton,
   readonlyFieldClass,
   sectionSurface,
-  StatusPill,
   Toast,
 } from './archivePagePrimitives';
 import ArchiveFormRenderer from './ArchiveFormRenderer';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
+import MobileEmptyState from '../../components/ui/MobileEmptyState';
+import MobileFloatingCreateButton from '../../components/ui/MobileFloatingCreateButton';
+import { ASSETS } from '../../assets/images';
 import { getArchiveHeaderImage, getArchiveTheme, getArchiveThemeStyle } from './archiveAppearance';
 
 interface StudentArchiveViewProps {
@@ -59,6 +62,7 @@ interface StudentArchiveViewProps {
   classes: ClassInfo[];
   getStudentsForClass: (classId: string) => Student[];
   onUpdateArchive: (templateId: string) => void;
+  onOpenPendingCollection: (recordId: string) => void;
 }
 
 type PageMode = 'root' | 'fill' | 'detail';
@@ -77,6 +81,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   classes,
   getStudentsForClass,
   onUpdateArchive,
+  onOpenPendingCollection,
 }) => {
   const readWorkspace = () => readArchiveWorkspace({
     spaceId,
@@ -90,8 +95,9 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   const [activeDraftId, setActiveDraftId] = useState('');
   const [transientDraft, setTransientDraft] = useState<ArchiveDraft | null>(null);
   const [activeSnapshotId, setActiveSnapshotId] = useState('');
-  const [newArchiveTemplateId, setNewArchiveTemplateId] = useState('');
-  const [newArchiveDataDate, setNewArchiveDataDate] = useState('');
+  const [showArchivePicker, setShowArchivePicker] = useState(false);
+  const [repeatArchiveTemplateId, setRepeatArchiveTemplateId] = useState('');
+  const [repeatArchiveDataDate, setRepeatArchiveDataDate] = useState('');
   const [answers, setAnswers] = useState<Record<string, ArchiveAnswer>>({});
   const [editingGrowthField, setEditingGrowthField] = useState<GrowthFieldDefinition | null>(null);
   const [growthFieldDraft, setGrowthFieldDraft] = useState<GrowthFieldDraft>({ recordedAt: '', value: '' });
@@ -121,6 +127,32 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     .filter(item => item.studentId === student.id && item.status === 'archived')
     .sort((a, b) => b.dataUpdatedAt.localeCompare(a.dataUpdatedAt) || b.createdAt.localeCompare(a.createdAt));
   const enabledTemplates = getEnabledTemplatesForGrade(workspace, student.grade);
+  const studentNo = student.studentNo ?? student.id;
+  const pendingArchiveCollections = getPendingArchiveCollectionsForStudent(readQuestionnaires(), spaceId, studentNo);
+  const pendingArchiveTemplateIds = new Set(pendingArchiveCollections.flatMap(record => (
+    record.archiveTemplateId ? [record.archiveTemplateId] : []
+  )));
+  const currentArchives = Array.from(new Set([
+    ...drafts.map(item => item.templateId),
+    ...snapshots.map(item => item.templateId),
+  ])).flatMap(templateId => {
+    const draft = drafts.find(item => item.templateId === templateId);
+    const snapshot = snapshots.find(item => item.templateId === templateId);
+    if (!draft && !snapshot) return [];
+    return [{
+      templateId,
+      templateName: draft?.templateName ?? snapshot?.templateName ?? '学生档案',
+      dataUpdatedAt: draft?.dataUpdatedAt ?? snapshot?.dataUpdatedAt ?? '',
+      draft,
+      snapshot,
+    }];
+  }).sort((left, right) => right.dataUpdatedAt.localeCompare(left.dataUpdatedAt));
+  const currentArchiveTemplateIds = new Set(currentArchives.map(item => item.templateId));
+  const canAddArchive = enabledTemplates.some(template => (
+    pendingArchiveTemplateIds.has(template.id)
+    || !currentArchiveTemplateIds.has(template.id)
+    || template.generationMode === 'continuous'
+  ));
   const activeDraft = transientDraft?.id === activeDraftId
     ? transientDraft
     : workspace.drafts.find(item => item.id === activeDraftId);
@@ -144,15 +176,15 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     setPageMode('fill');
   };
 
-  const openLiveArchive = (templateId: string) => {
+  const openLiveArchive = (templateId: string, dataUpdatedAt?: string) => {
     const template = enabledTemplates.find(item => item.id === templateId);
     if (!template) return;
-    const result = createStudentArchiveDraft(workspace, template.id, student, classInfo, teacherProfile.name);
-    if (!result.draftId) return;
-    const draft = result.workspace.drafts.find(item => item.id === result.draftId);
-    if (!draft) return;
+    const result = createStudentArchiveDraft(workspace, template.id, student, classInfo, teacherProfile.name, { dataUpdatedAt });
+    const sourceDraft = result.workspace.drafts.find(item => item.id === result.draftId);
+    if (!sourceDraft) return;
+    const draft = dataUpdatedAt ? { ...sourceDraft, dataUpdatedAt } : sourceDraft;
     const persistedDraft = workspace.drafts.find(item => item.id === draft.id);
-    if (persistedDraft) {
+    if (persistedDraft && !dataUpdatedAt) {
       openDraft(persistedDraft);
       return;
     }
@@ -162,25 +194,32 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     setPageMode('fill');
   };
 
-  const openNewArchive = (templateId: string) => {
-    setNewArchiveTemplateId(templateId);
-    setNewArchiveDataDate(new Date().toISOString().slice(0, 10));
+  const chooseArchiveTemplate = (templateId: string) => {
+    const template = enabledTemplates.find(item => item.id === templateId);
+    if (!template) return;
+    const pendingCollection = pendingArchiveCollections.find(record => record.archiveTemplateId === template.id);
+    if (pendingCollection) {
+      setShowArchivePicker(false);
+      onOpenPendingCollection(pendingCollection.id);
+      return;
+    }
+    const hasArchive = currentArchiveTemplateIds.has(template.id);
+    if (hasArchive && template.generationMode !== 'continuous') return;
+    setShowArchivePicker(false);
+    if (!hasArchive) {
+      openLiveArchive(template.id);
+      return;
+    }
+    setRepeatArchiveTemplateId(template.id);
+    setRepeatArchiveDataDate(new Date().toISOString().slice(0, 10));
   };
 
-  const createNewArchive = () => {
-    const template = enabledTemplates.find(item => item.id === newArchiveTemplateId);
-    if (!template || !newArchiveDataDate) return;
-    const result = createStudentArchiveDraft(workspace, template.id, student, classInfo, teacherProfile.name, {
-      createNew: true,
-      dataUpdatedAt: newArchiveDataDate,
-    });
-    const draft = result.workspace.drafts.find(item => item.id === result.draftId);
-    if (!draft) return;
-    setNewArchiveTemplateId('');
-    setTransientDraft(draft);
-    setActiveDraftId(draft.id);
-    setAnswers({ ...draft.answers });
-    setPageMode('fill');
+  const startRepeatedArchive = () => {
+    if (!repeatArchiveTemplateId || !repeatArchiveDataDate) return;
+    const templateId = repeatArchiveTemplateId;
+    const dataUpdatedAt = repeatArchiveDataDate;
+    setRepeatArchiveTemplateId('');
+    openLiveArchive(templateId, dataUpdatedAt);
   };
 
   const editSnapshot = (snapshot: ArchiveSnapshot) => {
@@ -304,67 +343,32 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   const renderRoot = () => (
     <div className={`relative flex h-full min-h-0 flex-col ${pageBackground}`}>
       <PageHeader title="学生成长档案" onBack={onBack} />
-      <div className="flex-1 overflow-y-auto px-5 pb-8 pt-4 no-scrollbar">
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">当前档案</h2>
-            <span className="text-[12px] font-semibold text-[var(--tm-text-tertiary)]">共{snapshots.length}份</span>
-          </div>
+      <div className="flex-1 overflow-y-auto px-5 pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))] pt-4 no-scrollbar">
+        {currentArchives.length > 0 ? (
           <div className="space-y-2.5">
-            {enabledTemplates.map(template => {
-              const draft = drafts.find(item => item.templateId === template.id);
-              const latestSnapshot = snapshots.find(item => item.templateId === template.id);
-              const archiveCount = snapshots.filter(item => item.templateId === template.id).length;
-              const hasArchive = Boolean(draft || latestSnapshot);
-              const statusMeta = hasArchive
-                ? { label: '已建立', className: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' }
-                : { label: '待采集', className: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' };
-              return (
-                <div key={template.id} className={`${sectionSurface} flex min-h-[82px] items-center`}>
-                  <button type="button" onClick={() => openLiveArchive(template.id)} className="flex min-h-[82px] min-w-0 flex-1 items-center gap-3 px-4 text-left transition active:scale-[0.985]">
-                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${hasArchive ? 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]'}`}>
-                      {hasArchive ? <BookOpenCheck className="h-4.5 w-4.5" /> : <FilePenLine className="h-4.5 w-4.5" />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{template.name}</span>
-                      <span className="mt-1 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{draft ? `数据更新于 ${draft.dataUpdatedAt}` : latestSnapshot ? `数据更新于 ${latestSnapshot.dataUpdatedAt}` : `${template.growthFields.length + template.fields.length}项内容`}</span>
-                    </span>
-                    <StatusPill className={statusMeta.className}>{archiveCount > 1 ? `${archiveCount}份` : statusMeta.label}</StatusPill>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" />
-                  </button>
-                  {template.generationMode === 'continuous' && hasArchive && (
-                    <button type="button" onClick={() => openNewArchive(template.id)} className="mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]" aria-label={`新增一份${template.name}`} title="新增一份">
-                      <Plus className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-            {enabledTemplates.length === 0 && <div className={`${sectionSurface} px-4 py-8 text-center text-[14px] font-medium text-[var(--tm-text-secondary)]`}>当前年级暂无可用档案</div>}
+            {currentArchives.map(archive => (
+              <button
+                key={archive.templateId}
+                type="button"
+                onClick={() => archive.draft ? openDraft(archive.draft) : archive.snapshot && openSnapshot(archive.snapshot)}
+                className={`${sectionSurface} flex min-h-[82px] w-full items-center gap-3 px-4 text-left transition active:scale-[0.985]`}
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]">
+                  <BookOpenCheck className="h-4.5 w-4.5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{archive.templateName}</span>
+                  <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">数据更新于 {archive.dataUpdatedAt}</span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" />
+              </button>
+            ))}
           </div>
-        </section>
-
-        {snapshots.length > 0 && (
-          <section className="mt-6">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">档案记录</h2>
-              <span className="text-[12px] font-semibold text-[var(--tm-text-tertiary)]">{snapshots.length}份</span>
-            </div>
-            <div className="space-y-2.5">
-              {snapshots.map(snapshot => (
-                <button key={snapshot.id} type="button" onClick={() => openSnapshot(snapshot)} className={`${sectionSurface} flex min-h-[78px] w-full items-center gap-3 px-4 text-left transition active:scale-[0.985]`}>
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><History className="h-4.5 w-4.5" /></span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{snapshot.templateName}</span>
-                    <span className="mt-1 block truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">数据更新于 {snapshot.dataUpdatedAt}</span>
-                  </span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" />
-                </button>
-              ))}
-            </div>
-          </section>
+        ) : (
+          <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD} title="暂无档案" className="py-10" />
         )}
       </div>
+      {canAddArchive && <MobileFloatingCreateButton label="新增档案" emphasis="raised" onClick={() => setShowArchivePicker(true)} />}
     </div>
   );
 
@@ -509,17 +513,49 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   return (
     <div className="relative h-full min-h-0 overflow-hidden font-sans text-[var(--tm-text-primary)]">
       {content}
-      <MobileBottomSheet open={Boolean(newArchiveTemplateId)} title="新增一份档案" onClose={() => setNewArchiveTemplateId('')}>
+      <MobileBottomSheet open={showArchivePicker} title="选择档案" onClose={() => setShowArchivePicker(false)}>
+        <div className="grid grid-cols-2 gap-3 pb-2">
+          {enabledTemplates.map(template => {
+            const hasArchive = currentArchiveTemplateIds.has(template.id);
+            const hasPendingCollection = pendingArchiveTemplateIds.has(template.id);
+            const canRepeat = hasArchive && template.generationMode === 'continuous';
+            const disabled = !hasPendingCollection && hasArchive && !canRepeat;
+            const stateLabel = hasPendingCollection ? '待填写中' : canRepeat ? '再次填写' : hasArchive ? '已建立' : '开始填写';
+            const headerImage = getArchiveHeaderImage(template.appearance);
+            const theme = getArchiveTheme(template.appearance);
+            return (
+              <button
+                key={template.id}
+                type="button"
+                disabled={disabled}
+                onClick={() => chooseArchiveTemplate(template.id)}
+                className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card-on-white)] transition active:scale-[0.97] disabled:opacity-55 disabled:active:scale-100"
+              >
+                {headerImage ? (
+                  <img src={headerImage} alt="" className="block aspect-[16/7] w-full object-cover" />
+                ) : (
+                  <span className="flex aspect-[16/7] w-full items-center justify-center text-[length:var(--tm-font-size-meta)] font-semibold" style={{ backgroundColor: theme.background, color: theme.accentStrong }}>无头图</span>
+                )}
+                <span className="block p-3">
+                  <span className="line-clamp-2 min-h-10 text-[length:var(--tm-font-size-card-title)] font-semibold leading-5 text-[var(--tm-text-primary)]">{template.name}</span>
+                  <span className={`mt-2 block text-[length:var(--tm-font-size-meta)] font-semibold ${disabled ? 'text-[var(--tm-text-disabled)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>{stateLabel}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </MobileBottomSheet>
+      <MobileBottomSheet open={Boolean(repeatArchiveTemplateId)} title="再次填写" onClose={() => setRepeatArchiveTemplateId('')}>
         <label className="block pb-2">
           <span className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">数据更新日期</span>
           <input
             type="date"
-            value={newArchiveDataDate}
-            onInput={event => setNewArchiveDataDate(event.currentTarget.value)}
+            value={repeatArchiveDataDate}
+            onInput={event => setRepeatArchiveDataDate(event.currentTarget.value)}
             className={`${inputClass} mt-2 h-12`}
           />
         </label>
-        <button type="button" disabled={!newArchiveDataDate} onClick={createNewArchive} className={`${primaryButton} mt-4 w-full`}>开始填写</button>
+        <button type="button" disabled={!repeatArchiveDataDate} onClick={startRepeatedArchive} className={`${primaryButton} mt-4 w-full`}>开始填写</button>
       </MobileBottomSheet>
       <BottomSheet open={editingGrowthField !== null} label="填写成长数据" onDismiss={() => setEditingGrowthField(null)}>
         <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">

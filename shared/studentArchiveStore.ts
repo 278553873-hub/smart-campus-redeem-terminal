@@ -1385,31 +1385,29 @@ export const createStudentArchiveDraft = (
   student: Student,
   classInfo: { id: string; name: string },
   operator: string,
-  options: { createNew?: boolean; dataUpdatedAt?: string; snapshotId?: string } = {},
+  options: { dataUpdatedAt?: string; snapshotId?: string } = {},
 ): { workspace: ArchiveWorkspace; draftId: string } => {
   const template = workspace.templates.find(item => item.id === templateId && (options.snapshotId || !item.deletedAt));
   if (!template || (!options.snapshotId && template.status !== 'published')) return { workspace, draftId: '' };
   const period = resolveArchivePeriod(template);
-  const existing = !options.createNew ? workspace.drafts.find(item => (
+  const existing = workspace.drafts.find(item => (
     item.studentId === student.id
     && item.templateId === templateId
     && item.periodKey === period.key
     && (!options.snapshotId || item.snapshotId === options.snapshotId)
-  )) : undefined;
+  ));
   if (existing) return { workspace, draftId: existing.id };
   const latestSnapshot = workspace.snapshots
     .filter(item => item.status === 'archived' && item.studentId === student.id && item.templateId === templateId)
     .sort((left, right) => right.dataUpdatedAt.localeCompare(left.dataUpdatedAt) || right.createdAt.localeCompare(left.createdAt))[0];
-  const sourceSnapshot = options.createNew
-    ? undefined
-    : options.snapshotId
-      ? workspace.snapshots.find(item => (
-          item.id === options.snapshotId
-          && item.status === 'archived'
-          && item.studentId === student.id
-          && item.templateId === templateId
-        ))
-      : latestSnapshot;
+  const sourceSnapshot = options.snapshotId
+    ? workspace.snapshots.find(item => (
+        item.id === options.snapshotId
+        && item.status === 'archived'
+        && item.studentId === student.id
+        && item.templateId === templateId
+      ))
+    : latestSnapshot;
   const draftId = `draft-${student.id}-${Date.now()}`;
   const draft: ArchiveDraft = {
     id: draftId,
@@ -1451,6 +1449,7 @@ export interface ArchiveCollectionUpdate {
   target: ArchiveCollectionTarget;
   answers: Record<string, ArchiveAnswer>;
   growthSnapshots: ArchiveGrowthModuleSnapshot[];
+  dataUpdatedAt: string;
   operator: string;
 }
 
@@ -1480,6 +1479,7 @@ export const upsertStudentArchiveCollectionAnswers = (
           } : {}),
           answers: cloneArchiveAnswers({ ...item.answers, ...update.answers }),
           growthSnapshots: mergeArchiveGrowthSnapshots(item.growthSnapshots, update.growthSnapshots),
+          dataUpdatedAt: update.dataUpdatedAt,
           updatedAt: isoDate(),
         } : item),
         auditEvents: [{
@@ -1510,7 +1510,7 @@ export const upsertStudentArchiveCollectionAnswers = (
     templateSnapshot: cloneTemplateSnapshot(update.templateSnapshot),
     periodKey: update.periodKey,
     periodLabel: update.periodLabel,
-    dataUpdatedAt: latestSnapshot?.dataUpdatedAt ?? isoDate(),
+    dataUpdatedAt: update.dataUpdatedAt,
     snapshotId: latestSnapshot?.id,
     answers: cloneArchiveAnswers({ ...(latestSnapshot?.answers ?? {}), ...update.answers }),
     growthSnapshots: mergeArchiveGrowthSnapshots(latestSnapshot?.growthSnapshots ?? [], update.growthSnapshots),

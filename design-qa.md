@@ -50,48 +50,52 @@ final result: passed
 
 ---
 
-# 班主任助理 V2 输入栏与评比图表设计验收
+# 班主任助理 V2 分类数据入口与排名表设计验收
 
-- source visual truth path: `/var/folders/6j/jzy6dm_s61sfd605jnldswbh0000gn/T/codex-clipboard-f25b5b3a-36e7-4f69-87d8-6fec3dc6ccea.png`
-- implementation screenshot path: 未生成，内置浏览器阻止刷新 `http://localhost:4176/`
-- viewport: `393 × 852` 手机屏幕
-- state: 班主任助理 V2 首页默认语音输入态；本周数据展开后的五项评比图表态
+- source visual truth paths:
+  - `/var/folders/6j/jzy6dm_s61sfd605jnldswbh0000gn/T/codex-clipboard-f2202fa3-354f-4859-9ce0-0d56dfab3cd4.png`
+  - `/var/folders/6j/jzy6dm_s61sfd605jnldswbh0000gn/T/codex-clipboard-200162c0-987d-41f7-8ccf-07bccaf3a233.png`
+- implementation screenshot paths:
+  - `/tmp/ai-headteacher-category-collapsed.png`
+  - `/tmp/ai-headteacher-category-expanded.png`
+- focused comparison path: `/tmp/ai-headteacher-category-control-comparison.png`
+- viewport: `390 × 844` 手机屏幕
+- state: 班主任助理 V2 首页分类数据收起态；分类数据展开态；健体班级扣分记录展开态
 
 ## Full-view comparison evidence
 
-参考图已打开并确认：输入栏为单行白色胶囊，左侧独立键盘圆键，中间文字居中，右侧添加按钮按用户要求删除。最新版实现无法通过内置浏览器刷新并截图，因此没有可用于全屏视觉比较的实现证据。
+收起态中，“分类数据”以白色圆角胶囊置于数据卡右侧，与附件1的文字加下箭头形态一致。展开态中，右侧只保留白色44像素圆形上箭头，与附件2的交互层级一致。四列数据表在390像素宽度下无换行、截断或水平溢出；底部输入栏仍可见，高频对话入口未被展开内容挤出屏幕。
 
 ## Focused region comparison evidence
 
-未完成。缺少最新版输入栏和展开图表的浏览器截图，不能从源码或构建结果替代视觉比较。
+对照图已将两张附件与实现控件置于同一画布。实现复用同类白色表面、全圆角、中性次级文字和线性箭头；控件尺寸按项目教师手机端44像素触控令牌归一，因实现全屏截图包含手机壳缩放，对照图中实现控件视觉尺寸更小，不属于实际组件尺寸偏差。
 
 ## Findings
 
-- P1：视觉验收阻塞。
-  - Location: 班主任助理 V2 底部输入栏、五项评比展开区。
-  - Evidence: 参考图可用，但本地实现截图不可用。
-  - Impact: 无法确认胶囊比例、文字视觉居中、图表标签密度以及展开后的屏幕节奏是否达到目标。
-  - Fix: 在本地页面手动刷新后提供默认输入栏与五项数据展开态截图，再按相同状态完成对比和校准。
+未发现 P0、P1 或 P2 问题。
 
 ## Required fidelity surfaces
 
-- Fonts and typography: 待浏览器截图确认。
-- Spacing and layout rhythm: 待浏览器截图确认。
-- Colors and visual tokens: 实现使用教师手机端 Token，视觉结果待确认。
-- Image quality and asset fidelity: 参考组件只包含图标与界面元素，键盘图标复用现有图标库；视觉结果待确认。
-- Copy and content: 默认文案为“按住说话”，已删除添加按钮；图表展示大项得分和排名。
+- Fonts and typography: 入口文案使用13像素中等字重；表头10像素、数据行12像素，四列均单行完整显示。
+- Spacing and layout rhythm: 入口与圆形收起按钮均保留44像素触控高度；指标列自适应，分数、年级排名和全校排名使用稳定列宽。
+- Colors and visual tokens: 控件使用教师手机端白色表面、次级文字、控件阴影和班主任助理玻璃表面 Token，无临时硬编码色值。
+- Image quality and asset fidelity: 附件中没有需要复制的位图素材；上下箭头使用项目现有线性图标库，线宽和尺寸与参考一致。
+- Copy and content: 入口统一为“分类数据”；展开后不显示“评比大项”，只展示“指标 / 分数/总分 / 年级排名 / 全校排名”。
 
 ## Primary interactions tested
 
-- 源码断言覆盖语音/文字切换、无添加按钮、横向条形图与逐项扣分下钻。
-- 生产构建通过。
-- 浏览器交互测试未执行，原因同上。
+- 点击“分类数据”可展开四列数据，点击圆形上箭头可收起。
+- 点击“健体班级”可展开3条扣分记录，再次点击可收起。
+- 入口断言、领域数据测试和生产构建通过。
+- 浏览器 warning/error 日志为空。
 
 ## Comparison history
 
-1. 首轮：参考图已确认；实现截图获取被浏览器策略阻止，未进入视觉差异修复循环。
+1. 首轮：原得分进度图与用户期望的四列信息结构不符；改为分类数据表，增加年级排名和全校排名。
+2. 浏览器首轮：整数分值显示为“20.0/20.0”，且点击行留下过强绿色焦点框；改为“20/20”紧凑格式，焦点反馈收敛为浅表面变化。
+3. 最终轮：收起态、展开态和扣分下钻均已实机画布复核；无可操作的 P0/P1/P2 问题。
 
-final result: blocked
+final result: passed
 
 ---
 
@@ -146,7 +150,7 @@ final result: passed
 
 # 当前 Product Design 验收状态
 
-- active review: 班主任助理 V2 输入栏与评比图表
-- blocker: 缺少内置浏览器渲染截图，详细证据与待办见上方同名验收章节
+- active review: 班主任助理 V2 分类数据入口与排名表
+- result: 收起态、展开态、扣分下钻与控件对照均已验收
 
-final result: blocked
+final result: passed

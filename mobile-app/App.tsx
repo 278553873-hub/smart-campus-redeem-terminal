@@ -370,6 +370,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             || teacherProfile.homeroomClassIds.includes(activeStudentClassId));
     const [questionnaireEntryMode, setQuestionnaireEntryMode] = useState<'owned' | 'assigned'>('owned');
     const [questionnaireInitialArchiveTemplateId, setQuestionnaireInitialArchiveTemplateId] = useState('');
+    const [questionnaireInitialRecordId, setQuestionnaireInitialRecordId] = useState('');
     const [pendingCollectionCount, setPendingCollectionCount] = useState(0);
     const [showTeacherSpaceSheet, setShowTeacherSpaceSheet] = useState(false);
     const [schoolSubjects, setSchoolSubjects] = useState<SchoolSubjectItem[]>(INITIAL_SCHOOL_SUBJECTS);
@@ -938,7 +939,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'department_management': return '部门管理';
             case 'coin_issuance': return '货币发放';
             case 'suggestion_feedback': return '建议反馈';
-            case 'questionnaire': return '采集管理';
+            case 'questionnaire': return '问卷采集';
             case 'archive_design': return '档案设计';
             case 'ai_headteacher_assistant': return 'AI班主任助理';
             case 'ai_headteacher_assistant_v2': return '班主任助理 V2';
@@ -1378,6 +1379,13 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onUpdateArchive={templateId => {
                                         setQuestionnaireEntryMode('owned');
                                         setQuestionnaireInitialArchiveTemplateId(templateId);
+                                        setQuestionnaireInitialRecordId('');
+                                        navigateTo('questionnaire');
+                                    }}
+                                    onOpenPendingCollection={recordId => {
+                                        setQuestionnaireEntryMode('owned');
+                                        setQuestionnaireInitialArchiveTemplateId('');
+                                        setQuestionnaireInitialRecordId(recordId);
                                         navigateTo('questionnaire');
                                     }}
                                 />
@@ -1428,9 +1436,9 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onOpenDepartmentManagement={() => navigateTo('department_management')}
                                     onOpenCoinIssuance={() => navigateTo('coin_issuance')}
                                     onOpenSuggestionFeedback={() => navigateTo('suggestion_feedback')}
-                                    onOpenQuestionnaire={() => { setQuestionnaireEntryMode('owned'); setQuestionnaireInitialArchiveTemplateId(''); navigateTo('questionnaire'); }}
+                                    onOpenQuestionnaire={() => { setQuestionnaireEntryMode('owned'); setQuestionnaireInitialArchiveTemplateId(''); setQuestionnaireInitialRecordId(''); navigateTo('questionnaire'); }}
                                     pendingCollectionCount={pendingCollectionCount}
-                                    onOpenAssignedCollections={() => { setQuestionnaireEntryMode('assigned'); setQuestionnaireInitialArchiveTemplateId(''); navigateTo('questionnaire'); }}
+                                    onOpenAssignedCollections={() => { setQuestionnaireEntryMode('assigned'); setQuestionnaireInitialArchiveTemplateId(''); setQuestionnaireInitialRecordId(''); navigateTo('questionnaire'); }}
                                     onOpenArchiveDesign={() => navigateTo('archive_design')}
                                     onOpenAiHeadteacherAssistant={() => navigateTo('ai_headteacher_assistant')}
                                     onOpenAiHeadteacherAssistantV2={() => navigateTo('ai_headteacher_assistant_v2')}
@@ -1514,7 +1522,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                             {currentView === 'questionnaire' && (
                                 <QuestionnaireManagementView
-                                    key={`${activeTeacherId}-${questionnaireEntryMode}-${questionnaireInitialArchiveTemplateId || 'default'}`}
+                                    key={`${activeTeacherId}-${questionnaireEntryMode}-${questionnaireInitialArchiveTemplateId || 'default'}-${questionnaireInitialRecordId || 'list'}`}
                                     onBack={goBack}
                                     teacherId={activeTeacherId}
                                     teacherName={teacherProfile.name}
@@ -1522,6 +1530,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     homeroomClassIds={teacherProfile.homeroomClassIds}
                                     initialMode={questionnaireEntryMode}
                                     initialArchiveTemplateId={questionnaireInitialArchiveTemplateId || undefined}
+                                    initialRecordId={questionnaireInitialRecordId || undefined}
                                     classes={questionnaireAuthorizedClasses}
                                     allScopeLabel={hasSchoolWideQuestionnaireAccess ? '全部年级' : '全部班级'}
                                     getStudentsForClass={getMergedStudentsForClass}

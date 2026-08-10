@@ -31,6 +31,9 @@ const forbidText = (source, text, message) => {
   if (source.includes(text)) throw new Error(message);
 };
 
+const studentRootSource = studentViewSource.slice(studentViewSource.indexOf('const renderRoot'), studentViewSource.indexOf('const renderFill'));
+const studentPickerSource = studentViewSource.slice(studentViewSource.indexOf('<MobileBottomSheet open={showArchivePicker}'), studentViewSource.indexOf('<MobileBottomSheet open={Boolean(repeatArchiveTemplateId)}'));
+
 requireText(meSource, "title: '档案设计'", '教师手机端更多工具缺少档案设计入口。');
 requireText(accessSource, 'administrator:', '学校管理员必须具备独立空间角色。');
 requireText(accessSource, 'leader:', '学校领导必须具备独立空间角色。');
@@ -253,33 +256,46 @@ requireText(archiveAppearanceSource, 'questionnaireHeaderImageOptions', '档案�
 for (const preset of ['learning', 'growth', 'sports', 'creativity']) requireText(questionnaireThemeSource, `id: '${preset}'`, `档案头图缺少系统预设：${preset}`);
 
 for (const required of [
-  '当前档案',
+  '学生成长档案',
   '发起采集',
   '保存修改',
-  '档案记录',
+  '新增档案',
+  '选择档案',
+  '开始填写',
+  '再次填写',
   '已建立',
-  '待采集',
+  '待填写中',
 ]) {
   requireText(studentViewSource, required, `学生档案流程缺少：${required}`);
 }
 requireText(appSource, 'onUpdateArchive={templateId =>', '当前档案的更新入口必须进入统一采集流程。');
 requireText(appSource, 'initialArchiveTemplateId={questionnaireInitialArchiveTemplateId || undefined}', '从档案进入采集时必须预选当前档案。');
 requireText(storeSource, 'upsertStudentArchiveCollectionAnswers', '采集提交必须合并更新学生当前档案。');
-forbidText(studentViewSource, 'aria-label="新建档案"', '学生档案首页不应再提供新建入口。');
-forbidText(studentViewSource, 'PageHeader title="选择档案"', '学生档案首页不应再进入模板选择页。');
-requireText(studentViewSource, 'enabledTemplates.map(template =>', '学生档案首页必须直接展示已启用档案。');
-requireText(studentViewSource, 'const hasArchive = Boolean(draft || latestSnapshot)', '学生档案首页必须区分待采集和已建立状态。');
-requireText(studentViewSource, "template.generationMode === 'continuous' && hasArchive", '只有可重复填写的档案才应提供新增一份入口。');
-requireText(studentViewSource, 'dataUpdatedAt: newArchiveDataDate', '新增一份档案前必须保存老师选择的数据更新日期。');
-requireText(studentViewSource, '数据更新于 {snapshot.dataUpdatedAt}', '学生档案列表必须展示业务数据更新日期。');
+requireText(studentViewSource, 'import MobileFloatingCreateButton', '学生档案首页必须复用公共悬浮创建按钮。');
+requireText(studentRootSource, '<MobileFloatingCreateButton label="新增档案" emphasis="raised" onClick={() => setShowArchivePicker(true)} />', '学生档案首页必须从右下角进入档案选择流程。');
+requireText(studentRootSource, 'currentArchives.map(archive =>', '学生档案首页只能展示该学生已经形成的当前档案。');
+forbidText(studentRootSource, 'enabledTemplates.map(template =>', '学生档案首页不得把学校已启用档案直接铺成待采集列表。');
+forbidText(studentRootSource, '待采集', '学生档案首页不得继续展示待采集占位档案。');
+forbidText(studentRootSource, '档案记录', '学生档案首页不得把同名历史版本与当前档案并列展示。');
+requireText(studentRootSource, 'title="暂无档案"', '学生没有已形成档案时必须展示简洁缺省态。');
+requireText(studentRootSource, 'ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD', '学生档案缺省态必须复用统一插图。');
+requireText(studentPickerSource, 'enabledTemplates.map(template =>', '新增抽屉必须展示当前年级已启用档案。');
+requireText(studentPickerSource, "const stateLabel = hasPendingCollection ? '待填写中' : canRepeat ? '再次填写' : hasArchive ? '已建立' : '开始填写'", '档案选择器必须完整区分可操作状态。');
+requireText(studentViewSource, 'getPendingArchiveCollectionsForStudent', '新增档案前必须识别同一档案已有待填写任务。');
+requireText(studentViewSource, 'onOpenPendingCollection(pendingCollection.id)', '待填写中的档案必须直接进入原采集任务。');
+requireText(appSource, 'initialRecordId={questionnaireInitialRecordId || undefined}', '从学生档案进入待填写任务时必须直接定位原任务。');
+requireText(studentViewSource, "template.generationMode === 'continuous'", '只有可重复填写的已有档案才能再次填写。');
+requireText(studentViewSource, 'openLiveArchive(templateId, dataUpdatedAt)', '再次填写必须携带老师选择的数据更新日期。');
+requireText(studentViewSource, '数据更新于 {archive.dataUpdatedAt}', '学生档案列表必须展示业务数据更新日期。');
 requireText(studentViewSource, 'editSnapshot(activeSnapshot)', '历史档案必须能够随时进入纠错。');
 requireText(storeSource, 'snapshotId: sourceSnapshot?.id', '编辑已有档案时必须关联原档案记录。');
 requireText(storeSource, 'workspace.snapshots.map(item => item.id === existingSnapshot.id ? snapshot : item)', '保存纠错必须覆盖原档案而不是增加数量。');
-requireText(storeSource, ': [...workspace.snapshots, snapshot]', '只有新建档案时才应追加一份记录。');
-requireText(studentViewSource, '当前年级暂无可用档案', '学生档案空状态必须说明当前年级没有可用档案。');
+requireText(storeSource, ': [...workspace.snapshots, snapshot]', '学生首次形成档案时才应追加当前档案。');
+forbidText(storeSource, 'createNew?: boolean', '数据层不得保留绕过当前档案唯一关系的重复新建参数。');
+forbidText(storeSource, 'options.createNew', '再次填写不得通过新建分支生成同名档案。');
 forbidText(studentViewSource, 'action={<StatusPill className="bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">草稿</StatusPill>}', '学生档案填写页标题栏不应重复展示草稿标签。');
 requireText(archiveFormRendererSource, 'className={`${sectionSurface} overflow-hidden`} open', '档案填写和预览必须默认展开全部分组，方便核对完整内容。');
-forbidText(studentViewSource, '>历史档案</h2>', '学生成长档案首页应使用“档案记录”承载多份档案。');
+forbidText(studentRootSource, '>历史档案</h2>', '学生成长档案首页不得并列展示历史档案。');
 forbidText(studentViewSource, '>已成档</StatusPill>', '学生档案详情标题栏不应重复展示已成档标签。');
 
 for (const required of [
@@ -461,7 +477,7 @@ requireText(studentViewSource, 'renderGrowthField={(config, number) =>', '学生
 requireText(archiveGrowthRendererSource, '待采集', '档案成长数据预览必须展示真实待采集状态。');
 forbidText(viewSource, '<dt className="shrink-0 text-[12px] font-semibold text-[var(--tm-text-tertiary)]">档案周期</dt>', '待启用详情不应提前展示使用周期。');
 requireText(viewSource, '学生已有档案和更新记录不受影响', '删除已禁用档案前必须说明学生档案不受影响。');
-requireText(viewSource, '启用后，老师可以在采集管理中按此档案发起采集。', '启用确认必须只说明启用后的直接结果。');
+requireText(viewSource, '启用后，老师可以在问卷采集中按此档案发起采集。', '启用确认必须只说明启用后的直接结果。');
 requireText(viewSource, '确认启用', '待启用档案必须能够直接确认启用。');
 requireText(viewSource, 'showDeleteConfirm', '删除档案设计必须二次确认。');
 requireText(viewSource, 'activeTemplateActionId', '档案列表必须记录当前操作对象。');

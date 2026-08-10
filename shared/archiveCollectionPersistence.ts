@@ -97,6 +97,22 @@ const hasCompletedArchiveCollection = (record: QuestionnaireRecord, studentNo: s
     : record.submissions.some(item => item.studentNo === studentNo)
 );
 
+export const getPendingArchiveCollectionsForStudent = (
+  records: QuestionnaireRecord[],
+  spaceId: string,
+  studentNo: string,
+) => records.filter(record => (
+  record.status === 'active'
+  && record.spaceId === spaceId
+  && Boolean(record.archiveTemplateId)
+  && record.targets.some(target => (
+    target.studentNo === studentNo
+    && (target.scopeStatus ?? 'active') === 'active'
+    && target.reachable
+  ))
+  && !hasCompletedArchiveCollection(record, studentNo)
+));
+
 export const getArchiveCollectionTargetPlan = (
   candidate: QuestionnaireRecord,
   records: QuestionnaireRecord[],
@@ -132,6 +148,7 @@ export const persistArchiveCollectionAnswers = (
   questionnaire: QuestionnaireRecord,
   studentNo: string,
   answers: Record<string, QuestionnaireAnswer>,
+  completedAt: string,
   operator: string,
 ) => {
   if (!questionnaire.archiveTemplateId || !questionnaire.archiveTemplateSnapshot) return false;
@@ -150,6 +167,13 @@ export const persistArchiveCollectionAnswers = (
   const period = getQuestionnaireArchivePeriod(questionnaire);
   const sourceRecordId = `${questionnaire.id}-${studentNo}`;
   const recordDate = questionnaire.growthMeasurementDate ?? '';
+  const completedDateParts = completedAt.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  const completedDate = completedDateParts
+    ? `${completedDateParts[1]}-${completedDateParts[2].padStart(2, '0')}-${completedDateParts[3].padStart(2, '0')}`
+    : '';
+  const hasGrowthFields = questionnaire.questions.some(question => Boolean(question.growthFieldKey));
+  const dataUpdatedAt = hasGrowthFields ? recordDate : completedDate;
+  if (!dataUpdatedAt) return false;
   const growthSnapshots = recordDate
     ? buildArchiveGrowthModuleSnapshots(target.studentId, questionnaire.archiveTemplateSnapshot.growthFields, {
         startDate: recordDate,
@@ -175,6 +199,7 @@ export const persistArchiveCollectionAnswers = (
     },
     answers: archiveAnswers,
     growthSnapshots,
+    dataUpdatedAt,
     operator,
   });
   if (!result.updated) return false;

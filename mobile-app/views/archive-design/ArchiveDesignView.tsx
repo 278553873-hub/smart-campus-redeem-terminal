@@ -1056,7 +1056,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       <BottomSheet open={showEnableConfirm} label={templateDraft?.status === 'disabled' ? '重新启用档案' : '启用档案'} onDismiss={() => setShowEnableConfirm(false)}>
         <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">{templateDraft?.status === 'disabled' ? '重新启用' : '启用'}“{templateDraft?.name ?? ''}”？</h2>
         <p className="mt-2 text-center text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">
-          启用后，老师可以在采集管理中按此档案发起采集。
+          启用后，老师可以在问卷采集中按此档案发起采集。
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button type="button" onClick={() => setShowEnableConfirm(false)} className={secondaryButton}>取消</button>

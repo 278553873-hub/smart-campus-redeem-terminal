@@ -55,6 +55,8 @@ for (const required of [
 
 requireText(cssSource, '.principal-report-screen-background', '校长报告缺少屏幕级红金渐变背景。');
 requireText(cssSource, '.headteacher-report-screen-background', '班主任助理报告缺少铺满屏幕的背景。');
+requireText(cssSource, '-webkit-font-smoothing: antialiased;', '班主任助理页面应在 macOS 使用抗锯齿字体渲染。');
+requireText(cssSource, '.headteacher-agent-glass {\n  border: 0;', '班主任助理玻璃表面应使用阴影建立层级，不使用实体边框。');
 requireText(cssSource, 'var(--tm-role-principal-glow-primary)', '校长报告背景应保留角色红氛围光。');
 requireText(cssSource, 'var(--tm-role-principal-glow-secondary)', '校长报告背景应保留管理金氛围光。');
 
@@ -68,6 +70,9 @@ for (const required of [
 }
 
 requireText(headerSource, 'var(--mini-program-capsule-right-inset,0px)', '助理标题栏必须避让微信胶囊。');
+requireText(headerSource, 'left-1/2', '助理标题栏中间内容必须以屏幕几何中心定位。');
+requireText(headerSource, '-translate-x-1/2', '助理标题栏中间内容必须使用自身宽度修正居中位置。');
+requireText(headerSource, '2*max(calc(var(--tm-size-touch)+var(--tm-space-5)),var(--mini-program-capsule-right-inset,0px))', '助理标题栏必须以对称安全区同时避让返回按钮和微信胶囊。');
 
 for (const required of [
   "export type ReportGenerationTaskStatus = 'idle' | 'generating'",

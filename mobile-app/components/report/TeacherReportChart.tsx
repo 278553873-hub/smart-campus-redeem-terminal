@@ -188,7 +188,10 @@ const TeacherReportChart: React.FC<TeacherReportChartProps> = ({
                 return;
             }
 
-            if (params.componentType === 'xAxis' && typeof params.value === 'string') {
+            if (
+                (params.componentType === 'xAxis' || params.componentType === 'yAxis')
+                && typeof params.value === 'string'
+            ) {
                 onItemSelect(params.value);
             }
         };

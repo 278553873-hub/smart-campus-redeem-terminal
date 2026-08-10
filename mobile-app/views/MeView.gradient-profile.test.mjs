@@ -35,6 +35,7 @@ requireText(source, 'variant="secondary"', '更多工具应使用 secondary 样�
 requireText(source, 'h-[38px] w-[38px] items-center justify-center rounded-full', '更多工具图标容器应缩小到原尺寸约 80%。');
 requireText(source, 'h-[19px] w-[19px]', '更多工具图标线条应同步缩小到原尺寸约 80%。');
 requireText(source, "const secondaryIconClass = 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]';", '更多工具应统一使用无描边的浅红底和品牌红图标。');
+requireText(source, '<ToolGrid items={primaryTools} columns={4} />', '管理工具应显式保持每行 4 个入口。');
 requireText(source, '<ToolGrid items={moreTools} columns={4} variant="secondary" />', '更多工具应显式保持每行 4 个入口。');
 requireText(source, '学校报表', '管理工具应包含学校报表。');
 requireText(source, '期末报告', '管理工具应包含期末报告。');

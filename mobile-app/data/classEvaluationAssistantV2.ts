@@ -9,7 +9,9 @@ export type ClassEvaluationWeekStatus = 'in_progress' | 'settled';
 export interface ClassEvaluationDimensionRanking {
     dimension: string;
     score: number;
-    rank: number;
+    maxScore: number;
+    gradeRank: number;
+    schoolRank: number;
     gapToFirst: number;
     recordCount: number;
     tiedForFirst?: boolean;
@@ -40,11 +42,11 @@ export const CLASS_EVALUATION_WEEKS: ClassEvaluationWeek[] = [
         snapshotLabel: '截至8月7日 16:36',
         overallRank: 2,
         dimensionRankings: [
-            { dimension: '诗意中队', score: 20, rank: 1, gapToFirst: 0, recordCount: 0, tiedForFirst: true },
-            { dimension: '安全教育', score: 20, rank: 1, gapToFirst: 0, recordCount: 0 },
-            { dimension: '健体班级', score: 18.2, rank: 3, gapToFirst: 0.4, recordCount: 3 },
-            { dimension: '文雅班级', score: 18.9, rank: 2, gapToFirst: 0.3, recordCount: 2 },
-            { dimension: '美净班级', score: 18.4, rank: 4, gapToFirst: 1.2, recordCount: 3 },
+            { dimension: '诗意中队', score: 20, maxScore: 20, gradeRank: 1, schoolRank: 2, gapToFirst: 0, recordCount: 0, tiedForFirst: true },
+            { dimension: '安全教育', score: 20, maxScore: 20, gradeRank: 1, schoolRank: 1, gapToFirst: 0, recordCount: 0 },
+            { dimension: '健体班级', score: 18.2, maxScore: 20, gradeRank: 3, schoolRank: 7, gapToFirst: 0.4, recordCount: 3 },
+            { dimension: '文雅班级', score: 18.9, maxScore: 20, gradeRank: 2, schoolRank: 4, gapToFirst: 0.3, recordCount: 2 },
+            { dimension: '美净班级', score: 18.4, maxScore: 20, gradeRank: 4, schoolRank: 9, gapToFirst: 1.2, recordCount: 3 },
         ],
         summary: '诗意中队、安全教育暂列第1',
         focus: '健体班级距第1仅差0.4分',
@@ -59,11 +61,11 @@ export const CLASS_EVALUATION_WEEKS: ClassEvaluationWeek[] = [
         snapshotLabel: '已结算',
         overallRank: 1,
         dimensionRankings: [
-            { dimension: '诗意中队', score: 19.8, rank: 2, gapToFirst: 0.2, recordCount: 1 },
-            { dimension: '安全教育', score: 19.5, rank: 2, gapToFirst: 0.5, recordCount: 2 },
-            { dimension: '健体班级', score: 19.2, rank: 1, gapToFirst: 0, recordCount: 1 },
-            { dimension: '文雅班级', score: 19.4, rank: 3, gapToFirst: 0.5, recordCount: 2 },
-            { dimension: '美净班级', score: 19.6, rank: 1, gapToFirst: 0, recordCount: 1, tiedForFirst: true },
+            { dimension: '诗意中队', score: 19.8, maxScore: 20, gradeRank: 2, schoolRank: 3, gapToFirst: 0.2, recordCount: 1 },
+            { dimension: '安全教育', score: 19.5, maxScore: 20, gradeRank: 2, schoolRank: 4, gapToFirst: 0.5, recordCount: 2 },
+            { dimension: '健体班级', score: 19.2, maxScore: 20, gradeRank: 1, schoolRank: 2, gapToFirst: 0, recordCount: 1 },
+            { dimension: '文雅班级', score: 19.4, maxScore: 20, gradeRank: 3, schoolRank: 6, gapToFirst: 0.5, recordCount: 2 },
+            { dimension: '美净班级', score: 19.6, maxScore: 20, gradeRank: 1, schoolRank: 1, gapToFirst: 0, recordCount: 1, tiedForFirst: true },
         ],
         summary: '健体班级第1，美净班级并列第1',
         focus: '安全教育距第1差0.5分',
@@ -78,11 +80,11 @@ export const CLASS_EVALUATION_WEEKS: ClassEvaluationWeek[] = [
         snapshotLabel: '已结算',
         overallRank: 3,
         dimensionRankings: [
-            { dimension: '诗意中队', score: 19.6, rank: 2, gapToFirst: 0.3, recordCount: 1 },
-            { dimension: '安全教育', score: 20, rank: 1, gapToFirst: 0, recordCount: 0, tiedForFirst: true },
-            { dimension: '健体班级', score: 19, rank: 3, gapToFirst: 0.7, recordCount: 2 },
-            { dimension: '文雅班级', score: 19.6, rank: 1, gapToFirst: 0, recordCount: 1 },
-            { dimension: '美净班级', score: 19.4, rank: 2, gapToFirst: 0.4, recordCount: 2 },
+            { dimension: '诗意中队', score: 19.6, maxScore: 20, gradeRank: 2, schoolRank: 4, gapToFirst: 0.3, recordCount: 1 },
+            { dimension: '安全教育', score: 20, maxScore: 20, gradeRank: 1, schoolRank: 1, gapToFirst: 0, recordCount: 0, tiedForFirst: true },
+            { dimension: '健体班级', score: 19, maxScore: 20, gradeRank: 3, schoolRank: 8, gapToFirst: 0.7, recordCount: 2 },
+            { dimension: '文雅班级', score: 19.6, maxScore: 20, gradeRank: 1, schoolRank: 2, gapToFirst: 0, recordCount: 1 },
+            { dimension: '美净班级', score: 19.4, maxScore: 20, gradeRank: 2, schoolRank: 5, gapToFirst: 0.4, recordCount: 2 },
         ],
         summary: '安全教育并列第1，文雅班级第1',
         focus: '健体班级距第1差0.7分',

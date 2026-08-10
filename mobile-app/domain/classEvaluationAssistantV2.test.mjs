@@ -34,6 +34,14 @@ assert.equal(CLASS_EVALUATION_WEEKS[0].dataRangeLabel, '8月3日-8月7日');
 assert.equal(CLASS_EVALUATION_WEEKS[0].overallRank, 2);
 for (const week of CLASS_EVALUATION_WEEKS) {
   assert.equal(week.dimensionRankings.length, 5, `${week.label} 应包含五个一级指标。`);
+  assert.ok(
+    week.dimensionRankings.every(item => item.maxScore === 20 && item.score <= item.maxScore),
+    `${week.label} 的五个一级指标应分别携带评价表中的20分满分上限。`,
+  );
+  assert.ok(
+    week.dimensionRankings.every(item => item.gradeRank > 0 && item.schoolRank > 0),
+    `${week.label} 的五个一级指标应同时携带年级排名和全校排名。`,
+  );
   const dimensionTotal = week.dimensionRankings.reduce((sum, item) => sum + item.score, 0);
   assert.equal(
     Number(dimensionTotal.toFixed(1)),

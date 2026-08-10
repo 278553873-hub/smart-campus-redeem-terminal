@@ -5,8 +5,8 @@ const catalogSource = fs.readFileSync('mobile-app/assets/studentAvatarCatalog.ts
 const assetsSource = fs.readFileSync('mobile-app/assets/images.ts', 'utf8');
 const editSource = fs.readFileSync('mobile-app/views/StudentBasicEditView.tsx', 'utf8');
 
-const girlAvatarImports = catalogSource.match(/student-girl-\d{2}\.jpg/g) ?? [];
-const boyAvatarImports = catalogSource.match(/student-boy-avatar-\d{2}\.jpg/g) ?? [];
+const girlAvatarImports = catalogSource.match(/student-avatars\/girls\/girl-(?:01-ponytail|02-twin-ponytail|03-bun|04-short|05-long|06-braid)-\d{2}-[a-z-]+\.jpg/g) ?? [];
+const boyAvatarImports = catalogSource.match(/student-avatars\/boys\/boy-(?:01-very-short|02-textured-short|03-side-part|04-fringe|05-curly)-\d{2}-[a-z-]+\.jpg/g) ?? [];
 assert.equal(girlAvatarImports.length, 20, '应完整导入 20 张女生系统头像。');
 assert.equal(boyAvatarImports.length, 20, '应完整导入 20 张男生系统头像。');
 
@@ -39,14 +39,8 @@ assert.match(editSource, /aria-pressed={isSelected}/);
 assert.doesNotMatch(editSource, /cycleMockAvatar/);
 assert.doesNotMatch(editSource, /ASSETS\.AVATAR\.BOYS\.map/);
 
-for (let index = 1; index <= 20; index += 1) {
-  const fileName = `student-girl-${String(index).padStart(2, '0')}.jpg`;
-  assert.ok(fs.existsSync(`mobile-app/assets/resources/student-avatars/girls/${fileName}`), `缺少头像资源：${fileName}`);
-}
-
-for (let index = 1; index <= 20; index += 1) {
-  const fileName = `student-boy-avatar-${String(index).padStart(2, '0')}.jpg`;
-  assert.ok(fs.existsSync(`mobile-app/assets/resources/student-avatars/boys/${fileName}`), `缺少头像资源：${fileName}`);
+for (const avatarImport of [...girlAvatarImports, ...boyAvatarImports]) {
+  assert.ok(fs.existsSync(`mobile-app/assets/resources/${avatarImport}`), `缺少头像资源：${avatarImport}`);
 }
 
 console.log('学生系统头像分组与更换流程校验通过。');

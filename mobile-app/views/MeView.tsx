@@ -289,7 +289,7 @@ const MeView: React.FC<MeViewProps> = ({
         },
         {
             id: 'questionnaire',
-            title: '采集管理',
+            title: '问卷采集',
             icon: ClipboardList,
             onClick: onOpenQuestionnaire,
         },
@@ -372,7 +372,7 @@ const MeView: React.FC<MeViewProps> = ({
                 )}
                 {primaryTools.length > 0 && (
                     <ToolSection title="管理工具">
-                        <ToolGrid items={primaryTools} columns={primaryTools.length === 4 ? 4 : 3} />
+                        <ToolGrid items={primaryTools} columns={4} />
                     </ToolSection>
                 )}
 
