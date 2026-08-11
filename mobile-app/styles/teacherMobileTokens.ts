@@ -481,6 +481,7 @@ export const teacherBrandCssVariables = {
   '--tm-glow-secondary': 'rgba(247, 92, 3, 0.11)',
   '--tm-glow-primary-subtle': 'rgba(224, 39, 39, 0.055)',
   '--tm-glow-secondary-subtle': 'rgba(247, 92, 3, 0.05)',
+  '--tm-student-detail-profile-bg': 'radial-gradient(circle at 92% 0%, var(--tm-glow-primary-subtle), transparent 46%), radial-gradient(circle at 8% 100%, var(--tm-glow-secondary-subtle), transparent 42%), linear-gradient(var(--tm-bg-surface-glass), var(--tm-bg-surface-glass))',
   '--tm-role-headteacher-primary': teacherAssistantRoleSemantic.headteacher.primary,
   '--tm-role-headteacher-strong': teacherAssistantRoleSemantic.headteacher.strong,
   '--tm-role-headteacher-soft': teacherAssistantRoleSemantic.headteacher.soft,

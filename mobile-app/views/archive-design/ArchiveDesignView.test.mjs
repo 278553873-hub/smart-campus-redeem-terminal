@@ -62,7 +62,7 @@ for (const legacyColor of ['amber-', 'emerald-', 'cyan-']) {
 requireText(appSource, "'student_archive'", '教师端导航必须注册学生成长档案页面。');
 requireText(appSource, '<ArchiveDesignView', '教师端必须渲染档案设计业务页面。');
 requireText(appSource, '<StudentArchiveView', '教师端必须渲染学生成长档案业务页面。');
-requireText(dashboardSource, '学生成长档案', '学生详情必须提供学生成长档案入口。');
+requireText(dashboardSource, '>成长档案</span>', '学生详情必须提供成长档案入口。');
 
 for (const required of [
   '新建档案',

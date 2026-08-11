@@ -37,17 +37,8 @@ export const CLASS_EVALUATION_FIXED_QUESTIONS = [
 export type ClassEvaluationFixedQuestion = typeof CLASS_EVALUATION_FIXED_QUESTIONS[number];
 export type ClassEvaluationFixedQuestionId = ClassEvaluationFixedQuestion['id'];
 
-export const CLASS_EVALUATION_PROMPT_VERSIONS: Record<ClassEvaluationFixedQuestionId, string> = {
-    weekly_performance: 'headteacher-class-evaluation-weekly-performance-v1',
-    deduction_patterns: 'headteacher-class-evaluation-deduction-patterns-v1',
-    next_week_focus: 'headteacher-class-evaluation-next-week-focus-v1',
-};
-
+export const CLASS_EVALUATION_CHAT_PROMPT_VERSION = 'headteacher-class-evaluation-chat-v2';
 export const CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION = 'headteacher-class-evaluation-weekly-report-v1';
-
-export const getClassEvaluationFixedQuestion = (questionId: ClassEvaluationFixedQuestionId) => (
-    CLASS_EVALUATION_FIXED_QUESTIONS.find(question => question.id === questionId)!
-);
 
 export interface ClassEvaluationDimensionMetric {
     dimension: string;
@@ -124,6 +115,7 @@ interface AskClassEvaluationQuestionInput {
     gradeRank: number;
     rankings: readonly ClassEvaluationDimensionMetric[];
     previousWeek?: ClassEvaluationComparisonWeek;
+    previousContext?: ClassEvaluationConversationContext;
 }
 
 const roundScore = (value: number) => Math.round((value + Number.EPSILON) * 10) / 10;
@@ -254,13 +246,60 @@ const getDimensionDeductions = (records: ClassEvaluationRecord[]) => {
 
 const createInsight = (title: string, body: string): ClassEvaluationAiInsight => ({ title, body });
 
-const getPromptVersion = (answerType: ClassEvaluationAnswerType) => {
-    const versionByType: Record<ClassEvaluationAnswerType, string> = {
-        ...CLASS_EVALUATION_PROMPT_VERSIONS,
-        clarification: 'headteacher-class-evaluation-clarification-v1',
-        unavailable: 'headteacher-class-evaluation-unavailable-v1',
-    };
-    return versionByType[answerType];
+const getPromptVersion = () => CLASS_EVALUATION_CHAT_PROMPT_VERSION;
+
+const includesAny = (value: string, keywords: readonly string[]) => (
+    keywords.some(keyword => value.includes(keyword))
+);
+
+const resolveQuestionIntent = (
+    question: string,
+    previousContext?: ClassEvaluationConversationContext,
+): ClassEvaluationFixedQuestionId | null => {
+    const fixedQuestion = CLASS_EVALUATION_FIXED_QUESTIONS.find(item => item.label === question);
+    if (fixedQuestion) return fixedQuestion.id;
+
+    if (includesAny(question, ['责任', '整改', '负责人', '申诉', '改分', '修改分数'])) return null;
+
+    const refersToPrevious = includesAny(question, ['这些', '上述', '刚才', '继续']);
+    if (refersToPrevious && previousContext?.recordIds.length) {
+        return includesAny(question, ['怎么', '如何', '建议', '关注', '改善'])
+            ? 'next_week_focus'
+            : 'deduction_patterns';
+    }
+
+    if (includesAny(question, ['上周', '相比', '变化', '趋势', '下周', '建议', '关注', '改善', '怎么做', '如何做'])) {
+        return 'next_week_focus';
+    }
+    if (includesAny(question, ['扣分', '失分', '原因', '问题', '记录', '明细', '规则', '依据', '具体扣', '扣在哪'])) {
+        return 'deduction_patterns';
+    }
+    if (includesAny(question, ['得分', '分数', '排名', '整体', '总体', '表现', '情况', '满分', '优势'])) {
+        return 'weekly_performance';
+    }
+    return null;
+};
+
+const GENERIC_LABEL_TOKENS = new Set(['班级', '教师', '学生', '评价', '本周', '管理']);
+
+const labelMatchesQuestion = (question: string, label: string) => {
+    if (question.includes(label)) return true;
+    for (let index = 0; index < label.length - 1; index += 1) {
+        const token = label.slice(index, index + 2);
+        if (!GENERIC_LABEL_TOKENS.has(token) && question.includes(token)) return true;
+    }
+    return false;
+};
+
+const scopeRecordsForQuestion = (
+    question: string,
+    records: ClassEvaluationRecord[],
+) => {
+    const scoped = records.filter(record => (
+        labelMatchesQuestion(question, record.dimension)
+        || labelMatchesQuestion(question, record.indicator)
+    ));
+    return scoped.length > 0 ? scoped : records;
 };
 
 const unavailableAnswer = (
@@ -275,7 +314,7 @@ const unavailableAnswer = (
     suggestions: [],
     context: createContext(snapshot, []),
     evidenceRefs: [],
-    promptVersion: getPromptVersion('unavailable'),
+    promptVersion: getPromptVersion(),
     dataSnapshotId: snapshot.id,
 });
 
@@ -286,6 +325,7 @@ export const askClassEvaluationQuestion = ({
     gradeRank,
     rankings,
     previousWeek,
+    previousContext,
 }: AskClassEvaluationQuestionInput): ClassEvaluationAssistantAnswer => {
     const normalizedQuestion = question.trim();
     const periodRecords = records.filter(record => (
@@ -296,18 +336,18 @@ export const askClassEvaluationQuestion = ({
 
     if (!snapshot.hasRecordDetails || periodRecords.length === 0) return unavailableAnswer(snapshot);
 
-    const fixedQuestion = CLASS_EVALUATION_FIXED_QUESTIONS.find(item => item.label === normalizedQuestion);
-    if (!fixedQuestion) {
+    const questionIntent = resolveQuestionIntent(normalizedQuestion, previousContext);
+    if (!questionIntent) {
         return {
             answerType: 'clarification',
-            message: '当前可分析本周整体表现、主要扣分问题和下周关注重点，请选择下方固定问题。',
+            message: '我可以基于当前班级的本周评价台账，回答得分、年级排名、扣分记录、扣分依据、周变化和下周建议。请换一种问法。',
             metrics: [],
             breakdown: [],
             analysis: [],
             suggestions: [],
             context: createContext(snapshot, []),
             evidenceRefs: [],
-            promptVersion: getPromptVersion('clarification'),
+            promptVersion: getPromptVersion(),
             dataSnapshotId: snapshot.id,
         };
     }
@@ -320,7 +360,7 @@ export const askClassEvaluationQuestion = ({
         || right.gradeRank - left.gradeRank
     ))[0];
 
-    if (fixedQuestion.id === 'weekly_performance') {
+    if (questionIntent === 'weekly_performance') {
         const fullScoreDimensions = rankings.filter(item => item.score === item.maxScore);
         const topTwoDeduction = roundScore(
             (dimensionDeductions[0]?.deduction ?? 0) + (dimensionDeductions[1]?.deduction ?? 0),
@@ -360,45 +400,56 @@ export const askClassEvaluationQuestion = ({
             ],
             context: createContext(snapshot, periodRecords),
             evidenceRefs: periodRecords.map(record => record.id),
-            promptVersion: getPromptVersion('weekly_performance'),
+            promptVersion: getPromptVersion(),
             dataSnapshotId: snapshot.id,
         };
     }
 
-    if (fixedQuestion.id === 'deduction_patterns') {
-        const topTwo = dimensionDeductions.slice(0, 2);
+    if (questionIntent === 'deduction_patterns') {
+        const scopedRecords = scopeRecordsForQuestion(normalizedQuestion, periodRecords);
+        const scopedPrioritizedRecords = prioritizeRecords(scopedRecords);
+        const scopedDimensionDeductions = getDimensionDeductions(scopedRecords);
+        const scopedDeduction = roundScore(scopedRecords.reduce((sum, record) => sum + record.deduction, 0));
+        const hasSpecificScope = scopedRecords.length < periodRecords.length;
+        const topTwo = scopedDimensionDeductions.slice(0, 2);
         const topTwoDeduction = roundScore(topTwo.reduce((sum, item) => sum + item.deduction, 0));
-        const concentration = Math.round((topTwoDeduction / snapshot.deduction) * 100);
-        const largestRecord = prioritizedRecords[0];
-        const highImpactShare = Math.round((largestRecord.deduction / snapshot.deduction) * 100);
-        const repeatedDimensions = dimensionDeductions.filter(item => item.count > 1);
+        const concentration = Math.round((topTwoDeduction / scopedDeduction) * 100);
+        const largestRecord = scopedPrioritizedRecords[0];
+        const highImpactShare = Math.round((largestRecord.deduction / scopedDeduction) * 100);
+        const repeatedDimensions = scopedDimensionDeductions.filter(item => item.count > 1);
+        const scopeLabel = hasSpecificScope
+            ? Array.from(new Set(scopedRecords.map(record => record.indicator))).slice(0, 2).join('、')
+            : '本周';
+        const asksForRule = includesAny(normalizedQuestion, ['规则', '依据']);
 
         return {
             answerType: 'deduction_patterns',
-            message: `本周共${snapshot.recordCount}笔扣分，合计扣${formatScore(snapshot.deduction)}分，问题主要集中在${topTwo.map(item => item.dimension).join('和')}。`,
+            message: `${scopeLabel}共${scopedRecords.length}笔扣分，合计扣${formatScore(scopedDeduction)}分，主要涉及${topTwo.map(item => item.dimension).join('和')}。`,
             metrics: [
-                { label: '累计扣分', value: `-${formatScore(snapshot.deduction)}分`, tone: 'negative' },
-                { label: '扣分记录', value: `${snapshot.recordCount}笔` },
-                { label: '扣分最多', value: mostDeducted.dimension },
+                { label: hasSpecificScope ? '相关扣分' : '累计扣分', value: `-${formatScore(scopedDeduction)}分`, tone: 'negative' },
+                { label: hasSpecificScope ? '相关记录' : '扣分记录', value: `${scopedRecords.length}笔` },
+                { label: '主要分类', value: scopedDimensionDeductions[0].dimension },
             ],
-            breakdown: summarizeByDimension(periodRecords),
+            breakdown: summarizeByDimension(scopedRecords),
             analysis: [
                 createInsight('问题较集中', `${topTwo.map(item => item.dimension).join('、')}合计扣${formatScore(topTwoDeduction)}分，占全部扣分的${concentration}%。`),
-                createInsight('高影响事件', `${largestRecord.indicator}单次扣${formatScore(largestRecord.deduction)}分，占本周扣分的${highImpactShare}%。`),
-                createInsight(
-                    '重复发生',
-                    repeatedDimensions.length > 0
-                        ? `${repeatedDimensions.map(item => `${item.dimension}${item.count}笔`).join('、')}，说明问题并非单次偶发。`
-                        : '本周各分类均为单次记录，暂未发现重复发生的分类。',
-                ),
+                createInsight('高影响事件', `${largestRecord.indicator}单次扣${formatScore(largestRecord.deduction)}分，占相关扣分的${highImpactShare}%。`),
+                asksForRule
+                    ? createInsight('扣分依据', largestRecord.rule)
+                    : createInsight(
+                        '重复发生',
+                        repeatedDimensions.length > 0
+                            ? `${repeatedDimensions.map(item => `${item.dimension}${item.count}笔`).join('、')}，说明问题并非单次偶发。`
+                            : '相关分类均为单次记录，暂未发现重复发生的分类。',
+                    ),
             ],
             suggestions: [
                 createInsight('先看高影响扣分', `优先复盘${largestRecord.indicator}，单次减少此类问题对周总分改善最直接。`),
-                createInsight('持续观察高频项', `重点观察${mostDeducted.dimension}，对照逐笔记录判断同类场景是否继续出现。`),
+                createInsight('持续观察高频项', `重点观察${scopedDimensionDeductions[0].dimension}，对照逐笔记录判断同类场景是否继续出现。`),
             ],
-            context: createContext(snapshot, prioritizedRecords),
-            evidenceRefs: prioritizedRecords.map(record => record.id),
-            promptVersion: getPromptVersion('deduction_patterns'),
+            context: createContext(snapshot, scopedPrioritizedRecords),
+            evidenceRefs: scopedPrioritizedRecords.map(record => record.id),
+            promptVersion: getPromptVersion(),
             dataSnapshotId: snapshot.id,
         };
     }
@@ -459,7 +510,7 @@ export const askClassEvaluationQuestion = ({
         ],
         context: createContext(snapshot, focusRecords),
         evidenceRefs: focusRecords.map(record => record.id),
-        promptVersion: getPromptVersion('next_week_focus'),
+        promptVersion: getPromptVersion(),
         dataSnapshotId: snapshot.id,
     };
 };

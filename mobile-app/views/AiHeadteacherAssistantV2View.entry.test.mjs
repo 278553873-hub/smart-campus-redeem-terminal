@@ -34,18 +34,26 @@ requireText(viewSource, 'centerContent={<ClassSwitchButton', '班级切换应放
 assert.ok(!viewSource.includes('AssistantSubpageHeader title='), 'V2 标题栏不应继续显示页面名称。');
 requireText(viewSource, '<HomeroomClassPickerSheet', 'V2 应复用带班班级选择组件。');
 requireText(viewSource, '<MobileBottomSheet', '扣分明细应使用公共底部抽屉渐进披露。');
-assert.ok(!viewSource.includes('AutoResizeTextarea'), '固定问题模式不应保留自由文字输入。');
-assert.ok(!viewSource.includes('SpeechRecognition'), '固定问题模式不应保留自由语音输入。');
-assert.ok(!viewSource.includes('latestSuggestions'), '回答后不应生成新的动态追问。');
+requireText(viewSource, '<AutoResizeTextarea', '自由对话应使用自动增高文字输入框。');
+requireText(viewSource, 'SpeechRecognitionConstructor', '自由对话应支持浏览器语音识别能力。');
+requireText(viewSource, "'按住说话'", '底部输入区应提供语音输入。');
+requireText(viewSource, 'aria-label="切换到文字输入"', '语音模式应能切换到文字输入。');
+requireText(viewSource, 'aria-label="切换到语音输入"', '文字模式应能切换回语音输入。');
+requireText(viewSource, 'aria-label="发送问题"', '文字模式应提供明确的发送入口。');
 assert.ok(!viewSource.includes('Camera'), '班主任 Agent 对话不应提供拍照入口。');
-assert.ok(!viewSource.includes('Plus'), '固定问题列表不应提供添加入口。');
+assert.ok(!viewSource.includes('Plus'), '对话输入栏不应提供添加入口。');
 requireText(viewSource, '数据概览', '完整周报应先展示确定性数据统计。');
 requireText(viewSource, '本周整体表现', '完整周报应包含整体表现分析。');
 requireText(viewSource, '主要扣分问题', '完整周报应包含扣分问题分析。');
 requireText(viewSource, '下周关注重点', '完整周报应包含下周指导建议。');
 requireText(viewSource, '<Sparkles', '人工智能分析应使用清晰、统一的图标。');
 requireText(viewSource, '查看依据', '回答应提供逐笔数据依据入口。');
-requireText(viewSource, '内容由人工智能基于班级评价台账生成', '页面应披露人工智能内容来源。');
+requireText(viewSource, '内容由AI生成仅供参考。', '页面应在输入栏下方披露人工智能内容。');
+assert.ok(
+  viewSource.indexOf('<QuestionComposer') < viewSource.indexOf('内容由AI生成仅供参考。'),
+  '人工智能内容提示应放在对话输入控件下方。',
+);
+requireText(viewSource, 'className="shrink-0 bg-transparent px-3 pt-1"', '输入控件不应再单独占用底部安全区。');
 for (const unrelatedCopy of ['责任拆分', '整改状态', '教师组织责任']) {
   assert.ok(!viewSource.includes(unrelatedCopy), `页面不应展示系统不存在的“${unrelatedCopy}”。`);
 }
@@ -60,18 +68,28 @@ requireText(viewSource, 'headteacher-agent-glass', '本周数据卡片应使用�
 requireText(viewSource, '本周数据', '首屏应展示本周数据面板。');
 requireText(viewSource, '本周总分', '收起态应展示本周总分。');
 requireText(viewSource, '年级排名', '收起态应明确展示年级排名。');
+requireText(viewSource, '学校排名', '收起态应明确展示学校排名。');
+requireText(viewSource, 'grid grid-cols-3 gap-3', '本周数据应并列展示总分、年级排名和学校排名。');
 assert.ok(!viewSource.includes('当前排名'), '总分排名不应继续使用含义模糊的当前排名文案。');
 assert.ok(!viewSource.includes('班级排名'), '周数据子页不应继续使用含义模糊的班级排名文案。');
 requireText(viewSource, 'h-[148px]', '首屏头图区应保持紧凑，避免数据卡下沉。');
-requireText(viewSource, '班级周评分析', '首屏应明确展示完整周报任务。');
-requireText(viewSource, '生成本周班级评比分析', '未生成时应提供单一主任务入口。');
-requireText(viewSource, '查看本周班级评比分析', '已生成时主任务应变为直接查看。');
+assert.ok(!viewSource.includes('weekly-analysis-title'), '首页不应再展示班级周评分析板块。');
 assert.equal(
   (viewSource.match(/setHistoryOpen\(true\)/g) ?? []).length,
   1,
   '往期报告入口只应出现在报告详情页，不应占用首页外层空间。',
 );
 requireText(viewSource, '打开周数据页面', '日期切换入口应打开独立周数据页面。');
+requireText(viewSource, 'OVERVIEW_RECOMMENDED_QUESTIONS', '首页应提供紧凑的推荐问题。');
+requireText(viewSource, '可以这样问', '推荐问题应使用简短、易理解的标题。');
+requireText(viewSource, 'recommendedQuestions={OVERVIEW_RECOMMENDED_QUESTIONS}', '推荐问题应合并到本周数据卡片内。');
+requireText(viewSource, 'whitespace-normal break-words', '推荐问题应完整展示并支持换行。');
+assert.ok(!viewSource.includes('aria-labelledby="recommended-questions-title">\n                        <h2'), '首页不应在数据卡外单独展示推荐问题。');
+requireText(viewSource, 'conversationOpen', '发起提问后应进入独立对话态。');
+requireText(viewSource, '班级评价对话', '对话态应明确当前处理的是班级评价数据。');
+requireText(viewSource, 'getFollowUpQuestions', '回答后应提供不重复当前问题的连续追问。');
+requireText(viewSource, 'askClassEvaluationQuestion', '自由问题应进入班级评价问答领域逻辑。');
+requireText(viewSource, 'getRecordsFromAnswer', '对话答案应能按证据编号查看逐笔记录。');
 requireText(viewSource, 'rankings.map', '展开态应展示五项一级指标的得分和排名。');
 requireText(viewSource, '<span>分类数据</span>', '收起态入口应命名为分类数据。');
 requireText(viewSource, 'justify-end px-4', '分类数据入口应放在数据卡片右侧。');
@@ -86,6 +104,7 @@ requireText(viewSource, '<DimensionRankingTable', '展开态应使用四列分�
 requireText(viewSource, 'formatCompactScore(item.score)', '分类数据表的整数分值不应重复显示无效小数位。');
 requireText(viewSource, '<DimensionScoreBullet score={item.score} maxScore={item.maxScore} />', '分类数据分数列应使用紧凑子弹图展示当前分与满分。');
 requireText(viewSource, '(score / maxScore) * 100', '子弹图长度应按当前分与满分的比例计算。');
+assert.ok(!viewSource.includes('-right-px -top-0.5 h-2.5 w-px'), '分类数据进度条不应再展示竖向满分标记。');
 requireText(viewSource, '<span>指标</span>', '指标应出现在分类数据表头中。');
 for (const header of ['分数/总分', '年级排名', '全校排名']) {
   requireText(viewSource, `<span className="text-center">${header}</span>`, `${header}应出现在分类数据表头中。`);
@@ -96,11 +115,10 @@ assert.ok(!viewSource.includes('grid grid-cols-2 divide-x divide-[var(--tm-borde
 assert.ok(!viewSource.includes(' transition '), 'V2 页面交互不得使用会监听所有属性的笼统过渡。');
 requireText(viewSource, '展示明细', '分类数据下方应提供居中的展示明细入口。');
 requireText(viewSource, 'find(item => item.recordCount > 0)?.dimension', '展示明细应默认打开本周期第一项有扣分的指标。');
-requireText(viewSource, 'onOpenDimensionDetails={setDetailDimension}', '点击一级指标应直接打开对应指标的扣分明细。');
-requireText(viewSource, 'role="tablist" aria-label="一级指标"', '扣分明细弹窗顶部应提供一级指标切换。');
-requireText(viewSource, 'records.filter(record => record.dimension === detailDimension)', '弹窗内容应只展示所选一级指标在本周期内的扣分记录。');
-requireText(viewSource, "dimensionDeduction > 0 ? '-' : ''", '无扣分指标不应显示负零分。');
-requireText(viewSource, '本周期该指标暂无扣分', '无扣分记录时应提供明确空状态。');
+requireText(viewSource, 'initialDimension={detailInitialDimension ?? undefined}', '分类明细应在子页定位到当前一级指标。');
+requireText(viewSource, 'setWeekDetailOpen(true)', '点击分类行或展示明细应进入周数据子页。');
+assert.ok(!viewSource.includes('DimensionDetailSheetHeader'), '分类明细不应再使用底部弹窗。');
+requireText(viewSource, 'role="tablist" aria-label="一级指标"', '周数据子页应提供一级指标切换。');
 assert.ok(!viewSource.includes('expandedDimension'), '分类数据不应继续在主卡片内展开扣分记录。');
 requireText(viewSource, 'WeekDataDetailPage', '日期入口应使用独立周数据页。');
 requireText(viewSource, 'aria-label="查看上一周"', '周数据页顶部应支持查看上一周。');
@@ -124,8 +142,7 @@ requireText(viewSource, 'activeReport.evidenceRecords', '历史报告的查看�
 requireText(viewSource, '返回概览', '报告态应支持返回周评概览。');
 assert.ok(!viewSource.includes('继续分析'), '报告页不应重复展示三个固定问题。');
 assert.ok(!viewSource.includes('role="tablist" aria-label="报告类型"'), '往期报告不应再按三个问题类型分栏。');
-assert.ok(!viewSource.includes('ChatMessage'), '固定报告不应保留聊天消息模型。');
-assert.ok(!viewSource.includes('conversationOpen'), '固定报告不应继续使用对话态命名。');
-assert.ok(!viewSource.includes('setMessages'), '报告页不应再构造用户消息气泡。');
+requireText(viewSource, 'interface ChatMessage', '自由对话应使用独立消息模型，不写入周报历史。');
+requireText(viewSource, '返回概览', '对话态应支持返回 V2 概览。');
 
 console.log('AiHeadteacherAssistantV2View entry assertions passed');

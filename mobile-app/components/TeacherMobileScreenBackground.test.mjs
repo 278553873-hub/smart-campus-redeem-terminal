@@ -28,6 +28,6 @@ assert.match(app, /<TeacherMobileScreenBackground \/>/);
 assert.doesNotMatch(app, /radial-gradient\(/);
 assert.doesNotMatch(record, /TeacherMobileScreenBackground|TeacherRecordAuroraBackground/);
 assert.match(me, /bg-transparent/);
-assert.match(studentDetail, /relative h-full min-h-0 overflow-hidden bg-transparent/);
+assert.match(studentDetail, /relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent/);
 
 console.log('teacher mobile public screen background assertions passed');

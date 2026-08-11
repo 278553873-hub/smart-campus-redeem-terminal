@@ -40,7 +40,7 @@ requireText(appSource, '<StudentBasicEditView', 'App 应渲染学生基础信息
 requireText(appSource, '<StudentCoinDetailView', 'App 应渲染校园币详情页。');
 requireText(appSource, 'onEditBasicInfo={() => navigateTo(\'student_basic_edit\')}', '学生详情页应能进入基础信息编辑页。');
 requireText(appSource, 'onViewCampusCoins={() => navigateTo(\'student_coin_detail\')}', '学生详情页资产区应能进入校园币详情页。');
-requireText(appSource, 'currentView !== \'student_detail\'', '学生详情页不应再显示独立页面标题栏。');
+requireText(appSource, 'currentView !== \'student_detail\'', '学生详情页应由页面内部渲染标题栏，App 不应重复渲染通用标题栏。');
 requireText(appSource, 'onBack={goBack}', '学生详情页必须保留返回能力。');
 requireText(appSource, "'student_detail'", '学生详情页应具备独立沉浸背景判断。');
 requireText(appSource, 'TeacherMobileScreenBackground', '应提供教师手机端公共屏幕背景组件。');
@@ -48,32 +48,33 @@ requireText(appSource, "'student_detail', 'student_archive'", '学生详情页�
 const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
 requireText(plainBackgroundList, "'student_detail'", '学生详情页应使用纯白标题栏、浅灰内容区背景。');
 requireText(appSource, '<TeacherMobileScreenBackground variant="plain" />', '学生详情页所属页面集合应返回公共纯色屏幕背景。');
-requireText(appSource, '<TeacherMobileScreenBackground variant="student-detail" />', '学生详情页应使用独立的沉浸顶部公共背景。');
+requireText(appSource, '<TeacherMobileScreenBackground variant="student-detail" />', '学生详情页应使用独立的纯色公共背景。');
 requireText(screenBackgroundSource, "variant === 'student-detail'", '公共屏幕背景组件应实现学生详情背景变体。');
-requireText(screenBackgroundSource, 'bg-[var(--tm-page-plain-content-bg)]', '学生详情应使用与内容区一致的全屏底色。');
-requireText(screenBackgroundSource, 'radial-gradient(circle_at_94%_-6%,var(--tm-glow-primary),transparent_36%)', '学生详情顶部应使用自然透明的品牌弥散光。');
-requireText(screenBackgroundSource, 'radial-gradient(circle_at_4%_2%,var(--tm-glow-secondary-subtle),transparent_32%)', '学生详情顶部应使用低透明辅助弥散光平衡氛围。');
-if (screenBackgroundSource.includes('--tm-student-detail-header-height') || screenBackgroundSource.includes('linear-gradient(180deg,var(--tm-bg-surface-soft)')) {
-  throw new Error('学生详情背景不应继续使用固定高度线性渐变，避免横向截断。');
+const studentDetailBackgroundBlock = screenBackgroundSource.match(/if \(variant === 'student-detail'\) \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+requireText(studentDetailBackgroundBlock, 'return <div className="absolute inset-0 bg-[var(--tm-page-plain-content-bg)]"', '学生详情应使用与内容区一致的全屏纯色底色。');
+if (studentDetailBackgroundBlock.includes('gradient') || studentDetailBackgroundBlock.includes('--tm-glow-')) {
+  throw new Error('学生详情屏幕背景不应继续使用渐变或弥散光。');
 }
 if (tokenSource.includes("'--tm-student-detail-header-height'")) {
   throw new Error('固定高度线性渐变移除后，应清理失效的学生详情背景高度 Token。');
 }
+requireText(tokenSource, "'--tm-student-detail-profile-bg'", '学生信息卡的品牌氛围应由组件 Token 统一管理。');
+requireText(dashboardSource, '[background:var(--tm-student-detail-profile-bg)]', '学生信息卡应使用独立的品牌氛围背景 Token。');
 requireText(appSource, "hasPlainBackground ? 'z-[2]' : 'z-auto'", '学生详情内容层必须高于纯白标题背景，避免返回、档案和学籍入口被遮挡。');
 requireText(appSource, "'student_collection_detail'", 'App 路由应包含学生采集记录详情页。');
 requireText(appSource, 'getCompletedStudentCollectionHistory(', '学生详情必须从问卷数据层读取已完成采集记录。');
 requireText(appSource, '<StudentCollectionRecordDetailView', '点击采集记录后必须进入独立详情页。');
-requireText(appSource, "setStudentDetailInitialTab('collection')", '从采集详情返回后应保持在采集记录页签。');
-requireText(appSource, "setStudentDetailInitialTab('overview')", '从学生列表进入详情时必须默认展示成长概览。');
-if (appSource.includes("setStudentDetailInitialTab('growth')")) {
-  throw new Error('学生详情入口不应继续写入已移除的 growth 页签，否则首屏正文为空。');
+requireText(appSource, "setStudentDetailInitialSection('collection')", '从采集详情返回后应保持在采集记录子页面。');
+requireText(appSource, "setStudentDetailInitialSection('evaluation')", '从学生列表进入详情时必须默认展示评价记录。');
+if (appSource.includes("setStudentDetailInitialSection('overview')") || appSource.includes("setStudentDetailInitialSection('growth')")) {
+  throw new Error('学生详情入口不应继续写入已移除的成长概览页签。');
 }
 
 requireText(dashboardSource, 'onEditBasicInfo', '学生详情总览应接收基础信息编辑入口。');
 const scrollHandledViews = appSource.match(/const viewHandlesScroll = \[([^\]]+)\]/)?.[1] ?? '';
 requireText(scrollHandledViews, "'student_detail'", '学生详情页应在手机屏幕内自行管理滚动。');
-requireText(dashboardSource, 'relative h-full min-h-0 overflow-hidden bg-transparent', '学生详情根容器应占满屏幕并保持透明，让公共背景完整显示。');
-requireText(dashboardSource, 'h-full overflow-y-auto pb-safe no-scrollbar', '学生详情内容应独立滚动，避免底部抽屉挂到长页面底部。');
+requireText(dashboardSource, 'relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent', '学生详情根容器应占满屏幕、保持透明，并支持固定标题栏布局。');
+requireText(dashboardSource, 'min-h-0 flex-1 overflow-y-auto pb-safe no-scrollbar', '学生详情标题栏下方内容应独立滚动，避免底部抽屉挂到长页面底部。');
 requireText(dashboardSource, 'aria-label="编辑基础信息"', '学生头像编辑入口必须保留无障碍标签。');
 requireText(dashboardSource, '<Camera', '学生头像右下角必须展示相机图标。');
 if (dashboardSource.includes('<Pencil')) {
@@ -109,8 +110,15 @@ requireText(dashboardSource, 'A. Student Profile Card', '学生信息卡应独�
 requireText(dashboardSource, 'Student Detail Navigation', '学生详情页应提供独立导航层。');
 requireText(dashboardSource, 'aria-label="返回"', '学生详情独立导航层必须保留返回按钮。');
 requireText(dashboardSource, '<ChevronLeft', '学生详情独立导航层应使用返回图标。');
-requireText(dashboardSource, 'mx-4 overflow-hidden rounded-[var(--tm-radius-card)]', '学生基本信息应呈现为有左右留白的独立卡片。');
-requireText(dashboardSource, 'bg-[var(--tm-bg-surface-glass)]', '学生信息卡应使用教师端轻玻璃表面 Token。');
+requireText(dashboardSource, 'bg-[var(--tm-page-plain-header-bg)]', '学生详情标题栏应使用教师端纯白标题栏背景 Token。');
+requireText(dashboardSource, '<h1 className=', '学生详情标题栏应使用页面主标题语义。');
+requireText(dashboardSource, '<StudentDetailHeader title="学生详情"', '学生详情标题栏应显示“学生详情”。');
+requireText(dashboardSource, 'text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]', '学生详情标题应居中并使用教师端标题字号与文字 Token。');
+requireText(dashboardSource, '[padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]', '学生详情标题栏应避让微信右上角胶囊安全区。');
+requireText(dashboardSource, 'h-[var(--tm-size-touch)] w-[var(--tm-size-touch)]', '学生详情返回按钮应保持 44 像素触控区域。');
+requireText(dashboardSource, 'mx-4 mt-4 overflow-hidden rounded-[var(--tm-radius-card)]', '学生基本信息应与白色标题栏保持间距，并呈现为有左右留白的独立卡片。');
+const studentProfileBackgroundToken = tokenSource.match(/'--tm-student-detail-profile-bg': ([^\n]+)/)?.[1] ?? '';
+requireText(studentProfileBackgroundToken, 'var(--tm-bg-surface-glass)', '学生信息卡背景 Token 应继承教师端轻玻璃表面。');
 if (dashboardSource.includes('mt-4 text-xs font-medium text-slate-500')) {
   throw new Error('学生状态不应单独占一行，应移动到姓名下方的信息标签组。');
 }
@@ -134,10 +142,10 @@ requireText(termSelectorSource, '<StudentTimeRangeSelector', '学期筛选必须
 requireText(timeRangeSelectorSource, 'h-11 w-full', '时间选择器必须满足 44px 触控高度。');
 requireText(termSelectorSource, '（本学期）', '学期选择器必须明确当前学期。');
 requireText(dashboardSource, '本学期五育积分', '五育积分应明确为本学期实时累计结果。');
-requireText(dashboardSource, 'currentTermOption', '成长概览必须固定读取当前学期数据。');
-const overviewSource = dashboardSource.slice(dashboardSource.indexOf('const renderOverviewTab'), dashboardSource.indexOf('const renderReportTab'));
-if (overviewSource.includes('<StudentTermSelector')) {
-  throw new Error('成长概览只展示本学期数据，不应提供历史学期筛选。');
+requireText(dashboardSource, 'currentTermOption', '评价记录页必须固定读取当前学期数据。');
+const evaluationSource = dashboardSource.slice(dashboardSource.indexOf('const renderEvaluationTab'), dashboardSource.indexOf('const renderReportTab'));
+if (evaluationSource.includes('<StudentTermSelector')) {
+  throw new Error('评价记录页只展示本学期数据，不应提供历史学期筛选。');
 }
 if (dashboardSource.includes('Filter Bar (Term Selector)') || dashboardSource.includes('merged basic info')) {
   throw new Error('学生信息、资产和学期筛选不应继续使用旧的混合布局。');
@@ -194,32 +202,33 @@ for (const required of [
 requireText(evaluationRecordsSource, '--tm-record-positive-bg', '评价记录卡片应使用正向记录 Token。');
 requireText(evaluationRecordsSource, '--tm-record-negative-bg', '评价记录卡片应使用负向记录 Token。');
 requireText(dashboardSource, 'showClassAvg', '五育能力模型应保留班级平均开关。');
-requireText(overviewSource, '<FiveEducationRadar scores={currentScores}', '成长概览必须直接展示五育雷达图。');
+requireText(evaluationSource, 'aria-expanded={showAbilityModel}', '五育积分摘要应提供可访问的能力模型展开入口。');
+requireText(evaluationSource, 'showAbilityModel &&', '五育雷达图默认应折叠，避免下压评价记录。');
+requireText(evaluationSource, '<FiveEducationRadar scores={currentScores}', '展开后必须复用现有五育雷达图。');
 if (dashboardSource.includes('showFiveComparison') || dashboardSource.includes('班级对比')) {
-  throw new Error('五育雷达图不应再通过班级对比按钮延迟展示。');
+  throw new Error('五育能力模型不应使用语义重复的班级对比入口。');
 }
-requireText(overviewSource, '<StudentEvaluationRecordsView', '成长概览必须直接展示评价记录列表。');
-requireText(overviewSource, 'embedded', '评价记录必须复用页内模式，避免复制筛选与列表逻辑。');
-requireText(overviewSource, 'selectedTerm={currentTermOption.value}', '成长概览中的评价记录必须固定为本学期。');
-requireText(overviewSource, 'onSelectRecord={(record) => setActiveEvaluationRecordId(record.id)}', '点击评价记录后必须渐进披露单条详情。');
-if (overviewSource.includes('bodyGrowthMetrics') || overviewSource.includes('onViewBodyMeasurements') || overviewSource.includes('>成长数据<')) {
-  throw new Error('成长概览不应展示成长数据摘要或入口。');
+requireText(evaluationSource, '<StudentEvaluationRecordsView', '评价记录页必须直接展示评价记录列表。');
+requireText(evaluationSource, 'embedded', '评价记录必须复用页内模式，避免复制筛选与列表逻辑。');
+requireText(evaluationSource, 'selectedTerm={currentTermOption.value}', '评价记录必须固定为本学期。');
+requireText(evaluationSource, 'onSelectRecord={(record) => setActiveEvaluationRecordId(record.id)}', '点击评价记录后必须渐进披露单条详情。');
+if (evaluationSource.includes('bodyGrowthMetrics') || evaluationSource.includes('onViewBodyMeasurements') || evaluationSource.includes('>成长数据<')) {
+  throw new Error('评价记录页不应展示成长数据摘要或入口。');
 }
 if (dashboardSource.includes('上月对比') || dashboardSource.includes('showLastMonth') || dashboardSource.includes('年级平均')) {
   throw new Error('五育能力模型不应再展示上月对比或年级平均，应改为当前与班级平均。');
 }
-requireText(dashboardSource, "useState<'overview' | 'report' | 'collection'>", '学生详情一级页签应拆分为成长概览、成长报告和采集记录。');
-requireText(dashboardSource, "initialTab = 'overview'", '学生详情应默认进入成长概览。');
-requireText(dashboardSource, '成长概览', '学生详情必须提供成长概览页签。');
-requireText(dashboardSource, '成长报告', '学生详情必须保留成长报告页签。');
-requireText(evaluationRecordsSource, '>评价记录</h3>', '学生详情成长概览必须保留评价记录板块。');
-requireText(dashboardSource, '采集记录', '学生详情必须新增采集记录页签。');
-requireText(dashboardSource, "activeTab === 'overview' && renderOverviewTab()", '实时五育积分必须只在成长概览展示。');
-requireText(dashboardSource, "activeTab === 'report' && renderReportTab()", '阶段报告必须收敛到成长报告页签。');
-if (dashboardSource.includes("activeTab === 'evaluation'")) {
-  throw new Error('评价记录不应继续占用学生详情一级页签。');
+requireText(dashboardSource, "useState<'evaluation' | 'report'>", '学生详情一级页签只应保留评价记录和成长报告。');
+requireText(dashboardSource, "initialSection = 'evaluation'", '学生详情应默认进入评价记录。');
+if (dashboardSource.includes('>成长概览</span>') || dashboardSource.includes("activeTab === 'collection'")) {
+  throw new Error('学生详情不应继续展示成长概览或采集记录一级页签。');
 }
-requireText(dashboardSource, 'initialRecordId={activeEvaluationRecordId}', '单条评价记录详情应从成长概览进入完整详情页。');
+requireText(dashboardSource, '>评价记录</span>', '学生详情必须提供评价记录页签。');
+requireText(dashboardSource, '成长报告', '学生详情必须保留成长报告页签。');
+requireText(evaluationRecordsSource, '>评价记录</h3>', '学生详情必须保留评价记录板块。');
+requireText(dashboardSource, "activeTab === 'evaluation' && renderEvaluationTab()", '实时五育积分和评价列表必须收敛到评价记录页签。');
+requireText(dashboardSource, "activeTab === 'report' && renderReportTab()", '阶段报告必须收敛到成长报告页签。');
+requireText(dashboardSource, 'initialRecordId={activeEvaluationRecordId}', '单条评价记录详情应从评价记录页进入完整详情页。');
 requireText(evaluationRecordsSource, 'record.evaluation_date >= activeTerm.startDate', '评价记录必须按所选学期过滤。');
 requireText(evaluationRecordsSource, 'ariaLabel="筛选评价记录学期"', '评价记录二级页必须继承并允许切换学期。');
 requireText(dashboardSource, 'onClick={() => setShowStatusActionSheet(true)}', '学生卡片顶部的学籍入口应直接打开学籍状态抽屉。');
@@ -227,16 +236,16 @@ requireText(dashboardSource, '>学籍</span>', '学生卡片顶部必须显示�
 if (dashboardSource.includes('showMoreActionsSheet') || dashboardSource.includes('aria-label="更多学生操作"')) {
   throw new Error('学籍管理不应再经过只有一个操作的更多菜单。');
 }
-requireText(dashboardSource, 'aria-label="查看学生成长档案"', '学生成长档案应使用学生卡片顶部的轻量入口。');
-requireText(dashboardSource, 'onClick={onOpenStudentArchive}', '学生成长档案入口应直接进入档案页面。');
-requireText(dashboardSource, '<FolderOpen', '学生成长档案入口应使用文件夹图标表达档案语义。');
-requireText(dashboardSource, '>档案</span>', '学生成长档案入口必须显示中文“档案”。');
+requireText(dashboardSource, 'aria-label="查看学生资料"', '学生资料应使用学生卡片顶部的轻量入口。');
+requireText(dashboardSource, 'onClick={() => setShowResourcesSheet(true)}', '学生资料入口应打开公共资料抽屉。');
+requireText(dashboardSource, '<FolderOpen', '学生资料入口应使用文件夹图标表达资料语义。');
+requireText(dashboardSource, '>资料</span>', '学生资料入口必须显示中文“资料”。');
 const studentHeaderActionsSource = dashboardSource.slice(
-  dashboardSource.indexOf('aria-label="查看学生成长档案"'),
+  dashboardSource.indexOf('aria-label="查看学生资料"'),
   dashboardSource.indexOf('<div className="mt-2 flex flex-wrap items-center gap-1.5">'),
 );
 if ((studentHeaderActionsSource.match(/text-\[var\(--tm-text-secondary\)\]/g) || []).length !== 2) {
-  throw new Error('学生卡片顶部的“档案”和“学籍”应统一使用中性深灰。');
+  throw new Error('学生卡片顶部的“资料”和“学籍”应统一使用中性深灰。');
 }
 if (studentHeaderActionsSource.includes('--tm-brand-primary')) {
   throw new Error('学生卡片顶部并列入口不应使用品牌红制造错误的主次关系。');
@@ -244,21 +253,25 @@ if (studentHeaderActionsSource.includes('--tm-brand-primary')) {
 if (dashboardSource.includes('BookOpenCheck')) {
   throw new Error('学生成长档案入口不应继续使用语义含混的带勾书本图标。');
 }
-if (dashboardSource.indexOf('aria-label="查看学生成长档案"') > dashboardSource.indexOf('{/* 2. Scrollable Content */}')) {
-  throw new Error('学生成长档案入口必须位于学生身份卡顶部。');
+if (dashboardSource.indexOf('aria-label="查看学生资料"') > dashboardSource.indexOf('{/* 2. Scrollable Content */}')) {
+  throw new Error('学生资料入口必须位于学生身份卡顶部。');
 }
 const studentCardStart = dashboardSource.indexOf('{/* A. Student Profile Card */}');
 const studentCardEnd = dashboardSource.indexOf('{/* 2. Scrollable Content */}');
-for (const actionLabel of ['aria-label="查看学生成长档案"', 'aria-label="管理学籍状态"']) {
+for (const actionLabel of ['aria-label="查看学生资料"', 'aria-label="管理学籍状态"']) {
   const actionIndex = dashboardSource.indexOf(actionLabel);
   if (actionIndex < studentCardStart || actionIndex > studentCardEnd) {
     throw new Error(`学生卡片操作未放入卡片内部：${actionLabel}`);
   }
 }
-if (dashboardSource.includes('>学生成长档案</span>')) {
-  throw new Error('学生成长档案不应继续作为更多操作抽屉中的文字菜单项。');
-}
-requireText(dashboardSource, '<StudentCollectionHistoryTab items={collectionHistory}', '采集记录页签必须使用独立业务组件。');
+requireText(dashboardSource, '<MobileBottomSheet', '学生资料必须复用公共底部抽屉。');
+requireText(dashboardSource, 'title="学生资料"', '资料抽屉必须使用明确标题。');
+requireText(dashboardSource, '>成长档案</span>', '资料抽屉必须保留成长档案入口。');
+requireText(dashboardSource, '>采集记录</span>', '资料抽屉必须提供采集记录入口。');
+requireText(dashboardSource, 'onOpenStudentArchive();', '成长档案入口必须进入现有档案页面。');
+requireText(dashboardSource, 'setShowCollectionHistory(true)', '采集记录入口必须进入独立子页面。');
+requireText(dashboardSource, '<StudentDetailHeader title="采集记录"', '采集记录子页面必须有明确标题和返回路径。');
+requireText(dashboardSource, '<StudentCollectionHistoryTab', '采集记录子页面必须复用独立业务组件。');
 requireText(dashboardSource, 'termOptions={STUDENT_TERM_OPTIONS}', '采集记录必须复用成长数据的学期定义。');
 requireText(dashboardSource, 'selectedTerm={selectedTerm}', '成长报告与采集记录必须共享所选学期。');
 requireText(dashboardSource, 'onSelectedTermChange={setSelectedTerm}', '采集记录必须能够切换共享学期。');

@@ -294,6 +294,7 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
     'homework_entry',
     'student_detail',
     'student_body_measurements',
+    'mine_settings',
     'subject_management',
     'department_management',
     'coin_issuance',
@@ -326,7 +327,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     // Selection States
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [selectedStudent, setSelectedStudent] = useState<Student>(MOCK_STUDENTS_CLASS_1[0]);
-    const [studentDetailInitialTab, setStudentDetailInitialTab] = useState<'overview' | 'report' | 'collection'>('overview');
+    const [studentDetailInitialSection, setStudentDetailInitialSection] = useState<'evaluation' | 'report' | 'collection'>('evaluation');
     const [activeStudentCollectionRecord, setActiveStudentCollectionRecord] = useState<StudentCollectionHistoryItem | null>(null);
     const [studentOverrides, setStudentOverrides] = useState<Record<string, Student>>({});
     const [classOverrides, setClassOverrides] = useState<Record<string, ClassInfo>>({});
@@ -599,7 +600,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     const handleSelectStudent = (student: Student) => {
         setSelectedStudent(studentOverrides[student.id] ?? student);
-        setStudentDetailInitialTab('overview');
+        setStudentDetailInitialSection('evaluation');
         navigateTo('student_detail');
     };
 
@@ -1089,7 +1090,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             return <TeacherMobileScreenBackground variant="plain" />;
         }
 
-        if (['class_list', 'student_archive', 'me', 'mine_settings'].includes(currentView)) {
+        if (['class_list', 'student_archive', 'me'].includes(currentView)) {
             return <TeacherMobileScreenBackground />;
         }
 
@@ -1344,7 +1345,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     currentTeacherName={teacherProfile.name}
                                     canEditOtherTeachersEvaluationRecords={canEditOtherTeachersEvaluationRecords}
                                     onUpdateEvaluationRecord={handleUpdateEvaluationRecord}
-                                    initialTab={studentDetailInitialTab}
+                                    initialSection={studentDetailInitialSection}
                                     collectionHistory={getCompletedStudentCollectionHistory(
                                         readQuestionnaires(),
                                         activeStudent.studentNo ?? activeStudent.id,
@@ -1354,7 +1355,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     )}
                                     onViewCollectionRecord={(item) => {
                                         setActiveStudentCollectionRecord(item);
-                                        setStudentDetailInitialTab('collection');
+                                        setStudentDetailInitialSection('collection');
                                         navigateTo('student_collection_detail');
                                     }}
                                     onOpenStudentArchive={() => navigateTo('student_archive')}

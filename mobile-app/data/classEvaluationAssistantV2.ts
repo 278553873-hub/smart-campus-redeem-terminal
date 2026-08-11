@@ -26,6 +26,7 @@ export interface ClassEvaluationWeek {
     status: ClassEvaluationWeekStatus;
     snapshotLabel: string;
     gradeRank: number;
+    schoolRank: number;
     dimensionRankings: ClassEvaluationDimensionRanking[];
     summary: string;
     focus: string;
@@ -41,6 +42,7 @@ export const CLASS_EVALUATION_WEEKS: ClassEvaluationWeek[] = [
         status: 'in_progress',
         snapshotLabel: '截至8月7日 16:36',
         gradeRank: 2,
+        schoolRank: 5,
         dimensionRankings: [
             { dimension: '诗意中队', score: 20, maxScore: 20, gradeRank: 1, schoolRank: 2, gapToFirst: 0, recordCount: 0, tiedForFirst: true },
             { dimension: '安全教育', score: 20, maxScore: 20, gradeRank: 1, schoolRank: 1, gapToFirst: 0, recordCount: 0 },
@@ -60,6 +62,7 @@ export const CLASS_EVALUATION_WEEKS: ClassEvaluationWeek[] = [
         status: 'settled',
         snapshotLabel: '已结算',
         gradeRank: 1,
+        schoolRank: 2,
         dimensionRankings: [
             { dimension: '诗意中队', score: 19.8, maxScore: 20, gradeRank: 2, schoolRank: 3, gapToFirst: 0.2, recordCount: 1 },
             { dimension: '安全教育', score: 19.5, maxScore: 20, gradeRank: 2, schoolRank: 4, gapToFirst: 0.5, recordCount: 2 },
@@ -79,6 +82,7 @@ export const CLASS_EVALUATION_WEEKS: ClassEvaluationWeek[] = [
         status: 'settled',
         snapshotLabel: '已结算',
         gradeRank: 3,
+        schoolRank: 8,
         dimensionRankings: [
             { dimension: '诗意中队', score: 19.6, maxScore: 20, gradeRank: 2, schoolRank: 4, gapToFirst: 0.3, recordCount: 1 },
             { dimension: '安全教育', score: 20, maxScore: 20, gradeRank: 1, schoolRank: 1, gapToFirst: 0, recordCount: 0, tiedForFirst: true },

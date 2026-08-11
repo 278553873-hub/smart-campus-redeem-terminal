@@ -5,13 +5,14 @@ import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
     AwardIcon, GrowthIcon
 } from '../components/Icons';
-import { AlertTriangle, BadgeCheck, Camera, ChevronLeft, ChevronRight, FolderOpen, School } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Camera, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, School } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
 import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
 import StudentEvaluationRecordsView, { type StudentEvaluationRecord } from './StudentEvaluationRecordsView';
+import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import {
     teacherBrandPalette,
     teacherBrandSemantic,
@@ -23,7 +24,7 @@ interface DashboardViewProps {
     scores: ScoreItem[];
     growthReports: GrowthReportItem[];
     onViewTermReport?: () => void; // New optional prop
-    onBack?: () => void;
+    onBack: () => void;
     onEditBasicInfo: () => void;
     onUpdateStudentStatus: (student: Student, status: Student['status']) => void;
     onViewCampusCoins: () => void;
@@ -36,7 +37,7 @@ interface DashboardViewProps {
     onUpdateEvaluationRecord: (record: StudentEvaluationRecord) => void;
     onViewCollectionRecord: (item: StudentCollectionHistoryItem) => void;
     onOpenStudentArchive: () => void;
-    initialTab?: 'overview' | 'report' | 'collection';
+    initialSection?: 'evaluation' | 'report' | 'collection';
 }
 
 const STUDENT_TERM_OPTIONS: StudentTermOption[] = [
@@ -73,6 +74,24 @@ const getFiveEducationTone = (category: string) => {
         default: return { main: teacherBrandSemantic.textSecondary, soft: teacherBrandSemantic.surfaceSoft, strong: teacherBrandSemantic.textPrimary };
     }
 };
+
+const StudentDetailHeader = ({ title, onBack }: { title: string; onBack: () => void }) => (
+    <header className="shrink-0 bg-[var(--tm-page-plain-header-bg)] pt-[var(--mini-program-status-bar-height,0px)]">
+        <div className="relative flex h-[var(--tm-size-touch)] items-center pl-[var(--tm-space-4)] [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]">
+            <button
+                type="button"
+                onClick={onBack}
+                aria-label="返回"
+                className="-ml-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+            >
+                <ChevronLeft className="h-5 w-5" />
+            </button>
+            <h1 className="pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">
+                {title}
+            </h1>
+        </div>
+    </header>
+);
 
 // Helper: Radar Chart Component
 const FiveEducationRadar = ({
@@ -273,16 +292,19 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onUpdateEvaluationRecord,
     onViewCollectionRecord,
     onOpenStudentArchive,
-    initialTab = 'overview',
+    initialSection = 'evaluation',
 }) => {
-    const [activeTab, setActiveTab] = useState<'overview' | 'report' | 'collection'>(initialTab);
+    const [activeTab, setActiveTab] = useState<'evaluation' | 'report'>(initialSection === 'report' ? 'report' : 'evaluation');
 
     // UI States
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
     const [selectedTerm, setSelectedTerm] = useState(STUDENT_TERM_OPTIONS[0].value);
     const [activeEvaluationRecordId, setActiveEvaluationRecordId] = useState<string | null>(null);
+    const [showAbilityModel, setShowAbilityModel] = useState(false);
     const [showCurrent, setShowCurrent] = useState(true);
     const [showClassAvg, setShowClassAvg] = useState(true);
+    const [showResourcesSheet, setShowResourcesSheet] = useState(false);
+    const [showCollectionHistory, setShowCollectionHistory] = useState(initialSection === 'collection');
     const [showStatusActionSheet, setShowStatusActionSheet] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
@@ -337,36 +359,45 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
     // --- Sub-renderers ---
 
-    const renderOverviewTab = () => (
+    const renderEvaluationTab = () => (
         <div className="space-y-3 pb-24 animate-in fade-in duration-300">
-            {/* C. Current Semester Five-Education Summary */}
-            <div className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
-                <div className="relative z-10 flex items-center justify-between px-4 pb-3 pt-4">
+            {/* C. Compact Current Semester Five-Education Summary */}
+            <section className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+                <button
+                    type="button"
+                    onClick={() => setShowAbilityModel(current => !current)}
+                    aria-expanded={showAbilityModel}
+                    className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-3 px-4 text-left active:bg-[var(--tm-bg-surface-soft)]"
+                >
                     <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
                         <AwardIcon className="h-4 w-4 text-[var(--tm-brand-reward)]" />
                         本学期五育积分
+                        <span className="rounded-full bg-[var(--tm-status-positive-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--tm-status-positive-strong)]">实时</span>
                     </h3>
-                    <span className="rounded-full bg-[var(--tm-status-positive-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--tm-status-positive-strong)]">实时</span>
-                </div>
+                    <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">
+                        {showAbilityModel ? '收起' : '能力模型'}
+                        <ChevronDown className={`h-4 w-4 transition-transform ${showAbilityModel ? 'rotate-180' : ''}`} />
+                    </span>
+                </button>
 
-                <div className="grid grid-cols-5 px-2 pb-4">
+                <div className="grid grid-cols-5 px-2 pb-3">
                     {currentScores.map(score => {
                         const tone = getFiveEducationTone(score.category);
                         return (
                             <div key={score.category} className="flex min-w-0 flex-col items-center px-1">
-                                <span className="text-[12px] font-medium text-[var(--tm-text-secondary)]">{score.label}</span>
-                                <span className="mt-1 text-[22px] font-bold leading-none tabular-nums" style={{ color: tone.strong }}>{score.score}</span>
-                                <span className="mt-2 h-1 w-5 rounded-full" style={{ backgroundColor: tone.main }} aria-hidden="true" />
+                                <span className="text-[11px] font-medium text-[var(--tm-text-secondary)]">{score.label}</span>
+                                <span className="mt-1 text-lg font-bold leading-none tabular-nums" style={{ color: tone.strong }}>{score.score}</span>
                             </div>
                         );
                     })}
                 </div>
 
-                <div className="border-t border-[var(--tm-border-subtle)] px-2 pb-3">
-                    <FiveEducationRadar scores={currentScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
-                </div>
-
-            </div>
+                {showAbilityModel && (
+                    <div className="border-t border-[var(--tm-border-subtle)] px-2 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <FiveEducationRadar scores={currentScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
+                    </div>
+                )}
+            </section>
 
             <StudentEvaluationRecordsView
                 embedded
@@ -452,26 +483,31 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         );
     }
 
+    if (showCollectionHistory) {
+        return (
+            <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent font-sans">
+                <StudentDetailHeader title="采集记录" onBack={() => setShowCollectionHistory(false)} />
+                <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-safe no-scrollbar">
+                    <StudentCollectionHistoryTab
+                        items={collectionHistory}
+                        termOptions={STUDENT_TERM_OPTIONS}
+                        selectedTerm={selectedTerm}
+                        onSelectedTermChange={setSelectedTerm}
+                        onOpen={onViewCollectionRecord}
+                    />
+                </main>
+            </div>
+        );
+    }
+
     return (
-        <div className="relative h-full min-h-0 overflow-hidden bg-transparent font-sans">
-            <div className="h-full overflow-y-auto pb-safe no-scrollbar">
-
+        <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent font-sans">
             {/* Student Detail Navigation */}
-            <header className="px-4 pt-[var(--mini-program-status-bar-height,0px)]">
-                <div className="flex h-11 items-center">
-                    <button
-                        type="button"
-                        onClick={onBack}
-                        aria-label="返回"
-                        className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
-                    >
-                        <ChevronLeft className="h-5 w-5" />
-                    </button>
-                </div>
-            </header>
+            <StudentDetailHeader title="学生详情" onBack={onBack} />
 
+            <div className="min-h-0 flex-1 overflow-y-auto pb-safe no-scrollbar">
             {/* A. Student Profile Card */}
-            <section className="mx-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-glass)] p-4 [box-shadow:var(--tm-shadow-card)] backdrop-blur-xl">
+            <section className="mx-4 mt-4 overflow-hidden rounded-[var(--tm-radius-card)] p-4 [background:var(--tm-student-detail-profile-bg)] [box-shadow:var(--tm-shadow-card)]">
                     <div className="flex min-w-0 items-start gap-4">
                         <button
                             type="button"
@@ -501,12 +537,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                 <div className="flex shrink-0 items-center">
                                     <button
                                         type="button"
-                                        onClick={onOpenStudentArchive}
-                                        aria-label="查看学生成长档案"
+                                        onClick={() => setShowResourcesSheet(true)}
+                                        aria-label="查看学生资料"
                                         className="flex h-11 items-center justify-center gap-1 rounded-full px-1.5 text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
                                     >
                                         <FolderOpen className="h-4 w-4 shrink-0" />
-                                        <span className="whitespace-nowrap text-xs font-medium">档案</span>
+                                        <span className="whitespace-nowrap text-xs font-medium">资料</span>
                                     </button>
                                     <button
                                         type="button"
@@ -562,15 +598,15 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="space-y-4 p-4">
                 {/* C. Tabs */}
                 <div className="sticky top-0 z-30 bg-[var(--tm-page-plain-content-bg)] py-2">
-                    <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="学生详情内容">
+                    <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="学生详情内容">
                         <button
                             type="button"
                             role="tab"
-                            aria-selected={activeTab === 'overview'}
-                            onClick={() => setActiveTab('overview')}
+                            aria-selected={activeTab === 'evaluation'}
+                            onClick={() => setActiveTab('evaluation')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'overview' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长概览</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'evaluation' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>评价记录</span>
                         </button>
                         <button
                             type="button"
@@ -581,26 +617,54 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         >
                             <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长报告</span>
                         </button>
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={activeTab === 'collection'}
-                            onClick={() => setActiveTab('collection')}
-                            className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
-                        >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'collection' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>采集记录</span>
-                        </button>
                     </div>
                 </div>
 
                 {/* D. Content Area */}
                 <div className="min-h-[400px]">
-                    {activeTab === 'overview' && renderOverviewTab()}
+                    {activeTab === 'evaluation' && renderEvaluationTab()}
                     {activeTab === 'report' && renderReportTab()}
-                    {activeTab === 'collection' && <StudentCollectionHistoryTab items={collectionHistory} termOptions={STUDENT_TERM_OPTIONS} selectedTerm={selectedTerm} onSelectedTermChange={setSelectedTerm} onOpen={onViewCollectionRecord} />}
                 </div>
             </div>
             </div>
+
+            <MobileBottomSheet
+                open={showResourcesSheet}
+                title="学生资料"
+                onClose={() => setShowResourcesSheet(false)}
+            >
+                <div className="divide-y divide-[var(--tm-border-subtle)]">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setShowResourcesSheet(false);
+                            onOpenStudentArchive();
+                        }}
+                        className="flex min-h-[60px] w-full items-center gap-3 text-left active:bg-[var(--tm-bg-surface-soft)]"
+                    >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]">
+                            <FolderOpen className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">成长档案</span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setShowResourcesSheet(false);
+                            setShowCollectionHistory(true);
+                        }}
+                        className="flex min-h-[60px] w-full items-center gap-3 text-left active:bg-[var(--tm-bg-surface-soft)]"
+                    >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-student-soft)] text-[var(--tm-audience-student-strong)]">
+                            <ClipboardList className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">采集记录</span>
+                        <span className="shrink-0 text-xs font-medium tabular-nums text-[var(--tm-text-tertiary)]">{collectionHistory.length}条</span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
+                    </button>
+                </div>
+            </MobileBottomSheet>
 
             {showStatusActionSheet && (
                 <div

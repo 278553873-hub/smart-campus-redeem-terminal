@@ -104,7 +104,7 @@ const SwitchControl: React.FC<{ checked: boolean; onChange: (checked: boolean) =
 );
 
 const ActionRow: React.FC<{ icon?: React.ElementType; title: string; value?: string; onClick?: () => void }> = ({ icon: Icon, title, value, onClick }) => (
-    <button type="button" onClick={onClick} className="flex min-h-[54px] w-full items-center justify-between gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-bg-surface-soft)]">
+    <button type="button" onClick={onClick} className={`${featureListRowClass} w-full justify-between gap-3 text-left transition active:bg-[var(--tm-bg-surface-soft)]`}>
         <span className="flex min-w-0 items-center gap-3 text-[14px] font-semibold text-[var(--tm-text-primary)]">
             {Icon && <Icon className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-secondary)]" strokeWidth={2.1} />}
             <span className="truncate">{title}</span>
@@ -118,18 +118,18 @@ const ActionRow: React.FC<{ icon?: React.ElementType; title: string; value?: str
 
 export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => (
     <FeaturePageBody>
-        <FeaturePanel>
-            <div className="px-4 py-3 text-[14px] font-bold text-[var(--tm-text-primary)]">账号安全</div>
+        <section className="space-y-2">
+            <h3 className="px-1 text-[14px] font-bold text-[var(--tm-text-primary)]">账号安全</h3>
             <ActionRow icon={Shield} title="登录账号" value="139****0121" />
             <ActionRow icon={KeyRound} title="修改密码" />
-        </FeaturePanel>
+        </section>
 
-        <FeaturePanel>
+        <section className="space-y-2">
             <ActionRow icon={Lock} title="隐私协议" />
             <ActionRow icon={BookOpen} title="用户协议" />
-        </FeaturePanel>
+        </section>
 
-        <button type="button" onClick={onLogout} className="h-12 w-full rounded-[20px] bg-[var(--tm-bg-surface-glass)] text-[14px] font-semibold text-[var(--tm-status-negative)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral-color)] backdrop-blur-sm transition active:scale-[0.99] active:bg-[var(--tm-status-negative-soft)]">
+        <button type="button" onClick={onLogout} className="flex min-h-[60px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 text-[14px] font-semibold text-[var(--tm-status-negative)] [box-shadow:var(--tm-shadow-control)] transition active:bg-[var(--tm-status-negative-soft)]">
             退出登录
         </button>
     </FeaturePageBody>

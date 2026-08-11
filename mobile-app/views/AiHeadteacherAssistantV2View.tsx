@@ -7,13 +7,17 @@ import {
     ClipboardList,
     FileText,
     History,
+    Keyboard,
     ListChecks,
+    LoaderCircle,
+    Mic,
+    Send,
     Sparkles,
-    X,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
+import AutoResizeTextarea from '../components/ui/AutoResizeTextarea';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import {
     CLASS_EVALUATION_WEEKS,
@@ -26,7 +30,10 @@ import {
 } from '../data/classEvaluationAssistantV2';
 import {
     CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION,
+    askClassEvaluationQuestion,
     generateClassEvaluationWeeklyReport,
+    getRecordsFromAnswer,
+    type ClassEvaluationAssistantAnswer,
     type ClassEvaluationRecord,
     type ClassEvaluationSnapshot,
     type ClassEvaluationWeeklyReport,
@@ -44,6 +51,13 @@ interface AiHeadteacherAssistantV2ViewProps {
     homeroomClasses: ClassInfo[];
     activeClassId: string;
     onClassChange: (classId: string) => void;
+}
+
+interface ChatMessage {
+    id: string;
+    role: 'user' | 'assistant';
+    content?: string;
+    answer?: ClassEvaluationAssistantAnswer;
 }
 
 const formatScore = (score: number) => score.toFixed(1);
@@ -72,6 +86,25 @@ const REPORT_GENERATION_STEPS = [
     '正在对比指标表现与周变化',
     '正在生成本周分析与指导建议',
 ] as const;
+
+const OVERVIEW_RECOMMENDED_QUESTIONS = [
+    '本周扣分主要集中在哪些方面？',
+    '和上周相比，哪项变化最大？',
+    '下周应该优先关注什么？',
+] as const;
+
+const getFollowUpQuestions = (answerType: ClassEvaluationAssistantAnswer['answerType']) => {
+    if (answerType === 'weekly_performance') {
+        return ['本周扣分主要集中在哪些方面？', '和上周相比，哪项变化最大？'];
+    }
+    if (answerType === 'deduction_patterns') {
+        return ['哪一笔扣分影响最大？', '下周应该优先关注什么？'];
+    }
+    if (answerType === 'next_week_focus') {
+        return ['这些建议对应哪些扣分记录？', '本周表现最稳定的是哪些项目？'];
+    }
+    return OVERVIEW_RECOMMENDED_QUESTIONS.slice(0, 2);
+};
 
 const ClassSwitchButton: React.FC<{
     className?: string;
@@ -202,6 +235,246 @@ const WeeklyReportContent: React.FC<{
         )}
     </div>
 );
+
+const ConversationAnswerContent: React.FC<{
+    answer: ClassEvaluationAssistantAnswer;
+    onOpenDetails: () => void;
+}> = ({ answer, onOpenDetails }) => (
+    <div>
+        <p className="text-pretty whitespace-pre-line text-[15px] font-semibold leading-6 text-[var(--tm-text-primary)]">{answer.message}</p>
+
+        {answer.metrics.length > 0 && (
+            <dl className={'mt-3 grid gap-3 ' + (answer.metrics.length === 1 ? 'grid-cols-1' : answer.metrics.length === 2 ? 'grid-cols-2' : 'grid-cols-3')}>
+                {answer.metrics.map(metric => (
+                    <div key={metric.label} className="min-w-0">
+                        <dt className="truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{metric.label}</dt>
+                        <dd className={'mt-1 truncate text-[17px] font-bold tabular-nums ' + (metric.tone === 'negative' ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-assistant-role-text)]')}>{metric.value}</dd>
+                    </div>
+                ))}
+            </dl>
+        )}
+
+        {answer.breakdown.length > 0 && (
+            <div className="mt-3 space-y-0.5">
+                {answer.breakdown.map((item, index) => (
+                    <div key={item.label + '-' + index} className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-1.5">
+                        <div className="min-w-0">
+                            <div className="truncate text-[13px] font-semibold text-[var(--tm-text-primary)]">{item.label}</div>
+                            <div className="mt-0.5 truncate text-[11px] text-[var(--tm-text-tertiary)]">{item.detail}</div>
+                        </div>
+                        <div className={'text-[13px] font-bold tabular-nums ' + (item.tone === 'negative' ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-text-primary)]')}>{item.value}</div>
+                    </div>
+                ))}
+            </div>
+        )}
+
+        {answer.analysis.length > 0 && (
+            <section className="mt-4" aria-label="人工智能分析">
+                <h2 className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
+                    <Sparkles className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
+                    分析
+                </h2>
+                <div className="mt-2 space-y-2">
+                    {answer.analysis.map(item => (
+                        <p key={item.title} className="text-pretty text-[13px] leading-5 text-[var(--tm-text-secondary)]">
+                            <span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}
+                        </p>
+                    ))}
+                </div>
+            </section>
+        )}
+
+        {answer.suggestions.length > 0 && (
+            <section className="mt-4" aria-label="人工智能建议">
+                <h2 className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
+                    <ListChecks className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
+                    建议
+                </h2>
+                <div className="mt-2 space-y-2">
+                    {answer.suggestions.map(item => (
+                        <p key={item.title} className="text-pretty text-[13px] leading-5 text-[var(--tm-text-secondary)]">
+                            <span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}
+                        </p>
+                    ))}
+                </div>
+            </section>
+        )}
+
+        {answer.evidenceRefs.length > 0 && (
+            <div className="mt-3 flex justify-end">
+                <button
+                    type="button"
+                    onClick={onOpenDetails}
+                    className="flex min-h-[var(--tm-size-touch)] items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                    aria-label={'查看' + answer.evidenceRefs.length + '笔数据依据'}
+                >
+                    查看依据
+                    <span className="font-medium tabular-nums text-[var(--tm-text-tertiary)]">{answer.evidenceRefs.length}笔</span>
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+            </div>
+        )}
+    </div>
+);
+
+type ComposerMode = 'voice' | 'text';
+type VoiceState = 'idle' | 'listening' | 'error';
+
+const QuestionComposer: React.FC<{
+    draft: string;
+    replying: boolean;
+    onDraftChange: (value: string) => void;
+    onSubmit: (question: string) => void;
+}> = ({ draft, replying, onDraftChange, onSubmit }) => {
+    const [mode, setMode] = useState<ComposerMode>('voice');
+    const [voiceState, setVoiceState] = useState<VoiceState>('idle');
+    const [voiceFallback, setVoiceFallback] = useState(false);
+    const recognitionRef = useRef<any>(null);
+
+    const stopVoiceInput = () => {
+        try {
+            recognitionRef.current?.stop?.();
+        } catch {
+            recognitionRef.current = null;
+            setVoiceState('idle');
+        }
+    };
+
+    const startVoiceInput = () => {
+        if (replying || voiceState === 'listening') return;
+
+        const SpeechRecognitionConstructor = (window as any).SpeechRecognition
+            ?? (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognitionConstructor) {
+            setVoiceFallback(true);
+            setVoiceState('error');
+            setMode('text');
+            return;
+        }
+
+        const recognition = new SpeechRecognitionConstructor();
+        recognition.lang = 'zh-CN';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.onresult = (event: any) => {
+            let transcript = '';
+            for (let index = event.resultIndex; index < event.results.length; index += 1) {
+                transcript += event.results[index][0]?.transcript ?? '';
+            }
+            const question = transcript.trim();
+            if (!question) return;
+            onDraftChange(question);
+            onSubmit(question);
+        };
+        recognition.onerror = () => {
+            setVoiceFallback(true);
+            setVoiceState('error');
+            setMode('text');
+        };
+        recognition.onend = () => {
+            recognitionRef.current = null;
+            setVoiceState(current => current === 'error' ? current : 'idle');
+        };
+        recognitionRef.current = recognition;
+        setVoiceFallback(false);
+        setVoiceState('listening');
+        try {
+            recognition.start();
+        } catch {
+            recognitionRef.current = null;
+            setVoiceFallback(true);
+            setVoiceState('error');
+            setMode('text');
+        }
+    };
+
+    useEffect(() => () => recognitionRef.current?.abort?.(), []);
+
+    return (
+        <form
+            className="shrink-0 bg-transparent px-3 pt-1"
+            onSubmit={(event) => {
+                event.preventDefault();
+                onSubmit(draft);
+            }}
+        >
+            {mode === 'voice' ? (
+                <div className="headteacher-agent-glass relative h-[52px] overflow-hidden rounded-full p-1">
+                    <button
+                        type="button"
+                        onClick={() => setMode('text')}
+                        className="absolute left-1 top-1 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-bg-surface-glass)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                        aria-label="切换到文字输入"
+                    >
+                        <Keyboard className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
+                    </button>
+                    <button
+                        type="button"
+                        disabled={replying}
+                        onPointerDown={startVoiceInput}
+                        onPointerUp={stopVoiceInput}
+                        onPointerCancel={stopVoiceInput}
+                        onPointerLeave={stopVoiceInput}
+                        onKeyDown={(event) => {
+                            if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) {
+                                event.preventDefault();
+                                startVoiceInput();
+                            }
+                        }}
+                        onKeyUp={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                stopVoiceInput();
+                            }
+                        }}
+                        className={'absolute inset-1 flex select-none items-center justify-center rounded-full px-14 text-[15px] font-semibold transition-[scale,background-color,color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)] ' + (voiceState === 'listening' ? 'bg-[var(--tm-assistant-role-primary)] text-white' : 'text-[var(--tm-text-primary)] active:bg-[var(--tm-role-headteacher-glass-surface-strong)]')}
+                        aria-label={voiceState === 'listening' ? '正在聆听，松开发送' : '按住说话'}
+                    >
+                        {voiceState === 'listening' ? '正在聆听，松开发送' : '按住说话'}
+                    </button>
+                </div>
+            ) : (
+                <div className="headteacher-agent-glass grid min-h-[52px] grid-cols-[44px_minmax(0,1fr)_44px] items-end overflow-hidden rounded-[26px] p-1">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setVoiceState('idle');
+                            setMode('voice');
+                        }}
+                        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-assistant-role-text)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                        aria-label="切换到语音输入"
+                    >
+                        <Mic className="h-5 w-5" strokeWidth={2.3} aria-hidden="true" />
+                    </button>
+                    <AutoResizeTextarea
+                        value={draft}
+                        onChange={event => onDraftChange(event.target.value)}
+                        onKeyDown={event => {
+                            if (event.key === 'Enter' && !event.shiftKey) {
+                                event.preventDefault();
+                                onSubmit(draft);
+                            }
+                        }}
+                        minHeight={44}
+                        maxHeight={88}
+                        placeholder={voiceFallback ? '当前环境暂不支持语音，请输入文字' : '输入班级评价问题'}
+                        aria-label="输入班级评价问题"
+                        className="w-full resize-none bg-transparent px-2.5 py-2.5 text-[14px] font-medium leading-6 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-disabled)]"
+                    />
+                    <button
+                        type="submit"
+                        disabled={!draft.trim() || replying}
+                        className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-assistant-role-primary)] text-white transition-[scale,background-color,color] duration-150 ease-out active:scale-[0.96] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)] focus-visible:ring-offset-2"
+                        aria-label="发送问题"
+                    >
+                        <Send className="h-5 w-5" strokeWidth={2.3} aria-hidden="true" />
+                    </button>
+                </div>
+            )}
+        </form>
+    );
+};
 
 const formatGeneratedAt = (date: string) => {
     const value = new Date(date);
@@ -353,7 +626,6 @@ const DimensionScoreBullet: React.FC<{
                     className="absolute inset-y-0 left-0 rounded-full bg-[var(--tm-assistant-role-primary)]"
                     style={{ width: `${percentage}%` }}
                 />
-                <span className="absolute -right-px -top-0.5 h-2.5 w-px rounded-full bg-[var(--tm-text-secondary)]" />
             </span>
         </span>
     );
@@ -423,19 +695,23 @@ const DimensionTabs: React.FC<{
 const WeekOverviewPanel: React.FC<{
     week: ClassEvaluationWeek;
     snapshot: ClassEvaluationSnapshot;
+    recommendedQuestions: readonly string[];
     expanded: boolean;
     onToggleExpanded: () => void;
     onOpenDimensionDetails: (dimension: string) => void;
     onOpenDetails: () => void;
     onOpenWeekDetail: () => void;
+    onQuestionSelect: (question: string) => void;
 }> = ({
     week,
     snapshot,
+    recommendedQuestions,
     expanded,
     onToggleExpanded,
     onOpenDimensionDetails,
     onOpenDetails,
     onOpenWeekDetail,
+    onQuestionSelect,
 }) => (
     <section className="headteacher-agent-glass relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)]" aria-labelledby="week-data-title">
         <div className="px-4 pt-4">
@@ -453,14 +729,18 @@ const WeekOverviewPanel: React.FC<{
                 </button>
             </div>
 
-            <dl className="mt-1 grid grid-cols-2 gap-6 pb-2 pt-3">
+            <dl className="mt-1 grid grid-cols-3 gap-3 pb-2 pt-3">
                 <div className="min-w-0">
-                    <dt className="text-[12px] font-medium text-[var(--tm-text-tertiary)]">本周总分</dt>
-                    <dd className="mt-2 whitespace-nowrap text-[28px] font-bold tabular-nums text-[var(--tm-assistant-role-text)]">{formatScore(snapshot.finalScore)}<span className="ml-1 text-[12px] font-medium text-[var(--tm-text-tertiary)]">分</span></dd>
+                    <dt className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">本周总分</dt>
+                    <dd className="mt-2 whitespace-nowrap text-[24px] font-bold tabular-nums text-[var(--tm-assistant-role-text)]">{formatScore(snapshot.finalScore)}<span className="ml-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">分</span></dd>
                 </div>
                 <div className="min-w-0">
-                    <dt className="text-[12px] font-medium text-[var(--tm-text-tertiary)]">年级排名</dt>
-                    <dd className="mt-2 whitespace-nowrap text-[28px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.gradeRank}<span className="ml-1 text-[12px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
+                    <dt className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">年级排名</dt>
+                    <dd className="mt-2 whitespace-nowrap text-[24px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.gradeRank}<span className="ml-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
+                </div>
+                <div className="min-w-0">
+                    <dt className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">学校排名</dt>
+                    <dd className="mt-2 whitespace-nowrap text-[24px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.schoolRank}<span className="ml-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
                 </div>
             </dl>
         </div>
@@ -498,44 +778,36 @@ const WeekOverviewPanel: React.FC<{
                 </div>
             </div>
         )}
-    </section>
-);
 
-const DimensionDetailSheetHeader: React.FC<{
-    rankings: ClassEvaluationDimensionRanking[];
-    selectedDimension: string;
-    onSelect: (dimension: string) => void;
-    onClose: () => void;
-}> = ({ rankings, selectedDimension, onSelect, onClose }) => (
-    <div className="shrink-0">
-        <header className="flex h-14 items-center justify-between px-4">
-            <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">扣分明细</h2>
-            <button
-                type="button"
-                onClick={onClose}
-                className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                aria-label="关闭扣分明细"
-            >
-                <X className="h-5 w-5" aria-hidden="true" />
-            </button>
-        </header>
-        <DimensionTabs
-            rankings={rankings}
-            selectedDimension={selectedDimension}
-            onSelect={onSelect}
-            className="px-3"
-        />
-    </div>
+        <div className="px-4 pb-3 pt-1" aria-labelledby="recommended-questions-title">
+            <h3 id="recommended-questions-title" className="px-1 py-1 text-[12px] font-semibold text-[var(--tm-text-secondary)]">可以这样问</h3>
+            <div className="mt-0.5">
+                {recommendedQuestions.map(question => (
+                    <button
+                        key={question}
+                        type="button"
+                        onClick={() => onQuestionSelect(question)}
+                        className="flex min-h-11 w-full items-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-left text-[13px] font-medium leading-5 text-[var(--tm-text-primary)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.99] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                    >
+                        <Sparkles className="h-3.5 w-3.5 shrink-0 text-[var(--tm-assistant-role-primary)]" strokeWidth={2.1} aria-hidden="true" />
+                        <span className="min-w-0 flex-1 whitespace-normal break-words">{question}</span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" aria-hidden="true" />
+                    </button>
+                ))}
+            </div>
+        </div>
+    </section>
 );
 
 const WeekDataDetailPage: React.FC<{
     weekId: string;
     classId: string;
+    initialDimension?: string;
     activeClass?: ClassInfo;
     onBack: () => void;
     onClassPickerOpen: () => void;
     onWeekChange: (weekId: string) => void;
-}> = ({ weekId, classId, activeClass, onBack, onClassPickerOpen, onWeekChange }) => {
+}> = ({ weekId, classId, initialDimension, activeClass, onBack, onClassPickerOpen, onWeekChange }) => {
     const weekIndex = CLASS_EVALUATION_WEEKS.findIndex(item => item.id === weekId);
     const week = getClassEvaluationWeek(weekId);
     const snapshot = getClassEvaluationSnapshot(classId, weekId);
@@ -545,7 +817,7 @@ const WeekDataDetailPage: React.FC<{
     const defaultDimension = week.dimensionRankings.find(item => item.recordCount > 0)?.dimension
         ?? week.dimensionRankings[0]?.dimension
         ?? '';
-    const [selectedDimension, setSelectedDimension] = useState(defaultDimension);
+    const [selectedDimension, setSelectedDimension] = useState(initialDimension ?? defaultDimension);
     const selectedRanking = week.dimensionRankings.find(item => item.dimension === selectedDimension)
         ?? week.dimensionRankings[0];
     const selectedRecords = records.filter(record => record.dimension === selectedRanking?.dimension);
@@ -593,14 +865,18 @@ const WeekDataDetailPage: React.FC<{
                 </section>
 
                 <section className="headteacher-agent-glass mt-4 rounded-[var(--tm-radius-card)] px-4 py-4" aria-label="周数据概览">
-                    <dl className="grid grid-cols-2 gap-6">
+                    <dl className="grid grid-cols-3 gap-3">
                         <div>
-                            <dt className="text-[12px] text-[var(--tm-text-tertiary)]">周总分</dt>
-                            <dd className="mt-2 text-[26px] font-bold tabular-nums text-[var(--tm-assistant-role-text)]">{formatScore(snapshot.finalScore)}<span className="ml-1 text-[11px] font-medium text-[var(--tm-text-tertiary)]">分</span></dd>
+                            <dt className="text-[11px] text-[var(--tm-text-tertiary)]">本周总分</dt>
+                            <dd className="mt-2 whitespace-nowrap text-[23px] font-bold tabular-nums text-[var(--tm-assistant-role-text)]">{formatScore(snapshot.finalScore)}<span className="ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]">分</span></dd>
                         </div>
                         <div>
-                            <dt className="text-[12px] text-[var(--tm-text-tertiary)]">年级排名</dt>
-                            <dd className="mt-2 text-[26px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.gradeRank}<span className="ml-1 text-[11px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
+                            <dt className="text-[11px] text-[var(--tm-text-tertiary)]">年级排名</dt>
+                            <dd className="mt-2 whitespace-nowrap text-[23px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.gradeRank}<span className="ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
+                        </div>
+                        <div>
+                            <dt className="text-[11px] text-[var(--tm-text-tertiary)]">学校排名</dt>
+                            <dd className="mt-2 whitespace-nowrap text-[23px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.schoolRank}<span className="ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
                         </div>
                     </dl>
                     <div className="mt-4 flex items-center justify-between rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-glass-surface-strong)] px-3 py-2 text-[12px]">
@@ -687,14 +963,19 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const [generationStepCount, setGenerationStepCount] = useState(1);
     const [historyOpen, setHistoryOpen] = useState(false);
     const [reportOrigin, setReportOrigin] = useState<'overview' | 'history'>('overview');
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [conversationOpen, setConversationOpen] = useState(false);
+    const [draft, setDraft] = useState('');
+    const [isReplying, setIsReplying] = useState(false);
     const [overviewExpanded, setOverviewExpanded] = useState(false);
-    const [detailDimension, setDetailDimension] = useState<string | null>(null);
+    const [detailInitialDimension, setDetailInitialDimension] = useState<string | null>(null);
     const [weekDetailOpen, setWeekDetailOpen] = useState(false);
     const [detailWeekId, setDetailWeekId] = useState(DEFAULT_CLASS_EVALUATION_WEEK_ID);
     const [showClassPicker, setShowClassPicker] = useState(false);
     const [detailRecords, setDetailRecords] = useState<ClassEvaluationRecord[] | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const generationTimersRef = useRef<number[]>([]);
+    const replyTimerRef = useRef<number | null>(null);
     const previousClassIdRef = useRef(resolvedClassId);
 
     const clearGenerationTimers = () => {
@@ -708,6 +989,15 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         setDetailRecords(null);
         setIsGenerating(false);
         setGenerationStepCount(1);
+    };
+
+    const clearConversation = () => {
+        if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current);
+        replyTimerRef.current = null;
+        setMessages([]);
+        setConversationOpen(false);
+        setDraft('');
+        setIsReplying(false);
     };
 
     useEffect(() => {
@@ -735,20 +1025,30 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         if (previousClassIdRef.current === resolvedClassId) return;
         previousClassIdRef.current = resolvedClassId;
         closeReport();
+        clearConversation();
         setOverviewExpanded(false);
-        setDetailDimension(null);
+        setDetailInitialDimension(null);
         setReportOrigin('overview');
     }, [resolvedClassId]);
 
     useEffect(() => {
+        if (conversationOpen) {
+            const frame = window.requestAnimationFrame(() => {
+                scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+            });
+            return () => window.cancelAnimationFrame(frame);
+        }
         if (!activeReport && !isGenerating) return undefined;
         const frame = window.requestAnimationFrame(() => {
             scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         });
         return () => window.cancelAnimationFrame(frame);
-    }, [activeReport, isGenerating]);
+    }, [activeReport, conversationOpen, isGenerating, isReplying, messages]);
 
-    useEffect(() => () => clearGenerationTimers(), []);
+    useEffect(() => () => {
+        clearGenerationTimers();
+        if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current);
+    }, []);
 
     const currentSavedReport = useMemo(() => savedReports.find(report => (
         report.classId === resolvedClassId
@@ -824,6 +1124,42 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         setDetailRecords(null);
     };
 
+    const submitQuestion = (rawQuestion: string) => {
+        const question = rawQuestion.trim();
+        if (!question || isReplying) return;
+
+        const previousContext = [...messages]
+            .reverse()
+            .find(message => message.role === 'assistant' && message.answer)?.answer?.context;
+        setConversationOpen(true);
+        setMessages(current => [...current, {
+            id: 'user-' + Date.now(),
+            role: 'user',
+            content: question,
+        }]);
+        setDraft('');
+        setIsReplying(true);
+
+        replyTimerRef.current = window.setTimeout(() => {
+            const answer = askClassEvaluationQuestion({
+                question,
+                snapshot,
+                records,
+                gradeRank: currentWeek.gradeRank,
+                rankings: currentWeek.dimensionRankings,
+                previousWeek,
+                previousContext,
+            });
+            setMessages(current => [...current, {
+                id: 'assistant-' + Date.now(),
+                role: 'assistant',
+                answer,
+            }]);
+            setIsReplying(false);
+            replyTimerRef.current = null;
+        }, 620);
+    };
+
     const handleHeaderBack = () => {
         if (activeReport || isGenerating) {
             closeReport();
@@ -833,13 +1169,22 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
             setHistoryOpen(false);
             return;
         }
+        if (conversationOpen) {
+            setConversationOpen(false);
+            return;
+        }
         onBack();
     };
 
-    const dimensionDetailRecords = detailDimension
-        ? records.filter(record => record.dimension === detailDimension)
+    const latestAnswer = [...messages]
+        .reverse()
+        .find(message => message.role === 'assistant' && message.answer)?.answer;
+    const askedQuestions = new Set(messages
+        .filter(message => message.role === 'user' && message.content)
+        .map(message => message.content));
+    const followUpQuestions = latestAnswer
+        ? getFollowUpQuestions(latestAnswer.answerType).filter(question => !askedQuestions.has(question))
         : [];
-    const dimensionDeduction = dimensionDetailRecords.reduce((total, record) => total + record.deduction, 0);
 
     const handleClassSelect = (classId: string) => {
         onClassChange(classId);
@@ -852,6 +1197,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                 <WeekDataDetailPage
                     weekId={detailWeekId}
                     classId={resolvedClassId}
+                    initialDimension={detailInitialDimension ?? undefined}
                     activeClass={activeClass}
                     onBack={() => setWeekDetailOpen(false)}
                     onClassPickerOpen={() => setShowClassPicker(true)}
@@ -875,7 +1221,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                 onBack={handleHeaderBack}
                 backLabel={activeReport || isGenerating
                     ? (reportOrigin === 'history' ? '返回历史报告' : '返回概览')
-                    : historyOpen ? '返回概览' : '返回'}
+                    : historyOpen || conversationOpen ? '返回概览' : '返回'}
                 surface="transparent"
                 centerContent={<ClassSwitchButton activeClass={activeClass} onClick={() => setShowClassPicker(true)} />}
             />
@@ -923,6 +1269,56 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     activeClassId={resolvedClassId}
                     onOpenReport={openHistoryReport}
                 />
+            ) : conversationOpen ? (
+                <main ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 pt-2 no-scrollbar" aria-live="polite">
+                    <section className="px-1" aria-labelledby="conversation-title">
+                        <h1 id="conversation-title" className="text-[18px] font-bold text-[var(--tm-text-primary)]">班级评价对话</h1>
+                        <p className="mt-1 text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">本周 · 数据截至 {currentWeek.dataRangeLabel}</p>
+                    </section>
+
+                    <div className="mt-4 space-y-4">
+                        {messages.map(message => (
+                            <div key={message.id} className={'flex ' + (message.role === 'user' ? 'justify-end' : 'justify-start')}>
+                                {message.role === 'user' ? (
+                                    <div className="max-w-[82%] rounded-[18px] rounded-br-[6px] bg-[var(--tm-assistant-role-primary)] px-4 py-2.5 text-[15px] font-medium leading-6 text-white [box-shadow:var(--tm-shadow-control)]">
+                                        {message.content}
+                                    </div>
+                                ) : message.answer ? (
+                                    <div className="headteacher-agent-glass w-full rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 py-3.5">
+                                        <ConversationAnswerContent
+                                            answer={message.answer}
+                                            onOpenDetails={() => setDetailRecords(getRecordsFromAnswer(message.answer!, records))}
+                                        />
+                                    </div>
+                                ) : null}
+                            </div>
+                        ))}
+
+                        {isReplying && (
+                            <div className="flex justify-start">
+                                <div className="headteacher-agent-glass flex h-11 items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">
+                                    <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
+                                    正在分析班级评价数据
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {!isReplying && followUpQuestions.length > 0 && (
+                        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 no-scrollbar" aria-label="继续提问">
+                            {followUpQuestions.map(question => (
+                                <button
+                                    key={question}
+                                    type="button"
+                                    onClick={() => submitQuestion(question)}
+                                    className="min-h-11 shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-glass)] px-3 text-left text-[12px] font-semibold text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.98] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                                >
+                                    {question}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </main>
             ) : (
                 <div className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar">
                     <section className="relative h-[148px] overflow-hidden px-5">
@@ -944,75 +1340,45 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     <WeekOverviewPanel
                         week={currentWeek}
                         snapshot={snapshot}
+                        recommendedQuestions={OVERVIEW_RECOMMENDED_QUESTIONS}
                         expanded={overviewExpanded}
                         onToggleExpanded={() => {
                             setOverviewExpanded(current => !current);
-                            if (overviewExpanded) setDetailDimension(null);
                         }}
-                        onOpenDimensionDetails={setDetailDimension}
-                        onOpenDetails={() => setDetailDimension(
-                            currentWeek.dimensionRankings.find(item => item.recordCount > 0)?.dimension
-                            ?? currentWeek.dimensionRankings[0]?.dimension
-                            ?? null,
-                        )}
-                        onOpenWeekDetail={() => {
+                        onOpenDimensionDetails={(dimension) => {
                             setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
+                            setDetailInitialDimension(dimension);
                             setWeekDetailOpen(true);
                         }}
+                        onOpenDetails={() => {
+                            setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
+                            setDetailInitialDimension(
+                                currentWeek.dimensionRankings.find(item => item.recordCount > 0)?.dimension
+                                ?? currentWeek.dimensionRankings[0]?.dimension
+                                ?? null,
+                            );
+                            setWeekDetailOpen(true);
+                        }}
+                        onOpenWeekDetail={() => {
+                            setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
+                            setDetailInitialDimension(null);
+                            setWeekDetailOpen(true);
+                        }}
+                        onQuestionSelect={submitQuestion}
                     />
-
-                    <section className="mx-4 mt-3" aria-labelledby="weekly-analysis-title">
-                        <div className="mb-2 flex min-h-9 items-center px-1">
-                            <h2 id="weekly-analysis-title" className="text-balance text-[14px] font-bold text-[var(--tm-text-primary)]">班级周评分析</h2>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={openWeeklyReport}
-                            className="headteacher-agent-glass flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] px-3.5 py-3 text-left transition-[scale,background-color] duration-150 ease-out active:scale-[0.98] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                            aria-label={currentSavedReport ? '查看本周班级评比分析' : '生成本周班级评比分析'}
-                        >
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-assistant-role-soft-strong)] text-[var(--tm-assistant-role-text)]">
-                                <FileText className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                                <span className="block text-[14px] font-bold text-[var(--tm-text-primary)]">{currentSavedReport ? '查看本周班级评比分析' : '生成本周班级评比分析'}</span>
-                                <span className="mt-1 block text-[11px] text-[var(--tm-text-tertiary)]">{currentSavedReport
-                                    ? `数据截至 ${currentSavedReport.dataRangeLabel} · 已生成`
-                                    : '整体表现、扣分问题与下周重点'}</span>
-                            </span>
-                            <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" aria-hidden="true" />
-                        </button>
-                    </section>
                 </div>
             )}
 
-            <p className="shrink-0 px-4 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2 text-center text-[10px] leading-4 text-[var(--tm-text-disabled)]">内容由人工智能基于班级评价台账生成，请以学校复核记录为准</p>
+            {!activeReport && !isGenerating && !historyOpen && (
+                <QuestionComposer
+                    draft={draft}
+                    replying={isReplying}
+                    onDraftChange={setDraft}
+                    onSubmit={submitQuestion}
+                />
+            )}
 
-            <MobileBottomSheet
-                open={detailDimension !== null}
-                title="扣分明细"
-                onClose={() => setDetailDimension(null)}
-                header={detailDimension ? (
-                    <DimensionDetailSheetHeader
-                        rankings={currentWeek.dimensionRankings}
-                        selectedDimension={detailDimension}
-                        onSelect={setDetailDimension}
-                        onClose={() => setDetailDimension(null)}
-                    />
-                ) : undefined}
-            >
-                <div className="flex min-h-11 items-center justify-between gap-3 py-2 text-[12px]">
-                    <span className="tabular-nums text-[var(--tm-text-tertiary)]">{currentWeek.dataRangeLabel}</span>
-                    <span className="font-semibold tabular-nums text-[var(--tm-status-negative)]">
-                        {dimensionDeduction > 0 ? '-' : ''}{formatScore(dimensionDeduction)}分 · {dimensionDetailRecords.length}笔
-                    </span>
-                </div>
-                {dimensionDetailRecords.length > 0 ? (
-                    <RecordDetailList records={dimensionDetailRecords} showDimension={false} />
-                ) : (
-                    <p className="py-12 text-center text-[13px] text-[var(--tm-text-tertiary)]">本周期该指标暂无扣分</p>
-                )}
-            </MobileBottomSheet>
+            <p className="shrink-0 px-4 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1 text-center text-[10px] leading-4 text-[var(--tm-text-disabled)]">内容由AI生成仅供参考。</p>
 
             <MobileBottomSheet
                 open={detailRecords !== null}

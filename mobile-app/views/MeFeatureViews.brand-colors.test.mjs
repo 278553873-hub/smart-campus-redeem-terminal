@@ -38,7 +38,12 @@ if (source.includes('const PageBody') || source.includes('const WhitePanel')) {
 
 requireText(source, 'export const MineSettingsView', '设置页应继续提供。');
 const settingsSource = source.slice(source.indexOf('export const MineSettingsView'), featureStart);
-requireText(settingsSource, '<FeaturePageBody>', '设置页应使用统一品牌页面骨架，保证顶部标题栏与页面氛围光一致。');
+requireText(settingsSource, '<FeaturePageBody>', '设置页应使用统一管理页面骨架。');
+requireText(settingsSource, '<section className="space-y-2">', '设置页应使用与科目、部门管理一致的独立紧凑条目。');
+requireText(settingsSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)]', '设置页条目应使用纯色白色表面。');
+if (settingsSource.includes('<FeaturePanel>') || settingsSource.includes('bg-[var(--tm-bg-surface-glass)]') || settingsSource.includes('backdrop-blur')) {
+  throw new Error('设置页不应继续使用大圆角玻璃面板。');
+}
 
 const screenBackgroundList = appSource.match(/const hasScreenLevelBackground = \[([^\]]+)\]/)?.[1] ?? '';
 const phoneScreenBackgroundList = appSource.match(/if \(\[([^\]]+)\]\.includes\(currentView\)\) \{\s*return <TeacherMobileScreenBackground/)?.[1] ?? '';
@@ -46,8 +51,8 @@ const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewS
 requireText(appSource, "const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView)", '纯色页面应通过统一壳层区分标题栏和内容区。');
 requireText(appSource, "hasPlainBackground ? 'bg-[var(--tm-page-plain-content-bg)]'", '纯色页面内容区应使用正式浅灰背景 Token 承托白色卡片。');
 requireText(appSource, 'h-11 bg-[var(--tm-page-plain-header-bg)]', '纯色页面标题栏底层应使用正式纯白背景 Token。');
-if (!screenBackgroundList.includes("'mine_settings'") || !phoneScreenBackgroundList.includes("'mine_settings'")) {
-  throw new Error('设置页应继续使用公共环境背景。');
+if (!screenBackgroundList.includes("'mine_settings'") || !plainBackgroundList.includes("'mine_settings'") || phoneScreenBackgroundList.includes("'mine_settings'")) {
+  throw new Error('设置页应使用屏幕级纯色分层背景，不应继续使用公共氛围背景。');
 }
 for (const viewName of ["'subject_management'", "'department_management'", "'coin_issuance'", "'suggestion_feedback'"]) {
   if (!screenBackgroundList.includes(viewName) || !plainBackgroundList.includes(viewName)) {

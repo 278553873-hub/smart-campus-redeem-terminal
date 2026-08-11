@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  CLASS_EVALUATION_CHAT_PROMPT_VERSION,
   CLASS_EVALUATION_FIXED_QUESTIONS,
   CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION,
   askClassEvaluationQuestion,
@@ -63,7 +64,7 @@ for (const record of CLASS_EVALUATION_RECORDS) {
 assert.deepEqual(
   CLASS_EVALUATION_FIXED_QUESTIONS.map(question => question.label),
   ['本周班级评比表现怎么样？', '本周扣分反映出哪些主要问题？', '下周应该重点关注什么？'],
-  'V2 应只提供三项同时覆盖数据统计和分析建议的固定问题。',
+  '完整周报仍应复用三类稳定分析章节。',
 );
 
 const currentWeek = CLASS_EVALUATION_WEEKS[0];
@@ -120,9 +121,31 @@ assert.ok(nextWeekFocus.analysis.length > 0);
 assert.ok(nextWeekFocus.suggestions.length > 0);
 
 for (const answer of [weeklyPerformance, deductionPatterns, nextWeekFocus]) {
-  assert.ok(answer.promptVersion.endsWith('-v1'), '每项固定问题都应记录提示词版本。');
+  assert.equal(answer.promptVersion, CLASS_EVALUATION_CHAT_PROMPT_VERSION, '对话回答应记录统一的自由对话提示词版本。');
   assert.equal(answer.dataSnapshotId, snapshot.id, '每项回答都应绑定生成时的数据快照。');
 }
+
+const naturalLanguageScore = askClassEvaluationQuestion({
+  ...assistantInput,
+  question: '我们班这周得分和排名怎么样？',
+});
+assert.equal(naturalLanguageScore.answerType, 'weekly_performance', '自由问法应识别得分与排名意图。');
+
+const eyeExerciseRule = askClassEvaluationQuestion({
+  ...assistantInput,
+  question: '眼操具体为什么扣分，依据是什么？',
+});
+assert.equal(eyeExerciseRule.answerType, 'deduction_patterns', '自由问法应识别具体扣分意图。');
+assert.equal(eyeExerciseRule.evidenceRefs.length, 1, '具体场景问题应只引用匹配的本周记录。');
+assert.match(eyeExerciseRule.message, /眼操教师组织共1笔扣分/);
+assert.equal(eyeExerciseRule.analysis.at(-1)?.title, '扣分依据');
+
+const contextualFollowUp = askClassEvaluationQuestion({
+  ...assistantInput,
+  question: '这些下周怎么改善？',
+  previousContext: eyeExerciseRule.context,
+});
+assert.equal(contextualFollowUp.answerType, 'next_week_focus', '连续追问应继承当前班级与周期上下文。');
 
 const weeklyReport = generateClassEvaluationWeeklyReport(assistantInput);
 assert.equal(weeklyReport.message, weeklyPerformance.message);
@@ -137,10 +160,10 @@ assert.equal(weeklyReport.dataSnapshotId, snapshot.id);
 
 const unsupportedQuestion = askClassEvaluationQuestion({
   ...assistantInput,
-  question: '眼操扣分规则是什么',
+  question: '这是谁的责任，整改完成了吗？',
 });
 assert.equal(unsupportedQuestion.answerType, 'clarification');
-assert.match(unsupportedQuestion.message, /请选择下方固定问题/);
+assert.match(unsupportedQuestion.message, /得分、年级排名、扣分记录/);
 assert.deepEqual(unsupportedQuestion.evidenceRefs, []);
 
 const snapshotOnly = getClassEvaluationSnapshot('c_2025_1');
