@@ -12,6 +12,7 @@ import {
   Files,
   FileText,
   Landmark,
+  KeyRound,
   LogOut,
   PiggyBank,
   Plus,
@@ -19,6 +20,7 @@ import {
   Star,
   UserRound,
   X,
+  type LucideIcon,
 } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 import {
@@ -40,6 +42,7 @@ import {
   QUESTIONNAIRE_STORE_EVENT,
   getActiveQuestionnaireTargets,
   getQuestionnaireCollectionMode,
+  getQuestionnaireByInviteCode,
   isQuestionnaireOverdue,
   readQuestionnaires,
   type QuestionnaireRecord,
@@ -48,6 +51,8 @@ import {
 interface ParentAppProps {
   showPhoneShell?: boolean;
   defaultHasBoundChild?: boolean;
+  defaultLoggedIn?: boolean;
+  initialQuestionnaireInviteCode?: string;
 }
 
 type Screen = 'binding' | 'growth' | 'reports' | 'archiveList' | 'archiveDetail' | 'questionnaireForm' | 'questionnaireDetail' | 'reportDetail' | 'bank' | 'growthRecords' | 'todo' | 'mine';
@@ -56,6 +61,7 @@ type BankTab = 'deposit' | 'list';
 type GrowthRangeMode = 'day' | 'week' | 'month' | 'term';
 type GrowthTermKey = 'first' | 'second';
 type MineSheet = 'profile' | 'privacy' | 'logout' | null;
+type InviteOutcome = 'invalid' | 'ended' | 'submitted' | 'out_of_scope' | null;
 
 interface EvaluationRecord {
   id: string;
@@ -610,7 +616,12 @@ const ParentDiffuseBackdrop = () => (
   <div aria-hidden="true" className={`${parentSurface.background} pointer-events-none absolute inset-0 overflow-hidden`} />
 );
 
-const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHasBoundChild = true }) => {
+const ParentApp: React.FC<ParentAppProps> = ({
+  showPhoneShell = true,
+  defaultHasBoundChild = true,
+  defaultLoggedIn = true,
+  initialQuestionnaireInviteCode = '',
+}) => {
   const [screen, setScreen] = useState<Screen>(() => defaultHasBoundChild ? 'growth' : 'binding');
   const [childrenList, setChildrenList] = useState<ChildProfile[]>(() => (
     defaultHasBoundChild ? [
@@ -619,6 +630,12 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
     ] : []
   ));
   const [activeChildId, setActiveChildId] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(defaultLoggedIn);
+  const [loginForm, setLoginForm] = useState({ phone: '', code: '' });
+  const [pendingInviteCode, setPendingInviteCode] = useState(() => initialQuestionnaireInviteCode.trim());
+  const [inviteOutcome, setInviteOutcome] = useState<InviteOutcome>(null);
+  const [inviteCandidateIds, setInviteCandidateIds] = useState<string[]>([]);
+  const inviteBootstrappedRef = useRef(false);
   const [showChildSwitcher, setShowChildSwitcher] = useState(false);
   const [activeReportId, setActiveReportId] = useState('');
   const [activeArchiveId, setActiveArchiveId] = useState('');
@@ -653,6 +670,80 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
     () => childrenList.find(child => child.id === activeChildId) ?? childrenList[0] ?? null,
     [activeChildId, childrenList]
   );
+
+  const activeInviteRecord = pendingInviteCode
+    ? getQuestionnaireByInviteCode(pendingInviteCode, sharedQuestionnaires)
+    : null;
+
+  const openInviteQuestionnaireForChild = (questionnaire: QuestionnaireRecord, child: ChildProfile) => {
+    setActiveChildId(child.id);
+    setActiveSharedQuestionnaireId(questionnaire.id);
+    setInviteOutcome(null);
+    setInviteCandidateIds([]);
+    setScreen('questionnaireForm');
+  };
+
+  const resumeQuestionnaireInvite = (nextChildren = childrenList, preferredChildId = '') => {
+    if (!pendingInviteCode) return false;
+    const refreshedQuestionnaires = readQuestionnaires();
+    setSharedQuestionnaires(refreshedQuestionnaires);
+    const questionnaire = getQuestionnaireByInviteCode(pendingInviteCode, refreshedQuestionnaires);
+    setInviteCandidateIds([]);
+
+    if (!questionnaire) {
+      setInviteOutcome('invalid');
+      return false;
+    }
+    if (questionnaire.status !== 'active') {
+      setInviteOutcome('ended');
+      return false;
+    }
+    if (nextChildren.length === 0) {
+      setInviteOutcome(null);
+      setScreen('binding');
+      return false;
+    }
+
+    const targetStudentNos = new Set(
+      getActiveQuestionnaireTargets(questionnaire)
+        .filter(target => target.reachable)
+        .map(target => target.studentNo),
+    );
+    const eligibleChildren = nextChildren.filter(child => targetStudentNos.has(child.studentNo));
+    if (eligibleChildren.length === 0) {
+      setInviteOutcome('out_of_scope');
+      return false;
+    }
+
+    const pendingChildren = eligibleChildren.filter(child => {
+      const submission = questionnaire.submissions.find(item => item.studentNo === child.studentNo);
+      return !submission || submission.reviewStatus === 'returned';
+    });
+    if (pendingChildren.length === 0) {
+      setInviteOutcome('submitted');
+      return false;
+    }
+
+    const preferredChild = pendingChildren.find(child => child.id === preferredChildId);
+    if (preferredChild) {
+      openInviteQuestionnaireForChild(questionnaire, preferredChild);
+      return true;
+    }
+    if (pendingChildren.length === 1) {
+      openInviteQuestionnaireForChild(questionnaire, pendingChildren[0]);
+      return true;
+    }
+
+    setInviteOutcome(null);
+    setInviteCandidateIds(pendingChildren.map(child => child.id));
+    return true;
+  };
+
+  useEffect(() => {
+    if (!isLoggedIn || !pendingInviteCode || inviteBootstrappedRef.current) return;
+    inviteBootstrappedRef.current = true;
+    resumeQuestionnaireInvite();
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const refresh = () => setSharedQuestionnaires(readQuestionnaires());
@@ -847,8 +938,14 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
   const submitBinding = () => {
     if (!canSubmitBinding) return;
     const newChild = createDemoChild(bindForm.studentName, bindForm.schoolCode, bindForm.studentNo, childrenList.length);
-    setChildrenList(prev => [...prev, newChild]);
+    const nextChildren = [...childrenList, newChild];
+    setChildrenList(nextChildren);
     setActiveChildId(newChild.id);
+    if (pendingInviteCode) {
+      setBindingReturnTarget('none');
+      resumeQuestionnaireInvite(nextChildren, newChild.id);
+      return;
+    }
     setScreen(bindingReturnTarget === 'switcher' ? bindingReturnScreen : 'growth');
     setShowChildSwitcher(bindingReturnTarget === 'switcher');
     setBindingReturnTarget('none');
@@ -861,7 +958,17 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
       setBindingReturnScreen(screen);
     }
     setShowChildSwitcher(false);
+    setInviteOutcome(null);
+    setInviteCandidateIds([]);
     setScreen('binding');
+  };
+
+  const finishInviteToHome = () => {
+    setPendingInviteCode('');
+    setInviteOutcome(null);
+    setInviteCandidateIds([]);
+    setActiveSharedQuestionnaireId('');
+    setScreen(childrenList.length > 0 ? 'growth' : 'binding');
   };
 
   const returnToChildSwitcher = () => {
@@ -1016,6 +1123,7 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
     setChildrenList([]);
     setActiveChildId('');
     setMineSheet(null);
+    setIsLoggedIn(false);
     setScreen('binding');
     setSubmitSuccessMessage('已退出登录');
   };
@@ -1032,6 +1140,109 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
       </div>
     </div>
   );
+
+  const Login = () => {
+    const canLogin = Boolean(loginForm.phone.trim() && loginForm.code.trim());
+    return (
+      <ParentPageShell className="pb-12">
+        <Header title="家长登录" />
+        <div className="px-6 pt-7">
+          <ParentCard className="p-5" as="section">
+            <div className="mb-5 flex items-center gap-3">
+              <ParentGradientIcon tone="green" size="lg"><UserRound size={23} /></ParentGradientIcon>
+              <div className="min-w-0">
+                <h1 className="text-[19px] font-black text-slate-950">登录家长端</h1>
+                {pendingInviteCode && <p className="mt-1 text-[13px] font-bold text-slate-500">登录后继续填写问卷</p>}
+              </div>
+            </div>
+            <div className="space-y-4">
+              <label className="block">
+                <span className="mb-2 flex items-center gap-2 text-[13px] font-bold text-slate-500"><UserRound size={15} /> 手机号</span>
+                <input
+                  value={loginForm.phone}
+                  onChange={event => setLoginForm(previous => ({ ...previous, phone: event.target.value }))}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="请输入手机号"
+                  className={BINDING_INPUT_CLASS}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-2 flex items-center gap-2 text-[13px] font-bold text-slate-500"><KeyRound size={15} /> 验证码</span>
+                <input
+                  value={loginForm.code}
+                  onChange={event => setLoginForm(previous => ({ ...previous, code: event.target.value }))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="请输入验证码"
+                  className={BINDING_INPUT_CLASS}
+                />
+              </label>
+            </div>
+            <ParentPrimaryButton type="button" onClick={() => setIsLoggedIn(true)} disabled={!canLogin} fullWidth className="mt-6 h-14 text-[16px]">
+              登录
+            </ParentPrimaryButton>
+          </ParentCard>
+        </div>
+      </ParentPageShell>
+    );
+  };
+
+  const InviteResultPage = () => {
+    const resultCopy = inviteOutcome === 'submitted'
+      ? { title: '已完成填写', detail: '这份问卷已经提交，无需重复填写。', tone: 'green' as const }
+      : inviteOutcome === 'ended'
+        ? { title: '问卷已结束', detail: '老师已结束本次问卷收集。', tone: 'orange' as const }
+        : inviteOutcome === 'out_of_scope'
+          ? { title: '不在填写范围', detail: '当前已绑定的孩子不在本次问卷范围内。', tone: 'softBlue' as const }
+          : { title: '邀请已失效', detail: '没有找到对应问卷，请联系老师重新邀请。', tone: 'orange' as const };
+    return (
+      <ParentPageShell className="pb-12">
+        <Header title="问卷" />
+        <div className="px-6 pt-8">
+          <ParentCard className="p-6 text-center" as="section">
+            <ParentGradientIcon tone={resultCopy.tone} size="lg" className="mx-auto">
+              {inviteOutcome === 'submitted' ? <CheckCircle2 size={24} /> : <ClipboardList size={24} />}
+            </ParentGradientIcon>
+            <h1 className="mt-4 text-[19px] font-black text-slate-950">{resultCopy.title}</h1>
+            <p className="mt-2 text-[14px] font-bold leading-6 text-slate-500">{resultCopy.detail}</p>
+            {inviteOutcome === 'out_of_scope' && (
+              <ParentPrimaryButton type="button" onClick={() => openBinding()} fullWidth className="mt-6 h-[52px] text-[16px]">
+                绑定其他孩子
+              </ParentPrimaryButton>
+            )}
+            <ParentSecondaryButton type="button" onClick={finishInviteToHome} fullWidth tone="neutral" className={`${inviteOutcome === 'out_of_scope' ? 'mt-3' : 'mt-6'} h-[52px] text-[16px]`}>
+              返回首页
+            </ParentSecondaryButton>
+          </ParentCard>
+        </div>
+      </ParentPageShell>
+    );
+  };
+
+  const InviteChildSelect = () => {
+    const candidates = childrenList.filter(child => inviteCandidateIds.includes(child.id));
+    return (
+      <ParentPageShell className="pb-12">
+        <Header title="选择填写孩子" />
+        <section className="mx-5 mt-5 space-y-2">
+          {activeInviteRecord && <h1 className="px-1 pb-2 text-[17px] font-black text-slate-950">{activeInviteRecord.title}</h1>}
+          {candidates.map(child => (
+            <ParentCard key={child.id} as="article" className="overflow-hidden p-0">
+              <button type="button" onClick={() => resumeQuestionnaireInvite(childrenList, child.id)} className={`flex min-h-[76px] w-full items-center gap-3 px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS}`}>
+                <ParentChildAvatar name={child.name} src={child.avatar} alt={`${child.name}头像`} className="h-12 w-12 rounded-[15px]" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[16px] font-black text-slate-950">{child.name}</span>
+                  <span className="mt-1 block truncate text-[13px] font-bold text-slate-500">{child.className}</span>
+                </span>
+                <ChevronRight size={18} className="shrink-0 text-slate-300" />
+              </button>
+            </ParentCard>
+          ))}
+        </section>
+      </ParentPageShell>
+    );
+  };
 
   const GrowthChildProfileCard = () => {
     if (!activeChild) return null;
@@ -2444,6 +2655,9 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
   };
 
   const renderScreen = () => {
+    if (!isLoggedIn) return Login();
+    if (inviteOutcome) return InviteResultPage();
+    if (inviteCandidateIds.length > 1) return InviteChildSelect();
     if (screen === 'binding') return Binding();
     if (screen === 'growthRecords') return GrowthRecords();
     if (screen === 'todo') return TodoPage();
@@ -2456,11 +2670,15 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
           questionnaire={activeSharedQuestionnaire}
           child={{ name: activeChild.name, studentNo: activeChild.studentNo }}
           guardianRelation={PARENT_PROFILE.relation}
-          onBack={() => setScreen('todo')}
+          onBack={() => pendingInviteCode ? finishInviteToHome() : setScreen('todo')}
           onSubmitted={() => {
             setSharedQuestionnaires(readQuestionnaires());
-            setSubmitSuccessMessage('提交成功');
-            setScreen('growth');
+            if (pendingInviteCode) {
+              setInviteOutcome('submitted');
+            } else {
+              setSubmitSuccessMessage('提交成功');
+              setScreen('growth');
+            }
           }}
         />
       );
@@ -2473,14 +2691,15 @@ const ParentApp: React.FC<ParentAppProps> = ({ showPhoneShell = true, defaultHas
     return Growth();
   };
 
-  const tabItems: { key: Screen; label: string; icon: React.ElementType }[] = [
+  const tabItems: { key: Screen; label: string; icon: LucideIcon }[] = [
     { key: 'growth', label: '成长', icon: Star },
     { key: 'reports', label: '报告', icon: FileText },
     { key: 'mine', label: '我的', icon: UserRound },
   ];
 
   const hasParentOverlay = showChildSwitcher || showDepositConfirm || showDepositReview || showQuestionnaireSubmitConfirm || Boolean(withdrawTarget) || Boolean(mineSheet);
-  const showTabs = activeChild && (screen === 'growth' || screen === 'reports' || screen === 'mine') && !hasParentOverlay;
+  const hasInviteStandalonePage = !isLoggedIn || Boolean(inviteOutcome) || inviteCandidateIds.length > 1;
+  const showTabs = activeChild && (screen === 'growth' || screen === 'reports' || screen === 'mine') && !hasParentOverlay && !hasInviteStandalonePage;
   const SubmitSuccessToast = () => {
     if (!submitSuccessMessage) return null;
     return (

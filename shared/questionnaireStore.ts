@@ -88,6 +88,7 @@ export interface StudentCollectionRecord {
 
 export interface QuestionnaireRecord {
   id: string;
+  inviteCode?: string;
   title: string;
   description: string;
   creatorName: string;
@@ -698,11 +699,53 @@ export const writeQuestionnaires = (records: QuestionnaireRecord[]) => {
 
 export const upsertQuestionnaire = (record: QuestionnaireRecord) => {
   const current = readQuestionnaires();
-  const exists = current.some(item => item.id === record.id);
-  return writeQuestionnaires(exists
+  const existing = current.find(item => item.id === record.id);
+  if (existing && existing.status !== 'draft') return current;
+  return writeQuestionnaires(existing
     ? current.map(item => item.id === record.id ? record : item)
     : [record, ...current]);
 };
+
+export const createQuestionnaireInviteCode = () => {
+  const randomPart = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID().replaceAll('-', '')
+    : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  return `questionnaire-${randomPart.slice(0, 24)}`;
+};
+
+export const publishQuestionnaire = (record: QuestionnaireRecord): QuestionnaireRecord | null => {
+  if (record.status !== 'active') return null;
+  const current = readQuestionnaires();
+  const existing = current.find(item => item.id === record.id);
+  if (existing && existing.status !== 'draft') return null;
+  const publishedRecord = {
+    ...record,
+    inviteCode: record.inviteCode ?? existing?.inviteCode ?? createQuestionnaireInviteCode(),
+  };
+  writeQuestionnaires(existing
+    ? current.map(item => item.id === publishedRecord.id ? publishedRecord : item)
+    : [publishedRecord, ...current]);
+  return publishedRecord;
+};
+
+export const ensureQuestionnaireInviteCode = (id: string): QuestionnaireRecord | null => {
+  const records = readQuestionnaires();
+  const record = records.find(item => item.id === id);
+  if (
+    !record
+    || record.status !== 'active'
+    || getQuestionnaireCollectionMode(record) !== 'guardian_questionnaire'
+  ) return null;
+  if (record.inviteCode) return record;
+  const nextRecord = { ...record, inviteCode: createQuestionnaireInviteCode() };
+  writeQuestionnaires(records.map(item => item.id === id ? nextRecord : item));
+  return nextRecord;
+};
+
+export const getQuestionnaireByInviteCode = (
+  inviteCode: string,
+  records: QuestionnaireRecord[] = readQuestionnaires(),
+) => records.find(record => record.inviteCode === inviteCode) ?? null;
 
 type QuestionnaireDraftSource = Pick<QuestionnaireRecord, 'spaceId' | 'creatorTeacherId' | 'creatorName' | 'respondentRole' | 'collectionMode'>;
 

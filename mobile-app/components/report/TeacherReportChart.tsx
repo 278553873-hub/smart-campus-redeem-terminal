@@ -15,6 +15,7 @@ const loadTeacherReportChartRuntime = async () => {
         ]).then(([echartsCore, charts, components, renderers]) => {
             echartsCore.use([
                 charts.BarChart,
+                charts.LineChart,
                 charts.PieChart,
                 components.GridComponent,
                 components.LegendComponent,
@@ -458,6 +459,87 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
             optionKey={optionKey}
             createOption={createOption}
             onItemSelect={onCategorySelect}
+        />
+    );
+};
+
+export interface TeacherReportLineSeries {
+    name: string;
+    values: number[];
+    color: TeacherReportChartColor;
+}
+
+interface TeacherReportLineChartProps {
+    ariaLabel: string;
+    categories: string[];
+    series: TeacherReportLineSeries[];
+    optionKey: string;
+    valueLabelSuffix?: string;
+    minValue?: number;
+    maxValue?: number;
+    className?: string;
+}
+
+export const TeacherReportLineChart: React.FC<TeacherReportLineChartProps> = ({
+    ariaLabel,
+    categories,
+    series,
+    optionKey,
+    valueLabelSuffix = '',
+    minValue,
+    maxValue,
+    className = 'h-52',
+}) => {
+    const createOption = React.useCallback((theme: TeacherReportChartTheme): EChartsCoreOption => ({
+        animationDuration: 500,
+        animationDurationUpdate: 250,
+        color: series.map(item => theme.colors[item.color]),
+        tooltip: {
+            trigger: 'axis',
+            backgroundColor: theme.tooltip,
+            borderWidth: 0,
+            textStyle: { color: theme.surface, fontSize: 12 },
+            valueFormatter: (value: unknown) => `${value ?? ''}${valueLabelSuffix}`,
+        },
+        grid: { left: 36, right: 12, top: 24, bottom: 30 },
+        xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: categories,
+            axisTick: { show: false },
+            axisLine: { lineStyle: { color: theme.gridLine } },
+            axisLabel: { color: theme.textSecondary, fontSize: 10, interval: 0 },
+        },
+        yAxis: {
+            type: 'value',
+            min: minValue,
+            max: maxValue,
+            splitNumber: 3,
+            axisLabel: { color: theme.textSecondary, fontSize: 9 },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            splitLine: { lineStyle: { color: theme.gridLine, type: 'dashed' } },
+        },
+        series: series.map(item => ({
+            name: item.name,
+            type: 'line',
+            smooth: 0.25,
+            symbol: 'circle',
+            symbolSize: 7,
+            showSymbol: true,
+            lineStyle: { width: 3 },
+            itemStyle: { borderWidth: 2, borderColor: theme.surface },
+            areaStyle: { opacity: 0.08 },
+            data: item.values,
+        })),
+    }), [categories, maxValue, minValue, series, valueLabelSuffix]);
+
+    return (
+        <TeacherReportChart
+            ariaLabel={ariaLabel}
+            className={className}
+            optionKey={optionKey}
+            createOption={createOption}
         />
     );
 };

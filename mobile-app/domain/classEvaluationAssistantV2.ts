@@ -1,13 +1,3 @@
-export type ClassEvaluationResponsibility = 'class' | 'teacher' | 'shared';
-
-export type ClassEvaluationRectificationStatus = 'pending' | 'reviewing' | 'resolved';
-
-export interface ClassEvaluationAction {
-    title: string;
-    owner: string;
-    verification: string;
-}
-
 export interface ClassEvaluationRecord {
     id: string;
     classId: string;
@@ -16,12 +6,7 @@ export interface ClassEvaluationRecord {
     indicator: string;
     finding: string;
     deduction: number;
-    classDeduction: number;
-    teacherDeduction: number;
-    responsibility: ClassEvaluationResponsibility;
     rule: string;
-    rectificationStatus: ClassEvaluationRectificationStatus;
-    actions: ClassEvaluationAction[];
 }
 
 export interface ClassEvaluationSnapshot {
@@ -32,21 +17,38 @@ export interface ClassEvaluationSnapshot {
     fullScore: number;
     finalScore: number;
     deduction: number;
-    classDeduction: number;
-    teacherDeduction: number;
     recordCount: number;
     hasRecordDetails: boolean;
 }
 
 export type ClassEvaluationAnswerType =
-    | 'score_summary'
-    | 'deduction_summary'
-    | 'deduction_detail'
-    | 'rule'
-    | 'responsibility'
-    | 'action_advice'
+    | 'weekly_performance'
+    | 'deduction_patterns'
+    | 'next_week_focus'
     | 'clarification'
     | 'unavailable';
+
+export const CLASS_EVALUATION_FIXED_QUESTIONS = [
+    { id: 'weekly_performance', label: '本周班级评比表现怎么样？' },
+    { id: 'deduction_patterns', label: '本周扣分反映出哪些主要问题？' },
+    { id: 'next_week_focus', label: '下周应该重点关注什么？' },
+] as const;
+
+export interface ClassEvaluationDimensionMetric {
+    dimension: string;
+    score: number;
+    maxScore: number;
+    gradeRank: number;
+    schoolRank: number;
+    recordCount: number;
+}
+
+export interface ClassEvaluationComparisonWeek {
+    label: string;
+    finalScore: number;
+    gradeRank: number;
+    dimensionRankings: readonly ClassEvaluationDimensionMetric[];
+}
 
 export interface ClassEvaluationAnswerMetric {
     label: string;
@@ -58,16 +60,19 @@ export interface ClassEvaluationAnswerBreakdown {
     label: string;
     value: string;
     detail: string;
+    tone?: 'default' | 'negative';
+}
+
+export interface ClassEvaluationAiInsight {
+    title: string;
+    body: string;
 }
 
 export interface ClassEvaluationConversationContext {
     classId: string;
     periodStart: string;
     periodEnd: string;
-    indicator?: string;
-    date?: string;
     recordIds: string[];
-    responsibilityTypes: ClassEvaluationResponsibility[];
 }
 
 export interface ClassEvaluationAssistantAnswer {
@@ -75,32 +80,42 @@ export interface ClassEvaluationAssistantAnswer {
     message: string;
     metrics: ClassEvaluationAnswerMetric[];
     breakdown: ClassEvaluationAnswerBreakdown[];
-    actions: ClassEvaluationAction[];
+    analysis: ClassEvaluationAiInsight[];
+    suggestions: ClassEvaluationAiInsight[];
     context: ClassEvaluationConversationContext;
     evidenceRefs: string[];
-    followUpSuggestions: string[];
+    promptVersion: string;
+    dataSnapshotId: string;
 }
 
 interface AskClassEvaluationQuestionInput {
     question: string;
     snapshot: ClassEvaluationSnapshot;
     records: ClassEvaluationRecord[];
-    previousContext?: ClassEvaluationConversationContext;
+    gradeRank: number;
+    rankings: readonly ClassEvaluationDimensionMetric[];
+    previousWeek?: ClassEvaluationComparisonWeek;
 }
 
 const roundScore = (value: number) => Math.round((value + Number.EPSILON) * 10) / 10;
 
 const formatScore = (value: number) => roundScore(value).toFixed(1);
 
+const formatSignedScore = (value: number) => {
+    const rounded = roundScore(value);
+    if (rounded === 0) return '持平';
+    return `${rounded > 0 ? '+' : ''}${formatScore(rounded)}分`;
+};
+
+const formatScoreTrend = (value: number) => {
+    const rounded = roundScore(value);
+    if (rounded === 0) return '持平';
+    return `${rounded > 0 ? '上升' : '下降'}${formatScore(Math.abs(rounded))}分`;
+};
+
 const formatDate = (date: string) => {
     const [, month, day] = date.split('-');
     return `${Number(month)}月${Number(day)}日`;
-};
-
-const responsibilityLabels: Record<ClassEvaluationResponsibility, string> = {
-    class: '班级行为责任',
-    teacher: '教师组织责任',
-    shared: '共同责任',
 };
 
 export const calculateClassEvaluationSnapshot = (
@@ -116,8 +131,6 @@ export const calculateClassEvaluationSnapshot = (
         && record.date <= periodEnd
     ));
     const deduction = roundScore(periodRecords.reduce((sum, record) => sum + record.deduction, 0));
-    const classDeduction = roundScore(periodRecords.reduce((sum, record) => sum + record.classDeduction, 0));
-    const teacherDeduction = roundScore(periodRecords.reduce((sum, record) => sum + record.teacherDeduction, 0));
 
     return {
         id: `${classId}:${periodStart}:${periodEnd}`,
@@ -127,8 +140,6 @@ export const calculateClassEvaluationSnapshot = (
         fullScore,
         finalScore: roundScore(fullScore - deduction),
         deduction,
-        classDeduction,
-        teacherDeduction,
         recordCount: periodRecords.length,
         hasRecordDetails: periodRecords.length > 0,
     };
@@ -137,15 +148,11 @@ export const calculateClassEvaluationSnapshot = (
 const createContext = (
     snapshot: ClassEvaluationSnapshot,
     records: ClassEvaluationRecord[],
-    details?: Pick<ClassEvaluationConversationContext, 'indicator' | 'date' | 'responsibilityTypes'>,
 ): ClassEvaluationConversationContext => ({
     classId: snapshot.classId,
     periodStart: snapshot.periodStart,
     periodEnd: snapshot.periodEnd,
-    indicator: details?.indicator,
-    date: details?.date,
     recordIds: records.map(record => record.id),
-    responsibilityTypes: details?.responsibilityTypes ?? [],
 });
 
 const summarizeByDimension = (records: ClassEvaluationRecord[]): ClassEvaluationAnswerBreakdown[] => {
@@ -165,77 +172,68 @@ const summarizeByDimension = (records: ClassEvaluationRecord[]): ClassEvaluation
             label,
             value: `-${formatScore(value.deduction)}分`,
             detail: `${value.count}笔`,
+            tone: 'negative',
         }));
-};
-
-const summarizeRecords = (records: ClassEvaluationRecord[]): ClassEvaluationAnswerBreakdown[] => (
-    records.slice(0, 5).map(record => ({
-        label: record.indicator,
-        value: `-${formatScore(record.deduction)}分`,
-        detail: `${formatDate(record.date)} · ${responsibilityLabels[record.responsibility]}`,
-    }))
-);
-
-const rectificationPriority: Record<ClassEvaluationRectificationStatus, number> = {
-    pending: 0,
-    reviewing: 1,
-    resolved: 2,
 };
 
 const prioritizeRecords = (records: ClassEvaluationRecord[]) => (
     [...records].sort((left, right) => (
-        rectificationPriority[left.rectificationStatus] - rectificationPriority[right.rectificationStatus]
-        || right.deduction - left.deduction
+        right.deduction - left.deduction
         || right.date.localeCompare(left.date)
     ))
 );
 
-const uniqueActions = (records: ClassEvaluationRecord[]): ClassEvaluationAction[] => {
-    const seen = new Set<string>();
-    return records
-        .flatMap(record => record.actions)
-        .filter(action => {
-            if (seen.has(action.title)) return false;
-            seen.add(action.title);
-            return true;
-        })
-        .slice(0, 3);
+const summarizeDimensionScores = (
+    rankings: readonly ClassEvaluationDimensionMetric[],
+): ClassEvaluationAnswerBreakdown[] => rankings.map(item => ({
+    label: item.dimension,
+    value: `${formatScore(item.score)}/${formatScore(item.maxScore)}分`,
+    detail: `年级第${item.gradeRank} · 全校第${item.schoolRank}`,
+}));
+
+const summarizeDimensionChanges = (
+    rankings: readonly ClassEvaluationDimensionMetric[],
+    previousWeek?: ClassEvaluationComparisonWeek,
+): ClassEvaluationAnswerBreakdown[] => rankings.map(item => {
+    const previous = previousWeek?.dimensionRankings.find(previousItem => (
+        previousItem.dimension === item.dimension
+    ));
+    const change = previous ? roundScore(item.score - previous.score) : 0;
+    return {
+        label: item.dimension,
+        value: previous ? formatSignedScore(change) : '暂无对比',
+        detail: previous
+            ? `本周${formatScore(item.score)}分 · 上周${formatScore(previous.score)}分`
+            : `本周${formatScore(item.score)}/${formatScore(item.maxScore)}分`,
+        tone: change < 0 ? 'negative' : 'default',
+    };
+});
+
+const getDimensionDeductions = (records: ClassEvaluationRecord[]) => {
+    const result = new Map<string, { deduction: number; count: number }>();
+    records.forEach(record => {
+        const current = result.get(record.dimension) ?? { deduction: 0, count: 0 };
+        result.set(record.dimension, {
+            deduction: roundScore(current.deduction + record.deduction),
+            count: current.count + 1,
+        });
+    });
+    return Array.from(result.entries())
+        .map(([dimension, value]) => ({ dimension, ...value }))
+        .sort((left, right) => right.deduction - left.deduction || right.count - left.count);
 };
 
-const parseChineseDate = (question: string, periodYear: string): string | undefined => {
-    const matched = question.match(/(\d{1,2})月(\d{1,2})日/);
-    if (!matched) return undefined;
-    return `${periodYear}-${matched[1].padStart(2, '0')}-${matched[2].padStart(2, '0')}`;
-};
+const createInsight = (title: string, body: string): ClassEvaluationAiInsight => ({ title, body });
 
-const detectIndicator = (question: string): string | undefined => {
-    const indicators = [
-        '诗意中队',
-        '安全教育',
-        '健体班级',
-        '文雅班级',
-        '美净班级',
-        '早操',
-        '眼操',
-        '眼保健操',
-        '午检',
-        '晨检',
-        '路队',
-        '图书',
-        '公区',
-        '卫生',
-        '美净',
-    ];
-    const matched = indicators.find(indicator => question.includes(indicator));
-    if (matched === '眼保健操') return '眼操';
-    if (matched === '卫生' || matched === '美净') return '美净';
-    return matched;
-};
-
-const recordMatchesIndicator = (record: ClassEvaluationRecord, indicator: string) => {
-    if (indicator === record.dimension) return true;
-    if (indicator === '美净') return record.dimension === '美净班级';
-    return `${record.dimension}${record.indicator}${record.finding}`.includes(indicator);
+const getPromptVersion = (answerType: ClassEvaluationAnswerType) => {
+    const versionByType: Record<ClassEvaluationAnswerType, string> = {
+        weekly_performance: 'headteacher-class-evaluation-weekly-performance-v1',
+        deduction_patterns: 'headteacher-class-evaluation-deduction-patterns-v1',
+        next_week_focus: 'headteacher-class-evaluation-next-week-focus-v1',
+        clarification: 'headteacher-class-evaluation-clarification-v1',
+        unavailable: 'headteacher-class-evaluation-unavailable-v1',
+    };
+    return versionByType[answerType];
 };
 
 const unavailableAnswer = (
@@ -246,41 +244,21 @@ const unavailableAnswer = (
     message,
     metrics: [{ label: '当前得分', value: formatScore(snapshot.finalScore) }],
     breakdown: [],
-    actions: [],
+    analysis: [],
+    suggestions: [],
     context: createContext(snapshot, []),
     evidenceRefs: [],
-    followUpSuggestions: ['查看当前得分', '扣分明细何时同步'],
+    promptVersion: getPromptVersion('unavailable'),
+    dataSnapshotId: snapshot.id,
 });
-
-export const createClassEvaluationWelcomeAnswer = (
-    snapshot: ClassEvaluationSnapshot,
-    records: ClassEvaluationRecord[],
-): ClassEvaluationAssistantAnswer => {
-    if (!snapshot.hasRecordDetails) return unavailableAnswer(snapshot);
-
-    const sortedDimensions = summarizeByDimension(records);
-    const mainDimension = sortedDimensions[0];
-    return {
-        answerType: 'score_summary',
-        message: `本周期得分${formatScore(snapshot.finalScore)}分，共${snapshot.recordCount}笔扣分。主要集中在${mainDimension.label}${mainDimension.value}，可继续询问具体日期、项目或责任归属。`,
-        metrics: [
-            { label: '当前得分', value: formatScore(snapshot.finalScore) },
-            { label: '累计扣分', value: `-${formatScore(snapshot.deduction)}`, tone: 'negative' },
-            { label: '扣分记录', value: `${snapshot.recordCount}笔` },
-        ],
-        breakdown: sortedDimensions,
-        actions: [],
-        context: createContext(snapshot, records),
-        evidenceRefs: records.map(record => record.id),
-        followUpSuggestions: ['本周为什么扣分', '哪些属于教师组织责任', '7月18日有哪些扣分'],
-    };
-};
 
 export const askClassEvaluationQuestion = ({
     question,
     snapshot,
     records,
-    previousContext,
+    gradeRank,
+    rankings,
+    previousWeek,
 }: AskClassEvaluationQuestionInput): ClassEvaluationAssistantAnswer => {
     const normalizedQuestion = question.trim();
     const periodRecords = records.filter(record => (
@@ -291,124 +269,171 @@ export const askClassEvaluationQuestion = ({
 
     if (!snapshot.hasRecordDetails || periodRecords.length === 0) return unavailableAnswer(snapshot);
 
-    const isAdviceQuestion = /怎么改|如何改|整改|怎么做|怎么办|怎么提升|如何提升|追上第一/.test(normalizedQuestion);
-    const isRuleQuestion = /规则|依据|为什么扣这么多|怎么扣/.test(normalizedQuestion);
-    const isTeacherResponsibilityQuestion = /教师|老师|组织责任|谁的责任/.test(normalizedQuestion);
-    const parsedDate = parseChineseDate(normalizedQuestion, snapshot.periodStart.slice(0, 4));
-    const detectedIndicator = detectIndicator(normalizedQuestion);
-    const inheritedIndicator = isAdviceQuestion ? previousContext?.indicator : undefined;
-    const targetIndicator = detectedIndicator ?? inheritedIndicator;
-
-    let matchedRecords = periodRecords;
-    if (parsedDate) matchedRecords = matchedRecords.filter(record => record.date === parsedDate);
-    if (targetIndicator) matchedRecords = matchedRecords.filter(record => recordMatchesIndicator(record, targetIndicator));
-    if (isTeacherResponsibilityQuestion) matchedRecords = matchedRecords.filter(record => record.teacherDeduction > 0);
-    if (isAdviceQuestion && !parsedDate && !targetIndicator && previousContext?.recordIds.length) {
-        matchedRecords = periodRecords.filter(record => previousContext.recordIds.includes(record.id));
-    }
-
-    const responsibilityTypes: ClassEvaluationResponsibility[] = isTeacherResponsibilityQuestion
-        ? ['teacher', 'shared']
-        : [];
-    const context = createContext(snapshot, matchedRecords, {
-        indicator: targetIndicator,
-        date: parsedDate,
-        responsibilityTypes,
-    });
-
-    if (matchedRecords.length === 0) {
-        const scope = parsedDate ? formatDate(parsedDate) : targetIndicator ?? '该条件';
+    const fixedQuestion = CLASS_EVALUATION_FIXED_QUESTIONS.find(item => item.label === normalizedQuestion);
+    if (!fixedQuestion) {
         return {
-            answerType: 'deduction_detail',
-            message: `${scope}没有查询到扣分记录。你可以换一个日期或检查项目继续问。`,
+            answerType: 'clarification',
+            message: '当前可分析本周整体表现、主要扣分问题和下周关注重点，请选择下方固定问题。',
             metrics: [],
             breakdown: [],
-            actions: [],
-            context,
+            analysis: [],
+            suggestions: [],
+            context: createContext(snapshot, []),
             evidenceRefs: [],
-            followUpSuggestions: ['本周为什么扣分', '哪些属于教师组织责任'],
+            promptVersion: getPromptVersion('clarification'),
+            dataSnapshotId: snapshot.id,
         };
     }
 
-    const matchedDeduction = roundScore(matchedRecords.reduce((sum, record) => sum + record.deduction, 0));
+    const prioritizedRecords = prioritizeRecords(periodRecords);
+    const dimensionDeductions = getDimensionDeductions(periodRecords);
+    const mostDeducted = dimensionDeductions[0];
+    const weakestDimension = [...rankings].sort((left, right) => (
+        (left.score / left.maxScore) - (right.score / right.maxScore)
+        || right.gradeRank - left.gradeRank
+    ))[0];
 
-    if (isAdviceQuestion) {
-        const prioritizedRecords = prioritizeRecords(matchedRecords);
+    if (fixedQuestion.id === 'weekly_performance') {
+        const fullScoreDimensions = rankings.filter(item => item.score === item.maxScore);
+        const topTwoDeduction = roundScore(
+            (dimensionDeductions[0]?.deduction ?? 0) + (dimensionDeductions[1]?.deduction ?? 0),
+        );
+        const concentration = snapshot.deduction > 0
+            ? Math.round((topTwoDeduction / snapshot.deduction) * 100)
+            : 0;
+
         return {
-            answerType: 'action_advice',
-            message: `针对刚才的${targetIndicator ?? '扣分记录'}，建议先处理${prioritizedRecords[0].indicator}，用连续检查结果确认是否改善。`,
-            metrics: [],
-            breakdown: summarizeRecords(prioritizedRecords),
-            actions: uniqueActions(prioritizedRecords),
-            context,
+            answerType: 'weekly_performance',
+            message: `本周当前得分${formatScore(snapshot.finalScore)}分，年级第${gradeRank}名。`,
+            metrics: [
+                { label: '本周得分', value: `${formatScore(snapshot.finalScore)}分` },
+                { label: '年级排名', value: `第${gradeRank}名` },
+                { label: '累计扣分', value: `-${formatScore(snapshot.deduction)}分`, tone: 'negative' },
+            ],
+            breakdown: summarizeDimensionScores(rankings),
+            analysis: [
+                createInsight(
+                    '优势表现',
+                    fullScoreDimensions.length > 0
+                        ? `${fullScoreDimensions.map(item => item.dimension).join('、')}保持满分，是本周相对稳定的项目。`
+                        : '本周暂无满分项目，各分类仍有提升空间。',
+                ),
+                createInsight(
+                    '主要短板',
+                    `${weakestDimension.dimension}${formatScore(weakestDimension.score)}/${formatScore(weakestDimension.maxScore)}分，年级第${weakestDimension.gradeRank}，是当前得分最低的分类。`,
+                ),
+                createInsight(
+                    '扣分集中度',
+                    `前两项扣分合计${formatScore(topTwoDeduction)}分，占本周全部扣分的${concentration}%。`,
+                ),
+            ],
+            suggestions: [
+                createInsight('保持优势项', `${fullScoreDimensions.map(item => item.dimension).join('、') || '当前高分项目'}继续按现有节奏观察，避免出现新增扣分。`),
+                createInsight('优先补齐短板', `下周先关注${weakestDimension.dimension}，并结合本周${mostDeducted.dimension}的逐笔记录定位高频场景。`),
+            ],
+            context: createContext(snapshot, periodRecords),
+            evidenceRefs: periodRecords.map(record => record.id),
+            promptVersion: getPromptVersion('weekly_performance'),
+            dataSnapshotId: snapshot.id,
+        };
+    }
+
+    if (fixedQuestion.id === 'deduction_patterns') {
+        const topTwo = dimensionDeductions.slice(0, 2);
+        const topTwoDeduction = roundScore(topTwo.reduce((sum, item) => sum + item.deduction, 0));
+        const concentration = Math.round((topTwoDeduction / snapshot.deduction) * 100);
+        const largestRecord = prioritizedRecords[0];
+        const highImpactShare = Math.round((largestRecord.deduction / snapshot.deduction) * 100);
+        const repeatedDimensions = dimensionDeductions.filter(item => item.count > 1);
+
+        return {
+            answerType: 'deduction_patterns',
+            message: `本周共${snapshot.recordCount}笔扣分，合计扣${formatScore(snapshot.deduction)}分，问题主要集中在${topTwo.map(item => item.dimension).join('和')}。`,
+            metrics: [
+                { label: '累计扣分', value: `-${formatScore(snapshot.deduction)}分`, tone: 'negative' },
+                { label: '扣分记录', value: `${snapshot.recordCount}笔` },
+                { label: '扣分最多', value: mostDeducted.dimension },
+            ],
+            breakdown: summarizeByDimension(periodRecords),
+            analysis: [
+                createInsight('问题较集中', `${topTwo.map(item => item.dimension).join('、')}合计扣${formatScore(topTwoDeduction)}分，占全部扣分的${concentration}%。`),
+                createInsight('高影响事件', `${largestRecord.indicator}单次扣${formatScore(largestRecord.deduction)}分，占本周扣分的${highImpactShare}%。`),
+                createInsight(
+                    '重复发生',
+                    repeatedDimensions.length > 0
+                        ? `${repeatedDimensions.map(item => `${item.dimension}${item.count}笔`).join('、')}，说明问题并非单次偶发。`
+                        : '本周各分类均为单次记录，暂未发现重复发生的分类。',
+                ),
+            ],
+            suggestions: [
+                createInsight('先看高影响扣分', `优先复盘${largestRecord.indicator}，单次减少此类问题对周总分改善最直接。`),
+                createInsight('持续观察高频项', `重点观察${mostDeducted.dimension}，对照逐笔记录判断同类场景是否继续出现。`),
+            ],
+            context: createContext(snapshot, prioritizedRecords),
             evidenceRefs: prioritizedRecords.map(record => record.id),
-            followUpSuggestions: ['查看对应扣分明细', '眼操扣分规则是什么'],
+            promptVersion: getPromptVersion('deduction_patterns'),
+            dataSnapshotId: snapshot.id,
         };
     }
 
-    if (isRuleQuestion) {
-        const ruleRecords = matchedRecords.slice(0, 3);
+    const scoreChange = previousWeek
+        ? roundScore(snapshot.finalScore - previousWeek.finalScore)
+        : 0;
+    const dimensionChanges = rankings.map(item => {
+        const previous = previousWeek?.dimensionRankings.find(previousItem => (
+            previousItem.dimension === item.dimension
+        ));
         return {
-            answerType: 'rule',
-            message: ruleRecords.map(record => `${record.indicator}：${record.rule}`).join('\n'),
-            metrics: [],
-            breakdown: summarizeRecords(ruleRecords),
-            actions: [],
-            context: createContext(snapshot, ruleRecords, {
-                indicator: targetIndicator,
-                date: parsedDate,
-                responsibilityTypes,
-            }),
-            evidenceRefs: ruleRecords.map(record => record.id),
-            followUpSuggestions: ['查看对应扣分明细', '怎么改'],
+            dimension: item.dimension,
+            currentScore: item.score,
+            previousScore: previous?.score,
+            change: previous ? roundScore(item.score - previous.score) : 0,
         };
-    }
-
-    if (isTeacherResponsibilityQuestion) {
-        const teacherDeduction = roundScore(matchedRecords.reduce((sum, record) => sum + record.teacherDeduction, 0));
-        return {
-            answerType: 'responsibility',
-            message: `本周期有${matchedRecords.length}笔记录涉及教师组织责任，教师责任部分合计扣${formatScore(teacherDeduction)}分；共同责任仅计入其中的教师分摊部分。`,
-            metrics: [{ label: '教师责任扣分', value: `-${formatScore(teacherDeduction)}`, tone: 'negative' }],
-            breakdown: matchedRecords.slice(0, 5).map(record => ({
-                label: record.indicator,
-                value: `-${formatScore(record.teacherDeduction)}分`,
-                detail: record.responsibility === 'shared' ? '共同责任中的教师部分' : '教师组织责任',
-            })),
-            actions: [],
-            context,
-            evidenceRefs: matchedRecords.map(record => record.id),
-            followUpSuggestions: ['眼操扣分规则是什么', '这些记录怎么改'],
-        };
-    }
-
-    if (parsedDate || targetIndicator) {
-        const scope = parsedDate ? formatDate(parsedDate) : targetIndicator;
-        return {
-            answerType: 'deduction_detail',
-            message: `${scope}共${matchedRecords.length}笔扣分，合计扣${formatScore(matchedDeduction)}分。以下均来自本周期评价台账。`,
-            metrics: [{ label: '合计扣分', value: `-${formatScore(matchedDeduction)}`, tone: 'negative' }],
-            breakdown: summarizeRecords(matchedRecords),
-            actions: [],
-            context,
-            evidenceRefs: matchedRecords.map(record => record.id),
-            followUpSuggestions: ['怎么改', '查看对应扣分明细'],
-        };
-    }
+    });
+    const biggestDecline = [...dimensionChanges].sort((left, right) => left.change - right.change)[0];
+    const stableOrImproved = dimensionChanges.filter(item => item.change >= 0);
+    const focusRecords = prioritizedRecords.filter(record => (
+        record.dimension === biggestDecline.dimension || record.dimension === mostDeducted.dimension
+    ));
 
     return {
-        answerType: 'deduction_summary',
-        message: `本周期共${snapshot.recordCount}笔扣分，合计扣${formatScore(snapshot.deduction)}分；其中班级行为责任${formatScore(snapshot.classDeduction)}分，教师组织责任${formatScore(snapshot.teacherDeduction)}分。`,
+        answerType: 'next_week_focus',
+        message: previousWeek
+            ? `本周较${previousWeek.label}总分${formatScoreTrend(scoreChange)}，下周建议优先关注${biggestDecline.dimension}和${mostDeducted.dimension}。`
+            : `下周建议优先关注${weakestDimension.dimension}和${mostDeducted.dimension}。`,
         metrics: [
-            { label: '当前得分', value: formatScore(snapshot.finalScore) },
-            { label: '班级责任', value: `-${formatScore(snapshot.classDeduction)}`, tone: 'negative' },
-            { label: '教师责任', value: `-${formatScore(snapshot.teacherDeduction)}`, tone: 'negative' },
+            { label: '本周得分', value: `${formatScore(snapshot.finalScore)}分` },
+            { label: '年级排名', value: `第${gradeRank}名` },
+            {
+                label: '较上周',
+                value: previousWeek ? formatSignedScore(scoreChange) : '暂无对比',
+                tone: scoreChange < 0 ? 'negative' : 'default',
+            },
         ],
-        breakdown: summarizeByDimension(periodRecords),
-        actions: [],
-        context: createContext(snapshot, periodRecords),
-        evidenceRefs: periodRecords.map(record => record.id),
-        followUpSuggestions: ['早操具体扣在哪里', '哪些属于教师组织责任', '怎么改'],
+        breakdown: summarizeDimensionChanges(rankings, previousWeek),
+        analysis: [
+            createInsight(
+                '总体变化',
+                previousWeek
+                    ? `本周${formatScore(snapshot.finalScore)}分，较上周${formatScore(previousWeek.finalScore)}分${formatScoreTrend(scoreChange)}，年级排名由第${previousWeek.gradeRank}变为第${gradeRank}。`
+                    : '当前没有可用于环比的上一周数据。',
+            ),
+            createInsight('下降最明显', `${biggestDecline.dimension}较上周${formatScoreTrend(biggestDecline.change)}，是五项中下降最明显的分类。`),
+            createInsight(
+                '稳定或改善',
+                stableOrImproved.length > 0
+                    ? `${stableOrImproved.map(item => item.dimension).join('、')}与上周持平或有所改善。`
+                    : '五项得分均低于上周，需要优先控制新增扣分。',
+            ),
+        ],
+        suggestions: [
+            createInsight('第一关注', `先看${biggestDecline.dimension}本周记录，关注造成环比下降的具体场景。`),
+            createInsight('第二关注', `${mostDeducted.dimension}是本周累计扣分最多的分类，下一周期持续观察同类记录是否减少。`),
+        ],
+        context: createContext(snapshot, focusRecords),
+        evidenceRefs: focusRecords.map(record => record.id),
+        promptVersion: getPromptVersion('next_week_focus'),
+        dataSnapshotId: snapshot.id,
     };
 };
 

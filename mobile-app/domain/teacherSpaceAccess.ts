@@ -19,6 +19,7 @@ export interface TeacherSpaceOption {
 
 export type TeacherManagementToolId =
     | 'schoolReport'
+    | 'moralEducationCockpit'
     | 'termReport'
     | 'headteacherAssistant'
     | 'headteacherAssistantV2'
@@ -58,6 +59,7 @@ interface TeacherClassAccessContext {
 
 const ALL_MANAGEMENT_TOOLS: TeacherManagementToolId[] = [
     'schoolReport',
+    'moralEducationCockpit',
     'termReport',
     'headteacherAssistant',
     'principalAssistant',

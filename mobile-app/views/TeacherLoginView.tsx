@@ -19,10 +19,10 @@ interface TeacherLoginViewProps {
 
 const phoneNumberPattern = /^1\d{10}$/;
 
-const wechatLoginButtonClass = 'mx-auto flex h-14 w-full max-w-[300px] items-center justify-center rounded-full bg-[var(--tm-platform-wechat)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-platform-wechat-pressed)] disabled:opacity-55';
-const recentLoginButtonClass = 'mx-auto flex h-14 w-full max-w-[300px] flex-col items-center justify-center rounded-full bg-[var(--tm-brand-primary)] px-4 py-2 text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:opacity-55';
-const phoneLoginLinkClass = 'flex min-h-11 items-center justify-center px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)] transition-colors active:text-[var(--tm-brand-primary-strong)]';
-const sheetPrimaryButtonClass = 'mx-auto flex min-h-12 w-full max-w-[300px] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:opacity-55';
+const wechatLoginButtonClass = 'mx-auto flex h-14 w-full max-w-[300px] items-center justify-center rounded-full bg-[var(--tm-platform-wechat)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-platform-wechat-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
+const recentLoginButtonClass = 'mx-auto flex h-14 w-full max-w-[300px] flex-col items-center justify-center rounded-full bg-[var(--tm-brand-primary)] px-4 py-2 text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
+const phoneLoginLinkClass = 'flex min-h-11 items-center justify-center px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)] transition-colors active:text-[var(--tm-brand-primary-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]';
+const sheetPrimaryButtonClass = 'mx-auto flex min-h-12 w-full max-w-[300px] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
 const fieldClass = 'h-[52px] w-full rounded-[var(--tm-radius-control)] border border-transparent bg-[var(--tm-bg-surface-soft)] px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] outline-none transition-[border-color,background-color,box-shadow] placeholder:text-[var(--tm-text-tertiary)] focus:border-[var(--tm-brand-primary-soft-strong)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-brand-primary-soft)]';
 
 const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
@@ -120,26 +120,27 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)]">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] antialiased">
       <main className="flex min-h-0 flex-1 flex-col px-[var(--tm-space-6)] pb-[calc(var(--tm-space-5)+env(safe-area-inset-bottom))] pt-[calc(var(--tm-space-8)*4)]">
         <div className="flex flex-col items-center text-center">
-          <div className="h-[84px] w-[84px] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] [box-shadow:var(--tm-shadow-card)]">
+          <div className="h-[84px] w-[84px] overflow-hidden rounded-full [box-shadow:var(--tm-shadow-card)]">
             <img
               src={ASSETS.MANAGEMENT.TEACHER_LOGIN_ICON}
               alt="AI素养评价产品图标"
-              className="h-full w-full object-contain"
+              className="h-full w-full rounded-full object-cover outline outline-1 -outline-offset-1 outline-black/10"
             />
           </div>
-          <h1 className="mt-[var(--tm-space-6)] text-[length:var(--tm-font-size-page-title)] font-bold leading-tight">欢迎使用 AI素养评价</h1>
+          <h1 className="mt-[var(--tm-space-6)] text-balance text-[length:var(--tm-font-size-page-title)] font-bold leading-tight">欢迎使用 AI素养评价</h1>
+          <p className="mt-[var(--tm-space-2)] text-pretty text-[length:var(--tm-font-size-body)] font-normal leading-5 text-[var(--tm-text-secondary)]">看见每一个孩子的成长</p>
         </div>
 
-        <div className="mt-[calc(var(--tm-space-8)*4)] flex w-full flex-col items-center">
+        <div className="mt-[calc(var(--tm-space-8)*2)] flex w-full flex-col items-center">
           <button type="button" onClick={loginWithRecentAccount} disabled={submitting} className={recentLoginButtonClass}>
             <span className="text-[length:var(--tm-font-size-card-title)] font-bold leading-5">最近登录</span>
             <span className="mt-0.5 text-[length:var(--tm-font-size-meta)] font-medium leading-4 opacity-80">190****0000</span>
           </button>
-          <button type="button" onClick={() => openSheet('wechat')} disabled={submitting} className={`${wechatLoginButtonClass} mt-[var(--tm-space-5)]`}>
-            微信登录
+          <button type="button" onClick={() => openSheet('wechat')} disabled={submitting} className={`${wechatLoginButtonClass} mt-[var(--tm-space-3)]`}>
+            一键登录
           </button>
           <button type="button" onClick={() => openSheet('phone')} className={phoneLoginLinkClass}>
             手机号登录/注册

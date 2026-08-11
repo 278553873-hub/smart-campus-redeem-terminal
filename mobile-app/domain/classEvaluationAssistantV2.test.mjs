@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  CLASS_EVALUATION_FIXED_QUESTIONS,
   askClassEvaluationQuestion,
   calculateClassEvaluationSnapshot,
 } from './classEvaluationAssistantV2.ts';
@@ -20,9 +21,9 @@ const snapshot = calculateClassEvaluationSnapshot(
 
 assert.equal(snapshot.deduction, 4.5);
 assert.equal(snapshot.finalScore, 95.5);
-assert.equal(snapshot.classDeduction, 3.4);
-assert.equal(snapshot.teacherDeduction, 1.1);
 assert.equal(snapshot.recordCount, 8);
+assert.ok(!('classDeduction' in snapshot));
+assert.ok(!('teacherDeduction' in snapshot));
 assert.ok(
   getClassEvaluationRecords('c_2025_4').every(record => record.date <= '2026-08-07'),
   '进行中周的模拟明细不得晚于面板所示的数据截止时间',
@@ -31,7 +32,8 @@ assert.ok(
 assert.equal(CLASS_EVALUATION_WEEKS.length, 3, '周评面板应提供当前周和两个历史周。');
 assert.equal(CLASS_EVALUATION_WEEKS[0].label, '8月3日-8月9日');
 assert.equal(CLASS_EVALUATION_WEEKS[0].dataRangeLabel, '8月3日-8月7日');
-assert.equal(CLASS_EVALUATION_WEEKS[0].overallRank, 2);
+assert.equal(CLASS_EVALUATION_WEEKS[0].gradeRank, 2);
+assert.ok(!('overallRank' in CLASS_EVALUATION_WEEKS[0]));
 for (const week of CLASS_EVALUATION_WEEKS) {
   assert.equal(week.dimensionRankings.length, 5, `${week.label} 应包含五个一级指标。`);
   assert.ok(
@@ -51,87 +53,95 @@ for (const week of CLASS_EVALUATION_WEEKS) {
 }
 
 for (const record of CLASS_EVALUATION_RECORDS) {
-  assert.equal(
-    Number((record.classDeduction + record.teacherDeduction).toFixed(1)),
-    record.deduction,
-    `${record.id} 的责任拆分必须等于该笔总扣分`,
-  );
+  for (const field of ['classDeduction', 'teacherDeduction', 'responsibility', 'rectificationStatus', 'actions']) {
+    assert.ok(!(field in record), `${record.id} 不应包含系统并不存在的 ${field} 字段`);
+  }
 }
 
-const earlyExercise = askClassEvaluationQuestion({
-  question: '早操具体扣在哪里',
-  snapshot,
-  records: CLASS_EVALUATION_RECORDS,
-});
-assert.equal(earlyExercise.answerType, 'deduction_detail');
-assert.equal(earlyExercise.evidenceRefs.length, 2);
-assert.ok(earlyExercise.breakdown.every(item => item.label.includes('早操')));
-
-const advice = askClassEvaluationQuestion({
-  question: '怎么改',
-  snapshot,
-  records: CLASS_EVALUATION_RECORDS,
-  previousContext: earlyExercise.context,
-});
-assert.equal(advice.answerType, 'action_advice');
-assert.equal(advice.context.indicator, '早操');
-assert.deepEqual(advice.evidenceRefs, earlyExercise.evidenceRefs);
-assert.ok(advice.actions.length > 0);
-
-const teacherResponsibility = askClassEvaluationQuestion({
-  question: '哪些属于教师组织责任',
-  snapshot,
-  records: CLASS_EVALUATION_RECORDS,
-});
-assert.equal(teacherResponsibility.answerType, 'responsibility');
-assert.equal(teacherResponsibility.metrics[0].value, '-1.1');
-assert.ok(teacherResponsibility.evidenceRefs.every(id => (
-  CLASS_EVALUATION_RECORDS.find(record => record.id === id)?.teacherDeduction > 0
-)));
-
-const eyeExerciseRule = askClassEvaluationQuestion({
-  question: '眼操扣分规则是什么',
-  snapshot,
-  records: CLASS_EVALUATION_RECORDS,
-});
-assert.equal(eyeExerciseRule.answerType, 'rule');
-assert.match(eyeExerciseRule.message, /教师组织责任扣0\.3分/);
-
-const fitnessAdvice = askClassEvaluationQuestion({
-  question: '健体班级怎么提升',
-  snapshot,
-  records: CLASS_EVALUATION_RECORDS,
-});
-assert.equal(fitnessAdvice.answerType, 'action_advice');
-assert.equal(fitnessAdvice.context.indicator, '健体班级');
-assert.ok(fitnessAdvice.evidenceRefs.every(id => (
-  CLASS_EVALUATION_RECORDS.find(record => record.id === id)?.dimension === '健体班级'
-)));
-
-const weeklyAdvice = askClassEvaluationQuestion({
-  question: '本周怎么改',
-  snapshot,
-  records: CLASS_EVALUATION_RECORDS,
-});
-assert.equal(weeklyAdvice.answerType, 'action_advice');
 assert.deepEqual(
-  weeklyAdvice.actions.map(action => action.title),
-  [
-    '下楼前完成一次队列静默检查',
-    '值日结束前由组长复查楼梯转角',
-    '将早操到岗提醒提前至集合前5分钟',
-  ],
-  '整改建议应优先选择未整改、待复核且扣分较高的事项',
+  CLASS_EVALUATION_FIXED_QUESTIONS.map(question => question.label),
+  ['本周班级评比表现怎么样？', '本周扣分反映出哪些主要问题？', '下周应该重点关注什么？'],
+  'V2 应只提供三项同时覆盖数据统计和分析建议的固定问题。',
 );
+
+const currentWeek = CLASS_EVALUATION_WEEKS[0];
+const previousWeekConfig = CLASS_EVALUATION_WEEKS[1];
+const previousSnapshot = getClassEvaluationSnapshot('c_2025_4', previousWeekConfig.id);
+const assistantInput = {
+  snapshot,
+  records: CLASS_EVALUATION_RECORDS,
+  gradeRank: currentWeek.gradeRank,
+  rankings: currentWeek.dimensionRankings,
+  previousWeek: {
+    label: previousWeekConfig.label,
+    finalScore: previousSnapshot.finalScore,
+    gradeRank: previousWeekConfig.gradeRank,
+    dimensionRankings: previousWeekConfig.dimensionRankings,
+  },
+};
+
+const weeklyPerformance = askClassEvaluationQuestion({
+  ...assistantInput,
+  question: CLASS_EVALUATION_FIXED_QUESTIONS[0].label,
+});
+assert.equal(weeklyPerformance.answerType, 'weekly_performance');
+assert.match(weeklyPerformance.message, /本周当前得分95.5分，年级第2名/);
+assert.equal(weeklyPerformance.breakdown.length, 5);
+assert.equal(weeklyPerformance.breakdown[2].label, '健体班级');
+assert.equal(weeklyPerformance.breakdown[2].value, '18.2\/20.0分');
+assert.ok(weeklyPerformance.metrics.length > 0);
+assert.ok(weeklyPerformance.analysis.length > 0);
+assert.ok(weeklyPerformance.suggestions.length > 0);
+assert.equal(weeklyPerformance.evidenceRefs.length, 8);
+
+const deductionPatterns = askClassEvaluationQuestion({
+  ...assistantInput,
+  question: CLASS_EVALUATION_FIXED_QUESTIONS[1].label,
+});
+assert.equal(deductionPatterns.answerType, 'deduction_patterns');
+assert.equal(deductionPatterns.breakdown[0].label, '健体班级');
+assert.equal(deductionPatterns.breakdown[0].value, '-1.8分');
+assert.match(deductionPatterns.analysis[0].body, /76%/);
+assert.ok(deductionPatterns.metrics.length > 0);
+assert.ok(deductionPatterns.suggestions.length > 0);
+assert.equal(deductionPatterns.evidenceRefs.length, 8);
+
+const nextWeekFocus = askClassEvaluationQuestion({
+  ...assistantInput,
+  question: CLASS_EVALUATION_FIXED_QUESTIONS[2].label,
+});
+assert.equal(nextWeekFocus.answerType, 'next_week_focus');
+assert.match(nextWeekFocus.message, /下降2.0分/);
+assert.equal(nextWeekFocus.metrics.find(item => item.label === '较上周')?.value, '-2.0分');
+assert.equal(nextWeekFocus.breakdown.find(item => item.label === '美净班级')?.value, '-1.2分');
+assert.ok(nextWeekFocus.analysis.length > 0);
+assert.ok(nextWeekFocus.suggestions.length > 0);
+
+for (const answer of [weeklyPerformance, deductionPatterns, nextWeekFocus]) {
+  assert.ok(answer.promptVersion.endsWith('-v1'), '每项固定问题都应记录提示词版本。');
+  assert.equal(answer.dataSnapshotId, snapshot.id, '每项回答都应绑定生成时的数据快照。');
+}
+
+const unsupportedQuestion = askClassEvaluationQuestion({
+  ...assistantInput,
+  question: '眼操扣分规则是什么',
+});
+assert.equal(unsupportedQuestion.answerType, 'clarification');
+assert.match(unsupportedQuestion.message, /请选择下方固定问题/);
+assert.deepEqual(unsupportedQuestion.evidenceRefs, []);
 
 const snapshotOnly = getClassEvaluationSnapshot('c_2025_1');
 const unavailable = askClassEvaluationQuestion({
-  question: '为什么扣分',
+  question: CLASS_EVALUATION_FIXED_QUESTIONS[0].label,
   snapshot: snapshotOnly,
   records: [],
+  gradeRank: currentWeek.gradeRank,
+  rankings: currentWeek.dimensionRankings,
 });
 assert.equal(unavailable.answerType, 'unavailable');
 assert.match(unavailable.message, /没有对应扣分明细/);
 assert.deepEqual(unavailable.evidenceRefs, []);
+assert.deepEqual(unavailable.analysis, []);
+assert.deepEqual(unavailable.suggestions, []);
 
 console.log('Class evaluation assistant V2 domain assertions passed');

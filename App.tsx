@@ -1246,6 +1246,9 @@ const PcWorkspace: React.FC = () => {
 };
 
 const AppSwitcher: React.FC = () => {
+  const questionnaireInviteCode = useMemo(() => (
+    new URLSearchParams(window.location.search).get('questionnaireInvite')?.trim() ?? ''
+  ), []);
   const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'group-pc' | 'group-pc-screen'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
@@ -1455,7 +1458,10 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'admin' && <MobileApp showPhoneShell={showPhoneShell} />}
         {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
-        {currentApp === 'parent' && <ParentApp showPhoneShell={showParentPhoneShell} />}
+        {currentApp === 'parent' && (questionnaireInviteCode
+          ? <ParentApp showPhoneShell={showParentPhoneShell} defaultLoggedIn={false} defaultHasBoundChild={false} initialQuestionnaireInviteCode={questionnaireInviteCode} />
+          : <ParentApp showPhoneShell={showParentPhoneShell} />
+        )}
       </div>
 
       {showPhoneShellToggle && (currentApp === 'admin' || currentApp === 'parent') && (

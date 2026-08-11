@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Minus } from 'lucide-react';
 import type { ClassInfo } from '../../types';
 import { phoneText } from '../../styles/teacherMobileTokens';
 
@@ -14,6 +14,7 @@ interface MobileClassCascadePickerProps {
   activeGrade: string;
   onActiveGradeChange: (grade: string) => void;
   onToggleClass: (classId: string) => void;
+  onToggleGrade?: (classIds: string[]) => void;
   getClassMeta?: (classInfo: ClassInfo) => React.ReactNode;
   ariaLabel?: string;
 }
@@ -24,6 +25,7 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = ({
   activeGrade,
   onActiveGradeChange,
   onToggleClass,
+  onToggleGrade,
   getClassMeta,
   ariaLabel = '班级级联选择',
 }) => {
@@ -33,6 +35,8 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = ({
   );
   const activeClasses = activeGroup?.classes ?? [];
   const activeSelectedCount = activeClasses.filter(classInfo => selectedClassIds.has(classInfo.id)).length;
+  const allActiveClassesSelected = activeClasses.length > 0 && activeSelectedCount === activeClasses.length;
+  const hasActiveClassSelected = activeSelectedCount > 0;
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[92px_1fr]" aria-label={ariaLabel}>
@@ -61,8 +65,24 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = ({
 
       <div className="flex min-h-0 min-w-0 flex-col p-3" aria-label="右侧再选该年级下的班级">
         <div className="mb-3 min-w-0 shrink-0">
-          <h3 className={`${phoneText.sectionTitle} truncate text-[var(--tm-text-primary)]`}>{activeGroup?.gradeLabel ?? '选择年级'}</h3>
-          <p className="mt-1 text-[length:var(--tm-font-size-badge)] text-[var(--tm-text-tertiary)]">已选 {activeSelectedCount} / {activeClasses.length} 个班</p>
+          <div className="flex min-h-11 items-center justify-between gap-2">
+            <h3 className={`${phoneText.sectionTitle} min-w-0 truncate text-[var(--tm-text-primary)]`}>{activeGroup?.gradeLabel ?? '选择年级'}</h3>
+            {onToggleGrade && activeGroup && (
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={allActiveClassesSelected ? true : hasActiveClassSelected ? 'mixed' : false}
+                onClick={() => onToggleGrade(activeClasses.map(classInfo => classInfo.id))}
+                className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
+              >
+                <span className={`flex h-5 w-5 items-center justify-center rounded-[6px] border ${allActiveClassesSelected || hasActiveClassSelected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
+                  {allActiveClassesSelected ? <Check className="h-3 w-3" strokeWidth={3} /> : hasActiveClassSelected ? <Minus className="h-3 w-3" strokeWidth={3} /> : null}
+                </span>
+                全选本年级
+              </button>
+            )}
+          </div>
+          <p className="text-[length:var(--tm-font-size-badge)] text-[var(--tm-text-tertiary)]">已选 {activeSelectedCount} / {activeClasses.length} 个班</p>
         </div>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 no-scrollbar">
           {activeClasses.map(classInfo => {

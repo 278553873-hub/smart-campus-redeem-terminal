@@ -26,6 +26,7 @@ import {
   Save,
   Search,
   Settings,
+  QrCode,
   Star,
   Target,
   TextCursorInput,
@@ -41,9 +42,11 @@ import AutoResizeTextarea from '../../components/ui/AutoResizeTextarea';
 import MobileClassCascadePicker from '../../components/ui/MobileClassCascadePicker';
 import MobileFloatingCreateButton from '../../components/ui/MobileFloatingCreateButton';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
+import MobileConfirmSheet from '../../components/ui/MobileConfirmSheet';
 import MobileDocumentTitleInput from '../../components/ui/MobileDocumentTitleInput';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileToast from '../../components/ui/MobileToast';
+import MobileQrInviteSheet from '../../components/ui/MobileQrInviteSheet';
 import { ASSETS } from '../../assets/images';
 import AssignedQuestionnaireView from '../../../components/parent-app/AssignedQuestionnaireView';
 import QuestionnaireHeaderImage from '../../../components/questionnaire/QuestionnaireHeaderImage';
@@ -70,6 +73,7 @@ import {
   createQuestionnaireId,
   deleteQuestionnaireDraftsForSource,
   deleteDraftQuestionnaire,
+  ensureQuestionnaireInviteCode,
   formatQuestionnaireAnswer,
   getActiveQuestionnaireTargets,
   getQuestionnaireAnswerValidationError,
@@ -94,8 +98,8 @@ import {
   reconcileQuestionnaireTargets,
   readQuestionnaires,
   saveStudentCollectionRecord,
+  publishQuestionnaire as publishQuestionnaireRecord,
   updateQuestionnaireStatus,
-  upsertQuestionnaire,
   upsertQuestionnaireDraftForSource,
   writeQuestionnaires,
   type QuestionnaireQuestion,
@@ -615,6 +619,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [showOutlineSheet, setShowOutlineSheet] = useState(false);
   const [showAppearanceSheet, setShowAppearanceSheet] = useState(false);
   const [showBasicSettingsSheet, setShowBasicSettingsSheet] = useState(false);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
+  const [closeConfirmRecordId, setCloseConfirmRecordId] = useState('');
+  const [inviteRecordId, setInviteRecordId] = useState('');
   const [studentRecordFilter, setStudentRecordFilter] = useState<StudentRecordFilter>('all');
   const [studentRecordSearch, setStudentRecordSearch] = useState('');
   const [activeStudentNo, setActiveStudentNo] = useState('');
@@ -691,6 +698,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return counts;
   }, [allAvailableStudents]);
   const activeRecord = records.find(record => record.id === activeRecordId) ?? null;
+  const closeConfirmRecord = records.find(record => record.id === closeConfirmRecordId && record.status === 'active') ?? null;
+  const inviteRecord = records.find(record => record.id === inviteRecordId) ?? null;
   const ownedRecords = records.filter(record => (
     record.spaceId === spaceId
     && record.growthTemplate !== 'semester_goal'
@@ -1109,6 +1118,13 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       }
       setStepOneValidationAttempt(0);
     }
+    if (
+      createStep === 2
+      && buildTargets(effectiveGrowthFields.length > 0 || Boolean(draftArchiveTemplateId)).length === 0
+    ) {
+      showToast('请选择学生范围');
+      return;
+    }
     setCreateStep(step => Math.min(3, step + 1));
   };
 
@@ -1282,7 +1298,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     studentAssignmentMode,
   ]);
 
-  const publishQuestionnaire = () => {
+  const completePublishQuestionnaire = () => {
     const existing = records.find(record => record.id === draftId);
     const questions = getAllDraftQuestions();
     const targets = buildTargets(effectiveGrowthFields.length > 0 || Boolean(draftArchiveTemplateId));
@@ -1334,11 +1350,18 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       studentRecords: respondentRole === 'teacher' ? buildStudentRecords(eligibleTargets, existing) : [],
     };
     if (draftArchiveTemplateId) persistArchiveWorkspace(archiveWorkspace);
-    upsertQuestionnaire(record);
+    const publishedRecord = publishQuestionnaireRecord(record);
+    if (!publishedRecord) {
+      setShowPublishConfirm(false);
+      showToast('当前问卷已发布，不能再次修改');
+      return;
+    }
     setRecords(readQuestionnaires());
-    setActiveRecordId(record.id);
+    setActiveRecordId(publishedRecord.id);
     setDetailTab('data');
     setPageMode('detail');
+    setShowPublishConfirm(false);
+    if (respondentRole === 'guardian') setInviteRecordId(publishedRecord.id);
     showToast(respondentRole === 'teacher' ? '已开始采集' : '已发布到家长端');
   };
 
@@ -1356,10 +1379,51 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setSelectedClassIds(allSelected ? new Set() : new Set(availableClasses.map(classInfo => classInfo.id)));
   };
 
-  const closeActiveRecord = () => {
-    if (!activeRecord || activeRecord.status !== 'active') return;
-    if (!updateQuestionnaireStatus(activeRecord.id, 'ended')) return;
+  const toggleGradeClasses = (classIds: string[]) => {
+    setSelectedClassIds(previous => {
+      const next = new Set(previous);
+      const allSelected = classIds.length > 0 && classIds.every(classId => next.has(classId));
+      classIds.forEach(classId => {
+        if (allSelected) next.delete(classId);
+        else next.add(classId);
+      });
+      return next;
+    });
+  };
+
+  const openQuestionnaireInvite = (record: QuestionnaireRecord) => {
+    const shareableRecord = ensureQuestionnaireInviteCode(record.id);
+    if (!shareableRecord) {
+      showToast('仅收集中的家长问卷可以邀请填写');
+      return;
+    }
     setRecords(readQuestionnaires());
+    setActiveListActionId('');
+    setShowRecordMenu(false);
+    setInviteRecordId(shareableRecord.id);
+  };
+
+  const getQuestionnaireInviteUrl = (record: QuestionnaireRecord | null) => {
+    if (!record?.inviteCode || typeof window === 'undefined') return '';
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('app', 'parent');
+    url.searchParams.set('questionnaireInvite', record.inviteCode);
+    return url.toString();
+  };
+
+  const requestCloseRecord = (record: QuestionnaireRecord | null) => {
+    if (!record || record.status !== 'active') return;
+    setCloseConfirmRecordId(record.id);
+    setShowRecordMenu(false);
+    setActiveListActionId('');
+  };
+
+  const completeCloseRecord = () => {
+    if (!closeConfirmRecord || !updateQuestionnaireStatus(closeConfirmRecord.id, 'ended')) return;
+    setRecords(readQuestionnaires());
+    setCloseConfirmRecordId('');
     setShowRecordMenu(false);
     setActiveListActionId('');
     showToast('采集已结束');
@@ -1565,22 +1629,24 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           {activeListActionRecord && (
             <div className="pb-2">
               <span className="inline-flex h-6 items-center rounded-full bg-[var(--tm-bg-surface-muted)] px-2.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-secondary)]">{statusMeta[activeListActionRecord.status].label}</span>
-              {activeListActionRecord.status === 'active' ? (
-                <button type="button" onClick={closeActiveRecord} className="mt-3 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"><CheckCircle2 className="h-5 w-5 text-[var(--tm-text-secondary)]" />结束收集</button>
-              ) : !isQuestionnaireFullyCollected(activeListActionRecord) ? (
+              {activeListActionRecord.status === 'active' && getQuestionnaireRespondentRole(activeListActionRecord) === 'guardian' && (
+                <PrimaryButton onClick={() => openQuestionnaireInvite(activeListActionRecord)} className="mt-3 w-full"><QrCode className="h-5 w-5" />邀请家长填写</PrimaryButton>
+              )}
+              {activeListActionRecord.status === 'ended' && !isQuestionnaireFullyCollected(activeListActionRecord) && (
                 <PrimaryButton onClick={reopenActiveRecord} className="mt-3 w-full"><RotateCcw className="h-5 w-5" />重新开放</PrimaryButton>
-              ) : null}
+              )}
               <section className="mt-5">
-                <h4 className="px-0.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">采集内容</h4>
+                <h4 className="px-0.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">查看采集</h4>
                 <div className="mt-2 grid grid-cols-2 gap-[var(--tm-space-2)]">
                   <button type="button" onClick={viewListRecord} className={collectionActionTile}><FileText className="h-5 w-5 text-[var(--tm-text-tertiary)]" />查看详情</button>
                   <button type="button" onClick={previewListRecord} className={collectionActionTile}><Eye className="h-5 w-5 text-[var(--tm-text-tertiary)]" />预览</button>
                 </div>
               </section>
               <section className="mt-5">
-                <h4 className="px-0.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">更多操作</h4>
+                <h4 className="px-0.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">任务管理</h4>
                 <div className="mt-2 grid grid-cols-2 gap-[var(--tm-space-2)]">
-                  <button type="button" onClick={duplicateActiveRecord} className={`${collectionActionTile} ${activeListActionRecord.status === 'active' ? 'col-span-2' : ''}`}><Copy className="h-5 w-5 text-[var(--tm-text-tertiary)]" />复制采集</button>
+                  <button type="button" onClick={duplicateActiveRecord} className={collectionActionTile}><Copy className="h-5 w-5 text-[var(--tm-text-tertiary)]" />复制采集</button>
+                  {activeListActionRecord.status === 'active' && <button type="button" onClick={() => requestCloseRecord(activeListActionRecord)} className={`${collectionActionTile} text-[var(--tm-status-negative-strong)]`}><CheckCircle2 className="h-5 w-5" />结束收集</button>}
                   {activeListActionRecord.status === 'ended' && <button type="button" onClick={archiveActiveRecord} className={collectionActionTile}><Archive className="h-5 w-5 text-[var(--tm-text-tertiary)]" />归档</button>}
                 </div>
               </section>
@@ -1885,6 +1951,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                       activeGrade={activeScopeGrade}
                       onActiveGradeChange={setActiveScopeGrade}
                       onToggleClass={toggleClass}
+                      onToggleGrade={toggleGradeClasses}
                       getClassMeta={classInfo => `${activeStudentCountByClassId.get(classInfo.id) ?? 0}人`}
                       ariaLabel="采集范围班级级联选择"
                     />
@@ -1981,9 +2048,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             <button type="button" onClick={openCreatePreview} className="inline-flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]">预览</button>
             <button
               type="button"
-              disabled={createStep === 2 && targets.length === 0}
-              onClick={createStep === 3 ? publishQuestionnaire : advanceCreateStep}
-              className="inline-flex h-11 w-full items-center justify-center whitespace-nowrap rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-inverse)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+              onClick={createStep === 3 ? () => setShowPublishConfirm(true) : advanceCreateStep}
+              className="inline-flex h-11 w-full items-center justify-center whitespace-nowrap rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-inverse)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)]"
             >
               {createStep === 3 ? '完成' : '下一步'}
             </button>
@@ -2187,7 +2253,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         <BottomSheet open={!assignedContext && showRecordMenu} label="采集操作" onDismiss={() => setShowRecordMenu(false)}>
           {record.status === 'archived' && <button type="button" onClick={restoreActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><ArchiveRestore className="h-5 w-5" />恢复到已结束</button>}
           <button type="button" onClick={duplicateActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><Copy className="h-5 w-5 text-[var(--tm-text-tertiary)]" />复制为新采集表</button>
-          {record.status === 'active' && <button type="button" onClick={closeActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]"><ClipboardCheck className="h-5 w-5" />结束采集</button>}
+          {record.status === 'active' && <button type="button" onClick={() => requestCloseRecord(record)} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]"><ClipboardCheck className="h-5 w-5" />结束采集</button>}
           {record.status === 'ended' && (
             <>
               <button type="button" onClick={reopenActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><RotateCcw className="h-5 w-5" />恢复编辑</button>
@@ -2257,7 +2323,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <div className="mt-3"><ProgressBar value={completion} tone={record.status === 'ended' ? 'neutral' : 'positive'} /></div>
         </section>
         {record.status === 'active' && isQuestionnaireOverdue(record) && (
-          <button type="button" onClick={closeActiveRecord} className="flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-reward-soft)] px-4 text-left active:bg-[var(--tm-brand-reward-soft)]">
+          <button type="button" onClick={() => requestCloseRecord(record)} className="flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-reward-soft)] px-4 text-left active:bg-[var(--tm-brand-reward-soft)]">
             <CalendarDays className="h-4 w-4 shrink-0 text-[var(--tm-brand-reward-strong)]" />
             <span className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-reward-strong)]">已到建议完成时间</span>
             <span className="shrink-0 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-brand-reward-strong)]">结束收集</span>
@@ -2444,8 +2510,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         </main>
         <BottomSheet open={showRecordMenu} label="采集操作" onDismiss={() => setShowRecordMenu(false)}>
           {activeRecord.status === 'archived' && <button type="button" onClick={restoreActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><ArchiveRestore className="h-5 w-5" />恢复到已结束</button>}
+          {activeRecord.status === 'active' && getQuestionnaireRespondentRole(activeRecord) === 'guardian' && <button type="button" onClick={() => openQuestionnaireInvite(activeRecord)} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><QrCode className="h-5 w-5" />邀请家长填写</button>}
           <button type="button" onClick={duplicateActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><Copy className="h-5 w-5 text-[var(--tm-text-tertiary)]" />复制为新采集</button>
-          {activeRecord.status === 'active' && <button type="button" onClick={closeActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]"><ClipboardCheck className="h-5 w-5" />结束收集</button>}
+          {activeRecord.status === 'active' && <button type="button" onClick={() => requestCloseRecord(activeRecord)} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]"><ClipboardCheck className="h-5 w-5" />结束收集</button>}
           {activeRecord.status === 'ended' && (
             <>
               {!isQuestionnaireFullyCollected(activeRecord) && <button type="button" onClick={reopenActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><RotateCcw className="h-5 w-5" />重新开放</button>}
@@ -2701,6 +2768,33 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           </div>
         ) : <div className="flex min-h-[60px] items-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)] [box-shadow:var(--tm-shadow-card-on-white)]">暂无已启用档案</div>}
       </MobileBottomSheet>
+      <MobileConfirmSheet
+        open={showPublishConfirm}
+        title="确认发布问卷？"
+        description="发布后，问卷内容和学生范围将不能编辑。请确认无误后再发布。"
+        cancelLabel="返回检查"
+        confirmLabel="确认发布"
+        onClose={() => setShowPublishConfirm(false)}
+        onConfirm={completePublishQuestionnaire}
+      />
+      <MobileConfirmSheet
+        open={Boolean(closeConfirmRecord)}
+        title="确认结束收集？"
+        description="结束后将停止继续填写；若仍有未完成内容，可以重新开放。"
+        cancelLabel="继续收集"
+        confirmLabel="结束收集"
+        tone="danger"
+        onClose={() => setCloseConfirmRecordId('')}
+        onConfirm={completeCloseRecord}
+      />
+      <MobileQrInviteSheet
+        open={Boolean(inviteRecord)}
+        title="邀请家长填写"
+        itemTitle={inviteRecord?.title ?? ''}
+        value={getQuestionnaireInviteUrl(inviteRecord)}
+        downloadName={`${inviteRecord?.title ?? '问卷'}-家长填写二维码`}
+        onClose={() => setInviteRecordId('')}
+      />
       <MobileToast message={toast} />
     </div>
   );

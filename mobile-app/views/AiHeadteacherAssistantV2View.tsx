@@ -5,17 +5,15 @@ import {
     ChevronDown,
     ChevronLeft,
     ChevronRight,
-    ChevronUp,
     ClipboardList,
-    Keyboard,
+    ListChecks,
     LoaderCircle,
-    Mic,
-    Send,
+    Sparkles,
+    X,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
-import AutoResizeTextarea from '../components/ui/AutoResizeTextarea';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import {
     CLASS_EVALUATION_WEEKS,
@@ -27,6 +25,7 @@ import {
     type ClassEvaluationWeek,
 } from '../data/classEvaluationAssistantV2';
 import {
+    CLASS_EVALUATION_FIXED_QUESTIONS,
     askClassEvaluationQuestion,
     getRecordsFromAnswer,
     type ClassEvaluationAssistantAnswer,
@@ -48,12 +47,6 @@ interface ChatMessage {
     content?: string;
     answer?: ClassEvaluationAssistantAnswer;
 }
-
-const rectificationLabels: Record<ClassEvaluationRecord['rectificationStatus'], string> = {
-    pending: '待整改',
-    reviewing: '待复核',
-    resolved: '已整改',
-};
 
 const formatScore = (score: number) => score.toFixed(1);
 const formatCompactScore = (score: number) => Number.isInteger(score) ? String(score) : score.toFixed(1);
@@ -91,90 +84,137 @@ const ClassSwitchButton: React.FC<{
     </button>
 );
 
+const FixedQuestionList: React.FC<{
+    disabled?: boolean;
+    onSelect: (question: string) => void;
+}> = ({ disabled = false, onSelect }) => (
+    <div className="headteacher-agent-glass space-y-1 overflow-hidden rounded-[var(--tm-radius-card)] p-1" aria-label="固定问题">
+        {CLASS_EVALUATION_FIXED_QUESTIONS.map(question => (
+            <button
+                key={question.id}
+                type="button"
+                disabled={disabled}
+                onClick={() => onSelect(question.label)}
+                className="flex min-h-11 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)]"
+            >
+                <span className="min-w-0 flex-1 text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{question.label}</span>
+                <ChevronRight className="h-4 w-4 shrink-0 translate-x-px text-[var(--tm-text-disabled)]" aria-hidden="true" />
+            </button>
+        ))}
+    </div>
+);
+
 const AnswerContent: React.FC<{
     answer: ClassEvaluationAssistantAnswer;
     onOpenDetails: (answer: ClassEvaluationAssistantAnswer) => void;
 }> = ({ answer, onOpenDetails }) => (
-    <div className="space-y-3">
-        <p className="text-pretty whitespace-pre-line text-[15px] font-medium leading-6 text-[var(--tm-text-primary)]">{answer.message}</p>
+    <div>
+        <p className="text-pretty whitespace-pre-line text-[15px] font-semibold leading-6 text-[var(--tm-text-primary)]">{answer.message}</p>
 
-        {answer.metrics.length > 0 && (
-            <dl className={'grid gap-3 py-2 ' + (answer.metrics.length === 1 ? 'grid-cols-1' : answer.metrics.length === 2 ? 'grid-cols-2' : 'grid-cols-3')}>
-                {answer.metrics.map(metric => (
-                    <div key={metric.label} className="min-w-0">
-                        <dt className="truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{metric.label}</dt>
-                        <dd className={'mt-1 truncate text-[19px] font-bold tabular-nums ' + (metric.tone === 'negative' ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-assistant-role-text)]')}>{metric.value}</dd>
-                    </div>
-                ))}
-            </dl>
-        )}
+        <section className="mt-4" aria-labelledby="answer-data-overview">
+            <h3 id="answer-data-overview" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
+                <ClipboardList className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
+                数据概览
+            </h3>
 
-        {answer.breakdown.length > 0 && (
-            <div className="space-y-1">
-                {answer.breakdown.map((item, index) => (
-                    <div key={item.label + '-' + index} className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2">
-                        <div className="min-w-0">
-                            <div className="truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{item.label}</div>
-                            <div className="mt-0.5 truncate text-[11px] text-[var(--tm-text-tertiary)]">{item.detail}</div>
+            {answer.metrics.length > 0 && (
+                <dl className={'mt-3 grid gap-3 ' + (answer.metrics.length === 1 ? 'grid-cols-1' : answer.metrics.length === 2 ? 'grid-cols-2' : 'grid-cols-3')}>
+                    {answer.metrics.map(metric => (
+                        <div key={metric.label} className="min-w-0">
+                            <dt className="truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{metric.label}</dt>
+                            <dd className={'mt-1 truncate text-[18px] font-bold tabular-nums ' + (metric.tone === 'negative' ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-assistant-role-text)]')}>{metric.value}</dd>
                         </div>
-                        <div className="text-[14px] font-bold tabular-nums text-[var(--tm-status-negative)]">{item.value}</div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </dl>
+            )}
+
+            {answer.breakdown.length > 0 && (
+                <div className="mt-3 space-y-0.5">
+                    {answer.breakdown.map((item, index) => (
+                        <div key={item.label + '-' + index} className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-1.5">
+                            <div className="min-w-0">
+                                <div className="truncate text-[13px] font-semibold text-[var(--tm-text-primary)]">{item.label}</div>
+                                <div className="mt-0.5 truncate text-[11px] text-[var(--tm-text-tertiary)]">{item.detail}</div>
+                            </div>
+                            <div className={'text-[13px] font-bold tabular-nums ' + (item.tone === 'negative' ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-text-primary)]')}>{item.value}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </section>
+
+        {answer.analysis.length > 0 && (
+            <section className="mt-4" aria-labelledby="answer-ai-analysis">
+                <h3 id="answer-ai-analysis" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
+                    <Sparkles className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
+                    AI分析
+                </h3>
+                <div className="mt-2 space-y-2">
+                    {answer.analysis.map(item => (
+                        <p key={item.title} className="text-pretty text-[13px] leading-5 text-[var(--tm-text-secondary)]">
+                            <span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}
+                        </p>
+                    ))}
+                </div>
+            </section>
         )}
 
-        {answer.actions.length > 0 && (
-            <ol className="space-y-3 border-l-2 border-[var(--tm-assistant-role-border)] pl-3">
-                {answer.actions.map(action => (
-                    <li key={action.title}>
-                        <div className="text-[14px] font-semibold leading-5 text-[var(--tm-text-primary)]">{action.title}</div>
-                        <div className="mt-1 text-[12px] leading-5 text-[var(--tm-text-secondary)]">{action.owner} · {action.verification}</div>
-                    </li>
-                ))}
-            </ol>
+        {answer.suggestions.length > 0 && (
+            <section className="mt-4" aria-labelledby="answer-ai-suggestions">
+                <h3 id="answer-ai-suggestions" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
+                    <ListChecks className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
+                    AI建议
+                </h3>
+                <div className="mt-2 space-y-2">
+                    {answer.suggestions.map(item => (
+                        <p key={item.title} className="text-pretty text-[13px] leading-5 text-[var(--tm-text-secondary)]">
+                            <span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}
+                        </p>
+                    ))}
+                </div>
+            </section>
         )}
 
         {answer.evidenceRefs.length > 0 && (
-            <button
-                type="button"
-                onClick={() => onOpenDetails(answer)}
-                className="-ml-2 flex min-h-[var(--tm-size-touch)] items-center gap-2 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                aria-label={'查看' + answer.evidenceRefs.length + '笔扣分明细'}
-            >
-                <ClipboardList className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
-                查看扣分明细
-                <span className="font-medium tabular-nums text-[var(--tm-text-tertiary)]">{answer.evidenceRefs.length}笔</span>
-            </button>
+            <div className="mt-3 flex justify-end">
+                <button
+                    type="button"
+                    onClick={() => onOpenDetails(answer)}
+                    className="flex min-h-[var(--tm-size-touch)] items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                    aria-label={'查看' + answer.evidenceRefs.length + '笔数据依据'}
+                >
+                    查看依据
+                    <span className="font-medium tabular-nums text-[var(--tm-text-tertiary)]">{answer.evidenceRefs.length}笔</span>
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+            </div>
         )}
     </div>
 );
 
-const RecordDetailList: React.FC<{ records: ClassEvaluationRecord[] }> = ({ records }) => (
+const RecordDetailList: React.FC<{
+    records: ClassEvaluationRecord[];
+    showDimension?: boolean;
+}> = ({ records, showDimension = true }) => (
     <div className="divide-y divide-[var(--tm-border-subtle)]">
         {records.map(record => (
             <article key={record.id} className="py-4 first:pt-0">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <div className="text-[15px] font-semibold text-[var(--tm-text-primary)]">{record.indicator}</div>
-                        <div className="mt-1 text-[12px] text-[var(--tm-text-tertiary)]">{formatRecordDate(record.date)} · {record.dimension}</div>
+                        <div className="mt-1 text-[12px] text-[var(--tm-text-tertiary)]">
+                            {formatRecordDate(record.date)}{showDimension ? ` · ${record.dimension}` : ''}
+                        </div>
                     </div>
                     <div className="shrink-0 text-[16px] font-bold tabular-nums text-[var(--tm-status-negative)]">-{record.deduction.toFixed(1)}分</div>
                 </div>
 
                 <p className="mt-3 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.finding}</p>
 
-                <dl className="mt-3 space-y-2 text-[12px] leading-5">
-                    <div className="grid grid-cols-[60px_minmax(0,1fr)] gap-2">
-                        <dt className="text-[var(--tm-text-tertiary)]">责任拆分</dt>
-                        <dd className="text-[var(--tm-text-secondary)]">班级 {record.classDeduction.toFixed(1)}分 · 教师 {record.teacherDeduction.toFixed(1)}分</dd>
-                    </div>
+                <dl className="mt-3 text-[12px] leading-5">
                     <div className="grid grid-cols-[60px_minmax(0,1fr)] gap-2">
                         <dt className="text-[var(--tm-text-tertiary)]">扣分依据</dt>
                         <dd className="text-[var(--tm-text-secondary)]">{record.rule}</dd>
-                    </div>
-                    <div className="grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
-                        <dt className="text-[var(--tm-text-tertiary)]">整改状态</dt>
-                        <dd className={'font-semibold ' + (record.rectificationStatus === 'resolved' ? 'text-[var(--tm-status-positive)]' : 'text-[var(--tm-text-secondary)]')}>{rectificationLabels[record.rectificationStatus]}</dd>
                     </div>
                 </dl>
             </article>
@@ -182,38 +222,37 @@ const RecordDetailList: React.FC<{ records: ClassEvaluationRecord[] }> = ({ reco
     </div>
 );
 
-const CompactDeductionList: React.FC<{
-    records: ClassEvaluationRecord[];
-    emptyLabel?: string;
-}> = ({ records, emptyLabel = '该项暂无扣分' }) => {
-    if (records.length === 0) {
-        return <p className="py-3 text-[12px] text-[var(--tm-text-tertiary)]">{emptyLabel}</p>;
-    }
+const DimensionScoreBullet: React.FC<{
+    score: number;
+    maxScore: number;
+}> = ({ score, maxScore }) => {
+    const percentage = maxScore > 0
+        ? Math.min(100, Math.max(0, (score / maxScore) * 100))
+        : 0;
 
     return (
-        <div className="space-y-1">
-            {records.map(record => (
-                <article key={record.id} className="py-3">
-                    <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                            <div className="text-[13px] font-semibold text-[var(--tm-text-primary)]">{record.indicator}</div>
-                            <p className="mt-1 text-pretty text-[11px] leading-5 text-[var(--tm-text-secondary)]">{record.finding}</p>
-                            <div className="mt-1 text-[10px] tabular-nums text-[var(--tm-text-tertiary)]">{formatRecordDate(record.date)}</div>
-                        </div>
-                        <div className="shrink-0 text-[13px] font-bold tabular-nums text-[var(--tm-status-negative)]">-{formatScore(record.deduction)}分</div>
-                    </div>
-                </article>
-            ))}
-        </div>
+        <span className="flex min-w-0 flex-col items-center gap-1" aria-hidden="true">
+            <span className="text-[10px] font-semibold tabular-nums leading-none text-[var(--tm-text-primary)]">
+                {formatCompactScore(score)}/{formatCompactScore(maxScore)}
+            </span>
+            <span className="relative h-1.5 w-full rounded-full bg-[var(--tm-assistant-role-soft-strong)]">
+                <span
+                    className="absolute inset-y-0 left-0 rounded-full bg-[var(--tm-assistant-role-primary)]"
+                    style={{ width: `${percentage}%` }}
+                />
+                <span className="absolute -right-px -top-0.5 h-2.5 w-px rounded-full bg-[var(--tm-text-secondary)]" />
+            </span>
+        </span>
     );
 };
 
 const DimensionRankingTable: React.FC<{
     rankings: ClassEvaluationDimensionRanking[];
     onSelect: (dimension: string) => void;
-}> = ({ rankings, onSelect }) => (
+    selectedDimension?: string;
+}> = ({ rankings, onSelect, selectedDimension }) => (
     <div className="px-3 pb-2">
-        <div className="grid min-h-8 grid-cols-[minmax(0,1fr)_76px_68px_68px] items-center rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-glass-surface-strong)] px-2 text-[10px] font-medium text-[var(--tm-text-tertiary)]">
+        <div className="grid min-h-8 grid-cols-[minmax(0,1fr)_88px_60px_60px] items-center rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-glass-surface-strong)] px-2 text-[10px] font-medium text-[var(--tm-text-tertiary)]">
             <span>指标</span>
             <span className="text-center">分数/总分</span>
             <span className="text-center">年级排名</span>
@@ -225,11 +264,12 @@ const DimensionRankingTable: React.FC<{
                     key={item.dimension}
                     type="button"
                     onClick={() => onSelect(item.dimension)}
-                    className="grid min-h-11 w-full grid-cols-[minmax(0,1fr)_76px_68px_68px] items-center rounded-[var(--tm-radius-control)] px-2 text-left transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface)] focus-visible:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none"
+                    className={'grid min-h-12 w-full grid-cols-[minmax(0,1fr)_88px_60px_60px] items-center rounded-[var(--tm-radius-control)] px-2 text-left transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface)] focus-visible:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none ' + (selectedDimension === item.dimension ? 'bg-[var(--tm-role-headteacher-glass-surface-strong)]' : '')}
                     aria-label={`${item.dimension}，${formatCompactScore(item.score)}/${formatCompactScore(item.maxScore)}分，年级第${item.gradeRank}名，全校第${item.schoolRank}名，查看扣分情况`}
+                    aria-pressed={selectedDimension === item.dimension || undefined}
                 >
                     <span className="min-w-0 truncate pr-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">{item.dimension}</span>
-                    <span className="text-center text-[12px] font-semibold tabular-nums text-[var(--tm-text-primary)]">{formatCompactScore(item.score)}/{formatCompactScore(item.maxScore)}</span>
+                    <DimensionScoreBullet score={item.score} maxScore={item.maxScore} />
                     <span className="text-center text-[12px] font-medium tabular-nums text-[var(--tm-text-secondary)]">第{item.gradeRank}</span>
                     <span className="text-center text-[12px] font-medium tabular-nums text-[var(--tm-text-secondary)]">第{item.schoolRank}</span>
                 </button>
@@ -238,23 +278,50 @@ const DimensionRankingTable: React.FC<{
     </div>
 );
 
+const DimensionTabs: React.FC<{
+    rankings: ClassEvaluationDimensionRanking[];
+    selectedDimension: string;
+    onSelect: (dimension: string) => void;
+    className?: string;
+}> = ({ rankings, selectedDimension, onSelect, className = '' }) => (
+    <div className={`overflow-x-auto no-scrollbar ${className}`} role="tablist" aria-label="一级指标">
+        <div className="flex min-w-max">
+            {rankings.map(item => {
+                const selected = item.dimension === selectedDimension;
+                return (
+                    <button
+                        key={item.dimension}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        onClick={() => onSelect(item.dimension)}
+                        className={'relative min-h-11 shrink-0 px-3 text-[13px] font-semibold transition-[color,background-color] duration-150 ease-out after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-5 after:-translate-x-1/2 after:rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)] ' + (selected
+                            ? 'text-[var(--tm-text-primary)] after:bg-[var(--tm-assistant-role-primary)]'
+                            : 'text-[var(--tm-text-tertiary)] after:bg-transparent active:bg-[var(--tm-bg-surface-soft)]')}
+                    >
+                        {item.dimension}
+                    </button>
+                );
+            })}
+        </div>
+    </div>
+);
+
 const WeekOverviewPanel: React.FC<{
     week: ClassEvaluationWeek;
     snapshot: ClassEvaluationSnapshot;
-    records: ClassEvaluationRecord[];
     expanded: boolean;
-    expandedDimension: string | null;
     onToggleExpanded: () => void;
-    onToggleDimension: (dimension: string) => void;
+    onOpenDimensionDetails: (dimension: string) => void;
+    onOpenDetails: () => void;
     onOpenWeekDetail: () => void;
 }> = ({
     week,
     snapshot,
-    records,
     expanded,
-    expandedDimension,
     onToggleExpanded,
-    onToggleDimension,
+    onOpenDimensionDetails,
+    onOpenDetails,
     onOpenWeekDetail,
 }) => (
     <section className="headteacher-agent-glass relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)]" aria-labelledby="week-data-title">
@@ -279,8 +346,8 @@ const WeekOverviewPanel: React.FC<{
                     <dd className="mt-2 whitespace-nowrap text-[28px] font-bold tabular-nums text-[var(--tm-assistant-role-text)]">{formatScore(snapshot.finalScore)}<span className="ml-1 text-[12px] font-medium text-[var(--tm-text-tertiary)]">分</span></dd>
                 </div>
                 <div className="min-w-0">
-                    <dt className="text-[12px] font-medium text-[var(--tm-text-tertiary)]">当前排名</dt>
-                    <dd className="mt-2 whitespace-nowrap text-[28px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.overallRank}<span className="ml-1 text-[12px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
+                    <dt className="text-[12px] font-medium text-[var(--tm-text-tertiary)]">年级排名</dt>
+                    <dd className="mt-2 whitespace-nowrap text-[28px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.gradeRank}<span className="ml-1 text-[12px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
                 </div>
             </dl>
         </div>
@@ -305,191 +372,48 @@ const WeekOverviewPanel: React.FC<{
 
         {expanded && (
             <div id="week-dimension-list">
-                <DimensionRankingTable rankings={week.dimensionRankings} onSelect={onToggleDimension} />
-
-                {expandedDimension && (
-                    <div className="mx-3 mb-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-role-headteacher-glass-surface-strong)] px-3 pb-1">
-                        <button
-                            type="button"
-                            onClick={() => onToggleDimension(expandedDimension)}
-                            className="flex min-h-11 w-full items-center justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                            aria-expanded="true"
-                            aria-label={`收起${expandedDimension}扣分情况`}
-                        >
-                            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--tm-text-primary)]">{expandedDimension}</span>
-                            <span className="text-[10px] tabular-nums text-[var(--tm-text-tertiary)]">{records.filter(record => record.dimension === expandedDimension).length}笔扣分</span>
-                            <ChevronUp className="h-4 w-4 shrink-0 text-[var(--tm-text-secondary)]" aria-hidden="true" />
-                        </button>
-                        <CompactDeductionList
-                            records={records.filter(record => record.dimension === expandedDimension)}
-                            emptyLabel="本周该项暂无扣分"
-                        />
-                    </div>
-                )}
+                <DimensionRankingTable rankings={week.dimensionRankings} onSelect={onOpenDimensionDetails} />
+                <div className="flex min-h-[var(--tm-size-touch)] items-center justify-center pb-1">
+                    <button
+                        type="button"
+                        onClick={onOpenDetails}
+                        className="flex min-h-11 items-center gap-1 rounded-[var(--tm-radius-control)] px-3 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                    >
+                        展示明细
+                        <ChevronRight className="h-4 w-4 translate-x-px" aria-hidden="true" />
+                    </button>
+                </div>
             </div>
         )}
     </section>
 );
 
-type ComposerMode = 'voice' | 'text';
-type VoiceState = 'idle' | 'listening' | 'error';
-
-const QuestionComposer: React.FC<{
-    draft: string;
-    replying: boolean;
-    onDraftChange: (value: string) => void;
-    onSubmit: (question: string) => void;
-}> = ({ draft, replying, onDraftChange, onSubmit }) => {
-    const [mode, setMode] = useState<ComposerMode>('voice');
-    const [voiceState, setVoiceState] = useState<VoiceState>('idle');
-    const [voiceFallback, setVoiceFallback] = useState(false);
-    const recognitionRef = useRef<any>(null);
-
-    const stopVoiceInput = () => {
-        try {
-            recognitionRef.current?.stop?.();
-        } catch {
-            recognitionRef.current = null;
-            setVoiceState('idle');
-        }
-    };
-
-    const startVoiceInput = () => {
-        if (replying || voiceState === 'listening') return;
-
-        const SpeechRecognitionConstructor = (window as any).SpeechRecognition
-            ?? (window as any).webkitSpeechRecognition;
-        if (!SpeechRecognitionConstructor) {
-            setVoiceFallback(true);
-            setVoiceState('error');
-            setMode('text');
-            return;
-        }
-
-        const recognition = new SpeechRecognitionConstructor();
-        recognition.lang = 'zh-CN';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        recognition.onresult = (event: any) => {
-            let transcript = '';
-            for (let index = event.resultIndex; index < event.results.length; index += 1) {
-                transcript += event.results[index][0]?.transcript ?? '';
-            }
-            const question = transcript.trim();
-            if (!question) return;
-            onDraftChange(question);
-            onSubmit(question);
-        };
-        recognition.onerror = () => {
-            setVoiceFallback(true);
-            setVoiceState('error');
-            setMode('text');
-        };
-        recognition.onend = () => {
-            recognitionRef.current = null;
-            setVoiceState(current => current === 'error' ? current : 'idle');
-        };
-        recognitionRef.current = recognition;
-        setVoiceFallback(false);
-        setVoiceState('listening');
-        try {
-            recognition.start();
-        } catch {
-            recognitionRef.current = null;
-            setVoiceFallback(true);
-            setVoiceState('error');
-            setMode('text');
-        }
-    };
-
-    useEffect(() => () => recognitionRef.current?.abort?.(), []);
-
-    return (
-        <form
-            className="shrink-0 bg-transparent px-3 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2"
-            onSubmit={(event) => {
-                event.preventDefault();
-                onSubmit(draft);
-            }}
-        >
-            {mode === 'voice' ? (
-                <div className="headteacher-agent-glass relative h-14 overflow-hidden rounded-full p-1">
-                    <button
-                        type="button"
-                        onClick={() => setMode('text')}
-                        className="absolute inset-y-1 left-1 z-10 flex w-12 items-center justify-center rounded-full bg-[var(--tm-bg-surface-glass)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                        aria-label="切换到文字输入"
-                    >
-                        <Keyboard className="h-[22px] w-[22px]" strokeWidth={2.2} aria-hidden="true" />
-                    </button>
-                    <button
-                        type="button"
-                        disabled={replying}
-                        onPointerDown={startVoiceInput}
-                        onPointerUp={stopVoiceInput}
-                        onPointerCancel={stopVoiceInput}
-                        onPointerLeave={stopVoiceInput}
-                        onKeyDown={(event) => {
-                            if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) {
-                                event.preventDefault();
-                                startVoiceInput();
-                            }
-                        }}
-                        onKeyUp={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                                event.preventDefault();
-                                stopVoiceInput();
-                            }
-                        }}
-                        className={'absolute inset-1 flex select-none items-center justify-center rounded-[24px] px-16 text-[16px] font-bold transition-[background-color,color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)] ' + (voiceState === 'listening' ? 'bg-[var(--tm-assistant-role-primary)] text-white' : 'bg-transparent text-[var(--tm-text-primary)] active:bg-[var(--tm-role-headteacher-glass-surface-strong)]')}
-                        aria-label={voiceState === 'listening' ? '正在聆听，松开发送' : '按住说话'}
-                    >
-                        <span>{voiceState === 'listening' ? '正在聆听，松开发送' : '按住说话'}</span>
-                    </button>
-                </div>
-            ) : (
-                <div className="headteacher-agent-glass grid min-h-14 grid-cols-[48px_minmax(0,1fr)_48px] items-end overflow-hidden rounded-[28px] p-1">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setVoiceState('idle');
-                            setMode('voice');
-                        }}
-                        className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--tm-bg-surface-glass)] text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                        aria-label="切换到语音输入"
-                    >
-                        <Mic className="h-5 w-5" strokeWidth={2.3} aria-hidden="true" />
-                    </button>
-                    <AutoResizeTextarea
-                        value={draft}
-                        onChange={event => onDraftChange(event.target.value)}
-                        onKeyDown={event => {
-                            if (event.key === 'Enter' && !event.shiftKey) {
-                                event.preventDefault();
-                                onSubmit(draft);
-                            }
-                        }}
-                        minHeight={48}
-                        maxHeight={88}
-                        placeholder={voiceFallback ? '当前环境暂不支持语音，请输入文字' : '输入班级评价问题'}
-                        aria-label="输入班级评价问题"
-                        className="w-full resize-none bg-transparent px-3 py-3 text-[14px] font-medium leading-6 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-disabled)]"
-                    />
-                    <button
-                        type="submit"
-                        disabled={!draft.trim() || replying}
-                        className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--tm-assistant-role-primary)] text-white transition-[scale,background-color,color] duration-150 ease-out active:scale-[0.96] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)] focus-visible:ring-offset-2"
-                        aria-label="发送问题"
-                    >
-                        <Send className="h-5 w-5" strokeWidth={2.3} aria-hidden="true" />
-                    </button>
-                </div>
-            )}
-            <p className="mt-1.5 text-center text-[10px] leading-4 text-[var(--tm-text-disabled)]">内容由人工智能基于班级评价台账生成，请以学校复核记录为准</p>
-        </form>
-    );
-};
+const DimensionDetailSheetHeader: React.FC<{
+    rankings: ClassEvaluationDimensionRanking[];
+    selectedDimension: string;
+    onSelect: (dimension: string) => void;
+    onClose: () => void;
+}> = ({ rankings, selectedDimension, onSelect, onClose }) => (
+    <div className="shrink-0">
+        <header className="flex h-14 items-center justify-between px-4">
+            <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">扣分明细</h2>
+            <button
+                type="button"
+                onClick={onClose}
+                className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                aria-label="关闭扣分明细"
+            >
+                <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+        </header>
+        <DimensionTabs
+            rankings={rankings}
+            selectedDimension={selectedDimension}
+            onSelect={onSelect}
+            className="px-3"
+        />
+    </div>
+);
 
 const WeekDataDetailPage: React.FC<{
     weekId: string;
@@ -505,6 +429,19 @@ const WeekDataDetailPage: React.FC<{
     const records = getClassEvaluationRecords(classId, weekId);
     const olderWeek = CLASS_EVALUATION_WEEKS[weekIndex + 1];
     const newerWeek = CLASS_EVALUATION_WEEKS[weekIndex - 1];
+    const defaultDimension = week.dimensionRankings.find(item => item.recordCount > 0)?.dimension
+        ?? week.dimensionRankings[0]?.dimension
+        ?? '';
+    const [selectedDimension, setSelectedDimension] = useState(defaultDimension);
+    const selectedRanking = week.dimensionRankings.find(item => item.dimension === selectedDimension)
+        ?? week.dimensionRankings[0];
+    const selectedRecords = records.filter(record => record.dimension === selectedRanking?.dimension);
+    const selectedDeduction = selectedRecords.reduce((total, record) => total + record.deduction, 0);
+
+    useEffect(() => {
+        if (week.dimensionRankings.some(item => item.dimension === selectedDimension)) return;
+        setSelectedDimension(defaultDimension);
+    }, [defaultDimension, selectedDimension, week.dimensionRankings]);
 
     return (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent">
@@ -549,23 +486,55 @@ const WeekDataDetailPage: React.FC<{
                             <dd className="mt-2 text-[26px] font-bold tabular-nums text-[var(--tm-assistant-role-text)]">{formatScore(snapshot.finalScore)}<span className="ml-1 text-[11px] font-medium text-[var(--tm-text-tertiary)]">分</span></dd>
                         </div>
                         <div>
-                            <dt className="text-[12px] text-[var(--tm-text-tertiary)]">班级排名</dt>
-                            <dd className="mt-2 text-[26px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.overallRank}<span className="ml-1 text-[11px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
+                            <dt className="text-[12px] text-[var(--tm-text-tertiary)]">年级排名</dt>
+                            <dd className="mt-2 text-[26px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.gradeRank}<span className="ml-1 text-[11px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
                         </div>
                     </dl>
                     <div className="mt-4 flex items-center justify-between rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-glass-surface-strong)] px-3 py-2 text-[12px]">
                         <span className="text-[var(--tm-text-secondary)]">累计扣分</span>
-                        <span className="font-bold tabular-nums text-[var(--tm-status-negative)]">-{formatScore(snapshot.deduction)}分 · {snapshot.recordCount}笔</span>
+                        <span className="font-bold tabular-nums text-[var(--tm-status-negative)]">{snapshot.deduction > 0 ? '-' : ''}{formatScore(snapshot.deduction)}分 · {snapshot.recordCount}笔</span>
                     </div>
                 </section>
 
-                <section className="mt-5" aria-labelledby="week-records-title">
+                <section className="mt-4" aria-labelledby="week-dimensions-title">
+                    <div className="mb-2 flex items-center justify-between px-1">
+                        <h2 id="week-dimensions-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">分类数据</h2>
+                        <span className="text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">{week.dataRangeLabel}</span>
+                    </div>
+                    <div className="headteacher-agent-glass rounded-[var(--tm-radius-card)] pt-3">
+                        <DimensionRankingTable
+                            rankings={week.dimensionRankings}
+                            selectedDimension={selectedRanking?.dimension}
+                            onSelect={setSelectedDimension}
+                        />
+                    </div>
+                </section>
+
+                <section className="mt-4" aria-labelledby="week-records-title">
                     <div className="mb-2 flex items-center justify-between px-1">
                         <h2 id="week-records-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">扣分明细</h2>
-                        <span className="text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">{records.length}笔</span>
+                        <span className="text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">{selectedRecords.length}笔</span>
                     </div>
-                    <div className="headteacher-agent-glass rounded-[var(--tm-radius-card)] px-4">
-                        <CompactDeductionList records={records} emptyLabel="该周暂无扣分记录" />
+                    <div className="headteacher-agent-glass overflow-hidden rounded-[var(--tm-radius-card)]">
+                        <DimensionTabs
+                            rankings={week.dimensionRankings}
+                            selectedDimension={selectedRanking?.dimension ?? ''}
+                            onSelect={setSelectedDimension}
+                            className="px-1"
+                        />
+                        <div className="px-4">
+                            <div className="flex min-h-11 items-center justify-between gap-3 py-2 text-[12px]">
+                                <span className="font-medium text-[var(--tm-text-secondary)]">{selectedRanking?.dimension}</span>
+                                <span className="font-semibold tabular-nums text-[var(--tm-status-negative)]">
+                                    {selectedDeduction > 0 ? '-' : ''}{formatScore(selectedDeduction)}分 · {selectedRecords.length}笔
+                                </span>
+                            </div>
+                            {selectedRecords.length > 0 ? (
+                                <RecordDetailList records={selectedRecords} showDimension={false} />
+                            ) : (
+                                <p className="py-12 text-center text-[13px] text-[var(--tm-text-tertiary)]">该周此指标暂无扣分</p>
+                            )}
+                        </div>
                     </div>
                 </section>
             </main>
@@ -586,15 +555,25 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const currentWeek = useMemo(() => getClassEvaluationWeek(DEFAULT_CLASS_EVALUATION_WEEK_ID), []);
     const snapshot = useMemo(() => getClassEvaluationSnapshot(resolvedClassId), [resolvedClassId]);
     const records = useMemo(() => getClassEvaluationRecords(resolvedClassId), [resolvedClassId]);
+    const previousWeek = useMemo(() => {
+        const week = CLASS_EVALUATION_WEEKS[1];
+        if (!week) return undefined;
+        const previousSnapshot = getClassEvaluationSnapshot(resolvedClassId, week.id);
+        return {
+            label: week.label,
+            finalScore: previousSnapshot.finalScore,
+            gradeRank: week.gradeRank,
+            dimensionRankings: week.dimensionRankings,
+        };
+    }, [resolvedClassId]);
     const assistantIntro = useMemo(getAssistantIntro, []);
     const [typedIntro, setTypedIntro] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [conversationOpen, setConversationOpen] = useState(false);
     const [overviewExpanded, setOverviewExpanded] = useState(false);
-    const [expandedDimension, setExpandedDimension] = useState<string | null>(null);
+    const [detailDimension, setDetailDimension] = useState<string | null>(null);
     const [weekDetailOpen, setWeekDetailOpen] = useState(false);
     const [detailWeekId, setDetailWeekId] = useState(DEFAULT_CLASS_EVALUATION_WEEK_ID);
-    const [draft, setDraft] = useState('');
     const [isReplying, setIsReplying] = useState(false);
     const [showClassPicker, setShowClassPicker] = useState(false);
     const [detailRecords, setDetailRecords] = useState<ClassEvaluationRecord[] | null>(null);
@@ -607,7 +586,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         replyTimerRef.current = null;
         setMessages([]);
         setConversationOpen(false);
-        setDraft('');
         setDetailRecords(null);
         setIsReplying(false);
     };
@@ -638,13 +616,13 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         previousClassIdRef.current = resolvedClassId;
         clearConversation();
         setOverviewExpanded(false);
-        setExpandedDimension(null);
+        setDetailDimension(null);
     }, [resolvedClassId]);
 
     useEffect(() => {
         if (!conversationOpen) return undefined;
         const frame = window.requestAnimationFrame(() => {
-            scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+            scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         });
         return () => window.cancelAnimationFrame(frame);
     }, [conversationOpen, isReplying, messages]);
@@ -657,21 +635,25 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         const question = rawQuestion.trim();
         if (!question || isReplying) return;
 
-        const previousContext = [...messages]
-            .reverse()
-            .find(message => message.role === 'assistant' && message.answer)?.answer?.context;
         setConversationOpen(true);
-        setMessages(current => [...current, {
+        const userMessage: ChatMessage = {
             id: 'user-' + Date.now(),
             role: 'user',
             content: question,
-        }]);
-        setDraft('');
+        };
+        setMessages([userMessage]);
         setIsReplying(true);
 
         replyTimerRef.current = window.setTimeout(() => {
-            const answer = askClassEvaluationQuestion({ question, snapshot, records, previousContext });
-            setMessages(current => [...current, {
+            const answer = askClassEvaluationQuestion({
+                question,
+                snapshot,
+                records,
+                gradeRank: currentWeek.gradeRank,
+                rankings: currentWeek.dimensionRankings,
+                previousWeek,
+            });
+            setMessages([userMessage, {
                 id: 'assistant-' + Date.now(),
                 role: 'assistant',
                 answer,
@@ -681,14 +663,10 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         }, 420);
     };
 
-    const latestSuggestions = [...messages]
-        .reverse()
-        .find(message => message.answer)?.answer?.followUpSuggestions ?? [];
-    const recommendedQuestions = [
-        `本周为什么扣了${formatScore(snapshot.deduction)}分？`,
-        '哪些属于教师组织责任？',
-        '健体班级怎么提升？',
-    ];
+    const dimensionDetailRecords = detailDimension
+        ? records.filter(record => record.dimension === detailDimension)
+        : [];
+    const dimensionDeduction = dimensionDetailRecords.reduce((total, record) => total + record.deduction, 0);
 
     const handleClassSelect = (classId: string) => {
         onClassChange(classId);
@@ -771,26 +749,16 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                                 <div className="flex justify-start">
                                     <div className="headteacher-agent-glass flex h-11 items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">
                                         <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
-                                        正在查询班级评价台账
+                                        正在汇总数据并生成分析
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {!isReplying && latestSuggestions.length > 0 && (
-                            <div className="mt-4 flex flex-wrap gap-2" aria-label="建议问题">
-                                {latestSuggestions.slice(0, 3).map(suggestion => (
-                                    <button
-                                        key={suggestion}
-                                        type="button"
-                                        onClick={() => submitQuestion(suggestion)}
-                                        className="min-h-[var(--tm-size-touch)] rounded-full bg-[var(--tm-role-headteacher-glass-surface)] px-3 text-left text-[12px] font-semibold leading-5 text-[var(--tm-assistant-role-text)] backdrop-blur-md [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color,box-shadow] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                                    >
-                                        {suggestion}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        <section className="mt-4" aria-labelledby="conversation-fixed-questions-title">
+                            <h2 id="conversation-fixed-questions-title" className="mb-2 px-1 text-[13px] font-bold text-[var(--tm-text-primary)]">继续分析</h2>
+                            <FixedQuestionList disabled={isReplying} onSelect={submitQuestion} />
+                        </section>
                     </div>
                 </>
             ) : (
@@ -814,45 +782,57 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     <WeekOverviewPanel
                         week={currentWeek}
                         snapshot={snapshot}
-                        records={records}
                         expanded={overviewExpanded}
-                        expandedDimension={expandedDimension}
                         onToggleExpanded={() => {
                             setOverviewExpanded(current => !current);
-                            if (overviewExpanded) setExpandedDimension(null);
+                            if (overviewExpanded) setDetailDimension(null);
                         }}
-                        onToggleDimension={(dimension) => setExpandedDimension(current => current === dimension ? null : dimension)}
+                        onOpenDimensionDetails={setDetailDimension}
+                        onOpenDetails={() => setDetailDimension(
+                            currentWeek.dimensionRankings.find(item => item.recordCount > 0)?.dimension
+                            ?? currentWeek.dimensionRankings[0]?.dimension
+                            ?? null,
+                        )}
                         onOpenWeekDetail={() => {
                             setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
                             setWeekDetailOpen(true);
                         }}
                     />
 
-                    <section className="mx-4 mt-3" aria-labelledby="recommended-questions-title">
-                        <h2 id="recommended-questions-title" className="mb-2 px-1 text-balance text-[14px] font-bold text-[var(--tm-text-primary)]">你可以继续问我</h2>
-                        <div className="headteacher-agent-glass space-y-1 overflow-hidden rounded-[var(--tm-radius-card)] p-1">
-                            {recommendedQuestions.slice(0, 2).map(question => (
-                                <button
-                                    key={question}
-                                    type="button"
-                                    onClick={() => submitQuestion(question)}
-                                    className="flex min-h-11 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                                >
-                                    <span className="min-w-0 flex-1 text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{question}</span>
-                                    <ChevronRight className="h-4 w-4 shrink-0 translate-x-px text-[var(--tm-text-disabled)]" aria-hidden="true" />
-                                </button>
-                            ))}
-                        </div>
+                    <section className="mx-4 mt-3" aria-labelledby="fixed-questions-title">
+                        <h2 id="fixed-questions-title" className="mb-2 px-1 text-balance text-[14px] font-bold text-[var(--tm-text-primary)]">常用问题</h2>
+                        <FixedQuestionList onSelect={submitQuestion} />
                     </section>
                 </div>
             )}
 
-            <QuestionComposer
-                draft={draft}
-                replying={isReplying}
-                onDraftChange={setDraft}
-                onSubmit={submitQuestion}
-            />
+            <p className="shrink-0 px-4 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2 text-center text-[10px] leading-4 text-[var(--tm-text-disabled)]">内容由人工智能基于班级评价台账生成，请以学校复核记录为准</p>
+
+            <MobileBottomSheet
+                open={detailDimension !== null}
+                title="扣分明细"
+                onClose={() => setDetailDimension(null)}
+                header={detailDimension ? (
+                    <DimensionDetailSheetHeader
+                        rankings={currentWeek.dimensionRankings}
+                        selectedDimension={detailDimension}
+                        onSelect={setDetailDimension}
+                        onClose={() => setDetailDimension(null)}
+                    />
+                ) : undefined}
+            >
+                <div className="flex min-h-11 items-center justify-between gap-3 py-2 text-[12px]">
+                    <span className="tabular-nums text-[var(--tm-text-tertiary)]">{currentWeek.dataRangeLabel}</span>
+                    <span className="font-semibold tabular-nums text-[var(--tm-status-negative)]">
+                        {dimensionDeduction > 0 ? '-' : ''}{formatScore(dimensionDeduction)}分 · {dimensionDetailRecords.length}笔
+                    </span>
+                </div>
+                {dimensionDetailRecords.length > 0 ? (
+                    <RecordDetailList records={dimensionDetailRecords} showDimension={false} />
+                ) : (
+                    <p className="py-12 text-center text-[13px] text-[var(--tm-text-tertiary)]">本周期该指标暂无扣分</p>
+                )}
+            </MobileBottomSheet>
 
             <MobileBottomSheet
                 open={detailRecords !== null}

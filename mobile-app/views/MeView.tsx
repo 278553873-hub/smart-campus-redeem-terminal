@@ -6,6 +6,7 @@ import {
     ClipboardList,
     Coins,
     FileCog,
+    Gauge,
     MessageCircle,
     Settings,
     UsersRound,
@@ -31,6 +32,7 @@ interface MeViewProps {
     onEditTeacherProfile: () => void;
     onOpenTermGenerateModal: () => void;
     onViewLeaderReport: () => void;
+    onOpenMoralEducationCockpit: () => void;
     onOpenSettings: () => void;
     onOpenSubjectManagement: () => void;
     onOpenDepartmentManagement: () => void;
@@ -189,6 +191,7 @@ const MeView: React.FC<MeViewProps> = ({
     onEditTeacherProfile,
     onOpenTermGenerateModal,
     onViewLeaderReport,
+    onOpenMoralEducationCockpit,
     onOpenSettings,
     onOpenSubjectManagement,
     onOpenDepartmentManagement,
@@ -216,6 +219,12 @@ const MeView: React.FC<MeViewProps> = ({
             imageClassName: reportToolImageClass,
             plainImage: true,
             onClick: onViewLeaderReport,
+        },
+        {
+            id: 'moralEducationCockpit',
+            title: '德育驾驶舱',
+            icon: Gauge,
+            onClick: onOpenMoralEducationCockpit,
         },
         {
             id: 'termReport',

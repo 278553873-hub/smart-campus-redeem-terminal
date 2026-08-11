@@ -12,6 +12,8 @@ const mobileDocumentTitleInputSource = fs.readFileSync(new URL('../../components
 const mobileBottomSheetSource = fs.readFileSync(new URL('../../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
 const classCascadeSource = fs.readFileSync(new URL('../../components/ui/MobileClassCascadePicker.tsx', import.meta.url), 'utf8');
 const floatingCreateSource = fs.readFileSync(new URL('../../components/ui/MobileFloatingCreateButton.tsx', import.meta.url), 'utf8');
+const confirmSheetSource = fs.readFileSync(new URL('../../components/ui/MobileConfirmSheet.tsx', import.meta.url), 'utf8');
+const qrInviteSheetSource = fs.readFileSync(new URL('../../components/ui/MobileQrInviteSheet.tsx', import.meta.url), 'utf8');
 const growthFieldPickerSource = fs.readFileSync(new URL('../../components/growth/GrowthFieldCategoryPicker.tsx', import.meta.url), 'utf8');
 const formDefinitionSource = fs.readFileSync(new URL('../../../shared/formDefinition.ts', import.meta.url), 'utf8');
 const questionnaireThemeSource = fs.readFileSync(new URL('../../../shared/questionnaireThemeTokens.ts', import.meta.url), 'utf8');
@@ -26,6 +28,7 @@ const archivePersistenceSource = fs.readFileSync(new URL('../../../shared/archiv
 const listSource = viewSource.slice(viewSource.indexOf('const renderList'), viewSource.indexOf('const renderCreate'));
 const listHeaderSource = listSource.slice(0, listSource.indexOf('<main'));
 const listCardsSource = listSource.slice(listSource.indexOf('{filteredRecords.map'), listSource.indexOf('{filteredRecords.length === 0'));
+const listActionsSource = listSource.slice(listSource.indexOf('<MobileBottomSheet open={Boolean(activeListActionRecord)}'), listSource.indexOf('</MobileBottomSheet>', listSource.indexOf('<MobileBottomSheet open={Boolean(activeListActionRecord)}')));
 const createSource = viewSource.slice(viewSource.indexOf('const renderCreate'), viewSource.indexOf('const renderStudentCollectionDetail'));
 const createStepOneSource = createSource.slice(createSource.indexOf('{createStep === 1'), createSource.indexOf('{createStep === 2'));
 const createStepThreeSource = createSource.slice(createSource.indexOf('{createStep === 3'), createSource.indexOf('<BottomAction>'));
@@ -84,6 +87,10 @@ requireText(storeSource, 'completed / reachable', '完成率必须使用对应�
 requireText(storeSource, 'suggestedDeadline: string', '问卷必须将建议完成时间与状态分开保存。');
 requireText(storeSource, 'isQuestionnaireOverdue', '问卷必须能够识别仅用于提示的逾期状态。');
 requireText(storeSource, "questionnaire?.status === 'active'", '家长提交时必须再次确认问卷仍在收集中。');
+requireText(storeSource, "if (existing && existing.status !== 'draft') return current;", '共享数据层必须拒绝覆盖已发布问卷。');
+requireText(storeSource, 'export const publishQuestionnaire', '正式发布必须通过受控的数据层方法。');
+requireText(storeSource, 'inviteCode?: string;', '问卷必须保存不含学生隐私信息的邀请凭证。');
+requireText(storeSource, 'getQuestionnaireByInviteCode', '家长扫码后必须通过邀请凭证查找问卷。');
 requireText(storeSource, "rest.suggestedDeadline ?? deadline ?? ''", '历史问卷的截止时间必须兼容迁移为建议完成时间。');
 for (const mockId of ['survey-autumn-trip-202607', 'survey-uniform-202607', 'survey-meal-202606', 'survey-summer-care-202607', 'survey-campus-activity-202605']) {
   requireText(storeSource, mockId, `演示数据缺少问卷：${mockId}`);
@@ -94,6 +101,8 @@ requireText(parentSource, "setScreen('questionnaireForm')", '家长端必须复�
 requireText(parentSource, 'pendingAssignedQuestionnaires', '家长端待办必须读取教师发布的共享问卷。');
 requireText(parentSource, "getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'", '家长端只能接收家长填写任务，不能收到老师填写任务。');
 requireText(parentSource, 'setSharedQuestionnaires(readQuestionnaires())', '家长提交后必须刷新共享问卷状态。');
+requireText(parentSource, 'resumeQuestionnaireInvite', '家长登录或绑定后必须恢复扫码对应问卷。');
+requireText(parentSource, "type InviteOutcome = 'invalid' | 'ended' | 'submitted' | 'out_of_scope' | null;", '扫码流程必须覆盖失效、结束、已提交和不在范围状态。');
 requireText(viewSource, 'useState<QuestionnaireQuestion[]>([])', '新建问卷不应默认创建单选题。');
 requireText(viewSource, 'const nextQuestions = record?.questions ?? [];', '新采集必须从空题目状态开始。');
 if (viewSource.includes('添加第一题')) {
@@ -367,7 +376,8 @@ requireText(viewSource, 'upsertQuestionnaireDraftForSource(record)', '采集设�
 requireText(viewSource, "if (pageMode !== 'create') return undefined", '自动草稿只应在新建和编辑采集期间保存。');
 requireText(viewSource, "if (!hasMeaningfulDraftContent())", '完全空白的采集不应保存草稿。');
 forbidText(createSource, '保存草稿', '采集设计底部不应继续展示手动保存草稿按钮。');
-requireText(viewSource, 'onClick={createStep === 3 ? publishQuestionnaire : advanceCreateStep}', '下一步必须可点击并主动触发校验。');
+requireText(viewSource, 'onClick={createStep === 3 ? () => setShowPublishConfirm(true) : advanceCreateStep}', '下一步必须可点击并主动触发校验，发布前必须进入二次确认。');
+requireText(viewSource, "&& buildTargets(effectiveGrowthFields.length > 0 || Boolean(draftArchiveTemplateId)).length === 0", '发送范围为空时必须通过主动反馈阻止进入发布确认。');
 requireText(viewSource, "target?.scrollIntoView({ behavior: 'smooth', block: 'center' })", '校验失败后必须滚动到首个错误。');
 requireText(viewSource, 'fieldErrors={stepOneValidationAttempt ? stepOneFieldErrors : undefined}', '题目错误必须在字段内就地展示。');
 if (viewSource.includes("disabled={createStep === 1 ? !validStepOne")) {
@@ -403,7 +413,7 @@ requireText(listCardsSource, "record.status === 'ended' ? 'bg-[var(--tm-text-dis
 requireText(listSource, 'grid grid-cols-2 gap-3', '问卷采集必须使用一行两张的紧凑卡片布局。');
 requireText(listSource, 'active:scale-[0.97]', '可点击问卷卡片必须保留克制的按压反馈。');
 requireText(listSource, 'aria-label={`打开采集操作：${record.title}`}', '点击采集卡片必须打开操作弹窗。');
-for (const actionGroup of ['>采集内容</h4>', '>更多操作</h4>', '>查看详情</button>', '>预览</button>', '>复制采集</button>']) requireText(listSource, actionGroup, `采集操作弹窗缺少层级或操作：${actionGroup}`);
+for (const actionGroup of ['>查看采集</h4>', '>任务管理</h4>', '>查看详情</button>', '>预览</button>', '>复制采集</button>']) requireText(listSource, actionGroup, `采集操作弹窗缺少层级或操作：${actionGroup}`);
 if (listCardsSource.includes('已提交') || listCardsSource.includes('>{completion}%</span>') || listCardsSource.includes('border-t') || listCardsSource.includes('<ChevronRight')) {
   throw new Error('问卷卡片不应显示解释文案、百分比、分割线或展开图标。');
 }
@@ -689,5 +699,26 @@ requireText(viewSource, 'focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', 
 if (viewSource.includes('focus:ring-4 focus:ring-[var(--tm-focus-ring)]')) {
   throw new Error('问卷输入框不应使用4像素实色焦点环。');
 }
+
+requireText(classCascadeSource, 'onToggleGrade?: (classIds: string[]) => void;', '班级级联组件必须支持按当前年级全选。');
+requireText(classCascadeSource, "aria-checked={allActiveClassesSelected ? true : hasActiveClassSelected ? 'mixed' : false}", '年级全选必须向读屏暴露未选、半选和全选状态。');
+requireText(classCascadeSource, '全选本年级', '发送范围必须提供明确的年级全选入口。');
+requireText(viewSource, 'onToggleGrade={toggleGradeClasses}', '问卷发送范围必须接入年级全选能力。');
+requireText(viewSource, 'title="确认发布问卷？"', '发布前必须显示明确的二次确认。');
+requireText(viewSource, '发布后，问卷内容和学生范围将不能编辑。请确认无误后再发布。', '发布确认必须明确说明不可编辑范围。');
+requireText(viewSource, 'publishQuestionnaire as publishQuestionnaireRecord', '教师端发布必须调用受控发布方法。');
+requireText(viewSource, '>邀请家长填写</PrimaryButton>', '收集中的家长问卷必须将邀请填写作为主操作。');
+requireText(listActionsSource, '>查看采集</h4>', '两类问卷的查看操作必须归入统一的“查看采集”分组。');
+requireText(listActionsSource, '>任务管理</h4>', '两类问卷的生命周期操作必须归入统一的“任务管理”分组。');
+requireText(listActionsSource, 'requestCloseRecord(activeListActionRecord)', '两类收集中问卷必须从同一任务管理位置发起结束确认。');
+forbidText(listActionsSource, "getQuestionnaireRespondentRole(activeListActionRecord) !== 'guardian' ? 'col-span-2'", '复制和结束操作不得因填写人不同而改变位置。');
+requireText(viewSource, 'title="确认结束收集？"', '结束收集必须使用明确的二次确认。');
+requireText(viewSource, '结束后将停止继续填写；若仍有未完成内容，可以重新开放。', '结束确认必须说明影响和可恢复条件。');
+requireText(viewSource, 'tone="danger"', '结束收集确认必须使用危险操作语义。');
+requireText(confirmSheetSource, "tone?: 'primary' | 'danger';", '公共确认浮层必须支持危险操作样式。');
+requireText(viewSource, '<MobileQrInviteSheet', '教师端必须通过公共二维码邀请浮层展示邀请。');
+requireText(confirmSheetSource, '<MobileBottomSheet', '发布确认必须复用带对话框语义的公共底部浮层。');
+requireText(qrInviteSheetSource, 'QRCode.toDataURL', '邀请浮层必须生成可扫码的真实二维码。');
+requireText(qrInviteSheetSource, '保存二维码', '邀请浮层必须支持保存二维码。');
 
 console.log('Questionnaire management assertions passed');
