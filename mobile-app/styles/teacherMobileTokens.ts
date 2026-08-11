@@ -531,7 +531,6 @@ export const teacherBrandCssVariables = {
   '--tm-assistant-category-pill-width': '108px',
   '--tm-assistant-secondary-pill-height': '30px',
   '--tm-assistant-icon-control-visual-size': '36px',
-  '--tm-student-detail-header-height': '336px',
   '--tm-font-size-document-title': '26px',
   '--tm-font-size-page-title': '22px',
   '--tm-font-size-group-title': '18px',

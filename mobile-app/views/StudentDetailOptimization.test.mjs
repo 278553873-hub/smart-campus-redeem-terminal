@@ -50,9 +50,15 @@ requireText(plainBackgroundList, "'student_detail'", '学生详情页应使用�
 requireText(appSource, '<TeacherMobileScreenBackground variant="plain" />', '学生详情页所属页面集合应返回公共纯色屏幕背景。');
 requireText(appSource, '<TeacherMobileScreenBackground variant="student-detail" />', '学生详情页应使用独立的沉浸顶部公共背景。');
 requireText(screenBackgroundSource, "variant === 'student-detail'", '公共屏幕背景组件应实现学生详情背景变体。');
-requireText(screenBackgroundSource, 'h-[var(--tm-student-detail-header-height)]', '学生详情顶部渐变高度应由组件 Token 管理。');
-requireText(screenBackgroundSource, 'linear-gradient(180deg,var(--tm-bg-surface-soft)_0%,var(--tm-brand-primary-soft)_54%,var(--tm-page-plain-content-bg)_100%)', '学生详情顶部氛围必须柔和收敛到内容区底色，避免固定高度横向截断。');
-requireText(tokenSource, "'--tm-student-detail-header-height'", '教师手机端 Token 应定义学生详情顶部渐变高度。');
+requireText(screenBackgroundSource, 'bg-[var(--tm-page-plain-content-bg)]', '学生详情应使用与内容区一致的全屏底色。');
+requireText(screenBackgroundSource, 'radial-gradient(circle_at_94%_-6%,var(--tm-glow-primary),transparent_36%)', '学生详情顶部应使用自然透明的品牌弥散光。');
+requireText(screenBackgroundSource, 'radial-gradient(circle_at_4%_2%,var(--tm-glow-secondary-subtle),transparent_32%)', '学生详情顶部应使用低透明辅助弥散光平衡氛围。');
+if (screenBackgroundSource.includes('--tm-student-detail-header-height') || screenBackgroundSource.includes('linear-gradient(180deg,var(--tm-bg-surface-soft)')) {
+  throw new Error('学生详情背景不应继续使用固定高度线性渐变，避免横向截断。');
+}
+if (tokenSource.includes("'--tm-student-detail-header-height'")) {
+  throw new Error('固定高度线性渐变移除后，应清理失效的学生详情背景高度 Token。');
+}
 requireText(appSource, "hasPlainBackground ? 'z-[2]' : 'z-auto'", '学生详情内容层必须高于纯白标题背景，避免返回、档案和学籍入口被遮挡。');
 requireText(appSource, "'student_collection_detail'", 'App 路由应包含学生采集记录详情页。');
 requireText(appSource, 'getCompletedStudentCollectionHistory(', '学生详情必须从问卷数据层读取已完成采集记录。');

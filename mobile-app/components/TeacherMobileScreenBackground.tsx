@@ -40,8 +40,7 @@ const TeacherMobileScreenBackground: React.FC<TeacherMobileScreenBackgroundProps
     if (variant === 'student-detail') {
         return (
             <div className="absolute inset-0 overflow-hidden bg-[var(--tm-page-plain-content-bg)]" aria-hidden="true">
-                <div className="absolute inset-x-0 top-0 h-[var(--tm-student-detail-header-height)] bg-[linear-gradient(180deg,var(--tm-bg-surface-soft)_0%,var(--tm-brand-primary-soft)_54%,var(--tm-page-plain-content-bg)_100%)]" />
-                <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--tm-brand-primary)_14%,transparent),transparent_70%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_94%_-6%,var(--tm-glow-primary),transparent_36%),radial-gradient(circle_at_4%_2%,var(--tm-glow-secondary-subtle),transparent_32%)]" />
             </div>
         );
     }

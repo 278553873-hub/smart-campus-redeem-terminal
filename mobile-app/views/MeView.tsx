@@ -50,6 +50,7 @@ interface MeViewProps {
 interface MenuEntry<TId extends string = string> {
     id: TId;
     title: string;
+    titleLines?: readonly string[];
     icon?: LucideIcon;
     imageSrc?: string;
     imageAlt?: string;
@@ -91,6 +92,7 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                 <button
                     key={item.id}
                     type="button"
+                    aria-label={item.title}
                     onClick={item.onClick}
                     className={`${isSecondary ? 'min-h-[78px] gap-2' : 'min-h-[92px] gap-2.5'} group flex flex-col items-center justify-start rounded-[var(--tm-radius-inner)] text-center transition duration-200 active:scale-[0.97] active:bg-[var(--tm-brand-primary-soft)]/60`}
                 >
@@ -126,7 +128,11 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                     ) : (
                         null
                     )}
-                    <span className="flex min-h-9 max-w-[92px] items-start justify-center text-balance text-[12px] font-semibold leading-[18px] text-[var(--tm-text-primary)]">{item.title}</span>
+                    <span className="flex min-h-9 max-w-[92px] flex-col items-center text-[12px] font-semibold leading-[18px] text-[var(--tm-text-primary)]">
+                        {item.titleLines
+                            ? item.titleLines.map(line => <span key={line} className="whitespace-nowrap">{line}</span>)
+                            : item.title}
+                    </span>
                 </button>
             );
         })}
@@ -213,6 +219,7 @@ const MeView: React.FC<MeViewProps> = ({
         {
             id: 'schoolReport',
             title: '学生评价报表',
+            titleLines: ['学生评价', '报表'],
             imageSrc: ASSETS.MANAGEMENT.SCHOOL_REPORT_V2,
             imageAlt: '学生评价报表图标',
             imageClassName: reportToolImageClass,
@@ -222,6 +229,7 @@ const MeView: React.FC<MeViewProps> = ({
         {
             id: 'moralEducationCockpit',
             title: '班级评价报表',
+            titleLines: ['班级评价', '报表'],
             imageSrc: ASSETS.MANAGEMENT.CLASS_EVALUATION_REPORT,
             imageAlt: '班级评价报表图标',
             imageClassName: reportToolImageClass,
