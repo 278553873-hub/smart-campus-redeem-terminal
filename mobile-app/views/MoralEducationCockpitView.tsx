@@ -178,7 +178,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                 if (!disposed) setSnapshot(data);
             })
             .catch(() => {
-                if (!disposed) setLoadError('德育评价数据加载失败，请稍后重试');
+                if (!disposed) setLoadError('班级评价数据加载失败，请稍后重试');
             })
             .finally(() => {
                 if (!disposed) setIsLoading(false);
@@ -303,7 +303,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
 
                     {snapshot && !loadError && (
                         <>
-                            <section className={reportCardClassName} aria-label="德育数据概况">
+                            <section className={reportCardClassName} aria-label="班级评价数据概况">
                                 <SectionHeader title="数据概况" />
                                 <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-4">
                                     <div className="min-w-0">
