@@ -1,3 +1,5 @@
+export type MoralEducationPeriodType = 'week' | 'month' | 'term';
+
 export type MoralEducationDimensionColor =
     | 'indicator1'
     | 'indicator2'
@@ -5,13 +7,17 @@ export type MoralEducationDimensionColor =
     | 'indicator4'
     | 'indicator5';
 
-export interface MoralEducationWeekOption {
+export interface MoralEducationPeriodOption {
     id: string;
+    type: MoralEducationPeriodType;
     startDate: string;
     endDate: string;
     label: string;
     trendLabel: string;
 }
+
+// 保留旧类型别名，避免已有调用方在迁移期间失效。
+export type MoralEducationWeekOption = MoralEducationPeriodOption;
 
 export interface MoralEducationDimensionStat {
     id: string;
@@ -56,7 +62,8 @@ export interface MoralEducationProblemStat {
 }
 
 export interface MoralEducationCockpitSnapshot {
-    week: MoralEducationWeekOption;
+    period: MoralEducationPeriodOption;
+    week: MoralEducationPeriodOption;
     summary: {
         averageScore: number;
         maxScore: number;
@@ -80,6 +87,11 @@ interface WeekConfig {
     issueScale: number;
 }
 
+interface PeriodDefinition {
+    option: MoralEducationPeriodOption;
+    weeks: WeekConfig[];
+}
+
 const SCHOOL_MAX_SCORE = 100;
 const DIMENSION_MAX_SCORE = 20;
 const CLASS_COUNT_PER_GRADE = 5;
@@ -91,6 +103,14 @@ const scaleCount = (value: number, factor: number) => Math.max(0, Math.round(val
 const sumBy = <T>(items: T[], getValue: (item: T) => number) => roundOne(items.reduce((sum, item) => sum + getValue(item), 0));
 
 const WEEK_CONFIGS: WeekConfig[] = [
+    { id: '2025-12-15_2025-12-21', startDate: '2025-12-15', endDate: '2025-12-21', averageScore: 96.4, issueScale: 0.84 },
+    { id: '2025-12-22_2025-12-28', startDate: '2025-12-22', endDate: '2025-12-28', averageScore: 96.6, issueScale: 0.82 },
+    { id: '2026-01-05_2026-01-11', startDate: '2026-01-05', endDate: '2026-01-11', averageScore: 96.5, issueScale: 0.86 },
+    { id: '2026-02-23_2026-03-01', startDate: '2026-02-23', endDate: '2026-03-01', averageScore: 96.8, issueScale: 0.78 },
+    { id: '2026-03-09_2026-03-15', startDate: '2026-03-09', endDate: '2026-03-15', averageScore: 96.7, issueScale: 0.82 },
+    { id: '2026-04-06_2026-04-12', startDate: '2026-04-06', endDate: '2026-04-12', averageScore: 96.6, issueScale: 0.86 },
+    { id: '2026-05-11_2026-05-17', startDate: '2026-05-11', endDate: '2026-05-17', averageScore: 96.4, issueScale: 0.9 },
+    { id: '2026-06-08_2026-06-14', startDate: '2026-06-08', endDate: '2026-06-14', averageScore: 96.5, issueScale: 0.88 },
     { id: '2026-07-06_2026-07-12', startDate: '2026-07-06', endDate: '2026-07-12', averageScore: 96.9, issueScale: 0.8 },
     { id: '2026-07-13_2026-07-19', startDate: '2026-07-13', endDate: '2026-07-19', averageScore: 96.7, issueScale: 0.86 },
     { id: '2026-07-20_2026-07-26', startDate: '2026-07-20', endDate: '2026-07-26', averageScore: 96.5, issueScale: 0.92 },
@@ -135,29 +155,81 @@ const formatWeekLabel = (startDate: string, endDate: string) => {
     return `${start.year}.${String(start.month).padStart(2, '0')}.${String(start.day).padStart(2, '0')} - ${endText}`;
 };
 
-const formatTrendLabel = (startDate: string, endDate: string) => {
+const formatWeekTrendLabel = (startDate: string, endDate: string) => {
     const start = parseDateParts(startDate);
     const end = parseDateParts(endDate);
     return `${start.month}.${String(start.day).padStart(2, '0')}-${end.month}.${String(end.day).padStart(2, '0')}`;
 };
 
-const toWeekOption = (config: WeekConfig): MoralEducationWeekOption => ({
+const toWeekOption = (config: WeekConfig): MoralEducationPeriodOption => ({
     id: config.id,
+    type: 'week',
     startDate: config.startDate,
     endDate: config.endDate,
     label: formatWeekLabel(config.startDate, config.endDate),
-    trendLabel: formatTrendLabel(config.startDate, config.endDate),
+    trendLabel: formatWeekTrendLabel(config.startDate, config.endDate),
 });
+
+const groupBy = <T>(items: T[], getKey: (item: T) => string) => {
+    const groups = new Map<string, T[]>();
+    items.forEach(item => {
+        const key = getKey(item);
+        groups.set(key, [...(groups.get(key) ?? []), item]);
+    });
+    return groups;
+};
+
+const createMonthDefinitions = (): PeriodDefinition[] => Array.from(
+    groupBy(WEEK_CONFIGS, config => config.startDate.slice(0, 7)),
+).map(([id, weeks]) => {
+    const { year, month } = parseDateParts(weeks[0].startDate);
+    return {
+        option: {
+            id,
+            type: 'month',
+            startDate: weeks[0].startDate,
+            endDate: weeks[weeks.length - 1].endDate,
+            label: `${year}年${month}月`,
+            trendLabel: `${month}月`,
+        },
+        weeks,
+    };
+});
+
+const termKey = (config: WeekConfig) => config.startDate < '2026-02-01' ? '2025-2026-1' : '2025-2026-2';
+
+const createTermDefinitions = (): PeriodDefinition[] => Array.from(
+    groupBy(WEEK_CONFIGS, termKey),
+).map(([id, weeks]) => {
+    const isFirstTerm = id.endsWith('-1');
+    return {
+        option: {
+            id,
+            type: 'term',
+            startDate: weeks[0].startDate,
+            endDate: weeks[weeks.length - 1].endDate,
+            label: `2025-2026学年${isFirstTerm ? '第一' : '第二'}学期`,
+            trendLabel: isFirstTerm ? '第一学期' : '第二学期',
+        },
+        weeks,
+    };
+});
+
+const PERIOD_DEFINITIONS: Record<MoralEducationPeriodType, PeriodDefinition[]> = {
+    week: WEEK_CONFIGS.map(config => ({ option: toWeekOption(config), weeks: [config] })),
+    month: createMonthDefinitions(),
+    term: createTermDefinitions(),
+};
 
 const distributeCount = (total: number, index: number) => {
     const base = Math.floor(total / CLASS_COUNT_PER_GRADE);
     return base + (index < total % CLASS_COUNT_PER_GRADE ? 1 : 0);
 };
 
-const createGrades = (config: WeekConfig): MoralEducationGradeSummary[] => BASE_GRADES.map(grade => {
+const createWeeklyClasses = (config: WeekConfig) => BASE_GRADES.flatMap(grade => {
     const scoreAdjustments = [0.8, -0.6, 0.2, -1.1, 0.7];
     const scaledIssueCount = scaleCount(grade.issueCount, config.issueScale);
-    const classes = scoreAdjustments.map((adjustment, index): MoralEducationClassSummary => {
+    return scoreAdjustments.map((adjustment, index): MoralEducationClassSummary => {
         const score = clampScore(config.averageScore + grade.scoreOffset + adjustment);
         return {
             id: `${grade.id}c${index + 1}`,
@@ -170,30 +242,38 @@ const createGrades = (config: WeekConfig): MoralEducationGradeSummary[] => BASE_
             rank: 0,
         };
     });
-    return { id: grade.id, name: grade.name, classes };
 });
 
-const createRankedData = (config: WeekConfig) => {
-    const grades = createGrades(config);
-    const classRanking = grades
-        .flatMap(grade => grade.classes)
-        .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name, 'zh-CN'))
-        .map((classItem, index) => ({ ...classItem, rank: index + 1 }));
-    const rankMap = new Map(classRanking.map(classItem => [classItem.id, classItem.rank]));
-    return {
-        classRanking,
-        grades: grades.map(grade => ({
-            ...grade,
-            classes: grade.classes.map(classItem => ({ ...classItem, rank: rankMap.get(classItem.id) ?? 0 })),
-        })),
-    };
+const rankClasses = (classes: MoralEducationClassSummary[]) => classes
+    .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name, 'zh-CN'))
+    .map((classItem, index) => ({ ...classItem, rank: index + 1 }));
+
+const createRankedData = (configs: WeekConfig[]) => {
+    const weeklyClasses = configs.map(createWeeklyClasses);
+    const classIds = weeklyClasses[0]?.map(classItem => classItem.id) ?? [];
+    const aggregatedClasses = classIds.map(id => {
+        const periodItems = weeklyClasses.flat().filter(classItem => classItem.id === id);
+        const base = periodItems[0];
+        return {
+            ...base,
+            score: roundOne(sumBy(periodItems, item => item.score) / periodItems.length),
+            deduction: sumBy(periodItems, item => item.deduction),
+            issueCount: sumBy(periodItems, item => item.issueCount),
+        };
+    });
+    const classRanking = rankClasses(aggregatedClasses);
+    const grades = BASE_GRADES.map(grade => ({
+        id: grade.id,
+        name: grade.name,
+        classes: rankClasses(aggregatedClasses.filter(classItem => classItem.gradeId === grade.id)),
+    }));
+    return { classRanking, grades };
 };
 
-const createSummary = (config: WeekConfig) => {
-    const { classRanking } = createRankedData(config);
-    const averageScore = roundOne(sumBy(classRanking, item => item.score) / classRanking.length);
+const createSummary = (configs: WeekConfig[]) => {
+    const { classRanking } = createRankedData(configs);
     return {
-        averageScore,
+        averageScore: roundOne(sumBy(classRanking, item => item.score) / classRanking.length),
         maxScore: SCHOOL_MAX_SCORE,
         cumulativeDeduction: sumBy(classRanking, item => item.deduction),
         issueCount: sumBy(classRanking, item => item.issueCount),
@@ -202,59 +282,75 @@ const createSummary = (config: WeekConfig) => {
     };
 };
 
-export const getMoralEducationCockpitWeeks = async (): Promise<MoralEducationWeekOption[]> => (
-    WEEK_CONFIGS.map(toWeekOption)
-);
-
-export const getMoralEducationCockpitSnapshot = async (
-    query: { weekId?: string } = {},
-): Promise<MoralEducationCockpitSnapshot> => {
-    const selectedIndex = WEEK_CONFIGS.findIndex(item => item.id === query.weekId);
-    const fallbackIndex = WEEK_CONFIGS.length - 1;
-    const configIndex = query.weekId && selectedIndex >= 0 ? selectedIndex : fallbackIndex;
-    const config = WEEK_CONFIGS[configIndex] ?? WEEK_CONFIGS[fallbackIndex];
-    const { grades, classRanking } = createRankedData(config);
-    const summary = createSummary(config);
+const createDimensions = (configs: WeekConfig[], classCount: number): MoralEducationDimensionStat[] => {
     const dimensionWeightTotal = sumBy(BASE_DIMENSIONS, item => item.deductionWeight);
-    let allocatedDeduction = 0;
-    const dimensions = BASE_DIMENSIONS.map((item, index): MoralEducationDimensionStat => {
-        const deduction = index === BASE_DIMENSIONS.length - 1
-            ? roundOne(summary.cumulativeDeduction - allocatedDeduction)
-            : roundOne(summary.cumulativeDeduction * item.deductionWeight / dimensionWeightTotal);
-        allocatedDeduction = roundOne(allocatedDeduction + deduction);
+    return BASE_DIMENSIONS.map(item => {
+        const weeklyStats = configs.map(config => {
+            const summary = createSummary([config]);
+            const deduction = roundOne(summary.cumulativeDeduction * item.deductionWeight / dimensionWeightTotal);
+            return {
+                averageScore: clampScore(DIMENSION_MAX_SCORE - deduction / classCount, DIMENSION_MAX_SCORE),
+                deduction,
+                issueCount: scaleCount(item.issueCount, config.issueScale),
+            };
+        });
         return {
             id: item.id,
             name: item.name,
-            averageScore: clampScore(DIMENSION_MAX_SCORE - deduction / classRanking.length, DIMENSION_MAX_SCORE),
+            averageScore: roundOne(sumBy(weeklyStats, stat => stat.averageScore) / weeklyStats.length),
             maxScore: DIMENSION_MAX_SCORE,
-            deduction,
-            issueCount: scaleCount(item.issueCount, config.issueScale),
+            deduction: sumBy(weeklyStats, stat => stat.deduction),
+            issueCount: sumBy(weeklyStats, stat => stat.issueCount),
             color: item.color,
         };
     });
+};
 
+const createProblems = (configs: WeekConfig[], classCount: number): MoralEducationProblemStat[] => BASE_PROBLEMS.map(item => ({
+    ...item,
+    recordCount: sumBy(configs, config => scaleCount(item.recordCount, config.issueScale)),
+    affectedClassCount: Math.min(classCount, Math.max(...configs.map(config => scaleCount(item.affectedClassCount, config.issueScale)))),
+    deduction: sumBy(configs, config => roundOne(item.deduction * config.issueScale)),
+}));
+
+export const getMoralEducationCockpitPeriods = async (
+    type: MoralEducationPeriodType,
+): Promise<MoralEducationPeriodOption[]> => PERIOD_DEFINITIONS[type].map(item => item.option);
+
+export const getMoralEducationCockpitWeeks = async (): Promise<MoralEducationWeekOption[]> => (
+    getMoralEducationCockpitPeriods('week')
+);
+
+export const getMoralEducationCockpitSnapshot = async (
+    query: { periodType?: MoralEducationPeriodType; periodId?: string; weekId?: string } = {},
+): Promise<MoralEducationCockpitSnapshot> => {
+    const periodType = query.periodType ?? 'week';
+    const definitions = PERIOD_DEFINITIONS[periodType];
+    const requestedId = query.periodId ?? query.weekId;
+    const selectedIndex = definitions.findIndex(item => item.option.id === requestedId);
+    const configIndex = requestedId && selectedIndex >= 0 ? selectedIndex : definitions.length - 1;
+    const definition = definitions[configIndex] ?? definitions[definitions.length - 1];
+    const { grades, classRanking } = createRankedData(definition.weeks);
+    const summary = createSummary(definition.weeks);
+    const dimensions = createDimensions(definition.weeks, classRanking.length);
     const trendStartIndex = Math.max(0, configIndex - TREND_WINDOW_SIZE + 1);
-    const trend = WEEK_CONFIGS.slice(trendStartIndex, configIndex + 1).map(item => {
-        const itemSummary = createSummary(item);
+    const trend = definitions.slice(trendStartIndex, configIndex + 1).map(item => {
+        const itemSummary = createSummary(item.weeks);
         return {
-            label: formatTrendLabel(item.startDate, item.endDate),
+            label: item.option.trendLabel,
             averageScore: itemSummary.averageScore,
             deduction: itemSummary.cumulativeDeduction,
         };
     });
 
     return {
-        week: toWeekOption(config),
+        period: definition.option,
+        week: definition.option,
         summary,
         dimensions,
         trend,
         grades,
         classRanking,
-        problems: BASE_PROBLEMS.map(item => ({
-            ...item,
-            recordCount: scaleCount(item.recordCount, config.issueScale),
-            affectedClassCount: Math.min(classRanking.length, scaleCount(item.affectedClassCount, config.issueScale)),
-            deduction: roundOne(item.deduction * config.issueScale),
-        })),
+        problems: createProblems(definition.weeks, classRanking.length),
     };
 };

@@ -555,6 +555,8 @@ interface TeacherReportDonutChartProps {
     data: TeacherReportDonutDatum[];
     optionKey: string;
     className?: string;
+    seriesName?: string;
+    valueSuffix?: string;
     onCategorySelect?: (name: string) => void;
 }
 
@@ -563,6 +565,8 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
     data,
     optionKey,
     className = 'h-64',
+    seriesName = '五育事件',
+    valueSuffix = '条',
     onCategorySelect,
 }) => {
     const createOption = React.useCallback((theme: TeacherReportChartTheme): EChartsCoreOption => ({
@@ -573,7 +577,7 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
             backgroundColor: theme.tooltip,
             borderWidth: 0,
             textStyle: { color: theme.surface, fontSize: 12 },
-            formatter: '{b}<br/>{c}条 · {d}%',
+            formatter: `{b}<br/>{c}${valueSuffix} · {d}%`,
         },
         legend: {
             left: 'center',
@@ -585,7 +589,7 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
             textStyle: { color: theme.textSecondary, fontSize: 11 },
         },
         series: [{
-            name: '五育事件',
+            name: seriesName,
             type: 'pie',
             cursor: onCategorySelect ? 'pointer' : 'default',
             center: ['50%', '43%'],
@@ -600,7 +604,7 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
             labelLine: { length: 8, length2: 6 },
             data: data.map(item => ({ name: item.name, value: item.value })),
         }],
-    }), [data, onCategorySelect]);
+    }), [data, onCategorySelect, seriesName, valueSuffix]);
 
     return (
         <TeacherReportChart

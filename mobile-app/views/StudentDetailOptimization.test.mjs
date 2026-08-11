@@ -51,7 +51,7 @@ requireText(appSource, '<TeacherMobileScreenBackground variant="plain" />', '学
 requireText(appSource, '<TeacherMobileScreenBackground variant="student-detail" />', '学生详情页应使用独立的沉浸顶部公共背景。');
 requireText(screenBackgroundSource, "variant === 'student-detail'", '公共屏幕背景组件应实现学生详情背景变体。');
 requireText(screenBackgroundSource, 'h-[var(--tm-student-detail-header-height)]', '学生详情顶部渐变高度应由组件 Token 管理。');
-requireText(screenBackgroundSource, 'linear-gradient(135deg,var(--tm-bg-surface-soft)_0%,var(--tm-brand-primary-soft)_100%)', '学生详情顶部应从浅暖灰过渡到品牌浅红，避免白色学生卡融入背景。');
+requireText(screenBackgroundSource, 'linear-gradient(180deg,var(--tm-bg-surface-soft)_0%,var(--tm-brand-primary-soft)_54%,var(--tm-page-plain-content-bg)_100%)', '学生详情顶部氛围必须柔和收敛到内容区底色，避免固定高度横向截断。');
 requireText(tokenSource, "'--tm-student-detail-header-height'", '教师手机端 Token 应定义学生详情顶部渐变高度。');
 requireText(appSource, "hasPlainBackground ? 'z-[2]' : 'z-auto'", '学生详情内容层必须高于纯白标题背景，避免返回、档案和学籍入口被遮挡。');
 requireText(appSource, "'student_collection_detail'", 'App 路由应包含学生采集记录详情页。');
@@ -185,18 +185,19 @@ for (const required of [
 ]) {
   requireText(dashboardSource, required, `学生详情页未完整接入新设计 Token：${required}`);
 }
-requireText(evaluationRecordsSource, '--tm-record-positive-bg', '评价记录二级页应使用正向记录 Token。');
-requireText(evaluationRecordsSource, '--tm-record-negative-bg', '评价记录二级页应使用负向记录 Token。');
+requireText(evaluationRecordsSource, '--tm-record-positive-bg', '评价记录卡片应使用正向记录 Token。');
+requireText(evaluationRecordsSource, '--tm-record-negative-bg', '评价记录卡片应使用负向记录 Token。');
 requireText(dashboardSource, 'showClassAvg', '五育能力模型应保留班级平均开关。');
 requireText(overviewSource, '<FiveEducationRadar scores={currentScores}', '成长概览必须直接展示五育雷达图。');
 if (dashboardSource.includes('showFiveComparison') || dashboardSource.includes('班级对比')) {
   throw new Error('五育雷达图不应再通过班级对比按钮延迟展示。');
 }
-requireText(overviewSource, '评价记录 {currentTermEvaluationRecords.length}条', '雷达图下方必须以文字链接展示本学期评价记录数量。');
-requireText(overviewSource, 'setSelectedTerm(currentTermOption.value)', '评价记录入口必须携带本学期条件进入二级页。');
-requireText(overviewSource, 'setShowEvaluationRecords(true)', '评价记录入口必须直接进入评价记录二级页。');
-if (overviewSource.includes('showEvaluationPreview') || overviewSource.includes('aria-expanded') || overviewSource.includes('student-evaluation-preview')) {
-  throw new Error('成长概览中的评价记录入口不应再原地展开明细。');
+requireText(overviewSource, '<StudentEvaluationRecordsView', '成长概览必须直接展示评价记录列表。');
+requireText(overviewSource, 'embedded', '评价记录必须复用页内模式，避免复制筛选与列表逻辑。');
+requireText(overviewSource, 'selectedTerm={currentTermOption.value}', '成长概览中的评价记录必须固定为本学期。');
+requireText(overviewSource, 'onSelectRecord={(record) => setActiveEvaluationRecordId(record.id)}', '点击评价记录后必须渐进披露单条详情。');
+if (overviewSource.includes('bodyGrowthMetrics') || overviewSource.includes('onViewBodyMeasurements') || overviewSource.includes('>成长数据<')) {
+  throw new Error('成长概览不应展示成长数据摘要或入口。');
 }
 if (dashboardSource.includes('上月对比') || dashboardSource.includes('showLastMonth') || dashboardSource.includes('年级平均')) {
   throw new Error('五育能力模型不应再展示上月对比或年级平均，应改为当前与班级平均。');
@@ -205,14 +206,14 @@ requireText(dashboardSource, "useState<'overview' | 'report' | 'collection'>", '
 requireText(dashboardSource, "initialTab = 'overview'", '学生详情应默认进入成长概览。');
 requireText(dashboardSource, '成长概览', '学生详情必须提供成长概览页签。');
 requireText(dashboardSource, '成长报告', '学生详情必须保留成长报告页签。');
-requireText(dashboardSource, '评价记录', '学生详情必须保留评价记录页签。');
+requireText(evaluationRecordsSource, '>评价记录</h3>', '学生详情成长概览必须保留评价记录板块。');
 requireText(dashboardSource, '采集记录', '学生详情必须新增采集记录页签。');
 requireText(dashboardSource, "activeTab === 'overview' && renderOverviewTab()", '实时五育积分必须只在成长概览展示。');
 requireText(dashboardSource, "activeTab === 'report' && renderReportTab()", '阶段报告必须收敛到成长报告页签。');
 if (dashboardSource.includes("activeTab === 'evaluation'")) {
   throw new Error('评价记录不应继续占用学生详情一级页签。');
 }
-requireText(dashboardSource, '<StudentEvaluationRecordsView', '评价记录应进入独立二级页面。');
+requireText(dashboardSource, 'initialRecordId={activeEvaluationRecordId}', '单条评价记录详情应从成长概览进入完整详情页。');
 requireText(evaluationRecordsSource, 'record.evaluation_date >= activeTerm.startDate', '评价记录必须按所选学期过滤。');
 requireText(evaluationRecordsSource, 'ariaLabel="筛选评价记录学期"', '评价记录二级页必须继承并允许切换学期。');
 requireText(dashboardSource, 'onClick={() => setShowStatusActionSheet(true)}', '学生卡片顶部的学籍入口应直接打开学籍状态抽屉。');

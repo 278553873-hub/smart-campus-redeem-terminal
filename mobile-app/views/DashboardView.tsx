@@ -5,11 +5,10 @@ import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
     AwardIcon, GrowthIcon
 } from '../components/Icons';
-import { AlertTriangle, BadgeCheck, Camera, ChevronLeft, ChevronRight, FolderOpen, Ruler, School } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Camera, ChevronLeft, ChevronRight, FolderOpen, School } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
-import type { StudentGrowthProfile } from '../../shared/studentGrowthStore';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
 import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
 import StudentEvaluationRecordsView, { type StudentEvaluationRecord } from './StudentEvaluationRecordsView';
@@ -37,8 +36,6 @@ interface DashboardViewProps {
     onUpdateEvaluationRecord: (record: StudentEvaluationRecord) => void;
     onViewCollectionRecord: (item: StudentCollectionHistoryItem) => void;
     onOpenStudentArchive: () => void;
-    growthProfile: StudentGrowthProfile;
-    onViewBodyMeasurements: () => void;
     initialTab?: 'overview' | 'report' | 'collection';
 }
 
@@ -276,8 +273,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onUpdateEvaluationRecord,
     onViewCollectionRecord,
     onOpenStudentArchive,
-    growthProfile,
-    onViewBodyMeasurements,
     initialTab = 'overview',
 }) => {
     const [activeTab, setActiveTab] = useState<'overview' | 'report' | 'collection'>(initialTab);
@@ -285,7 +280,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     // UI States
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
     const [selectedTerm, setSelectedTerm] = useState(STUDENT_TERM_OPTIONS[0].value);
-    const [showEvaluationRecords, setShowEvaluationRecords] = useState(false);
+    const [activeEvaluationRecordId, setActiveEvaluationRecordId] = useState<string | null>(null);
     const [showCurrent, setShowCurrent] = useState(true);
     const [showClassAvg, setShowClassAvg] = useState(true);
     const [showStatusActionSheet, setShowStatusActionSheet] = useState(false);
@@ -320,23 +315,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             .filter(score => score.category !== 'creativity')
             .map(score => ({ ...score, score: Math.max(0, Math.min(100, score.score + (offsets[score.category] ?? 0) + (recordDeltas[score.category] ?? 0))) }));
     }, [currentTermOption.value, evaluationScoreDeltas, scores]);
-    const currentTermEvaluationRecords = useMemo(() => evaluationRecords.filter(record => (
-        record.evaluation_date >= currentTermOption.startDate && record.evaluation_date <= currentTermOption.endDate
-    )).sort((left, right) => right.evaluation_date.localeCompare(left.evaluation_date)), [currentTermOption.endDate, currentTermOption.startDate, evaluationRecords]);
-    const latestHeightMeasurement = growthProfile.bodyMeasurements.find(record => record.heightCm !== undefined);
-    const latestWeightMeasurement = growthProfile.bodyMeasurements.find(record => record.weightKg !== undefined);
-    const latestBmiMeasurement = growthProfile.bodyMeasurements.find(record => record.bmi !== undefined);
-    const bodyGrowthMetrics = [
-        latestHeightMeasurement?.heightCm !== undefined
-            ? { key: 'height', label: '身高', value: latestHeightMeasurement.heightCm, unit: '厘米', recordedAt: latestHeightMeasurement.measuredAt }
-            : null,
-        latestWeightMeasurement?.weightKg !== undefined
-            ? { key: 'weight', label: '体重', value: latestWeightMeasurement.weightKg, unit: '千克', recordedAt: latestWeightMeasurement.measuredAt }
-            : null,
-        latestBmiMeasurement?.bmi !== undefined
-            ? { key: 'bmi', label: 'BMI', value: latestBmiMeasurement.bmi, unit: '', recordedAt: latestBmiMeasurement.measuredAt }
-            : null,
-    ].filter((item): item is { key: string; label: string; value: number; unit: string; recordedAt: string } => item !== null);
     const studentStatusLabel = student.status === 'left' ? '离校' : '在校';
     const formatCompactClassName = (className: string) => {
         const match = className.match(/^(\d{4}级)(.+)$/);
@@ -388,39 +366,21 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     <FiveEducationRadar scores={currentScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
                 </div>
 
-                <div className="border-t border-[var(--tm-border-subtle)] px-4">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setSelectedTerm(currentTermOption.value);
-                            setShowEvaluationRecords(true);
-                        }}
-                        className="mx-auto flex min-h-[var(--tm-size-touch)] items-center gap-1.5 text-[13px] font-medium text-[var(--tm-brand-primary-strong)]"
-                    >
-                        评价记录 {currentTermEvaluationRecords.length}条
-                        <ChevronRightIcon className="h-3.5 w-3.5" />
-                    </button>
-                </div>
             </div>
 
-            {bodyGrowthMetrics.length > 0 && (
-                <button type="button" onClick={onViewBodyMeasurements} className="w-full overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985]">
-                    <div className="flex min-h-[58px] items-center justify-between px-4">
-                        <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]"><Ruler className="h-4.5 w-4.5 text-[var(--tm-status-positive)]" />成长数据</h3>
-                        <ChevronRight className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
-                    </div>
-                    <div className={`grid border-t border-[var(--tm-border-subtle)] px-3 py-4 text-center ${bodyGrowthMetrics.length === 1 ? 'grid-cols-1' : bodyGrowthMetrics.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-                        {bodyGrowthMetrics.map(metric => (
-                            <div key={metric.key} className="min-w-0 px-1">
-                                <div className="truncate text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{metric.value}</div>
-                                <div className="mt-1 truncate text-xs text-[var(--tm-text-secondary)]">{metric.label}{metric.unit ? `（${metric.unit}）` : ''}</div>
-                                <div className="mt-1 text-[10px] font-medium text-[var(--tm-text-tertiary)]">{metric.recordedAt}</div>
-                            </div>
-                        ))}
-                    </div>
-                </button>
-            )}
-
+            <StudentEvaluationRecordsView
+                embedded
+                records={evaluationRecords}
+                selectedTerm={currentTermOption.value}
+                termOptions={STUDENT_TERM_OPTIONS}
+                currentTeacherId={currentTeacherId}
+                currentTeacherName={currentTeacherName}
+                canEditOtherTeachersRecords={canEditOtherTeachersEvaluationRecords}
+                onSelectedTermChange={() => undefined}
+                onUpdateRecord={onUpdateEvaluationRecord}
+                onBack={() => undefined}
+                onSelectRecord={(record) => setActiveEvaluationRecordId(record.id)}
+            />
         </div>
     );
 
@@ -475,18 +435,19 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
     );
 
-    if (showEvaluationRecords) {
+    if (activeEvaluationRecordId) {
         return (
             <StudentEvaluationRecordsView
                 records={evaluationRecords}
-                selectedTerm={selectedTerm}
+                selectedTerm={currentTermOption.value}
                 termOptions={STUDENT_TERM_OPTIONS}
                 currentTeacherId={currentTeacherId}
                 currentTeacherName={currentTeacherName}
                 canEditOtherTeachersRecords={canEditOtherTeachersEvaluationRecords}
-                onSelectedTermChange={setSelectedTerm}
+                onSelectedTermChange={() => undefined}
                 onUpdateRecord={onUpdateEvaluationRecord}
-                onBack={() => setShowEvaluationRecords(false)}
+                onBack={() => setActiveEvaluationRecordId(null)}
+                initialRecordId={activeEvaluationRecordId}
             />
         );
     }
@@ -600,7 +561,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             {/* 2. Scrollable Content */}
             <div className="space-y-4 p-4">
                 {/* C. Tabs */}
-                <div className="sticky top-0 z-30 bg-[var(--tm-bg-page)] py-2">
+                <div className="sticky top-0 z-30 bg-[var(--tm-page-plain-content-bg)] py-2">
                     <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="学生详情内容">
                         <button
                             type="button"

@@ -29,7 +29,7 @@ if (source.includes("label: '净得分'") || source.includes("net: '净得分'")
 
 for (const required of [
   'role="tablist"',
-  'aria-label="学校报表类型"',
+  'aria-label="学生评价报表类型"',
   'role="tab"',
   'aria-selected={selected}',
   'h-[var(--tm-report-filter-row-height)]',
@@ -61,7 +61,7 @@ for (const required of [
   '<ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />',
   'sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)]',
   'grid h-[var(--tm-report-filter-row-height)] grid-cols-5',
-  'aria-label="学校报表时间范围"',
+  'aria-label="学生评价报表时间范围"',
   'aria-pressed={activePeriod === period.key}',
   'h-[var(--tm-report-period-pill-height)]',
   'px-[var(--tm-report-period-pill-inline)]',

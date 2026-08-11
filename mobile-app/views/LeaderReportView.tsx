@@ -102,7 +102,7 @@ const ReportTypeTabs = ({
 }) => (
     <div
         role="tablist"
-        aria-label="学校报表类型"
+        aria-label="学生评价报表类型"
         className="grid h-[var(--tm-report-filter-row-height)] grid-cols-2 bg-[var(--tm-bg-surface)]"
     >
         {reportTypeTabs.map(tab => {
@@ -2142,14 +2142,14 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                 <button onClick={onBack} aria-label="返回" className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-muted)]">
                     <ChevronLeft className="h-5 w-5" />
                 </button>
-                <div className="absolute left-1/2 -translate-x-1/2 text-[17px] font-bold tracking-tight">学校数据报表</div>
+                <div className="absolute left-1/2 -translate-x-1/2 text-[17px] font-bold tracking-tight">学生评价报表</div>
                 <div className="w-10" aria-hidden="true" />
             </div>
 
             <div className="relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar">
                 <div className="sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)] pt-px">
                     <ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />
-                    <div className="grid h-[var(--tm-report-filter-row-height)] grid-cols-5" role="group" aria-label="学校报表时间范围">
+                    <div className="grid h-[var(--tm-report-filter-row-height)] grid-cols-5" role="group" aria-label="学生评价报表时间范围">
                         {leaderReportPeriods.map(period => (
                             <button
                                 key={period.key}

@@ -29,6 +29,7 @@ import dailyLaborServiceMobileImg from './resources/highlight-defaults/daily-lab
 import dailySportsVitalityMobileImg from './resources/highlight-defaults/daily-sports-vitality.png';
 import dailyArtCreativityMobileImg from './resources/highlight-defaults/daily-art-creativity.png';
 import schoolReportV2Icon from './resources/school-report-v2.png';
+import classEvaluationReportIcon from './resources/class-evaluation-report.png';
 import termReportV2Icon from './resources/term-report-v2.png';
 import {
   studentBoyAvatarGroups,
@@ -140,6 +141,7 @@ export const ASSETS = {
     SUBJECT: subjectReportIcon,
     TERM: termReportIcon,
     SCHOOL_REPORT_V2: schoolReportV2Icon,
+    CLASS_EVALUATION_REPORT: classEvaluationReportIcon,
     TERM_REPORT_V2: termReportV2Icon,
     AI_BOT: aiBotImg,
     AI_ART_BADGE: aiArtBadgeImg,

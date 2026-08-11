@@ -27,16 +27,11 @@ if (appSource.includes("'student_goal_plan'") || dashboardSource.includes('本�
 }
 requireText(appSource, 'ensureStudentGrowthProfile(activeStudent.id)', '学生切换后应读取统一成长数据。');
 requireText(appSource, 'STUDENT_GROWTH_STORE_EVENT', '成长数据修改后应刷新学生详情。');
-requireText(dashboardSource, '成长数据', '成长概览应展示成长数据摘要。');
-requireText(dashboardSource, 'onViewBodyMeasurements', '身体成长摘要应进入独立的身体成长记录。');
+forbidText(dashboardSource, 'onViewBodyMeasurements', '成长概览不应展示成长数据入口。');
+forbidText(dashboardSource, 'bodyGrowthMetrics', '成长概览不应读取或展示成长数据摘要。');
 forbidText(dashboardSource, '健康检查', '成长概览不应展示健康检查相关信息。');
 forbidText(dashboardSource, 'onViewHealthRecords', '成长概览不应保留健康检查入口。');
 forbidText(dashboardSource, 'latestHealthRecord', '成长概览不应读取健康检查摘要。');
-requireText(dashboardSource, 'latestHeightMeasurement', '成长概览必须独立读取最近一次身高。');
-requireText(dashboardSource, 'latestWeightMeasurement', '成长概览必须独立读取最近一次体重。');
-requireText(dashboardSource, 'latestBmiMeasurement', '身体质量指数必须读取最近一次完整测量记录。');
-requireText(dashboardSource, 'bodyGrowthMetrics.length > 0 &&', '学生没有成长数据时不应渲染空模块。');
-requireText(dashboardSource, 'metric.recordedAt', '不同成长指标必须分别展示自己的记录日期。');
 if (dashboardSource.includes("latestMeasurement?.measuredAt ?? '待补充'") || dashboardSource.includes('暂无测量记录') || dashboardSource.includes('暂无体检记录')) {
   throw new Error('学生详情不应把非必填成长数据表达为待补充或空卡片。');
 }

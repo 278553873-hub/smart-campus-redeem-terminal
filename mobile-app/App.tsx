@@ -308,7 +308,7 @@ interface MobileAppProps {
 }
 
 const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     // Default view is now the Log (Stream)
     const [currentView, setCurrentView] = useState<ViewState>('home_log');
     const [history, setHistory] = useState<ViewState[]>([]);
@@ -957,8 +957,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'principal_term_report': return '学期学校报告';
             case 'principal_term_history': return '往期学期报告';
             case 'class_leaderboard': return '排行榜';
-            case 'leader_report': return '学校数据报表';
-            case 'moral_education_cockpit': return '德育驾驶舱';
+            case 'leader_report': return '学生评价报表';
+            case 'moral_education_cockpit': return '班级评价报表';
             case 'reward_verification': return '班级奖励兑换';
             case 'face_update': return '更新人脸数据';
             case 'bank_password': return '设置兑换密码';
@@ -1251,7 +1251,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                             {currentView === 'student_batch_edit' && selectedClassInfo && (
                                 <StudentBatchEditView
-                                    classInfo={selectedClassInfo}
                                     students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
                                     onBack={goBack}
                                     onSave={handleSaveStudentBatch}
@@ -1359,8 +1358,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                         navigateTo('student_collection_detail');
                                     }}
                                     onOpenStudentArchive={() => navigateTo('student_archive')}
-                                    growthProfile={growthProfile}
-                                    onViewBodyMeasurements={() => navigateTo('student_body_measurements')}
                                 />
                             )}
 

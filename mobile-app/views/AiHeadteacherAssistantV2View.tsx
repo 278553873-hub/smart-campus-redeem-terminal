@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ArrowLeft,
     CalendarDays,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
     ClipboardList,
+    FileText,
+    History,
     ListChecks,
-    LoaderCircle,
     Sparkles,
     X,
 } from 'lucide-react';
@@ -25,13 +25,18 @@ import {
     type ClassEvaluationWeek,
 } from '../data/classEvaluationAssistantV2';
 import {
-    CLASS_EVALUATION_FIXED_QUESTIONS,
-    askClassEvaluationQuestion,
-    getRecordsFromAnswer,
-    type ClassEvaluationAssistantAnswer,
+    CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION,
+    generateClassEvaluationWeeklyReport,
     type ClassEvaluationRecord,
     type ClassEvaluationSnapshot,
+    type ClassEvaluationWeeklyReport,
 } from '../domain/classEvaluationAssistantV2';
+import {
+    findSavedClassEvaluationReport,
+    listSavedClassEvaluationReports,
+    saveClassEvaluationReport,
+    type SavedClassEvaluationReport,
+} from '../services/classEvaluationAssistantV2ReportStore';
 import type { ClassInfo } from '../types';
 
 interface AiHeadteacherAssistantV2ViewProps {
@@ -39,13 +44,6 @@ interface AiHeadteacherAssistantV2ViewProps {
     homeroomClasses: ClassInfo[];
     activeClassId: string;
     onClassChange: (classId: string) => void;
-}
-
-interface ChatMessage {
-    id: string;
-    role: 'user' | 'assistant';
-    content?: string;
-    answer?: ClassEvaluationAssistantAnswer;
 }
 
 const formatScore = (score: number) => score.toFixed(1);
@@ -68,6 +66,13 @@ const getTypeDelay = (char: string) => {
     return 56;
 };
 
+const REPORT_GENERATION_STEPS = [
+    '正在汇总本周班级评价数据',
+    '正在分析得分与扣分情况',
+    '正在对比指标表现与周变化',
+    '正在生成本周分析与指导建议',
+] as const;
+
 const ClassSwitchButton: React.FC<{
     className?: string;
     activeClass?: ClassInfo;
@@ -84,42 +89,34 @@ const ClassSwitchButton: React.FC<{
     </button>
 );
 
-const FixedQuestionList: React.FC<{
-    disabled?: boolean;
-    onSelect: (question: string) => void;
-}> = ({ disabled = false, onSelect }) => (
-    <div className="headteacher-agent-glass space-y-1 overflow-hidden rounded-[var(--tm-radius-card)] p-1" aria-label="固定问题">
-        {CLASS_EVALUATION_FIXED_QUESTIONS.map(question => (
-            <button
-                key={question.id}
-                type="button"
-                disabled={disabled}
-                onClick={() => onSelect(question.label)}
-                className="flex min-h-11 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)]"
-            >
-                <span className="min-w-0 flex-1 text-[13px] font-semibold leading-5 text-[var(--tm-text-primary)]">{question.label}</span>
-                <ChevronRight className="h-4 w-4 shrink-0 translate-x-px text-[var(--tm-text-disabled)]" aria-hidden="true" />
-            </button>
+const ReportInsightList: React.FC<{
+    insights: ClassEvaluationWeeklyReport['performanceInsights'];
+}> = ({ insights }) => (
+    <div className="mt-2 space-y-2">
+        {insights.map(item => (
+            <p key={item.title} className="text-pretty text-[13px] leading-5 text-[var(--tm-text-secondary)]">
+                <span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}
+            </p>
         ))}
     </div>
 );
 
-const AnswerContent: React.FC<{
-    answer: ClassEvaluationAssistantAnswer;
-    onOpenDetails: (answer: ClassEvaluationAssistantAnswer) => void;
-}> = ({ answer, onOpenDetails }) => (
+const WeeklyReportContent: React.FC<{
+    report: ClassEvaluationWeeklyReport;
+    onOpenDetails: () => void;
+}> = ({ report, onOpenDetails }) => (
     <div>
-        <p className="text-pretty whitespace-pre-line text-[15px] font-semibold leading-6 text-[var(--tm-text-primary)]">{answer.message}</p>
+        <p className="text-pretty whitespace-pre-line text-[15px] font-semibold leading-6 text-[var(--tm-text-primary)]">{report.message}</p>
 
-        <section className="mt-4" aria-labelledby="answer-data-overview">
-            <h3 id="answer-data-overview" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
+        <section className="mt-4" aria-labelledby="weekly-report-data-overview">
+            <h2 id="weekly-report-data-overview" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
                 <ClipboardList className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
                 数据概览
-            </h3>
+            </h2>
 
-            {answer.metrics.length > 0 && (
-                <dl className={'mt-3 grid gap-3 ' + (answer.metrics.length === 1 ? 'grid-cols-1' : answer.metrics.length === 2 ? 'grid-cols-2' : 'grid-cols-3')}>
-                    {answer.metrics.map(metric => (
+            {report.metrics.length > 0 && (
+                <dl className="mt-3 grid grid-cols-3 gap-3">
+                    {report.metrics.map(metric => (
                         <div key={metric.label} className="min-w-0">
                             <dt className="truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{metric.label}</dt>
                             <dd className={'mt-1 truncate text-[18px] font-bold tabular-nums ' + (metric.tone === 'negative' ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-assistant-role-text)]')}>{metric.value}</dd>
@@ -128,9 +125,9 @@ const AnswerContent: React.FC<{
                 </dl>
             )}
 
-            {answer.breakdown.length > 0 && (
+            {report.dimensionScores.length > 0 && (
                 <div className="mt-3 space-y-0.5">
-                    {answer.breakdown.map((item, index) => (
+                    {report.dimensionScores.map((item, index) => (
                         <div key={item.label + '-' + index} className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-1.5">
                             <div className="min-w-0">
                                 <div className="truncate text-[13px] font-semibold text-[var(--tm-text-primary)]">{item.label}</div>
@@ -143,54 +140,170 @@ const AnswerContent: React.FC<{
             )}
         </section>
 
-        {answer.analysis.length > 0 && (
-            <section className="mt-4" aria-labelledby="answer-ai-analysis">
-                <h3 id="answer-ai-analysis" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
+        {report.performanceInsights.length > 0 && (
+            <section className="mt-5" aria-labelledby="weekly-report-performance">
+                <h2 id="weekly-report-performance" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
                     <Sparkles className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
-                    AI分析
-                </h3>
-                <div className="mt-2 space-y-2">
-                    {answer.analysis.map(item => (
-                        <p key={item.title} className="text-pretty text-[13px] leading-5 text-[var(--tm-text-secondary)]">
-                            <span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}
-                        </p>
-                    ))}
-                </div>
+                    本周整体表现
+                </h2>
+                <ReportInsightList insights={report.performanceInsights} />
             </section>
         )}
 
-        {answer.suggestions.length > 0 && (
-            <section className="mt-4" aria-labelledby="answer-ai-suggestions">
-                <h3 id="answer-ai-suggestions" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
+        {report.deductionInsights.length > 0 && (
+            <section className="mt-5" aria-labelledby="weekly-report-deductions">
+                <h2 id="weekly-report-deductions" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
+                    <ClipboardList className="h-4 w-4 text-[var(--tm-status-negative)]" strokeWidth={2.1} aria-hidden="true" />
+                    主要扣分问题
+                </h2>
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+                    {report.deductionBreakdown.slice(0, 4).map(item => (
+                        <div key={item.label} className="flex min-h-9 items-center justify-between gap-2 text-[12px]">
+                            <span className="truncate text-[var(--tm-text-secondary)]">{item.label}</span>
+                            <span className="shrink-0 font-bold tabular-nums text-[var(--tm-status-negative)]">{item.value}</span>
+                        </div>
+                    ))}
+                </div>
+                <ReportInsightList insights={report.deductionInsights} />
+            </section>
+        )}
+
+        {report.nextWeekSuggestions.length > 0 && (
+            <section className="mt-5" aria-labelledby="weekly-report-next-week">
+                <h2 id="weekly-report-next-week" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
                     <ListChecks className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
-                    AI建议
-                </h3>
-                <div className="mt-2 space-y-2">
-                    {answer.suggestions.map(item => (
-                        <p key={item.title} className="text-pretty text-[13px] leading-5 text-[var(--tm-text-secondary)]">
-                            <span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}
-                        </p>
+                    下周关注重点
+                </h2>
+                <ReportInsightList insights={report.nextWeekInsights} />
+                <ol className="mt-3 space-y-2">
+                    {report.nextWeekSuggestions.map((item, index) => (
+                        <li key={item.title} className="grid grid-cols-[20px_minmax(0,1fr)] gap-2 text-[13px] leading-5 text-[var(--tm-text-secondary)]">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--tm-assistant-role-soft-strong)] text-[10px] font-bold text-[var(--tm-assistant-role-text)]" aria-hidden="true">{index + 1}</span>
+                            <span><span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}</span>
+                        </li>
                     ))}
-                </div>
+                </ol>
             </section>
         )}
 
-        {answer.evidenceRefs.length > 0 && (
+        {report.evidenceRefs.length > 0 && (
             <div className="mt-3 flex justify-end">
                 <button
                     type="button"
-                    onClick={() => onOpenDetails(answer)}
+                    onClick={onOpenDetails}
                     className="flex min-h-[var(--tm-size-touch)] items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                    aria-label={'查看' + answer.evidenceRefs.length + '笔数据依据'}
+                    aria-label={'查看' + report.evidenceRefs.length + '笔数据依据'}
                 >
                     查看依据
-                    <span className="font-medium tabular-nums text-[var(--tm-text-tertiary)]">{answer.evidenceRefs.length}笔</span>
+                    <span className="font-medium tabular-nums text-[var(--tm-text-tertiary)]">{report.evidenceRefs.length}笔</span>
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </button>
             </div>
         )}
     </div>
 );
+
+const formatGeneratedAt = (date: string) => {
+    const value = new Date(date);
+    if (Number.isNaN(value.getTime())) return '';
+    return `${value.getMonth() + 1}月${value.getDate()}日 ${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
+};
+
+const AgentGenerationProgress: React.FC<{ visibleStepCount: number }> = ({ visibleStepCount }) => (
+    <div className="mx-auto mt-8 min-h-[210px] max-w-[280px]" role="status" aria-live="polite" aria-label="正在生成本周班级评比分析">
+        <div className="space-y-4">
+            {REPORT_GENERATION_STEPS.slice(0, visibleStepCount).map((step, index) => {
+                const active = index === visibleStepCount - 1;
+                return (
+                    <div key={step} className="animate-in fade-in slide-in-from-bottom-1 flex items-start gap-3 duration-300">
+                        <span className={'mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ' + (active
+                            ? 'animate-pulse bg-[var(--tm-assistant-role-primary)]'
+                            : 'bg-[var(--tm-border-subtle)]')} aria-hidden="true" />
+                        <p className={'text-[13px] font-normal leading-5 ' + (active
+                            ? 'text-[var(--tm-text-secondary)]'
+                            : 'text-[var(--tm-text-tertiary)]')}>{step}</p>
+                    </div>
+                );
+            })}
+        </div>
+    </div>
+);
+
+interface HistoryMonthGroup {
+    key: string;
+    label: string;
+    reports: SavedClassEvaluationReport[];
+}
+
+const groupReportsByMonth = (reports: SavedClassEvaluationReport[]) => [...reports]
+    .sort((first, second) => second.weekId.localeCompare(first.weekId))
+    .reduce<HistoryMonthGroup[]>((groups, report) => {
+        const [year, month] = report.weekId.split('_')[0].split('-');
+        const key = `${year}-${month}`;
+        const existing = groups.find(group => group.key === key);
+        if (existing) existing.reports.push(report);
+        else groups.push({ key, label: `${year}年${Number(month)}月`, reports: [report] });
+        return groups;
+    }, []);
+
+const ClassEvaluationHistoryPage: React.FC<{
+    reports: SavedClassEvaluationReport[];
+    activeClassId: string;
+    onOpenReport: (report: SavedClassEvaluationReport) => void;
+}> = ({
+    reports,
+    activeClassId,
+    onOpenReport,
+}) => {
+    const visibleReports = reports.filter(report => report.classId === activeClassId);
+    const monthGroups = groupReportsByMonth(visibleReports);
+
+    return (
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 no-scrollbar">
+            <section className="pt-2" aria-labelledby="history-title">
+                <h1 id="history-title" className="px-1 text-[20px] font-bold text-[var(--tm-text-primary)]">历史报告</h1>
+
+            </section>
+
+            <section className="mt-4 space-y-5" aria-label="往期班级周评报告">
+                {monthGroups.length > 0 ? (
+                    monthGroups.map(group => (
+                        <section key={group.key} aria-labelledby={`history-month-${group.key}`}>
+                            <div className="relative flex h-6 items-center pl-5">
+                                <span className="absolute left-0 h-3 w-3 rounded-full border-[3px] border-[var(--tm-assistant-role-soft-strong)] bg-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
+                                <h2 id={`history-month-${group.key}`} className="text-[13px] font-semibold text-[var(--tm-text-tertiary)]">{group.label}</h2>
+                            </div>
+                            <div className="relative mt-2 space-y-3 pl-5">
+                                <span className="absolute -top-5 bottom-9 left-[5px] w-px bg-[var(--tm-border-subtle)]" aria-hidden="true" />
+                                {group.reports.map(report => (
+                                    <button
+                                        key={report.id}
+                                        type="button"
+                                        onClick={() => onOpenReport(report)}
+                                        className="headteacher-agent-glass relative flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] px-4 py-3 text-left transition-[scale,background-color] duration-150 ease-out active:scale-[0.985] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                                    >
+                                        <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-[var(--tm-bg-surface)] bg-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block text-[15px] font-bold text-[var(--tm-text-primary)]">{report.weekLabel}</span>
+                                            <span className="mt-1 block text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">数据截至 {report.dataRangeLabel} · {formatGeneratedAt(report.generatedAt)}生成</span>
+                                        </span>
+                                        <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" aria-hidden="true" />
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+                    ))
+                ) : (
+                    <div className="py-20 text-center">
+                        <History className="mx-auto h-8 w-8 text-[var(--tm-text-disabled)]" strokeWidth={1.8} aria-hidden="true" />
+                        <p className="mt-3 text-[14px] font-semibold text-[var(--tm-text-secondary)]">暂无往期报告</p>
+                        <p className="mt-1 text-[12px] text-[var(--tm-text-tertiary)]">报告只在主动生成后保存</p>
+                    </div>
+                )}
+            </section>
+        </div>
+    );
+};
 
 const RecordDetailList: React.FC<{
     records: ClassEvaluationRecord[];
@@ -568,26 +681,33 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     }, [resolvedClassId]);
     const assistantIntro = useMemo(getAssistantIntro, []);
     const [typedIntro, setTypedIntro] = useState('');
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [conversationOpen, setConversationOpen] = useState(false);
+    const [savedReports, setSavedReports] = useState<SavedClassEvaluationReport[]>(() => listSavedClassEvaluationReports());
+    const [activeReport, setActiveReport] = useState<SavedClassEvaluationReport | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generationStepCount, setGenerationStepCount] = useState(1);
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [reportOrigin, setReportOrigin] = useState<'overview' | 'history'>('overview');
     const [overviewExpanded, setOverviewExpanded] = useState(false);
     const [detailDimension, setDetailDimension] = useState<string | null>(null);
     const [weekDetailOpen, setWeekDetailOpen] = useState(false);
     const [detailWeekId, setDetailWeekId] = useState(DEFAULT_CLASS_EVALUATION_WEEK_ID);
-    const [isReplying, setIsReplying] = useState(false);
     const [showClassPicker, setShowClassPicker] = useState(false);
     const [detailRecords, setDetailRecords] = useState<ClassEvaluationRecord[] | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const replyTimerRef = useRef<number | null>(null);
+    const generationTimersRef = useRef<number[]>([]);
     const previousClassIdRef = useRef(resolvedClassId);
 
-    const clearConversation = () => {
-        if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current);
-        replyTimerRef.current = null;
-        setMessages([]);
-        setConversationOpen(false);
+    const clearGenerationTimers = () => {
+        generationTimersRef.current.forEach(timer => window.clearTimeout(timer));
+        generationTimersRef.current = [];
+    };
+
+    const closeReport = () => {
+        clearGenerationTimers();
+        setActiveReport(null);
         setDetailRecords(null);
-        setIsReplying(false);
+        setIsGenerating(false);
+        setGenerationStepCount(1);
     };
 
     useEffect(() => {
@@ -614,53 +734,106 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     useEffect(() => {
         if (previousClassIdRef.current === resolvedClassId) return;
         previousClassIdRef.current = resolvedClassId;
-        clearConversation();
+        closeReport();
         setOverviewExpanded(false);
         setDetailDimension(null);
+        setReportOrigin('overview');
     }, [resolvedClassId]);
 
     useEffect(() => {
-        if (!conversationOpen) return undefined;
+        if (!activeReport && !isGenerating) return undefined;
         const frame = window.requestAnimationFrame(() => {
             scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         });
         return () => window.cancelAnimationFrame(frame);
-    }, [conversationOpen, isReplying, messages]);
+    }, [activeReport, isGenerating]);
 
-    useEffect(() => () => {
-        if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current);
-    }, []);
+    useEffect(() => () => clearGenerationTimers(), []);
 
-    const submitQuestion = (rawQuestion: string) => {
-        const question = rawQuestion.trim();
-        if (!question || isReplying) return;
+    const currentSavedReport = useMemo(() => savedReports.find(report => (
+        report.classId === resolvedClassId
+        && report.weekId === currentWeek.id
+        && report.dataSnapshotId === snapshot.id
+        && report.promptVersion === CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION
+    )), [currentWeek.id, resolvedClassId, savedReports, snapshot.id]);
 
-        setConversationOpen(true);
-        const userMessage: ChatMessage = {
-            id: 'user-' + Date.now(),
-            role: 'user',
-            content: question,
-        };
-        setMessages([userMessage]);
-        setIsReplying(true);
+    const openWeeklyReport = () => {
+        if (isGenerating) return;
 
-        replyTimerRef.current = window.setTimeout(() => {
-            const answer = askClassEvaluationQuestion({
-                question,
-                snapshot,
-                records,
-                gradeRank: currentWeek.gradeRank,
-                rankings: currentWeek.dimensionRankings,
-                previousWeek,
+        const cachedReport = findSavedClassEvaluationReport({
+            classId: resolvedClassId,
+            weekId: currentWeek.id,
+            promptVersion: CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION,
+            dataSnapshotId: snapshot.id,
+        });
+
+        setReportOrigin('overview');
+        setDetailRecords(null);
+        if (cachedReport) {
+            setActiveReport(cachedReport);
+            setIsGenerating(false);
+            return;
+        }
+
+        setActiveReport(null);
+        setIsGenerating(true);
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        setGenerationStepCount(reduceMotion ? REPORT_GENERATION_STEPS.length : 1);
+
+        if (!reduceMotion) {
+            REPORT_GENERATION_STEPS.slice(1).forEach((_, index) => {
+                generationTimersRef.current.push(window.setTimeout(
+                    () => setGenerationStepCount(index + 2),
+                    (index + 1) * 680,
+                ));
             });
-            setMessages([userMessage, {
-                id: 'assistant-' + Date.now(),
-                role: 'assistant',
-                answer,
-            }]);
-            setIsReplying(false);
-            replyTimerRef.current = null;
-        }, 420);
+        }
+
+        const finishDelay = reduceMotion ? 600 : REPORT_GENERATION_STEPS.length * 680 + 260;
+        generationTimersRef.current.push(window.setTimeout(() => {
+            try {
+                const reportContent = generateClassEvaluationWeeklyReport({
+                    snapshot,
+                    records,
+                    gradeRank: currentWeek.gradeRank,
+                    rankings: currentWeek.dimensionRankings,
+                    previousWeek,
+                });
+                const report = saveClassEvaluationReport({
+                    classId: resolvedClassId,
+                    className: activeClass?.name ?? '当前班级',
+                    weekId: currentWeek.id,
+                    weekLabel: currentWeek.label,
+                    dataRangeLabel: currentWeek.dataRangeLabel,
+                    report: reportContent,
+                    records,
+                });
+                setActiveReport(report);
+                setSavedReports(listSavedClassEvaluationReports());
+            } finally {
+                setIsGenerating(false);
+                setGenerationStepCount(1);
+                generationTimersRef.current = [];
+            }
+        }, finishDelay));
+    };
+
+    const openHistoryReport = (report: SavedClassEvaluationReport) => {
+        setReportOrigin('history');
+        setActiveReport(report);
+        setDetailRecords(null);
+    };
+
+    const handleHeaderBack = () => {
+        if (activeReport || isGenerating) {
+            closeReport();
+            return;
+        }
+        if (historyOpen) {
+            setHistoryOpen(false);
+            return;
+        }
+        onBack();
     };
 
     const dimensionDetailRecords = detailDimension
@@ -699,68 +872,57 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     return (
         <div className="ai-assistant-theme-headteacher relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent text-[var(--tm-text-primary)]">
             <AssistantSubpageHeader
-                onBack={onBack}
+                onBack={handleHeaderBack}
+                backLabel={activeReport || isGenerating
+                    ? (reportOrigin === 'history' ? '返回历史报告' : '返回概览')
+                    : historyOpen ? '返回概览' : '返回'}
                 surface="transparent"
                 centerContent={<ClassSwitchButton activeClass={activeClass} onClick={() => setShowClassPicker(true)} />}
             />
 
-            {conversationOpen ? (
-                <>
-                    <div className="headteacher-agent-glass mx-4 mt-2 flex min-h-16 shrink-0 items-center gap-2 rounded-[var(--tm-radius-inner)] px-3">
-                        <img
-                            src={ASSETS.MANAGEMENT.AI_HEADTEACHER_ASSISTANT_CHARACTER}
-                            alt=""
-                            className="h-14 w-14 shrink-0 object-contain object-bottom"
-                        />
-                        <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[13px] font-bold text-[var(--tm-text-primary)]">班级评价分析</span>
-                            <span className="mt-0.5 block truncate text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">{currentWeek.dataRangeLabel}</span>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setConversationOpen(false)}
-                            className="flex min-h-11 shrink-0 items-center gap-1 rounded-[var(--tm-radius-control)] px-2 text-[12px] font-semibold text-[var(--tm-assistant-role-text)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                            返回概览
-                        </button>
-                    </div>
-
-                    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 pt-4 no-scrollbar" aria-live="polite">
-                        <div className="space-y-4">
-                            {messages.map(message => (
-                                <div key={message.id} className={'flex ' + (message.role === 'user' ? 'justify-end' : 'justify-start')}>
-                                    {message.role === 'user' ? (
-                                        <div className="max-w-[82%] text-pretty rounded-[18px] rounded-br-[6px] bg-[var(--tm-assistant-role-primary)] px-4 py-2.5 text-[15px] font-medium leading-6 text-white [box-shadow:var(--tm-shadow-control)]">
-                                            {message.content}
-                                        </div>
-                                    ) : message.answer ? (
-                                        <div className="headteacher-agent-glass w-full rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 py-3.5">
-                                            <AnswerContent
-                                                answer={message.answer}
-                                                onOpenDetails={answer => setDetailRecords(getRecordsFromAnswer(answer, records))}
-                                            />
-                                        </div>
-                                    ) : null}
-                                </div>
-                            ))}
-
-                            {isReplying && (
-                                <div className="flex justify-start">
-                                    <div className="headteacher-agent-glass flex h-11 items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">
-                                        <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
-                                        正在汇总数据并生成分析
-                                    </div>
-                                </div>
+            {activeReport || isGenerating ? (
+                <main ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 pt-3 no-scrollbar" aria-live="polite">
+                    <section className="px-1" aria-labelledby="active-report-title">
+                        <div className="flex items-start justify-between gap-3">
+                            <h1 id="active-report-title" className="min-w-0 text-pretty text-[20px] font-bold leading-7 text-[var(--tm-text-primary)]">本周班级评比分析</h1>
+                            {activeReport && reportOrigin === 'overview' && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        closeReport();
+                                        setHistoryOpen(true);
+                                    }}
+                                    className="flex min-h-11 shrink-0 items-center gap-1 px-1 text-[12px] font-semibold text-[var(--tm-assistant-role-text)] transition-[scale,color] duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                                    aria-label="查看往期报告"
+                                >
+                                    <History className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                                    往期报告
+                                </button>
                             )}
                         </div>
+                        <p className="mt-1 text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">
+                            {activeReport?.weekLabel ?? currentWeek.label} · 数据截至 {activeReport?.dataRangeLabel ?? currentWeek.dataRangeLabel}
+                            {activeReport && ` · 生成于 ${formatGeneratedAt(activeReport.generatedAt)}`}
+                        </p>
+                    </section>
 
-                        <section className="mt-4" aria-labelledby="conversation-fixed-questions-title">
-                            <h2 id="conversation-fixed-questions-title" className="mb-2 px-1 text-[13px] font-bold text-[var(--tm-text-primary)]">继续分析</h2>
-                            <FixedQuestionList disabled={isReplying} onSelect={submitQuestion} />
-                        </section>
-                    </div>
-                </>
+                    {isGenerating ? (
+                        <AgentGenerationProgress visibleStepCount={generationStepCount} />
+                    ) : activeReport ? (
+                        <div className="headteacher-agent-glass mt-4 rounded-[var(--tm-radius-card)] px-4 py-4">
+                            <WeeklyReportContent
+                                report={activeReport.report}
+                                onOpenDetails={() => setDetailRecords(activeReport.evidenceRecords)}
+                            />
+                        </div>
+                    ) : null}
+                </main>
+            ) : historyOpen ? (
+                <ClassEvaluationHistoryPage
+                    reports={savedReports}
+                    activeClassId={resolvedClassId}
+                    onOpenReport={openHistoryReport}
+                />
             ) : (
                 <div className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar">
                     <section className="relative h-[148px] overflow-hidden px-5">
@@ -799,9 +961,27 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                         }}
                     />
 
-                    <section className="mx-4 mt-3" aria-labelledby="fixed-questions-title">
-                        <h2 id="fixed-questions-title" className="mb-2 px-1 text-balance text-[14px] font-bold text-[var(--tm-text-primary)]">常用问题</h2>
-                        <FixedQuestionList onSelect={submitQuestion} />
+                    <section className="mx-4 mt-3" aria-labelledby="weekly-analysis-title">
+                        <div className="mb-2 flex min-h-9 items-center px-1">
+                            <h2 id="weekly-analysis-title" className="text-balance text-[14px] font-bold text-[var(--tm-text-primary)]">班级周评分析</h2>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={openWeeklyReport}
+                            className="headteacher-agent-glass flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] px-3.5 py-3 text-left transition-[scale,background-color] duration-150 ease-out active:scale-[0.98] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                            aria-label={currentSavedReport ? '查看本周班级评比分析' : '生成本周班级评比分析'}
+                        >
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-assistant-role-soft-strong)] text-[var(--tm-assistant-role-text)]">
+                                <FileText className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                                <span className="block text-[14px] font-bold text-[var(--tm-text-primary)]">{currentSavedReport ? '查看本周班级评比分析' : '生成本周班级评比分析'}</span>
+                                <span className="mt-1 block text-[11px] text-[var(--tm-text-tertiary)]">{currentSavedReport
+                                    ? `数据截至 ${currentSavedReport.dataRangeLabel} · 已生成`
+                                    : '整体表现、扣分问题与下周重点'}</span>
+                            </span>
+                            <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" aria-hidden="true" />
+                        </button>
                     </section>
                 </div>
             )}

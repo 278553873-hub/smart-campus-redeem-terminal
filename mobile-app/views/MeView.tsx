@@ -6,7 +6,6 @@ import {
     ClipboardList,
     Coins,
     FileCog,
-    Gauge,
     MessageCircle,
     Settings,
     UsersRound,
@@ -213,17 +212,20 @@ const MeView: React.FC<MeViewProps> = ({
     const allPrimaryTools: MenuEntry<TeacherManagementToolId>[] = [
         {
             id: 'schoolReport',
-            title: '学校报表',
+            title: '学生评价报表',
             imageSrc: ASSETS.MANAGEMENT.SCHOOL_REPORT_V2,
-            imageAlt: '学校报表图标',
+            imageAlt: '学生评价报表图标',
             imageClassName: reportToolImageClass,
             plainImage: true,
             onClick: onViewLeaderReport,
         },
         {
             id: 'moralEducationCockpit',
-            title: '德育驾驶舱',
-            icon: Gauge,
+            title: '班级评价报表',
+            imageSrc: ASSETS.MANAGEMENT.CLASS_EVALUATION_REPORT,
+            imageAlt: '班级评价报表图标',
+            imageClassName: reportToolImageClass,
+            plainImage: true,
             onClick: onOpenMoralEducationCockpit,
         },
         {

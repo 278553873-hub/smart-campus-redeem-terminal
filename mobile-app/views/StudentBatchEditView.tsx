@@ -1,18 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { Check, ChevronLeft } from 'lucide-react';
 import { phoneText } from '../styles/teacherMobileTokens';
-import type { ClassInfo, Student } from '../types';
+import type { Student } from '../types';
 
 interface StudentBatchEditViewProps {
-  classInfo: ClassInfo;
   students: Student[];
   onBack: () => void;
   onSave: (students: Student[]) => void;
 }
 
-const inputClass = 'h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
+const inputClass = 'h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-inner)] border border-[var(--tm-compact-editor-control-border)] bg-[var(--tm-compact-editor-control-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 
-const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ classInfo, students, onBack, onSave }) => {
+const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ students, onBack, onSave }) => {
   const [drafts, setDrafts] = useState<Student[]>(() => students.map(student => ({ ...student })));
   const [showSaved, setShowSaved] = useState(false);
 
@@ -41,14 +40,14 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ classInfo, 
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-5)] pb-[calc(var(--tm-space-8)+var(--tm-size-touch))] pt-[var(--tm-space-4)] no-scrollbar">
-        <div className="mb-[var(--tm-space-3)] flex items-center justify-between text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">
-          <span className="truncate">{classInfo.name}</span>
-          <span className="shrink-0 tabular-nums">{drafts.length}人</span>
-        </div>
-
-        <div className="divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+        <div className="space-y-[var(--tm-space-3)]">
           {drafts.map(student => (
-            <div key={student.id} className="grid grid-cols-[minmax(0,1fr)_104px] gap-[var(--tm-space-2)] p-[var(--tm-space-3)]">
+            <div
+              key={student.id}
+              className="grid grid-cols-[minmax(72px,1fr)_minmax(76px,0.72fr)_92px] items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-card)] bg-[var(--tm-compact-editor-row-bg)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]"
+              role="group"
+              aria-label={`${student.name || '学生'}信息`}
+            >
               <input
                 value={student.name}
                 onChange={event => updateStudent(student.id, { name: event.target.value })}
@@ -65,7 +64,7 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ classInfo, 
                 aria-label={`${student.name || '学生'}学号`}
                 aria-required="true"
               />
-              <div className="col-span-2 grid min-h-[var(--tm-size-touch)] grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-1)]" role="group" aria-label={`${student.name || '学生'}性别`}>
+              <div className="grid w-[92px] grid-cols-2 gap-[var(--tm-space-1)]" role="group" aria-label={`${student.name || '学生'}性别`}>
                 {(['male', 'female'] as const).map(gender => {
                   const selected = student.gender === gender;
                   return (
@@ -73,7 +72,7 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ classInfo, 
                       key={gender}
                       type="button"
                       onClick={() => updateStudent(student.id, { gender })}
-                      className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-compact)] font-semibold ${selected ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                      className={`h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-compact)] font-semibold ${selected ? 'bg-[var(--tm-compact-editor-selected-bg)] text-[var(--tm-compact-editor-selected-text)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]'}`}
                       aria-pressed={selected}
                     >
                       {gender === 'male' ? '男' : '女'}

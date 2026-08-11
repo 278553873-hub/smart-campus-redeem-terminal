@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import {
   CLASS_EVALUATION_FIXED_QUESTIONS,
+  CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION,
   askClassEvaluationQuestion,
   calculateClassEvaluationSnapshot,
+  generateClassEvaluationWeeklyReport,
 } from './classEvaluationAssistantV2.ts';
 import {
     CLASS_EVALUATION_PERIOD,
@@ -121,6 +123,17 @@ for (const answer of [weeklyPerformance, deductionPatterns, nextWeekFocus]) {
   assert.ok(answer.promptVersion.endsWith('-v1'), '每项固定问题都应记录提示词版本。');
   assert.equal(answer.dataSnapshotId, snapshot.id, '每项回答都应绑定生成时的数据快照。');
 }
+
+const weeklyReport = generateClassEvaluationWeeklyReport(assistantInput);
+assert.equal(weeklyReport.message, weeklyPerformance.message);
+assert.deepEqual(weeklyReport.metrics, weeklyPerformance.metrics);
+assert.deepEqual(weeklyReport.dimensionScores, weeklyPerformance.breakdown);
+assert.deepEqual(weeklyReport.performanceInsights, weeklyPerformance.analysis);
+assert.deepEqual(weeklyReport.deductionInsights, deductionPatterns.analysis);
+assert.deepEqual(weeklyReport.nextWeekSuggestions, nextWeekFocus.suggestions);
+assert.equal(weeklyReport.evidenceRefs.length, 8, '完整周报应合并三个分析阶段的逐笔依据并去重。');
+assert.equal(weeklyReport.promptVersion, CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION);
+assert.equal(weeklyReport.dataSnapshotId, snapshot.id);
 
 const unsupportedQuestion = askClassEvaluationQuestion({
   ...assistantInput,

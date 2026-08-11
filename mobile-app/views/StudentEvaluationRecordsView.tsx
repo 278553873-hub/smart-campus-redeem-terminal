@@ -25,6 +25,9 @@ interface StudentEvaluationRecordsViewProps {
   onSelectedTermChange: (value: string) => void;
   onUpdateRecord: (record: StudentEvaluationRecord) => void;
   onBack: () => void;
+  embedded?: boolean;
+  initialRecordId?: string | null;
+  onSelectRecord?: (record: StudentEvaluationRecord) => void;
 }
 
 const DEFAULT_TIME_FILTER: EvaluationTimeFilterValue = {
@@ -90,6 +93,9 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   onSelectedTermChange,
   onUpdateRecord,
   onBack,
+  embedded = false,
+  initialRecordId = null,
+  onSelectRecord,
 }) => {
   const [timeFilter, setTimeFilter] = useState<EvaluationTimeFilterValue>(DEFAULT_TIME_FILTER);
   const [teacherFilterId, setTeacherFilterId] = useState('all');
@@ -97,7 +103,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   const [showTimeFilterSheet, setShowTimeFilterSheet] = useState(false);
   const [showTeacherFilterSheet, setShowTeacherFilterSheet] = useState(false);
   const [showIndicatorFilterSheet, setShowIndicatorFilterSheet] = useState(false);
-  const [activeRecordId, setActiveRecordId] = useState<string | null>(null);
+  const [activeRecordId, setActiveRecordId] = useState<string | null>(initialRecordId);
   const [recordPage, setRecordPage] = useState<'detail' | 'edit'>('detail');
   const activeTerm = termOptions.find(option => option.value === selectedTerm) ?? termOptions[0];
 
@@ -105,8 +111,9 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
     setTimeFilter(DEFAULT_TIME_FILTER);
     setTeacherFilterId('all');
     setIndicatorFilterPath([]);
-    setActiveRecordId(null);
-  }, [selectedTerm]);
+    setActiveRecordId(initialRecordId);
+    setRecordPage('detail');
+  }, [initialRecordId, selectedTerm]);
 
   const termRecords = useMemo(() => records.filter(record => (
     record.evaluation_date >= activeTerm.startDate && record.evaluation_date <= activeTerm.endDate
@@ -227,7 +234,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
       <EvaluationRecordDetailView
         record={activeRecord}
         canEdit={canEditActiveRecord}
-        onBack={() => setActiveRecordId(null)}
+        onBack={() => initialRecordId ? onBack() : setActiveRecordId(null)}
         onEdit={() => setRecordPage('edit')}
       />
     );
@@ -252,6 +259,10 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
         key={record.id}
         type="button"
         onClick={() => {
+          if (onSelectRecord) {
+            onSelectRecord(record);
+            return;
+          }
           setActiveRecordId(record.id);
           setRecordPage('detail');
         }}
@@ -276,17 +287,25 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   };
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent font-sans">
-      <header className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-4 backdrop-blur-md">
-        <button type="button" onClick={onBack} aria-label="返回学生详情" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <h1 className={`${phoneText.navTitle} text-[var(--tm-text-primary)]`}>评价记录</h1>
-        <div className="h-11 w-11" aria-hidden="true" />
-      </header>
+    <div className={`relative bg-transparent font-sans ${embedded ? '' : 'flex h-full min-h-0 flex-col overflow-hidden'}`}>
+      {!embedded && (
+        <header className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-4 backdrop-blur-md">
+          <button type="button" onClick={onBack} aria-label="返回学生详情" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <h1 className={`${phoneText.navTitle} text-[var(--tm-text-primary)]`}>评价记录</h1>
+          <div className="h-11 w-11" aria-hidden="true" />
+        </header>
+      )}
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4 no-scrollbar">
-        <StudentTermSelector value={selectedTerm} options={termOptions} onChange={onSelectedTermChange} ariaLabel="筛选评价记录学期" />
+      <main className={embedded ? '' : 'min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4 no-scrollbar'}>
+        {!embedded && <StudentTermSelector value={selectedTerm} options={termOptions} onChange={onSelectedTermChange} ariaLabel="筛选评价记录学期" />}
+        {embedded && (
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">评价记录</h3>
+            <span className="text-[12px] font-medium text-[var(--tm-text-tertiary)]">共 {filteredRecords.length} 条</span>
+          </div>
+        )}
 
         <div className="mt-3 grid grid-cols-3 items-center gap-2">
           <button
@@ -329,11 +348,11 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
             <ChevronDown className="h-3.5 w-3.5 shrink-0" />
           </button>
         </div>
-        <div className="mt-2 text-right text-[12px] font-medium text-[var(--tm-text-tertiary)]">共 {filteredRecords.length} 条</div>
+        {!embedded && <div className="mt-2 text-right text-[12px] font-medium text-[var(--tm-text-tertiary)]">共 {filteredRecords.length} 条</div>}
 
         <div className="mt-3 space-y-4">
           {filteredRecords.length === 0 ? (
-            <div className="flex min-h-64 flex-col items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-6 text-center [box-shadow:var(--tm-shadow-card)]">
+            <div className={`flex flex-col items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-6 text-center [box-shadow:var(--tm-shadow-card)] ${embedded ? 'min-h-40' : 'min-h-64'}`}>
               <span className="flex h-12 w-12 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-tertiary)]"><ClipboardList className="h-5 w-5" /></span>
               <p className="mt-3 text-sm font-medium text-[var(--tm-text-secondary)]">没有符合条件的评价记录</p>
               {hasActiveFilter && (

@@ -34,6 +34,21 @@ export const CLASS_EVALUATION_FIXED_QUESTIONS = [
     { id: 'next_week_focus', label: '下周应该重点关注什么？' },
 ] as const;
 
+export type ClassEvaluationFixedQuestion = typeof CLASS_EVALUATION_FIXED_QUESTIONS[number];
+export type ClassEvaluationFixedQuestionId = ClassEvaluationFixedQuestion['id'];
+
+export const CLASS_EVALUATION_PROMPT_VERSIONS: Record<ClassEvaluationFixedQuestionId, string> = {
+    weekly_performance: 'headteacher-class-evaluation-weekly-performance-v1',
+    deduction_patterns: 'headteacher-class-evaluation-deduction-patterns-v1',
+    next_week_focus: 'headteacher-class-evaluation-next-week-focus-v1',
+};
+
+export const CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION = 'headteacher-class-evaluation-weekly-report-v1';
+
+export const getClassEvaluationFixedQuestion = (questionId: ClassEvaluationFixedQuestionId) => (
+    CLASS_EVALUATION_FIXED_QUESTIONS.find(question => question.id === questionId)!
+);
+
 export interface ClassEvaluationDimensionMetric {
     dimension: string;
     score: number;
@@ -83,6 +98,20 @@ export interface ClassEvaluationAssistantAnswer {
     analysis: ClassEvaluationAiInsight[];
     suggestions: ClassEvaluationAiInsight[];
     context: ClassEvaluationConversationContext;
+    evidenceRefs: string[];
+    promptVersion: string;
+    dataSnapshotId: string;
+}
+
+export interface ClassEvaluationWeeklyReport {
+    message: string;
+    metrics: ClassEvaluationAnswerMetric[];
+    dimensionScores: ClassEvaluationAnswerBreakdown[];
+    performanceInsights: ClassEvaluationAiInsight[];
+    deductionBreakdown: ClassEvaluationAnswerBreakdown[];
+    deductionInsights: ClassEvaluationAiInsight[];
+    nextWeekInsights: ClassEvaluationAiInsight[];
+    nextWeekSuggestions: ClassEvaluationAiInsight[];
     evidenceRefs: string[];
     promptVersion: string;
     dataSnapshotId: string;
@@ -227,9 +256,7 @@ const createInsight = (title: string, body: string): ClassEvaluationAiInsight =>
 
 const getPromptVersion = (answerType: ClassEvaluationAnswerType) => {
     const versionByType: Record<ClassEvaluationAnswerType, string> = {
-        weekly_performance: 'headteacher-class-evaluation-weekly-performance-v1',
-        deduction_patterns: 'headteacher-class-evaluation-deduction-patterns-v1',
-        next_week_focus: 'headteacher-class-evaluation-next-week-focus-v1',
+        ...CLASS_EVALUATION_PROMPT_VERSIONS,
         clarification: 'headteacher-class-evaluation-clarification-v1',
         unavailable: 'headteacher-class-evaluation-unavailable-v1',
     };
@@ -434,6 +461,41 @@ export const askClassEvaluationQuestion = ({
         evidenceRefs: focusRecords.map(record => record.id),
         promptVersion: getPromptVersion('next_week_focus'),
         dataSnapshotId: snapshot.id,
+    };
+};
+
+export const generateClassEvaluationWeeklyReport = (
+    input: Omit<AskClassEvaluationQuestionInput, 'question'>,
+): ClassEvaluationWeeklyReport => {
+    const weeklyPerformance = askClassEvaluationQuestion({
+        ...input,
+        question: CLASS_EVALUATION_FIXED_QUESTIONS[0].label,
+    });
+    const deductionPatterns = askClassEvaluationQuestion({
+        ...input,
+        question: CLASS_EVALUATION_FIXED_QUESTIONS[1].label,
+    });
+    const nextWeekFocus = askClassEvaluationQuestion({
+        ...input,
+        question: CLASS_EVALUATION_FIXED_QUESTIONS[2].label,
+    });
+
+    return {
+        message: weeklyPerformance.message,
+        metrics: weeklyPerformance.metrics,
+        dimensionScores: weeklyPerformance.breakdown,
+        performanceInsights: weeklyPerformance.analysis,
+        deductionBreakdown: deductionPatterns.breakdown,
+        deductionInsights: deductionPatterns.analysis,
+        nextWeekInsights: nextWeekFocus.analysis,
+        nextWeekSuggestions: nextWeekFocus.suggestions,
+        evidenceRefs: Array.from(new Set([
+            ...weeklyPerformance.evidenceRefs,
+            ...deductionPatterns.evidenceRefs,
+            ...nextWeekFocus.evidenceRefs,
+        ])),
+        promptVersion: CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION,
+        dataSnapshotId: input.snapshot.id,
     };
 };
 

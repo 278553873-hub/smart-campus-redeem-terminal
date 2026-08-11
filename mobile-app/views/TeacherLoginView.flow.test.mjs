@@ -11,7 +11,7 @@ const assetSource = readFileSync(path.join(mobileAppDir, 'assets/images.ts'), 'u
 const tokenSource = readFileSync(path.join(mobileAppDir, 'styles/teacherMobileTokens.ts'), 'utf8');
 const loginIconPath = path.join(mobileAppDir, 'assets/resources/teacher-login-icon.jpg');
 
-assert.match(appSource, /const \[isAuthenticated, setIsAuthenticated\] = useState\(true\)/, '教师端应持有明确的登录态。');
+assert.match(appSource, /const \[isAuthenticated, setIsAuthenticated\] = useState\(false\)/, '教师手机端默认应从登录页开始。');
 assert.match(appSource, /const handleTeacherLogout = \(\) => \{[\s\S]*resetAuthenticatedNavigation\(\);[\s\S]*setIsAuthenticated\(false\);[\s\S]*\};/, '退出登录应先清理导航状态，再切换到未登录态。');
 assert.match(appSource, /setHistory\(\[\]\);[\s\S]*setCurrentView\('home_log'\);/, '退出或登录时应重置历史栈与落地页。');
 assert.match(appSource, /<MineSettingsView onLogout=\{handleTeacherLogout\} \/>/, '设置页退出按钮应接入真实退出处理。');
