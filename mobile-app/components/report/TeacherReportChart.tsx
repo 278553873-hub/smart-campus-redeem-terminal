@@ -337,6 +337,7 @@ interface TeacherReportBarChartProps {
     showValueAxis?: boolean;
     showLegend?: boolean;
     valueLabelSuffix?: string;
+    chartTop?: number;
     onCategorySelect?: (name: string) => void;
 }
 
@@ -350,6 +351,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
     showValueAxis = true,
     showLegend = true,
     valueLabelSuffix = '',
+    chartTop,
     onCategorySelect,
 }) => {
     const useCategoryColors = Boolean(categoryColors && categoryColors.length > 0);
@@ -382,7 +384,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                 })),
             } : {}),
         },
-        grid: { left: showValueAxis ? 38 : 8, right: 8, top: showLegend ? 42 : 10, bottom: 30 },
+        grid: { left: showValueAxis ? 38 : 8, right: 8, top: chartTop ?? (showLegend ? 42 : 10), bottom: 30 },
         xAxis: {
             type: 'category',
             data: categories,
@@ -450,7 +452,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                 fontWeight: 600,
             },
         })),
-    }), [categories, series, useCategoryColors, categoryColors, hasNegativeValue, showValueAxis, showLegend, valueLabelSuffix, onCategorySelect]);
+    }), [categories, series, useCategoryColors, categoryColors, hasNegativeValue, showValueAxis, showLegend, valueLabelSuffix, chartTop, onCategorySelect]);
 
     return (
         <TeacherReportChart

@@ -1,0 +1,14 @@
+# 班主任助理图标
+
+这里列出“班主任助理”页面及其弹窗、抽屉和复用子组件实际使用的图标。公共图标只在公共目录保存一份。
+
+| 资源路径 | 页面用途 | 存放位置 | 类型 |
+| --- | --- | --- | --- |
+| `../../00-公共图标/ai-art-badge.png` | AI（人工智能）标识 | 公共图标 | 专用图片图标 |
+| `../../00-公共图标/ai-headteacher-assistant-icon.png` | 班主任助理 | 公共图标 | 专用图片图标 |
+| `../../00-公共图标/check.svg` | 确认或已选择 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/chevron-left.svg` | 返回 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/chevron-right.svg` | 进入下一级 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/scan-search.svg` | 分析查看 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/user-round-check.svg` | 填写人或已选人员 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/x.svg` | 关闭 | 公共图标 | Lucide SVG |

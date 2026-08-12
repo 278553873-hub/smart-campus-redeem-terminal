@@ -75,9 +75,21 @@ export interface MoralEducationProblemDimensionStat {
     categories: MoralEducationProblemCategoryStat[];
 }
 
+export interface MoralEducationScoreNode {
+    id: string;
+    name: string;
+    level: 1 | 2 | 3;
+    averageScore: number;
+    maxScore: number;
+    deduction: number;
+    color: MoralEducationDimensionColor;
+    children: MoralEducationScoreNode[];
+}
+
 export interface MoralEducationGradeReport {
     gradeId: string;
     dimensions: MoralEducationDimensionStat[];
+    scoreTree: MoralEducationScoreNode[];
     problemDimensions: MoralEducationProblemDimensionStat[];
 }
 
@@ -510,11 +522,73 @@ const createDimensions = (
     });
 };
 
+const distributeMaxScores = (maxScore: number, itemCount: number) => (
+    distributeInteger(Math.round(maxScore * 10), Array.from({ length: itemCount }, () => 1))
+        .map(value => roundOne(value / 10))
+);
+
+const createScoreTree = (
+    configs: WeekConfig[],
+    gradeId: string,
+    dimensions: MoralEducationDimensionStat[],
+    problemDimensions: MoralEducationProblemDimensionStat[],
+): MoralEducationScoreNode[] => {
+    const classCount = gradeId === 'all' ? BASE_GRADES.length * CLASS_COUNT_PER_GRADE : CLASS_COUNT_PER_GRADE;
+    const scoreDivisor = classCount * configs.length;
+    return dimensions.map(dimension => {
+        const problemDimension = problemDimensions.find(item => item.id === dimension.id);
+        const configuredDimension = BASE_PROBLEM_DIMENSIONS.find(item => item.id === dimension.id);
+        const configuredCategories = configuredDimension?.categories ?? [];
+        const categoryMaxScores = distributeMaxScores(dimension.maxScore, configuredCategories.length);
+        const children = configuredCategories.map((configuredCategory, categoryIndex): MoralEducationScoreNode => {
+            const category = problemDimension?.categories.find(item => item.id === configuredCategory.id);
+            const categoryDeduction = category?.deduction ?? 0;
+            const categoryMaxScore = categoryMaxScores[categoryIndex];
+            const detailMaxScores = distributeMaxScores(categoryMaxScore, configuredCategory.details.length);
+            return {
+                id: configuredCategory.id,
+                name: configuredCategory.name,
+                level: 2,
+                averageScore: clampScore(categoryMaxScore - categoryDeduction / scoreDivisor, categoryMaxScore),
+                maxScore: categoryMaxScore,
+                deduction: categoryDeduction,
+                color: dimension.color,
+                children: configuredCategory.details.map((configuredDetail, detailIndex): MoralEducationScoreNode => {
+                    const detail = category?.details.find(item => item.id === configuredDetail.id);
+                    const detailDeduction = detail?.deduction ?? 0;
+                    return {
+                        id: configuredDetail.id,
+                        name: configuredDetail.name,
+                        level: 3,
+                        averageScore: clampScore(detailMaxScores[detailIndex] - detailDeduction / scoreDivisor, detailMaxScores[detailIndex]),
+                        maxScore: detailMaxScores[detailIndex],
+                        deduction: detailDeduction,
+                        color: dimension.color,
+                        children: [],
+                    };
+                }),
+            };
+        });
+        return {
+            id: dimension.id,
+            name: dimension.name,
+            level: 1,
+            averageScore: dimension.averageScore,
+            maxScore: dimension.maxScore,
+            deduction: dimension.deduction,
+            color: dimension.color,
+            children,
+        };
+    });
+};
+
 const createGradeReport = (configs: WeekConfig[], gradeId: string): MoralEducationGradeReport => {
     const problemDimensions = createProblemDimensions(configs, gradeId);
+    const dimensions = createDimensions(configs, gradeId, problemDimensions);
     return {
         gradeId,
-        dimensions: createDimensions(configs, gradeId, problemDimensions),
+        dimensions,
+        scoreTree: createScoreTree(configs, gradeId, dimensions, problemDimensions),
         problemDimensions,
     };
 };

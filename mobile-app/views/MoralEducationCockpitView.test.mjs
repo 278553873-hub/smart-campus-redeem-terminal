@@ -11,6 +11,8 @@ const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const chartSource = fs.readFileSync(new URL('../components/report/TeacherReportChart.tsx', import.meta.url), 'utf8');
+const drilldownSource = fs.readFileSync(new URL('../components/report/MoralEducationScoreDrilldown.tsx', import.meta.url), 'utf8');
+const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 
 for (const required of [
   "title: '班级评价报表'",
@@ -63,6 +65,12 @@ for (const required of [
   'ariaLabel="问题分布年级筛选"',
   'ariaLabel="问题分布一级指标筛选"',
   'ariaLabel="问题分布二级指标筛选"',
+  "name: '全校'",
+  '<ReportSegmentTabs',
+  '查看明细',
+  '<MoralEducationScoreDrilldown',
+  'onCategorySelect={openScoreDrilldown}',
+  'chartTop={28}',
   '扣分笔数',
 ]) {
   assert.ok(viewSource.includes(required), `驾驶舱应提供多周期筛选、排名和图表展示，缺少：${required}`);
@@ -74,6 +82,16 @@ assert.ok(chartSource.includes('charts.LineChart'), '通用教师报告图表应
 assert.ok(chartSource.includes('export const TeacherReportLineChart'), '通用教师报告图表应导出折线图组件。');
 assert.ok(chartSource.includes('valueSuffix = \'条\''), '环图应保持默认条数单位，兼容既有报告。');
 assert.ok(chartSource.includes('seriesName = \'五育事件\''), '环图应保持默认系列名称，兼容既有报告。');
+assert.ok(chartSource.includes('chartTop?: number'), '通用柱状图应允许业务层设置柱顶安全区。');
+assert.ok(drilldownSource.includes('title="指标得分明细"'), '指标得分应使用独立的下钻抽屉。');
+assert.ok(drilldownSource.includes('onCategorySelect={canDrillDown ? selectCategory : undefined}'), '二级指标应允许点击进入三级，三级应停止下钻。');
+for (const requiredToken of [
+  "'--tm-report-grade-pill-height': '30px'",
+  "'--tm-report-grade-pill-inline': '10px'",
+  "'--tm-report-scroll-hint-width': '28px'",
+]) {
+  assert.ok(tokenSource.includes(requiredToken), `年级切换应使用统一紧凑令牌，缺少：${requiredToken}`);
+}
 
 const weeks = await getMoralEducationCockpitWeeks();
 assert.ok(weeks.length >= 4, '驾驶舱应提供多个已有考核周供切换。');
@@ -96,6 +114,7 @@ assert.equal(snapshot.classRanking.length, 30, '驾驶舱应提供全部班级�
 assert.equal(snapshot.gradeReports.length, 7, '指标得分和问题分布应同时提供全部年级及六个年级的数据。');
 assert.equal(snapshot.gradeReports[0].gradeId, 'all', '两个报表板块应默认使用全部年级数据。');
 assert.equal(snapshot.gradeReports.every(report => report.dimensions.length === 5), true, '每个年级应展示学校配置的五个一级指标。');
+assert.equal(snapshot.gradeReports.every(report => report.scoreTree.length === 5), true, '每个年级的得分下钻应包含完整五个一级指标。');
 assert.equal(snapshot.gradeReports[0].problemDimensions.length, 5, '全部年级应提供有扣分的一级指标。');
 assert.equal(snapshot.gradeReports.slice(1).every(report => report.problemDimensions.length > 0 && report.problemDimensions.length <= 5), true, '各年级只应提供本年级有扣分的一级指标。');
 assert.notDeepEqual(
@@ -146,6 +165,23 @@ assert.equal(
   true,
   '三级指标扣分笔数应为整数。',
 );
+
+const roundOne = value => Math.round(value * 10) / 10;
+for (const report of snapshot.gradeReports) {
+  for (const root of report.scoreTree) {
+    assert.equal(root.level, 1, '得分树根节点应为一级指标。');
+    assert.equal(roundOne(root.children.reduce((sum, child) => sum + child.maxScore, 0)), root.maxScore, '一级指标满分应由二级指标完整汇总。');
+    assert.equal(roundOne(root.children.reduce((sum, child) => sum + child.deduction, 0)), root.deduction, '一级指标扣分应由二级指标完整汇总。');
+    assert.ok(Math.abs(roundOne(root.children.reduce((sum, child) => sum + child.averageScore, 0)) - root.averageScore) <= 0.100001, '一级指标得分应与二级指标得分闭合。');
+    for (const category of root.children) {
+      assert.equal(category.level, 2, '一级指标子节点应为二级指标。');
+      assert.equal(roundOne(category.children.reduce((sum, child) => sum + child.maxScore, 0)), category.maxScore, '二级指标满分应由三级指标完整汇总。');
+      assert.equal(roundOne(category.children.reduce((sum, child) => sum + child.deduction, 0)), category.deduction, '二级指标扣分应由三级指标完整汇总。');
+      assert.ok(Math.abs(roundOne(category.children.reduce((sum, child) => sum + child.averageScore, 0)) - category.averageScore) <= 0.100001, '二级指标得分应与三级指标得分闭合。');
+      assert.equal(category.children.every(detail => detail.level === 3 && detail.children.length === 0), true, '三级指标必须为得分下钻终点。');
+    }
+  }
+}
 
 const selectedTerm = terms[terms.length - 1];
 const termSnapshot = await getMoralEducationCockpitSnapshot({ periodType: 'term', periodId: selectedTerm.id });

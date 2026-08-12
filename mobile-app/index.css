@@ -27,6 +27,21 @@
   box-shadow: 0 12px 24px -14px var(--tm-shadow-brand-color);
 }
 
+@keyframes teacher-record-onboarding-arrow-nudge {
+  0%, 100% {
+    transform: translate(-50%, 0);
+  }
+
+  50% {
+    transform: translate(-50%, 6px);
+  }
+}
+
+.teacher-record-onboarding-arrow {
+  transform: translateX(-50%);
+  animation: teacher-record-onboarding-arrow-nudge 1.2s ease-in-out infinite;
+}
+
 @keyframes ai-assistant-shine {
   0% {
     background-position: 140% center;
@@ -142,6 +157,10 @@
     animation: none;
     background: none;
     -webkit-text-fill-color: currentColor;
+  }
+
+  .teacher-record-onboarding-arrow {
+    animation: none;
   }
 }
 

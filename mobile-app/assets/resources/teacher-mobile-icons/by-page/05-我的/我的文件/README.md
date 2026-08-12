@@ -1,0 +1,11 @@
+# 我的文件图标
+
+这里列出“我的文件”页面及其弹窗、抽屉和复用子组件实际使用的图标。公共图标只在公共目录保存一份。
+
+| 资源路径 | 页面用途 | 存放位置 | 类型 |
+| --- | --- | --- | --- |
+| `../../00-公共图标/chevron-left.svg` | 返回 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/file-spreadsheet.svg` | 表格文件 | 公共图标 | Lucide SVG |
+| `file.svg` | 文件 | 本页面 | Lucide SVG |
+| `more-vertical.svg` | 文件更多操作 | 本页面 | Lucide SVG |
+| `../../00-公共图标/trash-2.svg` | 删除或移除 | 公共图标 | Lucide SVG |

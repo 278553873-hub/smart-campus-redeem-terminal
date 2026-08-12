@@ -7,6 +7,7 @@ import {
 import { MOCK_STUDENTS_CLASS_1, MOCK_CLASS_RECORD_LOGS } from '../constants';
 import { ASSETS } from '../assets/images';
 import { Loader2, Sparkles } from 'lucide-react'; // Import directly if needed for icons not in components
+import voiceOnboardingArrow from '../assets/resources/teacher-mobile-icons/by-page/02-记录/记录首页/voice-onboarding-arrow.svg';
 
 interface ClassRecordLogViewProps {
     classNameStr?: string;
@@ -20,6 +21,7 @@ interface ClassRecordLogViewProps {
     activeTab: 'student' | 'class';
     onTabChange: (tab: 'student' | 'class') => void;
     canRecordClass?: boolean;
+    showFirstRecordGuide?: boolean;
 }
 
 // Data Models
@@ -127,12 +129,12 @@ const INITIAL_LOGS: LogItem[] = [
         aiSummary: '这份文档是“2025-2026学年上学期”的“体育”学科的“期末成绩”。涉及三年级5个班共计200名学生，成绩包括“学习态度、课后锻炼、健康知识、专项运动技能和体能”等维度。',
         theme: 'neutral',
         scope: 'class'
-    }
+    },
 ];
 
 const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     classNameStr, onBack, onStartRecord, isMainView = false, newRecordData, onClearNewRecord, onToggleModal,
-    addDemoTopBreathingSpace = false, activeTab, onTabChange, canRecordClass = false
+    addDemoTopBreathingSpace = false, activeTab, onTabChange, canRecordClass = false, showFirstRecordGuide = false
 }) => {
     // State
     const [logs, setLogs] = useState<LogItem[]>(INITIAL_LOGS);
@@ -477,16 +479,31 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
             {/* List Content */}
             <div className="relative z-10 flex-1 min-h-0 overflow-y-auto px-5 pb-44 pt-0 no-scrollbar">
-                {visibleLogs.length > 0 ? (
+                {!showFirstRecordGuide && visibleLogs.length > 0 ? (
                     <div className="space-y-3.5">
                         {visibleLogs.map(log => renderLogItem(log))}
                     </div>
+                ) : showFirstRecordGuide ? (
+                    <div className="relative flex min-h-full flex-col items-center pt-[22vh] text-center">
+                        <p className="text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">试试通过语音描述一下内容</p>
+                        <p className="mt-[var(--tm-space-2)] max-w-[300px] text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">
+                            {activeTab === 'student'
+                                ? '例如：张三同学今天主动帮助同学解决问题，值得表扬。'
+                                : '例如：2025级1班全体同学积极参加体育锻炼。'}
+                        </p>
+                        <img
+                            src={voiceOnboardingArrow}
+                            alt=""
+                            aria-hidden="true"
+                            className="teacher-record-onboarding-arrow absolute bottom-[-14px] left-1/2 h-[72px] w-[64px]"
+                        />
+                    </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-20 opacity-40">
-                        <div className="w-16 h-16 bg-white/50 rounded-full flex items-center justify-center mb-4">
-                            <Sparkles className="w-8 h-8 text-slate-300" />
+                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/50">
+                            <Sparkles className="h-8 w-8 text-slate-300" />
                         </div>
-                        <p className="text-sm font-bold text-slate-400">暂无{activeTab === 'student' ? '学生' : '班级'}记录</p>
+                        <p className="text-sm font-bold text-slate-400">暂无学生记录</p>
                     </div>
                 )}
             </div>

@@ -7,6 +7,7 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MoralEducationScoreDrilldown from '../components/report/MoralEducationScoreDrilldown';
 import {
     TeacherReportBarChart,
     TeacherReportLineChart,
@@ -84,9 +85,14 @@ const GradeTabs = ({
     onChange: (gradeId: string) => void;
     ariaLabel: string;
 }) => (
-    <div className="-mx-[var(--tm-report-card-padding)] overflow-x-auto px-[var(--tm-report-card-padding)] no-scrollbar" role="tablist" aria-label={ariaLabel}>
-        <div className="flex min-w-max gap-2 pb-1">
-            {[{ id: 'all', name: '全部年级' }, ...grades].map(grade => {
+    <div className="relative -mx-[var(--tm-report-card-padding)]">
+        <div
+            className="overflow-x-auto pl-[var(--tm-report-card-padding)] pr-[calc(var(--tm-report-card-padding)+var(--tm-space-5))] no-scrollbar"
+            role="tablist"
+            aria-label={ariaLabel}
+        >
+            <div className="flex min-w-max gap-1.5">
+            {[{ id: 'all', name: '全校' }, ...grades].map(grade => {
                 const selected = grade.id === value;
                 return (
                     <button
@@ -95,15 +101,22 @@ const GradeTabs = ({
                         role="tab"
                         aria-selected={selected}
                         onClick={() => onChange(grade.id)}
-                        className={`min-h-11 rounded-[var(--tm-radius-control)] border px-4 text-[13px] font-semibold transition-[color,background-color,border-color] duration-200 ${selected
-                            ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]'
-                            : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]'}`}
+                        className="flex min-h-[var(--tm-size-touch)] shrink-0 items-center transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96]"
                     >
-                        {grade.name}
+                        <span className={`flex h-[var(--tm-report-grade-pill-height)] items-center rounded-[var(--tm-radius-control)] px-[var(--tm-report-grade-pill-inline)] text-[length:var(--tm-font-size-compact)] font-semibold transition-[color,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] ${selected
+                            ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)]'
+                            : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]'}`}>
+                            {grade.name}
+                        </span>
                     </button>
                 );
             })}
+            </div>
         </div>
+        <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-[var(--tm-report-scroll-hint-width)] bg-gradient-to-l from-[var(--tm-bg-surface)] via-[var(--tm-bg-surface)]/90 to-transparent"
+        />
     </div>
 );
 
@@ -135,6 +148,42 @@ const ReportTextTabs = ({
                     >
                         {item.name}
                         {selected && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[var(--tm-brand-primary)]" />}
+                    </button>
+                );
+            })}
+        </div>
+    </div>
+);
+
+const ReportSegmentTabs = ({
+    items,
+    value,
+    onChange,
+    ariaLabel,
+}: {
+    items: Array<{ id: string; name: string }>;
+    value: string;
+    onChange: (id: string) => void;
+    ariaLabel: string;
+}) => (
+    <div className="-mx-[var(--tm-report-card-padding)] overflow-x-auto px-[var(--tm-report-card-padding)] py-1 no-scrollbar" role="tablist" aria-label={ariaLabel}>
+        <div className="flex min-w-max gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
+            {items.map(item => {
+                const selected = item.id === value;
+                return (
+                    <button
+                        key={item.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        onClick={() => onChange(item.id)}
+                        className="flex min-h-10 shrink-0 items-center transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96]"
+                    >
+                        <span className={`flex h-8 items-center rounded-[calc(var(--tm-radius-control)-4px)] px-3 text-[length:var(--tm-font-size-compact)] font-semibold transition-[color,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] ${selected
+                            ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]'
+                            : 'text-[var(--tm-text-secondary)]'}`}>
+                            {item.name}
+                        </span>
                     </button>
                 );
             })}
@@ -179,6 +228,9 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
     const [trendMetric, setTrendMetric] = useState<TrendMetric>('averageScore');
     const [isPeriodSheetOpen, setIsPeriodSheetOpen] = useState(false);
     const [isRankingSheetOpen, setIsRankingSheetOpen] = useState(false);
+    const [isScoreDrilldownOpen, setIsScoreDrilldownOpen] = useState(false);
+    const [scoreDrilldownRootId, setScoreDrilldownRootId] = useState('');
+    const [lastScoreRootId, setLastScoreRootId] = useState('');
     const [rankingGradeId, setRankingGradeId] = useState('all');
     const [scoreGradeId, setScoreGradeId] = useState('all');
     const [problemGradeId, setProblemGradeId] = useState('all');
@@ -267,6 +319,9 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         setProblemDimensionId('');
         setProblemCategoryId('');
         setIsPeriodSheetOpen(false);
+        setIsScoreDrilldownOpen(false);
+        setScoreDrilldownRootId('');
+        setLastScoreRootId('');
     };
 
     const changeProblemGrade = (gradeId: string) => {
@@ -283,6 +338,16 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
     const changePeriod = (offset: number) => {
         const nextPeriod = periodOptions[selectedPeriodIndex + offset];
         if (nextPeriod) setSelectedPeriodId(nextPeriod.id);
+    };
+
+    const openScoreDrilldown = (dimensionName?: string) => {
+        const selectedRoot = scoreGradeReport?.scoreTree.find(root => root.name === dimensionName)
+            ?? scoreGradeReport?.scoreTree.find(root => root.id === lastScoreRootId)
+            ?? scoreGradeReport?.scoreTree[0];
+        if (!selectedRoot) return;
+        setScoreDrilldownRootId(selectedRoot.id);
+        setLastScoreRootId(selectedRoot.id);
+        setIsScoreDrilldownOpen(true);
     };
 
     return (
@@ -430,7 +495,19 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                             </section>
 
                             <section className={reportCardClassName} aria-label="一级指标得分">
-                                <SectionHeader title="指标得分" />
+                                <SectionHeader
+                                    title="指标得分"
+                                    action={(
+                                        <button
+                                            type="button"
+                                            onClick={() => openScoreDrilldown()}
+                                            className="-mr-2 flex min-h-11 items-center gap-0.5 px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96]"
+                                        >
+                                            查看明细
+                                            <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                />
                                 <GradeTabs
                                     grades={snapshot.grades}
                                     value={scoreGradeId}
@@ -449,8 +526,11 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                         optionKey={`${snapshot.period.id}-${scoreGradeReport.gradeId}-indicator-score`}
                                         categoryColors={scoreGradeReport.dimensions.map((_, index) => indicatorChartColors[index % indicatorChartColors.length])}
                                         showLegend={false}
+                                        showValueAxis={false}
                                         valueLabelSuffix="分"
-                                        className="mt-2 h-56"
+                                        chartTop={28}
+                                        className="mt-[var(--tm-space-4)] h-56"
+                                        onCategorySelect={openScoreDrilldown}
                                     />
                                 )}
                             </section>
@@ -464,20 +544,22 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                     ariaLabel="问题分布年级筛选"
                                 />
                                 {problemGradeReport && selectedProblemDimension && selectedProblemCategory && (
-                                    <div className="mt-2">
+                                    <div className="mt-[var(--tm-space-2)]">
                                         <ReportTextTabs
                                             items={problemGradeReport.problemDimensions}
                                             value={selectedProblemDimension.id}
                                             onChange={changeProblemDimension}
                                             ariaLabel="问题分布一级指标筛选"
                                         />
-                                        <ReportTextTabs
-                                            items={selectedProblemDimension.categories}
-                                            value={selectedProblemCategory.id}
-                                            onChange={setProblemCategoryId}
-                                            ariaLabel="问题分布二级指标筛选"
-                                        />
-                                        <div className="mt-2" role="table" aria-label={`${selectedProblemCategory.name}三级指标扣分明细`}>
+                                        <div className="mt-[var(--tm-space-3)]">
+                                            <ReportSegmentTabs
+                                                items={selectedProblemDimension.categories}
+                                                value={selectedProblemCategory.id}
+                                                onChange={setProblemCategoryId}
+                                                ariaLabel="问题分布二级指标筛选"
+                                            />
+                                        </div>
+                                        <div className="mt-[var(--tm-space-4)]" role="table" aria-label={`${selectedProblemCategory.name}三级指标扣分明细`}>
                                             <div className="grid min-h-8 grid-cols-[minmax(0,1fr)_72px_64px] items-center gap-2 text-[11px] text-[var(--tm-text-secondary)]" role="row">
                                                 <span role="columnheader">三级指标</span>
                                                 <span className="text-right" role="columnheader">总扣分</span>
@@ -587,6 +669,14 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                     </>
                 )}
             </MobileBottomSheet>
+
+            <MoralEducationScoreDrilldown
+                open={isScoreDrilldownOpen}
+                roots={scoreGradeReport?.scoreTree ?? []}
+                initialRootId={scoreDrilldownRootId}
+                onClose={() => setIsScoreDrilldownOpen(false)}
+                onRootChange={setLastScoreRootId}
+            />
         </div>
     );
 };

@@ -432,7 +432,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
     const [multiSelectIds, setMultiSelectIds] = useState<Set<string>>(new Set());
 
-    const [activeLogTab, setActiveLogTab] = useState<'student' | 'class'>('student');
+    const [activeLogTab, setActiveLogTab] = useState<'student' | 'class'>('class');
+    const [recordGuidePending, setRecordGuidePending] = useState<Record<'student' | 'class', boolean>>({
+        student: true,
+        class: true,
+    });
     const [recordContextToast, setRecordContextToast] = useState('');
     const [pendingRecordData, setPendingRecordData] = useState<any>(null);
     const [recordMode, setRecordMode] = useState<'voice' | 'camera' | 'text'>('voice');
@@ -995,6 +999,15 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const GlobalInputBar = () => {
         const targetIds: string[] = isMultiSelectMode ? Array.from(multiSelectIds) : [];
 
+        const handleVoiceRecord = () => {
+            if (currentView === 'home_log' && recordGuidePending[activeLogTab]) {
+                setRecordGuidePending(current => ({ ...current, [activeLogTab]: false }));
+                return;
+            }
+
+            handleStartRecord(targetIds, 'voice');
+        };
+
         if (showKeyboard) {
             return (
                 <div className="pointer-events-none absolute bottom-[292px] left-0 right-0 z-[85] mx-auto max-w-md px-4">
@@ -1032,7 +1045,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                     </button>
 
                     <button
-                        onClick={() => handleStartRecord(targetIds, 'voice')}
+                        onClick={handleVoiceRecord}
                         aria-label="语音记录"
                         className="flex h-11 min-w-0 items-center justify-center rounded-[var(--tm-radius-inner)] px-4 text-[15px] font-semibold text-[var(--tm-text-primary)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"
                     >
@@ -1178,6 +1191,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 <ClassRecordLogView
                                     activeTab={activeLogTab}
                                     onTabChange={setActiveLogTab}
+                                    showFirstRecordGuide={recordGuidePending[activeLogTab]}
                                     onBack={goBack}
                                     isMainView={true}
                                     onStartRecord={() => handleStartRecord([], 'voice')}
