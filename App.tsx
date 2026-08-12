@@ -1258,7 +1258,7 @@ const AppSwitcher: React.FC = () => {
     return 'terminal'; // default
   });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
-  const [showPhoneShell, setShowPhoneShell] = useState(false);
+  const [showPhoneShell, setShowPhoneShell] = useState(true);
   const [showParentPhoneShell, setShowParentPhoneShell] = useState(false);
   const [showPhoneShellToggle, setShowPhoneShellToggle] = useState(false);
   const [demoPanelPosition, setDemoPanelPosition] = useState<{ left: number; top: number } | null>(null);
@@ -1464,7 +1464,7 @@ const AppSwitcher: React.FC = () => {
         )}
       </div>
 
-      {showPhoneShellToggle && (currentApp === 'admin' || currentApp === 'parent') && (
+      {(currentApp === 'admin' || (showPhoneShellToggle && currentApp === 'parent')) && (
         <div className="fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
           {(() => {
             const phoneShellEnabled = currentApp === 'parent' ? showParentPhoneShell : showPhoneShell;

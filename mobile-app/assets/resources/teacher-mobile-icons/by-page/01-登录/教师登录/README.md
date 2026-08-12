@@ -7,6 +7,5 @@
 | `../../00-公共图标/check.svg` | 确认或已选择 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/eye-off.svg` | 隐藏内容 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/eye.svg` | 查看或预览 | 公共图标 | Lucide SVG |
-| `shield-check.svg` | 安全校验 | 本页面 | Lucide SVG |
 | `teacher-login-icon.jpg` | 教师登录 | 本页面 | 专用图片图标 |
 | `../../00-公共图标/x.svg` | 关闭 | 公共图标 | Lucide SVG |

@@ -3,7 +3,6 @@ import {
   Check,
   Eye,
   EyeOff,
-  ShieldCheck,
   X,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
@@ -26,7 +25,8 @@ const sheetPrimaryButtonClass = 'mx-auto flex min-h-12 w-full max-w-[300px] item
 const fieldClass = 'h-[52px] w-full rounded-[var(--tm-radius-control)] border border-transparent bg-[var(--tm-bg-surface-soft)] px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] outline-none transition-[border-color,background-color,box-shadow] placeholder:text-[var(--tm-text-tertiary)] focus:border-[var(--tm-brand-primary-soft-strong)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-brand-primary-soft)]';
 
 const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
-  const [agreed, setAgreed] = useState(false);
+  // Demo convenience only; production login must require explicit user consent.
+  const [agreed, setAgreed] = useState(true);
   const [activeSheet, setActiveSheet] = useState<LoginSheet>(null);
   const [phoneLoginMode, setPhoneLoginMode] = useState<PhoneLoginMode>('sms');
   const [phone, setPhone] = useState('');
@@ -160,14 +160,9 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
 
       <MobileBottomSheet open={activeSheet === 'wechat'} title="微信授权登录" onClose={closeActiveSheet}>
         <div className="pb-[var(--tm-space-4)]">
-          <div className="flex items-center gap-3 py-[var(--tm-space-2)]">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
-              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold">选择微信绑定的手机号</h3>
-              <p className="mt-1 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">用于识别教师账号</p>
-            </div>
+          <div className="py-[var(--tm-space-2)]">
+            <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold">选择微信绑定的手机号</h3>
+            <p className="mt-1 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">用于识别教师账号</p>
           </div>
           <div className="mt-[var(--tm-space-3)] divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)]">
             {['152****1332', '199****8610'].map((maskedPhone, index) => (

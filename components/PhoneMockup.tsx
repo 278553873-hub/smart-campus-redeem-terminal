@@ -129,7 +129,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
       className="w-full h-full flex items-center justify-center overflow-hidden"
     >
       <div 
-        className="relative"
+        className="relative shrink-0"
         style={{
           width: `${screenWidth}px`,
           height: `${screenHeight}px`,

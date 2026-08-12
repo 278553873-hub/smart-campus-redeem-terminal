@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Bot, CalendarRange, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, ListTree, UserRound } from 'lucide-react';
+import { Bot, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react';
 import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
 import { phoneText } from '../styles/teacherMobileTokens';
 import EvaluationRecordDetailView from './student-evaluation/EvaluationRecordDetailView';
@@ -320,39 +320,33 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
             onClick={() => setShowTimeFilterSheet(true)}
             aria-label={`选择记录时间，当前${timeFilterLabel}`}
             title={timeFilterLabel}
-            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${timeFilter.type !== 'all'
+            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center justify-center rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${timeFilter.type !== 'all'
               ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
               : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
           >
-            <CalendarRange className="h-4 w-4 shrink-0" />
-            <span className="min-w-0 flex-1 truncate text-left">{timeFilterLabel}</span>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+            <span className="min-w-0 truncate text-center">{timeFilterLabel}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowTeacherFilterSheet(true)}
             aria-label={`选择评价人，当前${teacherFilterLabel}`}
             title={teacherFilterLabel}
-            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${teacherFilterId !== 'all'
+            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center justify-center rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${teacherFilterId !== 'all'
               ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
               : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
           >
-            <UserRound className="h-4 w-4 shrink-0" />
-            <span className="min-w-0 flex-1 truncate text-left">{teacherFilterLabel}</span>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+            <span className="min-w-0 truncate text-center">{teacherFilterLabel}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowIndicatorFilterSheet(true)}
             aria-label={`选择指标，当前${indicatorFilterPath.length > 0 ? indicatorFilterPath.join('、') : indicatorFilterLabel}`}
             title={indicatorFilterPath.join(' / ') || indicatorFilterLabel}
-            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${indicatorFilterPath.length > 0
+            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center justify-center rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${indicatorFilterPath.length > 0
               ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
               : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
           >
-            <ListTree className="h-4 w-4 shrink-0" />
-            <span className="min-w-0 flex-1 truncate text-left">{indicatorFilterLabel}</span>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+            <span className="min-w-0 truncate text-center">{indicatorFilterLabel}</span>
           </button>
         </div>
         {!embedded && <div className="mt-2 text-right text-[12px] font-medium text-[var(--tm-text-tertiary)]">共 {filteredRecords.length} 条</div>}

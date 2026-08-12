@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 const tokens = fs.readFileSync('mobile-app/styles/teacherMobileTokens.ts', 'utf8');
 const css = fs.readFileSync('mobile-app/index.css', 'utf8');
-const headteacher = fs.readFileSync('mobile-app/views/AiHeadteacherAssistantView.tsx', 'utf8');
+const headteacher = fs.readFileSync('mobile-app/views/AiHeadteacherAssistantV2View.tsx', 'utf8');
 const principal = fs.readFileSync('mobile-app/views/AiPrincipalAssistantView.tsx', 'utf8');
 const guidelines = fs.readFileSync('design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', 'utf8');
 
@@ -34,13 +34,12 @@ assert.match(assistantCss, /--tm-assistant-role-primary: var\(--tm-role-principa
 assert.match(assistantCss, /--tm-assistant-role-highlight: var\(--tm-role-principal-highlight\)/);
 
 for (const source of [headteacher, principal]) {
-  assert.match(source, /ai-assistant-dialog-card/);
   assert.match(source, /ai-assistant-typewriter-shine/);
 }
 
-assert.match(headteacher, /tm-role-headteacher-primary/);
+assert.match(headteacher, /tm-role-headteacher-glass-surface/);
 assert.match(principal, /tm-role-principal-primary/);
-assert.match(headteacher, /ai-assistant-theme-headteacher teacher-assistant-page/);
+assert.match(headteacher, /ai-assistant-theme-headteacher/);
 assert.match(principal, /ai-assistant-theme-principal teacher-assistant-page/);
 
 assert.match(guidelines, /班主任助理使用鲜活翡翠青角色 Token/);

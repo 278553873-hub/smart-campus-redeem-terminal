@@ -6,7 +6,7 @@
 | --- | --- | --- | --- |
 | `../../00-公共图标/alert-triangle.svg` | 风险提示 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/calendar-days.svg` | 日期选择 | 公共图标 | Lucide SVG |
-| `../../00-公共图标/check.svg` | 确认或已选择 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/chevron-down.svg` | 展开或下拉 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/chevron-left.svg` | 返回 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/chevron-right.svg` | 进入下一级 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/class-evaluation-report.png` | 班级评价报表 | 公共图标 | 专用图片图标 |

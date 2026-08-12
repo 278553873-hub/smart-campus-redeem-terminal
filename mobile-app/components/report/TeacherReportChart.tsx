@@ -559,6 +559,7 @@ interface TeacherReportDonutChartProps {
     className?: string;
     seriesName?: string;
     valueSuffix?: string;
+    selectedName?: string;
     onCategorySelect?: (name: string) => void;
 }
 
@@ -569,6 +570,7 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
     className = 'h-64',
     seriesName = '五育事件',
     valueSuffix = '条',
+    selectedName,
     onCategorySelect,
 }) => {
     const createOption = React.useCallback((theme: TeacherReportChartTheme): EChartsCoreOption => ({
@@ -593,6 +595,8 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
         series: [{
             name: seriesName,
             type: 'pie',
+            selectedMode: selectedName ? 'single' : false,
+            selectedOffset: 4,
             cursor: onCategorySelect ? 'pointer' : 'default',
             center: ['50%', '43%'],
             radius: ['43%', '66%'],
@@ -604,9 +608,13 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
                 formatter: ({ percent }: { percent?: number }) => `${percent ?? 0}%`,
             },
             labelLine: { length: 8, length2: 6 },
-            data: data.map(item => ({ name: item.name, value: item.value })),
+            data: data.map(item => ({
+                name: item.name,
+                value: item.value,
+                selected: item.name === selectedName,
+            })),
         }],
-    }), [data, onCategorySelect, seriesName, valueSuffix]);
+    }), [data, onCategorySelect, selectedName, seriesName, valueSuffix]);
 
     return (
         <TeacherReportChart

@@ -18,7 +18,6 @@ import { ASSETS } from '../assets/images';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
 import AutoResizeTextarea from '../components/ui/AutoResizeTextarea';
-import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import {
     CLASS_EVALUATION_WEEKS,
     DEFAULT_CLASS_EVALUATION_WEEK_ID,
@@ -32,7 +31,6 @@ import {
     CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION,
     askClassEvaluationQuestion,
     generateClassEvaluationWeeklyReport,
-    getRecordsFromAnswer,
     type ClassEvaluationAssistantAnswer,
     type ClassEvaluationRecord,
     type ClassEvaluationSnapshot,
@@ -51,6 +49,10 @@ interface AiHeadteacherAssistantV2ViewProps {
     homeroomClasses: ClassInfo[];
     activeClassId: string;
     onClassChange: (classId: string) => void;
+    showStudentEvaluation: boolean;
+    showClassEvaluation: boolean;
+    onOpenWeeklyActionAdvice: (classId: string) => void;
+    onOpenEvaluationReview: (classId: string) => void;
 }
 
 interface ChatMessage {
@@ -71,7 +73,7 @@ const formatRecordDate = (date: string) => {
 const getAssistantIntro = () => {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? '上午好' : hour < 18 ? '下午好' : '晚上好';
-    return `${greeting}，我将为您提供数据分析和指导建议。`;
+    return `${greeting}，\n我将为您提供数据分析和指导建议。`;
 };
 
 const getTypeDelay = (char: string) => {
@@ -88,17 +90,30 @@ const REPORT_GENERATION_STEPS = [
 ] as const;
 
 const OVERVIEW_RECOMMENDED_QUESTIONS = [
-    '本周扣分主要集中在哪些方面？',
-    '和上周相比，哪项变化最大？',
-    '下周应该优先关注什么？',
+    '班级评价主要扣在哪？',
+    '班级评价较上周哪项变化最大？',
+    '根据班级评价，下周优先关注什么？',
+] as const;
+
+const STUDENT_EVALUATION_QUESTIONS = [
+    {
+        title: '本周班级行动建议',
+        description: '综合上周评价，分析学生表现、班级共性与评价信号，给出本周关注重点和行动建议。',
+        action: 'weekly_action_advice',
+    },
+    {
+        title: '我的评价复盘',
+        description: '复盘上月记录，分析关注对象、评价视角、指标使用和表达方式，发现盲区与改进方向。',
+        action: 'evaluation_review',
+    },
 ] as const;
 
 const getFollowUpQuestions = (answerType: ClassEvaluationAssistantAnswer['answerType']) => {
     if (answerType === 'weekly_performance') {
-        return ['本周扣分主要集中在哪些方面？', '和上周相比，哪项变化最大？'];
+        return OVERVIEW_RECOMMENDED_QUESTIONS.slice(0, 2);
     }
     if (answerType === 'deduction_patterns') {
-        return ['哪一笔扣分影响最大？', '下周应该优先关注什么？'];
+        return ['哪一笔扣分影响最大？', OVERVIEW_RECOMMENDED_QUESTIONS[2]];
     }
     if (answerType === 'next_week_focus') {
         return ['这些建议对应哪些扣分记录？', '本周表现最稳定的是哪些项目？'];
@@ -136,8 +151,7 @@ const ReportInsightList: React.FC<{
 
 const WeeklyReportContent: React.FC<{
     report: ClassEvaluationWeeklyReport;
-    onOpenDetails: () => void;
-}> = ({ report, onOpenDetails }) => (
+}> = ({ report }) => (
     <div>
         <p className="text-pretty whitespace-pre-line text-[15px] font-semibold leading-6 text-[var(--tm-text-primary)]">{report.message}</p>
 
@@ -219,197 +233,126 @@ const WeeklyReportContent: React.FC<{
             </section>
         )}
 
-        {report.evidenceRefs.length > 0 && (
-            <div className="mt-3 flex justify-end">
-                <button
-                    type="button"
-                    onClick={onOpenDetails}
-                    className="flex min-h-[var(--tm-size-touch)] items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                    aria-label={'查看' + report.evidenceRefs.length + '笔数据依据'}
-                >
-                    查看依据
-                    <span className="font-medium tabular-nums text-[var(--tm-text-tertiary)]">{report.evidenceRefs.length}笔</span>
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </button>
-            </div>
-        )}
     </div>
 );
 
 const ConversationAnswerContent: React.FC<{
     answer: ClassEvaluationAssistantAnswer;
-    onOpenDetails: () => void;
-}> = ({ answer, onOpenDetails }) => (
-    <div>
-        <p className="text-pretty whitespace-pre-line text-[15px] font-semibold leading-6 text-[var(--tm-text-primary)]">{answer.message}</p>
-
-        {answer.metrics.length > 0 && (
-            <dl className={'mt-3 grid gap-3 ' + (answer.metrics.length === 1 ? 'grid-cols-1' : answer.metrics.length === 2 ? 'grid-cols-2' : 'grid-cols-3')}>
-                {answer.metrics.map(metric => (
-                    <div key={metric.label} className="min-w-0">
-                        <dt className="truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]">{metric.label}</dt>
-                        <dd className={'mt-1 truncate text-[17px] font-bold tabular-nums ' + (metric.tone === 'negative' ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-assistant-role-text)]')}>{metric.value}</dd>
-                    </div>
-                ))}
-            </dl>
-        )}
+}> = ({ answer }) => (
+    <div className="space-y-3 text-pretty text-[14px] font-normal leading-6 text-[var(--tm-text-primary)]">
+        <p className="whitespace-pre-line">{answer.message}</p>
 
         {answer.breakdown.length > 0 && (
-            <div className="mt-3 space-y-0.5">
-                {answer.breakdown.map((item, index) => (
-                    <div key={item.label + '-' + index} className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-1.5">
-                        <div className="min-w-0">
-                            <div className="truncate text-[13px] font-semibold text-[var(--tm-text-primary)]">{item.label}</div>
-                            <div className="mt-0.5 truncate text-[11px] text-[var(--tm-text-tertiary)]">{item.detail}</div>
-                        </div>
-                        <div className={'text-[13px] font-bold tabular-nums ' + (item.tone === 'negative' ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-text-primary)]')}>{item.value}</div>
-                    </div>
-                ))}
-            </div>
+            <p>
+                具体来看，{answer.breakdown.map(item => (
+                    `${item.label}${item.detail ? `（${item.detail}）` : ''}${item.value ? `：${item.value}` : ''}`
+                )).join('；')}。
+            </p>
         )}
 
         {answer.analysis.length > 0 && (
-            <section className="mt-4" aria-label="人工智能分析">
-                <h2 className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
-                    <Sparkles className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
-                    分析
-                </h2>
-                <div className="mt-2 space-y-2">
-                    {answer.analysis.map(item => (
-                        <p key={item.title} className="text-pretty text-[13px] leading-5 text-[var(--tm-text-secondary)]">
-                            <span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}
-                        </p>
-                    ))}
-                </div>
-            </section>
+            <p>从分析结果看，{answer.analysis.map(item => item.body).join('')}</p>
         )}
 
         {answer.suggestions.length > 0 && (
-            <section className="mt-4" aria-label="人工智能建议">
-                <h2 className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
-                    <ListChecks className="h-4 w-4 text-[var(--tm-assistant-role-text)]" strokeWidth={2.1} aria-hidden="true" />
-                    建议
-                </h2>
-                <div className="mt-2 space-y-2">
-                    {answer.suggestions.map(item => (
-                        <p key={item.title} className="text-pretty text-[13px] leading-5 text-[var(--tm-text-secondary)]">
-                            <span className="font-semibold text-[var(--tm-text-primary)]">{item.title}：</span>{item.body}
-                        </p>
-                    ))}
-                </div>
-            </section>
-        )}
-
-        {answer.evidenceRefs.length > 0 && (
-            <div className="mt-3 flex justify-end">
-                <button
-                    type="button"
-                    onClick={onOpenDetails}
-                    className="flex min-h-[var(--tm-size-touch)] items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                    aria-label={'查看' + answer.evidenceRefs.length + '笔数据依据'}
-                >
-                    查看依据
-                    <span className="font-medium tabular-nums text-[var(--tm-text-tertiary)]">{answer.evidenceRefs.length}笔</span>
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </button>
-            </div>
+            <p>接下来，{answer.suggestions.map(item => item.body).join('')}</p>
         )}
     </div>
-);
-
-const AgentMessageIdentity: React.FC = () => (
-    <img
-        src={ASSETS.MANAGEMENT.AI_HEADTEACHER_ASSISTANT}
-        alt=""
-        className="h-9 w-9 shrink-0 rounded-full object-cover [box-shadow:var(--tm-shadow-control)]"
-        aria-hidden="true"
-    />
 );
 
 const ConversationThread: React.FC<{
     messages: ChatMessage[];
     replying: boolean;
-    followUpQuestions: string[];
-    records: ClassEvaluationRecord[];
     latestAssistantRef: React.RefObject<HTMLDivElement | null>;
-    onOpenDetails: (records: ClassEvaluationRecord[]) => void;
-    onQuestionSelect: (question: string) => void;
 }> = ({
     messages,
     replying,
-    followUpQuestions,
-    records,
     latestAssistantRef,
-    onOpenDetails,
-    onQuestionSelect,
 }) => (
     <section className="mx-4 mt-5 space-y-4" aria-label="班级评价对话" aria-live="polite">
         {messages.map((message, index) => (
             <div
                 key={message.id}
                 ref={message.role === 'assistant' && index === messages.length - 1 ? latestAssistantRef : undefined}
-                className={'flex scroll-mt-2 ' + (message.role === 'user' ? 'justify-end' : 'items-start gap-2.5')}
+                className={'flex scroll-mt-2 ' + (message.role === 'user' ? 'justify-end' : 'items-start')}
             >
                 {message.role === 'user' ? (
                     <div className="max-w-[82%] rounded-[18px] rounded-br-[6px] bg-[var(--tm-assistant-role-primary)] px-4 py-2.5 text-[15px] font-medium leading-6 text-white [box-shadow:var(--tm-shadow-control)]">
                         {message.content}
                     </div>
                 ) : message.answer ? (
-                    <>
-                        <AgentMessageIdentity />
-                        <div className="min-w-0 flex-1">
-                            <div className="mb-1 px-1 text-[11px] font-semibold text-[var(--tm-assistant-role-text)]">班主任助理</div>
-                            <div className="headteacher-agent-glass rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 py-3.5">
-                                <ConversationAnswerContent
-                                    answer={message.answer}
-                                    onOpenDetails={() => onOpenDetails(getRecordsFromAnswer(message.answer!, records))}
-                                />
-                            </div>
-                        </div>
-                    </>
+                    <div className="headteacher-agent-glass min-w-0 flex-1 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 py-3.5">
+                        <ConversationAnswerContent answer={message.answer} />
+                    </div>
                 ) : null}
             </div>
         ))}
 
         {replying && (
-            <div className="flex items-start gap-2.5" role="status">
-                <AgentMessageIdentity />
-                <div className="min-w-0">
-                    <div className="mb-1 px-1 text-[11px] font-semibold text-[var(--tm-assistant-role-text)]">班主任助理</div>
-                    <div className="headteacher-agent-glass flex h-11 items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">
-                        <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
-                        正在分析班级评价数据
-                    </div>
-                </div>
+            <div className="headteacher-agent-glass flex h-11 w-fit items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]" role="status">
+                <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
+                正在分析班级评价数据
             </div>
         )}
 
-        {!replying && followUpQuestions.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pl-[46px] pb-1 no-scrollbar" aria-label="继续提问">
-                {followUpQuestions.map(question => (
-                    <button
-                        key={question}
-                        type="button"
-                        onClick={() => onQuestionSelect(question)}
-                        className="min-h-11 shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-glass)] px-3 text-left text-[12px] font-semibold text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.98] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                    >
-                        {question}
-                    </button>
-                ))}
-            </div>
-        )}
     </section>
 );
 
 type ComposerMode = 'voice' | 'text';
 type VoiceState = 'idle' | 'listening' | 'error';
 
+const SuggestedQuestionList: React.FC<{
+    questions: readonly string[];
+    disabled: boolean;
+    onSelect: (question: string) => void;
+}> = ({ questions, disabled, onSelect }) => (
+    <div
+        className="-mx-3 mb-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 pb-1 pr-12 no-scrollbar"
+        aria-label={`共${questions.length}个快捷问题`}
+    >
+        {questions.map((question, index) => (
+            <button
+                key={question}
+                type="button"
+                disabled={disabled}
+                onClick={() => onSelect(question)}
+                className="min-h-[var(--tm-size-touch)] shrink-0 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-glass)] px-3 text-[12px] font-semibold text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color,color] duration-150 ease-out active:scale-[0.98] active:bg-[var(--tm-assistant-role-soft)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                aria-label={`快捷问题 ${index + 1}/${questions.length}：${question}`}
+            >
+                {question}
+            </button>
+        ))}
+    </div>
+);
+
+const StudentQuestionList: React.FC<{
+    onSelect: (action: typeof STUDENT_EVALUATION_QUESTIONS[number]['action']) => void;
+}> = ({ onSelect }) => (
+    <section className="relative z-10 mx-4 space-y-2" aria-label="学生评价快捷问题">
+        {STUDENT_EVALUATION_QUESTIONS.map(item => (
+            <button
+                key={item.title}
+                type="button"
+                onClick={() => onSelect(item.action)}
+                className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-glass)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.98] active:bg-[var(--tm-role-headteacher-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+            >
+                <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-semibold leading-[22px] text-[var(--tm-text-primary)]">{item.title}</span>
+                    <span className="mt-1 block text-pretty text-[12px] font-normal leading-[18px] text-[var(--tm-text-secondary)]">{item.description}</span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
+            </button>
+        ))}
+    </section>
+);
+
 const QuestionComposer: React.FC<{
     draft: string;
     replying: boolean;
+    suggestedQuestions: readonly string[];
     onDraftChange: (value: string) => void;
     onSubmit: (question: string) => void;
-}> = ({ draft, replying, onDraftChange, onSubmit }) => {
+}> = ({ draft, replying, suggestedQuestions, onDraftChange, onSubmit }) => {
     const [mode, setMode] = useState<ComposerMode>('voice');
     const [voiceState, setVoiceState] = useState<VoiceState>('idle');
     const [voiceFallback, setVoiceFallback] = useState(false);
@@ -483,6 +426,13 @@ const QuestionComposer: React.FC<{
                 onSubmit(draft);
             }}
         >
+            {suggestedQuestions.length > 0 && (
+                <SuggestedQuestionList
+                    questions={suggestedQuestions}
+                    disabled={replying}
+                    onSelect={onSubmit}
+                />
+            )}
             {mode === 'voice' ? (
                 <div className="headteacher-agent-glass relative h-[52px] overflow-hidden rounded-full p-1">
                     <button
@@ -774,23 +724,19 @@ const DimensionTabs: React.FC<{
 const WeekOverviewPanel: React.FC<{
     week: ClassEvaluationWeek;
     snapshot: ClassEvaluationSnapshot;
-    recommendedQuestions: readonly string[];
     expanded: boolean;
     onToggleExpanded: () => void;
     onOpenDimensionDetails: (dimension: string) => void;
     onOpenDetails: () => void;
     onOpenWeekDetail: () => void;
-    onQuestionSelect: (question: string) => void;
 }> = ({
     week,
     snapshot,
-    recommendedQuestions,
     expanded,
     onToggleExpanded,
     onOpenDimensionDetails,
     onOpenDetails,
     onOpenWeekDetail,
-    onQuestionSelect,
 }) => (
     <section className="headteacher-agent-glass relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)]" aria-labelledby="week-data-title">
         <div className="px-4 pt-4">
@@ -858,25 +804,6 @@ const WeekOverviewPanel: React.FC<{
             </div>
         )}
 
-        <div className="mx-3 mb-3 mt-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-assistant-role-soft)] p-3" aria-labelledby="recommended-questions-title">
-            <h3 id="recommended-questions-title" className="flex min-h-7 items-center gap-2 px-1 text-[12px] font-semibold text-[var(--tm-assistant-role-text)]">
-                <Sparkles className="h-4 w-4 shrink-0 text-[var(--tm-assistant-role-primary)]" strokeWidth={2.1} aria-hidden="true" />
-                可以这样问
-            </h3>
-            <div className="mt-2 space-y-2">
-                {recommendedQuestions.map(question => (
-                    <button
-                        key={question}
-                        type="button"
-                        onClick={() => onQuestionSelect(question)}
-                        className="flex min-h-11 w-full items-center gap-2.5 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 py-2 text-left text-[13px] font-medium leading-5 text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.99] active:bg-[var(--tm-role-headteacher-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                    >
-                        <span className="min-w-0 flex-1 whitespace-normal break-words">{question}</span>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" aria-hidden="true" />
-                    </button>
-                ))}
-            </div>
-        </div>
     </section>
 );
 
@@ -1002,6 +929,10 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     homeroomClasses,
     activeClassId,
     onClassChange,
+    showStudentEvaluation,
+    showClassEvaluation,
+    onOpenWeeklyActionAdvice,
+    onOpenEvaluationReview,
 }) => {
     const resolvedClassId = homeroomClasses.some(classInfo => classInfo.id === activeClassId)
         ? activeClassId
@@ -1037,7 +968,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const [weekDetailOpen, setWeekDetailOpen] = useState(false);
     const [detailWeekId, setDetailWeekId] = useState(DEFAULT_CLASS_EVALUATION_WEEK_ID);
     const [showClassPicker, setShowClassPicker] = useState(false);
-    const [detailRecords, setDetailRecords] = useState<ClassEvaluationRecord[] | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const latestAssistantRef = useRef<HTMLDivElement>(null);
     const generationTimersRef = useRef<number[]>([]);
@@ -1052,7 +982,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const closeReport = () => {
         clearGenerationTimers();
         setActiveReport(null);
-        setDetailRecords(null);
         setIsGenerating(false);
         setGenerationStepCount(1);
     };
@@ -1100,7 +1029,13 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         const latestMessage = messages[messages.length - 1];
         if (latestMessage?.role === 'assistant') {
             const frame = window.requestAnimationFrame(() => {
-                latestAssistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const scroller = scrollRef.current;
+                const latestAssistant = latestAssistantRef.current;
+                if (!scroller || !latestAssistant) return;
+                scroller.scrollTo({
+                    top: Math.max(0, latestAssistant.offsetTop - 8),
+                    behavior: 'smooth',
+                });
             });
             return () => window.cancelAnimationFrame(frame);
         }
@@ -1140,7 +1075,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         });
 
         setReportOrigin('overview');
-        setDetailRecords(null);
         if (cachedReport) {
             setActiveReport(cachedReport);
             setIsGenerating(false);
@@ -1193,7 +1127,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const openHistoryReport = (report: SavedClassEvaluationReport) => {
         setReportOrigin('history');
         setActiveReport(report);
-        setDetailRecords(null);
     };
 
     const submitQuestion = (rawQuestion: string) => {
@@ -1323,10 +1256,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                         <AgentGenerationProgress visibleStepCount={generationStepCount} />
                     ) : activeReport ? (
                         <div className="headteacher-agent-glass mt-4 rounded-[var(--tm-radius-card)] px-4 py-4">
-                            <WeeklyReportContent
-                                report={activeReport.report}
-                                onOpenDetails={() => setDetailRecords(activeReport.evidenceRecords)}
-                            />
+                            <WeeklyReportContent report={activeReport.report} />
                         </div>
                     ) : null}
                 </main>
@@ -1340,7 +1270,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                 <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar">
                     <section className="relative h-[148px] overflow-hidden px-5">
                         <div className="relative z-10 max-w-[59%] pt-3" aria-live="polite">
-                            <p className="ai-assistant-typewriter-shine min-h-16 text-pretty text-[17px] font-bold leading-7">
+                            <p className="ai-assistant-typewriter-shine min-h-16 whitespace-pre-line text-pretty text-[17px] font-bold leading-7">
                                 {typedIntro}
                                 {typedIntro.length < assistantIntro.length && (
                                     <span className="ml-0.5 inline-block h-5 w-[1.5px] translate-y-1 animate-pulse rounded-full bg-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
@@ -1354,68 +1284,72 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                         />
                     </section>
 
-                    <WeekOverviewPanel
-                        week={currentWeek}
-                        snapshot={snapshot}
-                        recommendedQuestions={OVERVIEW_RECOMMENDED_QUESTIONS}
-                        expanded={overviewExpanded}
-                        onToggleExpanded={() => {
-                            setOverviewExpanded(current => !current);
-                        }}
-                        onOpenDimensionDetails={(dimension) => {
-                            setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
-                            setDetailInitialDimension(dimension);
-                            setWeekDetailOpen(true);
-                        }}
-                        onOpenDetails={() => {
-                            setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
-                            setDetailInitialDimension(
-                                currentWeek.dimensionRankings.find(item => item.recordCount > 0)?.dimension
-                                ?? currentWeek.dimensionRankings[0]?.dimension
-                                ?? null,
-                            );
-                            setWeekDetailOpen(true);
-                        }}
-                        onOpenWeekDetail={() => {
-                            setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
-                            setDetailInitialDimension(null);
-                            setWeekDetailOpen(true);
-                        }}
-                        onQuestionSelect={submitQuestion}
-                    />
+                    {showClassEvaluation && (
+                        <WeekOverviewPanel
+                            week={currentWeek}
+                            snapshot={snapshot}
+                            expanded={overviewExpanded}
+                            onToggleExpanded={() => {
+                                setOverviewExpanded(current => !current);
+                            }}
+                            onOpenDimensionDetails={(dimension) => {
+                                setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
+                                setDetailInitialDimension(dimension);
+                                setWeekDetailOpen(true);
+                            }}
+                            onOpenDetails={() => {
+                                setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
+                                setDetailInitialDimension(
+                                    currentWeek.dimensionRankings.find(item => item.recordCount > 0)?.dimension
+                                    ?? currentWeek.dimensionRankings[0]?.dimension
+                                    ?? null,
+                                );
+                                setWeekDetailOpen(true);
+                            }}
+                            onOpenWeekDetail={() => {
+                                setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
+                                setDetailInitialDimension(null);
+                                setWeekDetailOpen(true);
+                            }}
+                        />
+                    )}
+
+                    {showStudentEvaluation && (
+                        <div className={showClassEvaluation ? 'mt-4' : '-mt-5'}>
+                            <StudentQuestionList
+                                onSelect={(action) => {
+                                    if (action === 'weekly_action_advice') onOpenWeeklyActionAdvice(resolvedClassId);
+                                    else onOpenEvaluationReview(resolvedClassId);
+                                }}
+                            />
+                        </div>
+                    )}
 
                     {messages.length > 0 && (
                         <ConversationThread
                             messages={messages}
                             replying={isReplying}
-                            followUpQuestions={followUpQuestions}
-                            records={records}
                             latestAssistantRef={latestAssistantRef}
-                            onOpenDetails={setDetailRecords}
-                            onQuestionSelect={submitQuestion}
                         />
                     )}
                 </div>
             )}
 
-            {!activeReport && !isGenerating && !historyOpen && (
-                <QuestionComposer
-                    draft={draft}
-                    replying={isReplying}
-                    onDraftChange={setDraft}
-                    onSubmit={submitQuestion}
-                />
-            )}
+            <footer className="relative z-30 shrink-0 bg-transparent">
+                {showClassEvaluation && !activeReport && !isGenerating && !historyOpen && (
+                    <QuestionComposer
+                        draft={draft}
+                        replying={isReplying}
+                        suggestedQuestions={messages.length > 0 ? followUpQuestions : OVERVIEW_RECOMMENDED_QUESTIONS}
+                        onDraftChange={setDraft}
+                        onSubmit={submitQuestion}
+                    />
+                )}
 
-            <p className="shrink-0 px-4 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1 text-center text-[10px] leading-4 text-[var(--tm-text-disabled)]">内容由AI生成仅供参考。</p>
-
-            <MobileBottomSheet
-                open={detailRecords !== null}
-                title={'扣分明细' + (detailRecords?.length ? ' · ' + detailRecords.length + '笔' : '')}
-                onClose={() => setDetailRecords(null)}
-            >
-                <RecordDetailList records={detailRecords ?? []} />
-            </MobileBottomSheet>
+                {(showStudentEvaluation || showClassEvaluation) && (
+                    <p className="px-4 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1 text-center text-[10px] leading-4 text-[var(--tm-text-disabled)]">内容由AI生成仅供参考。</p>
+                )}
+            </footer>
 
             {showClassPicker && (
                 <HomeroomClassPickerSheet

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import {
   canManagePersonalClasses,
   canViewClassLeaderboard,
+  getHeadteacherAssistantScopes,
   getTeacherClassActionPolicy,
   getTeacherSpaceMenuPolicy,
 } from './teacherSpaceAccess.ts';
@@ -49,13 +50,26 @@ assert.deepEqual(schoolWithTools(['headteacherAssistant']), {
   moreTools: ['suggestionFeedback', 'questionnaire'],
 });
 assert.deepEqual(schoolWithTools(['headteacherAssistantV2']), {
-  managementTools: ['headteacherAssistantV2'],
+  managementTools: ['headteacherAssistant'],
   moreTools: ['suggestionFeedback', 'questionnaire'],
 });
 assert.deepEqual(schoolWithTools(['headteacherAssistant', 'headteacherAssistantV2']), {
-  managementTools: ['headteacherAssistant', 'headteacherAssistantV2'],
+  managementTools: ['headteacherAssistant'],
   moreTools: ['suggestionFeedback', 'questionnaire'],
 });
+
+const assistantScopesFor = (enabledManagementTools) => getHeadteacherAssistantScopes({
+  id: 'school-configured',
+  title: '配置学校',
+  type: 'school',
+  role: 'homeroomTeacher',
+  enabledManagementTools,
+});
+
+assert.deepEqual(assistantScopesFor(['headteacherAssistant']), ['student']);
+assert.deepEqual(assistantScopesFor(['headteacherAssistantV2']), ['class']);
+assert.deepEqual(assistantScopesFor(['headteacherAssistant', 'headteacherAssistantV2']), ['student', 'class']);
+assert.deepEqual(assistantScopesFor([]), []);
 
 const classPolicyFor = ({ type, role, membership = 'school', classId = 'class-1', teaching = [], homeroom = [], deputyHomeroom = [] }) => (
   getTeacherClassActionPolicy({

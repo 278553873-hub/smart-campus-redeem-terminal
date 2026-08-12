@@ -20,6 +20,7 @@ assert.match(appSource, /<div className="relative flex min-h-0 flex-1 flex-col o
 
 assert.match(loginSource, />\s*一键登录\s*<\/button>/, '登录页应把一键登录作为主操作。');
 assert.match(loginSource, />最近登录<[\s\S]*>190\*\*\*\*0000</, '登录页应在最近登录文案下方展示较小字号的脱敏手机号。');
+assert.match(loginSource, /const \[agreed, setAgreed\] = useState\(true\)/, '教师端 Demo 登录页应默认勾选隐私保护指引。');
 assert.match(loginSource, /loginWithRecentAccount[\s\S]*请先阅读并同意隐私保护指引[\s\S]*completeLogin\(\)/, '最近登录应校验协议后直接登录。');
 assert.match(loginSource, /手机号登录\/注册/, '登录页应提供手机号登录或注册。');
 assert.match(loginSource, /header=\{\([\s\S]*aria-label="关闭手机号登录"/, '手机号登录弹窗应隐藏重复标题，仅保留关闭入口。');

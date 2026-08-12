@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertTriangle,
     CalendarDays,
-    Check,
+    ChevronDown,
     ChevronLeft,
     ChevronRight,
 } from 'lucide-react';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
-import MoralEducationScoreDrilldown from '../components/report/MoralEducationScoreDrilldown';
+import ReportPeriodCalendar, { periodTypeLabels } from '../components/report/ReportPeriodCalendar';
 import {
-    TeacherReportBarChart,
+    TeacherReportDonutChart,
     TeacherReportLineChart,
     type TeacherReportChartColor,
 } from '../components/report/TeacherReportChart';
@@ -130,30 +130,63 @@ const ReportTextTabs = ({
     value: string;
     onChange: (id: string) => void;
     ariaLabel: string;
-}) => (
-    <div className="-mx-[var(--tm-report-card-padding)] overflow-x-auto px-[var(--tm-report-card-padding)] no-scrollbar" role="tablist" aria-label={ariaLabel}>
-        <div className="flex min-w-max gap-5">
-            {items.map(item => {
-                const selected = item.id === value;
-                return (
-                    <button
-                        key={item.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={selected}
-                        onClick={() => onChange(item.id)}
-                        className={`relative flex min-h-[var(--tm-size-touch)] shrink-0 items-center text-[length:var(--tm-font-size-compact)] font-semibold transition-colors duration-200 ${selected
-                            ? 'text-[var(--tm-text-primary)]'
-                            : 'text-[var(--tm-text-secondary)]'}`}
-                    >
-                        {item.name}
-                        {selected && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[var(--tm-brand-primary)]" />}
-                    </button>
-                );
-            })}
+}) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+
+    const updateScrollHint = () => {
+        const element = scrollRef.current;
+        if (!element) return;
+        setCanScrollRight(element.scrollLeft + element.clientWidth < element.scrollWidth - 2);
+    };
+
+    useEffect(() => {
+        updateScrollHint();
+        window.addEventListener('resize', updateScrollHint);
+        return () => window.removeEventListener('resize', updateScrollHint);
+    }, [items]);
+
+    return (
+        <div className="relative -mx-[var(--tm-report-card-padding)]">
+            <div
+                ref={scrollRef}
+                className="overflow-x-auto pl-[var(--tm-report-card-padding)] pr-[calc(var(--tm-report-card-padding)+var(--tm-report-scroll-hint-width))] no-scrollbar"
+                role="tablist"
+                aria-label={ariaLabel}
+                onScroll={updateScrollHint}
+            >
+                <div className="flex min-w-max gap-6">
+                    {items.map(item => {
+                        const selected = item.id === value;
+                        return (
+                            <button
+                                key={item.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={selected}
+                                onClick={() => onChange(item.id)}
+                                className={`relative flex min-h-[var(--tm-size-touch)] shrink-0 items-center text-[15px] font-semibold transition-[color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] ${selected
+                                    ? 'text-[var(--tm-text-primary)]'
+                                    : 'text-[var(--tm-text-secondary)]'}`}
+                            >
+                                {item.name}
+                                {selected && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[3px] rounded-full bg-[var(--tm-brand-primary)]" />}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+            {canScrollRight && (
+                <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 right-0 flex w-[var(--tm-report-scroll-hint-width)] items-center justify-end bg-gradient-to-l from-[var(--tm-bg-surface)] via-[var(--tm-bg-surface)]/95 to-transparent pr-1 text-[var(--tm-text-secondary)]"
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </span>
+            )}
         </div>
-    </div>
-);
+    );
+};
 
 const ReportSegmentTabs = ({
     items,
@@ -166,8 +199,8 @@ const ReportSegmentTabs = ({
     onChange: (id: string) => void;
     ariaLabel: string;
 }) => (
-    <div className="-mx-[var(--tm-report-card-padding)] overflow-x-auto px-[var(--tm-report-card-padding)] py-1 no-scrollbar" role="tablist" aria-label={ariaLabel}>
-        <div className="flex min-w-max gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
+    <div className="overflow-x-auto no-scrollbar" role="tablist" aria-label={ariaLabel}>
+        <div className="flex min-w-max gap-[var(--tm-space-2)]">
             {items.map(item => {
                 const selected = item.id === value;
                 return (
@@ -177,10 +210,10 @@ const ReportSegmentTabs = ({
                         role="tab"
                         aria-selected={selected}
                         onClick={() => onChange(item.id)}
-                        className="flex min-h-10 shrink-0 items-center transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96]"
+                        className="flex min-h-[var(--tm-size-touch)] shrink-0 items-center transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96]"
                     >
-                        <span className={`flex h-8 items-center rounded-[calc(var(--tm-radius-control)-4px)] px-3 text-[length:var(--tm-font-size-compact)] font-semibold transition-[color,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] ${selected
-                            ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]'
+                        <span className={`flex h-8 items-center rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-medium transition-[color,background-color] [transition-duration:var(--tm-duration-fast)] ${selected
+                            ? 'bg-[var(--tm-bg-surface-muted)] font-semibold text-[var(--tm-text-primary)]'
                             : 'text-[var(--tm-text-secondary)]'}`}>
                             {item.name}
                         </span>
@@ -228,11 +261,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
     const [trendMetric, setTrendMetric] = useState<TrendMetric>('averageScore');
     const [isPeriodSheetOpen, setIsPeriodSheetOpen] = useState(false);
     const [isRankingSheetOpen, setIsRankingSheetOpen] = useState(false);
-    const [isScoreDrilldownOpen, setIsScoreDrilldownOpen] = useState(false);
-    const [scoreDrilldownRootId, setScoreDrilldownRootId] = useState('');
-    const [lastScoreRootId, setLastScoreRootId] = useState('');
     const [rankingGradeId, setRankingGradeId] = useState('all');
-    const [scoreGradeId, setScoreGradeId] = useState('all');
     const [problemGradeId, setProblemGradeId] = useState('all');
     const [problemDimensionId, setProblemDimensionId] = useState('');
     const [problemCategoryId, setProblemCategoryId] = useState('');
@@ -290,10 +319,6 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         if (rankingGradeId === 'all') return snapshot.classRanking;
         return snapshot.grades.find(grade => grade.id === rankingGradeId)?.classes ?? [];
     }, [rankingGradeId, snapshot]);
-    const scoreGradeReport = useMemo(() => (
-        snapshot?.gradeReports.find(report => report.gradeId === scoreGradeId)
-        ?? snapshot?.gradeReports[0]
-    ), [scoreGradeId, snapshot]);
     const problemGradeReport = useMemo(() => (
         snapshot?.gradeReports.find(report => report.gradeId === problemGradeId)
         ?? snapshot?.gradeReports[0]
@@ -314,14 +339,10 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         setSelectedPeriodId('');
         setSnapshot(null);
         setRankingGradeId('all');
-        setScoreGradeId('all');
         setProblemGradeId('all');
         setProblemDimensionId('');
         setProblemCategoryId('');
         setIsPeriodSheetOpen(false);
-        setIsScoreDrilldownOpen(false);
-        setScoreDrilldownRootId('');
-        setLastScoreRootId('');
     };
 
     const changeProblemGrade = (gradeId: string) => {
@@ -335,19 +356,14 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         setProblemCategoryId('');
     };
 
+    const changeProblemDimensionByName = (dimensionName: string) => {
+        const dimension = problemGradeReport?.problemDimensions.find(item => item.name === dimensionName);
+        if (dimension) changeProblemDimension(dimension.id);
+    };
+
     const changePeriod = (offset: number) => {
         const nextPeriod = periodOptions[selectedPeriodIndex + offset];
         if (nextPeriod) setSelectedPeriodId(nextPeriod.id);
-    };
-
-    const openScoreDrilldown = (dimensionName?: string) => {
-        const selectedRoot = scoreGradeReport?.scoreTree.find(root => root.name === dimensionName)
-            ?? scoreGradeReport?.scoreTree.find(root => root.id === lastScoreRootId)
-            ?? scoreGradeReport?.scoreTree[0];
-        if (!selectedRoot) return;
-        setScoreDrilldownRootId(selectedRoot.id);
-        setLastScoreRootId(selectedRoot.id);
-        setIsScoreDrilldownOpen(true);
     };
 
     return (
@@ -367,26 +383,26 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                 >
                     <ChevronLeft className="h-5 w-5" />
                 </button>
+                <h1 className="pointer-events-none absolute inset-0 flex items-center justify-center text-[17px] font-semibold text-[var(--tm-text-primary)]">班级评价报表</h1>
             </header>
 
             <div className="relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar">
                 <div className="sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)] pb-3 pt-1 [box-shadow:0_8px_20px_-20px_var(--tm-shadow-neutral-color)]">
-                    <div className="grid h-10 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="group" aria-label="统计周期类型">
-                        {periodTypeOptions.map(option => (
-                            <button
-                                key={option.key}
-                                type="button"
-                                aria-pressed={periodType === option.key}
-                                onClick={() => changePeriodType(option.key)}
-                                className={`rounded-[var(--tm-radius-control)] text-[13px] font-semibold transition-[color,background-color,box-shadow] duration-200 ${periodType === option.key
-                                    ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]'
-                                    : 'text-[var(--tm-text-secondary)]'}`}
+                    <div className="grid h-11 grid-cols-[80px_44px_minmax(0,1fr)_44px] items-center">
+                        <label className="relative flex h-11 min-w-0 items-center">
+                            <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 inset-y-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" />
+                            <select
+                                aria-label="统计周期类型"
+                                value={periodType}
+                                onChange={event => changePeriodType(event.target.value as MoralEducationPeriodType)}
+                                className="relative z-10 h-full w-full appearance-none bg-transparent pl-3 pr-7 text-[13px] font-semibold text-[var(--tm-text-primary)] outline-none"
                             >
-                                {option.label}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="mt-1 grid h-11 grid-cols-[44px_minmax(0,1fr)_44px] items-center">
+                                {periodTypeOptions.map(option => (
+                                    <option key={option.key} value={option.key}>{option.label}</option>
+                                ))}
+                            </select>
+                            <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 z-10 h-4 w-4 text-[var(--tm-text-secondary)]" />
+                        </label>
                         <button
                             type="button"
                             onClick={() => changePeriod(-1)}
@@ -400,7 +416,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                             type="button"
                             onClick={() => setIsPeriodSheetOpen(true)}
                             disabled={periodOptions.length === 0}
-                            className="mx-auto flex min-h-11 min-w-0 max-w-full items-center justify-center gap-2 px-2 text-[14px] font-semibold tabular-nums text-[var(--tm-text-primary)]"
+                            className="mx-auto flex min-h-11 min-w-0 max-w-full items-center justify-center gap-1.5 px-1 text-[13px] font-semibold tabular-nums text-[var(--tm-text-primary)]"
                         >
                             <CalendarDays className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" />
                             <span className="truncate">{selectedPeriod?.label ?? '加载中'}</span>
@@ -494,47 +510,6 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                 </button>
                             </section>
 
-                            <section className={reportCardClassName} aria-label="一级指标得分">
-                                <SectionHeader
-                                    title="指标得分"
-                                    action={(
-                                        <button
-                                            type="button"
-                                            onClick={() => openScoreDrilldown()}
-                                            className="-mr-2 flex min-h-11 items-center gap-0.5 px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96]"
-                                        >
-                                            查看明细
-                                            <ChevronRight aria-hidden="true" className="h-4 w-4" />
-                                        </button>
-                                    )}
-                                />
-                                <GradeTabs
-                                    grades={snapshot.grades}
-                                    value={scoreGradeId}
-                                    onChange={setScoreGradeId}
-                                    ariaLabel="指标得分年级筛选"
-                                />
-                                {scoreGradeReport && (
-                                    <TeacherReportBarChart
-                                        ariaLabel={scoreGradeReport.dimensions.map(item => `${item.name}${item.averageScore}分`).join('，')}
-                                        categories={scoreGradeReport.dimensions.map(item => item.name)}
-                                        series={[{
-                                            name: '平均得分',
-                                            values: scoreGradeReport.dimensions.map(item => item.averageScore),
-                                            color: 'data',
-                                        }]}
-                                        optionKey={`${snapshot.period.id}-${scoreGradeReport.gradeId}-indicator-score`}
-                                        categoryColors={scoreGradeReport.dimensions.map((_, index) => indicatorChartColors[index % indicatorChartColors.length])}
-                                        showLegend={false}
-                                        showValueAxis={false}
-                                        valueLabelSuffix="分"
-                                        chartTop={28}
-                                        className="mt-[var(--tm-space-4)] h-56"
-                                        onCategorySelect={openScoreDrilldown}
-                                    />
-                                )}
-                            </section>
-
                             <section className={reportCardClassName} aria-label="问题分布">
                                 <SectionHeader title="问题分布" />
                                 <GradeTabs
@@ -545,6 +520,23 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                 />
                                 {problemGradeReport && selectedProblemDimension && selectedProblemCategory && (
                                     <div className="mt-[var(--tm-space-2)]">
+                                        <TeacherReportDonutChart
+                                            ariaLabel={problemGradeReport.problemDimensions.map(item => `${item.name}扣${item.deduction}分`).join('，')}
+                                            data={problemGradeReport.problemDimensions.map(item => {
+                                                const dimensionIndex = problemGradeReport.dimensions.findIndex(dimension => dimension.id === item.id);
+                                                return {
+                                                    name: item.name,
+                                                    value: item.deduction,
+                                                    color: indicatorChartColors[dimensionIndex >= 0 ? dimensionIndex % indicatorChartColors.length : 0],
+                                                };
+                                            })}
+                                            optionKey={`${snapshot.period.id}-${problemGradeReport.gradeId}-problem-distribution`}
+                                            seriesName="问题分布"
+                                            valueSuffix="分"
+                                            selectedName={selectedProblemDimension.name}
+                                            className="h-64"
+                                            onCategorySelect={changeProblemDimensionByName}
+                                        />
                                         <ReportTextTabs
                                             items={problemGradeReport.problemDimensions}
                                             value={selectedProblemDimension.id}
@@ -556,26 +548,26 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                                 items={selectedProblemDimension.categories}
                                                 value={selectedProblemCategory.id}
                                                 onChange={setProblemCategoryId}
-                                                ariaLabel="问题分布二级指标筛选"
+                                                ariaLabel={`${selectedProblemDimension.name}下的二级指标筛选`}
                                             />
-                                        </div>
-                                        <div className="mt-[var(--tm-space-4)]" role="table" aria-label={`${selectedProblemCategory.name}三级指标扣分明细`}>
-                                            <div className="grid min-h-8 grid-cols-[minmax(0,1fr)_72px_64px] items-center gap-2 text-[11px] text-[var(--tm-text-secondary)]" role="row">
-                                                <span role="columnheader">三级指标</span>
-                                                <span className="text-right" role="columnheader">总扣分</span>
-                                                <span className="text-right" role="columnheader">扣分笔数</span>
-                                            </div>
-                                            {selectedProblemCategory.details.map(detail => (
-                                                <div
-                                                    key={detail.id}
-                                                    className="grid min-h-[52px] grid-cols-[minmax(0,1fr)_72px_64px] items-center gap-2 border-t border-[var(--tm-border-subtle)]"
-                                                    role="row"
-                                                >
-                                                    <span className="min-w-0 text-[14px] font-semibold text-[var(--tm-text-primary)]" role="cell">{detail.name}</span>
-                                                    <strong className="text-right text-[14px] font-bold tabular-nums text-[var(--tm-chart-negative-text)]" role="cell">-{detail.deduction}分</strong>
-                                                    <span className="text-right text-[13px] font-semibold tabular-nums text-[var(--tm-text-primary)]" role="cell">{detail.recordCount}笔</span>
+                                            <div className="mt-[var(--tm-space-3)]" role="table" aria-label={`${selectedProblemDimension.name}下${selectedProblemCategory.name}三级指标扣分明细`}>
+                                                <div className="grid min-h-9 grid-cols-[minmax(0,1fr)_72px_64px] items-center gap-2 text-[11px] text-[var(--tm-text-secondary)]" role="row">
+                                                    <span role="columnheader">指标名称</span>
+                                                    <span className="text-right" role="columnheader">总扣分</span>
+                                                    <span className="text-right" role="columnheader">扣分笔数</span>
                                                 </div>
-                                            ))}
+                                                {selectedProblemCategory.details.map(detail => (
+                                                    <div
+                                                        key={detail.id}
+                                                        className="grid min-h-[52px] grid-cols-[minmax(0,1fr)_72px_64px] items-center gap-2 border-t border-[var(--tm-border-subtle)]"
+                                                        role="row"
+                                                    >
+                                                        <span className="min-w-0 text-[14px] font-semibold text-[var(--tm-text-primary)]" role="cell">{detail.name}</span>
+                                                        <strong className="text-right text-[14px] font-bold tabular-nums text-[var(--tm-chart-negative-text)]" role="cell">-{detail.deduction}分</strong>
+                                                        <span className="text-right text-[13px] font-semibold tabular-nums text-[var(--tm-text-primary)]" role="cell">{detail.recordCount}笔</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -623,29 +615,17 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
 
             <MobileBottomSheet
                 open={isPeriodSheetOpen}
-                title={`选择${periodTypeNames[periodType]}`}
+                title={`选择${periodTypeLabels[periodType]}`}
                 onClose={() => setIsPeriodSheetOpen(false)}
             >
-                <div className="pb-2">
-                    {[...periodOptions].reverse().map(period => {
-                        const selected = period.id === selectedPeriodId;
-                        return (
-                            <button
-                                key={period.id}
-                                type="button"
-                                onClick={() => {
-                                    setSelectedPeriodId(period.id);
-                                    setIsPeriodSheetOpen(false);
-                                }}
-                                className="flex min-h-[56px] w-full items-center justify-between border-b border-[var(--tm-border-subtle)] text-left last:border-b-0"
-                                aria-pressed={selected}
-                            >
-                                <span className={`text-[14px] tabular-nums ${selected ? 'font-semibold text-[var(--tm-brand-primary)]' : 'font-medium text-[var(--tm-text-primary)]'}`}>{period.label}</span>
-                                {selected && <Check className="h-5 w-5 shrink-0 text-[var(--tm-brand-primary)]" />}
-                            </button>
-                        );
-                    })}
-                </div>
+                <ReportPeriodCalendar
+                    periods={periodOptions}
+                    selectedPeriodId={selectedPeriodId}
+                    onSelect={periodId => {
+                        setSelectedPeriodId(periodId);
+                        setIsPeriodSheetOpen(false);
+                    }}
+                />
             </MobileBottomSheet>
 
             <MobileBottomSheet
@@ -670,13 +650,6 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                 )}
             </MobileBottomSheet>
 
-            <MoralEducationScoreDrilldown
-                open={isScoreDrilldownOpen}
-                roots={scoreGradeReport?.scoreTree ?? []}
-                initialRootId={scoreDrilldownRootId}
-                onClose={() => setIsScoreDrilldownOpen(false)}
-                onRootChange={setLastScoreRootId}
-            />
         </div>
     );
 };

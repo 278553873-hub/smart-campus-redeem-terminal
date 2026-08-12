@@ -3,9 +3,9 @@ import { Student, ScoreItem, GrowthReportItem, CampusCoinDetail } from '../types
 import { ASSETS } from '../assets/images';
 import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
-    AwardIcon, GrowthIcon
+    GrowthIcon
 } from '../components/Icons';
-import { AlertTriangle, BadgeCheck, Camera, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Pencil, School, X } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Camera, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Pencil, X } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
@@ -376,7 +376,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-3 px-4 text-left active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
-                        <AwardIcon className="h-4 w-4 text-[var(--tm-brand-reward)]" />
                         本学期五育积分
                         <span className="rounded-full bg-[var(--tm-status-positive-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--tm-status-positive-strong)]">实时</span>
                     </h3>
@@ -568,7 +567,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                 </div>
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                <span className="flex items-center gap-1 rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]"><School className="h-3 w-3" />{formatCompactClassName(student.class)}</span>
+                                <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">{formatCompactClassName(student.class)}</span>
                                 <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">ID: {student.id}</span>
                                 <span className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]'}`}>
                                     <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />

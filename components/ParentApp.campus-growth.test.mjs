@@ -288,7 +288,8 @@ for (const forbiddenTab of ["key: 'bank', label: '银行'"]) {
 
 for (const required of [
   '<ParentApp showPhoneShell={showParentPhoneShell} />',
-  "currentApp === 'admin' || currentApp === 'parent'",
+  "currentApp === 'admin'",
+  "showPhoneShellToggle && currentApp === 'parent'",
   '家长-手机端',
 ]) {
   requireText(appSource, required, `AppSwitcher 家长端入口边界被破坏：${required}`);

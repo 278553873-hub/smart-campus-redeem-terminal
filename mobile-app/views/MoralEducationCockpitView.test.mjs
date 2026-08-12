@@ -11,7 +11,7 @@ const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const chartSource = fs.readFileSync(new URL('../components/report/TeacherReportChart.tsx', import.meta.url), 'utf8');
-const drilldownSource = fs.readFileSync(new URL('../components/report/MoralEducationScoreDrilldown.tsx', import.meta.url), 'utf8');
+const periodCalendarSource = fs.readFileSync(new URL('../components/report/ReportPeriodCalendar.tsx', import.meta.url), 'utf8');
 const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 
 for (const required of [
@@ -40,7 +40,7 @@ for (const required of [
   assert.ok(appSource.includes(required), `应用路由应完整接入班级评价报表，缺少：${required}`);
 }
 
-const sectionTitles = ['数据概况', '班级排名', '指标得分', '问题分布', '周期趋势'];
+const sectionTitles = ['数据概况', '班级排名', '问题分布', '周期趋势'];
 let previousIndex = -1;
 for (const title of sectionTitles) {
   const currentIndex = viewSource.indexOf(`title="${title}"`);
@@ -50,9 +50,9 @@ for (const title of sectionTitles) {
 
 for (const required of [
   'getMoralEducationCockpitPeriods',
-  'TeacherReportBarChart',
   'TeacherReportLineChart',
   '<MobileBottomSheet',
+  '<ReportPeriodCalendar',
   "{ key: 'week', label: '按周' }",
   "{ key: 'month', label: '按月' }",
   "{ key: 'term', label: '按学期' }",
@@ -61,30 +61,60 @@ for (const required of [
   '查看完整排名',
   'title="完整班级排名"',
   'snapshot.summary.lowestScore',
-  'ariaLabel="指标得分年级筛选"',
+  '<h1 className="pointer-events-none absolute inset-0 flex items-center justify-center text-[17px] font-semibold text-[var(--tm-text-primary)]">班级评价报表</h1>',
+  '<select',
+  'aria-label="统计周期类型"',
+  'grid-cols-[80px_44px_minmax(0,1fr)_44px]',
   'ariaLabel="问题分布年级筛选"',
+  '<TeacherReportDonutChart',
+  'seriesName="问题分布"',
+  'selectedName={selectedProblemDimension.name}',
+  'onCategorySelect={changeProblemDimensionByName}',
   'ariaLabel="问题分布一级指标筛选"',
-  'ariaLabel="问题分布二级指标筛选"',
+  'ariaLabel={`${selectedProblemDimension.name}下的二级指标筛选`}',
+  'h-[3px]',
+  'canScrollRight',
+  'onScroll={updateScrollHint}',
+  'var(--tm-report-scroll-hint-width)',
+  '>指标名称</span>',
   "name: '全校'",
   '<ReportSegmentTabs',
-  '查看明细',
-  '<MoralEducationScoreDrilldown',
-  'onCategorySelect={openScoreDrilldown}',
-  'chartTop={28}',
   '扣分笔数',
 ]) {
   assert.ok(viewSource.includes(required), `驾驶舱应提供多周期筛选、排名和图表展示，缺少：${required}`);
 }
 
 assert.ok(!viewSource.includes('AI角标'), '班级评价报表不得展示人工智能角标。');
-assert.equal(viewSource.includes('<h1'), false, '顶部不应保留页面标题。');
+assert.equal((viewSource.match(/<h1/g) ?? []).length, 1, '班级评价报表顶部应只展示一个页面标题。');
 assert.ok(chartSource.includes('charts.LineChart'), '通用教师报告图表应注册折线图。');
 assert.ok(chartSource.includes('export const TeacherReportLineChart'), '通用教师报告图表应导出折线图组件。');
 assert.ok(chartSource.includes('valueSuffix = \'条\''), '环图应保持默认条数单位，兼容既有报告。');
 assert.ok(chartSource.includes('seriesName = \'五育事件\''), '环图应保持默认系列名称，兼容既有报告。');
-assert.ok(chartSource.includes('chartTop?: number'), '通用柱状图应允许业务层设置柱顶安全区。');
-assert.ok(drilldownSource.includes('title="指标得分明细"'), '指标得分应使用独立的下钻抽屉。');
-assert.ok(drilldownSource.includes('onCategorySelect={canDrillDown ? selectCategory : undefined}'), '二级指标应允许点击进入三级，三级应停止下钻。');
+assert.equal(viewSource.includes('title="指标得分"'), false, '指标得分板块当前应从页面隐藏。');
+assert.equal(viewSource.includes('ml-[var(--tm-space-3)]'), false, '问题分布二、三级内容应与一级指标左对齐。');
+for (const required of ['title={`选择${periodTypeLabels[periodType]}`}', 'periods={periodOptions}', 'setIsPeriodSheetOpen(false)']) {
+  assert.ok(viewSource.includes(required), `周期抽屉应按当前粒度选择周、月份或学期，缺少：${required}`);
+}
+for (const required of [
+  "week: '周'",
+  "month: '月份'",
+  "term: '学期'",
+  'previousLabel="上个月"',
+  'nextLabel="下个月"',
+  'aria-label="周期范围"',
+  'formatWeekRange(period)',
+  'Array.from({ length: 12 }',
+  'aria-label="月份"',
+  "['第一学期', '第二学期']",
+  'aria-label="学期"',
+]) {
+  assert.ok(periodCalendarSource.includes(required), `报表周期选择器应分别展示周范围、月份和学期按钮，缺少：${required}`);
+}
+for (const removedCalendarBehavior of ['const weekDays', 'calendarCells', 'dateValue >= item.startDate', '无数据日期']) {
+  assert.equal(periodCalendarSource.includes(removedCalendarBehavior), false, `周期选择器不应继续使用逐日日历交互：${removedCalendarBehavior}`);
+}
+assert.equal(periodCalendarSource.includes('absolute bottom-2 h-1.5 w-1.5'), false, '月份按钮不应使用红点重复表达有数据状态。');
+assert.equal(viewSource.includes('[...periodOptions].reverse().map'), false, '周期抽屉不应继续罗列周期文本。');
 for (const requiredToken of [
   "'--tm-report-grade-pill-height': '30px'",
   "'--tm-report-grade-pill-inline': '10px'",
@@ -200,7 +230,7 @@ for (const unsupportedMetric of ['平均得分率', '检查完成率', '待整�
 for (const unsupportedContent of ['本周考核', '年级排名', '高频问题', 'moralEducationCockpitPeriods', 'type="date"', '>自定义<']) {
   assert.equal(viewSource.includes(unsupportedContent), false, `驾驶舱不应保留旧的信息结构：${unsupportedContent}`);
 }
-for (const removedContent of ['TeacherReportDonutChart', 'title="扣分维度"', 'title="扣分项目"', 'seriesName="扣分维度"', 'snapshot.problems']) {
+for (const removedContent of ['title="扣分维度"', 'title="扣分项目"', 'seriesName="扣分维度"', 'snapshot.problems']) {
   assert.equal(viewSource.includes(removedContent), false, `问题分布合并后不应保留旧扣分板块：${removedContent}`);
 }
 assert.equal(/第\d+周/.test(viewSource), false, '驾驶舱页面不得显示推算的第X周。');

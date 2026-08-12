@@ -9,6 +9,20 @@ import { ASSETS } from '../assets/images';
 import { Loader2, Sparkles } from 'lucide-react'; // Import directly if needed for icons not in components
 import voiceOnboardingArrow from '../assets/resources/teacher-mobile-icons/by-page/02-记录/记录首页/voice-onboarding-arrow.svg';
 
+const STUDENT_RECORD_GUIDE_EXAMPLES = [
+    '张三同学今天主动帮助同学解决问题，值得表扬。',
+    '2025级1班全体同学积极参加体育锻炼。',
+    '2025级1班的1号，2号，3号，4号，7号同学在语文课堂上积极举手发言。',
+    '李四和王五同学主动帮助老师搬桌椅',
+] as const;
+
+const CLASS_RECORD_GUIDE_EXAMPLES = [
+    '3年级2班，有6个学生没有佩戴红领巾',
+    '2年级6班，放学时班级队伍不整齐',
+    '4年级3班，课间有3个学生在楼道追逐打闹',
+    '5年级1班，晨检时发现教室桌椅摆放不整齐',
+] as const;
+
 interface ClassRecordLogViewProps {
     classNameStr?: string;
     onBack: () => void;
@@ -484,13 +498,32 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         {visibleLogs.map(log => renderLogItem(log))}
                     </div>
                 ) : showFirstRecordGuide ? (
-                    <div className="relative flex min-h-full flex-col items-center pt-[22vh] text-center">
-                        <p className="text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">试试通过语音描述一下内容</p>
-                        <p className="mt-[var(--tm-space-2)] max-w-[300px] text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">
-                            {activeTab === 'student'
-                                ? '例如：张三同学今天主动帮助同学解决问题，值得表扬。'
-                                : '例如：2025级1班全体同学积极参加体育锻炼。'}
-                        </p>
+                    <div className="relative flex min-h-full flex-col items-center pt-[var(--tm-space-4)] text-center">
+                        {activeTab === 'student' ? (
+                            <section className="w-full text-left" aria-labelledby="student-record-guide-title">
+                                <p id="student-record-guide-title" className="px-[var(--tm-space-1)] text-center text-[length:var(--tm-font-size-card-title)] font-semibold leading-6 text-[var(--tm-text-primary)]">试试通过语音描述一下内容：</p>
+                                <ol className="mt-[var(--tm-space-2)] px-[var(--tm-space-1)]">
+                                    {STUDENT_RECORD_GUIDE_EXAMPLES.map((example, index) => (
+                                        <li key={example} className="flex items-start gap-[var(--tm-space-3)] py-[var(--tm-space-2)]">
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--tm-record-student-soft)] text-[length:var(--tm-font-size-meta)] font-bold tabular-nums text-[var(--tm-record-student-text)]">{index + 1}</span>
+                                            <span className="text-pretty pt-0.5 text-[length:var(--tm-font-size-body)] font-normal leading-6 text-[var(--tm-text-secondary)]">{example}</span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </section>
+                        ) : (
+                            <section className="w-full text-left" aria-labelledby="class-record-guide-title">
+                                <p id="class-record-guide-title" className="px-[var(--tm-space-1)] text-center text-[length:var(--tm-font-size-card-title)] font-semibold leading-6 text-[var(--tm-text-primary)]">试试通过语音描述一下内容：</p>
+                                <ol className="mt-[var(--tm-space-2)] px-[var(--tm-space-1)]">
+                                    {CLASS_RECORD_GUIDE_EXAMPLES.map((example, index) => (
+                                        <li key={example} className="flex items-start gap-[var(--tm-space-3)] py-[var(--tm-space-2)]">
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--tm-record-class-soft)] text-[length:var(--tm-font-size-meta)] font-bold tabular-nums text-[var(--tm-record-class-text)]">{index + 1}</span>
+                                            <span className="text-pretty pt-0.5 text-[length:var(--tm-font-size-body)] font-normal leading-6 text-[var(--tm-text-secondary)]">{example}</span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </section>
+                        )}
                         <img
                             src={voiceOnboardingArrow}
                             alt=""

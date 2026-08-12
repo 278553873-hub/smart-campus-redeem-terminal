@@ -5,6 +5,7 @@ const viewSource = fs.readFileSync(new URL('./AiHeadteacherAssistantV2View.tsx',
 const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
+const unifiedPrdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理.md', import.meta.url), 'utf8');
 
 const requireText = (source, text, message) => {
   assert.ok(source.includes(text), message);
@@ -12,28 +13,60 @@ const requireText = (source, text, message) => {
 
 requireText(accessSource, "| 'headteacherAssistantV2'", '权限类型应包含 V2 能力。');
 requireText(accessSource, 'space.enabledManagementTools', '菜单必须优先读取后台明确返回的能力列表。');
+requireText(accessSource, "export type HeadteacherAssistantScope = 'student' | 'class';", '统一助理应区分学生评价和班级评价能力范围。');
+requireText(accessSource, 'getHeadteacherAssistantScopes', '统一助理应从学校配置解析能力范围。');
 
-requireText(meSource, "id: 'headteacherAssistant'", '现有班主任助理入口必须保留。');
-requireText(meSource, "id: 'headteacherAssistantV2'", '管理工具应增加班主任助理 V2。');
-requireText(meSource, "title: '班主任助理 V2'", 'V2 入口名称应明确区分版本。');
+requireText(meSource, "id: 'headteacherAssistant'", '管理工具应保留统一班主任助理入口。');
+assert.ok(!meSource.includes("id: 'headteacherAssistantV2'"), '管理工具不应再显示第二个班主任助理入口。');
+assert.ok(!meSource.includes("title: '班主任助理 V2'"), '用户界面不应再显示 V2 产品名称。');
 assert.equal(
   (meSource.match(/imageSrc: ASSETS\.MANAGEMENT\.AI_HEADTEACHER_ASSISTANT/g) ?? []).length,
-  2,
-  'V1 与 V2 应复用班主任助理图标。',
+  1,
+  '我的页只能展示一个班主任助理入口。',
 );
-requireText(meSource, 'onOpenAiHeadteacherAssistantV2', '我的页应暴露 V2 导航回调。');
+assert.ok(!meSource.includes('onOpenAiHeadteacherAssistantV2'), '我的页不应再暴露独立 V2 导航回调。');
 
-requireText(appSource, "import AiHeadteacherAssistantV2View from './views/AiHeadteacherAssistantV2View';", 'App 应导入 V2 页面。');
-requireText(appSource, "'ai_headteacher_assistant_v2'", 'App 页面状态应包含 V2。');
-requireText(appSource, "onOpenAiHeadteacherAssistantV2={() => navigateTo('ai_headteacher_assistant_v2')}", 'V2 入口应接入独立导航。');
-requireText(appSource, '<AiHeadteacherAssistantV2View', 'App 应渲染 V2 页面。');
-requireText(appSource, 'activeClassId={assistantV2ClassId}', 'V2 应使用独立班级状态。');
+requireText(appSource, "import AiHeadteacherAssistantV2View from './views/AiHeadteacherAssistantV2View';", 'App 应复用现有对话页面实现统一助理。');
+requireText(appSource, "onOpenAiHeadteacherAssistant={() => navigateTo('ai_headteacher_assistant')}", '统一入口应进入班主任助理页面。');
+requireText(appSource, "currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2'", '旧 V2 路由应仅作为统一页面兼容别名。');
+requireText(appSource, 'const isHeadteacherAssistantView =', '统一助理的新旧兼容路由应共用页面能力判定。');
+requireText(appSource, "'archive_design'].includes(currentView) || isHeadteacherAssistantView", '统一助理应接管页面滚动并占满剩余屏幕。');
+requireText(appSource, "showStudentEvaluation={headteacherAssistantScopes.includes('student')}", '统一页面应按学生评价能力组合内容。');
+requireText(appSource, "showClassEvaluation={headteacherAssistantScopes.includes('class')}", '统一页面应按班级评价能力组合内容。');
+assert.ok(!appSource.includes('onOpenAiHeadteacherAssistantV2={()'), 'App 不应再生成独立 V2 菜单导航。');
 
-requireText(viewSource, '<AssistantSubpageHeader', 'V2 页面应使用公共子页标题栏。');
+for (const rule of ['仅学生评价', '仅班级评价', '学生评价和班级评价', '不显示班主任助理入口']) {
+  requireText(unifiedPrdSource, rule, `统一 PRD 应覆盖规则：${rule}`);
+}
+
+requireText(viewSource, '<AssistantSubpageHeader', '统一页面应使用公共子页标题栏。');
 requireText(viewSource, 'centerContent={<ClassSwitchButton', '班级切换应放在标题栏中。');
 assert.ok(!viewSource.includes('AssistantSubpageHeader title='), 'V2 标题栏不应继续显示页面名称。');
 requireText(viewSource, '<HomeroomClassPickerSheet', 'V2 应复用带班班级选择组件。');
-requireText(viewSource, '<MobileBottomSheet', '扣分明细应使用公共底部抽屉渐进披露。');
+assert.ok(!viewSource.includes('<MobileBottomSheet'), '班主任助理 V2 不应提供依据明细抽屉。');
+for (const title of ['本周班级行动建议', '我的评价复盘']) {
+  requireText(viewSource, title, `统一页面应提供学生评价高层级能力：${title}`);
+}
+for (const description of [
+  '综合上周评价，分析学生表现、班级共性与评价信号，给出本周关注重点和行动建议。',
+  '复盘上月记录，分析关注对象、评价视角、指标使用和表达方式，发现盲区与改进方向。',
+]) {
+  requireText(viewSource, description, `学生评价能力应展示完整概括：${description}`);
+}
+requireText(viewSource, 'aria-label="学生评价快捷问题"', '学生评价问题应作为中部独立高层级区域。');
+requireText(viewSource, 'text-[15px] font-semibold leading-[22px]', '学生评价能力名称应使用清晰的卡片标题层级。');
+requireText(viewSource, 'text-[12px] font-normal leading-[18px] text-[var(--tm-text-secondary)]', '学生评价能力概括应使用自然的次级正文层级。');
+requireText(viewSource, 'min-h-[72px]', '学生评价能力卡片应允许双层文案自然增长。');
+requireText(viewSource, '{showClassEvaluation && (', '班级数据面板和输入区应受班级评价能力控制。');
+requireText(viewSource, '{showStudentEvaluation && (', '学生问题应受学生评价能力控制。');
+assert.ok(
+  viewSource.indexOf('<WeekOverviewPanel') < viewSource.indexOf('<StudentQuestionList'),
+  '双开时应先展示班级数据面板，再展示学生评价问题。',
+);
+assert.ok(
+  viewSource.indexOf('<StudentQuestionList') < viewSource.indexOf('<ConversationThread'),
+  '学生评价问题应位于会话内容之前。',
+);
 requireText(viewSource, '<AutoResizeTextarea', '自由对话应使用自动增高文字输入框。');
 requireText(viewSource, 'SpeechRecognitionConstructor', '自由对话应支持浏览器语音识别能力。');
 requireText(viewSource, "'按住说话'", '底部输入区应提供语音输入。');
@@ -47,8 +80,9 @@ requireText(viewSource, '本周整体表现', '完整周报应包含整体表现
 requireText(viewSource, '主要扣分问题', '完整周报应包含扣分问题分析。');
 requireText(viewSource, '下周关注重点', '完整周报应包含下周指导建议。');
 requireText(viewSource, '<Sparkles', '人工智能分析应使用清晰、统一的图标。');
-requireText(viewSource, '查看依据', '回答应提供逐笔数据依据入口。');
+assert.ok(!viewSource.includes('查看依据'), '班主任助理 V2 不应提供查看依据入口。');
 requireText(viewSource, '内容由AI生成仅供参考。', '页面应在输入栏下方披露人工智能内容。');
+requireText(viewSource, '<footer className="relative z-30 shrink-0 bg-transparent">', '快捷问题和输入控件应收拢在不随正文滚动的底部栏。');
 assert.ok(
   viewSource.indexOf('<QuestionComposer') < viewSource.indexOf('内容由AI生成仅供参考。'),
   '人工智能内容提示应放在对话输入控件下方。',
@@ -60,9 +94,12 @@ for (const unrelatedCopy of ['责任拆分', '整改状态', '教师组织责任
 requireText(viewSource, 'ASSETS.MANAGEMENT.AI_HEADTEACHER_ASSISTANT_CHARACTER', 'Agent 首屏应复用班主任助理虚拟形象。');
 requireText(viewSource, 'alt="AI班主任助理形象"', '虚拟形象应提供明确替代文本。');
 requireText(viewSource, '我将为您提供数据分析和指导建议', '首屏应使用精简的动态问候文案。');
+requireText(viewSource, '`${greeting}，\\n我将为您提供数据分析和指导建议。`', '时段问候后应固定换行展示说明文案。');
+requireText(viewSource, 'whitespace-pre-line text-pretty', '打字机文案容器应保留问候后的换行。');
 requireText(viewSource, 'ai-assistant-typewriter-shine', '动态问候应复用 V1 的渐变光效文字。');
-requireText(appSource, "currentView === 'ai_headteacher_assistant_v2'", 'V2 应注册独立整屏背景。');
+requireText(appSource, "currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2'", '统一助理及旧兼容路由应使用同一整屏背景。');
 requireText(appSource, 'headteacher-agent-gradient-page absolute inset-0', 'V2 渐变应铺满手机屏幕并覆盖状态栏安全区。');
+requireText(appSource, '|| isHeadteacherAssistantView || hasPrincipalReportBackground', '统一助理内容承载层必须透明，不能用白底覆盖整屏渐变。');
 requireText(viewSource, 'bg-transparent', 'V2 内容层应保持透明，避免渐变在安全区后重新开始。');
 requireText(viewSource, 'headteacher-agent-glass', '本周数据卡片应使用拟态玻璃效果。');
 requireText(viewSource, '本周数据', '首屏应展示本周数据面板。');
@@ -82,20 +119,46 @@ assert.equal(
 requireText(viewSource, '打开周数据页面', '日期切换入口应打开独立周数据页面。');
 requireText(viewSource, "'\u6253\u5f00\u5468\u6570\u636e\u9875\u9762\uff0c\u5f53\u524d' + week.label", '首页本周日期应展示完整自然周。');
 requireText(viewSource, 'OVERVIEW_RECOMMENDED_QUESTIONS', '首页应提供紧凑的推荐问题。');
-requireText(viewSource, '可以这样问', '推荐问题应使用简短、易理解的标题。');
-requireText(viewSource, 'recommendedQuestions={OVERVIEW_RECOMMENDED_QUESTIONS}', '推荐问题应合并到本周数据卡片内。');
-requireText(viewSource, 'whitespace-normal break-words', '推荐问题应完整展示并支持换行。');
-requireText(viewSource, 'mx-3 mb-3 mt-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-assistant-role-soft)] p-3', '推荐问题应使用独立浅色分区与数据统计建立层级。');
-requireText(viewSource, 'mt-2 space-y-2', '推荐问题应使用独立操作行呈现。');
-assert.ok(!viewSource.includes('aria-labelledby="recommended-questions-title">\n                        <h2'), '首页不应在数据卡外单独展示推荐问题。');
+assert.ok(!viewSource.includes('可以这样问'), '快捷问题上方不应增加说明文案。');
+for (const question of ['班级评价主要扣在哪？', '班级评价较上周哪项变化最大？', '根据班级评价，下周优先关注什么？']) {
+  requireText(viewSource, question, `班级评价快捷问题应使用明确且自然的文案：${question}`);
+}
+requireText(viewSource, 'suggestedQuestions={messages.length > 0 ? followUpQuestions : OVERVIEW_RECOMMENDED_QUESTIONS}', '输入区应根据对话状态展示首轮建议或连续追问。');
+assert.ok(
+  viewSource.indexOf('<SuggestedQuestionList') < viewSource.indexOf("{mode === 'voice' ? ("),
+  '建议问题应位于语音或文字输入控件上方。',
+);
+requireText(viewSource, 'touch-pan-x gap-2 overflow-x-auto overscroll-x-contain', '建议问题应支持单行左右滑动。');
+requireText(viewSource, 'shrink-0 whitespace-nowrap', '快捷问题按内容自然定宽，不应填充多余空间。');
+requireText(viewSource, '共${questions.length}个快捷问题', '快捷问题应对辅助技术明确总数。');
+assert.ok(!viewSource.includes('activeIndex'), '紧凑快捷问题不应增加轮播指示状态。');
+assert.ok(!viewSource.includes('w-[calc(100%-48px)]'), '快捷问题不应使用制造空白的固定卡片宽度。');
+requireText(viewSource, 'min-h-[var(--tm-size-touch)] shrink-0', '建议问题应保持44像素触控高度。');
+assert.ok(!viewSource.includes('recommendedQuestions: readonly string[];'), '本周数据卡不应再承载建议问题。');
 requireText(viewSource, '<ConversationThread', '发起提问后应在概览页内追加对话消息。');
+requireText(viewSource, 'latestAssistant.offsetTop - 8', 'Agent 回复后应只滚动中部内容区并保留顶部间距。');
+assert.ok(!viewSource.includes('latestAssistantRef.current?.scrollIntoView'), 'Agent 回复不得通过全局滚动带动固定底部栏。');
 assert.ok(!viewSource.includes(') : conversationOpen ? ('), '推荐问题不应跳转到独立对话页面。');
-requireText(viewSource, 'ASSETS.MANAGEMENT.AI_HEADTEACHER_ASSISTANT', 'Agent 回复应展示班主任助理头像。');
-requireText(viewSource, '>班主任助理</div>', 'Agent 回复应明确展示班主任助理身份。');
+assert.ok(!viewSource.includes('AgentMessageIdentity'), 'Agent 回复不应展示额外头像。');
+assert.ok(!viewSource.includes('>班主任助理</div>'), 'Agent 回复不应重复展示身份名称。');
+requireText(viewSource, 'headteacher-agent-glass min-w-0 flex-1', 'Agent 回复应直接使用左侧浅色内容气泡。');
 requireText(viewSource, '正在分析班级评价数据', 'Agent 回复前应展示分析中的对话反馈。');
+const conversationAnswerSource = viewSource.slice(
+  viewSource.indexOf('const ConversationAnswerContent'),
+  viewSource.indexOf('const ConversationThread'),
+);
+requireText(conversationAnswerSource, 'space-y-3 text-pretty text-[14px] font-normal leading-6 text-[var(--tm-text-primary)]', '快捷问题回答应使用统一的普通正文样式。');
+requireText(conversationAnswerSource, '具体来看，{answer.breakdown.map', '分类数据应转换为自然文本段落。');
+requireText(conversationAnswerSource, "<p>从分析结果看，{answer.analysis.map(item => item.body).join('')}</p>", '分析内容应通过承接语合并为一个自然段。');
+requireText(conversationAnswerSource, "<p>接下来，{answer.suggestions.map(item => item.body).join('')}</p>", '行动建议应通过承接语合并为一个自然段。');
+assert.ok(!conversationAnswerSource.includes('answer.metrics.map'), '关键数据不应机械重复首段已经表达的结论。');
+assert.ok(!conversationAnswerSource.includes('answer.evidenceRefs'), '快捷问题回答不应保留依据功能。');
+for (const forbidden of ['<Sparkles', '<ListChecks', 'aria-label="人工智能分析"', 'aria-label="人工智能建议"', 'text-[var(--tm-status-negative)]', 'text-[var(--tm-assistant-role-text)]']) {
+  assert.ok(!conversationAnswerSource.includes(forbidden), `快捷问题回答不应使用特殊分区或彩色文字：${forbidden}`);
+}
 requireText(viewSource, 'getFollowUpQuestions', '回答后应提供不重复当前问题的连续追问。');
 requireText(viewSource, 'askClassEvaluationQuestion', '自由问题应进入班级评价问答领域逻辑。');
-requireText(viewSource, 'getRecordsFromAnswer', '对话答案应能按证据编号查看逐笔记录。');
+assert.ok(!viewSource.includes('getRecordsFromAnswer'), '对话回答不应再按证据编号打开逐笔记录。');
 requireText(viewSource, 'rankings.map', '展开态应展示五项一级指标的得分和排名。');
 requireText(viewSource, '<span>分类数据</span>', '收起态入口应命名为分类数据。');
 requireText(viewSource, 'justify-end px-4', '分类数据入口应放在数据卡片右侧。');
@@ -152,7 +215,7 @@ requireText(viewSource, 'REPORT_GENERATION_STEPS', '首次生成应展示 Agent 
 for (const step of ['正在汇总本周班级评价数据', '正在分析得分与扣分情况', '正在对比指标表现与周变化', '正在生成本周分析与指导建议']) {
   requireText(viewSource, step, `Agent 生成过程缺少阶段：${step}`);
 }
-requireText(viewSource, 'activeReport.evidenceRecords', '历史报告的查看依据应使用生成时冻结的逐笔记录。');
+assert.ok(!viewSource.includes('activeReport.evidenceRecords'), '历史报告也不应提供查看依据入口。');
 requireText(viewSource, '返回概览', '报告态应支持返回周评概览。');
 assert.ok(!viewSource.includes('继续分析'), '报告页不应重复展示三个固定问题。');
 assert.ok(!viewSource.includes('role="tablist" aria-label="报告类型"'), '往期报告不应再按三个问题类型分栏。');

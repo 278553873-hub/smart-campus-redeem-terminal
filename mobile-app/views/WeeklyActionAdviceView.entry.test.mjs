@@ -3,7 +3,7 @@ import fs from 'node:fs';
 const viewSource = fs.readFileSync(new URL('./WeeklyActionAdviceView.tsx', import.meta.url), 'utf8');
 const dataSource = fs.readFileSync(new URL('../data/weeklyActionAdvice.ts', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
-const assistantSource = fs.readFileSync(new URL('./AiHeadteacherAssistantView.tsx', import.meta.url), 'utf8');
+const assistantSource = fs.readFileSync(new URL('./AiHeadteacherAssistantV2View.tsx', import.meta.url), 'utf8');
 const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
 const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_本周行动建议_内容生成提示词.md', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
@@ -76,8 +76,8 @@ requireText(cssSource, '@keyframes waa-fade-up', '应定义报告卡片入场动
 requireText(cssSource, 'prefers-reduced-motion: reduce', '动画应支持减少动态效果。');
 requireText(footerSource, 'document.notice', '真实报告应保留精简的AI参考声明。');
 
-requireText(assistantSource, '根据上周记录，整理本周班级重点。', '班主任助理入口应明确使用上周数据。');
-forbidText(assistantSource, '根据近期评价', '入口不应继续使用模糊的近期口径。');
+requireText(assistantSource, '本周班级行动建议', '统一班主任助理应以明确的能力名称进入本周行动建议。');
+requireText(assistantSource, '综合上周评价，分析学生表现、班级共性与评价信号，给出本周关注重点和行动建议。', '统一班主任助理应概括本周班级行动建议的分析范围和输出价值。');
 requireText(promptSource, '上一个完整自然周', '提示词应固定上一个完整自然周。');
 forbidText(promptSource, 'data_window_weeks', '提示词不应继续传递自适应周数。');
 requireText(promptSource, '不发送本周记录或更早历史记录', '提示词应禁止混入本周和更早数据。');

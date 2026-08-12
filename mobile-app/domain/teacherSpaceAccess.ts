@@ -8,6 +8,8 @@ export type TeacherSpaceRole =
     | 'homeroomTeacher'
     | 'teacher';
 
+export type HeadteacherAssistantScope = 'student' | 'class';
+
 export interface TeacherSpaceOption {
     id: string;
     title: string;
@@ -15,6 +17,8 @@ export interface TeacherSpaceOption {
     role: TeacherSpaceRole;
     classRecordEnabled?: boolean;
     enabledManagementTools?: TeacherManagementToolId[];
+    headteacherAssistantEnabled?: boolean;
+    evaluationScopes?: HeadteacherAssistantScope[];
 }
 
 export type TeacherManagementToolId =
@@ -103,12 +107,42 @@ const SPACE_MENU_POLICIES: Record<TeacherSpaceRole, TeacherSpaceMenuPolicy> = {
 
 export const getTeacherSpaceMenuPolicy = (space: TeacherSpaceOption): TeacherSpaceMenuPolicy => {
     const policy = SPACE_MENU_POLICIES[space.role];
+    const configuredManagementTools = space.enabledManagementTools
+        ? [...space.enabledManagementTools]
+        : [...policy.managementTools];
+    const managementTools: TeacherManagementToolId[] = [];
+    configuredManagementTools.forEach(tool => {
+        if (tool === 'headteacherAssistant' || tool === 'headteacherAssistantV2') {
+            if (!managementTools.includes('headteacherAssistant')) managementTools.push('headteacherAssistant');
+            return;
+        }
+        managementTools.push(tool);
+    });
+    if (getHeadteacherAssistantScopes(space).length > 0 && !managementTools.includes('headteacherAssistant')) {
+        const principalAssistantIndex = managementTools.indexOf('principalAssistant');
+        if (principalAssistantIndex >= 0) managementTools.splice(principalAssistantIndex, 0, 'headteacherAssistant');
+        else managementTools.push('headteacherAssistant');
+    }
+
     return {
-        managementTools: space.enabledManagementTools
-            ? [...space.enabledManagementTools]
-            : [...policy.managementTools],
+        managementTools,
         moreTools: [...policy.moreTools],
     };
+};
+
+export const getHeadteacherAssistantScopes = (
+    space: TeacherSpaceOption,
+): HeadteacherAssistantScope[] => {
+    if (space.headteacherAssistantEnabled === false) return [];
+    if (space.evaluationScopes) {
+        return Array.from(new Set(space.evaluationScopes));
+    }
+    const configuredManagementTools = space.enabledManagementTools
+        ?? SPACE_MENU_POLICIES[space.role].managementTools;
+    const scopes: HeadteacherAssistantScope[] = [];
+    if (configuredManagementTools.includes('headteacherAssistant')) scopes.push('student');
+    if (configuredManagementTools.includes('headteacherAssistantV2')) scopes.push('class');
+    return scopes;
 };
 
 export const canTeacherSpaceRecordClass = (space: TeacherSpaceOption): boolean => (

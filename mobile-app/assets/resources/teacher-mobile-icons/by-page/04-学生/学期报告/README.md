@@ -5,7 +5,7 @@
 | 资源路径 | 页面用途 | 存放位置 | 类型 |
 | --- | --- | --- | --- |
 | `arrow-up-right.svg` | 进入或跳转 | 本页面 | Lucide SVG |
-| `../../00-公共图标/award.svg` | 荣誉或奖励 | 公共图标 | Lucide SVG |
+| `award.svg` | 荣誉或奖励 | 本页面 | Lucide SVG |
 | `../../00-公共图标/book-open.svg` | 科目或协议 | 公共图标 | Lucide SVG |
 | `calculator.svg` | 计算 | 本页面 | Lucide SVG |
 | `../../00-公共图标/calendar.svg` | 日期 | 公共图标 | Lucide SVG |

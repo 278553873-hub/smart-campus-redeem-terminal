@@ -32,9 +32,10 @@ if (classList.includes('text-xl font-semibold text-slate-800')) failures.push('�
 if (classList.includes('text-[11px] px-2 py-0.5 bg-slate-100')) failures.push('普通学科标签不应继续使用 11px。');
 if (mobileApp.includes("currentView !== 'home_log' && currentView !== 'report_detail'")) failures.push('班级首页不应继续走默认白色 LocalHeader。');
 
-requireText(rootApp, 'const [showPhoneShell, setShowPhoneShell] = useState(false);', '教师手机端模拟真实手机效果应默认关闭。');
+requireText(rootApp, 'const [showPhoneShell, setShowPhoneShell] = useState(true);', '教师手机端模拟真实手机效果应默认开启。');
 requireText(rootApp, 'const [showParentPhoneShell, setShowParentPhoneShell] = useState(false);', '家长手机端模拟真实手机效果应默认关闭。');
-requireText(rootApp, 'const [showPhoneShellToggle, setShowPhoneShellToggle] = useState(false);', '模拟真实手机效果开关应默认隐藏。');
+requireText(rootApp, 'const [showPhoneShellToggle, setShowPhoneShellToggle] = useState(false);', '家长手机端模拟真实手机效果开关应默认隐藏。');
+requireText(rootApp, "currentApp === 'admin' || (showPhoneShellToggle && currentApp === 'parent')", '教师手机端应默认展示模拟真实手机效果开关，家长手机端仍使用隐藏入口。');
 requireText(rootApp, 'environmentTitleClickCountRef.current >= 5', '环境切换文案应点击 5 次后显示或隐藏模拟真实手机效果开关。');
 
 if (failures.length) throw new Error(failures.join('\n'));

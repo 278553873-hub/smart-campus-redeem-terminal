@@ -38,8 +38,7 @@ requireText(source, "const secondaryIconClass = 'bg-[var(--tm-brand-primary-soft
 requireText(source, '<ToolGrid items={primaryTools} columns={4} />', '管理工具应显式保持每行 4 个入口。');
 requireText(source, '<ToolGrid items={moreTools} columns={4} variant="secondary" />', '更多工具应显式保持每行 4 个入口。');
 requireText(source, '学生评价报表', '管理工具应包含学生评价报表。');
-requireText(source, "titleLines: ['学生评价', '报表']", '学生评价报表名称应按完整语义分行。');
-requireText(source, "titleLines: ['班级评价', '报表']", '班级评价报表名称应按完整语义分行。');
+requireText(source, 'whitespace-nowrap', '管理工具入口名称应保持单行展示。');
 requireText(source, '期末报告', '管理工具应包含期末报告。');
 requireText(source, "const reportToolImageClass = 'h-16 w-16 max-w-none rounded-[var(--tm-radius-inner)] object-cover';", '评价报表和期末报告图片应通过统一放大补偿资源留白，并保持管理工具图标视觉尺寸一致。');
 requireText(source, 'imageClassName: reportToolImageClass', '评价报表和期末报告入口应使用统一的放大图标样式。');
@@ -88,12 +87,16 @@ if (source.includes("title: 'AI班主任助理'")) {
   throw new Error('班主任助理入口名称不应继续显示为 AI班主任助理。');
 }
 
+if (source.includes('titleLines')) {
+  throw new Error('管理工具入口名称应保持单行，不应配置强制分行。');
+}
+
 if ((source.match(/imageClassName: reportToolImageClass/g) ?? []).length !== 3) {
   throw new Error('学生评价报表、班级评价报表和期末报告应同时使用放大图标样式。');
 }
 
-if ((source.match(/imageClassName: assistantToolImageClass/g) ?? []).length !== 3) {
-  throw new Error('两个班主任助理入口和校长助理应同时使用无边框图标样式。');
+if ((source.match(/imageClassName: assistantToolImageClass/g) ?? []).length !== 2) {
+  throw new Error('统一班主任助理入口和校长助理应同时使用无边框图标样式。');
 }
 
 if (source.includes('top-11 h-px bg-gradient-to-r')) {
