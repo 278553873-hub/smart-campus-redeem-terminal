@@ -52,13 +52,33 @@ export interface MoralEducationGradeSummary {
     classes: MoralEducationClassSummary[];
 }
 
-export interface MoralEducationProblemStat {
+export interface MoralEducationProblemDetailStat {
     id: string;
-    dimension: string;
-    indicator: string;
+    name: string;
     recordCount: number;
-    affectedClassCount: number;
     deduction: number;
+}
+
+export interface MoralEducationProblemCategoryStat {
+    id: string;
+    name: string;
+    recordCount: number;
+    deduction: number;
+    details: MoralEducationProblemDetailStat[];
+}
+
+export interface MoralEducationProblemDimensionStat {
+    id: string;
+    name: string;
+    recordCount: number;
+    deduction: number;
+    categories: MoralEducationProblemCategoryStat[];
+}
+
+export interface MoralEducationGradeReport {
+    gradeId: string;
+    dimensions: MoralEducationDimensionStat[];
+    problemDimensions: MoralEducationProblemDimensionStat[];
 }
 
 export interface MoralEducationCockpitSnapshot {
@@ -72,11 +92,10 @@ export interface MoralEducationCockpitSnapshot {
         highestScore: number;
         lowestScore: number;
     };
-    dimensions: MoralEducationDimensionStat[];
     trend: MoralEducationTrendPoint[];
     grades: MoralEducationGradeSummary[];
     classRanking: MoralEducationClassSummary[];
-    problems: MoralEducationProblemStat[];
+    gradeReports: MoralEducationGradeReport[];
 }
 
 interface WeekConfig {
@@ -135,13 +154,116 @@ const BASE_GRADES = [
     { id: 'g6', name: '六年级', scoreOffset: -0.5, issueCount: 10 },
 ];
 
-const BASE_PROBLEMS = [
-    { id: 'p1', dimension: '健体班级', indicator: '早操队列', recordCount: 14, affectedClassCount: 7, deduction: 15.2 },
-    { id: 'p2', dimension: '美净班级', indicator: '班级清洁', recordCount: 12, affectedClassCount: 8, deduction: 12.4 },
-    { id: 'p3', dimension: '文雅班级', indicator: '协调精灵反馈登记', recordCount: 9, affectedClassCount: 5, deduction: 4.5 },
-    { id: 'p4', dimension: '健体班级', indicator: '眼操纪律', recordCount: 8, affectedClassCount: 6, deduction: 5.2 },
-    { id: 'p5', dimension: '文雅班级', indicator: '班级内务', recordCount: 7, affectedClassCount: 5, deduction: 4.8 },
-];
+const BASE_PROBLEM_DIMENSIONS = [
+    {
+        id: 'poetic',
+        name: '诗意中队',
+        categories: [
+            {
+                id: 'poetic-culture',
+                name: '班级文化',
+                details: [
+                    { id: 'class-culture-layout', name: '班级文化布置', recordWeight: 5, deductionWeight: 5.2 },
+                    { id: 'reading-corner', name: '图书角管理', recordWeight: 4, deductionWeight: 4.1 },
+                ],
+            },
+            {
+                id: 'poetic-activity',
+                name: '活动参与',
+                details: [
+                    { id: 'class-activity', name: '班级活动参与', recordWeight: 3, deductionWeight: 3.1 },
+                ],
+            },
+        ],
+    },
+    {
+        id: 'safety',
+        name: '安全教育',
+        categories: [
+            {
+                id: 'safety-campus',
+                name: '校园安全',
+                details: [
+                    { id: 'corridor-safety', name: '楼道通行安全', recordWeight: 4, deductionWeight: 3.4 },
+                    { id: 'activity-safety', name: '课间活动安全', recordWeight: 3, deductionWeight: 2.2 },
+                ],
+            },
+            {
+                id: 'safety-education',
+                name: '安全教育',
+                details: [
+                    { id: 'safety-task', name: '安全教育任务', recordWeight: 2, deductionWeight: 1.5 },
+                ],
+            },
+        ],
+    },
+    {
+        id: 'fitness',
+        name: '健体班级',
+        categories: [
+            {
+                id: 'fitness-exercises',
+                name: '两操管理',
+                details: [
+                    { id: 'morning-exercise-line', name: '早操队列', recordWeight: 14, deductionWeight: 15.2 },
+                    { id: 'eye-exercise-discipline', name: '眼操纪律', recordWeight: 8, deductionWeight: 5.2 },
+                ],
+            },
+            {
+                id: 'fitness-activity',
+                name: '体育活动',
+                details: [
+                    { id: 'activity-attendance', name: '体育活动出勤', recordWeight: 6, deductionWeight: 7.1 },
+                    { id: 'equipment-return', name: '器材归还', recordWeight: 4, deductionWeight: 5 },
+                ],
+            },
+        ],
+    },
+    {
+        id: 'civilized',
+        name: '文雅班级',
+        categories: [
+            {
+                id: 'civilized-etiquette',
+                name: '文明礼仪',
+                details: [
+                    { id: 'civilized-feedback', name: '文明行为反馈登记', recordWeight: 9, deductionWeight: 4.5 },
+                    { id: 'language-etiquette', name: '文明用语', recordWeight: 6, deductionWeight: 8.1 },
+                ],
+            },
+            {
+                id: 'civilized-routine',
+                name: '班级常规',
+                details: [
+                    { id: 'class-housekeeping', name: '班级内务', recordWeight: 7, deductionWeight: 4.8 },
+                    { id: 'classroom-discipline', name: '课前纪律', recordWeight: 5, deductionWeight: 7.2 },
+                ],
+            },
+        ],
+    },
+    {
+        id: 'clean',
+        name: '美净班级',
+        categories: [
+            {
+                id: 'clean-environment',
+                name: '环境卫生',
+                details: [
+                    { id: 'class-cleaning', name: '班级清洁', recordWeight: 12, deductionWeight: 12.4 },
+                    { id: 'public-area-cleaning', name: '公共区域清洁', recordWeight: 8, deductionWeight: 7.8 },
+                ],
+            },
+            {
+                id: 'clean-habit',
+                name: '卫生习惯',
+                details: [
+                    { id: 'waste-sorting', name: '垃圾分类', recordWeight: 6, deductionWeight: 5.2 },
+                    { id: 'desk-organization', name: '桌椅物品整理', recordWeight: 5, deductionWeight: 3.8 },
+                ],
+            },
+        ],
+    },
+] as const;
 
 const parseDateParts = (value: string) => {
     const [year, month, day] = value.split('-').map(Number);
@@ -282,36 +404,120 @@ const createSummary = (configs: WeekConfig[]) => {
     };
 };
 
-const createDimensions = (configs: WeekConfig[], classCount: number): MoralEducationDimensionStat[] => {
-    const dimensionWeightTotal = sumBy(BASE_DIMENSIONS, item => item.deductionWeight);
-    return BASE_DIMENSIONS.map(item => {
-        const weeklyStats = configs.map(config => {
-            const summary = createSummary([config]);
-            const deduction = roundOne(summary.cumulativeDeduction * item.deductionWeight / dimensionWeightTotal);
-            return {
-                averageScore: clampScore(DIMENSION_MAX_SCORE - deduction / classCount, DIMENSION_MAX_SCORE),
-                deduction,
-                issueCount: scaleCount(item.issueCount, config.issueScale),
-            };
+const distributeInteger = (total: number, weights: number[]) => {
+    const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
+    const rawValues = weights.map(weight => total * weight / weightTotal);
+    const values = rawValues.map(Math.floor);
+    let remainder = total - values.reduce((sum, value) => sum + value, 0);
+    rawValues
+        .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+        .sort((left, right) => right.fraction - left.fraction || left.index - right.index)
+        .forEach(item => {
+            if (remainder <= 0) return;
+            values[item.index] += 1;
+            remainder -= 1;
         });
+    return values;
+};
+
+const gradeWeights = BASE_GRADES.map(grade => grade.issueCount);
+
+const createProblemDetailTotals = (configs: WeekConfig[]) => {
+    const details = BASE_PROBLEM_DIMENSIONS.flatMap(dimension => (
+        dimension.categories.flatMap(category => category.details)
+    ));
+    const recordWeights = details.map(detail => configs.reduce(
+        (sum, config) => sum + scaleCount(detail.recordWeight, config.issueScale),
+        0,
+    ));
+    const deductionWeights = details.map(detail => sumBy(
+        configs,
+        config => roundOne(detail.deductionWeight * config.issueScale),
+    ));
+    const summary = createSummary(configs);
+    const recordCounts = distributeInteger(summary.issueCount, recordWeights);
+    const deductionTenths = distributeInteger(Math.round(summary.cumulativeDeduction * 10), deductionWeights);
+    return new Map(details.map((detail, index) => [detail.id, {
+        recordCount: recordCounts[index],
+        deductionTenths: deductionTenths[index],
+    }]));
+};
+
+const createProblemDimensions = (
+    configs: WeekConfig[],
+    gradeId: string,
+): MoralEducationProblemDimensionStat[] => {
+    const gradeIndex = BASE_GRADES.findIndex(grade => grade.id === gradeId);
+    const detailTotals = createProblemDetailTotals(configs);
+    return BASE_PROBLEM_DIMENSIONS.map(dimension => {
+        const categories = dimension.categories.map(category => {
+            const details = category.details.map(detail => {
+                const total = detailTotals.get(detail.id) ?? { recordCount: 0, deductionTenths: 0 };
+                const gradeRecordCounts = distributeInteger(total.recordCount, gradeWeights);
+                const gradeDeductionTenths = distributeInteger(total.deductionTenths, gradeRecordCounts);
+                const recordCount = gradeId === 'all'
+                    ? total.recordCount
+                    : gradeRecordCounts[gradeIndex] ?? 0;
+                const deductionTenths = gradeId === 'all'
+                    ? total.deductionTenths
+                    : gradeDeductionTenths[gradeIndex] ?? 0;
+                return {
+                    id: detail.id,
+                    name: detail.name,
+                    recordCount,
+                    deduction: roundOne(deductionTenths / 10),
+                };
+            }).filter(detail => detail.recordCount > 0 && detail.deduction > 0);
+            return {
+                id: category.id,
+                name: category.name,
+                recordCount: details.reduce((sum, detail) => sum + detail.recordCount, 0),
+                deduction: sumBy(details, detail => detail.deduction),
+                details,
+            };
+        }).filter(category => category.details.length > 0);
+        return {
+            id: dimension.id,
+            name: dimension.name,
+            recordCount: categories.reduce((sum, category) => sum + category.recordCount, 0),
+            deduction: sumBy(categories, category => category.deduction),
+            categories,
+        };
+    }).filter(dimension => dimension.categories.length > 0);
+};
+
+const createDimensions = (
+    configs: WeekConfig[],
+    gradeId: string,
+    problemDimensions: MoralEducationProblemDimensionStat[],
+): MoralEducationDimensionStat[] => {
+    const classCount = gradeId === 'all' ? BASE_GRADES.length * CLASS_COUNT_PER_GRADE : CLASS_COUNT_PER_GRADE;
+    return BASE_DIMENSIONS.map(item => {
+        const problemDimension = problemDimensions.find(dimension => dimension.id === item.id);
+        const deduction = problemDimension?.deduction ?? 0;
         return {
             id: item.id,
             name: item.name,
-            averageScore: roundOne(sumBy(weeklyStats, stat => stat.averageScore) / weeklyStats.length),
+            averageScore: clampScore(
+                DIMENSION_MAX_SCORE - deduction / classCount / configs.length,
+                DIMENSION_MAX_SCORE,
+            ),
             maxScore: DIMENSION_MAX_SCORE,
-            deduction: sumBy(weeklyStats, stat => stat.deduction),
-            issueCount: sumBy(weeklyStats, stat => stat.issueCount),
+            deduction,
+            issueCount: problemDimension?.recordCount ?? 0,
             color: item.color,
         };
     });
 };
 
-const createProblems = (configs: WeekConfig[], classCount: number): MoralEducationProblemStat[] => BASE_PROBLEMS.map(item => ({
-    ...item,
-    recordCount: sumBy(configs, config => scaleCount(item.recordCount, config.issueScale)),
-    affectedClassCount: Math.min(classCount, Math.max(...configs.map(config => scaleCount(item.affectedClassCount, config.issueScale)))),
-    deduction: sumBy(configs, config => roundOne(item.deduction * config.issueScale)),
-}));
+const createGradeReport = (configs: WeekConfig[], gradeId: string): MoralEducationGradeReport => {
+    const problemDimensions = createProblemDimensions(configs, gradeId);
+    return {
+        gradeId,
+        dimensions: createDimensions(configs, gradeId, problemDimensions),
+        problemDimensions,
+    };
+};
 
 export const getMoralEducationCockpitPeriods = async (
     type: MoralEducationPeriodType,
@@ -332,7 +538,8 @@ export const getMoralEducationCockpitSnapshot = async (
     const definition = definitions[configIndex] ?? definitions[definitions.length - 1];
     const { grades, classRanking } = createRankedData(definition.weeks);
     const summary = createSummary(definition.weeks);
-    const dimensions = createDimensions(definition.weeks, classRanking.length);
+    const gradeReports = ['all', ...BASE_GRADES.map(grade => grade.id)]
+        .map(gradeId => createGradeReport(definition.weeks, gradeId));
     const trendStartIndex = Math.max(0, configIndex - TREND_WINDOW_SIZE + 1);
     const trend = definitions.slice(trendStartIndex, configIndex + 1).map(item => {
         const itemSummary = createSummary(item.weeks);
@@ -347,10 +554,9 @@ export const getMoralEducationCockpitSnapshot = async (
         period: definition.option,
         week: definition.option,
         summary,
-        dimensions,
         trend,
         grades,
         classRanking,
-        problems: createProblems(definition.weeks, classRanking.length),
+        gradeReports,
     };
 };

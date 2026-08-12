@@ -317,6 +317,90 @@ const ConversationAnswerContent: React.FC<{
     </div>
 );
 
+const AgentMessageIdentity: React.FC = () => (
+    <img
+        src={ASSETS.MANAGEMENT.AI_HEADTEACHER_ASSISTANT}
+        alt=""
+        className="h-9 w-9 shrink-0 rounded-full object-cover [box-shadow:var(--tm-shadow-control)]"
+        aria-hidden="true"
+    />
+);
+
+const ConversationThread: React.FC<{
+    messages: ChatMessage[];
+    replying: boolean;
+    followUpQuestions: string[];
+    records: ClassEvaluationRecord[];
+    latestAssistantRef: React.RefObject<HTMLDivElement | null>;
+    onOpenDetails: (records: ClassEvaluationRecord[]) => void;
+    onQuestionSelect: (question: string) => void;
+}> = ({
+    messages,
+    replying,
+    followUpQuestions,
+    records,
+    latestAssistantRef,
+    onOpenDetails,
+    onQuestionSelect,
+}) => (
+    <section className="mx-4 mt-5 space-y-4" aria-label="班级评价对话" aria-live="polite">
+        {messages.map((message, index) => (
+            <div
+                key={message.id}
+                ref={message.role === 'assistant' && index === messages.length - 1 ? latestAssistantRef : undefined}
+                className={'flex scroll-mt-2 ' + (message.role === 'user' ? 'justify-end' : 'items-start gap-2.5')}
+            >
+                {message.role === 'user' ? (
+                    <div className="max-w-[82%] rounded-[18px] rounded-br-[6px] bg-[var(--tm-assistant-role-primary)] px-4 py-2.5 text-[15px] font-medium leading-6 text-white [box-shadow:var(--tm-shadow-control)]">
+                        {message.content}
+                    </div>
+                ) : message.answer ? (
+                    <>
+                        <AgentMessageIdentity />
+                        <div className="min-w-0 flex-1">
+                            <div className="mb-1 px-1 text-[11px] font-semibold text-[var(--tm-assistant-role-text)]">班主任助理</div>
+                            <div className="headteacher-agent-glass rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 py-3.5">
+                                <ConversationAnswerContent
+                                    answer={message.answer}
+                                    onOpenDetails={() => onOpenDetails(getRecordsFromAnswer(message.answer!, records))}
+                                />
+                            </div>
+                        </div>
+                    </>
+                ) : null}
+            </div>
+        ))}
+
+        {replying && (
+            <div className="flex items-start gap-2.5" role="status">
+                <AgentMessageIdentity />
+                <div className="min-w-0">
+                    <div className="mb-1 px-1 text-[11px] font-semibold text-[var(--tm-assistant-role-text)]">班主任助理</div>
+                    <div className="headteacher-agent-glass flex h-11 items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">
+                        <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
+                        正在分析班级评价数据
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {!replying && followUpQuestions.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pl-[46px] pb-1 no-scrollbar" aria-label="继续提问">
+                {followUpQuestions.map(question => (
+                    <button
+                        key={question}
+                        type="button"
+                        onClick={() => onQuestionSelect(question)}
+                        className="min-h-11 shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-glass)] px-3 text-left text-[12px] font-semibold text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.98] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                    >
+                        {question}
+                    </button>
+                ))}
+            </div>
+        )}
+    </section>
+);
+
 type ComposerMode = 'voice' | 'text';
 type VoiceState = 'idle' | 'listening' | 'error';
 
@@ -580,29 +664,24 @@ const ClassEvaluationHistoryPage: React.FC<{
 
 const RecordDetailList: React.FC<{
     records: ClassEvaluationRecord[];
-    showDimension?: boolean;
-}> = ({ records, showDimension = true }) => (
+}> = ({ records }) => (
     <div className="divide-y divide-[var(--tm-border-subtle)]">
         {records.map(record => (
             <article key={record.id} className="py-4 first:pt-0">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                        <div className="text-[15px] font-semibold text-[var(--tm-text-primary)]">{record.indicator}</div>
-                        <div className="mt-1 text-[12px] text-[var(--tm-text-tertiary)]">
-                            {formatRecordDate(record.date)}{showDimension ? ` · ${record.dimension}` : ''}
-                        </div>
-                    </div>
+                <div className="flex items-center justify-between gap-3">
+                    <time className="text-[12px] tabular-nums text-[var(--tm-text-tertiary)]" dateTime={record.date}>{formatRecordDate(record.date)}</time>
                     <div className="shrink-0 text-[16px] font-bold tabular-nums text-[var(--tm-status-negative)]">-{record.deduction.toFixed(1)}分</div>
                 </div>
 
-                <p className="mt-3 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.finding}</p>
+                <div className="mt-2 text-[12px] leading-5 text-[var(--tm-text-secondary)]">
+                    <span className="mr-2 text-[var(--tm-text-tertiary)]">指标</span>
+                    <span>{record.indicatorPath?.join(' / ') ?? [record.dimension, record.indicator].join(' / ')}</span>
+                </div>
 
-                <dl className="mt-3 text-[12px] leading-5">
-                    <div className="grid grid-cols-[60px_minmax(0,1fr)] gap-2">
-                        <dt className="text-[var(--tm-text-tertiary)]">扣分依据</dt>
-                        <dd className="text-[var(--tm-text-secondary)]">{record.rule}</dd>
-                    </div>
-                </dl>
+                <div className="mt-3">
+                    <div className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">原文</div>
+                    <p className="mt-1 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.finding}</p>
+                </div>
             </article>
         ))}
     </div>
@@ -721,10 +800,10 @@ const WeekOverviewPanel: React.FC<{
                     type="button"
                     onClick={onOpenWeekDetail}
                     className="flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-control)] pl-2 pr-1.5 text-[11px] font-medium tabular-nums text-[var(--tm-text-tertiary)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                    aria-label={'打开周数据页面，当前' + week.dataRangeLabel}
+                    aria-label={'打开周数据页面，当前' + week.label}
                 >
                     <CalendarDays className="h-3.5 w-3.5 shrink-0" strokeWidth={2.1} aria-hidden="true" />
-                    <span className="truncate">{week.dataRangeLabel}</span>
+                    <span className="truncate">{week.label}</span>
                     <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 </button>
             </div>
@@ -779,17 +858,19 @@ const WeekOverviewPanel: React.FC<{
             </div>
         )}
 
-        <div className="px-4 pb-3 pt-1" aria-labelledby="recommended-questions-title">
-            <h3 id="recommended-questions-title" className="px-1 py-1 text-[12px] font-semibold text-[var(--tm-text-secondary)]">可以这样问</h3>
-            <div className="mt-0.5">
+        <div className="mx-3 mb-3 mt-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-assistant-role-soft)] p-3" aria-labelledby="recommended-questions-title">
+            <h3 id="recommended-questions-title" className="flex min-h-7 items-center gap-2 px-1 text-[12px] font-semibold text-[var(--tm-assistant-role-text)]">
+                <Sparkles className="h-4 w-4 shrink-0 text-[var(--tm-assistant-role-primary)]" strokeWidth={2.1} aria-hidden="true" />
+                可以这样问
+            </h3>
+            <div className="mt-2 space-y-2">
                 {recommendedQuestions.map(question => (
                     <button
                         key={question}
                         type="button"
                         onClick={() => onQuestionSelect(question)}
-                        className="flex min-h-11 w-full items-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-left text-[13px] font-medium leading-5 text-[var(--tm-text-primary)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.99] active:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                        className="flex min-h-11 w-full items-center gap-2.5 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 py-2 text-left text-[13px] font-medium leading-5 text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.99] active:bg-[var(--tm-role-headteacher-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
                     >
-                        <Sparkles className="h-3.5 w-3.5 shrink-0 text-[var(--tm-assistant-role-primary)]" strokeWidth={2.1} aria-hidden="true" />
                         <span className="min-w-0 flex-1 whitespace-normal break-words">{question}</span>
                         <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" aria-hidden="true" />
                     </button>
@@ -821,8 +902,6 @@ const WeekDataDetailPage: React.FC<{
     const selectedRanking = week.dimensionRankings.find(item => item.dimension === selectedDimension)
         ?? week.dimensionRankings[0];
     const selectedRecords = records.filter(record => record.dimension === selectedRanking?.dimension);
-    const selectedDeduction = selectedRecords.reduce((total, record) => total + record.deduction, 0);
-
     useEffect(() => {
         if (week.dimensionRankings.some(item => item.dimension === selectedDimension)) return;
         setSelectedDimension(defaultDimension);
@@ -850,7 +929,6 @@ const WeekDataDetailPage: React.FC<{
                         </button>
                         <div className="min-w-0 flex-1 text-center">
                             <h1 className="truncate text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{week.label}</h1>
-                            <p className="mt-1 text-[11px] text-[var(--tm-text-tertiary)]">{week.status === 'in_progress' ? week.snapshotLabel : '本周数据已结算'}</p>
                         </div>
                         <button
                             type="button"
@@ -879,16 +957,11 @@ const WeekDataDetailPage: React.FC<{
                             <dd className="mt-2 whitespace-nowrap text-[23px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.schoolRank}<span className="ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
                         </div>
                     </dl>
-                    <div className="mt-4 flex items-center justify-between rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-glass-surface-strong)] px-3 py-2 text-[12px]">
-                        <span className="text-[var(--tm-text-secondary)]">累计扣分</span>
-                        <span className="font-bold tabular-nums text-[var(--tm-status-negative)]">{snapshot.deduction > 0 ? '-' : ''}{formatScore(snapshot.deduction)}分 · {snapshot.recordCount}笔</span>
-                    </div>
                 </section>
 
                 <section className="mt-4" aria-labelledby="week-dimensions-title">
-                    <div className="mb-2 flex items-center justify-between px-1">
+                    <div className="mb-2 px-1">
                         <h2 id="week-dimensions-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">分类数据</h2>
-                        <span className="text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">{week.dataRangeLabel}</span>
                     </div>
                     <div className="headteacher-agent-glass rounded-[var(--tm-radius-card)] pt-3">
                         <DimensionRankingTable
@@ -900,9 +973,8 @@ const WeekDataDetailPage: React.FC<{
                 </section>
 
                 <section className="mt-4" aria-labelledby="week-records-title">
-                    <div className="mb-2 flex items-center justify-between px-1">
+                    <div className="mb-2 px-1">
                         <h2 id="week-records-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">扣分明细</h2>
-                        <span className="text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">{selectedRecords.length}笔</span>
                     </div>
                     <div className="headteacher-agent-glass overflow-hidden rounded-[var(--tm-radius-card)]">
                         <DimensionTabs
@@ -912,14 +984,8 @@ const WeekDataDetailPage: React.FC<{
                             className="px-1"
                         />
                         <div className="px-4">
-                            <div className="flex min-h-11 items-center justify-between gap-3 py-2 text-[12px]">
-                                <span className="font-medium text-[var(--tm-text-secondary)]">{selectedRanking?.dimension}</span>
-                                <span className="font-semibold tabular-nums text-[var(--tm-status-negative)]">
-                                    {selectedDeduction > 0 ? '-' : ''}{formatScore(selectedDeduction)}分 · {selectedRecords.length}笔
-                                </span>
-                            </div>
                             {selectedRecords.length > 0 ? (
-                                <RecordDetailList records={selectedRecords} showDimension={false} />
+                                <RecordDetailList records={selectedRecords} />
                             ) : (
                                 <p className="py-12 text-center text-[13px] text-[var(--tm-text-tertiary)]">该周此指标暂无扣分</p>
                             )}
@@ -964,7 +1030,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const [historyOpen, setHistoryOpen] = useState(false);
     const [reportOrigin, setReportOrigin] = useState<'overview' | 'history'>('overview');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [conversationOpen, setConversationOpen] = useState(false);
     const [draft, setDraft] = useState('');
     const [isReplying, setIsReplying] = useState(false);
     const [overviewExpanded, setOverviewExpanded] = useState(false);
@@ -974,6 +1039,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const [showClassPicker, setShowClassPicker] = useState(false);
     const [detailRecords, setDetailRecords] = useState<ClassEvaluationRecord[] | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const latestAssistantRef = useRef<HTMLDivElement>(null);
     const generationTimersRef = useRef<number[]>([]);
     const replyTimerRef = useRef<number | null>(null);
     const previousClassIdRef = useRef(resolvedClassId);
@@ -995,7 +1061,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current);
         replyTimerRef.current = null;
         setMessages([]);
-        setConversationOpen(false);
         setDraft('');
         setIsReplying(false);
     };
@@ -1032,7 +1097,14 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     }, [resolvedClassId]);
 
     useEffect(() => {
-        if (conversationOpen) {
+        const latestMessage = messages[messages.length - 1];
+        if (latestMessage?.role === 'assistant') {
+            const frame = window.requestAnimationFrame(() => {
+                latestAssistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            return () => window.cancelAnimationFrame(frame);
+        }
+        if (latestMessage?.role === 'user' || isReplying) {
             const frame = window.requestAnimationFrame(() => {
                 scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
             });
@@ -1043,7 +1115,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
             scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         });
         return () => window.cancelAnimationFrame(frame);
-    }, [activeReport, conversationOpen, isGenerating, isReplying, messages]);
+    }, [activeReport, isGenerating, isReplying, messages]);
 
     useEffect(() => () => {
         clearGenerationTimers();
@@ -1131,7 +1203,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         const previousContext = [...messages]
             .reverse()
             .find(message => message.role === 'assistant' && message.answer)?.answer?.context;
-        setConversationOpen(true);
         setMessages(current => [...current, {
             id: 'user-' + Date.now(),
             role: 'user',
@@ -1167,10 +1238,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         }
         if (historyOpen) {
             setHistoryOpen(false);
-            return;
-        }
-        if (conversationOpen) {
-            setConversationOpen(false);
             return;
         }
         onBack();
@@ -1221,7 +1288,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                 onBack={handleHeaderBack}
                 backLabel={activeReport || isGenerating
                     ? (reportOrigin === 'history' ? '返回历史报告' : '返回概览')
-                    : historyOpen || conversationOpen ? '返回概览' : '返回'}
+                    : historyOpen ? '返回概览' : '返回'}
                 surface="transparent"
                 centerContent={<ClassSwitchButton activeClass={activeClass} onClick={() => setShowClassPicker(true)} />}
             />
@@ -1269,58 +1336,8 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     activeClassId={resolvedClassId}
                     onOpenReport={openHistoryReport}
                 />
-            ) : conversationOpen ? (
-                <main ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 pt-2 no-scrollbar" aria-live="polite">
-                    <section className="px-1" aria-labelledby="conversation-title">
-                        <h1 id="conversation-title" className="text-[18px] font-bold text-[var(--tm-text-primary)]">班级评价对话</h1>
-                        <p className="mt-1 text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">本周 · 数据截至 {currentWeek.dataRangeLabel}</p>
-                    </section>
-
-                    <div className="mt-4 space-y-4">
-                        {messages.map(message => (
-                            <div key={message.id} className={'flex ' + (message.role === 'user' ? 'justify-end' : 'justify-start')}>
-                                {message.role === 'user' ? (
-                                    <div className="max-w-[82%] rounded-[18px] rounded-br-[6px] bg-[var(--tm-assistant-role-primary)] px-4 py-2.5 text-[15px] font-medium leading-6 text-white [box-shadow:var(--tm-shadow-control)]">
-                                        {message.content}
-                                    </div>
-                                ) : message.answer ? (
-                                    <div className="headteacher-agent-glass w-full rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 py-3.5">
-                                        <ConversationAnswerContent
-                                            answer={message.answer}
-                                            onOpenDetails={() => setDetailRecords(getRecordsFromAnswer(message.answer!, records))}
-                                        />
-                                    </div>
-                                ) : null}
-                            </div>
-                        ))}
-
-                        {isReplying && (
-                            <div className="flex justify-start">
-                                <div className="headteacher-agent-glass flex h-11 items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">
-                                    <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
-                                    正在分析班级评价数据
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {!isReplying && followUpQuestions.length > 0 && (
-                        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 no-scrollbar" aria-label="继续提问">
-                            {followUpQuestions.map(question => (
-                                <button
-                                    key={question}
-                                    type="button"
-                                    onClick={() => submitQuestion(question)}
-                                    className="min-h-11 shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-glass)] px-3 text-left text-[12px] font-semibold text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.98] active:bg-[var(--tm-assistant-role-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                                >
-                                    {question}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </main>
             ) : (
-                <div className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar">
+                <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar">
                     <section className="relative h-[148px] overflow-hidden px-5">
                         <div className="relative z-10 max-w-[59%] pt-3" aria-live="polite">
                             <p className="ai-assistant-typewriter-shine min-h-16 text-pretty text-[17px] font-bold leading-7">
@@ -1366,6 +1383,18 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                         }}
                         onQuestionSelect={submitQuestion}
                     />
+
+                    {messages.length > 0 && (
+                        <ConversationThread
+                            messages={messages}
+                            replying={isReplying}
+                            followUpQuestions={followUpQuestions}
+                            records={records}
+                            latestAssistantRef={latestAssistantRef}
+                            onOpenDetails={setDetailRecords}
+                            onQuestionSelect={submitQuestion}
+                        />
+                    )}
                 </div>
             )}
 

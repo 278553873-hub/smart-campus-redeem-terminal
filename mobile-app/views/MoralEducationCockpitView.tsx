@@ -9,7 +9,6 @@ import {
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import {
     TeacherReportBarChart,
-    TeacherReportDonutChart,
     TeacherReportLineChart,
     type TeacherReportChartColor,
 } from '../components/report/TeacherReportChart';
@@ -85,7 +84,7 @@ const GradeTabs = ({
     onChange: (gradeId: string) => void;
     ariaLabel: string;
 }) => (
-    <div className="-mx-[var(--tm-report-card-padding)] overflow-x-auto px-[var(--tm-report-card-padding)] no-scrollbar" aria-label={ariaLabel}>
+    <div className="-mx-[var(--tm-report-card-padding)] overflow-x-auto px-[var(--tm-report-card-padding)] no-scrollbar" role="tablist" aria-label={ariaLabel}>
         <div className="flex min-w-max gap-2 pb-1">
             {[{ id: 'all', name: '全部年级' }, ...grades].map(grade => {
                 const selected = grade.id === value;
@@ -93,13 +92,49 @@ const GradeTabs = ({
                     <button
                         key={grade.id}
                         type="button"
-                        aria-pressed={selected}
+                        role="tab"
+                        aria-selected={selected}
                         onClick={() => onChange(grade.id)}
                         className={`min-h-11 rounded-[var(--tm-radius-control)] border px-4 text-[13px] font-semibold transition-[color,background-color,border-color] duration-200 ${selected
                             ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]'
                             : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]'}`}
                     >
                         {grade.name}
+                    </button>
+                );
+            })}
+        </div>
+    </div>
+);
+
+const ReportTextTabs = ({
+    items,
+    value,
+    onChange,
+    ariaLabel,
+}: {
+    items: Array<{ id: string; name: string }>;
+    value: string;
+    onChange: (id: string) => void;
+    ariaLabel: string;
+}) => (
+    <div className="-mx-[var(--tm-report-card-padding)] overflow-x-auto px-[var(--tm-report-card-padding)] no-scrollbar" role="tablist" aria-label={ariaLabel}>
+        <div className="flex min-w-max gap-5">
+            {items.map(item => {
+                const selected = item.id === value;
+                return (
+                    <button
+                        key={item.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        onClick={() => onChange(item.id)}
+                        className={`relative flex min-h-[var(--tm-size-touch)] shrink-0 items-center text-[length:var(--tm-font-size-compact)] font-semibold transition-colors duration-200 ${selected
+                            ? 'text-[var(--tm-text-primary)]'
+                            : 'text-[var(--tm-text-secondary)]'}`}
+                    >
+                        {item.name}
+                        {selected && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[var(--tm-brand-primary)]" />}
                     </button>
                 );
             })}
@@ -145,6 +180,10 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
     const [isPeriodSheetOpen, setIsPeriodSheetOpen] = useState(false);
     const [isRankingSheetOpen, setIsRankingSheetOpen] = useState(false);
     const [rankingGradeId, setRankingGradeId] = useState('all');
+    const [scoreGradeId, setScoreGradeId] = useState('all');
+    const [problemGradeId, setProblemGradeId] = useState('all');
+    const [problemDimensionId, setProblemDimensionId] = useState('');
+    const [problemCategoryId, setProblemCategoryId] = useState('');
 
     useEffect(() => {
         let disposed = false;
@@ -199,6 +238,22 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         if (rankingGradeId === 'all') return snapshot.classRanking;
         return snapshot.grades.find(grade => grade.id === rankingGradeId)?.classes ?? [];
     }, [rankingGradeId, snapshot]);
+    const scoreGradeReport = useMemo(() => (
+        snapshot?.gradeReports.find(report => report.gradeId === scoreGradeId)
+        ?? snapshot?.gradeReports[0]
+    ), [scoreGradeId, snapshot]);
+    const problemGradeReport = useMemo(() => (
+        snapshot?.gradeReports.find(report => report.gradeId === problemGradeId)
+        ?? snapshot?.gradeReports[0]
+    ), [problemGradeId, snapshot]);
+    const selectedProblemDimension = useMemo(() => (
+        problemGradeReport?.problemDimensions.find(dimension => dimension.id === problemDimensionId)
+        ?? problemGradeReport?.problemDimensions[0]
+    ), [problemDimensionId, problemGradeReport]);
+    const selectedProblemCategory = useMemo(() => (
+        selectedProblemDimension?.categories.find(category => category.id === problemCategoryId)
+        ?? selectedProblemDimension?.categories[0]
+    ), [problemCategoryId, selectedProblemDimension]);
 
     const changePeriodType = (nextType: MoralEducationPeriodType) => {
         if (nextType === periodType) return;
@@ -207,7 +262,22 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         setSelectedPeriodId('');
         setSnapshot(null);
         setRankingGradeId('all');
+        setScoreGradeId('all');
+        setProblemGradeId('all');
+        setProblemDimensionId('');
+        setProblemCategoryId('');
         setIsPeriodSheetOpen(false);
+    };
+
+    const changeProblemGrade = (gradeId: string) => {
+        setProblemGradeId(gradeId);
+        setProblemDimensionId('');
+        setProblemCategoryId('');
+    };
+
+    const changeProblemDimension = (dimensionId: string) => {
+        setProblemDimensionId(dimensionId);
+        setProblemCategoryId('');
     };
 
     const changePeriod = (offset: number) => {
@@ -361,55 +431,72 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
 
                             <section className={reportCardClassName} aria-label="一级指标得分">
                                 <SectionHeader title="指标得分" />
-                                <TeacherReportBarChart
-                                    ariaLabel={snapshot.dimensions.map(item => `${item.name}${item.averageScore}分`).join('，')}
-                                    categories={snapshot.dimensions.map(item => item.name)}
-                                    series={[{
-                                        name: '平均得分',
-                                        values: snapshot.dimensions.map(item => item.averageScore),
-                                        color: 'data',
-                                    }]}
-                                    optionKey={`${snapshot.period.id}-indicator-score`}
-                                    categoryColors={snapshot.dimensions.map((_, index) => indicatorChartColors[index % indicatorChartColors.length])}
-                                    showLegend={false}
-                                    valueLabelSuffix="分"
-                                    className="h-56"
+                                <GradeTabs
+                                    grades={snapshot.grades}
+                                    value={scoreGradeId}
+                                    onChange={setScoreGradeId}
+                                    ariaLabel="指标得分年级筛选"
                                 />
+                                {scoreGradeReport && (
+                                    <TeacherReportBarChart
+                                        ariaLabel={scoreGradeReport.dimensions.map(item => `${item.name}${item.averageScore}分`).join('，')}
+                                        categories={scoreGradeReport.dimensions.map(item => item.name)}
+                                        series={[{
+                                            name: '平均得分',
+                                            values: scoreGradeReport.dimensions.map(item => item.averageScore),
+                                            color: 'data',
+                                        }]}
+                                        optionKey={`${snapshot.period.id}-${scoreGradeReport.gradeId}-indicator-score`}
+                                        categoryColors={scoreGradeReport.dimensions.map((_, index) => indicatorChartColors[index % indicatorChartColors.length])}
+                                        showLegend={false}
+                                        valueLabelSuffix="分"
+                                        className="mt-2 h-56"
+                                    />
+                                )}
                             </section>
 
-                            <section className={reportCardClassName} aria-label="扣分维度分布">
-                                <SectionHeader title="扣分维度" />
-                                <TeacherReportDonutChart
-                                    ariaLabel={snapshot.dimensions.map(item => `${item.name}扣${item.deduction}分`).join('，')}
-                                    data={snapshot.dimensions.map((item, index) => ({
-                                        name: item.name,
-                                        value: item.deduction,
-                                        color: indicatorChartColors[index % indicatorChartColors.length],
-                                    }))}
-                                    optionKey={`${snapshot.period.id}-deduction-distribution`}
-                                    seriesName="扣分维度"
-                                    valueSuffix="分"
-                                    className="h-64"
+                            <section className={reportCardClassName} aria-label="问题分布">
+                                <SectionHeader title="问题分布" />
+                                <GradeTabs
+                                    grades={snapshot.grades}
+                                    value={problemGradeId}
+                                    onChange={changeProblemGrade}
+                                    ariaLabel="问题分布年级筛选"
                                 />
-                            </section>
-
-                            <section className={reportCardClassName}>
-                                <SectionHeader title="扣分项目" />
-                                <div>
-                                    {snapshot.problems.map((problem, index) => (
-                                        <div key={problem.id} className="grid min-h-[60px] grid-cols-[28px_minmax(0,1fr)_64px] items-center gap-2 border-b border-[var(--tm-border-subtle)] text-left last:border-b-0">
-                                            <span className="text-center text-[13px] font-bold tabular-nums text-[var(--tm-text-disabled)]">{index + 1}</span>
-                                            <span className="min-w-0">
-                                                <span className="block truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{problem.indicator}</span>
-                                                <span className="mt-1 block truncate text-[11px] text-[var(--tm-text-secondary)]">{problem.dimension} · {problem.affectedClassCount}个班级</span>
-                                            </span>
-                                            <span className="text-right">
-                                                <span className="block text-[14px] font-bold tabular-nums text-[var(--tm-text-primary)]">{problem.recordCount}笔</span>
-                                                <span className="mt-1 block text-[11px] tabular-nums text-[var(--tm-chart-negative-text)]">-{problem.deduction}分</span>
-                                            </span>
+                                {problemGradeReport && selectedProblemDimension && selectedProblemCategory && (
+                                    <div className="mt-2">
+                                        <ReportTextTabs
+                                            items={problemGradeReport.problemDimensions}
+                                            value={selectedProblemDimension.id}
+                                            onChange={changeProblemDimension}
+                                            ariaLabel="问题分布一级指标筛选"
+                                        />
+                                        <ReportTextTabs
+                                            items={selectedProblemDimension.categories}
+                                            value={selectedProblemCategory.id}
+                                            onChange={setProblemCategoryId}
+                                            ariaLabel="问题分布二级指标筛选"
+                                        />
+                                        <div className="mt-2" role="table" aria-label={`${selectedProblemCategory.name}三级指标扣分明细`}>
+                                            <div className="grid min-h-8 grid-cols-[minmax(0,1fr)_72px_64px] items-center gap-2 text-[11px] text-[var(--tm-text-secondary)]" role="row">
+                                                <span role="columnheader">三级指标</span>
+                                                <span className="text-right" role="columnheader">总扣分</span>
+                                                <span className="text-right" role="columnheader">扣分笔数</span>
+                                            </div>
+                                            {selectedProblemCategory.details.map(detail => (
+                                                <div
+                                                    key={detail.id}
+                                                    className="grid min-h-[52px] grid-cols-[minmax(0,1fr)_72px_64px] items-center gap-2 border-t border-[var(--tm-border-subtle)]"
+                                                    role="row"
+                                                >
+                                                    <span className="min-w-0 text-[14px] font-semibold text-[var(--tm-text-primary)]" role="cell">{detail.name}</span>
+                                                    <strong className="text-right text-[14px] font-bold tabular-nums text-[var(--tm-chart-negative-text)]" role="cell">-{detail.deduction}分</strong>
+                                                    <span className="text-right text-[13px] font-semibold tabular-nums text-[var(--tm-text-primary)]" role="cell">{detail.recordCount}笔</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                )}
                             </section>
 
                             <section className={reportCardClassName}>

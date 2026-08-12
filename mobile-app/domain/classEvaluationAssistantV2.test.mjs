@@ -28,13 +28,13 @@ assert.equal(snapshot.recordCount, 8);
 assert.ok(!('classDeduction' in snapshot));
 assert.ok(!('teacherDeduction' in snapshot));
 assert.ok(
-  getClassEvaluationRecords('c_2025_4').every(record => record.date <= '2026-08-07'),
-  '进行中周的模拟明细不得晚于面板所示的数据截止时间',
+  getClassEvaluationRecords('c_2025_4').every(record => record.date <= CLASS_EVALUATION_WEEKS[0].end),
+  '当前周的模拟明细应属于页面展示的完整自然周',
 );
 
 assert.equal(CLASS_EVALUATION_WEEKS.length, 3, '周评面板应提供当前周和两个历史周。');
 assert.equal(CLASS_EVALUATION_WEEKS[0].label, '8月3日-8月9日');
-assert.equal(CLASS_EVALUATION_WEEKS[0].dataRangeLabel, '8月3日-8月7日');
+assert.equal(CLASS_EVALUATION_WEEKS[0].dataRangeLabel, '8月3日-8月9日');
 assert.equal(CLASS_EVALUATION_WEEKS[0].gradeRank, 2);
 assert.ok(!('overallRank' in CLASS_EVALUATION_WEEKS[0]));
 for (const week of CLASS_EVALUATION_WEEKS) {
@@ -56,6 +56,11 @@ for (const week of CLASS_EVALUATION_WEEKS) {
 }
 
 for (const record of CLASS_EVALUATION_RECORDS) {
+  assert.deepEqual(
+    [record.indicatorPath[0], record.indicatorPath[2]],
+    [record.dimension, record.indicator],
+    `${record.id} 应提供与一级指标、末级指标一致的完整三级路径`,
+  );
   for (const field of ['classDeduction', 'teacherDeduction', 'responsibility', 'rectificationStatus', 'actions']) {
     assert.ok(!(field in record), `${record.id} 不应包含系统并不存在的 ${field} 字段`);
   }
@@ -137,7 +142,7 @@ const eyeExerciseRule = askClassEvaluationQuestion({
 });
 assert.equal(eyeExerciseRule.answerType, 'deduction_patterns', '自由问法应识别具体扣分意图。');
 assert.equal(eyeExerciseRule.evidenceRefs.length, 1, '具体场景问题应只引用匹配的本周记录。');
-assert.match(eyeExerciseRule.message, /眼操教师组织共1笔扣分/);
+assert.match(eyeExerciseRule.message, /教师组织管理共1笔扣分/);
 assert.equal(eyeExerciseRule.analysis.at(-1)?.title, '扣分依据');
 
 const contextualFollowUp = askClassEvaluationQuestion({

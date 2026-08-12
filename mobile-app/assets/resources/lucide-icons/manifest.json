@@ -1,0 +1,1641 @@
+{
+  "package": "lucide-react",
+  "version": "0.563.0",
+  "generatedFrom": "mobile-app direct imports and shared icon wrappers",
+  "iconCount": 177,
+  "defaults": {
+    "format": "SVG",
+    "width": 24,
+    "height": 24,
+    "color": "#171513",
+    "strokeWidth": 2
+  },
+  "icons": [
+    {
+      "exportName": "Activity",
+      "fileName": "activity.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/archive-design/ArchiveGrowthDataRenderer.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "ActivityIcon",
+      "fileName": "activity-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "AlertCircle",
+      "fileName": "alert-circle.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx"
+      ]
+    },
+    {
+      "exportName": "AlertCircleIcon",
+      "fileName": "alert-circle-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "AlertTriangle",
+      "fileName": "alert-triangle.svg",
+      "usageFiles": [
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/MoralEducationCockpitView.tsx"
+      ]
+    },
+    {
+      "exportName": "Anchor",
+      "fileName": "anchor.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Archive",
+      "fileName": "archive.svg",
+      "usageFiles": [
+        "mobile-app/views/archive-design/ClassArchiveBatchView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "ArchiveRestore",
+      "fileName": "archive-restore.svg",
+      "usageFiles": [
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "ArrowDown",
+      "fileName": "arrow-down.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassLeaderboardView.tsx"
+      ]
+    },
+    {
+      "exportName": "ArrowDownNarrowWide",
+      "fileName": "arrow-down-narrow-wide.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "ArrowLeft",
+      "fileName": "arrow-left.svg",
+      "usageFiles": [
+        "mobile-app/views/EvaluationRecordsLogView.tsx"
+      ]
+    },
+    {
+      "exportName": "ArrowLeftRight",
+      "fileName": "arrow-left-right.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx"
+      ]
+    },
+    {
+      "exportName": "ArrowUpDown",
+      "fileName": "arrow-up-down.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/ClassReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "ArrowUpNarrowWide",
+      "fileName": "arrow-up-narrow-wide.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "ArrowUpRight",
+      "fileName": "arrow-up-right.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Award",
+      "fileName": "award.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/ReportDetailView.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "BadgeCheck",
+      "fileName": "badge-check.svg",
+      "usageFiles": [
+        "mobile-app/views/DashboardView.tsx"
+      ]
+    },
+    {
+      "exportName": "BarChart3",
+      "fileName": "bar-chart-3.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/ClassListView.tsx"
+      ]
+    },
+    {
+      "exportName": "BarChartIcon",
+      "fileName": "bar-chart-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "BellIcon",
+      "fileName": "bell-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "BookOpen",
+      "fileName": "book-open.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/MeFeatureViews.tsx",
+        "mobile-app/views/MeView.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "BookOpenCheck",
+      "fileName": "book-open-check.svg",
+      "usageFiles": [
+        "mobile-app/views/archive-design/StudentArchiveView.tsx"
+      ]
+    },
+    {
+      "exportName": "BookOpenText",
+      "fileName": "book-open-text.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx"
+      ]
+    },
+    {
+      "exportName": "Bot",
+      "fileName": "bot.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/StudentEvaluationRecordsView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationRecordDetailView.tsx"
+      ]
+    },
+    {
+      "exportName": "BrainCircuit",
+      "fileName": "brain-circuit.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Building2",
+      "fileName": "building-2.svg",
+      "usageFiles": [
+        "mobile-app/components/ClassSourceTrigger.tsx",
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/views/AiPrincipalAssistantView.tsx"
+      ]
+    },
+    {
+      "exportName": "Calculator",
+      "fileName": "calculator.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Calendar",
+      "fileName": "calendar.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/LeaderReportView.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "CalendarClock",
+      "fileName": "calendar-clock.svg",
+      "usageFiles": [
+        "mobile-app/components/ui/MobileNoticeSheet.tsx"
+      ]
+    },
+    {
+      "exportName": "CalendarDays",
+      "fileName": "calendar-days.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/components/student-detail/StudentTimeRangeSelector.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/MoralEducationCockpitView.tsx",
+        "mobile-app/views/PrincipalPeriodicReportView.tsx",
+        "mobile-app/views/PrincipalReportHistoryView.tsx",
+        "mobile-app/views/PrincipalTermReportView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-collection/StudentCollectionRecordDetailView.tsx"
+      ]
+    },
+    {
+      "exportName": "CalendarRange",
+      "fileName": "calendar-range.svg",
+      "usageFiles": [
+        "mobile-app/views/AiPrincipalAssistantView.tsx",
+        "mobile-app/views/ClassReportView.tsx",
+        "mobile-app/views/StudentEvaluationRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "Camera",
+      "fileName": "camera.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/MeView.tsx",
+        "mobile-app/views/RecordInputView.tsx",
+        "mobile-app/views/StudentBasicEditView.tsx",
+        "mobile-app/views/TeacherProfileEditView.tsx",
+        "mobile-app/views/face-update/FaceUpdateView.tsx"
+      ]
+    },
+    {
+      "exportName": "CameraIcon",
+      "fileName": "camera-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "Check",
+      "fileName": "check.svg",
+      "usageFiles": [
+        "mobile-app/components/HomeroomClassPickerSheet.tsx",
+        "mobile-app/components/class/ClassInviteFlow.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/components/growth/GrowthFieldCategoryPicker.tsx",
+        "mobile-app/components/ui/MobileClassCascadePicker.tsx",
+        "mobile-app/views/ClassInfoView.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/MeFeatureViews.tsx",
+        "mobile-app/views/MoralEducationCockpitView.tsx",
+        "mobile-app/views/ReportDetailView.tsx",
+        "mobile-app/views/StudentBasicEditView.tsx",
+        "mobile-app/views/StudentBatchEditView.tsx",
+        "mobile-app/views/TeacherLoginView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/archive-design/ArchiveFormRenderer.tsx",
+        "mobile-app/views/archive-design/ClassArchiveBatchView.tsx",
+        "mobile-app/views/bank-password/BankPasswordView.tsx",
+        "mobile-app/views/questionnaire/GrowthCollectionForms.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/reward-verification/RewardVerificationView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationIndicatorFilterSheet.tsx",
+        "mobile-app/views/student-evaluation/EvaluationRecordEditView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationTeacherFilterSheet.tsx",
+        "mobile-app/views/student-evaluation/EvaluationTimeFilterSheet.tsx",
+        "mobile-app/views/student-growth/SemesterGoalPlanView.tsx"
+      ]
+    },
+    {
+      "exportName": "CheckCircle2",
+      "fileName": "check-circle-2.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassDetailView.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/RecordResultView.tsx",
+        "mobile-app/views/face-update/FaceUpdateView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "CheckIcon",
+      "fileName": "check-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "ChevronDown",
+      "fileName": "chevron-down.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/ClassSourceTrigger.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/components/student-detail/StudentTimeRangeSelector.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/ClassDetailView.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/ClassReportView.tsx",
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/EvaluationRecordsLogView.tsx",
+        "mobile-app/views/StudentEvaluationRecordsView.tsx",
+        "mobile-app/views/TeacherEvaluationReviewHistoryView.tsx",
+        "mobile-app/views/WeeklyActionAdviceHistoryView.tsx",
+        "mobile-app/views/archive-design/ArchiveFormRenderer.tsx",
+        "mobile-app/views/archive-design/ClassArchiveBatchView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-collection/StudentCollectionHistoryTab.tsx"
+      ]
+    },
+    {
+      "exportName": "ChevronLeft",
+      "fileName": "chevron-left.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/AssistantSubpageHeader.tsx",
+        "mobile-app/components/Header.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/class/ClassInviteFlow.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/AiHeadteacherAssistantView.tsx",
+        "mobile-app/views/AiPrincipalAssistantView.tsx",
+        "mobile-app/views/ClassDetailView.tsx",
+        "mobile-app/views/ClassInfoView.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx",
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/HomeworkEntryView.tsx",
+        "mobile-app/views/LeaderReportView.tsx",
+        "mobile-app/views/MoralEducationCockpitView.tsx",
+        "mobile-app/views/MyFilesView.tsx",
+        "mobile-app/views/StudentBasicEditView.tsx",
+        "mobile-app/views/StudentBatchEditView.tsx",
+        "mobile-app/views/StudentCoinDetailView.tsx",
+        "mobile-app/views/StudentEvaluationRecordsView.tsx",
+        "mobile-app/views/TeacherProfileEditView.tsx",
+        "mobile-app/views/TermReportView.tsx",
+        "mobile-app/views/archive-design/archivePagePrimitives.tsx",
+        "mobile-app/views/bank-password/BankPasswordView.tsx",
+        "mobile-app/views/face-update/FaceUpdateView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/reward-verification/RewardVerificationView.tsx",
+        "mobile-app/views/student-collection/StudentCollectionRecordDetailView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationRecordDetailView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationRecordEditView.tsx"
+      ]
+    },
+    {
+      "exportName": "ChevronRight",
+      "fileName": "chevron-right.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/report/ClassReportIndicatorDrilldown.tsx",
+        "mobile-app/components/ui/MenuItem.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/AiHeadteacherAssistantView.tsx",
+        "mobile-app/views/AiPrincipalAssistantView.tsx",
+        "mobile-app/views/ClassInfoView.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx",
+        "mobile-app/views/ClassReportView.tsx",
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/HomeworkEntryView.tsx",
+        "mobile-app/views/LeaderReportView.tsx",
+        "mobile-app/views/MeFeatureViews.tsx",
+        "mobile-app/views/MeView.tsx",
+        "mobile-app/views/MoralEducationCockpitView.tsx",
+        "mobile-app/views/PrincipalReportHistoryView.tsx",
+        "mobile-app/views/RecordInputView.tsx",
+        "mobile-app/views/StudentEvaluationRecordsView.tsx",
+        "mobile-app/views/TeacherEvaluationReviewHistoryView.tsx",
+        "mobile-app/views/TeacherEvaluationReviewView.tsx",
+        "mobile-app/views/TermReportView.tsx",
+        "mobile-app/views/WeeklyActionAdviceHistoryView.tsx",
+        "mobile-app/views/WeeklyActionAdviceView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/archive-design/ArchiveGrowthDataRenderer.tsx",
+        "mobile-app/views/archive-design/StudentArchiveView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationIndicatorFilterSheet.tsx",
+        "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "ChevronUp",
+      "fileName": "chevron-up.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Circle",
+      "fileName": "circle.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassDetailView.tsx"
+      ]
+    },
+    {
+      "exportName": "CircleAlert",
+      "fileName": "circle-alert.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/views/archive-design/ClassArchiveBatchView.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "CircleDot",
+      "fileName": "circle-dot.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "CircleHelp",
+      "fileName": "circle-help.svg",
+      "usageFiles": [
+        "mobile-app/views/MeFeatureViews.tsx"
+      ]
+    },
+    {
+      "exportName": "ClipboardCheck",
+      "fileName": "clipboard-check.svg",
+      "usageFiles": [
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-collection/StudentCollectionHistoryTab.tsx",
+        "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx"
+      ]
+    },
+    {
+      "exportName": "ClipboardList",
+      "fileName": "clipboard-list.svg",
+      "usageFiles": [
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/LeaderReportView.tsx",
+        "mobile-app/views/MeView.tsx",
+        "mobile-app/views/StudentEvaluationRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "Clock",
+      "fileName": "clock.svg",
+      "usageFiles": [
+        "mobile-app/views/StudentCoinDetailView.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "ClockIcon",
+      "fileName": "clock-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "Coins",
+      "fileName": "coins.svg",
+      "usageFiles": [
+        "mobile-app/views/MeView.tsx"
+      ]
+    },
+    {
+      "exportName": "Compass",
+      "fileName": "compass.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Copy",
+      "fileName": "copy.svg",
+      "usageFiles": [
+        "mobile-app/components/class/ClassInviteFlow.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/ClassInfoView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "CornerDownLeft",
+      "fileName": "corner-down-left.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "DatabaseZap",
+      "fileName": "database-zap.svg",
+      "usageFiles": [
+        "mobile-app/components/AssistantReportFeedback.tsx"
+      ]
+    },
+    {
+      "exportName": "Disc",
+      "fileName": "disc.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx"
+      ]
+    },
+    {
+      "exportName": "Download",
+      "fileName": "download.svg",
+      "usageFiles": [
+        "mobile-app/components/class/ClassInviteFlow.tsx",
+        "mobile-app/components/ui/MobileQrInviteSheet.tsx"
+      ]
+    },
+    {
+      "exportName": "Dumbbell",
+      "fileName": "dumbbell.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Edit3",
+      "fileName": "edit-3.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassDetailView.tsx",
+        "mobile-app/views/MeFeatureViews.tsx",
+        "mobile-app/views/ReportDetailView.tsx",
+        "mobile-app/views/TermReportView.tsx",
+        "mobile-app/views/bank-password/BankPasswordView.tsx"
+      ]
+    },
+    {
+      "exportName": "Eye",
+      "fileName": "eye.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/views/TeacherLoginView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/bank-password/BankPasswordView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "EyeOff",
+      "fileName": "eye-off.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/TeacherLoginView.tsx",
+        "mobile-app/views/bank-password/BankPasswordView.tsx"
+      ]
+    },
+    {
+      "exportName": "File",
+      "fileName": "file.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/MyFilesView.tsx"
+      ]
+    },
+    {
+      "exportName": "FileBarChart",
+      "fileName": "file-bar-chart.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx"
+      ]
+    },
+    {
+      "exportName": "FileCog",
+      "fileName": "file-cog.svg",
+      "usageFiles": [
+        "mobile-app/views/MeView.tsx"
+      ]
+    },
+    {
+      "exportName": "FilePenLine",
+      "fileName": "file-pen-line.svg",
+      "usageFiles": [
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/archive-design/StudentArchiveView.tsx"
+      ]
+    },
+    {
+      "exportName": "FileSearch",
+      "fileName": "file-search.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx"
+      ]
+    },
+    {
+      "exportName": "FileSpreadsheet",
+      "fileName": "file-spreadsheet.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx",
+        "mobile-app/views/MyFilesView.tsx"
+      ]
+    },
+    {
+      "exportName": "FileText",
+      "fileName": "file-text.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/StudentInfoCard.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx",
+        "mobile-app/views/TermReportView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "Filter",
+      "fileName": "filter.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx"
+      ]
+    },
+    {
+      "exportName": "FlaskConical",
+      "fileName": "flask-conical.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Folder",
+      "fileName": "folder.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormOutlineSorter.tsx"
+      ]
+    },
+    {
+      "exportName": "FolderArchive",
+      "fileName": "folder-archive.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassListView.tsx"
+      ]
+    },
+    {
+      "exportName": "FolderOpen",
+      "fileName": "folder-open.svg",
+      "usageFiles": [
+        "mobile-app/views/DashboardView.tsx"
+      ]
+    },
+    {
+      "exportName": "FolderPlus",
+      "fileName": "folder-plus.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx"
+      ]
+    },
+    {
+      "exportName": "Gift",
+      "fileName": "gift.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/reward-verification/RewardVerificationView.tsx"
+      ]
+    },
+    {
+      "exportName": "GripHorizontal",
+      "fileName": "grip-horizontal.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx"
+      ]
+    },
+    {
+      "exportName": "GripVertical",
+      "fileName": "grip-vertical.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/components/form-builder/FormOutlineSorter.tsx",
+        "mobile-app/views/MeFeatureViews.tsx"
+      ]
+    },
+    {
+      "exportName": "Hash",
+      "fileName": "hash.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "HeartHandshake",
+      "fileName": "heart-handshake.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "HeartPulse",
+      "fileName": "heart-pulse.svg",
+      "usageFiles": [
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "HelpCircle",
+      "fileName": "help-circle.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/RecordResultView.tsx"
+      ]
+    },
+    {
+      "exportName": "History",
+      "fileName": "history.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/AssistantHistoryLink.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/archive-design/StudentArchiveView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationRecordDetailView.tsx",
+        "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "Home",
+      "fileName": "home.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "HomeIcon",
+      "fileName": "home-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "Image",
+      "fileName": "image.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/RecordInputView.tsx",
+        "mobile-app/views/StudentBasicEditView.tsx",
+        "mobile-app/views/TeacherProfileEditView.tsx",
+        "mobile-app/views/face-update/FaceUpdateView.tsx"
+      ]
+    },
+    {
+      "exportName": "ImageOff",
+      "fileName": "image-off.svg",
+      "usageFiles": [
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "ImagePlus",
+      "fileName": "image-plus.svg",
+      "usageFiles": [
+        "mobile-app/views/MeFeatureViews.tsx"
+      ]
+    },
+    {
+      "exportName": "Info",
+      "fileName": "info.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/LeaderReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Keyboard",
+      "fileName": "keyboard.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/RecordInputView.tsx"
+      ]
+    },
+    {
+      "exportName": "KeyRound",
+      "fileName": "key-round.svg",
+      "usageFiles": [
+        "mobile-app/views/MeFeatureViews.tsx"
+      ]
+    },
+    {
+      "exportName": "Landmark",
+      "fileName": "landmark.svg",
+      "usageFiles": [
+        "mobile-app/views/StudentCoinDetailView.tsx"
+      ]
+    },
+    {
+      "exportName": "Languages",
+      "fileName": "languages.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Layers",
+      "fileName": "layers.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Layout",
+      "fileName": "layout.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Lightbulb",
+      "fileName": "lightbulb.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Link",
+      "fileName": "link.svg",
+      "usageFiles": [
+        "mobile-app/components/class/ClassInviteFlow.tsx"
+      ]
+    },
+    {
+      "exportName": "ListChecks",
+      "fileName": "list-checks.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "ListPlus",
+      "fileName": "list-plus.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "ListTree",
+      "fileName": "list-tree.svg",
+      "usageFiles": [
+        "mobile-app/views/StudentEvaluationRecordsView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "Loader2",
+      "fileName": "loader-2.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassRecordLogView.tsx"
+      ]
+    },
+    {
+      "exportName": "LoaderCircle",
+      "fileName": "loader-circle.svg",
+      "usageFiles": [
+        "mobile-app/components/ui/MobileQrInviteSheet.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx"
+      ]
+    },
+    {
+      "exportName": "Lock",
+      "fileName": "lock.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/MeFeatureViews.tsx"
+      ]
+    },
+    {
+      "exportName": "LockKeyhole",
+      "fileName": "lock-keyhole.svg",
+      "usageFiles": [
+        "mobile-app/views/archive-design/ClassArchiveBatchView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationRecordDetailView.tsx"
+      ]
+    },
+    {
+      "exportName": "LogIn",
+      "fileName": "log-in.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassListView.tsx"
+      ]
+    },
+    {
+      "exportName": "LogOut",
+      "fileName": "log-out.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassInfoView.tsx"
+      ]
+    },
+    {
+      "exportName": "LogOutIcon",
+      "fileName": "log-out-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "Map",
+      "fileName": "map.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "MapPin",
+      "fileName": "map-pin.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "MapPinIcon",
+      "fileName": "map-pin-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "Mars",
+      "fileName": "mars.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/StudentInfoCard.tsx",
+        "mobile-app/components/student-performance/StudentPerformanceAvatar.tsx",
+        "mobile-app/views/ClassDetailView.tsx",
+        "mobile-app/views/DashboardView.tsx"
+      ]
+    },
+    {
+      "exportName": "Megaphone",
+      "fileName": "megaphone.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "MessageCircle",
+      "fileName": "message-circle.svg",
+      "usageFiles": [
+        "mobile-app/components/class/ClassInviteFlow.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/MeView.tsx",
+        "mobile-app/views/student-growth/SemesterGoalPlanView.tsx"
+      ]
+    },
+    {
+      "exportName": "MessageSquare",
+      "fileName": "message-square.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "MessageSquareText",
+      "fileName": "message-square-text.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "Mic",
+      "fileName": "mic.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/RecordInputView.tsx"
+      ]
+    },
+    {
+      "exportName": "Minus",
+      "fileName": "minus.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/components/ui/MobileClassCascadePicker.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationRecordEditView.tsx"
+      ]
+    },
+    {
+      "exportName": "Monitor",
+      "fileName": "monitor.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "MoreHorizontal",
+      "fileName": "more-horizontal.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/ClassInfoView.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "MoreVertical",
+      "fileName": "more-vertical.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/MyFilesView.tsx"
+      ]
+    },
+    {
+      "exportName": "Palette",
+      "fileName": "palette.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/TermReportView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "Palmtree",
+      "fileName": "palmtree.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Pencil",
+      "fileName": "pencil.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/ClassInfoView.tsx",
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/TeacherProfileEditView.tsx",
+        "mobile-app/views/reward-verification/RewardVerificationView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationRecordDetailView.tsx",
+        "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "PencilLine",
+      "fileName": "pencil-line.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "PenLine",
+      "fileName": "pen-line.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "PenTool",
+      "fileName": "pen-tool.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Phone",
+      "fileName": "phone.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassInfoView.tsx"
+      ]
+    },
+    {
+      "exportName": "Plus",
+      "fileName": "plus.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/components/ui/MobileFloatingCreateButton.tsx",
+        "mobile-app/views/ClassDetailView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/MeFeatureViews.tsx",
+        "mobile-app/views/StudentBasicEditView.tsx",
+        "mobile-app/views/TeacherProfileEditView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/reward-verification/RewardVerificationView.tsx",
+        "mobile-app/views/student-evaluation/EvaluationRecordEditView.tsx",
+        "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "Power",
+      "fileName": "power.svg",
+      "usageFiles": [
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx"
+      ]
+    },
+    {
+      "exportName": "PowerOff",
+      "fileName": "power-off.svg",
+      "usageFiles": [
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx"
+      ]
+    },
+    {
+      "exportName": "Printer",
+      "fileName": "printer.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "QrCode",
+      "fileName": "qr-code.svg",
+      "usageFiles": [
+        "mobile-app/components/class/ClassInviteFlow.tsx",
+        "mobile-app/views/ClassInfoView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "Quote",
+      "fileName": "quote.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassReportView.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "RefreshCw",
+      "fileName": "refresh-cw.svg",
+      "usageFiles": [
+        "mobile-app/components/AssistantReportFeedback.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/assistant-report/AssistantReportContractError.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx"
+      ]
+    },
+    {
+      "exportName": "Repeat2",
+      "fileName": "repeat-2.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassInfoView.tsx"
+      ]
+    },
+    {
+      "exportName": "RotateCcw",
+      "fileName": "rotate-ccw.svg",
+      "usageFiles": [
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "Ruler",
+      "fileName": "ruler.svg",
+      "usageFiles": [
+        "mobile-app/views/questionnaire/GrowthCollectionForms.tsx",
+        "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "Save",
+      "fileName": "save.svg",
+      "usageFiles": [
+        "mobile-app/views/archive-design/StudentArchiveView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "Scale",
+      "fileName": "scale.svg",
+      "usageFiles": [
+        "mobile-app/views/questionnaire/GrowthCollectionForms.tsx",
+        "mobile-app/views/student-growth/StudentHealthRecordsView.tsx"
+      ]
+    },
+    {
+      "exportName": "ScanFace",
+      "fileName": "scan-face.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassListView.tsx"
+      ]
+    },
+    {
+      "exportName": "ScanSearch",
+      "fileName": "scan-search.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/views/AiHeadteacherAssistantView.tsx",
+        "mobile-app/views/AiPrincipalAssistantView.tsx"
+      ]
+    },
+    {
+      "exportName": "School",
+      "fileName": "school.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/views/DashboardView.tsx"
+      ]
+    },
+    {
+      "exportName": "Search",
+      "fileName": "search.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassDetailView.tsx",
+        "mobile-app/views/bank-password/BankPasswordView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "SearchIcon",
+      "fileName": "search-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "Send",
+      "fileName": "send.svg",
+      "usageFiles": [
+        "mobile-app/components/class/ClassInviteFlow.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/archive-design/StudentArchiveView.tsx"
+      ]
+    },
+    {
+      "exportName": "Settings",
+      "fileName": "settings.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/MeView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "Share2",
+      "fileName": "share-2.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassInfoView.tsx"
+      ]
+    },
+    {
+      "exportName": "Shield",
+      "fileName": "shield.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/MeFeatureViews.tsx"
+      ]
+    },
+    {
+      "exportName": "ShieldCheck",
+      "fileName": "shield-check.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/views/TeacherLoginView.tsx"
+      ]
+    },
+    {
+      "exportName": "ShoppingBag",
+      "fileName": "shopping-bag.svg",
+      "usageFiles": [
+        "mobile-app/views/StudentCoinDetailView.tsx"
+      ]
+    },
+    {
+      "exportName": "SlidersHorizontal",
+      "fileName": "sliders-horizontal.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/StudentCoinDetailView.tsx"
+      ]
+    },
+    {
+      "exportName": "Smartphone",
+      "fileName": "smartphone.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "Smile",
+      "fileName": "smile.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Sparkles",
+      "fileName": "sparkles.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/components/assistant-report/AssistantReportFooter.tsx",
+        "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx",
+        "mobile-app/views/PrincipalPeriodicReportView.tsx",
+        "mobile-app/views/PrincipalTermReportView.tsx",
+        "mobile-app/views/ReportDetailView.tsx",
+        "mobile-app/views/StudentCoinDetailView.tsx",
+        "mobile-app/views/TermReportView.tsx",
+        "mobile-app/views/student-growth/SemesterGoalPlanView.tsx"
+      ]
+    },
+    {
+      "exportName": "Sprout",
+      "fileName": "sprout.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx"
+      ]
+    },
+    {
+      "exportName": "Star",
+      "fileName": "star.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/ReportDetailView.tsx",
+        "mobile-app/views/TermReportView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "StopCircle",
+      "fileName": "stop-circle.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx"
+      ]
+    },
+    {
+      "exportName": "Sun",
+      "fileName": "sun.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Tags",
+      "fileName": "tags.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx"
+      ]
+    },
+    {
+      "exportName": "Target",
+      "fileName": "target.svg",
+      "usageFiles": [
+        "mobile-app/views/TermReportView.tsx",
+        "mobile-app/views/questionnaire/GrowthCollectionForms.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-growth/SemesterGoalPlanView.tsx"
+      ]
+    },
+    {
+      "exportName": "TextCursorInput",
+      "fileName": "text-cursor-input.svg",
+      "usageFiles": [
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx"
+      ]
+    },
+    {
+      "exportName": "Trash2",
+      "fileName": "trash-2.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/views/ClassInfoView.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx",
+        "mobile-app/views/MeFeatureViews.tsx",
+        "mobile-app/views/MyFilesView.tsx",
+        "mobile-app/views/TeacherProfileEditView.tsx",
+        "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/reward-verification/RewardVerificationView.tsx"
+      ]
+    },
+    {
+      "exportName": "TrendingDown",
+      "fileName": "trending-down.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassLeaderboardView.tsx"
+      ]
+    },
+    {
+      "exportName": "TrendingUp",
+      "fileName": "trending-up.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/ReportDetailView.tsx",
+        "mobile-app/views/StudentCoinDetailView.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Triangle",
+      "fileName": "triangle.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "Trophy",
+      "fileName": "trophy.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/LeaderReportView.tsx",
+        "mobile-app/views/RecordResultView.tsx"
+      ]
+    },
+    {
+      "exportName": "User",
+      "fileName": "user.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx"
+      ]
+    },
+    {
+      "exportName": "UserCheck",
+      "fileName": "user-check.svg",
+      "usageFiles": [
+        "mobile-app/views/LeaderReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "UserCog",
+      "fileName": "user-cog.svg",
+      "usageFiles": [
+        "mobile-app/views/ClassInfoView.tsx"
+      ]
+    },
+    {
+      "exportName": "UserIcon",
+      "fileName": "user-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "UserPlus",
+      "fileName": "user-plus.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassInfoView.tsx",
+        "mobile-app/views/ClassListView.tsx"
+      ]
+    },
+    {
+      "exportName": "UserRound",
+      "fileName": "user-round.svg",
+      "usageFiles": [
+        "mobile-app/components/ClassSourceTrigger.tsx",
+        "mobile-app/views/StudentEvaluationRecordsView.tsx",
+        "mobile-app/views/archive-design/ClassArchiveBatchView.tsx",
+        "mobile-app/views/face-update/FaceUpdateView.tsx",
+        "mobile-app/views/student-collection/StudentCollectionRecordDetailView.tsx"
+      ]
+    },
+    {
+      "exportName": "UserRoundCheck",
+      "fileName": "user-round-check.svg",
+      "usageFiles": [
+        "mobile-app/views/AiHeadteacherAssistantView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-collection/StudentCollectionHistoryTab.tsx",
+        "mobile-app/views/student-collection/StudentCollectionRecordDetailView.tsx",
+        "mobile-app/views/student-growth/SemesterGoalPlanView.tsx"
+      ]
+    },
+    {
+      "exportName": "UserRoundSearch",
+      "fileName": "user-round-search.svg",
+      "usageFiles": [
+        "mobile-app/components/assistant-report/AssistantReportCards.tsx"
+      ]
+    },
+    {
+      "exportName": "Users",
+      "fileName": "users.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/LeaderReportView.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    },
+    {
+      "exportName": "UsersRound",
+      "fileName": "users-round.svg",
+      "usageFiles": [
+        "mobile-app/components/ClassSourceTrigger.tsx",
+        "mobile-app/views/MeView.tsx",
+        "mobile-app/views/StudentBasicEditView.tsx",
+        "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+        "mobile-app/views/student-collection/StudentCollectionHistoryTab.tsx",
+        "mobile-app/views/student-collection/StudentCollectionRecordDetailView.tsx"
+      ]
+    },
+    {
+      "exportName": "Venus",
+      "fileName": "venus.svg",
+      "usageFiles": [
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/StudentInfoCard.tsx",
+        "mobile-app/components/student-performance/StudentPerformanceAvatar.tsx",
+        "mobile-app/views/ClassDetailView.tsx",
+        "mobile-app/views/DashboardView.tsx"
+      ]
+    },
+    {
+      "exportName": "Volume2",
+      "fileName": "volume-2.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx"
+      ]
+    },
+    {
+      "exportName": "VolumeIcon",
+      "fileName": "volume-icon.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx"
+      ]
+    },
+    {
+      "exportName": "X",
+      "fileName": "x.svg",
+      "usageFiles": [
+        "mobile-app/App.tsx",
+        "mobile-app/components/HomeroomClassPickerSheet.tsx",
+        "mobile-app/components/Icons.tsx",
+        "mobile-app/components/form-builder/FormBuilder.tsx",
+        "mobile-app/components/ui/MobileBottomSheet.tsx",
+        "mobile-app/components/ui/MobileNoticeSheet.tsx",
+        "mobile-app/views/ClassDetailView.tsx",
+        "mobile-app/views/ClassLeaderboardView.tsx",
+        "mobile-app/views/ClassListView.tsx",
+        "mobile-app/views/ClassRecordLogView.tsx",
+        "mobile-app/views/DashboardView.tsx",
+        "mobile-app/views/LeaderReportView.tsx",
+        "mobile-app/views/MeFeatureViews.tsx",
+        "mobile-app/views/ReportDetailView.tsx",
+        "mobile-app/views/StudentBasicEditView.tsx",
+        "mobile-app/views/StudentCoinDetailView.tsx",
+        "mobile-app/views/TeacherLoginView.tsx",
+        "mobile-app/views/TermReportView.tsx"
+      ]
+    }
+  ]
+}

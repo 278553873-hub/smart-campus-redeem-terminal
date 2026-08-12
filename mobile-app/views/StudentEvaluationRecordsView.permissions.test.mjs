@@ -49,7 +49,7 @@ requireText(dashboardSource, 'evaluationScoreDeltas', '评价分值修改后必�
 requireText(dashboardSource, 'getTermValueForEvaluationDate', '五育积分回算必须按评价日期归属学期。');
 
 for (const source of [listSource, timeFilterSource, teacherFilterSource, indicatorFilterSource, detailSource, editSource, sheetSource]) {
-  assert.ok(!source.match(/#[0-9a-fA-F]{3,8}\b/), '评价记录新页面不得新增十六进制颜色。');
+  assert.ok(!source.match(/#[0-9a-fA-F]{3,8}\b/), '评价记录相关界面不得新增十六进制颜色。');
 }
 requireText(sheetSource, 'var(--tm-radius-sheet)', '评价筛选必须复用教师端弹层圆角令牌。');
 requireText(sheetSource, 'var(--tm-shadow-sheet)', '评价筛选必须复用教师端弹层阴影令牌。');

@@ -4,6 +4,7 @@ export interface ClassEvaluationRecord {
     date: string;
     dimension: string;
     indicator: string;
+    indicatorPath: [string, string, string];
     finding: string;
     deduction: number;
     rule: string;
@@ -283,10 +284,13 @@ const resolveQuestionIntent = (
 const GENERIC_LABEL_TOKENS = new Set(['班级', '教师', '学生', '评价', '本周', '管理']);
 
 const labelMatchesQuestion = (question: string, label: string) => {
-    if (question.includes(label)) return true;
-    for (let index = 0; index < label.length - 1; index += 1) {
-        const token = label.slice(index, index + 2);
-        if (!GENERIC_LABEL_TOKENS.has(token) && question.includes(token)) return true;
+    const aliases = [label, label.replaceAll('眼保健操', '眼操')];
+    for (const candidate of aliases) {
+        if (question.includes(candidate)) return true;
+        for (let index = 0; index < candidate.length - 1; index += 1) {
+            const token = candidate.slice(index, index + 2);
+            if (!GENERIC_LABEL_TOKENS.has(token) && question.includes(token)) return true;
+        }
     }
     return false;
 };
@@ -298,6 +302,7 @@ const scopeRecordsForQuestion = (
     const scoped = records.filter(record => (
         labelMatchesQuestion(question, record.dimension)
         || labelMatchesQuestion(question, record.indicator)
+        || record.indicatorPath.some(label => labelMatchesQuestion(question, label))
     ));
     return scoped.length > 0 ? scoped : records;
 };

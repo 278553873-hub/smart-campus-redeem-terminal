@@ -77,7 +77,11 @@ requireText(dashboardSource, 'relative flex h-full min-h-0 flex-col overflow-hid
 requireText(dashboardSource, 'min-h-0 flex-1 overflow-y-auto pb-safe no-scrollbar', '学生详情标题栏下方内容应独立滚动，避免底部抽屉挂到长页面底部。');
 requireText(dashboardSource, 'aria-label="编辑基础信息"', '学生头像编辑入口必须保留无障碍标签。');
 requireText(dashboardSource, '<Camera', '学生头像右下角必须展示相机图标。');
-if (dashboardSource.includes('<Pencil')) {
+const studentProfileCardSource = dashboardSource.slice(
+  dashboardSource.indexOf('{/* A. Student Profile Card */}'),
+  dashboardSource.indexOf('{/* 2. Scrollable Content */}'),
+);
+if (studentProfileCardSource.includes('<Pencil')) {
   throw new Error('学生身份卡顶部不应继续展示独立铅笔编辑按钮。');
 }
 if (dashboardSource.indexOf('aria-label="编辑基础信息"') < dashboardSource.indexOf('<div className="flex min-w-0 items-start gap-4">')) {
@@ -211,7 +215,8 @@ if (dashboardSource.includes('showFiveComparison') || dashboardSource.includes('
 requireText(evaluationSource, '<StudentEvaluationRecordsView', '评价记录页必须直接展示评价记录列表。');
 requireText(evaluationSource, 'embedded', '评价记录必须复用页内模式，避免复制筛选与列表逻辑。');
 requireText(evaluationSource, 'selectedTerm={currentTermOption.value}', '评价记录必须固定为本学期。');
-requireText(evaluationSource, 'onSelectRecord={(record) => setActiveEvaluationRecordId(record.id)}', '点击评价记录后必须渐进披露单条详情。');
+requireText(evaluationSource, 'onSelectRecord={(record) => {', '点击评价记录后必须渐进披露单条详情。');
+requireText(evaluationSource, 'setActiveEvaluationRecordId(record.id);', '点击评价记录后必须保存当前记录用于详情抽屉。');
 if (evaluationSource.includes('bodyGrowthMetrics') || evaluationSource.includes('onViewBodyMeasurements') || evaluationSource.includes('>成长数据<')) {
   throw new Error('评价记录页不应展示成长数据摘要或入口。');
 }
@@ -228,7 +233,14 @@ requireText(dashboardSource, '成长报告', '学生详情必须保留成长报�
 requireText(evaluationRecordsSource, '>评价记录</h3>', '学生详情必须保留评价记录板块。');
 requireText(dashboardSource, "activeTab === 'evaluation' && renderEvaluationTab()", '实时五育积分和评价列表必须收敛到评价记录页签。');
 requireText(dashboardSource, "activeTab === 'report' && renderReportTab()", '阶段报告必须收敛到成长报告页签。');
-requireText(dashboardSource, 'initialRecordId={activeEvaluationRecordId}', '单条评价记录详情应从评价记录页进入完整详情页。');
+requireText(dashboardSource, 'title="评价详情"', '单条评价记录详情必须使用公共底部抽屉。');
+requireText(dashboardSource, 'open={Boolean(activeEvaluationRecord)}', '评价详情抽屉应由当前选中的记录控制。');
+requireText(dashboardSource, '<EvaluationRecordDetailContent record={activeEvaluationRecord} />', '评价详情抽屉必须复用通用详情内容。');
+requireText(dashboardSource, 'initialRecordPage="edit"', '修改评价应从详情抽屉渐进披露到独立编辑页。');
+requireText(dashboardSource, 'onBack={() => setShowEvaluationRecordEditor(false)}', '取消或保存修改后应回到同一条详情抽屉。');
+if (dashboardSource.includes('if (activeEvaluationRecordId) {')) {
+  throw new Error('点击单条评价记录后不应再切换为完整详情页。');
+}
 requireText(evaluationRecordsSource, 'record.evaluation_date >= activeTerm.startDate', '评价记录必须按所选学期过滤。');
 requireText(evaluationRecordsSource, 'ariaLabel="筛选评价记录学期"', '评价记录二级页必须继承并允许切换学期。');
 requireText(dashboardSource, 'onClick={() => setShowStatusActionSheet(true)}', '学生卡片顶部的学籍入口应直接打开学籍状态抽屉。');

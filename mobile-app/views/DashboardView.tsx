@@ -5,13 +5,14 @@ import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
     AwardIcon, GrowthIcon
 } from '../components/Icons';
-import { AlertTriangle, BadgeCheck, Camera, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, School } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Camera, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, FolderOpen, Pencil, School, X } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
 import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
 import StudentEvaluationRecordsView, { type StudentEvaluationRecord } from './StudentEvaluationRecordsView';
+import { EvaluationRecordDetailContent } from './student-evaluation/EvaluationRecordDetailView';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import {
     teacherBrandPalette,
@@ -300,6 +301,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
     const [selectedTerm, setSelectedTerm] = useState(STUDENT_TERM_OPTIONS[0].value);
     const [activeEvaluationRecordId, setActiveEvaluationRecordId] = useState<string | null>(null);
+    const [showEvaluationRecordEditor, setShowEvaluationRecordEditor] = useState(false);
     const [showAbilityModel, setShowAbilityModel] = useState(false);
     const [showCurrent, setShowCurrent] = useState(true);
     const [showClassAvg, setShowClassAvg] = useState(true);
@@ -317,6 +319,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
     const currentTermOption = STUDENT_TERM_OPTIONS.find(option => option.isCurrent) ?? STUDENT_TERM_OPTIONS[0];
     const selectedTermOption = STUDENT_TERM_OPTIONS.find(option => option.value === selectedTerm) ?? currentTermOption;
+    const activeEvaluationRecord = evaluationRecords.find(record => record.id === activeEvaluationRecordId) ?? null;
+    const canEditActiveEvaluationRecord = Boolean(activeEvaluationRecord && (
+        activeEvaluationRecord.teacherId === currentTeacherId || canEditOtherTeachersEvaluationRecords
+    ));
     const evaluationScoreDeltas = useMemo(() => {
         const deltas: Record<string, Record<string, number>> = {};
         const applyRecord = (record: StudentEvaluationRecord, factor: number) => {
@@ -410,7 +416,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 onSelectedTermChange={() => undefined}
                 onUpdateRecord={onUpdateEvaluationRecord}
                 onBack={() => undefined}
-                onSelectRecord={(record) => setActiveEvaluationRecordId(record.id)}
+                onSelectRecord={(record) => {
+                    setShowEvaluationRecordEditor(false);
+                    setActiveEvaluationRecordId(record.id);
+                }}
             />
         </div>
     );
@@ -466,7 +475,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
     );
 
-    if (activeEvaluationRecordId) {
+    if (showEvaluationRecordEditor && activeEvaluationRecordId) {
         return (
             <StudentEvaluationRecordsView
                 records={evaluationRecords}
@@ -477,8 +486,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 canEditOtherTeachersRecords={canEditOtherTeachersEvaluationRecords}
                 onSelectedTermChange={() => undefined}
                 onUpdateRecord={onUpdateEvaluationRecord}
-                onBack={() => setActiveEvaluationRecordId(null)}
+                onBack={() => setShowEvaluationRecordEditor(false)}
                 initialRecordId={activeEvaluationRecordId}
+                initialRecordPage="edit"
             />
         );
     }
@@ -627,6 +637,37 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
             </div>
             </div>
+
+            <MobileBottomSheet
+                open={Boolean(activeEvaluationRecord)}
+                title="评价详情"
+                onClose={() => setActiveEvaluationRecordId(null)}
+                header={(
+                    <header className="flex h-14 shrink-0 items-center gap-1 px-4">
+                        <h2 className="min-w-0 flex-1 truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">评价详情</h2>
+                        {canEditActiveEvaluationRecord && (
+                            <button
+                                type="button"
+                                onClick={() => setShowEvaluationRecordEditor(true)}
+                                className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
+                                aria-label="修改评价"
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => setActiveEvaluationRecordId(null)}
+                            className="-mr-2 flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                            aria-label="关闭评价详情"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                    </header>
+                )}
+            >
+                {activeEvaluationRecord && <EvaluationRecordDetailContent record={activeEvaluationRecord} />}
+            </MobileBottomSheet>
 
             <MobileBottomSheet
                 open={showResourcesSheet}

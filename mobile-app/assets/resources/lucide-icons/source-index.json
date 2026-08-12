@@ -1,0 +1,2741 @@
+{
+  "sourceCount": 80,
+  "sources": [
+    {
+      "sourceFile": "mobile-app/App.tsx",
+      "directory": "by-source/App",
+      "icons": [
+        {
+          "exportName": "Activity",
+          "fileName": "activity.svg"
+        },
+        {
+          "exportName": "ActivityIcon",
+          "fileName": "activity-icon.svg"
+        },
+        {
+          "exportName": "AlertCircle",
+          "fileName": "alert-circle.svg"
+        },
+        {
+          "exportName": "AlertCircleIcon",
+          "fileName": "alert-circle-icon.svg"
+        },
+        {
+          "exportName": "BarChartIcon",
+          "fileName": "bar-chart-icon.svg"
+        },
+        {
+          "exportName": "BellIcon",
+          "fileName": "bell-icon.svg"
+        },
+        {
+          "exportName": "BookOpen",
+          "fileName": "book-open.svg"
+        },
+        {
+          "exportName": "Camera",
+          "fileName": "camera.svg"
+        },
+        {
+          "exportName": "CameraIcon",
+          "fileName": "camera-icon.svg"
+        },
+        {
+          "exportName": "CheckCircle2",
+          "fileName": "check-circle-2.svg"
+        },
+        {
+          "exportName": "CheckIcon",
+          "fileName": "check-icon.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ClockIcon",
+          "fileName": "clock-icon.svg"
+        },
+        {
+          "exportName": "FileSpreadsheet",
+          "fileName": "file-spreadsheet.svg"
+        },
+        {
+          "exportName": "FileText",
+          "fileName": "file-text.svg"
+        },
+        {
+          "exportName": "History",
+          "fileName": "history.svg"
+        },
+        {
+          "exportName": "Home",
+          "fileName": "home.svg"
+        },
+        {
+          "exportName": "HomeIcon",
+          "fileName": "home-icon.svg"
+        },
+        {
+          "exportName": "Keyboard",
+          "fileName": "keyboard.svg"
+        },
+        {
+          "exportName": "LogOutIcon",
+          "fileName": "log-out-icon.svg"
+        },
+        {
+          "exportName": "MapPinIcon",
+          "fileName": "map-pin-icon.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "SearchIcon",
+          "fileName": "search-icon.svg"
+        },
+        {
+          "exportName": "ShieldCheck",
+          "fileName": "shield-check.svg"
+        },
+        {
+          "exportName": "Smartphone",
+          "fileName": "smartphone.svg"
+        },
+        {
+          "exportName": "User",
+          "fileName": "user.svg"
+        },
+        {
+          "exportName": "UserIcon",
+          "fileName": "user-icon.svg"
+        },
+        {
+          "exportName": "Volume2",
+          "fileName": "volume-2.svg"
+        },
+        {
+          "exportName": "VolumeIcon",
+          "fileName": "volume-icon.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/AssistantHistoryLink.tsx",
+      "directory": "by-source/components/AssistantHistoryLink",
+      "icons": [
+        {
+          "exportName": "History",
+          "fileName": "history.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/AssistantReportFeedback.tsx",
+      "directory": "by-source/components/AssistantReportFeedback",
+      "icons": [
+        {
+          "exportName": "DatabaseZap",
+          "fileName": "database-zap.svg"
+        },
+        {
+          "exportName": "RefreshCw",
+          "fileName": "refresh-cw.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/AssistantSubpageHeader.tsx",
+      "directory": "by-source/components/AssistantSubpageHeader",
+      "icons": [
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/ClassSourceTrigger.tsx",
+      "directory": "by-source/components/ClassSourceTrigger",
+      "icons": [
+        {
+          "exportName": "Building2",
+          "fileName": "building-2.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "UserRound",
+          "fileName": "user-round.svg"
+        },
+        {
+          "exportName": "UsersRound",
+          "fileName": "users-round.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/Header.tsx",
+      "directory": "by-source/components/Header",
+      "icons": [
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/HomeroomClassPickerSheet.tsx",
+      "directory": "by-source/components/HomeroomClassPickerSheet",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/Icons.tsx",
+      "directory": "by-source/components/Icons",
+      "icons": [
+        {
+          "exportName": "Activity",
+          "fileName": "activity.svg"
+        },
+        {
+          "exportName": "AlertCircle",
+          "fileName": "alert-circle.svg"
+        },
+        {
+          "exportName": "ArrowLeftRight",
+          "fileName": "arrow-left-right.svg"
+        },
+        {
+          "exportName": "Award",
+          "fileName": "award.svg"
+        },
+        {
+          "exportName": "BarChart3",
+          "fileName": "bar-chart-3.svg"
+        },
+        {
+          "exportName": "BookOpen",
+          "fileName": "book-open.svg"
+        },
+        {
+          "exportName": "Bot",
+          "fileName": "bot.svg"
+        },
+        {
+          "exportName": "Calendar",
+          "fileName": "calendar.svg"
+        },
+        {
+          "exportName": "Camera",
+          "fileName": "camera.svg"
+        },
+        {
+          "exportName": "CheckCircle2",
+          "fileName": "check-circle-2.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "Circle",
+          "fileName": "circle.svg"
+        },
+        {
+          "exportName": "Disc",
+          "fileName": "disc.svg"
+        },
+        {
+          "exportName": "Edit3",
+          "fileName": "edit-3.svg"
+        },
+        {
+          "exportName": "Eye",
+          "fileName": "eye.svg"
+        },
+        {
+          "exportName": "EyeOff",
+          "fileName": "eye-off.svg"
+        },
+        {
+          "exportName": "File",
+          "fileName": "file.svg"
+        },
+        {
+          "exportName": "FileBarChart",
+          "fileName": "file-bar-chart.svg"
+        },
+        {
+          "exportName": "FileSpreadsheet",
+          "fileName": "file-spreadsheet.svg"
+        },
+        {
+          "exportName": "FileText",
+          "fileName": "file-text.svg"
+        },
+        {
+          "exportName": "Filter",
+          "fileName": "filter.svg"
+        },
+        {
+          "exportName": "Gift",
+          "fileName": "gift.svg"
+        },
+        {
+          "exportName": "GripHorizontal",
+          "fileName": "grip-horizontal.svg"
+        },
+        {
+          "exportName": "HelpCircle",
+          "fileName": "help-circle.svg"
+        },
+        {
+          "exportName": "Home",
+          "fileName": "home.svg"
+        },
+        {
+          "exportName": "Image",
+          "fileName": "image.svg"
+        },
+        {
+          "exportName": "Keyboard",
+          "fileName": "keyboard.svg"
+        },
+        {
+          "exportName": "Lightbulb",
+          "fileName": "lightbulb.svg"
+        },
+        {
+          "exportName": "Lock",
+          "fileName": "lock.svg"
+        },
+        {
+          "exportName": "LogOut",
+          "fileName": "log-out.svg"
+        },
+        {
+          "exportName": "Mars",
+          "fileName": "mars.svg"
+        },
+        {
+          "exportName": "Mic",
+          "fileName": "mic.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "MoreVertical",
+          "fileName": "more-vertical.svg"
+        },
+        {
+          "exportName": "Palette",
+          "fileName": "palette.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "RefreshCw",
+          "fileName": "refresh-cw.svg"
+        },
+        {
+          "exportName": "ScanFace",
+          "fileName": "scan-face.svg"
+        },
+        {
+          "exportName": "Search",
+          "fileName": "search.svg"
+        },
+        {
+          "exportName": "Settings",
+          "fileName": "settings.svg"
+        },
+        {
+          "exportName": "Shield",
+          "fileName": "shield.svg"
+        },
+        {
+          "exportName": "Sprout",
+          "fileName": "sprout.svg"
+        },
+        {
+          "exportName": "Star",
+          "fileName": "star.svg"
+        },
+        {
+          "exportName": "StopCircle",
+          "fileName": "stop-circle.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        },
+        {
+          "exportName": "TrendingUp",
+          "fileName": "trending-up.svg"
+        },
+        {
+          "exportName": "Trophy",
+          "fileName": "trophy.svg"
+        },
+        {
+          "exportName": "User",
+          "fileName": "user.svg"
+        },
+        {
+          "exportName": "UserPlus",
+          "fileName": "user-plus.svg"
+        },
+        {
+          "exportName": "Users",
+          "fileName": "users.svg"
+        },
+        {
+          "exportName": "Venus",
+          "fileName": "venus.svg"
+        },
+        {
+          "exportName": "Volume2",
+          "fileName": "volume-2.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/StudentInfoCard.tsx",
+      "directory": "by-source/components/StudentInfoCard",
+      "icons": [
+        {
+          "exportName": "FileText",
+          "fileName": "file-text.svg"
+        },
+        {
+          "exportName": "Mars",
+          "fileName": "mars.svg"
+        },
+        {
+          "exportName": "Venus",
+          "fileName": "venus.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+      "directory": "by-source/components/assistant-report/AssistantReportCards",
+      "icons": [
+        {
+          "exportName": "BarChart3",
+          "fileName": "bar-chart-3.svg"
+        },
+        {
+          "exportName": "BookOpenText",
+          "fileName": "book-open-text.svg"
+        },
+        {
+          "exportName": "Building2",
+          "fileName": "building-2.svg"
+        },
+        {
+          "exportName": "CircleAlert",
+          "fileName": "circle-alert.svg"
+        },
+        {
+          "exportName": "Eye",
+          "fileName": "eye.svg"
+        },
+        {
+          "exportName": "FileSearch",
+          "fileName": "file-search.svg"
+        },
+        {
+          "exportName": "ListChecks",
+          "fileName": "list-checks.svg"
+        },
+        {
+          "exportName": "MessageSquareText",
+          "fileName": "message-square-text.svg"
+        },
+        {
+          "exportName": "ScanSearch",
+          "fileName": "scan-search.svg"
+        },
+        {
+          "exportName": "School",
+          "fileName": "school.svg"
+        },
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        },
+        {
+          "exportName": "Tags",
+          "fileName": "tags.svg"
+        },
+        {
+          "exportName": "TrendingUp",
+          "fileName": "trending-up.svg"
+        },
+        {
+          "exportName": "UserRoundSearch",
+          "fileName": "user-round-search.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/assistant-report/AssistantReportContractError.tsx",
+      "directory": "by-source/components/assistant-report/AssistantReportContractError",
+      "icons": [
+        {
+          "exportName": "RefreshCw",
+          "fileName": "refresh-cw.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/assistant-report/AssistantReportFooter.tsx",
+      "directory": "by-source/components/assistant-report/AssistantReportFooter",
+      "icons": [
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/class/ClassInviteFlow.tsx",
+      "directory": "by-source/components/class/ClassInviteFlow",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "Copy",
+          "fileName": "copy.svg"
+        },
+        {
+          "exportName": "Download",
+          "fileName": "download.svg"
+        },
+        {
+          "exportName": "Link",
+          "fileName": "link.svg"
+        },
+        {
+          "exportName": "MessageCircle",
+          "fileName": "message-circle.svg"
+        },
+        {
+          "exportName": "QrCode",
+          "fileName": "qr-code.svg"
+        },
+        {
+          "exportName": "Send",
+          "fileName": "send.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/form-builder/FormBuilder.tsx",
+      "directory": "by-source/components/form-builder/FormBuilder",
+      "icons": [
+        {
+          "exportName": "ArrowUpDown",
+          "fileName": "arrow-up-down.svg"
+        },
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "CircleDot",
+          "fileName": "circle-dot.svg"
+        },
+        {
+          "exportName": "Copy",
+          "fileName": "copy.svg"
+        },
+        {
+          "exportName": "FolderPlus",
+          "fileName": "folder-plus.svg"
+        },
+        {
+          "exportName": "GripVertical",
+          "fileName": "grip-vertical.svg"
+        },
+        {
+          "exportName": "Hash",
+          "fileName": "hash.svg"
+        },
+        {
+          "exportName": "Info",
+          "fileName": "info.svg"
+        },
+        {
+          "exportName": "ListChecks",
+          "fileName": "list-checks.svg"
+        },
+        {
+          "exportName": "ListPlus",
+          "fileName": "list-plus.svg"
+        },
+        {
+          "exportName": "MessageSquareText",
+          "fileName": "message-square-text.svg"
+        },
+        {
+          "exportName": "Minus",
+          "fileName": "minus.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "Pencil",
+          "fileName": "pencil.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "Star",
+          "fileName": "star.svg"
+        },
+        {
+          "exportName": "TextCursorInput",
+          "fileName": "text-cursor-input.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/form-builder/FormOutlineSorter.tsx",
+      "directory": "by-source/components/form-builder/FormOutlineSorter",
+      "icons": [
+        {
+          "exportName": "Folder",
+          "fileName": "folder.svg"
+        },
+        {
+          "exportName": "GripVertical",
+          "fileName": "grip-vertical.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/growth/GrowthFieldCategoryPicker.tsx",
+      "directory": "by-source/components/growth/GrowthFieldCategoryPicker",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/report/ClassReportIndicatorDrilldown.tsx",
+      "directory": "by-source/components/report/ClassReportIndicatorDrilldown",
+      "icons": [
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/student-detail/StudentTimeRangeSelector.tsx",
+      "directory": "by-source/components/student-detail/StudentTimeRangeSelector",
+      "icons": [
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/student-performance/StudentPerformanceAvatar.tsx",
+      "directory": "by-source/components/student-performance/StudentPerformanceAvatar",
+      "icons": [
+        {
+          "exportName": "Mars",
+          "fileName": "mars.svg"
+        },
+        {
+          "exportName": "Venus",
+          "fileName": "venus.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/ui/MenuItem.tsx",
+      "directory": "by-source/components/ui/MenuItem",
+      "icons": [
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/ui/MobileBottomSheet.tsx",
+      "directory": "by-source/components/ui/MobileBottomSheet",
+      "icons": [
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/ui/MobileClassCascadePicker.tsx",
+      "directory": "by-source/components/ui/MobileClassCascadePicker",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "Minus",
+          "fileName": "minus.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/ui/MobileFloatingCreateButton.tsx",
+      "directory": "by-source/components/ui/MobileFloatingCreateButton",
+      "icons": [
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/ui/MobileNoticeSheet.tsx",
+      "directory": "by-source/components/ui/MobileNoticeSheet",
+      "icons": [
+        {
+          "exportName": "CalendarClock",
+          "fileName": "calendar-clock.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/components/ui/MobileQrInviteSheet.tsx",
+      "directory": "by-source/components/ui/MobileQrInviteSheet",
+      "icons": [
+        {
+          "exportName": "Download",
+          "fileName": "download.svg"
+        },
+        {
+          "exportName": "LoaderCircle",
+          "fileName": "loader-circle.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+      "directory": "by-source/views/AiHeadteacherAssistantV2View",
+      "icons": [
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "ClipboardList",
+          "fileName": "clipboard-list.svg"
+        },
+        {
+          "exportName": "FileText",
+          "fileName": "file-text.svg"
+        },
+        {
+          "exportName": "History",
+          "fileName": "history.svg"
+        },
+        {
+          "exportName": "Keyboard",
+          "fileName": "keyboard.svg"
+        },
+        {
+          "exportName": "ListChecks",
+          "fileName": "list-checks.svg"
+        },
+        {
+          "exportName": "LoaderCircle",
+          "fileName": "loader-circle.svg"
+        },
+        {
+          "exportName": "Mic",
+          "fileName": "mic.svg"
+        },
+        {
+          "exportName": "Send",
+          "fileName": "send.svg"
+        },
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/AiHeadteacherAssistantView.tsx",
+      "directory": "by-source/views/AiHeadteacherAssistantView",
+      "icons": [
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "ScanSearch",
+          "fileName": "scan-search.svg"
+        },
+        {
+          "exportName": "UserRoundCheck",
+          "fileName": "user-round-check.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/AiPrincipalAssistantView.tsx",
+      "directory": "by-source/views/AiPrincipalAssistantView",
+      "icons": [
+        {
+          "exportName": "Building2",
+          "fileName": "building-2.svg"
+        },
+        {
+          "exportName": "CalendarRange",
+          "fileName": "calendar-range.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "ScanSearch",
+          "fileName": "scan-search.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/ClassDetailView.tsx",
+      "directory": "by-source/views/ClassDetailView",
+      "icons": [
+        {
+          "exportName": "CheckCircle2",
+          "fileName": "check-circle-2.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "Circle",
+          "fileName": "circle.svg"
+        },
+        {
+          "exportName": "Edit3",
+          "fileName": "edit-3.svg"
+        },
+        {
+          "exportName": "Mars",
+          "fileName": "mars.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "Search",
+          "fileName": "search.svg"
+        },
+        {
+          "exportName": "Venus",
+          "fileName": "venus.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/ClassInfoView.tsx",
+      "directory": "by-source/views/ClassInfoView",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "Copy",
+          "fileName": "copy.svg"
+        },
+        {
+          "exportName": "LogOut",
+          "fileName": "log-out.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "Pencil",
+          "fileName": "pencil.svg"
+        },
+        {
+          "exportName": "Phone",
+          "fileName": "phone.svg"
+        },
+        {
+          "exportName": "QrCode",
+          "fileName": "qr-code.svg"
+        },
+        {
+          "exportName": "Repeat2",
+          "fileName": "repeat-2.svg"
+        },
+        {
+          "exportName": "Share2",
+          "fileName": "share-2.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        },
+        {
+          "exportName": "UserCog",
+          "fileName": "user-cog.svg"
+        },
+        {
+          "exportName": "UserPlus",
+          "fileName": "user-plus.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/ClassLeaderboardView.tsx",
+      "directory": "by-source/views/ClassLeaderboardView",
+      "icons": [
+        {
+          "exportName": "AlertCircle",
+          "fileName": "alert-circle.svg"
+        },
+        {
+          "exportName": "ArrowDown",
+          "fileName": "arrow-down.svg"
+        },
+        {
+          "exportName": "BarChart3",
+          "fileName": "bar-chart-3.svg"
+        },
+        {
+          "exportName": "Calendar",
+          "fileName": "calendar.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "CheckCircle2",
+          "fileName": "check-circle-2.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "FileText",
+          "fileName": "file-text.svg"
+        },
+        {
+          "exportName": "Filter",
+          "fileName": "filter.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "TrendingDown",
+          "fileName": "trending-down.svg"
+        },
+        {
+          "exportName": "TrendingUp",
+          "fileName": "trending-up.svg"
+        },
+        {
+          "exportName": "Trophy",
+          "fileName": "trophy.svg"
+        },
+        {
+          "exportName": "Users",
+          "fileName": "users.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/ClassListView.tsx",
+      "directory": "by-source/views/ClassListView",
+      "icons": [
+        {
+          "exportName": "BarChart3",
+          "fileName": "bar-chart-3.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "Copy",
+          "fileName": "copy.svg"
+        },
+        {
+          "exportName": "FileText",
+          "fileName": "file-text.svg"
+        },
+        {
+          "exportName": "FolderArchive",
+          "fileName": "folder-archive.svg"
+        },
+        {
+          "exportName": "Gift",
+          "fileName": "gift.svg"
+        },
+        {
+          "exportName": "LogIn",
+          "fileName": "log-in.svg"
+        },
+        {
+          "exportName": "MessageCircle",
+          "fileName": "message-circle.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "ScanFace",
+          "fileName": "scan-face.svg"
+        },
+        {
+          "exportName": "Shield",
+          "fileName": "shield.svg"
+        },
+        {
+          "exportName": "SlidersHorizontal",
+          "fileName": "sliders-horizontal.svg"
+        },
+        {
+          "exportName": "Trophy",
+          "fileName": "trophy.svg"
+        },
+        {
+          "exportName": "UserPlus",
+          "fileName": "user-plus.svg"
+        },
+        {
+          "exportName": "Users",
+          "fileName": "users.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/ClassRecordLogView.tsx",
+      "directory": "by-source/views/ClassRecordLogView",
+      "icons": [
+        {
+          "exportName": "ArrowLeftRight",
+          "fileName": "arrow-left-right.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "FileSpreadsheet",
+          "fileName": "file-spreadsheet.svg"
+        },
+        {
+          "exportName": "FileText",
+          "fileName": "file-text.svg"
+        },
+        {
+          "exportName": "Loader2",
+          "fileName": "loader-2.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "RefreshCw",
+          "fileName": "refresh-cw.svg"
+        },
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        },
+        {
+          "exportName": "Volume2",
+          "fileName": "volume-2.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/ClassReportView.tsx",
+      "directory": "by-source/views/ClassReportView",
+      "icons": [
+        {
+          "exportName": "ArrowDownNarrowWide",
+          "fileName": "arrow-down-narrow-wide.svg"
+        },
+        {
+          "exportName": "ArrowUpDown",
+          "fileName": "arrow-up-down.svg"
+        },
+        {
+          "exportName": "ArrowUpNarrowWide",
+          "fileName": "arrow-up-narrow-wide.svg"
+        },
+        {
+          "exportName": "CalendarRange",
+          "fileName": "calendar-range.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "ChevronUp",
+          "fileName": "chevron-up.svg"
+        },
+        {
+          "exportName": "PencilLine",
+          "fileName": "pencil-line.svg"
+        },
+        {
+          "exportName": "Quote",
+          "fileName": "quote.svg"
+        },
+        {
+          "exportName": "Triangle",
+          "fileName": "triangle.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/DashboardView.tsx",
+      "directory": "by-source/views/DashboardView",
+      "icons": [
+        {
+          "exportName": "AlertTriangle",
+          "fileName": "alert-triangle.svg"
+        },
+        {
+          "exportName": "Award",
+          "fileName": "award.svg"
+        },
+        {
+          "exportName": "BadgeCheck",
+          "fileName": "badge-check.svg"
+        },
+        {
+          "exportName": "Camera",
+          "fileName": "camera.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "ClipboardList",
+          "fileName": "clipboard-list.svg"
+        },
+        {
+          "exportName": "FolderOpen",
+          "fileName": "folder-open.svg"
+        },
+        {
+          "exportName": "Mars",
+          "fileName": "mars.svg"
+        },
+        {
+          "exportName": "Pencil",
+          "fileName": "pencil.svg"
+        },
+        {
+          "exportName": "School",
+          "fileName": "school.svg"
+        },
+        {
+          "exportName": "TrendingUp",
+          "fileName": "trending-up.svg"
+        },
+        {
+          "exportName": "Venus",
+          "fileName": "venus.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/EvaluationRecordsLogView.tsx",
+      "directory": "by-source/views/EvaluationRecordsLogView",
+      "icons": [
+        {
+          "exportName": "ArrowLeft",
+          "fileName": "arrow-left.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/HomeworkEntryView.tsx",
+      "directory": "by-source/views/HomeworkEntryView",
+      "icons": [
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/LeaderReportView.tsx",
+      "directory": "by-source/views/LeaderReportView",
+      "icons": [
+        {
+          "exportName": "Calendar",
+          "fileName": "calendar.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "ClipboardList",
+          "fileName": "clipboard-list.svg"
+        },
+        {
+          "exportName": "Info",
+          "fileName": "info.svg"
+        },
+        {
+          "exportName": "Trophy",
+          "fileName": "trophy.svg"
+        },
+        {
+          "exportName": "UserCheck",
+          "fileName": "user-check.svg"
+        },
+        {
+          "exportName": "Users",
+          "fileName": "users.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/MeFeatureViews.tsx",
+      "directory": "by-source/views/MeFeatureViews",
+      "icons": [
+        {
+          "exportName": "BookOpen",
+          "fileName": "book-open.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "CircleHelp",
+          "fileName": "circle-help.svg"
+        },
+        {
+          "exportName": "Edit3",
+          "fileName": "edit-3.svg"
+        },
+        {
+          "exportName": "GripVertical",
+          "fileName": "grip-vertical.svg"
+        },
+        {
+          "exportName": "ImagePlus",
+          "fileName": "image-plus.svg"
+        },
+        {
+          "exportName": "KeyRound",
+          "fileName": "key-round.svg"
+        },
+        {
+          "exportName": "Lock",
+          "fileName": "lock.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "Shield",
+          "fileName": "shield.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/MeView.tsx",
+      "directory": "by-source/views/MeView",
+      "icons": [
+        {
+          "exportName": "BookOpen",
+          "fileName": "book-open.svg"
+        },
+        {
+          "exportName": "Camera",
+          "fileName": "camera.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "ClipboardList",
+          "fileName": "clipboard-list.svg"
+        },
+        {
+          "exportName": "Coins",
+          "fileName": "coins.svg"
+        },
+        {
+          "exportName": "FileCog",
+          "fileName": "file-cog.svg"
+        },
+        {
+          "exportName": "MessageCircle",
+          "fileName": "message-circle.svg"
+        },
+        {
+          "exportName": "Settings",
+          "fileName": "settings.svg"
+        },
+        {
+          "exportName": "UsersRound",
+          "fileName": "users-round.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/MoralEducationCockpitView.tsx",
+      "directory": "by-source/views/MoralEducationCockpitView",
+      "icons": [
+        {
+          "exportName": "AlertTriangle",
+          "fileName": "alert-triangle.svg"
+        },
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/MyFilesView.tsx",
+      "directory": "by-source/views/MyFilesView",
+      "icons": [
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "File",
+          "fileName": "file.svg"
+        },
+        {
+          "exportName": "FileSpreadsheet",
+          "fileName": "file-spreadsheet.svg"
+        },
+        {
+          "exportName": "MoreVertical",
+          "fileName": "more-vertical.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/PrincipalPeriodicReportView.tsx",
+      "directory": "by-source/views/PrincipalPeriodicReportView",
+      "icons": [
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/PrincipalReportHistoryView.tsx",
+      "directory": "by-source/views/PrincipalReportHistoryView",
+      "icons": [
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/PrincipalTermReportView.tsx",
+      "directory": "by-source/views/PrincipalTermReportView",
+      "icons": [
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/RecordInputView.tsx",
+      "directory": "by-source/views/RecordInputView",
+      "icons": [
+        {
+          "exportName": "Camera",
+          "fileName": "camera.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "Image",
+          "fileName": "image.svg"
+        },
+        {
+          "exportName": "Keyboard",
+          "fileName": "keyboard.svg"
+        },
+        {
+          "exportName": "Mic",
+          "fileName": "mic.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/RecordResultView.tsx",
+      "directory": "by-source/views/RecordResultView",
+      "icons": [
+        {
+          "exportName": "CheckCircle2",
+          "fileName": "check-circle-2.svg"
+        },
+        {
+          "exportName": "HelpCircle",
+          "fileName": "help-circle.svg"
+        },
+        {
+          "exportName": "Trophy",
+          "fileName": "trophy.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/ReportDetailView.tsx",
+      "directory": "by-source/views/ReportDetailView",
+      "icons": [
+        {
+          "exportName": "Award",
+          "fileName": "award.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "Edit3",
+          "fileName": "edit-3.svg"
+        },
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        },
+        {
+          "exportName": "Star",
+          "fileName": "star.svg"
+        },
+        {
+          "exportName": "TrendingUp",
+          "fileName": "trending-up.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/StudentBasicEditView.tsx",
+      "directory": "by-source/views/StudentBasicEditView",
+      "icons": [
+        {
+          "exportName": "Camera",
+          "fileName": "camera.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "Image",
+          "fileName": "image.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "UsersRound",
+          "fileName": "users-round.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/StudentBatchEditView.tsx",
+      "directory": "by-source/views/StudentBatchEditView",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/StudentCoinDetailView.tsx",
+      "directory": "by-source/views/StudentCoinDetailView",
+      "icons": [
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "Clock",
+          "fileName": "clock.svg"
+        },
+        {
+          "exportName": "Landmark",
+          "fileName": "landmark.svg"
+        },
+        {
+          "exportName": "ShoppingBag",
+          "fileName": "shopping-bag.svg"
+        },
+        {
+          "exportName": "SlidersHorizontal",
+          "fileName": "sliders-horizontal.svg"
+        },
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        },
+        {
+          "exportName": "TrendingUp",
+          "fileName": "trending-up.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/StudentEvaluationRecordsView.tsx",
+      "directory": "by-source/views/StudentEvaluationRecordsView",
+      "icons": [
+        {
+          "exportName": "Bot",
+          "fileName": "bot.svg"
+        },
+        {
+          "exportName": "CalendarRange",
+          "fileName": "calendar-range.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "ClipboardList",
+          "fileName": "clipboard-list.svg"
+        },
+        {
+          "exportName": "ListTree",
+          "fileName": "list-tree.svg"
+        },
+        {
+          "exportName": "UserRound",
+          "fileName": "user-round.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/TeacherEvaluationReviewHistoryView.tsx",
+      "directory": "by-source/views/TeacherEvaluationReviewHistoryView",
+      "icons": [
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/TeacherEvaluationReviewView.tsx",
+      "directory": "by-source/views/TeacherEvaluationReviewView",
+      "icons": [
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/TeacherLoginView.tsx",
+      "directory": "by-source/views/TeacherLoginView",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "Eye",
+          "fileName": "eye.svg"
+        },
+        {
+          "exportName": "EyeOff",
+          "fileName": "eye-off.svg"
+        },
+        {
+          "exportName": "ShieldCheck",
+          "fileName": "shield-check.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/TeacherProfileEditView.tsx",
+      "directory": "by-source/views/TeacherProfileEditView",
+      "icons": [
+        {
+          "exportName": "Camera",
+          "fileName": "camera.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "Image",
+          "fileName": "image.svg"
+        },
+        {
+          "exportName": "Pencil",
+          "fileName": "pencil.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/TermReportView.tsx",
+      "directory": "by-source/views/TermReportView",
+      "icons": [
+        {
+          "exportName": "Anchor",
+          "fileName": "anchor.svg"
+        },
+        {
+          "exportName": "ArrowUpRight",
+          "fileName": "arrow-up-right.svg"
+        },
+        {
+          "exportName": "Award",
+          "fileName": "award.svg"
+        },
+        {
+          "exportName": "BookOpen",
+          "fileName": "book-open.svg"
+        },
+        {
+          "exportName": "BrainCircuit",
+          "fileName": "brain-circuit.svg"
+        },
+        {
+          "exportName": "Calculator",
+          "fileName": "calculator.svg"
+        },
+        {
+          "exportName": "Calendar",
+          "fileName": "calendar.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "Clock",
+          "fileName": "clock.svg"
+        },
+        {
+          "exportName": "Compass",
+          "fileName": "compass.svg"
+        },
+        {
+          "exportName": "CornerDownLeft",
+          "fileName": "corner-down-left.svg"
+        },
+        {
+          "exportName": "Dumbbell",
+          "fileName": "dumbbell.svg"
+        },
+        {
+          "exportName": "Edit3",
+          "fileName": "edit-3.svg"
+        },
+        {
+          "exportName": "FileText",
+          "fileName": "file-text.svg"
+        },
+        {
+          "exportName": "FlaskConical",
+          "fileName": "flask-conical.svg"
+        },
+        {
+          "exportName": "HeartHandshake",
+          "fileName": "heart-handshake.svg"
+        },
+        {
+          "exportName": "Home",
+          "fileName": "home.svg"
+        },
+        {
+          "exportName": "Languages",
+          "fileName": "languages.svg"
+        },
+        {
+          "exportName": "Layers",
+          "fileName": "layers.svg"
+        },
+        {
+          "exportName": "Layout",
+          "fileName": "layout.svg"
+        },
+        {
+          "exportName": "Lightbulb",
+          "fileName": "lightbulb.svg"
+        },
+        {
+          "exportName": "Map",
+          "fileName": "map.svg"
+        },
+        {
+          "exportName": "MapPin",
+          "fileName": "map-pin.svg"
+        },
+        {
+          "exportName": "Megaphone",
+          "fileName": "megaphone.svg"
+        },
+        {
+          "exportName": "MessageSquare",
+          "fileName": "message-square.svg"
+        },
+        {
+          "exportName": "Monitor",
+          "fileName": "monitor.svg"
+        },
+        {
+          "exportName": "Palette",
+          "fileName": "palette.svg"
+        },
+        {
+          "exportName": "Palmtree",
+          "fileName": "palmtree.svg"
+        },
+        {
+          "exportName": "PenLine",
+          "fileName": "pen-line.svg"
+        },
+        {
+          "exportName": "PenTool",
+          "fileName": "pen-tool.svg"
+        },
+        {
+          "exportName": "Printer",
+          "fileName": "printer.svg"
+        },
+        {
+          "exportName": "Quote",
+          "fileName": "quote.svg"
+        },
+        {
+          "exportName": "Smile",
+          "fileName": "smile.svg"
+        },
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        },
+        {
+          "exportName": "Star",
+          "fileName": "star.svg"
+        },
+        {
+          "exportName": "Sun",
+          "fileName": "sun.svg"
+        },
+        {
+          "exportName": "Target",
+          "fileName": "target.svg"
+        },
+        {
+          "exportName": "TrendingUp",
+          "fileName": "trending-up.svg"
+        },
+        {
+          "exportName": "Users",
+          "fileName": "users.svg"
+        },
+        {
+          "exportName": "X",
+          "fileName": "x.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/WeeklyActionAdviceHistoryView.tsx",
+      "directory": "by-source/views/WeeklyActionAdviceHistoryView",
+      "icons": [
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/WeeklyActionAdviceView.tsx",
+      "directory": "by-source/views/WeeklyActionAdviceView",
+      "icons": [
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+      "directory": "by-source/views/archive-design/ArchiveDesignView",
+      "icons": [
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "CircleDot",
+          "fileName": "circle-dot.svg"
+        },
+        {
+          "exportName": "Copy",
+          "fileName": "copy.svg"
+        },
+        {
+          "exportName": "Eye",
+          "fileName": "eye.svg"
+        },
+        {
+          "exportName": "FilePenLine",
+          "fileName": "file-pen-line.svg"
+        },
+        {
+          "exportName": "Hash",
+          "fileName": "hash.svg"
+        },
+        {
+          "exportName": "ImageOff",
+          "fileName": "image-off.svg"
+        },
+        {
+          "exportName": "ListChecks",
+          "fileName": "list-checks.svg"
+        },
+        {
+          "exportName": "ListTree",
+          "fileName": "list-tree.svg"
+        },
+        {
+          "exportName": "MessageSquareText",
+          "fileName": "message-square-text.svg"
+        },
+        {
+          "exportName": "Palette",
+          "fileName": "palette.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "Power",
+          "fileName": "power.svg"
+        },
+        {
+          "exportName": "PowerOff",
+          "fileName": "power-off.svg"
+        },
+        {
+          "exportName": "Settings",
+          "fileName": "settings.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/archive-design/ArchiveFormRenderer.tsx",
+      "directory": "by-source/views/archive-design/ArchiveFormRenderer",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/archive-design/ArchiveGrowthDataRenderer.tsx",
+      "directory": "by-source/views/archive-design/ArchiveGrowthDataRenderer",
+      "icons": [
+        {
+          "exportName": "Activity",
+          "fileName": "activity.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/archive-design/ClassArchiveBatchView.tsx",
+      "directory": "by-source/views/archive-design/ClassArchiveBatchView",
+      "icons": [
+        {
+          "exportName": "Archive",
+          "fileName": "archive.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "CircleAlert",
+          "fileName": "circle-alert.svg"
+        },
+        {
+          "exportName": "LockKeyhole",
+          "fileName": "lock-keyhole.svg"
+        },
+        {
+          "exportName": "UserRound",
+          "fileName": "user-round.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/archive-design/StudentArchiveView.tsx",
+      "directory": "by-source/views/archive-design/StudentArchiveView",
+      "icons": [
+        {
+          "exportName": "BookOpenCheck",
+          "fileName": "book-open-check.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "FilePenLine",
+          "fileName": "file-pen-line.svg"
+        },
+        {
+          "exportName": "History",
+          "fileName": "history.svg"
+        },
+        {
+          "exportName": "Save",
+          "fileName": "save.svg"
+        },
+        {
+          "exportName": "Send",
+          "fileName": "send.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/archive-design/archivePagePrimitives.tsx",
+      "directory": "by-source/views/archive-design/archivePagePrimitives",
+      "icons": [
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/bank-password/BankPasswordView.tsx",
+      "directory": "by-source/views/bank-password/BankPasswordView",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "Edit3",
+          "fileName": "edit-3.svg"
+        },
+        {
+          "exportName": "Eye",
+          "fileName": "eye.svg"
+        },
+        {
+          "exportName": "EyeOff",
+          "fileName": "eye-off.svg"
+        },
+        {
+          "exportName": "Search",
+          "fileName": "search.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/face-update/FaceUpdateView.tsx",
+      "directory": "by-source/views/face-update/FaceUpdateView",
+      "icons": [
+        {
+          "exportName": "Camera",
+          "fileName": "camera.svg"
+        },
+        {
+          "exportName": "CheckCircle2",
+          "fileName": "check-circle-2.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "Image",
+          "fileName": "image.svg"
+        },
+        {
+          "exportName": "UserRound",
+          "fileName": "user-round.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/questionnaire/GrowthCollectionForms.tsx",
+      "directory": "by-source/views/questionnaire/GrowthCollectionForms",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "Ruler",
+          "fileName": "ruler.svg"
+        },
+        {
+          "exportName": "Scale",
+          "fileName": "scale.svg"
+        },
+        {
+          "exportName": "Target",
+          "fileName": "target.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "directory": "by-source/views/questionnaire/QuestionnaireManagementView",
+      "icons": [
+        {
+          "exportName": "Archive",
+          "fileName": "archive.svg"
+        },
+        {
+          "exportName": "ArchiveRestore",
+          "fileName": "archive-restore.svg"
+        },
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "CheckCircle2",
+          "fileName": "check-circle-2.svg"
+        },
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "CircleDot",
+          "fileName": "circle-dot.svg"
+        },
+        {
+          "exportName": "ClipboardCheck",
+          "fileName": "clipboard-check.svg"
+        },
+        {
+          "exportName": "Copy",
+          "fileName": "copy.svg"
+        },
+        {
+          "exportName": "Eye",
+          "fileName": "eye.svg"
+        },
+        {
+          "exportName": "FileText",
+          "fileName": "file-text.svg"
+        },
+        {
+          "exportName": "Hash",
+          "fileName": "hash.svg"
+        },
+        {
+          "exportName": "ImageOff",
+          "fileName": "image-off.svg"
+        },
+        {
+          "exportName": "ListChecks",
+          "fileName": "list-checks.svg"
+        },
+        {
+          "exportName": "ListPlus",
+          "fileName": "list-plus.svg"
+        },
+        {
+          "exportName": "ListTree",
+          "fileName": "list-tree.svg"
+        },
+        {
+          "exportName": "MessageSquareText",
+          "fileName": "message-square-text.svg"
+        },
+        {
+          "exportName": "Minus",
+          "fileName": "minus.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "Palette",
+          "fileName": "palette.svg"
+        },
+        {
+          "exportName": "QrCode",
+          "fileName": "qr-code.svg"
+        },
+        {
+          "exportName": "RotateCcw",
+          "fileName": "rotate-ccw.svg"
+        },
+        {
+          "exportName": "Save",
+          "fileName": "save.svg"
+        },
+        {
+          "exportName": "Search",
+          "fileName": "search.svg"
+        },
+        {
+          "exportName": "Settings",
+          "fileName": "settings.svg"
+        },
+        {
+          "exportName": "Star",
+          "fileName": "star.svg"
+        },
+        {
+          "exportName": "Target",
+          "fileName": "target.svg"
+        },
+        {
+          "exportName": "TextCursorInput",
+          "fileName": "text-cursor-input.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        },
+        {
+          "exportName": "UserRoundCheck",
+          "fileName": "user-round-check.svg"
+        },
+        {
+          "exportName": "UsersRound",
+          "fileName": "users-round.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/reward-verification/RewardVerificationView.tsx",
+      "directory": "by-source/views/reward-verification/RewardVerificationView",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "Gift",
+          "fileName": "gift.svg"
+        },
+        {
+          "exportName": "Pencil",
+          "fileName": "pencil.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "Trash2",
+          "fileName": "trash-2.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-collection/StudentCollectionHistoryTab.tsx",
+      "directory": "by-source/views/student-collection/StudentCollectionHistoryTab",
+      "icons": [
+        {
+          "exportName": "ChevronDown",
+          "fileName": "chevron-down.svg"
+        },
+        {
+          "exportName": "ClipboardCheck",
+          "fileName": "clipboard-check.svg"
+        },
+        {
+          "exportName": "UserRoundCheck",
+          "fileName": "user-round-check.svg"
+        },
+        {
+          "exportName": "UsersRound",
+          "fileName": "users-round.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-collection/StudentCollectionRecordDetailView.tsx",
+      "directory": "by-source/views/student-collection/StudentCollectionRecordDetailView",
+      "icons": [
+        {
+          "exportName": "CalendarDays",
+          "fileName": "calendar-days.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "UserRound",
+          "fileName": "user-round.svg"
+        },
+        {
+          "exportName": "UserRoundCheck",
+          "fileName": "user-round-check.svg"
+        },
+        {
+          "exportName": "UsersRound",
+          "fileName": "users-round.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-evaluation/EvaluationIndicatorFilterSheet.tsx",
+      "directory": "by-source/views/student-evaluation/EvaluationIndicatorFilterSheet",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-evaluation/EvaluationRecordDetailView.tsx",
+      "directory": "by-source/views/student-evaluation/EvaluationRecordDetailView",
+      "icons": [
+        {
+          "exportName": "Bot",
+          "fileName": "bot.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "History",
+          "fileName": "history.svg"
+        },
+        {
+          "exportName": "LockKeyhole",
+          "fileName": "lock-keyhole.svg"
+        },
+        {
+          "exportName": "Pencil",
+          "fileName": "pencil.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-evaluation/EvaluationRecordEditView.tsx",
+      "directory": "by-source/views/student-evaluation/EvaluationRecordEditView",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "ChevronLeft",
+          "fileName": "chevron-left.svg"
+        },
+        {
+          "exportName": "Minus",
+          "fileName": "minus.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-evaluation/EvaluationTeacherFilterSheet.tsx",
+      "directory": "by-source/views/student-evaluation/EvaluationTeacherFilterSheet",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-evaluation/EvaluationTimeFilterSheet.tsx",
+      "directory": "by-source/views/student-evaluation/EvaluationTimeFilterSheet",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-growth/SemesterGoalPlanView.tsx",
+      "directory": "by-source/views/student-growth/SemesterGoalPlanView",
+      "icons": [
+        {
+          "exportName": "Check",
+          "fileName": "check.svg"
+        },
+        {
+          "exportName": "MessageCircle",
+          "fileName": "message-circle.svg"
+        },
+        {
+          "exportName": "Sparkles",
+          "fileName": "sparkles.svg"
+        },
+        {
+          "exportName": "Target",
+          "fileName": "target.svg"
+        },
+        {
+          "exportName": "UserRoundCheck",
+          "fileName": "user-round-check.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+      "directory": "by-source/views/student-growth/StudentBodyMeasurementsView",
+      "icons": [
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "ClipboardCheck",
+          "fileName": "clipboard-check.svg"
+        },
+        {
+          "exportName": "History",
+          "fileName": "history.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "Pencil",
+          "fileName": "pencil.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "Ruler",
+          "fileName": "ruler.svg"
+        }
+      ]
+    },
+    {
+      "sourceFile": "mobile-app/views/student-growth/StudentHealthRecordsView.tsx",
+      "directory": "by-source/views/student-growth/StudentHealthRecordsView",
+      "icons": [
+        {
+          "exportName": "Activity",
+          "fileName": "activity.svg"
+        },
+        {
+          "exportName": "ChevronRight",
+          "fileName": "chevron-right.svg"
+        },
+        {
+          "exportName": "CircleAlert",
+          "fileName": "circle-alert.svg"
+        },
+        {
+          "exportName": "Eye",
+          "fileName": "eye.svg"
+        },
+        {
+          "exportName": "HeartPulse",
+          "fileName": "heart-pulse.svg"
+        },
+        {
+          "exportName": "History",
+          "fileName": "history.svg"
+        },
+        {
+          "exportName": "MoreHorizontal",
+          "fileName": "more-horizontal.svg"
+        },
+        {
+          "exportName": "Pencil",
+          "fileName": "pencil.svg"
+        },
+        {
+          "exportName": "Plus",
+          "fileName": "plus.svg"
+        },
+        {
+          "exportName": "Ruler",
+          "fileName": "ruler.svg"
+        },
+        {
+          "exportName": "Scale",
+          "fileName": "scale.svg"
+        }
+      ]
+    }
+  ]
+}

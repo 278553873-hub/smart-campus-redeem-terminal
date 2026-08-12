@@ -27,6 +27,7 @@ interface StudentEvaluationRecordsViewProps {
   onBack: () => void;
   embedded?: boolean;
   initialRecordId?: string | null;
+  initialRecordPage?: 'detail' | 'edit';
   onSelectRecord?: (record: StudentEvaluationRecord) => void;
 }
 
@@ -95,6 +96,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   onBack,
   embedded = false,
   initialRecordId = null,
+  initialRecordPage = 'detail',
   onSelectRecord,
 }) => {
   const [timeFilter, setTimeFilter] = useState<EvaluationTimeFilterValue>(DEFAULT_TIME_FILTER);
@@ -104,7 +106,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   const [showTeacherFilterSheet, setShowTeacherFilterSheet] = useState(false);
   const [showIndicatorFilterSheet, setShowIndicatorFilterSheet] = useState(false);
   const [activeRecordId, setActiveRecordId] = useState<string | null>(initialRecordId);
-  const [recordPage, setRecordPage] = useState<'detail' | 'edit'>('detail');
+  const [recordPage, setRecordPage] = useState<'detail' | 'edit'>(initialRecordPage);
   const activeTerm = termOptions.find(option => option.value === selectedTerm) ?? termOptions[0];
 
   useEffect(() => {
@@ -112,8 +114,8 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
     setTeacherFilterId('all');
     setIndicatorFilterPath([]);
     setActiveRecordId(initialRecordId);
-    setRecordPage('detail');
-  }, [initialRecordId, selectedTerm]);
+    setRecordPage(initialRecordPage);
+  }, [initialRecordId, initialRecordPage, selectedTerm]);
 
   const termRecords = useMemo(() => records.filter(record => (
     record.evaluation_date >= activeTerm.startDate && record.evaluation_date <= activeTerm.endDate
@@ -207,12 +209,17 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
         aiComment: activeRecord.aiComment,
       },
     };
-    onUpdateRecord({
+    const updatedRecord: StudentEvaluationRecord = {
       ...activeRecord,
       ...update,
       isBad: update.scoreChange < 0,
       revisions: [...(activeRecord.revisions ?? []), revision],
-    });
+    };
+    onUpdateRecord(updatedRecord);
+    if (initialRecordId && initialRecordPage === 'edit') {
+      onBack();
+      return;
+    }
     setRecordPage('detail');
   };
 
@@ -223,7 +230,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
         isEditingOthersRecord={activeRecord.teacherId !== currentTeacherId}
         termStartDate={activeTerm.startDate}
         termEndDate={activeTerm.endDate}
-        onCancel={() => setRecordPage('detail')}
+        onCancel={() => initialRecordId && initialRecordPage === 'edit' ? onBack() : setRecordPage('detail')}
         onSave={saveRecord}
       />
     );

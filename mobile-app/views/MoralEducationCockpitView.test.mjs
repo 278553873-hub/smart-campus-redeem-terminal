@@ -38,7 +38,7 @@ for (const required of [
   assert.ok(appSource.includes(required), `应用路由应完整接入班级评价报表，缺少：${required}`);
 }
 
-const sectionTitles = ['数据概况', '班级排名', '指标得分', '扣分维度', '扣分项目', '周期趋势'];
+const sectionTitles = ['数据概况', '班级排名', '指标得分', '问题分布', '周期趋势'];
 let previousIndex = -1;
 for (const title of sectionTitles) {
   const currentIndex = viewSource.indexOf(`title="${title}"`);
@@ -49,7 +49,6 @@ for (const title of sectionTitles) {
 for (const required of [
   'getMoralEducationCockpitPeriods',
   'TeacherReportBarChart',
-  'TeacherReportDonutChart',
   'TeacherReportLineChart',
   '<MobileBottomSheet',
   "{ key: 'week', label: '按周' }",
@@ -60,8 +59,11 @@ for (const required of [
   '查看完整排名',
   'title="完整班级排名"',
   'snapshot.summary.lowestScore',
-  'seriesName="扣分维度"',
-  'valueSuffix="分"',
+  'ariaLabel="指标得分年级筛选"',
+  'ariaLabel="问题分布年级筛选"',
+  'ariaLabel="问题分布一级指标筛选"',
+  'ariaLabel="问题分布二级指标筛选"',
+  '扣分笔数',
 ]) {
   assert.ok(viewSource.includes(required), `驾驶舱应提供多周期筛选、排名和图表展示，缺少：${required}`);
 }
@@ -88,11 +90,44 @@ const selectedWeek = weeks[weeks.length - 1];
 const snapshot = await getMoralEducationCockpitSnapshot({ periodType: 'week', periodId: selectedWeek.id });
 assert.equal(snapshot.period.id, selectedWeek.id, '驾驶舱应按所选考核周加载数据。');
 assert.equal(snapshot.period.label, '2026.08.03 - 08.09', '按周应展示明确的起止日期。');
-assert.equal(snapshot.dimensions.length, 5, '驾驶舱应展示五个班级评价一级维度。');
 assert.equal(snapshot.grades.length, 6, '完整排名应提供年级筛选数据。');
 assert.equal(snapshot.grades.every(grade => grade.classes.length === 5), true, '每个年级应具备班级数据。');
 assert.equal(snapshot.classRanking.length, 30, '驾驶舱应提供全部班级排名。');
-assert.equal(snapshot.problems.length, 5, '首屏只展示前五项扣分项目。');
+assert.equal(snapshot.gradeReports.length, 7, '指标得分和问题分布应同时提供全部年级及六个年级的数据。');
+assert.equal(snapshot.gradeReports[0].gradeId, 'all', '两个报表板块应默认使用全部年级数据。');
+assert.equal(snapshot.gradeReports.every(report => report.dimensions.length === 5), true, '每个年级应展示学校配置的五个一级指标。');
+assert.equal(snapshot.gradeReports[0].problemDimensions.length, 5, '全部年级应提供有扣分的一级指标。');
+assert.equal(snapshot.gradeReports.slice(1).every(report => report.problemDimensions.length > 0 && report.problemDimensions.length <= 5), true, '各年级只应提供本年级有扣分的一级指标。');
+assert.notDeepEqual(
+  snapshot.gradeReports[1].dimensions.map(item => item.averageScore),
+  snapshot.gradeReports[5].dimensions.map(item => item.averageScore),
+  '不同年级的指标得分应随年级切换真实变化。',
+);
+const allGradeReport = snapshot.gradeReports[0];
+assert.equal(allGradeReport.problemDimensions[0].id, 'poetic', '问题分布应按学校指标配置顺序默认选择第一个有扣分一级指标。');
+assert.equal(allGradeReport.problemDimensions[0].categories[0].id, 'poetic-culture', '问题分布应默认选择当前一级指标下第一个有扣分二级指标。');
+assert.equal(
+  allGradeReport.problemDimensions.reduce((sum, dimension) => sum + dimension.recordCount, 0),
+  snapshot.summary.issueCount,
+  '全部三级指标的扣分笔数应汇总为问题记录总数。',
+);
+assert.equal(
+  Math.round(allGradeReport.problemDimensions.reduce((sum, dimension) => sum + dimension.deduction, 0) * 10) / 10,
+  snapshot.summary.cumulativeDeduction,
+  '全部三级指标的扣分应汇总为累计扣分。',
+);
+assert.equal(
+  allGradeReport.problemDimensions.every(dimension => (
+    dimension.recordCount === dimension.categories.reduce((sum, category) => sum + category.recordCount, 0)
+    && dimension.deduction === Math.round(dimension.categories.reduce((sum, category) => sum + category.deduction, 0) * 10) / 10
+    && dimension.categories.every(category => (
+      category.recordCount === category.details.reduce((sum, detail) => sum + detail.recordCount, 0)
+      && category.deduction === Math.round(category.details.reduce((sum, detail) => sum + detail.deduction, 0) * 10) / 10
+    ))
+  )),
+  true,
+  '一级、二级和三级问题数据应逐层闭合。',
+);
 assert.equal(snapshot.summary.issueCount, snapshot.classRanking.reduce((sum, item) => sum + item.issueCount, 0), '问题记录数应与班级记录汇总一致。');
 assert.equal(
   snapshot.summary.averageScore,
@@ -104,7 +139,13 @@ assert.equal(snapshot.grades.every(grade => grade.classes.every((classItem, inde
 assert.equal(snapshot.summary.highestScore, snapshot.classRanking[0].score, '最高得分应来自班级最终得分。');
 assert.equal(snapshot.summary.lowestScore, snapshot.classRanking[snapshot.classRanking.length - 1].score, '最低得分应来自班级最终得分。');
 assert.equal(snapshot.trend[snapshot.trend.length - 1].label, selectedWeek.trendLabel, '趋势最后一个点应对应当前所选考核周。');
-assert.equal(snapshot.problems.every(problem => Number.isInteger(problem.recordCount) && Number.isInteger(problem.affectedClassCount)), true, '扣分项目只汇总记录和班级。');
+assert.equal(
+  snapshot.gradeReports.every(report => report.problemDimensions.every(dimension => dimension.categories.every(category => (
+    category.details.every(detail => Number.isInteger(detail.recordCount))
+  )))),
+  true,
+  '三级指标扣分笔数应为整数。',
+);
 
 const selectedTerm = terms[terms.length - 1];
 const termSnapshot = await getMoralEducationCockpitSnapshot({ periodType: 'term', periodId: selectedTerm.id });
@@ -122,6 +163,9 @@ for (const unsupportedMetric of ['平均得分率', '检查完成率', '待整�
 
 for (const unsupportedContent of ['本周考核', '年级排名', '高频问题', 'moralEducationCockpitPeriods', 'type="date"', '>自定义<']) {
   assert.equal(viewSource.includes(unsupportedContent), false, `驾驶舱不应保留旧的信息结构：${unsupportedContent}`);
+}
+for (const removedContent of ['TeacherReportDonutChart', 'title="扣分维度"', 'title="扣分项目"', 'seriesName="扣分维度"', 'snapshot.problems']) {
+  assert.equal(viewSource.includes(removedContent), false, `问题分布合并后不应保留旧扣分板块：${removedContent}`);
 }
 assert.equal(/第\d+周/.test(viewSource), false, '驾驶舱页面不得显示推算的第X周。');
 
