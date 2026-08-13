@@ -67,7 +67,11 @@ requireText(viewSource, 'visibleStepCount', '生成等待文案应逐步出现�
 requireText(viewSource, '<AssistantHistoryLink', '行动建议应复用带文字的历史入口组件。');
 requireText(viewSource, 'label="往期建议"', '行动建议历史入口应显示明确文案。');
 requireText(viewSource, "const showHeaderTitle = title !== '本周行动建议';", '当前行动建议应区分班级标题与历史详情标题。');
-requireText(viewSource, 'title={showHeaderTitle ? title : className}', '当前行动建议标题栏应展示班级名，历史详情和报告示例应展示报告标题。');
+requireText(viewSource, '<AssistantClassSwitchButton', '当前行动建议标题栏应提供班级切换。');
+requireText(viewSource, '<HomeroomClassPickerSheet', '当前行动建议应复用带班班级选择组件。');
+requireText(viewSource, 'setViewingExample(false);', '切班时应退出报告示例并加载目标班级数据。');
+requireText(appSource, 'activeClassId={headteacherAssistantClassId}', '当前行动建议应复用班主任助理当前班级状态。');
+requireText(appSource, 'onClassChange={setHeadteacherAssistantClassId}', '行动建议切班应同步统一班级状态。');
 requireText(viewSource, 'surface="transparent"', '班主任助理报告标题栏应保持透明。');
 requireText(viewSource, '<AssistantSubpageHeader', '行动建议应复用避让微信胶囊的标题栏。');
 requireText(cardsSource, 'rounded-[var(--tm-radius-card)]', '报告与进度面板应消费教师手机端圆角令牌。');
@@ -76,8 +80,7 @@ requireText(cssSource, '@keyframes waa-fade-up', '应定义报告卡片入场动
 requireText(cssSource, 'prefers-reduced-motion: reduce', '动画应支持减少动态效果。');
 requireText(footerSource, 'document.notice', '真实报告应保留精简的AI参考声明。');
 
-requireText(assistantSource, '本周班级行动建议', '统一班主任助理应以明确的能力名称进入本周行动建议。');
-requireText(assistantSource, '综合上周评价，分析学生表现、班级共性与评价信号，给出本周关注重点和行动建议。', '统一班主任助理应概括本周班级行动建议的分析范围和输出价值。');
+requireText(assistantSource, '本周学生情况洞察与班级跟进建议', '统一班主任助理应以单行内容概括进入本周行动建议。');
 requireText(promptSource, '上一个完整自然周', '提示词应固定上一个完整自然周。');
 forbidText(promptSource, 'data_window_weeks', '提示词不应继续传递自适应周数。');
 requireText(promptSource, '不发送本周记录或更早历史记录', '提示词应禁止混入本周和更早数据。');

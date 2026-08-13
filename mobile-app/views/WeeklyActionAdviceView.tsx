@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
+import AssistantClassSwitchButton from '../components/AssistantClassSwitchButton';
 import AssistantHistoryLink from '../components/AssistantHistoryLink';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
+import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
 import AssistantReportCards from '../components/assistant-report/AssistantReportCards';
 import AssistantReportContractError from '../components/assistant-report/AssistantReportContractError';
 import AssistantReportFooter from '../components/assistant-report/AssistantReportFooter';
@@ -17,6 +19,7 @@ import {
     type WeeklyActionAdvicePageData,
     type WeeklyActionAdviceReport,
 } from '../data/weeklyActionAdvice';
+import type { ClassInfo } from '../types';
 
 const ANALYSIS_STEPS = [
     '正在整理上周评价记录',
@@ -171,6 +174,9 @@ const InsufficientContent: React.FC<{
 interface WeeklyActionAdviceViewProps {
     onBack: () => void;
     onOpenHistory?: () => void;
+    homeroomClasses?: ClassInfo[];
+    activeClassId?: string;
+    onClassChange?: (classId: string) => void;
     data?: WeeklyActionAdvicePageData;
     report?: WeeklyActionAdviceReport;
     reportPayload?: unknown;
@@ -181,6 +187,9 @@ interface WeeklyActionAdviceViewProps {
 const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
     onBack,
     onOpenHistory,
+    homeroomClasses = [],
+    activeClassId,
+    onClassChange,
     data,
     report,
     reportPayload,
@@ -189,6 +198,8 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
 }) => {
     const pageData = data ?? report ?? CURRENT_WEEKLY_ACTION_ADVICE;
     const [viewingExample, setViewingExample] = useState(false);
+    const [showClassPicker, setShowClassPicker] = useState(false);
+    const activeClass = homeroomClasses.find(classInfo => classInfo.id === activeClassId);
     const activeReport = viewingExample
         ? WEEKLY_ACTION_ADVICE_SAMPLE_REPORT
         : pageData.status === 'generated' ? pageData : null;
@@ -231,6 +242,10 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
         return () => timers.forEach((timer) => window.clearTimeout(timer));
     }, [pageData.id, shouldSimulateLoading]);
 
+    useEffect(() => {
+        setViewingExample(false);
+    }, [activeClassId]);
+
     const title = viewingExample ? WEEKLY_ACTION_ADVICE_SAMPLE_REPORT.title : pageData.title;
     const className = viewingExample ? WEEKLY_ACTION_ADVICE_SAMPLE_REPORT.className : pageData.className;
     const showHeaderTitle = title !== '本周行动建议';
@@ -238,7 +253,13 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
     return (
         <div className="ai-assistant-theme-headteacher relative min-h-full overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
             <AssistantSubpageHeader
-                title={showHeaderTitle ? title : className}
+                title={activeClass && !viewingExample ? undefined : showHeaderTitle ? title : className}
+                centerContent={activeClass && !viewingExample ? (
+                    <AssistantClassSwitchButton
+                        activeClass={activeClass}
+                        onClick={homeroomClasses.length > 1 ? () => setShowClassPicker(true) : undefined}
+                    />
+                ) : undefined}
                 onBack={viewingExample ? () => setViewingExample(false) : onBack}
                 backLabel={viewingExample ? '返回本周行动建议' : '返回'}
                 surface="transparent"
@@ -284,6 +305,18 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
                     <AssistantReportFooter document={reportResolution.document} example={viewingExample} className="mx-0" />
                 )}
             </main>
+
+            {showClassPicker && onClassChange && (
+                <HomeroomClassPickerSheet
+                    classes={homeroomClasses}
+                    selectedClassId={activeClassId}
+                    onClose={() => setShowClassPicker(false)}
+                    onSelect={(classId) => {
+                        onClassChange(classId);
+                        setShowClassPicker(false);
+                    }}
+                />
+            )}
         </div>
     );
 };

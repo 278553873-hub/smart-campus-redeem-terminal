@@ -13,6 +13,7 @@ interface TeacherEvaluationReviewHistoryViewProps {
     onBack: () => void;
     classes: ClassInfo[];
     initialClassId: string;
+    onClassChange?: (classId: string) => void;
 }
 
 interface ReviewYearGroup {
@@ -39,6 +40,7 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
     onBack,
     classes,
     initialClassId,
+    onClassChange,
 }) => {
     const [selectedReport, setSelectedReport] = useState<TeacherEvaluationReviewReport | null>(null);
     const [activeClassId, setActiveClassId] = useState(initialClassId);
@@ -129,6 +131,7 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
                     onClose={() => setShowClassPicker(false)}
                     onSelect={(classId) => {
                         setActiveClassId(classId);
+                        onClassChange?.(classId);
                         setShowClassPicker(false);
                     }}
                 />

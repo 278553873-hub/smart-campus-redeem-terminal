@@ -339,7 +339,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [selectedSubject, setSelectedSubject] = useState<string>('');
     const [batchStudentIds, setBatchStudentIds] = useState<string[]>([]);
     const [teacherProfilesBySpace, setTeacherProfilesBySpace] = useState<Record<string, TeacherProfile>>(INITIAL_TEACHER_PROFILES_BY_SPACE);
-    const [weeklyAdviceClassId, setWeeklyAdviceClassId] = useState(DEFAULT_WEEKLY_ADVICE_CLASS_ID);
     const [headteacherAssistantClassId, setHeadteacherAssistantClassId] = useState(DEFAULT_WEEKLY_ADVICE_CLASS_ID);
     const principalWeeklyReportTask = useReportGenerationTask({ stepCount: 4 });
     const principalMonthlyReportTask = useReportGenerationTask({ stepCount: 4 });
@@ -984,8 +983,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             ? 'deputyHeadTeacher'
             : 'teacher';
     const homeroomClasses = classes.filter(classInfo => teacherProfile.homeroomClassIds.includes(classInfo.id));
-    const activeWeeklyAdvice = WEEKLY_ACTION_ADVICE_CURRENT_BY_CLASS[weeklyAdviceClassId] ?? CURRENT_WEEKLY_ACTION_ADVICE;
-    const activeEvaluationReview = TEACHER_EVALUATION_REVIEW_CURRENT_BY_CLASS[weeklyAdviceClassId]
+    const activeWeeklyAdvice = WEEKLY_ACTION_ADVICE_CURRENT_BY_CLASS[headteacherAssistantClassId] ?? CURRENT_WEEKLY_ACTION_ADVICE;
+    const activeEvaluationReview = TEACHER_EVALUATION_REVIEW_CURRENT_BY_CLASS[headteacherAssistantClassId]
         ?? CURRENT_TEACHER_EVALUATION_REVIEW;
 
     const getActiveStudentNames = () => {
@@ -1581,11 +1580,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     showStudentEvaluation={headteacherAssistantScopes.includes('student')}
                                     showClassEvaluation={headteacherAssistantScopes.includes('class')}
                                     onOpenWeeklyActionAdvice={(classId) => {
-                                        setWeeklyAdviceClassId(classId);
+                                        setHeadteacherAssistantClassId(classId);
                                         navigateTo('weekly_action_advice');
                                     }}
                                     onOpenEvaluationReview={(classId) => {
-                                        setWeeklyAdviceClassId(classId);
+                                        setHeadteacherAssistantClassId(classId);
                                         navigateTo('teacher_evaluation_review');
                                     }}
                                 />
@@ -1594,6 +1593,9 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             {currentView === 'weekly_action_advice' && (
                                 <WeeklyActionAdviceView
                                     data={activeWeeklyAdvice}
+                                    homeroomClasses={homeroomClasses}
+                                    activeClassId={headteacherAssistantClassId}
+                                    onClassChange={setHeadteacherAssistantClassId}
                                     onBack={goBack}
                                     onOpenHistory={() => navigateTo('weekly_action_history')}
                                 />
@@ -1603,13 +1605,17 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 <WeeklyActionAdviceHistoryView
                                     onBack={goBack}
                                     classes={homeroomClasses}
-                                    initialClassId={weeklyAdviceClassId}
+                                    initialClassId={headteacherAssistantClassId}
+                                    onClassChange={setHeadteacherAssistantClassId}
                                 />
                             )}
 
                             {currentView === 'teacher_evaluation_review' && (
                                 <TeacherEvaluationReviewView
                                     data={activeEvaluationReview}
+                                    homeroomClasses={homeroomClasses}
+                                    activeClassId={headteacherAssistantClassId}
+                                    onClassChange={setHeadteacherAssistantClassId}
                                     onBack={goBack}
                                     onOpenHistory={() => navigateTo('teacher_evaluation_review_history')}
                                 />
@@ -1619,7 +1625,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                 <TeacherEvaluationReviewHistoryView
                                     onBack={goBack}
                                     classes={homeroomClasses}
-                                    initialClassId={weeklyAdviceClassId}
+                                    initialClassId={headteacherAssistantClassId}
+                                    onClassChange={setHeadteacherAssistantClassId}
                                 />
                             )}
 

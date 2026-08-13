@@ -14,7 +14,8 @@ requireText(appSource, "import WeeklyActionAdviceHistoryView from './views/Weekl
 requireText(appSource, "'weekly_action_history'", 'App 页面状态应包含往期建议。');
 requireText(appSource, "{currentView === 'weekly_action_history' && (", 'App 应渲染往期建议页面。');
 requireText(appSource, 'classes={homeroomClasses}', '往期建议应接收全部带班班级。');
-requireText(appSource, 'initialClassId={weeklyAdviceClassId}', '往期建议应默认显示当前报告班级。');
+requireText(appSource, 'initialClassId={headteacherAssistantClassId}', '往期建议应默认显示统一班主任助理当前班级。');
+requireText(appSource, 'onClassChange={setHeadteacherAssistantClassId}', '往期建议切班应同步统一班级状态。');
 
 requireText(historySource, '往期建议', '历史页面名称应精简为往期建议。');
 requireText(historySource, 'WEEKLY_ACTION_ADVICE_HISTORY_BY_CLASS', '历史页面应按班级读取往期建议。');

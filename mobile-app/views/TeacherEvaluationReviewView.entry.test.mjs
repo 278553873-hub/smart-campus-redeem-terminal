@@ -38,7 +38,9 @@ requireText(viewSource, '<AssistantReportCards', '评价复盘应使用共享报
 requireText(footerSource, 'document.notice', '月度复盘应明确由AI生成并保留参考声明。');
 requireText(viewSource, '<AssistantHistoryLink', '当前复盘应复用带文字的历史入口组件。');
 requireText(viewSource, 'label="往期复盘"', '当前复盘历史入口应显示明确文案。');
-requireText(viewSource, 'title={showHeaderTitle ? title : className}', '当前评价复盘标题栏应展示班级名。');
+requireText(viewSource, '<AssistantClassSwitchButton', '当前评价复盘标题栏应提供班级切换。');
+requireText(viewSource, '<HomeroomClassPickerSheet', '当前评价复盘应复用带班班级选择组件。');
+requireText(viewSource, 'setViewingExample(false);', '切班时应退出评价复盘示例并加载目标班级数据。');
 requireText(viewSource, 'surface="transparent"', '当前评价复盘标题栏应保持透明。');
 requireText(viewSource, '上月记录不足', '数据不足时应明确上月记录不足。');
 requireText(viewSource, '查看报告示例', '数据不足时应允许查看有意义的报告示例。');
@@ -55,6 +57,8 @@ requireText(appSource, "import TeacherEvaluationReviewView from './views/Teacher
 requireText(appSource, "'teacher_evaluation_review'", 'App 页面枚举应包含评价复盘。');
 requireText(appSource, "'teacher_evaluation_review_history'", 'App 页面枚举应包含往期复盘。');
 requireText(appSource, 'data={activeEvaluationReview}', '评价复盘应按所选班级加载数据。');
+requireText(appSource, 'activeClassId={headteacherAssistantClassId}', '评价复盘应复用班主任助理当前班级状态。');
+requireText(appSource, 'onClassChange={setHeadteacherAssistantClassId}', '评价复盘切班应同步统一班级状态。');
 requireText(appSource, "onOpenHistory={() => navigateTo('teacher_evaluation_review_history')}", '当前复盘应能进入历史页。');
 
 requireText(promptSource, '上一个完整自然月', '提示词应固定分析上一个完整自然月。');

@@ -40,25 +40,33 @@ for (const rule of ['仅学生评价', '仅班级评价', '学生评价和班级
 }
 
 requireText(viewSource, '<AssistantSubpageHeader', '统一页面应使用公共子页标题栏。');
-requireText(viewSource, 'centerContent={<ClassSwitchButton', '班级切换应放在标题栏中。');
+requireText(viewSource, '<ClassContextPanel', '概览页应使用统一班级上下文卡片。');
+requireText(viewSource, 'aria-label="当前班级数据与分析功能"', '班级切换、本周数据和分析功能应收拢在一张总卡中。');
+requireText(viewSource, '<AssistantClassSwitchButton', '统一页面应复用班主任助理班级切换控件。');
+requireText(viewSource, 'centerContent={(activeReport || isGenerating || historyOpen)', '概览态标题栏不应显示班级切换，报告和历史状态仍应保留切班能力。');
 assert.ok(!viewSource.includes('AssistantSubpageHeader title='), 'V2 标题栏不应继续显示页面名称。');
 requireText(viewSource, '<HomeroomClassPickerSheet', 'V2 应复用带班班级选择组件。');
 assert.ok(!viewSource.includes('<MobileBottomSheet'), '班主任助理 V2 不应提供依据明细抽屉。');
-for (const title of ['本周班级行动建议', '我的评价复盘']) {
-  requireText(viewSource, title, `统一页面应提供学生评价高层级能力：${title}`);
+for (const label of ['本周学生情况洞察与班级跟进建议', '上月评价记录复盘与改进建议']) {
+  requireText(viewSource, label, `统一页面应提供学生评价单行能力：${label}`);
 }
-for (const description of [
-  '综合上周评价，分析学生表现、班级共性与评价信号，给出本周关注重点和行动建议。',
-  '复盘上月记录，分析关注对象、评价视角、指标使用和表达方式，发现盲区与改进方向。',
-]) {
-  requireText(viewSource, description, `学生评价能力应展示完整概括：${description}`);
+requireText(viewSource, 'aria-label="报告快捷入口"', '两项报告应作为独立高层级快捷入口。');
+requireText(viewSource, 'min-h-14 w-full items-center', '学生评价能力块应保持紧凑且满足触控高度。');
+requireText(viewSource, 'whitespace-nowrap text-[length:var(--tm-font-size-body)] font-medium leading-5', '学生评价能力应使用舒展的正文级单行文字层级。');
+requireText(viewSource, 'headteacher-agent-glass headteacher-context-card', '班级上下文总卡应使用独立表面层级。');
+requireText(viewSource, 'bg-[var(--tm-role-headteacher-data-surface)] [box-shadow:var(--tm-role-headteacher-data-shadow)]', '本周数据应通过浅色表面和环境阴影与总卡建立清晰边界。');
+requireText(viewSource, 'rounded-[var(--tm-radius-card)] p-2', '总卡与内部内容应使用同心圆角和八像素间距。');
+requireText(viewSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-data-surface)]', '本周数据内卡应使用十二像素圆角。');
+requireText(viewSource, 'variant="quiet"', '概览态班级切换应使用弱化文字样式。');
+requireText(viewSource, '{canSwitchClass && (', '概览态只有存在多个带班班级时才应展示班级切换控件。');
+requireText(viewSource, '<div className="mx-2">', '本周数据卡应相对总卡主动缩进。');
+requireText(viewSource, 'className={`mx-3 pb-2 ${showClassEvaluation ? \'mt-3\' : \'\'}`}', '报告入口应比数据卡进一步缩进，并与总卡底边保留十六像素空间。');
+for (const icon of ['ChartNoAxesCombined', 'Telescope', 'ScanSearch']) {
+  requireText(viewSource, icon, `概览应使用语义图标：${icon}`);
 }
-requireText(viewSource, 'aria-label="学生评价快捷问题"', '学生评价问题应作为中部独立高层级区域。');
-requireText(viewSource, 'text-[15px] font-semibold leading-[22px]', '学生评价能力名称应使用清晰的卡片标题层级。');
-requireText(viewSource, 'text-[12px] font-normal leading-[18px] text-[var(--tm-text-secondary)]', '学生评价能力概括应使用自然的次级正文层级。');
-requireText(viewSource, 'min-h-[72px]', '学生评价能力卡片应允许双层文案自然增长。');
-requireText(viewSource, '{showClassEvaluation && (', '班级数据面板和输入区应受班级评价能力控制。');
-requireText(viewSource, '{showStudentEvaluation && (', '学生问题应受学生评价能力控制。');
+assert.ok(!viewSource.includes('description:'), '学生评价能力入口不应继续维护第二行描述。');
+requireText(viewSource, 'showClassEvaluation={showClassEvaluation}', '班级上下文卡应按班级评价能力组合数据面板。');
+requireText(viewSource, 'showStudentEvaluation={showStudentEvaluation}', '班级上下文卡应按学生评价能力组合功能块。');
 assert.ok(
   viewSource.indexOf('<WeekOverviewPanel') < viewSource.indexOf('<StudentQuestionList'),
   '双开时应先展示班级数据面板，再展示学生评价问题。',
@@ -106,7 +114,9 @@ requireText(viewSource, '本周数据', '首屏应展示本周数据面板。');
 requireText(viewSource, '本周总分', '收起态应展示本周总分。');
 requireText(viewSource, '年级排名', '收起态应明确展示年级排名。');
 requireText(viewSource, '学校排名', '收起态应明确展示学校排名。');
-requireText(viewSource, 'grid grid-cols-3 gap-3', '本周数据应并列展示总分、年级排名和学校排名。');
+requireText(viewSource, 'grid grid-cols-[1.18fr_0.82fr]', '本周数据应突出总分，并将两个排名收为次级信息。');
+requireText(viewSource, 'style={{ width: `${Math.min(Math.max(snapshot.finalScore, 0), 100)}%` }}', '总分应通过紧凑进度线提供视觉表达。');
+assert.ok(!viewSource.includes('{week.summary}'), '本周数据卡不应为了装饰增加额外结论文案。');
 assert.ok(!viewSource.includes('当前排名'), '总分排名不应继续使用含义模糊的当前排名文案。');
 assert.ok(!viewSource.includes('班级排名'), '周数据子页不应继续使用含义模糊的班级排名文案。');
 requireText(viewSource, 'h-[148px]', '首屏头图区应保持紧凑，避免数据卡下沉。');
@@ -161,9 +171,9 @@ requireText(viewSource, 'askClassEvaluationQuestion', '自由问题应进入班�
 assert.ok(!viewSource.includes('getRecordsFromAnswer'), '对话回答不应再按证据编号打开逐笔记录。');
 requireText(viewSource, 'rankings.map', '展开态应展示五项一级指标的得分和排名。');
 requireText(viewSource, '<span>分类数据</span>', '收起态入口应命名为分类数据。');
-requireText(viewSource, 'justify-end px-4', '分类数据入口应放在数据卡片右侧。');
+requireText(viewSource, 'items-center justify-end bg-[var(--tm-bg-surface-glass)] px-3', '数据卡底部只应保留右侧分类入口。');
 requireText(viewSource, "aria-label={expanded ? '收起分类数据' : '展开分类数据'}", '分类数据按钮应按展开状态提供准确的无障碍名称。');
-requireText(viewSource, 'h-[var(--tm-assistant-secondary-pill-height)] w-[var(--tm-assistant-category-pill-width)]', '分类数据入口应使用紧凑的108×30像素可见胶囊。');
+requireText(viewSource, 'h-[var(--tm-assistant-secondary-pill-height)] w-[92px]', '分类数据入口应使用更紧凑的92×30像素可见胶囊。');
 requireText(viewSource, 'h-[var(--tm-assistant-icon-control-visual-size)] w-[var(--tm-assistant-icon-control-visual-size)]', '收起箭头应使用36像素可见圆形按钮。');
 requireText(viewSource, 'after:-inset-y-[7px]', '分类数据入口应在30像素外观之外保留44像素触控高度。');
 requireText(viewSource, 'after:-inset-1', '收起箭头应在36像素外观之外保留44像素触控区域。');

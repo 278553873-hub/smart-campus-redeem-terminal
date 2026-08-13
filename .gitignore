@@ -44,3 +44,4 @@ deliverables/
 artifacts/
 .codex/audit/
 .codex/audits/
+.codex-audit/

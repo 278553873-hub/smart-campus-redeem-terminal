@@ -10,6 +10,7 @@ interface WeeklyActionAdviceHistoryViewProps {
     onBack: () => void;
     classes: ClassInfo[];
     initialClassId: string;
+    onClassChange?: (classId: string) => void;
 }
 
 interface HistoryMonthGroup {
@@ -45,7 +46,7 @@ const groupReportsByMonth = (reports: WeeklyActionAdviceReport[]) => [...reports
         return groups;
     }, []);
 
-const WeeklyActionAdviceHistoryView: React.FC<WeeklyActionAdviceHistoryViewProps> = ({ onBack, classes, initialClassId }) => {
+const WeeklyActionAdviceHistoryView: React.FC<WeeklyActionAdviceHistoryViewProps> = ({ onBack, classes, initialClassId, onClassChange }) => {
     const [selectedReport, setSelectedReport] = useState<WeeklyActionAdviceReport | null>(null);
     const [activeClassId, setActiveClassId] = useState(initialClassId);
     const [showClassPicker, setShowClassPicker] = useState(false);
@@ -134,6 +135,7 @@ const WeeklyActionAdviceHistoryView: React.FC<WeeklyActionAdviceHistoryViewProps
                     onClose={() => setShowClassPicker(false)}
                     onSelect={(classId) => {
                         setActiveClassId(classId);
+                        onClassChange?.(classId);
                         setShowClassPicker(false);
                     }}
                 />

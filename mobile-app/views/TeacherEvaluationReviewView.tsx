@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
+import AssistantClassSwitchButton from '../components/AssistantClassSwitchButton';
 import AssistantHistoryLink from '../components/AssistantHistoryLink';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
+import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
 import AssistantReportCards from '../components/assistant-report/AssistantReportCards';
 import AssistantReportContractError from '../components/assistant-report/AssistantReportContractError';
 import AssistantReportFooter from '../components/assistant-report/AssistantReportFooter';
@@ -16,6 +18,7 @@ import {
     type TeacherEvaluationReviewPageData,
     type TeacherEvaluationReviewReport,
 } from '../data/teacherEvaluationReview';
+import type { ClassInfo } from '../types';
 
 const REVIEW_ANALYSIS_STEPS = [
     '正在整理上月评价记录',
@@ -81,6 +84,9 @@ const InsufficientReview: React.FC<{
 interface TeacherEvaluationReviewViewProps {
     onBack: () => void;
     onOpenHistory?: () => void;
+    homeroomClasses?: ClassInfo[];
+    activeClassId?: string;
+    onClassChange?: (classId: string) => void;
     data?: TeacherEvaluationReviewPageData;
     report?: TeacherEvaluationReviewReport;
     reportPayload?: unknown;
@@ -91,6 +97,9 @@ interface TeacherEvaluationReviewViewProps {
 const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = ({
     onBack,
     onOpenHistory,
+    homeroomClasses = [],
+    activeClassId,
+    onClassChange,
     data,
     report,
     reportPayload,
@@ -99,6 +108,8 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
 }) => {
     const pageData = data ?? report ?? CURRENT_TEACHER_EVALUATION_REVIEW;
     const [viewingExample, setViewingExample] = useState(false);
+    const [showClassPicker, setShowClassPicker] = useState(false);
+    const activeClass = homeroomClasses.find(classInfo => classInfo.id === activeClassId);
     const activeReport = viewingExample
         ? TEACHER_EVALUATION_REVIEW_SAMPLE
         : pageData.status === 'generated' ? pageData : null;
@@ -141,6 +152,10 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
         return () => timers.forEach((timer) => window.clearTimeout(timer));
     }, [pageData.id, shouldSimulateLoading]);
 
+    useEffect(() => {
+        setViewingExample(false);
+    }, [activeClassId]);
+
     const title = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.title : pageData.title;
     const className = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.className : pageData.className;
     const dataRange = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.dataRange : pageData.dataRange;
@@ -149,7 +164,13 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
     return (
         <div className="ai-assistant-theme-headteacher relative min-h-full overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
             <AssistantSubpageHeader
-                title={showHeaderTitle ? title : className}
+                title={activeClass && !viewingExample ? undefined : showHeaderTitle ? title : className}
+                centerContent={activeClass && !viewingExample ? (
+                    <AssistantClassSwitchButton
+                        activeClass={activeClass}
+                        onClick={homeroomClasses.length > 1 ? () => setShowClassPicker(true) : undefined}
+                    />
+                ) : undefined}
                 onBack={viewingExample ? () => setViewingExample(false) : onBack}
                 backLabel={viewingExample ? '返回我的评价复盘' : '返回'}
                 surface="transparent"
@@ -195,6 +216,18 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
                     <AssistantReportFooter document={reportResolution.document} example={viewingExample} className="mx-0" />
                 )}
             </main>
+
+            {showClassPicker && onClassChange && (
+                <HomeroomClassPickerSheet
+                    classes={homeroomClasses}
+                    selectedClassId={activeClassId}
+                    onClose={() => setShowClassPicker(false)}
+                    onSelect={(classId) => {
+                        onClassChange(classId);
+                        setShowClassPicker(false);
+                    }}
+                />
+            )}
         </div>
     );
 };

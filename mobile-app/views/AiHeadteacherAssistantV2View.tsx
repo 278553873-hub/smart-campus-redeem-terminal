@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+    ChartNoAxesCombined,
     CalendarDays,
     ChevronDown,
     ChevronLeft,
@@ -12,9 +13,12 @@ import {
     LoaderCircle,
     Mic,
     Send,
+    ScanSearch,
     Sparkles,
+    Telescope,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import AssistantClassSwitchButton from '../components/AssistantClassSwitchButton';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
 import AutoResizeTextarea from '../components/ui/AutoResizeTextarea';
@@ -97,14 +101,14 @@ const OVERVIEW_RECOMMENDED_QUESTIONS = [
 
 const STUDENT_EVALUATION_QUESTIONS = [
     {
-        title: '本周班级行动建议',
-        description: '综合上周评价，分析学生表现、班级共性与评价信号，给出本周关注重点和行动建议。',
+        label: '本周学生情况洞察与班级跟进建议',
         action: 'weekly_action_advice',
+        icon: Telescope,
     },
     {
-        title: '我的评价复盘',
-        description: '复盘上月记录，分析关注对象、评价视角、指标使用和表达方式，发现盲区与改进方向。',
+        label: '上月评价记录复盘与改进建议',
         action: 'evaluation_review',
+        icon: ScanSearch,
     },
 ] as const;
 
@@ -120,22 +124,6 @@ const getFollowUpQuestions = (answerType: ClassEvaluationAssistantAnswer['answer
     }
     return OVERVIEW_RECOMMENDED_QUESTIONS.slice(0, 2);
 };
-
-const ClassSwitchButton: React.FC<{
-    className?: string;
-    activeClass?: ClassInfo;
-    onClick: () => void;
-}> = ({ className = '', activeClass, onClick }) => (
-    <button
-        type="button"
-        onClick={onClick}
-        className={`flex min-h-11 max-w-[190px] min-w-0 items-center justify-center gap-1 rounded-full pl-3 pr-2.5 text-[14px] font-semibold text-[var(--tm-text-primary)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-glass-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)] ${className}`}
-        aria-label={'切换班级，当前' + (activeClass?.name ?? '未选择')}
-    >
-        <span className="truncate">{activeClass?.name ?? '选择班级'}</span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" strokeWidth={2.2} aria-hidden="true" />
-    </button>
-);
 
 const ReportInsightList: React.FC<{
     insights: ClassEvaluationWeeklyReport['performanceInsights'];
@@ -327,19 +315,20 @@ const SuggestedQuestionList: React.FC<{
 
 const StudentQuestionList: React.FC<{
     onSelect: (action: typeof STUDENT_EVALUATION_QUESTIONS[number]['action']) => void;
-}> = ({ onSelect }) => (
-    <section className="relative z-10 mx-4 space-y-2" aria-label="学生评价快捷问题">
+    className?: string;
+}> = ({ onSelect, className = '' }) => (
+    <section className={`relative z-10 space-y-2 ${className}`} aria-label="报告快捷入口">
         {STUDENT_EVALUATION_QUESTIONS.map(item => (
             <button
-                key={item.title}
+                key={item.label}
                 type="button"
                 onClick={() => onSelect(item.action)}
-                className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-glass)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.98] active:bg-[var(--tm-role-headteacher-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                className="flex min-h-14 w-full items-center gap-2.5 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] pl-3 pr-3.5 text-left [box-shadow:var(--tm-shadow-control)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-role-headteacher-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
             >
-                <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] font-semibold leading-[22px] text-[var(--tm-text-primary)]">{item.title}</span>
-                    <span className="mt-1 block text-pretty text-[12px] font-normal leading-[18px] text-[var(--tm-text-secondary)]">{item.description}</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[var(--tm-role-headteacher-soft)] text-[var(--tm-assistant-role-text)]" aria-hidden="true">
+                    <item.icon className="h-[17px] w-[17px]" strokeWidth={2} />
                 </span>
+                <span className="min-w-0 flex-1 whitespace-nowrap text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)]">{item.label}</span>
                 <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
             </button>
         ))}
@@ -738,10 +727,15 @@ const WeekOverviewPanel: React.FC<{
     onOpenDetails,
     onOpenWeekDetail,
 }) => (
-    <section className="headteacher-agent-glass relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)]" aria-labelledby="week-data-title">
-        <div className="px-4 pt-4">
-            <div className="flex min-h-11 items-center justify-between gap-3">
-                <h2 id="week-data-title" className="shrink-0 text-balance text-[17px] font-bold text-[var(--tm-text-primary)]">本周数据</h2>
+    <section className="overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-data-surface)] [box-shadow:var(--tm-role-headteacher-data-shadow)]" aria-labelledby="week-data-title">
+        <div className="px-4 pb-3 pt-3">
+            <div className="flex min-h-11 items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[var(--tm-bg-surface)] text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)]" aria-hidden="true">
+                        <ChartNoAxesCombined className="h-[17px] w-[17px]" strokeWidth={2.1} />
+                    </span>
+                    <h2 id="week-data-title" className="shrink-0 text-balance text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">本周数据</h2>
+                </div>
                 <button
                     type="button"
                     onClick={onOpenWeekDetail}
@@ -754,29 +748,34 @@ const WeekOverviewPanel: React.FC<{
                 </button>
             </div>
 
-            <dl className="mt-1 grid grid-cols-3 gap-3 pb-2 pt-3">
-                <div className="min-w-0">
+            <dl className="mt-2 grid grid-cols-[1.18fr_0.82fr] items-end gap-4">
+                <div className="min-w-0 pb-1">
                     <dt className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">本周总分</dt>
-                    <dd className="mt-2 whitespace-nowrap text-[24px] font-bold tabular-nums text-[var(--tm-assistant-role-text)]">{formatScore(snapshot.finalScore)}<span className="ml-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">分</span></dd>
+                    <dd className="mt-1 whitespace-nowrap text-[30px] font-bold tabular-nums leading-none text-[var(--tm-assistant-role-text)]">{formatScore(snapshot.finalScore)}<span className="ml-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">分</span></dd>
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--tm-role-headteacher-soft-strong)]" aria-hidden="true">
+                        <div className="h-full rounded-full bg-[var(--tm-assistant-role-primary)]" style={{ width: `${Math.min(Math.max(snapshot.finalScore, 0), 100)}%` }} />
+                    </div>
                 </div>
-                <div className="min-w-0">
-                    <dt className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">年级排名</dt>
-                    <dd className="mt-2 whitespace-nowrap text-[24px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.gradeRank}<span className="ml-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
-                </div>
-                <div className="min-w-0">
-                    <dt className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">学校排名</dt>
-                    <dd className="mt-2 whitespace-nowrap text-[24px] font-bold tabular-nums text-[var(--tm-text-primary)]">第{week.schoolRank}<span className="ml-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
+                <div className="grid min-w-0 grid-cols-2 gap-3 pb-1">
+                    <div className="min-w-0">
+                        <dt className="whitespace-nowrap text-[10px] font-medium text-[var(--tm-text-tertiary)]">年级排名</dt>
+                        <dd className="mt-1.5 whitespace-nowrap text-[20px] font-bold tabular-nums leading-none text-[var(--tm-text-primary)]">第{week.gradeRank}<span className="ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
+                    </div>
+                    <div className="min-w-0">
+                        <dt className="whitespace-nowrap text-[10px] font-medium text-[var(--tm-text-tertiary)]">学校排名</dt>
+                        <dd className="mt-1.5 whitespace-nowrap text-[20px] font-bold tabular-nums leading-none text-[var(--tm-text-primary)]">第{week.schoolRank}<span className="ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]">名</span></dd>
+                    </div>
                 </div>
             </dl>
         </div>
 
-        <div className="flex min-h-[var(--tm-size-touch)] items-center justify-end px-4">
+        <div className="flex min-h-[var(--tm-size-touch)] items-center justify-end bg-[var(--tm-bg-surface-glass)] px-3">
             <button
                 type="button"
                 onClick={onToggleExpanded}
                 className={'relative flex items-center justify-center overflow-visible rounded-full bg-[var(--tm-bg-surface)] text-[13px] font-medium text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] after:absolute after:content-[\'\'] transition-[width,height,scale,background-color,box-shadow] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] focus-visible:bg-[var(--tm-bg-surface-muted)] focus-visible:outline-none ' + (expanded
                     ? 'h-[var(--tm-assistant-icon-control-visual-size)] w-[var(--tm-assistant-icon-control-visual-size)] after:-inset-1'
-                    : 'h-[var(--tm-assistant-secondary-pill-height)] w-[var(--tm-assistant-category-pill-width)] after:-inset-y-[7px] after:inset-x-0')}
+                    : 'h-[var(--tm-assistant-secondary-pill-height)] w-[92px] after:-inset-y-[7px] after:inset-x-0')}
                 aria-expanded={expanded}
                 aria-controls="week-dimension-list"
                 aria-label={expanded ? '收起分类数据' : '展开分类数据'}
@@ -804,6 +803,70 @@ const WeekOverviewPanel: React.FC<{
             </div>
         )}
 
+    </section>
+);
+
+const ClassContextPanel: React.FC<{
+    activeClass?: ClassInfo;
+    canSwitchClass: boolean;
+    showClassEvaluation: boolean;
+    showStudentEvaluation: boolean;
+    week: ClassEvaluationWeek;
+    snapshot: ClassEvaluationSnapshot;
+    expanded: boolean;
+    onClassPickerOpen: () => void;
+    onToggleExpanded: () => void;
+    onOpenDimensionDetails: (dimension: string) => void;
+    onOpenDetails: () => void;
+    onOpenWeekDetail: () => void;
+    onStudentQuestionSelect: (action: typeof STUDENT_EVALUATION_QUESTIONS[number]['action']) => void;
+}> = ({
+    activeClass,
+    canSwitchClass,
+    showClassEvaluation,
+    showStudentEvaluation,
+    week,
+    snapshot,
+    expanded,
+    onClassPickerOpen,
+    onToggleExpanded,
+    onOpenDimensionDetails,
+    onOpenDetails,
+    onOpenWeekDetail,
+    onStudentQuestionSelect,
+}) => (
+    <section className="headteacher-agent-glass headteacher-context-card relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)] p-2" aria-label="当前班级数据与分析功能">
+        {canSwitchClass && (
+            <div className="mb-1 flex min-h-10 items-center px-3">
+                <AssistantClassSwitchButton
+                    activeClass={activeClass}
+                    onClick={onClassPickerOpen}
+                    variant="quiet"
+                    className="-ml-1 justify-start"
+                />
+            </div>
+        )}
+
+        {showClassEvaluation && (
+            <div className="mx-2">
+                <WeekOverviewPanel
+                    week={week}
+                    snapshot={snapshot}
+                    expanded={expanded}
+                    onToggleExpanded={onToggleExpanded}
+                    onOpenDimensionDetails={onOpenDimensionDetails}
+                    onOpenDetails={onOpenDetails}
+                    onOpenWeekDetail={onOpenWeekDetail}
+                />
+            </div>
+        )}
+
+        {showStudentEvaluation && (
+            <StudentQuestionList
+                className={`mx-3 pb-2 ${showClassEvaluation ? 'mt-3' : ''}`}
+                onSelect={onStudentQuestionSelect}
+            />
+        )}
     </section>
 );
 
@@ -839,7 +902,7 @@ const WeekDataDetailPage: React.FC<{
             <AssistantSubpageHeader
                 onBack={onBack}
                 surface="transparent"
-                centerContent={<ClassSwitchButton activeClass={activeClass} onClick={onClassPickerOpen} />}
+                centerContent={<AssistantClassSwitchButton activeClass={activeClass} onClick={onClassPickerOpen} />}
             />
 
             <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(24px+env(safe-area-inset-bottom))] no-scrollbar">
@@ -1223,7 +1286,9 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     ? (reportOrigin === 'history' ? '返回历史报告' : '返回概览')
                     : historyOpen ? '返回概览' : '返回'}
                 surface="transparent"
-                centerContent={<ClassSwitchButton activeClass={activeClass} onClick={() => setShowClassPicker(true)} />}
+                centerContent={(activeReport || isGenerating || historyOpen)
+                    ? <AssistantClassSwitchButton activeClass={activeClass} onClick={() => setShowClassPicker(true)} />
+                    : undefined}
             />
 
             {activeReport || isGenerating ? (
@@ -1284,11 +1349,16 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                         />
                     </section>
 
-                    {showClassEvaluation && (
-                        <WeekOverviewPanel
+                    {(showClassEvaluation || showStudentEvaluation) && (
+                        <ClassContextPanel
+                            activeClass={activeClass}
+                            canSwitchClass={homeroomClasses.length > 1}
+                            showClassEvaluation={showClassEvaluation}
+                            showStudentEvaluation={showStudentEvaluation}
                             week={currentWeek}
                             snapshot={snapshot}
                             expanded={overviewExpanded}
+                            onClassPickerOpen={() => setShowClassPicker(true)}
                             onToggleExpanded={() => {
                                 setOverviewExpanded(current => !current);
                             }}
@@ -1311,18 +1381,11 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                                 setDetailInitialDimension(null);
                                 setWeekDetailOpen(true);
                             }}
+                            onStudentQuestionSelect={(action) => {
+                                if (action === 'weekly_action_advice') onOpenWeeklyActionAdvice(resolvedClassId);
+                                else onOpenEvaluationReview(resolvedClassId);
+                            }}
                         />
-                    )}
-
-                    {showStudentEvaluation && (
-                        <div className={showClassEvaluation ? 'mt-4' : '-mt-5'}>
-                            <StudentQuestionList
-                                onSelect={(action) => {
-                                    if (action === 'weekly_action_advice') onOpenWeeklyActionAdvice(resolvedClassId);
-                                    else onOpenEvaluationReview(resolvedClassId);
-                                }}
-                            />
-                        </div>
                     )}
 
                     {messages.length > 0 && (

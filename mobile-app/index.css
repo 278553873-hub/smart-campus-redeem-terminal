@@ -87,6 +87,11 @@
   backdrop-filter: blur(24px) saturate(145%);
 }
 
+.headteacher-context-card {
+  background: var(--tm-role-headteacher-context-surface);
+  box-shadow: var(--tm-role-headteacher-context-shadow);
+}
+
 .ai-assistant-theme-principal {
   --tm-assistant-role-text: var(--tm-role-principal-strong);
   --tm-assistant-role-primary: var(--tm-role-principal-primary);
