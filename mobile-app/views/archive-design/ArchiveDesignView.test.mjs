@@ -41,6 +41,7 @@ requireText(accessSource, "'archiveDesign'", '档案设计入口必须由学校�
 requireText(appSource, "'archive_design'", '教师端导航必须注册档案设计页面。');
 const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
 requireText(plainBackgroundList, "'archive_design'", '档案设计应使用屏幕级纯色背景。');
+requireText(plainBackgroundList, "'student_archive'", '学生成长档案首页应使用屏幕级纯色背景。');
 requireText(primitivesSource, "export const pageBackground = 'bg-transparent'", '档案设计页面容器应保持透明，由屏幕级背景统一提供底色。');
 requireText(primitivesSource, 'justify-between bg-[var(--tm-bg-surface-glass)] pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md', '档案设计标题栏应使用表面玻璃令牌并避让微信胶囊安全区。');
 forbidText(primitivesSource, 'border-b border-white/70', '档案设计顶部标题栏不应保留分割线，应依靠毛玻璃与内容自然分层。');
@@ -49,10 +50,9 @@ requireText(primitivesSource, "export const sectionSurface = 'rounded-[var(--tm-
 requireText(primitivesSource, 'border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]', '档案次按钮必须使用浅边界令牌。');
 requireText(primitivesSource, '[box-shadow:var(--tm-shadow-control)]', '档案次按钮必须使用控件阴影令牌。');
 requireText(primitivesSource, "export const readonlyFieldClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)]", '档案只读字段必须使用只读输入令牌。');
-requireText(primitivesSource, 'focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '档案输入框应使用轻量输入焦点环。');
-forbidText(primitivesSource, 'focus:ring-4', '档案输入框不应使用4像素粗焦点环。');
-requireText(formBuilderSource, 'focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '共享表单输入框应使用轻量输入焦点环。');
-forbidText(formBuilderSource, 'focus:ring-4', '共享表单输入框不应使用4像素粗焦点环。');
+requireText(primitivesSource, 'focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '档案输入框应统一消费中性聚焦令牌。');
+requireText(formBuilderSource, 'focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '共享表单输入框应统一消费中性聚焦令牌。');
+forbidText(archiveAppearanceSource, "'--tm-input-focus-border'", '档案主题不得覆盖全局输入聚焦边界。');
 forbidText(viewSource, 'slate-', '档案设计页面不应残留旧灰色系。');
 forbidText(studentViewSource, 'slate-', '学生成长档案页面不应残留旧灰色系。');
 for (const legacyColor of ['amber-', 'emerald-', 'cyan-']) {
@@ -257,7 +257,6 @@ for (const preset of ['learning', 'growth', 'sports', 'creativity']) requireText
 
 for (const required of [
   '学生成长档案',
-  '发起采集',
   '保存修改',
   '新增档案',
   '选择档案',
@@ -268,8 +267,10 @@ for (const required of [
 ]) {
   requireText(studentViewSource, required, `学生档案流程缺少：${required}`);
 }
-requireText(appSource, 'onUpdateArchive={templateId =>', '当前档案的更新入口必须进入统一采集流程。');
-requireText(appSource, 'initialArchiveTemplateId={questionnaireInitialArchiveTemplateId || undefined}', '从档案进入采集时必须预选当前档案。');
+forbidText(studentViewSource, '发起采集', '学生成长档案页当前不提供发起采集入口。');
+forbidText(studentViewSource, 'onUpdateArchive', '移除发起采集入口后，学生成长档案组件不应保留无用回调。');
+forbidText(appSource, 'onUpdateArchive={templateId =>', 'App 不应继续向学生成长档案传入发起采集回调。');
+requireText(appSource, 'initialArchiveTemplateId={questionnaireInitialArchiveTemplateId || undefined}', '问卷采集模块应保留按档案采集的底层能力。');
 requireText(storeSource, 'upsertStudentArchiveCollectionAnswers', '采集提交必须合并更新学生当前档案。');
 requireText(studentViewSource, 'import MobileFloatingCreateButton', '学生档案首页必须复用公共悬浮创建按钮。');
 requireText(studentRootSource, '<MobileFloatingCreateButton label="新增档案" emphasis="raised" onClick={() => setShowArchivePicker(true)} />', '学生档案首页必须从右下角进入档案选择流程。');

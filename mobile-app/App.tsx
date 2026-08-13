@@ -292,6 +292,7 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
     'bank_password',
     'homework_entry',
     'student_detail',
+    'student_archive',
     'student_body_measurements',
     'mine_settings',
     'subject_management',
@@ -439,6 +440,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [recordContextToast, setRecordContextToast] = useState('');
     const [pendingRecordData, setPendingRecordData] = useState<any>(null);
     const [recordMode, setRecordMode] = useState<'voice' | 'camera' | 'text'>('voice');
+    const [voicePressState, setVoicePressState] = useState<'idle' | 'listening' | 'canceling'>('idle');
+    const voicePressActiveRef = useRef(false);
+    const voicePressCanceledRef = useRef(false);
+    const voicePressCleanupRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
         if (!recordContextToast) return;
@@ -818,6 +823,72 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         setCurrentView('home_log');
     };
 
+    const beginVoiceRecording = (event: React.PointerEvent<HTMLButtonElement>, targetIds: string[]) => {
+        if (!event.isPrimary || voicePressActiveRef.current) return;
+
+        event.preventDefault();
+        const pointerId = event.pointerId;
+        const startY = event.clientY;
+        voicePressActiveRef.current = true;
+        voicePressCanceledRef.current = false;
+        setVoicePressState('listening');
+
+        if (currentView === 'home_log' && recordGuidePending[activeLogTab]) {
+            setRecordGuidePending(current => ({ ...current, [activeLogTab]: false }));
+        }
+
+        const cleanup = () => {
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+            window.removeEventListener('pointercancel', handlePointerCancel);
+            voicePressCleanupRef.current = null;
+        };
+
+        const finish = (forceCancel = false) => {
+            if (!voicePressActiveRef.current) return;
+            const shouldCancel = forceCancel || voicePressCanceledRef.current;
+            voicePressActiveRef.current = false;
+            voicePressCanceledRef.current = false;
+            cleanup();
+            setVoicePressState('idle');
+            if (shouldCancel) return;
+
+            const targetNames = MOCK_STUDENTS_CLASS_1
+                .filter(student => targetIds.includes(student.id))
+                .map(student => student.name)
+                .join('、');
+            handleAnalysisComplete({
+                type: 'voice',
+                text: `今天数学课，${targetNames || '大家'}表现都很积极，主动回答问题。`,
+                mockStudents: targetIds,
+            });
+        };
+
+        const handlePointerMove = (pointerEvent: PointerEvent) => {
+            if (pointerEvent.pointerId !== pointerId) return;
+            pointerEvent.preventDefault();
+            const shouldCancel = startY - pointerEvent.clientY > 90;
+            if (voicePressCanceledRef.current === shouldCancel) return;
+            voicePressCanceledRef.current = shouldCancel;
+            setVoicePressState(shouldCancel ? 'canceling' : 'listening');
+        };
+
+        const handlePointerUp = (pointerEvent: PointerEvent) => {
+            if (pointerEvent.pointerId === pointerId) finish();
+        };
+
+        const handlePointerCancel = (pointerEvent: PointerEvent) => {
+            if (pointerEvent.pointerId === pointerId) finish(true);
+        };
+
+        voicePressCleanupRef.current = cleanup;
+        window.addEventListener('pointermove', handlePointerMove, { passive: false });
+        window.addEventListener('pointerup', handlePointerUp);
+        window.addEventListener('pointercancel', handlePointerCancel);
+    };
+
+    useEffect(() => () => voicePressCleanupRef.current?.(), []);
+
     const handleImportWeChat = () => {
         setShowPlusMenu(false);
         alert("即将打开微信文件选择器...");
@@ -998,15 +1069,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const GlobalInputBar = () => {
         const targetIds: string[] = isMultiSelectMode ? Array.from(multiSelectIds) : [];
 
-        const handleVoiceRecord = () => {
-            if (currentView === 'home_log' && recordGuidePending[activeLogTab]) {
-                setRecordGuidePending(current => ({ ...current, [activeLogTab]: false }));
-                return;
-            }
-
-            handleStartRecord(targetIds, 'voice');
-        };
-
         if (showKeyboard) {
             return (
                 <div className="pointer-events-none absolute bottom-[292px] left-0 right-0 z-[85] mx-auto max-w-md px-4">
@@ -1044,11 +1106,18 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                     </button>
 
                     <button
-                        onClick={handleVoiceRecord}
-                        aria-label="语音记录"
-                        className="flex h-11 min-w-0 items-center justify-center rounded-[var(--tm-radius-inner)] px-4 text-[15px] font-semibold text-[var(--tm-text-primary)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"
+                        type="button"
+                        onPointerDown={(event) => beginVoiceRecording(event, targetIds)}
+                        onContextMenu={(event) => event.preventDefault()}
+                        aria-label={voicePressState === 'idle' ? '按住说话' : voicePressState === 'canceling' ? '松开取消' : '正在录音，松开发送'}
+                        className={`flex h-11 min-w-0 touch-none select-none items-center justify-center rounded-[var(--tm-radius-inner)] px-4 text-[15px] font-semibold transition ${voicePressState === 'idle'
+                            ? 'text-[var(--tm-text-primary)] active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]'
+                            : voicePressState === 'canceling'
+                                ? 'bg-[var(--tm-status-negative-soft)] text-[var(--tm-status-negative-strong)]'
+                                : 'bg-[var(--tm-brand-primary)] text-white'
+                            }`}
                     >
-                        <span>按住说话</span>
+                        <span>{voicePressState === 'idle' ? '按住说话' : voicePressState === 'canceling' ? '松开取消' : '松开发送'}</span>
                     </button>
 
                     <button
@@ -1103,7 +1172,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             return <TeacherMobileScreenBackground variant="plain" />;
         }
 
-        if (['class_list', 'student_archive', 'me'].includes(currentView)) {
+        if (['class_list', 'me'].includes(currentView)) {
             return <TeacherMobileScreenBackground />;
         }
 
@@ -1397,12 +1466,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     spaceId={activeTeacherSpace.id}
                                     classes={activeSpaceClasses}
                                     getStudentsForClass={getMergedStudentsForClass}
-                                    onUpdateArchive={templateId => {
-                                        setQuestionnaireEntryMode('owned');
-                                        setQuestionnaireInitialArchiveTemplateId(templateId);
-                                        setQuestionnaireInitialRecordId('');
-                                        navigateTo('questionnaire');
-                                    }}
                                     onOpenPendingCollection={recordId => {
                                         setQuestionnaireEntryMode('owned');
                                         setQuestionnaireInitialArchiveTemplateId('');

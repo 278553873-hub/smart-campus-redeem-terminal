@@ -2356,7 +2356,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                                         value={draftDateRange.startDate}
                                         max={getTodayValue()}
                                         onChange={(event) => setDraftDateRange(current => ({ ...current, startDate: event.target.value }))}
-                                        className="min-h-[44px] w-full rounded-2xl border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-3 text-sm font-semibold text-[var(--tm-text-primary)] outline-none transition-colors focus:border-[var(--tm-brand-primary)] focus:bg-white"
+                                        className="min-h-[44px] w-full rounded-2xl border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-sm font-semibold text-[var(--tm-input-text)] outline-none"
                                     />
                                 </label>
                                 <label className="block">
@@ -2366,7 +2366,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                                         value={draftDateRange.endDate}
                                         max={getTodayValue()}
                                         onChange={(event) => setDraftDateRange(current => ({ ...current, endDate: event.target.value }))}
-                                        className="min-h-[44px] w-full rounded-2xl border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] px-3 text-sm font-semibold text-[var(--tm-text-primary)] outline-none transition-colors focus:border-[var(--tm-brand-primary)] focus:bg-white"
+                                        className="min-h-[44px] w-full rounded-2xl border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-sm font-semibold text-[var(--tm-input-text)] outline-none"
                                     />
                                 </label>
                             </div>

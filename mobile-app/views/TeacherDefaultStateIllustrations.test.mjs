@@ -4,6 +4,7 @@ const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const assetsSource = read('../assets/images.ts');
 const questionnaireSource = read('./questionnaire/QuestionnaireManagementView.tsx');
 const archiveSource = read('./archive-design/ArchiveDesignView.tsx');
+const collectionHistorySource = read('./student-collection/StudentCollectionHistoryTab.tsx');
 const classDetailSource = read('./ClassDetailView.tsx');
 const classListSource = read('./ClassListView.tsx');
 const featureSource = read('./MeFeatureViews.tsx');
@@ -24,6 +25,7 @@ for (const fileName of [
 
 requireText(questionnaireSource, 'ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD', '问卷采集为空时应使用担忧清单缺省图。');
 requireText(archiveSource, 'ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD', '档案为空时应使用担忧清单缺省图。');
+requireText(collectionHistorySource, 'ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD', '学生采集记录为空时应使用担忧清单缺省图。');
 requireText(classDetailSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '学生搜索无结果时应使用放大镜缺省图。');
 requireText(classDetailSource, 'ASSETS.DEFAULT_STATE.CHAIR', '没有学生或分组时应使用椅子缺省图。');
 requireText(classListSource, 'ASSETS.DEFAULT_STATE.CHAIR', '没有班级时应使用椅子缺省图。');

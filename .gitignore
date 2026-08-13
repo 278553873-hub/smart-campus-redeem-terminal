@@ -45,3 +45,5 @@ artifacts/
 .codex/audit/
 .codex/audits/
 .codex-audit/
+.codex-work/
+.impeccable/critique/

@@ -60,11 +60,12 @@ for (const required of [
   "var(--mini-program-capsule-right-inset, 0px)",
   '查看完整排名',
   'title="完整班级排名"',
-  'snapshot.summary.lowestScore',
+  'lowestRankedClass.score',
   '<h1 className="pointer-events-none absolute inset-0 flex items-center justify-center text-[17px] font-semibold text-[var(--tm-text-primary)]">班级评价报表</h1>',
   '<select',
   'aria-label="统计周期类型"',
   'grid-cols-[80px_44px_minmax(0,1fr)_44px]',
+  'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)]',
   'ariaLabel="问题分布年级筛选"',
   '<TeacherReportDonutChart',
   'seriesName="问题分布"',
@@ -92,6 +93,40 @@ assert.ok(chartSource.includes('valueSuffix = \'条\''), '环图应保持默认�
 assert.ok(chartSource.includes('seriesName = \'五育事件\''), '环图应保持默认系列名称，兼容既有报告。');
 assert.equal(viewSource.includes('title="指标得分"'), false, '指标得分板块当前应从页面隐藏。');
 assert.equal(viewSource.includes('ml-[var(--tm-space-3)]'), false, '问题分布二、三级内容应与一级指标左对齐。');
+assert.equal(viewSource.includes('-{snapshot.summary.cumulativeDeduction}分'), false, '数据概况不应继续展示累计扣分。');
+assert.equal(viewSource.includes('grid grid-rows-2 divide-y'), false, '数据概况不应使用横向灰色分割线区分指标。');
+assert.equal(viewSource.includes('grid grid-cols-2 divide-x'), false, '数据概况不应使用纵向灰色分割线区分指标。');
+assert.ok(viewSource.includes('<section aria-label="班级评价数据概况">'), '数据概况应使用无外层卡片的独立板块，避免卡片嵌套。');
+assert.ok(viewSource.includes('min-h-[var(--tm-report-summary-min-height)]'), '数据概况应使用稳定高度的单一紧凑摘要容器。');
+assert.ok(viewSource.includes('bg-[var(--tm-report-summary-surface)]'), '数据概况应使用组件级中性表面 Token。');
+assert.ok(viewSource.includes('bg-[var(--tm-report-summary-data-surface)]'), '数据概况主数据区应使用克制的数据色表面建立完成度。');
+assert.ok(viewSource.includes('较上期 {averageScoreDelta > 0 ? \'+\' : \'\'}{averageScoreDelta}分'), '平均得分应基于真实周期趋势展示较上期变化。');
+assert.ok(viewSource.includes('const highestRankedClass = snapshot?.classRanking[0]'), '数据概况应从真实排名中获取最高班级。');
+assert.ok(viewSource.includes('const lowestRankedClass = snapshot?.classRanking[snapshot.classRanking.length - 1]'), '数据概况应从真实排名中获取最低班级。');
+assert.ok(viewSource.includes('最高班级'), '数据概况应直接展示可定位的最高班级。');
+assert.ok(viewSource.includes('{highestRankedClass.name}'), '最高班级应展示真实班级名称。');
+assert.ok(viewSource.includes('{highestRankedClass.score}分'), '最高班级应展示真实班级得分。');
+assert.ok(viewSource.includes('最低班级'), '数据概况应直接展示可定位的最低班级。');
+assert.ok(viewSource.includes('{lowestRankedClass.name}'), '最低班级应展示真实班级名称。');
+assert.ok(viewSource.includes('{lowestRankedClass.score}分'), '最低班级应展示真实班级得分。');
+assert.equal(viewSource.includes('班级得分范围'), false, '数据概况不应使用抽象得分范围替代最低班级。');
+assert.ok(viewSource.includes('text-[length:var(--tm-report-summary-primary-value-size)]'), '平均得分应通过组件级字号 Token 建立主要层级。');
+assert.ok(viewSource.includes('text-[length:var(--tm-report-summary-secondary-value-size)]'), '问题记录应作为摘要容器内的同级静态数据展示。');
+assert.equal(viewSource.includes('onClick={() => setIsProblem'), false, '问题记录不应提供点击或展开明细交互。');
+assert.equal(viewSource.includes('ArrowUpRight'), false, '平均分变化不应通过正向状态图标表达普通统计变化。');
+assert.equal(viewSource.includes('ArrowDownRight'), false, '平均分变化不应通过提醒状态图标表达普通统计变化。');
+assert.equal(viewSource.includes('tm-chart-positive-soft'), false, '数据概况不应把最高分表达为正向状态卡。');
+assert.equal(viewSource.includes('tm-chart-warning-soft'), false, '数据概况不应把最低分表达为提醒状态卡。');
+for (const requiredToken of [
+  "'--tm-report-summary-surface': 'var(--tm-bg-surface)'",
+  "'--tm-report-summary-data-surface': 'var(--tm-chart-data-default-soft)'",
+  "'--tm-report-summary-primary-value-size': '32px'",
+  "'--tm-report-summary-secondary-value-size': '28px'",
+  "'--tm-report-summary-min-height': '128px'",
+  "'--tm-report-summary-class-row-height': '36px'",
+]) {
+  assert.ok(tokenSource.includes(requiredToken), `数据概况应通过组件级 Token 收敛样式，缺少：${requiredToken}`);
+}
 for (const required of ['title={`选择${periodTypeLabels[periodType]}`}', 'periods={periodOptions}', 'setIsPeriodSheetOpen(false)']) {
   assert.ok(viewSource.includes(required), `周期抽屉应按当前粒度选择周、月份或学期，缺少：${required}`);
 }

@@ -24,7 +24,6 @@ import {
   Palette,
   RotateCcw,
   Save,
-  Search,
   Settings,
   QrCode,
   Star,
@@ -47,6 +46,7 @@ import MobileDocumentTitleInput from '../../components/ui/MobileDocumentTitleInp
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileToast from '../../components/ui/MobileToast';
 import MobileQrInviteSheet from '../../components/ui/MobileQrInviteSheet';
+import MobileSearchInput from '../../components/ui/MobileSearchInput';
 import { ASSETS } from '../../assets/images';
 import AssignedQuestionnaireView from '../../../components/parent-app/AssignedQuestionnaireView';
 import QuestionnaireHeaderImage from '../../../components/questionnaire/QuestionnaireHeaderImage';
@@ -143,6 +143,10 @@ import {
   type ArchiveTemplate,
   type ArchiveTemplateSnapshot,
 } from '../../../shared/studentArchiveStore';
+
+const getTeacherQuestionnaireThemeStyle = (themeId: QuestionnaireThemeId) => (
+  getQuestionnaireThemeCssVariables(themeId, { inputAppearance: 'teacher-mobile' }) as React.CSSProperties
+);
 
 interface QuestionnaireManagementViewProps {
   onBack: () => void;
@@ -1835,7 +1839,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           : { ...field, sectionId: fallbackSectionId }),
       });
     };
-    const editorThemeStyle = getQuestionnaireThemeCssVariables(draftThemeId) as React.CSSProperties;
+    const editorThemeStyle = getTeacherQuestionnaireThemeStyle(draftThemeId);
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24" style={editorThemeStyle}>
         <PageHeader
@@ -1857,7 +1861,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               <section className="-mx-5 bg-[var(--tm-bg-surface)] px-5 py-4">
                 <MobileDocumentTitleInput id="survey-title" ariaLabel="采集标题" value={draftTitle} maxLength={40} onChange={setDraftTitle} placeholder={titlePlaceholder} error={stepOneValidationAttempt > 0 ? stepOneTitleError : undefined} />
                 <div className="mt-[var(--tm-space-4)]">
-                  <AutoResizeTextarea id="survey-description" aria-label="采集说明" value={draftDescription} maxLength={500} maxHeight={Number.POSITIVE_INFINITY} onChange={event => setDraftDescription(event.target.value)} placeholder={descriptionPlaceholder} className="min-h-[var(--tm-size-touch)] w-full resize-none border-0 border-b border-[var(--tm-border-control)] bg-transparent px-0 py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] outline-none transition-[border-color,border-width] placeholder:text-[var(--tm-text-tertiary)] focus:border-b-2 focus:border-[var(--tm-brand-primary)] focus:ring-0" />
+                  <AutoResizeTextarea id="survey-description" aria-label="采集说明" value={draftDescription} maxLength={500} maxHeight={Number.POSITIVE_INFINITY} onChange={event => setDraftDescription(event.target.value)} placeholder={descriptionPlaceholder} className="min-h-[var(--tm-size-touch)] w-full resize-none border-0 border-b border-[var(--tm-input-border)] bg-transparent px-0 py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-tertiary)] focus:border-[var(--tm-input-focus-border)] focus:ring-0" />
                   <div className="mt-1 text-right text-[length:var(--tm-font-size-badge)] font-medium tabular-nums text-[var(--tm-text-tertiary)]" aria-live="polite">{draftDescription.length}/500</div>
                 </div>
               </section>
@@ -2161,7 +2165,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             aria-label="记录日期"
             value={draftGrowthRecordDate}
             onChange={event => setDraftGrowthRecordDate(event.target.value)}
-            className="mt-4 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
+            className="mt-4 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
           />
           <PrimaryButton disabled={!draftGrowthRecordDate} onClick={() => setShowGrowthDateSheet(false)} className="mt-4 w-full">完成</PrimaryButton>
         </BottomSheet>
@@ -2227,10 +2231,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           </section>
 
           <div className="sticky top-0 z-20 -mx-1 mt-4 bg-[var(--tm-bg-page-glass)] px-1 py-3 backdrop-blur-md">
-            <label className="relative block">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
-              <input value={studentRecordSearch} onChange={event => setStudentRecordSearch(event.target.value)} placeholder="搜索学生" aria-label="搜索学生" className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] pl-10 pr-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
-            </label>
+            <MobileSearchInput value={studentRecordSearch} onChange={event => setStudentRecordSearch(event.target.value)} placeholder="搜索学生" aria-label="搜索学生" className="text-[length:var(--tm-font-size-compact)]" />
             <div className="mt-2 grid grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label="填写进度">
               {([['all', '全部'], ['incomplete', '待完成'], ['completed', '已完成']] as const).map(([value, label]) => (
                 <button key={value} type="button" role="tab" aria-selected={studentRecordFilter === value} onClick={() => setStudentRecordFilter(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${studentRecordFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>
@@ -2273,7 +2274,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const editable = activeRecord.status === 'active';
     const updateAnswer = (questionId: string, answer: QuestionnaireAnswer) => setStudentRecordAnswers(previous => ({ ...previous, [questionId]: answer }));
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24" style={getQuestionnaireThemeCssVariables(activeRecord.themeId) as React.CSSProperties}>
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24" style={getTeacherQuestionnaireThemeStyle(activeRecord.themeId)}>
         <PageHeader title={studentRecord.studentName} onBack={() => setPageMode('detail')} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-28 no-scrollbar">
           <QuestionnaireHeaderImage headerImageId={activeRecord.headerImageId} className="-mx-5" />
@@ -2590,10 +2591,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           </section>
           <div className="sticky top-0 z-20 -mx-1 mt-4 bg-[var(--tm-bg-page-glass)] px-1 py-3 backdrop-blur-md">
             <div className={`grid gap-2 ${classOptions.length > 1 ? 'grid-cols-[minmax(0,1fr)_120px]' : 'grid-cols-1'}`}>
-              <label className="relative block">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
-                <input value={questionResponseSearch} onChange={event => { setQuestionResponseSearch(event.target.value); setVisibleQuestionResponseCount(20); }} placeholder="搜索回答或学生" aria-label="搜索回答或学生" className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] pl-10 pr-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
-              </label>
+              <MobileSearchInput value={questionResponseSearch} onChange={event => { setQuestionResponseSearch(event.target.value); setVisibleQuestionResponseCount(20); }} placeholder="搜索回答或学生" aria-label="搜索回答或学生" className="text-[length:var(--tm-font-size-compact)]" />
               {classOptions.length > 1 && (
                 <label className="relative block">
                   <select value={questionResponseClass} onChange={event => { setQuestionResponseClass(event.target.value); setVisibleQuestionResponseCount(20); }} aria-label="按班级筛选回答" className="h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] pl-3 pr-8 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]">
@@ -2629,7 +2627,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const previewTarget = getActiveQuestionnaireTargets(previewRecord)[0];
     if (getQuestionnaireCollectionMode(previewRecord) === 'student_information') {
       return (
-        <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24" style={getQuestionnaireThemeCssVariables(previewRecord.themeId) as React.CSSProperties}>
+        <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24" style={getTeacherQuestionnaireThemeStyle(previewRecord.themeId)}>
           <PageHeader title={previewTarget?.studentName ?? '学生'} onBack={() => setPageMode(previewReturnMode)} />
           <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-[var(--tm-bg-page)] px-5 pb-28 no-scrollbar">
             <QuestionnaireHeaderImage headerImageId={previewRecord.headerImageId} className="-mx-5" />
@@ -2663,6 +2661,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           onBack={() => setPageMode(previewReturnMode)}
           onSubmitted={() => undefined}
           preview
+          inputAppearance="teacher-mobile"
         />
       </div>
     );

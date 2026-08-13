@@ -332,7 +332,7 @@ export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ 
                 </button>
             )}
         >
-            <FeaturePanel className="p-4 focus-within:shadow-[0_0_0_2px_var(--tm-brand-primary-soft-strong),0_12px_32px_-26px_var(--tm-shadow-neutral-color)]">
+            <FeaturePanel className="p-4">
                 <textarea value={text} onChange={(event) => onTextChange(event.target.value)} className="min-h-[156px] w-full resize-none bg-transparent text-[14px] leading-6 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-disabled)]" placeholder="请输入建议或问题" aria-label="反馈内容" />
             </FeaturePanel>
 

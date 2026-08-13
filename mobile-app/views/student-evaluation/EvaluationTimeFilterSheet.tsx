@@ -198,7 +198,7 @@ const EvaluationTimeFilterSheet: React.FC<EvaluationTimeFilterSheetProps> = ({
                     max={customRange.customEnd || termEndDate}
                     value={customRange.customStart}
                     onChange={event => setCustomRange(current => ({ ...current, customStart: event.target.value }))}
-                    className="mt-1.5 h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-2 text-[12px] text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                    className="mt-1.5 h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-[12px] text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                   />
                 </label>
                 <label className="text-[12px] font-medium text-[var(--tm-text-secondary)]">
@@ -209,7 +209,7 @@ const EvaluationTimeFilterSheet: React.FC<EvaluationTimeFilterSheetProps> = ({
                     max={termEndDate}
                     value={customRange.customEnd}
                     onChange={event => setCustomRange(current => ({ ...current, customEnd: event.target.value }))}
-                    className="mt-1.5 h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-2 text-[12px] text-[var(--tm-text-primary)] outline-none focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)]"
+                    className="mt-1.5 h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-[12px] text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                   />
                 </label>
               </div>

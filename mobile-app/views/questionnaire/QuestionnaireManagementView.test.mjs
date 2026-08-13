@@ -270,8 +270,8 @@ requireText(assignedSource, 'placeholder="请补充填写"', '家长端自定义
 requireText(assignedSource, "questionnaire.status !== 'active'", '家长填写页必须响应老师结束收集。');
 requireText(assignedSource, '问卷已结束或已经提交', '状态变化导致提交失败时必须提供明确反馈。');
 requireText(assignedSource, "import { getQuestionnaireThemeCssVariables }", '教师预览和家长填写必须引用共享问卷主题 Token。');
-requireText(assignedSource, 'style={getQuestionnaireThemeCssVariables(questionnaire.themeId) as React.CSSProperties}', '采集选择的主题必须同时作用于教师预览和家长实际填写。');
-for (const token of ['--tm-brand-primary', '--tm-input-focus-ring', '--tm-questionnaire-progress']) {
+requireText(assignedSource, 'getQuestionnaireThemeCssVariables(questionnaire.themeId, { inputAppearance })', '采集选择的主题必须同时作用于教师预览和家长实际填写。');
+for (const token of ['--tm-brand-primary', '--tm-input-border', '--tm-input-focus-ring', '--tm-questionnaire-progress']) {
   requireText(assignedSource, token, `家长问卷填写态缺少共享语义 Token：${token}`);
 }
 requireText(assignedSource, 'bg-[var(--tm-questionnaire-progress)]', '问卷进度必须使用中性色进度 Token。');
@@ -302,6 +302,8 @@ requireText(assignedSource, '<QuestionnaireHeaderImage headerImageId={questionna
 requireText(questionnaireThemeSource, "'--tm-brand-primary': accent.primary", '共享问卷主题主色必须随所选风格变化。');
 requireText(questionnaireThemeSource, "'--tm-bg-page': accent.page", '问卷填写页背景必须随所选风格变化。');
 requireText(questionnaireThemeSource, "'--tm-questionnaire-progress': questionnaireThemePalette.neutral[900]", '问卷进度必须使用独立中性色 Token。');
+requireText(questionnaireThemeSource, "options?: { inputAppearance?: 'theme' | 'teacher-mobile' }", '共享问卷主题必须支持教师端输入外观适配。');
+requireText(questionnaireThemeSource, "useTeacherMobileInput ? questionnaireThemePalette.neutral[200] : accent.primary", '教师端问卷输入聚焦必须使用极浅暖灰，不得跟随主题色。');
 for (const [token, value] of [['--tm-font-size-document-title', '22px'], ['--tm-font-size-group-title', '18px'], ['--tm-font-size-form-group-label', '14px'], ['--tm-font-size-question-title', '16px'], ['--tm-font-size-control', '14px']]) {
   requireText(questionnaireThemeSource, `'${token}': '${value}'`, `共享问卷主题缺少排版 Token：${token}`);
 }
@@ -341,7 +343,7 @@ if ((viewSource.match(/<StudentCollectionForm/g) ?? []).length < 2) {
 }
 requireText(viewSource, 'const [previewAnswers, setPreviewAnswers] = useState<Record<string, QuestionnaireAnswer>>({});', '学生采集预览必须使用独立答案状态。');
 requireText(viewSource, 'onAnswerChange={(questionId, answer) => setPreviewAnswers', '学生采集预览输入只能写入预览答案状态。');
-requireText(viewSource, 'style={getQuestionnaireThemeCssVariables(previewRecord.themeId) as React.CSSProperties}', '学生采集预览必须使用当前采集主题 Token。');
+requireText(viewSource, 'style={getTeacherQuestionnaireThemeStyle(previewRecord.themeId)}', '学生采集预览必须保留主题背景并使用教师端浅边界输入外观。');
 requireText(viewSource, '<h1 className="text-pretty text-[length:var(--tm-font-size-document-title)]', '学生采集预览标题必须使用独立文档标题层级。');
 requireText(viewSource, 'getStudentCollectionQuestionGroups(record).map(questionGroup', '学生采集必须按分组组织填写内容。');
 requireText(viewSource, 'questionGroup.label && <h2 className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)]', '学生采集分组标签必须使用14像素弱层级并位于题目卡外。');
@@ -479,6 +481,8 @@ if (viewSource.includes('justify-between border-b border-[var(--tm-border-subtle
 }
 forbidText(listSource, 'overflow-hidden bg-[var(--tm-bg-page)]', '采集列表应继续使用屏幕级背景。');
 requireText(createSource, 'bg-[var(--tm-bg-page)] pb-24" style={editorThemeStyle}', '采集编辑画布必须即时使用当前风格背景。');
+requireText(viewSource, "getQuestionnaireThemeCssVariables(themeId, { inputAppearance: 'teacher-mobile' })", '教师端问卷主题必须统一适配浅边界输入外观。');
+requireText(viewSource, 'inputAppearance="teacher-mobile"', '教师端家长问卷预览必须显式使用教师端浅边界输入外观。');
 forbidText(viewSource.slice(viewSource.indexOf('const PageHeader'), viewSource.indexOf('const BottomAction')), 'action?: React.ReactNode', '问卷标题栏不得再提供业务操作插槽。');
 requireText(viewSource, 'absolute inset-x-16 truncate text-center', '问卷顶部标题必须保持居中安全区。');
 requireText(viewSource, '<ChevronLeft className="h-5 w-5" />', '问卷顶部返回图标必须与管理页保持一致。');
@@ -695,10 +699,8 @@ for (const token of [
   requireText(teacherTokenSource, token, `教师端唯一令牌源缺少：${token}`);
 }
 
-requireText(viewSource, 'focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '问卷输入框应使用轻量输入焦点环。');
-if (viewSource.includes('focus:ring-4 focus:ring-[var(--tm-focus-ring)]')) {
-  throw new Error('问卷输入框不应使用4像素实色焦点环。');
-}
+requireText(viewSource, 'focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '问卷输入框应统一消费中性聚焦令牌。');
+forbidText(viewSource, 'focus:border-[var(--tm-brand-primary)]', '问卷普通输入框聚焦时不应显示品牌红边界。');
 
 requireText(classCascadeSource, 'onToggleGrade?: (classIds: string[]) => void;', '班级级联组件必须支持按当前年级全选。');
 requireText(classCascadeSource, "aria-checked={allActiveClassesSelected ? true : hasActiveClassSelected ? 'mixed' : false}", '年级全选必须向读屏暴露未选、半选和全选状态。');

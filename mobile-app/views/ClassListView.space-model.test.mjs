@@ -33,10 +33,11 @@ requireText(classListSource, 'getTeacherClassActionPolicy({', '更多操作必�
 requireText(classListSource, 'activeActionPolicy.canMaintainClass', '班级维护操作必须受权限控制。');
 requireText(classListSource, 'activeActionPolicy.canInviteParent', '邀请家长必须受权限控制。');
 requireText(classListSource, "label: '邀请家长加入'", '协同管理应支持邀请家长。');
-requireText(classListSource, 'const hasMoreActions = Object.values(classActionPolicy).some(Boolean);', '无任何操作权限时不应展示更多按钮。');
+requireText(classListSource, 'onClick={() => onViewClassReport(classInfo.id)}', '所有可见班级都应在卡片外层提供班级报告。');
+assert.ok(!classListSource.includes('const hasMoreActions = Object.values(classActionPolicy).some(Boolean);'), '更多按钮应始终提供班级号复制能力，管理操作再按权限生成。');
 
-requireText(classListSource, 'formatClassCode(classInfo.classCode)', '班级卡片应常驻展示格式化班级号。');
-requireText(classListSource, 'min-h-11 items-center gap-1.5', '班级号复制入口必须提供44像素触控热区。');
+requireText(classListSource, 'formatClassCode(activeActionClass.classCode)', '更多操作抽屉应展示格式化班级号。');
+requireText(classListSource, 'inline-flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-2)]', '抽屉内班级号复制入口必须提供44像素触控热区。');
 requireText(constantsSource, "classCode: `${g.year}${String(idx + 1).padStart(4, '0')}`", '班级数据必须提供8位班级号。');
 
 requireText(appSource, 'CLASS_MEMBERSHIP_BY_SPACE', 'App 应维护个人和协作来源的班级归属。');

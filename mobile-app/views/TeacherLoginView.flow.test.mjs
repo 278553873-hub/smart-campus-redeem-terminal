@@ -58,8 +58,8 @@ assert.match(loginSource, /role="tab"[\s\S]*text-\[length:var\(--tm-font-size-se
 assert.match(loginSource, /max-w-\[300px\] pb-\[var\(--tm-space-4\)\] pt-\[var\(--tm-space-5\)\]/, '手机号登录输入区整体宽度应为 300px 并居中。');
 assert.match(loginSource, /sheetPrimaryButtonClass = '[^']*max-w-\[300px\]/, '弹窗登录按钮宽度应与输入区统一为 300px。');
 assert.match(loginSource, /phoneLoginLinkClass = 'flex min-h-11/, '手机号登录入口应降级为文字链接。');
-assert.match(loginSource, /border border-transparent bg-\[var\(--tm-bg-surface-soft\)\]/, '手机号登录输入控件应使用浅色表面并弱化默认边界。');
-assert.match(loginSource, /focus:border-\[var\(--tm-brand-primary-soft-strong\)\]/, '手机号登录输入控件聚焦时应保留轻量品牌反馈。');
+assert.match(loginSource, /const fieldClass = '[^']*border-\[var\(--tm-input-border\)\][^']*bg-\[var\(--tm-input-bg\)\]/, '手机号登录输入控件应使用统一的中性输入边界与表面。');
+assert.doesNotMatch(loginSource, /const fieldClass = '[^']*focus:(?:border|ring)-/, '手机号登录输入控件聚焦时不应增加品牌边界或焦点环。');
 assert.doesNotMatch(loginSource, /KeyRound|MessageCircle|Smartphone/, '登录操作按钮不应附加图标。');
 assert.match(loginSource, /submitting \? '正在登录\.\.\.' : phoneLoginMode === 'sms' \? '注册\/登录' : '登录'/, '验证码模式应显示注册/登录，密码模式应显示登录。');
 assert.doesNotMatch(loginSource, /min-h-\[314px\]/, '登录页不应把产品 Icon 平铺成大面积头图。');

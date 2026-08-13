@@ -276,7 +276,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                                 >
                                     {/* Rank & Name */}
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-semibold ${rankBadgeClassName(cls.rank)}`}>
+                                        <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold tabular-nums ${rankBadgeClassName(cls.rank)}`}>
                                             {cls.rank}
                                         </div>
                                         <span className="text-[14px] font-bold text-slate-800">{cls.name}</span>
@@ -284,7 +284,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
 
                                     {/* Score Only (Trend Removed) */}
                                     <div className="flex items-center gap-2">
-                                        <span className="font-mono font-black text-[17px] text-[#5B50F6]">
+                                        <span className="text-[17px] font-bold tabular-nums text-[#5B50F6]">
                                             {cls.score}
                                         </span>
                                     </div>
@@ -334,7 +334,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                                             <div className="text-[12px] text-slate-500 leading-snug">
                                                 {record.indicator}
                                             </div>
-                                            <div className={`text-sm font-semibold font-mono flex-shrink-0 ${record.score > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                            <div className={`flex-shrink-0 text-sm font-bold tabular-nums ${record.score > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                                                 {record.score > 0 ? '+' : ''}{record.score}
                                             </div>
                                         </div>
@@ -369,12 +369,12 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                                             className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
                                         >
                                             <div className="flex min-w-0 items-center gap-4">
-                                                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${rankBadgeClassName(cls.rank)}`}>
+                                                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-bold tabular-nums ${rankBadgeClassName(cls.rank)}`}>
                                                     {cls.rank}
                                                 </div>
                                                 <span className="truncate text-[14px] font-bold text-slate-800">{cls.name}</span>
                                             </div>
-                                            <span className="font-mono text-[17px] font-black text-[#5B50F6]">
+                                            <span className="text-[17px] font-bold tabular-nums text-[#5B50F6]">
                                                 {cls.score}
                                             </span>
                                         </div>

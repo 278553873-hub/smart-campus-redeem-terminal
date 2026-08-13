@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ClipboardCheck, UserRoundCheck, UsersRound } from 'lucide-react';
+import { ChevronDown, UserRoundCheck, UsersRound } from 'lucide-react';
 import type { StudentCollectionHistoryItem } from '../../../shared/questionnaireStore';
 import StudentTermSelector, { type StudentTermOption } from '../../components/student-detail/StudentTermSelector';
+import MobileEmptyState from '../../components/ui/MobileEmptyState';
+import { ASSETS } from '../../assets/images';
 
 interface StudentCollectionHistoryTabProps {
   items: StudentCollectionHistoryItem[];
@@ -136,10 +138,11 @@ const StudentCollectionHistoryTab: React.FC<StudentCollectionHistoryTabProps> = 
       </div>
 
       {filteredItems.length === 0 && (
-        <div className="py-14 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-tertiary)]"><ClipboardCheck className="h-6 w-6" /></span>
-          <div className="mt-4 text-[15px] font-semibold text-[var(--tm-text-secondary)]">{items.length === 0 ? '暂无采集记录' : '该学期暂无采集记录'}</div>
-        </div>
+        <MobileEmptyState
+          imageSrc={ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD}
+          title={items.length === 0 ? '暂无采集记录' : '该学期暂无采集记录'}
+          className="py-10"
+        />
       )}
     </div>
   );

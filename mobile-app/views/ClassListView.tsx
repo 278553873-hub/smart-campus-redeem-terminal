@@ -296,8 +296,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 .map(assignment => assignment.subject)
         ));
         const hasRelationshipTags = Boolean(classRole) || subjectTags.length > 0;
-        const classActionPolicy = getActionPolicy(classInfo.id);
-        const hasMoreActions = Object.values(classActionPolicy).some(Boolean);
 
         return (
             <article key={classInfo.id} className="relative rounded-[var(--tm-radius-card)] bg-white px-4 py-3 [box-shadow:var(--tm-shadow-card)]">
@@ -319,32 +317,18 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             </div>
                         )}
                     </div>
-                    {hasMoreActions && (
-                        <button
-                            type="button"
-                            aria-label={`${classInfo.name}更多操作`}
-                            onClick={() => setActiveActionClassId(classInfo.id)}
-                            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]"
-                        >
-                            <WechatMoreIcon className="h-5 w-5" />
-                        </button>
-                    )}
-                </div>
-
-                <div className="mt-1 flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[13px] text-[var(--tm-text-secondary)]">
-                    <span>{classInfo.gradeLevel} · {classInfo.studentCount}人</span>
                     <button
                         type="button"
-                        onClick={() => copyClassCode(classInfo)}
-                        className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-normal text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
-                        aria-label={`复制${classInfo.name}班级号${classInfo.classCode}`}
+                        aria-label={`${classInfo.name}更多操作`}
+                        onClick={() => setActiveActionClassId(classInfo.id)}
+                        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]"
                     >
-                        <span>班级号</span>
-                        <span className="font-semibold tabular-nums text-[var(--tm-text-primary)]">{formatClassCode(classInfo.classCode)}</span>
-                        {copyFeedback?.classId === classInfo.id && copyFeedback.success
-                            ? <Check className="h-3.5 w-3.5 text-[var(--tm-status-positive)]" />
-                            : <Copy className="h-3.5 w-3.5" />}
+                        <WechatMoreIcon className="h-5 w-5" />
                     </button>
+                </div>
+
+                <div className="mt-1 flex min-h-8 items-center text-[13px] text-[var(--tm-text-secondary)]">
+                    <span>{classInfo.gradeLevel} · {classInfo.studentCount}人</span>
                 </div>
 
                 <div className="mt-2 grid grid-cols-2 gap-2.5">
@@ -424,7 +408,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 <select
                                     value={gradeFilter}
                                     onChange={event => setGradeFilter(event.target.value)}
-                                    className="min-h-11 w-full appearance-none rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 pr-9 text-[13px] font-medium text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] outline-none focus:ring-2 focus:ring-[var(--tm-brand-primary)]"
+                                    className="min-h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 pr-9 text-[13px] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none"
                                     aria-label="按年级筛选班级"
                                 >
                                     {gradeOptions.map(option => <option key={option} value={option}>{option}</option>)}

@@ -892,7 +892,7 @@ const HighbrightMomentsContent = ({ id, student, className = "" }: { id?: string
                                     {isEditing ? (
                                         <div className="space-y-4">
                                             <textarea
-                                                className="w-full min-h-[120px] text-[15px] leading-[1.8] relative z-10 pt-1 text-slate-700 bg-slate-50 border border-amber-200/60 rounded-xl p-3 outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-none shadow-inner"
+                                                className="relative z-10 min-h-[120px] w-full resize-none rounded-xl border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] p-3 pt-1 text-[15px] leading-[1.8] text-[var(--tm-input-text)] shadow-inner outline-none"
                                                 value={item.description}
                                                 onChange={(e) => handleChange(idx, 'description', e.target.value)}
                                                 placeholder="请输入真实、具体、适合展示给学生和家长的高光时刻..."

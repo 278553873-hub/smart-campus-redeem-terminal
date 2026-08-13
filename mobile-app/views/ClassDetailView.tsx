@@ -4,6 +4,7 @@ import { GET_MOCK_GROUP_PLANS_FOR_CLASS } from '../constants';
 import { BackIcon, MaleIcon, FemaleIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, PlusIcon, EditIcon, CloseIcon } from '../components/Icons';
 import { ASSETS } from '../assets/images';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
+import MobileSearchInput from '../components/ui/MobileSearchInput';
 import StudentPerformanceAvatar from '../components/student-performance/StudentPerformanceAvatar';
 import StudentPerformanceMeta from '../components/student-performance/StudentPerformanceMeta';
 import {
@@ -205,21 +206,26 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     const renderStudentToolbar = () => (
         <div className="bg-white/92 px-4 pb-2 pt-1.5 backdrop-blur-xl border-b border-white/70 shadow-sm sticky top-0 z-10">
             <div className="student-action-row flex items-center gap-2">
-                <button
-                    type="button"
-                    onClick={handleRestoreSearchMode}
-                    aria-label={isSelectionMode ? "恢复搜索" : "搜索学生"}
-                    className={`relative text-left transition-all duration-300 ease-out ${isSelectionMode ? 'w-10 flex-none opacity-70' : 'min-w-0 flex-1 opacity-100'} ${isSelectionMode ? 'active:scale-95' : ''}`}
-                >
-                    <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-disabled)]" />
-                    <input
+                <div className={`relative text-left transition-all duration-300 ease-out ${isSelectionMode ? 'w-10 flex-none opacity-70' : 'min-w-0 flex-1 opacity-100'}`}>
+                    {isSelectionMode ? (
+                        <button
+                            type="button"
+                            onClick={handleRestoreSearchMode}
+                            aria-label="恢复搜索"
+                            className="flex h-9 w-full items-center justify-center rounded-full border border-[var(--tm-border-subtle)] bg-white [box-shadow:var(--tm-shadow-control)] transition active:scale-95"
+                        >
+                            <SearchIcon className="h-4 w-4 text-[var(--tm-text-disabled)]" />
+                        </button>
+                    ) : (
+                    <MobileSearchInput
                         value={searchQuery}
                         onChange={(event) => setSearchQuery(event.target.value)}
                         placeholder="搜索姓名、学号"
-                        disabled={isSelectionMode}
-                        className={`h-9 w-full rounded-full border border-[var(--tm-border-subtle)] bg-white pl-9 pr-3 text-[13px] font-medium text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] outline-none placeholder:text-[var(--tm-text-disabled)] transition-all duration-300 ease-out focus:border-[var(--tm-brand-primary)] focus:ring-2 focus:ring-[var(--tm-focus-ring)] ${isSelectionMode ? 'pointer-events-none pr-0 text-transparent placeholder:text-transparent' : ''}`}
+                        aria-label="搜索学生"
+                        density="compact"
                     />
-                </button>
+                    )}
+                </div>
 
                 <div className="selection-tools-next-to-cancel ml-auto flex shrink-0 items-center gap-1.5">
                     {isSelectionMode && (

@@ -67,6 +67,8 @@ const indicatorChartColors: TeacherReportChartColor[] = [
     'indicator6',
 ];
 
+const roundScore = (value: number) => Math.round(value * 10) / 10;
+
 const SectionHeader = ({ title, action }: { title: string; action?: React.ReactNode }) => (
     <div className="mb-[var(--tm-report-card-content-gap)] flex min-h-11 items-center justify-between gap-3">
         <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">{title}</h2>
@@ -314,11 +316,19 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
     const canGoNext = selectedPeriodIndex >= 0 && selectedPeriodIndex < periodOptions.length - 1;
     const trendConfig = trendMetricConfig[trendMetric];
     const trendAxisRange = snapshot ? getTrendAxisRange(snapshot, trendMetric) : {};
+    const averageScoreDelta = useMemo(() => {
+        if (!snapshot || snapshot.trend.length < 2) return null;
+        const current = snapshot.trend[snapshot.trend.length - 1].averageScore;
+        const previous = snapshot.trend[snapshot.trend.length - 2].averageScore;
+        return roundScore(current - previous);
+    }, [snapshot]);
     const filteredRanking = useMemo(() => {
         if (!snapshot) return [];
         if (rankingGradeId === 'all') return snapshot.classRanking;
         return snapshot.grades.find(grade => grade.id === rankingGradeId)?.classes ?? [];
     }, [rankingGradeId, snapshot]);
+    const highestRankedClass = snapshot?.classRanking[0];
+    const lowestRankedClass = snapshot?.classRanking[snapshot.classRanking.length - 1];
     const problemGradeReport = useMemo(() => (
         snapshot?.gradeReports.find(report => report.gradeId === problemGradeId)
         ?? snapshot?.gradeReports[0]
@@ -390,18 +400,18 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                 <div className="sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)] pb-3 pt-1 [box-shadow:0_8px_20px_-20px_var(--tm-shadow-neutral-color)]">
                     <div className="grid h-11 grid-cols-[80px_44px_minmax(0,1fr)_44px] items-center">
                         <label className="relative flex h-11 min-w-0 items-center">
-                            <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 inset-y-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" />
+                            <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 inset-y-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] [box-shadow:var(--tm-shadow-control)]" />
                             <select
                                 aria-label="统计周期类型"
                                 value={periodType}
                                 onChange={event => changePeriodType(event.target.value as MoralEducationPeriodType)}
-                                className="relative z-10 h-full w-full appearance-none bg-transparent pl-3 pr-7 text-[13px] font-semibold text-[var(--tm-text-primary)] outline-none"
+                                className="relative z-10 h-full w-full appearance-none bg-transparent pl-3 pr-7 text-[13px] font-semibold text-[var(--tm-brand-primary)] outline-none active:scale-[0.98]"
                             >
                                 {periodTypeOptions.map(option => (
                                     <option key={option.key} value={option.key}>{option.label}</option>
                                 ))}
                             </select>
-                            <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 z-10 h-4 w-4 text-[var(--tm-text-secondary)]" />
+                            <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 z-10 h-4 w-4 text-[var(--tm-brand-primary)]" />
                         </label>
                         <button
                             type="button"
@@ -454,36 +464,44 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
 
                     {snapshot && !loadError && (
                         <>
-                            <section className={reportCardClassName} aria-label="班级评价数据概况">
+                            <section aria-label="班级评价数据概况">
                                 <SectionHeader title="数据概况" />
-                                <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-4">
-                                    <div className="min-w-0">
-                                        <div className="text-[12px] font-medium text-[var(--tm-text-secondary)]">平均得分</div>
-                                        <div className="mt-2 flex items-end gap-1">
-                                            <strong className="text-[40px] font-bold leading-none tabular-nums text-[var(--tm-text-primary)]">{snapshot.summary.averageScore}</strong>
-                                            <span className="pb-1 text-[13px] font-semibold text-[var(--tm-text-secondary)]">分</span>
+                                <div className="min-h-[var(--tm-report-summary-min-height)] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-report-summary-border)] bg-[var(--tm-report-summary-surface)]">
+                                    <div className="grid grid-cols-2 gap-[var(--tm-report-summary-column-gap)] bg-[var(--tm-report-summary-data-surface)] p-[var(--tm-report-summary-padding)]">
+                                        <div className="min-w-0">
+                                            <div className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">平均得分</div>
+                                            <div className="mt-1.5 flex items-end gap-1">
+                                                <strong className="text-[length:var(--tm-report-summary-primary-value-size)] font-bold leading-none tabular-nums text-[var(--tm-report-summary-value-text)]">{snapshot.summary.averageScore}</strong>
+                                                <span className="pb-0.5 text-[12px] font-semibold text-[var(--tm-text-secondary)]">分</span>
+                                            </div>
+                                            {averageScoreDelta !== null && (
+                                                <div className="mt-1.5 text-[12px] font-medium tabular-nums text-[var(--tm-report-summary-compare-text)]">
+                                                    较上期 {averageScoreDelta > 0 ? '+' : ''}{averageScoreDelta}分
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="min-w-0 text-right">
+                                            <div className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">问题记录</div>
+                                            <div className="mt-1.5 flex items-end justify-end gap-1">
+                                                <strong className="text-[length:var(--tm-report-summary-secondary-value-size)] font-bold leading-none tabular-nums text-[var(--tm-report-summary-value-text)]">{snapshot.summary.issueCount}</strong>
+                                                <span className="pb-0.5 text-[12px] font-semibold text-[var(--tm-text-secondary)]">笔</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="grid grid-rows-2 divide-y divide-[var(--tm-border-subtle)] border-l border-[var(--tm-border-subtle)] pl-4">
-                                        <div className="pb-2">
-                                            <span className="block text-[11px] text-[var(--tm-text-secondary)]">最高得分</span>
-                                            <strong className="mt-1 block text-[18px] font-bold tabular-nums text-[var(--tm-status-positive-strong)]">{snapshot.summary.highestScore}</strong>
+                                    {highestRankedClass && lowestRankedClass && (
+                                        <div className="grid bg-[var(--tm-report-summary-surface)] px-[var(--tm-report-summary-padding)] py-1 text-[12px]">
+                                            <div className="grid min-h-[var(--tm-report-summary-class-row-height)] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
+                                                <span className="font-medium text-[var(--tm-text-secondary)]">最高班级</span>
+                                                <strong className="truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{highestRankedClass.name}</strong>
+                                                <strong className="text-[14px] font-bold tabular-nums text-[var(--tm-report-summary-value-text)]">{highestRankedClass.score}分</strong>
+                                            </div>
+                                            <div className="grid min-h-[var(--tm-report-summary-class-row-height)] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
+                                                <span className="font-medium text-[var(--tm-text-secondary)]">最低班级</span>
+                                                <strong className="truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{lowestRankedClass.name}</strong>
+                                                <strong className="text-[14px] font-bold tabular-nums text-[var(--tm-report-summary-value-text)]">{lowestRankedClass.score}分</strong>
+                                            </div>
                                         </div>
-                                        <div className="pt-2">
-                                            <span className="block text-[11px] text-[var(--tm-text-secondary)]">最低得分</span>
-                                            <strong className="mt-1 block text-[18px] font-bold tabular-nums text-[var(--tm-chart-warning-text)]">{snapshot.summary.lowestScore}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="mt-5 grid grid-cols-2 divide-x divide-[var(--tm-border-subtle)] border-t border-[var(--tm-border-subtle)] pt-4">
-                                    <div className="pr-4">
-                                        <div className="text-[22px] font-bold leading-none tabular-nums text-[var(--tm-chart-negative-text)]">-{snapshot.summary.cumulativeDeduction}分</div>
-                                        <div className="mt-2 text-[11px] font-medium text-[var(--tm-text-secondary)]">累计扣分</div>
-                                    </div>
-                                    <div className="pl-4">
-                                        <div className="text-[22px] font-bold leading-none tabular-nums text-[var(--tm-chart-warning-text)]">{snapshot.summary.issueCount}笔</div>
-                                        <div className="mt-2 text-[11px] font-medium text-[var(--tm-text-secondary)]">问题记录</div>
-                                    </div>
+                                    )}
                                 </div>
                             </section>
 

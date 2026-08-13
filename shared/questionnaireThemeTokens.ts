@@ -98,8 +98,12 @@ const questionnaireThemeAccent: Record<QuestionnaireThemeId, {
   },
 };
 
-export const getQuestionnaireThemeCssVariables = (themeId: QuestionnaireThemeId = 'classic-red') => {
+export const getQuestionnaireThemeCssVariables = (
+  themeId: QuestionnaireThemeId = 'classic-red',
+  options?: { inputAppearance?: 'theme' | 'teacher-mobile' },
+) => {
   const accent = questionnaireThemeAccent[themeId] ?? questionnaireThemeAccent['classic-red'];
+  const useTeacherMobileInput = options?.inputAppearance === 'teacher-mobile';
   return {
   '--tm-brand-primary': accent.primary,
   '--tm-brand-primary-strong': accent.strong,
@@ -125,9 +129,14 @@ export const getQuestionnaireThemeCssVariables = (themeId: QuestionnaireThemeId 
   '--tm-text-inverse': questionnaireThemePalette.neutral[0],
   '--tm-border-subtle': questionnaireThemePalette.neutral[200],
   '--tm-border-control': questionnaireThemePalette.neutral[450],
+  '--tm-input-bg': questionnaireThemePalette.neutral[0],
+  '--tm-input-border': useTeacherMobileInput ? questionnaireThemePalette.neutral[200] : questionnaireThemePalette.neutral[450],
+  '--tm-input-text': questionnaireThemePalette.neutral[900],
+  '--tm-input-placeholder': questionnaireThemePalette.neutral[550],
   '--tm-questionnaire-progress': questionnaireThemePalette.neutral[900],
-  '--tm-input-focus-border': accent.primary,
-  '--tm-input-focus-ring': accent.focusRing,
+  '--tm-focus-ring': accent.primary,
+  '--tm-input-focus-border': useTeacherMobileInput ? questionnaireThemePalette.neutral[200] : accent.primary,
+  '--tm-input-focus-ring': useTeacherMobileInput ? 'transparent' : accent.focusRing,
   '--tm-mask': 'rgba(23, 21, 19, 0.42)',
   '--tm-shadow-card': '0 10px 28px -20px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-control': '0 6px 16px -12px rgba(64, 60, 58, 0.18)',

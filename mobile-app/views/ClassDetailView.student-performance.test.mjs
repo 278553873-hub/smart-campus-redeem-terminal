@@ -11,7 +11,7 @@ const requireText = (text, message) => {
   if (!source.includes(text)) throw new Error(message);
 };
 
-requireText('student-roster-grid grid gap-x-2.5 gap-y-3', '学生列表应使用横向10像素、纵向12像素间距。');
+requireText('student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3', '学生列表应使用横向10像素、纵向12像素间距。');
 requireText('px-3 pb-40', '学生列表应保留12像素左右留白。');
 requireText('h-[136px]', '学生卡片应使用稳定的136像素高度。');
 requireText('rounded-[var(--tm-radius-inner)]', '学生卡片应使用16像素内层圆角，减轻连续气泡感。');

@@ -22,7 +22,7 @@ if (app.includes('className="h-14 flex items-center justify-between px-6 bg-whit
   failures.push('通用 LocalHeader 仍为 56px，会导致“我的班级”标题低于微信胶囊中心。');
 }
 
-if (!record.includes('min-h-11 flex-1') || !record.includes('min-h-11 shrink-0')) {
+if (!record.includes('h-[var(--tm-size-touch)] flex-1') || !record.includes('h-[var(--tm-size-touch)] shrink-0')) {
   failures.push('记录页顶部模式和指标入口应使用至少 44px 的稳定触控高度。');
 }
 

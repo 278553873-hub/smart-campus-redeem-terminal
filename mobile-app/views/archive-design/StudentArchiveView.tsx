@@ -5,7 +5,6 @@ import {
   FilePenLine,
   History,
   Save,
-  Send,
 } from 'lucide-react';
 import type { ClassInfo, Student, TeacherProfile } from '../../types';
 import { getPendingArchiveCollectionsForStudent } from '../../../shared/archiveCollectionPersistence';
@@ -61,7 +60,6 @@ interface StudentArchiveViewProps {
   spaceId: string;
   classes: ClassInfo[];
   getStudentsForClass: (classId: string) => Student[];
-  onUpdateArchive: (templateId: string) => void;
   onOpenPendingCollection: (recordId: string) => void;
 }
 
@@ -80,7 +78,6 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
   spaceId,
   classes,
   getStudentsForClass,
-  onUpdateArchive,
   onOpenPendingCollection,
 }) => {
   const readWorkspace = () => readArchiveWorkspace({
@@ -396,11 +393,6 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
             <span className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">数据更新日期</span>
             <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{activeDraft.dataUpdatedAt}</span>
           </div>
-          <button type="button" onClick={() => onUpdateArchive(activeDraft.templateId)} className={`${sectionSurface} mb-4 flex min-h-[56px] w-full items-center gap-3 px-4 text-left transition active:scale-[0.985]`}>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]"><Send className="h-4.5 w-4.5" /></span>
-            <span className="min-w-0 flex-1 text-[14px] font-semibold text-[var(--tm-text-primary)]">发起采集</span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" />
-          </button>
           {(activeTemplate.fields.length > 0 || activeTemplate.growthFields.length > 0) && (
             <div className="mt-5">
               <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">档案内容</h2>

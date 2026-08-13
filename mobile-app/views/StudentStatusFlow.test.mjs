@@ -47,17 +47,16 @@ if (basicEditSource.includes('设为离校') || basicEditSource.includes('学籍
 requireText(appSource, 'handleUpdateStudentStatus', 'App 应提供独立的学生状态更新处理函数。');
 requireText(appSource, 'onUpdateStudentStatus={handleUpdateStudentStatus}', 'App 应把独立学籍状态操作传给学生详情页。');
 requireText(dashboardSource, 'onUpdateStudentStatus', '学生详情页应接收独立学籍状态操作回调。');
-requireText(dashboardSource, 'showStatusActionSheet', '学生详情页应有单独的学籍状态入口弹层。');
-requireText(dashboardSource, '学籍状态', '学生详情页应提供独立的学籍状态操作弹层。');
-requireText(dashboardSource, 'onClick={() => setShowStatusActionSheet(true)}', '学生详情页顶部学籍入口应直接打开学籍状态抽屉。');
-requireText(dashboardSource, '>学籍</span>', '学生详情页顶部应以图标和中文“学籍”直接展示入口。');
-if (dashboardSource.includes('showMoreActionsSheet') || dashboardSource.includes('aria-label="学生管理"')) {
-  throw new Error('学籍管理不应再经过中间学生管理抽屉。');
+requireText(dashboardSource, 'id="student-resources-heading"', '更多操作应将成长档案和采集记录归入学生资料。');
+requireText(dashboardSource, 'id="student-enrollment-heading"', '更多操作应将学籍状态与子页入口分区。');
+requireText(dashboardSource, '办理离校', '学籍状态分组应提供明确的办理离校操作。');
+if (dashboardSource.includes('showEnrollmentManagement') || dashboardSource.includes('showStatusActionSheet')) {
+  throw new Error('学籍状态不应再进入子页面或叠加状态抽屉。');
 }
 if (dashboardSource.includes('<BadgeCheck className="h-3 w-3" />')) {
   throw new Error('学生顶部信息卡不应重复展示在校/离校状态标签，学籍状态已由独立操作行承载。');
 }
-requireText(dashboardSource, 'aria-label="管理学籍状态"', '学生详情页应通过“图标 + 学籍”轻入口进入学籍状态操作，而不是点击信息标签。');
+requireText(dashboardSource, 'setShowMoreActionsSheet(false);', '办理离校前应先关闭更多操作抽屉。');
 if (dashboardSource.includes('<div className="mt-1 text-xs font-medium text-slate-400">当前：{studentStatusLabel}</div>')) {
   throw new Error('学籍状态操作行不应重复展示两个状态，只保留一个在校/离校标签。');
 }

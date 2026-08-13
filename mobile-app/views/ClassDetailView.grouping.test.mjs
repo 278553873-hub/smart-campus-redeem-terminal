@@ -2,6 +2,7 @@ import fs from 'node:fs';
 
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const viewSource = read('./ClassDetailView.tsx');
+const searchInputSource = read('../components/ui/MobileSearchInput.tsx');
 const typesSource = read('../types.ts');
 const constantsSource = read('../constants.ts');
 const appSource = read('../App.tsx');
@@ -59,7 +60,7 @@ if (viewSource.includes('多选学生')) {
 }
 
 requireText(viewSource, 'student-action-row', '学生搜索框与多选入口应放在同一行，减少顶部占高。');
-requireText(viewSource, 'h-9 w-full rounded-full', '学生搜索框高度应压缩，优先释放学生卡片首屏空间。');
+requireText(viewSource, 'density="compact"', '学生搜索框应使用公共组件的紧凑密度，优先释放学生卡片首屏空间。');
 requireText(viewSource, 'class-detail-titlebar-switcher', '学生/分组筛选应使用标题栏紧凑容器。');
 requireText(viewSource, 'text-[15px] font-bold', '学生/分组筛选字号应压缩，避免喧宾夺主。');
 if (viewSource.includes('UsersIcon')) {
@@ -75,15 +76,14 @@ if (viewSource.includes('当前可见 {visibleStudents.length} 人')) {
 requireText(viewSource, 'isAllVisibleSelected', '多选态应根据当前可见学生判断是否已经全选。');
 requireText(viewSource, "isSelectionMode ? 'w-10 flex-none opacity-70' : 'min-w-0 flex-1 opacity-100'", '进入多选后搜索框应丝滑压缩，而不是继续占据主要空间。');
 requireText(viewSource, 'transition-all duration-300 ease-out', '搜索框压缩应具备平滑过渡微交互。');
-requireText(viewSource, 'pointer-events-none', '多选态搜索框压缩后不应继续作为主要输入入口。');
+requireText(viewSource, 'aria-label="恢复搜索"', '多选态压缩搜索按钮应提供明确语义。');
 
 requireText(viewSource, 'handleRestoreSearchMode', '多选态点击压缩搜索按钮应恢复初始搜索状态。');
-requireText(viewSource, 'aria-label={isSelectionMode ? "恢复搜索" : "搜索学生"}', '压缩搜索按钮应有明确的无障碍名称。');
 requireText(viewSource, 'onClick={handleRestoreSearchMode}', '压缩搜索按钮点击后应退出多选并恢复搜索栏。');
 requireText(viewSource, "isAllVisibleSelected ? '取消全选' : '全选'", '全选按钮应只在已全选后变为取消全选。');
 requireText(viewSource, 'bg-white/92', '学生工具栏应使用柔和白色玻璃背景融入页面。');
-requireText(viewSource, 'bg-white pl-9 pr-3', '搜索框应使用白底加轻阴影的真实产品方案，避免原型感灰底。');
-requireText(viewSource, '[box-shadow:var(--tm-shadow-control)] outline-none', '搜索框应使用教师端控件阴影 Token。');
+requireText(searchInputSource, "'h-9 rounded-full border-[var(--tm-border-subtle)] pl-9 pr-3 text-[13px] [box-shadow:var(--tm-shadow-control)]'", '紧凑搜索框应使用白色表面、轻阴影与紧凑尺寸。');
+requireText(searchInputSource, 'outline-none', '公共搜索框不应显示浏览器默认轮廓。');
 requireText(viewSource, 'border border-[var(--tm-border-subtle)] bg-white text-[var(--tm-text-primary)]', '多选按钮应使用白底中性方案，避免黑色重按钮。');
 if (viewSource.includes('bg-[#FFD43B]') || viewSource.includes('bg-amber-400')) {
   failures.push('学生工具栏主按钮不应继续使用高饱和黄色，应改为更贴合页面的中性色方案。');

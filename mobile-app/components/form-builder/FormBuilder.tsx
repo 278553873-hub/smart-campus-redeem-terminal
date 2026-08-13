@@ -720,7 +720,7 @@ const FormBuilder = <TType extends string>({
               aria-describedby={fieldError?.label ? `form-field-${field.id}-error` : undefined}
               className={`w-full min-h-11 max-h-[84px] resize-none py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 outline-none transition-[border-color,border-width,background-color,color] placeholder:text-[var(--tm-text-tertiary)] ${fixedContent
                 ? 'cursor-default rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] px-3 text-[var(--tm-input-readonly-text)]'
-                : `border-0 border-b bg-transparent px-0 text-[var(--tm-text-primary)] focus:border-b-2 focus:ring-0 ${fieldError?.label ? 'border-[var(--tm-status-negative-strong)] focus:border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-border-control)] focus:border-[var(--tm-brand-primary)]'}`}`}
+                : `border-0 border-b bg-transparent px-0 text-[var(--tm-text-primary)] focus:ring-0 ${fieldError?.label ? 'border-[var(--tm-status-negative-strong)] focus:border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-input-border)] focus:border-[var(--tm-input-focus-border)]'}`}`}
             />
             {!fixedContent && fieldError?.label && <p id={`form-field-${field.id}-error`} className="mt-1.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{fieldError.label}</p>}
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Check, ChevronLeft, Edit3, Eye, EyeOff, Search } from 'lucide-react';
+import { Check, ChevronLeft, Edit3, Eye, EyeOff } from 'lucide-react';
 import type { ClassInfo, Student } from '../../types';
+import MobileSearchInput from '../../components/ui/MobileSearchInput';
 
 interface BankPasswordViewProps {
   classInfo: ClassInfo;
@@ -68,10 +69,7 @@ const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classInfo, students
         </div>
 
         <div className="sticky top-0 z-20 bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] py-[var(--tm-space-3)]">
-          <label className="relative block">
-            <Search className="pointer-events-none absolute left-[var(--tm-space-3)] top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
-            <input type="search" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="搜索姓名或学号" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] pl-10 pr-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
-          </label>
+          <MobileSearchInput value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="搜索姓名或学号" aria-label="搜索学生" />
         </div>
 
         <div className="space-y-[var(--tm-space-2)] px-[var(--tm-space-4)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))]">

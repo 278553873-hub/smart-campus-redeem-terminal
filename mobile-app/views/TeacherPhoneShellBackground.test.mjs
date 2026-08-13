@@ -14,11 +14,11 @@ requireText(appSource, 'const getPhoneScreenBackground = () =>', '教师手机�
 requireText(appSource, "currentView === 'class_list'", '班级页面应进入屏幕级背景分支。');
 requireText(appSource, "import TeacherMobileScreenBackground from './components/TeacherMobileScreenBackground'", '教师手机端应引用公共屏幕背景组件。');
 const ambientBranchList = appSource.match(/if \(\[([^\]]+)\]\.includes\(currentView\)\) \{\s*return <TeacherMobileScreenBackground/)?.[1] ?? '';
-for (const viewName of ["'student_archive'", "'me'"]) {
+for (const viewName of ["'me'"]) {
   if (!ambientBranchList.includes(viewName)) failures.push('环境氛围页面应统一进入公共渐变背景分支：缺少 ' + viewName + '。');
 }
 const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
-for (const viewName of ["'class_detail'", "'class_report'", "'student_detail'"]) {
+for (const viewName of ["'class_detail'", "'class_report'", "'student_detail'", "'student_archive'"]) {
   if (!plainBackgroundList.includes(viewName)) failures.push('查看类页面应统一进入纯白标题栏、浅灰内容区背景分支：缺少 ' + viewName + '。');
 }
 requireText(appSource, "currentView === 'me'", '我的页面应进入屏幕级背景分支。');

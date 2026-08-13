@@ -33,6 +33,7 @@ interface AssignedQuestionnaireViewProps {
   onBack: () => void;
   onSubmitted: () => void;
   preview?: boolean;
+  inputAppearance?: 'theme' | 'teacher-mobile';
 }
 
 const getQuestionTypeLabel = (question: QuestionnaireQuestion) => ({
@@ -46,10 +47,10 @@ const getQuestionTypeLabel = (question: QuestionnaireQuestion) => ({
   date: '日期',
 }[question.type]);
 
-const questionnaireButtonBase = 'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold transition-[transform,background-color,box-shadow,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-input-focus-ring)]';
+const questionnaireButtonBase = 'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold transition-[transform,background-color,box-shadow,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]';
 const questionnairePrimaryButton = `${questionnaireButtonBase} bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]`;
 const questionnaireSecondaryButton = `${questionnaireButtonBase} border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]`;
-const questionnaireInputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)] px-4 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-text-primary)] outline-none transition-[border-color,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] placeholder:text-[var(--tm-text-tertiary)] focus:border-[var(--tm-brand-primary)] focus:bg-[var(--tm-bg-surface)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
+const questionnaireInputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-fast)] placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 
 const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   questionnaire,
@@ -58,7 +59,9 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   onBack,
   onSubmitted,
   preview = false,
+  inputAppearance = 'theme',
 }) => {
+  const questionnaireThemeStyle = getQuestionnaireThemeCssVariables(questionnaire.themeId, { inputAppearance }) as React.CSSProperties;
   const returnedSubmission = questionnaire.growthTemplate === 'semester_goal'
     ? questionnaire.submissions.find(submission => (
         submission.studentNo === child.studentNo
@@ -92,7 +95,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
 
   if (!preview && questionnaire.status !== 'active') {
     return (
-      <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-8 text-[var(--tm-text-primary)] no-scrollbar" style={getQuestionnaireThemeCssVariables(questionnaire.themeId) as React.CSSProperties}>
+      <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-8 text-[var(--tm-text-primary)] no-scrollbar" style={questionnaireThemeStyle}>
         <header className="sticky top-0 z-40 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 py-3 backdrop-blur-xl [padding-right:max(16px,var(--mini-program-capsule-right-inset,16px))]">
           <div className="flex min-h-11 items-center gap-3">
             <button type="button" onClick={onBack} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-transform active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)]" aria-label="返回待办"><ArrowLeft size={18} /></button>
@@ -171,7 +174,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   };
 
   return (
-    <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-36 text-[var(--tm-text-primary)] antialiased no-scrollbar" style={getQuestionnaireThemeCssVariables(questionnaire.themeId) as React.CSSProperties}>
+    <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-36 text-[var(--tm-text-primary)] antialiased no-scrollbar" style={questionnaireThemeStyle}>
       <header className="sticky top-0 z-40 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 py-3 backdrop-blur-xl [padding-right:max(16px,var(--mini-program-capsule-right-inset,16px))]">
         <div className="flex min-h-11 items-center gap-3">
           <button type="button" onClick={onBack} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-transform active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)]" aria-label={preview ? '退出预览' : '返回待办'}>

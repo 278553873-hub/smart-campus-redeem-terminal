@@ -14,6 +14,9 @@ assert.match(loginView, />\s*不允许\s*</);
 assert.match(loginView, />\s*管理号码\s*</);
 assert.match(loginView, /ASSETS\.MANAGEMENT\.TEACHER_LOGIN_ICON/);
 assert.match(loginView, /--tm-platform-wechat/);
+assert.match(loginView, /text-xl font-bold leading-7/);
+assert.match(loginView, /text-lg font-medium tabular-nums/);
+assert.match(loginView, /text-\[17px\] font-medium/);
 
 assert.match(loginView, /最近登录/);
 assert.match(loginView, /手机号登录\/注册/);

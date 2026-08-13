@@ -20,6 +20,7 @@
 | `../../00-公共图标/lock-keyhole.svg` | 权限锁定 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/mars.svg` | 男生 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/minus.svg` | 移除 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/more-horizontal.svg` | 学生更多操作 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/pencil.svg` | 编辑 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/plus.svg` | 新增 | 公共图标 | Lucide SVG |
 | `student-detail-clock.svg` | 学生详情时间 | 本页面 | 页面专用 SVG |

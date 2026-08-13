@@ -58,7 +58,6 @@ export const getArchiveThemeStyle = (appearance: ArchiveAppearance): CSSProperti
     '--tm-brand-primary-pressed': theme.accentPressed,
     '--tm-brand-primary-soft': theme.accentSoft,
     '--tm-brand-primary-soft-strong': theme.accentSoftStrong,
-    '--tm-input-focus-border': theme.accent,
   } as CSSProperties;
 };
 
