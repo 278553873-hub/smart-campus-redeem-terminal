@@ -12,7 +12,6 @@ const packageRoot = path.join(projectRoot, 'mobile-app/assets/resources/teacher-
 const outputRoot = path.join(packageRoot, 'by-page');
 const commonFolder = '00-公共图标';
 const commonRoot = path.join(outputRoot, commonFolder);
-const imageRoot = path.join(projectRoot, 'mobile-app/assets/resources');
 const codeExtensions = ['.ts', '.tsx', '.js', '.jsx'];
 const aliasMap = { CircleAlert: 'AlertCircle', PenLine: 'Edit3', LoaderCircle: 'Loader2' };
 
@@ -85,16 +84,7 @@ const customLabels = {
   'term-highlight-add.svg': '学期报告新增高光', 'term-highlight-camera.svg': '学期报告拍照',
   'term-highlight-delete.svg': '学期报告删除高光', 'term-highlight-gallery.svg': '学期报告相册选择',
   'term-highlight-upload.svg': '学期报告上传图片', 'term-highlight-zoom-in.svg': '学期报告查看大图',
-  'voice-onboarding-arrow.svg': '语音录入控件指引',
-};
-
-const imageLabels = {
-  'ai-art-badge.png': 'AI（人工智能）标识', 'ai-bot.png': '记录页 AI 入口',
-  'ai-headteacher-assistant-icon.png': '班主任助理', 'ai-principal-assistant-icon.png': '校长助理',
-  'class-evaluation-report.png': '班级评价报表', 'ranking-crown-icon.png': '排行皇冠',
-  'school-report-v2.png': '学生评价报表', 'teacher-login-icon.jpg': '教师登录',
-  'term-report-v2.png': '期末报告', 'star.png': '学生星星等级', 'moon.png': '学生月亮等级',
-  'sun.png': '学生太阳等级', 'crown.png': '学生皇冠等级',
+  'voice-onboarding-arrow-solid-gold.svg': '语音录入控件指引（奖励金粗线、无描边）',
 };
 
 const pageSpecificLabels = {
@@ -121,14 +111,14 @@ const pageSpecificLabels = {
 };
 
 const pageDefinitions = [
-  { folder: '01-登录/教师登录', roots: ['mobile-app/views/TeacherLoginView.tsx'], images: ['teacher-login-icon.jpg'] },
-  { folder: '02-记录/记录首页', roots: ['mobile-app/views/ClassRecordLogView.tsx'], custom: ['voice-onboarding-arrow.svg'], images: ['ai-bot.png'] },
+  { folder: '01-登录/教师登录', roots: ['mobile-app/views/TeacherLoginView.tsx'] },
+  { folder: '02-记录/记录首页', roots: ['mobile-app/views/ClassRecordLogView.tsx'], custom: ['voice-onboarding-arrow-solid-gold.svg'] },
   { folder: '02-记录/评价录入', roots: ['mobile-app/views/RecordInputView.tsx', 'mobile-app/components/VirtualKeyboard.tsx'], custom: ['keyboard-shift.svg', 'keyboard-delete.svg'] },
   { folder: '03-班级/班级列表', roots: ['mobile-app/views/ClassListView.tsx'] },
   { folder: '03-班级/班级更多操作', manualIcons: ['copy.svg', 'check.svg', 'more-horizontal.svg', 'chevron-right.svg', 'x.svg', 'file-text.svg', 'gift.svg', 'users.svg', 'scan-face.svg', 'shield.svg', 'folder-archive.svg', 'user-plus.svg', 'message-circle.svg'] },
   { folder: '03-班级/班级详情', roots: ['mobile-app/views/ClassInfoView.tsx'] },
-  { folder: '03-班级/学生列表', roots: ['mobile-app/views/ClassDetailView.tsx'], images: ['student-level/star.png', 'student-level/moon.png', 'student-level/sun.png', 'student-level/crown.png'] },
-  { folder: '03-班级/班级报告', roots: ['mobile-app/views/ClassReportView.tsx'], images: ['ranking-crown-icon.png'] },
+  { folder: '03-班级/学生列表', roots: ['mobile-app/views/ClassDetailView.tsx'] },
+  { folder: '03-班级/班级报告', roots: ['mobile-app/views/ClassReportView.tsx'] },
   { folder: '03-班级/班级排行榜', roots: ['mobile-app/views/ClassLeaderboardView.tsx'] },
   { folder: '03-班级/班级奖励兑换', roots: ['mobile-app/views/reward-verification/RewardVerificationView.tsx'] },
   { folder: '03-班级/更新人脸数据', roots: ['mobile-app/views/face-update/FaceUpdateView.tsx'] },
@@ -143,7 +133,7 @@ const pageDefinitions = [
   { folder: '04-学生/学生成长档案', roots: ['mobile-app/views/archive-design/StudentArchiveView.tsx'] },
   { folder: '04-学生/采集详情', roots: ['mobile-app/views/student-collection/StudentCollectionRecordDetailView.tsx'] },
   { folder: '04-学生/学期报告', roots: ['mobile-app/views/TermReportView.tsx'], custom: ['term-highlight-delete.svg', 'term-highlight-camera.svg', 'term-highlight-zoom-in.svg', 'term-highlight-add.svg', 'term-highlight-upload.svg', 'term-highlight-gallery.svg'] },
-  { folder: '05-我的/我的首页', roots: ['mobile-app/views/MeView.tsx'], custom: ['avatar-camera.svg', 'profile-settings.svg', 'personal-class-source.svg', 'collaboration-class-source.svg', 'school-source.svg', 'school-source-chevron-down.svg', 'questionnaire-todo.svg', 'questionnaire-todo-chevron-right.svg', 'more-subject-management.svg', 'more-department-management.svg', 'more-coin-issuance.svg', 'more-suggestion-feedback.svg', 'more-questionnaire.svg', 'more-archive-design.svg'], images: ['school-report-v2.png', 'class-evaluation-report.png', 'term-report-v2.png', 'ai-art-badge.png', 'ai-headteacher-assistant-icon.png', 'ai-principal-assistant-icon.png'] },
+  { folder: '05-我的/我的首页', roots: ['mobile-app/views/MeView.tsx'], custom: ['avatar-camera.svg', 'profile-settings.svg', 'personal-class-source.svg', 'collaboration-class-source.svg', 'school-source.svg', 'school-source-chevron-down.svg', 'questionnaire-todo.svg', 'questionnaire-todo-chevron-right.svg', 'more-subject-management.svg', 'more-department-management.svg', 'more-coin-issuance.svg', 'more-suggestion-feedback.svg', 'more-questionnaire.svg', 'more-archive-design.svg'] },
   { folder: '05-我的/我的文件', roots: ['mobile-app/views/MyFilesView.tsx'] },
   { folder: '05-我的/编辑教师信息', roots: ['mobile-app/views/TeacherProfileEditView.tsx'] },
   { folder: '05-我的/设置', manualIcons: ['shield.svg', 'key-round.svg', 'lock.svg', 'book-open.svg', 'chevron-right.svg'] },
@@ -154,17 +144,17 @@ const pageDefinitions = [
   { folder: '06-问卷与档案/问卷采集', roots: ['mobile-app/views/questionnaire/QuestionnaireManagementView.tsx'] },
   { folder: '06-问卷与档案/档案设计', roots: ['mobile-app/views/archive-design/ArchiveDesignView.tsx'] },
   { folder: '06-问卷与档案/班级批量留档', roots: ['mobile-app/views/archive-design/ClassArchiveBatchView.tsx'] },
-  { folder: '07-AI助理/班主任助理', roots: ['mobile-app/views/AiHeadteacherAssistantV2View.tsx'], images: ['ai-headteacher-assistant-icon.png', 'ai-art-badge.png'] },
+  { folder: '07-AI助理/班主任助理', roots: ['mobile-app/views/AiHeadteacherAssistantV2View.tsx'] },
   { folder: '07-AI助理/本周行动建议', roots: ['mobile-app/views/WeeklyActionAdviceView.tsx'] },
   { folder: '07-AI助理/往期行动建议', roots: ['mobile-app/views/WeeklyActionAdviceHistoryView.tsx'] },
   { folder: '07-AI助理/教师评价复盘', roots: ['mobile-app/views/TeacherEvaluationReviewView.tsx'] },
   { folder: '07-AI助理/往期评价复盘', roots: ['mobile-app/views/TeacherEvaluationReviewHistoryView.tsx'] },
-  { folder: '07-AI助理/校长助理', roots: ['mobile-app/views/AiPrincipalAssistantView.tsx'], images: ['ai-principal-assistant-icon.png', 'ai-art-badge.png'] },
+  { folder: '07-AI助理/校长助理', roots: ['mobile-app/views/AiPrincipalAssistantView.tsx'] },
   { folder: '07-AI助理/学校周月报告', roots: ['mobile-app/views/PrincipalPeriodicReportView.tsx'] },
   { folder: '07-AI助理/学校报告历史', roots: ['mobile-app/views/PrincipalReportHistoryView.tsx'] },
   { folder: '07-AI助理/学校学期报告', roots: ['mobile-app/views/PrincipalTermReportView.tsx'] },
-  { folder: '08-数据报表/学生评价报表', roots: ['mobile-app/views/LeaderReportView.tsx'], images: ['school-report-v2.png'] },
-  { folder: '08-数据报表/班级评价报表', roots: ['mobile-app/views/MoralEducationCockpitView.tsx'], images: ['class-evaluation-report.png'] },
+  { folder: '08-数据报表/学生评价报表', roots: ['mobile-app/views/LeaderReportView.tsx'] },
+  { folder: '08-数据报表/班级评价报表', roots: ['mobile-app/views/MoralEducationCockpitView.tsx'] },
 ];
 
 const alwaysCommon = new Set([
@@ -184,15 +174,8 @@ const generatedCustomSvg = {
   <path d="M14 2v6h6M8 13h8M8 17h8M8 9h2" />
 </svg>
 `,
-  'voice-onboarding-arrow.svg': `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="72" viewBox="0 0 64 72" fill="none">
-  <defs>
-    <filter id="soft-glow" x="8" y="0" width="52" height="72" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="2" />
-    </filter>
-  </defs>
-  <path d="M29 11L35 56M22 44L35 57L45 41" stroke="#FFD56A" stroke-opacity="0.42" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" filter="url(#soft-glow)" />
-  <path d="M29 11L35 56M22 44L35 57L45 41" stroke="#9A5B00" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M29 11L35 56M22 44L35 57L45 41" stroke="#FA9C00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  'voice-onboarding-arrow-solid-gold.svg': `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="72" viewBox="0 0 64 72" fill="none">
+  <path d="M29 11L35 56M22 44L35 57L45 41" stroke="#FA9C00" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
 `,
 };
@@ -209,10 +192,6 @@ const collectExistingCustomSvg = (directory) => {
   }
 };
 collectExistingCustomSvg(outputRoot);
-
-const imageSourcePath = (relativeName) => relativeName.startsWith('student-level/')
-  ? path.join(imageRoot, 'student-level-icons', path.basename(relativeName))
-  : path.join(imageRoot, relativeName);
 
 const readCustomSvg = (fileName) => {
   if (generatedCustomSvg[fileName]) return generatedCustomSvg[fileName];
@@ -374,16 +353,6 @@ const pages = pageDefinitions.map((page) => {
       type: '页面专用 SVG',
     });
   }
-  for (const relativeName of page.images ?? []) {
-    const fileName = path.basename(relativeName);
-    resources.set(`image:${relativeName}`, {
-      key: `image:${relativeName}`,
-      fileName,
-      relativeName,
-      label: imageLabels[fileName] ?? fileName,
-      type: '专用图片图标',
-    });
-  }
   return { ...page, resources };
 });
 
@@ -420,8 +389,6 @@ const writeResource = (resource, destination) => {
     fs.writeFileSync(destination, renderLucideSvg(resource.exportName));
   } else if (resource.key.startsWith('custom:')) {
     fs.writeFileSync(destination, readCustomSvg(resource.fileName));
-  } else {
-    fs.copyFileSync(imageSourcePath(resource.relativeName), destination);
   }
 };
 
@@ -509,11 +476,11 @@ fs.writeFileSync(path.join(packageRoot, 'README.md'), [
   '',
   '请从 `by-page/` 进入对应中文业务页面。每个页面的 `README.md` 都写明“资源路径 → 页面用途”；公共图标只在 `by-page/00-公共图标/` 保存一份。',
   '',
-  `当前共 ${uniqueFileCount} 个唯一图标文件，覆盖 ${pages.length} 个业务页面目录。`,
+  `当前共 ${uniqueFileCount} 个唯一 SVG 图标文件，覆盖 ${pages.length} 个业务页面目录。`,
   '',
   'SVG 可以在 Vue 中直接作为图片引用。需要跟随文字颜色时，可内联 SVG 并把根节点的 `stroke` 改为 `currentColor`。',
   '',
-  '未收录页面背景、头像、空状态插画、活动照片、AI（人工智能）角色大图和动态绘制图表，因为它们属于页面内容，不是操作图标。',
+  '本目录不重复收录 PNG、JPG、页面背景、头像、空状态插画、活动照片、AI（人工智能）角色图片和动态绘制图表；这些图片继续使用项目既有资源。',
   '',
 ].join('\n'));
 

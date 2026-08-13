@@ -9,5 +9,4 @@
 | `../../00-公共图标/chevron-down.svg` | 展开或下拉 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/chevron-left.svg` | 返回 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/chevron-right.svg` | 进入下一级 | 公共图标 | Lucide SVG |
-| `../../00-公共图标/class-evaluation-report.png` | 班级评价报表 | 公共图标 | 专用图片图标 |
 | `../../00-公共图标/x.svg` | 关闭 | 公共图标 | Lucide SVG |

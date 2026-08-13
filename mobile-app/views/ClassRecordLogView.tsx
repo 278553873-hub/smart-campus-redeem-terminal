@@ -7,7 +7,7 @@ import {
 import { MOCK_STUDENTS_CLASS_1, MOCK_CLASS_RECORD_LOGS } from '../constants';
 import { ASSETS } from '../assets/images';
 import { Loader2, Sparkles } from 'lucide-react'; // Import directly if needed for icons not in components
-import voiceOnboardingArrow from '../assets/resources/teacher-mobile-icons/by-page/02-记录/记录首页/voice-onboarding-arrow.svg';
+import voiceOnboardingArrow from '../assets/resources/teacher-mobile-icons/by-page/02-记录/记录首页/voice-onboarding-arrow-solid-gold.svg';
 
 const STUDENT_RECORD_GUIDE_EXAMPLES = [
     '张三同学今天主动帮助同学解决问题，值得表扬。',

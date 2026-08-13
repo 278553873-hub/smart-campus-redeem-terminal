@@ -4,8 +4,6 @@
 
 | 资源路径 | 页面用途 | 存放位置 | 类型 |
 | --- | --- | --- | --- |
-| `../../00-公共图标/ai-art-badge.png` | AI（人工智能）标识 | 公共图标 | 专用图片图标 |
-| `../../00-公共图标/ai-principal-assistant-icon.png` | 校长助理 | 公共图标 | 专用图片图标 |
 | `../../00-公共图标/building-2.svg` | 学校来源 | 公共图标 | Lucide SVG |
 | `calendar-clock.svg` | 日期时间 | 本页面 | Lucide SVG |
 | `../../00-公共图标/calendar-range.svg` | 时间范围 | 公共图标 | Lucide SVG |

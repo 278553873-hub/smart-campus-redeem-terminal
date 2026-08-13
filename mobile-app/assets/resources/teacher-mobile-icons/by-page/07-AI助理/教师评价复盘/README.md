@@ -8,6 +8,8 @@
 | `../../00-公共图标/bar-chart-3.svg` | 数据报表 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/book-open-text.svg` | 阅读报告 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/building-2.svg` | 学校来源 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/check.svg` | 确认或已选择 | 公共图标 | Lucide SVG |
+| `../../00-公共图标/chevron-down.svg` | 展开或下拉 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/chevron-left.svg` | 返回 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/chevron-right.svg` | 进入下一级 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/eye.svg` | 查看或预览 | 公共图标 | Lucide SVG |

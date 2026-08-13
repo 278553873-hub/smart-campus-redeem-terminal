@@ -4,8 +4,7 @@
 
 | 资源路径 | 页面用途 | 存放位置 | 类型 |
 | --- | --- | --- | --- |
-| `../../00-公共图标/check.svg` | 确认或已选择 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/eye-off.svg` | 隐藏内容 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/eye.svg` | 查看或预览 | 公共图标 | Lucide SVG |
-| `teacher-login-icon.jpg` | 教师登录 | 本页面 | 专用图片图标 |
+| `../../00-公共图标/info.svg` | 信息提示 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/x.svg` | 关闭 | 公共图标 | Lucide SVG |

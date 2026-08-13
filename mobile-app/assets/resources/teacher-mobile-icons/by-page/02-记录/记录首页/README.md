@@ -4,7 +4,6 @@
 
 | 资源路径 | 页面用途 | 存放位置 | 类型 |
 | --- | --- | --- | --- |
-| `ai-bot.png` | 记录页 AI 入口 | 本页面 | 专用图片图标 |
 | `../../00-公共图标/chevron-left.svg` | 返回 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/chevron-right.svg` | 进入下一级 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/file-spreadsheet.svg` | 表格文件 | 公共图标 | Lucide SVG |
@@ -13,5 +12,5 @@
 | `../../00-公共图标/refresh-cw.svg` | 重试或刷新 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/sparkles.svg` | AI（人工智能）生成 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/trash-2.svg` | 删除或移除 | 公共图标 | Lucide SVG |
-| `voice-onboarding-arrow.svg` | 语音录入控件指引 | 本页面 | 页面专用 SVG |
+| `voice-onboarding-arrow-solid-gold.svg` | 语音录入控件指引（奖励金粗线、无描边） | 本页面 | 页面专用 SVG |
 | `../../00-公共图标/x.svg` | 关闭 | 公共图标 | Lucide SVG |

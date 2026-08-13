@@ -1,20 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Check,
   Eye,
   EyeOff,
+  Info,
   X,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileToast from '../components/ui/MobileToast';
 
-type LoginSheet = 'wechat' | 'phone' | null;
-type PhoneLoginMode = 'sms' | 'password';
-
 interface TeacherLoginViewProps {
   onLogin: () => void;
 }
+
+type LoginSheet = 'wechat' | 'phone' | null;
+type PhoneLoginMode = 'sms' | 'password';
 
 const phoneNumberPattern = /^1\d{10}$/;
 
@@ -158,30 +158,61 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
         </label>
       </main>
 
-      <MobileBottomSheet open={activeSheet === 'wechat'} title="微信授权登录" onClose={closeActiveSheet}>
-        <div className="pb-[var(--tm-space-4)]">
-          <div className="py-[var(--tm-space-2)]">
-            <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold">选择微信绑定的手机号</h3>
-            <p className="mt-1 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">用于识别教师账号</p>
+      <MobileBottomSheet
+        open={activeSheet === 'wechat'}
+        title="申请获取并验证你的手机号"
+        onClose={closeActiveSheet}
+        showHandle={false}
+        header={(
+          <header className="flex shrink-0 items-center gap-3 bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-5)] pb-[var(--tm-space-3)] pt-[var(--tm-space-6)]">
+            <img
+              src={ASSETS.MANAGEMENT.TEACHER_LOGIN_ICON}
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-full object-cover outline outline-1 -outline-offset-1 outline-black/10"
+            />
+            <span className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">AI素养评价</span>
+            <Info className="h-5 w-5 shrink-0 text-[var(--tm-text-disabled)]" aria-hidden="true" />
+          </header>
+        )}
+      >
+        <div className="-mx-[var(--tm-space-4)] flex min-h-[60vh] flex-col bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-5)] pb-[var(--tm-space-2)]">
+          <div className="px-1 pt-[var(--tm-space-4)]">
+            <h2 className="text-[length:var(--tm-font-size-page-title)] font-bold leading-tight text-[var(--tm-text-primary)]">申请获取并验证你的手机号</h2>
+            <p className="mt-[var(--tm-space-2)] text-[length:var(--tm-font-size-section-title)] leading-6 text-[var(--tm-text-tertiary)]">用户正常进行授权登录</p>
           </div>
-          <div className="mt-[var(--tm-space-3)] divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)]">
+
+          <div className="mt-[var(--tm-space-6)] overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)]">
             {['152****1332', '199****8610'].map((maskedPhone, index) => (
               <button
                 key={maskedPhone}
                 type="button"
                 onClick={completeLogin}
                 disabled={submitting}
-                className="flex min-h-16 w-full items-center justify-between bg-[var(--tm-bg-surface)] px-4 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-55"
+                className="relative flex min-h-[82px] w-full flex-col items-center justify-center px-4 text-center transition-colors after:absolute after:bottom-0 after:left-4 after:right-4 after:h-px after:bg-[var(--tm-border-subtle)] last:after:hidden active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-55"
               >
-                <span>
-                  <span className="block text-[length:var(--tm-font-size-body)] font-semibold">{maskedPhone}</span>
-                  {index === 0 && <span className="mt-1 block text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">上次使用</span>}
-                </span>
-                <Check className="h-5 w-5 text-[var(--tm-brand-primary)]" aria-hidden="true" />
+                <span className="text-[length:var(--tm-font-size-section-title)] font-medium tabular-nums text-[var(--tm-text-primary)]">{maskedPhone}</span>
+                {index === 0 && <span className="mt-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-platform-wechat)]">上次提供</span>}
               </button>
             ))}
           </div>
-          {submitting && <p role="status" className="mt-3 text-center text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">正在登录...</p>}
+
+          <button
+            type="button"
+            onClick={closeActiveSheet}
+            className="mt-[var(--tm-space-4)] flex min-h-16 w-full items-center justify-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-section-title)] font-medium text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+          >
+            不允许
+          </button>
+
+          <button
+            type="button"
+            onClick={closeActiveSheet}
+            className="mt-auto flex min-h-14 w-full items-center justify-center text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-link)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]"
+          >
+            管理号码
+          </button>
+
+          {submitting && <span role="status" className="sr-only">正在登录</span>}
         </div>
       </MobileBottomSheet>
 

@@ -13,6 +13,5 @@
 | `chevron-up.svg` | 收起 | 本页面 | Lucide SVG |
 | `pencil-line.svg` | 编辑记录 | 本页面 | Lucide SVG |
 | `../../00-公共图标/quote.svg` | 内容摘要 | 公共图标 | Lucide SVG |
-| `ranking-crown-icon.png` | 排行皇冠 | 本页面 | 专用图片图标 |
 | `triangle.svg` | 图表标记 | 本页面 | Lucide SVG |
 | `../../00-公共图标/x.svg` | 关闭 | 公共图标 | Lucide SVG |
