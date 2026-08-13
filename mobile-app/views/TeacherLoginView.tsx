@@ -175,7 +175,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
           </header>
         )}
       >
-        <div className="-mx-[var(--tm-space-4)] flex min-h-[60vh] flex-col bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-5)] pb-[var(--tm-space-2)]">
+        <div className="-mx-[var(--tm-space-4)] flex min-h-[50vh] flex-col bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-5)] pb-[var(--tm-space-2)]">
           <div className="px-1 pt-[var(--tm-space-4)]">
             <h2 className="text-[length:var(--tm-font-size-page-title)] font-bold leading-tight text-[var(--tm-text-primary)]">申请获取并验证你的手机号</h2>
             <p className="mt-[var(--tm-space-2)] text-[length:var(--tm-font-size-section-title)] leading-6 text-[var(--tm-text-tertiary)]">用户正常进行授权登录</p>
