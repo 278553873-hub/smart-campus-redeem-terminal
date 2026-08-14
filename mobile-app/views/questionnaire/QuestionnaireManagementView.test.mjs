@@ -33,7 +33,7 @@ const createSource = viewSource.slice(viewSource.indexOf('const renderCreate'), 
 const createStepOneSource = createSource.slice(createSource.indexOf('{createStep === 1'), createSource.indexOf('{createStep === 2'));
 const createStepThreeSource = createSource.slice(createSource.indexOf('{createStep === 3'), createSource.indexOf('<BottomAction>'));
 const studentDetailSource = viewSource.slice(viewSource.indexOf('const renderStudentCollectionDetail'), viewSource.indexOf('const renderStudentRecordPage'));
-const createPreviewSource = viewSource.slice(viewSource.indexOf('const openCreatePreview'), viewSource.indexOf('const openDetailPreview'));
+const createPreviewSource = viewSource.slice(viewSource.indexOf('const openCreatePreview'), viewSource.indexOf('const openListPreview'));
 const detailSource = viewSource.slice(viewSource.indexOf('const renderDetail'), viewSource.indexOf('const renderResponseDetail'));
 const responseDetailSource = viewSource.slice(viewSource.indexOf('const renderResponseDetail'), viewSource.indexOf('const renderQuestionResponses'));
 const originalPreviewSource = viewSource.slice(viewSource.indexOf('const renderPreview'), viewSource.indexOf('const renderPage'));
@@ -74,7 +74,6 @@ for (const required of [
   '已结束',
   '数据',
   '答卷',
-  '预览采集内容',
   '未绑定家长',
 ]) {
   requireText(viewSource, required, `教师端问卷流程缺少：${required}`);
@@ -346,7 +345,7 @@ requireText(createSource, '<FormOutlineSorter', '采集排序必须收敛到大�
 requireText(createSource, 'smartDefaultContent', '采集普通题型必须复用档案设计的智能默认内容交互。');
 requireText(createSource, 'fixedContentFieldIds={lockedFieldIds}', '成长数据和档案字段必须使用完整的只读编辑态。');
 requireText(createSource, 'showLayoutControl={false}', '分组开关必须从正文移入设置弹窗。');
-requireText(studentDetailSource, 'aria-label="预览采集表"', '学生采集详情首张内容卡必须提供预览入口。');
+forbidText(studentDetailSource, 'openListPreview(record)', '学生采集详情不应提供原始问卷预览入口。');
 requireText(viewSource, 'const StudentCollectionForm: React.FC<StudentCollectionFormProps>', '学生采集预览与真实填写必须复用业务字段组件。');
 if ((viewSource.match(/<StudentCollectionForm/g) ?? []).length < 2) {
   throw new Error('学生采集预览与真实逐生填写必须共同调用字段组件。');
@@ -362,10 +361,11 @@ requireText(viewSource, 'text-[length:var(--tm-font-size-question-title)] font-b
 requireText(viewSource, 'min-h-[52px] w-full items-center gap-2.5', '学生采集选项必须统一为至少52像素并显示选择控件。');
 requireText(detailSource, 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]', '问卷详情基本信息卡必须复用教师端公共卡片令牌。');
 requireText(teacherTokenSource, "'--tm-shadow-card'", '教师端唯一令牌源必须提供公共卡片阴影。');
-requireText(detailSource, "const detailPreviewLabel = '预览采集内容';", '统一采集详情必须使用一致的预览名称。');
-requireText(detailSource, 'aria-label={detailPreviewLabel}', '采集预览必须保留清晰的无障碍名称。');
+forbidText(detailSource, 'openListPreview(activeRecord)', '统一采集详情不应提供原始问卷预览入口。');
+requireText(listActionsSource, 'onClick={previewListRecord}', '列表操作弹窗必须保留原始问卷预览入口。');
+requireText(listActionsSource, "activeListActionRecord.status !== 'active' && <span", '收集中的任务弹窗不应重复展示状态标签。');
+requireText(viewSource, "setPreviewReturnMode('list');", '从列表操作弹窗进入预览后必须返回问卷列表。');
 forbidText(detailSource, 'line-clamp-2', '问卷详情说明必须完整展示，不能截断为两行。');
-requireText(detailSource, 'min-h-11', '问卷预览入口必须保留44像素触控高度。');
 if (detailSource.includes('<StatusPill') || detailSource.includes('grid-cols-[0.9fr_1.1fr]') || detailSource.includes('border-t border-slate-100 pt-3')) {
   throw new Error('问卷详情卡不应保留状态工具栏、固定两列或割裂内容的分割线。');
 }
@@ -499,7 +499,8 @@ requireText(viewSource, 'absolute inset-x-16 truncate text-center', '问卷顶�
 requireText(viewSource, '<ChevronLeft className="h-5 w-5" />', '问卷顶部返回图标必须与管理页保持一致。');
 requireText(viewSource, '<div className="h-11 w-11 shrink-0" aria-hidden="true" />', '问卷标题栏右侧必须完整留空给微信原生胶囊。');
 requireText(detailSource, '<IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}>', '问卷详情更多操作必须移入首张内容卡。');
-requireText(viewSource, '!assignedContext && <IconButton label="更多操作"', '学生采集详情更多操作必须移入首张内容卡。');
+requireText(studentDetailSource, '{!assignedContext && <div className="-mr-2 -mt-2 flex shrink-0 items-center">', '待我填写详情不应渲染空的操作区域。');
+requireText(studentDetailSource, '<IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}>', '创建人查看学生采集详情时必须保留更多操作。');
 requireText(viewSource, 'import MobileFloatingCreateButton', '问卷列表必须复用通用悬浮创建组件。');
 requireText(listSource, 'setRespondentSheetMode(\'entry\')', '新建采集必须从右下角悬浮入口先选择填写人。');
 requireText(listSource, '<div className="relative flex h-full min-h-0 flex-col overflow-hidden">', '问卷列表外层不得为悬浮按钮增加固定底部占位。');

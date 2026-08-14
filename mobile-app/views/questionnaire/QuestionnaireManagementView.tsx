@@ -167,7 +167,7 @@ type ListFilter = 'active' | 'ended';
 type DetailTab = 'data' | 'responses';
 type PageMode = 'list' | 'assigned-list' | 'archived-list' | 'create' | 'detail' | 'response' | 'preview' | 'question-responses' | 'student-record';
 type StudentRecordFilter = 'incomplete' | 'completed';
-type PreviewReturnMode = 'create' | 'detail';
+type PreviewReturnMode = 'create' | 'list';
 type RespondentSheetMode = 'entry';
 
 const statusMeta: Record<QuestionnaireStatus, { label: string }> = {
@@ -629,7 +629,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [draftHeaderImageId, setDraftHeaderImageId] = useState<QuestionnaireHeaderImageId>('none');
   const [previewRecord, setPreviewRecord] = useState<QuestionnaireRecord | null>(null);
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, QuestionnaireAnswer>>({});
-  const [previewReturnMode, setPreviewReturnMode] = useState<PreviewReturnMode>('detail');
+  const [previewReturnMode, setPreviewReturnMode] = useState<PreviewReturnMode>('list');
   const [selectedClassIds, setSelectedClassIds] = useState<Set<string>>(new Set());
   const [activeScopeGrade, setActiveScopeGrade] = useState(classes[0]?.gradeLevel ?? '');
   const [hasSuggestedDeadline, setHasSuggestedDeadline] = useState(false);
@@ -895,7 +895,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const previewListRecord = () => {
     if (!activeListActionRecord) return;
     setActiveListActionId('');
-    openDetailPreview(activeListActionRecord);
+    openListPreview(activeListActionRecord);
   };
 
   const openQuestionResponses = (questionId: string, subFieldId = '') => {
@@ -1148,10 +1148,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setPageMode('preview');
   };
 
-  const openDetailPreview = (record: QuestionnaireRecord) => {
+  const openListPreview = (record: QuestionnaireRecord) => {
     setPreviewRecord(record);
     setPreviewAnswers({});
-    setPreviewReturnMode('detail');
+    setPreviewReturnMode('list');
     setPageMode('preview');
   };
 
@@ -1678,14 +1678,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         <MobileBottomSheet open={Boolean(activeListActionRecord)} title={activeListActionRecord?.title ?? ''} onClose={() => setActiveListActionId('')}>
           {activeListActionRecord && (
             <div className="pb-2">
-              <span className="inline-flex h-6 items-center rounded-full bg-[var(--tm-bg-surface-muted)] px-2.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-secondary)]">{statusMeta[activeListActionRecord.status].label}</span>
+              {activeListActionRecord.status !== 'active' && <span className="inline-flex h-6 items-center rounded-full bg-[var(--tm-bg-surface-muted)] px-2.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-secondary)]">{statusMeta[activeListActionRecord.status].label}</span>}
               {canManageActiveListActionRecord && activeListActionRecord.status === 'active' && getQuestionnaireRespondentRole(activeListActionRecord) === 'guardian' && (
                 <PrimaryButton onClick={() => openQuestionnaireInvite(activeListActionRecord)} className="mt-3 w-full"><QrCode className="h-5 w-5" />邀请家长填写</PrimaryButton>
               )}
               {canManageActiveListActionRecord && activeListActionRecord.status === 'ended' && !isQuestionnaireFullyCollected(activeListActionRecord) && (
                 <PrimaryButton onClick={reopenActiveRecord} className="mt-3 w-full"><RotateCcw className="h-5 w-5" />重新开放</PrimaryButton>
               )}
-              <section className="mt-5">
+              <section className={activeListActionRecord.status !== 'active' || (canManageActiveListActionRecord && getQuestionnaireRespondentRole(activeListActionRecord) === 'guardian') ? 'mt-5' : ''}>
                 <h4 className="px-0.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">查看采集</h4>
                 <div className="mt-2 grid grid-cols-2 gap-[var(--tm-space-2)]">
                   <button type="button" onClick={viewListRecord} className={collectionActionTile}><FileText className="h-5 w-5 text-[var(--tm-text-tertiary)]" />查看详情</button>
@@ -2239,18 +2239,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 <h2 className="text-balance text-[length:var(--tm-font-size-section-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{record.title}</h2>
                 {record.description && <p className="mt-1 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">{record.description}</p>}
               </div>
-              <div className="-mr-2 -mt-2 flex shrink-0 items-center">
-                <button
-                  type="button"
-                  aria-label="预览采集表"
-                  title="预览采集表"
-                  onClick={() => openDetailPreview(record)}
-                  className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-[transform,background-color] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
-                >
-                  <Eye className="h-4 w-4" />预览
-                </button>
-                {!assignedContext && <IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}><MoreHorizontal className="h-5 w-5" /></IconButton>}
-              </div>
+              {!assignedContext && <div className="-mr-2 -mt-2 flex shrink-0 items-center">
+                <IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}><MoreHorizontal className="h-5 w-5" /></IconButton>
+              </div>}
             </div>
             <div className="mt-4 flex items-end justify-between gap-4">
               <div className="text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">完成进度</div>
@@ -2557,7 +2548,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const renderDetail = () => {
     if (!activeRecord) return renderList();
     if (getQuestionnaireRespondentRole(activeRecord) === 'teacher' && recordOrigin === 'assigned-list') return renderStudentCollectionDetail(activeRecord);
-    const detailPreviewLabel = '预览采集内容';
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
         <PageHeader title="采集详情" onBack={() => setPageMode(activeRecord.status === 'archived' ? 'archived-list' : 'list')} />
@@ -2568,18 +2558,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 <h2 className="text-balance text-[length:var(--tm-font-size-section-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{activeRecord.title}</h2>
                 {activeRecord.description && <p className="mt-1 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">{activeRecord.description}</p>}
               </div>
-              <div className="-mr-2 -mt-2 flex shrink-0 items-center">
-                <button
-                  type="button"
-                  aria-label={detailPreviewLabel}
-                  title={detailPreviewLabel}
-                  onClick={() => openDetailPreview(activeRecord)}
-                  className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-[transform,background-color] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
-                >
-                  <Eye className="h-4 w-4" />预览
-                </button>
-                {canManageActiveRecord && <IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}><MoreHorizontal className="h-5 w-5" /></IconButton>}
-              </div>
+              {canManageActiveRecord && <div className="-mr-2 -mt-2 flex shrink-0 items-center">
+                <IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}><MoreHorizontal className="h-5 w-5" /></IconButton>
+              </div>}
             </div>
             {activeRecord.suggestedDeadline && (
               <div className="mt-2.5 inline-flex items-center gap-1.5 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">
