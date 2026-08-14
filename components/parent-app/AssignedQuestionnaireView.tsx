@@ -176,11 +176,12 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   return (
     <div className="relative flex-1 overflow-y-auto bg-[var(--tm-bg-page)] pb-36 text-[var(--tm-text-primary)] antialiased no-scrollbar" style={questionnaireThemeStyle}>
       <header className="sticky top-0 z-40 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 py-3 backdrop-blur-xl [padding-right:max(16px,var(--mini-program-capsule-right-inset,16px))]">
-        <div className="flex min-h-11 items-center gap-3">
+        <div className="relative flex min-h-11 items-center gap-3">
           <button type="button" onClick={onBack} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-transform active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)]" aria-label={preview ? '退出预览' : '返回待办'}>
             <ArrowLeft size={18} />
           </button>
-          <div className="min-w-0 flex-1">
+          {preview && <h1 className="pointer-events-none absolute inset-x-14 truncate text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">预览问卷</h1>}
+          <div className={`min-w-0 flex-1 ${preview ? 'invisible' : ''}`} aria-hidden={preview || undefined}>
             <div className="mb-2 flex justify-end"><span className="shrink-0 tabular-nums text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{stepIndex + 1}/{questionnaire.questions.length}</span></div>
             <div className="h-2 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
               <div className="h-full rounded-full bg-[var(--tm-questionnaire-progress)] transition-[width] [transition-duration:var(--tm-duration-panel)]" style={{ width: `${progress}%` }} />

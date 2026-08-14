@@ -1,17 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useRef, useEffect } from 'react';
 import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ClassListView from './views/ClassListView';
 import ClassInfoView, { type ClassInfoRole } from './views/ClassInfoView';
 import ClassDetailView from './views/ClassDetailView';
 import RecordInputView from './views/RecordInputView';
-import ClassReportView from './views/ClassReportView';
 import ClassRecordLogView from './views/ClassRecordLogView';
 import MeView, { ClassSourceSheet, type TeacherSpaceOption } from './views/MeView';
 import MyFilesView from './views/MyFilesView';
-import TermReportView from './views/TermReportView';
 import ClassLeaderboardView from './views/ClassLeaderboardView';
-import LeaderReportView from './views/LeaderReportView';
 import MoralEducationCockpitView from './views/MoralEducationCockpitView';
 import RewardVerificationView from './views/reward-verification/RewardVerificationView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
@@ -20,7 +17,6 @@ import HomeworkEntryView from './views/HomeworkEntryView';
 import StudentBatchEditView from './views/StudentBatchEditView';
 import TeacherProfileEditView from './views/TeacherProfileEditView';
 import StudentBasicEditView from './views/StudentBasicEditView';
-import StudentCoinDetailView from './views/StudentCoinDetailView';
 import StudentCollectionRecordDetailView from './views/student-collection/StudentCollectionRecordDetailView';
 import StudentBodyMeasurementsView from './views/student-growth/StudentBodyMeasurementsView';
 import type { StudentEvaluationRecord } from './views/student-evaluation/types';
@@ -34,10 +30,6 @@ import AiPrincipalAssistantView from './views/AiPrincipalAssistantView';
 import PrincipalPeriodicReportView from './views/PrincipalPeriodicReportView';
 import PrincipalReportHistoryView from './views/PrincipalReportHistoryView';
 import PrincipalTermReportView from './views/PrincipalTermReportView';
-import QuestionnaireManagementView from './views/questionnaire/QuestionnaireManagementView';
-import ArchiveDesignView from './views/archive-design/ArchiveDesignView';
-import StudentArchiveView from './views/archive-design/StudentArchiveView';
-import ClassArchiveBatchView from './views/archive-design/ClassArchiveBatchView';
 import {
     CoinIssuanceView,
     DeleteConfirmSheet,
@@ -46,7 +38,6 @@ import {
     SubjectManagementView,
     SuggestionFeedbackView,
     TextEditSheet,
-    type CoinIssuanceConfig,
     type SchoolDepartmentItem,
     type SchoolSubjectItem,
 } from './views/MeFeatureViews';
@@ -85,11 +76,12 @@ import {
     MOCK_SUBJECTS,
     MOCK_GROWTH_REPORTS,
     MOCK_PE_REPORT_DETAILS,
+    DEFAULT_COIN_ISSUANCE_CONFIG,
     GET_MOCK_STUDENTS_FOR_CLASS,
     GET_MOCK_CAMPUS_COIN_DETAIL,
     MOCK_BEHAVIOR_RECORDS,
 } from './constants';
-import { ClassInfo, Student, TeacherDepartment, TeacherProfile } from './types';
+import { ClassInfo, Student, TeacherDepartment, TeacherProfile, type CoinIssuanceConfig } from './types';
 import {
     QUESTIONNAIRE_STORE_EVENT,
     getCompletedStudentCollectionHistory,
@@ -114,6 +106,15 @@ import { canManagePersonalClasses, canTeacherSpaceRecordClass, getHeadteacherAss
 import { useReportGenerationTask } from './hooks/useReportGenerationTask';
 import { summarizeStudentPerformance } from './domain/studentPerformance';
 
+const ClassReportView = lazy(() => import('./views/ClassReportView'));
+const TermReportView = lazy(() => import('./views/TermReportView'));
+const LeaderReportView = lazy(() => import('./views/LeaderReportView'));
+const StudentCoinDetailView = lazy(() => import('./views/StudentCoinDetailView'));
+const QuestionnaireManagementView = lazy(() => import('./views/questionnaire/QuestionnaireManagementView'));
+const ArchiveDesignView = lazy(() => import('./views/archive-design/ArchiveDesignView'));
+const StudentArchiveView = lazy(() => import('./views/archive-design/StudentArchiveView'));
+const ClassArchiveBatchView = lazy(() => import('./views/archive-design/ClassArchiveBatchView'));
+
 const TERMS = [
     "2025-2026学年 下学期",
     "2025-2026学年 上学期",
@@ -130,6 +131,20 @@ const GRADE_SCOPES = [
     '五年级',
     '六年级'
 ];
+
+const TeacherRouteSkeleton = () => (
+    <div
+        className="flex h-full min-h-0 flex-col bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pt-[var(--tm-space-4)]"
+        role="status"
+        aria-live="polite"
+        aria-label="页面加载中"
+    >
+        <span className="sr-only">页面加载中</span>
+        <div className="mx-auto h-5 w-24 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] motion-safe:animate-pulse" aria-hidden="true" />
+        <div className="mt-[var(--tm-space-5)] h-20 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)] motion-safe:animate-pulse" aria-hidden="true" />
+        <div className="mt-[var(--tm-space-3)] h-32 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)] motion-safe:animate-pulse" aria-hidden="true" />
+    </div>
+);
 
 const SUBJECT_SCOPES = [
     '全学科',
@@ -184,13 +199,6 @@ const INITIAL_SCHOOL_DEPARTMENTS: SchoolDepartmentItem[] = [
     { id: 'department-academic', name: '教务处' },
     { id: 'department-art', name: '艺体组' },
 ];
-
-const DEFAULT_COIN_ISSUANCE_CONFIG: CoinIssuanceConfig = {
-    enabled: false,
-    period: 'weekly',
-    classBudget: 500,
-    sunshineRatio: 60,
-};
 
 const createInitialStudentEvaluationRecords = (): StudentEvaluationRecord[] => (
     (MOCK_BEHAVIOR_RECORDS as StudentEvaluationRecord[]).map(record => ({
@@ -334,8 +342,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const classes = MOCK_CLASSES.map(classInfo => classOverrides[classInfo.id] ?? classInfo);
     const [evaluationRecordsByStudentId, setEvaluationRecordsByStudentId] = useState<Record<string, StudentEvaluationRecord[]>>({});
     const activeStudent = studentOverrides[selectedStudent.id] ?? selectedStudent;
+    const [coinIssuanceConfig, setCoinIssuanceConfig] = useState<CoinIssuanceConfig>(DEFAULT_COIN_ISSUANCE_CONFIG);
     const [growthProfile, setGrowthProfile] = useState(() => ensureStudentGrowthProfile(activeStudent.id));
-    const activeCampusCoinDetail = GET_MOCK_CAMPUS_COIN_DETAIL(activeStudent);
     const activeStudentEvaluationRecords = evaluationRecordsByStudentId[activeStudent.id] ?? createInitialStudentEvaluationRecords();
     const [selectedSubject, setSelectedSubject] = useState<string>('');
     const [batchStudentIds, setBatchStudentIds] = useState<string[]>([]);
@@ -366,6 +374,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         ));
     const activeTeacherId = `${activeTeacherSpace.id}:${teacherProfile.name}`;
     const activeStudentClassId = classes.find(classInfo => classInfo.name === activeStudent.class)?.id ?? selectedClassId;
+    const activeStudentClassSize = classes.find(classInfo => classInfo.id === activeStudentClassId)?.studentCount ?? 60;
+    const activeCampusCoinDetail = GET_MOCK_CAMPUS_COIN_DETAIL(activeStudent, coinIssuanceConfig, activeStudentClassSize);
     const canEditOtherTeachersEvaluationRecords = teacherProfile.homeroomClassIds.includes(activeStudentClassId);
     const canEditStudentHealth = activeTeacherSpace.type === 'school'
         && (activeTeacherSpace.role === 'leader'
@@ -384,7 +394,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [departmentDraftTarget, setDepartmentDraftTarget] = useState<SchoolDepartmentItem | null>(null);
     const [nameDraft, setNameDraft] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<{ type: 'subject' | 'department'; id: string; name: string } | null>(null);
-    const [coinIssuanceConfig, setCoinIssuanceConfig] = useState<CoinIssuanceConfig>(DEFAULT_COIN_ISSUANCE_CONFIG);
     const [suggestionText, setSuggestionText] = useState('');
     const [suggestionImages, setSuggestionImages] = useState<string[]>([]);
 
@@ -1256,6 +1265,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             id="main-scroll-container"
                             className={`min-h-0 flex-1 relative ${pageTransitionClass} ${showTabBar && !viewHandlesScroll ? 'has-floating-tabbar' : ''} ${isOverlayActive ? 'z-[100]' : hasPlainBackground ? 'z-[2]' : 'z-auto'} ${viewHandlesScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto no-scrollbar'}`}
                         >
+                            <Suspense fallback={<TeacherRouteSkeleton />}>
                             {currentView === 'home_log' && (
                                 <ClassRecordLogView
                                     activeTab={activeLogTab}
@@ -1772,6 +1782,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onBack={goBack}
                                 />
                             )}
+                            </Suspense>
                         </main>
 
                         <div

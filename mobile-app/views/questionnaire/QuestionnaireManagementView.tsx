@@ -82,6 +82,7 @@ import {
   getQuestionnaireCompletedCount,
   getQuestionnaireContentType,
   getQuestionnaireCollectionMode,
+  getQuestionnaireResultRecords,
   getQuestionnaireRespondentRole,
   hasGrowthCollectionFields,
   inferQuestionnaireContentType,
@@ -108,7 +109,7 @@ import {
   type QuestionnaireRespondentRole,
   type QuestionnaireAnswer,
   type QuestionnaireRecord,
-  type QuestionnaireSubmission,
+  type QuestionnaireResultRecord,
   type QuestionnaireTarget,
   type QuestionnaireStatus,
   type StudentCollectionRecord,
@@ -165,7 +166,7 @@ interface QuestionnaireManagementViewProps {
 type ListFilter = 'active' | 'ended';
 type DetailTab = 'data' | 'responses';
 type PageMode = 'list' | 'assigned-list' | 'archived-list' | 'create' | 'detail' | 'response' | 'preview' | 'question-responses' | 'student-record';
-type StudentRecordFilter = 'all' | 'incomplete' | 'completed';
+type StudentRecordFilter = 'incomplete' | 'completed';
 type PreviewReturnMode = 'create' | 'detail';
 type RespondentSheetMode = 'entry';
 
@@ -240,10 +241,6 @@ const collectionModeMeta: Record<QuestionnaireCollectionMode, {
 const getCollectionBadgeLabel = (record: QuestionnaireRecord) => {
   const role = getQuestionnaireRespondentRole(record);
   return role === 'teacher' ? '老师填写' : '家长填写';
-};
-
-const getSubmissionDetailTitle = (record: QuestionnaireRecord) => {
-  return getQuestionnaireContentType(record) === 'ordinary' && !record.archiveTemplateId ? '答卷详情' : '采集内容详情';
 };
 
 const createRatingOptions = (count: number) => Array.from({ length: count }, (_, index) => String(index + 1));
@@ -370,6 +367,33 @@ const SecondaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> =
     {...props}
   >
     {children}
+  </button>
+);
+
+const StudentAnswerRow: React.FC<{
+  avatarSrc: string;
+  studentName: string;
+  className?: string;
+  statusLabel: string;
+  statusClassName: string;
+  secondaryStatusLabel?: string;
+  onClick?: () => void;
+}> = ({ avatarSrc, studentName, className, statusLabel, statusClassName, secondaryStatusLabel, onClick }) => (
+  <button
+    type="button"
+    disabled={!onClick}
+    onClick={onClick}
+    className="flex min-h-[64px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left transition-colors last:border-b-0 active:bg-[var(--tm-bg-surface-soft)] disabled:cursor-default"
+  >
+    <img src={avatarSrc} alt={`${studentName}头像`} className="h-9 w-9 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" />
+    <span className="min-w-0 flex-1">
+      <span className="block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{studentName}</span>
+      {className && <span className="mt-0.5 block truncate text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{className}</span>}
+    </span>
+    <span className="flex shrink-0 items-center gap-1.5">
+      <span className={`rounded-full px-2.5 py-1 text-[length:var(--tm-font-size-badge)] font-semibold ${statusClassName}`}>{statusLabel}</span>
+      {secondaryStatusLabel && <span className="rounded-full bg-[var(--tm-brand-reward-soft)] px-2.5 py-1 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-brand-reward-strong)]">{secondaryStatusLabel}</span>}
+    </span>
   </button>
 );
 
@@ -575,7 +599,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [listFilter, setListFilter] = useState<ListFilter>('active');
   const [activeRecordId, setActiveRecordId] = useState(initialRecordId ?? '');
   const [detailTab, setDetailTab] = useState<DetailTab>('data');
-  const [activeSubmission, setActiveSubmission] = useState<QuestionnaireSubmission | null>(null);
+  const [activeResultRecord, setActiveResultRecord] = useState<QuestionnaireResultRecord | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState('');
   const [activeQuestionSubFieldId, setActiveQuestionSubFieldId] = useState('');
   const [questionResponseSearch, setQuestionResponseSearch] = useState('');
@@ -626,7 +650,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const [closeConfirmRecordId, setCloseConfirmRecordId] = useState('');
   const [inviteRecordId, setInviteRecordId] = useState('');
-  const [studentRecordFilter, setStudentRecordFilter] = useState<StudentRecordFilter>('all');
+  const [studentRecordFilter, setStudentRecordFilter] = useState<StudentRecordFilter>('completed');
   const [studentRecordSearch, setStudentRecordSearch] = useState('');
   const [activeStudentNo, setActiveStudentNo] = useState('');
   const [studentRecordAnswers, setStudentRecordAnswers] = useState<Record<string, QuestionnaireAnswer>>({});
@@ -696,23 +720,45 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       .filter(student => (student.status ?? 'active') === 'active')
       .map(student => ({ classInfo, student }))
   )), [availableClasses, getStudentsForClass]);
+  const studentRosterByNo = useMemo(() => new Map(allAvailableStudents.flatMap(({ student }) => (
+    student.studentNo ? [[student.studentNo, student] as const] : []
+  ))), [allAvailableStudents]);
+  const getStudentAvatar = (studentNo: string) => (
+    studentRosterByNo.get(studentNo)?.avatar ?? ASSETS.AVATAR.STUDENT_GIRL_DEFAULT
+  );
   const activeStudentCountByClassId = useMemo(() => {
     const counts = new Map<string, number>();
     allAvailableStudents.forEach(({ classInfo }) => counts.set(classInfo.id, (counts.get(classInfo.id) ?? 0) + 1));
     return counts;
   }, [allAvailableStudents]);
-  const activeRecord = records.find(record => record.id === activeRecordId) ?? null;
-  const closeConfirmRecord = records.find(record => record.id === closeConfirmRecordId && record.status === 'active') ?? null;
-  const inviteRecord = records.find(record => record.id === inviteRecordId) ?? null;
   const ownedRecords = records.filter(record => (
     record.spaceId === spaceId
     && record.growthTemplate !== 'semester_goal'
     && isQuestionnaireCreatedByTeacher(record, teacherId, teacherName)
   ));
-  const filteredRecords = ownedRecords.filter(record => record.status === listFilter);
+  const visibleRecords = ownedRecords;
+  const filteredRecords = visibleRecords.filter(record => record.status === listFilter);
   const ownedDrafts = ownedRecords.filter(record => record.status === 'draft');
-  const activeListActionRecord = ownedRecords.find(record => record.id === activeListActionId && record.status !== 'draft') ?? null;
-  const archivedRecords = ownedRecords.filter(record => record.status === 'archived');
+  const activeListActionRecord = visibleRecords.find(record => record.id === activeListActionId && record.status !== 'draft') ?? null;
+  const archivedRecords = visibleRecords.filter(record => record.status === 'archived');
+  const activeRecord = records.find(record => (
+    record.id === activeRecordId
+    && record.spaceId === spaceId
+    && record.growthTemplate !== 'semester_goal'
+    && (
+      isQuestionnaireCreatedByTeacher(record, teacherId, teacherName)
+      || (recordOrigin === 'assigned-list'
+        && getStudentCollectionRecordsForTeacher(record, teacherId, teacherName).length > 0)
+    )
+  )) ?? null;
+  const closeConfirmRecord = ownedRecords.find(record => record.id === closeConfirmRecordId && record.status === 'active') ?? null;
+  const inviteRecord = ownedRecords.find(record => record.id === inviteRecordId) ?? null;
+  const canManageActiveListActionRecord = activeListActionRecord
+    ? isQuestionnaireCreatedByTeacher(activeListActionRecord, teacherId, teacherName)
+    : false;
+  const canManageActiveRecord = activeRecord
+    ? isQuestionnaireCreatedByTeacher(activeRecord, teacherId, teacherName)
+    : false;
   const assignedRecords = getPendingAssignedStudentCollections(records, teacherId, teacherName, spaceId)
     .filter(record => record.growthTemplate !== 'semester_goal');
   const availableArchiveTemplates = useMemo(() => archiveWorkspace.templates
@@ -830,7 +876,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setActiveRecordId(record.id);
     setRecordOrigin(origin);
     setDetailTab('data');
-    setStudentRecordFilter('all');
+    setStudentRecordFilter(origin === 'assigned-list' ? 'incomplete' : 'completed');
     setStudentRecordSearch('');
     setPageMode('detail');
   };
@@ -1633,10 +1679,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           {activeListActionRecord && (
             <div className="pb-2">
               <span className="inline-flex h-6 items-center rounded-full bg-[var(--tm-bg-surface-muted)] px-2.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-secondary)]">{statusMeta[activeListActionRecord.status].label}</span>
-              {activeListActionRecord.status === 'active' && getQuestionnaireRespondentRole(activeListActionRecord) === 'guardian' && (
+              {canManageActiveListActionRecord && activeListActionRecord.status === 'active' && getQuestionnaireRespondentRole(activeListActionRecord) === 'guardian' && (
                 <PrimaryButton onClick={() => openQuestionnaireInvite(activeListActionRecord)} className="mt-3 w-full"><QrCode className="h-5 w-5" />邀请家长填写</PrimaryButton>
               )}
-              {activeListActionRecord.status === 'ended' && !isQuestionnaireFullyCollected(activeListActionRecord) && (
+              {canManageActiveListActionRecord && activeListActionRecord.status === 'ended' && !isQuestionnaireFullyCollected(activeListActionRecord) && (
                 <PrimaryButton onClick={reopenActiveRecord} className="mt-3 w-full"><RotateCcw className="h-5 w-5" />重新开放</PrimaryButton>
               )}
               <section className="mt-5">
@@ -1646,14 +1692,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   <button type="button" onClick={previewListRecord} className={collectionActionTile}><Eye className="h-5 w-5 text-[var(--tm-text-tertiary)]" />预览</button>
                 </div>
               </section>
-              <section className="mt-5">
+              {canManageActiveListActionRecord && <section className="mt-5">
                 <h4 className="px-0.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">任务管理</h4>
                 <div className="mt-2 grid grid-cols-2 gap-[var(--tm-space-2)]">
                   <button type="button" onClick={duplicateActiveRecord} className={collectionActionTile}><Copy className="h-5 w-5 text-[var(--tm-text-tertiary)]" />复制采集</button>
                   {activeListActionRecord.status === 'active' && <button type="button" onClick={() => requestCloseRecord(activeListActionRecord)} className={`${collectionActionTile} text-[var(--tm-status-negative-strong)]`}><CheckCircle2 className="h-5 w-5" />结束收集</button>}
                   {activeListActionRecord.status === 'ended' && <button type="button" onClick={archiveActiveRecord} className={collectionActionTile}><Archive className="h-5 w-5 text-[var(--tm-text-tertiary)]" />归档</button>}
                 </div>
-              </section>
+              </section>}
             </div>
           )}
         </MobileBottomSheet>
@@ -2175,28 +2221,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
   const renderStudentCollectionDetail = (record: QuestionnaireRecord) => {
     const assignedContext = recordOrigin === 'assigned-list';
-    const normalizedSearch = studentRecordSearch.trim().toLowerCase();
     const studentRecords = assignedContext
       ? getStudentCollectionRecordsForTeacher(record, teacherId, teacherName)
       : getActiveQuestionnaireTargets(record).map(target => getStudentRecord(record, target.studentNo)).filter(Boolean) as StudentCollectionRecord[];
     const completed = studentRecords.filter(item => item.status === 'completed').length;
     const completion = studentRecords.length === 0 ? 0 : Math.round((completed / studentRecords.length) * 100);
-    const visibleRecords = studentRecords.filter(item => {
-      const matchesStatus = studentRecordFilter === 'all'
-        || (studentRecordFilter === 'incomplete' ? item.status !== 'completed' : item.status === 'completed');
-      return matchesStatus && (!normalizedSearch
-        || item.studentName.toLowerCase().includes(normalizedSearch)
-        || item.studentNo.toLowerCase().includes(normalizedSearch)
-        || item.className.toLowerCase().includes(normalizedSearch));
-    }).sort((left, right) => {
-      if (studentRecordFilter !== 'incomplete') return 0;
-      return Number(right.status === 'draft') - Number(left.status === 'draft');
-    });
-    const studentStatusMeta: Record<StudentCollectionRecordStatus, { label: string; className: string }> = {
-      pending: { label: '未填写', className: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' },
-      draft: { label: '待继续', className: 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]' },
-      completed: { label: '已完成', className: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' },
-    };
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
         <PageHeader
@@ -2230,25 +2259,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             <div className="mt-2"><ProgressBar value={completion} tone={record.status === 'ended' || record.status === 'archived' ? 'neutral' : 'positive'} /></div>
           </section>
 
-          <div className="sticky top-0 z-20 -mx-1 mt-4 bg-[var(--tm-bg-page-glass)] px-1 py-3 backdrop-blur-md">
-            <MobileSearchInput value={studentRecordSearch} onChange={event => setStudentRecordSearch(event.target.value)} placeholder="搜索学生" aria-label="搜索学生" className="text-[length:var(--tm-font-size-compact)]" />
-            <div className="mt-2 grid grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label="填写进度">
-              {([['all', '全部'], ['incomplete', '待完成'], ['completed', '已完成']] as const).map(([value, label]) => (
-                <button key={value} type="button" role="tab" aria-selected={studentRecordFilter === value} onClick={() => setStudentRecordFilter(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${studentRecordFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>
-              ))}
-            </div>
-          </div>
-
-          <section className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
-            {visibleRecords.map(item => (
-              <button key={item.id} type="button" onClick={() => openStudentRecord(record, item.studentNo)} className="flex min-h-[64px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left transition-colors last:border-b-0 active:bg-[var(--tm-bg-surface-soft)]">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-brand-primary-strong)]">{item.studentName.slice(-1)}</span>
-                <span className="min-w-0 flex-1"><span className="block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{item.studentName}</span><span className="mt-0.5 block truncate text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{item.className}</span></span>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[length:var(--tm-font-size-badge)] font-semibold ${studentStatusMeta[item.status].className}`}>{studentStatusMeta[item.status].label}</span>
-              </button>
-            ))}
-            {visibleRecords.length === 0 && <div className="px-4 py-12 text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">暂无匹配学生</div>}
-          </section>
+          <div className="mt-4">{renderStudentRecords(record, assignedContext)}</div>
         </main>
 
         <BottomSheet open={!assignedContext && showRecordMenu} label="采集操作" onDismiss={() => setShowRecordMenu(false)}>
@@ -2267,11 +2278,69 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     );
   };
 
+  const renderStudentRecords = (record: QuestionnaireRecord, assignedContext = false) => {
+    const normalizedSearch = studentRecordSearch.trim().toLowerCase();
+    const studentRecords = assignedContext
+      ? getStudentCollectionRecordsForTeacher(record, teacherId, teacherName)
+      : getActiveQuestionnaireTargets(record).map(target => getStudentRecord(record, target.studentNo)).filter(Boolean) as StudentCollectionRecord[];
+    const visibleRecords = studentRecords.filter(item => {
+      const matchesStatus = studentRecordFilter === 'incomplete' ? item.status !== 'completed' : item.status === 'completed';
+      return matchesStatus && (!normalizedSearch
+        || item.studentName.toLowerCase().includes(normalizedSearch)
+        || item.studentNo.toLowerCase().includes(normalizedSearch)
+        || item.className.toLowerCase().includes(normalizedSearch));
+    }).sort((left, right) => {
+      if (studentRecordFilter !== 'incomplete') return 0;
+      return Number(right.status === 'draft') - Number(left.status === 'draft');
+    });
+    const studentStatusMeta: Record<StudentCollectionRecordStatus, { label: string; className: string }> = {
+      pending: { label: '未完成', className: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' },
+      draft: { label: '未完成', className: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' },
+      completed: { label: '已完成', className: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' },
+    };
+    return (
+      <div>
+        <div className={assignedContext ? 'sticky top-0 z-20 -mx-1 bg-[var(--tm-bg-page-glass)] px-1 pb-3 backdrop-blur-md' : ''}>
+          <MobileSearchInput value={studentRecordSearch} onChange={event => setStudentRecordSearch(event.target.value)} placeholder="搜索学生" aria-label="搜索学生" className="text-[length:var(--tm-font-size-compact)]" />
+          <div className="mt-2 grid grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label="填写进度">
+            {([['completed', '已完成'], ['incomplete', '未完成']] as const).map(([value, label]) => (
+              <button key={value} type="button" role="tab" aria-selected={studentRecordFilter === value} onClick={() => setStudentRecordFilter(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${studentRecordFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>
+            ))}
+          </div>
+        </div>
+        <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+          {visibleRecords.map(item => {
+            const resultRecord = item.status === 'completed'
+              ? getQuestionnaireResultRecords(record).find(result => result.studentNo === item.studentNo)
+              : undefined;
+            return (
+              <StudentAnswerRow
+                key={item.id}
+                avatarSrc={getStudentAvatar(item.studentNo)}
+                studentName={item.studentName}
+                className={item.status === 'completed' ? item.className : undefined}
+                statusLabel={studentStatusMeta[item.status].label}
+                statusClassName={studentStatusMeta[item.status].className}
+                secondaryStatusLabel={item.status === 'draft' ? '待继续' : undefined}
+                onClick={item.status === 'completed' && resultRecord
+                  ? () => { setActiveResultRecord(resultRecord); setPageMode('response'); }
+                  : () => openStudentRecord(record, item.studentNo)}
+              />
+            );
+          })}
+          {visibleRecords.length === 0 && <div className="px-4 py-12 text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">暂无匹配学生</div>}
+        </section>
+      </div>
+    );
+  };
+
   const renderStudentRecordPage = () => {
     if (!activeRecord) return renderList();
     const studentRecord = getStudentRecord(activeRecord, activeStudentNo);
     if (!studentRecord) return renderStudentCollectionDetail(activeRecord);
-    const editable = activeRecord.status === 'active';
+    const editable = activeRecord.status === 'active'
+      && getStudentCollectionRecordsForTeacher(activeRecord, teacherId, teacherName)
+        .some(item => item.studentNo === studentRecord.studentNo);
     const updateAnswer = (questionId: string, answer: QuestionnaireAnswer) => setStudentRecordAnswers(previous => ({ ...previous, [questionId]: answer }));
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24" style={getTeacherQuestionnaireThemeStyle(activeRecord.themeId)}>
@@ -2280,7 +2349,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <QuestionnaireHeaderImage headerImageId={activeRecord.headerImageId} className="-mx-5" />
           <div className="pb-3 pt-4">
             <div className="truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)]">{activeRecord.title}</div>
-            <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{studentRecord.className}</div>
+            <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{studentRecord.className}{studentRecord.assigneeTeacherName ? ` · ${studentRecord.assigneeTeacherName}` : ''}</div>
           </div>
           <StudentCollectionForm
             record={activeRecord}
@@ -2302,8 +2371,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   };
 
   const renderDataSummary = (record: QuestionnaireRecord) => {
-    const reachable = getReachableTargetCount(record);
-    const completed = getQuestionnaireCompletedCount(record);
+    const respondentRole = getQuestionnaireRespondentRole(record);
+    const reachable = respondentRole === 'teacher' ? getActiveQuestionnaireTargets(record).length : getReachableTargetCount(record);
+    const completed = getQuestionnaireResultRecords(record).length;
     const completion = getCompletionRate(record);
     const activeTargets = getActiveQuestionnaireTargets(record);
     const pending = Math.max(0, reachable - completed);
@@ -2317,8 +2387,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               <div className="mt-1 text-[length:var(--tm-font-size-metric)] font-bold tabular-nums text-[var(--tm-text-primary)]">{completed}<span className="ml-1 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-tertiary)]">/{reachable}</span></div>
             </div>
             <div className="space-y-1 text-right text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">
-              <div>待提交 <span className="ml-1 font-semibold tabular-nums text-[var(--tm-brand-reward-strong)]">{pending}</span></div>
-              <div>未绑定 <span className="ml-1 font-semibold tabular-nums text-[var(--tm-text-secondary)]">{unreachable}</span></div>
+              <div>{respondentRole === 'teacher' ? '未完成' : '待提交'} <span className="ml-1 font-semibold tabular-nums text-[var(--tm-brand-reward-strong)]">{pending}</span></div>
+              {respondentRole === 'guardian' && <div>未绑定 <span className="ml-1 font-semibold tabular-nums text-[var(--tm-text-secondary)]">{unreachable}</span></div>}
             </div>
           </div>
           <div className="mt-3"><ProgressBar value={completion} tone={record.status === 'ended' ? 'neutral' : 'positive'} /></div>
@@ -2335,27 +2405,38 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   };
 
   const renderResponses = (record: QuestionnaireRecord) => {
-    const submittedNos = new Set(record.submissions.map(item => item.studentNo));
+    if (getQuestionnaireRespondentRole(record) === 'teacher') return renderStudentRecords(record);
+    const resultRecords = getQuestionnaireResultRecords(record);
+    const submittedNos = new Set(resultRecords.map(item => item.studentNo));
     const activeTargets = getActiveQuestionnaireTargets(record);
     const rows = responseFilter === 'completed'
-      ? record.submissions
+      ? resultRecords
       : responseFilter === 'pending'
         ? activeTargets.filter(target => target.reachable && !submittedNos.has(target.studentNo))
         : activeTargets.filter(target => !target.reachable);
     return (
       <div>
-        <div className="grid grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
-          {([['completed', '已完成'], ['pending', '未完成'], ['unreachable', '未绑定']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setResponseFilter(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${responseFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
+        <div className="grid grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label="答卷状态">
+          {([['completed', '已完成'], ['pending', '未完成'], ['unreachable', '未绑定']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={responseFilter === value} onClick={() => setResponseFilter(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${responseFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
         </div>
         <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
           {rows.map(row => {
-            const isSubmission = 'answers' in row;
+            const isCompleted = 'completedAt' in row;
+            const statusMeta = isCompleted
+              ? { label: '已完成', className: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' }
+              : responseFilter === 'unreachable'
+                ? { label: '未绑定', className: 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]' }
+                : { label: '未完成', className: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' };
             return (
-              <button key={isSubmission ? row.id : row.studentNo} type="button" disabled={!isSubmission} onClick={() => { if (isSubmission) { setActiveSubmission(row); setPageMode('response'); } }} className="flex min-h-[62px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-bg-surface-soft)] disabled:cursor-default">
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${isSubmission ? 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' : responseFilter === 'unreachable' ? 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]'}`}>{isSubmission ? <CheckCircle2 className="h-4.5 w-4.5" /> : <UserRoundCheck className="h-4.5 w-4.5" />}</span>
-                <span className="min-w-0 flex-1"><span className="block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{row.studentName}</span><span className="mt-0.5 block truncate text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{isSubmission ? `${row.guardianRelation} · ${row.submittedAt}` : row.className}</span></span>
-                {isSubmission && <ChevronRight className="h-4 w-4 text-[var(--tm-text-disabled)]" />}
-              </button>
+              <StudentAnswerRow
+                key={isCompleted ? row.id : row.studentNo}
+                avatarSrc={getStudentAvatar(row.studentNo)}
+                studentName={row.studentName}
+                className={isCompleted ? row.className : undefined}
+                statusLabel={statusMeta.label}
+                statusClassName={statusMeta.className}
+                onClick={isCompleted ? () => { setActiveResultRecord(row); setPageMode('response'); } : undefined}
+              />
             );
           })}
           {rows.length === 0 && <div className="px-4 py-12 text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">暂无数据</div>}
@@ -2364,10 +2445,12 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     );
   };
 
-  const renderAnalysis = (record: QuestionnaireRecord) => (
-    <div className="space-y-3">
-      {record.questions.map((question, questionIndex) => {
-        const answers = record.submissions.map(item => item.answers[question.id]).filter(answer => answer !== undefined && answer !== '');
+  const renderAnalysis = (record: QuestionnaireRecord) => {
+    const resultRecords = getQuestionnaireResultRecords(record);
+    return (
+      <div className="space-y-3">
+        {record.questions.map((question, questionIndex) => {
+        const answers = resultRecords.map(item => item.answers[question.id]).filter(answer => answer !== undefined && answer !== '');
         if (question.type === 'multi_fill') {
           return (
             <section key={question.id} className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
@@ -2375,12 +2458,12 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               <h3 className="mt-2 text-balance text-[length:var(--tm-font-size-body)] font-bold leading-5 text-[var(--tm-text-primary)]">{question.title}</h3>
               <div className="mt-3 divide-y divide-[var(--tm-border-subtle)]">
                 {(question.subFields ?? []).map(subField => {
-                  const subFieldAnswers = record.submissions
-                    .map(submission => getQuestionnaireMultiFillValues(submission.answers[question.id])[subField.id]?.trim() ?? '')
+                  const subFieldAnswers = resultRecords
+                    .map(result => getQuestionnaireMultiFillValues(result.answers[question.id])[subField.id]?.trim() ?? '')
                     .filter(Boolean);
                   const showAllInline = subFieldAnswers.length <= 5;
                   const visibleAnswers = showAllInline ? subFieldAnswers : subFieldAnswers.slice(-2).reverse();
-                  const showEffectiveCount = subFieldAnswers.length !== record.submissions.length;
+                  const showEffectiveCount = subFieldAnswers.length !== resultRecords.length;
                   return (
                     <div key={subField.id} className="py-3 first:pt-1 last:pb-0">
                       <div className="flex items-center justify-between gap-3">
@@ -2407,7 +2490,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           const keywords = getFrequentKeywords(textAnswers);
           const showAllInline = textAnswers.length <= 5;
           const visibleAnswers = showAllInline ? textAnswers : textAnswers.slice(-2).reverse();
-          const showEffectiveCount = textAnswers.length !== record.submissions.length;
+          const showEffectiveCount = textAnswers.length !== resultRecords.length;
           return (
             <section key={question.id} className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
               <div className="flex items-center justify-between gap-3">
@@ -2454,9 +2537,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             </div>
           </section>
         );
-      })}
-    </div>
-  );
+        })}
+      </div>
+    );
+  };
 
   const renderData = (record: QuestionnaireRecord) => {
     return (
@@ -2472,7 +2556,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
   const renderDetail = () => {
     if (!activeRecord) return renderList();
-    if (getQuestionnaireCollectionMode(activeRecord) === 'student_information') return renderStudentCollectionDetail(activeRecord);
+    if (getQuestionnaireRespondentRole(activeRecord) === 'teacher' && recordOrigin === 'assigned-list') return renderStudentCollectionDetail(activeRecord);
     const detailPreviewLabel = '预览采集内容';
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
@@ -2494,7 +2578,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 >
                   <Eye className="h-4 w-4" />预览
                 </button>
-                <IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}><MoreHorizontal className="h-5 w-5" /></IconButton>
+                {canManageActiveRecord && <IconButton label="更多操作" onClick={() => setShowRecordMenu(true)}><MoreHorizontal className="h-5 w-5" /></IconButton>}
               </div>
             </div>
             {activeRecord.suggestedDeadline && (
@@ -2509,14 +2593,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           </div>
           <div className="mt-4">{detailTab === 'data' ? renderData(activeRecord) : renderResponses(activeRecord)}</div>
         </main>
-        <BottomSheet open={showRecordMenu} label="采集操作" onDismiss={() => setShowRecordMenu(false)}>
+        <BottomSheet open={canManageActiveRecord && showRecordMenu} label="采集操作" onDismiss={() => setShowRecordMenu(false)}>
           {activeRecord.status === 'archived' && <button type="button" onClick={restoreActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><ArchiveRestore className="h-5 w-5" />恢复到已结束</button>}
           {activeRecord.status === 'active' && getQuestionnaireRespondentRole(activeRecord) === 'guardian' && <button type="button" onClick={() => openQuestionnaireInvite(activeRecord)} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><QrCode className="h-5 w-5" />邀请家长填写</button>}
           <button type="button" onClick={duplicateActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><Copy className="h-5 w-5 text-[var(--tm-text-tertiary)]" />复制为新采集</button>
-          {activeRecord.status === 'active' && <button type="button" onClick={() => requestCloseRecord(activeRecord)} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]"><ClipboardCheck className="h-5 w-5" />结束收集</button>}
+          {activeRecord.status === 'active' && <button type="button" onClick={() => requestCloseRecord(activeRecord)} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative-strong)]"><ClipboardCheck className="h-5 w-5" />结束采集</button>}
           {activeRecord.status === 'ended' && (
             <>
-              {!isQuestionnaireFullyCollected(activeRecord) && <button type="button" onClick={reopenActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><RotateCcw className="h-5 w-5" />重新开放</button>}
+              {!isQuestionnaireFullyCollected(activeRecord) && <button type="button" onClick={reopenActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><RotateCcw className="h-5 w-5" />{getQuestionnaireRespondentRole(activeRecord) === 'teacher' ? '恢复编辑' : '重新开放'}</button>}
               <button type="button" onClick={archiveActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)]"><Archive className="h-5 w-5 text-[var(--tm-text-tertiary)]" />归档</button>
             </>
           )}
@@ -2527,20 +2611,21 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   };
 
   const renderResponseDetail = () => {
-    if (!activeRecord || !activeSubmission) return renderDetail();
+    if (!activeRecord || !activeResultRecord) return renderDetail();
+    const respondent = activeResultRecord.respondentRole === 'teacher'
+      ? `${activeResultRecord.respondentLabel.replace(/老师$/, '')}老师`
+      : `${activeResultRecord.studentName}的${activeResultRecord.respondentLabel}`;
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
-        <PageHeader title={getSubmissionDetailTitle(activeRecord)} onBack={() => setPageMode('detail')} />
+        <PageHeader title="预览问卷" onBack={() => setPageMode('detail')} />
         <main className="min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain px-5 py-4 no-scrollbar">
-          <div className="flex items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] px-4 py-3 text-[var(--tm-status-positive-strong)]">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">{activeSubmission.studentName}<span className="ml-2 text-[length:var(--tm-font-size-meta)] font-medium text-current opacity-75">{activeSubmission.guardianRelation}</span></div>
-              <div className="mt-0.5 truncate text-[length:var(--tm-font-size-badge)] font-semibold">已提交 · {activeSubmission.submittedAt}</div>
-            </div>
-          </div>
+          <header className="pb-2">
+            <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{activeRecord.title}</h1>
+            {activeRecord.description && <p className="mt-2 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]">{activeRecord.description}</p>}
+            <div className="mt-3 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">填写人：{respondent}</div>
+          </header>
           {activeRecord.questions.map((question, index) => {
-            const answer = activeSubmission.answers[question.id];
+            const answer = activeResultRecord.answers[question.id];
             return <section key={question.id} className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]"><div className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary-strong)]">第{index + 1}题 · {questionTypeMeta[question.type].label}</div><h3 className="mt-2 text-balance text-[length:var(--tm-font-size-body)] font-bold leading-5 text-[var(--tm-text-primary)]">{question.title}</h3><div className="mt-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-pretty text-[length:var(--tm-font-size-compact)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{formatQuestionnaireAnswer(answer, question)}</div></section>;
           })}
         </main>
@@ -2556,15 +2641,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       : undefined;
     if (!question || (question.type !== 'text' && !activeSubField)) return renderDetail();
     const questionIndex = activeRecord.questions.findIndex(item => item.id === question.id);
-    const rows = activeRecord.submissions.map(submission => {
-      const answer = submission.answers[question.id];
-      const target = activeRecord.targets.find(item => item.studentNo === submission.studentNo);
+    const rows = getQuestionnaireResultRecords(activeRecord).map(result => {
+      const answer = result.answers[question.id];
       return {
-        id: submission.id,
-        studentNo: submission.studentNo,
-        studentName: submission.studentName,
-        className: target?.className ?? '未分班级',
-        submittedAt: submission.submittedAt,
+        id: result.id,
+        studentNo: result.studentNo,
+        studentName: result.studentName,
+        className: result.className || '未分班级',
+        submittedAt: result.completedAt,
         answer: question.type === 'text'
           ? typeof answer === 'string' ? answer.trim() : ''
           : activeSubField ? getQuestionnaireMultiFillValues(answer)[activeSubField.id]?.trim() ?? '' : '',
@@ -2628,12 +2712,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     if (getQuestionnaireCollectionMode(previewRecord) === 'student_information') {
       return (
         <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24" style={getTeacherQuestionnaireThemeStyle(previewRecord.themeId)}>
-          <PageHeader title={previewTarget?.studentName ?? '学生'} onBack={() => setPageMode(previewReturnMode)} />
+          <PageHeader title="预览问卷" onBack={() => setPageMode(previewReturnMode)} />
           <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-[var(--tm-bg-page)] px-5 pb-28 no-scrollbar">
             <QuestionnaireHeaderImage headerImageId={previewRecord.headerImageId} className="-mx-5" />
             <div className="pb-5 pt-5">
               <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{previewRecord.title}</h1>
-              {previewTarget?.className && <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{previewTarget.className}</div>}
               {previewRecord.description && <p className="mt-2 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]">{previewRecord.description}</p>}
             </div>
             <StudentCollectionForm

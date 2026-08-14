@@ -1,4 +1,4 @@
-import { Student, ScoreItem, SubjectGrade, GrowthReportItem, DetailedReportSection, ClassInfo, CampusCoinDetail, GroupPlan } from './types';
+import { Student, ScoreItem, SubjectGrade, GrowthReportItem, DetailedReportSection, ClassInfo, CampusCoinDetail, GroupPlan, type CoinIssuanceConfig } from './types';
 import { ASSETS } from './assets/images';
 import { getSystemStudentAvatar } from './assets/studentAvatarCatalog';
 
@@ -130,13 +130,37 @@ export const GET_MOCK_GROUP_PLANS_FOR_CLASS = (classId: string, students: Studen
 
 export const MOCK_STUDENTS_CLASS_1: Student[] = GET_MOCK_STUDENTS_FOR_CLASS(MOCK_CLASSES[0]?.id || 'c_2025_1');
 
-export const GET_MOCK_CAMPUS_COIN_DETAIL = (student: Student): CampusCoinDetail => {
+export const DEFAULT_COIN_ISSUANCE_CONFIG: CoinIssuanceConfig = {
+  enabled: true,
+  period: 'weekly',
+  classBudget: 500,
+  sunshineRatio: 60,
+};
+
+export const GET_MOCK_CAMPUS_COIN_DETAIL = (
+  student: Student,
+  issuanceConfig: CoinIssuanceConfig = DEFAULT_COIN_ISSUANCE_CONFIG,
+  classStudentCount = 60,
+): CampusCoinDetail => {
   const seed = student.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const balance = 320 + (seed % 80);
   const basePerformance = 100 + (seed % 25);
   const rankingReward = 12 + (seed % 9);
   const classBonus = 8 + (seed % 6);
-  const deductions = seed % 2 === 0 ? 0 : 5;
+  const normalizedSunshineRatio = Math.min(100, Math.max(0, issuanceConfig.sunshineRatio));
+  const normalizedClassBudget = Math.max(0, issuanceConfig.classBudget);
+  const sunshinePool = normalizedClassBudget * normalizedSunshineRatio / 100;
+  const rankingPool = normalizedClassBudget - sunshinePool;
+  // Demo allocation: the sunshine pool is shared equally; ranking share varies by mock student performance.
+  const mockRankingShare = 0.08 + (seed % 5) * 0.005;
+  const roundCoin = (value: number) => Math.round(value * 100) / 100;
+  const sunshineReward = issuanceConfig.enabled ? roundCoin(sunshinePool / Math.max(1, classStudentCount)) : 0;
+  const estimatedRankingReward = issuanceConfig.enabled ? roundCoin(rankingPool * mockRankingShare) : 0;
+  const isWeeklySettlement = issuanceConfig.period === 'weekly';
+  const settlementSource = isWeeklySettlement ? '周度综合表现结算' : '月度综合表现结算';
+  const settlementDescription = isWeeklySettlement
+    ? '根据上周五育评价记录自动发放校园币'
+    : '根据上月五育评价记录自动发放校园币';
 
   return {
     balance,
@@ -144,10 +168,10 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (student: Student): CampusCoinDetail 
     issueRecords: [
       {
         id: `${student.id}-issue-1`,
-        source: '月度综合表现结算',
+        source: settlementSource,
         amount: basePerformance,
         time: '2026-02-01 09:00',
-        description: '根据上月五育评价记录自动发放基础校园币',
+        description: settlementDescription,
         operator: '系统规则',
       },
       {
@@ -190,12 +214,14 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (student: Student): CampusCoinDetail 
         scene: '班级奖励兑换',
       },
     ],
-    monthlyEstimate: {
-      basePerformance,
-      rankingReward,
-      classBonus,
-      deductions,
-      estimatedTotal: basePerformance + rankingReward + classBonus - deductions,
+    settlementEstimate: {
+      enabled: issuanceConfig.enabled,
+      period: issuanceConfig.period,
+      sunshineReward,
+      rankingReward: estimatedRankingReward,
+      estimatedTotal: roundCoin(sunshineReward + estimatedRankingReward),
+      estimatedAt: '2026-08-14 10:00',
+      ruleVersion: '2026-08',
     },
   };
 };

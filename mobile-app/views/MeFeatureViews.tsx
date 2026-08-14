@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
+import type { CoinIssuanceConfig } from '../types';
 
 export interface SchoolSubjectItem {
     id: string;
@@ -25,13 +26,6 @@ export interface SchoolSubjectItem {
 export interface SchoolDepartmentItem {
     id: string;
     name: string;
-}
-
-export interface CoinIssuanceConfig {
-    enabled: boolean;
-    period: 'weekly' | 'monthly';
-    classBudget: number;
-    sunshineRatio: number;
 }
 
 interface SettingsViewProps {

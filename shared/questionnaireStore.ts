@@ -86,6 +86,18 @@ export interface StudentCollectionRecord {
   assigneeTeacherName?: string;
 }
 
+export interface QuestionnaireResultRecord {
+  id: string;
+  studentNo: string;
+  studentName: string;
+  classId: string;
+  className: string;
+  respondentRole: QuestionnaireRespondentRole;
+  respondentLabel: string;
+  completedAt: string;
+  answers: Record<string, QuestionnaireAnswer>;
+}
+
 export interface QuestionnaireRecord {
   id: string;
   inviteCode?: string;
@@ -1045,6 +1057,47 @@ export const getStudentCollectionCompletedCount = (record: QuestionnaireRecord) 
 export const getQuestionnaireCompletedCount = (record: QuestionnaireRecord) => {
   const activeTargetNos = new Set(getActiveQuestionnaireTargets(record).map(target => target.studentNo));
   return record.submissions.filter(submission => activeTargetNos.has(submission.studentNo)).length;
+};
+
+export const getQuestionnaireResultRecords = (record: QuestionnaireRecord): QuestionnaireResultRecord[] => {
+  const activeTargets = getActiveQuestionnaireTargets(record);
+  const targetByStudentNo = new Map(activeTargets.map(target => [target.studentNo, target]));
+
+  if (getQuestionnaireRespondentRole(record) === 'teacher') {
+    return (record.studentRecords ?? [])
+      .filter(item => item.status === 'completed' && targetByStudentNo.has(item.studentNo))
+      .map(item => {
+        const target = targetByStudentNo.get(item.studentNo)!;
+        return {
+          id: item.id,
+          studentNo: item.studentNo,
+          studentName: item.studentName,
+          classId: item.classId || target.classId,
+          className: item.className || target.className,
+          respondentRole: 'teacher' as const,
+          respondentLabel: item.assigneeTeacherName ?? record.creatorName,
+          completedAt: item.updatedAt,
+          answers: item.answers,
+        };
+      });
+  }
+
+  return record.submissions
+    .filter(item => targetByStudentNo.has(item.studentNo))
+    .map(item => {
+      const target = targetByStudentNo.get(item.studentNo)!;
+      return {
+        id: item.id,
+        studentNo: item.studentNo,
+        studentName: item.studentName,
+        classId: target.classId,
+        className: target.className,
+        respondentRole: 'guardian' as const,
+        respondentLabel: item.guardianRelation,
+        completedAt: item.submittedAt,
+        answers: item.answers,
+      };
+    });
 };
 
 export const isQuestionnaireFullyCollected = (record: QuestionnaireRecord) => {

@@ -25,12 +25,19 @@ requireText(typesSource, "status?: 'active' | 'left';", 'Student 类型应包含
 requireText(typesSource, 'reservedPhones?: string[];', 'Student 类型应包含多个预留手机。');
 requireText(typesSource, 'CampusCoinIssueRecord', '类型层应定义校园币发放记录。');
 requireText(typesSource, 'CampusCoinConsumeRecord', '类型层应定义校园币消耗记录。');
-requireText(typesSource, 'CampusCoinMonthlyEstimate', '类型层应定义本月校园币结算预估。');
+requireText(typesSource, 'CampusCoinSettlementEstimate', '类型层应定义可跟随周/月配置变化的校园币结算预估。');
+requireText(typesSource, 'CoinIssuanceConfig', '货币发放配置应由共享类型层统一定义。');
+requireText(typesSource, 'estimatedAt: string;', '校园币预估应包含估算截止时间。');
+requireText(typesSource, 'ruleVersion: string;', '校园币预估应保留计算规则版本，便于接口结果追溯。');
 
 requireText(constantsSource, 'GET_MOCK_CAMPUS_COIN_DETAIL', 'Mock 数据应提供按学生生成校园币详情的方法。');
 requireText(constantsSource, 'issueRecords', '校园币 Mock 应包含发放情况。');
 requireText(constantsSource, 'consumeRecords', '校园币 Mock 应包含消耗情况。');
-requireText(constantsSource, 'monthlyEstimate', '校园币 Mock 应包含本月结算预估。');
+requireText(constantsSource, 'settlementEstimate', '校园币 Mock 应包含结算预估。');
+requireText(constantsSource, 'sunshinePool', '校园币预估应读取阳光保底比例计算保底奖池。');
+requireText(constantsSource, 'rankingPool', '校园币预估应读取积分排行比例计算排行奖池。');
+requireText(constantsSource, "'周度综合表现结算'", '周结算配置下的流水标题应使用周度语义。');
+requireText(constantsSource, "'月度综合表现结算'", '月结算配置下的流水标题应使用月度语义。');
 
 requireText(appSource, "'student_basic_edit'", 'App 路由应包含学生基础信息编辑子页面。');
 requireText(appSource, "'student_coin_detail'", 'App 路由应包含校园币详情子页面。');
@@ -38,6 +45,9 @@ requireText(appSource, 'studentOverrides', 'App 应维护本次会话内的学�
 requireText(appSource, 'handleSaveStudentBasicInfo', 'App 应提供学生基础信息保存处理。');
 requireText(appSource, '<StudentBasicEditView', 'App 应渲染学生基础信息编辑页。');
 requireText(appSource, '<StudentCoinDetailView', 'App 应渲染校园币详情页。');
+requireText(appSource, "lazy(() => import('./views/StudentCoinDetailView'))", '校园币详情等低频子页面应按需加载。');
+requireText(appSource, '<Suspense fallback={<TeacherRouteSkeleton />}>', '低频子页面加载时应提供稳定的页面骨架。');
+requireText(appSource, 'GET_MOCK_CAMPUS_COIN_DETAIL(activeStudent, coinIssuanceConfig, activeStudentClassSize)', '校园币详情应实时读取学校货币发放配置和班级人数。');
 requireText(appSource, 'onEditBasicInfo={() => navigateTo(\'student_basic_edit\')}', '学生详情页应能进入基础信息编辑页。');
 requireText(appSource, 'onViewCampusCoins={() => navigateTo(\'student_coin_detail\')}', '学生详情页资产区应能进入校园币详情页。');
 requireText(appSource, 'currentView !== \'student_detail\'', '学生详情页应由页面内部渲染标题栏，App 不应重复渲染通用标题栏。');
@@ -376,7 +386,7 @@ requireText(basicEditSource, '从相册选择', '头像操作蒙层应提供从�
 requireText(basicEditSource, 'cameraInputRef', '头像操作应复用拍照文件入口。');
 requireText(basicEditSource, 'albumInputRef', '头像操作应复用相册文件入口。');
 
-for (const required of ['收入', '支出', '校园币收支记录', '校园币流水']) {
+for (const required of ['收入', '支出', '校园币收支记录', '校园币明细']) {
   requireText(coinDetailSource, required, `校园币详情页缺少收支流水能力：${required}`);
 }
 requireText(coinDetailSource, 'CampusCoinDetail', '校园币详情页应使用校园币详情类型。');
@@ -390,7 +400,12 @@ requireText(coinDetailSource, "type FlowFilter = 'income' | 'expense'", '校园�
 requireText(coinDetailSource, 'categoryOptionsByFilter', '校园币收入和支出应分别维护各自的分类按钮。');
 requireText(coinDetailSource, 'aria-label="筛选流水年份"', '校园币年份应使用独立下拉筛选。');
 requireText(coinDetailSource, '<select', '校园币年份筛选应支持大量年份选项。');
-requireText(coinDetailSource, 'role="tablist"', '收入和支出应使用标准页签语义。');
+requireText(coinDetailSource, 'role="group" aria-label="按收支类型筛选"', '收入和支出属于过滤条件，应使用按钮组语义。');
+requireText(coinDetailSource, 'aria-pressed={activeFilter === option.value}', '收入和支出筛选按钮应暴露选中状态。');
+if (coinDetailSource.includes('role="tablist"') || coinDetailSource.includes('role="tab"')) {
+  throw new Error('校园币收入和支出是过滤条件，不应误用内容页签语义。');
+}
+requireText(coinDetailSource, 'new Date().getFullYear()', '校园币年份不应写死，应跟随当前年份和现有记录动态生成。');
 if (coinDetailSource.includes('showFilterSheet') || coinDetailSource.includes('<MobileBottomSheet')) {
   throw new Error('校园币分类和年份筛选已前置，不应继续保留筛选抽屉。');
 }
@@ -399,12 +414,43 @@ requireText(coinDetailSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '校园币筛选
 requireText(coinDetailSource, 'grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]', '校园币资产摘要应保持钱包与存款等分，并支持长金额收缩。');
 requireText(coinDetailSource, 'groupedFlowItems', '校园币流水应按月份分组。');
 requireText(coinDetailSource, 'divide-y divide-[var(--tm-border-subtle)]', '同月流水应使用连续列表与分隔线组织。');
-requireText(coinDetailSource, 'min-h-11 shrink-0', '校园币分类按钮应满足至少 44px 触控尺寸。');
+requireText(coinDetailSource, 'min-h-[var(--tm-size-touch)] shrink-0', '校园币分类按钮应使用触控尺寸 Token，且不低于 44px。');
 if (coinDetailSource.includes('学期')) {
   throw new Error('校园币是持续资产，不应使用学期筛选。');
 }
-if (coinDetailSource.includes('monthlyEstimate') || coinDetailSource.includes('预计可得') || coinDetailSource.includes('校园币总额')) {
-  throw new Error('校园币详情页只保留收支记录，不应展示预估或金额分布。');
+for (const required of [
+  'settlementEstimate',
+  '本周预计可得',
+  '本月预计可得',
+  '阳光保底',
+  '排名奖励',
+  '每周一结算',
+  '每月1日结算',
+  '学校暂未开启自动发放',
+  'estimateDateLabel',
+]) {
+  requireText(coinDetailSource, required, `校园币详情缺少结算预估信息：${required}`);
+}
+requireText(coinDetailSource, '账户概览', '钱包、存款与结算预估应组成明确的账户概览板块。');
+requireText(coinDetailSource, '收支明细', '流水筛选和列表应归入明确的收支明细板块。');
+requireText(coinDetailSource, '--tm-font-size-group-title', '紧凑预估总额应使用教师端组标题字号 Token。');
+if (coinDetailSource.includes('--tm-font-size-metric')) {
+  throw new Error('结算预估已收敛为账户摘要带，不应继续使用大号统计数字。');
+}
+requireText(coinDetailSource, 'bg-[var(--tm-bg-surface-muted)]', '结算预估应使用浅中性摘要带与资产区建立分层。');
+requireText(coinDetailSource, 'mt-[var(--tm-space-5)]', '账户概览与收支明细之间应保留明确的板块间距。');
+requireText(coinDetailSource, '--tm-size-touch', '校园币页面控件应使用统一触控尺寸 Token。');
+requireText(coinDetailSource, '--tm-duration-fast', '校园币页面交互动效应使用统一时长 Token。');
+requireText(coinDetailSource, '--tm-focus-ring', '校园币非输入控件应保留可见的键盘焦点样式。');
+requireText(coinDetailSource, 'focus-visible:ring-offset-2', '校园币年份下拉应提供可见且与背景分离的焦点环。');
+requireText(coinDetailSource, 'motion-reduce:transition-none', '校园币页面过渡应尊重减少动态效果设置。');
+for (const hardcodedClass of ['min-h-11', 'text-[14px]', 'text-[13px]', 'text-lg']) {
+  if (coinDetailSource.includes(hardcodedClass)) {
+    throw new Error(`校园币页面不应继续使用可由 Token 替代的硬编码样式：${hardcodedClass}`);
+  }
+}
+if (coinDetailSource.includes('gradient') || coinDetailSource.includes('--tm-brand-reward-strong')) {
+  throw new Error('结算预估不应使用渐变或大面积奖励色文字。');
 }
 if (coinDetailSource.includes('mb-1 truncate text-base') || coinDetailSource.includes('truncate text-xs font-bold')) {
   throw new Error('校园币流水不应继续强制单行截断标题和来源。');

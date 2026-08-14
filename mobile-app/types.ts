@@ -52,12 +52,23 @@ export interface CampusCoinConsumeRecord {
   scene: string;
 }
 
-export interface CampusCoinMonthlyEstimate {
-  basePerformance: number;
+export type CampusCoinSettlementPeriod = 'weekly' | 'monthly';
+
+export interface CoinIssuanceConfig {
+  enabled: boolean;
+  period: CampusCoinSettlementPeriod;
+  classBudget: number;
+  sunshineRatio: number;
+}
+
+export interface CampusCoinSettlementEstimate {
+  enabled: boolean;
+  period: CampusCoinSettlementPeriod;
+  sunshineReward: number;
   rankingReward: number;
-  classBonus: number;
-  deductions: number;
   estimatedTotal: number;
+  estimatedAt: string;
+  ruleVersion: string;
 }
 
 export interface CampusCoinDetail {
@@ -65,7 +76,7 @@ export interface CampusCoinDetail {
   bankDeposit: number;
   issueRecords: CampusCoinIssueRecord[];
   consumeRecords: CampusCoinConsumeRecord[];
-  monthlyEstimate: CampusCoinMonthlyEstimate;
+  settlementEstimate: CampusCoinSettlementEstimate;
 }
 
 export interface ClassInfo {

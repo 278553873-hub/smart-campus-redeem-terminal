@@ -35,6 +35,8 @@ const createStepThreeSource = createSource.slice(createSource.indexOf('{createSt
 const studentDetailSource = viewSource.slice(viewSource.indexOf('const renderStudentCollectionDetail'), viewSource.indexOf('const renderStudentRecordPage'));
 const createPreviewSource = viewSource.slice(viewSource.indexOf('const openCreatePreview'), viewSource.indexOf('const openDetailPreview'));
 const detailSource = viewSource.slice(viewSource.indexOf('const renderDetail'), viewSource.indexOf('const renderResponseDetail'));
+const responseDetailSource = viewSource.slice(viewSource.indexOf('const renderResponseDetail'), viewSource.indexOf('const renderQuestionResponses'));
+const originalPreviewSource = viewSource.slice(viewSource.indexOf('const renderPreview'), viewSource.indexOf('const renderPage'));
 
 const requireText = (source, text, message) => {
   if (!source.includes(text)) throw new Error(message);
@@ -310,6 +312,14 @@ for (const [token, value] of [['--tm-font-size-document-title', '22px'], ['--tm-
 requireText(teacherTokenSource, "'--tm-font-size-group-title': '18px'", '教师端创建页必须提供18像素分组标题 Token。');
 requireText(teacherTokenSource, "'--tm-font-size-form-group-label': '14px'", '教师端填写页必须提供14像素分组标签 Token。');
 requireText(viewSource, 'getQuestionnaireSelectedOptions(answer).includes(option)', '题目统计必须将自定义答案计入对应选项。');
+requireText(storeSource, 'getQuestionnaireResultRecords', '老师和家长填写必须共用已完成采集结果口径。');
+requireText(viewSource, 'const resultRecords = getQuestionnaireResultRecords(record);', '题目统计不得只读取家长答卷。');
+requireText(viewSource, "getQuestionnaireRespondentRole(activeRecord) === 'teacher' && recordOrigin === 'assigned-list'", '只有老师待填写入口可直达逐生录入页。');
+requireText(viewSource, 'const visibleRecords = ownedRecords;', '我发起的列表必须只展示当前教师创建的采集，不因角色扩大范围。');
+requireText(viewSource, "recordOrigin === 'assigned-list'", '他人发起的任务只能从待我填写入口按填写分工访问。');
+if (viewSource.includes('canViewAllQuestionnaireResults') || appSource.includes('canViewAllQuestionnaireResults')) {
+  throw new Error('教师手机端不得按领导或管理员角色扩大问卷数据可见范围。');
+}
 requireText(viewSource, "type DetailTab = 'data' | 'responses'", '问卷详情必须合并为数据和答卷两个页签。');
 requireText(viewSource, "'question-responses'", '简答题必须支持进入独立的全部回答页。');
 requireText(viewSource, "new Intl.Segmenter('zh-CN', { granularity: 'word' })", '简答题高频词必须使用标准中文分词能力。');
@@ -500,7 +510,13 @@ requireText(floatingCreateSource, ": 'calc(var(--tm-space-5) + env(safe-area-ins
 if (viewSource.includes('subtitle?: string') || viewSource.includes('subtitle={`第${createStep}步，共3步`}')) {
   throw new Error('问卷顶部不应承载步骤或答卷副标题。');
 }
-requireText(viewSource, '{activeSubmission.studentName}<span className="ml-2 text-[length:var(--tm-font-size-meta)] font-medium text-current opacity-75">{activeSubmission.guardianRelation}</span>', '答卷学生与家长关系信息必须移入内容区。');
+requireText(responseDetailSource, '<PageHeader title="预览问卷"', '点击已完成记录必须进入预览问卷。');
+requireText(responseDetailSource, '填写人：{respondent}', '已完成答卷预览必须在问卷信息后展示实际填写人。');
+requireText(responseDetailSource, "`${activeResultRecord.studentName}的${activeResultRecord.respondentLabel}`", '家长填写人必须展示学生姓名和家长关系。');
+requireText(responseDetailSource, "`${activeResultRecord.respondentLabel.replace(/老师$/, '')}老师`", '老师填写人必须展示老师姓名和老师后缀。');
+requireText(originalPreviewSource, '<PageHeader title="预览问卷"', '老师填写的原始问卷预览必须使用预览问卷标题。');
+forbidText(originalPreviewSource, '填写人：', '原始问卷预览不得展示填写人。');
+requireText(assignedSource, '>预览问卷</h1>', '家长填写的原始问卷预览必须使用预览问卷标题。');
 
 requireText(viewSource, 'typePickerPrimaryLabel="普通题型"', '添加内容必须提供普通题型页签。');
 requireText(viewSource, "label: '成长数据'", '添加内容必须提供成长数据页签。');
@@ -642,17 +658,32 @@ requireText(assignedSource, "question.type === 'multi_fill'", '家长端必须�
 requireText(viewSource, 'openQuestionResponses(question.id, subField.id)', '多项填空统计必须支持按子项查看全部回答。');
 requireText(viewSource, "{ value: 'text', label: '问答题', icon: MessageSquareText }", '普通问卷题型必须提供问答题。');
 requireText(viewSource, "{ value: 'multiple', label: '多选题', icon: ListChecks, choice: true }", '普通问卷题型必须提供多选题。');
-requireText(viewSource, "type StudentRecordFilter = 'all' | 'incomplete' | 'completed'", '学生信息采集必须使用任务视角的三类筛选。');
-requireText(viewSource, "studentRecordFilter === 'incomplete' ? item.status !== 'completed'", '待完成必须合并未填写和草稿记录。');
-requireText(viewSource, "[['all', '全部'], ['incomplete', '待完成'], ['completed', '已完成']]", '逐生记录顶部只保留全部、待完成和已完成。');
-requireText(viewSource, "draft: { label: '待继续'", '草稿记录应在学生行内表达为待继续。');
+requireText(viewSource, "type StudentRecordFilter = 'incomplete' | 'completed'", '老师填写答卷只使用未完成和已完成两类筛选。');
+requireText(viewSource, "studentRecordFilter === 'incomplete' ? item.status !== 'completed'", '未完成必须合并未填写和草稿记录。');
+requireText(viewSource, "[['completed', '已完成'], ['incomplete', '未完成']]", '老师填写答卷必须按已完成、未完成排序。');
+requireText(viewSource, "[['completed', '已完成'], ['pending', '未完成'], ['unreachable', '未绑定']]", '家长填写答卷必须按已完成、未完成、未绑定排序。');
+requireText(viewSource, 'role="tablist" aria-label="答卷状态"', '家长填写答卷筛选必须使用可识别的页签语义。');
+requireText(viewSource, 'const getStudentAvatar = (studentNo: string)', '老师和家长填写答卷必须复用学生头像规则。');
+requireText(viewSource, 'const StudentAnswerRow: React.FC', '老师和家长填写答卷必须复用同一学生名单行。');
+requireText(viewSource, 'avatarSrc={getStudentAvatar(item.studentNo)}', '老师填写答卷列表必须使用学生头像。');
+requireText(viewSource, 'avatarSrc={getStudentAvatar(row.studentNo)}', '家长填写答卷列表必须使用学生头像。');
+requireText(viewSource, "secondaryStatusLabel={item.status === 'draft' ? '待继续' : undefined}", '老师草稿必须在未完成标签外增加待继续标签。');
+requireText(viewSource, 'className={isCompleted ? row.className : undefined}', '家长答卷只有已完成名单展示学生班级。');
+if (viewSource.slice(viewSource.indexOf('const renderResponses'), viewSource.indexOf('const renderAnalysis')).includes('<ChevronRight')) {
+  throw new Error('已完成答卷名单可点击但不应显示箭头。');
+}
+if (viewSource.includes('{item.studentName.slice(-1)}</span>')) {
+  throw new Error('老师填写答卷列表不得使用姓名字块代替学生头像。');
+}
+requireText(viewSource, "draft: { label: '未完成'", '草稿记录的主状态必须统一为未完成。');
 requireText(viewSource, "Number(right.status === 'draft') - Number(left.status === 'draft')", '待完成列表必须将待继续记录排在未填写记录之前。');
-if (viewSource.includes("[['all', '全部'], ['pending', '未填写'], ['draft', '草稿'], ['completed', '已完成']]")) {
-  throw new Error('草稿不应作为逐生记录的一级筛选。');
+if (viewSource.includes("['all', '全部']") || viewSource.includes("['incomplete', '待完成']")) {
+  throw new Error('老师填写答卷不应保留“全部”或“待完成”一级筛选。');
 }
 requireText(viewSource, "status: 'pending'", '学生范围生成后必须为每名学生建立未填写记录。');
 requireText(viewSource, "saveStudentCollectionRecord(activeRecord.id", '教师必须可以保存逐生采集记录。');
 requireText(viewSource, "saveActiveStudentRecord('completed')", '逐生采集记录必须可以标记完成。');
+requireText(viewSource, 'getStudentCollectionRecordsForTeacher(activeRecord, teacherId, teacherName)', '逐生记录编辑权限必须按实际填写分配校验。');
 requireText(viewSource, '>恢复编辑</button>', '学生信息采集结束后必须支持恢复编辑。');
 requireText(storeSource, "getStudentCollectionCompletedCount", '学生信息采集进度必须按已完成学生记录计算。');
 for (const mockId of ['collection-enrollment-202607', 'collection-status-check-202606']) {
