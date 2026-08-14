@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronLeft, Clock, Landmark, ShoppingBag, SlidersHorizontal, Sparkles, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Clock, Landmark, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
 import { ASSETS } from '../assets/images';
-import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import { CampusCoinDetail, Student } from '../types';
 import { phoneText } from '../styles/teacherMobileTokens';
@@ -13,7 +12,7 @@ interface StudentCoinDetailViewProps {
   onBack: () => void;
 }
 
-type FlowFilter = 'all' | 'income' | 'expense';
+type FlowFilter = 'income' | 'expense';
 type FlowCategory = 'all' | 'dividend' | 'reward' | 'interest' | 'vending_shop' | 'class_shop';
 
 interface CoinFlowItem {
@@ -27,7 +26,7 @@ interface CoinFlowItem {
 }
 
 const categoryLabels: Record<FlowCategory, string> = {
-  all: '全部类型',
+  all: '全部',
   dividend: '月度分红',
   reward: '班级奖励',
   interest: '银行利息',
@@ -36,10 +35,14 @@ const categoryLabels: Record<FlowCategory, string> = {
 };
 
 const flowFilterOptions: Array<{ value: FlowFilter; label: string }> = [
-  { value: 'all', label: '全部' },
   { value: 'income', label: '收入' },
   { value: 'expense', label: '支出' },
 ];
+
+const categoryOptionsByFilter: Record<FlowFilter, FlowCategory[]> = {
+  income: ['all', 'dividend', 'reward', 'interest'],
+  expense: ['all', 'vending_shop', 'class_shop'],
+};
 
 const getFlowIcon = (category: FlowCategory) => {
   const toneClass = 'text-[var(--tm-text-tertiary)]';
@@ -83,12 +86,9 @@ const formatFlowTime = (value: string) => {
 
 const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, coinDetail, onBack }) => {
   const { issueRecords, consumeRecords } = coinDetail;
-  const [activeFilter, setActiveFilter] = useState<FlowFilter>('all');
+  const [activeFilter, setActiveFilter] = useState<FlowFilter>('income');
   const [activeYear, setActiveYear] = useState<string>('2026');
   const [activeCategory, setActiveCategory] = useState<FlowCategory>('all');
-  const [showFilterSheet, setShowFilterSheet] = useState(false);
-  const [draftYear, setDraftYear] = useState<string>('2026');
-  const [draftCategory, setDraftCategory] = useState<FlowCategory>('all');
 
   const flowItems = useMemo<CoinFlowItem[]>(() => {
     const incomeItems = issueRecords.map(record => ({
@@ -118,14 +118,10 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
     '2024',
   ])).sort((a, b) => b.localeCompare(a)), [flowItems]);
 
-  const categoryOptions: FlowCategory[] = [
-    'all',
-    ...(activeFilter === 'expense' ? [] : ['dividend', 'reward', 'interest'] as FlowCategory[]),
-    ...(activeFilter === 'income' ? [] : ['vending_shop', 'class_shop'] as FlowCategory[]),
-  ];
+  const categoryOptions = categoryOptionsByFilter[activeFilter];
 
   const filteredFlowItems = useMemo(() => flowItems.filter(item => (
-    (activeFilter === 'all' || item.type === activeFilter)
+    item.type === activeFilter
     && (activeCategory === 'all' || item.category === activeCategory)
     && item.time.startsWith(activeYear)
   )), [activeCategory, activeFilter, activeYear, flowItems]);
@@ -140,26 +136,6 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
 
   const selectFilter = (filter: FlowFilter) => {
     setActiveFilter(filter);
-    setActiveCategory('all');
-  };
-
-  const defaultYear = yearOptions[0] ?? '2026';
-  const appliedFilterCount = Number(activeYear !== defaultYear) + Number(activeCategory !== 'all');
-
-  const openFilterSheet = () => {
-    setDraftYear(activeYear);
-    setDraftCategory(activeCategory);
-    setShowFilterSheet(true);
-  };
-
-  const applyFilters = () => {
-    setActiveYear(draftYear);
-    setActiveCategory(draftCategory);
-    setShowFilterSheet(false);
-  };
-
-  const resetAppliedFilters = () => {
-    setActiveYear(defaultYear);
     setActiveCategory('all');
   };
 
@@ -191,31 +167,50 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
             </div>
           </section>
 
-          <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
-            <div className="grid h-11 grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)]" aria-label="按收支类型筛选">
-              {flowFilterOptions.map(option => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => selectFilter(option.value)}
-                  aria-pressed={activeFilter === option.value}
-                  className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
-                >
-                  <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition ${activeFilter === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>
-                    {option.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={openFilterSheet}
-              aria-label={`筛选校园币流水${appliedFilterCount ? `，已应用${appliedFilterCount}项条件` : ''}`}
-              className="flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 text-[13px] font-medium text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              <span>筛选{appliedFilterCount > 0 ? `·${appliedFilterCount}` : ''}</span>
-            </button>
+          <div className="mt-2 flex min-h-11 items-center justify-between px-1">
+            <span className="text-[14px] font-medium text-[var(--tm-text-secondary)]">时间</span>
+            <label className="relative shrink-0">
+              <select
+                value={activeYear}
+                onChange={event => setActiveYear(event.target.value)}
+                aria-label="筛选流水年份"
+                className="h-11 appearance-none rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] pl-3 pr-9 text-[14px] font-semibold text-[var(--tm-text-primary)] outline-none [box-shadow:var(--tm-shadow-control)] focus-visible:ring-2 focus-visible:ring-[var(--tm-input-focus-ring)]"
+              >
+                {yearOptions.map(year => <option key={year} value={year}>{year}年</option>)}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
+            </label>
+          </div>
+
+          <div className="mt-2 grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)]" role="tablist" aria-label="按收支类型筛选">
+            {flowFilterOptions.map(option => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => selectFilter(option.value)}
+                role="tab"
+                aria-selected={activeFilter === option.value}
+                className="flex min-h-11 items-center p-1 text-[14px] font-semibold"
+              >
+                <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition ${activeFilter === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>
+                  {option.label}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-1 flex min-h-11 gap-2 overflow-x-auto no-scrollbar" aria-label={`${activeFilter === 'income' ? '收入' : '支出'}分类筛选`}>
+            {categoryOptions.map(category => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setActiveCategory(category)}
+                aria-pressed={activeCategory === category}
+                className={`min-h-11 shrink-0 rounded-[var(--tm-radius-control)] px-3 text-[14px] font-medium transition-colors ${activeCategory === category ? 'bg-[var(--tm-bg-surface)] font-semibold text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]'}`}
+              >
+                {categoryLabels[category]}
+              </button>
+            ))}
           </div>
 
           {groupedFlowItems.length === 0 ? (
@@ -225,11 +220,6 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                 title="暂无符合条件的流水记录"
                 imageClassName="w-[58%] min-w-[156px] max-w-[196px]"
               />
-              {appliedFilterCount > 0 && (
-                <button type="button" onClick={resetAppliedFilters} className="mt-2 min-h-11 px-4 text-[14px] font-semibold text-[var(--tm-brand-primary)] active:text-[var(--tm-brand-primary-strong)]">
-                  重置筛选
-                </button>
-              )}
             </div>
           ) : (
             <div className="mt-3 space-y-4">
@@ -260,54 +250,6 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
           )}
         </main>
       </div>
-
-      <MobileBottomSheet
-        open={showFilterSheet}
-        title="筛选校园币流水"
-        onClose={() => setShowFilterSheet(false)}
-        footer={(
-          <div className="grid grid-cols-[1fr_2fr] gap-2">
-            <button type="button" onClick={() => { setDraftYear(defaultYear); setDraftCategory('all'); }} className="h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[14px] font-semibold text-[var(--tm-text-secondary)] active:scale-[0.98]">重置</button>
-            <button type="button" onClick={applyFilters} className="h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[14px] font-semibold text-[var(--tm-text-inverse)] active:scale-[0.98]">应用筛选</button>
-          </div>
-        )}
-      >
-        <div className="space-y-5 pb-1">
-          <section>
-            <h3 className="text-[13px] font-medium text-[var(--tm-text-secondary)]">年份</h3>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              {yearOptions.map(year => (
-                <button
-                  key={year}
-                  type="button"
-                  onClick={() => setDraftYear(year)}
-                  aria-pressed={draftYear === year}
-                  className={`h-11 rounded-[var(--tm-radius-control)] text-[13px] font-semibold ${draftYear === year ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]'}`}
-                >
-                  {year}年
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-[13px] font-medium text-[var(--tm-text-secondary)]">交易类型</h3>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {categoryOptions.map(category => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setDraftCategory(category)}
-                  aria-pressed={draftCategory === category}
-                  className={`min-h-11 rounded-[var(--tm-radius-control)] px-3 text-[13px] font-semibold ${draftCategory === category ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]'}`}
-                >
-                  {categoryLabels[category]}
-                </button>
-              ))}
-            </div>
-          </section>
-        </div>
-      </MobileBottomSheet>
     </div>
   );
 };

@@ -386,16 +386,20 @@ requireText(coinDetailSource, 'line-clamp-2', '校园币流水标题和说明应
 requireText(coinDetailSource, 'activeFilter', '校园币详情页应参考货柜机流水明细提供收支筛选。');
 requireText(coinDetailSource, 'activeCategory', '校园币详情页应参考货柜机流水明细提供类型筛选。');
 requireText(coinDetailSource, 'formatCoinAmount', '校园币详情页金额应使用统一校园币格式化函数。');
-requireText(coinDetailSource, 'showFilterSheet', '校园币年份与交易类型应收进筛选抽屉。');
-requireText(coinDetailSource, '<MobileBottomSheet', '校园币筛选必须复用公共底部抽屉。');
-requireText(coinDetailSource, 'draftYear', '校园币筛选应使用草稿状态，点击应用后再更新结果。');
-requireText(coinDetailSource, '应用筛选', '校园币筛选提交按钮应明确表达应用动作。');
+requireText(coinDetailSource, "type FlowFilter = 'income' | 'expense'", '校园币流水一级页签只应保留收入和支出。');
+requireText(coinDetailSource, 'categoryOptionsByFilter', '校园币收入和支出应分别维护各自的分类按钮。');
+requireText(coinDetailSource, 'aria-label="筛选流水年份"', '校园币年份应使用独立下拉筛选。');
+requireText(coinDetailSource, '<select', '校园币年份筛选应支持大量年份选项。');
+requireText(coinDetailSource, 'role="tablist"', '收入和支出应使用标准页签语义。');
+if (coinDetailSource.includes('showFilterSheet') || coinDetailSource.includes('<MobileBottomSheet')) {
+  throw new Error('校园币分类和年份筛选已前置，不应继续保留筛选抽屉。');
+}
 requireText(coinDetailSource, '<MobileEmptyState', '校园币筛选无结果时应复用公共缺省组件。');
 requireText(coinDetailSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '校园币筛选无结果时应使用搜索无结果缺省图。');
 requireText(coinDetailSource, 'grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]', '校园币资产摘要应保持钱包与存款等分，并支持长金额收缩。');
 requireText(coinDetailSource, 'groupedFlowItems', '校园币流水应按月份分组。');
 requireText(coinDetailSource, 'divide-y divide-[var(--tm-border-subtle)]', '同月流水应使用连续列表与分隔线组织。');
-requireText(coinDetailSource, 'h-11 min-w-11', '校园币筛选按钮应满足至少 44px 触控尺寸。');
+requireText(coinDetailSource, 'min-h-11 shrink-0', '校园币分类按钮应满足至少 44px 触控尺寸。');
 if (coinDetailSource.includes('学期')) {
   throw new Error('校园币是持续资产，不应使用学期筛选。');
 }
