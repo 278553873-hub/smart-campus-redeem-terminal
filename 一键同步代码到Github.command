@@ -83,7 +83,7 @@ log "========================================"
 log "  一键提交、同步 GitHub 并部署演示服务器"
 log "========================================"
 
-for cmd in git npm node rsync expect ssh curl; do
+for cmd in git npm node rsync expect ssh curl shasum; do
   require_command "$cmd"
 done
 
@@ -152,8 +152,10 @@ set -euo pipefail
 APP_DIR="$DEPLOY_APP_DIR"
 WEB_PORT="$DEPLOY_WEB_PORT"
 MODE="\${1:-restart}"
-mkdir -p "\$APP_DIR/dist" "\$APP_DIR/logs"
+mkdir -p "\$APP_DIR/logs"
 if [ "\$MODE" = "prepare" ]; then
+  rm -rf "\$APP_DIR/dist.next"
+  mkdir -p "\$APP_DIR/dist.next"
   exit 0
 fi
 cd "\$APP_DIR"
@@ -170,7 +172,10 @@ EOF_REMOTE_DEPLOY
 chmod +x "$TMP_REMOTE_DEPLOY_FILE"
 rsync_with_password "$TMP_REMOTE_DEPLOY_FILE" "/home/$DEPLOY_USER/campus-smart-points-remote-deploy.sh"
 run_expect "bash /home/$DEPLOY_USER/campus-smart-points-remote-deploy.sh prepare"
-rsync_with_password "dist/" "$DEPLOY_APP_DIR/dist/"
+rsync_with_password "dist/" "$DEPLOY_APP_DIR/dist.next/"
+
+LOCAL_INDEX_SHA="$(shasum -a 256 dist/index.html | awk '{print $1}')"
+run_expect "REMOTE_INDEX_SHA=\$(sha256sum '$DEPLOY_APP_DIR/dist.next/index.html' | awk '{print \$1}'); test \"\$REMOTE_INDEX_SHA\" = '$LOCAL_INDEX_SHA'; rm -rf '$DEPLOY_APP_DIR/dist.prev'; if [ -d '$DEPLOY_APP_DIR/dist' ]; then mv '$DEPLOY_APP_DIR/dist' '$DEPLOY_APP_DIR/dist.prev'; fi; mv '$DEPLOY_APP_DIR/dist.next' '$DEPLOY_APP_DIR/dist'"
 
 TMP_SERVER_FILE="/tmp/campus-smart-points-server-$$.mjs"
 cat > "$TMP_SERVER_FILE" <<'EOF_SERVER'
@@ -211,8 +216,16 @@ const server = http.createServer((req, res) => {
     }
     const type = mime[extname(filePath)] || 'application/octet-stream';
     const cache = filePath.endsWith('index.html') ? 'no-cache' : 'public, max-age=31536000, immutable';
+    const stream = createReadStream(filePath);
+    stream.on('error', (error) => {
+      console.error(`Failed to read static file: ${filePath}`, error);
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      }
+      res.end('Server error');
+    });
     res.writeHead(200, { 'Content-Type': type, 'Cache-Control': cache });
-    createReadStream(filePath).pipe(res);
+    stream.pipe(res);
   } catch (error) {
     res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Server error');
@@ -232,6 +245,7 @@ run_expect "bash /home/$DEPLOY_USER/campus-smart-points-remote-deploy.sh restart
 
 log "[7/7] 验证公网访问..."
 if curl -I --max-time 15 "$DEPLOY_PUBLIC_URL" | grep -q "200 OK"; then
+  run_expect "rm -rf '$DEPLOY_APP_DIR/dist.prev'"
   append_deploy_log
   log "✅ 已提交到 GitHub，并成功部署到服务器。"
   log "访问地址：$DEPLOY_PUBLIC_URL"
