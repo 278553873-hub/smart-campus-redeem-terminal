@@ -485,7 +485,8 @@ if (scrollRegionCount < 3) {
 
 requireText(viewSource, 'min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain', '单份答卷详情必须保留独立纵向滚动区域。');
 
-requireText(viewSource, 'sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-white/38 pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md', '问卷顶部必须使用教师端44像素头部，并避让微信胶囊安全区。');
+requireText(viewSource, 'sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-[var(--tm-page-plain-header-bg)] pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]', '问卷顶部必须使用教师端纯色标题栏 Token、44像素高度并避让微信胶囊安全区。');
+requireText(assignedSource, 'preview ? (\n        <header className="sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-[var(--tm-page-plain-header-bg)]', '家长填写问卷的教师端预览必须切换为教师端标准标题栏。');
 if (viewSource.includes('justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)]')) {
   throw new Error('问卷顶部标题栏不应保留分割线，应依靠毛玻璃与内容自然分层。');
 }

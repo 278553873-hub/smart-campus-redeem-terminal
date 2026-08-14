@@ -306,7 +306,7 @@ const PageHeader: React.FC<{
   onBack: () => void;
 }> = ({ title, onBack }) => {
   return (
-  <header className="sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-white/38 pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md">
+  <header className="sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-[var(--tm-page-plain-header-bg)] pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]">
     <button
       type="button"
       aria-label="返回"
