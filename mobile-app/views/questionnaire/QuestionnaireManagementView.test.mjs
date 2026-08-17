@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const viewSource = fs.readFileSync(new URL('./QuestionnaireManagementView.tsx', import.meta.url), 'utf8');
 const meSource = fs.readFileSync(new URL('../MeView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../../App.tsx', import.meta.url), 'utf8');
+const bottomNavigationSource = fs.readFileSync(new URL('../../components/TeacherBottomNavigation.tsx', import.meta.url), 'utf8');
 const parentSource = fs.readFileSync(new URL('../../../components/ParentApp.tsx', import.meta.url), 'utf8');
 const storeSource = fs.readFileSync(new URL('../../../shared/questionnaireStore.ts', import.meta.url), 'utf8');
 const teacherTokenSource = fs.readFileSync(new URL('../../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
@@ -761,7 +762,8 @@ requireText(viewSource, "type PageMode = 'list' | 'assigned-list'", '问卷采�
 requireText(viewSource, "['creator', '我来填写'], ['homeroom', '各班班主任']", '确认开始页必须支持选择填写分工。');
 requireText(viewSource, 'getStudentCollectionRecordsForTeacher(record, teacherId, teacherName)', '待我填写详情只能展示当前教师负责的学生。');
 requireText(meSource, '待填写采集', '我的页面必须按需展示采集待办入口。');
-requireText(appSource, 'pendingCollectionCount > 0', '我的底部导航必须按需展示待办数量。');
+requireText(bottomNavigationSource, 'pendingCollectionCount > 0', '我的底部导航必须按需展示待办数量。');
+requireText(appSource, 'pendingCollectionCount={pendingCollectionCount}', '应用层必须向底部导航传入待办数量。');
 requireText(appSource, "setQuestionnaireEntryMode('assigned')", '点击我的待办必须直达待我填写列表。');
 
 for (const [pattern, message] of [

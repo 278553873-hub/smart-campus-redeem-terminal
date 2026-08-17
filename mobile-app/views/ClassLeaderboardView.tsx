@@ -1,18 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import {
-    ChevronRightIcon, ActivityIcon,
-    ChartIcon, UsersIcon, CloseIcon, FilterIcon,
-    CheckCircleIcon, AlertCircleIcon, CalendarIcon,
-    TrophyIcon
-} from '../components/Icons';
-import { MOCK_CLASSES } from '../constants';
-import { MoreHorizontal, TrendingUp, TrendingDown, ArrowDown, BarChart3, ChevronDown, Check } from 'lucide-react';
+import { ChevronRightIcon, ActivityIcon } from '../components/Icons';
+import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
+import ClassRankingList from '../components/ui/ClassRankingList';
+import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
-import EvaluationRecordsLogView from './EvaluationRecordsLogView';
+import TextSelectionControl from '../components/ui/TextSelectionControl';
 
 interface ClassLeaderboardViewProps {
-    onBack: () => void;
-    classId?: string;
+    onOpenEvaluationRecords: () => void;
 }
 
 type TimeRange = 'today' | 'week' | 'month' | 'term' | 'custom';
@@ -25,10 +20,9 @@ type ClassRankingItem = {
     id: string;
     name: string;
     score: number;
-    rank?: number;
 };
 
-const getRankedClasses = (items: ClassRankingItem[]) => {
+const getRankedClasses = (items: ClassRankingItem[]): Array<ClassRankingItem & { rank: number }> => {
     const sortedItems = [...items].sort((left, right) => right.score - left.score || left.name.localeCompare(right.name, 'zh-Hans-CN'));
 
     let previousScore: number | null = null;
@@ -44,13 +38,6 @@ const getRankedClasses = (items: ClassRankingItem[]) => {
             rank,
         };
     });
-};
-
-const rankBadgeClassName = (rank?: number) => {
-    if (rank === 1) return 'bg-[#FFC107] text-white shadow-[#FFC107]/40 shadow-lg';
-    if (rank === 2) return 'bg-[#B0BEC5] text-white';
-    if (rank === 3) return 'bg-[#FFAB91] text-white';
-    return 'bg-slate-100 text-slate-400';
 };
 
 // --- Mock Data Generator ---
@@ -113,73 +100,11 @@ const getGradeStats = (grade: string, timeRange: TimeRange, activeDim: Dimension
     return { gradeAvg, gradeTrend, pillarScores, topIssue, rankings: getRankedClasses(rankings), recentRecords };
 };
 
-// --- Components ---
-const GradePicker = ({ selected, options, onSelect }: { selected: string, options: string[], onSelect: (g: string) => void }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    return (
-        <div className="relative z-50">
-            <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                aria-expanded={isOpen}
-                className="flex min-h-[var(--tm-size-touch)] items-center gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm transition-[background-color,box-shadow,transform] active:scale-[0.96] active:bg-slate-50"
-            >
-                <span className="text-[14px] font-bold text-slate-800">{selected}</span>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isOpen && (
-                <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-2xl shadow-lg border border-slate-100 py-2 z-50 overflow-hidden text-left">
-                        {options.map(opt => (
-                            <button
-                                key={opt}
-                                onClick={() => { onSelect(opt); setIsOpen(false); }}
-                                className={`w-full px-4 py-3 text-[14px] font-bold flex items-center justify-between gap-2
-                                    ${selected === opt ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-slate-600 '}
-                                `}
-                            >
-                                {opt}
-                                {selected === opt && <Check className="w-3.5 h-3.5" />}
-                            </button>
-                        ))}
-                    </div>
-                </>
-            )}
-        </div>
-    );
-};
-
-interface TabItemProps {
-    label: string;
-    active: boolean;
-    onClick: () => void;
-}
-const TabItem: React.FC<TabItemProps> = ({ label, active, onClick }) => (
-    <button
-        type="button"
-        onClick={onClick}
-        aria-pressed={active}
-        className={`relative min-h-[var(--tm-size-touch)] flex-shrink-0 px-4 text-sm font-medium transition-[color,transform] active:scale-[0.96] ${active ? 'text-[var(--tm-brand-primary)]' : 'text-slate-400'}`}
-    >
-        {label}
-        {active && (
-            <div className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]" />
-        )}
-    </button>
-);
-
-const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
+const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ onOpenEvaluationRecords }) => {
     const [activeGrade, setActiveGrade] = useState('全部年级');
     const [timeRange, setTimeRange] = useState<TimeRange>('week');
     const [activeDim, setActiveDim] = useState<Dimension>('total');
-    const [showRecordsLog, setShowRecordsLog] = useState(false);
     const [showFullRanking, setShowFullRanking] = useState(false);
-
-    if (showRecordsLog) {
-        return <EvaluationRecordsLogView onBack={() => setShowRecordsLog(false)} />;
-    }
 
     // Filter logic: Map '全部年级' back to 'all' for internal logic if needed, 
     // or just pass '全部年级' to getGradeStats and handle it there.
@@ -201,24 +126,22 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
 
             <div className="w-full max-w-md min-h-screen relative flex flex-col">
 
-                {/* 1. Top Navigation Logic (Dropdown + Tabs) */}
-                <div className="sticky top-0 z-40 [box-shadow:var(--tm-shadow-control)]">
-                    <div className="flex items-center overflow-x-auto bg-[var(--tm-page-plain-header-bg)] px-2 no-scrollbar">
-                        {timeOptions.map(t => (
-                            <TabItem
-                                key={t.label}
-                                label={t.label}
-                                active={timeRange === t.value}
-                                onClick={() => setTimeRange(t.value)}
-                            />
-                        ))}
-                    </div>
+                <div className="sticky top-0 z-40 bg-[var(--tm-page-plain-content-bg)]">
+                    <ReportDateRangeTabs
+                        value={timeRange}
+                        items={timeOptions.map(item => ({ value: item.value, label: item.label }))}
+                        onChange={setTimeRange}
+                        ariaLabel="排行榜时间范围"
+                    />
 
-                    <div className="flex items-center bg-[var(--tm-page-plain-content-bg)] px-4 py-2">
-                        <GradePicker
-                            selected={activeGrade}
-                            options={gradeOptions}
-                            onSelect={setActiveGrade}
+                    <div className="bg-[var(--tm-page-plain-content-bg)]">
+                        <TextSelectionControl
+                            value={activeGrade}
+                            items={gradeOptions.map(grade => ({ value: grade, label: grade }))}
+                            onChange={setActiveGrade}
+                            ariaLabel="排行榜年级筛选"
+                            size="compact"
+                            className="px-[var(--tm-report-page-inline)]"
                         />
                     </div>
                 </div>
@@ -227,14 +150,13 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                 <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
 
                     {/* Module 1: Class Rankings Card */}
-                    <div className="bg-white rounded-3xl p-5 shadow-sm">
+                    <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
 
                         {/* Header */}
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[17px] font-semibold text-slate-800 flex items-center gap-2">
+                        <div className="mb-[var(--tm-report-card-content-gap)] flex min-h-11 items-center">
+                            <h3 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">
                                 班级排行榜
                             </h3>
-                            <span className="text-[11px] font-bold text-slate-400">Top 5</span>
                         </div>
 
                         {/* Dimension Pills */}
@@ -246,43 +168,13 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                             className="mb-2"
                         />
 
-                        {/* List */}
-                        <div className="space-y-3">
-                            {data.rankings.slice(0, 5).map((cls) => (
-                                <div
-                                    key={cls.id}
-                                    className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl shadow-sm"
-                                >
-                                    {/* Rank & Name */}
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold tabular-nums ${rankBadgeClassName(cls.rank)}`}>
-                                            {cls.rank}
-                                        </div>
-                                        <span className="text-[14px] font-bold text-slate-800">{cls.name}</span>
-                                    </div>
-
-                                    {/* Score Only (Trend Removed) */}
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[17px] font-bold tabular-nums text-[var(--tm-brand-primary)]">
-                                            {cls.score}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Footer Action */}
-                        {data.rankings.length > 5 && (
-                            <div className="mt-4 pt-2 flex justify-center border-t border-slate-50">
-                                <button
-                                    onClick={() => setShowFullRanking(true)}
-                                    className="flex min-h-11 items-center gap-1 py-2 text-[12px] font-bold text-slate-400 transition-colors active:text-[var(--tm-brand-primary)]"
-                                >
-                                    查看全部排名 <ChevronRightIcon className="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                        <ClassRankingList
+                            items={data.rankings.slice(0, 5)}
+                            ariaLabel="班级排行榜前五名"
+                            onViewAll={data.rankings.length > 5 ? () => setShowFullRanking(true) : undefined}
+                            actionLabel="查看完整排名"
+                        />
+                    </section>
 
                     {/* Module 2: Evaluation Records Card */}
                     <div className="bg-white rounded-3xl p-5 shadow-sm">
@@ -292,8 +184,10 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                                 评价记录
                             </h3>
                             <button
-                                onClick={() => setShowRecordsLog(true)}
-                                className="text-[11px] font-bold text-slate-400 flex items-center gap-0.5"
+                                type="button"
+                                onClick={onOpenEvaluationRecords}
+                                aria-label="查看全部评价记录"
+                                className="-my-2 flex min-h-[var(--tm-size-touch)] items-center gap-0.5 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-brand-primary)] transition-colors active:text-[var(--tm-brand-primary-pressed)]"
                             >
                                 更多 <ChevronRightIcon className="w-3 h-3" />
                             </button>
@@ -324,45 +218,16 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                     </div>
                 </div>
 
-                {showFullRanking && (
-                    <div className="absolute inset-0 z-[120] flex items-end bg-black/40 backdrop-blur-sm" onClick={() => setShowFullRanking(false)}>
-                        <div className="max-h-[82%] w-full rounded-t-[32px] bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                                <div>
-                                    <h3 className="text-[17px] font-semibold text-slate-900">全部班级排名</h3>
-                                    <p className="mt-1 text-[12px] font-medium text-slate-400">{activeGrade} · {activeDim === 'total' ? '综合评价' : activeDim}</p>
-                                </div>
-                                <button
-                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-500 active:bg-slate-100"
-                                    onClick={() => setShowFullRanking(false)}
-                                    aria-label="关闭全部班级排名"
-                                >
-                                    <CloseIcon className="h-5 w-5" />
-                                </button>
-                            </div>
-                            <div className="max-h-[calc(82vh-76px)] overflow-y-auto p-4">
-                                <div className="space-y-3">
-                                    {data.rankings.map((cls) => (
-                                        <div
-                                            key={cls.id}
-                                            className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
-                                        >
-                                            <div className="flex min-w-0 items-center gap-4">
-                                                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-bold tabular-nums ${rankBadgeClassName(cls.rank)}`}>
-                                                    {cls.rank}
-                                                </div>
-                                                <span className="truncate text-[14px] font-bold text-slate-800">{cls.name}</span>
-                                            </div>
-                                            <span className="text-[17px] font-bold tabular-nums text-[var(--tm-brand-primary)]">
-                                                {cls.score}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <MobileBottomSheet
+                    open={showFullRanking}
+                    title="全部班级排名"
+                    onClose={() => setShowFullRanking(false)}
+                >
+                    <p className="-mt-1 mb-2 text-[12px] font-medium text-[var(--tm-text-secondary)]">
+                        {activeGrade} · {activeDim === 'total' ? '综合评价' : activeDim}
+                    </p>
+                    <ClassRankingList items={data.rankings} ariaLabel="全部班级排名" />
+                </MobileBottomSheet>
             </div>
         </div>
     );

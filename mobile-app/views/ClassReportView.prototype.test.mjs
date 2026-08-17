@@ -17,6 +17,7 @@ const pillSelectionSource = fs.readFileSync(new URL('../components/ui/PillSelect
 const indicatorDemoSource = fs.readFileSync(new URL('../data/classReportIndicatorDemo.ts', import.meta.url), 'utf8');
 const indicatorTreeSource = fs.readFileSync(new URL('../domain/classReportIndicatorTree.ts', import.meta.url), 'utf8');
 const indicatorDrilldownSource = fs.readFileSync(new URL('../components/report/ClassReportIndicatorDrilldown.tsx', import.meta.url), 'utf8');
+const reportDateTabsSource = fs.readFileSync(new URL('../components/report/ReportDateRangeTabs.tsx', import.meta.url), 'utf8');
 
 for (const section of [
     '概况',
@@ -156,15 +157,15 @@ assert.ok(viewSource.includes("maxTeacherCount: reportSourceKey === 'all'"), '�
 assert.ok(viewSource.includes('gap-[var(--tm-report-source-item-gap)] px-[var(--tm-report-source-list-inline)]'), '来源列表应使用令牌化外边距与项目间距。');
 assert.ok(viewSource.includes('h-[var(--tm-report-source-pill-height)]') && viewSource.includes('px-[var(--tm-report-source-pill-inline)]') && viewSource.includes('px-[var(--tm-report-source-item-inline)]'), '来源项与选中胶囊应分别消费稳定高度和水平内边距令牌。');
 assert.ok(viewSource.includes("'bg-[var(--tm-brand-primary)] px-[var(--tm-report-source-pill-inline)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]'"), '当前来源应使用主题红实底、反白文字和轻阴影。');
-assert.ok(viewSource.includes('grid h-[var(--tm-size-touch)] grid-cols-5') && !viewSource.includes('<div className="border-b border-[var(--tm-border-subtle)]">'), '时间范围应使用开放式五等分文字标签，日期与来源之间不增加干扰线。');
+assert.ok(viewSource.includes('<ReportDateRangeTabs') && reportDateTabsSource.includes('grid h-[var(--tm-size-touch)] grid-cols-5') && !viewSource.includes('<div className="border-b border-[var(--tm-border-subtle)]">'), '时间范围应复用开放式五等分文字标签，日期与来源之间不增加干扰线。');
 assert.ok(viewSource.includes('sticky top-0 z-30 border-b bg-[var(--tm-page-plain-content-bg)]'), '班级报告顶部组合筛选应使用页面浅灰底承接来源切换。');
-assert.ok(viewSource.includes('-mx-[var(--tm-report-page-inline)] grid h-[var(--tm-size-touch)] grid-cols-5 bg-[var(--tm-page-plain-header-bg)]'), '班级报告日期切换应保留独立白色开放页签层。');
-assert.ok(viewSource.includes('h-[var(--tm-report-date-indicator-height)] w-[var(--tm-report-date-indicator-width)]') && viewSource.includes('h-[var(--tm-size-touch)]'), '日期选中项应使用令牌化短线并保留44像素触控区域。');
+assert.ok(viewSource.includes('className="-mx-[var(--tm-report-page-inline)]"') && reportDateTabsSource.includes('bg-[var(--tm-page-plain-header-bg)]'), '班级报告日期切换应保留独立白色开放页签层。');
+assert.ok(reportDateTabsSource.includes('h-[var(--tm-report-date-indicator-height)] w-[var(--tm-report-date-indicator-width)]') && reportDateTabsSource.includes('h-[var(--tm-size-touch)]'), '日期选中项应使用令牌化短线并保留44像素触控区域。');
 assert.ok(viewSource.includes('px-[var(--tm-report-page-inline)]') && viewSource.includes('pb-[var(--tm-report-filter-padding-bottom)] pt-[var(--tm-report-filter-padding-top)]'), '顶部工具区应与报告卡片共用左右基线并消费默认态上下留白令牌。');
 assert.ok(viewSource.includes('pt-[var(--tm-report-source-padding-top)]') && viewSource.includes('pb-[var(--tm-report-source-padding-bottom)]') && viewSource.includes('h-[var(--tm-size-touch)] shrink-0'), '来源标签栏应消费上下留白令牌并保留44像素触控高度。');
 assert.ok(viewSource.includes('pt-[var(--tm-report-card-gap)]'), '日期筛选卡片到概况卡片的间距应复用正文板块间距令牌。');
-assert.ok(viewSource.includes("'font-semibold text-[var(--tm-brand-primary)]'") && viewSource.includes("timeRange === item.key ? 'opacity-100' : 'opacity-0'"), '日期选中项应使用品牌文字和短下划线。');
-assert.ok(viewSource.includes("'font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]'"), '日期未选项应使用中等字重次级文字和按压反馈。');
+assert.ok(reportDateTabsSource.includes("'font-semibold text-[var(--tm-brand-primary)]'") && reportDateTabsSource.includes("selected ? 'opacity-100' : 'opacity-0'"), '日期选中项应使用品牌文字和短下划线。');
+assert.ok(reportDateTabsSource.includes("'font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]'"), '日期未选项应使用中等字重次级文字和按压反馈。');
 assert.ok(!viewSource.includes('bg-[var(--tm-bg-page-glass)] pb-3 backdrop-blur-xl'), '班级报告顶部筛选不应继续使用玻璃背景。');
 for (const filterLabel of ['积分排行类型', '需要关注维度']) {
     assert.ok(viewSource.includes(`ariaLabel="${filterLabel}"`), `班级报告缺少${filterLabel}筛选语义。`);

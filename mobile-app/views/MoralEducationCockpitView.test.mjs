@@ -14,6 +14,7 @@ const chartSource = fs.readFileSync(new URL('../components/report/TeacherReportC
 const periodCalendarSource = fs.readFileSync(new URL('../components/report/ReportPeriodCalendar.tsx', import.meta.url), 'utf8');
 const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const pillSource = fs.readFileSync(new URL('../components/ui/PillSelectionControl.tsx', import.meta.url), 'utf8');
+const rankingListSource = fs.readFileSync(new URL('../components/ui/ClassRankingList.tsx', import.meta.url), 'utf8');
 
 for (const required of [
   "title: '班级评价报表'",
@@ -53,6 +54,7 @@ for (const required of [
   'getMoralEducationCockpitPeriods',
   'TeacherReportLineChart',
   '<MobileBottomSheet',
+  '<ClassRankingList',
   '<ReportPeriodCalendar',
   "{ key: 'week', label: '按周' }",
   "{ key: 'month', label: '按月' }",
@@ -90,6 +92,9 @@ assert.ok(viewSource.includes('text-[var(--tm-text-secondary)]" />'), '统计粒
 assert.equal(viewSource.includes('active:scale-[0.98]'), false, '统计粒度下拉不应增加手机端按压缩放。');
 assert.equal(viewSource.includes('border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)]'), false, '统计粒度下拉不应继续使用品牌红表面。');
 assert.ok(viewSource.includes('<PillSelectionControl') && viewSource.includes('semantics="tabs"'), '班级排名与问题分布年级筛选应复用统一胶囊页签。');
+assert.ok(viewSource.includes('items={filteredRanking.slice(0, 5)}') && viewSource.includes('items={filteredRanking}'), '班级评价报表预览与完整排名应复用统一排名列表。');
+assert.ok(rankingListSource.includes('text-[var(--tm-text-primary)]">{item.score}分'), '普通排名得分应使用中性主文字，不得表达为负向状态。');
+assert.ok(rankingListSource.includes('text-[var(--tm-chart-negative-text)]">扣{item.deduction}分'), '只有扣分信息应使用负向数据色。');
 assert.ok(pillSource.includes('border-[var(--tm-selection-pill-active-border)] bg-[var(--tm-selection-pill-active-bg)] text-[var(--tm-selection-pill-active-text)]'), '年级选中项应通过组件 Token 使用主题红边框、红底和白字。');
 assert.ok(pillSource.includes('border-[var(--tm-selection-pill-inactive-border)] bg-[var(--tm-selection-pill-inactive-bg)] text-[var(--tm-selection-pill-inactive-text)]'), '年级未选项应通过组件 Token 使用白底浅边框和次级文字。');
 assert.ok(viewSource.includes("? 'font-bold text-[var(--tm-text-primary)]'"), '问题分布的下级指标选中态应使用透明背景与黑色粗体。');

@@ -7,6 +7,7 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import ClassRankingList from '../components/ui/ClassRankingList';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
 import ReportPeriodCalendar, { periodTypeLabels } from '../components/report/ReportPeriodCalendar';
 import {
@@ -17,7 +18,6 @@ import {
 import {
     getMoralEducationCockpitPeriods,
     getMoralEducationCockpitSnapshot,
-    type MoralEducationClassSummary,
     type MoralEducationCockpitSnapshot,
     type MoralEducationGradeSummary,
     type MoralEducationPeriodOption,
@@ -205,25 +205,6 @@ const ReportSegmentTabs = ({
                 );
             })}
         </div>
-    </div>
-);
-
-const rankToneClasses = [
-    'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]',
-    'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]',
-    'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]',
-];
-
-const RankingRow = ({ item }: { item: MoralEducationClassSummary }) => (
-    <div className="grid min-h-[58px] grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 border-b border-[var(--tm-border-subtle)] last:border-b-0">
-        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold tabular-nums ${rankToneClasses[item.rank - 1] ?? 'text-[var(--tm-text-disabled)]'}`}>
-            {item.rank}
-        </span>
-        <span className="min-w-0 truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{item.name}</span>
-        <span className="text-right">
-            <strong className="block text-[15px] font-bold tabular-nums text-[var(--tm-text-primary)]">{item.score}分</strong>
-            <span className="mt-0.5 block text-[11px] tabular-nums text-[var(--tm-chart-negative-text)]">扣{item.deduction}分</span>
-        </span>
     </div>
 );
 
@@ -496,18 +477,13 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                     ariaLabel="班级排名年级筛选"
                                 />
                                 <div className="mt-2">
-                                    {filteredRanking.slice(0, 5).map(classItem => (
-                                        <RankingRow key={classItem.id} item={classItem} />
-                                    ))}
+                                    <ClassRankingList
+                                        items={filteredRanking.slice(0, 5)}
+                                        ariaLabel="班级排名前五名"
+                                        onViewAll={() => setIsRankingSheetOpen(true)}
+                                        actionLabel="查看完整排名"
+                                    />
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsRankingSheetOpen(true)}
-                                    className="mt-3 flex min-h-11 w-full items-center justify-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[13px] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]"
-                                >
-                                    查看完整排名
-                                    <ChevronRight className="h-4 w-4 text-[var(--tm-text-secondary)]" />
-                                </button>
                             </section>
 
                             <section className={reportCardClassName} aria-label="问题分布">
@@ -642,9 +618,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                             ariaLabel="完整班级排名年级筛选"
                         />
                         <div className="mt-2 pb-2">
-                            {filteredRanking.map(classItem => (
-                                <RankingRow key={classItem.id} item={classItem} />
-                            ))}
+                            <ClassRankingList items={filteredRanking} ariaLabel="完整班级排名" />
                         </div>
                     </>
                 )}

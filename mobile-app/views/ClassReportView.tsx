@@ -19,6 +19,7 @@ import ClassReportIndicatorDrilldown, {
     type ClassReportIndicatorDrilldownMode,
 } from '../components/report/ClassReportIndicatorDrilldown';
 import RecordDistributionComparison, { RecordDistributionDetails } from '../components/report/RecordDistributionComparison';
+import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
 import {
     TeacherReportBarChart,
     TeacherReportDonutChart,
@@ -651,29 +652,13 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                             : 'pb-[var(--tm-report-filter-padding-bottom)] pt-[var(--tm-report-filter-padding-top)]'
                     }`}>
                         <div>
-                            <div className="-mx-[var(--tm-report-page-inline)] grid h-[var(--tm-size-touch)] grid-cols-5 bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)]" role="group" aria-label="报告时间范围">
-                                {timeRangeTabs.map(item => (
-                                    <button
-                                        key={item.key}
-                                        type="button"
-                                        aria-pressed={timeRange === item.key}
-                                        onClick={() => handleTimeRangeChange(item.key)}
-                                        className={`relative flex h-full min-w-0 items-center justify-center whitespace-nowrap px-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] transition-[color,scale] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transform-none ${
-                                            timeRange === item.key
-                                                ? 'font-semibold text-[var(--tm-brand-primary)]'
-                                                : 'font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]'
-                                        }`}
-                                    >
-                                        <span>{item.label}</span>
-                                        <span
-                                            aria-hidden="true"
-                                            className={`absolute bottom-0 left-1/2 h-[var(--tm-report-date-indicator-height)] w-[var(--tm-report-date-indicator-width)] -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)] transition-opacity [transition-duration:var(--tm-duration-standard)] ${
-                                                timeRange === item.key ? 'opacity-100' : 'opacity-0'
-                                            }`}
-                                        />
-                                    </button>
-                                ))}
-                            </div>
+                            <ReportDateRangeTabs
+                                value={timeRange}
+                                items={timeRangeTabs.map(item => ({ value: item.key, label: item.label }))}
+                                onChange={handleTimeRangeChange}
+                                ariaLabel="报告时间范围"
+                                className="-mx-[var(--tm-report-page-inline)]"
+                            />
                             {timeRange === 'custom' && appliedCustomRange && (
                                 <div
                                     aria-label={`当前自定义日期范围：${appliedCustomRange.start}至${appliedCustomRange.end}`}
