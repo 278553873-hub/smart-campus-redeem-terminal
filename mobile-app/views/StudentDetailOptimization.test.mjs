@@ -185,6 +185,9 @@ requireText(appSource, "contentTopInsetMode={currentView === 'student_detail' ? 
 requireText(dashboardSource, '<StudentTermSelector value={selectedTerm}', '成长报告必须使用学期选择器。');
 requireText(termSelectorSource, '<StudentTimeRangeSelector', '学期筛选必须复用学生详情通用时间选择器。');
 requireText(timeRangeSelectorSource, 'h-11 w-full', '时间选择器必须满足 44px 触控高度。');
+requireText(timeRangeSelectorSource, 'bg-[var(--tm-bg-surface)]', '学生学期筛选必须使用白色表面。');
+requireText(timeRangeSelectorSource, '[box-shadow:var(--tm-shadow-control)]', '学生学期筛选必须使用统一控件轻阴影。');
+requireText(timeRangeSelectorSource, 'focus-visible:bg-[var(--tm-bg-surface)]', '学生学期筛选聚焦后必须保持白色表面。');
 requireText(termSelectorSource, '（本学期）', '学期选择器必须明确当前学期。');
 requireText(dashboardSource, '本学期五育积分', '五育积分应明确为本学期实时累计结果。');
 requireText(dashboardSource, 'currentTermOption', '评价记录页必须固定读取当前学期数据。');
@@ -424,25 +427,67 @@ for (const required of [
   '本月预计可得',
   '阳光保底',
   '排名奖励',
-  '每周一结算',
-  '每月1日结算',
   '学校暂未开启自动发放',
-  'estimateDateLabel',
 ]) {
   requireText(coinDetailSource, required, `校园币详情缺少结算预估信息：${required}`);
 }
 requireText(coinDetailSource, '账户概览', '钱包、存款与结算预估应组成明确的账户概览板块。');
 requireText(coinDetailSource, '收支明细', '流水筛选和列表应归入明确的收支明细板块。');
-requireText(coinDetailSource, '--tm-font-size-group-title', '紧凑预估总额应使用教师端组标题字号 Token。');
-if (coinDetailSource.includes('--tm-font-size-metric')) {
-  throw new Error('结算预估已收敛为账户摘要带，不应继续使用大号统计数字。');
+requireText(coinDetailSource, 'text-[length:var(--tm-font-size-body)] font-semibold leading-none tabular-nums', '预计可得属于预测值，应使用14px半粗字重。');
+requireText(coinDetailSource, 'text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums', '钱包和存款属于已确认资产，应使用15px半粗字重。');
+requireText(coinDetailSource, 'text-[length:var(--tm-font-size-card-title)] font-semibold leading-none tabular-nums', '单笔流水金额应与流水标题保持15px半粗层级。');
+for (const oversizedAmountToken of ['--tm-font-size-metric', '--tm-font-size-group-title']) {
+  if (coinDetailSource.includes(oversizedAmountToken)) {
+    throw new Error(`校园币金额不应继续使用大号统计或组标题字号：${oversizedAmountToken}`);
+  }
 }
-requireText(coinDetailSource, 'bg-[var(--tm-bg-surface-muted)]', '结算预估应使用浅中性摘要带与资产区建立分层。');
-requireText(coinDetailSource, 'mt-[var(--tm-space-5)]', '账户概览与收支明细之间应保留明确的板块间距。');
+requireText(coinDetailSource, 'bg-[var(--tm-brand-reward-soft)]', '结算预估与收入流水图标应使用浅金表面建立校园币语义。');
+requireText(coinDetailSource, "item.type === 'income' ? 'bg-[var(--tm-brand-reward-soft)]' : 'bg-[var(--tm-brand-primary-soft)]'", '流水图标应按收入和支出使用有限的语义色。');
+requireText(coinDetailSource, 'overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)]', '校园币明细应使用浅灰页面底承托白色内容卡片。');
+requireText(coinDetailSource, 'id="coin-overview-title" className="flex min-h-[var(--tm-size-touch)] items-center px-[var(--tm-space-4)]', '账户概览标题应纳入账户卡片头部。');
+requireText(coinDetailSource, 'overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]', '账户资产与结算预估应组成一张由浅灰页面承托的语义卡片。');
+requireText(coinDetailSource, 'p-[var(--tm-space-2)] pb-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]', '收支卡应以 8px 内缩匹配 20px 外圆角与 12px 控件圆角。');
+requireText(coinDetailSource, 'className="flex min-h-[var(--tm-size-touch)] items-center justify-between px-[var(--tm-space-2)]">\n                <h2 id="coin-flow-title"', '收支明细标题和年份筛选应纳入同一卡片头部，并与流水内容保持 16px 视觉对齐。');
+requireText(coinDetailSource, 'flex min-h-[var(--tm-size-touch)] items-center justify-between gap-[var(--tm-space-3)]', '结算预估应使用单行横向摘要，减少板块占高。');
+requireText(coinDetailSource, 'bg-[var(--tm-filter-bg)]', '年份筛选的默认和有值状态应使用透明筛选表面 Token。');
+requireText(coinDetailSource, 'border-[var(--tm-filter-border)]', '年份筛选不应显示容器边界。');
+requireText(coinDetailSource, '[box-shadow:var(--tm-filter-shadow)]', '年份筛选不应显示容器阴影。');
+requireText(coinDetailSource, 'focus-visible:bg-[var(--tm-filter-focus-bg)]', '年份筛选激活时应继续使用透明筛选表面 Token。');
+requireText(coinDetailSource, '[outline:var(--tm-filter-focus-outline)]', '年份筛选应通过手机端筛选 Token 明确取消激活描边。');
+const coinYearSelect = coinDetailSource.match(/<select[\s\S]*?<\/select>/)?.[0] ?? '';
+if (coinYearSelect.includes('focus-visible:ring')) {
+  throw new Error('手机端年份下拉聚焦时不应增加描边或焦点环。');
+}
+requireText(coinDetailSource, 'items-center rounded-[var(--tm-radius-control)] p-[var(--tm-space-1)]', '收入和支出按钮的焦点边界应匹配分段控件圆角。');
+requireText(coinDetailSource, 'transition-[background-color,color,box-shadow]', '收入和支出选中态只应过渡实际变化的属性。');
+requireText(coinDetailSource, 'active:scale-[0.96]', '校园币页面按钮应提供克制的手机端按压反馈。');
+if (coinDetailSource.includes('] transition [transition-duration:')) {
+  throw new Error('校园币页面不得使用监听全部属性的 transition 简写。');
+}
+requireText(coinDetailSource, 'className="divide-y divide-[var(--tm-border-subtle)]"', '月度流水应在白色板块内使用连续列表。');
+if (coinDetailSource.includes('divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card)]')) {
+  throw new Error('通栏白色收支板块内不应继续嵌套月度流水卡片。');
+}
+for (const redundantGrayBand of [
+  'id="coin-overview-title" className="-mx-[var(--tm-space-4)]',
+  'items-center justify-between bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)]',
+]) {
+  if (coinDetailSource.includes(redundantGrayBand)) {
+    throw new Error('校园币明细不应继续使用通栏浅灰标题带切割页面。');
+  }
+}
+for (const redundantSettlementText of ['estimateDateLabel', 'settlementLabel', '每周一结算', '每月1日结算']) {
+  if (coinDetailSource.includes(redundantSettlementText)) {
+    throw new Error(`结算预估不应展示低频结算时间信息：${redundantSettlementText}`);
+  }
+}
+requireText(coinDetailSource, 'mt-[var(--tm-space-4)]', '两张一级卡片应通过紧凑且稳定的灰底间距建立板块层级。');
 requireText(coinDetailSource, '--tm-size-touch', '校园币页面控件应使用统一触控尺寸 Token。');
 requireText(coinDetailSource, '--tm-duration-fast', '校园币页面交互动效应使用统一时长 Token。');
 requireText(coinDetailSource, '--tm-focus-ring', '校园币非输入控件应保留可见的键盘焦点样式。');
-requireText(coinDetailSource, 'focus-visible:ring-offset-2', '校园币年份下拉应提供可见且与背景分离的焦点环。');
+if (coinDetailSource.includes('focus-visible:ring-offset-2')) {
+  throw new Error('校园币年份下拉不应增加品牌色描边或外环。');
+}
 requireText(coinDetailSource, 'motion-reduce:transition-none', '校园币页面过渡应尊重减少动态效果设置。');
 for (const hardcodedClass of ['min-h-11', 'text-[14px]', 'text-[13px]', 'text-lg']) {
   if (coinDetailSource.includes(hardcodedClass)) {

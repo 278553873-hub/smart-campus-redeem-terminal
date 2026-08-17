@@ -18,24 +18,23 @@ if (sheetStart < 0 || sheetEnd < 0) throw new Error('应将班级来源抽屉抽
 const sheetSource = meSource.slice(sheetStart, sheetEnd);
 
 requireText(sheetSource, '切换班级来源', '底部抽屉标题应为切换班级来源，而不是切换学校。');
-requireText(sheetSource, "aria-label=\"切换班级来源\"", '底部抽屉语义应标记为切换班级来源。');
+requireText(sheetSource, 'title="切换班级来源"', '全局底部弹窗应通过标题提供切换班级来源的对话框语义。');
 requireText(meSource, "if (space.type === 'personal') return '个人';", '个人来源应展示个人标签。');
 requireText(meSource, "if (space.type === 'collaboration') return '协作';", '协作来源应展示协作标签。');
 requireText(meSource, "return '学校';", '学校来源应展示学校标签。');
 requireText(meSource, '<ClassSourceTrigger', '我的页应复用全局班级来源触发器。');
+requireText(meSource, "import MobileBottomSheet from '../components/ui/MobileBottomSheet';", '班级来源抽屉应复用全局底部弹窗组件。');
 requireText(sourceTriggerSource, 'personal: UserRound', '个人来源触发器应使用单人图标。');
 requireText(sourceTriggerSource, 'collaboration: UsersRound', '协作来源触发器应使用多人图标。');
 requireText(sourceTriggerSource, 'school: Building2', '学校来源触发器应使用学校图标。');
-requireText(sheetSource, 'absolute inset-0 z-[70] flex items-end', '班级来源抽屉层级应高于底部导航 z-50。');
+requireText(sheetSource, '<MobileBottomSheet open title="切换班级来源" onClose={onClose}>', '班级来源抽屉应使用全局底部弹窗的白色承载面与层级。');
 requireText(sheetSource, 'text-[17px] font-semibold leading-[22px]', '抽屉标题和列表主文案应使用接近 iOS 17pt 的字号。');
 requireText(sheetSource, 'min-h-[60px]', '来源卡片高度应按标注收紧为 60px。');
 requireText(sheetSource, 'rounded-[var(--tm-radius-inner)]', '来源卡片应使用统一内层圆角令牌。');
-requireText(sheetSource, 'bg-[var(--tm-mask)] backdrop-blur-[1px]', '遮罩应使用品牌 Token 中的统一中性遮罩。');
-requireText(sheetSource, 'bg-[var(--tm-bg-page-glass)]', '抽屉面板应使用暖白轻玻璃底。');
-requireText(sheetSource, 'bg-[var(--tm-brand-primary-soft-strong)]', '底部抽屉拖拽条应使用品牌红浅色。');
+requireText(sheetSource, 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]', '未选中来源应使用白色表面和白底专用阴影。');
 requireText(sheetSource, 'bg-[var(--tm-brand-primary-soft)]', '当前来源卡片应使用浅红选中底。');
 requireText(sheetSource, 'ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]', '当前来源卡片应使用品牌红描边与统一卡片阴影。');
-requireText(sheetSource, 'bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-white', '当前来源胶囊应使用品牌红。');
+requireText(sheetSource, 'bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-[var(--tm-text-inverse)]', '当前来源胶囊应使用品牌红和统一反色文字。');
 requireText(sheetSource, 'transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96]', '抽屉内按钮应使用快速动效令牌和 0.96 按压反馈。');
 forbidText(sheetSource, 'aria-label="切换学校"', '不应继续使用切换学校语义。');
 forbidText(sheetSource, '<div className="text-[16px] font-bold text-slate-900">切换学校</div>', '不应继续展示切换学校标题。');
@@ -47,6 +46,8 @@ forbidText(sheetSource, '完成', '班级来源抽屉不应展示完成按钮。
 forbidText(sheetSource, 'min-h-[76px]', '来源卡片不应继续使用 76px 高度。');
 forbidText(sheetSource, 'min-h-11 min-w-11', '移除完成按钮后不应保留完成按钮触控区。');
 forbidText(sheetSource, 'bg-black/32', '遮罩不应使用黑色低保真风格。');
+forbidText(sheetSource, 'bg-[var(--tm-bg-page-glass)]', '班级来源抽屉不应继续使用发灰的页面玻璃底。');
+forbidText(sheetSource, 'backdrop-blur', '班级来源抽屉不应局部叠加背景模糊。');
 forbidText(sheetSource, 'bg-slate-950 px-3 py-1', '当前标签不应使用黑白低保真配色。');
 forbidText(sheetSource, 'rgba(15,23,42,0.92)', '当前描边不应使用近黑色。');
 forbidText(sheetSource, '#1E9AAA', '班级来源抽屉不应残留旧青蓝主色。');

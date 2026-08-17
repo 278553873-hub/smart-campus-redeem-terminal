@@ -23,7 +23,6 @@ import {
   MoreHorizontal,
   Palette,
   RotateCcw,
-  Save,
   Settings,
   QrCode,
   Star,
@@ -96,9 +95,10 @@ import {
   isQuestionnaireCreatedByTeacher,
   isQuestionnaireOverdue,
   isQuestionnaireFullyCollected,
+  isQuestionnaireOneQuestionPerPage,
   reconcileQuestionnaireTargets,
   readQuestionnaires,
-  saveStudentCollectionRecord,
+  completeStudentCollectionRecord,
   publishQuestionnaire as publishQuestionnaireRecord,
   updateQuestionnaireStatus,
   upsertQuestionnaireDraftForSource,
@@ -113,7 +113,6 @@ import {
   type QuestionnaireTarget,
   type QuestionnaireStatus,
   type StudentCollectionRecord,
-  type StudentCollectionRecordStatus,
   type StudentAssignmentMode,
 } from '../../../shared/questionnaireStore';
 import { persistGrowthCollectionAnswers } from '../../../shared/growthCollectionPersistence';
@@ -370,15 +369,34 @@ const SecondaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> =
   </button>
 );
 
+const SettingSwitchRow: React.FC<{
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}> = ({ label, checked, onChange }) => (
+  <div className="flex min-h-[64px] items-center justify-between gap-4">
+    <span className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{label}</span>
+    <button
+      type="button"
+      role="switch"
+      aria-label={label}
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`flex h-7 w-12 shrink-0 rounded-full p-0.5 transition ${checked ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-border-control)]'}`}
+    >
+      <span className={`h-6 w-6 rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-control)] transition-all ${checked ? 'ml-5' : ''}`} />
+    </button>
+  </div>
+);
+
 const StudentAnswerRow: React.FC<{
   avatarSrc: string;
   studentName: string;
   className?: string;
   statusLabel: string;
   statusClassName: string;
-  secondaryStatusLabel?: string;
   onClick?: () => void;
-}> = ({ avatarSrc, studentName, className, statusLabel, statusClassName, secondaryStatusLabel, onClick }) => (
+}> = ({ avatarSrc, studentName, className, statusLabel, statusClassName, onClick }) => (
   <button
     type="button"
     disabled={!onClick}
@@ -392,7 +410,6 @@ const StudentAnswerRow: React.FC<{
     </span>
     <span className="flex shrink-0 items-center gap-1.5">
       <span className={`rounded-full px-2.5 py-1 text-[length:var(--tm-font-size-badge)] font-semibold ${statusClassName}`}>{statusLabel}</span>
-      {secondaryStatusLabel && <span className="rounded-full bg-[var(--tm-brand-reward-soft)] px-2.5 py-1 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-brand-reward-strong)]">{secondaryStatusLabel}</span>}
     </span>
   </button>
 );
@@ -422,6 +439,7 @@ interface StudentCollectionFormProps {
   record: QuestionnaireRecord;
   answers: Record<string, QuestionnaireAnswer>;
   editable: boolean;
+  activeQuestionIndex?: number;
   onAnswerChange: (questionId: string, answer: QuestionnaireAnswer) => void;
 }
 
@@ -459,6 +477,7 @@ const StudentCollectionForm: React.FC<StudentCollectionFormProps> = ({
   record,
   answers,
   editable,
+  activeQuestionIndex,
   onAnswerChange,
 }) => {
   const renderQuestion = (question: QuestionnaireQuestion, index: number) => {
@@ -525,6 +544,22 @@ const StudentCollectionForm: React.FC<StudentCollectionFormProps> = ({
       </div>
     );
   };
+
+  if (activeQuestionIndex !== undefined) {
+    const activeQuestion = record.questions[activeQuestionIndex];
+    if (!activeQuestion) return null;
+    const section = record.layoutMode === 'grouped'
+      ? record.sections?.find(item => item.id === activeQuestion.sectionId)
+      : undefined;
+    return (
+      <section>
+        {section?.label && <h2 className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{section.label}</h2>}
+        <section className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+          {renderQuestion(activeQuestion, activeQuestionIndex)}
+        </section>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-5">
@@ -615,6 +650,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [draftDescription, setDraftDescription] = useState('');
   const [draftLayoutMode, setDraftLayoutMode] = useState<FormLayoutMode>('flat');
   const [draftSections, setDraftSections] = useState<FormSection[]>([]);
+  const [draftOneQuestionPerPage, setDraftOneQuestionPerPage] = useState(true);
   const [draftQuestions, setDraftQuestions] = useState<QuestionnaireQuestion[]>([]);
   const [draftQuestionOrderIds, setDraftQuestionOrderIds] = useState<string[]>([]);
   const [draftGrowthFields, setDraftGrowthFields] = useState<BodyGrowthFieldKey[]>([]);
@@ -630,6 +666,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [previewRecord, setPreviewRecord] = useState<QuestionnaireRecord | null>(null);
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, QuestionnaireAnswer>>({});
   const [previewReturnMode, setPreviewReturnMode] = useState<PreviewReturnMode>('list');
+  const [studentQuestionIndex, setStudentQuestionIndex] = useState(0);
+  const [showQuestionnaireIntro, setShowQuestionnaireIntro] = useState(false);
   const [selectedClassIds, setSelectedClassIds] = useState<Set<string>>(new Set());
   const [activeScopeGrade, setActiveScopeGrade] = useState(classes[0]?.gradeLevel ?? '');
   const [hasSuggestedDeadline, setHasSuggestedDeadline] = useState(false);
@@ -954,6 +992,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const inheritedSections = (record?.sections ?? archiveTemplateSnapshot?.sections ?? []).map(section => ({ ...section }));
     setDraftLayoutMode(inheritedLayoutMode);
     setDraftSections(inheritedSections);
+    setDraftOneQuestionPerPage(record?.oneQuestionPerPage ?? resolvedRole === 'guardian');
     const nextQuestions = record?.questions ?? [];
     const archiveGrowthKeys = new Set((archiveTemplateSnapshot?.growthFields ?? []).map(field => field.key));
     setDraftGrowthFields(getBodyGrowthFieldKeys(nextQuestions).filter(key => !archiveGrowthKeys.has(key)));
@@ -1136,6 +1175,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       targetSyncPolicy: 'follow_classes',
       layoutMode: draftLayoutMode,
       sections: draftSections,
+      oneQuestionPerPage: draftOneQuestionPerPage,
       questions: allQuestions.map((question, index) => ({
         ...question,
         title: question.title.trim() || `未填写题目 ${index + 1}`,
@@ -1144,6 +1184,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       submissions: existing?.submissions ?? [],
     });
     setPreviewAnswers({});
+    setStudentQuestionIndex(0);
+    setShowQuestionnaireIntro(draftOneQuestionPerPage && Boolean(draftDescription.trim()));
     setPreviewReturnMode('create');
     setPageMode('preview');
   };
@@ -1151,6 +1193,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const openListPreview = (record: QuestionnaireRecord) => {
     setPreviewRecord(record);
     setPreviewAnswers({});
+    setStudentQuestionIndex(0);
+    setShowQuestionnaireIntro(isQuestionnaireOneQuestionPerPage(record) && Boolean(record.description.trim()));
     setPreviewReturnMode('list');
     setPageMode('preview');
   };
@@ -1260,6 +1304,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     || draftDescription.trim()
     || getAllDraftQuestions().length > 0
     || draftSections.length > 0
+    || draftOneQuestionPerPage !== (respondentRole === 'guardian')
     || draftArchiveTemplateId
     || selectedClassIds.size > 0
     || hasSuggestedDeadline
@@ -1309,6 +1354,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       targetSyncPolicy: 'follow_classes',
       layoutMode: draftLayoutMode,
       sections: draftSections,
+      oneQuestionPerPage: draftOneQuestionPerPage,
       questions,
       targets,
       submissions: existing?.submissions ?? [],
@@ -1331,6 +1377,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     draftDescription,
     draftLayoutMode,
     draftSections,
+    draftOneQuestionPerPage,
     draftQuestions,
     draftQuestionOrderIds,
     draftGrowthFields,
@@ -1381,6 +1428,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       targetSyncPolicy: 'follow_classes',
       layoutMode: draftLayoutMode,
       sections: draftSections,
+      oneQuestionPerPage: draftOneQuestionPerPage,
       questions,
       targets,
       submissions: existing?.submissions ?? [],
@@ -1548,29 +1596,32 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   };
 
   const openStudentRecord = (record: QuestionnaireRecord, studentNo: string) => {
+    if (recordOrigin !== 'assigned-list') return;
     const studentRecord = getStudentRecord(record, studentNo);
-    if (!studentRecord) return;
+    if (!studentRecord || studentRecord.status === 'completed') return;
     setActiveStudentNo(studentNo);
     setStudentRecordAnswers({
       ...getArchiveCollectionPrefillAnswers(record, studentNo),
       ...studentRecord.answers,
     });
+    setStudentQuestionIndex(0);
+    setShowQuestionnaireIntro(isQuestionnaireOneQuestionPerPage(record) && Boolean(record.description.trim()));
     setPageMode('student-record');
   };
 
-  const saveActiveStudentRecord = (status: 'draft' | 'completed') => {
+  const saveActiveStudentRecord = () => {
     if (!activeRecord) return;
     const studentRecord = getStudentRecord(activeRecord, activeStudentNo);
     if (!studentRecord) return;
     const validationError = activeRecord.questions.map(question => getQuestionnaireAnswerValidationError(question, studentRecordAnswers[question.id])).find(Boolean);
-    if (status === 'completed' && validationError) {
+    if (validationError) {
       showToast(validationError);
       return;
     }
     const completedAt = nowText();
-    const saved = saveStudentCollectionRecord(activeRecord.id, {
+    const saved = completeStudentCollectionRecord(activeRecord.id, {
       ...studentRecord,
-      status,
+      status: 'completed',
       updatedAt: completedAt,
       answers: studentRecordAnswers,
     }, teacherId, teacherName);
@@ -1578,17 +1629,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       showToast('当前采集不可编辑');
       return;
     }
-    const growthUpdated = status === 'completed' && hasGrowthCollectionFields(activeRecord)
+    const growthUpdated = hasGrowthCollectionFields(activeRecord)
       ? persistGrowthCollectionAnswers(activeRecord, studentRecord.studentNo, studentRecordAnswers, completedAt)
       : false;
-    const archiveUpdated = status === 'completed' && Boolean(activeRecord.archiveTemplateId)
+    const archiveUpdated = Boolean(activeRecord.archiveTemplateId)
       ? persistArchiveCollectionAnswers(activeRecord, studentRecord.studentNo, studentRecordAnswers, completedAt, teacherName)
       : false;
     setRecords(readQuestionnaires());
     setPageMode('detail');
-    showToast(status === 'completed'
-      ? activeRecord.archiveTemplateId && (archiveUpdated || growthUpdated) ? '已完成并更新档案' : growthUpdated ? '已完成并更新成长数据' : '已完成'
-      : '草稿已保存');
+    showToast(activeRecord.archiveTemplateId && (archiveUpdated || growthUpdated) ? '已完成并更新档案' : growthUpdated ? '已完成并更新成长数据' : '已完成');
   };
 
   const renderList = () => {
@@ -2169,18 +2218,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         </MobileBottomSheet>
 
         <MobileBottomSheet open={showBasicSettingsSheet} title="设置" onClose={() => setShowBasicSettingsSheet(false)}>
-          <section className="flex min-h-[64px] items-center justify-between gap-4 pb-2">
-            <span className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">展示分组</span>
-            <button
-              type="button"
-              role="switch"
-              aria-label="展示分组"
-              aria-checked={draftLayoutMode === 'grouped'}
-              onClick={() => setDraftGroupingEnabled(draftLayoutMode !== 'grouped')}
-              className={`flex h-7 w-12 shrink-0 rounded-full p-0.5 transition ${draftLayoutMode === 'grouped' ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-border-control)]'}`}
-            >
-              <span className={`h-6 w-6 rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-control)] transition-all ${draftLayoutMode === 'grouped' ? 'ml-5' : ''}`} />
-            </button>
+          <section className="space-y-1 pb-2">
+            <SettingSwitchRow label="展示分组" checked={draftLayoutMode === 'grouped'} onChange={setDraftGroupingEnabled} />
+            <SettingSwitchRow label="一页一题" checked={draftOneQuestionPerPage} onChange={setDraftOneQuestionPerPage} />
           </section>
         </MobileBottomSheet>
 
@@ -2280,13 +2320,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         || item.studentName.toLowerCase().includes(normalizedSearch)
         || item.studentNo.toLowerCase().includes(normalizedSearch)
         || item.className.toLowerCase().includes(normalizedSearch));
-    }).sort((left, right) => {
-      if (studentRecordFilter !== 'incomplete') return 0;
-      return Number(right.status === 'draft') - Number(left.status === 'draft');
     });
-    const studentStatusMeta: Record<StudentCollectionRecordStatus, { label: string; className: string }> = {
+    const studentStatusMeta = {
       pending: { label: '未完成', className: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' },
-      draft: { label: '未完成', className: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' },
       completed: { label: '已完成', className: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' },
     };
     return (
@@ -2312,10 +2348,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 className={item.status === 'completed' ? item.className : undefined}
                 statusLabel={studentStatusMeta[item.status].label}
                 statusClassName={studentStatusMeta[item.status].className}
-                secondaryStatusLabel={item.status === 'draft' ? '待继续' : undefined}
                 onClick={item.status === 'completed' && resultRecord
                   ? () => { setActiveResultRecord(resultRecord); setPageMode('response'); }
-                  : () => openStudentRecord(record, item.studentNo)}
+                  : assignedContext ? () => openStudentRecord(record, item.studentNo) : undefined}
               />
             );
           })}
@@ -2329,32 +2364,80 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     if (!activeRecord) return renderList();
     const studentRecord = getStudentRecord(activeRecord, activeStudentNo);
     if (!studentRecord) return renderStudentCollectionDetail(activeRecord);
-    const editable = activeRecord.status === 'active'
+    const editable = recordOrigin === 'assigned-list'
+      && activeRecord.status === 'active'
+      && studentRecord.status === 'pending'
       && getStudentCollectionRecordsForTeacher(activeRecord, teacherId, teacherName)
         .some(item => item.studentNo === studentRecord.studentNo);
+    const oneQuestionPerPage = isQuestionnaireOneQuestionPerPage(activeRecord);
+    const hasIntroPage = oneQuestionPerPage && Boolean(activeRecord.description.trim());
+    const activeQuestion = activeRecord.questions[studentQuestionIndex];
+    const isLastQuestion = studentQuestionIndex === activeRecord.questions.length - 1;
+    const questionProgress = Math.round(((studentQuestionIndex + 1) / Math.max(1, activeRecord.questions.length)) * 100);
     const updateAnswer = (questionId: string, answer: QuestionnaireAnswer) => setStudentRecordAnswers(previous => ({ ...previous, [questionId]: answer }));
+    const advanceStudentQuestion = () => {
+      if (!activeQuestion) return;
+      const validationError = getQuestionnaireAnswerValidationError(activeQuestion, studentRecordAnswers[activeQuestion.id]);
+      if (validationError) {
+        showToast(validationError);
+        return;
+      }
+      setStudentQuestionIndex(index => Math.min(activeRecord.questions.length - 1, index + 1));
+    };
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24" style={getTeacherQuestionnaireThemeStyle(activeRecord.themeId)}>
-        <PageHeader title={studentRecord.studentName} onBack={() => setPageMode('detail')} />
+        <PageHeader title={activeRecord.title} onBack={() => setPageMode('detail')} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-28 no-scrollbar">
-          <QuestionnaireHeaderImage headerImageId={activeRecord.headerImageId} className="-mx-5" />
-          <div className="pb-3 pt-4">
-            <div className="truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)]">{activeRecord.title}</div>
-            <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{studentRecord.className}{studentRecord.assigneeTeacherName ? ` · ${studentRecord.assigneeTeacherName}` : ''}</div>
-          </div>
-          <StudentCollectionForm
-            record={activeRecord}
-            answers={studentRecordAnswers}
-            editable={editable}
-            onAnswerChange={updateAnswer}
-          />
+          {(!oneQuestionPerPage || showQuestionnaireIntro) && <QuestionnaireHeaderImage headerImageId={activeRecord.headerImageId} className="-mx-5" />}
+          {showQuestionnaireIntro ? (
+            <section className="pb-5 pt-6">
+              <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{activeRecord.title}</h1>
+              <p className="mt-3 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">{activeRecord.description}</p>
+              <div className="mt-5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{studentRecord.studentName} · {studentRecord.className}</div>
+            </section>
+          ) : (
+            <>
+              <div className="pb-3 pt-4">
+                <div className="truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)]">{oneQuestionPerPage ? studentRecord.studentName : activeRecord.title}</div>
+                <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{studentRecord.className}{studentRecord.assigneeTeacherName ? ` · ${studentRecord.assigneeTeacherName}` : ''}</div>
+              </div>
+            </>
+          )}
+          {oneQuestionPerPage && !showQuestionnaireIntro && (
+            <div className="mb-4">
+              <div className="mb-2 flex justify-end text-[length:var(--tm-font-size-compact)] font-bold tabular-nums text-[var(--tm-text-secondary)]">{studentQuestionIndex + 1}/{activeRecord.questions.length}</div>
+              <ProgressBar value={questionProgress} />
+            </div>
+          )}
+          {!showQuestionnaireIntro && (
+            <StudentCollectionForm
+              record={activeRecord}
+              answers={studentRecordAnswers}
+              editable={editable}
+              activeQuestionIndex={oneQuestionPerPage ? studentQuestionIndex : undefined}
+              onAnswerChange={updateAnswer}
+            />
+          )}
         </main>
         {editable && (
           <BottomAction>
-            <div className="grid grid-cols-[0.8fr_1.2fr] gap-3">
-              <SecondaryButton onClick={() => saveActiveStudentRecord(studentRecord.status === 'completed' ? 'completed' : 'draft')}><Save className="h-4 w-4" />{studentRecord.status === 'completed' ? '保存' : '保存草稿'}</SecondaryButton>
-              <PrimaryButton onClick={() => saveActiveStudentRecord('completed')}><CheckCircle2 className="h-4 w-4" />完成</PrimaryButton>
-            </div>
+            {showQuestionnaireIntro ? (
+              <PrimaryButton onClick={() => setShowQuestionnaireIntro(false)} className="w-full">开始填写</PrimaryButton>
+            ) : oneQuestionPerPage ? (
+              <div className="grid grid-cols-[0.8fr_1.2fr] gap-3">
+                <SecondaryButton
+                  onClick={() => studentQuestionIndex === 0 && hasIntroPage
+                    ? setShowQuestionnaireIntro(true)
+                    : setStudentQuestionIndex(index => Math.max(0, index - 1))}
+                  disabled={studentQuestionIndex === 0 && !hasIntroPage}
+                >上一题</SecondaryButton>
+                <PrimaryButton onClick={isLastQuestion ? saveActiveStudentRecord : advanceStudentQuestion}>
+                  {isLastQuestion ? <><CheckCircle2 className="h-4 w-4" />完成</> : '下一题'}
+                </PrimaryButton>
+              </div>
+            ) : (
+              <PrimaryButton onClick={saveActiveStudentRecord} className="w-full"><CheckCircle2 className="h-4 w-4" />完成</PrimaryButton>
+            )}
           </BottomAction>
         )}
       </div>
@@ -2659,7 +2742,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               <MobileSearchInput value={questionResponseSearch} onChange={event => { setQuestionResponseSearch(event.target.value); setVisibleQuestionResponseCount(20); }} placeholder="搜索回答或学生" aria-label="搜索回答或学生" className="text-[length:var(--tm-font-size-compact)]" />
               {classOptions.length > 1 && (
                 <label className="relative block">
-                  <select value={questionResponseClass} onChange={event => { setQuestionResponseClass(event.target.value); setVisibleQuestionResponseCount(20); }} aria-label="按班级筛选回答" className="h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] pl-3 pr-8 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]">
+                  <select value={questionResponseClass} onChange={event => { setQuestionResponseClass(event.target.value); setVisibleQuestionResponseCount(20); }} aria-label="按班级筛选回答" className="h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-filter-border)] bg-[var(--tm-filter-bg)] pl-3 pr-8 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-input-text)] [box-shadow:var(--tm-filter-shadow)] [outline:var(--tm-filter-focus-outline)] focus-visible:bg-[var(--tm-filter-focus-bg)]">
                     <option value="all">全部班级</option>
                     {classOptions.map(className => <option key={className} value={className}>{className}</option>)}
                   </select>
@@ -2691,24 +2774,64 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     if (!previewRecord) return renderList();
     const previewTarget = getActiveQuestionnaireTargets(previewRecord)[0];
     if (getQuestionnaireCollectionMode(previewRecord) === 'student_information') {
+      const oneQuestionPerPage = isQuestionnaireOneQuestionPerPage(previewRecord);
+      const hasIntroPage = oneQuestionPerPage && Boolean(previewRecord.description.trim());
+      const isLastQuestion = studentQuestionIndex === previewRecord.questions.length - 1;
+      const questionProgress = Math.round(((studentQuestionIndex + 1) / Math.max(1, previewRecord.questions.length)) * 100);
       return (
         <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-24" style={getTeacherQuestionnaireThemeStyle(previewRecord.themeId)}>
           <PageHeader title="预览问卷" onBack={() => setPageMode(previewReturnMode)} />
           <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-[var(--tm-bg-page)] px-5 pb-28 no-scrollbar">
-            <QuestionnaireHeaderImage headerImageId={previewRecord.headerImageId} className="-mx-5" />
-            <div className="pb-5 pt-5">
-              <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{previewRecord.title}</h1>
-              {previewRecord.description && <p className="mt-2 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]">{previewRecord.description}</p>}
-            </div>
-            <StudentCollectionForm
-              record={previewRecord}
-              answers={previewAnswers}
-              editable
-              onAnswerChange={(questionId, answer) => setPreviewAnswers(previous => ({ ...previous, [questionId]: answer }))}
-            />
+            {(!oneQuestionPerPage || showQuestionnaireIntro) && <QuestionnaireHeaderImage headerImageId={previewRecord.headerImageId} className="-mx-5" />}
+            {showQuestionnaireIntro ? (
+              <section className="pb-5 pt-6">
+                <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{previewRecord.title}</h1>
+                <p className="mt-3 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">{previewRecord.description}</p>
+              </section>
+            ) : !oneQuestionPerPage ? (
+              <div className="pb-5 pt-5">
+                <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{previewRecord.title}</h1>
+                {previewRecord.description && <p className="mt-2 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]">{previewRecord.description}</p>}
+              </div>
+            ) : (
+              <div className="mb-4 pt-4">
+                <div className="mb-2 flex items-center gap-3 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">
+                  <div className="min-w-0 flex-1 truncate">{previewRecord.title}</div>
+                  <span className="shrink-0 font-bold tabular-nums">{studentQuestionIndex + 1}/{previewRecord.questions.length}</span>
+                </div>
+                <ProgressBar value={questionProgress} />
+              </div>
+            )}
+            {!showQuestionnaireIntro && (
+              <StudentCollectionForm
+                record={previewRecord}
+                answers={previewAnswers}
+                editable
+                activeQuestionIndex={oneQuestionPerPage ? studentQuestionIndex : undefined}
+                onAnswerChange={(questionId, answer) => setPreviewAnswers(previous => ({ ...previous, [questionId]: answer }))}
+              />
+            )}
           </main>
           <BottomAction>
-            <PrimaryButton onClick={() => setPageMode(previewReturnMode)} className="w-full">结束预览</PrimaryButton>
+            {showQuestionnaireIntro ? (
+              <PrimaryButton onClick={() => setShowQuestionnaireIntro(false)} className="w-full">开始预览</PrimaryButton>
+            ) : oneQuestionPerPage ? (
+              <div className="grid grid-cols-[0.8fr_1.2fr] gap-3">
+                <SecondaryButton
+                  onClick={() => studentQuestionIndex === 0 && hasIntroPage
+                    ? setShowQuestionnaireIntro(true)
+                    : setStudentQuestionIndex(index => Math.max(0, index - 1))}
+                  disabled={studentQuestionIndex === 0 && !hasIntroPage}
+                >上一题</SecondaryButton>
+                <PrimaryButton onClick={() => isLastQuestion
+                  ? setPageMode(previewReturnMode)
+                  : setStudentQuestionIndex(index => Math.min(previewRecord.questions.length - 1, index + 1))}>
+                  {isLastQuestion ? '结束预览' : '下一题'}
+                </PrimaryButton>
+              </div>
+            ) : (
+              <PrimaryButton onClick={() => setPageMode(previewReturnMode)} className="w-full">结束预览</PrimaryButton>
+            )}
           </BottomAction>
         </div>
       );

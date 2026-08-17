@@ -16,7 +16,7 @@ export type QuestionnaireQuestionType = 'single' | 'multiple' | 'rating' | 'text
 export type QuestionnaireTargetMode = 'all' | 'classes' | 'students';
 export type QuestionnaireTargetSyncPolicy = 'fixed' | 'follow_classes';
 export type QuestionnaireTargetScopeStatus = 'active' | 'exited';
-export type StudentCollectionRecordStatus = 'pending' | 'draft' | 'completed';
+export type StudentCollectionRecordStatus = 'pending' | 'completed';
 export type StudentAssignmentMode = 'creator' | 'homeroom';
 export type GrowthCollectionTemplate = 'height_weight' | 'semester_goal';
 export type QuestionnaireReviewStatus = 'pending' | 'confirmed' | 'returned';
@@ -132,6 +132,7 @@ export interface QuestionnaireRecord {
   targetSyncPolicy?: QuestionnaireTargetSyncPolicy;
   layoutMode?: FormLayoutMode;
   sections?: FormSection[];
+  oneQuestionPerPage?: boolean;
   questions: QuestionnaireQuestion[];
   targets: QuestionnaireTarget[];
   submissions: QuestionnaireSubmission[];
@@ -257,23 +258,21 @@ const createStudentCollectionRecords = (
   prefix: string,
   targets: QuestionnaireTarget[],
   completedCount: number,
-  draftCount: number,
   assigneeTeacherId = 'school-star:刘飞',
   assigneeTeacherName = '刘飞',
 ): StudentCollectionRecord[] => targets.map((target, index) => {
   const completed = index < completedCount;
-  const draft = !completed && index < completedCount + draftCount;
   return {
     id: `${prefix}-${target.studentNo}`,
     studentNo: target.studentNo,
     studentName: target.studentName,
     classId: target.classId,
     className: target.className,
-    status: completed ? 'completed' : draft ? 'draft' : 'pending',
-    updatedAt: completed || draft ? `2026-07-${String(12 + (index % 3)).padStart(2, '0')} ${String(9 + index).padStart(2, '0')}:20` : '',
+    status: completed ? 'completed' : 'pending',
+    updatedAt: completed ? `2026-07-${String(12 + (index % 3)).padStart(2, '0')} ${String(9 + index).padStart(2, '0')}:20` : '',
     assigneeTeacherId,
     assigneeTeacherName,
-    answers: completed || draft ? {
+    answers: completed ? {
       'enrollment-address': `锦江区春熙路${index + 1}号`,
       'enrollment-birthday': `2019-0${(index % 8) + 1}-${String(8 + index).padStart(2, '0')}`,
       'enrollment-height': 118 + index,
@@ -307,15 +306,14 @@ const schoolEnrollmentRecords = createStudentCollectionRecords(
   'school-enrollment',
   schoolEnrollmentTargets,
   schoolEnrollmentTargets.length,
-  0,
 ).map((record, index) => {
   const isCurrentTeacherClass = record.classId === 'c_2025_1' || record.classId === 'c_2025_4';
-  const hasSavedContent = index === 0 || index === 1 || index === 6 || index === 7;
+  const completed = index === 0 || index === 6;
   return {
     ...record,
-    status: index === 0 || index === 6 ? 'completed' as const : index === 1 || index === 7 ? 'draft' as const : 'pending' as const,
-    updatedAt: hasSavedContent ? record.updatedAt : '',
-    answers: hasSavedContent ? record.answers : {},
+    status: completed ? 'completed' as const : 'pending' as const,
+    updatedAt: completed ? record.updatedAt : '',
+    answers: completed ? record.answers : {},
     assigneeTeacherId: isCurrentTeacherClass ? 'school-star:刘飞' : 'school-star:王蕾',
     assigneeTeacherName: isCurrentTeacherClass ? '刘飞' : '王蕾老师',
   };
@@ -407,7 +405,7 @@ const seedQuestionnaires: QuestionnaireRecord[] = [
     questions: enrollmentInformationFields,
     targets: seedTargets.map(target => ({ ...target, reachable: true })),
     submissions: [],
-    studentRecords: createStudentCollectionRecords('enrollment', seedTargets, 5, 2),
+    studentRecords: createStudentCollectionRecords('enrollment', seedTargets, 5),
   },
   {
     id: 'collection-status-check-202606',
@@ -425,7 +423,7 @@ const seedQuestionnaires: QuestionnaireRecord[] = [
     questions: enrollmentInformationFields.slice(0, 4),
     targets: seedTargets.slice(0, 8).map(target => ({ ...target, reachable: true })),
     submissions: [],
-    studentRecords: createStudentCollectionRecords('status-check', seedTargets.slice(0, 8), 8, 0),
+    studentRecords: createStudentCollectionRecords('status-check', seedTargets.slice(0, 8), 8),
   },
   {
     id: 'collection-health-draft',
@@ -637,11 +635,12 @@ type StoredQuestionnaireRecord = Omit<QuestionnaireRecord, 'suggestedDeadline'> 
 const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): QuestionnaireRecord => {
   const { deadline, ...rest } = record;
   const collectionMode = rest.collectionMode ?? 'guardian_questionnaire';
+  const respondentRole = rest.respondentRole ?? (collectionMode === 'guardian_questionnaire' ? 'guardian' : 'teacher');
   return {
     ...rest,
     suggestedDeadline: rest.suggestedDeadline ?? deadline ?? '',
     contentType: inferQuestionnaireContentType(rest.questions, rest.growthTemplate),
-    respondentRole: rest.respondentRole ?? (collectionMode === 'guardian_questionnaire' ? 'guardian' : 'teacher'),
+    respondentRole,
     collectionMode,
     themeId: rest.themeId ?? 'classic-red',
     headerImageId: rest.headerImageId ?? 'none',
@@ -649,6 +648,7 @@ const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): Questionnair
     targetSyncPolicy: rest.targetSyncPolicy ?? 'fixed',
     layoutMode: rest.layoutMode ?? 'flat',
     sections: rest.sections ?? [],
+    oneQuestionPerPage: rest.oneQuestionPerPage ?? respondentRole === 'guardian',
     questions: rest.questions.map(question => ({
       ...question,
       options: [...question.options],
@@ -660,7 +660,14 @@ const normalizeQuestionnaire = (record: StoredQuestionnaireRecord): Questionnair
       ...target,
       scopeStatus: target.scopeStatus ?? 'active',
     })),
-    studentRecords: rest.studentRecords ?? [],
+    studentRecords: (rest.studentRecords ?? []).map(item => item.status === 'completed'
+      ? item
+      : {
+          ...item,
+          status: 'pending',
+          updatedAt: '',
+          answers: {},
+        }),
   };
 };
 
@@ -816,6 +823,10 @@ export const hasGrowthCollectionFields = (record: QuestionnaireRecord) => (
 
 export const getQuestionnaireRespondentRole = (record: QuestionnaireRecord): QuestionnaireRespondentRole => (
   record.respondentRole ?? (getQuestionnaireCollectionMode(record) === 'guardian_questionnaire' ? 'guardian' : 'teacher')
+);
+
+export const isQuestionnaireOneQuestionPerPage = (record: QuestionnaireRecord) => (
+  record.oneQuestionPerPage ?? getQuestionnaireRespondentRole(record) === 'guardian'
 );
 
 export const getActiveQuestionnaireTargets = (record: QuestionnaireRecord): QuestionnaireTarget[] => (
@@ -1206,9 +1217,9 @@ export const reviewSemesterGoalSubmission = (
   return reviewedSubmission;
 };
 
-export const saveStudentCollectionRecord = (
+export const completeStudentCollectionRecord = (
   questionnaireId: string,
-  studentRecord: StudentCollectionRecord,
+  studentRecord: StudentCollectionRecord & { status: 'completed' },
   teacherId?: string,
   teacherName?: string,
 ) => {
@@ -1224,7 +1235,7 @@ export const saveStudentCollectionRecord = (
     && getActiveQuestionnaireTargets(questionnaire).some(target => target.studentNo === studentRecord.studentNo)
     && (!teacherId || !teacherName || Boolean(assignedRecord));
   if (!canSave || !questionnaire) return false;
-  if (studentRecord.status === 'completed' && questionnaire.questions.some(question => getQuestionnaireAnswerValidationError(question, studentRecord.answers[question.id]))) return false;
+  if (questionnaire.questions.some(question => getQuestionnaireAnswerValidationError(question, studentRecord.answers[question.id]))) return false;
 
   const currentRecords = questionnaire.studentRecords ?? [];
   const exists = currentRecords.some(item => item.studentNo === studentRecord.studentNo);

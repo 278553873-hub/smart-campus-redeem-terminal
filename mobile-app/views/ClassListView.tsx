@@ -408,7 +408,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 <select
                                     value={gradeFilter}
                                     onChange={event => setGradeFilter(event.target.value)}
-                                    className="min-h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 pr-9 text-[13px] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none"
+                                    className="min-h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-transparent bg-[var(--tm-bg-surface)] px-3 pr-9 text-[13px] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none focus-visible:bg-[var(--tm-bg-surface)]"
                                     aria-label="按年级筛选班级"
                                 >
                                     {gradeOptions.map(option => <option key={option} value={option}>{option}</option>)}

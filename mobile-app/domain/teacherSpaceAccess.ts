@@ -30,12 +30,13 @@ export type TeacherManagementToolId =
     | 'principalAssistant';
 
 export type TeacherMoreToolId =
+    | 'coinIssuance'
+    | 'questionnaire'
+    | 'weeklyDutySchedule'
+    | 'archiveDesign'
     | 'subjectManagement'
     | 'departmentManagement'
-    | 'coinIssuance'
-    | 'suggestionFeedback'
-    | 'questionnaire'
-    | 'archiveDesign';
+    | 'suggestionFeedback';
 
 export interface TeacherSpaceMenuPolicy {
     managementTools: TeacherManagementToolId[];
@@ -70,12 +71,13 @@ const ALL_MANAGEMENT_TOOLS: TeacherManagementToolId[] = [
 ];
 
 const ALL_MORE_TOOLS: TeacherMoreToolId[] = [
+    'coinIssuance',
+    'questionnaire',
+    'weeklyDutySchedule',
+    'archiveDesign',
     'subjectManagement',
     'departmentManagement',
-    'coinIssuance',
     'suggestionFeedback',
-    'questionnaire',
-    'archiveDesign',
 ];
 
 const SPACE_MENU_POLICIES: Record<TeacherSpaceRole, TeacherSpaceMenuPolicy> = {

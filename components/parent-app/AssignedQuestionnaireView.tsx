@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Check, ChevronLeft, Circle, Send } from 'lucide-react';
 import {
   getQuestionnaireAnswerValidationError,
   getQuestionnaireContentType,
   getQuestionnaireMultiFillValues,
   getQuestionnaireSelectedOptions,
+  isQuestionnaireOneQuestionPerPage,
   isQuestionnaireChoiceAnswer,
   submitQuestionnaireResponse,
   type QuestionnaireAnswer,
@@ -52,6 +53,118 @@ const questionnairePrimaryButton = `${questionnaireButtonBase} bg-[var(--tm-bran
 const questionnaireSecondaryButton = `${questionnaireButtonBase} border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]`;
 const questionnaireInputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-fast)] placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 
+const QuestionnaireQuestionCard: React.FC<{
+  question: QuestionnaireQuestion;
+  answer?: QuestionnaireAnswer;
+  onAnswerChange: (answer: QuestionnaireAnswer) => void;
+}> = ({ question, answer, onAnswerChange }) => {
+  const selectedOptions = getQuestionnaireSelectedOptions(answer);
+  const customText = isQuestionnaireChoiceAnswer(answer) ? answer.customText : {};
+  const fillValues = getQuestionnaireMultiFillValues(answer);
+  const settings = normalizeFormFieldSettings(question.type, question.settings, question.options);
+  const ratingValues = question.type === 'rating'
+    ? (question.options.length > 0 ? question.options : ['1', '2', '3', '4', '5'])
+    : [];
+
+  const toggleOption = (option: string) => {
+    if (question.type === 'single' || question.type === 'multiple') {
+      const nextSelected = question.type === 'multiple'
+        ? selectedOptions.includes(option)
+          ? selectedOptions.filter(item => item !== option)
+          : selectedOptions.length >= (settings.maxSelections ?? question.options.length)
+            ? selectedOptions
+            : [...selectedOptions, option]
+        : [option];
+      const nextCustomText = Object.fromEntries(
+        Object.entries(customText).filter(([key]) => nextSelected.includes(key)),
+      );
+      onAnswerChange({ selectedOptions: nextSelected, customText: nextCustomText });
+      return;
+    }
+    onAnswerChange(Number(option));
+  };
+
+  return (
+    <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-5 shadow-[var(--tm-shadow-card)]">
+      <div className="mb-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-tertiary)]">{getQuestionTypeLabel(question)}</div>
+      <h2 className="break-words text-[length:var(--tm-font-size-question-title)] font-bold leading-[1.45] text-[var(--tm-text-primary)]">
+        {question.title}{question.required && question.type !== 'multi_fill' && <span className="ml-1 text-[var(--tm-status-negative-strong)]" aria-label="必填">*</span>}
+      </h2>
+
+      {(question.type === 'single' || question.type === 'multiple') && (
+        <div className="mt-5 space-y-2.5">
+          {question.options.map(option => {
+            const selected = selectedOptions.includes(option);
+            const showCustomInput = selected && question.customAnswerOptions?.includes(option);
+            return (
+              <div key={option} className={`overflow-hidden rounded-[var(--tm-radius-inner)] border ${selected ? 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
+                <button type="button" onClick={() => toggleOption(option)} aria-pressed={selected} className="flex min-h-[52px] w-full items-center gap-3 px-4 py-3 text-left transition-transform active:scale-[0.98]">
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${question.type === 'single' ? 'rounded-full' : 'rounded-[6px]'} ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`}>
+                    {selected && (question.type === 'single' ? <Circle size={9} fill="currentColor" /> : <Check size={13} strokeWidth={3} />)}
+                  </span>
+                  <span className="text-[length:var(--tm-font-size-control)] font-medium leading-snug text-[var(--tm-text-primary)]">{option}</span>
+                </button>
+                {showCustomInput && (
+                  <div className="px-4 pb-4">
+                    <input
+                      value={customText[option] ?? ''}
+                      onChange={event => onAnswerChange({ selectedOptions, customText: { ...customText, [option]: event.target.value } })}
+                      maxLength={120}
+                      placeholder="请补充填写"
+                      aria-label={`${option}补充内容`}
+                      className={`${questionnaireInputClass} h-[52px] px-3.5`}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {question.type === 'rating' && (
+        <div className="mt-6">
+          <div className="grid grid-cols-5 justify-items-center gap-2.5">
+            {ratingValues.map(option => {
+              const value = Number(option);
+              const selected = Number(answer) === value;
+              return <button key={value} type="button" onClick={() => toggleOption(String(value))} aria-pressed={selected} className={`flex h-11 w-11 items-center justify-center rounded-full text-[length:var(--tm-font-size-control)] font-semibold transition active:scale-[0.96] ${selected ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-control)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] ring-1 ring-[var(--tm-border-subtle)]'}`}>{value}</button>;
+            })}
+          </div>
+          <div className="mt-3 flex justify-between text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-tertiary)]"><span>低</span><span>高</span></div>
+        </div>
+      )}
+
+      {question.type === 'short_text' && <input value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(event.target.value)} maxLength={120} placeholder="请输入您的回答" className={`${questionnaireInputClass} mt-5 h-[52px]`} />}
+
+      {question.type === 'text' && <textarea value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(event.target.value)} rows={5} maxLength={300} placeholder="请输入您的回答" className={`${questionnaireInputClass} mt-5 min-h-[132px] resize-none py-3 leading-relaxed`} />}
+
+      {question.type === 'multi_fill' && (
+        <div className="mt-5 space-y-4">
+          {(question.subFields ?? []).map((subField, subFieldIndex) => (
+            <label key={subField.id} className="block">
+              <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{subField.label}{subField.required && <span className="ml-1 text-[var(--tm-status-negative-strong)]" aria-hidden="true">*</span>}</span>
+              <input
+                value={fillValues[subField.id] ?? ''}
+                onChange={event => onAnswerChange({ fillValues: { ...fillValues, [subField.id]: event.target.value } })}
+                maxLength={120}
+                placeholder="请输入"
+                required={subField.required}
+                enterKeyHint={subFieldIndex === (question.subFields?.length ?? 0) - 1 ? 'done' : 'next'}
+                className={`${questionnaireInputClass} mt-2 h-[52px] px-3.5`}
+              />
+            </label>
+          ))}
+        </div>
+      )}
+
+      {question.type === 'date' && <input type={settings.dateFormat === 'year' ? 'number' : settings.dateFormat === 'ym' ? 'month' : 'date'} inputMode={settings.dateFormat === 'year' ? 'numeric' : undefined} min={settings.dateFormat === 'year' ? 1900 : undefined} max={settings.dateFormat === 'year' ? 2100 : undefined} value={typeof answer === 'string' || typeof answer === 'number' ? answer : ''} onChange={event => onAnswerChange(event.target.value)} className={`${questionnaireInputClass} mt-5 h-[52px]`} />}
+
+      {question.type === 'number' && <input type="number" inputMode="decimal" min={settings.minValue} max={settings.maxValue} step={settings.numberFormat === 'integer' ? 1 : settings.numberFormat === 'decimal-1' ? 0.1 : 0.01} value={typeof answer === 'string' || typeof answer === 'number' ? answer : ''} onChange={event => onAnswerChange(event.target.value)} placeholder="请输入数字" className={`${questionnaireInputClass} mt-5 h-[52px]`} />}
+    </section>
+  );
+};
+
 const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   questionnaire,
   child,
@@ -61,6 +174,8 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
   preview = false,
   inputAppearance = 'theme',
 }) => {
+  const oneQuestionPerPage = isQuestionnaireOneQuestionPerPage(questionnaire);
+  const hasIntroPage = oneQuestionPerPage && Boolean(questionnaire.description.trim());
   const questionnaireThemeStyle = getQuestionnaireThemeCssVariables(questionnaire.themeId, { inputAppearance }) as React.CSSProperties;
   const returnedSubmission = questionnaire.growthTemplate === 'semester_goal'
     ? questionnaire.submissions.find(submission => (
@@ -69,6 +184,7 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
       ))
     : undefined;
   const [stepIndex, setStepIndex] = useState(0);
+  const [showIntroPage, setShowIntroPage] = useState(hasIntroPage);
   const [answers, setAnswers] = useState<Record<string, QuestionnaireAnswer>>(() => ({
     ...(!preview ? getArchiveCollectionPrefillAnswers(questionnaire, child.studentNo) : {}),
     ...(returnedSubmission?.answers ?? {}),
@@ -82,14 +198,9 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
     : undefined;
   const progress = Math.round(((stepIndex + 1) / Math.max(1, questionnaire.questions.length)) * 100);
   const currentAnswer = question ? answers[question.id] : undefined;
-  const selectedOptions = getQuestionnaireSelectedOptions(currentAnswer);
-  const currentCustomText = isQuestionnaireChoiceAnswer(currentAnswer) ? currentAnswer.customText : {};
-  const currentFillValues = getQuestionnaireMultiFillValues(currentAnswer);
   const isLastQuestion = stepIndex === questionnaire.questions.length - 1;
-  const ratingValues = question?.type === 'rating'
-    ? (question.options.length > 0 ? question.options : ['1', '2', '3', '4', '5'])
-    : [];
-  const canContinue = useMemo(() => !question || !getQuestionnaireAnswerValidationError(question, currentAnswer), [currentAnswer, question]);
+  const canContinue = !question || !getQuestionnaireAnswerValidationError(question, currentAnswer);
+  const canSubmitAll = questionnaire.questions.every(item => !getQuestionnaireAnswerValidationError(item, answers[item.id]));
 
   if (!question) return null;
 
@@ -110,44 +221,6 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
       </div>
     );
   }
-
-  const toggleOption = (option: string) => {
-    if (question.type === 'single' || question.type === 'multiple') {
-      const nextSelected = question.type === 'multiple'
-        ? selectedOptions.includes(option)
-          ? selectedOptions.filter(item => item !== option)
-          : selectedOptions.length >= (normalizeFormFieldSettings(question.type, question.settings, question.options).maxSelections ?? question.options.length)
-            ? selectedOptions
-            : [...selectedOptions, option]
-        : [option];
-      const nextCustomText = Object.fromEntries(
-        Object.entries(currentCustomText).filter(([key]) => nextSelected.includes(key)),
-      );
-      setAnswers(previous => ({
-        ...previous,
-        [question.id]: { selectedOptions: nextSelected, customText: nextCustomText },
-      }));
-      return;
-    }
-    setAnswers(previous => ({ ...previous, [question.id]: Number(option) }));
-  };
-
-  const updateCustomText = (option: string, value: string) => {
-    setAnswers(previous => ({
-      ...previous,
-      [question.id]: {
-        selectedOptions,
-        customText: { ...currentCustomText, [option]: value },
-      },
-    }));
-  };
-
-  const updateFillValue = (subFieldId: string, value: string) => {
-    setAnswers(previous => ({
-      ...previous,
-      [question.id]: { fillValues: { ...currentFillValues, [subFieldId]: value } },
-    }));
-  };
 
   const submit = () => {
     const submittedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
@@ -183,144 +256,119 @@ const AssignedQuestionnaireView: React.FC<AssignedQuestionnaireViewProps> = ({
           <h1 className="pointer-events-none absolute inset-x-16 truncate text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">预览问卷</h1>
           <div className="h-11 w-11 shrink-0" aria-hidden="true" />
         </header>
-      ) : (
+      ) : oneQuestionPerPage ? (
         <header className="sticky top-0 z-40 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 py-3 backdrop-blur-xl [padding-right:max(16px,var(--mini-program-capsule-right-inset,16px))]">
           <div className="flex min-h-11 items-center gap-3">
             <button type="button" onClick={onBack} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-transform active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)]" aria-label="返回待办">
               <ArrowLeft size={18} />
             </button>
             <div className="min-w-0 flex-1">
-              <div className="mb-2 flex justify-end"><span className="shrink-0 tabular-nums text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{stepIndex + 1}/{questionnaire.questions.length}</span></div>
-              <div className="h-2 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
-                <div className="h-full rounded-full bg-[var(--tm-questionnaire-progress)] transition-[width] [transition-duration:var(--tm-duration-panel)]" style={{ width: `${progress}%` }} />
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">{questionnaire.title}</div>
+                {!showIntroPage && <span className="shrink-0 tabular-nums text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{stepIndex + 1}/{questionnaire.questions.length}</span>}
               </div>
+              {!showIntroPage && (
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full rounded-full bg-[var(--tm-questionnaire-progress)] transition-[width] [transition-duration:var(--tm-duration-panel)]" style={{ width: `${progress}%` }} />
+                </div>
+              )}
             </div>
           </div>
         </header>
+      ) : (
+        <header className="sticky top-0 z-40 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-page-glass)] px-4 py-3 backdrop-blur-xl [padding-right:max(16px,var(--mini-program-capsule-right-inset,16px))]">
+          <div className="flex min-h-11 items-center gap-3">
+            <button type="button" onClick={onBack} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-transform active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)]" aria-label="返回待办">
+              <ArrowLeft size={18} />
+            </button>
+            <div className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">{questionnaire.title}</div>
+          </div>
+        </header>
       )}
-      <QuestionnaireHeaderImage headerImageId={questionnaire.headerImageId} />
+      {(!oneQuestionPerPage || showIntroPage) && <QuestionnaireHeaderImage headerImageId={questionnaire.headerImageId} />}
 
-      <section className="mx-5 mt-5">
-        {stepIndex === 0 && (
+      {showIntroPage ? (
+        <section className="mx-5 mt-6 px-1">
+          <h1 className="break-words text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{questionnaire.title}</h1>
+          <p className="mt-3 whitespace-pre-wrap break-words text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">{questionnaire.description}</p>
+        </section>
+      ) : <section className="mx-5 mt-5">
+        {!oneQuestionPerPage && (
           <header className="mb-5 px-1">
             <h1 className="break-words text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{questionnaire.title}</h1>
             {questionnaire.description && <p className="mt-2 whitespace-pre-wrap break-words text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]">{questionnaire.description}</p>}
           </header>
         )}
-        {currentSection && <div className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{currentSection.label}</div>}
-        <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-5 shadow-[var(--tm-shadow-card)]">
-          <div className="mb-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-tertiary)]">{getQuestionTypeLabel(question)}</div>
-          <h2 className="break-words text-[length:var(--tm-font-size-question-title)] font-bold leading-[1.45] text-[var(--tm-text-primary)]">
-            {question.title}{question.required && question.type !== 'multi_fill' && <span className="ml-1 text-[var(--tm-status-negative-strong)]" aria-label="必填">*</span>}
-          </h2>
-
-          {(question.type === 'single' || question.type === 'multiple') && (
-            <div className="mt-5 space-y-2.5">
-              {question.options.map(option => {
-                const selected = selectedOptions.includes(option);
-                const showCustomInput = selected && question.customAnswerOptions?.includes(option);
-                return (
-                  <div key={option} className={`overflow-hidden rounded-[var(--tm-radius-inner)] border ${selected ? 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
-                    <button
-                      type="button"
-                      onClick={() => toggleOption(option)}
-                      aria-pressed={selected}
-                      className="flex min-h-[52px] w-full items-center gap-3 px-4 py-3 text-left transition-transform active:scale-[0.98]"
-                    >
-                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${question.type === 'single' ? 'rounded-full' : 'rounded-[6px]'} ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`}>
-                        {selected && (question.type === 'single' ? <Circle size={9} fill="currentColor" /> : <Check size={13} strokeWidth={3} />)}
-                      </span>
-                      <span className="text-[length:var(--tm-font-size-control)] font-medium leading-snug text-[var(--tm-text-primary)]">{option}</span>
-                    </button>
-                    {showCustomInput && (
-                      <div className="px-4 pb-4">
-                        <input
-                          value={currentCustomText[option] ?? ''}
-                          onChange={event => updateCustomText(option, event.target.value)}
-                          maxLength={120}
-                          placeholder="请补充填写"
-                          aria-label={`${option}补充内容`}
-                          className={`${questionnaireInputClass} h-[52px] px-3.5`}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {question.type === 'rating' && (
-            <div className="mt-6">
-              <div className="grid grid-cols-5 justify-items-center gap-2.5">
-                {ratingValues.map(option => {
-                  const value = Number(option);
-                  const selected = Number(currentAnswer) === value;
-                  return (
-                    <button key={value} type="button" onClick={() => toggleOption(String(value))} aria-pressed={selected} className={`flex h-11 w-11 items-center justify-center rounded-full text-[length:var(--tm-font-size-control)] font-semibold transition active:scale-[0.96] ${selected ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] shadow-[var(--tm-shadow-control)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] ring-1 ring-[var(--tm-border-subtle)]'}`}>{value}</button>
-                  );
-                })}
+        {oneQuestionPerPage ? (
+          <>
+            {preview && (
+              <div className="mb-4 px-1">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{questionnaire.title}</div>
+                  <span className="shrink-0 tabular-nums text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{stepIndex + 1}/{questionnaire.questions.length}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full rounded-full bg-[var(--tm-questionnaire-progress)] transition-[width] [transition-duration:var(--tm-duration-panel)]" style={{ width: `${progress}%` }} />
+                </div>
               </div>
-              <div className="mt-3 flex justify-between text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-tertiary)]"><span>低</span><span>高</span></div>
-            </div>
-          )}
-
-          {question.type === 'text' && (
-            <textarea
-              value={typeof currentAnswer === 'string' ? currentAnswer : ''}
-              onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))}
-              rows={5}
-              maxLength={300}
-              placeholder="请输入您的回答"
-              className={`${questionnaireInputClass} mt-5 min-h-[132px] resize-none py-3 leading-relaxed`}
+            )}
+            {currentSection && <div className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{currentSection.label}</div>}
+            <QuestionnaireQuestionCard
+              question={question}
+              answer={currentAnswer}
+              onAnswerChange={answer => setAnswers(previous => ({ ...previous, [question.id]: answer }))}
             />
-          )}
-
-          {question.type === 'multi_fill' && (
-            <div className="mt-5 space-y-4">
-              {(question.subFields ?? []).map((subField, subFieldIndex) => (
-                <label key={subField.id} className="block">
-                  <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{subField.label}{subField.required && <span className="ml-1 text-[var(--tm-status-negative-strong)]" aria-hidden="true">*</span>}</span>
-                  <input
-                    value={currentFillValues[subField.id] ?? ''}
-                    onChange={event => updateFillValue(subField.id, event.target.value)}
-                    maxLength={120}
-                    placeholder="请输入"
-                    required={subField.required}
-                    enterKeyHint={subFieldIndex === (question.subFields?.length ?? 0) - 1 ? 'done' : 'next'}
-                    className={`${questionnaireInputClass} mt-2 h-[52px] px-3.5`}
+          </>
+        ) : (
+          <div className="space-y-5">
+            {questionnaire.questions.map((item, index) => {
+              const previousQuestion = questionnaire.questions[index - 1];
+              const section = questionnaire.layoutMode === 'grouped'
+                ? questionnaire.sections?.find(candidate => candidate.id === item.sectionId)
+                : undefined;
+              const showSectionLabel = Boolean(section) && (!previousQuestion || previousQuestion.sectionId !== item.sectionId);
+              return (
+                <div key={item.id}>
+                  {showSectionLabel && <div className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{section?.label}</div>}
+                  <QuestionnaireQuestionCard
+                    question={item}
+                    answer={answers[item.id]}
+                    onAnswerChange={answer => setAnswers(previous => ({ ...previous, [item.id]: answer }))}
                   />
-                </label>
-              ))}
-            </div>
-          )}
-
-          {question.type === 'date' && (() => {
-            const dateFormat = normalizeFormFieldSettings(question.type, question.settings, question.options).dateFormat ?? 'ymd';
-            return <input type={dateFormat === 'year' ? 'number' : dateFormat === 'ym' ? 'month' : 'date'} inputMode={dateFormat === 'year' ? 'numeric' : undefined} min={dateFormat === 'year' ? 1900 : undefined} max={dateFormat === 'year' ? 2100 : undefined} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} className={`${questionnaireInputClass} mt-5 h-[52px]`} />;
-          })()}
-
-          {question.type === 'number' && (() => {
-            const settings = normalizeFormFieldSettings(question.type, question.settings, question.options);
-            const numberFormat = settings.numberFormat ?? 'integer';
-            const step = numberFormat === 'integer' ? 1 : numberFormat === 'decimal-1' ? 0.1 : 0.01;
-            return <input type="number" inputMode="decimal" min={settings.minValue} max={settings.maxValue} step={step} value={typeof currentAnswer === 'string' || typeof currentAnswer === 'number' ? currentAnswer : ''} onChange={event => setAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} placeholder="请输入数字" className={`${questionnaireInputClass} mt-5 h-[52px]`} />;
-          })()}
-        </section>
-      </section>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>}
 
       <div className="absolute inset-x-0 bottom-0 z-30 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 pb-[calc(16px+env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl">
-        <div className="grid grid-cols-[0.8fr_1.2fr] gap-3">
-          <button type="button" onClick={() => setStepIndex(index => Math.max(0, index - 1))} disabled={stepIndex === 0} className={questionnaireSecondaryButton}>上一题</button>
-          <button
-            type="button"
-            disabled={!preview && !canContinue}
-            onClick={() => isLastQuestion ? preview ? onBack() : setShowSubmitConfirm(true) : setStepIndex(index => Math.min(questionnaire.questions.length - 1, index + 1))}
-            className={questionnairePrimaryButton}
-          >
-            {isLastQuestion ? preview ? '结束预览' : <><Send size={16} />提交</> : '下一题'}
+        {showIntroPage ? (
+          <button type="button" onClick={() => setShowIntroPage(false)} className={`${questionnairePrimaryButton} w-full`}>
+            {preview ? '开始预览' : '开始填写'}
           </button>
-        </div>
+        ) : oneQuestionPerPage ? (
+          <div className="grid grid-cols-[0.8fr_1.2fr] gap-3">
+            <button
+              type="button"
+              onClick={() => stepIndex === 0 && hasIntroPage ? setShowIntroPage(true) : setStepIndex(index => Math.max(0, index - 1))}
+              disabled={stepIndex === 0 && !hasIntroPage}
+              className={questionnaireSecondaryButton}
+            >上一题</button>
+            <button
+              type="button"
+              disabled={!preview && !canContinue}
+              onClick={() => isLastQuestion ? preview ? onBack() : setShowSubmitConfirm(true) : setStepIndex(index => Math.min(questionnaire.questions.length - 1, index + 1))}
+              className={questionnairePrimaryButton}
+            >
+              {isLastQuestion ? preview ? '结束预览' : <><Send size={16} />提交</> : '下一题'}
+            </button>
+          </div>
+        ) : (
+          <button type="button" disabled={!preview && !canSubmitAll} onClick={() => preview ? onBack() : setShowSubmitConfirm(true)} className={`${questionnairePrimaryButton} w-full`}>
+            {preview ? '结束预览' : <><Send size={16} />提交</>}
+          </button>
+        )}
       </div>
 
       {showSubmitConfirm && (

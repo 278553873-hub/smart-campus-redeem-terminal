@@ -33,10 +33,12 @@ const createSource = viewSource.slice(viewSource.indexOf('const renderCreate'), 
 const createStepOneSource = createSource.slice(createSource.indexOf('{createStep === 1'), createSource.indexOf('{createStep === 2'));
 const createStepThreeSource = createSource.slice(createSource.indexOf('{createStep === 3'), createSource.indexOf('<BottomAction>'));
 const studentDetailSource = viewSource.slice(viewSource.indexOf('const renderStudentCollectionDetail'), viewSource.indexOf('const renderStudentRecordPage'));
+const studentRecordPageSource = viewSource.slice(viewSource.indexOf('const renderStudentRecordPage'), viewSource.indexOf('const renderDataSummary'));
 const createPreviewSource = viewSource.slice(viewSource.indexOf('const openCreatePreview'), viewSource.indexOf('const openListPreview'));
 const detailSource = viewSource.slice(viewSource.indexOf('const renderDetail'), viewSource.indexOf('const renderResponseDetail'));
 const responseDetailSource = viewSource.slice(viewSource.indexOf('const renderResponseDetail'), viewSource.indexOf('const renderQuestionResponses'));
 const originalPreviewSource = viewSource.slice(viewSource.indexOf('const renderPreview'), viewSource.indexOf('const renderPage'));
+const legacyParentQuestionnaireSource = parentSource.slice(parentSource.indexOf('const QuestionnaireForm'), parentSource.indexOf('const ArchiveDetail'));
 
 const requireText = (source, text, message) => {
   if (!source.includes(text)) throw new Error(message);
@@ -100,6 +102,18 @@ requireText(storeSource, ".filter(record => record.status !== 'draft')", '默认
 requireText(storeSource, '.filter(record => !LEGACY_SEED_DRAFT_IDS.has(record.id))', '历史演示草稿必须从已有本地数据中清理。');
 requireText(parentSource, "setScreen('questionnaireForm')", '家长端必须复用现有问卷填写页打开教师发布问卷。');
 requireText(parentSource, 'pendingAssignedQuestionnaires', '家长端待办必须读取教师发布的共享问卷。');
+requireText(parentSource, 'description?: string;', '家长端旧问卷数据必须支持问卷说明。');
+requireText(parentSource, 'const [showLegacyQuestionnaireIntro, setShowLegacyQuestionnaireIntro] = useState(false)', '家长端旧问卷必须维护独立首页状态。');
+requireText(parentSource, 'setShowLegacyQuestionnaireIntro(Boolean(questionnaire?.description?.trim()))', '家长端旧问卷必须仅在有说明时从首页开始。');
+requireText(legacyParentQuestionnaireSource, 'const hasIntroPage = Boolean(activePendingQuestionnaire.description?.trim())', '家长真实填写必须按说明决定是否展示首页。');
+requireText(legacyParentQuestionnaireSource, '!showLegacyQuestionnaireIntro && <span', '家长问卷首页不得展示题目进度。');
+requireText(legacyParentQuestionnaireSource, 'setShowLegacyQuestionnaireIntro(false)', '家长问卷首页开始操作必须进入第一题。');
+requireText(legacyParentQuestionnaireSource, '开始填写', '家长问卷首页必须使用明确的开始填写文案。');
+requireText(legacyParentQuestionnaireSource, 'questionnaireStepIndex === 0 && hasIntroPage', '家长问卷第一题必须能够返回首页。');
+requireText(legacyParentQuestionnaireSource, 'const isQuestionRequired = questionOptions.length > 0', '家长旧问卷的必填展示必须与实际作答校验一致。');
+requireText(legacyParentQuestionnaireSource, 'isQuestionRequired && <span className="ml-1 text-rose-500" aria-label="必填">*</span>', '家长真实填写题目必须展示可识别的必填星号。');
+requireText(legacyParentQuestionnaireSource, "setScreen('todo')", '家长退出填写必须返回待办而不是跳到成长首页。');
+requireText(parentSource, 'label: questionnaire.title', '家长待办必须展示具体问卷名称。');
 requireText(parentSource, "getQuestionnaireCollectionMode(questionnaire) === 'guardian_questionnaire'", '家长端只能接收家长填写任务，不能收到老师填写任务。');
 requireText(parentSource, 'setSharedQuestionnaires(readQuestionnaires())', '家长提交后必须刷新共享问卷状态。');
 requireText(parentSource, 'resumeQuestionnaireInvite', '家长登录或绑定后必须恢复扫码对应问卷。');
@@ -260,7 +274,12 @@ const assignedSource = fs.readFileSync(new URL('../../../components/parent-app/A
 requireText(assignedSource, 'showCustomInput', '家长端必须仅在选中可填写选项后展示输入框。');
 requireText(assignedSource, 'preview?: boolean', '家长问卷组件必须支持教师预览模式。');
 requireText(assignedSource, "preview ? '结束预览'", '教师预览必须提供明确的退出操作。');
-requireText(assignedSource, 'stepIndex === 0 && (', '真实家长填写和预览必须在首题展示独立文档头部。');
+requireText(assignedSource, '!oneQuestionPerPage && (', '连续模式必须在题目上方展示问卷名称和说明。');
+requireText(assignedSource, 'const hasIntroPage = oneQuestionPerPage && Boolean(questionnaire.description.trim())', '逐题模式必须仅在存在问卷说明时生成独立首页。');
+requireText(assignedSource, 'const [showIntroPage, setShowIntroPage] = useState(hasIntroPage)', '家长填写与教师预览必须从问卷首页开始。');
+requireText(assignedSource, "{preview ? '开始预览' : '开始填写'}", '问卷首页必须按预览或真实填写提供单一开始操作。');
+requireText(assignedSource, 'stepIndex === 0 && hasIntroPage ? setShowIntroPage(true)', '逐题模式第一题必须能够返回问卷首页。');
+requireText(assignedSource, '(!oneQuestionPerPage || showIntroPage) && <QuestionnaireHeaderImage', '逐题模式头图只能出现在独立问卷首页。');
 requireText(assignedSource, 'text-[length:var(--tm-font-size-document-title)]', '问卷预览标题必须使用22像素文档标题层级。');
 requireText(assignedSource, 'currentSection && <div className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)]', '问卷填写态分组标签必须独立放在题目卡上方。');
 forbidText(assignedSource, 'currentSection && <div className="mb-3 rounded-[var(--tm-radius-control)]', '问卷填写态分组标签不得继续放在题目卡内。');
@@ -639,6 +658,27 @@ if (viewSource.includes('即将开放') || viewSource.includes('<LockKeyhole')) 
   throw new Error('未开放的教师问卷不应侵入新建采集高频流程。');
 }
 requireText(storeSource, "QuestionnaireCollectionMode = 'guardian_questionnaire' | 'student_information' | 'teacher_questionnaire'", '底层必须按通用采集模式区分填写方和采集对象。');
+requireText(storeSource, 'oneQuestionPerPage?: boolean;', '问卷数据模型必须保存一页一题设置。');
+requireText(storeSource, "rest.oneQuestionPerPage ?? respondentRole === 'guardian'", '历史问卷必须按填写人兼容一页一题默认值。');
+requireText(storeSource, 'export const isQuestionnaireOneQuestionPerPage', '预览与真实填写必须通过共享方法读取一页一题设置。');
+requireText(viewSource, "const [draftOneQuestionPerPage, setDraftOneQuestionPerPage] = useState(true)", '配置页必须维护一页一题草稿状态。');
+requireText(viewSource, "setDraftOneQuestionPerPage(record?.oneQuestionPerPage ?? resolvedRole === 'guardian')", '老师填写默认关闭、家长填写默认开启。');
+if ((viewSource.match(/oneQuestionPerPage: draftOneQuestionPerPage/g) ?? []).length < 3) {
+  throw new Error('创建预览、自动草稿和正式发布都必须保存一页一题设置。');
+}
+requireText(viewSource, '<SettingSwitchRow label="一页一题" checked={draftOneQuestionPerPage} onChange={setDraftOneQuestionPerPage} />', '设置抽屉必须提供一页一题开关。');
+requireText(assignedSource, 'const oneQuestionPerPage = isQuestionnaireOneQuestionPerPage(questionnaire)', '家长预览与真实填写必须统一读取一页一题设置。');
+requireText(assignedSource, 'questionnaire.questions.map((item, index)', '家长填写关闭一页一题后必须连续展示全部题目。');
+requireText(assignedSource, '{oneQuestionPerPage ? (', '家长填写开启一页一题后必须使用逐题操作。');
+requireText(viewSource, 'activeQuestionIndex={oneQuestionPerPage ? studentQuestionIndex : undefined}', '老师填写必须按一页一题设置切换逐题与连续展示。');
+requireText(studentRecordPageSource, 'const oneQuestionPerPage = isQuestionnaireOneQuestionPerPage(activeRecord)', '老师真实填写必须读取共享的一页一题设置。');
+requireText(originalPreviewSource, 'const oneQuestionPerPage = isQuestionnaireOneQuestionPerPage(previewRecord)', '老师预览必须读取共享的一页一题设置。');
+requireText(viewSource, 'const [showQuestionnaireIntro, setShowQuestionnaireIntro] = useState(false)', '老师填写与预览必须维护独立问卷首页状态。');
+requireText(viewSource, 'setShowQuestionnaireIntro(draftOneQuestionPerPage && Boolean(draftDescription.trim()))', '老师创建预览必须仅在逐题且有说明时从首页开始。');
+requireText(studentRecordPageSource, 'const hasIntroPage = oneQuestionPerPage && Boolean(activeRecord.description.trim())', '老师真实填写必须按说明决定是否展示首页。');
+requireText(studentRecordPageSource, '>开始填写</PrimaryButton>', '老师真实填写首页必须只提供开始填写主操作。');
+requireText(originalPreviewSource, '>开始预览</PrimaryButton>', '老师预览首页必须只提供开始预览主操作。');
+requireText(originalPreviewSource, 'studentQuestionIndex === 0 && hasIntroPage', '老师预览第一题必须能够返回问卷首页。');
 requireText(viewSource, "['unreachable', '未绑定']", '家长问卷答卷筛选必须使用明确的未绑定术语。');
 if (viewSource.includes('未送达')) {
   throw new Error('教师端不应使用容易被理解为通知失败的“未送达”。');
@@ -661,7 +701,7 @@ requireText(viewSource, 'openQuestionResponses(question.id, subField.id)', '多�
 requireText(viewSource, "{ value: 'text', label: '问答题', icon: MessageSquareText }", '普通问卷题型必须提供问答题。');
 requireText(viewSource, "{ value: 'multiple', label: '多选题', icon: ListChecks, choice: true }", '普通问卷题型必须提供多选题。');
 requireText(viewSource, "type StudentRecordFilter = 'incomplete' | 'completed'", '老师填写答卷只使用未完成和已完成两类筛选。');
-requireText(viewSource, "studentRecordFilter === 'incomplete' ? item.status !== 'completed'", '未完成必须合并未填写和草稿记录。');
+requireText(viewSource, "studentRecordFilter === 'incomplete' ? item.status !== 'completed'", '未完成筛选必须只排除已完成记录。');
 requireText(viewSource, "[['completed', '已完成'], ['incomplete', '未完成']]", '老师填写答卷必须按已完成、未完成排序。');
 requireText(viewSource, "[['completed', '已完成'], ['pending', '未完成'], ['unreachable', '未绑定']]", '家长填写答卷必须按已完成、未完成、未绑定排序。');
 requireText(viewSource, 'role="tablist" aria-label="答卷状态"', '家长填写答卷筛选必须使用可识别的页签语义。');
@@ -669,7 +709,6 @@ requireText(viewSource, 'const getStudentAvatar = (studentNo: string)', '老师�
 requireText(viewSource, 'const StudentAnswerRow: React.FC', '老师和家长填写答卷必须复用同一学生名单行。');
 requireText(viewSource, 'avatarSrc={getStudentAvatar(item.studentNo)}', '老师填写答卷列表必须使用学生头像。');
 requireText(viewSource, 'avatarSrc={getStudentAvatar(row.studentNo)}', '家长填写答卷列表必须使用学生头像。');
-requireText(viewSource, "secondaryStatusLabel={item.status === 'draft' ? '待继续' : undefined}", '老师草稿必须在未完成标签外增加待继续标签。');
 requireText(viewSource, 'className={isCompleted ? row.className : undefined}', '家长答卷只有已完成名单展示学生班级。');
 if (viewSource.slice(viewSource.indexOf('const renderResponses'), viewSource.indexOf('const renderAnalysis')).includes('<ChevronRight')) {
   throw new Error('已完成答卷名单可点击但不应显示箭头。');
@@ -677,14 +716,22 @@ if (viewSource.slice(viewSource.indexOf('const renderResponses'), viewSource.ind
 if (viewSource.includes('{item.studentName.slice(-1)}</span>')) {
   throw new Error('老师填写答卷列表不得使用姓名字块代替学生头像。');
 }
-requireText(viewSource, "draft: { label: '未完成'", '草稿记录的主状态必须统一为未完成。');
-requireText(viewSource, "Number(right.status === 'draft') - Number(left.status === 'draft')", '待完成列表必须将待继续记录排在未填写记录之前。');
+requireText(storeSource, "StudentCollectionRecordStatus = 'pending' | 'completed'", '老师逐生作答第一版只能保存未完成和已完成两种状态。');
+forbidText(studentDetailSource, '待继续', '老师逐生作答第一版不应展示草稿状态。');
+requireText(studentDetailSource, ': assignedContext ? () => openStudentRecord(record, item.studentNo) : undefined', '只有待我填写入口中的未完成学生可以进入填写。');
+requireText(viewSource, "if (recordOrigin !== 'assigned-list') return", '逐生填写入口必须校验来自待我填写。');
+requireText(studentRecordPageSource, "recordOrigin === 'assigned-list'", '逐生填写页必须再次校验待办入口上下文。');
+requireText(studentRecordPageSource, "studentRecord.status === 'pending'", '只有未完成的逐生记录可以编辑。');
+forbidText(studentRecordPageSource, '保存草稿', '老师逐生作答第一版不提供保存草稿。');
+requireText(studentRecordPageSource, '<PrimaryButton onClick={saveActiveStudentRecord} className="w-full">', '老师逐生作答只保留完成提交主操作。');
+requireText(storeSource, "studentRecord: StudentCollectionRecord & { status: 'completed' }", '数据层只能提交已完成的逐生记录。');
+requireText(storeSource, "status: 'pending',\n          updatedAt: '',\n          answers: {},", '历史逐生草稿必须迁移为未完成并清空未提交答案。');
 if (viewSource.includes("['all', '全部']") || viewSource.includes("['incomplete', '待完成']")) {
   throw new Error('老师填写答卷不应保留“全部”或“待完成”一级筛选。');
 }
 requireText(viewSource, "status: 'pending'", '学生范围生成后必须为每名学生建立未填写记录。');
-requireText(viewSource, "saveStudentCollectionRecord(activeRecord.id", '教师必须可以保存逐生采集记录。');
-requireText(viewSource, "saveActiveStudentRecord('completed')", '逐生采集记录必须可以标记完成。');
+requireText(viewSource, "completeStudentCollectionRecord(activeRecord.id", '教师必须可以完成逐生采集记录。');
+requireText(viewSource, "status: 'completed'", '逐生采集记录提交时必须直接标记完成。');
 requireText(viewSource, 'getStudentCollectionRecordsForTeacher(activeRecord, teacherId, teacherName)', '逐生记录编辑权限必须按实际填写分配校验。');
 requireText(viewSource, '>恢复编辑</button>', '学生信息采集结束后必须支持恢复编辑。');
 requireText(storeSource, "getStudentCollectionCompletedCount", '学生信息采集进度必须按已完成学生记录计算。');

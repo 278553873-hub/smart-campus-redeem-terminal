@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import {
     BackIcon, FileIcon,
     DeleteIcon, GenericFileIcon, MoreVerticalIcon,
@@ -157,14 +158,14 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
                     <select 
                         value={activeMonth}
                         onChange={(e) => setActiveMonth(e.target.value as 'all' | string)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-medium text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        className="h-[var(--tm-size-touch)] w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-filter-border)] bg-[var(--tm-filter-bg)] px-[var(--tm-space-3)] pr-9 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-filter-shadow)] [outline:var(--tm-filter-focus-outline)] focus-visible:bg-[var(--tm-filter-focus-bg)]"
                     >
                         <option value="all">全部月份</option>
                         {monthOptions.map(option => (
                             <option key={option.key} value={option.key}>{option.label}</option>
                         ))}
                     </select>
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">▼</span>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
                 </div>
             </div>
 

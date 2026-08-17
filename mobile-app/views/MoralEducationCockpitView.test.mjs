@@ -35,7 +35,7 @@ for (const required of [
   "'moral_education_cockpit'",
   "onOpenMoralEducationCockpit={() => navigateTo('moral_education_cockpit')}",
   "{currentView === 'moral_education_cockpit' && (",
-  "enabledManagementTools: ['schoolReport', 'moralEducationCockpit', 'termReport'",
+  "enabledManagementTools: ['schoolReport', 'moralEducationCockpit', 'weeklyDutySchedule', 'termReport'",
 ]) {
   assert.ok(appSource.includes(required), `应用路由应完整接入班级评价报表，缺少：${required}`);
 }
@@ -65,7 +65,7 @@ for (const required of [
   '<select',
   'aria-label="统计周期类型"',
   'grid-cols-[80px_44px_minmax(0,1fr)_44px]',
-  'border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)]',
+  'border-[var(--tm-input-border)] bg-[var(--tm-input-bg)]',
   'ariaLabel="问题分布年级筛选"',
   '<TeacherReportDonutChart',
   'seriesName="问题分布"',
@@ -84,6 +84,10 @@ for (const required of [
 ]) {
   assert.ok(viewSource.includes(required), `驾驶舱应提供多周期筛选、排名和图表展示，缺少：${required}`);
 }
+assert.ok(viewSource.includes('text-[var(--tm-input-text)] outline-none'), '统计粒度下拉应使用中性输入文字色。');
+assert.ok(viewSource.includes('text-[var(--tm-text-secondary)]" />'), '统计粒度下拉箭头应使用次级中性色。');
+assert.equal(viewSource.includes('active:scale-[0.98]'), false, '统计粒度下拉不应增加手机端按压缩放。');
+assert.equal(viewSource.includes('border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)]'), false, '统计粒度下拉不应继续使用品牌红表面。');
 
 assert.ok(!viewSource.includes('AI角标'), '班级评价报表不得展示人工智能角标。');
 assert.equal((viewSource.match(/<h1/g) ?? []).length, 1, '班级评价报表顶部应只展示一个页面标题。');

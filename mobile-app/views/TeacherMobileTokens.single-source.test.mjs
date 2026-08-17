@@ -7,6 +7,7 @@ const app = fs.readFileSync('mobile-app/App.tsx', 'utf8');
 const css = fs.readFileSync('mobile-app/index.css', 'utf8');
 const parent = fs.readFileSync('components/ParentApp.tsx', 'utf8');
 const guidelines = fs.readFileSync('design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', 'utf8');
+const classList = fs.readFileSync('mobile-app/views/ClassListView.tsx', 'utf8');
 
 const collectTeacherMobileSources = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
   const path = `${directory}/${entry.name}`;
@@ -42,6 +43,11 @@ for (const required of [
   "'--tm-input-readonly-border'",
   "'--tm-input-readonly-text'",
   "'--tm-input-focus-border'",
+  "'--tm-filter-bg'",
+  "'--tm-filter-border'",
+  "'--tm-filter-shadow'",
+  "'--tm-filter-focus-bg'",
+  "'--tm-filter-focus-outline'",
   "'--tm-focus-ring'",
   "'--tm-input-focus-ring'",
   "'--tm-page-plain-header-bg'",
@@ -87,6 +93,31 @@ assert.match(canonical, /'--tm-input-bg': teacherBrandSemantic\.surface/);
 assert.match(canonical, /'--tm-input-border': teacherBrandSemantic\.border/, '输入默认边界必须使用极浅暖灰，避免形成生硬深色描边。');
 assert.match(canonical, /'--tm-input-focus-border': teacherBrandSemantic\.border/, '输入聚焦边界必须保持与默认态相同的极浅暖灰。');
 assert.match(canonical, /'--tm-input-focus-ring': 'transparent'/, '输入聚焦外环必须保持透明。');
+assert.match(canonical, /'--tm-filter-bg': 'transparent'/, '手机端筛选型下拉默认和有值状态必须保持透明。');
+assert.match(canonical, /'--tm-filter-border': 'transparent'/, '手机端筛选型下拉不得显示容器边界。');
+assert.match(canonical, /'--tm-filter-shadow': 'none'/, '手机端筛选型下拉不得显示容器阴影。');
+assert.match(canonical, /'--tm-filter-focus-bg': 'transparent'/, '手机端筛选型下拉激活时必须保持透明。');
+assert.match(canonical, /'--tm-filter-focus-outline': 'none'/, '手机端筛选型下拉激活时必须取消浏览器轮廓。');
+const classListGradeSelect = classList.match(/<select[\s\S]*?aria-label="按年级筛选班级"[\s\S]*?<\/select>/)?.[0] ?? '';
+assert.match(classListGradeSelect, /bg-\[var\(--tm-bg-surface\)\]/, '班级页年级筛选默认状态必须使用白色表面。');
+assert.match(classListGradeSelect, /\[box-shadow:var\(--tm-shadow-control\)\]/, '班级页年级筛选必须使用统一控件阴影。');
+assert.match(classListGradeSelect, /focus-visible:bg-\[var\(--tm-bg-surface\)\]/, '班级页年级筛选聚焦时必须保持白底。');
+assert.match(classList, /variant="quiet"/, '班级页来源切换必须保持透明的 quiet 形态。');
+assert.match(guidelines, /班级页学校版年级筛选是专项例外/, '教师手机端规范应明确班级页年级筛选的白底例外。');
+
+for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
+  const source = fs.readFileSync(sourcePath, 'utf8');
+  for (const selectBlock of source.match(/<select[\s\S]*?<\/select>/g) ?? []) {
+    assert.doesNotMatch(selectBlock, /--tm-focus-ring/, `${sourcePath} 的下拉控件不得复用品牌色焦点环。`);
+    assert.doesNotMatch(selectBlock, /focus-visible:ring/, `${sourcePath} 的手机端下拉控件聚焦时不得增加描边。`);
+    if (selectBlock.includes('--tm-filter-focus-bg')) {
+      assert.match(selectBlock, /--tm-filter-bg/, `${sourcePath} 的筛选型下拉必须使用透明表面 Token。`);
+      assert.match(selectBlock, /--tm-filter-border/, `${sourcePath} 的筛选型下拉必须使用透明边界 Token。`);
+      assert.match(selectBlock, /--tm-filter-shadow/, `${sourcePath} 的筛选型下拉必须使用无阴影 Token。`);
+      assert.match(selectBlock, /--tm-filter-focus-outline/, `${sourcePath} 的筛选型下拉必须使用无轮廓 Token。`);
+    }
+  }
+}
 assert.match(canonical, /'--tm-input-disabled-bg': teacherBrandSemantic\.surfaceMuted/);
 assert.match(canonical, /'--tm-input-readonly-bg': teacherBrandSemantic\.surfaceSoft/);
 assert.match(guidelines, /禁止把可编辑输入框默认画成灰底/);

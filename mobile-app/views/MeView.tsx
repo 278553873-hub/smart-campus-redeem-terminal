@@ -1,6 +1,7 @@
 import React from 'react';
 import {
     BookOpen,
+    CalendarRange,
     Camera,
     ChevronRight,
     ClipboardList,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import ClassSourceTrigger from '../components/ClassSourceTrigger';
+import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import type { TeacherProfile } from '../types';
 import {
     getTeacherSpaceMenuPolicy,
@@ -32,6 +34,7 @@ interface MeViewProps {
     onOpenTermGenerateModal: () => void;
     onViewLeaderReport: () => void;
     onOpenMoralEducationCockpit: () => void;
+    onOpenWeeklyDutySchedule: () => void;
     onOpenSettings: () => void;
     onOpenSubjectManagement: () => void;
     onOpenDepartmentManagement: () => void;
@@ -147,41 +150,29 @@ export const ClassSourceSheet: React.FC<{
     onClose: () => void;
     onSelectSpace: (spaceId: string) => void;
 }> = ({ currentSpace, spaceOptions, onClose, onSelectSpace }) => (
-    <div
-        className="absolute inset-0 z-[70] flex items-end bg-[var(--tm-mask)] backdrop-blur-[1px]"
-        onClick={onClose}
-    >
-        <section
-            className="w-full rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-page-glass)] px-5 pb-[calc(16px+env(safe-area-inset-bottom))] pt-2.5 [box-shadow:var(--tm-shadow-sheet)] backdrop-blur-xl"
-            onClick={(event) => event.stopPropagation()}
-            aria-label="切换班级来源"
-        >
-            <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[var(--tm-brand-primary-soft-strong)]" aria-hidden="true" />
-            <div className="mb-5 flex min-h-11 items-center">
-                <div className="text-balance text-[17px] font-semibold leading-[22px] text-[var(--tm-text-primary)]">切换班级来源</div>
-            </div>
-            <div className="space-y-3">
-                {spaceOptions.map(space => {
-                    const isActive = space.id === currentSpace.id;
-                    const tag = getClassSourceTag(space);
-                    return (
-                        <button
-                            key={space.id}
-                            type="button"
-                            onClick={() => onSelectSpace(space.id)}
-                            className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-inner)] px-4 text-left transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]' : 'bg-white/92 ring-1 ring-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-card)]'}`}
-                        >
-                            <span className="min-w-0 truncate text-[17px] font-semibold leading-[22px] text-[var(--tm-text-primary)]">{space.title}</span>
-                            <span className="ml-3 flex shrink-0 items-center gap-2">
-                                <span className={`rounded-full px-3 py-1 text-[13px] font-medium leading-[18px] ${isActive ? 'bg-white/84 text-[var(--tm-brand-primary-pressed)]' : 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]'}`}>{tag}</span>
-                                {isActive && <span className="rounded-full bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-white shadow-[0_8px_18px_-12px_var(--tm-shadow-brand)]">当前</span>}
-                            </span>
-                        </button>
-                    );
-                })}
-            </div>
-        </section>
-    </div>
+    <MobileBottomSheet open title="切换班级来源" onClose={onClose}>
+        <div className="space-y-3">
+            {spaceOptions.map(space => {
+                const isActive = space.id === currentSpace.id;
+                const tag = getClassSourceTag(space);
+                return (
+                    <button
+                        key={space.id}
+                        type="button"
+                        aria-pressed={isActive}
+                        onClick={() => onSelectSpace(space.id)}
+                        className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-inner)] px-4 text-left transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                    >
+                        <span className="min-w-0 truncate text-[17px] font-semibold leading-[22px] text-[var(--tm-text-primary)]">{space.title}</span>
+                        <span className="ml-3 flex shrink-0 items-center gap-2">
+                            <span className={`rounded-full px-3 py-1 text-[13px] font-medium leading-[18px] ${isActive ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-pressed)]' : 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]'}`}>{tag}</span>
+                            {isActive && <span className="rounded-full bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-[var(--tm-text-inverse)]">当前</span>}
+                        </span>
+                    </button>
+                );
+            })}
+        </div>
+    </MobileBottomSheet>
 );
 
 const MeView: React.FC<MeViewProps> = ({
@@ -193,6 +184,7 @@ const MeView: React.FC<MeViewProps> = ({
     onOpenTermGenerateModal,
     onViewLeaderReport,
     onOpenMoralEducationCockpit,
+    onOpenWeeklyDutySchedule,
     onOpenSettings,
     onOpenSubjectManagement,
     onOpenDepartmentManagement,
@@ -265,6 +257,30 @@ const MeView: React.FC<MeViewProps> = ({
 
     const allMoreTools: MenuEntry<TeacherMoreToolId>[] = [
         {
+            id: 'coinIssuance',
+            title: '货币发放',
+            icon: Coins,
+            onClick: onOpenCoinIssuance,
+        },
+        {
+            id: 'questionnaire',
+            title: '问卷采集',
+            icon: ClipboardList,
+            onClick: onOpenQuestionnaire,
+        },
+        {
+            id: 'weeklyDutySchedule',
+            title: '值周安排',
+            icon: CalendarRange,
+            onClick: onOpenWeeklyDutySchedule,
+        },
+        {
+            id: 'archiveDesign',
+            title: '档案设计',
+            icon: FileCog,
+            onClick: onOpenArchiveDesign,
+        },
+        {
             id: 'subjectManagement',
             title: '科目管理',
             icon: BookOpen,
@@ -277,28 +293,10 @@ const MeView: React.FC<MeViewProps> = ({
             onClick: onOpenDepartmentManagement,
         },
         {
-            id: 'coinIssuance',
-            title: '货币发放',
-            icon: Coins,
-            onClick: onOpenCoinIssuance,
-        },
-        {
             id: 'suggestionFeedback',
             title: '建议反馈',
             icon: MessageCircle,
             onClick: onOpenSuggestionFeedback,
-        },
-        {
-            id: 'questionnaire',
-            title: '问卷采集',
-            icon: ClipboardList,
-            onClick: onOpenQuestionnaire,
-        },
-        {
-            id: 'archiveDesign',
-            title: '档案设计',
-            icon: FileCog,
-            onClick: onOpenArchiveDesign,
         },
     ];
     const moreTools = allMoreTools.filter(item => allowedMoreTools.has(item.id));

@@ -400,18 +400,18 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                 <div className="sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)] pb-3 pt-1 [box-shadow:0_8px_20px_-20px_var(--tm-shadow-neutral-color)]">
                     <div className="grid h-11 grid-cols-[80px_44px_minmax(0,1fr)_44px] items-center">
                         <label className="relative flex h-11 min-w-0 items-center">
-                            <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 inset-y-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)] [box-shadow:var(--tm-shadow-control)]" />
+                            <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 inset-y-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)]" />
                             <select
                                 aria-label="统计周期类型"
                                 value={periodType}
                                 onChange={event => changePeriodType(event.target.value as MoralEducationPeriodType)}
-                                className="relative z-10 h-full w-full appearance-none bg-transparent pl-3 pr-7 text-[13px] font-semibold text-[var(--tm-brand-primary)] outline-none active:scale-[0.98]"
+                                className="relative z-10 h-full w-full appearance-none bg-transparent pl-3 pr-7 text-[13px] font-semibold text-[var(--tm-input-text)] outline-none"
                             >
                                 {periodTypeOptions.map(option => (
                                     <option key={option.key} value={option.key}>{option.label}</option>
                                 ))}
                             </select>
-                            <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 z-10 h-4 w-4 text-[var(--tm-brand-primary)]" />
+                            <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 z-10 h-4 w-4 text-[var(--tm-text-secondary)]" />
                         </label>
                         <button
                             type="button"

@@ -160,6 +160,7 @@ interface StudentArchive {
 interface PendingQuestionnaire {
   id: string;
   title: string;
+  description?: string;
   audience: 'parent' | 'student';
   sourceRecordId: string;
 }
@@ -263,8 +264,20 @@ const createDemoChild = (name: string, schoolCode: string, studentNo: string, in
       },
     ],
     pendingQuestionnaires: [
-      { id: `pending-${index}-parent`, title: '家长问卷', audience: 'parent', sourceRecordId: `source-${index}-parent` },
-      { id: `pending-${index}-student`, title: '孩子问卷', audience: 'student', sourceRecordId: `source-${index}-student` },
+      {
+        id: `pending-${index}-parent`,
+        title: '一年级学生家长问卷',
+        description: '请结合孩子日常表现如实填写，帮助老师更全面地了解孩子。',
+        audience: 'parent',
+        sourceRecordId: `source-${index}-parent`,
+      },
+      {
+        id: `pending-${index}-student`,
+        title: '一年级学生问卷',
+        description: '请由孩子根据自己的真实想法完成填写。',
+        audience: 'student',
+        sourceRecordId: `source-${index}-student`,
+      },
     ],
     canViewArchive: Boolean(options.canViewArchive),
     archives: [
@@ -653,6 +666,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const [sharedQuestionnaires, setSharedQuestionnaires] = useState<QuestionnaireRecord[]>(() => readQuestionnaires());
   const [activeSharedQuestionnaireId, setActiveSharedQuestionnaireId] = useState('');
   const [questionnaireStepIndex, setQuestionnaireStepIndex] = useState(0);
+  const [showLegacyQuestionnaireIntro, setShowLegacyQuestionnaireIntro] = useState(false);
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<QuestionnaireAnswerDraft>({});
   const [questionnaireTextAnswers, setQuestionnaireTextAnswers] = useState<Record<string, string>>({});
   const [showQuestionnaireSubmitConfirm, setShowQuestionnaireSubmitConfirm] = useState(false);
@@ -1064,9 +1078,11 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   const openQuestionnaireForm = (questionnaireId: string) => {
+    const questionnaire = activeChild?.pendingQuestionnaires.find(item => item.id === questionnaireId);
     setActiveSharedQuestionnaireId('');
     setActiveQuestionnaireId(questionnaireId);
     setQuestionnaireStepIndex(0);
+    setShowLegacyQuestionnaireIntro(Boolean(questionnaire?.description?.trim()));
     setQuestionnaireAnswers({});
     setQuestionnaireTextAnswers({});
     setScreen('questionnaireForm');
@@ -1297,7 +1313,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
     if (!activeChild || activeChild.pendingQuestionnaires.length === 0) return null;
     const pendingQuestionnaireRows: Array<PendingQuestionnaire & { label: string; tone: 'blue' | 'softBlue' }> = activeChild.pendingQuestionnaires.map(questionnaire => ({
       ...questionnaire,
-      label: questionnaire.audience === 'student' ? '待学生填写问卷' : '待家长填写问卷',
+      label: questionnaire.title,
       tone: questionnaire.audience === 'student' ? 'softBlue' : 'blue',
     }));
     return pendingQuestionnaireRows;
@@ -1828,6 +1844,8 @@ const ParentApp: React.FC<ParentAppProps> = ({
     const currentStepNumber = questionnaireStepIndex + 1;
     const questionTotal = activeQuestionnaireQuestions.length;
     const progressPercent = Math.round((currentStepNumber / Math.max(1, questionTotal)) * 100);
+    const hasIntroPage = Boolean(activePendingQuestionnaire.description?.trim());
+    const questionnaireDisplayTitle = activePendingQuestionnaire.title || activeQuestionnaireSourceRecord.title;
     const selectedTextOptionsComplete = selectedAnswers.every(option => (
       !optionNeedsTextInput(option) || Boolean(questionnaireTextAnswers[`${currentQuestion.id}::${option}`]?.trim())
     ));
@@ -1835,34 +1853,42 @@ const ParentApp: React.FC<ParentAppProps> = ({
       .replace(/^\d+[.．、]/, '')
       .replace(/\s+\/\s+/g, '：');
     const questionTypeLabel = getQuestionTypeLabel(currentQuestion);
+    const isQuestionRequired = questionOptions.length > 0;
     const canGoNext = questionOptions.length === 0 || (selectedAnswers.length > 0 && selectedTextOptionsComplete);
     const isLastQuestion = currentStepNumber === questionTotal;
     return (
       <ParentPageShell className="pb-36">
         <div className="sticky top-0 z-40 border-b border-white/60 bg-white/76 px-4 py-3 backdrop-blur-xl">
           <div className="flex min-h-10 items-center gap-3">
-            <button type="button" onClick={() => setScreen('growth')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm transition-transform duration-150 ease-out active:scale-[0.96]" aria-label="返回成长页">
+            <button type="button" onClick={() => setScreen('todo')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm transition-transform duration-150 ease-out active:scale-[0.96]" aria-label="返回待办">
               <ArrowLeft size={18} />
             </button>
             <div className="min-w-0 flex-1">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <span className="text-[13px] font-black text-slate-500">填写进度</span>
-                <span className="tabular-nums text-[13px] font-black text-emerald-600">{currentStepNumber}/{questionTotal}</span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="min-w-0 flex-1 truncate text-[15px] font-black text-slate-900">{questionnaireDisplayTitle}</span>
+                {!showLegacyQuestionnaireIntro && <span className="shrink-0 tabular-nums text-[13px] font-black text-emerald-600">{currentStepNumber}/{questionTotal}</span>}
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-gradient-to-r from-[#0DB4F1] to-[#18D0A8] transition-[width] duration-300 ease-out" style={{ width: `${progressPercent}%` }} />
-              </div>
+              {!showLegacyQuestionnaireIntro && (
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full rounded-full bg-gradient-to-r from-[#0DB4F1] to-[#18D0A8] transition-[width] duration-300 ease-out" style={{ width: `${progressPercent}%` }} />
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <section className="mx-5 mt-4">
+        {showLegacyQuestionnaireIntro ? (
+          <section className="mx-5 mt-6 px-1">
+            <h1 className="break-words text-[23px] font-black leading-8 text-slate-950">{questionnaireDisplayTitle}</h1>
+            <p className="mt-3 whitespace-pre-wrap break-words text-[15px] font-bold leading-6 text-slate-600">{activePendingQuestionnaire.description}</p>
+          </section>
+        ) : <section className="mx-5 mt-4">
           <ParentCard as="section" className="p-5">
             <div className="mb-3 inline-flex rounded-full bg-sky-50 px-3 py-1.5 text-[12px] font-black text-sky-600">
               {questionTypeLabel}
             </div>
             <h2 className="break-words text-[18px] font-black leading-[1.4] text-slate-950">
-              {questionPrompt}
+              {questionPrompt}{isQuestionRequired && <span className="ml-1 text-rose-500" aria-label="必填">*</span>}
             </h2>
 
             <div className="mt-5 space-y-2.5">
@@ -1910,14 +1936,20 @@ const ParentApp: React.FC<ParentAppProps> = ({
               )}
             </div>
           </ParentCard>
-        </section>
+        </section>}
 
         <div className="absolute bottom-0 left-0 right-0 z-30 border-t border-white/70 bg-white/86 px-5 py-4 backdrop-blur-xl">
-          <div className="grid grid-cols-[0.8fr_1.2fr] gap-3">
+          {showLegacyQuestionnaireIntro ? (
+            <ParentPrimaryButton type="button" onClick={() => setShowLegacyQuestionnaireIntro(false)} fullWidth className="h-[52px] text-[16px]">
+              开始填写
+            </ParentPrimaryButton>
+          ) : <div className="grid grid-cols-[0.8fr_1.2fr] gap-3">
             <ParentSecondaryButton
               type="button"
-              onClick={() => setQuestionnaireStepIndex(index => Math.max(0, index - 1))}
-              disabled={questionnaireStepIndex === 0}
+              onClick={() => questionnaireStepIndex === 0 && hasIntroPage
+                ? setShowLegacyQuestionnaireIntro(true)
+                : setQuestionnaireStepIndex(index => Math.max(0, index - 1))}
+              disabled={questionnaireStepIndex === 0 && !hasIntroPage}
               className="h-[52px] text-[16px]"
             >
               上一题
@@ -1936,7 +1968,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
             >
               {isLastQuestion ? '提交' : '下一题'}
             </ParentPrimaryButton>
-          </div>
+          </div>}
         </div>
 
         {showQuestionnaireSubmitConfirm && (
