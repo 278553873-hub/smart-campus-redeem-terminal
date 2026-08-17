@@ -1193,7 +1193,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
     // Local Header component to replace the imported one's styling for specific views
     const LocalHeader = ({ title, onBack }: { title: string; onBack?: () => void }) => (
-        <div className={`h-11 flex items-center justify-between px-4 sticky top-0 z-[45] backdrop-blur-md ${hasScreenLevelBackground ? 'bg-white/38' : 'bg-[var(--tm-bg-page-glass)]'}`}>
+        <div className={`h-11 flex items-center justify-between px-4 sticky top-0 z-[45] backdrop-blur-md ${currentView === 'class_leaderboard' ? 'bg-[var(--tm-page-plain-header-bg)]' : hasScreenLevelBackground ? 'bg-white/38' : 'bg-[var(--tm-bg-page-glass)]'}`}>
             {onBack && (
                 <button onClick={onBack} className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回">
                     <ChevronLeftLucide className="w-5 h-5" />

@@ -59,7 +59,11 @@ for (const required of [
   'px-[var(--tm-report-page-inline)]',
   'space-y-[var(--tm-report-card-gap)]',
   '<ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />',
-  'sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)]',
+  'sticky -top-px z-30 -mt-px border-b bg-[var(--tm-page-plain-content-bg)]',
+  'onScroll={handleReportScroll}',
+  "? 'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]'",
+  ": 'border-transparent'",
+  '-mx-[var(--tm-report-page-inline)] bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)]',
   'grid h-[var(--tm-report-filter-row-height)] grid-cols-5',
   'aria-label="学生评价报表时间范围"',
   'aria-pressed={activePeriod === period.key}',
@@ -81,7 +85,7 @@ if ((leaderView.match(/<ReportTypeTabs/g) ?? []).length !== 1) {
   throw new Error('学校数据报表只应渲染一套报表类型页签');
 }
 
-for (const forbidden of ['isFilterPinned', 'handleReportScroll', '紧凑筛选', '完整筛选', 'blur-[2px]']) {
+for (const forbidden of ['紧凑筛选', '完整筛选', 'blur-[2px]']) {
   if (leaderView.includes(forbidden)) {
     throw new Error(`学校数据报表顶部不应保留滚动变形或双层筛选：${forbidden}`);
   }

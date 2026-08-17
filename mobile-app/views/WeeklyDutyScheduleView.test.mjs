@@ -33,10 +33,15 @@ requireText(viewSource, 'MobileBottomSheet', '教师选择应复用公共底部�
 requireText(viewSource, 'MobileSearchInput', '教师选择应复用公共搜索输入框。');
 requireText(viewSource, 'teacher.name.includes(keyword)', '教师搜索应按姓名子串即时过滤。');
 requireText(viewSource, 'teacher.avatar', '教师结果应展示教师头像。');
+assert.ok(!viewSource.includes('MobileToast') && !viewSource.includes('showToast'), '排班成功后页面已即时更新，不应重复显示成功Toast。');
 requireText(viewSource, 'aria-label="暂不安排老师"', '抽屉应提供常驻的暂不安排老师选项。');
 assert.ok(viewSource.indexOf('aria-label="暂不安排老师"') < viewSource.indexOf('<MobileSearchInput'), '暂不安排老师按钮应位于搜索框上方。');
 requireText(viewSource, 'header={teacherSheetWeek ? (', '暂不安排老师应进入抽屉标题栏。');
 requireText(viewSource, "title={teacherSheetWeek ? formatDutyWeekRange(teacherSheetWeek) : '选择教师'}", '抽屉标题应只保留周日期范围。');
+requireText(viewSource, 'border-[var(--tm-duty-unassigned-button-border)]', '暂不安排老师默认态应有明确按钮边界。');
+requireText(viewSource, '[box-shadow:var(--tm-duty-unassigned-button-shadow)]', '暂不安排老师默认态应有控件阴影。');
+requireText(tokenSource, "'--tm-duty-unassigned-button-bg': 'var(--tm-bg-surface)'", '暂不安排老师默认态应使用白色实体表面。');
+requireText(tokenSource, "'--tm-duty-unassigned-button-selected-bg': 'var(--tm-bg-surface-muted)'", '暂不安排老师已选态应使用中性灰表面。');
 assert.ok(!viewSource.includes('值周老师'), '抽屉顶部不应继续显示“值周老师”。');
 assert.ok(!viewSource.includes('scheduledCount') && !viewSource.includes('7/27周'), '页面不应展示已安排周数统计。');
 assert.ok(!viewSource.includes('当前安排') && !viewSource.includes('RotateCcw'), '抽屉不应保留旧的当前安排与清空行。');
@@ -73,6 +78,12 @@ for (const token of [
   '--tm-duty-current-button-shadow',
   '--tm-duty-current-button-pressed-bg',
   '--tm-duty-unassigned-option-height',
+  '--tm-duty-unassigned-button-bg',
+  '--tm-duty-unassigned-button-selected-bg',
+  '--tm-duty-unassigned-button-pressed-bg',
+  '--tm-duty-unassigned-button-border',
+  '--tm-duty-unassigned-button-text',
+  '--tm-duty-unassigned-button-shadow',
   '--tm-duty-teacher-row-height',
 ]) {
   requireText(tokenSource, token, `教师端令牌源缺少${token}。`);

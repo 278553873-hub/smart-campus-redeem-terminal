@@ -12,7 +12,9 @@ import {
     Triangle,
 } from 'lucide-react';
 import rankingCrownIcon from '../assets/resources/ranking-crown-icon.png';
+import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import PillSelectionControl from '../components/ui/PillSelectionControl';
 import ClassReportIndicatorDrilldown, {
     type ClassReportIndicatorDrilldownMode,
 } from '../components/report/ClassReportIndicatorDrilldown';
@@ -84,7 +86,6 @@ const timeRangeTabs: { key: TimeRange; label: string }[] = [
 ];
 
 const cardClass = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]';
-const inactiveConditionFilterClass = 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]';
 const customDateInputClass = 'h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition-[border-color,background-color,box-shadow] [transition-duration:var(--tm-duration-standard)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 
 interface ReportSectionProps {
@@ -639,7 +640,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     return (
         <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent text-[var(--tm-text-primary)]">
             <div className="min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar" onScroll={handleReportScroll}>
-                <header className={`sticky top-0 z-30 border-b bg-[var(--tm-page-plain-header-bg)] transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
+                <header className={`sticky top-0 z-30 border-b bg-[var(--tm-page-plain-content-bg)] transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
                     isFilterPinned
                         ? 'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]'
                         : 'border-transparent'
@@ -650,7 +651,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                             : 'pb-[var(--tm-report-filter-padding-bottom)] pt-[var(--tm-report-filter-padding-top)]'
                     }`}>
                         <div>
-                            <div className="grid h-[var(--tm-size-touch)] grid-cols-5" role="group" aria-label="报告时间范围">
+                            <div className="-mx-[var(--tm-report-page-inline)] grid h-[var(--tm-size-touch)] grid-cols-5 bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)]" role="group" aria-label="报告时间范围">
                                 {timeRangeTabs.map(item => (
                                     <button
                                         key={item.key}
@@ -859,29 +860,16 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
 
                 <ReportSection id="ranking-title" title="积分排行">
                     <div>
-                        <div className="mb-3 grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="积分排行类型">
-                            {([
-                                { key: 'net' as const, label: '总分' },
-                                { key: 'progress' as const, label: '进步幅度' },
-                            ]).map(item => (
-                                <button
-                                    key={item.key}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={rankingMode === item.key}
-                                    onClick={() => setRankingMode(item.key)}
-                                    className="flex h-[var(--tm-size-touch)] items-center p-1 text-[var(--tm-font-size-compact)] font-semibold"
-                                >
-                                    <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all duration-200 ${
-                                        rankingMode === item.key
-                                            ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]'
-                                            : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'
-                                    }`}>
-                                        {item.label}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
+                        <CompactSegmentedControl
+                            value={rankingMode}
+                            items={[
+                                { value: 'net', label: '总分' },
+                                { value: 'progress', label: '进步幅度' },
+                            ]}
+                            onChange={setRankingMode}
+                            ariaLabel="积分排行类型"
+                            className="mb-3"
+                        />
                         <ol id="class-ranking-list">
                             {visibleRankingRows.map((row, index) => (
                                 <li key={row.student.id} className="border-b border-[var(--tm-border-subtle)] last:border-0">
@@ -922,25 +910,13 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
 
                 <ReportSection id="attention-students-title" title="需要关注">
                     <div>
-                        <div className="mb-3 flex gap-2 overflow-x-auto py-1 no-scrollbar" aria-label="需要关注维度">
-                            {[{ id: 'all', label: '全部' }, ...reportData.indicatorTree].map(item => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    aria-pressed={activeEducation === item.id}
-                                    onClick={() => setActiveEducation(item.id)}
-                                    className="flex h-[var(--tm-size-touch)] min-w-[60px] shrink-0 items-center justify-center"
-                                >
-                                    <span className={`flex h-8 w-full items-center justify-center rounded-[8px] border px-3 text-[var(--tm-font-size-compact)] font-semibold transition-colors duration-200 ${
-                                        activeEducation === item.id
-                                            ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]'
-                                            : inactiveConditionFilterClass
-                                    }`}>
-                                        {item.label}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
+                        <PillSelectionControl
+                            value={activeEducation}
+                            items={[{ value: 'all', label: '全部' }, ...reportData.indicatorTree.map(item => ({ value: item.id, label: item.label }))]}
+                            onChange={setActiveEducation}
+                            ariaLabel="需要关注维度"
+                            className="mb-3"
+                        />
 
                         <div className="grid grid-cols-2 gap-2">
                             <div className="min-w-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-chart-positive-soft)] px-[var(--tm-space-1)] py-[var(--tm-space-2)]">

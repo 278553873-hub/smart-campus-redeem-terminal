@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronLeft, Clock, Landmark, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
+import TextSelectionControl from '../components/ui/TextSelectionControl';
 import { CampusCoinDetail, Student } from '../types';
 import { phoneText } from '../styles/teacherMobileTokens';
 import { formatCoinAmount } from '../utils/coinFormat';
@@ -226,35 +228,24 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                 </label>
               </div>
 
-              <div className="mt-[var(--tm-space-1)] grid h-[var(--tm-size-touch)] grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)]" role="group" aria-label="按收支类型筛选">
-                {flowFilterOptions.map(option => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => selectFilter(option.value)}
-                    aria-pressed={activeFilter === option.value}
-                    className="flex min-h-[var(--tm-size-touch)] items-center rounded-[var(--tm-radius-control)] p-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] font-semibold transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none motion-reduce:active:scale-100"
-                  >
-                    <span className={`flex h-[calc(var(--tm-size-touch)-var(--tm-space-2))] w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-var(--tm-space-1))] transition-[background-color,color,box-shadow] [transition-duration:var(--tm-duration-fast)] ease-out motion-reduce:transition-none ${activeFilter === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-brand-primary-strong)]'}`}>
-                      {option.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              <CompactSegmentedControl
+                value={activeFilter}
+                items={flowFilterOptions}
+                onChange={selectFilter}
+                ariaLabel="按收支类型筛选"
+                semantics="group"
+                className="mt-[var(--tm-space-1)]"
+              />
 
-              <div className="mt-[var(--tm-space-1)] flex min-h-[var(--tm-size-touch)] gap-[var(--tm-space-2)] overflow-x-auto no-scrollbar" role="group" aria-label={`${activeFilter === 'income' ? '收入' : '支出'}分类筛选`}>
-                {categoryOptions.map(category => (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => setActiveCategory(category)}
-                    aria-pressed={activeCategory === category}
-                    className={`min-h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium transition-[transform,background-color,color] [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none motion-reduce:active:scale-100 ${activeCategory === category ? 'bg-[var(--tm-brand-primary-soft)] font-semibold text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
-                  >
-                    {categoryLabels[category]}
-                  </button>
-                ))}
-              </div>
+              <TextSelectionControl
+                value={activeCategory}
+                items={categoryOptions.map(category => ({ value: category, label: categoryLabels[category] }))}
+                onChange={setActiveCategory}
+                ariaLabel={`${activeFilter === 'income' ? '收入' : '支出'}分类筛选`}
+                semantics="group"
+                inactiveTone="primary"
+                className="mt-[var(--tm-space-1)]"
+              />
 
               {groupedFlowItems.length === 0 ? (
                 <div className="flex min-h-72 flex-col items-center justify-center">

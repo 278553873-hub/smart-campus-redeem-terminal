@@ -601,7 +601,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('evaluation')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'evaluation' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>评价记录</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'evaluation' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>评价记录</span>
                         </button>
                         <button
                             type="button"
@@ -610,7 +610,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('report')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长报告</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长报告</span>
                         </button>
                     </div>
                 </div>

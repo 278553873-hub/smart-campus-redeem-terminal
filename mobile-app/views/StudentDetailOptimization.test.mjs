@@ -9,6 +9,8 @@ const screenBackgroundSource = read('../components/TeacherMobileScreenBackground
 const tokenSource = read('../styles/teacherMobileTokens.ts');
 const basicEditSource = read('./StudentBasicEditView.tsx');
 const coinDetailSource = read('./StudentCoinDetailView.tsx');
+const compactSegmentSource = read('../components/ui/CompactSegmentedControl.tsx');
+const textSelectionSource = read('../components/ui/TextSelectionControl.tsx');
 const evaluationRecordsSource = read('./StudentEvaluationRecordsView.tsx');
 const termSelectorSource = read('../components/student-detail/StudentTermSelector.tsx');
 const timeRangeSelectorSource = read('../components/student-detail/StudentTimeRangeSelector.tsx');
@@ -46,6 +48,13 @@ requireText(appSource, 'handleSaveStudentBasicInfo', 'App 应提供学生基础�
 requireText(appSource, '<StudentBasicEditView', 'App 应渲染学生基础信息编辑页。');
 requireText(appSource, '<StudentCoinDetailView', 'App 应渲染校园币详情页。');
 requireText(appSource, "lazy(() => import('./views/StudentCoinDetailView'))", '校园币详情等低频子页面应按需加载。');
+requireText(coinDetailSource, '<CompactSegmentedControl', '校园币收入/支出应复用紧凑分段控件。');
+requireText(coinDetailSource, '<TextSelectionControl', '校园币分类应复用仅文字高亮的选择控件。');
+requireText(compactSegmentSource, 'min-h-[var(--tm-selection-touch-height)]', '紧凑分段控件必须通过组件 Token 保留44像素触控区。');
+requireText(textSelectionSource, "? 'font-semibold text-[var(--tm-selection-text-active)]'", '分类选中态应只使用组件级主题红文字。');
+if (textSelectionSource.includes("? 'bg-[var(--tm-brand-primary-soft)]")) {
+  throw new Error('仅文字选择控件的选中态不得增加底色。');
+}
 requireText(appSource, '<Suspense fallback={<TeacherRouteSkeleton />}>', '低频子页面加载时应提供稳定的页面骨架。');
 requireText(appSource, 'GET_MOCK_CAMPUS_COIN_DETAIL(activeStudent, coinIssuanceConfig, activeStudentClassSize)', '校园币详情应实时读取学校货币发放配置和班级人数。');
 requireText(appSource, 'onEditBasicInfo={() => navigateTo(\'student_basic_edit\')}', '学生详情页应能进入基础信息编辑页。');
@@ -274,6 +283,11 @@ if (dashboardSource.includes('>成长概览</span>') || dashboardSource.includes
 }
 requireText(dashboardSource, '>评价记录</span>', '学生详情必须提供评价记录页签。');
 requireText(dashboardSource, '成长报告', '学生详情必须保留成长报告页签。');
+const studentDetailTabsSource = dashboardSource.slice(dashboardSource.indexOf('aria-label="学生详情内容"'), dashboardSource.indexOf('{/* D. Content Area */}'));
+requireText(studentDetailTabsSource, 'text-[var(--tm-brand-primary)]', '学生详情一级页签选中态应使用标准主题红。');
+if (studentDetailTabsSource.includes('text-[var(--tm-brand-primary-strong)]')) {
+  throw new Error('学生详情一级页签不得继续使用偏深的强主题红。');
+}
 requireText(evaluationRecordsSource, '>评价记录</h3>', '学生详情必须保留评价记录板块。');
 requireText(dashboardSource, "activeTab === 'evaluation' && renderEvaluationTab()", '实时五育积分和评价列表必须收敛到评价记录页签。');
 requireText(dashboardSource, "activeTab === 'report' && renderReportTab()", '阶段报告必须收敛到成长报告页签。');
@@ -403,8 +417,9 @@ requireText(coinDetailSource, "type FlowFilter = 'income' | 'expense'", '校园�
 requireText(coinDetailSource, 'categoryOptionsByFilter', '校园币收入和支出应分别维护各自的分类按钮。');
 requireText(coinDetailSource, 'aria-label="筛选流水年份"', '校园币年份应使用独立下拉筛选。');
 requireText(coinDetailSource, '<select', '校园币年份筛选应支持大量年份选项。');
-requireText(coinDetailSource, 'role="group" aria-label="按收支类型筛选"', '收入和支出属于过滤条件，应使用按钮组语义。');
-requireText(coinDetailSource, 'aria-pressed={activeFilter === option.value}', '收入和支出筛选按钮应暴露选中状态。');
+requireText(coinDetailSource, 'ariaLabel="按收支类型筛选"', '收入和支出筛选必须保留明确的按钮组标签。');
+requireText(coinDetailSource, 'semantics="group"', '收入和支出属于过滤条件，应使用按钮组语义。');
+requireText(compactSegmentSource, "aria-pressed={semantics === 'group' ? selected : undefined}", '收入和支出筛选按钮应通过共享控件暴露选中状态。');
 if (coinDetailSource.includes('role="tablist"') || coinDetailSource.includes('role="tab"')) {
   throw new Error('校园币收入和支出是过滤条件，不应误用内容页签语义。');
 }
@@ -417,7 +432,7 @@ requireText(coinDetailSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '校园币筛选
 requireText(coinDetailSource, 'grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]', '校园币资产摘要应保持钱包与存款等分，并支持长金额收缩。');
 requireText(coinDetailSource, 'groupedFlowItems', '校园币流水应按月份分组。');
 requireText(coinDetailSource, 'divide-y divide-[var(--tm-border-subtle)]', '同月流水应使用连续列表与分隔线组织。');
-requireText(coinDetailSource, 'min-h-[var(--tm-size-touch)] shrink-0', '校园币分类按钮应使用触控尺寸 Token，且不低于 44px。');
+requireText(textSelectionSource, 'min-h-[var(--tm-selection-touch-height)]', '校园币分类按钮应使用选择控件触控尺寸 Token，且不低于 44px。');
 if (coinDetailSource.includes('学期')) {
   throw new Error('校园币是持续资产，不应使用学期筛选。');
 }
@@ -458,9 +473,9 @@ const coinYearSelect = coinDetailSource.match(/<select[\s\S]*?<\/select>/)?.[0] 
 if (coinYearSelect.includes('focus-visible:ring')) {
   throw new Error('手机端年份下拉聚焦时不应增加描边或焦点环。');
 }
-requireText(coinDetailSource, 'items-center rounded-[var(--tm-radius-control)] p-[var(--tm-space-1)]', '收入和支出按钮的焦点边界应匹配分段控件圆角。');
-requireText(coinDetailSource, 'transition-[background-color,color,box-shadow]', '收入和支出选中态只应过渡实际变化的属性。');
-requireText(coinDetailSource, 'active:scale-[0.96]', '校园币页面按钮应提供克制的手机端按压反馈。');
+requireText(compactSegmentSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-selection-segment-track-bg)]', '收入和支出按钮的焦点边界应匹配分段控件圆角。');
+requireText(compactSegmentSource, 'transition-[background-color,color,box-shadow]', '收入和支出选中态只应过渡实际变化的属性。');
+requireText(compactSegmentSource, 'active:scale-[0.96]', '校园币分段控件应提供克制的手机端按压反馈。');
 if (coinDetailSource.includes('] transition [transition-duration:')) {
   throw new Error('校园币页面不得使用监听全部属性的 transition 简写。');
 }

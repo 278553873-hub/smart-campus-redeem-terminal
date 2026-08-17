@@ -53,6 +53,7 @@ import {
 } from '../../../shared/formDefinition';
 import MobileBottomSheet from '../ui/MobileBottomSheet';
 import AutoResizeTextarea from '../ui/AutoResizeTextarea';
+import CompactSegmentedControl from '../ui/CompactSegmentedControl';
 
 type FieldIcon = React.ComponentType<{ className?: string }>;
 
@@ -961,11 +962,17 @@ const FormBuilder = <TType extends string>({
 
       <BottomSheet open={typeSheetSectionId !== null} label={typePickerTitle ?? `选择${itemLabel}类型`} onDismiss={() => setTypeSheetSectionId(null)}>
         {typePickerSecondaryTab && (
-          <div className={`${typePickerTab === 'secondary' && typePickerSecondaryTab.description ? 'mb-3' : 'mb-4'} grid grid-cols-2 gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1`} role="tablist" aria-label={typePickerTitle ?? `选择${itemLabel}类型`}>
-            {([['primary', typePickerPrimaryLabel], ['secondary', typePickerSecondaryTab.label]] as const).map(([value, label]) => (
-              <button key={value} type="button" role="tab" aria-selected={typePickerTab === value} onClick={() => setTypePickerTab(value)} className={`min-h-11 rounded-[calc(var(--tm-radius-control)-4px)] px-2 text-[length:var(--tm-font-size-body)] font-semibold ${typePickerTab === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>
-            ))}
-          </div>
+          <CompactSegmentedControl
+            value={typePickerTab}
+            items={[
+              { value: 'primary', label: typePickerPrimaryLabel },
+              { value: 'secondary', label: typePickerSecondaryTab.label },
+            ]}
+            onChange={setTypePickerTab}
+            ariaLabel={typePickerTitle ?? `选择${itemLabel}类型`}
+            fullWidth
+            className={typePickerTab === 'secondary' && typePickerSecondaryTab.description ? 'mb-3' : 'mb-4'}
+          />
         )}
         {typePickerTab === 'secondary' && typePickerSecondaryTab?.description && (
           <div className="mb-3 flex items-start gap-2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-[length:var(--tm-font-size-meta)] font-normal leading-5 text-[var(--tm-text-secondary)]">

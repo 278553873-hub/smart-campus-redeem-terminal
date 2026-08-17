@@ -7,6 +7,7 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import PillSelectionControl from '../components/ui/PillSelectionControl';
 import ReportPeriodCalendar, { periodTypeLabels } from '../components/report/ReportPeriodCalendar';
 import {
     TeacherReportDonutChart,
@@ -88,33 +89,14 @@ const GradeTabs = ({
     ariaLabel: string;
 }) => (
     <div className="relative -mx-[var(--tm-report-card-padding)]">
-        <div
-            className="overflow-x-auto pl-[var(--tm-report-card-padding)] pr-[calc(var(--tm-report-card-padding)+var(--tm-space-5))] no-scrollbar"
-            role="tablist"
-            aria-label={ariaLabel}
-        >
-            <div className="flex min-w-max gap-1.5">
-            {[{ id: 'all', name: '全校' }, ...grades].map(grade => {
-                const selected = grade.id === value;
-                return (
-                    <button
-                        key={grade.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={selected}
-                        onClick={() => onChange(grade.id)}
-                        className="flex min-h-[var(--tm-size-touch)] shrink-0 items-center transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96]"
-                    >
-                        <span className={`flex h-[var(--tm-report-grade-pill-height)] items-center rounded-[var(--tm-radius-control)] px-[var(--tm-report-grade-pill-inline)] text-[length:var(--tm-font-size-compact)] font-semibold transition-[color,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] ${selected
-                            ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)]'
-                            : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]'}`}>
-                            {grade.name}
-                        </span>
-                    </button>
-                );
-            })}
-            </div>
-        </div>
+        <PillSelectionControl
+            value={value}
+            items={[{ value: 'all', label: '全校' }, ...grades.map(grade => ({ value: grade.id, label: grade.name }))]}
+            onChange={onChange}
+            ariaLabel={ariaLabel}
+            semantics="tabs"
+            className="pl-[var(--tm-report-card-padding)] pr-[calc(var(--tm-report-card-padding)+var(--tm-space-5))]"
+        />
         <span
             aria-hidden="true"
             className="pointer-events-none absolute inset-y-0 right-0 w-[var(--tm-report-scroll-hint-width)] bg-gradient-to-l from-[var(--tm-bg-surface)] via-[var(--tm-bg-surface)]/90 to-transparent"
@@ -214,9 +196,9 @@ const ReportSegmentTabs = ({
                         onClick={() => onChange(item.id)}
                         className="flex min-h-[var(--tm-size-touch)] shrink-0 items-center transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96]"
                     >
-                        <span className={`flex h-8 items-center rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-medium transition-[color,background-color] [transition-duration:var(--tm-duration-fast)] ${selected
-                            ? 'bg-[var(--tm-bg-surface-muted)] font-semibold text-[var(--tm-text-primary)]'
-                            : 'text-[var(--tm-text-secondary)]'}`}>
+                        <span className={`flex h-8 items-center px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] transition-colors [transition-duration:var(--tm-duration-fast)] ${selected
+                            ? 'font-bold text-[var(--tm-text-primary)]'
+                            : 'font-medium text-[var(--tm-text-secondary)]'}`}>
                             {item.name}
                         </span>
                     </button>

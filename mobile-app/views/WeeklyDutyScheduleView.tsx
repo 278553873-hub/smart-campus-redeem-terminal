@@ -10,7 +10,6 @@ import {
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobilePageHeader from '../components/ui/MobilePageHeader';
 import MobileSearchInput from '../components/ui/MobileSearchInput';
-import MobileToast from '../components/ui/MobileToast';
 import {
   CURRENT_DUTY_WEEK_ID,
   DUTY_TEACHERS,
@@ -37,7 +36,6 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
   const [teacherSearch, setTeacherSearch] = useState('');
   const [onlyUnscheduled, setOnlyUnscheduled] = useState(false);
   const [schedules, setSchedules] = useState<Record<string, string>>(INITIAL_DUTY_SCHEDULES);
-  const [toast, setToast] = useState('');
 
   const teachersById = useMemo(
     () => Object.fromEntries(DUTY_TEACHERS.map(teacher => [teacher.id, teacher])),
@@ -53,11 +51,6 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
       ? DUTY_TEACHERS.filter(teacher => teacher.name.includes(keyword))
       : DUTY_TEACHERS;
   }, [teacherSearch]);
-  const showToast = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(''), 1800);
-  };
-
   const openTeacherSheet = (week: DutyWeek) => {
     setSelectedWeekId(week.id);
     setTeacherSearch('');
@@ -72,10 +65,8 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
   const assignTeacher = (teacherId: string) => {
     if (!teacherSheetWeek) return;
     const week = teacherSheetWeek;
-    const teacher = teachersById[teacherId];
     setSchedules(current => ({ ...current, [week.id]: teacherId }));
     closeTeacherSheet();
-    showToast(`${formatDutyWeekRange(week)} 已安排${teacher.name}`);
   };
 
   const leaveTeacherUnscheduled = () => {
@@ -87,7 +78,6 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
       return next;
     });
     closeTeacherSheet();
-    showToast(`${formatDutyWeekRange(week)} 已设为暂不安排`);
   };
 
   const shiftMonth = (offset: number) => {
@@ -201,7 +191,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
               onClick={leaveTeacherUnscheduled}
               aria-label="暂不安排老师"
               aria-pressed={!schedules[teacherSheetWeek.id]}
-              className={`flex h-[var(--tm-duty-unassigned-option-height)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)] transition-[scale,background-color,box-shadow] duration-150 ease-out active:scale-[0.96] ${!schedules[teacherSheetWeek.id] ? 'bg-[var(--tm-bg-surface-muted)] [box-shadow:var(--tm-shadow-control)]' : 'bg-[var(--tm-bg-surface-soft)]'}`}
+              className={`flex h-[var(--tm-duty-unassigned-option-height)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] border border-[var(--tm-duty-unassigned-button-border)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-duty-unassigned-button-text)] [box-shadow:var(--tm-duty-unassigned-button-shadow)] transition-[scale,background-color,box-shadow] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-duty-unassigned-button-pressed-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${!schedules[teacherSheetWeek.id] ? 'bg-[var(--tm-duty-unassigned-button-selected-bg)]' : 'bg-[var(--tm-duty-unassigned-button-bg)]'}`}
             >
               <CalendarOff className="h-4 w-4 shrink-0 text-[var(--tm-text-secondary)]" strokeWidth={2.2} aria-hidden="true" />
               <span>暂不安排老师</span>
@@ -248,8 +238,6 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
           </div>
         </div>
       </MobileBottomSheet>
-
-      <MobileToast message={toast} />
     </div>
   );
 };

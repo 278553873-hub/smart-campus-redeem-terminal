@@ -13,6 +13,7 @@ const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', 
 const chartSource = fs.readFileSync(new URL('../components/report/TeacherReportChart.tsx', import.meta.url), 'utf8');
 const periodCalendarSource = fs.readFileSync(new URL('../components/report/ReportPeriodCalendar.tsx', import.meta.url), 'utf8');
 const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
+const pillSource = fs.readFileSync(new URL('../components/ui/PillSelectionControl.tsx', import.meta.url), 'utf8');
 
 for (const required of [
   "title: '班级评价报表'",
@@ -78,7 +79,7 @@ for (const required of [
   'onScroll={updateScrollHint}',
   'var(--tm-report-scroll-hint-width)',
   '>指标名称</span>',
-  "name: '全校'",
+  "{ value: 'all', label: '全校' }",
   '<ReportSegmentTabs',
   '扣分笔数',
 ]) {
@@ -88,6 +89,11 @@ assert.ok(viewSource.includes('text-[var(--tm-input-text)] outline-none'), '统�
 assert.ok(viewSource.includes('text-[var(--tm-text-secondary)]" />'), '统计粒度下拉箭头应使用次级中性色。');
 assert.equal(viewSource.includes('active:scale-[0.98]'), false, '统计粒度下拉不应增加手机端按压缩放。');
 assert.equal(viewSource.includes('border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)]'), false, '统计粒度下拉不应继续使用品牌红表面。');
+assert.ok(viewSource.includes('<PillSelectionControl') && viewSource.includes('semantics="tabs"'), '班级排名与问题分布年级筛选应复用统一胶囊页签。');
+assert.ok(pillSource.includes('border-[var(--tm-selection-pill-active-border)] bg-[var(--tm-selection-pill-active-bg)] text-[var(--tm-selection-pill-active-text)]'), '年级选中项应通过组件 Token 使用主题红边框、红底和白字。');
+assert.ok(pillSource.includes('border-[var(--tm-selection-pill-inactive-border)] bg-[var(--tm-selection-pill-inactive-bg)] text-[var(--tm-selection-pill-inactive-text)]'), '年级未选项应通过组件 Token 使用白底浅边框和次级文字。');
+assert.ok(viewSource.includes("? 'font-bold text-[var(--tm-text-primary)]'"), '问题分布的下级指标选中态应使用透明背景与黑色粗体。');
+assert.equal(viewSource.includes("? 'bg-[var(--tm-bg-surface-muted)] font-semibold text-[var(--tm-text-primary)]'"), false, '问题分布的下级指标不得使用比一级短线更强的灰色块面。');
 
 assert.ok(!viewSource.includes('AI角标'), '班级评价报表不得展示人工智能角标。');
 assert.equal((viewSource.match(/<h1/g) ?? []).length, 1, '班级评价报表顶部应只展示一个页面标题。');
@@ -155,8 +161,8 @@ for (const removedCalendarBehavior of ['const weekDays', 'calendarCells', 'dateV
 assert.equal(periodCalendarSource.includes('absolute bottom-2 h-1.5 w-1.5'), false, '月份按钮不应使用红点重复表达有数据状态。');
 assert.equal(viewSource.includes('[...periodOptions].reverse().map'), false, '周期抽屉不应继续罗列周期文本。');
 for (const requiredToken of [
-  "'--tm-report-grade-pill-height': '30px'",
-  "'--tm-report-grade-pill-inline': '10px'",
+  "'--tm-selection-pill-visible-height': '32px'",
+  "'--tm-selection-pill-min-width': '60px'",
   "'--tm-report-scroll-hint-width': '28px'",
 ]) {
   assert.ok(tokenSource.includes(requiredToken), `年级切换应使用统一紧凑令牌，缺少：${requiredToken}`);

@@ -679,7 +679,7 @@ requireText(studentRecordPageSource, 'const hasIntroPage = oneQuestionPerPage &&
 requireText(studentRecordPageSource, '>开始填写</PrimaryButton>', '老师真实填写首页必须只提供开始填写主操作。');
 requireText(originalPreviewSource, '>开始预览</PrimaryButton>', '老师预览首页必须只提供开始预览主操作。');
 requireText(originalPreviewSource, 'studentQuestionIndex === 0 && hasIntroPage', '老师预览第一题必须能够返回问卷首页。');
-requireText(viewSource, "['unreachable', '未绑定']", '家长问卷答卷筛选必须使用明确的未绑定术语。');
+requireText(viewSource, "{ value: 'unreachable', label: '未绑定' }", '家长问卷答卷筛选必须使用明确的未绑定术语。');
 if (viewSource.includes('未送达')) {
   throw new Error('教师端不应使用容易被理解为通知失败的“未送达”。');
 }
@@ -702,14 +702,27 @@ requireText(viewSource, "{ value: 'text', label: '问答题', icon: MessageSquar
 requireText(viewSource, "{ value: 'multiple', label: '多选题', icon: ListChecks, choice: true }", '普通问卷题型必须提供多选题。');
 requireText(viewSource, "type StudentRecordFilter = 'incomplete' | 'completed'", '老师填写答卷只使用未完成和已完成两类筛选。');
 requireText(viewSource, "studentRecordFilter === 'incomplete' ? item.status !== 'completed'", '未完成筛选必须只排除已完成记录。');
-requireText(viewSource, "[['completed', '已完成'], ['incomplete', '未完成']]", '老师填写答卷必须按已完成、未完成排序。');
-requireText(viewSource, "[['completed', '已完成'], ['pending', '未完成'], ['unreachable', '未绑定']]", '家长填写答卷必须按已完成、未完成、未绑定排序。');
-requireText(viewSource, 'role="tablist" aria-label="答卷状态"', '家长填写答卷筛选必须使用可识别的页签语义。');
+requireText(viewSource, "{ value: 'completed', label: '已完成' },\n  { value: 'incomplete', label: '未完成' }", '老师填写答卷必须按已完成、未完成排序。');
+requireText(viewSource, "{ value: 'completed', label: '已完成' },\n  { value: 'pending', label: '未完成' },\n  { value: 'unreachable', label: '未绑定' }", '家长填写答卷必须按已完成、未完成、未绑定排序。');
+if ((viewSource.match(/<CompactSegmentedControl/g) ?? []).length < 3) {
+  throw new Error('数据/答卷、答卷状态和教师待办填写进度必须复用同一个紧凑分段控件。');
+}
+forbidText(viewSource, '<TextSelectionControl', '问卷采集详情的状态筛选是页面级例外，不应继续使用纯文字选择控件。');
+requireText(viewSource, 'ariaLabel="答卷状态"', '家长填写答卷筛选必须保留可识别的页签语义。');
+for (const filterLabel of ['ariaLabel="答卷状态"', 'ariaLabel="填写进度"']) {
+  const controlStart = viewSource.lastIndexOf('<CompactSegmentedControl', viewSource.indexOf(filterLabel));
+  const controlEnd = viewSource.indexOf('/>', controlStart);
+  const controlSource = viewSource.slice(controlStart, controlEnd);
+  requireText(controlSource, 'fullWidth', `${filterLabel}必须使用与数据/答卷相同的单行等分 Tab。`);
+}
 requireText(viewSource, 'const getStudentAvatar = (studentNo: string)', '老师和家长填写答卷必须复用学生头像规则。');
 requireText(viewSource, 'const StudentAnswerRow: React.FC', '老师和家长填写答卷必须复用同一学生名单行。');
 requireText(viewSource, 'avatarSrc={getStudentAvatar(item.studentNo)}', '老师填写答卷列表必须使用学生头像。');
 requireText(viewSource, 'avatarSrc={getStudentAvatar(row.studentNo)}', '家长填写答卷列表必须使用学生头像。');
-requireText(viewSource, 'className={isCompleted ? row.className : undefined}', '家长答卷只有已完成名单展示学生班级。');
+requireText(viewSource, 'className={item.className}', '教师逐生答卷的已完成和未完成名单必须都展示学生班级。');
+requireText(viewSource, 'className={row.className}', '家长答卷的已完成、未完成和未绑定名单必须都展示学生班级。');
+forbidText(viewSource, "item.status === 'completed' ? item.className : undefined", '教师逐生答卷不得按完成状态隐藏班级。');
+forbidText(viewSource, 'isCompleted ? row.className : undefined', '家长答卷不得按完成状态隐藏班级。');
 if (viewSource.slice(viewSource.indexOf('const renderResponses'), viewSource.indexOf('const renderAnalysis')).includes('<ChevronRight')) {
   throw new Error('已完成答卷名单可点击但不应显示箭头。');
 }

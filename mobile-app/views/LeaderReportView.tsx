@@ -2060,6 +2060,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
     const [confirmedDateRange, setConfirmedDateRange] = useState<LeaderReportDateRange | null>(null);
     const [snapshot, setSnapshot] = useState<LeaderReportSnapshot | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isFilterPinned, setIsFilterPinned] = useState(false);
     const dateRangeError = getDateRangeError(draftDateRange);
     const periodQuery = activePeriod === 'custom' && confirmedDateRange
         ? { period: 'custom' as const, ...confirmedDateRange }
@@ -2132,6 +2133,10 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
         setActivePeriod('custom');
         setShowCustomDateSheet(false);
     };
+    const handleReportScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+        const nextPinned = event.currentTarget.scrollTop > 12;
+        setIsFilterPinned(current => (current === nextPinned ? current : nextPinned));
+    }, []);
 
     return (
         <div
@@ -2146,9 +2151,13 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                 <div className="w-10" aria-hidden="true" />
             </div>
 
-            <div className="relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar">
-                <div className="sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)] pt-px">
-                    <ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />
+            <div className="relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar" onScroll={handleReportScroll}>
+                <div className={`sticky -top-px z-30 -mt-px border-b bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-report-page-inline)] pt-px transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${isFilterPinned
+                    ? 'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]'
+                    : 'border-transparent'}`}>
+                    <div className="-mx-[var(--tm-report-page-inline)] bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)]">
+                        <ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />
+                    </div>
                     <div className="grid h-[var(--tm-report-filter-row-height)] grid-cols-5" role="group" aria-label="学生评价报表时间范围">
                         {leaderReportPeriods.map(period => (
                             <button

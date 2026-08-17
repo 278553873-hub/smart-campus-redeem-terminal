@@ -7,6 +7,7 @@ import {
 } from '../components/Icons';
 import { MOCK_CLASSES } from '../constants';
 import { MoreHorizontal, TrendingUp, TrendingDown, ArrowDown, BarChart3, ChevronDown, Check } from 'lucide-react';
+import PillSelectionControl from '../components/ui/PillSelectionControl';
 import EvaluationRecordsLogView from './EvaluationRecordsLogView';
 
 interface ClassLeaderboardViewProps {
@@ -118,8 +119,10 @@ const GradePicker = ({ selected, options, onSelect }: { selected: string, option
     return (
         <div className="relative z-50">
             <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm active:bg-slate-50 transition-all"
+                aria-expanded={isOpen}
+                className="flex min-h-[var(--tm-size-touch)] items-center gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm transition-[background-color,box-shadow,transform] active:scale-[0.96] active:bg-slate-50"
             >
                 <span className="text-[14px] font-bold text-slate-800">{selected}</span>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -134,7 +137,7 @@ const GradePicker = ({ selected, options, onSelect }: { selected: string, option
                                 key={opt}
                                 onClick={() => { onSelect(opt); setIsOpen(false); }}
                                 className={`w-full px-4 py-3 text-[14px] font-bold flex items-center justify-between gap-2
-                                    ${selected === opt ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 '}
+                                    ${selected === opt ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-slate-600 '}
                                 `}
                             >
                                 {opt}
@@ -155,35 +158,17 @@ interface TabItemProps {
 }
 const TabItem: React.FC<TabItemProps> = ({ label, active, onClick }) => (
     <button
+        type="button"
         onClick={onClick}
-        className={`relative px-4 py-3 text-sm font-medium transition-all flex-shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`}
+        aria-pressed={active}
+        className={`relative min-h-[var(--tm-size-touch)] flex-shrink-0 px-4 text-sm font-medium transition-[color,transform] active:scale-[0.96] ${active ? 'text-[var(--tm-brand-primary)]' : 'text-slate-400'}`}
     >
         {label}
         {active && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-blue-600 rounded-full" />
+            <div className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]" />
         )}
     </button>
 );
-
-interface DimensionPillProps {
-    label: string;
-    active: boolean;
-    onClick: () => void;
-}
-const DimensionPill: React.FC<DimensionPillProps> = ({ label, active, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap flex-shrink-0
-            ${active
-                ? 'bg-[#5B50F6] text-white border-[#5B50F6] shadow-md shadow-indigo-200'
-                : 'bg-white text-slate-500 border-slate-200'}
-        `}
-    >
-        {label}
-    </button>
-);
-
-
 
 const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
     const [activeGrade, setActiveGrade] = useState('全部年级');
@@ -212,24 +197,13 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
     const gradeOptions = ['全部年级', ...GRADES];
 
     return (
-        <div className="min-h-screen bg-[#F5F7FA] flex flex-col items-center">
+        <div className="flex min-h-screen flex-col items-center bg-[var(--tm-page-plain-content-bg)]">
 
             <div className="w-full max-w-md min-h-screen relative flex flex-col">
 
                 {/* 1. Top Navigation Logic (Dropdown + Tabs) */}
-                <div className="bg-white sticky top-0 z-40 shadow-sm">
-
-                    {/* Row 1: Grade Dropdown (Left Aligned) */}
-                    <div className="flex items-center px-4 py-3 border-b border-slate-50">
-                        <GradePicker
-                            selected={activeGrade}
-                            options={gradeOptions}
-                            onSelect={setActiveGrade}
-                        />
-                    </div>
-
-                    {/* Row 2: Time Tabs */}
-                    <div className="flex items-center overflow-x-auto no-scrollbar px-2 bg-slate-50/50">
+                <div className="sticky top-0 z-40 [box-shadow:var(--tm-shadow-control)]">
+                    <div className="flex items-center overflow-x-auto bg-[var(--tm-page-plain-header-bg)] px-2 no-scrollbar">
                         {timeOptions.map(t => (
                             <TabItem
                                 key={t.label}
@@ -238,6 +212,14 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                                 onClick={() => setTimeRange(t.value)}
                             />
                         ))}
+                    </div>
+
+                    <div className="flex items-center bg-[var(--tm-page-plain-content-bg)] px-4 py-2">
+                        <GradePicker
+                            selected={activeGrade}
+                            options={gradeOptions}
+                            onSelect={setActiveGrade}
+                        />
                     </div>
                 </div>
 
@@ -256,16 +238,13 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                         </div>
 
                         {/* Dimension Pills */}
-                        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2 mb-2">
-                            {dimensions.map(dim => (
-                                <DimensionPill
-                                    key={dim}
-                                    label={dim === 'total' ? '综合评价' : dim}
-                                    active={activeDim === dim}
-                                    onClick={() => setActiveDim(dim)}
-                                />
-                            ))}
-                        </div>
+                        <PillSelectionControl
+                            value={activeDim}
+                            items={dimensions.map(dim => ({ value: dim, label: dim === 'total' ? '综合评价' : dim }))}
+                            onChange={setActiveDim}
+                            ariaLabel="班级排行榜维度"
+                            className="mb-2"
+                        />
 
                         {/* List */}
                         <div className="space-y-3">
@@ -284,7 +263,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
 
                                     {/* Score Only (Trend Removed) */}
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[17px] font-bold tabular-nums text-[#5B50F6]">
+                                        <span className="text-[17px] font-bold tabular-nums text-[var(--tm-brand-primary)]">
                                             {cls.score}
                                         </span>
                                     </div>
@@ -297,7 +276,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                             <div className="mt-4 pt-2 flex justify-center border-t border-slate-50">
                                 <button
                                     onClick={() => setShowFullRanking(true)}
-                                    className="flex min-h-11 items-center gap-1 text-[12px] font-bold text-slate-400 py-2 transition-colors active:text-[#5B50F6]"
+                                    className="flex min-h-11 items-center gap-1 py-2 text-[12px] font-bold text-slate-400 transition-colors active:text-[var(--tm-brand-primary)]"
                                 >
                                     查看全部排名 <ChevronRightIcon className="w-3.5 h-3.5" />
                                 </button>
@@ -309,7 +288,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                     <div className="bg-white rounded-3xl p-5 shadow-sm">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-[17px] font-semibold text-slate-800 flex items-center gap-2">
-                                <ActivityIcon className="w-5 h-5 text-blue-500" />
+                                <ActivityIcon className="h-5 w-5 text-[var(--tm-brand-primary)]" />
                                 评价记录
                             </h3>
                             <button
@@ -374,7 +353,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = () => {
                                                 </div>
                                                 <span className="truncate text-[14px] font-bold text-slate-800">{cls.name}</span>
                                             </div>
-                                            <span className="text-[17px] font-bold tabular-nums text-[#5B50F6]">
+                                            <span className="text-[17px] font-bold tabular-nums text-[var(--tm-brand-primary)]">
                                                 {cls.score}
                                             </span>
                                         </div>

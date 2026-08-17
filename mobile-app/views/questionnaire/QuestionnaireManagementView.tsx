@@ -38,6 +38,7 @@ import FormOutlineSorter, { type FormOutlineValue } from '../../components/form-
 import GrowthFieldCategoryPicker from '../../components/growth/GrowthFieldCategoryPicker';
 import AutoResizeTextarea from '../../components/ui/AutoResizeTextarea';
 import MobileClassCascadePicker from '../../components/ui/MobileClassCascadePicker';
+import CompactSegmentedControl from '../../components/ui/CompactSegmentedControl';
 import MobileFloatingCreateButton from '../../components/ui/MobileFloatingCreateButton';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import MobileConfirmSheet from '../../components/ui/MobileConfirmSheet';
@@ -166,8 +167,25 @@ type ListFilter = 'active' | 'ended';
 type DetailTab = 'data' | 'responses';
 type PageMode = 'list' | 'assigned-list' | 'archived-list' | 'create' | 'detail' | 'response' | 'preview' | 'question-responses' | 'student-record';
 type StudentRecordFilter = 'incomplete' | 'completed';
+type ResponseFilter = 'completed' | 'pending' | 'unreachable';
 type PreviewReturnMode = 'create' | 'list';
 type RespondentSheetMode = 'entry';
+
+const detailTabOptions: Array<{ value: DetailTab; label: string }> = [
+  { value: 'data', label: '数据' },
+  { value: 'responses', label: '答卷' },
+];
+
+const studentRecordFilterOptions: Array<{ value: StudentRecordFilter; label: string }> = [
+  { value: 'completed', label: '已完成' },
+  { value: 'incomplete', label: '未完成' },
+];
+
+const responseFilterOptions: Array<{ value: ResponseFilter; label: string }> = [
+  { value: 'completed', label: '已完成' },
+  { value: 'pending', label: '未完成' },
+  { value: 'unreachable', label: '未绑定' },
+];
 
 const statusMeta: Record<QuestionnaireStatus, { label: string }> = {
   active: { label: '收集中' },
@@ -640,7 +658,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [questionResponseSearch, setQuestionResponseSearch] = useState('');
   const [questionResponseClass, setQuestionResponseClass] = useState('all');
   const [visibleQuestionResponseCount, setVisibleQuestionResponseCount] = useState(20);
-  const [responseFilter, setResponseFilter] = useState<'completed' | 'pending' | 'unreachable'>('completed');
+  const [responseFilter, setResponseFilter] = useState<ResponseFilter>('completed');
   const [createStep, setCreateStep] = useState(1);
   const [respondentRole, setRespondentRole] = useState<QuestionnaireRespondentRole>('guardian');
   const [collectionMode, setCollectionMode] = useState<QuestionnaireCollectionMode>('guardian_questionnaire');
@@ -2329,11 +2347,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       <div>
         <div className={assignedContext ? 'sticky top-0 z-20 -mx-1 bg-[var(--tm-bg-page-glass)] px-1 pb-3 backdrop-blur-md' : ''}>
           <MobileSearchInput value={studentRecordSearch} onChange={event => setStudentRecordSearch(event.target.value)} placeholder="搜索学生" aria-label="搜索学生" className="text-[length:var(--tm-font-size-compact)]" />
-          <div className="mt-2 grid grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label="填写进度">
-            {([['completed', '已完成'], ['incomplete', '未完成']] as const).map(([value, label]) => (
-              <button key={value} type="button" role="tab" aria-selected={studentRecordFilter === value} onClick={() => setStudentRecordFilter(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${studentRecordFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>
-            ))}
-          </div>
+          <CompactSegmentedControl
+            value={studentRecordFilter}
+            items={studentRecordFilterOptions}
+            onChange={setStudentRecordFilter}
+            ariaLabel="填写进度"
+            fullWidth
+            className="mt-2"
+          />
         </div>
         <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
           {visibleRecords.map(item => {
@@ -2345,7 +2366,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 key={item.id}
                 avatarSrc={getStudentAvatar(item.studentNo)}
                 studentName={item.studentName}
-                className={item.status === 'completed' ? item.className : undefined}
+                className={item.className}
                 statusLabel={studentStatusMeta[item.status].label}
                 statusClassName={studentStatusMeta[item.status].className}
                 onClick={item.status === 'completed' && resultRecord
@@ -2490,9 +2511,13 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         : activeTargets.filter(target => !target.reachable);
     return (
       <div>
-        <div className="grid grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="tablist" aria-label="答卷状态">
-          {([['completed', '已完成'], ['pending', '未完成'], ['unreachable', '未绑定']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={responseFilter === value} onClick={() => setResponseFilter(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${responseFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
-        </div>
+        <CompactSegmentedControl
+          value={responseFilter}
+          items={responseFilterOptions}
+          onChange={setResponseFilter}
+          ariaLabel="答卷状态"
+          fullWidth
+        />
         <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
           {rows.map(row => {
             const isCompleted = 'completedAt' in row;
@@ -2506,7 +2531,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 key={isCompleted ? row.id : row.studentNo}
                 avatarSrc={getStudentAvatar(row.studentNo)}
                 studentName={row.studentName}
-                className={isCompleted ? row.className : undefined}
+                className={row.className}
                 statusLabel={statusMeta.label}
                 statusClassName={statusMeta.className}
                 onClick={isCompleted ? () => { setActiveResultRecord(row); setPageMode('response'); } : undefined}
@@ -2652,9 +2677,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               </div>
             )}
           </section>
-          <div className="sticky top-0 z-20 -mx-1 mt-4 grid grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1 backdrop-blur" role="tablist">
-            {([['data', '数据'], ['responses', '答卷']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={detailTab === value} onClick={() => setDetailTab(value)} className={`min-h-11 rounded-[var(--tm-radius-control)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold transition-[color,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] ${detailTab === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
-          </div>
+          <CompactSegmentedControl
+            value={detailTab}
+            items={detailTabOptions}
+            onChange={setDetailTab}
+            ariaLabel="采集详情视图"
+            fullWidth
+            className="sticky top-0 z-20 -mx-1 mt-4 backdrop-blur"
+          />
           <div className="mt-4">{detailTab === 'data' ? renderData(activeRecord) : renderResponses(activeRecord)}</div>
         </main>
         <BottomSheet open={canManageActiveRecord && showRecordMenu} label="采集操作" onDismiss={() => setShowRecordMenu(false)}>
