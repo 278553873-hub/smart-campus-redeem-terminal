@@ -176,6 +176,24 @@ const createRecordDraft = (record: EvaluationRecord): EvaluationRecordDraft => {
 
 const recordFieldClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 
+const EvaluationIndicatorPath: React.FC<{ indicatorPath: string; className?: string }> = ({ indicatorPath, className = '' }) => {
+    const indicatorParts = indicatorPath.split(' / ');
+
+    return (
+        <p
+            aria-label={`指标：${indicatorParts.join('，')}`}
+            className={`flex min-w-0 items-center whitespace-nowrap text-[length:var(--tm-font-size-meta)] font-medium leading-none ${className}`}
+        >
+            {indicatorParts.map((indicator, index) => (
+                <React.Fragment key={`${indicator}-${index}`}>
+                    {index > 0 && <span aria-hidden="true" className="shrink-0 px-1 text-[var(--tm-evaluation-indicator-separator)]">›</span>}
+                    <span className={`flex h-6 items-center rounded-[var(--tm-radius-inner)] border border-[var(--tm-evaluation-indicator-border)] bg-[var(--tm-evaluation-indicator-bg)] px-1.5 text-[var(--tm-evaluation-indicator-text)] ${index === indicatorParts.length - 1 ? 'shrink-0' : 'min-w-0 truncate'}`}>{indicator}</span>
+                </React.Fragment>
+            ))}
+        </p>
+    );
+};
+
 const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ classes, canEditRecords, canDeleteRecords }) => {
     const today = useMemo(() => startOfDay(new Date()), []);
     const [selectedGrade, setSelectedGrade] = useState('all');
@@ -396,10 +414,6 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                 {filteredRecords.length > 0 ? (
                     <ol className="space-y-4" aria-label={`${selectedScopeLabel}评价记录`}>
                         {filteredRecords.map(record => {
-                            const indicatorParts = record.indicatorPath.split(' / ');
-                            const targetIndicator = indicatorParts.at(-1) ?? '';
-                            const parentIndicators = indicatorParts.slice(0, -1);
-
                             return (
                                 <li key={record.id}>
                                     <button
@@ -412,19 +426,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                             <p className="truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{record.className}</p>
                                         )}
                                         <div className={`grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 ${selectedClassId === 'all' ? 'mt-3' : ''}`}>
-                                            <p
-                                                aria-label={`指标：${indicatorParts.join('，')}`}
-                                                className="flex min-w-0 items-center whitespace-nowrap text-[length:var(--tm-font-size-meta)] font-medium leading-none"
-                                            >
-                                                {parentIndicators.map((indicator, index) => (
-                                                    <React.Fragment key={`${indicator}-${index}`}>
-                                                        {index > 0 && <span aria-hidden="true" className="shrink-0 px-1 text-[var(--tm-evaluation-indicator-separator)]">›</span>}
-                                                        <span className="flex h-6 min-w-0 items-center truncate rounded-[var(--tm-radius-inner)] border border-[var(--tm-evaluation-indicator-border)] bg-[var(--tm-evaluation-indicator-bg)] px-1.5 text-[var(--tm-evaluation-indicator-text)]">{indicator}</span>
-                                                    </React.Fragment>
-                                                ))}
-                                                {parentIndicators.length > 0 && <span aria-hidden="true" className="shrink-0 px-1 text-[var(--tm-evaluation-indicator-separator)]">›</span>}
-                                                <span className="flex h-6 shrink-0 items-center rounded-[var(--tm-radius-inner)] border border-[var(--tm-evaluation-indicator-border)] bg-[var(--tm-evaluation-indicator-bg)] px-1.5 text-[var(--tm-evaluation-indicator-text)]">{targetIndicator}</span>
-                                            </p>
+                                            <EvaluationIndicatorPath indicatorPath={record.indicatorPath} />
                                             <strong className={`shrink-0 text-[length:var(--tm-font-size-body)] font-semibold tabular-nums ${record.score >= 0 ? 'text-[var(--tm-chart-positive-text)]' : 'text-[var(--tm-chart-negative-text)]'}`}>
                                                 {formatScore(record.score)}
                                             </strong>
@@ -541,14 +543,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
 
                         <section className="py-4">
                             <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">详细指标</h3>
-                            <dl className="mt-2 space-y-2">
-                                {activeRecord.indicatorPath.split(' / ').map((indicator, index) => (
-                                    <div key={`${indicator}-${index}`} className="grid grid-cols-[64px_minmax(0,1fr)] gap-2 text-[length:var(--tm-font-size-meta)] leading-5">
-                                        <dt className="text-[var(--tm-text-tertiary)]">{['一级指标', '二级指标', '三级指标'][index] ?? `第${index + 1}级`}</dt>
-                                        <dd className="font-medium text-[var(--tm-text-primary)]">{indicator}</dd>
-                                    </div>
-                                ))}
-                            </dl>
+                            <EvaluationIndicatorPath indicatorPath={activeRecord.indicatorPath} className="mt-3" />
                         </section>
 
                         {canDeleteRecords && (

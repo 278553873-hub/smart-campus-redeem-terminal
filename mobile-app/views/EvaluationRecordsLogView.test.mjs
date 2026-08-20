@@ -47,14 +47,11 @@ assert.ok(viewSource.includes('onClick={() => openRecordDetail(record)}') && vie
 assert.ok(viewSource.includes("const formatScore = (score: number) => `${score > 0 ? '+' : ''}${score.toFixed(2)}`;") && !viewSource.includes("${score.toFixed(2)}分`"), '加减分数值不应重复展示“分”单位。');
 assert.ok(viewSource.includes("selectedClassId === 'all' && (") && viewSource.includes('{record.className}</p>') && viewSource.includes('{record.operator}'), '未筛选具体班级时卡片应展示班级，并始终展示评价人。');
 for (const required of [
-  "const targetIndicator = indicatorParts.at(-1)",
-  'const parentIndicators = indicatorParts.slice(0, -1)',
+  'const EvaluationIndicatorPath:',
+  "const indicatorParts = indicatorPath.split(' / ')",
   'grid-cols-[minmax(0,1fr)_auto]',
-  'parentIndicators.length > 0',
-  '>{targetIndicator}</span>',
   '>›</span>',
-  'flex h-6 min-w-0 items-center truncate',
-  'flex h-6 shrink-0 items-center',
+  "index === indicatorParts.length - 1 ? 'shrink-0' : 'min-w-0 truncate'",
   'bg-[var(--tm-evaluation-indicator-bg)]',
   'border-[var(--tm-evaluation-indicator-border)]',
   'text-[var(--tm-evaluation-indicator-text)]',
@@ -63,6 +60,7 @@ for (const required of [
 ]) {
   assert.ok(viewSource.includes(required), `评价卡片应使用统一颜色的三个连续标签保持完整单行指标路径，缺少：${required}`);
 }
+assert.equal(viewSource.match(/<EvaluationIndicatorPath indicatorPath=/g)?.length, 2, '评价列表卡片和详情弹窗应复用同一个指标路径标签组件。');
 assert.ok(!viewSource.includes('text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{targetIndicator}'), '三级指标不得通过不同字号和字重破坏复合标签的一致性。');
 for (const required of [
   'teacherEvaluationIndicatorSemantic',
@@ -76,7 +74,7 @@ for (const required of [
 }
 assert.ok(!tokenSource.includes('evaluation-indicator-level-'), '三个指标标签不应再维护用户无法理解的层级色阶。');
 const classNamePosition = viewSource.indexOf('{record.className}</p>');
-const indicatorPosition = viewSource.indexOf('aria-label={`指标：${indicatorParts.join');
+const indicatorPosition = viewSource.indexOf('<EvaluationIndicatorPath indicatorPath={record.indicatorPath}', classNamePosition);
 const reasonPosition = viewSource.indexOf('{record.reason}</p>');
 const timePosition = viewSource.indexOf('{formatRecordTime(record.occurredAt, today)}</time>', reasonPosition);
 assert.ok(classNamePosition < indicatorPosition && indicatorPosition < reasonPosition && reasonPosition < timePosition, '评价卡片信息强度应按班级、指标与得分、评分理由、时间与评价人稳定递减。');
@@ -85,6 +83,7 @@ for (const required of [
   '>评分理由</h3>',
   '>原始记录</h3>',
   '>详细指标</h3>',
+  '<EvaluationIndicatorPath indicatorPath={activeRecord.indicatorPath} className="mt-3" />',
   "activeRecord.sourceType === 'voice'",
   'playRecordAudio(activeRecord)',
   '>语音转文字',
