@@ -2,122 +2,132 @@ import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('./ClassLeaderboardView.tsx', import.meta.url), 'utf8');
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+const accessSource = readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const pillSource = readFileSync(new URL('../components/ui/PillSelectionControl.tsx', import.meta.url), 'utf8');
 const rankingListSource = readFileSync(new URL('../components/ui/ClassRankingList.tsx', import.meta.url), 'utf8');
-const dateTabsSource = readFileSync(new URL('../components/report/ReportDateRangeTabs.tsx', import.meta.url), 'utf8');
-const textSelectionSource = readFileSync(new URL('../components/ui/TextSelectionControl.tsx', import.meta.url), 'utf8');
+const periodCalendarSource = readFileSync(new URL('../components/report/ReportPeriodCalendar.tsx', import.meta.url), 'utf8');
+const bottomSheetSource = readFileSync(new URL('../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
+const guidelineSource = readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', import.meta.url), 'utf8');
 
 for (const required of [
   'const getRankedClasses =',
   '.sort((left, right) => right.score - left.score',
-  'let previousScore: number | null = null',
-  'let previousRank = 0',
   'previousScore === item.score ? previousRank : index + 1',
   'const [showFullRanking, setShowFullRanking] = useState(false)',
-  'onViewAll={data.rankings.length > 5 ? () => setShowFullRanking(true) : undefined}',
-  '<MobileBottomSheet',
-  '全部班级排名',
-  'items={data.rankings}',
-  '<ClassRankingList',
+  'onViewAll={rankings.length > 5 ? () => setShowFullRanking(true) : undefined}',
+  'title={`${activeGrade}完整排名`}',
+  'ariaLabel="完整排名评价维度"',
+  'items={rankings}',
 ]) {
-  if (!source.includes(required)) {
-    throw new Error(`班级排行榜需要支持降序排序、并列名次和全部排名弹窗，缺少：${required}`);
-  }
+  if (!source.includes(required)) throw new Error(`班级排行榜排序、并列名次或完整排名缺少：${required}`);
+}
+
+for (const required of [
+  "export type ClassLeaderboardSettlementCycle = 'week' | 'month'",
+  'classLeaderboardSettlementCycle?: ClassLeaderboardSettlementCycle',
+]) {
+  if (!accessSource.includes(required)) throw new Error(`学校来源应配置排行榜结算方式，缺少：${required}`);
+}
+
+for (const required of [
+  "classLeaderboardSettlementCycle: 'week'",
+  "settlementCycle={activeTeacherSpace.classLeaderboardSettlementCycle ?? 'week'}",
+]) {
+  if (!appSource.includes(required)) throw new Error(`应用层应向排行榜传入学校结算方式，缺少：${required}`);
+}
+
+for (const required of [
+  'settlementCycle: ClassLeaderboardSettlementCycle',
+  'const createSettlementPeriods =',
+  "if (settlementCycle === 'month')",
+  "type: 'week'",
+  'title={periodPickerTitle}',
+  '<ReportPeriodCalendar',
+  'aria-label={`查看上一${periodUnitLabel}`}',
+  'aria-label={`查看下一${periodUnitLabel}`}',
+  "aria-label={`打开${settlementCycle === 'week' ? '周历' : '月份'}选择，当前${selectedPeriodLabel}`}",
+  'text-[length:var(--tm-font-size-body)]',
+  'setSelectedPeriodId(periodId)',
+]) {
+  if (!source.includes(required)) throw new Error(`排行榜应只按学校结算周期切换历史榜单，缺少：${required}`);
+}
+
+for (const forbidden of [
+  'ReportDateRangeTabs',
+  "type TimeRange =",
+  "label: '今日'",
+  "label: '本学期'",
+  "label: '自定义'",
+  'Math.random',
+  '${selectedPeriod?.label} · ${activeGrade}',
+]) {
+  if (source.includes(forbidden)) throw new Error(`排行榜不得保留查询型日期栏或随机跳榜：${forbidden}`);
+}
+
+const periodSwitcherIndex = source.indexOf('aria-label="排行榜周期切换"');
+const rankingSectionIndex = source.indexOf('<section className="rounded-[var(--tm-radius-card)]');
+const gradeFilterIndex = source.indexOf('aria-label="班级排行榜年级筛选"');
+const rankingListIndex = source.indexOf('ariaLabel="班级排行榜前五名"');
+if (!(periodSwitcherIndex >= 0 && periodSwitcherIndex < rankingSectionIndex && gradeFilterIndex > rankingSectionIndex && rankingListIndex > gradeFilterIndex)) {
+  throw new Error('周期切换必须位于卡片上方，年级和评价维度必须位于班级排行榜卡片内。');
+}
+
+for (const required of [
+  '<select',
+  'aria-label="班级排行榜年级筛选"',
+  'text-[length:var(--tm-font-size-compact)]',
+  '<PillSelectionControl',
+  'ariaLabel="班级排行榜维度"',
+]) {
+  if (!source.includes(required)) throw new Error(`排行榜局部筛选缺少：${required}`);
+}
+
+for (const required of [
+  'const recentRecords = [',
+  'aria-label="全校最新评价记录"',
+  'role="listitem"',
+  'record.score > 0',
+  'onClick={onOpenEvaluationRecords}',
+]) {
+  if (!source.includes(required)) throw new Error(`评价记录应保持全校独立口径并同时表达加扣分，缺少：${required}`);
 }
 
 for (const required of [
   'grid min-h-[58px] grid-cols-[32px_minmax(0,1fr)_auto]',
   'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]',
-  'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]',
-  'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]',
   'text-[var(--tm-text-primary)]">{item.score}分',
-  'text-[var(--tm-chart-negative-text)]">扣{item.deduction}分',
-  "actionLabel = '查看完整排名'",
 ]) {
-  if (!rankingListSource.includes(required)) {
-    throw new Error(`统一班级排名列表缺少连续行、轻量前三名或正确分值语义：${required}`);
-  }
-}
-
-for (const forbidden of ['Top 5', 'rankBadgeClassName', 'bg-[#FFC107]', 'shadow-[#FFC107]', 'rounded-2xl border border-slate-100']) {
-  if (source.includes(forbidden) || rankingListSource.includes(forbidden)) {
-    throw new Error(`班级排行榜不应保留独立小卡片、硬编码名次色或英文数量标签：${forbidden}`);
-  }
-}
-
-if (source.includes('rank: i + 1')) {
-  throw new Error('班级排行榜名次不能在模拟数据生成时按原始顺序写死，应排序后重新计算并列名次');
-}
-
-if (source.includes('sortedItems[index - 1].rank')) {
-  throw new Error('并列名次不能读取排序原始数据上的上一条 rank，否则并列项会得到空值，导致排名数字和背景消失');
-}
-
-for (const required of [
-  'text-[var(--tm-brand-primary)]',
-  '<PillSelectionControl',
-  'ariaLabel="班级排行榜维度"',
-  '<ReportDateRangeTabs',
-  '<TextSelectionControl',
-  'ariaLabel="排行榜年级筛选"',
-  'bg-[var(--tm-page-plain-content-bg)]',
-]) {
-  if (!source.includes(required)) {
-    throw new Error(`班级排行榜切换控件应使用品牌红，并分离44像素触控区与32像素可见高度，缺少：${required}`);
-  }
+  if (!rankingListSource.includes(required)) throw new Error(`统一班级排名列表缺少：${required}`);
 }
 
 for (const required of [
   'min-h-[var(--tm-selection-touch-height)]',
   'h-[var(--tm-selection-pill-visible-height)]',
-  'border-[var(--tm-selection-pill-active-border)] bg-[var(--tm-selection-pill-active-bg)] text-[var(--tm-selection-pill-active-text)]',
-  'border-[var(--tm-selection-pill-inactive-border)] bg-[var(--tm-selection-pill-inactive-bg)] text-[var(--tm-selection-pill-inactive-text)]',
 ]) {
-  if (!pillSource.includes(required)) throw new Error(`班级排行榜维度筛选缺少统一胶囊约束：${required}`);
+  if (!pillSource.includes(required)) throw new Error(`排行榜维度筛选缺少统一触控或可见高度：${required}`);
 }
 
-if (source.indexOf('<ReportDateRangeTabs') > source.indexOf('<TextSelectionControl')) {
-  throw new Error('班级排行榜必须先展示日期切换，再展示年级筛选');
+if (source.includes('ActivityIcon')) throw new Error('评价记录卡片标题不应展示图标。');
+if (source.includes('weekDisplay="calendar"')) throw new Error('排行榜应直接复用班级评价报表的公共周期选择样式。');
+for (const required of ["headerAction={settlementCycle === 'week' && currentPeriod ? {", "label: '本周'", 'setSelectedPeriodId(currentPeriod.id)', 'setIsPeriodSheetOpen(false)']) {
+  if (!source.includes(required)) throw new Error(`排行榜选择周弹窗标题栏缺少本周快捷定位能力：${required}`);
+}
+for (const required of ['headerAction?: {', 'headerAction.onClick', 'h-[var(--tm-size-touch)]', 'h-7', 'rounded-[8px]', 'border-[var(--tm-brand-primary)]', 'text-[var(--tm-brand-primary)]']) {
+  if (!bottomSheetSource.includes(required)) throw new Error(`公共底部弹窗标题栏操作位缺少：${required}`);
+}
+for (const forbidden of ['shortcutLabel="本周"', 'onShortcut=', 'onSelect(currentPeriod.id)']) {
+  if (periodCalendarSource.includes(forbidden)) throw new Error(`本周快捷操作不应侵入月份周历导航：${forbidden}`);
 }
 
 for (const required of [
-  'grid h-[var(--tm-size-touch)] grid-cols-5',
-  'bg-[var(--tm-page-plain-header-bg)]',
-  'h-[var(--tm-report-date-indicator-height)] w-[var(--tm-report-date-indicator-width)]',
+  '排行榜页面只包含“班级排行榜”和“评价记录”两个业务板块',
+  '按周结算的学校只允许切换当前周和历史周',
+  '周期切换控件直接位于页面标题栏下方',
+  '选择周弹窗标题栏右侧展示“本周”快捷按钮',
+  '年级和评价维度都是排行榜局部条件',
+  '评价记录不继承排行榜的结算周期、年级或评价维度',
 ]) {
-  if (!dateTabsSource.includes(required)) throw new Error(`排行榜与班级报告共用的日期栏缺少开放式五等分样式：${required}`);
+  if (!guidelineSource.includes(required)) throw new Error(`教师手机端规范未固化排行榜结算与筛选作用域：${required}`);
 }
 
-for (const required of [
-  'min-h-[var(--tm-selection-touch-height)]',
-  'text-[var(--tm-selection-text-active)]',
-  'text-[var(--tm-selection-text-inactive)]',
-]) {
-  if (!textSelectionSource.includes(required)) throw new Error(`排行榜年级筛选应使用无底色纯文字选择：${required}`);
-}
-
-if (!appSource.includes("currentView === 'class_leaderboard' || currentView === 'class_evaluation_records' ? 'bg-[var(--tm-page-plain-header-bg)]'")) {
-  throw new Error('班级排行榜标题栏必须使用纯白标题栏背景');
-}
-
-for (const required of [
-  'onOpenEvaluationRecords: () => void',
-  'onClick={onOpenEvaluationRecords}',
-  "navigateTo('class_evaluation_records')",
-  "case 'class_evaluation_records': return '评价记录明细'",
-  '<EvaluationRecordsLogView classes={activeSpaceClasses} />',
-]) {
-  if (!source.includes(required) && !appSource.includes(required)) {
-    throw new Error(`评价记录“更多”应进入应用层独立页面，缺少：${required}`);
-  }
-}
-
-for (const forbidden of ['showRecordsLog', '<EvaluationRecordsLogView onBack=', 'if (showRecordsLog)']) {
-  if (source.includes(forbidden)) throw new Error(`排行榜不得通过局部条件返回替换页面：${forbidden}`);
-}
-
-for (const forbidden of ['text-blue-', 'text-indigo-', 'bg-indigo-', '#5B50F6']) {
-  if (source.includes(forbidden)) {
-    throw new Error(`班级排行榜的品牌选中与操作状态不应继续使用蓝紫色：${forbidden}`);
-  }
-}
+console.log('Class leaderboard settlement and scope checks passed.');

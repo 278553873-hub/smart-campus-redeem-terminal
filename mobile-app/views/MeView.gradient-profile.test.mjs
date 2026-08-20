@@ -21,7 +21,7 @@ requireText(source, '编辑教师信息', '编辑按钮应保持独立可点击�
 requireText(appSource, 'return <TeacherMobileScreenBackground />', '我的页面屏幕级背景应统一使用公共背景组件。');
 const screenBackgroundSource = fs.readFileSync(new URL('../components/TeacherMobileScreenBackground.tsx', import.meta.url), 'utf8');
 requireText(screenBackgroundSource, 'bg-[var(--tm-bg-page)]', '我的页面屏幕级背景应使用页面背景 Token。');
-requireText(source, 'min-h-[144px]', '教师信息展示区应压缩高度，避免头像区域占用过多空间。');
+requireText(source, 'flex min-h-[132px] items-center', '教师信息区应保留适度高度，并将内容垂直居中。');
 requireText(source, 'Camera', '教师头像右下角应使用相机图标。');
 requireText(source, 'border border-white bg-white text-[var(--tm-brand-primary)]', '我的页头像相机图标应使用白色实底和品牌红图标。');
 requireText(source, "const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)] transition active:scale-95 active:text-[var(--tm-brand-primary)]';", '设置图标应无底色，右侧与卡片对齐，并与教师姓名首行视觉居中。');
@@ -38,7 +38,9 @@ requireText(source, "const secondaryIconClass = 'bg-[var(--tm-brand-primary-soft
 requireText(source, '<ToolGrid items={primaryTools} columns={4} />', '管理工具应显式保持每行 4 个入口。');
 requireText(source, '<ToolGrid items={moreTools} columns={4} variant="secondary" />', '更多工具应显式保持每行 4 个入口。');
 requireText(source, '学生评价报表', '管理工具应包含学生评价报表。');
-requireText(source, 'whitespace-nowrap', '管理工具入口名称应保持单行展示。');
+requireText(source, "labelLines: ['学生评价', '报表']", '学生评价报表应按业务语义分两行展示。');
+requireText(source, "labelLines: ['班级评价', '报表']", '班级评价报表应按业务语义分两行展示。');
+requireText(source, 'gap-x-3 gap-y-3', '工具网格应增加横向呼吸感并收紧纵向间距。');
 requireText(source, '期末报告', '管理工具应包含期末报告。');
 requireText(source, "const reportToolImageClass = 'h-16 w-16 max-w-none rounded-[var(--tm-radius-inner)] object-cover';", '评价报表和期末报告图片应通过统一放大补偿资源留白，并保持管理工具图标视觉尺寸一致。');
 requireText(source, 'imageClassName: reportToolImageClass', '评价报表和期末报告入口应使用统一的放大图标样式。');
@@ -55,7 +57,10 @@ requireText(source, '部门管理', '更多工具应包含部门管理。');
 requireText(source, '货币发放', '更多工具应包含货币发放。');
 requireText(source, '建议反馈', '更多工具应包含建议反馈。');
 requireText(source, "const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-card)] backdrop-blur-sm';", '“我的”页工具卡应使用干净的普通卡片阴影 Token。');
-requireText(source, 'rounded-[var(--tm-radius-card)] p-5 ${toolCardSurfaceClass}', '管理工具、更多工具卡片应共享统一圆角和卡片表面。');
+requireText(source, 'rounded-[var(--tm-radius-card)] p-4 ${toolCardSurfaceClass}', '管理工具、更多工具卡片应共享紧凑内边距、统一圆角和卡片表面。');
+requireText(source, 'className="relative overflow-hidden bg-transparent font-sans', '我的页不应重复增加底部安全留白。');
+requireText(source, 'min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)]', '待填写采集应收紧为 48px 紧凑待办卡。');
+requireText(source, 'h-8 w-8 shrink-0 items-center justify-center', '待办卡图标底座应与紧凑高度匹配。');
 requireText(source, 'active:bg-[var(--tm-brand-primary-soft)] ${toolCardSurfaceClass}', '待填写采集卡片应共享无显性描边的卡片表面。');
 requireText(source, 'onClick={onEditTeacherProfile}', '头像和编辑按钮应进入编辑教师信息页。');
 
@@ -87,8 +92,12 @@ if (source.includes("title: 'AI班主任助理'")) {
   throw new Error('班主任助理入口名称不应继续显示为 AI班主任助理。');
 }
 
-if (source.includes('titleLines')) {
-  throw new Error('管理工具入口名称应保持单行，不应配置强制分行。');
+if (source.includes('min-h-9 max-w-[92px]')) {
+  throw new Error('工具短标题不应统一预留双行高度。');
+}
+
+if (source.includes('pb-24') || source.includes('<div className="h-10" />')) {
+  throw new Error('我的页底部安全留白应由全局滚动容器统一提供。');
 }
 
 if ((source.match(/imageClassName: reportToolImageClass/g) ?? []).length !== 3) {

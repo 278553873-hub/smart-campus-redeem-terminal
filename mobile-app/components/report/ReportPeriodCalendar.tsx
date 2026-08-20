@@ -60,7 +60,7 @@ const PickerHeader = ({
         <button type="button" onClick={onPrevious} disabled={!canGoPrevious} aria-label={previousLabel} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] disabled:opacity-25 active:bg-[var(--tm-bg-surface-soft)]">
             <ChevronLeft className="h-[18px] w-[18px]" />
         </button>
-        <strong className="text-center text-[16px] font-semibold tabular-nums text-[var(--tm-text-primary)]">{label}</strong>
+        <strong className="truncate text-center text-[16px] font-semibold tabular-nums text-[var(--tm-text-primary)]">{label}</strong>
         <button type="button" onClick={onNext} disabled={!canGoNext} aria-label={nextLabel} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] disabled:opacity-25 active:bg-[var(--tm-bg-surface-soft)]">
             <ChevronRight className="h-[18px] w-[18px]" />
         </button>

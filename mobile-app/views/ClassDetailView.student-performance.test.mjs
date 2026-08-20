@@ -13,19 +13,45 @@ const requireText = (text, message) => {
 
 requireText('student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3', '学生列表应使用横向10像素、纵向12像素间距。');
 requireText('px-3 pb-40', '学生列表应保留12像素左右留白。');
-requireText('h-[136px]', '学生卡片应使用稳定的136像素高度。');
+requireText('h-[120px]', '学生卡片应使用稳定的120像素高度。');
+requireText('overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)]', '学生卡片应允许右上角多选框跨出卡片，避免遮挡等级图标。');
+if (source.includes("isSelectionMode && isSelected ? 'border-[var(--tm-brand-primary)]'")) {
+  throw new Error('学生卡片选中时不应显示品牌红边框。');
+}
+requireText('absolute -right-1 -top-1', '学生多选框应向右上方各外移4像素并跨在卡片边框上。');
+requireText('h-[18px] w-[18px]', '学生多选框应保持18像素可见尺寸。');
+requireText("isSelected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'", '学生多选框选中时应使用实心品牌红圆底。');
+requireText('<CheckIcon className="h-3 w-3 text-white [stroke-width:3]" />', '实心选中框中应展示清晰的白色勾选图标。');
+if (source.includes('bg-[var(--tm-brand-primary-soft)] ring-2')) {
+  throw new Error('选中学生卡片不应整体使用品牌红背景。');
+}
 requireText('rounded-[var(--tm-radius-inner)]', '学生卡片应使用16像素内层圆角，减轻连续气泡感。');
-requireText('px-5 font-mono text-[9px]', '学生卡片应在顶部弱化展示完整学号。');
+requireText('getClassRosterNumber', '学生卡片应统一派生两位班内学号。');
+requireText("padStart(2, '0')", '两位班内学号应保留前导零。');
+requireText('inline-flex min-w-0 max-w-full items-center justify-center gap-0.5', '班内学号与姓名应组成完整身份组并整体居中。');
+requireText('w-4 shrink-0 items-center justify-center', '班内学号应保持稳定宽度，不因姓名长度发生变化。');
+requireText('text-[13px] font-semibold leading-4', '手机端姓名应使用13像素、600字重，保持清晰但不过重。');
+if (source.includes('absolute right-full')) {
+  throw new Error('班内学号不应再通过绝对定位脱离身份组，避免四字姓名时越出卡片。');
+}
 requireText('StudentPerformanceAvatar', '学生卡片应展示头像等级进度环。');
-requireText('StudentPerformanceMeta', '学生卡片应展示等级图标和奖惩次数。');
-if (source.indexOf('aria-label={`学号${studentNo}`}') > source.indexOf('<StudentPerformanceAvatar')) {
-  throw new Error('完整学号应展示在头像上方。');
+requireText('StudentPerformanceLevelIcons', '学生卡片应单独展示居中的等级图标。');
+requireText('StudentPerformanceCounts', '学生卡片应单独展示奖惩次数。');
+const levelIndex = source.indexOf('<StudentPerformanceLevelIcons level={level} />');
+const avatarIndex = source.indexOf('<StudentPerformanceAvatar', levelIndex);
+const countsIndex = source.indexOf('<StudentPerformanceCounts summary={performance} />', avatarIndex);
+const rosterIndex = source.indexOf('aria-label={`学号${studentNo}`}', countsIndex);
+if (!(levelIndex < avatarIndex && avatarIndex < countsIndex && countsIndex < rosterIndex)) {
+  throw new Error('学生卡片应按等级、头像、奖惩次数、学号与姓名的顺序展示。');
 }
 if (!avatarSource.includes('stroke="var(--tm-student-level-progress)"')) {
   throw new Error('头像进度环应统一使用奖励进度色。');
 }
-if (avatarSource.includes('rounded-full ring-2 ring-white')) {
-  throw new Error('性别图标不应继续使用白色图标和彩色圆底。');
+if (avatarSource.includes('MaleIcon') || avatarSource.includes('FemaleIcon') || avatarSource.includes('student.gender')) {
+  throw new Error('普通花名册头像不应常驻展示性别角标。');
+}
+if (!avatarSource.includes("compact ? 'h-[58px] w-[58px]'")) {
+  throw new Error('手机花名册紧凑卡片的头像进度环应使用58像素尺寸。');
 }
 if (metaSource.includes('ThumbsUp') || metaSource.includes('ThumbsDown')) {
   throw new Error('奖惩次数应只通过双色数字展示，不增加常驻图标。');
@@ -36,10 +62,19 @@ if (!metaSource.includes('bg-[var(--tm-student-praise-soft)]') || !metaSource.in
 if (!metaSource.includes('min-w-[24px]') || metaSource.includes('w-full grid-cols-2')) {
   throw new Error('奖惩色片应保持局部尺寸，不得再次形成贴边通栏。');
 }
+if (!metaSource.includes('h-[18px] w-[18px]')) {
+  throw new Error('手机花名册等级图标应使用18像素尺寸。');
+}
+if (!metaSource.includes("level.iconCount === 0") || !metaSource.includes('student-level-icons/sprout.png')) {
+  throw new Error('尚未点亮等级图标时应展示一株18像素小豆苗作为成长起步状态。');
+}
+if (!metaSource.includes("formatSignedCount(summary.praiseCount, '+')") || !metaSource.includes("formatSignedCount(summary.criticismCount, '-')")) {
+  throw new Error('奖惩次数应通过正负号与颜色共同表达语义。');
+}
 if (metaSource.includes("from 'lucide-react'")) {
   throw new Error('等级标识应使用专用金色图片，不应退回通用线性图标。');
 }
-for (const iconName of ['star', 'moon', 'sun', 'crown']) {
+for (const iconName of ['sprout', 'star', 'moon', 'sun', 'crown']) {
   const iconFile = new URL(`${iconName}.png`, levelIconDirectory);
   const iconBuffer = fs.readFileSync(iconFile);
   if (iconBuffer.readUInt32BE(16) !== 128 || iconBuffer.readUInt32BE(20) !== 128) {
@@ -48,6 +83,9 @@ for (const iconName of ['star', 'moon', 'sun', 'crown']) {
 }
 if (!appSource.includes('summarizeStudentPerformance(records)')) {
   throw new Error('应用数据层应把学生评价记录汇总为净得分和奖惩次数。');
+}
+if (!appSource.includes('const hasSelectionTarget = !isMultiSelectMode || targetIds.length > 0;') || !appSource.includes('disabled={!hasSelectionTarget}')) {
+  throw new Error('多选未选中学生时应禁用底部录入，避免误录全班。');
 }
 
 if (source.includes('grid-cols-3')) {

@@ -1,13 +1,13 @@
 import React from 'react';
 import type { Student } from '../../types';
 import type { StudentPerformanceLevel } from '../../domain/studentPerformance';
-import { FemaleIcon, MaleIcon } from '../Icons';
 
 interface StudentPerformanceAvatarProps {
   student: Student;
   fallbackText: string;
   fallbackClassName: string;
   level: StudentPerformanceLevel;
+  compact?: boolean;
 }
 
 const RADIUS = 27;
@@ -18,6 +18,7 @@ const StudentPerformanceAvatar: React.FC<StudentPerformanceAvatarProps> = ({
   fallbackText,
   fallbackClassName,
   level,
+  compact = false,
 }) => {
   const progressPercent = Math.round(level.progress * 100);
   const dashOffset = CIRCUMFERENCE * (1 - level.progress);
@@ -26,7 +27,7 @@ const StudentPerformanceAvatar: React.FC<StudentPerformanceAvatarProps> = ({
     <div
       role="img"
       aria-label={`${student.name}头像，下一等级图标进度${progressPercent}%`}
-      className="relative mt-0.5 h-[58px] w-[58px] shrink-0"
+      className={`relative shrink-0 ${compact ? 'h-[58px] w-[58px]' : 'h-[60px] w-[60px]'}`}
     >
       <svg aria-hidden="true" className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 58 58">
         <circle
@@ -58,12 +59,6 @@ const StudentPerformanceAvatar: React.FC<StudentPerformanceAvatarProps> = ({
           <span className="flex h-full w-full items-center justify-center text-base font-semibold">{fallbackText}</span>
         )}
       </div>
-
-      <span className={`absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center drop-shadow-[0_0_1px_rgba(255,255,255,1)] ${student.gender === 'male' ? 'text-[var(--tm-gender-male)]' : 'text-[var(--tm-gender-female)]'}`}>
-        {student.gender === 'male'
-          ? <MaleIcon className="h-4 w-4 stroke-[3]" />
-          : <FemaleIcon className="h-4 w-4 stroke-[3]" />}
-      </span>
     </div>
   );
 };

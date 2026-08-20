@@ -22,6 +22,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
+import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 import PhoneMockup from './PhoneMockup';
 import {
   ParentBottomSheet,
@@ -1424,19 +1425,19 @@ const ParentApp: React.FC<ParentAppProps> = ({
           </ParentGradientIcon>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-[16px] font-black leading-tight text-slate-950">积分银行</h2>
+              <h2 className="text-[16px] font-black leading-tight text-slate-950">{GROWTH_COIN_TERMS.name}</h2>
               <ChevronRight size={16} className="shrink-0 text-slate-300" />
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <div className="rounded-[14px] bg-orange-50/80 px-3 py-2">
-                <div className="text-[11px] font-black text-orange-500/80">钱包</div>
+                <div className="text-[11px] font-black text-orange-500/80">{GROWTH_COIN_TERMS.available}</div>
                 <div className="mt-1 flex items-center gap-1 tabular-nums text-[16px] font-black text-orange-500">
                   <img src="/assets/coin.png" alt="" className="h-4 w-4" />
                   {formatCoin(activeChild.availableCoins)}
                 </div>
               </div>
               <div className="rounded-[14px] bg-sky-50/85 px-3 py-2">
-                <div className="text-[11px] font-black text-sky-500/80">存款</div>
+                <div className="text-[11px] font-black text-sky-500/80">{GROWTH_COIN_TERMS.saved}</div>
                 <div className="mt-1 flex items-center gap-1 tabular-nums text-[16px] font-black text-sky-600">
                   <img src="/assets/coin.png" alt="" className="h-4 w-4" />
                   {formatCoin(activeChild.bankBalance)}
@@ -2225,14 +2226,15 @@ const ParentApp: React.FC<ParentAppProps> = ({
         <Header title="积分银行" showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />
         <ParentCard as="section" className={`parent-bank-balance-strip sticky top-[44px] z-30 mx-5 px-4 py-2 backdrop-blur-xl ${bankTopSpacing}`}>
           <div className="flex min-h-10 items-center text-slate-600">
+            <span className="shrink-0 pr-3 text-[13px] font-black text-slate-900">{GROWTH_COIN_TERMS.name}</span>
             <div className="flex flex-1 items-center justify-center gap-1.5">
-              <span className="text-[14px] font-black">钱包</span>
+              <span className="text-[14px] font-black">{GROWTH_COIN_TERMS.available}</span>
               <img src="/assets/coin.png" alt="" className="h-4 w-4 shrink-0" />
               <span className="tabular-nums text-[16px] font-black leading-none">{formatCoin(activeChild.availableCoins)}</span>
             </div>
             <div className="h-5 w-px bg-slate-200" aria-hidden="true" />
             <div className="flex flex-1 items-center justify-center gap-1.5">
-              <span className="text-[14px] font-black">存款</span>
+              <span className="text-[14px] font-black">{GROWTH_COIN_TERMS.saved}</span>
               <img src="/assets/coin.png" alt="" className="h-4 w-4 shrink-0" />
               <span className="tabular-nums text-[16px] font-black leading-none">{formatCoin(activeChild.bankBalance)}</span>
             </div>

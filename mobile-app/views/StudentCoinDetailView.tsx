@@ -7,6 +7,7 @@ import TextSelectionControl from '../components/ui/TextSelectionControl';
 import { CampusCoinDetail, Student } from '../types';
 import { phoneText } from '../styles/teacherMobileTokens';
 import { formatCoinAmount } from '../utils/coinFormat';
+import { GROWTH_COIN_TERMS } from '../../shared/growthCoinTerminology';
 
 interface StudentCoinDetailViewProps {
   student: Student;
@@ -159,25 +160,25 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
           <button type="button" onClick={onBack} className="-ml-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none motion-reduce:active:scale-100" aria-label="返回学生详情">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className={`${phoneText.navTitle} pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[var(--tm-text-primary)]`}>校园币明细</h1>
+          <h1 className={`${phoneText.navTitle} pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[var(--tm-text-primary)]`}>{GROWTH_COIN_TERMS.details}</h1>
         </header>
 
-        <section className="min-h-0 flex-1 overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pb-[var(--tm-space-8)] no-scrollbar" aria-label={`${student.name}的校园币收支记录`}>
+        <section className="min-h-0 flex-1 overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pb-[var(--tm-space-8)] no-scrollbar" aria-label={`${student.name}的${GROWTH_COIN_TERMS.name}收支记录`}>
           <section className="pt-[var(--tm-space-4)]" aria-labelledby="coin-overview-title">
             <div className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
-              <h2 id="coin-overview-title" className="flex min-h-[var(--tm-size-touch)] items-center px-[var(--tm-space-4)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">账户概览</h2>
-              <section className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)] px-[var(--tm-space-4)]" aria-label="校园币资产">
+              <h2 id="coin-overview-title" className="flex min-h-[var(--tm-size-touch)] items-center px-[var(--tm-space-4)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{GROWTH_COIN_TERMS.name}</h2>
+              <section className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)] px-[var(--tm-space-4)]" aria-label={`${GROWTH_COIN_TERMS.name}资产`}>
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
                   <img src="/assets/coin.png" className="h-4 w-4" alt="" />
                 </span>
                 <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center gap-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)]">
                   <div className="flex min-w-0 items-baseline gap-[var(--tm-space-2)]">
-                    <span className="shrink-0 text-[var(--tm-text-secondary)]">钱包</span>
+                    <span className="shrink-0 text-[var(--tm-text-secondary)]">{GROWTH_COIN_TERMS.available}</span>
                     <span className="min-w-0 truncate text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums text-[var(--tm-text-primary)]">{formatCoinAmount(coinDetail.balance)}</span>
                   </div>
                   <span className="h-3 w-px bg-[var(--tm-border-subtle)]" aria-hidden="true" />
                   <div className="flex min-w-0 items-baseline gap-[var(--tm-space-2)]">
-                    <span className="shrink-0 text-[var(--tm-text-secondary)]">存款</span>
+                    <span className="shrink-0 text-[var(--tm-text-secondary)]">{GROWTH_COIN_TERMS.saved}</span>
                     <span className="min-w-0 truncate text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums text-[var(--tm-text-primary)]">{formatCoinAmount(coinDetail.bankDeposit)}</span>
                   </div>
                 </div>
@@ -185,7 +186,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
 
               <section
                 className="bg-[var(--tm-brand-reward-soft)] px-[var(--tm-space-4)]"
-                aria-label={settlementEstimate.enabled ? `${estimateTitle}${formatCoinAmount(settlementEstimate.estimatedTotal)}校园币` : '学校暂未开启自动发放'}
+                aria-label={settlementEstimate.enabled ? `${estimateTitle}${formatCoinAmount(settlementEstimate.estimatedTotal)}${GROWTH_COIN_TERMS.name}` : '学校暂未开启自动发放'}
               >
                 {settlementEstimate.enabled ? (
                   <div className="flex min-h-[var(--tm-size-touch)] items-center justify-between gap-[var(--tm-space-3)]">

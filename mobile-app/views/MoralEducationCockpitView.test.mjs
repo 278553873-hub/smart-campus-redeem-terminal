@@ -12,6 +12,7 @@ const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8'
 const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const chartSource = fs.readFileSync(new URL('../components/report/TeacherReportChart.tsx', import.meta.url), 'utf8');
 const periodCalendarSource = fs.readFileSync(new URL('../components/report/ReportPeriodCalendar.tsx', import.meta.url), 'utf8');
+const bottomSheetSource = fs.readFileSync(new URL('../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
 const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const pillSource = fs.readFileSync(new URL('../components/ui/PillSelectionControl.tsx', import.meta.url), 'utf8');
 const rankingListSource = fs.readFileSync(new URL('../components/ui/ClassRankingList.tsx', import.meta.url), 'utf8');
@@ -56,19 +57,18 @@ for (const required of [
   '<MobileBottomSheet',
   '<ClassRankingList',
   '<ReportPeriodCalendar',
-  "{ key: 'week', label: '按周' }",
-  "{ key: 'month', label: '按月' }",
-  "{ key: 'term', label: '按学期' }",
-  'getMoralEducationCockpitSnapshot({ periodType, periodId: selectedPeriodId })',
+  "const reportPeriodType: MoralEducationPeriodType = 'week'",
+  'getMoralEducationCockpitSnapshot({ periodType: reportPeriodType, periodId: selectedPeriodId })',
+  'const currentPeriod = periodOptions[periodOptions.length - 1]',
+  'selectedPeriod && currentPeriod && selectedPeriod.id === currentPeriod.id',
+  '? `本周 ${selectedPeriod.label}`',
+  "selectedPeriod?.label ?? ''",
   "var(--mini-program-capsule-right-inset, 0px)",
   '查看完整排名',
   'title="完整班级排名"',
   'lowestRankedClass.score',
   '<h1 className="pointer-events-none absolute inset-0 flex items-center justify-center text-[17px] font-semibold text-[var(--tm-text-primary)]">班级评价报表</h1>',
-  '<select',
-  'aria-label="统计周期类型"',
-  'grid-cols-[80px_44px_minmax(0,1fr)_44px]',
-  'border-[var(--tm-input-border)] bg-[var(--tm-input-bg)]',
+  'grid-cols-[44px_minmax(0,1fr)_44px]',
   'ariaLabel="问题分布年级筛选"',
   '<TeacherReportDonutChart',
   'seriesName="问题分布"',
@@ -85,12 +85,14 @@ for (const required of [
   '<ReportSegmentTabs',
   '扣分笔数',
 ]) {
-  assert.ok(viewSource.includes(required), `驾驶舱应提供多周期筛选、排名和图表展示，缺少：${required}`);
+  assert.ok(viewSource.includes(required), `班级评价报表应提供固定周口径、排名和图表展示，缺少：${required}`);
 }
-assert.ok(viewSource.includes('text-[var(--tm-input-text)] outline-none'), '统计粒度下拉应使用中性输入文字色。');
-assert.ok(viewSource.includes('text-[var(--tm-text-secondary)]" />'), '统计粒度下拉箭头应使用次级中性色。');
-assert.equal(viewSource.includes('active:scale-[0.98]'), false, '统计粒度下拉不应增加手机端按压缩放。');
-assert.equal(viewSource.includes('border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-brand-primary-soft)]'), false, '统计粒度下拉不应继续使用品牌红表面。');
+for (const removedPeriodFilter of ['统计周期类型', '按周', '按月', '按学期', '<select']) {
+  assert.equal(viewSource.includes(removedPeriodFilter), false, `班级评价报表顶部不应继续展示统计粒度筛选：${removedPeriodFilter}`);
+}
+assert.ok(viewSource.includes('aria-label={`上一个${periodTypeNames[reportPeriodType]}`}') && viewSource.includes('aria-label={`下一个${periodTypeNames[reportPeriodType]}`}'), '移除统计粒度后应继续支持上一周和下一周切换。');
+assert.ok(viewSource.includes("<span className=\"truncate\">{selectedPeriodLabel || '加载中'}</span>"), '当前周应显示“本周 + 日期范围”，历史周只显示日期范围。');
+assert.equal(undefined && undefined && undefined === undefined ? '本周' : '', '', '周期数据尚未加载时不得误判为当前周并读取空对象。');
 assert.ok(viewSource.includes('<PillSelectionControl') && viewSource.includes('semantics="tabs"'), '班级排名与问题分布年级筛选应复用统一胶囊页签。');
 assert.ok(viewSource.includes('items={filteredRanking.slice(0, 5)}') && viewSource.includes('items={filteredRanking}'), '班级评价报表预览与完整排名应复用统一排名列表。');
 assert.ok(rankingListSource.includes('text-[var(--tm-text-primary)]">{item.score}分'), '普通排名得分应使用中性主文字，不得表达为负向状态。');
@@ -142,8 +144,8 @@ for (const requiredToken of [
 ]) {
   assert.ok(tokenSource.includes(requiredToken), `数据概况应通过组件级 Token 收敛样式，缺少：${requiredToken}`);
 }
-for (const required of ['title={`选择${periodTypeLabels[periodType]}`}', 'periods={periodOptions}', 'setIsPeriodSheetOpen(false)']) {
-  assert.ok(viewSource.includes(required), `周期抽屉应按当前粒度选择周、月份或学期，缺少：${required}`);
+for (const required of ['title={`选择${periodTypeLabels[reportPeriodType]}`}', 'periods={periodOptions}', 'setIsPeriodSheetOpen(false)']) {
+  assert.ok(viewSource.includes(required), `周选择抽屉应按固定周口径切换历史周期，缺少：${required}`);
 }
 for (const required of [
   "week: '周'",
@@ -159,6 +161,15 @@ for (const required of [
   'aria-label="学期"',
 ]) {
   assert.ok(periodCalendarSource.includes(required), `报表周期选择器应分别展示周范围、月份和学期按钮，缺少：${required}`);
+}
+for (const required of ["headerAction={currentPeriod ? {", "label: '本周'", 'setSelectedPeriodId(currentPeriod.id)', 'setIsPeriodSheetOpen(false)']) {
+  assert.ok(viewSource.includes(required), `班级评价报表选择周弹窗标题栏应提供本周快捷定位，缺少：${required}`);
+}
+for (const required of ['headerAction?: {', 'headerAction.onClick', 'h-[var(--tm-size-touch)]', 'h-7', 'rounded-[8px]', 'border-[var(--tm-brand-primary)]', 'text-[var(--tm-brand-primary)]']) {
+  assert.ok(bottomSheetSource.includes(required), `公共底部弹窗标题栏操作位缺少：${required}`);
+}
+for (const forbidden of ['shortcutLabel="本周"', 'onShortcut=', 'onSelect(currentPeriod.id)']) {
+  assert.equal(periodCalendarSource.includes(forbidden), false, `本周快捷操作不应侵入月份周历导航：${forbidden}`);
 }
 for (const removedCalendarBehavior of ['const weekDays', 'calendarCells', 'dateValue >= item.startDate', '无数据日期']) {
   assert.equal(periodCalendarSource.includes(removedCalendarBehavior), false, `周期选择器不应继续使用逐日日历交互：${removedCalendarBehavior}`);

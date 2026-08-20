@@ -36,8 +36,11 @@ import {
 } from '../mobile-app/domain/studentPerformance';
 import {
   ClassroomStudentAvatar,
-  ClassroomStudentMeta,
+  ClassroomStudentCounts,
+  ClassroomStudentLevelIcons,
 } from './student-performance/ClassroomStudentPerformance';
+import ClassroomQuickActionDock from './classroom/ClassroomQuickActionDock';
+import { resolveStudentsBySpokenNumbers } from './classroom/classroomVoiceTargets.mjs';
 
 declare global { interface Window { confetti?: (options: Record<string, unknown>) => void; } }
 
@@ -98,38 +101,12 @@ interface SmartBigScreenProps {
   embedded?: boolean;
 }
 
-const VoiceMicGlyph: React.FC<{ muted?: boolean; className?: string }> = ({ muted = false, className = '' }) => (
-  <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
-    <path d="M5 11a7 7 0 0 0 14 0" />
-    <path d="M12 18v3" />
-    <path d="M8 21h8" />
-    {muted && <path d="M4 4l16 16" />}
-  </svg>
-);
-
-const VoiceWaveGlyph: React.FC<{ level: number }> = ({ level }) => {
-  const bars = [0.35, 0.65, 1, 0.78, 0.48];
-  return (
-    <div className="relative z-10 flex h-8 w-9 items-center justify-center gap-1">
-      {bars.map((weight, index) => {
-        const height = 8 + Math.round(level * weight * 22);
-        return (
-          <span
-            key={index}
-            className="w-1.5 rounded-full bg-white transition-[height] duration-75 ease-out"
-            style={{ height: `${height}px` }}
-          />
-        );
-      })}
-    </div>
-  );
-};
-
 const CLASSES = ['2025级1班', '2025级2班', '2025级3班'];
-const CARD_WIDTH = 160;
-const CARD_GAP = 24;
+const CARD_WIDTH = 136;
+const CARD_GAP = 12;
 const FILTER_SIDEBAR_WIDTH = 320;
+const CLASSROOM_ASSISTANT_ICON = '/assets/classroom/quick-action-giraffe.png';
+const CLASSROOM_SECONDARY_ICON = '/assets/classroom/open-app-icon.png';
 
 const INITIALS_MAP: Record<string, string> = {
   '林': 'L', '王': 'W', '陈': 'C', '蔡': 'C', '周': 'Z', '赵': 'Z', '孙': 'S', '李': 'L',
@@ -390,29 +367,36 @@ const StudentCard: React.FC<{
     <div
       onClick={onClick}
       aria-label={`${student.name}，学号${student.studentNo}，净得分${performance.netScore}分，被表扬${performance.praiseCount}次，被批评${performance.criticismCount}次`}
-      className={`w-[160px] h-[208px] relative bg-white rounded-[2rem] px-4 py-3 flex flex-col items-center border-2 shadow-[0_8px_20px_rgba(0,0,0,0.03)] ${isFocused ? 'border-blue-400 bg-blue-50/30' : 'border-white hover:border-blue-500 hover:shadow-xl'} ${selected ? 'border-blue-500 shadow-lg z-10' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95 transition-all' : ''}`}
+      className={`relative flex h-[148px] w-[136px] flex-col items-center rounded-lg border-2 bg-white px-1 pb-2 pt-1 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
     >
       {isSelectable && (
-        <div className={`absolute top-3 right-3 w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${selected ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-200 bg-white/80 text-slate-300'}`}>
-          <Check size={14} strokeWidth={3} />
+        <div className={`absolute right-0 top-0 z-20 flex h-5 w-5 items-center justify-center rounded-md border shadow-sm transition-all ${selected ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-200 bg-white/90 text-slate-300'}`}>
+          <Check size={12} strokeWidth={3} />
         </div>
       )}
-      <div className="mb-1 flex h-4 w-full items-center justify-center px-6">
-        <span className="truncate font-mono text-[10px] font-semibold tracking-normal text-slate-400">{student.studentNo}</span>
-      </div>
-      <ClassroomStudentAvatar
-        name={student.name}
-        avatar={student.avatar}
-        level={level}
-      />
-      <div className="mt-1.5 flex w-full flex-1 flex-col items-center text-center">
-        <div className="flex h-5 w-full items-center justify-center gap-1">
-          <h3 className={`max-w-[108px] truncate text-[17px] font-bold leading-5 tracking-normal text-slate-800 ${isRolling ? 'opacity-80' : ''}`}>{student.name}</h3>
-          {student.gender === 'male'
-            ? <Mars aria-hidden="true" size={15} className="shrink-0 text-[#3b82f6]" strokeWidth={3.2} />
-            : <Venus aria-hidden="true" size={15} className="shrink-0 text-[#ec4899]" strokeWidth={3.2} />}
+      <div className="flex h-5 w-full items-center justify-center">
+        <div className="flex items-center justify-center">
+          <ClassroomStudentLevelIcons level={level} compact />
         </div>
-        <ClassroomStudentMeta level={level} summary={performance} />
+      </div>
+      <div className="mt-px flex h-[68px] w-full items-center justify-center">
+        <ClassroomStudentAvatar
+          name={student.name}
+          avatar={student.avatar}
+          level={level}
+          compact
+        />
+      </div>
+      <div className="mt-px flex h-[18px] w-full items-center justify-center">
+        <ClassroomStudentCounts summary={performance} compact />
+      </div>
+      <div className="mt-1.5 flex h-[18px] w-full shrink-0 items-center justify-center text-center">
+        <div className="inline-flex min-w-0 max-w-[110px] items-center justify-center gap-1">
+          <span className="flex h-[18px] w-[22px] shrink-0 items-center justify-center rounded-md bg-slate-100 px-0.5 font-mono text-[11px] font-black tabular-nums text-slate-600">
+            {student.studentNo.slice(-2)}
+          </span>
+          <h3 className={`min-w-0 max-w-[84px] truncate text-[16px] font-semibold leading-[18px] tracking-normal text-slate-800 ${isRolling ? 'opacity-80' : ''}`}>{student.name}</h3>
+        </div>
       </div>
     </div>
   );
@@ -467,7 +451,6 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [voiceLevel, setVoiceLevel] = useState(0);
-  const [voiceDockPosition, setVoiceDockPosition] = useState<{ x: number; y: number } | null>(null);
   const randomRollTimerRef = useRef<number | null>(null);
   const celebrationTimerRef = useRef<number | null>(null);
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
@@ -479,18 +462,6 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const voiceAudioContextRef = useRef<AudioContext | null>(null);
   const voiceLevelFrameRef = useRef<number | null>(null);
   const demoRecordClassRef = useRef<string | null>(null);
-  const voiceDockRef = useRef<HTMLDivElement | null>(null);
-  const voiceDragRef = useRef({
-    active: false,
-    pointerId: -1,
-    startX: 0,
-    startY: 0,
-    originX: 0,
-    originY: 0,
-    width: 64,
-    height: 64,
-    moved: false
-  });
   const deckContainerRef = useRef<HTMLDivElement | null>(null);
   const [deckContainerWidth, setDeckContainerWidth] = useState(0);
 
@@ -871,6 +842,17 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     });
     if (matchedGroup) return { names: [matchedGroup.name], studentIds: matchedGroup.memberIds };
 
+    const numberTargets = resolveStudentsBySpokenNumbers(normalized, students) as {
+      numbers: number[];
+      students: StudentData[];
+    };
+    if (numberTargets.numbers.length > 0) {
+      return {
+        names: numberTargets.students.map(student => student.name),
+        studentIds: numberTargets.students.map(student => student.id),
+      };
+    }
+
     const matchedStudents = students.filter(student => normalized.includes(student.name));
     const excludeMatch = normalized.match(/(?:除了|除)(.+?)(?:以外|外)/);
     const excludeNames = excludeMatch ? splitSpokenNames(excludeMatch[1]) : [];
@@ -905,7 +887,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
     const targets = inferVoiceTargets(label);
     if (targets.names.length === 0) {
-      setToastMsg('AI 未识别到明确评价对象，请说出学生姓名、小组名或班级范围');
+      setToastMsg('AI 未识别到明确评价对象，请说出学生姓名、学号、小组名或班级范围');
       setTimeout(() => setToastMsg(null), 3000);
       return;
     }
@@ -1070,70 +1052,11 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     else startVoiceCapture();
   };
 
-  const clampVoiceDockPosition = (x: number, y: number, width: number, height: number) => ({
-    x: Math.min(Math.max(12, x), Math.max(12, window.innerWidth - width - 12)),
-    y: Math.min(Math.max(12, y), Math.max(12, window.innerHeight - height - 12))
-  });
-
-  const handleVoiceDockPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0) return;
-    const rect = voiceDockRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    voiceDragRef.current = {
-      active: true,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      originX: rect.left,
-      originY: rect.top,
-      width: rect.width,
-      height: rect.height,
-      moved: false
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const handleVoiceDockPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
-    const drag = voiceDragRef.current;
-    if (!drag.active || drag.pointerId !== event.pointerId) return;
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) drag.moved = true;
-    setVoiceDockPosition(clampVoiceDockPosition(drag.originX + dx, drag.originY + dy, drag.width, drag.height));
-  };
-
-  const handleVoiceDockPointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
-    const drag = voiceDragRef.current;
-    if (!drag.active || drag.pointerId !== event.pointerId) return;
-    voiceDragRef.current = { ...drag, active: false };
-    event.currentTarget.releasePointerCapture(event.pointerId);
-    if (!drag.moved) toggleVoiceCapture();
-  };
-
-  const handleVoiceDockPointerCancel = (event: React.PointerEvent<HTMLButtonElement>) => {
-    const drag = voiceDragRef.current;
-    if (drag.pointerId === event.pointerId) {
-      voiceDragRef.current = { ...drag, active: false };
-    }
-  };
-
   useEffect(() => {
     if ((evaluationModalOpen || groupDetailsModalOpen || randomModalOpen) && isVoiceListening) {
       stopVoiceCapture(false);
     }
   }, [evaluationModalOpen, groupDetailsModalOpen, randomModalOpen, isVoiceListening]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setVoiceDockPosition(prev => {
-        if (!prev) return prev;
-        const rect = voiceDockRef.current?.getBoundingClientRect();
-        return clampVoiceDockPosition(prev.x, prev.y, rect?.width || 64, rect?.height || 64);
-      });
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const handleCloseEvaluation = () => {
     stopVoiceCapture(false);
@@ -1455,7 +1378,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     </div>
                   </div>
                 )}
-                <div className={`grid grid-cols-[repeat(auto-fill,var(--card-width))] ${viewMode === 'student' ? 'justify-center' : 'justify-start'} gap-6 pb-20 relative`} style={{ '--card-width': `${CARD_WIDTH}px` } as any}>
+                <div className={`grid grid-cols-[repeat(auto-fill,var(--card-width))] ${viewMode === 'student' ? 'justify-center' : 'justify-start'} gap-3 pb-20 relative`} style={{ '--card-width': `${CARD_WIDTH}px` } as any}>
                   {!embedded && (
                     <div className="col-span-full relative h-[60px] mb-0">
                       <div className="absolute inset-x-0 top-0 h-full">
@@ -1720,33 +1643,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       </div>
 
       {showPageVoiceButton && (
-        <div
-          ref={voiceDockRef}
-          className={`fixed z-[80] flex items-end gap-3 ${voiceDockPosition ? '' : 'right-10 bottom-28'}`}
-          style={voiceDockPosition ? { left: `${voiceDockPosition.x}px`, top: `${voiceDockPosition.y}px` } : undefined}
-        >
-          <div className={`max-w-[320px] rounded-2xl border border-blue-100 bg-white px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.10)] transition-all ${isVoiceListening ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0 pointer-events-none'}`}>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-              <span className="text-[12px] font-black text-slate-500">录音采集中</span>
-            </div>
-            <p className="mt-1.5 text-[16px] font-black leading-snug text-slate-800">
-              点击结束
-            </p>
-          </div>
-          <button
-            onPointerDown={handleVoiceDockPointerDown}
-            onPointerMove={handleVoiceDockPointerMove}
-            onPointerUp={handleVoiceDockPointerUp}
-            onPointerCancel={handleVoiceDockPointerCancel}
-            className={`relative flex h-16 w-16 touch-none select-none items-center justify-center rounded-full bg-blue-600 text-white shadow-[0_20px_40px_rgba(37,99,235,0.34)] transition-all hover:bg-blue-700 active:scale-95 cursor-grab active:cursor-grabbing ${isVoiceListening ? 'ring-8 ring-blue-500/15' : ''}`}
-            title={isVoiceListening ? '停止语音录入' : '开始语音录入'}
-            aria-label={isVoiceListening ? '停止语音录入' : '开始语音录入'}
-          >
-            {isVoiceListening && <span className="absolute inset-0 rounded-full bg-blue-400/30 animate-ping" />}
-            {isVoiceListening ? <VoiceWaveGlyph level={voiceLevel} /> : <VoiceMicGlyph className="relative z-10 h-7 w-7" />}
-          </button>
-        </div>
+        <ClassroomQuickActionDock
+          assistantIconSrc={CLASSROOM_ASSISTANT_ICON}
+          secondaryIconSrc={CLASSROOM_SECONDARY_ICON}
+          isVoiceListening={isVoiceListening}
+          voiceLevel={voiceLevel}
+          onToggleVoice={toggleVoiceCapture}
+        />
       )}
 
       <div className={`fixed inset-0 z-[140] flex items-center justify-center ${groupDetailsModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>

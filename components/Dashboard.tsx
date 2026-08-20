@@ -5,6 +5,7 @@ import {
   Zap, ChevronRight, LogOut
 } from 'lucide-react';
 import { Student } from '../types';
+import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 
 interface DashboardProps {
   student: Student;
@@ -50,7 +51,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
             <div className="relative z-10 flex flex-col justify-between w-full h-full">
               <div className="flex justify-between items-start w-full">
                 <div className="flex flex-col">
-                  <p className="text-blue-100 font-black text-[10px] uppercase tracking-widest opacity-90 mb-0.5">我的总资产</p>
+                  <p className="text-blue-100 font-black text-[10px] opacity-90 mb-0.5">{GROWTH_COIN_TERMS.name}</p>
                   <h3 className="text-4xl font-black tracking-tighter leading-none mb-1 flex items-center">
                     <img src="/assets/coin.png" className="inline-block w-[1em] h-[1em] drop-shadow-sm mr-1.5" alt="coin" /> 
                     {formatCoin(student.campusCoins + bankBalance)}
@@ -63,14 +64,14 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
 
               <div className="flex items-center gap-2 w-full mt-3">
                 <div className="flex items-center text-xs bg-black/10 rounded-full px-3 py-1.5 backdrop-blur-sm border border-white/20 shadow-inner">
-                  <span className="opacity-80 font-bold mr-1.5 text-white">钱包</span>
+                  <span className="opacity-80 font-bold mr-1.5 text-white">{GROWTH_COIN_TERMS.available}</span>
                   <span className="font-bold tracking-tight inline-flex items-center text-white">
                     <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -mt-[1px] mr-1 opacity-90" alt="coin" />
                     {formatCoin(student.campusCoins)}
                   </span>
                 </div>
                 <div className="flex items-center text-xs bg-black/10 rounded-full px-3 py-1.5 backdrop-blur-sm border border-white/20 shadow-inner">
-                  <span className="opacity-80 font-bold mr-1.5 text-white">存款</span>
+                  <span className="opacity-80 font-bold mr-1.5 text-white">{GROWTH_COIN_TERMS.saved}</span>
                   <span className="font-bold tracking-tight inline-flex items-center text-white">
                     <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -mt-[1px] mr-1 opacity-90" alt="coin" />
                     {formatCoin(bankBalance)}

@@ -9,6 +9,7 @@ interface ClassSourceTriggerProps {
     expanded?: boolean;
     className?: string;
     variant?: 'surface' | 'quiet';
+    density?: 'default' | 'compact';
 }
 
 const SOURCE_ICONS = {
@@ -24,11 +25,23 @@ const ClassSourceTrigger: React.FC<ClassSourceTriggerProps> = ({
     expanded,
     className = '',
     variant = 'surface',
+    density = 'default',
 }) => {
     const SourceIcon = SOURCE_ICONS[type];
+    const isCompactSurface = variant === 'surface' && density === 'compact';
     const variantClass = variant === 'quiet'
         ? 'gap-1.5 rounded-[var(--tm-radius-control)] px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] shadow-none active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]'
-        : 'gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3.5 text-[13px] font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]';
+        : isCompactSurface
+            ? 'group text-[13px] font-semibold text-[var(--tm-text-primary)]'
+            : 'gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3.5 text-[13px] font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]';
+
+    const content = (
+        <>
+            <SourceIcon className={`h-4 w-4 shrink-0 ${variant === 'quiet' ? 'text-[var(--tm-text-tertiary)]' : 'text-[var(--tm-brand-primary)]'}`} strokeWidth={2.2} />
+            <span className="min-w-0 truncate">{name}</span>
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-disabled)]" strokeWidth={2.2} />
+        </>
+    );
 
     return (
         <button
@@ -38,9 +51,11 @@ const ClassSourceTrigger: React.FC<ClassSourceTriggerProps> = ({
             aria-label={`切换班级来源，当前${name}`}
             aria-expanded={expanded}
         >
-            <SourceIcon className={`h-4 w-4 shrink-0 ${variant === 'quiet' ? 'text-[var(--tm-text-tertiary)]' : 'text-[var(--tm-brand-primary)]'}`} strokeWidth={2.2} />
-            <span className="min-w-0 truncate">{name}</span>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-disabled)]" strokeWidth={2.2} />
+            {isCompactSurface ? (
+                <span className="inline-flex h-9 max-w-full items-center gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3 [box-shadow:var(--tm-shadow-control)] group-active:bg-[var(--tm-bg-surface-soft)]">
+                    {content}
+                </span>
+            ) : content}
         </button>
     );
 };

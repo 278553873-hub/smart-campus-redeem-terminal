@@ -167,6 +167,14 @@ export const teacherReportChartSemantic = {
   ],
 } as const;
 
+// 评价指标标签只表达同一条指标路径，不用色阶暗示额外层级含义。
+export const teacherEvaluationIndicatorSemantic = {
+  text: '#35566E',
+  separator: '#85A0B3',
+  background: '#F3F8FC',
+  border: '#DFEBF4',
+} as const;
+
 // 标准德智体美劳图表仍可使用固定配色；班级报告的学校自定义一级指标使用 indicators 循环色板。
 // 分类色必须满足白底 3:1 图形对比度：美育使用深薄荷，劳育使用深金。
 // 体育与覆盖率同属绿色系是有意设计：分类场景（五育图表）与比例场景（覆盖进度）不共存于同一图表。
@@ -187,8 +195,18 @@ export const teacherTagTones = {
 } as const;
 
 export const teacherGenderSemantic = {
-  male: teacherBrandPalette.jade[400],
-  female: teacherBrandPalette.orange[500],
+  male: {
+    soft: teacherReportChartPalette.spring.soft,
+    base: teacherReportChartPalette.spring.fill,
+    strong: teacherReportChartPalette.spring.text,
+    selectionBackground: teacherReportChartPalette.spring.fill,
+  },
+  female: {
+    soft: teacherReportChartPalette.coral.soft,
+    base: teacherReportChartPalette.coral.fill,
+    strong: teacherReportChartPalette.coral.text,
+    selectionBackground: teacherReportChartPalette.coral.fill,
+  },
 } as const;
 
 export const teacherStudentLevelSemantic = {
@@ -354,8 +372,14 @@ export const teacherBrandCssVariables = {
   '--tm-tag-gold-soft': teacherTagTones.gold.soft,
   '--tm-tag-gold-strong': teacherTagTones.gold.strong,
   '--tm-tag-gold-border': teacherTagTones.gold.border,
-  '--tm-gender-male': teacherGenderSemantic.male,
-  '--tm-gender-female': teacherGenderSemantic.female,
+  '--tm-gender-male': teacherGenderSemantic.male.base,
+  '--tm-gender-male-soft': teacherGenderSemantic.male.soft,
+  '--tm-gender-male-strong': teacherGenderSemantic.male.strong,
+  '--tm-gender-male-selection-bg': teacherGenderSemantic.male.selectionBackground,
+  '--tm-gender-female': teacherGenderSemantic.female.base,
+  '--tm-gender-female-soft': teacherGenderSemantic.female.soft,
+  '--tm-gender-female-strong': teacherGenderSemantic.female.strong,
+  '--tm-gender-female-selection-bg': teacherGenderSemantic.female.selectionBackground,
   '--tm-student-level-reward': teacherStudentLevelSemantic.reward,
   '--tm-student-level-progress': teacherStudentLevelSemantic.progress,
   '--tm-student-level-track': teacherStudentLevelSemantic.track,
@@ -437,6 +461,10 @@ export const teacherBrandCssVariables = {
   '--tm-chart-data-default': teacherReportChartSemantic.dataDefault,
   '--tm-chart-data-default-text': teacherReportChartSemantic.dataDefaultText,
   '--tm-chart-data-default-soft': teacherReportChartSemantic.dataDefaultSoft,
+  '--tm-evaluation-indicator-text': teacherEvaluationIndicatorSemantic.text,
+  '--tm-evaluation-indicator-separator': teacherEvaluationIndicatorSemantic.separator,
+  '--tm-evaluation-indicator-bg': teacherEvaluationIndicatorSemantic.background,
+  '--tm-evaluation-indicator-border': teacherEvaluationIndicatorSemantic.border,
   '--tm-chart-percentage-low': teacherReportChartSemantic.percentage.low.fill,
   '--tm-chart-percentage-low-text': teacherReportChartSemantic.percentage.low.text,
   '--tm-chart-percentage-low-soft': teacherReportChartSemantic.percentage.low.soft,
@@ -496,6 +524,7 @@ export const teacherBrandCssVariables = {
   '--tm-student-detail-asset-bg': 'rgba(255, 255, 255, 0.24)',
   '--tm-student-detail-asset-border': 'rgba(64, 60, 58, 0.08)',
   '--tm-student-detail-asset-height': '48px',
+  '--tm-student-detail-asset-label-width': '80px',
   '--tm-student-detail-asset-chevron-space': 'var(--tm-size-touch)',
   '--tm-role-headteacher-primary': teacherAssistantRoleSemantic.headteacher.primary,
   '--tm-role-headteacher-strong': teacherAssistantRoleSemantic.headteacher.strong,
@@ -637,16 +666,19 @@ export const teacherBrandCssVariables = {
   '--tm-duty-week-assigned-text': 'var(--tm-status-positive-strong)',
   '--tm-duty-week-unassigned-bg': 'var(--tm-bg-surface-muted)',
   '--tm-duty-week-unassigned-text': 'var(--tm-text-secondary)',
-  '--tm-duty-current-button-bg': 'var(--tm-bg-surface-muted)',
-  '--tm-duty-current-button-text': 'var(--tm-text-primary)',
-  '--tm-duty-current-button-shadow': 'var(--tm-shadow-control)',
-  '--tm-duty-current-button-pressed-bg': 'var(--tm-bg-surface-soft)',
+  '--tm-duty-current-button-bg': 'var(--tm-bg-surface)',
+  '--tm-duty-current-button-text': 'var(--tm-brand-primary)',
+  '--tm-duty-current-button-border': 'var(--tm-brand-primary)',
+  '--tm-duty-current-button-shadow': 'none',
+  '--tm-duty-current-button-pressed-bg': 'var(--tm-brand-primary-soft)',
   '--tm-duty-unassigned-option-height': '44px',
+  '--tm-duty-unassigned-button-visible-height': '28px',
+  '--tm-duty-unassigned-button-radius': '8px',
   '--tm-duty-unassigned-button-bg': 'var(--tm-bg-surface)',
-  '--tm-duty-unassigned-button-selected-bg': 'var(--tm-bg-surface-muted)',
-  '--tm-duty-unassigned-button-pressed-bg': 'var(--tm-bg-surface-soft)',
-  '--tm-duty-unassigned-button-border': 'var(--tm-border-control)',
-  '--tm-duty-unassigned-button-text': 'var(--tm-text-primary)',
+  '--tm-duty-unassigned-button-selected-bg': 'var(--tm-brand-primary-soft)',
+  '--tm-duty-unassigned-button-pressed-bg': 'var(--tm-brand-primary-soft-strong)',
+  '--tm-duty-unassigned-button-border': 'var(--tm-brand-primary)',
+  '--tm-duty-unassigned-button-text': 'var(--tm-brand-primary)',
   '--tm-duty-unassigned-button-shadow': 'var(--tm-shadow-control)',
   '--tm-duty-teacher-row-height': '56px',
   '--tm-duration-fast': '150ms',

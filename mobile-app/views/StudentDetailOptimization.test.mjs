@@ -18,6 +18,7 @@ const coinFormatSource = read('../utils/coinFormat.ts');
 const questionnaireStoreSource = read('../../shared/questionnaireStore.ts');
 const collectionHistorySource = read('./student-collection/StudentCollectionHistoryTab.tsx');
 const collectionDetailSource = read('./student-collection/StudentCollectionRecordDetailView.tsx');
+const growthCoinTerminologySource = read('../../shared/growthCoinTerminology.ts');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -126,20 +127,25 @@ requireText(dashboardSource, 'formatCompactClassName', '学生详情页班级标
 if (dashboardSource.includes('{student.grade}{student.class}')) {
   throw new Error('学生详情页班级标签不应显示年级学段和完整中文班名，只显示 2025级1班。');
 }
-requireText(dashboardSource, '钱包', '学生详情顶部应展示钱包金额。');
-requireText(dashboardSource, '存款', '学生详情顶部应展示存款金额。');
-requireText(dashboardSource, 'src="/assets/coin.png"', '钱包和存款金额应使用货柜机同款金币图标。');
+requireText(dashboardSource, 'GROWTH_COIN_TERMS.name', '学生详情顶部应独立展示成长币名称。');
+requireText(dashboardSource, 'GROWTH_COIN_TERMS.available', '学生详情顶部应展示可用金额。');
+requireText(dashboardSource, 'GROWTH_COIN_TERMS.saved', '学生详情顶部应展示已存金额。');
+requireText(dashboardSource, 'src="/assets/coin.png"', '成长币金额应使用货柜机同款金币图标。');
 if (dashboardSource.includes('发放、消耗与本月结算预估') || dashboardSource.includes('最近发放') || dashboardSource.includes('本月预估')) {
   throw new Error('学生详情总览页不应再展示校园币发放、消耗或月预估信息。');
 }
 requireText(dashboardSource, 'onViewCampusCoins', '学生详情顶部资产区应保留查看明细入口回调。');
-requireText(dashboardSource, 'B. Student Assets Band', '钱包和存款应放在组合信息卡内部的资产带。');
+requireText(dashboardSource, 'B. Student Assets Band', '成长币余额应放在组合信息卡内部的资产带。');
 requireText(dashboardSource, 'h-[var(--tm-student-detail-asset-height)]', '资产带应使用组件 Token 固定高度，避免内容变化引发布局跳动。');
-requireText(dashboardSource, 'grid-cols-2', '钱包和存款必须严格按 5/5 等分资产带。');
+requireText(dashboardSource, 'grid-cols-[var(--tm-student-detail-asset-label-width)_1px_minmax(0,1fr)_1px_minmax(0,1fr)_var(--tm-student-detail-asset-chevron-space)]', '成长币名称、两项等宽余额和箭头必须使用相互独立的栅格区域。');
+requireText(tokenSource, "'--tm-student-detail-asset-label-width': '80px'", '成长币标题区应使用组件 Token 固定宽度。');
 requireText(dashboardSource, 'text-sm font-semibold tabular-nums', '资产金额应使用 14px 半粗字重降低视觉重量。');
 requireText(dashboardSource, 'tabular-nums text-[var(--tm-text-primary)]', '资产金额应使用主文字暖黑色，不重复使用奖励金文字色。');
-requireText(dashboardSource, 'absolute right-3', '资产下钻箭头必须绝对定位，不得参与两列宽度分配。');
-requireText(dashboardSource, 'aria-label={`查看校园币明细', '资产摘要条整行应提供完整的可访问下钻语义。');
+requireText(dashboardSource, 'flex h-full items-center justify-center', '资产下钻箭头应使用独立固定宽度区域，不得挤压已存余额。');
+if (dashboardSource.includes('absolute right-3')) {
+  throw new Error('资产下钻箭头不应继续叠加在已存余额区域。');
+}
+requireText(dashboardSource, 'aria-label={`查看${GROWTH_COIN_TERMS.details}', '资产摘要条整行应提供完整的可访问下钻语义。');
 if (dashboardSource.includes('明细 <ChevronRight')) {
   throw new Error('资产摘要条不应重复展示“明细”文字按钮。');
 }
@@ -170,18 +176,18 @@ if (dashboardSource.includes('w-full bg-white px-5 pb-5 pt-3')) {
   throw new Error('首个学生信息卡不应继续使用纯白背景。');
 }
 if (dashboardSource.includes('总资产') || dashboardSource.includes('totalCampusAssets')) {
-  throw new Error('资产卡不应展示总资产，只展示钱包、存款和查看明细。');
+  throw new Error('资产卡不应展示总资产，只展示成长币名称、可用、已存和查看明细。');
 }
 const studentCombinedCardSource = dashboardSource.slice(
   dashboardSource.indexOf('{/* A. Student Profile Card */}'),
   dashboardSource.indexOf('{/* 2. Scrollable Content */}'),
 );
-if (!studentCombinedCardSource.includes('钱包') || !studentCombinedCardSource.includes('存款')) {
-  throw new Error('钱包和存款必须并入学生组合信息卡。');
+if (!studentCombinedCardSource.includes('GROWTH_COIN_TERMS.name') || !studentCombinedCardSource.includes('GROWTH_COIN_TERMS.available') || !studentCombinedCardSource.includes('GROWTH_COIN_TERMS.saved')) {
+  throw new Error('成长币名称、可用和已存必须并入学生组合信息卡。');
 }
 const studentAssetBandSource = studentCombinedCardSource.slice(studentCombinedCardSource.indexOf('{/* B. Student Assets Band */}'));
 if (studentAssetBandSource.includes('text-base font-bold') || studentAssetBandSource.includes('className="block')) {
-  throw new Error('钱包和存款应单行轻量展示，不得继续使用上下两行或大号粗体金额。');
+  throw new Error('可用和已存应单行轻量展示，不得继续使用上下两行或大号粗体金额。');
 }
 if (studentAssetBandSource.includes('--tm-brand-reward-strong')) {
   throw new Error('金币图标已承担校园币语义，资产金额不应继续使用奖励金文字色。');
@@ -403,7 +409,7 @@ requireText(basicEditSource, '从相册选择', '头像操作蒙层应提供从�
 requireText(basicEditSource, 'cameraInputRef', '头像操作应复用拍照文件入口。');
 requireText(basicEditSource, 'albumInputRef', '头像操作应复用相册文件入口。');
 
-for (const required of ['收入', '支出', '校园币收支记录', '校园币明细']) {
+for (const required of ['收入', '支出', '${GROWTH_COIN_TERMS.name}收支记录', 'GROWTH_COIN_TERMS.details']) {
   requireText(coinDetailSource, required, `校园币详情页缺少收支流水能力：${required}`);
 }
 requireText(coinDetailSource, 'CampusCoinDetail', '校园币详情页应使用校园币详情类型。');
@@ -429,7 +435,7 @@ if (coinDetailSource.includes('showFilterSheet') || coinDetailSource.includes('<
 }
 requireText(coinDetailSource, '<MobileEmptyState', '校园币筛选无结果时应复用公共缺省组件。');
 requireText(coinDetailSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '校园币筛选无结果时应使用搜索无结果缺省图。');
-requireText(coinDetailSource, 'grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]', '校园币资产摘要应保持钱包与存款等分，并支持长金额收缩。');
+requireText(coinDetailSource, 'grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]', '成长币资产摘要应保持可用与已存等分，并支持长金额收缩。');
 requireText(coinDetailSource, 'groupedFlowItems', '校园币流水应按月份分组。');
 requireText(coinDetailSource, 'divide-y divide-[var(--tm-border-subtle)]', '同月流水应使用连续列表与分隔线组织。');
 requireText(textSelectionSource, 'min-h-[var(--tm-selection-touch-height)]', '校园币分类按钮应使用选择控件触控尺寸 Token，且不低于 44px。');
@@ -446,10 +452,14 @@ for (const required of [
 ]) {
   requireText(coinDetailSource, required, `校园币详情缺少结算预估信息：${required}`);
 }
-requireText(coinDetailSource, '账户概览', '钱包、存款与结算预估应组成明确的账户概览板块。');
+requireText(coinDetailSource, 'GROWTH_COIN_TERMS.name', '可用、已存与结算预估应组成明确的成长币板块。');
 requireText(coinDetailSource, '收支明细', '流水筛选和列表应归入明确的收支明细板块。');
 requireText(coinDetailSource, 'text-[length:var(--tm-font-size-body)] font-semibold leading-none tabular-nums', '预计可得属于预测值，应使用14px半粗字重。');
-requireText(coinDetailSource, 'text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums', '钱包和存款属于已确认资产，应使用15px半粗字重。');
+requireText(coinDetailSource, 'text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums', '可用和已存属于已确认资产，应使用15px半粗字重。');
+
+for (const required of ["name: '成长币'", "available: '可用'", "saved: '已存'", "details: '成长币明细'"]) {
+  requireText(growthCoinTerminologySource, required, `教师手机端缺少统一成长币术语：${required}`);
+}
 requireText(coinDetailSource, 'text-[length:var(--tm-font-size-card-title)] font-semibold leading-none tabular-nums', '单笔流水金额应与流水标题保持15px半粗层级。');
 for (const oversizedAmountToken of ['--tm-font-size-metric', '--tm-font-size-group-title']) {
   if (coinDetailSource.includes(oversizedAmountToken)) {

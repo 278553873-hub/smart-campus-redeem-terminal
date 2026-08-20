@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 const parentSource = readFileSync(new URL('./ParentApp.tsx', import.meta.url), 'utf8');
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const fluidNavSource = readFileSync(new URL('./parent-app/ParentFluidGlassNav.tsx', import.meta.url), 'utf8');
+const growthCoinTerminologySource = readFileSync(new URL('../shared/growthCoinTerminology.ts', import.meta.url), 'utf8');
 
 const failures = [];
 
@@ -207,8 +208,9 @@ for (const required of [
 
 for (const required of [
   '积分银行',
-  '钱包',
-  '存款',
+  'GROWTH_COIN_TERMS.name',
+  'GROWTH_COIN_TERMS.available',
+  'GROWTH_COIN_TERMS.saved',
   "type BankTab = 'deposit' | 'list'",
   'activeBankTab',
   '签署新存单',
@@ -256,6 +258,12 @@ for (const required of [
 ]) {
   requireText(parentSource, required, `家长端银行流程边界被破坏：${required}`);
 }
+
+for (const required of ["name: '成长币'", "available: '可用'", "saved: '已存'"]) {
+  requireText(growthCoinTerminologySource, required, `家长端缺少统一成长币术语：${required}`);
+}
+forbidText(parentSource, '>钱包<', '家长端余额展示不应继续使用“钱包”。');
+forbidText(parentSource, '>存款<', '家长端余额展示不应继续使用“存款”。');
 
 for (const tab of ["key: 'growth', label: '成长'", "key: 'reports', label: '报告'", "key: 'mine', label: '我的'"]) {
   requireText(parentSource, tab, `底部菜单缺少固定入口：${tab}`);

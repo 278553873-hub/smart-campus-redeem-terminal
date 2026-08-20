@@ -11,7 +11,7 @@ const requireText = (text, message) => {
 requireText('const hasSearchQuery = searchQuery.trim().length > 0;', '搜索缺省图必须根据是否输入关键词选择语义。');
 requireText('hasSearchQuery ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR', '搜索无结果必须使用放大镜，学生为空必须使用椅子。');
 requireText("hasSearchQuery ? '没有匹配的学生' : '暂无学生'", '学生列表空状态必须区分搜索无结果与没有学生。');
-requireText('title="暂无分组"', '没有分组时必须显示明确文案。');
+requireText('title="还没有分组"', '没有分组时必须显示明确文案。');
 requireText('imageSrc={ASSETS.DEFAULT_STATE.CHAIR}', '没有分组时必须使用椅子缺省图。');
 requireText('w-[68%] min-w-[178px] max-w-[224px]', '学生列表缺省图必须使用稳定尺寸。');
 requireText('没有匹配的学生', '搜索无结果状态必须保留明确结果文案。');

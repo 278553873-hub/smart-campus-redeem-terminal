@@ -33,7 +33,7 @@ const MobileConfirmSheet: React.FC<MobileConfirmSheetProps> = ({
       <button
         type="button"
         onClick={onConfirm}
-        className={`${buttonBase} text-[var(--tm-text-inverse)] ${tone === 'danger' ? 'bg-[var(--tm-status-negative-strong)] active:bg-[var(--tm-status-negative)]' : 'bg-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-pressed)]'}`}
+        className={`${buttonBase} text-[var(--tm-text-inverse)] ${tone === 'danger' ? 'bg-[var(--tm-status-negative)] active:bg-[var(--tm-status-negative-strong)]' : 'bg-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-pressed)]'}`}
       >
         {confirmLabel}
       </button>

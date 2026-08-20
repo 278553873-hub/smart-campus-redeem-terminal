@@ -9,6 +9,7 @@ import { VoiceSiriOrbCanvas } from '../components/VoiceSiriOrbCanvas';
 
 interface RecordInputViewProps {
     initialStudentIds: string[]; // From batch selection
+    candidateStudentIds?: string[];
     studentNameList: string;
     initialMode?: 'voice' | 'camera' | 'text';
     onClose: () => void;
@@ -23,7 +24,7 @@ const getAudioContext = () => {
     return AudioContextCtor ? new AudioContextCtor() : null;
 };
 
-const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, studentNameList, initialMode = 'voice', onClose, onAnalysisComplete }) => {
+const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, candidateStudentIds = [], studentNameList, initialMode = 'voice', onClose, onAnalysisComplete }) => {
     const [mode, setMode] = useState<InputMode>(initialMode);
     const [inputText, setInputText] = useState("");
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -161,7 +162,8 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
             onAnalysisComplete({
                 type: 'camera',
                 text: "",
-                mockStudents: initialStudentIds
+                mockStudents: initialStudentIds,
+                candidateStudentIds,
             });
         }, 500);
     };
@@ -196,10 +198,11 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
             onAnalysisComplete({
                 type: 'voice',
                 text: "今天数学课，" + (studentNameList || "大家") + "表现都很积极，主动回答问题。",
-                mockStudents: initialStudentIds
+                mockStudents: initialStudentIds,
+                candidateStudentIds,
             });
         }, 300);
-    }, [isRecording, cancelThreshold, onAnalysisComplete, initialStudentIds, studentNameList, onClose, stopAudioCapture]);
+    }, [isRecording, cancelThreshold, onAnalysisComplete, initialStudentIds, candidateStudentIds, studentNameList, onClose, stopAudioCapture]);
 
     useEffect(() => {
         if (!isRecording) return;
@@ -374,7 +377,8 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, st
                                     onAnalysisComplete({
                                         type: 'text',
                                         text: inputText,
-                                        mockStudents: initialStudentIds
+                                        mockStudents: initialStudentIds,
+                                        candidateStudentIds,
                                     });
                                 }}
                                 className={`px-8 py-3.5 rounded-2xl font-semibold text-white shadow-md transition-all active:scale-95 flex items-center gap-2

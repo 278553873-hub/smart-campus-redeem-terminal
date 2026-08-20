@@ -8,8 +8,10 @@ import {
   X,
 } from 'lucide-react';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobilePageHeader from '../components/ui/MobilePageHeader';
 import MobileSearchInput from '../components/ui/MobileSearchInput';
+import { ASSETS } from '../assets/images';
 import {
   CURRENT_DUTY_WEEK_ID,
   DUTY_TEACHERS,
@@ -142,9 +144,11 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
               <button
                 type="button"
                 onClick={resetToCurrentWeek}
-                className="min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control)] bg-[var(--tm-duty-current-button-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-duty-current-button-text)] [box-shadow:var(--tm-duty-current-button-shadow)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-duty-current-button-pressed-bg)]"
+                className="group flex h-[var(--tm-size-touch)] items-center justify-center px-1 transition-transform duration-150 ease-out active:scale-[0.96]"
               >
-                本周
+                <span className="flex h-7 items-center justify-center rounded-[8px] border border-[var(--tm-duty-current-button-border)] bg-[var(--tm-duty-current-button-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-duty-current-button-text)] [box-shadow:var(--tm-duty-current-button-shadow)] transition-[background-color,color,border-color] duration-150 ease-out group-active:bg-[var(--tm-duty-current-button-pressed-bg)]">
+                  本周
+                </span>
               </button>
             </div>
 
@@ -191,10 +195,12 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
               onClick={leaveTeacherUnscheduled}
               aria-label="暂不安排老师"
               aria-pressed={!schedules[teacherSheetWeek.id]}
-              className={`flex h-[var(--tm-duty-unassigned-option-height)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] border border-[var(--tm-duty-unassigned-button-border)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-duty-unassigned-button-text)] [box-shadow:var(--tm-duty-unassigned-button-shadow)] transition-[scale,background-color,box-shadow] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-duty-unassigned-button-pressed-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${!schedules[teacherSheetWeek.id] ? 'bg-[var(--tm-duty-unassigned-button-selected-bg)]' : 'bg-[var(--tm-duty-unassigned-button-bg)]'}`}
+              className="group flex h-[var(--tm-duty-unassigned-option-height)] shrink-0 items-center justify-center transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
             >
-              <CalendarOff className="h-4 w-4 shrink-0 text-[var(--tm-text-secondary)]" strokeWidth={2.2} aria-hidden="true" />
-              <span>暂不安排老师</span>
+              <span className={`flex h-[var(--tm-duty-unassigned-button-visible-height)] items-center gap-[var(--tm-space-1)] rounded-[var(--tm-duty-unassigned-button-radius)] border border-[var(--tm-duty-unassigned-button-border)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-duty-unassigned-button-text)] [box-shadow:var(--tm-duty-unassigned-button-shadow)] transition-[background-color,box-shadow] duration-150 ease-out group-active:bg-[var(--tm-duty-unassigned-button-pressed-bg)] ${!schedules[teacherSheetWeek.id] ? 'bg-[var(--tm-duty-unassigned-button-selected-bg)]' : 'bg-[var(--tm-duty-unassigned-button-bg)]'}`}>
+                <CalendarOff className="h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+                <span>暂不安排老师</span>
+              </span>
             </button>
             <button
               type="button"
@@ -233,7 +239,12 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
                 </button>
               );
             }) : (
-              <p className="flex min-h-28 items-center justify-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]">未找到相关教师</p>
+              <MobileEmptyState
+                imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER}
+                title="没有匹配的教师"
+                className="min-h-72 py-[var(--tm-space-4)]"
+                imageClassName="w-[58%] min-w-[156px] max-w-[196px]"
+              />
             )}
           </div>
         </div>

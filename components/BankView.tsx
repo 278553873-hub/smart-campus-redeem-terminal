@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Student, BankAccount, Deposit } from '../types';
 import { BANK_CONFIG } from '../constants';
+import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 
 interface BankViewProps {
   student: Student;
@@ -114,18 +115,19 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="bg-gradient-to-b from-blue-50 to-blue-100/50 px-4 py-2 rounded-2xl border border-blue-200/50 flex flex-col items-end shadow-sm">
-            <span className="text-blue-500/80 font-black text-[9px] mb-0.5 tracking-wider">我的存款</span>
-            <div className="text-blue-600 font-[NumberFont] font-black text-xl leading-none flex items-center gap-1">
-              <img src="/assets/coin.png" className="w-[1em] h-[1em] drop-shadow-sm -translate-y-0.5" alt="coin" />
-              {formatCoin(bankBalance)}
-            </div>
-          </div>
+          <span className="text-[11px] font-black text-slate-500">{GROWTH_COIN_TERMS.name}</span>
           <div className="bg-gradient-to-b from-orange-50 to-orange-100/50 px-4 py-2 rounded-2xl border border-orange-200/50 flex flex-col items-end shadow-sm">
-            <span className="text-orange-500/80 font-black text-[9px] mb-0.5 tracking-wider">钱包余额</span>
+            <span className="text-orange-500/80 font-black text-[9px] mb-0.5">{GROWTH_COIN_TERMS.available}</span>
             <div className="text-orange-600 font-[NumberFont] font-black text-xl leading-none flex items-center gap-1">
               <img src="/assets/coin.png" className="w-[1em] h-[1em] drop-shadow-sm -translate-y-0.5" alt="coin" />
               {formatCoin(student.campusCoins)}
+            </div>
+          </div>
+          <div className="bg-gradient-to-b from-blue-50 to-blue-100/50 px-4 py-2 rounded-2xl border border-blue-200/50 flex flex-col items-end shadow-sm">
+            <span className="text-blue-500/80 font-black text-[9px] mb-0.5">{GROWTH_COIN_TERMS.saved}</span>
+            <div className="text-blue-600 font-[NumberFont] font-black text-xl leading-none flex items-center gap-1">
+              <img src="/assets/coin.png" className="w-[1em] h-[1em] drop-shadow-sm -translate-y-0.5" alt="coin" />
+              {formatCoin(bankBalance)}
             </div>
           </div>
         </div>
@@ -136,18 +138,19 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
 
         {/* 滑动后简易版头部（淡入淡出，堆叠更紧凑展示避免挤压） */}
         <div className={`flex items-center justify-center bg-white shadow-sm border border-slate-100 rounded-2xl transition-all duration-500 overflow-hidden whitespace-nowrap
-          ${isScrolled ? 'opacity-100 w-[120px] px-3 py-1.5 translate-x-0' : 'opacity-0 w-0 px-0 py-1.5 -translate-x-10 border-none'}`}>
+          ${isScrolled ? 'opacity-100 w-[136px] px-3 py-1.5 translate-x-0' : 'opacity-0 w-0 px-0 py-1.5 -translate-x-10 border-none'}`}>
           <div className="flex flex-col w-full gap-1">
+            <span className="text-[9px] font-black text-slate-500">{GROWTH_COIN_TERMS.name}</span>
             <div className="flex justify-between items-center">
-              <span className="text-[9px] text-blue-400 font-black">存款</span>
-              <div className="flex items-center gap-0.5 text-blue-600 font-black font-[NumberFont] text-[13px] leading-none">
-                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {formatCoin(bankBalance)}
+              <span className="text-[9px] text-orange-400 font-black">{GROWTH_COIN_TERMS.available}</span>
+              <div className="flex items-center gap-0.5 text-orange-600 font-black font-[NumberFont] text-[13px] leading-none">
+                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {formatCoin(student.campusCoins)}
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-[9px] text-orange-400 font-black">钱包</span>
-              <div className="flex items-center gap-0.5 text-orange-600 font-black font-[NumberFont] text-[13px] leading-none">
-                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {formatCoin(student.campusCoins)}
+              <span className="text-[9px] text-blue-400 font-black">{GROWTH_COIN_TERMS.saved}</span>
+              <div className="flex items-center gap-0.5 text-blue-600 font-black font-[NumberFont] text-[13px] leading-none">
+                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {formatCoin(bankBalance)}
               </div>
             </div>
           </div>
@@ -473,7 +476,7 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
             </div>
 
             <h2 className="text-4xl font-black text-slate-900 mb-2">确认签署这份存单？</h2>
-            <p className="text-slate-500 font-bold mb-6">请检查你的签署信息，确认后将扣除相应校园币。</p>
+            <p className="text-slate-500 font-bold mb-6">请检查你的签署信息，确认后将扣除相应成长币。</p>
 
             <div className="bg-slate-50 rounded-[2.5rem] p-8 mb-8 space-y-4 border border-slate-100 shadow-inner">
               <div className="flex justify-between items-center">

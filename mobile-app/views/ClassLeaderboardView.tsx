@@ -1,20 +1,27 @@
-import React, { useState, useMemo } from 'react';
-import { ChevronRightIcon, ActivityIcon } from '../components/Icons';
-import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
+import React, { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronRightIcon } from '../components/Icons';
+import ReportPeriodCalendar from '../components/report/ReportPeriodCalendar';
 import ClassRankingList from '../components/ui/ClassRankingList';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
-import TextSelectionControl from '../components/ui/TextSelectionControl';
+import type { ClassLeaderboardSettlementCycle } from '../domain/teacherSpaceAccess';
 
 interface ClassLeaderboardViewProps {
+    settlementCycle: ClassLeaderboardSettlementCycle;
     onOpenEvaluationRecords: () => void;
 }
 
-type TimeRange = 'today' | 'week' | 'month' | 'term' | 'custom';
 type Dimension = 'total' | '诗意中队' | '安全班级' | '健体班级' | '文雅班级' | '美净班级';
 
-const dimensions: Dimension[] = ['total', '诗意中队', '安全班级', '健体班级', '文雅班级', '美净班级'];
-const GRADES = ['2025级', '2024级', '2023级', '2022级', '2021级', '2020级'];
+interface LeaderboardPeriodOption {
+    id: string;
+    type: ClassLeaderboardSettlementCycle;
+    startDate: string;
+    endDate: string;
+    label: string;
+    trendLabel: string;
+}
 
 type ClassRankingItem = {
     id: string;
@@ -22,9 +29,78 @@ type ClassRankingItem = {
     score: number;
 };
 
+const dimensions: Dimension[] = ['total', '诗意中队', '安全班级', '健体班级', '文雅班级', '美净班级'];
+const GRADES = ['2025级', '2024级', '2023级', '2022级', '2021级', '2020级'];
+
+const recentRecords = [
+    { id: 'r_1', className: '2025级一班', indicator: '安全班级 / 课间纪律 / 走廊奔跑', score: -2, time: '2分钟前' },
+    { id: 'r_2', className: '2024级三班', indicator: '美净班级 / 卫生保持 / 地面清洁', score: 1, time: '8分钟前' },
+    { id: 'r_3', className: '2023级五班', indicator: '诗意中队 / 少先队礼仪 / 佩戴规范', score: 2, time: '16分钟前' },
+    { id: 'r_4', className: '2022级四班', indicator: '文雅班级 / 路队管理 / 文明放学', score: -1, time: '25分钟前' },
+    { id: 'r_5', className: '2021级二班', indicator: '健体班级 / 早操体锻 / 队列姿态', score: 2, time: '36分钟前' },
+] as const;
+
+const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const addDays = (date: Date, days: number) => {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return next;
+};
+
+const addMonths = (date: Date, months: number) => new Date(date.getFullYear(), date.getMonth() + months, 1);
+
+const toDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const formatShortDate = (date: Date) => `${date.getMonth() + 1}月${date.getDate()}日`;
+
+const createSettlementPeriods = (
+    settlementCycle: ClassLeaderboardSettlementCycle,
+    today: Date,
+): LeaderboardPeriodOption[] => {
+    if (settlementCycle === 'month') {
+        const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        return Array.from({ length: 12 }, (_, index) => {
+            const start = addMonths(currentMonth, index - 11);
+            const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+            return {
+                id: `month-${toDateKey(start)}`,
+                type: 'month',
+                startDate: toDateKey(start),
+                endDate: toDateKey(end),
+                label: `${start.getFullYear()}年${start.getMonth() + 1}月`,
+                trendLabel: `${start.getMonth() + 1}月`,
+            };
+        });
+    }
+
+    const currentWeekStart = addDays(today, -((today.getDay() + 6) % 7));
+    return Array.from({ length: 12 }, (_, index) => {
+        const start = addDays(currentWeekStart, (index - 11) * 7);
+        const end = addDays(start, 6);
+        return {
+            id: `week-${toDateKey(start)}`,
+            type: 'week',
+            startDate: toDateKey(start),
+            endDate: toDateKey(end),
+            label: `${formatShortDate(start)}-${formatShortDate(end)}`,
+            trendLabel: `${start.getMonth() + 1}.${start.getDate()}-${end.getMonth() + 1}.${end.getDate()}`,
+        };
+    });
+};
+
+const hashText = (value: string) => Array.from(value).reduce(
+    (hash, character) => (hash * 31 + character.charCodeAt(0)) >>> 0,
+    0,
+);
+
 const getRankedClasses = (items: ClassRankingItem[]): Array<ClassRankingItem & { rank: number }> => {
     const sortedItems = [...items].sort((left, right) => right.score - left.score || left.name.localeCompare(right.name, 'zh-Hans-CN'));
-
     let previousScore: number | null = null;
     let previousRank = 0;
 
@@ -32,201 +108,196 @@ const getRankedClasses = (items: ClassRankingItem[]): Array<ClassRankingItem & {
         const rank = previousScore === item.score ? previousRank : index + 1;
         previousScore = item.score;
         previousRank = rank;
-
-        return {
-            ...item,
-            rank,
-        };
+        return { ...item, rank };
     });
 };
 
-// --- Mock Data Generator ---
-const getGradeStats = (grade: string, timeRange: TimeRange, activeDim: Dimension) => {
-    // 1. Grade Overview Stats
-    const gradeAvg = activeDim === 'total' ? 97.4 : 19.5;
-    const gradeTrend = -0.2;
+const getRankings = (grade: string, periodId: string, activeDimension: Dimension) => {
+    const baseScore = activeDimension === 'total' ? 100 : 20;
+    const seed = hashText(`${grade}-${periodId}-${activeDimension}`);
 
-    // 2. Pillar Stats (for Radar or specific summary)
-    const pillarScores = {
-        '诗意中队': { avg: 19.8, color: '#F59E0B' },
-        '安全班级': { avg: 18.5, color: '#EF4444' },
-        '健体班级': { avg: 19.5, color: '#10B981' },
-        '文雅班级': { avg: 19.6, color: '#6366F1' },
-        '美净班级': { avg: 19.8, color: '#8B5CF6' },
-    };
-
-    // 3. Key Issues (Contextual)
-    const topIssue = activeDim === '安全班级'
-        ? { title: '课间追逐', count: 42 }
-        : activeDim === '健体班级'
-            ? { title: '眼操纪律', count: 35 }
-            : null;
-
-    // 4. Rankings (Generated based on dimension)
-    const rankings = Array.from({ length: 12 }).map((_, i) => {
-        // Base score varies by rank to simulate order
-        const base = activeDim === 'total' ? 100 : 20;
-        // Integer scores only
-        const deduction = Math.floor(i * (activeDim === 'total' ? 1.5 : 0.5)) + Math.floor(Math.random() * 2);
-        const score = base - deduction;
-
-        // Fix for "all" grade display
-        const displayGrade = (grade === 'all' || grade === '全部' || grade === '全部年级')
-            ? GRADES[i % GRADES.length]
-            : grade;
-
+    const rankings = Array.from({ length: 12 }, (_, index) => {
+        const displayGrade = grade === '全部年级' ? GRADES[index % GRADES.length] : grade;
+        const deductionStep = activeDimension === 'total' ? 1.5 : 0.5;
+        const deduction = Math.floor(index * deductionStep) + ((seed + index * 7) % 2);
         return {
-            id: `c_${i}`,
-            name: `${displayGrade}${i + 1}班`,
-            score: Math.max(0, score), // Ensure no negative scores
-            // trend removed
-        };
-    });
-    // 5. Recent Records (Mock)
-    const recentRecords = Array.from({ length: 8 }).map((_, i) => {
-        const displayGrade = (grade === 'all' || grade === '全部' || grade === '全部年级')
-            ? GRADES[i % GRADES.length]
-            : grade;
-
-        return {
-            id: `r_${i}`,
-            className: `${displayGrade}${Math.floor(Math.random() * 12) + 1}班`,
-            indicator: i % 2 === 0 ? '安全班级 / 课间纪律 / 走廊奔跑' : '美净班级 / 卫生保持 / 地面有垃圾',
-            score: i % 2 === 0 ? -2 : -1,
-            time: `${Math.floor(Math.random() * 59) + 1}分钟前`
+            id: `${displayGrade}-${index + 1}`,
+            name: `${displayGrade}${index + 1}班`,
+            score: Math.max(0, baseScore - deduction),
         };
     });
 
-    return { gradeAvg, gradeTrend, pillarScores, topIssue, rankings: getRankedClasses(rankings), recentRecords };
+    return getRankedClasses(rankings);
 };
 
-const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ onOpenEvaluationRecords }) => {
+const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementCycle, onOpenEvaluationRecords }) => {
+    const today = useMemo(() => startOfDay(new Date()), []);
+    const periods = useMemo(() => createSettlementPeriods(settlementCycle, today), [settlementCycle, today]);
+    const [selectedPeriodId, setSelectedPeriodId] = useState(() => periods[periods.length - 1]?.id ?? '');
+    const [isPeriodSheetOpen, setIsPeriodSheetOpen] = useState(false);
     const [activeGrade, setActiveGrade] = useState('全部年级');
-    const [timeRange, setTimeRange] = useState<TimeRange>('week');
-    const [activeDim, setActiveDim] = useState<Dimension>('total');
+    const [activeDimension, setActiveDimension] = useState<Dimension>('total');
     const [showFullRanking, setShowFullRanking] = useState(false);
 
-    // Filter logic: Map '全部年级' back to 'all' for internal logic if needed, 
-    // or just pass '全部年级' to getGradeStats and handle it there.
-    // Let's update getGradeStats to handle '全部年级' explicitly.
-    const data = useMemo(() => getGradeStats(activeGrade, timeRange, activeDim), [activeGrade, timeRange, activeDim]);
-
-    const timeOptions: { label: string, value: TimeRange }[] = [
-        { label: '今日', value: 'today' },
-        { label: '本周', value: 'week' },
-        { label: '本月', value: 'month' },
-        { label: '本学期', value: 'term' },
-        { label: '自定义', value: 'custom' }
-    ];
-
+    const selectedPeriod = periods.find(period => period.id === selectedPeriodId) ?? periods[periods.length - 1];
+    const selectedPeriodIndex = periods.findIndex(period => period.id === selectedPeriod?.id);
+    const currentPeriod = periods[periods.length - 1];
+    const rankings = useMemo(
+        () => getRankings(activeGrade, selectedPeriod?.id ?? '', activeDimension),
+        [activeDimension, activeGrade, selectedPeriod?.id],
+    );
+    const currentPeriodPrefix = settlementCycle === 'week' ? '本周' : '本月';
+    const selectedPeriodLabel = selectedPeriod?.id === currentPeriod?.id
+        ? `${currentPeriodPrefix} ${selectedPeriod.label}`
+        : selectedPeriod?.label ?? '';
+    const periodUnitLabel = settlementCycle === 'week' ? '周' : '月';
+    const periodPickerTitle = settlementCycle === 'week' ? '选择周' : '选择月份';
     const gradeOptions = ['全部年级', ...GRADES];
 
+    const changePeriod = (offset: number) => {
+        const targetPeriod = periods[selectedPeriodIndex + offset];
+        if (targetPeriod) setSelectedPeriodId(targetPeriod.id);
+    };
+
+    useEffect(() => {
+        setSelectedPeriodId(currentPeriod?.id ?? '');
+    }, [currentPeriod?.id, settlementCycle]);
+
     return (
-        <div className="flex min-h-screen flex-col items-center bg-[var(--tm-page-plain-content-bg)]">
-
-            <div className="w-full max-w-md min-h-screen relative flex flex-col">
-
-                <div className="sticky top-0 z-40 bg-[var(--tm-page-plain-content-bg)]">
-                    <ReportDateRangeTabs
-                        value={timeRange}
-                        items={timeOptions.map(item => ({ value: item.value, label: item.label }))}
-                        onChange={setTimeRange}
-                        ariaLabel="排行榜时间范围"
-                    />
-
-                    <div className="bg-[var(--tm-page-plain-content-bg)]">
-                        <TextSelectionControl
-                            value={activeGrade}
-                            items={gradeOptions.map(grade => ({ value: grade, label: grade }))}
-                            onChange={setActiveGrade}
-                            ariaLabel="排行榜年级筛选"
-                            size="compact"
-                            className="px-[var(--tm-report-page-inline)]"
-                        />
+        <div className="flex min-h-full flex-col items-center bg-[var(--tm-page-plain-content-bg)]">
+            <div className="relative flex min-h-full w-full max-w-md flex-col">
+                <section className="sticky top-0 z-20 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]" aria-label="排行榜周期切换">
+                    <div className="grid h-[var(--tm-size-touch)] grid-cols-[44px_minmax(0,1fr)_44px] items-center px-[var(--tm-space-2)]">
+                        <button
+                            type="button"
+                            disabled={selectedPeriodIndex <= 0}
+                            onClick={() => changePeriod(-1)}
+                            aria-label={`查看上一${periodUnitLabel}`}
+                            className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                        >
+                            <ChevronLeft aria-hidden="true" className="h-5 w-5" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsPeriodSheetOpen(true)}
+                            aria-label={`打开${settlementCycle === 'week' ? '周历' : '月份'}选择，当前${selectedPeriodLabel}`}
+                            className="flex h-[var(--tm-size-touch)] min-w-0 items-center justify-center gap-1.5 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] font-semibold tabular-nums text-[var(--tm-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                        >
+                            <CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" />
+                            <span className="truncate">{selectedPeriodLabel}</span>
+                        </button>
+                        <button
+                            type="button"
+                            disabled={selectedPeriodIndex < 0 || selectedPeriodIndex >= periods.length - 1}
+                            onClick={() => changePeriod(1)}
+                            aria-label={`查看下一${periodUnitLabel}`}
+                            className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                        >
+                            <ChevronRight aria-hidden="true" className="h-5 w-5" />
+                        </button>
                     </div>
-                </div>
+                </section>
 
-                {/* Scroll Content */}
-                <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
-
-                    {/* Module 1: Class Rankings Card */}
+                <div className="flex-1 space-y-4 p-4">
                     <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
-
-                        {/* Header */}
-                        <div className="mb-[var(--tm-report-card-content-gap)] flex min-h-11 items-center">
-                            <h3 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">
-                                班级排行榜
-                            </h3>
+                        <div className="flex min-h-11 items-center justify-between gap-3">
+                            <h3 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">班级排行榜</h3>
+                            <label className="relative -mr-2 flex min-h-[var(--tm-size-touch)] min-w-0 items-center">
+                                <span className="sr-only">班级排行榜年级筛选</span>
+                                <select
+                                    value={activeGrade}
+                                    onChange={event => setActiveGrade(event.target.value)}
+                                    aria-label="班级排行榜年级筛选"
+                                    className="h-[var(--tm-size-touch)] max-w-[128px] appearance-none bg-transparent pl-2 pr-7 text-right text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] outline-none focus-visible:text-[var(--tm-text-primary)]"
+                                >
+                                    {gradeOptions.map(grade => <option key={grade} value={grade}>{grade}</option>)}
+                                </select>
+                                <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 h-4 w-4 text-[var(--tm-text-tertiary)]" />
+                            </label>
                         </div>
 
-                        {/* Dimension Pills */}
                         <PillSelectionControl
-                            value={activeDim}
-                            items={dimensions.map(dim => ({ value: dim, label: dim === 'total' ? '综合评价' : dim }))}
-                            onChange={setActiveDim}
+                            value={activeDimension}
+                            items={dimensions.map(dimension => ({ value: dimension, label: dimension === 'total' ? '综合评价' : dimension }))}
+                            onChange={setActiveDimension}
                             ariaLabel="班级排行榜维度"
                             className="mb-2"
                         />
 
                         <ClassRankingList
-                            items={data.rankings.slice(0, 5)}
+                            items={rankings.slice(0, 5)}
                             ariaLabel="班级排行榜前五名"
-                            onViewAll={data.rankings.length > 5 ? () => setShowFullRanking(true) : undefined}
+                            onViewAll={rankings.length > 5 ? () => setShowFullRanking(true) : undefined}
                             actionLabel="查看完整排名"
                         />
                     </section>
 
-                    {/* Module 2: Evaluation Records Card */}
-                    <div className="bg-white rounded-3xl p-5 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[17px] font-semibold text-slate-800 flex items-center gap-2">
-                                <ActivityIcon className="h-5 w-5 text-[var(--tm-brand-primary)]" />
-                                评价记录
-                            </h3>
+                    <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
+                        <div className="mb-[var(--tm-report-card-content-gap)] flex min-h-11 items-center justify-between">
+                            <h3 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">评价记录</h3>
                             <button
                                 type="button"
                                 onClick={onOpenEvaluationRecords}
                                 aria-label="查看全部评价记录"
                                 className="-my-2 flex min-h-[var(--tm-size-touch)] items-center gap-0.5 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-brand-primary)] transition-colors active:text-[var(--tm-brand-primary-pressed)]"
                             >
-                                更多 <ChevronRightIcon className="w-3 h-3" />
+                                更多 <ChevronRightIcon className="h-3 w-3" />
                             </button>
                         </div>
 
-                        <div className="space-y-4">
-                            {data.recentRecords.slice(0, 5).map((record, i) => (
-                                <div key={record.id} className="flex items-start gap-3">
-                                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 shadow-sm ${record.score > 0 ? 'bg-emerald-400 shadow-emerald-200' : 'bg-red-400 shadow-red-200'}`} />
-
-                                    <div className="flex-1 min-w-0 pb-3 border-b border-slate-50 last:border-0 last:pb-0">
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <span className="text-sm font-medium text-slate-800">{record.className}</span>
-                                            <span className="text-[11px] font-medium text-slate-400">{record.time}</span>
+                        <div role="list" aria-label="全校最新评价记录">
+                            {recentRecords.map(record => (
+                                <div key={record.id} role="listitem" className="flex min-h-[58px] items-start gap-3 border-b border-[var(--tm-border-subtle)] py-3 last:border-0">
+                                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${record.score > 0 ? 'bg-[var(--tm-chart-positive)]' : 'bg-[var(--tm-chart-negative)]'}`} aria-hidden="true" />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{record.className}</span>
+                                            <span className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{record.time}</span>
                                         </div>
-                                        <div className="flex justify-between items-start gap-4">
-                                            <div className="text-[12px] text-slate-500 leading-snug">
-                                                {record.indicator}
-                                            </div>
-                                            <div className={`flex-shrink-0 text-sm font-bold tabular-nums ${record.score > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                        <div className="mt-1 flex items-start justify-between gap-3">
+                                            <span className="min-w-0 text-[length:var(--tm-font-size-meta)] leading-5 text-[var(--tm-text-secondary)]">{record.indicator}</span>
+                                            <strong className={`shrink-0 text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums ${record.score > 0 ? 'text-[var(--tm-chart-positive-text)]' : 'text-[var(--tm-chart-negative-text)]'}`}>
                                                 {record.score > 0 ? '+' : ''}{record.score}
-                                            </div>
+                                            </strong>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </section>
                 </div>
 
                 <MobileBottomSheet
-                    open={showFullRanking}
-                    title="全部班级排名"
-                    onClose={() => setShowFullRanking(false)}
+                    open={isPeriodSheetOpen}
+                    title={periodPickerTitle}
+                    onClose={() => setIsPeriodSheetOpen(false)}
+                    headerAction={settlementCycle === 'week' && currentPeriod ? {
+                        label: '本周',
+                        onClick: () => {
+                            setSelectedPeriodId(currentPeriod.id);
+                            setIsPeriodSheetOpen(false);
+                        },
+                    } : undefined}
                 >
-                    <p className="-mt-1 mb-2 text-[12px] font-medium text-[var(--tm-text-secondary)]">
-                        {activeGrade} · {activeDim === 'total' ? '综合评价' : activeDim}
-                    </p>
-                    <ClassRankingList items={data.rankings} ariaLabel="全部班级排名" />
+                    <ReportPeriodCalendar
+                        periods={periods}
+                        selectedPeriodId={selectedPeriod?.id ?? ''}
+                        onSelect={periodId => {
+                            setSelectedPeriodId(periodId);
+                            setIsPeriodSheetOpen(false);
+                        }}
+                    />
+                </MobileBottomSheet>
+
+                <MobileBottomSheet open={showFullRanking} title={`${activeGrade}完整排名`} onClose={() => setShowFullRanking(false)}>
+                    <PillSelectionControl
+                        value={activeDimension}
+                        items={dimensions.map(dimension => ({ value: dimension, label: dimension === 'total' ? '综合评价' : dimension }))}
+                        onChange={setActiveDimension}
+                        ariaLabel="完整排名评价维度"
+                        className="-mt-1 mb-1"
+                    />
+                    <ClassRankingList items={rankings} ariaLabel="全部班级排名" />
                 </MobileBottomSheet>
             </div>
         </div>

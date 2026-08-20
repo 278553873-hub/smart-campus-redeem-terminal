@@ -23,10 +23,14 @@ requireText(meSource, "if (space.type === 'personal') return '个人';", '个人
 requireText(meSource, "if (space.type === 'collaboration') return '协作';", '协作来源应展示协作标签。');
 requireText(meSource, "return '学校';", '学校来源应展示学校标签。');
 requireText(meSource, '<ClassSourceTrigger', '我的页应复用全局班级来源触发器。');
+requireText(meSource, 'density="compact"', '我的页应使用班级来源触发器的紧凑可见样式。');
 requireText(meSource, "import MobileBottomSheet from '../components/ui/MobileBottomSheet';", '班级来源抽屉应复用全局底部弹窗组件。');
 requireText(sourceTriggerSource, 'personal: UserRound', '个人来源触发器应使用单人图标。');
 requireText(sourceTriggerSource, 'collaboration: UsersRound', '协作来源触发器应使用多人图标。');
 requireText(sourceTriggerSource, 'school: Building2', '学校来源触发器应使用学校图标。');
+requireText(sourceTriggerSource, "density?: 'default' | 'compact';", '班级来源触发器应通过公共参数支持紧凑密度。');
+requireText(sourceTriggerSource, 'inline-flex h-9 max-w-full items-center', '紧凑来源触发器的可见胶囊应为 36px。');
+requireText(sourceTriggerSource, 'inline-flex min-h-11 max-w-full items-center', '来源触发器应继续保留 44px 触控高度。');
 requireText(sheetSource, '<MobileBottomSheet open title="切换班级来源" onClose={onClose}>', '班级来源抽屉应使用全局底部弹窗的白色承载面与层级。');
 requireText(sheetSource, 'text-[17px] font-semibold leading-[22px]', '抽屉标题和列表主文案应使用接近 iOS 17pt 的字号。');
 requireText(sheetSource, 'min-h-[60px]', '来源卡片高度应按标注收紧为 60px。');
@@ -54,9 +58,9 @@ forbidText(sheetSource, '#1E9AAA', '班级来源抽屉不应残留旧青蓝主�
 
 requireText(appSource, "{ id: 'personal', title: '我创建的班级', type: 'personal', role: 'owner' }", '我创建的班级应使用个人版创建者身份。');
 requireText(appSource, "{ id: 'collab-li', title: '李明老师的班级', type: 'collaboration', role: 'collaborator' }", '被邀请班级应使用协作老师身份。');
-requireText(appSource, "{ id: 'school-qizhong', title: '成都七中初中附属小学', type: 'school', role: 'homeroomTeacher' }", '学校来源示例应覆盖班主任身份。');
-requireText(appSource, "{ id: 'school-star', title: '星河实验小学', type: 'school', role: 'leader' }", '学校来源示例应覆盖管理层身份。');
-requireText(appSource, "{ id: 'school-qinghe', title: '青禾实验小学', type: 'school', role: 'teacher' }", '学校来源示例应覆盖普通任课老师身份。');
+requireText(appSource, "{ id: 'school-qizhong', title: '成都七中初中附属小学', type: 'school', role: 'homeroomTeacher',", '学校来源示例应覆盖班主任身份。');
+requireText(appSource, "{ id: 'school-star', title: '星河实验小学', type: 'school', role: 'leader',", '学校来源示例应覆盖管理层身份。');
+requireText(appSource, "{ id: 'school-qinghe', title: '青禾实验小学', type: 'school', role: 'homeroomTeacher',", '其他学校来源示例应保留班主任身份。');
 requireText(appSource, "const DEFAULT_TEACHER_SPACE_ID = 'school-star';", '默认班级来源应与 demo 当前态保持一致。');
 requireText(appSource, "import MeView, { ClassSourceSheet, type TeacherSpaceOption } from './views/MeView';", 'App 应导入全局班级来源抽屉组件。');
 requireText(appSource, 'const INITIAL_TEACHER_PROFILES_BY_SPACE: Record<string, TeacherProfile>', '教师资料应按班级来源分别保存。');
@@ -67,7 +71,7 @@ requireText(appSource, 'const teacherProfile = teacherProfilesBySpace[activeTeac
 requireText(appSource, '[activeTeacherSpace.id]: nextProfile', '编辑教师资料时只应更新当前来源。');
 requireText(appSource, "'school-qinghe': {", '普通任课老师学校应有独立教师资料。');
 requireText(appSource, "teachingAssignments: createTeachingAssignments(['c_2025_3', 'c_2025_6'], '体育')", '普通任课老师资料应包含任教班级和科目。');
-requireText(appSource, "{(currentView === 'me' || currentView === 'home_log' || currentView === 'class_list') && showTeacherSpaceSheet && (", '班级来源抽屉应由 App 在记录页、班级页和我的页的全局层级复用。');
+requireText(appSource, "{(currentView === 'me' || currentView === 'class_list') && showTeacherSpaceSheet && (", '班级来源抽屉应由 App 在班级页和我的页的全局层级复用。');
 requireText(appSource, '<ClassSourceSheet', 'App 应渲染班级来源抽屉。');
 
 const navIndex = appSource.indexOf('Teacher mobile bottom navigation');

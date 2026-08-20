@@ -52,6 +52,7 @@ interface MeViewProps {
 interface MenuEntry<TId extends string = string> {
     id: TId;
     title: string;
+    labelLines?: readonly string[];
     icon?: LucideIcon;
     imageSrc?: string;
     imageAlt?: string;
@@ -75,7 +76,7 @@ const assistantToolImageClass = 'h-12 w-12 rounded-[var(--tm-radius-inner)] obje
 const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-card)] backdrop-blur-sm';
 
 const ToolSection: React.FC<ToolSectionProps> = ({ title, children }) => (
-    <section className={`relative overflow-hidden rounded-[var(--tm-radius-card)] p-5 ${toolCardSurfaceClass}`}>
+    <section className={`relative overflow-hidden rounded-[var(--tm-radius-card)] p-4 ${toolCardSurfaceClass}`}>
         <h3 className="flex items-center gap-3 text-[17px] font-bold leading-snug text-[var(--tm-text-primary)]">
             <span className="h-7 w-1.5 rounded-full bg-[var(--tm-brand-primary)]" aria-hidden="true" />
             {title}
@@ -85,7 +86,7 @@ const ToolSection: React.FC<ToolSectionProps> = ({ title, children }) => (
 );
 
 const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'primary' | 'secondary' }> = ({ items, columns = 4, variant = 'primary' }) => (
-    <div className={`mt-6 grid ${columns === 4 ? 'grid-cols-4' : columns === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-x-2 gap-y-6`}>
+    <div className={`mt-4 grid ${columns === 4 ? 'grid-cols-4' : columns === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-x-3 gap-y-3`}>
         {items.map(item => {
             const Icon = item.icon;
             const isSecondary = variant === 'secondary';
@@ -95,7 +96,7 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                     type="button"
                     aria-label={item.title}
                     onClick={item.onClick}
-                    className={`${isSecondary ? 'min-h-[78px] gap-2' : 'min-h-[92px] gap-2.5'} group flex flex-col items-center justify-start rounded-[var(--tm-radius-inner)] text-center transition duration-200 active:scale-[0.97] active:bg-[var(--tm-brand-primary-soft)]/60`}
+                    className={`${isSecondary ? 'min-h-[64px]' : 'min-h-[74px]'} group flex flex-col items-center justify-start gap-2 rounded-[var(--tm-radius-inner)] text-center transition duration-200 active:scale-[0.97] active:bg-[var(--tm-brand-primary-soft)]/60`}
                 >
                     {item.imageSrc ? (
                         <span className="relative flex h-12 w-12 items-center justify-center overflow-visible rounded-[var(--tm-radius-inner)]">
@@ -129,8 +130,8 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                     ) : (
                         null
                     )}
-                    <span className="min-h-9 max-w-[92px] whitespace-nowrap text-[12px] font-semibold leading-[18px] text-[var(--tm-text-primary)]">
-                        {item.title}
+                    <span className="max-w-[72px] whitespace-nowrap text-[12px] font-semibold leading-[18px] text-[var(--tm-text-primary)]">
+                        {item.labelLines?.map(line => <span key={line} className="block">{line}</span>) ?? item.title}
                     </span>
                 </button>
             );
@@ -206,6 +207,7 @@ const MeView: React.FC<MeViewProps> = ({
         {
             id: 'schoolReport',
             title: '学生评价报表',
+            labelLines: ['学生评价', '报表'],
             imageSrc: ASSETS.MANAGEMENT.SCHOOL_REPORT_V2,
             imageAlt: '学生评价报表图标',
             imageClassName: reportToolImageClass,
@@ -215,6 +217,7 @@ const MeView: React.FC<MeViewProps> = ({
         {
             id: 'moralEducationCockpit',
             title: '班级评价报表',
+            labelLines: ['班级评价', '报表'],
             imageSrc: ASSETS.MANAGEMENT.CLASS_EVALUATION_REPORT,
             imageAlt: '班级评价报表图标',
             imageClassName: reportToolImageClass,
@@ -306,11 +309,11 @@ const MeView: React.FC<MeViewProps> = ({
 
     return (
         <div
-            className="relative min-h-screen overflow-hidden bg-transparent pb-24 font-sans text-[var(--tm-text-primary)]"
+            className="relative overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]"
         >
-            <div className="relative px-5 pt-7">
-                <div className="relative z-10 min-h-[144px]">
-                    <div className="relative z-10 flex items-start gap-4 pt-5">
+            <div className="relative px-5 pt-5">
+                <div className="relative z-10 flex min-h-[132px] items-center">
+                    <div className="relative z-10 flex w-full items-start gap-4">
                         <button
                             type="button"
                             onClick={onEditTeacherProfile}
@@ -339,6 +342,7 @@ const MeView: React.FC<MeViewProps> = ({
                                 onClick={onToggleSpaceSheet}
                                 expanded={isSpaceSheetOpen}
                                 className="mt-2"
+                                density="compact"
                             />
                         </div>
 
@@ -354,14 +358,14 @@ const MeView: React.FC<MeViewProps> = ({
                 </div>
             </div>
 
-            <div className="relative z-10 space-y-4 px-5 pt-0">
+            <div className="relative z-10 space-y-3 px-5 pt-0">
                 {pendingCollectionCount > 0 && (
                     <button
                         type="button"
                         onClick={onOpenAssignedCollections}
-                        className={`flex min-h-[58px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] px-4 text-left transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)] ${toolCardSurfaceClass}`}
+                        className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-4 text-left transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)] ${toolCardSurfaceClass}`}
                     >
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><ClipboardList className="h-5 w-5" /></span>
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><ClipboardList className="h-4 w-4" /></span>
                         <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">待填写采集</span>
                         <span className="flex shrink-0 items-center gap-1.5">
                             <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--tm-status-negative)] px-1.5 text-[11px] font-bold tabular-nums text-white">{pendingCollectionCount}</span>
@@ -380,7 +384,6 @@ const MeView: React.FC<MeViewProps> = ({
                         <ToolGrid items={moreTools} columns={4} variant="secondary" />
                     </ToolSection>
                 )}
-                <div className="h-10" />
             </div>
         </div>
     );

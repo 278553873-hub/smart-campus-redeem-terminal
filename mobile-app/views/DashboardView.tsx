@@ -9,6 +9,7 @@ import { AlertTriangle, BadgeCheck, Camera, ChevronDown, ChevronLeft, ChevronRig
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
+import { GROWTH_COIN_TERMS } from '../../shared/growthCoinTerminology';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
 import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
 import StudentEvaluationRecordsView, { type StudentEvaluationRecord } from './StudentEvaluationRecordsView';
@@ -568,24 +569,30 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 <button
                     type="button"
                     onClick={onViewCampusCoins}
-                    aria-label={`查看校园币明细，钱包${formatCoinAmount(campusCoinDetail.balance)}，存款${formatCoinAmount(campusCoinDetail.bankDeposit)}`}
-                    className="relative grid h-[var(--tm-student-detail-asset-height)] w-full grid-cols-2 items-center border-t border-[var(--tm-student-detail-asset-border)] bg-[var(--tm-student-detail-asset-bg)] text-left active:bg-[var(--tm-bg-surface-soft)]"
+                    aria-label={`查看${GROWTH_COIN_TERMS.details}，${GROWTH_COIN_TERMS.available}${formatCoinAmount(campusCoinDetail.balance)}，${GROWTH_COIN_TERMS.saved}${formatCoinAmount(campusCoinDetail.bankDeposit)}`}
+                    className="grid h-[var(--tm-student-detail-asset-height)] w-full grid-cols-[var(--tm-student-detail-asset-label-width)_1px_minmax(0,1fr)_1px_minmax(0,1fr)_var(--tm-student-detail-asset-chevron-space)] items-center border-t border-[var(--tm-student-detail-asset-border)] bg-[var(--tm-student-detail-asset-bg)] text-left active:bg-[var(--tm-bg-surface-soft)]"
                 >
-                    <span className="flex min-w-0 items-center gap-1.5 px-4">
+                    <span className="flex min-w-0 items-center justify-center gap-1.5 px-2">
                         <img src="/assets/coin.png" className="h-4 w-4 shrink-0" alt="" />
-                        <span className="shrink-0 text-[11px] font-medium text-[var(--tm-text-secondary)]">钱包</span>
+                        <span className="shrink-0 text-[11px] font-semibold text-[var(--tm-text-primary)]">{GROWTH_COIN_TERMS.name}</span>
+                    </span>
+                    <span className="h-5 bg-[var(--tm-student-detail-asset-border)]" aria-hidden="true" />
+                    <span className="flex min-w-0 items-center justify-center gap-2 px-2">
+                        <span className="shrink-0 text-[11px] font-medium text-[var(--tm-text-secondary)]">{GROWTH_COIN_TERMS.available}</span>
                         <span className="min-w-0 truncate text-sm font-semibold tabular-nums text-[var(--tm-text-primary)]">
                             {formatCoinAmount(campusCoinDetail.balance)}
                         </span>
                     </span>
-                    <span className="flex min-w-0 items-center gap-1.5 border-l border-[var(--tm-student-detail-asset-border)] px-4 pr-[var(--tm-student-detail-asset-chevron-space)]">
-                        <img src="/assets/coin.png" className="h-4 w-4 shrink-0" alt="" />
-                        <span className="shrink-0 text-[11px] font-medium text-[var(--tm-text-secondary)]">存款</span>
+                    <span className="h-5 bg-[var(--tm-student-detail-asset-border)]" aria-hidden="true" />
+                    <span className="flex min-w-0 items-center justify-center gap-2 px-2">
+                        <span className="shrink-0 text-[11px] font-medium text-[var(--tm-text-secondary)]">{GROWTH_COIN_TERMS.saved}</span>
                         <span className="min-w-0 truncate text-sm font-semibold tabular-nums text-[var(--tm-text-primary)]">
                             {formatCoinAmount(campusCoinDetail.bankDeposit)}
                         </span>
                     </span>
-                    <ChevronRight className="absolute right-3 h-5 w-5 text-[var(--tm-text-tertiary)]" />
+                    <span className="flex h-full items-center justify-center" aria-hidden="true">
+                        <ChevronRight className="h-5 w-5 text-[var(--tm-text-tertiary)]" />
+                    </span>
                 </button>
             </section>
 

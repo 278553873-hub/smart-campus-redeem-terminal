@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, ShoppingBag, Gift, CheckCircle2 } from 'lucide-react';
 import { Student, Product } from '../types';
+import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 
 interface ShopViewProps {
   student: Student;
@@ -57,8 +58,9 @@ const ShopView: React.FC<ShopViewProps> = ({ student, products, onPurchase }) =>
 
           <div className="flex flex-col items-end gap-2">
             <div className="bg-gradient-to-b from-orange-50 to-orange-100/50 px-5 py-2.5 rounded-2xl border border-orange-200/50 flex flex-col items-end shadow-sm">
-              <span className="text-orange-500/80 font-black text-[9px] mb-0.5 tracking-wider">我的余额</span>
+              <span className="text-orange-500/80 font-black text-[9px] mb-0.5">{GROWTH_COIN_TERMS.name}</span>
               <div className="text-orange-600 font-[NumberFont] font-black text-2xl leading-none flex items-center gap-1">
+                <span className="mr-1 text-[10px] font-black">{GROWTH_COIN_TERMS.available}</span>
                 <img src="/assets/coin.png" className="w-[1em] h-[1em] drop-shadow-sm -translate-y-[2px]" alt="coin" />
                 {student.campusCoins}
               </div>
@@ -72,8 +74,9 @@ const ShopView: React.FC<ShopViewProps> = ({ student, products, onPurchase }) =>
           <div className="flex flex-1 items-center justify-center bg-white shadow-sm border border-slate-100 rounded-2xl px-4 py-2.5">
             <div className="flex flex-col w-full gap-1">
               <div className="flex justify-between items-center gap-3">
-                <span className="text-xs text-orange-400 font-black">我的钱包</span>
+                <span className="text-xs text-slate-500 font-black">{GROWTH_COIN_TERMS.name}</span>
                 <div className="flex items-center gap-0.5 text-orange-600 font-black font-[NumberFont] text-base leading-none">
+                  <span className="mr-1 text-[10px]">{GROWTH_COIN_TERMS.available}</span>
                   <img src="/assets/coin.png" className="w-[1em] h-[1em]" alt="coin" /> {student.campusCoins}
                 </div>
               </div>
@@ -163,7 +166,7 @@ const ShopView: React.FC<ShopViewProps> = ({ student, products, onPurchase }) =>
 
             <div className="w-full space-y-4 mb-10">
               <div className="flex justify-between items-center bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                <span className="text-slate-500 font-bold">当前校园币余额</span>
+                <span className="text-slate-500 font-bold">{GROWTH_COIN_TERMS.name} · {GROWTH_COIN_TERMS.available}</span>
                 <span className="text-xl font-black text-slate-800"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {student.campusCoins}</span>
               </div>
               <div className={`flex justify-between items-center p-5 rounded-2xl border ${confirmingProduct.type === 'special' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' : 'bg-pink-50 border-pink-100 text-pink-700'

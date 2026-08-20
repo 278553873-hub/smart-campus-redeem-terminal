@@ -10,12 +10,15 @@ export type TeacherSpaceRole =
 
 export type HeadteacherAssistantScope = 'student' | 'class';
 
+export type ClassLeaderboardSettlementCycle = 'week' | 'month';
+
 export interface TeacherSpaceOption {
     id: string;
     title: string;
     type: TeacherSpaceType;
     role: TeacherSpaceRole;
     classRecordEnabled?: boolean;
+    classLeaderboardSettlementCycle?: ClassLeaderboardSettlementCycle;
     enabledManagementTools?: TeacherManagementToolId[];
     headteacherAssistantEnabled?: boolean;
     evaluationScopes?: HeadteacherAssistantScope[];

@@ -9,9 +9,10 @@ import {
     MessageCircle,
     Plus,
     SlidersHorizontal,
+    UsersRound,
     X,
 } from 'lucide-react';
-import { ClassInfo, Student, TeacherProfile } from '../types';
+import { ClassInfo, Student, TeacherProfile, type SchoolStudentTeam } from '../types';
 import {
     UsersIcon,
     ChartIcon,
@@ -27,6 +28,7 @@ import ClassSourceTrigger from '../components/ClassSourceTrigger';
 import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/ClassInviteFlow';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
+import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import { ASSETS } from '../assets/images';
 import {
     canManagePersonalClasses,
@@ -61,6 +63,12 @@ interface ClassListViewProps {
     onViewBankPassword: (classId: string) => void;
     onViewHomeworkEntry: (classId: string) => void;
     onEditClassInfo: (classId: string) => void;
+    activeListTab: 'class' | 'team';
+    onListTabChange: (tab: 'class' | 'team') => void;
+    studentTeams: SchoolStudentTeam[];
+    canCreateStudentTeam: boolean;
+    onCreateStudentTeam: () => void;
+    onSelectStudentTeam: (teamId: string) => void;
 }
 
 type ClassActionTone = 'brand' | 'secondary' | 'reward' | 'positive' | 'neutral';
@@ -108,6 +116,12 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onViewBankPassword,
     onViewHomeworkEntry,
     onEditClassInfo,
+    activeListTab,
+    onListTabChange,
+    studentTeams,
+    canCreateStudentTeam,
+    onCreateStudentTeam,
+    onSelectStudentTeam,
 }) => {
     const [activeActionClassId, setActiveActionClassId] = useState<string | null>(null);
     const [showTeachingOnly, setShowTeachingOnly] = useState(false);
@@ -353,6 +367,24 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         );
     };
 
+    const renderStudentTeamCard = (team: SchoolStudentTeam) => (
+        <button
+            key={team.id}
+            type="button"
+            onClick={() => onSelectStudentTeam(team.id)}
+            className="flex min-h-[92px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition-transform active:scale-[0.99]"
+        >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]">
+                <UsersRound className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="block truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{team.name}</span>
+                <span className="mt-1 block truncate text-[13px] text-[var(--tm-text-secondary)]">{team.ownerName}负责 · {team.memberIds.length}人</span>
+            </span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-[var(--tm-text-disabled)]" />
+        </button>
+    );
+
     return (
         <div className="relative h-full overflow-hidden">
             {copyFeedback && (
@@ -382,7 +414,20 @@ const ClassListView: React.FC<ClassListViewProps> = ({
 
                     </div>
 
-                    {canManagePersonal && classes.length > 0 && (
+                    {isSchoolSpace && (
+                        <CompactSegmentedControl
+                            value={activeListTab}
+                            items={[
+                                { value: 'class', label: '班级' },
+                                { value: 'team', label: '社团与团队' },
+                            ]}
+                            onChange={onListTabChange}
+                            ariaLabel="班级内容分类"
+                            fullWidth
+                        />
+                    )}
+
+                    {activeListTab === 'class' && canManagePersonal && classes.length > 0 && (
                         <div className="flex min-h-11 items-center justify-between gap-3">
                             <span className="text-[13px] font-medium text-[var(--tm-text-tertiary)]">
                                 {hiddenClassIds.size > 0
@@ -401,7 +446,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         </div>
                     )}
 
-                    {isSchoolSpace && (
+                    {activeListTab === 'class' && isSchoolSpace && (
                         <div className={`grid gap-2 ${showLeaderboard ? 'grid-cols-[minmax(72px,1fr)_auto_auto]' : 'grid-cols-[minmax(0,1fr)_auto]'}`}>
                             <label className="relative min-w-0">
                                 <span className="sr-only">按年级筛选班级</span>
@@ -438,36 +483,70 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             )}
                         </div>
                     )}
+
+                    {activeListTab === 'team' && (
+                        <div className="flex min-h-11 items-center justify-between gap-3">
+                            <span className="text-[13px] font-medium text-[var(--tm-text-tertiary)]">共 {studentTeams.length} 个社团或团队</span>
+                            {canCreateStudentTeam && (
+                                <button
+                                    type="button"
+                                    onClick={onCreateStudentTeam}
+                                    className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    新建
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </section>
 
-                {visibleClasses.map(renderClassCard)}
+                {activeListTab === 'class' && (
+                    <>{visibleClasses.map(renderClassCard)}</>
+                )}
 
-                {visibleClasses.length === 0 && (
+                {activeListTab === 'team' && studentTeams.map(renderStudentTeamCard)}
+
+                {activeListTab === 'class' && (
+                    <>
+                        {visibleClasses.length === 0 && (
+                            <section className="px-2 py-6 text-center">
+                                <MobileEmptyState
+                                    imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
+                                    title={isSchoolSpace ? '没有符合条件的班级' : classes.length === 0 ? '暂无班级' : '暂无显示班级'}
+                                    imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
+                                />
+                                {isSchoolSpace ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setGradeFilter('全部');
+                                            setShowTeachingOnly(false);
+                                        }}
+                                        className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]"
+                                    >
+                                        清除筛选
+                                    </button>
+                                ) : classes.length === 0 ? (
+                                    <div className="mt-3 grid grid-cols-2 gap-2">
+                                        <button type="button" onClick={onCreateClass} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-3 text-sm font-semibold text-white active:bg-[var(--tm-brand-primary-pressed)]">创建班级</button>
+                                        <button type="button" onClick={onJoinClass} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 text-sm font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]">加入已有班级</button>
+                                    </div>
+                                ) : (
+                                    <button type="button" onClick={() => setShowDisplaySettings(true)} className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]">调整显示</button>
+                                )}
+                            </section>
+                        )}
+                    </>
+                )}
+
+                {activeListTab === 'team' && studentTeams.length === 0 && (
                     <section className="px-2 py-6 text-center">
                         <MobileEmptyState
                             imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
-                            title={isSchoolSpace ? '没有符合条件的班级' : classes.length === 0 ? '暂无班级' : '暂无显示班级'}
+                            title="暂无社团或团队"
                             imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
                         />
-                        {isSchoolSpace ? (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setGradeFilter('全部');
-                                    setShowTeachingOnly(false);
-                                }}
-                                className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]"
-                            >
-                                清除筛选
-                            </button>
-                        ) : classes.length === 0 ? (
-                            <div className="mt-3 grid grid-cols-2 gap-2">
-                                <button type="button" onClick={onCreateClass} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-3 text-sm font-semibold text-white active:bg-[var(--tm-brand-primary-pressed)]">创建班级</button>
-                                <button type="button" onClick={onJoinClass} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 text-sm font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]">加入已有班级</button>
-                            </div>
-                        ) : (
-                            <button type="button" onClick={() => setShowDisplaySettings(true)} className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]">调整显示</button>
-                        )}
                     </section>
                 )}
             </div>

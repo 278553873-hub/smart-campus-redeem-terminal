@@ -27,6 +27,15 @@ export interface StudentGroup {
   memberIds: string[];
 }
 
+export interface SchoolStudentTeam {
+  id: string;
+  spaceId: string;
+  name: string;
+  ownerName: string;
+  memberIds: string[];
+  status: 'active' | 'archived';
+}
+
 export interface GroupPlan {
   id: string;
   name: string;

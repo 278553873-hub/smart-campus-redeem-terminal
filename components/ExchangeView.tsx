@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ArrowRight, AlertCircle } from 'lucide-react';
 import { Student } from '../types';
 import { EXCHANGE_RATE } from '../constants';
+import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 
 interface ExchangeViewProps {
   student: Student;
@@ -24,7 +25,7 @@ const ExchangeView: React.FC<ExchangeViewProps> = ({ student, onExchange }) => {
   return (
     <div className="p-8 max-w-2xl mx-auto h-full flex flex-col items-center animate-in zoom-in duration-300">
       <h2 className="text-3xl font-bold text-blue-900 mb-2">积分兑换中心</h2>
-      <p className="text-blue-600 mb-8 italic text-sm">每 {EXCHANGE_RATE} 积分可兑换 1 校园币</p>
+      <p className="text-blue-600 mb-8 italic text-sm">每 {EXCHANGE_RATE} 积分可兑换 1 {GROWTH_COIN_TERMS.name}</p>
 
       <div className="w-full flex flex-col items-center gap-6 mb-8 bg-white p-8 rounded-[3rem] shadow-xl border-4 border-blue-50">
         <div className="text-center">
@@ -39,7 +40,7 @@ const ExchangeView: React.FC<ExchangeViewProps> = ({ student, onExchange }) => {
         </div>
 
         <div className="text-center">
-          <div className="text-[10px] font-black text-yellow-500 uppercase tracking-widest mb-1">预计获得校园币</div>
+          <div className="text-[10px] font-black text-yellow-500 mb-1">预计获得{GROWTH_COIN_TERMS.name}</div>
           <div className="text-5xl font-black text-yellow-500 leading-none"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {coinsGained}</div>
         </div>
       </div>
@@ -94,7 +95,7 @@ const ExchangeView: React.FC<ExchangeViewProps> = ({ student, onExchange }) => {
                 <span className="text-2xl font-black text-blue-700">-{amount}</span>
               </div>
               <div className="flex justify-between items-center bg-yellow-50 p-5 rounded-2xl border border-yellow-100">
-                <span className="text-yellow-600 font-bold">兑换获得校园币</span>
+                <span className="text-yellow-600 font-bold">兑换获得{GROWTH_COIN_TERMS.name}</span>
                 <span className="text-2xl font-black text-yellow-600"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> +{coinsGained}</span>
               </div>
             </div>

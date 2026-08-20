@@ -32,6 +32,9 @@ requireText(viewSource, "dimmed = onlyUnscheduled && Boolean(teacherId)", '月�
 requireText(viewSource, 'MobileBottomSheet', '教师选择应复用公共底部抽屉。');
 requireText(viewSource, 'MobileSearchInput', '教师选择应复用公共搜索输入框。');
 requireText(viewSource, 'teacher.name.includes(keyword)', '教师搜索应按姓名子串即时过滤。');
+requireText(viewSource, 'MobileEmptyState', '教师搜索无结果应复用公共缺省态组件。');
+requireText(viewSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '教师搜索无结果应使用统一的放大镜缺省图。');
+requireText(viewSource, '没有匹配的教师', '教师搜索无结果应展示明确结果文案。');
 requireText(viewSource, 'teacher.avatar', '教师结果应展示教师头像。');
 assert.ok(!viewSource.includes('MobileToast') && !viewSource.includes('showToast'), '排班成功后页面已即时更新，不应重复显示成功Toast。');
 requireText(viewSource, 'aria-label="暂不安排老师"', '抽屉应提供常驻的暂不安排老师选项。');
@@ -40,13 +43,26 @@ requireText(viewSource, 'header={teacherSheetWeek ? (', '暂不安排老师应�
 requireText(viewSource, "title={teacherSheetWeek ? formatDutyWeekRange(teacherSheetWeek) : '选择教师'}", '抽屉标题应只保留周日期范围。');
 requireText(viewSource, 'border-[var(--tm-duty-unassigned-button-border)]', '暂不安排老师默认态应有明确按钮边界。');
 requireText(viewSource, '[box-shadow:var(--tm-duty-unassigned-button-shadow)]', '暂不安排老师默认态应有控件阴影。');
+requireText(viewSource, 'h-[var(--tm-duty-unassigned-option-height)]', '暂不安排老师应保留完整触控高度。');
+requireText(viewSource, 'h-[var(--tm-duty-unassigned-button-visible-height)]', '暂不安排老师的可见按钮应使用紧凑高度。');
+requireText(viewSource, 'rounded-[var(--tm-duty-unassigned-button-radius)]', '暂不安排老师的可见按钮应使用紧凑圆角。');
 requireText(tokenSource, "'--tm-duty-unassigned-button-bg': 'var(--tm-bg-surface)'", '暂不安排老师默认态应使用白色实体表面。');
-requireText(tokenSource, "'--tm-duty-unassigned-button-selected-bg': 'var(--tm-bg-surface-muted)'", '暂不安排老师已选态应使用中性灰表面。');
+requireText(tokenSource, "'--tm-duty-unassigned-button-visible-height': '28px'", '暂不安排老师的可见按钮高度应为28像素。');
+requireText(tokenSource, "'--tm-duty-unassigned-button-radius': '8px'", '暂不安排老师的可见按钮圆角应为8像素。');
+requireText(tokenSource, "'--tm-duty-unassigned-button-selected-bg': 'var(--tm-brand-primary-soft)'", '暂不安排老师已选态应使用主题色浅表面，不应使用灰色底色。');
+requireText(tokenSource, "'--tm-duty-unassigned-button-border': 'var(--tm-brand-primary)'", '暂不安排老师按钮边框应使用主题色。');
+requireText(tokenSource, "'--tm-duty-unassigned-button-text': 'var(--tm-brand-primary)'", '暂不安排老师按钮文字应使用主题色。');
 assert.ok(!viewSource.includes('值周老师'), '抽屉顶部不应继续显示“值周老师”。');
 assert.ok(!viewSource.includes('scheduledCount') && !viewSource.includes('7/27周'), '页面不应展示已安排周数统计。');
 assert.ok(!viewSource.includes('当前安排') && !viewSource.includes('RotateCcw'), '抽屉不应保留旧的当前安排与清空行。');
 requireText(viewSource, '--tm-duty-current-button-bg', '本周入口应使用明确的中性按钮表面。');
-requireText(tokenSource, "'--tm-duty-current-button-bg': 'var(--tm-bg-surface-muted)'", '本周按钮应使用可辨识的中性实面，不应在白色月历卡中退化为普通文字。');
+requireText(viewSource, 'h-7', '本周按钮的可见描边应保持紧凑高度。');
+requireText(viewSource, 'rounded-[8px]', '本周按钮应使用 8 像素圆角。');
+requireText(viewSource, 'border-[var(--tm-duty-current-button-border)]', '本周按钮应使用主题色边框。');
+requireText(viewSource, 'text-[var(--tm-duty-current-button-text)]', '本周按钮应使用主题色文字。');
+requireText(tokenSource, "'--tm-duty-current-button-bg': 'var(--tm-bg-surface)'", '本周按钮应使用白色表面承载主题色描边。');
+requireText(tokenSource, "'--tm-duty-current-button-text': 'var(--tm-brand-primary)'", '本周按钮文字应使用主题色。');
+requireText(tokenSource, "'--tm-duty-current-button-border': 'var(--tm-brand-primary)'", '本周按钮边框应使用主题色。');
 requireText(tokenSource, "'--tm-duty-week-tile-height': '76px'", '周块应使用更紧凑的 76 像素高度。');
 requireText(viewSource, 'CheckCircle2', '已安排周应通过勾选图标辅助表达状态。');
 requireText(viewSource, '--tm-duty-week-assigned-text', '已安排周应使用成功语义文字。');
@@ -78,6 +94,8 @@ for (const token of [
   '--tm-duty-current-button-shadow',
   '--tm-duty-current-button-pressed-bg',
   '--tm-duty-unassigned-option-height',
+  '--tm-duty-unassigned-button-visible-height',
+  '--tm-duty-unassigned-button-radius',
   '--tm-duty-unassigned-button-bg',
   '--tm-duty-unassigned-button-selected-bg',
   '--tm-duty-unassigned-button-pressed-bg',

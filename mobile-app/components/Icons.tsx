@@ -3,7 +3,7 @@ import {
   ChevronLeft, MoreHorizontal, FileText, ChevronRight,
   Mars, Venus, Star, BookOpen, Activity, Palette,
   Sprout, Lightbulb, Trophy, Award, TrendingUp,
-  Camera, Mic, Image as ImageIcon, CheckCircle2, Circle,
+  Camera, Mic, Image as ImageIcon, Check, CheckCircle2, Circle,
   Users, BarChart3, Home, User, Plus, X, Edit3, HelpCircle,
   ArrowLeftRight, Trash2, RefreshCw, Settings, Volume2, FileSpreadsheet,
   Keyboard, StopCircle, AlertCircle, ChevronDown,
@@ -48,6 +48,7 @@ export const GrowthIcon = () => <TrendingUp className="w-4 h-4" />;
 export const CameraIcon = ({ className }: { className?: string }) => <Camera className={className} />;
 export const MicIcon = ({ className }: { className?: string }) => <Mic className={className} />;
 export const ImageIconIcon = ({ className }: { className?: string }) => <ImageIcon className={className} />;
+export const CheckIcon = ({ className }: { className?: string }) => <Check className={className} />;
 export const CheckCircleIcon = ({ className }: { className?: string }) => <CheckCircle2 className={className} />;
 export const CircleIcon = ({ className }: { className?: string }) => <Circle className={className} />;
 export const UsersIcon = ({ className }: { className?: string }) => <Users className={className} />;

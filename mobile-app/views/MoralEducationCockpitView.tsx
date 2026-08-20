@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertTriangle,
     CalendarDays,
-    ChevronDown,
     ChevronLeft,
     ChevronRight,
 } from 'lucide-react';
@@ -33,17 +32,13 @@ type TrendMetric = 'averageScore' | 'deduction';
 
 const reportCardClassName = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]';
 
-const periodTypeOptions: Array<{ key: MoralEducationPeriodType; label: string }> = [
-    { key: 'week', label: '按周' },
-    { key: 'month', label: '按月' },
-    { key: 'term', label: '按学期' },
-];
-
 const periodTypeNames: Record<MoralEducationPeriodType, string> = {
     week: '周',
     month: '月',
     term: '学期',
 };
+
+const reportPeriodType: MoralEducationPeriodType = 'week';
 
 const trendMetricOptions: Array<{ key: TrendMetric; label: string }> = [
     { key: 'averageScore', label: '平均得分' },
@@ -216,7 +211,6 @@ const getTrendAxisRange = (snapshot: MoralEducationCockpitSnapshot, metric: Tren
 };
 
 const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ onBack }) => {
-    const [periodType, setPeriodType] = useState<MoralEducationPeriodType>('week');
     const [periodOptions, setPeriodOptions] = useState<MoralEducationPeriodOption[]>([]);
     const [selectedPeriodId, setSelectedPeriodId] = useState('');
     const [snapshot, setSnapshot] = useState<MoralEducationCockpitSnapshot | null>(null);
@@ -235,7 +229,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         let disposed = false;
         setIsLoading(true);
         setLoadError('');
-        getMoralEducationCockpitPeriods(periodType)
+        getMoralEducationCockpitPeriods(reportPeriodType)
             .then(options => {
                 if (disposed) return;
                 setPeriodOptions(options);
@@ -250,7 +244,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         return () => {
             disposed = true;
         };
-    }, [periodType, reloadKey]);
+    }, [reloadKey]);
 
     useEffect(() => {
         if (!selectedPeriodId) return undefined;
@@ -258,7 +252,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         setIsLoading(true);
         setLoadError('');
         setSnapshot(null);
-        getMoralEducationCockpitSnapshot({ periodType, periodId: selectedPeriodId })
+        getMoralEducationCockpitSnapshot({ periodType: reportPeriodType, periodId: selectedPeriodId })
             .then(data => {
                 if (!disposed) setSnapshot(data);
             })
@@ -271,10 +265,14 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         return () => {
             disposed = true;
         };
-    }, [periodType, selectedPeriodId, reloadKey]);
+    }, [selectedPeriodId, reloadKey]);
 
     const selectedPeriodIndex = periodOptions.findIndex(item => item.id === selectedPeriodId);
     const selectedPeriod = periodOptions[selectedPeriodIndex];
+    const currentPeriod = periodOptions[periodOptions.length - 1];
+    const selectedPeriodLabel = selectedPeriod && currentPeriod && selectedPeriod.id === currentPeriod.id
+        ? `本周 ${selectedPeriod.label}`
+        : selectedPeriod?.label ?? '';
     const canGoPrevious = selectedPeriodIndex > 0;
     const canGoNext = selectedPeriodIndex >= 0 && selectedPeriodIndex < periodOptions.length - 1;
     const trendConfig = trendMetricConfig[trendMetric];
@@ -304,19 +302,6 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         selectedProblemDimension?.categories.find(category => category.id === problemCategoryId)
         ?? selectedProblemDimension?.categories[0]
     ), [problemCategoryId, selectedProblemDimension]);
-
-    const changePeriodType = (nextType: MoralEducationPeriodType) => {
-        if (nextType === periodType) return;
-        setPeriodType(nextType);
-        setPeriodOptions([]);
-        setSelectedPeriodId('');
-        setSnapshot(null);
-        setRankingGradeId('all');
-        setProblemGradeId('all');
-        setProblemDimensionId('');
-        setProblemCategoryId('');
-        setIsPeriodSheetOpen(false);
-    };
 
     const changeProblemGrade = (gradeId: string) => {
         setProblemGradeId(gradeId);
@@ -361,26 +346,12 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
 
             <div className="relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar">
                 <div className="sticky -top-px z-30 -mt-px bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)] pb-3 pt-1 [box-shadow:0_8px_20px_-20px_var(--tm-shadow-neutral-color)]">
-                    <div className="grid h-11 grid-cols-[80px_44px_minmax(0,1fr)_44px] items-center">
-                        <label className="relative flex h-11 min-w-0 items-center">
-                            <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 inset-y-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)]" />
-                            <select
-                                aria-label="统计周期类型"
-                                value={periodType}
-                                onChange={event => changePeriodType(event.target.value as MoralEducationPeriodType)}
-                                className="relative z-10 h-full w-full appearance-none bg-transparent pl-3 pr-7 text-[13px] font-semibold text-[var(--tm-input-text)] outline-none"
-                            >
-                                {periodTypeOptions.map(option => (
-                                    <option key={option.key} value={option.key}>{option.label}</option>
-                                ))}
-                            </select>
-                            <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 z-10 h-4 w-4 text-[var(--tm-text-secondary)]" />
-                        </label>
+                    <div className="grid h-11 grid-cols-[44px_minmax(0,1fr)_44px] items-center">
                         <button
                             type="button"
                             onClick={() => changePeriod(-1)}
                             disabled={!canGoPrevious}
-                            aria-label={`上一个${periodTypeNames[periodType]}`}
+                            aria-label={`上一个${periodTypeNames[reportPeriodType]}`}
                             className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] disabled:opacity-30 active:bg-[var(--tm-bg-surface-muted)]"
                         >
                             <ChevronLeft className="h-5 w-5" />
@@ -392,13 +363,13 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                             className="mx-auto flex min-h-11 min-w-0 max-w-full items-center justify-center gap-1.5 px-1 text-[13px] font-semibold tabular-nums text-[var(--tm-text-primary)]"
                         >
                             <CalendarDays className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" />
-                            <span className="truncate">{selectedPeriod?.label ?? '加载中'}</span>
+                            <span className="truncate">{selectedPeriodLabel || '加载中'}</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => changePeriod(1)}
                             disabled={!canGoNext}
-                            aria-label={`下一个${periodTypeNames[periodType]}`}
+                            aria-label={`下一个${periodTypeNames[reportPeriodType]}`}
                             className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] disabled:opacity-30 active:bg-[var(--tm-bg-surface-muted)]"
                         >
                             <ChevronRight className="h-5 w-5" />
@@ -571,7 +542,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                     )}
                                 />
                                 <TeacherReportLineChart
-                                    ariaLabel={`${periodTypeNames[periodType]}度${trendConfig.label}趋势`}
+                                    ariaLabel={`${periodTypeNames[reportPeriodType]}度${trendConfig.label}趋势`}
                                     categories={snapshot.trend.map(item => item.label)}
                                     series={[{
                                         name: trendConfig.label,
@@ -591,8 +562,15 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
 
             <MobileBottomSheet
                 open={isPeriodSheetOpen}
-                title={`选择${periodTypeLabels[periodType]}`}
+                title={`选择${periodTypeLabels[reportPeriodType]}`}
                 onClose={() => setIsPeriodSheetOpen(false)}
+                headerAction={currentPeriod ? {
+                    label: '本周',
+                    onClick: () => {
+                        setSelectedPeriodId(currentPeriod.id);
+                        setIsPeriodSheetOpen(false);
+                    },
+                } : undefined}
             >
                 <ReportPeriodCalendar
                     periods={periodOptions}
