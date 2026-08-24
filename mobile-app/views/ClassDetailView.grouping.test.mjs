@@ -6,6 +6,8 @@ const bottomSheetSource = read('../components/ui/MobileBottomSheet.tsx');
 const searchInputSource = read('../components/ui/MobileSearchInput.tsx');
 const compactSelectSource = read('../components/student/StudentCompactSelectItem.tsx');
 const compactSelectGridSource = read('../components/student/StudentCompactSelectGrid.tsx');
+const groupPerformanceSource = read('../components/group/GroupPerformanceMeta.tsx');
+const groupPerformanceDomainSource = read('../domain/groupPerformance.ts');
 const typesSource = read('../types.ts');
 const constantsSource = read('../constants.ts');
 const groupAvatarCatalogSource = read('../assets/groupAvatarCatalog.ts');
@@ -338,6 +340,12 @@ requireText(viewSource, 'const StudentRosterCard', '学生列表与小组详情�
 const rosterCardUsages = viewSource.match(/<StudentRosterCard\s/g)?.length || 0;
 if (rosterCardUsages !== 2) failures.push('完整花名册卡片只应用于班级学生列表和小组详情，不得重新侵入选人状态。');
 if (addStudentGroupSheet.includes('<StudentRosterCard')) failures.push('添加小组选人状态不得重新使用完整花名册卡片。');
+requireText(viewSource, '<GroupPerformanceMeta summary={groupPerformance}', '小组列表卡片应展示小组等级与正负向评价次数。');
+requireText(viewSource, 'groupPerformanceByGroupId[groupDetailTarget.id]', '小组详情头部应复用独立的小组表现数据。');
+requireText(groupPerformanceSource, '<StudentPerformanceLevelIcons', '小组表现应复用学生等级图标。');
+requireText(groupPerformanceSource, '<StudentPerformanceCounts', '小组表现应复用正负向评价次数色片。');
+requireText(groupPerformanceDomainSource, 'if (record.groupId !== groupId) return summary;', '小组表现只应汇总直接指向该小组的原始评价事件。');
+if (groupPerformanceDomainSource.includes('memberIds')) failures.push('小组表现汇总不得依赖当前成员名单。');
 requireText(viewSource, '<StudentPerformanceAvatar', '共享学生卡应展示带进度环的学生头像。');
 requireText(viewSource, '<StudentPerformanceCounts summary={performance}', '共享学生卡应展示表扬与批评次数。');
 requireText(teacherMobileGuidelines, '统一复用通用层的紧凑学生选择项', '教师手机端规范应明确分组选人使用独立紧凑组件。');
@@ -358,6 +366,8 @@ requireText(teacherMobileGuidelines, '编辑图标和文字使用次级中性色
 requireText(teacherMobileGuidelines, '人数使用600字重的次级文字', '教师手机端规范应明确小组人数的字重。');
 requireText(teacherMobileGuidelines, '头像与组名右侧并列展示轻量`编辑 / 解散`', '教师手机端规范应明确详情层直接展示解散入口。');
 requireText(teacherMobileGuidelines, '危险确认是唯一允许叠加在小组详情上的临时决策浮层', '教师手机端规范应明确危险确认是弹窗叠加的唯一例外。');
+requireText(teacherMobileGuidelines, '只汇总评价对象明确为该小组 ID 的原始评价事件', '教师手机端规范应明确小组表现数据口径。');
+requireText(teacherMobileGuidelines, '不因学生移入、移出、调整或解散而回算历史', '教师手机端规范应明确成员变化不影响小组历史表现。');
 requireText(viewSource, 'MobileBottomSheet', '分组浮层应复用教师端公共底部抽屉。');
 if (viewSource.includes('Math.random')) {
   failures.push('分组创建不得随机安排学生。');

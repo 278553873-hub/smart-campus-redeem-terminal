@@ -14,6 +14,7 @@ import MobileSearchInput from '../components/ui/MobileSearchInput';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileToast from '../components/ui/MobileToast';
+import GroupPerformanceMeta from '../components/group/GroupPerformanceMeta';
 import StudentCompactSelectGrid, { type StudentCompactSelectSection } from '../components/student/StudentCompactSelectGrid';
 import StudentPerformanceAvatar from '../components/student-performance/StudentPerformanceAvatar';
 import {
@@ -25,6 +26,7 @@ import {
     getStudentPerformanceLevel,
     type StudentPerformanceSummary,
 } from '../domain/studentPerformance';
+import { createDemoGroupPerformanceSummary } from '../domain/groupPerformance';
 
 interface ClassDetailViewProps {
     classInfo: ClassInfo;
@@ -41,6 +43,7 @@ interface ClassDetailViewProps {
     onBack?: () => void;
     onGroupingEditorChange?: (open: boolean) => void;
     performanceByStudentId?: Record<string, StudentPerformanceSummary>;
+    groupPerformanceByGroupId?: Record<string, StudentPerformanceSummary>;
     levelNetScoreByStudentId?: Record<string, number>;
 }
 
@@ -237,6 +240,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     onBack,
     onGroupingEditorChange,
     performanceByStudentId = {},
+    groupPerformanceByGroupId = {},
     levelNetScoreByStudentId = {},
 }) => {
     const [activeView, setActiveView] = useState<'student' | 'group'>('student');
@@ -1061,6 +1065,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         {activeGroupPlan.groups.map((group, index) => {
                             const isSelected = groupSelectionIds.has(group.id);
                             const members = group.memberIds.map(id => studentById.get(id)).filter(Boolean) as Student[];
+                            const groupPerformance = groupPerformanceByGroupId[group.id] ?? createDemoGroupPerformanceSummary(group.id);
                             return (
                                 <button
                                     type="button"
@@ -1075,17 +1080,20 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                     className="relative flex min-h-[88px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.99]"
                                 >
                                     <GroupAvatar avatarKey={group.avatarKey} index={index} />
-                                    <span className="min-w-0 flex-1 pr-7">
+                                    <span className="min-w-0 flex-1">
                                         <span className="block truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{group.name}</span>
                                         <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{getGroupMemberSummary(members)}</span>
                                     </span>
+                                    {!isGroupSelectionMode && (
+                                        <GroupPerformanceMeta summary={groupPerformance} className="w-[76px] shrink-0" />
+                                    )}
                                     {isGroupSelectionMode && (
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2">
                                             {isSelected ? <CheckCircleIcon className="h-5 w-5 text-[var(--tm-brand-primary)]" /> : <CircleIcon className="h-5 w-5 text-[var(--tm-border-subtle)]" />}
                                         </span>
                                     )}
                                     {!isGroupSelectionMode && (
-                                        <ChevronRightIcon className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
+                                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
                                     )}
                                 </button>
                             );
@@ -1344,6 +1352,13 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             <div className="min-w-0 flex-1">
                                 <div className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{groupDetailTarget?.name}</div>
                                 <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">{groupDetailMembers?.length || 0}名学生</div>
+                                {groupDetailTarget && (
+                                    <GroupPerformanceMeta
+                                        summary={groupPerformanceByGroupId[groupDetailTarget.id] ?? createDemoGroupPerformanceSummary(groupDetailTarget.id)}
+                                        layout="inline"
+                                        className="mt-1.5 justify-start"
+                                    />
+                                )}
                             </div>
                             {isActiveGroupPlanOwnedByCurrentTeacher && (
                                 <div className="-mr-1 flex shrink-0 items-center gap-1">
