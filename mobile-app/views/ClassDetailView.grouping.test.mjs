@@ -302,7 +302,7 @@ requireText(viewSource, '&& !isSelected) return false;', '添加小组筛选开�
 requireText(viewSource, 'activeGroupMembershipByStudentId', '调整学生应识别每名学生当前所属小组。');
 requireText(viewSource, 'assignedGroup?.id === groupDetailTarget?.id || adjustStudentGroupMemberIds.has(student.id)', '调整学生时应持续展示当前小组成员和本次已选学生。');
 requireText(viewSource, 'setStudentSelectionMoveNotice(`${student.name}将从${assignedGroup.name}移入`)', '勾选其他小组学生后应通过短时轻提示说明移动来源。');
-requireText(viewSource, '<StudentSelectionMoveNotice message={studentSelectionMoveNotice} />', '跨组移动提示应出现在选人弹窗底部主操作上方。');
+requireText(viewSource, '<MobileActionToast message={studentSelectionMoveNotice} />', '跨组移动提示应出现在选人弹窗底部主操作上方。');
 requireText(viewSource, 'addGroupMovedStudentCount', '添加小组应计算本次跨组移动人数。');
 requireText(viewSource, 'adjustStudentGroupMovedStudentCount', '调整学生应计算本次跨组移动人数。');
 requireText(viewSource, '，含移动${addGroupMovedStudentCount}人', '添加小组的完成按钮应同时披露总人数和跨组移动人数。');

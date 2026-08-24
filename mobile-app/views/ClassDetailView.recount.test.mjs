@@ -29,7 +29,8 @@ requireText(viewSource, 'handleToggleRecountAcknowledgement(event.target.checked
 requireText(viewSource, 'setRecountCountdown(5)', '打开确认弹窗时应从5秒开始倒计时。');
 requireText(viewSource, "recountCountdown > 0 ? `${recountCountdown}秒后可确认` : '确认重新计数'", '进入弹窗后应在最终确认按钮内显示倒计时。');
 requireText(viewSource, 'disabled={recountCountdown > 0}', '5秒倒计时未结束时最终确认按钮必须禁用。');
-requireText(viewSource, "setGroupingToastMessage('请先勾选我已知晓')", '倒计时结束但未勾选时应使用轻提示说明下一步。');
+requireText(viewSource, "setRecountConfirmationNotice('请先勾选我已知晓')", '倒计时结束但未勾选时应使用弹窗内轻提示说明下一步。');
+requireText(viewSource, '<MobileActionToast message={recountConfirmationNotice} />', '未勾选提示应显示在确认弹窗底部按钮上方。');
 requireText(viewSource, '重新计数以后，卡片上的数字将清零。已有的评价记录、积分等不受影响。', '确认弹窗应使用简洁文案说明清零效果和不受影响的数据。');
 assert.doesNotMatch(viewSource, /当前表扬次数|当前批评次数|recountObjectSummary|recountCurrentCounts/, '确认弹窗不应重复展示已选对象或当前评价次数。');
 requireText(viewSource, 'createEvaluationCountCheckpoint', '确认后应记录新的统计起点。');

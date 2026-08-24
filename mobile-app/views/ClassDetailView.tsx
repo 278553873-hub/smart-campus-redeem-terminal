@@ -262,7 +262,7 @@ const OnlyUngroupedFilter: React.FC<OnlyUngroupedFilterProps> = ({ checked, ungr
     </label>
 );
 
-const StudentSelectionMoveNotice: React.FC<{ message: string }> = ({ message }) => (
+const MobileActionToast: React.FC<{ message: string }> = ({ message }) => (
     message ? (
         <div className="pointer-events-none absolute bottom-[64px] left-1/2 z-30 w-max max-w-[calc(100%-16px)] -translate-x-1/2 rounded-full bg-[var(--tm-text-primary)] px-3.5 py-2 text-center text-[length:var(--tm-font-size-compact)] font-semibold leading-5 text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]" role="status" aria-live="polite">
             {message}
@@ -329,6 +329,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     const [showRecountConfirmation, setShowRecountConfirmation] = useState(false);
     const [recountAcknowledged, setRecountAcknowledged] = useState(false);
     const [recountCountdown, setRecountCountdown] = useState(5);
+    const [recountConfirmationNotice, setRecountConfirmationNotice] = useState('');
     const [studentCountCheckpoints, setStudentCountCheckpoints] = useState<Record<string, EvaluationCountCheckpoint>>({});
     const [groupCountCheckpoints, setGroupCountCheckpoints] = useState<Record<string, EvaluationCountCheckpoint>>({});
     const activeStudents = useMemo(() => students.filter(student => (student.status ?? 'active') === 'active'), [students]);
@@ -375,6 +376,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         setShowRecountConfirmation(false);
         setRecountAcknowledged(false);
         setRecountCountdown(5);
+        setRecountConfirmationNotice('');
         setStudentCountCheckpoints({});
         setGroupCountCheckpoints({});
     }, [activeStudentKey, classInfo.id, currentTeacherName]);
@@ -390,6 +392,12 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         const timer = window.setTimeout(() => setStudentSelectionMoveNotice(''), 1800);
         return () => window.clearTimeout(timer);
     }, [studentSelectionMoveNotice]);
+
+    useEffect(() => {
+        if (!recountConfirmationNotice) return undefined;
+        const timer = window.setTimeout(() => setRecountConfirmationNotice(''), 1800);
+        return () => window.clearTimeout(timer);
+    }, [recountConfirmationNotice]);
 
     useEffect(() => {
         if (!activeGroupPlanId && groupPlans.length > 0) {
@@ -630,6 +638,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         setShowRecountConfirmation(false);
         setRecountAcknowledged(false);
         setRecountCountdown(5);
+        setRecountConfirmationNotice('');
     };
 
     const handleCancelRecount = () => {
@@ -673,17 +682,19 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         if (recountSelectedCount === 0) return;
         setRecountAcknowledged(false);
         setRecountCountdown(5);
+        setRecountConfirmationNotice('');
         setShowRecountConfirmation(true);
     };
 
     const handleToggleRecountAcknowledgement = (checked: boolean) => {
         setRecountAcknowledged(checked);
+        if (checked) setRecountConfirmationNotice('');
     };
 
     const handleConfirmRecount = () => {
         if (!recountTarget || recountSelectedCount === 0 || recountCountdown > 0) return;
         if (!recountAcknowledged) {
-            setGroupingToastMessage('请先勾选我已知晓');
+            setRecountConfirmationNotice('请先勾选我已知晓');
             return;
         }
         const resetAt = new Date().toISOString();
@@ -1516,9 +1527,12 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 onClose={resetRecountConfirmation}
                 footerDivider={false}
                 footer={(
-                    <button type="button" onClick={handleConfirmRecount} disabled={recountCountdown > 0} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-status-negative-strong)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
-                        {recountCountdown > 0 ? `${recountCountdown}秒后可确认` : '确认重新计数'}
-                    </button>
+                    <div className="relative">
+                        <MobileActionToast message={recountConfirmationNotice} />
+                        <button type="button" onClick={handleConfirmRecount} disabled={recountCountdown > 0} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-status-negative-strong)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+                            {recountCountdown > 0 ? `${recountCountdown}秒后可确认` : '确认重新计数'}
+                        </button>
+                    </div>
                 )}
             >
                 <div className="space-y-4 pb-2">
@@ -1623,7 +1637,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     <button type="button" onClick={handleConfirmStudentGroupName} disabled={!newStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
                 ) : (
                     <div className="relative">
-                        <StudentSelectionMoveNotice message={studentSelectionMoveNotice} />
+                        <MobileActionToast message={studentSelectionMoveNotice} />
                         <button type="button" onClick={handleFinishGrouping} disabled={!draftActiveGroup?.memberIds.length} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
                             {draftActiveGroup?.memberIds.length
                                 ? `完成（${draftActiveGroup.memberIds.length}人${addGroupMovedStudentCount > 0 ? `，含移动${addGroupMovedStudentCount}人` : ''}）`
@@ -1701,7 +1715,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 )}
                 footer={groupDetailMode === 'adjust' ? (
                     <div className="relative">
-                        <StudentSelectionMoveNotice message={studentSelectionMoveNotice} />
+                        <MobileActionToast message={studentSelectionMoveNotice} />
                         <button type="button" onClick={handleSaveAdjustStudentGroup} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]">
                             {`保存（${adjustStudentGroupMemberIds.size}人${adjustStudentGroupMovedStudentCount > 0 ? `，含移动${adjustStudentGroupMovedStudentCount}人` : ''}）`}
                         </button>
