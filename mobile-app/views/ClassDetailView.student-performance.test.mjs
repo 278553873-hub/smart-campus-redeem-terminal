@@ -20,7 +20,7 @@ if (source.includes("isSelectionMode && isSelected ? 'border-[var(--tm-brand-pri
 }
 requireText('absolute -right-1 -top-1', '学生多选框应向右上方各外移4像素并跨在卡片边框上。');
 requireText('h-[18px] w-[18px]', '学生多选框应保持18像素可见尺寸。');
-requireText("isSelected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'", '学生多选框选中时应使用实心品牌红圆底。');
+requireText("selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'", '学生多选框选中时应使用实心品牌红圆底。');
 requireText('<CheckIcon className="h-3 w-3 text-white [stroke-width:3]" />', '实心选中框中应展示清晰的白色勾选图标。');
 if (source.includes('bg-[var(--tm-brand-primary-soft)] ring-2')) {
   throw new Error('选中学生卡片不应整体使用品牌红背景。');

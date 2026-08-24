@@ -17,7 +17,6 @@ import {
     UsersIcon,
     ChartIcon,
     WechatMoreIcon,
-    TrophyIcon,
     GiftIcon,
     ScanFaceIcon,
     ShieldIcon,
@@ -29,6 +28,7 @@ import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/C
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
+import MobileFloatingImageButton from '../components/ui/MobileFloatingImageButton';
 import { ASSETS } from '../assets/images';
 import {
     canManagePersonalClasses,
@@ -214,12 +214,12 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         activeActionPolicy.canUseDailyActions ? {
             title: '日常操作',
             items: [
-                {
+                ...(activeActionPolicy.canManuallyEnterHomework ? [{
                     label: '作业录入',
                     icon: FileTextIcon,
                     tone: 'brand' as const,
                     onClick: () => runClassAction(onViewHomeworkEntry),
-                },
+                }] : []),
                 {
                     label: '兑换奖励',
                     icon: GiftIcon,
@@ -396,7 +396,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     {copyFeedback.message}
                 </div>
             )}
-            <div className={`relative z-10 h-full space-y-4 overflow-y-auto px-4 pb-40 no-scrollbar ${addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'}`}>
+            <div className={`relative z-10 h-full space-y-4 overflow-y-auto px-4 pb-[calc(var(--tm-floating-image-button-height)+var(--teacher-tabbar-height,66px)+var(--teacher-tabbar-bottom,16px)+var(--tm-space-3))] no-scrollbar ${addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'}`}>
                 <section className={`${isSchoolSpace ? 'space-y-3' : 'space-y-0'} px-1`}>
                     <div className="flex h-[var(--mini-program-title-bar-height,44px)] items-center [padding-right:var(--mini-program-capsule-right-inset,0px)]">
                         {showClassSourceSwitcher ? (
@@ -447,7 +447,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     )}
 
                     {activeListTab === 'class' && isSchoolSpace && (
-                        <div className={`grid gap-2 ${showLeaderboard ? 'grid-cols-[minmax(72px,1fr)_auto_auto]' : 'grid-cols-[minmax(0,1fr)_auto]'}`}>
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                             <label className="relative min-w-0">
                                 <span className="sr-only">按年级筛选班级</span>
                                 <select
@@ -471,16 +471,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 </span>
                                 任教班级
                             </button>
-                            {showLeaderboard && (
-                                <button
-                                    type="button"
-                                    className="flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-2.5 text-[13px] font-semibold text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)]"
-                                    onClick={onViewLeaderboard}
-                                >
-                                    <TrophyIcon className="h-4 w-4" />
-                                    排行榜
-                                </button>
-                            )}
                         </div>
                     )}
 
@@ -550,6 +540,17 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     </section>
                 )}
             </div>
+
+            {activeListTab === 'class' && showLeaderboard && (
+                <MobileFloatingImageButton
+                    label="查看班级排行榜"
+                    visibleLabel="班级排行榜"
+                    imageSrc={ASSETS.MANAGEMENT.CLASS_LEADERBOARD}
+                    imageMode="full-bleed"
+                    onClick={onViewLeaderboard}
+                    placement="middle-right"
+                />
+            )}
 
             <MobileBottomSheet open={canManagePersonal && showClassManagement} title="班级管理" onClose={() => setShowClassManagement(false)}>
                 <div className="space-y-[var(--tm-space-2)]">

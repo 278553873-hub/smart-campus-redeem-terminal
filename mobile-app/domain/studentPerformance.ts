@@ -1,4 +1,4 @@
-import type { Student } from '../types';
+import type { Student, StudentLevelDisplayMode } from '../types';
 import type { StudentEvaluationRecord } from '../views/student-evaluation/types';
 
 export type StudentPerformanceTier = 'star' | 'moon' | 'sun' | 'crown';
@@ -15,6 +15,11 @@ export interface StudentPerformanceLevel {
   progress: number;
   nextIconTier: StudentPerformanceTier | null;
   isMaxLevel: boolean;
+}
+
+interface StudentPerformanceTermRange {
+  startDate: string;
+  endDate: string;
 }
 
 const LEVEL_STEPS = [
@@ -70,6 +75,21 @@ export const summarizeStudentPerformance = (
   praiseCount: 0,
   criticismCount: 0,
 });
+
+export const getStudentLevelNetScore = (
+  records: Pick<StudentEvaluationRecord, 'evaluation_date' | 'scoreChange'>[],
+  mode: StudentLevelDisplayMode,
+  termRange: StudentPerformanceTermRange,
+): number => {
+  const levelRecords = mode === 'cumulative'
+    ? records
+    : records.filter(record => (
+        record.evaluation_date >= termRange.startDate
+        && record.evaluation_date <= termRange.endDate
+      ));
+
+  return summarizeStudentPerformance(levelRecords).netScore;
+};
 
 // Demo fallback only. Production summaries come from confirmed evaluation records.
 export const applyStudentPerformanceEvent = (

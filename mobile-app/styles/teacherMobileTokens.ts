@@ -175,6 +175,28 @@ export const teacherEvaluationIndicatorSemantic = {
   border: '#DFEBF4',
 } as const;
 
+// 评价原始记录使用独立的浅雾蓝内容面板，和指标标签保持协调但不共享组件语义。
+export const teacherEvaluationSourceSemantic = {
+  background: '#F3F8FC',
+  border: '#D5E5F0',
+  controlText: teacherReportChartSemantic.dataDefaultText,
+} as const;
+
+// AI识别结果中的可编辑值沿用已有数据蓝，通过独立语义避免业务组件直接引用图表变量。
+export const teacherEvaluationAiSemantic = {
+  editableText: teacherReportChartSemantic.dataDefaultText,
+} as const;
+
+// 指标编辑使用数据蓝的浅色状态，表达可选中而不引入品牌红的大面积填充。
+export const teacherEvaluationIndicatorEditorSemantic = {
+  border: teacherEvaluationSourceSemantic.border,
+  headerBackground: teacherReportChartSemantic.dataDefaultSoft,
+  selectedBackground: teacherReportChartSemantic.dataDefaultSoft,
+  selectedText: teacherReportChartSemantic.dataDefaultText,
+  focusRing: teacherReportChartSemantic.dataDefault,
+  activeBackground: teacherEvaluationIndicatorSemantic.background,
+} as const;
+
 // 标准德智体美劳图表仍可使用固定配色；班级报告的学校自定义一级指标使用 indicators 循环色板。
 // 分类色必须满足白底 3:1 图形对比度：美育使用深薄荷，劳育使用深金。
 // 体育与覆盖率同属绿色系是有意设计：分类场景（五育图表）与比例场景（覆盖进度）不共存于同一图表。
@@ -465,6 +487,16 @@ export const teacherBrandCssVariables = {
   '--tm-evaluation-indicator-separator': teacherEvaluationIndicatorSemantic.separator,
   '--tm-evaluation-indicator-bg': teacherEvaluationIndicatorSemantic.background,
   '--tm-evaluation-indicator-border': teacherEvaluationIndicatorSemantic.border,
+  '--tm-evaluation-source-bg': teacherEvaluationSourceSemantic.background,
+  '--tm-evaluation-source-border': teacherEvaluationSourceSemantic.border,
+  '--tm-evaluation-source-control-text': teacherEvaluationSourceSemantic.controlText,
+  '--tm-evaluation-ai-editable-text': teacherEvaluationAiSemantic.editableText,
+  '--tm-evaluation-indicator-editor-border': teacherEvaluationIndicatorEditorSemantic.border,
+  '--tm-evaluation-indicator-editor-header-bg': teacherEvaluationIndicatorEditorSemantic.headerBackground,
+  '--tm-evaluation-indicator-editor-selected-bg': teacherEvaluationIndicatorEditorSemantic.selectedBackground,
+  '--tm-evaluation-indicator-editor-selected-text': teacherEvaluationIndicatorEditorSemantic.selectedText,
+  '--tm-evaluation-indicator-editor-focus-ring': teacherEvaluationIndicatorEditorSemantic.focusRing,
+  '--tm-evaluation-indicator-editor-active-bg': teacherEvaluationIndicatorEditorSemantic.activeBackground,
   '--tm-chart-percentage-low': teacherReportChartSemantic.percentage.low.fill,
   '--tm-chart-percentage-low-text': teacherReportChartSemantic.percentage.low.text,
   '--tm-chart-percentage-low-soft': teacherReportChartSemantic.percentage.low.soft,
@@ -514,6 +546,7 @@ export const teacherBrandCssVariables = {
   '--tm-shadow-avatar': '0 18px 28px -18px rgba(224, 39, 39, 0.24)',
   '--tm-shadow-floating': '0 -10px 24px -12px rgba(64, 60, 58, 0.18), 0 10px 28px -12px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-floating-raised': '0 14px 32px -12px var(--tm-shadow-brand-color), 0 8px 20px -10px var(--tm-shadow-neutral-color)',
+  '--tm-floating-image-button-shadow': '0 3px 10px rgba(64, 60, 58, 0.20), 0 14px 26px -8px rgba(28, 128, 118, 0.28)',
   '--tm-shadow-navigation': '0 -10px 24px -12px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-sheet': '0 -20px 52px -34px rgba(64, 60, 58, 0.18)',
   '--tm-glow-primary': 'rgba(224, 39, 39, 0.13)',
@@ -575,8 +608,21 @@ export const teacherBrandCssVariables = {
   '--tm-radius-inner': '16px',
   '--tm-radius-card': '20px',
   '--tm-radius-sheet': '28px',
+  '--tm-sheet-footer-divider-width': '0px',
   '--tm-size-touch': '44px',
   '--tm-size-floating-action': '52px',
+  '--tm-floating-image-button-width': '68px',
+  '--tm-floating-image-button-height': '72px',
+  '--tm-floating-image-button-circle-size': '68px',
+  '--tm-floating-image-button-image-size': '44px',
+  '--tm-floating-image-button-label-width': '64px',
+  '--tm-floating-image-button-label-height': '20px',
+  '--tm-floating-image-button-border-width': '2px',
+  '--tm-floating-image-button-bg': 'var(--tm-bg-surface)',
+  '--tm-floating-image-button-border': teacherBrandPalette.gold[300],
+  '--tm-floating-image-button-label-bg': teacherBrandPalette.gold[50],
+  '--tm-floating-image-button-label-border': teacherBrandPalette.gold[200],
+  '--tm-floating-image-button-label-text': teacherBrandPalette.jade[700],
   '--tm-assistant-category-pill-width': '108px',
   '--tm-assistant-secondary-pill-height': '30px',
   '--tm-assistant-icon-control-visual-size': '36px',
@@ -591,6 +637,7 @@ export const teacherBrandCssVariables = {
   '--tm-font-size-meta': '12px',
   '--tm-font-size-badge': '11px',
   '--tm-font-size-metric': '24px',
+  '--tm-class-info-title-font-size': '20px',
   '--tm-space-1': '4px',
   '--tm-space-2': '8px',
   '--tm-space-3': '12px',

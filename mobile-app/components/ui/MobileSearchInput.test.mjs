@@ -11,6 +11,9 @@ const guidelines = read('../../../design-system/teacher-mobile/TEACHER_MOBILE_UI
 assert.doesNotMatch(searchInput, /focus:border-|focus:ring-/, '公共搜索框聚焦时不得改变边框颜色或增加外环。');
 assert.match(searchInput, /type="search"/, '公共搜索框应使用搜索输入语义。');
 assert.match(searchInput, /density === 'compact'/, '公共搜索框应支持学生花名册的紧凑密度。');
+assert.match(searchInput, /appearance === 'filled'/, '公共搜索框应支持无边框浅底填充样式。');
+assert.match(searchInput, /fillTone === 'surface'/, '公共搜索框的填充样式应支持白色与浅灰底。');
+assert.match(searchInput, /border-0 shadow-none/, '填充样式不得显示边框或阴影。');
 
 assert.match(classDetail, /<MobileSearchInput/, '学生列表应复用公共搜索框。');
 assert.match(bankPassword, /<MobileSearchInput/, '兑换密码页应复用公共搜索框。');

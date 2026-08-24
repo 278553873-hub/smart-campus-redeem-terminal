@@ -36,14 +36,14 @@ export const DUTY_TEACHERS: DutyTeacherOption[] = [
 
 export const DUTY_TERM_WEEKS = createDutyWeeks('2026-07-27', 27);
 
-export const INITIAL_DUTY_SCHEDULES: Record<string, string> = {
-  '2026-07-27': 'teacher-chen-simin',
-  '2026-08-03': 'teacher-li-lian',
-  '2026-08-10': 'teacher-zhang-quanyou',
-  '2026-08-24': 'teacher-wang-jingyi',
-  '2026-09-07': 'teacher-zhao-zihang',
-  '2026-09-21': 'teacher-lin-xiaoyun',
-  '2026-10-12': 'teacher-ma-wenbo',
+export const INITIAL_DUTY_SCHEDULES: Record<string, string[]> = {
+  '2026-07-27': ['teacher-chen-simin'],
+  '2026-08-03': ['teacher-li-lian', 'teacher-liu-chang'],
+  '2026-08-10': ['teacher-zhang-quanyou', 'teacher-liu-fei', 'teacher-chen-simin'],
+  '2026-08-24': ['teacher-wang-jingyi'],
+  '2026-09-07': ['teacher-zhao-zihang'],
+  '2026-09-21': ['teacher-lin-xiaoyun'],
+  '2026-10-12': ['teacher-ma-wenbo'],
 };
 
 export const CURRENT_DUTY_WEEK_ID = '2026-08-10';

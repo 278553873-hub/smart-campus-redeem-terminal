@@ -25,7 +25,26 @@ export interface StudentGroup {
   id: string;
   name: string;
   memberIds: string[];
+  avatarKey?: StudentGroupAvatarKey;
 }
+
+export type StudentGroupAvatarKey =
+  | 'windmill'
+  | 'hot-air-balloon'
+  | 'rocket'
+  | 'sailboat'
+  | 'blocks'
+  | 'puzzle'
+  | 'telescope'
+  | 'bridge'
+  | 'paper-plane'
+  | 'kite'
+  | 'compass'
+  | 'gears'
+  | 'lightbulb'
+  | 'magnet'
+  | 'folded-map'
+  | 'backpack';
 
 export interface SchoolStudentTeam {
   id: string;
@@ -88,6 +107,8 @@ export interface CampusCoinDetail {
   settlementEstimate: CampusCoinSettlementEstimate;
 }
 
+export type StudentLevelDisplayMode = 'term' | 'cumulative';
+
 export interface ClassInfo {
   id: string;
   name: string;
@@ -98,6 +119,7 @@ export interface ClassInfo {
   educationStage?: EducationStage;
   admissionYear?: number;
   classNumber?: number;
+  studentLevelDisplayMode?: StudentLevelDisplayMode;
 }
 
 export type EducationStage = 'primary' | 'middle' | 'high';

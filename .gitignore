@@ -37,6 +37,7 @@ output/
 outputs/
 tmp/
 assets/generated/
+design-assets/
 deliverables/
 
 # Local QA artifacts

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   applyStudentPerformanceEvent,
+  getStudentLevelNetScore,
   getStudentPerformanceLevel,
   revertStudentPerformanceEvent,
   summarizeStudentPerformance,
@@ -71,6 +72,17 @@ assert.deepEqual(summarizeStudentPerformance([
   praiseCount: 2,
   criticismCount: 1,
 });
+
+const crossTermRecords = [
+  { evaluation_date: '2025-12-20', scoreChange: 8 },
+  { evaluation_date: '2026-03-01', scoreChange: 3 },
+  { evaluation_date: '2026-07-31', scoreChange: -1 },
+  { evaluation_date: '2026-08-01', scoreChange: 5 },
+];
+const currentTerm = { startDate: '2026-02-23', endDate: '2026-07-31' };
+
+assert.equal(getStudentLevelNetScore(crossTermRecords, 'term', currentTerm), 2, '学期等级只应汇总当前学期评价。');
+assert.equal(getStudentLevelNetScore(crossTermRecords, 'cumulative', currentTerm), 15, '累计等级应汇总全部历史评价。');
 
 const moonBoundarySummary = { netScore: 10, praiseCount: 6, criticismCount: 1 };
 const downgradedSummary = applyStudentPerformanceEvent(moonBoundarySummary, -1);

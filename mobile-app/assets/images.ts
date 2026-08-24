@@ -17,6 +17,7 @@ import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
 import teacherMePageBg from './resources/teacher-me-page-bg.png';
 import teacherLoginIconImg from './resources/teacher-login-icon.jpg';
 import teacherDefaultAvatarImg from './resources/teacher-default-avatar.png';
+import classLeaderboardIconImg from './resources/class-leaderboard-icon.png';
 import defaultStateWorriedClipboardImg from './resources/default-states/default-state-giraffe-worried-clipboard-3d-color-v1.png';
 import defaultStateChairImg from './resources/default-states/default-state-giraffe-chair-3d-color-v1.png';
 import defaultStateMagnifierImg from './resources/default-states/default-state-giraffe-magnifier-3d-color-v1.png';
@@ -152,6 +153,7 @@ export const ASSETS = {
     TEACHER_ME_HERO_BG: teacherMeHeroBg,
     TEACHER_ME_PAGE_BG: teacherMePageBg,
     TEACHER_LOGIN_ICON: teacherLoginIconImg,
+    CLASS_LEADERBOARD: classLeaderboardIconImg,
   },
   DEFAULT_STATE: {
     WORRIED_CLIPBOARD: defaultStateWorriedClipboardImg,

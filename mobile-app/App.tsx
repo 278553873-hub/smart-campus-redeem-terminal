@@ -18,6 +18,7 @@ import RewardVerificationView from './views/reward-verification/RewardVerificati
 import FaceUpdateView from './views/face-update/FaceUpdateView';
 import { BankPasswordView } from './views/bank-password/BankPasswordView';
 import HomeworkEntryView from './views/HomeworkEntryView';
+import HomeworkBatchImportView from './views/HomeworkBatchImportView';
 import StudentBatchEditView from './views/StudentBatchEditView';
 import TeacherProfileEditView from './views/TeacherProfileEditView';
 import StudentBasicEditView from './views/StudentBasicEditView';
@@ -109,7 +110,16 @@ import {
 import { CURRENT_PRINCIPAL_TERM } from './data/principalTermReport';
 import { canManagePersonalClasses, canTeacherSpaceRecordClass, getHeadteacherAssistantScopes } from './domain/teacherSpaceAccess';
 import { useReportGenerationTask } from './hooks/useReportGenerationTask';
-import { summarizeStudentPerformance } from './domain/studentPerformance';
+import { getStudentLevelNetScore, summarizeStudentPerformance } from './domain/studentPerformance';
+import {
+    buildRosterVersion,
+    getCurrentRosterVersions,
+    getHomeworkConflict,
+    type HomeworkAssignment,
+    type HomeworkImportDraft,
+    type HomeworkRosterVersion,
+} from './domain/homework';
+import { createDemoHomeworkAssignments } from './data/homeworkDemoData';
 
 const ClassReportView = lazy(() => import('./views/ClassReportView'));
 const TermReportView = lazy(() => import('./views/TermReportView'));
@@ -173,7 +183,7 @@ const TEACHER_SPACE_OPTIONS: TeacherSpaceOption[] = ([
     { id: 'personal', title: '我创建的班级', type: 'personal', role: 'owner' },
     { id: 'collab-li', title: '李明老师的班级', type: 'collaboration', role: 'collaborator' },
     { id: 'school-qizhong', title: '成都七中初中附属小学', type: 'school', role: 'homeroomTeacher', classLeaderboardSettlementCycle: 'week', enabledManagementTools: [], headteacherAssistantEnabled: true, evaluationScopes: ['class'] },
-    { id: 'school-star', title: '星河实验小学', type: 'school', role: 'leader', classLeaderboardSettlementCycle: 'week', enabledManagementTools: ['schoolReport', 'moralEducationCockpit', 'weeklyDutySchedule', 'termReport', 'principalAssistant'], headteacherAssistantEnabled: true, evaluationScopes: ['student', 'class'] },
+    { id: 'school-star', title: '星河实验小学', type: 'school', role: 'leader', classLeaderboardSettlementCycle: 'week', enabledManagementTools: ['schoolReport', 'moralEducationCockpit', 'termReport', 'principalAssistant'], headteacherAssistantEnabled: true, evaluationScopes: ['student', 'class'], homeworkAiEnabled: true, homeworkOperator: true },
     { id: 'school-qinghe', title: '青禾实验小学', type: 'school', role: 'homeroomTeacher', enabledManagementTools: [], headteacherAssistantEnabled: true, evaluationScopes: ['student'] },
 ] satisfies TeacherSpaceOption[]).map(space => ({
     ...space,
@@ -267,8 +277,10 @@ const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
     departmentId: 'student-development',
     departmentName: '学发中心',
     teachingAssignments: [
-        ...createTeachingAssignments(['c_2025_1', 'c_2025_2', 'c_2025_3', 'c_2025_4', 'c_2025_5', 'c_2025_6', 'c_2025_7'], '体育'),
+        ...createTeachingAssignments(['c_2025_2', 'c_2025_3', 'c_2025_4', 'c_2025_5', 'c_2025_6', 'c_2025_7'], '体育'),
         ...createTeachingAssignments(['c_2024_1', 'c_2024_2', 'c_2024_3', 'c_2024_4', 'c_2024_5', 'c_2024_6', 'c_2024_7', 'c_2024_8', 'c_2024_9', 'c_2024_10'], '体育'),
+        ...createTeachingAssignments(['c_2025_1'], '语文'),
+        ...createTeachingAssignments(['c_2025_1'], '书法'),
     ],
     homeroomClassIds: ['c_2025_4', 'c_2025_1', 'c_2024_2', 'c_2025_7'],
     gradeLeaderGrades: ['2025级'],
@@ -319,7 +331,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_info' | 'class_detail' | 'class_report' | 'student_team_detail' | 'student_team_editor' | 'student_batch_edit' | 'class_archive_batch' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'class_list' | 'class_info' | 'class_detail' | 'class_report' | 'student_team_detail' | 'student_team_editor' | 'student_batch_edit' | 'class_archive_batch' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
 
 const PRINCIPAL_REPORT_VIEWS: ViewState[] = [
     'principal_weekly_report',
@@ -350,6 +362,7 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
     'face_update',
     'bank_password',
     'homework_entry',
+    'homework_batch_import',
     'student_detail',
     'student_archive',
     'student_body_measurements',
@@ -379,7 +392,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'record_input') return 0;
         if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'class_report' || view === 'student_team_detail' || view === 'student_team_editor' || view === 'student_batch_edit' || view === 'class_archive_batch' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
-        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'weekly_duty_schedule' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
+        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'weekly_duty_schedule' || view === 'homework_batch_import' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
         return 0;
     };
     const activeIndex = getActiveTabIndex(currentView);
@@ -393,6 +406,44 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const [studentOverrides, setStudentOverrides] = useState<Record<string, Student>>({});
     const [classOverrides, setClassOverrides] = useState<Record<string, ClassInfo>>({});
     const classes = MOCK_CLASSES.map(classInfo => classOverrides[classInfo.id] ?? classInfo);
+    const [homeworkRosterVersions] = useState<HomeworkRosterVersion[]>(() => (
+        MOCK_CLASSES.map(classInfo => buildRosterVersion({
+            schoolId: DEFAULT_TEACHER_SPACE_ID,
+            schoolName: '星河实验小学',
+            classInfo,
+            students: GET_MOCK_STUDENTS_FOR_CLASS(classInfo.id),
+        }))
+    ));
+    const [homeworkAssignments, setHomeworkAssignments] = useState<HomeworkAssignment[]>(() => (
+        [
+            ...createDemoHomeworkAssignments({
+                schoolId: DEFAULT_TEACHER_SPACE_ID,
+                schoolName: '星河实验小学',
+                classInfo: MOCK_CLASSES[0],
+                students: GET_MOCK_STUDENTS_FOR_CLASS(MOCK_CLASSES[0].id),
+                teacherName: DEFAULT_TEACHER_PROFILE.name,
+                subject: '语文',
+                entries: [
+                    { title: '分数应用题', dayOffset: -1 },
+                    { title: '课文背诵', dayOffset: -3 },
+                    { title: '第二单元订正', dayOffset: -7 },
+                ],
+            }),
+            ...createDemoHomeworkAssignments({
+                schoolId: DEFAULT_TEACHER_SPACE_ID,
+                schoolName: '星河实验小学',
+                classInfo: MOCK_CLASSES[0],
+                students: GET_MOCK_STUDENTS_FOR_CLASS(MOCK_CLASSES[0].id),
+                teacherName: DEFAULT_TEACHER_PROFILE.name,
+                subject: '书法',
+                entries: [
+                    { title: '硬笔临摹', dayOffset: -2 },
+                    { title: '偏旁部首练习', dayOffset: -5 },
+                ],
+            }),
+        ]
+    ));
+    const [homeworkImportTasks, setHomeworkImportTasks] = useState<HomeworkImportDraft[]>([]);
     const [studentTeams, setStudentTeams] = useState<SchoolStudentTeam[]>(INITIAL_SCHOOL_STUDENT_TEAMS);
     const [selectedStudentTeamId, setSelectedStudentTeamId] = useState('team-basketball');
     const [editingStudentTeamId, setEditingStudentTeamId] = useState<string | null>(null);
@@ -696,7 +747,20 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const getMergedStudentsForClass = (classId: string) => {
         const sourceClassInfo = MOCK_CLASSES.find(classInfo => classInfo.id === classId);
         const currentClassInfo = classes.find(classInfo => classInfo.id === classId) ?? sourceClassInfo;
-        return GET_MOCK_STUDENTS_FOR_CLASS(classId).map(student => {
+        const importedRoster = getCurrentRosterVersions(homeworkRosterVersions)
+            .find(roster => roster.classId === classId && (roster.version > 1 || !sourceClassInfo));
+        const sourceStudents: Student[] = importedRoster
+            ? importedRoster.students.map((student, index) => ({
+                id: student.studentId,
+                studentNo: student.studentNo,
+                name: student.name,
+                gender: index % 2 === 0 ? 'male' : 'female',
+                grade: currentClassInfo?.gradeLevel ?? importedRoster.className.split('级')[0],
+                class: currentClassInfo?.name ?? importedRoster.className,
+                status: student.status,
+            }))
+            : GET_MOCK_STUDENTS_FOR_CLASS(classId);
+        return sourceStudents.map(student => {
             const mergedStudent = studentOverrides[student.id] ?? student;
             if (!sourceClassInfo || !currentClassInfo || mergedStudent.class !== sourceClassInfo.name) return mergedStudent;
             return {
@@ -767,10 +831,9 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
         goBack();
     };
 
-    const handleSaveStudentBasicInfo = (student: Student) => {
+    const handleChangeStudentBasicInfo = (student: Student) => {
         setStudentOverrides(prev => ({ ...prev, [student.id]: student }));
         setSelectedStudent(student);
-        goBack();
     };
 
     const handleRestoreStudentStatus = (student: Student) => {
@@ -817,6 +880,45 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const handleViewHomeworkEntry = (classId: string) => {
         setSelectedClassId(classId);
         navigateTo('homework_entry');
+    };
+
+    const handleSaveHomeworkAssignment = (assignment: HomeworkAssignment) => {
+        setHomeworkAssignments(current => {
+            const exists = current.some(item => item.id === assignment.id);
+            return exists
+                ? current.map(item => item.id === assignment.id ? assignment : item)
+                : [assignment, ...current];
+        });
+    };
+
+    const handleSubmitRecognizedHomework = (recognizedAssignments: HomeworkAssignment[]) => {
+        let saved = 0;
+        let skipped = 0;
+        const next = [...homeworkAssignments];
+        recognizedAssignments.forEach(assignment => {
+            if (getHomeworkConflict(assignment, next) !== 'none') {
+                skipped += 1;
+                return;
+            }
+            next.unshift(assignment);
+            saved += 1;
+        });
+        setHomeworkAssignments(next);
+        return { saved, skipped };
+    };
+
+    const handleSyncRecognizedHomework = (recognizedAssignments: HomeworkAssignment[]) => {
+        const recognizedIds = new Set(recognizedAssignments.map(assignment => assignment.id));
+        setHomeworkAssignments(current => [
+            ...recognizedAssignments,
+            ...current.filter(assignment => !recognizedIds.has(assignment.id)),
+        ]);
+    };
+
+    const handleDeleteHomeworkImportTask = (task: HomeworkImportDraft) => {
+        const assignmentIds = new Set(task.assignments.map(assignment => assignment.id));
+        setHomeworkAssignments(current => current.filter(assignment => !assignmentIds.has(assignment.id)));
+        setHomeworkImportTasks(current => current.filter(item => item.id !== task.id));
     };
 
     const handleViewStudentBatchEdit = (classId: string) => {
@@ -1178,6 +1280,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
             case 'questionnaire': return '问卷采集';
             case 'archive_design': return '档案设计';
             case 'weekly_duty_schedule': return '值周安排';
+            case 'homework_batch_import': return '作业录入';
             case 'ai_headteacher_assistant':
             case 'ai_headteacher_assistant_v2': return '班主任助理';
             case 'weekly_action_advice': return '本周行动建议';
@@ -1307,7 +1410,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
     const primaryTabViewKey = showTabBar ? 'teacher-primary-tabs' : currentView;
     const pageTransitionClass = showTabBar ? '' : 'animate-page-enter';
     const isHeadteacherAssistantView = currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2';
-    const viewHandlesScroll = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'student_team_detail', 'student_team_editor', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'class_archive_batch', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'face_update', 'bank_password', 'homework_entry', 'questionnaire', 'archive_design', 'weekly_duty_schedule'].includes(currentView) || isHeadteacherAssistantView;
+    const viewHandlesScroll = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'student_team_detail', 'student_team_editor', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'class_archive_batch', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule'].includes(currentView) || isHeadteacherAssistantView;
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView);
@@ -1398,7 +1501,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                             <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-11 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />
                         )}
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_team_detail' && currentView !== 'student_team_editor' && currentView !== 'student_batch_edit' && currentView !== 'class_archive_batch' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_team_detail' && currentView !== 'student_team_editor' && currentView !== 'student_batch_edit' && currentView !== 'class_archive_batch' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -1505,6 +1608,16 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                         Object.entries(evaluationRecordsByStudentId).map(([studentId, records]) => [
                                             studentId,
                                             summarizeStudentPerformance(records),
+                                        ]),
+                                    )}
+                                    levelNetScoreByStudentId={Object.fromEntries(
+                                        Object.entries(evaluationRecordsByStudentId).map(([studentId, records]) => [
+                                            studentId,
+                                            getStudentLevelNetScore(
+                                                records,
+                                                classes.find(classInfo => classInfo.id === selectedClassId)?.studentLevelDisplayMode ?? 'term',
+                                                CURRENT_PRINCIPAL_TERM,
+                                            ),
                                         ]),
                                     )}
                                 />
@@ -1625,8 +1738,14 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                             {currentView === 'homework_entry' && selectedClassId && (
                                 <HomeworkEntryView
+                                    schoolId={activeTeacherSpace.id}
+                                    schoolName={activeTeacherSpace.title}
                                     classInfo={classes.find(c => c.id === selectedClassId)!}
                                     students={getMergedStudentsForClass(selectedClassId).filter(student => (student.status ?? 'active') === 'active')}
+                                    subjects={Array.from(new Set(teacherProfile.teachingAssignments.filter(item => item.classId === selectedClassId).map(item => item.subject)))}
+                                    teacherName={teacherProfile.name}
+                                    assignments={homeworkAssignments}
+                                    onSaveAssignment={handleSaveHomeworkAssignment}
                                     onBack={goBack}
                                 />
                             )}
@@ -1703,7 +1822,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     student={activeStudent}
                                     classes={classes}
                                     onBack={goBack}
-                                    onSave={handleSaveStudentBasicInfo}
+                                    onChange={handleChangeStudentBasicInfo}
                                 />
                             )}
 
@@ -1736,6 +1855,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
                                     onViewLeaderReport={handleViewLeaderReport}
                                     onOpenMoralEducationCockpit={() => navigateTo('moral_education_cockpit')}
                                     onOpenWeeklyDutySchedule={() => navigateTo('weekly_duty_schedule')}
+                                    onOpenHomeworkBatchImport={() => navigateTo('homework_batch_import')}
                                     onOpenSettings={() => navigateTo('mine_settings')}
                                     onOpenSubjectManagement={() => navigateTo('subject_management')}
                                     onOpenDepartmentManagement={() => navigateTo('department_management')}
@@ -1753,6 +1873,22 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true }) => {
 
                             {currentView === 'weekly_duty_schedule' && (
                                 <WeeklyDutyScheduleView onBack={goBack} />
+                            )}
+
+                            {currentView === 'homework_batch_import' && (
+                                <HomeworkBatchImportView
+                                    schoolId={activeTeacherSpace.id}
+                                    schoolName={activeTeacherSpace.title}
+                                    operatorName={teacherProfile.name}
+                                    rosters={homeworkRosterVersions.filter(roster => roster.schoolId === activeTeacherSpace.id)}
+                                    assignments={homeworkAssignments.filter(assignment => assignment.schoolId === activeTeacherSpace.id)}
+                                    tasks={homeworkImportTasks}
+                                    onChangeTasks={setHomeworkImportTasks}
+                                    onSubmitAssignments={handleSubmitRecognizedHomework}
+                                    onSyncAssignments={handleSyncRecognizedHomework}
+                                    onDeleteTask={handleDeleteHomeworkImportTask}
+                                    onBack={goBack}
+                                />
                             )}
 
                             {currentView === 'teacher_profile_edit' && (

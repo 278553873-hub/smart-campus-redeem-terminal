@@ -42,6 +42,9 @@ export const CreativityIcon = () => <Lightbulb className="w-5 h-5 text-purple-50
 
 // UI Icons
 export const StarIcon = ({ className }: { className?: string }) => <Star className={className} />;
+export const BookOpenIcon = ({ className }: { className?: string }) => <BookOpen className={className} />;
+export const SproutIcon = ({ className }: { className?: string }) => <Sprout className={className} />;
+export const LightbulbIcon = ({ className }: { className?: string }) => <Lightbulb className={className} />;
 export const TrophyIcon = ({ className }: { className?: string }) => <Trophy className={className || "w-4 h-4"} />;
 export const AwardIcon = ({ className }: { className?: string }) => <Award className={className || "w-4 h-4"} />;
 export const GrowthIcon = () => <TrendingUp className="w-4 h-4" />;

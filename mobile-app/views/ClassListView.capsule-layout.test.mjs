@@ -4,6 +4,8 @@ import fs from 'node:fs';
 const classListSource = fs.readFileSync(new URL('./ClassListView.tsx', import.meta.url), 'utf8');
 const phoneMockupSource = fs.readFileSync(new URL('../../components/PhoneMockup.tsx', import.meta.url), 'utf8');
 const guidelineSource = fs.readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', import.meta.url), 'utf8');
+const floatingImageButtonSource = fs.readFileSync(new URL('../components/ui/MobileFloatingImageButton.tsx', import.meta.url), 'utf8');
+const teacherMobileTokensSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 
 assert.ok(
   classListSource.includes('[padding-right:var(--mini-program-capsule-right-inset,0px)]'),
@@ -25,18 +27,34 @@ assert.ok(
   '班级页不得继续通过 12 像素补白将标题栏控件整体下移。',
 );
 assert.ok(
-  classListSource.includes("grid-cols-[minmax(72px,1fr)_auto_auto]"),
-  '已开通排行榜的学校来源应在筛选行展示三个紧凑控件。',
+  classListSource.includes('grid grid-cols-[minmax(0,1fr)_auto] gap-2'),
+  '学校来源的筛选行应只保留年级与任教班级两个高频控件。',
 );
 assert.ok(classListSource.includes('任教班级'), '筛选文案应精简为“任教班级”。');
-assert.ok(classListSource.includes('<TrophyIcon className="h-4 w-4" />\n                                    排行榜'), '排行榜入口应同时展示奖杯图标和文字。');
-assert.ok(!classListSource.includes('\n                                班级排行榜\n'), '顶部不应继续展示“班级排行榜”长文案按钮。');
+assert.ok(classListSource.includes('<MobileFloatingImageButton'), '排行榜应使用公共悬浮图片按钮。');
+assert.ok(classListSource.includes('imageSrc={ASSETS.MANAGEMENT.CLASS_LEADERBOARD}'), '排行榜悬浮入口应使用独立图片素材。');
+assert.ok(classListSource.includes('label="查看班级排行榜"'), '排行榜入口必须保留完整读屏名称。');
+assert.ok(classListSource.includes('visibleLabel="班级排行榜"'), '排行榜入口必须展示由页面渲染的清晰文字。');
+assert.ok(classListSource.includes('imageMode="full-bleed"'), '完整圆形排行榜图片必须铺满入口，不得再次嵌入空白圆框。');
+assert.ok(classListSource.includes('placement="middle-right"'), '排行榜悬浮入口应位于班级页中部靠右。');
+assert.ok(classListSource.includes('pb-[calc(var(--tm-floating-image-button-height)'), '班级列表必须为放大后的悬浮入口预留滚动空间。');
+assert.ok(floatingImageButtonSource.includes('visibleLabel?: string;'), '公共悬浮图片按钮应提供可选的可见文字能力。');
+assert.ok(floatingImageButtonSource.includes("imageMode?: 'contained' | 'full-bleed';"), '公共悬浮图片按钮应区分留白图标与完整圆形图片。');
+assert.ok(floatingImageButtonSource.includes("? 'h-full w-full object-cover'"), '完整圆形图片必须铺满圆形展示区。');
+assert.ok(floatingImageButtonSource.includes("placement?: 'middle-right' | 'above-tab-bar' | 'safe-bottom';"), '公共悬浮图片按钮应通过位置变体管理页面锚点。');
+assert.ok(floatingImageButtonSource.includes("isMiddleRight ? 'top-1/2 -translate-y-1/2' : ''"), '中部靠右变体应相对页面垂直居中。');
+assert.ok(floatingImageButtonSource.includes('border-[length:var(--tm-floating-image-button-border-width)]'), '带文字的悬浮图片按钮应消费组件边框 Token。');
+assert.ok(floatingImageButtonSource.includes('[box-shadow:var(--tm-floating-image-button-shadow)]'), '带文字的悬浮图片按钮应消费组件阴影 Token。');
+assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-width': '68px'"), '排行榜悬浮入口宽度应缩放为上一版的约 80%。');
+assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-height': '72px'"), '排行榜悬浮入口高度应缩放为上一版的约 80%。');
+assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-circle-size': '68px'"), '排行榜图标主体应使用圆形组件尺寸 Token。');
+assert.ok(!classListSource.includes('TrophyIcon'), '班级列表不应继续使用奖杯线性图标。');
 const toolbarStart = classListSource.indexOf('{isSchoolSpace && (');
 const toolbarEnd = classListSource.indexOf('{visibleClasses.map(renderClassCard)}');
 const toolbarSource = classListSource.slice(toolbarStart, toolbarEnd);
 assert.ok(toolbarStart >= 0 && toolbarEnd > toolbarStart, '应能识别学校版筛选工具行。');
 assert.ok(!toolbarSource.includes('ring-[var(--tm-border-subtle)]'), '年级、任教班级与排行榜不应使用常驻外边框。');
-assert.ok(toolbarSource.match(/\[box-shadow:var\(--tm-shadow-control\)\]/g)?.length >= 3, '三个筛选工具应统一使用控件阴影 Token。');
+assert.ok(toolbarSource.match(/\[box-shadow:var\(--tm-shadow-control\)\]/g)?.length >= 2, '两个筛选工具应统一使用控件阴影 Token。');
 
 assert.ok(phoneMockupSource.includes("'--mini-program-capsule-right-inset'"), '演示手机壳必须注入胶囊安全区变量。');
 assert.ok(phoneMockupSource.includes("'--mini-program-title-bar-height'"), '演示手机壳必须注入微信标题栏高度变量。');

@@ -1,12 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Student, ClassInfo, GroupPlan, StudentGroup } from '../types';
+import { Student, ClassInfo, GroupPlan, StudentGroup, type StudentGroupAvatarKey } from '../types';
 import { GET_MOCK_GROUP_PLANS_FOR_CLASS } from '../constants';
-import { BackIcon, MaleIcon, FemaleIcon, CheckIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, PlusIcon, MenuIcon, EditIcon, DeleteIcon } from '../components/Icons';
+import { BackIcon, MaleIcon, FemaleIcon, CheckIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, ChevronRightIcon, PlusIcon, MenuIcon, EditIcon, DeleteIcon, CloseIcon } from '../components/Icons';
 import { ASSETS } from '../assets/images';
+import {
+    getAvailableStudentGroupAvatarKey,
+    getStudentGroupAvatarOption,
+    studentGroupAvatarKeys,
+    studentGroupAvatarOptions,
+} from '../assets/groupAvatarCatalog';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSearchInput from '../components/ui/MobileSearchInput';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
+import MobileToast from '../components/ui/MobileToast';
+import StudentCompactSelectGrid, { type StudentCompactSelectSection } from '../components/student/StudentCompactSelectGrid';
 import StudentPerformanceAvatar from '../components/student-performance/StudentPerformanceAvatar';
 import {
     StudentPerformanceCounts,
@@ -33,6 +41,7 @@ interface ClassDetailViewProps {
     onBack?: () => void;
     onGroupingEditorChange?: (open: boolean) => void;
     performanceByStudentId?: Record<string, StudentPerformanceSummary>;
+    levelNetScoreByStudentId?: Record<string, number>;
 }
 
 const getClassRosterNumber = (studentNo: string) => {
@@ -52,6 +61,170 @@ const getAvatarStyle = (student: Student, index: number) => {
     return avatarTones[index % avatarTones.length];
 };
 
+const GroupAvatar: React.FC<{ avatarKey?: StudentGroupAvatarKey; index?: number; size?: 'card' | 'sheet' }> = ({ avatarKey, index = 0, size = 'card' }) => {
+    const avatar = getStudentGroupAvatarOption(avatarKey, index);
+    return (
+        <span className={`flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] ${size === 'sheet' ? 'h-14 w-14' : 'h-11 w-11'}`} aria-hidden="true">
+            <img src={avatar.src} alt="" className="h-full w-full object-cover" decoding="async" />
+        </span>
+    );
+};
+
+const getGroupMemberSummary = (members: Student[]) => {
+    if (members.length === 0) return '暂无学生';
+    const names = members.slice(0, 3).map(student => student.name).join('、');
+    return members.length > 3
+        ? `${names}等${members.length}名学生`
+        : `${names}，共${members.length}名学生`;
+};
+
+const getGroupedStudentSelectionSections = (
+    visibleStudents: Student[],
+    membershipByStudentId: Map<string, StudentGroup>,
+    groups: StudentGroup[],
+): StudentCompactSelectSection[] => {
+    const sections: StudentCompactSelectSection[] = [];
+    const ungroupedStudents = visibleStudents.filter(student => !membershipByStudentId.has(student.id));
+    if (ungroupedStudents.length > 0) sections.push({ id: 'ungrouped', label: '未分组', students: ungroupedStudents });
+
+    groups.forEach(group => {
+        const groupStudents = visibleStudents.filter(student => membershipByStudentId.get(student.id)?.id === group.id);
+        if (groupStudents.length > 0) sections.push({ id: group.id, label: group.name, students: groupStudents });
+    });
+    return sections;
+};
+
+interface StudentRosterCardProps {
+    student: Student;
+    index: number;
+    performance: StudentPerformanceSummary;
+    levelNetScore?: number;
+    showSelection: boolean;
+    selected: boolean;
+    selectionStatus?: string;
+    onClick: () => void;
+}
+
+const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
+    student,
+    index,
+    performance,
+    levelNetScore,
+    showSelection,
+    selected,
+    selectionStatus,
+    onClick,
+}) => {
+    const [bgClass, textClass, borderClass] = getAvatarStyle(student, index);
+    const studentNo = student.studentNo || student.id;
+    const rosterNumber = getClassRosterNumber(studentNo);
+    const level = getStudentPerformanceLevel(levelNetScore ?? performance.netScore);
+
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-pressed={showSelection ? selected : undefined}
+            aria-label={`${student.name}，学号${studentNo}，等级分值${levelNetScore ?? performance.netScore}分，被表扬${performance.praiseCount}次，被批评${performance.criticismCount}次${selectionStatus ? `，${selectionStatus}` : ''}`}
+            className="relative flex h-[120px] w-full min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-1 text-center [box-shadow:var(--tm-shadow-card)] transition-[transform,box-shadow] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transition-none"
+        >
+            {showSelection && (
+                <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`}>
+                    {selected
+                        ? <CheckIcon className="h-3 w-3 text-white [stroke-width:3]" />
+                        : <CircleIcon className="h-[18px] w-[18px] fill-white text-[var(--tm-border-subtle)]" />
+                    }
+                </span>
+            )}
+            <StudentPerformanceLevelIcons level={level} />
+            <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
+                <StudentPerformanceAvatar
+                    compact
+                    student={{ ...student, avatar: student.avatar || (student.gender === 'female' ? ASSETS.AVATAR.STUDENT_GIRL_DEFAULT : undefined) }}
+                    fallbackText={student.name.slice(-1)}
+                    fallbackClassName={`${bgClass} ${textClass} border ${borderClass}`}
+                    level={level}
+                />
+            </span>
+            <StudentPerformanceCounts summary={performance} />
+            <span className="flex h-4 w-full shrink-0 items-center justify-center px-0.5">
+                <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-0.5">
+                    <span
+                        aria-label={`学号${studentNo}`}
+                        className="flex h-[14px] w-4 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[9px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]"
+                    >
+                        {rosterNumber}
+                    </span>
+                    <span className="block min-w-0 max-w-[52px] truncate text-[13px] font-semibold leading-4 text-[var(--tm-text-primary)]">
+                        {student.name}
+                    </span>
+                </span>
+            </span>
+        </button>
+    );
+};
+
+interface ClassDetailTabToolbarProps {
+    children: React.ReactNode;
+    rowClassName?: string;
+}
+
+const ClassDetailTabToolbar: React.FC<ClassDetailTabToolbarProps> = ({ children, rowClassName = '' }) => (
+    <div className="class-detail-tab-toolbar sticky top-0 z-10 shrink-0 bg-[var(--tm-bg-surface)] px-4 py-1">
+        <div className={`flex min-h-11 items-center ${rowClassName}`}>{children}</div>
+    </div>
+);
+
+interface ClassDetailMultiSelectButtonProps {
+    active: boolean;
+    onClick: () => void;
+}
+
+const ClassDetailMultiSelectButton: React.FC<ClassDetailMultiSelectButtonProps> = ({ active, onClick }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={`min-h-11 shrink-0 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold transition active:scale-95 ${active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-primary)]'}`}
+    >
+        {active ? '取消' : '多选'}
+    </button>
+);
+
+interface OnlyUngroupedFilterProps {
+    checked: boolean;
+    ungroupedCount: number;
+    onChange: (checked: boolean) => void;
+}
+
+const OnlyUngroupedFilter: React.FC<OnlyUngroupedFilterProps> = ({ checked, ungroupedCount, onChange }) => (
+    <label className="flex min-h-11 select-none items-center gap-2 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-primary)]">
+        <input
+            type="checkbox"
+            checked={checked}
+            onChange={event => onChange(event.target.checked)}
+            className="sr-only"
+        />
+        <span
+            aria-hidden="true"
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] transition-colors [transition-duration:var(--tm-duration-fast)] ${checked ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-muted)]'}`}
+        >
+            {checked && <CheckIcon className="h-3.5 w-3.5 text-[var(--tm-text-inverse)] [stroke-width:3]" />}
+        </span>
+        <span>仅看未分组</span>
+        {checked && (
+            <span className="ml-auto text-[length:var(--tm-font-size-meta)] font-normal text-[var(--tm-text-secondary)]">{ungroupedCount}人</span>
+        )}
+    </label>
+);
+
+const StudentSelectionMoveNotice: React.FC<{ message: string }> = ({ message }) => (
+    message ? (
+        <div className="pointer-events-none absolute bottom-[64px] left-1/2 z-30 w-max max-w-[calc(100%-16px)] -translate-x-1/2 rounded-full bg-[var(--tm-text-primary)] px-3.5 py-2 text-center text-[length:var(--tm-font-size-compact)] font-semibold leading-5 text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]" role="status" aria-live="polite">
+            {message}
+        </div>
+    ) : null
+);
+
 const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     classInfo,
     students,
@@ -64,6 +237,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     onBack,
     onGroupingEditorChange,
     performanceByStudentId = {},
+    levelNetScoreByStudentId = {},
 }) => {
     const [activeView, setActiveView] = useState<'student' | 'group'>('student');
     const [searchQuery, setSearchQuery] = useState('');
@@ -72,14 +246,27 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     const [showGroupPlanSheet, setShowGroupPlanSheet] = useState(false);
     const [isGroupSelectionMode, setIsGroupSelectionMode] = useState(false);
     const [groupSelectionIds, setGroupSelectionIds] = useState<Set<string>>(new Set());
-    const [groupEditor, setGroupEditor] = useState<{ mode: 'create' | 'edit'; planId: string; name: string; groups: StudentGroup[] } | null>(null);
+    const [groupEditor, setGroupEditor] = useState<{ mode: 'create' | 'add-group'; planId: string; name: string; groups: StudentGroup[] } | null>(null);
     const [newGroupName, setNewGroupName] = useState('');
     const [showNewGroupNameSheet, setShowNewGroupNameSheet] = useState(false);
+    const [newStudentGroupName, setNewStudentGroupName] = useState('');
+    const [showNewStudentGroupNameSheet, setShowNewStudentGroupNameSheet] = useState(false);
+    const [addStudentGroupStep, setAddStudentGroupStep] = useState<'name' | 'members'>('name');
+    const [addGroupShowOnlyUngrouped, setAddGroupShowOnlyUngrouped] = useState(true);
     const [groupPlanActionTarget, setGroupPlanActionTarget] = useState<GroupPlan | null>(null);
     const [renameGroupPlanTarget, setRenameGroupPlanTarget] = useState<GroupPlan | null>(null);
     const [renameGroupPlanName, setRenameGroupPlanName] = useState('');
     const [deleteGroupPlanTarget, setDeleteGroupPlanTarget] = useState<GroupPlan | null>(null);
-    const [deleteDraftGroupTarget, setDeleteDraftGroupTarget] = useState<StudentGroup | null>(null);
+    const [groupDetailTargetId, setGroupDetailTargetId] = useState<string | null>(null);
+    const [groupDetailMode, setGroupDetailMode] = useState<'view' | 'adjust' | 'settings'>('view');
+    const [adjustStudentGroupMemberIds, setAdjustStudentGroupMemberIds] = useState<Set<string>>(new Set());
+    const [adjustStudentGroupSearchQuery, setAdjustStudentGroupSearchQuery] = useState('');
+    const [adjustStudentGroupShowOnlyUngrouped, setAdjustStudentGroupShowOnlyUngrouped] = useState(true);
+    const [renameStudentGroupName, setRenameStudentGroupName] = useState('');
+    const [studentGroupAvatarKey, setStudentGroupAvatarKey] = useState<StudentGroupAvatarKey>(studentGroupAvatarKeys[0]);
+    const [dissolveStudentGroupTargetId, setDissolveStudentGroupTargetId] = useState<string | null>(null);
+    const [groupingToastMessage, setGroupingToastMessage] = useState('');
+    const [studentSelectionMoveNotice, setStudentSelectionMoveNotice] = useState('');
     const [showDiscardGroupingConfirm, setShowDiscardGroupingConfirm] = useState(false);
     const [draftActiveGroupId, setDraftActiveGroupId] = useState('');
     const [draftSearchQuery, setDraftSearchQuery] = useState('');
@@ -99,15 +286,40 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         setIsGroupSelectionMode(false);
         setGroupSelectionIds(new Set());
         setGroupEditor(null);
+        setNewGroupName('');
         setShowNewGroupNameSheet(false);
+        setNewStudentGroupName('');
+        setShowNewStudentGroupNameSheet(false);
+        setAddStudentGroupStep('name');
+        setAddGroupShowOnlyUngrouped(true);
         setGroupPlanActionTarget(null);
         setRenameGroupPlanTarget(null);
         setDeleteGroupPlanTarget(null);
-        setDeleteDraftGroupTarget(null);
+        setGroupDetailTargetId(null);
+        setGroupDetailMode('view');
+        setAdjustStudentGroupMemberIds(new Set());
+        setAdjustStudentGroupSearchQuery('');
+        setAdjustStudentGroupShowOnlyUngrouped(true);
+        setRenameStudentGroupName('');
+        setDissolveStudentGroupTargetId(null);
+        setGroupingToastMessage('');
+        setStudentSelectionMoveNotice('');
         setShowDiscardGroupingConfirm(false);
         setDraftSearchQuery('');
         setSearchQuery('');
     }, [activeStudentKey, classInfo.id, currentTeacherName]);
+
+    useEffect(() => {
+        if (!groupingToastMessage) return undefined;
+        const timer = window.setTimeout(() => setGroupingToastMessage(''), 1800);
+        return () => window.clearTimeout(timer);
+    }, [groupingToastMessage]);
+
+    useEffect(() => {
+        if (!studentSelectionMoveNotice) return undefined;
+        const timer = window.setTimeout(() => setStudentSelectionMoveNotice(''), 1800);
+        return () => window.clearTimeout(timer);
+    }, [studentSelectionMoveNotice]);
 
     useEffect(() => {
         if (!activeGroupPlanId && groupPlans.length > 0) {
@@ -135,27 +347,82 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     ), [activeGroupPlanId, groupPlans, orderedGroupPlans]);
 
     const isActiveGroupPlanOwnedByCurrentTeacher = Boolean(activeGroupPlan && activeGroupPlan.ownerName === currentTeacherName);
+    const hasActiveStudentGroups = Boolean(activeGroupPlan?.groups.length);
 
     const studentById = useMemo(() => new Map(activeStudents.map(student => [student.id, student])), [activeStudents]);
 
-    const draftMembershipByStudentId = useMemo(() => {
-        const membership = new Map<string, string>();
-        groupEditor?.groups.forEach(group => group.memberIds.forEach(studentId => membership.set(studentId, group.id)));
+    const groupDetailTarget = activeGroupPlan?.groups.find(group => group.id === groupDetailTargetId) ?? null;
+    const groupDetailMembers = groupDetailTarget?.memberIds.map(id => studentById.get(id)).filter(Boolean) as Student[] | undefined;
+    const dissolveStudentGroupTarget = activeGroupPlan?.groups.find(group => group.id === dissolveStudentGroupTargetId) ?? null;
+
+    const activeGroupMembershipByStudentId = useMemo(() => {
+        const membership = new Map<string, StudentGroup>();
+        activeGroupPlan?.groups.forEach(group => group.memberIds.forEach(studentId => membership.set(studentId, group)));
         return membership;
-    }, [groupEditor]);
+    }, [activeGroupPlan]);
+
+    const activeGroupUngroupedCount = activeStudents.filter(student => !activeGroupMembershipByStudentId.has(student.id)).length;
+
+    const adjustStudentGroupVisibleStudents = useMemo(() => {
+        const normalizedQuery = adjustStudentGroupSearchQuery.trim().replace(/\s+/g, '').toLowerCase();
+        return activeStudents.filter(student => {
+            const assignedGroup = activeGroupMembershipByStudentId.get(student.id);
+            const isCurrentOrSelected = assignedGroup?.id === groupDetailTarget?.id || adjustStudentGroupMemberIds.has(student.id);
+            if (adjustStudentGroupShowOnlyUngrouped && assignedGroup && !isCurrentOrSelected) return false;
+            return !normalizedQuery
+                || student.name.includes(normalizedQuery)
+                || student.id.toLowerCase().includes(normalizedQuery)
+                || (student.studentNo || '').toLowerCase().includes(normalizedQuery);
+        });
+    }, [activeGroupMembershipByStudentId, activeStudents, adjustStudentGroupMemberIds, adjustStudentGroupSearchQuery, adjustStudentGroupShowOnlyUngrouped, groupDetailTarget?.id]);
+
+    const addGroupUngroupedStudentIds = useMemo(() => {
+        if (groupEditor?.mode !== 'add-group') return null;
+        const sourcePlan = groupPlans.find(plan => plan.id === groupEditor.planId);
+        const assignedIds = new Set(sourcePlan?.groups.flatMap(group => group.memberIds) ?? []);
+        return new Set(activeStudents.filter(student => !assignedIds.has(student.id)).map(student => student.id));
+    }, [activeStudents, groupEditor?.mode, groupEditor?.planId, groupPlans]);
+
+    const draftActiveGroup = groupEditor?.groups.find(group => group.id === draftActiveGroupId) || groupEditor?.groups[0] || null;
+
+    const addGroupMovedStudentCount = useMemo(() => (
+        groupEditor?.mode === 'add-group'
+            ? (draftActiveGroup?.memberIds.filter(studentId => activeGroupMembershipByStudentId.has(studentId)).length ?? 0)
+            : 0
+    ), [activeGroupMembershipByStudentId, draftActiveGroup?.memberIds, groupEditor?.mode]);
+
+    const adjustStudentGroupMovedStudentCount = useMemo(() => (
+        groupDetailTarget
+            ? Array.from(adjustStudentGroupMemberIds).filter(studentId => {
+                const assignedGroup = activeGroupMembershipByStudentId.get(studentId);
+                return assignedGroup && assignedGroup.id !== groupDetailTarget.id;
+            }).length
+            : 0
+    ), [activeGroupMembershipByStudentId, adjustStudentGroupMemberIds, groupDetailTarget]);
 
     const draftVisibleStudents = useMemo(() => {
         const normalizedQuery = draftSearchQuery.trim().replace(/\s+/g, '').toLowerCase();
-        return activeStudents.filter(student => (
-            !normalizedQuery
-            || student.name.includes(normalizedQuery)
-            || student.id.toLowerCase().includes(normalizedQuery)
-            || (student.studentNo || '').toLowerCase().includes(normalizedQuery)
-        ));
-    }, [activeStudents, draftSearchQuery]);
+        return activeStudents.filter(student => {
+            const isSelected = draftActiveGroup?.memberIds.includes(student.id) ?? false;
+            if (groupEditor?.mode === 'add-group' && addGroupShowOnlyUngrouped && !addGroupUngroupedStudentIds?.has(student.id) && !isSelected) return false;
+            return !normalizedQuery
+                || student.name.includes(normalizedQuery)
+                || student.id.toLowerCase().includes(normalizedQuery)
+                || (student.studentNo || '').toLowerCase().includes(normalizedQuery);
+        });
+    }, [activeStudents, addGroupShowOnlyUngrouped, addGroupUngroupedStudentIds, draftActiveGroup?.memberIds, draftSearchQuery, groupEditor?.mode]);
 
-    const draftActiveGroup = groupEditor?.groups.find(group => group.id === draftActiveGroupId) || groupEditor?.groups[0] || null;
-    const draftUnassignedCount = activeStudents.filter(student => !draftMembershipByStudentId.has(student.id)).length;
+    const draftStudentSelectionSections = useMemo<StudentCompactSelectSection[]>(() => (
+        groupEditor?.mode === 'add-group' && !addGroupShowOnlyUngrouped
+            ? getGroupedStudentSelectionSections(draftVisibleStudents, activeGroupMembershipByStudentId, activeGroupPlan?.groups ?? [])
+            : [{ id: 'visible-students', students: draftVisibleStudents }]
+    ), [activeGroupMembershipByStudentId, activeGroupPlan?.groups, addGroupShowOnlyUngrouped, draftVisibleStudents, groupEditor?.mode]);
+
+    const adjustStudentSelectionSections = useMemo<StudentCompactSelectSection[]>(() => (
+        !adjustStudentGroupShowOnlyUngrouped
+            ? getGroupedStudentSelectionSections(adjustStudentGroupVisibleStudents, activeGroupMembershipByStudentId, activeGroupPlan?.groups ?? [])
+            : [{ id: 'visible-students', students: adjustStudentGroupVisibleStudents }]
+    ), [activeGroupMembershipByStudentId, activeGroupPlan?.groups, adjustStudentGroupShowOnlyUngrouped, adjustStudentGroupVisibleStudents]);
 
     const visibleStudents = useMemo(() => {
         const normalizedSearchQuery = searchQuery.trim().replace(/\s+/g, '').toLowerCase();
@@ -251,48 +518,79 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         onSelectionChange(new Set(memberIds));
     };
 
-    const createDraftGroups = (planId: string) => ([{
+    const createDraftGroups = (planId: string, groupName = '第1组') => ([{
         id: `${planId}-group-1-${Date.now()}`,
-        name: '第1组',
+        name: groupName,
         memberIds: [],
+        avatarKey: studentGroupAvatarKeys[0],
     }]);
 
     const handleStartFirstGrouping = () => {
-        const planId = `${classInfo.id}-custom-plan-${Date.now()}`;
-        const groups = createDraftGroups(planId);
-        setDraftActiveGroupId(groups[0].id);
+        let targetPlan = activeGroupPlan?.ownerName === currentTeacherName ? activeGroupPlan : null;
+        if (!targetPlan) {
+            const nextPlan: GroupPlan = {
+                id: `${classInfo.id}-custom-plan-${Date.now()}`,
+                name: '常用分组',
+                subject: '自定义',
+                ownerName: currentTeacherName,
+                groups: [],
+            };
+            targetPlan = nextPlan;
+            setGroupPlans(current => [...current, nextPlan]);
+        }
+        setActiveGroupPlanId(targetPlan.id);
+        setNewStudentGroupName('');
+        setAddStudentGroupStep('name');
+        setAddGroupShowOnlyUngrouped(true);
+        setGroupEditor(null);
         setDraftSearchQuery('');
-        setGroupEditor({ mode: 'create', planId, name: '常用分组', groups });
+        setStudentSelectionMoveNotice('');
         setShowGroupPlanSheet(false);
+        setShowNewStudentGroupNameSheet(true);
     };
 
     const handleStartNewGrouping = () => {
         setNewGroupName('');
+        setNewStudentGroupName('');
+        setGroupEditor(null);
+        setDraftSearchQuery('');
+        setStudentSelectionMoveNotice('');
+        setAddGroupShowOnlyUngrouped(true);
         setShowGroupPlanSheet(false);
         setShowNewGroupNameSheet(true);
     };
 
     const handleCreateNamedGrouping = () => {
         const name = newGroupName.trim();
-        if (!name) return;
-        const planId = `${classInfo.id}-custom-plan-${Date.now()}`;
-        const groups = createDraftGroups(planId);
-        setDraftActiveGroupId(groups[0].id);
+        const groupName = newStudentGroupName.trim();
+        if (!name || !groupName) return;
+        if (groupEditor?.mode === 'create') {
+            setGroupEditor({
+                ...groupEditor,
+                name,
+                groups: groupEditor.groups.map((group, index) => index === 0 ? { ...group, name: groupName } : group),
+            });
+        } else {
+            const planId = `${classInfo.id}-custom-plan-${Date.now()}`;
+            const groups = createDraftGroups(planId, groupName);
+            setDraftActiveGroupId(groups[0].id);
+            setGroupEditor({ mode: 'create', planId, name, groups });
+        }
         setDraftSearchQuery('');
+        setStudentSelectionMoveNotice('');
+        setAddStudentGroupStep('members');
         setShowNewGroupNameSheet(false);
-        setGroupEditor({ mode: 'create', planId, name, groups });
-    };
-
-    const handleEditActiveGrouping = () => {
-        if (!activeGroupPlan || !isActiveGroupPlanOwnedByCurrentTeacher) return;
-        const groups = activeGroupPlan.groups.map(group => ({ ...group, memberIds: [...group.memberIds] }));
-        setDraftActiveGroupId(groups[0]?.id || '');
-        setDraftSearchQuery('');
-        setGroupEditor({ mode: 'edit', planId: activeGroupPlan.id, name: activeGroupPlan.name, groups });
+        setShowNewStudentGroupNameSheet(true);
     };
 
     const handleToggleDraftStudent = (studentId: string) => {
         if (!groupEditor || !draftActiveGroup) return;
+        const isSelected = draftActiveGroup.memberIds.includes(studentId);
+        const assignedGroup = groupEditor.mode === 'add-group' ? activeGroupMembershipByStudentId.get(studentId) : undefined;
+        const student = studentById.get(studentId);
+        if (!isSelected && assignedGroup && student) {
+            setStudentSelectionMoveNotice(`${student.name}将从${assignedGroup.name}移入`);
+        }
         setGroupEditor(current => {
             if (!current) return current;
             return {
@@ -312,45 +610,210 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         });
     };
 
-    const handleAddDraftGroup = () => {
-        if (!groupEditor) return;
-        let nextIndex = 1;
-        while (groupEditor.groups.some(group => group.name === `第${nextIndex}组`)) nextIndex += 1;
-        const nextGroup = {
-            id: `${groupEditor.planId}-group-${nextIndex}-${Date.now()}`,
-            name: `第${nextIndex}组`,
-            memberIds: [],
-        };
-        setGroupEditor(current => current ? { ...current, groups: [...current.groups, nextGroup] } : current);
-        setDraftActiveGroupId(nextGroup.id);
+    const handleStartAddStudentGroup = () => {
+        if (!activeGroupPlan || !isActiveGroupPlanOwnedByCurrentTeacher) return;
+        setNewStudentGroupName('');
+        setAddStudentGroupStep('name');
+        setAddGroupShowOnlyUngrouped(true);
+        setStudentSelectionMoveNotice('');
+        setShowNewStudentGroupNameSheet(true);
     };
 
-    const handleRequestCloseGroupEditor = () => {
-        if (!groupEditor) return;
-        if (groupEditor.mode === 'create') {
-            setShowDiscardGroupingConfirm(true);
+    const handleConfirmStudentGroupName = () => {
+        const groupName = newStudentGroupName.trim();
+        if (!activeGroupPlan || !isActiveGroupPlanOwnedByCurrentTeacher || !groupName) return;
+        if (groupEditor?.mode === 'add-group') {
+            setGroupEditor({
+                ...groupEditor,
+                groups: groupEditor.groups.map((group, index) => index === 0 ? { ...group, name: groupName } : group),
+            });
+            setAddStudentGroupStep('members');
             return;
         }
-        setGroupEditor(null);
+        const nextGroup: StudentGroup = {
+            id: `${activeGroupPlan.id}-group-${Date.now()}`,
+            name: groupName,
+            memberIds: [],
+            avatarKey: getAvailableStudentGroupAvatarKey(
+                activeGroupPlan.groups.map(group => group.avatarKey),
+                activeGroupPlan.groups.length,
+            ),
+        };
+        setDraftActiveGroupId(nextGroup.id);
         setDraftSearchQuery('');
+        setGroupEditor({ mode: 'add-group', planId: activeGroupPlan.id, name: activeGroupPlan.name, groups: [nextGroup] });
+        setAddStudentGroupStep('members');
+    };
+
+    const handleReturnToStudentGroupName = () => {
+        if (groupEditor?.mode === 'create') {
+            setStudentSelectionMoveNotice('');
+            setNewGroupName(groupEditor.name);
+            setNewStudentGroupName(draftActiveGroup?.name || '');
+            setShowNewStudentGroupNameSheet(false);
+            setShowNewGroupNameSheet(true);
+            return;
+        }
+        if (groupEditor?.mode !== 'add-group') return;
+        setStudentSelectionMoveNotice('');
+        setNewStudentGroupName(draftActiveGroup?.name || '');
+        setAddStudentGroupStep('name');
     };
 
     const handleConfirmDiscardGrouping = () => {
         setShowDiscardGroupingConfirm(false);
+        setShowNewGroupNameSheet(false);
+        setShowNewStudentGroupNameSheet(false);
+        setNewGroupName('');
+        setNewStudentGroupName('');
+        setAddStudentGroupStep('name');
         setGroupEditor(null);
         setDraftSearchQuery('');
+        setStudentSelectionMoveNotice('');
     };
 
-    const handleConfirmDeleteDraftGroup = () => {
-        if (!groupEditor || !deleteDraftGroupTarget || groupEditor.groups.length <= 1) return;
-        const deletedIndex = groupEditor.groups.findIndex(group => group.id === deleteDraftGroupTarget.id);
-        const remainingGroups = groupEditor.groups
-            .filter(group => group.id !== deleteDraftGroupTarget.id)
-            .map((group, index) => ({ ...group, name: `第${index + 1}组` }));
-        const nextActiveGroup = remainingGroups[Math.min(Math.max(deletedIndex, 0), remainingGroups.length - 1)];
-        setGroupEditor({ ...groupEditor, groups: remainingGroups });
-        setDraftActiveGroupId(nextActiveGroup.id);
-        setDeleteDraftGroupTarget(null);
+    const handleCloseNewGroupingDetails = () => {
+        if (groupEditor?.mode === 'create') {
+            setShowDiscardGroupingConfirm(true);
+            return;
+        }
+        setShowNewGroupNameSheet(false);
+        setNewGroupName('');
+        setNewStudentGroupName('');
+    };
+
+    const handleCloseStudentGroupNameSheet = () => {
+        if (groupEditor?.mode === 'create') {
+            setShowDiscardGroupingConfirm(true);
+            return;
+        }
+        setShowNewStudentGroupNameSheet(false);
+        setNewStudentGroupName('');
+        setAddStudentGroupStep('name');
+        setAddGroupShowOnlyUngrouped(true);
+        setStudentSelectionMoveNotice('');
+        if (groupEditor?.mode === 'add-group') {
+            setGroupEditor(null);
+            setDraftSearchQuery('');
+        }
+    };
+
+    const handleCloseDiscardGroupingConfirm = () => {
+        setShowDiscardGroupingConfirm(false);
+    };
+
+    const resetAdjustStudentGroupDraft = () => {
+        setAdjustStudentGroupMemberIds(new Set());
+        setAdjustStudentGroupSearchQuery('');
+        setAdjustStudentGroupShowOnlyUngrouped(true);
+        setStudentSelectionMoveNotice('');
+    };
+
+    const handleOpenStudentGroupDetail = (groupId: string) => {
+        setGroupDetailTargetId(groupId);
+        setGroupDetailMode('view');
+        resetAdjustStudentGroupDraft();
+    };
+
+    const handleStartAdjustStudentGroup = () => {
+        if (!groupDetailTarget || !isActiveGroupPlanOwnedByCurrentTeacher) return;
+        setAdjustStudentGroupMemberIds(new Set(groupDetailTarget.memberIds));
+        setAdjustStudentGroupSearchQuery('');
+        setAdjustStudentGroupShowOnlyUngrouped(true);
+        setGroupDetailMode('adjust');
+    };
+
+    const handleToggleAdjustStudentGroupMember = (studentId: string) => {
+        const assignedGroup = activeGroupMembershipByStudentId.get(studentId);
+        const student = studentById.get(studentId);
+        if (!adjustStudentGroupMemberIds.has(studentId) && assignedGroup && assignedGroup.id !== groupDetailTarget?.id && student) {
+            setStudentSelectionMoveNotice(`${student.name}将从${assignedGroup.name}移入`);
+        }
+        setAdjustStudentGroupMemberIds(current => {
+            const next = new Set(current);
+            if (next.has(studentId)) next.delete(studentId);
+            else next.add(studentId);
+            return next;
+        });
+    };
+
+    const handleBackToStudentGroupDetail = () => {
+        setGroupDetailMode('view');
+        setRenameStudentGroupName('');
+        resetAdjustStudentGroupDraft();
+    };
+
+    const handleCloseStudentGroupDetail = () => {
+        setGroupDetailTargetId(null);
+        setGroupDetailMode('view');
+        setRenameStudentGroupName('');
+        resetAdjustStudentGroupDraft();
+    };
+
+    const handleOpenGroupMemberStudent = (student: Student) => {
+        handleCloseStudentGroupDetail();
+        onSelectStudent(student);
+    };
+
+    const handleSaveAdjustStudentGroup = () => {
+        if (!activeGroupPlan || !groupDetailTarget || !isActiveGroupPlanOwnedByCurrentTeacher) return;
+        const movedStudentCount = adjustStudentGroupMovedStudentCount;
+        const memberIds = activeStudents
+            .filter(student => adjustStudentGroupMemberIds.has(student.id))
+            .map(student => student.id);
+        const memberIdSet = new Set(memberIds);
+        setGroupPlans(current => current.map(plan => plan.id === activeGroupPlan.id
+            ? {
+                ...plan,
+                groups: plan.groups.map(group => group.id === groupDetailTarget.id
+                    ? { ...group, memberIds }
+                    : { ...group, memberIds: group.memberIds.filter(studentId => !memberIdSet.has(studentId)) }),
+            }
+            : plan));
+        setGroupDetailMode('view');
+        resetAdjustStudentGroupDraft();
+        if (movedStudentCount > 0) {
+            setGroupingToastMessage(`${movedStudentCount}名学生已从原小组移入`);
+        }
+    };
+
+    const handleStartEditStudentGroup = () => {
+        if (!groupDetailTarget || !activeGroupPlan || !isActiveGroupPlanOwnedByCurrentTeacher) return;
+        const groupIndex = activeGroupPlan.groups.findIndex(group => group.id === groupDetailTarget.id);
+        setRenameStudentGroupName(groupDetailTarget.name);
+        setStudentGroupAvatarKey(getStudentGroupAvatarOption(groupDetailTarget.avatarKey, Math.max(groupIndex, 0)).key);
+        setGroupDetailMode('settings');
+    };
+
+    const handleSaveStudentGroupSettings = () => {
+        const name = renameStudentGroupName.trim();
+        if (!activeGroupPlan || !groupDetailTarget || !name || !isActiveGroupPlanOwnedByCurrentTeacher) return;
+        setGroupPlans(current => current.map(plan => plan.id === activeGroupPlan.id
+            ? {
+                ...plan,
+                groups: plan.groups.map(group => group.id === groupDetailTarget.id
+                    ? { ...group, name, avatarKey: studentGroupAvatarKey }
+                    : group),
+            }
+            : plan));
+        setGroupDetailMode('view');
+        setRenameStudentGroupName('');
+    };
+
+    const handleRequestDissolveStudentGroup = () => {
+        if (!groupDetailTarget || !isActiveGroupPlanOwnedByCurrentTeacher) return;
+        setDissolveStudentGroupTargetId(groupDetailTarget.id);
+    };
+
+    const handleConfirmDissolveStudentGroup = () => {
+        if (!activeGroupPlan || !dissolveStudentGroupTarget || !isActiveGroupPlanOwnedByCurrentTeacher) return;
+        setGroupPlans(current => current.map(plan => plan.id === activeGroupPlan.id
+            ? { ...plan, groups: plan.groups.filter(group => group.id !== dissolveStudentGroupTarget.id) }
+            : plan));
+        setDissolveStudentGroupTargetId(null);
+        setGroupDetailTargetId(null);
+        setGroupDetailMode('view');
+        resetAdjustStudentGroupDraft();
     };
 
     const handleOpenGroupPlanActions = (plan: GroupPlan) => {
@@ -398,6 +861,35 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
 
     const handleFinishGrouping = () => {
         if (!groupEditor) return;
+        if (groupEditor.mode === 'add-group') {
+            const nextGroup = groupEditor.groups[0];
+            if (!nextGroup || nextGroup.memberIds.length === 0) return;
+            const movedStudentCount = addGroupMovedStudentCount;
+            const nextMemberIds = new Set(nextGroup.memberIds);
+            setGroupPlans(current => current.map(plan => plan.id === groupEditor.planId
+                ? {
+                    ...plan,
+                    groups: [
+                        ...plan.groups.map(group => ({
+                            ...group,
+                            memberIds: group.memberIds.filter(studentId => !nextMemberIds.has(studentId)),
+                        })),
+                        nextGroup,
+                    ],
+                }
+                : plan));
+            setActiveGroupPlanId(groupEditor.planId);
+            setShowNewStudentGroupNameSheet(false);
+            setAddStudentGroupStep('name');
+            setAddGroupShowOnlyUngrouped(true);
+            setGroupEditor(null);
+            setDraftSearchQuery('');
+            setActiveView('group');
+            if (movedStudentCount > 0) {
+                setGroupingToastMessage(`${movedStudentCount}名学生已从原小组移入`);
+            }
+            return;
+        }
         const nextPlan: GroupPlan = {
             id: groupEditor.planId,
             name: groupEditor.name,
@@ -405,19 +897,21 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             ownerName: currentTeacherName,
             groups: groupEditor.groups,
         };
-        setGroupPlans(current => groupEditor.mode === 'edit'
-            ? current.map(plan => plan.id === nextPlan.id ? nextPlan : plan)
-            : [...current, nextPlan]);
+        setGroupPlans(current => [...current, nextPlan]);
         setActiveGroupPlanId(nextPlan.id);
+        setShowNewStudentGroupNameSheet(false);
+        setNewGroupName('');
+        setNewStudentGroupName('');
+        setAddStudentGroupStep('name');
+        setAddGroupShowOnlyUngrouped(true);
         setGroupEditor(null);
         setDraftSearchQuery('');
         setActiveView('group');
     };
 
     const renderStudentToolbar = () => (
-        <div className="sticky top-0 z-10 border-b border-white/70 bg-white/92 px-4 py-1 backdrop-blur-xl shadow-sm">
-            <div className="student-action-row flex min-h-11 items-center gap-1.5">
-                <div className={`relative text-left transition-all duration-300 ease-out ${isSelectionMode ? 'w-11 flex-none opacity-70' : 'min-w-0 flex-1 opacity-100'}`}>
+        <ClassDetailTabToolbar rowClassName="student-action-row gap-1.5">
+            <div className={`relative text-left transition-all duration-300 ease-out ${isSelectionMode ? 'w-11 flex-none opacity-70' : 'min-w-0 flex-1 opacity-100'}`}>
                     {isSelectionMode ? (
                         <button
                             type="button"
@@ -436,12 +930,13 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             placeholder="搜索姓名、学号"
                             aria-label="搜索学生"
                             density="compact"
+                            appearance="filled"
                             containerClassName="flex min-h-11 items-center"
                         />
                     )}
-                </div>
+            </div>
 
-                <div className="selection-tools-next-to-cancel ml-auto flex shrink-0 items-center gap-1">
+            <div className="selection-tools-next-to-cancel ml-auto flex shrink-0 items-center gap-1">
                     {isSelectionMode && (
                         <>
                             <button
@@ -485,20 +980,17 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         </>
                     )}
 
-                    <button
+                    <ClassDetailMultiSelectButton
+                        active={isSelectionMode}
                         onClick={() => {
                             if (!isSelectionMode) {
                                 setSearchQuery('');
                             }
                             onToggleSelectionMode();
                         }}
-                        className={`min-h-11 shrink-0 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold transition active:scale-95 ${isSelectionMode ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-primary)]'}`}
-                    >
-                        {isSelectionMode ? '取消' : '多选'}
-                    </button>
-                </div>
+                    />
             </div>
-        </div>
+        </ClassDetailTabToolbar>
     );
 
     const renderStudentGrid = () => (
@@ -506,55 +998,18 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             <div className="student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3">
                 {visibleStudents.map((student, index) => {
                     const isSelected = selectedIds.has(student.id);
-                    const [bgClass, textClass, borderClass] = getAvatarStyle(student, index);
-                    const nameChar = student.name.slice(-1);
-                    const studentNo = student.studentNo || student.id;
-                    const rosterNumber = getClassRosterNumber(studentNo);
                     const performance = performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student);
-                    const level = getStudentPerformanceLevel(performance.netScore);
-
                     return (
-                        <button
-                            type="button"
+                        <StudentRosterCard
                             key={student.id}
+                            student={student}
+                            index={index}
+                            performance={performance}
+                            levelNetScore={levelNetScoreByStudentId[student.id]}
+                            showSelection={isSelectionMode}
+                            selected={isSelected}
                             onClick={() => handleStudentClick(student)}
-                            aria-pressed={isSelectionMode ? isSelected : undefined}
-                            aria-label={`${student.name}，学号${studentNo}，净得分${performance.netScore}分，被表扬${performance.praiseCount}次，被批评${performance.criticismCount}次`}
-                            className="relative flex h-[120px] min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-1 text-center [box-shadow:var(--tm-shadow-card)] transition-[transform,box-shadow] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transition-none"
-                        >
-                            {isSelectionMode && (
-                                <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${isSelected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`}>
-                                    {isSelected
-                                        ? <CheckIcon className="h-3 w-3 text-white [stroke-width:3]" />
-                                        : <CircleIcon className="h-[18px] w-[18px] fill-white text-[var(--tm-border-subtle)]" />
-                                    }
-                                </span>
-                            )}
-                            <StudentPerformanceLevelIcons level={level} />
-                            <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
-                                <StudentPerformanceAvatar
-                                    compact
-                                    student={{ ...student, avatar: student.avatar || (student.gender === 'female' ? ASSETS.AVATAR.STUDENT_GIRL_DEFAULT : undefined) }}
-                                    fallbackText={nameChar}
-                                    fallbackClassName={`${bgClass} ${textClass} border ${borderClass}`}
-                                    level={level}
-                                />
-                            </span>
-                            <StudentPerformanceCounts summary={performance} />
-                            <span className="flex h-4 w-full shrink-0 items-center justify-center px-0.5">
-                                <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-0.5">
-                                    <span
-                                        aria-label={`学号${studentNo}`}
-                                        className="flex h-[14px] w-4 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[9px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]"
-                                    >
-                                        {rosterNumber}
-                                    </span>
-                                    <span className="block min-w-0 max-w-[52px] truncate text-[13px] font-semibold leading-4 text-[var(--tm-text-primary)]">
-                                        {student.name}
-                                    </span>
-                                </span>
-                            </span>
-                        </button>
+                        />
                     );
                 })}
             </div>
@@ -574,82 +1029,77 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
 
     const renderGroupView = () => (
         <div className="flex min-h-0 flex-1 flex-col bg-[var(--tm-page-plain-content-bg)]">
-            <div className="sticky top-0 z-10 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] px-4 pb-3 pt-1 [box-shadow:var(--tm-shadow-control)]">
-                <div className="flex min-h-11 items-center justify-center">
-                    {activeGroupPlan ? (
-                        <button
+            {activeGroupPlan && (hasActiveStudentGroups || orderedGroupPlans.length > 1) && (
+                <ClassDetailTabToolbar rowClassName="justify-between gap-2">
+                    <button
                             type="button"
                             onClick={() => setShowGroupPlanSheet(true)}
                             aria-label="切换分组"
-                            className="flex min-h-11 max-w-[80%] items-center justify-center gap-1.5 px-3 text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)] active:text-[var(--tm-brand-primary)]"
+                            className="flex min-h-11 min-w-0 flex-1 items-center pr-2 text-left active:text-[var(--tm-brand-primary)]"
                         >
-                            <span className="truncate">{activeGroupPlan.name}</span>
-                            <ChevronDownIcon className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
-                        </button>
-                    ) : (
-                        <span className="text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">分组</span>
-                    )}
-                </div>
-                {activeGroupPlan && (
-                    <div className="flex min-h-8 items-center justify-between gap-2">
-                        <div className="min-w-0 truncate text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">
-                            {activeGroupPlan.ownerName}创建
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                            {isActiveGroupPlanOwnedByCurrentTeacher && (
-                                <button
-                                    type="button"
-                                    onClick={handleEditActiveGrouping}
-                                    className="flex min-h-11 items-center justify-center px-2.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] active:text-[var(--tm-brand-primary-pressed)]"
-                                >
-                                    调整分组
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsGroupSelectionMode(prev => !prev);
-                                    setGroupSelectionIds(new Set());
-                                    onSelectionChange(new Set());
-                                }}
-                                className="flex min-h-11 items-center justify-center px-2.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] active:text-[var(--tm-brand-primary)]"
-                            >
-                                {isGroupSelectionMode ? '取消' : '多选'}
-                            </button>
-                        </div>
+                            <span className="flex max-w-full items-center gap-1">
+                                <span className="truncate text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{activeGroupPlan.name}</span>
+                                <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-tertiary)]" />
+                            </span>
+                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                        <ClassDetailMultiSelectButton
+                            active={isGroupSelectionMode}
+                            onClick={() => {
+                                setIsGroupSelectionMode(prev => !prev);
+                                setGroupSelectionIds(new Set());
+                                onSelectionChange(new Set());
+                            }}
+                        />
                     </div>
-                )}
-            </div>
+                </ClassDetailTabToolbar>
+            )}
 
             <div className="flex-1 overflow-y-auto px-4 pb-40 pt-3">
-                {activeGroupPlan ? (
+                {activeGroupPlan && hasActiveStudentGroups ? (
                     <div className="space-y-3">
                         {activeGroupPlan.groups.map((group, index) => {
                             const isSelected = groupSelectionIds.has(group.id);
                             const members = group.memberIds.map(id => studentById.get(id)).filter(Boolean) as Student[];
-                            const previewNames = members.slice(0, 4).map(student => student.name).join('、');
                             return (
                                 <button
                                     type="button"
                                     key={group.id}
-                                    onClick={() => isGroupSelectionMode && handleToggleGroupSelection(group.id)}
-                                    disabled={!isGroupSelectionMode}
+                                    onClick={() => isGroupSelectionMode
+                                        ? handleToggleGroupSelection(group.id)
+                                        : handleOpenStudentGroupDetail(group.id)}
                                     aria-pressed={isGroupSelectionMode ? isSelected : undefined}
+                                    aria-label={isGroupSelectionMode
+                                        ? `${isSelected ? '取消选择' : '选择'}${group.name}`
+                                        : `查看${group.name}`}
                                     className="relative flex min-h-[88px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.99]"
                                 >
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-tag-gold-soft)] text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-tag-gold-strong)]">{index + 1}</span>
+                                    <GroupAvatar avatarKey={group.avatarKey} index={index} />
                                     <span className="min-w-0 flex-1 pr-7">
                                         <span className="block truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{group.name}</span>
-                                        <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{members.length}名学生 · {previewNames || '暂未添加学生'}{members.length > 4 ? '等' : ''}</span>
+                                        <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{getGroupMemberSummary(members)}</span>
                                     </span>
                                     {isGroupSelectionMode && (
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2">
                                             {isSelected ? <CheckCircleIcon className="h-5 w-5 text-[var(--tm-brand-primary)]" /> : <CircleIcon className="h-5 w-5 text-[var(--tm-border-subtle)]" />}
                                         </span>
                                     )}
+                                    {!isGroupSelectionMode && (
+                                        <ChevronRightIcon className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
+                                    )}
                                 </button>
                             );
                         })}
+                        {isActiveGroupPlanOwnedByCurrentTeacher && !isGroupSelectionMode && (
+                            <button
+                                type="button"
+                                onClick={handleStartAddStudentGroup}
+                                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
+                            >
+                                <PlusIcon className="h-4 w-4" />
+                                添加小组
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="flex min-h-[380px] flex-col items-center justify-center gap-4">
@@ -664,81 +1114,6 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         </button>
                     </div>
                 )}
-            </div>
-        </div>
-    );
-
-    const renderGroupEditor = () => (
-        <div className="absolute inset-0 z-40 flex min-h-0 flex-col bg-[var(--tm-page-plain-content-bg)]">
-            <header className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] px-2">
-                <button type="button" onClick={handleRequestCloseGroupEditor} aria-label="返回分组" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
-                    <BackIcon className="h-5 w-5" />
-                </button>
-                <h2 className="max-w-[56%] truncate text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">{groupEditor?.mode === 'create' ? '创建分组' : '调整分组'}</h2>
-                <div className="w-11" aria-hidden="true" />
-            </header>
-            <div className="shrink-0 border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] px-4 pb-3 pt-2">
-                <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                        <div className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{groupEditor?.name}</div>
-                        <div className="mt-1 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">已分组 {activeStudents.length - draftUnassignedCount}/{activeStudents.length}</div>
-                    </div>
-                    <button type="button" onClick={handleFinishGrouping} className="flex min-h-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]">完成</button>
-                </div>
-                <div className="mt-3 flex items-center gap-1">
-                    <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto no-scrollbar">
-                        {groupEditor?.groups.map(group => (
-                            <button
-                                type="button"
-                                key={group.id}
-                                onClick={() => setDraftActiveGroupId(group.id)}
-                                aria-pressed={group.id === draftActiveGroup?.id}
-                                className="flex min-h-11 shrink-0 items-center justify-center"
-                            >
-                                <span className={`flex h-[var(--tm-selection-pill-visible-height)] items-center gap-1.5 rounded-[var(--tm-selection-pill-radius)] border px-3 text-[length:var(--tm-font-size-compact)] font-semibold ${group.id === draftActiveGroup?.id ? 'border-[var(--tm-selection-pill-active-border)] bg-[var(--tm-selection-pill-active-bg)] text-[var(--tm-selection-pill-active-text)]' : 'border-[var(--tm-selection-pill-inactive-border)] bg-[var(--tm-selection-pill-inactive-bg)] text-[var(--tm-selection-pill-inactive-text)]'}`}>
-                                    {group.name}<span className="text-[length:var(--tm-font-size-meta)] opacity-80">{group.memberIds.length}</span>
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                    <button type="button" onClick={handleAddDraftGroup} aria-label="添加小组" className="flex min-h-11 min-w-11 shrink-0 items-center justify-center text-[var(--tm-brand-primary)]"><span className="flex h-[var(--tm-selection-pill-visible-height)] w-8 items-center justify-center rounded-[var(--tm-selection-pill-radius)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-soft)]"><PlusIcon className="h-4 w-4" /></span></button>
-                    {groupEditor && groupEditor.groups.length > 1 ? (
-                        <button type="button" onClick={() => draftActiveGroup && setDeleteDraftGroupTarget(draftActiveGroup)} aria-label={`删除${draftActiveGroup?.name || '当前小组'}`} className="flex min-h-11 min-w-11 shrink-0 items-center justify-center text-[var(--tm-status-negative)] active:bg-[var(--tm-status-negative-soft)]">
-                            <DeleteIcon className="h-[18px] w-[18px]" />
-                        </button>
-                    ) : <div className="h-11 w-11 shrink-0" aria-hidden="true" />}
-                </div>
-            </div>
-            <div className="shrink-0 bg-[var(--tm-page-plain-content-bg)] px-4 py-2">
-                <MobileSearchInput value={draftSearchQuery} onChange={event => setDraftSearchQuery(event.target.value)} placeholder="搜索姓名、学号" aria-label="搜索分组学生" density="compact" containerClassName="flex min-h-11 items-center" />
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6 pt-1">
-                <div className="grid grid-cols-4 gap-x-2.5 gap-y-3">
-                    {draftVisibleStudents.map((student, index) => {
-                        const assignedGroupId = draftMembershipByStudentId.get(student.id);
-                        const assignedGroup = groupEditor?.groups.find(group => group.id === assignedGroupId);
-                        const isSelected = assignedGroupId === draftActiveGroup?.id;
-                        const [bgClass, textClass, borderClass] = getAvatarStyle(student, index);
-                        const studentNo = student.studentNo || student.id;
-                        return (
-                            <button
-                                type="button"
-                                key={student.id}
-                                onClick={() => handleToggleDraftStudent(student.id)}
-                                aria-pressed={isSelected}
-                                aria-label={`${student.name}${assignedGroup ? `，当前在${assignedGroup.name}` : '，未分组'}`}
-                                className="relative flex h-[96px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-1 text-center [box-shadow:var(--tm-shadow-card)] transition-[transform,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96]"
-                            >
-                                <span className={`absolute right-1 top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full ${isSelected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`}>
-                                    {isSelected ? <CheckIcon className="h-3 w-3 text-white [stroke-width:3]" /> : <CircleIcon className="h-[18px] w-[18px] text-[var(--tm-border-subtle)]" />}
-                                </span>
-                                <span className={`flex h-10 w-10 items-center justify-center rounded-full border text-[length:var(--tm-font-size-card-title)] font-semibold ${bgClass} ${textClass} ${borderClass} ${assignedGroup && !isSelected ? 'opacity-55' : ''}`}>{student.name.slice(-1)}</span>
-                                <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{student.name}</span>
-                                <span className={`max-w-full truncate text-[length:var(--tm-font-size-badge)] ${assignedGroup && !isSelected ? 'text-[var(--tm-text-tertiary)]' : 'text-[var(--tm-text-secondary)]'}`}>{assignedGroup ? assignedGroup.name : `学号${getClassRosterNumber(studentNo)}`}</span>
-                            </button>
-                        );
-                    })}
-                </div>
             </div>
         </div>
     );
@@ -785,7 +1160,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 </>
             ) : renderGroupView()}
 
-            <MobileBottomSheet open={showGroupPlanSheet} title="切换分组" onClose={() => setShowGroupPlanSheet(false)}>
+            <MobileBottomSheet open={showGroupPlanSheet} title="切换分组方案" onClose={() => setShowGroupPlanSheet(false)}>
                 <div className="pb-2">
                     <div className="space-y-1">
                         {orderedGroupPlans.map(plan => {
@@ -823,20 +1198,251 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             );
                         })}
                     </div>
-                    <button type="button" onClick={groupPlans.some(plan => plan.ownerName === currentTeacherName) ? handleStartNewGrouping : handleStartFirstGrouping} className="mt-2 flex min-h-[52px] w-full items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]">
+                    <button type="button" onClick={groupPlans.length > 0 ? handleStartNewGrouping : handleStartFirstGrouping} className="mt-2 flex min-h-[52px] w-full items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]">
                         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] text-white"><PlusIcon className="h-4 w-4" /></span>
-                        {groupPlans.some(plan => plan.ownerName === currentTeacherName) ? '新建另一套分组' : '开始分组'}
+                        {groupPlans.length > 0 ? '新建另一套分组' : '开始分组'}
                     </button>
                 </div>
             </MobileBottomSheet>
 
-            <MobileBottomSheet open={showNewGroupNameSheet} title="新建另一套分组" onClose={() => setShowNewGroupNameSheet(false)} footer={(
-                <button type="button" onClick={handleCreateNamedGrouping} disabled={!newGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">开始分组</button>
+            <MobileBottomSheet open={showNewGroupNameSheet} title="新建另一套分组" onClose={handleCloseNewGroupingDetails} footerDivider={false} footer={(
+                <button type="button" onClick={handleCreateNamedGrouping} disabled={!newGroupName.trim() || !newStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
             )}>
-                <label className="block py-2">
-                    <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">分组名称</span>
-                    <input value={newGroupName} onChange={event => setNewGroupName(event.target.value)} placeholder="例如：写作分组" aria-label="分组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
-                </label>
+                <div className="space-y-4 py-2">
+                    <label className="block">
+                        <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">这套分组名称</span>
+                        <input value={newGroupName} onChange={event => setNewGroupName(event.target.value)} maxLength={20} placeholder="例如：阅读分组" aria-label="这套分组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+                        <span className="mt-1.5 block text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">用于在不同分组之间切换</span>
+                    </label>
+                    <label className="block">
+                        <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">第一个小组名称</span>
+                        <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：阅读1组" aria-label="第一个小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+                    </label>
+                </div>
+            </MobileBottomSheet>
+
+            <MobileBottomSheet
+                open={showNewStudentGroupNameSheet}
+                title={addStudentGroupStep === 'name' ? '添加小组' : '选择学生'}
+                size={addStudentGroupStep === 'members' ? 'tall' : 'content'}
+                contentInset={addStudentGroupStep === 'members' ? 'compact' : 'standard'}
+                contentTone={addStudentGroupStep === 'members' ? 'plain' : 'surface'}
+                footerDivider={false}
+                onClose={handleCloseStudentGroupNameSheet}
+                header={addStudentGroupStep === 'members' ? (
+                    <header className="grid h-14 shrink-0 grid-cols-[44px_1fr_44px] items-center px-2">
+                        <button type="button" onClick={handleReturnToStudentGroupName} aria-label="返回上一步" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+                            <BackIcon className="h-5 w-5" />
+                        </button>
+                        <h2 className="truncate text-center text-[17px] font-semibold text-[var(--tm-text-primary)]">选择学生</h2>
+                        <button type="button" onClick={handleCloseStudentGroupNameSheet} aria-label="关闭选择学生" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+                            <CloseIcon className="h-5 w-5" />
+                        </button>
+                    </header>
+                ) : undefined}
+                footer={addStudentGroupStep === 'name' ? (
+                    <button type="button" onClick={handleConfirmStudentGroupName} disabled={!newStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
+                ) : (
+                    <div className="relative">
+                        <StudentSelectionMoveNotice message={studentSelectionMoveNotice} />
+                        <button type="button" onClick={handleFinishGrouping} disabled={!draftActiveGroup?.memberIds.length} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+                            {draftActiveGroup?.memberIds.length
+                                ? `完成（${draftActiveGroup.memberIds.length}人${addGroupMovedStudentCount > 0 ? `，含移动${addGroupMovedStudentCount}人` : ''}）`
+                                : '完成'}
+                        </button>
+                    </div>
+                )}
+            >
+                {addStudentGroupStep === 'name' ? (
+                    <label className="block py-2">
+                        <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">小组名称</span>
+                        <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：写作1组" aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+                    </label>
+                ) : (
+                    <div className="min-h-full">
+                        <div className="sticky top-0 z-20 -mx-3 bg-[var(--tm-bg-surface)] px-3 py-2">
+                            <MobileSearchInput value={draftSearchQuery} onChange={event => setDraftSearchQuery(event.target.value)} placeholder="搜索姓名、学号" aria-label="搜索学生" density="compact" appearance="filled" containerClassName="flex min-h-11 items-center" />
+                        </div>
+                        {groupEditor?.mode === 'add-group' && (
+                            <OnlyUngroupedFilter
+                                checked={addGroupShowOnlyUngrouped}
+                                ungroupedCount={addGroupUngroupedStudentIds?.size ?? 0}
+                                onChange={setAddGroupShowOnlyUngrouped}
+                            />
+                        )}
+                        <StudentCompactSelectGrid
+                            sections={draftStudentSelectionSections}
+                            className={groupEditor?.mode === 'add-group' ? 'pt-1' : 'pt-3'}
+                            isSelected={studentId => draftActiveGroup?.memberIds.includes(studentId) ?? false}
+                            getSelectionDescription={student => {
+                                const assignedGroup = groupEditor?.mode === 'add-group' ? activeGroupMembershipByStudentId.get(student.id) : undefined;
+                                return assignedGroup ? `当前在${assignedGroup.name}` : '未分组';
+                            }}
+                            onToggle={handleToggleDraftStudent}
+                        />
+                        {draftVisibleStudents.length === 0 && (
+                            <MobileEmptyState
+                                imageSrc={draftSearchQuery.trim() ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR}
+                                title={draftSearchQuery.trim() ? '没有匹配的学生' : groupEditor?.mode === 'add-group' && addGroupShowOnlyUngrouped ? '没有未分组学生' : '暂无学生'}
+                                className="min-h-[320px] py-4"
+                            />
+                        )}
+                    </div>
+                )}
+            </MobileBottomSheet>
+
+            <MobileBottomSheet
+                open={Boolean(groupDetailTarget)}
+                title={groupDetailMode === 'adjust' ? '调整学生' : groupDetailMode === 'settings' ? '小组设置' : '小组详情'}
+                size="tall"
+                contentInset="compact"
+                contentTone="plain"
+                footerDivider={false}
+                onClose={handleCloseStudentGroupDetail}
+                header={(
+                    <header className="flex h-14 shrink-0 items-center px-2">
+                        {groupDetailMode !== 'view' ? (
+                            <>
+                                <button type="button" onClick={handleBackToStudentGroupDetail} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回小组详情">
+                                    <BackIcon className="h-5 w-5" />
+                                </button>
+                                <h2 className="min-w-0 flex-1 truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{groupDetailMode === 'adjust' ? '调整学生' : '小组设置'}</h2>
+                            </>
+                        ) : (
+                            <div className="min-w-0 flex-1 pl-2">
+                                <h2 className="truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">小组详情</h2>
+                            </div>
+                        )}
+                        <div className="flex shrink-0 items-center">
+                            <button type="button" onClick={handleCloseStudentGroupDetail} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭小组详情">
+                                <CloseIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </header>
+                )}
+                footer={groupDetailMode === 'adjust' ? (
+                    <div className="relative">
+                        <StudentSelectionMoveNotice message={studentSelectionMoveNotice} />
+                        <button type="button" onClick={handleSaveAdjustStudentGroup} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]">
+                            {`保存（${adjustStudentGroupMemberIds.size}人${adjustStudentGroupMovedStudentCount > 0 ? `，含移动${adjustStudentGroupMovedStudentCount}人` : ''}）`}
+                        </button>
+                    </div>
+                ) : groupDetailMode === 'settings' ? (
+                    <button type="button" onClick={handleSaveStudentGroupSettings} disabled={!renameStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+                        保存
+                    </button>
+                ) : isActiveGroupPlanOwnedByCurrentTeacher ? (
+                    <button type="button" onClick={handleStartAdjustStudentGroup} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]">
+                        调整学生
+                    </button>
+                ) : undefined}
+            >
+                {groupDetailMode === 'view' ? (
+                    <div className="min-h-full pb-3">
+                        <div className="-mx-3 flex min-h-[84px] items-center gap-3 bg-[var(--tm-bg-surface)] px-4 py-3">
+                            <GroupAvatar avatarKey={groupDetailTarget?.avatarKey} index={Math.max(activeGroupPlan?.groups.findIndex(group => group.id === groupDetailTarget?.id) ?? 0, 0)} size="sheet" />
+                            <div className="min-w-0 flex-1">
+                                <div className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{groupDetailTarget?.name}</div>
+                                <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">{groupDetailMembers?.length || 0}名学生</div>
+                            </div>
+                            {isActiveGroupPlanOwnedByCurrentTeacher && (
+                                <div className="-mr-1 flex shrink-0 items-center gap-1">
+                                    <button type="button" onClick={handleStartEditStudentGroup} className="flex min-h-11 shrink-0 items-center gap-1 px-1.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]" aria-label="编辑小组信息">
+                                        <EditIcon className="h-4 w-4" />
+                                        编辑
+                                    </button>
+                                    <button type="button" onClick={handleRequestDissolveStudentGroup} className="flex min-h-11 shrink-0 items-center gap-1 px-1.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative)] active:text-[var(--tm-status-negative-strong)]" aria-label="解散小组">
+                                        <DeleteIcon className="h-4 w-4" />
+                                        解散
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        {(groupDetailMembers?.length || 0) > 0 ? (
+                            <div className="student-roster-grid grid gap-x-2.5 gap-y-3 pt-3">
+                                {groupDetailMembers?.map((student, index) => {
+                                    const performance = performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student);
+                                    return (
+                                        <StudentRosterCard
+                                            key={student.id}
+                                            student={student}
+                                            index={index}
+                                            performance={performance}
+                                            levelNetScore={levelNetScoreByStudentId[student.id]}
+                                            showSelection={false}
+                                            selected={false}
+                                            onClick={() => handleOpenGroupMemberStudent(student)}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.CHAIR} title="暂无学生" className="min-h-[360px] py-4" />
+                        )}
+                    </div>
+                ) : groupDetailMode === 'adjust' ? (
+                    <div className="min-h-full">
+                        <div className="sticky top-0 z-20 -mx-3 bg-[var(--tm-bg-surface)] px-3 py-2">
+                            <MobileSearchInput value={adjustStudentGroupSearchQuery} onChange={event => setAdjustStudentGroupSearchQuery(event.target.value)} placeholder="搜索姓名、学号" aria-label="搜索学生" density="compact" appearance="filled" containerClassName="flex min-h-11 items-center" />
+                        </div>
+                        <OnlyUngroupedFilter
+                            checked={adjustStudentGroupShowOnlyUngrouped}
+                            ungroupedCount={activeGroupUngroupedCount}
+                            onChange={setAdjustStudentGroupShowOnlyUngrouped}
+                        />
+                        <StudentCompactSelectGrid
+                            sections={adjustStudentSelectionSections}
+                            className="pt-1"
+                            isSelected={studentId => adjustStudentGroupMemberIds.has(studentId)}
+                            getSelectionDescription={student => {
+                                const assignedGroup = activeGroupMembershipByStudentId.get(student.id);
+                                return assignedGroup ? `当前在${assignedGroup.name}` : '未分组';
+                            }}
+                            onToggle={handleToggleAdjustStudentGroupMember}
+                        />
+                        {adjustStudentGroupVisibleStudents.length === 0 && (
+                            <MobileEmptyState
+                                imageSrc={adjustStudentGroupSearchQuery.trim() ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR}
+                                title={adjustStudentGroupSearchQuery.trim() ? '没有匹配的学生' : adjustStudentGroupShowOnlyUngrouped ? '没有未分组学生' : '暂无学生'}
+                                className="min-h-[320px] py-4"
+                            />
+                        )}
+                    </div>
+                ) : (
+                    <div className="-mx-3 min-h-full space-y-3 pb-3">
+                        <section className="bg-[var(--tm-bg-surface)] px-4 py-4">
+                            <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">小组头像</h3>
+                            <div className="mt-3 grid grid-cols-4 gap-3">
+                                {studentGroupAvatarOptions.map((preset) => {
+                                    const selected = preset.key === studentGroupAvatarKey;
+                                    return (
+                                        <button
+                                            type="button"
+                                            key={preset.key}
+                                            onClick={() => setStudentGroupAvatarKey(preset.key)}
+                                            aria-pressed={selected}
+                                            aria-label={`${selected ? '已选择' : '选择'}${preset.label}小组头像`}
+                                            className={`relative aspect-square min-w-0 overflow-hidden rounded-[var(--tm-radius-inner)] border-2 bg-[var(--tm-bg-surface-soft)] transition-transform active:scale-95 ${selected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft-strong)]' : 'border-transparent'}`}
+                                        >
+                                            <img src={preset.src} alt="" className="h-full w-full object-cover" decoding="async" />
+                                            {selected && (
+                                                <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--tm-brand-primary)] text-white [box-shadow:var(--tm-shadow-icon)]" aria-hidden="true">
+                                                    <CheckIcon className="h-3.5 w-3.5 [stroke-width:3]" />
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                        <section className="bg-[var(--tm-bg-surface)] px-4 py-4">
+                            <label className="block">
+                                <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">小组名称</span>
+                                <input value={renameStudentGroupName} onChange={event => setRenameStudentGroupName(event.target.value)} maxLength={20} aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none" />
+                            </label>
+                        </section>
+                    </div>
+                )}
             </MobileBottomSheet>
 
             <MobileBottomSheet open={Boolean(groupPlanActionTarget)} title={groupPlanActionTarget?.name || '分组管理'} onClose={() => setGroupPlanActionTarget(null)}>
@@ -852,7 +1458,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 </div>
             </MobileBottomSheet>
 
-            <MobileBottomSheet open={Boolean(renameGroupPlanTarget)} title="重命名分组" onClose={() => setRenameGroupPlanTarget(null)} footer={(
+            <MobileBottomSheet open={Boolean(renameGroupPlanTarget)} title="重命名分组" onClose={() => setRenameGroupPlanTarget(null)} footerDivider={false} footer={(
                 <button type="button" onClick={handleConfirmRenameGroupPlan} disabled={!renameGroupPlanName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">保存</button>
             )}>
                 <label className="block py-2">
@@ -872,13 +1478,13 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             />
 
             <MobileConfirmSheet
-                open={Boolean(deleteDraftGroupTarget)}
-                title={`删除“${deleteDraftGroupTarget?.name || ''}”？`}
-                description={`组内${deleteDraftGroupTarget?.memberIds.length || 0}名学生将变为未分组。`}
-                confirmLabel="确认删除"
+                open={Boolean(dissolveStudentGroupTarget)}
+                title={`解散“${dissolveStudentGroupTarget?.name || ''}”？`}
+                description={`组内${dissolveStudentGroupTarget?.memberIds.length || 0}名学生将变为未分组，学生信息不会删除。`}
+                confirmLabel="确认解散"
                 tone="danger"
-                onClose={() => setDeleteDraftGroupTarget(null)}
-                onConfirm={handleConfirmDeleteDraftGroup}
+                onClose={() => setDissolveStudentGroupTargetId(null)}
+                onConfirm={handleConfirmDissolveStudentGroup}
             />
 
             <MobileConfirmSheet
@@ -887,11 +1493,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 description="已完成的分组内容不会保存。"
                 confirmLabel="放弃创建"
                 tone="danger"
-                onClose={() => setShowDiscardGroupingConfirm(false)}
+                onClose={handleCloseDiscardGroupingConfirm}
                 onConfirm={handleConfirmDiscardGrouping}
             />
 
-            {groupEditor && renderGroupEditor()}
+            <MobileToast message={groupingToastMessage} />
 
         </div>
     );

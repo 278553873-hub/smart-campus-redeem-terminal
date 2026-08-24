@@ -8,6 +8,7 @@ const dashboardSource = read('./DashboardView.tsx');
 const screenBackgroundSource = read('../components/TeacherMobileScreenBackground.tsx');
 const tokenSource = read('../styles/teacherMobileTokens.ts');
 const basicEditSource = read('./StudentBasicEditView.tsx');
+const mobileEditableRowSource = read('../components/ui/MobileEditableRow.tsx');
 const coinDetailSource = read('./StudentCoinDetailView.tsx');
 const compactSegmentSource = read('../components/ui/CompactSegmentedControl.tsx');
 const textSelectionSource = read('../components/ui/TextSelectionControl.tsx');
@@ -23,6 +24,12 @@ const growthCoinTerminologySource = read('../../shared/growthCoinTerminology.ts'
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
 };
+
+requireText(mobileEditableRowSource, 'before:inset-y-0 before:-left-4 before:-right-4', '统一字段行按压底色应拉通整个卡片行。');
+requireText(mobileEditableRowSource, 'active:before:bg-[var(--tm-bg-surface-soft)]', '统一字段行按下时应使用浅灰反馈，不使用主题色填充。');
+if (mobileEditableRowSource.includes('before:rounded')) {
+  throw new Error('统一字段行按压底色不应设置圆角。');
+}
 
 requireText(typesSource, "status?: 'active' | 'left';", 'Student 类型应包含在校/离校状态。');
 requireText(typesSource, 'reservedPhones?: string[];', 'Student 类型应包含多个预留手机。');
@@ -45,7 +52,13 @@ requireText(constantsSource, "'月度综合表现结算'", '月结算配置下�
 requireText(appSource, "'student_basic_edit'", 'App 路由应包含学生基础信息编辑子页面。');
 requireText(appSource, "'student_coin_detail'", 'App 路由应包含校园币详情子页面。');
 requireText(appSource, 'studentOverrides', 'App 应维护本次会话内的学生资料覆盖状态。');
-requireText(appSource, 'handleSaveStudentBasicInfo', 'App 应提供学生基础信息保存处理。');
+requireText(appSource, 'handleChangeStudentBasicInfo', 'App 应提供学生基础信息实时更新处理。');
+const basicInfoChangeHandlerSource = appSource.match(/const handleChangeStudentBasicInfo = \(student: Student\) => \{([\s\S]*?)\n    \};/)?.[1] ?? '';
+requireText(basicInfoChangeHandlerSource, 'setStudentOverrides', '实时修改基础信息后应更新学生资料覆盖状态。');
+requireText(basicInfoChangeHandlerSource, 'setSelectedStudent(student)', '实时修改基础信息后应同步当前学生详情。');
+if (basicInfoChangeHandlerSource.includes('goBack()')) {
+  throw new Error('基础信息实时生效后应停留在编辑页，不应自动返回。');
+}
 requireText(appSource, '<StudentBasicEditView', 'App 应渲染学生基础信息编辑页。');
 requireText(appSource, '<StudentCoinDetailView', 'App 应渲染校园币详情页。');
 requireText(appSource, "lazy(() => import('./views/StudentCoinDetailView'))", '校园币详情等低频子页面应按需加载。');
@@ -375,6 +388,50 @@ if (dashboardSource.includes('兑换记录')) {
 for (const required of ['头像', '更换头像', '姓名', '性别', '学号', '所在班级', '家长联系方式']) {
   requireText(basicEditSource, required, `基础信息编辑页缺少字段：${required}`);
 }
+requireText(basicEditSource, 'student-avatar-card', '学生头像应作为独立卡片展示。');
+requireText(basicEditSource, 'student-profile-fields-card', '姓名、性别、学号、出生日期和所在班级应归入同一张资料卡。');
+requireText(basicEditSource, 'student-guardian-card', '家长联系方式应作为独立卡片展示。');
+const studentAvatarCardSource = basicEditSource.slice(
+  basicEditSource.indexOf('student-avatar-card'),
+  basicEditSource.indexOf('student-profile-fields-card'),
+);
+const studentProfileFieldsCardSource = basicEditSource.slice(
+  basicEditSource.indexOf('student-profile-fields-card'),
+  basicEditSource.indexOf('student-guardian-card'),
+);
+for (const field of ['姓名', '性别', '学号', '出生日期', '所在班级']) {
+  requireText(studentProfileFieldsCardSource, field, `学生资料卡缺少字段：${field}`);
+}
+requireText(studentProfileFieldsCardSource, '>基础资料</h2>', '基础资料卡应展示与家长联系方式一致的分组标题。');
+if (studentProfileFieldsCardSource.includes('<IconBadge')) {
+  throw new Error('基础资料卡标题不应增加装饰性图标。');
+}
+requireText(studentProfileFieldsCardSource, 'grid-cols-[72px_minmax(0,1fr)]', '基础资料字段应采用左侧标签、右侧值的紧凑结构。');
+requireText(studentProfileFieldsCardSource, 'divide-y divide-[var(--tm-border-subtle)]', '基础资料字段之间应保留浅色单边分隔线。');
+requireText(studentProfileFieldsCardSource, '<MobileEditableRow', '基础资料可编辑字段应复用手机端统一字段行按压状态。');
+if (studentProfileFieldsCardSource.includes('<input')) {
+  throw new Error('基础资料卡不应常驻文字或日期输入框，应通过字段弹窗渐进编辑。');
+}
+requireText(studentProfileFieldsCardSource, "openFieldEditor('name')", '点击姓名整行应进入字段编辑弹窗。');
+requireText(studentProfileFieldsCardSource, "openFieldEditor('studentNo')", '点击学号整行应进入字段编辑弹窗。');
+requireText(studentProfileFieldsCardSource, "openFieldEditor('birthDate')", '点击出生日期整行应进入字段编辑弹窗。');
+requireText(studentProfileFieldsCardSource, "formatBirthDate(draft.birthDate)", '出生日期应使用中文日期或未设置状态展示。');
+if ((studentProfileFieldsCardSource.match(/<ChevronRight/g) ?? []).length < 4) {
+  throw new Error('姓名、学号、出生日期和所在班级都应通过右箭头表达下钻编辑。');
+}
+if (studentAvatarCardSource.includes('姓名') || studentAvatarCardSource.includes('所在班级')) {
+  throw new Error('头像独立卡片不应混入基础资料字段。');
+}
+requireText(studentAvatarCardSource, 'h-24 w-24', '学生头像卡应复用教师个人信息页的头像尺寸。');
+requireText(studentAvatarCardSource, 'bg-[var(--tm-brand-primary)]', '学生头像卡应使用与教师个人信息一致的相机角标。');
+requireText(basicEditSource, 'bg-[var(--tm-bg-page)] font-sans', '学生基础信息编辑页应使用与教师个人信息编辑页一致的页面底色。');
+requireText(basicEditSource, 'bg-[var(--tm-page-plain-header-bg)] px-4', '学生基础信息编辑页标题栏应保持纯白，与浅灰内容区形成分层。');
+if (basicEditSource.includes('overflow-hidden bg-transparent font-sans')) {
+  throw new Error('学生基础信息编辑页不应继续透出应用外层纯白背景。');
+}
+if (basicEditSource.includes('border-white/40 bg-white/38')) {
+  throw new Error('学生基础信息编辑页标题栏不应使用半透明白色。');
+}
 if (basicEditSource.includes('学生状态') || basicEditSource.includes('设为离校') || basicEditSource.includes('学籍状态')) {
   throw new Error('基础信息编辑页不应包含学生状态或设为离校入口，学籍状态应在学生详情页单独操作。');
 }
@@ -385,6 +442,17 @@ requireText(basicEditSource, 'grid-cols-[92px_1fr]', '班级级联应采用左�
 requireText(basicEditSource, 'aria-label="左侧先选入学年级"', '班级级联左侧应先选入学年级。');
 requireText(basicEditSource, 'aria-label="右侧再选该年级下的班级"', '班级级联右侧应展示该年级下的班级。');
 requireText(basicEditSource, 'formatCompactClassName(item.name)', '右侧班级应展示 2020级1班 这样的紧凑班级名。');
+requireText(basicEditSource, 'open={showClassPicker}', '所在班级应使用底部弹窗承载级联选择。');
+requireText(basicEditSource, 'title="选择班级"', '班级选择弹窗应使用明确标题。');
+requireText(basicEditSource, 'onClick={() => selectClass(item)}', '点击具体班级后应立即应用选择。');
+requireText(basicEditSource, 'setToastMessage(`已调整至${formatCompactClassName(item.name)}`)', '换班成功后应提供轻量结果反馈。');
+requireText(basicEditSource, 'aria-label={`选择所在班级，当前${formatCompactClassName(draft.class)}`}', '所在班级入口应整行可点击并说明当前值。');
+if (basicEditSource.includes('>更换</span>') || basicEditSource.includes('toggleClassPicker')) {
+  throw new Error('所在班级入口不应保留“更换”文案或页内展开逻辑。');
+}
+if (basicEditSource.includes('确认换班') || basicEditSource.includes('确认调整班级')) {
+  throw new Error('换班选择后应直接生效，不应增加二次确认。');
+}
 requireText(basicEditSource, '添加联系方式', '基础信息编辑页应支持新增多个家长联系方式。');
 requireText(basicEditSource, 'removeContact', '基础信息编辑页应支持删除家长联系方式。');
 requireText(typesSource, "export type GuardianRelation = '家长' | '爸爸' | '妈妈' | '爷爷' | '奶奶' | '外公' | '外婆' | '其他';", '学生基础信息应定义家长关系选项。');
@@ -392,11 +460,66 @@ requireText(typesSource, 'guardianContacts?: GuardianContact[];', 'Student 类�
 requireText(basicEditSource, "const guardianRelationOptions: GuardianRelation[] = ['家长', '爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他'];", '基础信息编辑页应提供家长关系选择。');
 requireText(basicEditSource, "contact.relation === '其他'", '选择其他关系时应显示自定义关系输入框。');
 requireText(basicEditSource, 'confirmSystemAvatar', '基础信息编辑页应确认系统头像后再写入学生资料。');
-requireText(basicEditSource, '保存基础信息', '基础信息编辑页应提供明确保存按钮。');
+if (basicEditSource.includes('保存基础信息')) {
+  throw new Error('基础信息编辑页采用实时生效，不应保留底部保存按钮。');
+}
+requireText(basicEditSource, 'onChange(normalizedStudent)', '基础信息字段校验通过后应独立更新学生资料。');
+requireText(basicEditSource, "setToastMessage('保存失败，请重试')", '独立保存失败后应提供可执行的重试提示。');
+requireText(basicEditSource, 'restoreLastPersistedDraft', '独立保存失败后应回滚到最近一次成功数据。');
+requireText(appSource, 'onChange={handleChangeStudentBasicInfo}', 'App 应接收基础信息页的实时更新。');
+if (basicEditSource.includes('onSave')) {
+  throw new Error('基础信息编辑组件不应继续暴露整页保存回调。');
+}
+requireText(basicEditSource, 'open={editingField !== null}', '姓名、学号和出生日期应复用同一个字段编辑弹窗。');
+requireText(basicEditSource, 'disabled={!canSaveField}', '字段未变化或不合法时不得提交。');
+requireText(basicEditSource, 'onClick={saveField}', '字段弹窗确认后应独立保存当前字段。');
+requireText(basicEditSource, 'focus:ring-[var(--tm-input-focus-ring)]', '字段弹窗输入框应使用透明的输入焦点令牌，不得使用主题色填充。');
+requireText(basicEditSource, 'getContactValidationErrors', '家长联系方式保存前必须分别校验手机号和关系。');
+requireText(basicEditSource, "errors.phone = '该手机号已添加'", '新增或编辑联系方式时应阻止保存重复手机号。');
+requireText(basicEditSource, 'guardian-phone-error', '手机号错误应就近关联到手机号字段。');
+requireText(basicEditSource, 'guardian-relation-other-error', '具体关系错误应就近关联到具体关系字段。');
+requireText(basicEditSource, "relationOther: relation === '其他' ? previous.relationOther : ''", '从其他关系切回预设关系时应清理无效的具体关系数据。');
+requireText(basicEditSource, 'open={contactSheetOpen}', '新增与编辑联系方式应复用同一个底部弹窗。');
+requireText(basicEditSource, 'contactSheetMode !== null && deleteContactIndex === null', '删除确认打开时应暂时隐藏编辑弹窗，避免叠加两个焦点陷阱。');
+requireText(basicEditSource, "contactSheetMode === 'edit' ? '编辑联系方式' : '添加联系方式'", '联系方式弹窗应根据新增或编辑状态展示对应标题。');
+requireText(basicEditSource, 'openEditContact(index)', '点击已有联系方式应进入编辑弹窗。');
+requireText(basicEditSource, 'disabled={!canSaveContact}', '联系方式填写不完整时不得保存。');
+requireText(basicEditSource, 'formatGuardianPhone(contact.phone)', '联系方式列表应隐藏手机号中间四位。');
+requireText(basicEditSource, 'onClick={requestDeleteContact}', '删除入口应收敛在联系方式编辑弹窗中。');
+requireText(basicEditSource, 'border border-[var(--tm-brand-primary)] bg-[var(--tm-bg-surface)]', '添加按钮应使用主题色边框和白色底。');
+requireText(basicEditSource, '添加\n                </span>', '联系方式卡片按钮名称应简化为“添加”。');
+requireText(basicEditSource, 'className={relationSelectClass}', '关系选择应使用明确的可编辑样式。');
+requireText(basicEditSource, 'appearance-none', '关系选择应覆盖移动端原生置灰外观。');
+requireText(basicEditSource, '[-webkit-text-fill-color:var(--tm-text-primary)] opacity-100', '关系选择文字应保持主文字色和正常透明度。');
+const guardianCardSource = basicEditSource.slice(
+  basicEditSource.indexOf('student-guardian-card'),
+  basicEditSource.indexOf('<MobileBottomSheet', basicEditSource.indexOf('student-guardian-card')),
+);
+if (guardianCardSource.includes('<IconBadge')) {
+  throw new Error('家长联系方式卡标题不应增加装饰性图标。');
+}
+requireText(guardianCardSource, 'className="group flex h-11 items-center justify-center"', '联系方式添加按钮应保留 44 像素触控高度。');
+requireText(guardianCardSource, 'className="flex h-7 items-center gap-1', '联系方式添加按钮的可见描边高度应收敛为 28 像素。');
+requireText(guardianCardSource, 'grid-cols-[72px_minmax(0,1fr)]', '联系方式应与基础资料复用左侧标签、右侧值的两列结构。');
+requireText(guardianCardSource, 'className={compactLabelClass}>{getGuardianRelationLabel(contact)}</span>', '联系方式关系应使用灰色标签层级。');
+requireText(guardianCardSource, 'tabular-nums text-[var(--tm-text-primary)]', '联系方式手机号应使用黑色主信息层级。');
+requireText(guardianCardSource, 'divide-y divide-[var(--tm-border-subtle)]', '联系方式子项之间应保留浅色单边分隔线。');
+requireText(guardianCardSource, '<MobileEditableRow', '联系方式应复用手机端统一字段行按压状态。');
+if (guardianCardSource.includes('<input') || guardianCardSource.includes('<select')) {
+  throw new Error('家长联系方式卡片应保持只读，编辑控件应收敛到底部弹窗。');
+}
+requireText(basicEditSource, 'open={deleteContactIndex !== null}', '删除已有联系方式前必须打开确认弹窗。');
+requireText(basicEditSource, 'onConfirm={removeContact}', '确认后才可删除已有联系方式。');
+requireText(basicEditSource, 'formatGuardianPhone(deletingContact.phone)', '删除确认应展示正在删除的脱敏手机号。');
+requireText(basicEditSource, '删除后，该手机将无法查看学生报告', '删除联系方式确认文案应说明学生报告访问影响。');
+requireText(basicEditSource, '暂无联系方式', '删除最后一条联系方式后应展示真实空状态。');
 requireText(basicEditSource, 'h-full min-h-0 overflow-hidden', '基础信息编辑子页面应使用手机壳内高度，避免底部按钮裁切。');
 requireText(basicEditSource, 'StudentBasicEditView', '基础信息编辑页应独立封装。');
-requireText(basicEditSource, 'const birthDate = event.currentTarget.value;', '出生日期更新必须在状态更新前读取输入值，避免页面白屏。');
-requireText(basicEditSource, 'onInput={updateBirthDate}', '出生日期输入必须使用安全的独立更新方法。');
+requireText(basicEditSource, "max={editingField === 'birthDate' ? maxBirthDate : undefined}", '出生日期弹窗不得允许选择未来日期。');
+requireText(basicEditSource, "return '未设置';", '出生日期为空时应显示未设置，不展示浏览器年月日占位。');
+requireText(basicEditSource, 'aria-pressed={draft.gender === option.value}', '性别选中状态应能被辅助技术识别。');
+requireText(basicEditSource, 'aria-pressed={classPickerYear === year}', '班级年份选中状态应能被辅助技术识别。');
+requireText(basicEditSource, 'h-11 w-11 items-center justify-center', '标题栏返回按钮应满足 44 像素最小触控尺寸。');
 if (basicEditSource.includes('学生基础资料') || basicEditSource.includes('本次 Demo 保存后在当前会话内生效') || basicEditSource.includes('UserRound')) {
   throw new Error('基础信息编辑页不应展示顶部说明卡，应直接进入表单。');
 }

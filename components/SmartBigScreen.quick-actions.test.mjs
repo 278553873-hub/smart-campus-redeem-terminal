@@ -5,9 +5,11 @@ const screenSource = readFileSync(new URL('./SmartBigScreen.tsx', import.meta.ur
 const dockSource = readFileSync(new URL('./classroom/ClassroomQuickActionDock.tsx', import.meta.url), 'utf8');
 const iconUrl = new URL('../public/assets/classroom/quick-action-giraffe.png', import.meta.url);
 const secondaryIconUrl = new URL('../public/assets/classroom/open-app-icon.png', import.meta.url);
+const microphoneGlyphUrl = new URL('../public/assets/classroom/microphone-glyph.png', import.meta.url);
 
 assert.ok(existsSync(iconUrl), '课堂快捷功能应使用已入库的长颈鹿图标资源');
 assert.ok(existsSync(secondaryIconUrl), '第二个课堂快捷功能应使用已入库的打开应用图标资源');
+assert.ok(existsSync(microphoneGlyphUrl), '麦克风入口应使用已入库的单一透明图形资源');
 assert.match(screenSource, /ClassroomQuickActionDock/, '课堂大屏应复用课堂快捷功能悬浮组件');
 assert.match(screenSource, /onToggleVoice=\{toggleVoiceCapture\}/, '麦克风子入口应保留原有语音录入逻辑');
 assert.doesNotMatch(screenSource, /handleVoiceDockPointer/, '课堂大屏页面不应继续承载悬浮入口拖拽细节');
@@ -22,6 +24,13 @@ assert.match(dockSource, /transitionDuration: isVisible \? '220ms' : '160ms'/, '
 assert.match(dockSource, /setIsExpanded\(false\);[\s\S]*setPosition\(clampPosition/, '拖拽主入口时应先收起子功能');
 assert.doesNotMatch(dockSource, /flex-col gap-3/, '两个子入口不应继续垂直堆叠');
 assert.match(dockSource, /h-12 w-12/g, '子入口应保持48像素点击区域');
+assert.match(dockSource, /bg-\[linear-gradient\(180deg,#7BCDFC_0%,#54BAF6_52%,#2D99DF_100%\)\]/, '麦克风默认态应使用与其他入口一致的天空蓝渐变');
+assert.match(dockSource, /hover:bg-\[linear-gradient\(180deg,#8AD7FF_0%,#61C5FB_52%,#38A8E8_100%\)\]/, '麦克风悬停态应整体提亮');
+assert.match(dockSource, /active:bg-\[linear-gradient\(180deg,#62BFEF_0%,#43ACEB_52%,#258ACD_100%\)\]/, '麦克风按下态应整体压暗');
+assert.match(dockSource, /radial-gradient\(circle_at_32%_18%,rgba\(255,255,255,0\.34\),transparent_44%\)/, '麦克风入口应保留轻量高光以匹配其他立体图标');
+assert.match(dockSource, /MICROPHONE_GLYPH_SRC = '\/assets\/classroom\/microphone-glyph\.png'/, '麦克风入口应只复用一枚透明麦克风图形');
+assert.doesNotMatch(dockSource, /const VoiceMicGlyph/, '课堂大屏不应继续使用较细的线框麦克风图形');
+assert.doesNotMatch(dockSource, /microphone-(?:default|hover|pressed)\.(?:png|ico)/, '麦克风交互状态不应拆成多张图片资源');
 assert.match(dockSource, /aria-expanded=\{isExpanded\}/, '主入口应向辅助技术暴露展开状态');
 assert.match(dockSource, /event\.key !== 'Enter' && event\.key !== ' '/, '主入口应明确支持回车和空格键展开');
 assert.match(dockSource, /event\.key !== 'Escape'/, '快捷功能应支持按Esc键收起');

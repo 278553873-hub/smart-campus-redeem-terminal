@@ -18,7 +18,7 @@ assert.ok(!classListSource.includes("renderClassSection('加入的班级'"), '�
 assert.ok(!classListSource.includes("renderClassSection('协作班级'"), '协作来源下不应重复展示协作分组。');
 
 requireText(classListSource, 'const showLeaderboard = canViewClassLeaderboard(currentSpace);', '排行榜显示条件必须来自统一空间权限规则。');
-requireText(classListSource, '{showLeaderboard && (', '排行榜入口必须按条件渲染。');
+requireText(classListSource, "activeListTab === 'class' && showLeaderboard", '排行榜入口必须同时校验班级页签和空间能力。');
 requireText(classListSource, 'const canManagePersonal = canManagePersonalClasses(currentSpace);', '个人版加号必须来自统一空间权限规则。');
 requireText(classListSource, '显示${visibleClasses.length}/${classes.length}个班级', '个人来源的管理工具行应同时反馈班级显示数量。');
 requireText(classListSource, 'open={canManagePersonal && showClassManagement}', '班级管理弹窗也必须校验当前为本人创建来源。');

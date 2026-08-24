@@ -20,24 +20,7 @@ const DOCK_SIZE = 64;
 const VIEWPORT_GUTTER = 12;
 const MIC_FAN_OFFSET = { x: 21, y: 77 };
 const ASSISTANT_FAN_OFFSET = { x: 69, y: 40 };
-
-const VoiceMicGlyph: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <svg
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.6"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
-    <path d="M5 11a7 7 0 0 0 14 0" />
-    <path d="M12 18v3" />
-    <path d="M8 21h8" />
-  </svg>
-);
+const MICROPHONE_GLYPH_SRC = '/assets/classroom/microphone-glyph.png';
 
 const VoiceWaveGlyph: React.FC<{ level: number }> = ({ level }) => {
   const bars = [0.35, 0.65, 1, 0.78, 0.48];
@@ -280,17 +263,28 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
               if (isVoiceListening) setIsExpanded(false);
               onToggleVoice();
             }}
-            className={`relative flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.30)] transition-all hover:scale-105 hover:bg-blue-700 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 ${
-              isVoiceListening ? 'ring-4 ring-blue-500/20' : ''
+            className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(180deg,#7BCDFC_0%,#54BAF6_52%,#2D99DF_100%)] text-white shadow-[0_12px_28px_rgba(45,153,223,0.30)] transition-[transform,background-image,box-shadow] hover:scale-105 hover:bg-[linear-gradient(180deg,#8AD7FF_0%,#61C5FB_52%,#38A8E8_100%)] active:scale-95 active:bg-[linear-gradient(180deg,#62BFEF_0%,#43ACEB_52%,#258ACD_100%)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#B9E8FF] ${
+              isVoiceListening ? 'ring-4 ring-[#54BAF6]/25' : ''
             }`}
             title={isVoiceListening ? '停止语音录入' : '开始语音录入'}
             aria-label={isVoiceListening ? '停止语音录入' : '开始语音录入'}
             aria-pressed={isVoiceListening}
           >
-            {isVoiceListening && <span className="absolute inset-0 rounded-full bg-blue-400/30 animate-ping" />}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-[1px] rounded-full bg-[radial-gradient(circle_at_32%_18%,rgba(255,255,255,0.34),transparent_44%)]"
+            />
+            {isVoiceListening && <span className="absolute inset-0 rounded-full bg-[#54BAF6]/30 animate-ping" />}
             {isVoiceListening
               ? <VoiceWaveGlyph level={voiceLevel} />
-              : <VoiceMicGlyph className="relative z-10 h-6 w-6" />}
+              : (
+                <img
+                  src={MICROPHONE_GLYPH_SRC}
+                  alt=""
+                  draggable={false}
+                  className="relative z-10 h-8 w-8 select-none object-contain"
+                />
+              )}
           </button>
         </div>
 

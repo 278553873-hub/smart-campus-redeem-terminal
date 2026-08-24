@@ -7,6 +7,7 @@ import {
     ClipboardList,
     Coins,
     FileCog,
+    ScanLine,
     MessageCircle,
     Settings,
     UsersRound,
@@ -35,6 +36,7 @@ interface MeViewProps {
     onViewLeaderReport: () => void;
     onOpenMoralEducationCockpit: () => void;
     onOpenWeeklyDutySchedule: () => void;
+    onOpenHomeworkBatchImport: () => void;
     onOpenSettings: () => void;
     onOpenSubjectManagement: () => void;
     onOpenDepartmentManagement: () => void;
@@ -71,7 +73,7 @@ interface ToolSectionProps {
 const secondaryIconClass = 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]';
 
 const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)] transition active:scale-95 active:text-[var(--tm-brand-primary)]';
-const reportToolImageClass = 'h-16 w-16 max-w-none rounded-[var(--tm-radius-inner)] object-cover';
+const reportToolImageClass = 'h-14 w-14 max-w-none rounded-[var(--tm-radius-inner)] object-cover';
 const assistantToolImageClass = 'h-12 w-12 rounded-[var(--tm-radius-inner)] object-cover';
 const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-card)] backdrop-blur-sm';
 
@@ -86,7 +88,7 @@ const ToolSection: React.FC<ToolSectionProps> = ({ title, children }) => (
 );
 
 const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'primary' | 'secondary' }> = ({ items, columns = 4, variant = 'primary' }) => (
-    <div className={`mt-4 grid ${columns === 4 ? 'grid-cols-4' : columns === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-x-3 gap-y-3`}>
+    <div className={`mt-4 grid ${columns === 4 ? 'grid-cols-4' : columns === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-x-3 ${variant === 'secondary' ? 'gap-y-3' : 'gap-y-4'} mb-[var(--tm-space-1)]`}>
         {items.map(item => {
             const Icon = item.icon;
             const isSecondary = variant === 'secondary';
@@ -96,7 +98,7 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                     type="button"
                     aria-label={item.title}
                     onClick={item.onClick}
-                    className={`${isSecondary ? 'min-h-[64px]' : 'min-h-[74px]'} group flex flex-col items-center justify-start gap-2 rounded-[var(--tm-radius-inner)] text-center transition duration-200 active:scale-[0.97] active:bg-[var(--tm-brand-primary-soft)]/60`}
+                    className={`${isSecondary ? 'min-h-[72px]' : 'min-h-[82px]'} group flex flex-col items-center justify-start gap-2 rounded-[var(--tm-radius-inner)] py-1 text-center transition duration-200 active:scale-[0.97] active:bg-[var(--tm-brand-primary-soft)]/60`}
                 >
                     {item.imageSrc ? (
                         <span className="relative flex h-12 w-12 items-center justify-center overflow-visible rounded-[var(--tm-radius-inner)]">
@@ -115,7 +117,7 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                                 <img
                                     src={item.imageBadgeSrc}
                                     alt={item.imageBadgeAlt ?? ''}
-                                    className="pointer-events-none absolute -bottom-2 -right-2 h-6 w-6 object-contain"
+                                    className="pointer-events-none absolute -bottom-1 -right-2 h-6 w-6 object-contain"
                                 />
                             )}
                         </span>
@@ -130,7 +132,7 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                     ) : (
                         null
                     )}
-                    <span className="max-w-[72px] whitespace-nowrap text-[12px] font-semibold leading-[18px] text-[var(--tm-text-primary)]">
+                    <span className="max-w-[72px] whitespace-nowrap text-[12px] font-medium leading-[18px] text-[var(--tm-text-primary)]">
                         {item.labelLines?.map(line => <span key={line} className="block">{line}</span>) ?? item.title}
                     </span>
                 </button>
@@ -186,6 +188,7 @@ const MeView: React.FC<MeViewProps> = ({
     onViewLeaderReport,
     onOpenMoralEducationCockpit,
     onOpenWeeklyDutySchedule,
+    onOpenHomeworkBatchImport,
     onOpenSettings,
     onOpenSubjectManagement,
     onOpenDepartmentManagement,
@@ -204,35 +207,6 @@ const MeView: React.FC<MeViewProps> = ({
     const allowedMoreTools = new Set(menuPolicy.moreTools);
 
     const allPrimaryTools: MenuEntry<TeacherManagementToolId>[] = [
-        {
-            id: 'schoolReport',
-            title: '学生评价报表',
-            labelLines: ['学生评价', '报表'],
-            imageSrc: ASSETS.MANAGEMENT.SCHOOL_REPORT_V2,
-            imageAlt: '学生评价报表图标',
-            imageClassName: reportToolImageClass,
-            plainImage: true,
-            onClick: onViewLeaderReport,
-        },
-        {
-            id: 'moralEducationCockpit',
-            title: '班级评价报表',
-            labelLines: ['班级评价', '报表'],
-            imageSrc: ASSETS.MANAGEMENT.CLASS_EVALUATION_REPORT,
-            imageAlt: '班级评价报表图标',
-            imageClassName: reportToolImageClass,
-            plainImage: true,
-            onClick: onOpenMoralEducationCockpit,
-        },
-        {
-            id: 'termReport',
-            title: '期末报告',
-            imageSrc: ASSETS.MANAGEMENT.TERM_REPORT_V2,
-            imageAlt: '期末报告图标',
-            imageClassName: reportToolImageClass,
-            plainImage: true,
-            onClick: onOpenTermGenerateModal,
-        },
         {
             id: 'headteacherAssistant',
             title: '班主任助理',
@@ -255,10 +229,46 @@ const MeView: React.FC<MeViewProps> = ({
             plainImage: true,
             onClick: onOpenAiPrincipalAssistant,
         },
+        {
+            id: 'schoolReport',
+            title: '学生评价报表',
+            labelLines: ['学评报表'],
+            imageSrc: ASSETS.MANAGEMENT.SCHOOL_REPORT_V2,
+            imageAlt: '学生评价报表图标',
+            imageClassName: reportToolImageClass,
+            plainImage: true,
+            onClick: onViewLeaderReport,
+        },
+        {
+            id: 'moralEducationCockpit',
+            title: '班级评价报表',
+            labelLines: ['班评报表'],
+            imageSrc: ASSETS.MANAGEMENT.CLASS_EVALUATION_REPORT,
+            imageAlt: '班级评价报表图标',
+            imageClassName: reportToolImageClass,
+            plainImage: true,
+            onClick: onOpenMoralEducationCockpit,
+        },
+        {
+            id: 'termReport',
+            title: '期末报告',
+            imageSrc: ASSETS.MANAGEMENT.TERM_REPORT_V2,
+            imageAlt: '期末报告图标',
+            imageClassName: reportToolImageClass,
+            plainImage: true,
+            onClick: onOpenTermGenerateModal,
+        },
     ];
     const primaryTools = allPrimaryTools.filter(item => allowedManagementTools.has(item.id));
 
     const allMoreTools: MenuEntry<TeacherMoreToolId>[] = [
+        {
+            id: 'homeworkBatchImport',
+            title: '作业录入',
+            labelLines: ['作业录入'],
+            icon: ScanLine,
+            onClick: onOpenHomeworkBatchImport,
+        },
         {
             id: 'coinIssuance',
             title: '货币发放',

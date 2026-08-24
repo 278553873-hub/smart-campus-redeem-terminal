@@ -38,7 +38,7 @@ for (const required of [
   "'moral_education_cockpit'",
   "onOpenMoralEducationCockpit={() => navigateTo('moral_education_cockpit')}",
   "{currentView === 'moral_education_cockpit' && (",
-  "enabledManagementTools: ['schoolReport', 'moralEducationCockpit', 'weeklyDutySchedule', 'termReport'",
+  "enabledManagementTools: ['schoolReport', 'moralEducationCockpit', 'termReport'",
 ]) {
   assert.ok(appSource.includes(required), `应用路由应完整接入班级评价报表，缺少：${required}`);
 }

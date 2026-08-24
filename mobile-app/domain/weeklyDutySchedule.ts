@@ -47,6 +47,12 @@ export const formatDutyWeekRange = (week: DutyWeek): string => {
 
 export const formatDutyMonth = (year: number, monthIndex: number): string => `${year}年${monthIndex + 1}月`;
 
+export const formatDutyTeacherSummary = (teacherNames: string[]): string => {
+  if (teacherNames.length === 0) return '未安排';
+  if (teacherNames.length <= 2) return teacherNames.join('、');
+  return `${teacherNames[0]}等${teacherNames.length}人`;
+};
+
 export const getDutyWeekMonthKey = (week: DutyWeek): string => week.startDate.slice(0, 7);
 
 export const formatDutyMonthKey = (monthKey: string): string => {

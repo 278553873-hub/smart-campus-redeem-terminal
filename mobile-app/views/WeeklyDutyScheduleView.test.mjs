@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   createDutyWeeks,
+  formatDutyTeacherSummary,
   formatDutyWeekRange,
   getDutyWeeksForMonth,
 } from '../domain/weeklyDutySchedule.ts';
@@ -20,6 +21,10 @@ const requireText = (source, value, message) => {
 const weeks = createDutyWeeks('2026-07-27', 6);
 assert.equal(weeks.length, 6);
 assert.equal(formatDutyWeekRange(weeks[0]), '07.27-08.02');
+assert.equal(formatDutyTeacherSummary([]), '未安排');
+assert.equal(formatDutyTeacherSummary(['陈思敏']), '陈思敏');
+assert.equal(formatDutyTeacherSummary(['李连', '刘畅']), '李连、刘畅');
+assert.equal(formatDutyTeacherSummary(['张全有', '刘飞', '陈思敏']), '张全有等3人');
 assert.deepEqual(
   getDutyWeeksForMonth(weeks, 2026, 7).map(week => formatDutyWeekRange(week)),
   ['07.27-08.02', '08.03-08.09', '08.10-08.16', '08.17-08.23', '08.24-08.30', '08.31-09.06'],
@@ -28,7 +33,7 @@ assert.deepEqual(
 
 requireText(viewSource, 'grid grid-cols-2 gap-[var(--tm-duty-week-grid-gap)]', '月历应使用两列周块网格。');
 requireText(viewSource, '只看未安排', '页面应提供只看未安排筛选。');
-requireText(viewSource, "dimmed = onlyUnscheduled && Boolean(teacherId)", '月历筛选应弱化已安排周并保持网格位置。');
+requireText(viewSource, 'dimmed = onlyUnscheduled && assigned', '月历筛选应弱化已安排周并保持网格位置。');
 requireText(viewSource, 'MobileBottomSheet', '教师选择应复用公共底部抽屉。');
 requireText(viewSource, 'MobileSearchInput', '教师选择应复用公共搜索输入框。');
 requireText(viewSource, 'teacher.name.includes(keyword)', '教师搜索应按姓名子串即时过滤。');
@@ -37,6 +42,18 @@ requireText(viewSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '教师搜索无结果
 requireText(viewSource, '没有匹配的教师', '教师搜索无结果应展示明确结果文案。');
 requireText(viewSource, 'teacher.avatar', '教师结果应展示教师头像。');
 assert.ok(!viewSource.includes('MobileToast') && !viewSource.includes('showToast'), '排班成功后页面已即时更新，不应重复显示成功Toast。');
+requireText(dataSource, 'Record<string, string[]>', '每周排班数据应支持多个教师。');
+requireText(viewSource, 'draftTeacherIds', '教师抽屉应使用临时多选状态，避免点选后立即保存。');
+requireText(viewSource, 'const selectedTeachers = useMemo(', '教师抽屉应提供独立的已选教师摘要。');
+requireText(viewSource, '已选 {draftTeacherIds.length}人', '已选区域应持续展示当前选择人数。');
+requireText(viewSource, 'aria-label={`移除${teacher.name}`}', '已选教师应提供明确的移除操作。');
+requireText(viewSource, 'overflow-x-auto no-scrollbar', '已选教师较多时应横向滚动，不得挤压教师名录。');
+requireText(viewSource, 'h-[var(--tm-size-touch)] min-w-0', '已选区域应固定占位，避免首次选择导致名录跳动。');
+assert.ok(!viewSource.includes('leftSelectedIndex') && !viewSource.includes('rightSelectedIndex'), '选择教师后不得动态重排教师名录。');
+requireText(viewSource, 'toggleTeacher', '教师列表应支持连续选中和取消。');
+requireText(viewSource, 'saveTeacherSelection', '多人选择应通过统一保存操作提交。');
+requireText(viewSource, "`保存（${draftTeacherIds.length}人）`", '保存按钮应展示当前已选教师人数。');
+assert.ok(!viewSource.includes('assignTeacher'), '多人配置不应继续沿用单选即关闭逻辑。');
 requireText(viewSource, 'aria-label="暂不安排老师"', '抽屉应提供常驻的暂不安排老师选项。');
 assert.ok(viewSource.indexOf('aria-label="暂不安排老师"') < viewSource.indexOf('<MobileSearchInput'), '暂不安排老师按钮应位于搜索框上方。');
 requireText(viewSource, 'header={teacherSheetWeek ? (', '暂不安排老师应进入抽屉标题栏。');
@@ -77,6 +94,8 @@ assert.ok(!viewSource.includes('isCurrent'), '周块不应重复显示本周文�
 assert.ok(!viewSource.includes('department'), '教师结果只展示头像和完整姓名。');
 requireText(dataSource, "name: '李连'", '演示教师应使用可核对的完整姓名。');
 requireText(dataSource, "name: '张全有'", '演示教师应使用可核对的完整姓名。');
+requireText(dataSource, "['teacher-li-lian', 'teacher-liu-chang']", '演示排班应覆盖同一周两位教师。');
+requireText(dataSource, "['teacher-zhang-quanyou', 'teacher-liu-fei', 'teacher-chen-simin']", '演示排班应覆盖同一周三位教师。');
 assert.equal((dataSource.match(/name: '刘/g) ?? []).length, 4, '输入刘时应有多位刘姓教师可供筛选。');
 
 for (const token of [

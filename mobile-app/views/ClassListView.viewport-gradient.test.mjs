@@ -20,7 +20,7 @@ requireText(background, "variant = 'ambient'", '公共背景组件应默认使�
 requireText(mobileApp, 'const hasScreenLevelBackground', '有屏幕级背景的页面，内容容器应保持透明。');
 requireText(classList, 'text-lg font-semibold text-[var(--tm-text-primary)]', '班级卡片标题字号应为 18px，并使用正文 Token。');
 requireText(classList, 'px-2 py-0.5 text-xs font-normal text-[var(--tm-text-secondary)]', '普通学科标签字号应为 12px，并使用辅助文字 Token。');
-requireText(classList, "addDemoTopBreathingSpace ? 'pt-5' : 'pt-3'", '班级列表顶距应与记录页的来源触发器精确对齐。');
+requireText(classList, "addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'", '真实手机效果下班级列表不应在小程序标题栏下重复增加顶距。');
 requireText(classList, 'variant="quiet"', '班级页的班级来源触发器应与记录页保持轻量样式一致。');
 requireText(classList, 'bg-white px-4 py-3 [box-shadow:var(--tm-shadow-card)]', '白色班级卡片应引用普通卡片阴影令牌，禁止业务页面自拼阴影公式。');
 if (classList.includes('rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-white')) failures.push('班级卡片不应使用边框分割页面。');

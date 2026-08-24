@@ -4,12 +4,32 @@ import fs from 'node:fs';
 const viewSource = fs.readFileSync(new URL('./ClassInfoView.tsx', import.meta.url), 'utf8');
 const listSource = fs.readFileSync(new URL('./ClassListView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
+const detailOverviewSource = viewSource.slice(
+  viewSource.indexOf('const renderDetail ='),
+  viewSource.indexOf('const renderTeacherList ='),
+);
 
 assert.match(viewSource, /<MobileBottomSheet[\s\S]*title="编辑班级信息"/, '编辑班级信息应复用全局底部抽屉。');
 assert.match(viewSource, /copyText\(classInfo\.classCode\)/, '班级信息页的班级号应支持复制。');
 assert.match(viewSource, /'班级详情'/, '页面标题应与产品原型一致。');
 assert.match(viewSource, /老师列表/, '班级详情应包含老师列表。');
 assert.match(viewSource, /家长绑定列表/, '班级详情应包含家长绑定列表。');
+assert.match(viewSource, /等级展示规则/, '班级详情应直接提供等级展示规则。');
+assert.match(tokenSource, /'--tm-class-info-title-font-size': '20px'/, '班级信息标题应使用 20 像素组件字号 Token。');
+assert.match(viewSource, /text-\[length:var\(--tm-class-info-title-font-size\)\]/, '班级名称应消费班级信息标题字号 Token。');
+assert.match(viewSource, /TeacherAvatar[\s\S]*?tm-font-size-compact\)\] font-medium/, '首页老师姓名应使用 500 字重。');
+assert.match(viewSource, /tm-font-size-meta\)\] font-medium[\s\S]*?已绑定/, '首页绑定状态应使用 500 字重。');
+assert.match(viewSource, /仅计算本学期/, '等级展示规则应明确只计算当前学期。');
+assert.match(viewSource, /累计所有学期/, '等级展示规则应明确累计全部学期。');
+assert.doesNotMatch(viewSource, />班级设置</, '班级详情不应重复展示“班级设置”分组标题。');
+assert.match(viewSource, /effectiveRole === 'headTeacher'/, '等级展示方式只允许班主任配置。');
+assert.match(viewSource, /role="radiogroup"/, '等级展示方式应使用可访问的单选结构。');
+assert.match(viewSource, /studentLevelDisplayMode: levelDisplayDraft/, '等级展示方式应随班级信息回写。');
+assert.doesNotMatch(detailOverviewSource, /邀请老师/, '班级详情首页的老师列表不应展示邀请快捷入口。');
+assert.doesNotMatch(detailOverviewSource, /邀请家长绑定/, '班级详情首页的家长绑定列表不应展示邀请快捷入口。');
+assert.match(viewSource, /page === 'teachers' && canInvite[\s\S]*邀请老师/, '完整老师列表应保留邀请入口。');
+assert.match(viewSource, /page === 'parents' && canInvite[\s\S]*邀请家长绑定/, '完整家长绑定列表应保留邀请入口。');
 assert.match(viewSource, /role="tablist"/, '家长绑定子页面应提供未绑定和已绑定切换。');
 assert.match(viewSource, /未绑定[\s\S]*已绑定/, '家长绑定子页面应区分未绑定与已绑定学生。');
 assert.match(viewSource, /title="老师更多操作"/, '班主任应通过底部抽屉管理老师角色。');
@@ -49,6 +69,7 @@ assert.match(appSource, /navigateTo\('class_info'\)/, '编辑班级信息应进�
 assert.match(appSource, /classOverrides/, '保存后的班级信息应提升到应用状态。');
 assert.match(appSource, /<ClassInfoView/, '应用应渲染班级信息页面。');
 assert.match(appSource, /classRole=\{selectedClassRole\}/, '应用应向班级详情传入班级角色。');
+assert.match(appSource, /getStudentLevelNetScore\(/, '班级花名册等级应按班级配置计算展示分值。');
 assert.match(appSource, /students=\{getMergedStudentsForClass\(selectedClassInfo\.id\)\}/, '班级详情应使用当前班级学生数据。');
 
 console.log('Class info view integration assertions passed');

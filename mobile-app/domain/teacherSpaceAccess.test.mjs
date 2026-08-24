@@ -90,6 +90,7 @@ assert.equal(canViewClassLeaderboard({ id: 'personal-enabled', title: '个人', 
 
 assert.deepEqual(classPolicyFor({ type: 'personal', role: 'owner', membership: 'created' }), {
   canUseDailyActions: true,
+  canManuallyEnterHomework: true,
   canUpdateStudents: true,
   canMaintainClass: true,
   canInviteTeacher: true,
@@ -98,6 +99,7 @@ assert.deepEqual(classPolicyFor({ type: 'personal', role: 'owner', membership: '
 
 assert.deepEqual(classPolicyFor({ type: 'personal', role: 'owner', membership: 'joined' }), {
   canUseDailyActions: true,
+  canManuallyEnterHomework: true,
   canUpdateStudents: false,
   canMaintainClass: false,
   canInviteTeacher: false,
@@ -106,6 +108,7 @@ assert.deepEqual(classPolicyFor({ type: 'personal', role: 'owner', membership: '
 
 assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1', teaching: ['class-1'] }), {
   canUseDailyActions: true,
+  canManuallyEnterHomework: true,
   canUpdateStudents: false,
   canMaintainClass: false,
   canInviteTeacher: false,
@@ -114,6 +117,7 @@ assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'cla
 
 assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1' }), {
   canUseDailyActions: true,
+  canManuallyEnterHomework: false,
   canUpdateStudents: false,
   canMaintainClass: false,
   canInviteTeacher: false,
@@ -122,11 +126,42 @@ assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'cla
 
 assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1', deputyHomeroom: ['class-1'] }), {
   canUseDailyActions: true,
+  canManuallyEnterHomework: true,
   canUpdateStudents: true,
   canMaintainClass: true,
   canInviteTeacher: true,
   canInviteParent: true,
 });
+
+assert.equal(
+  policyFor('school', 'teacher').moreTools.includes('homeworkBatchImport'),
+  false,
+  '未配置人工智能能力和作业录入员权限时不应展示批量录入。',
+);
+assert.equal(
+  getTeacherSpaceMenuPolicy({
+    id: 'school-ai-only',
+    title: '人工智能已开通学校',
+    type: 'school',
+    role: 'teacher',
+    homeworkAiEnabled: true,
+    homeworkOperator: false,
+  }).moreTools.includes('homeworkBatchImport'),
+  false,
+  '只有人工智能能力、没有作业录入员权限时不应展示批量录入。',
+);
+assert.equal(
+  getTeacherSpaceMenuPolicy({
+    id: 'school-homework-operator',
+    title: '作业录入学校',
+    type: 'school',
+    role: 'teacher',
+    homeworkAiEnabled: true,
+    homeworkOperator: true,
+  }).moreTools[0],
+  'homeworkBatchImport',
+  '两项能力同时开通后，批量录入应进入更多工具。',
+);
 
 const meViewSource = fs.readFileSync(new URL('../views/MeView.tsx', import.meta.url), 'utf8');
 assert.ok(meViewSource.includes('getTeacherSpaceMenuPolicy(currentSpace)'), '我的页应从统一权限规则读取菜单。');

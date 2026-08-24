@@ -8,6 +8,15 @@ const requireText = (haystack, needle, message) => {
   if (!haystack.includes(needle)) throw new Error(message);
 };
 
+const primaryToolsSource = source.slice(source.indexOf('const allPrimaryTools'), source.indexOf('const primaryTools ='));
+const expectedPrimaryToolOrder = ['班主任助理', '校长助理', '学生评价报表', '班级评价报表', '期末报告'];
+let previousPrimaryToolIndex = -1;
+for (const title of expectedPrimaryToolOrder) {
+  const currentIndex = primaryToolsSource.indexOf(`title: '${title}'`);
+  if (currentIndex <= previousPrimaryToolIndex) throw new Error(`管理工具顺序错误：${title}`);
+  previousPrimaryToolIndex = currentIndex;
+}
+
 requireText(assetsSource, 'teacher-default-avatar.png', '老师默认头像应使用统一的小鹿 IP 资源。');
 requireText(source, 'teacherProfile.avatar', '头像必须保持独立真实数据区域，不能固化在整卡图片里。');
 requireText(source, 'src={teacherProfile.avatar}', '我的页应直接展示教师资料头像，以支持老师自行更换。');
@@ -37,12 +46,19 @@ requireText(source, 'h-[19px] w-[19px]', '更多工具图标线条应同步缩�
 requireText(source, "const secondaryIconClass = 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]';", '更多工具应统一使用无描边的浅红底和品牌红图标。');
 requireText(source, '<ToolGrid items={primaryTools} columns={4} />', '管理工具应显式保持每行 4 个入口。');
 requireText(source, '<ToolGrid items={moreTools} columns={4} variant="secondary" />', '更多工具应显式保持每行 4 个入口。');
+requireText(source, "title: '作业录入'", '作业录入入口应保留完整的无障碍名称。');
+requireText(source, 'onClick: onOpenHomeworkBatchImport', '作业录入入口应进入批量录入页面。');
+requireText(source, "labelLines: ['作业录入']", '更多工具中的作业入口应使用四字单行文案。');
+requireText(source, "gap-x-3 ${variant === 'secondary' ? 'gap-y-3' : 'gap-y-4'} mb-[var(--tm-space-1)]", '管理工具应使用 16px 原始行距，更多工具保持 12px，并统一增加 4px 底部留白。');
+requireText(source, "isSecondary ? 'min-h-[72px]' : 'min-h-[82px]'", '更多工具和管理工具入口应分别保留 72px 与 82px 稳定高度。');
+requireText(source, 'rounded-[var(--tm-radius-inner)] py-1 text-center', '工具入口应增加上下各 4px 的内部留白。');
+requireText(source, 'text-[12px] font-medium leading-[18px]', '管理工具和更多工具标签应统一使用 500 字重。');
 requireText(source, '学生评价报表', '管理工具应包含学生评价报表。');
-requireText(source, "labelLines: ['学生评价', '报表']", '学生评价报表应按业务语义分两行展示。');
-requireText(source, "labelLines: ['班级评价', '报表']", '班级评价报表应按业务语义分两行展示。');
-requireText(source, 'gap-x-3 gap-y-3', '工具网格应增加横向呼吸感并收紧纵向间距。');
+requireText(source, "labelLines: ['学评报表']", '学生评价报表入口应使用四字单行文案。');
+requireText(source, "labelLines: ['班评报表']", '班级评价报表入口应使用四字单行文案。');
+requireText(source, 'gap-x-3', '工具网格应保持 12px 横向间距。');
 requireText(source, '期末报告', '管理工具应包含期末报告。');
-requireText(source, "const reportToolImageClass = 'h-16 w-16 max-w-none rounded-[var(--tm-radius-inner)] object-cover';", '评价报表和期末报告图片应通过统一放大补偿资源留白，并保持管理工具图标视觉尺寸一致。');
+requireText(source, "const reportToolImageClass = 'h-14 w-14 max-w-none rounded-[var(--tm-radius-inner)] object-cover';", '评价报表和期末报告图片应适度补偿资源留白，并与文字保持安全间距。');
 requireText(source, 'imageClassName: reportToolImageClass', '评价报表和期末报告入口应使用统一的放大图标样式。');
 requireText(source, "title: '班主任助理'", '管理工具中班主任助理入口名称不应继续带 AI 前缀。');
 requireText(source, "title: '校长助理'", '管理工具中校长助理入口名称不应继续带 AI 前缀。');
@@ -51,7 +67,7 @@ requireText(source, "imageBadgeSrc: ASSETS.MANAGEMENT.AI_ART_BADGE", 'AI 助理�
 requireText(source, "const assistantToolImageClass = 'h-12 w-12 rounded-[var(--tm-radius-inner)] object-cover';", 'AI 助理图标应直接裁切图片，并使用统一圆角 Token。');
 requireText(source, 'imageClassName: assistantToolImageClass', '班主任助理和校长助理应使用统一的无边框图标样式。');
 requireText(source, 'overflow-visible rounded-[var(--tm-radius-inner)]', '图片工具图标容器应允许 AI 角标一半露出图标外部。');
-requireText(source, 'absolute -bottom-2 -right-2 h-6 w-6', 'AI 角标应定位在图标右下角，并形成半内半外的位置关系。');
+requireText(source, 'absolute -bottom-1 -right-2 h-6 w-6', 'AI 角标应定位在图标右下角，并与文字保持 4px 间距。');
 requireText(source, '科目管理', '更多工具应包含科目管理。');
 requireText(source, '部门管理', '更多工具应包含部门管理。');
 requireText(source, '货币发放', '更多工具应包含货币发放。');
@@ -76,7 +92,7 @@ if (source.includes('ShieldCheck')) {
   throw new Error('教师头像右下角不应继续使用认证盾牌图标，应改为相机图标。');
 }
 
-if (source.includes('ScanLine') || source.includes('扫一扫') || source.includes('showDemoFeedback')) {
+if (source.includes('扫一扫') || source.includes('showDemoFeedback')) {
   throw new Error('我的页顶部不应继续展示扫一扫入口或保留无用演示逻辑。');
 }
 

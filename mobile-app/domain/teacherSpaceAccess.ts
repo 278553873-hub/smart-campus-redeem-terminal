@@ -22,6 +22,8 @@ export interface TeacherSpaceOption {
     enabledManagementTools?: TeacherManagementToolId[];
     headteacherAssistantEnabled?: boolean;
     evaluationScopes?: HeadteacherAssistantScope[];
+    homeworkAiEnabled?: boolean;
+    homeworkOperator?: boolean;
 }
 
 export type TeacherManagementToolId =
@@ -33,6 +35,7 @@ export type TeacherManagementToolId =
     | 'principalAssistant';
 
 export type TeacherMoreToolId =
+    | 'homeworkBatchImport'
     | 'coinIssuance'
     | 'questionnaire'
     | 'weeklyDutySchedule'
@@ -50,6 +53,7 @@ export type TeacherClassMembership = 'created' | 'joined' | 'school';
 
 export interface TeacherClassActionPolicy {
     canUseDailyActions: boolean;
+    canManuallyEnterHomework: boolean;
     canUpdateStudents: boolean;
     canMaintainClass: boolean;
     canInviteTeacher: boolean;
@@ -129,9 +133,19 @@ export const getTeacherSpaceMenuPolicy = (space: TeacherSpaceOption): TeacherSpa
         else managementTools.push('headteacherAssistant');
     }
 
+    const moreTools = [...policy.moreTools];
+    if (
+        space.type === 'school'
+        && space.homeworkAiEnabled === true
+        && space.homeworkOperator === true
+        && !moreTools.includes('homeworkBatchImport')
+    ) {
+        moreTools.unshift('homeworkBatchImport');
+    }
+
     return {
         managementTools,
-        moreTools: [...policy.moreTools],
+        moreTools,
     };
 };
 
@@ -178,6 +192,7 @@ export const getTeacherClassActionPolicy = ({
 
     return {
         canUseDailyActions: canManageClass || isAssignedTeacher || membership === 'joined' || space.type === 'collaboration' || space.type === 'school',
+        canManuallyEnterHomework: isClassOwner || isAssignedTeacher || membership === 'joined' || space.type === 'collaboration',
         canUpdateStudents: canManageClass,
         canMaintainClass: canManageClass,
         canInviteTeacher: canManageClass,

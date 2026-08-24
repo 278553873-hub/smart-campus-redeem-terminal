@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarRange, Check, ChevronDown, Mic2, Pause, Pencil, Play, Trash2, X } from 'lucide-react';
+import { CalendarRange, Check, ChevronDown, Pause, Pencil, Play, Trash2, X } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import EvaluationIndicatorCascadePicker from '../components/evaluation/EvaluationIndicatorCascadePicker';
 import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker';
@@ -29,13 +30,17 @@ interface EvaluationRecord {
     score: number;
     operator: string;
     occurredAt: Date;
+    recordedAt: Date;
 }
 
 interface EvaluationRecordDraft {
+    occurredOn: string;
     classId: string;
     indicatorPath: [string, string, string];
     score: string;
 }
+
+type RecordEditScope = 'date' | 'class' | 'indicator' | 'score';
 
 const timeRangeTabs: Array<{ value: TimeRange; label: string }> = [
     { value: 'today', label: '今日' },
@@ -111,6 +116,15 @@ const recordTemplates = [
     },
 ] as const;
 
+const evaluationIndicatorPaths = recordTemplates.map(template => template.indicatorPath.split(' / ') as [string, string, string]);
+
+const getEvaluationIndicatorOptions = (path: readonly string[], depth: number) => Array.from(new Set(
+    evaluationIndicatorPaths
+        .filter(candidate => candidate.slice(0, depth).every((label, index) => label === path[index]))
+        .map(candidate => candidate[depth])
+        .filter(Boolean),
+));
+
 const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
 const addDays = (date: Date, days: number) => {
@@ -151,6 +165,7 @@ const createEvaluationRecords = (classes: ClassInfo[], today: Date): EvaluationR
             score: template.score,
             operator: template.operator,
             occurredAt,
+            recordedAt: new Date(occurredAt),
         };
     })
 ));
@@ -165,9 +180,12 @@ const formatRecordTime = (date: Date, today: Date) => {
 
 const formatScore = (score: number) => `${score > 0 ? '+' : ''}${score.toFixed(2)}`;
 
+const formatRecognitionDate = (date: Date) => `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+
 const createRecordDraft = (record: EvaluationRecord): EvaluationRecordDraft => {
     const indicatorPath = record.indicatorPath.split(' / ');
     return {
+        occurredOn: toDateInputValue(record.occurredAt),
         classId: record.classId,
         indicatorPath: [indicatorPath[0] ?? '', indicatorPath[1] ?? '', indicatorPath[2] ?? ''],
         score: record.score.toFixed(2),
@@ -176,18 +194,25 @@ const createRecordDraft = (record: EvaluationRecord): EvaluationRecordDraft => {
 
 const recordFieldClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 
-const EvaluationIndicatorPath: React.FC<{ indicatorPath: string; className?: string }> = ({ indicatorPath, className = '' }) => {
+interface EvaluationIndicatorPathProps {
+    indicatorPath: string;
+    className?: string;
+    variant?: 'default' | 'compact-full';
+}
+
+const EvaluationIndicatorPath: React.FC<EvaluationIndicatorPathProps> = ({ indicatorPath, className = '', variant = 'default' }) => {
     const indicatorParts = indicatorPath.split(' / ');
+    const compactFull = variant === 'compact-full';
 
     return (
         <p
             aria-label={`指标：${indicatorParts.join('，')}`}
-            className={`flex min-w-0 items-center whitespace-nowrap text-[length:var(--tm-font-size-meta)] font-medium leading-none ${className}`}
+            className={`flex min-w-0 items-center whitespace-nowrap font-medium leading-none ${compactFull ? 'overflow-x-auto text-[length:var(--tm-font-size-badge)] no-scrollbar' : 'text-[length:var(--tm-font-size-meta)]'} ${className}`}
         >
             {indicatorParts.map((indicator, index) => (
                 <React.Fragment key={`${indicator}-${index}`}>
-                    {index > 0 && <span aria-hidden="true" className="shrink-0 px-1 text-[var(--tm-evaluation-indicator-separator)]">›</span>}
-                    <span className={`flex h-6 items-center rounded-[var(--tm-radius-inner)] border border-[var(--tm-evaluation-indicator-border)] bg-[var(--tm-evaluation-indicator-bg)] px-1.5 text-[var(--tm-evaluation-indicator-text)] ${index === indicatorParts.length - 1 ? 'shrink-0' : 'min-w-0 truncate'}`}>{indicator}</span>
+                    {index > 0 && <span aria-hidden="true" className={`shrink-0 text-[var(--tm-evaluation-indicator-separator)] ${compactFull ? 'px-0.5' : 'px-1'}`}>›</span>}
+                    <span className={`flex items-center rounded-[var(--tm-radius-inner)] border border-[var(--tm-evaluation-indicator-border)] bg-[var(--tm-evaluation-indicator-bg)] text-[var(--tm-evaluation-indicator-text)] ${compactFull ? 'h-5 shrink-0 px-1' : `h-6 px-1.5 ${index === indicatorParts.length - 1 ? 'shrink-0' : 'min-w-0 truncate'}`}`}>{indicator}</span>
                 </React.Fragment>
             ))}
         </p>
@@ -211,6 +236,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
     const [records, setRecords] = useState(() => createEvaluationRecords(classes, today));
     const [activeRecordId, setActiveRecordId] = useState('');
     const [isEditingRecord, setIsEditingRecord] = useState(false);
+    const [recordEditScope, setRecordEditScope] = useState<RecordEditScope | null>(null);
     const [recordDraft, setRecordDraft] = useState<EvaluationRecordDraft | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [playingRecordId, setPlayingRecordId] = useState('');
@@ -256,14 +282,26 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
     const selectedGradeLabel = selectedGrade === 'all' ? '全部年级' : selectedGrade;
     const selectedScopeLabel = selectedClass?.name ?? selectedGradeLabel;
     const activeRecord = records.find(record => record.id === activeRecordId) ?? null;
+    const detailSheetTitle = isEditingRecord && recordEditScope
+        ? ({ date: '修改识别日期', class: '修改记录对象', indicator: '修改指标', score: '修改得分' } as const)[recordEditScope]
+        : '评价详情';
     const draftScore = Number(recordDraft?.score ?? '');
+    const draftIndicatorPath = recordDraft?.indicatorPath ?? ['', '', ''];
+    const levelOneIndicatorOptions = getEvaluationIndicatorOptions(draftIndicatorPath, 0);
+    const levelTwoIndicatorOptions = getEvaluationIndicatorOptions(draftIndicatorPath, 1);
+    const levelThreeIndicatorOptions = getEvaluationIndicatorOptions(draftIndicatorPath, 2);
+    const parsedDraftDate = recordDraft?.occurredOn ? new Date(`${recordDraft.occurredOn}T00:00:00`) : null;
     const recordDraftInvalid = !recordDraft
-        || !classes.some(classInfo => classInfo.id === recordDraft.classId)
-        || recordDraft.indicatorPath.some(item => item.trim() === '')
-        || !Number.isFinite(draftScore)
-        || draftScore === 0
-        || draftScore < -100
-        || draftScore > 100;
+        || !recordEditScope
+        || (recordEditScope === 'date' && (!parsedDraftDate || Number.isNaN(parsedDraftDate.getTime())))
+        || (recordEditScope === 'class' && !classes.some(classInfo => classInfo.id === recordDraft.classId))
+        || (recordEditScope === 'indicator' && recordDraft.indicatorPath.some(item => item.trim() === ''))
+        || (recordEditScope === 'score' && (
+            !Number.isFinite(draftScore)
+            || draftScore === 0
+            || draftScore < -100
+            || draftScore > 100
+        ));
 
     useEffect(() => {
         if (!statusMessage) return undefined;
@@ -307,6 +345,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
     const openRecordDetail = (record: EvaluationRecord) => {
         setActiveRecordId(record.id);
         setIsEditingRecord(false);
+        setRecordEditScope(null);
         setRecordDraft(null);
     };
 
@@ -314,28 +353,45 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
         window.speechSynthesis?.cancel();
         setPlayingRecordId('');
         setIsEditingRecord(false);
+        setRecordEditScope(null);
         setRecordDraft(null);
         setActiveRecordId('');
     };
 
-    const startEditingRecord = () => {
+    const startEditingRecord = (scope: RecordEditScope) => {
         if (!activeRecord || !canEditRecords) return;
         setRecordDraft(createRecordDraft(activeRecord));
+        setRecordEditScope(scope);
         setIsEditingRecord(true);
+    };
+
+    const updateDraftIndicator = (depth: number, value: string) => {
+        setRecordDraft(current => {
+            if (!current) return current;
+            const nextPath = [...current.indicatorPath] as [string, string, string];
+            nextPath[depth] = value;
+            for (let index = depth + 1; index < nextPath.length; index += 1) nextPath[index] = '';
+            return { ...current, indicatorPath: nextPath };
+        });
     };
 
     const saveRecordChanges = () => {
         if (!activeRecord || !recordDraft || recordDraftInvalid || !canEditRecords) return;
         const nextClass = classes.find(classInfo => classInfo.id === recordDraft.classId);
         if (!nextClass) return;
+        const [year, month, day] = recordDraft.occurredOn.split('-').map(Number);
+        const nextOccurredAt = new Date(activeRecord.occurredAt);
+        nextOccurredAt.setFullYear(year, month - 1, day);
         setRecords(current => current.map(record => record.id === activeRecord.id ? {
             ...record,
+            occurredAt: nextOccurredAt,
             classId: nextClass.id,
             className: nextClass.name,
             indicatorPath: recordDraft.indicatorPath.map(item => item.trim()).join(' / '),
             score: Number(draftScore.toFixed(2)),
         } : record));
         setIsEditingRecord(false);
+        setRecordEditScope(null);
         setRecordDraft(null);
         setStatusMessage('评价记录已更新');
     };
@@ -346,6 +402,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
         setShowDeleteConfirm(false);
         setActiveRecordId('');
         setIsEditingRecord(false);
+        setRecordEditScope(null);
         setRecordDraft(null);
         setStatusMessage('评价记录已删除');
     };
@@ -448,26 +505,27 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
 
             <MobileBottomSheet
                 open={Boolean(activeRecord)}
-                title={isEditingRecord ? '修改评价' : '评价详情'}
+                title={detailSheetTitle}
                 onClose={closeRecordDetail}
+                footerDivider={false}
                 header={activeRecord ? (
                     <header className="flex h-14 shrink-0 items-center justify-between px-4">
-                        <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">{isEditingRecord ? '修改评价' : '评价详情'}</h2>
+                        <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">{detailSheetTitle}</h2>
                         <div className="flex items-center">
-                            {!isEditingRecord && canEditRecords && (
+                            {!isEditingRecord && canDeleteRecords && (
                                 <button
                                     type="button"
-                                    onClick={startEditingRecord}
-                                    aria-label="编辑评价记录"
-                                    className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    aria-label="删除评价记录"
+                                    className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-status-negative)] active:bg-[var(--tm-status-negative-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                 >
-                                    <Pencil aria-hidden="true" className="h-[18px] w-[18px]" />
+                                    <Trash2 aria-hidden="true" className="h-[18px] w-[18px]" />
                                 </button>
                             )}
                             <button
                                 type="button"
                                 onClick={closeRecordDetail}
-                                aria-label={`关闭${isEditingRecord ? '修改评价' : '评价详情'}`}
+                                aria-label={`关闭${detailSheetTitle}`}
                                 className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                             >
                                 <X aria-hidden="true" className="h-5 w-5" />
@@ -481,6 +539,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                             type="button"
                             onClick={() => {
                                 setIsEditingRecord(false);
+                                setRecordEditScope(null);
                                 setRecordDraft(null);
                             }}
                             className="flex min-h-12 items-center justify-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
@@ -499,119 +558,173 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                 ) : undefined}
             >
                 {activeRecord && !isEditingRecord && (
-                    <div className="divide-y divide-[var(--tm-border-subtle)]">
-                        <section className="pb-4">
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <time className="text-[length:var(--tm-font-size-meta)] font-medium tabular-nums text-[var(--tm-text-secondary)]">{formatRecordTime(activeRecord.occurredAt, today)}</time>
-                                    <p className="mt-1 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{activeRecord.className}</p>
+                    <div className="space-y-4">
+                        <section>
+                            <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">AI识别</h3>
+                            <div className="mt-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 py-2.5">
+                                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1">
+                                    <span className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">识别日期：</span>
+                                    {canEditRecords ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => startEditingRecord('date')}
+                                            aria-label={`修改识别日期，当前${formatRecognitionDate(activeRecord.occurredAt)}`}
+                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-inner)] px-2 text-left text-[var(--tm-evaluation-ai-editable-text)] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                        >
+                                            <time dateTime={toDateInputValue(activeRecord.occurredAt)} className="truncate text-[length:var(--tm-font-size-body)] font-semibold tabular-nums">{formatRecognitionDate(activeRecord.occurredAt)}</time>
+                                            <Pencil aria-hidden="true" className="h-3 w-3 shrink-0" />
+                                        </button>
+                                    ) : (
+                                        <time dateTime={toDateInputValue(activeRecord.occurredAt)} className="flex min-h-11 items-center text-[length:var(--tm-font-size-body)] font-semibold tabular-nums text-[var(--tm-text-primary)]">{formatRecognitionDate(activeRecord.occurredAt)}</time>
+                                    )}
                                 </div>
-                                <strong className={`text-[24px] font-bold leading-none tabular-nums ${activeRecord.score >= 0 ? 'text-[var(--tm-record-positive-text)]' : 'text-[var(--tm-record-negative-text)]'}`}>
-                                    {formatScore(activeRecord.score)}
-                                </strong>
-                            </div>
-                            <p className="mt-3 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">评价人：{activeRecord.operator}</p>
-                        </section>
-
-                        <section className="py-4">
-                            <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">评分理由</h3>
-                            <p className="mt-2 text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-primary)]">{activeRecord.reason}</p>
-                        </section>
-
-                        <section className="py-4">
-                            <div className="flex items-center justify-between gap-3">
-                                <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">原始记录</h3>
-                                {activeRecord.sourceType === 'voice' && (
-                                    <button
-                                        type="button"
-                                        onClick={() => playRecordAudio(activeRecord)}
-                                        aria-label={`${playingRecordId === activeRecord.id ? '暂停' : '播放'}原始语音`}
-                                        className="flex min-h-[var(--tm-size-touch)] items-center gap-1.5 rounded-full px-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
-                                    >
-                                        {playingRecordId === activeRecord.id ? <Pause aria-hidden="true" className="h-4 w-4" /> : <Play aria-hidden="true" className="h-4 w-4" />}
-                                        {activeRecord.audioDuration}
-                                    </button>
-                                )}
-                            </div>
-                            {activeRecord.sourceType === 'voice' && (
-                                <div className="mt-2 flex items-center gap-1.5 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">
-                                    <Mic2 aria-hidden="true" className="h-4 w-4" />语音转文字
+                                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1">
+                                    <span className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">识别对象：</span>
+                                    {canEditRecords ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => startEditingRecord('class')}
+                                            aria-label={`修改记录对象，当前${activeRecord.className}`}
+                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-inner)] px-2 text-left text-[var(--tm-evaluation-ai-editable-text)] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                        >
+                                            <span className="truncate text-[length:var(--tm-font-size-body)] font-semibold">{activeRecord.className}</span>
+                                            <Pencil aria-hidden="true" className="h-3 w-3 shrink-0" />
+                                        </button>
+                                    ) : (
+                                        <p className="flex min-h-11 items-center text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{activeRecord.className}</p>
+                                    )}
                                 </div>
-                            )}
-                            <p className="mt-2 text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">{activeRecord.audioTranscript ?? activeRecord.originalContent}</p>
-                        </section>
-
-                        <section className="py-4">
-                            <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">详细指标</h3>
-                            <EvaluationIndicatorPath indicatorPath={activeRecord.indicatorPath} className="mt-3" />
-                        </section>
-
-                        {canDeleteRecords && (
-                            <div className="pt-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative)] active:bg-[var(--tm-status-negative-soft)]"
-                                >
-                                    <Trash2 aria-hidden="true" className="h-[18px] w-[18px]" />删除评价
-                                </button>
+                                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1">
+                                    <span className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">匹配指标：</span>
+                                    {canEditRecords ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => startEditingRecord('indicator')}
+                                            aria-label="修改匹配指标"
+                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-inner)] px-2 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                        >
+                                            <EvaluationIndicatorPath indicatorPath={activeRecord.indicatorPath} variant="compact-full" className="flex-1" />
+                                            <Pencil aria-hidden="true" className="h-3 w-3 shrink-0 text-[var(--tm-evaluation-ai-editable-text)]" />
+                                        </button>
+                                    ) : (
+                                        <EvaluationIndicatorPath indicatorPath={activeRecord.indicatorPath} variant="compact-full" className="min-h-11" />
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1">
+                                    <span className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">匹配分数：</span>
+                                    {canEditRecords ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => startEditingRecord('score')}
+                                            aria-label={`修改得分，当前${formatScore(activeRecord.score)}`}
+                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-inner)] px-2 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                        >
+                                            <strong className={`shrink-0 text-[length:var(--tm-font-size-body)] font-semibold leading-none tabular-nums ${activeRecord.score >= 0 ? 'text-[var(--tm-record-positive-text)]' : 'text-[var(--tm-record-negative-text)]'}`}>
+                                                {formatScore(activeRecord.score)}
+                                            </strong>
+                                            <Pencil aria-hidden="true" className="h-3 w-3 shrink-0 text-[var(--tm-evaluation-ai-editable-text)]" />
+                                        </button>
+                                    ) : (
+                                        <strong className={`flex min-h-11 items-center text-[length:var(--tm-font-size-body)] font-semibold leading-none tabular-nums ${activeRecord.score >= 0 ? 'text-[var(--tm-record-positive-text)]' : 'text-[var(--tm-record-negative-text)]'}`}>
+                                            {formatScore(activeRecord.score)}
+                                        </strong>
+                                    )}
+                                </div>
+                                <div className="mt-1 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-1 py-1.5">
+                                    <span className="pt-0.5 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">匹配理由：</span>
+                                    <p className="text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-primary)]">{activeRecord.reason}</p>
+                                </div>
                             </div>
-                        )}
+                        </section>
+
+                        <section>
+                            <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">原始记录</h3>
+                            <div className="mt-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-evaluation-source-border)] bg-[var(--tm-evaluation-source-bg)] px-3 py-2.5">
+                                <p className="w-full text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">{activeRecord.audioTranscript ?? activeRecord.originalContent}</p>
+                                <div className="mt-3 flex min-h-11 items-center justify-between gap-3">
+                                    <div className="flex min-w-0 items-center gap-1.5 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">
+                                        <time className="shrink-0 tabular-nums">{formatRecordTime(activeRecord.recordedAt, today)}</time>
+                                        <span aria-hidden="true">·</span>
+                                        <span className="truncate">{activeRecord.operator}</span>
+                                    </div>
+                                    {activeRecord.sourceType === 'voice' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => playRecordAudio(activeRecord)}
+                                            aria-label={`${playingRecordId === activeRecord.id ? '暂停' : '播放'}原始语音，${activeRecord.audioDuration}`}
+                                            className="-mr-1 flex h-11 shrink-0 items-center rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-evaluation-source-control-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                        >
+                                            <span className="flex h-7 items-center gap-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-evaluation-source-border)] bg-[var(--tm-bg-surface)] px-2">
+                                                {playingRecordId === activeRecord.id ? <Pause aria-hidden="true" className="h-3 w-3 stroke-[2.25]" /> : <Play aria-hidden="true" className="h-3 w-3 fill-current stroke-[1.5]" />}
+                                                <span className="tabular-nums">{activeRecord.audioDuration}</span>
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 )}
 
                 {activeRecord && isEditingRecord && recordDraft && (
                     <div className="space-y-5 pb-1">
-                        <label className="block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">
-                            记录对象
-                            <select
-                                value={recordDraft.classId}
-                                onChange={event => setRecordDraft(current => current ? { ...current, classId: event.target.value } : current)}
-                                className={recordFieldClass}
-                            >
-                                {classes.map(classInfo => <option key={classInfo.id} value={classInfo.id}>{classInfo.name}</option>)}
-                            </select>
-                        </label>
-
-                        <section>
-                            <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">对应指标</h3>
-                            <div className="mt-2 space-y-2.5">
-                                {['一级指标', '二级指标', '三级指标'].map((label, index) => (
-                                    <label key={label} className="block">
-                                        <span className="sr-only">{label}</span>
-                                        <input
-                                            value={recordDraft.indicatorPath[index]}
-                                            onChange={event => setRecordDraft(current => current ? {
-                                                ...current,
-                                                indicatorPath: current.indicatorPath.map((item, itemIndex) => itemIndex === index ? event.target.value : item) as [string, string, string],
-                                            } : current)}
-                                            placeholder={label}
-                                            className={recordFieldClass.replace('mt-2 ', '')}
-                                        />
-                                    </label>
-                                ))}
-                            </div>
-                        </section>
-
-                        <label className="block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">
-                            得分
-                            <input
-                                type="number"
-                                inputMode="decimal"
-                                min="-100"
-                                max="100"
-                                step="0.01"
-                                value={recordDraft.score}
-                                onChange={event => setRecordDraft(current => current ? { ...current, score: event.target.value } : current)}
-                                className={`${recordFieldClass} tabular-nums`}
-                            />
-                        </label>
-
-                        {recordDraftInvalid && (
-                            <p role="alert" className="rounded-[var(--tm-radius-control)] bg-[var(--tm-record-negative-bg)] px-3 py-2.5 text-[length:var(--tm-font-size-meta)] font-medium leading-5 text-[var(--tm-record-negative-text)]">
-                                请完整填写记录对象与三级指标，分数需为 -100.00 至 100.00 且不能为 0。
-                            </p>
+                        {recordEditScope === 'date' && (
+                            <label className="block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">
+                                识别日期
+                                <input
+                                    type="date"
+                                    value={recordDraft.occurredOn}
+                                    onInput={event => {
+                                        const occurredOn = event.currentTarget.value;
+                                        setRecordDraft(current => current ? { ...current, occurredOn } : current);
+                                    }}
+                                    className={`${recordFieldClass} tabular-nums`}
+                                />
+                            </label>
                         )}
+
+                        {recordEditScope === 'class' && (
+                            <label className="block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">
+                                记录对象
+                                <select
+                                    value={recordDraft.classId}
+                                    onChange={event => setRecordDraft(current => current ? { ...current, classId: event.target.value } : current)}
+                                    className={recordFieldClass}
+                                >
+                                    {classes.map(classInfo => <option key={classInfo.id} value={classInfo.id}>{classInfo.name}</option>)}
+                                </select>
+                            </label>
+                        )}
+
+                        {recordEditScope === 'indicator' && (
+                            <section>
+                                <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">对应指标</h3>
+                                <div className="mt-2">
+                                    <EvaluationIndicatorCascadePicker
+                                        value={recordDraft.indicatorPath}
+                                        options={[levelOneIndicatorOptions, levelTwoIndicatorOptions, levelThreeIndicatorOptions]}
+                                        onChange={updateDraftIndicator}
+                                    />
+                                </div>
+                            </section>
+                        )}
+
+                        {recordEditScope === 'score' && (
+                            <label className="block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">
+                                得分
+                                <input
+                                    type="number"
+                                    inputMode="decimal"
+                                    min="-100"
+                                    max="100"
+                                    step="0.01"
+                                    value={recordDraft.score}
+                                    onChange={event => setRecordDraft(current => current ? { ...current, score: event.target.value } : current)}
+                                    className={`${recordFieldClass} tabular-nums`}
+                                />
+                            </label>
+                        )}
+
                     </div>
                 )}
             </MobileBottomSheet>

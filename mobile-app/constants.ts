@@ -94,41 +94,11 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
 };
 
 
-export const GET_MOCK_GROUP_PLANS_FOR_CLASS = (classId: string, students: Student[], currentTeacherName = '刘飞'): GroupPlan[] => {
-  const cls = MOCK_CLASSES.find(c => c.id === classId);
-  if (!cls || students.length === 0) return [];
-
-  const templates = [
-    { subject: '日常', name: '常用分组', ownerName: currentTeacherName, prefix: '第', groupCount: 5, offset: 0 },
-    { subject: '语文', name: '阅读分组', ownerName: '王静怡', prefix: '阅读', groupCount: 5, offset: 3 },
-    { subject: '数学', name: '数学互助分组', ownerName: '李连', prefix: '互助', groupCount: 5, offset: 6 },
-  ];
-
-  return templates.map((template, planIndex) => {
-    const groupCount = Math.min(template.groupCount, Math.max(1, Math.ceil(students.length / 8)));
-    const groups = Array.from({ length: groupCount }).map((_, groupIndex) => {
-      const memberIds = students
-        .filter((_, studentIndex) => ((studentIndex + template.offset) % groupCount) === groupIndex)
-        .map(student => student.id);
-
-      return {
-        id: `${classId}-${template.subject}-group-${groupIndex + 1}`,
-        name: template.prefix === '第'
-          ? `第${groupIndex + 1}组`
-          : `${template.prefix}${groupIndex + 1}组`,
-        memberIds,
-      };
-    });
-
-    return {
-      id: `${classId}-plan-${planIndex + 1}`,
-      name: template.name,
-      subject: template.subject,
-      ownerName: template.ownerName,
-      groups,
-    };
-  });
-};
+export const GET_MOCK_GROUP_PLANS_FOR_CLASS = (
+  _classId: string,
+  _students: Student[],
+  _currentTeacherName = '刘飞',
+): GroupPlan[] => [];
 
 export const MOCK_STUDENTS_CLASS_1: Student[] = GET_MOCK_STUDENTS_FOR_CLASS(MOCK_CLASSES[0]?.id || 'c_2025_1');
 
