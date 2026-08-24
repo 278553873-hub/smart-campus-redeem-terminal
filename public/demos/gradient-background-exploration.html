@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI改造 · 手机端渐变背景方案</title>
+  <style>
+    :root {
+      /* Existing teacher mobile design tokens. */
+      --tm-brand-primary: #e02727;
+      --tm-brand-secondary: #f75c03;
+      --tm-brand-reward: #fa9c00;
+      --tm-audience-student-primary: #278779;
+      --tm-theme-learning-blue: #477eae;
+      --tm-theme-growth-green: #4d8f63;
+      --tm-status-positive: #48a04d;
+      --tm-chart-sky: #43b0f6;
+      --tm-chart-cyan: #45ced1;
+      --tm-chart-coral: #ff8176;
+      --tm-soft-red: #fff1f1;
+      --tm-soft-orange: #fff5ec;
+      --tm-soft-gold: #fff8e5;
+      --tm-soft-jade: #ecf8f6;
+      --tm-soft-green: #f4fbf4;
+      --tm-soft-sky: #f4faff;
+      --tm-soft-coral: #fff7f4;
+      --tm-bg-page: #f8f6f5;
+      --tm-bg-page-mid: #fbfaf9;
+      --tm-bg-surface: #ffffff;
+      --tm-border-subtle: #e7e2df;
+      --tm-text-primary: #171513;
+      --tm-text-secondary: #6d6764;
+      --tm-surface-muted: #f1eeec;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-width: 320px;
+      background: var(--tm-bg-page);
+    }
+
+    body {
+      margin: 0;
+      color: var(--tm-text-primary);
+      background: var(--tm-bg-page);
+      font-family: "PingFang SC", "Noto Sans CJK SC", sans-serif;
+    }
+
+    .control-zone {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid color-mix(in srgb, var(--tm-border-subtle) 76%, transparent);
+      background: rgba(248, 246, 245, 0.9);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+
+    .style-switcher {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(76px, 1fr));
+      gap: 4px;
+      width: min(520px, 100%);
+      padding: 4px;
+      border-radius: 16px;
+      background: var(--tm-surface-muted);
+    }
+
+    .style-switcher button {
+      min-height: 44px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 12px;
+      color: var(--tm-text-secondary);
+      background: transparent;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0;
+      cursor: pointer;
+      transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .style-switcher button:hover {
+      color: var(--tm-text-primary);
+      background: rgba(255, 255, 255, 0.56);
+    }
+
+    .style-switcher button[aria-pressed="true"] {
+      color: var(--tm-brand-primary);
+      background: var(--tm-bg-surface);
+      box-shadow: 0 4px 12px -8px rgba(64, 60, 58, 0.34);
+    }
+
+    .style-switcher button:focus-visible {
+      outline: 2px solid var(--tm-brand-primary);
+      outline-offset: 2px;
+    }
+
+    .scheme-zone {
+      display: grid;
+      grid-template-columns: repeat(6, 180px);
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 1228px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    figure {
+      width: 180px;
+      margin: 0;
+    }
+
+    figcaption {
+      margin: 0 0 8px;
+      color: #403c3a;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 20px;
+    }
+
+    .phone-gradient {
+      width: 180px;
+      aspect-ratio: 393 / 852;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--tm-border-subtle) 72%, transparent);
+      border-radius: 16px;
+      background-color: var(--tm-bg-surface);
+      box-shadow: 0 16px 42px -32px rgba(64, 60, 58, 0.32);
+    }
+
+    .scheme-blue-green {
+      --tone-a: var(--tm-theme-learning-blue);
+      --tone-b: var(--tm-audience-student-primary);
+      --tone-c: var(--tm-brand-primary);
+      --base-top: var(--tm-soft-sky);
+    }
+
+    .scheme-blue-gold {
+      --tone-a: var(--tm-chart-sky);
+      --tone-b: var(--tm-brand-reward);
+      --tone-c: var(--tm-brand-primary);
+      --base-top: var(--tm-soft-gold);
+    }
+
+    .scheme-jade-blue {
+      --tone-a: var(--tm-audience-student-primary);
+      --tone-b: var(--tm-status-positive);
+      --tone-c: var(--tm-brand-primary);
+      --base-top: var(--tm-soft-jade);
+    }
+
+    .scheme-five-education {
+      --tone-a: var(--tm-brand-reward);
+      --tone-b: var(--tm-chart-cyan);
+      --tone-c: var(--tm-brand-primary);
+      --base-top: var(--tm-soft-gold);
+    }
+
+    .scheme-morning-mist {
+      --tone-a: var(--tm-chart-sky);
+      --tone-b: var(--tm-status-positive);
+      --tone-c: var(--tm-brand-primary);
+      --base-top: var(--tm-soft-green);
+    }
+
+    .scheme-pink-cyan {
+      --tone-a: var(--tm-brand-primary);
+      --tone-b: var(--tm-chart-cyan);
+      --tone-c: var(--tm-brand-reward);
+      --base-top: var(--tm-soft-red);
+    }
+
+    .scheme-red-gold {
+      --tone-a: var(--tm-brand-primary);
+      --tone-b: var(--tm-brand-reward);
+      --tone-c: var(--tm-brand-secondary);
+      --base-top: var(--tm-soft-red);
+    }
+
+    .scheme-red-blue {
+      --tone-a: var(--tm-brand-primary);
+      --tone-b: var(--tm-chart-sky);
+      --tone-c: var(--tm-audience-student-primary);
+      --base-top: var(--tm-soft-red);
+    }
+
+    .scheme-red-green {
+      --tone-a: var(--tm-brand-primary);
+      --tone-b: var(--tm-status-positive);
+      --tone-c: var(--tm-chart-coral);
+      --base-top: var(--tm-soft-coral);
+    }
+
+    .scheme-orange-green {
+      --tone-a: var(--tm-brand-secondary);
+      --tone-b: var(--tm-status-positive);
+      --tone-c: var(--tm-brand-primary);
+      --base-top: var(--tm-soft-orange);
+    }
+
+    .scheme-red-blue-clean {
+      --tone-a: var(--tm-brand-primary);
+      --tone-b: var(--tm-chart-sky);
+      --tone-c: var(--tm-brand-primary);
+      --base-top: var(--tm-bg-surface);
+    }
+
+    /* Diffuse: broad color fields approaching from both sides. */
+    .scheme-zone[data-gradient-style="diffuse"] .phone-gradient {
+      background:
+        radial-gradient(ellipse 84% 50% at -8% 24%, color-mix(in srgb, var(--tone-a) 16%, transparent) 0%, transparent 72%),
+        radial-gradient(ellipse 82% 52% at 108% 34%, color-mix(in srgb, var(--tone-b) 14%, transparent) 0%, transparent 74%),
+        radial-gradient(ellipse 44% 24% at 20% -2%, color-mix(in srgb, var(--tone-c) 4%, transparent) 0%, transparent 70%),
+        linear-gradient(180deg, var(--base-top) 0%, var(--tm-bg-page-mid) 52%, var(--tm-bg-surface) 82%);
+    }
+
+    .scheme-zone[data-gradient-style="diffuse"] .scheme-red-blue-clean .phone-gradient {
+      background:
+        radial-gradient(ellipse 62% 42% at -12% 22%, color-mix(in srgb, var(--tone-a) 11%, transparent) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 44% at 112% 30%, color-mix(in srgb, var(--tone-b) 10%, transparent) 0%, transparent 72%),
+        linear-gradient(180deg, var(--tm-bg-surface) 0%, var(--tm-bg-page-mid) 56%, var(--tm-bg-surface) 86%);
+    }
+
+    /* Linear: a clear diagonal color direction. */
+    .scheme-zone[data-gradient-style="linear"] .phone-gradient {
+      background:
+        linear-gradient(180deg, transparent 0%, transparent 38%, rgba(255, 255, 255, 0.52) 64%, var(--tm-bg-surface) 86%),
+        linear-gradient(142deg,
+          color-mix(in srgb, var(--tone-c) 5%, var(--tm-bg-surface)) 0%,
+          color-mix(in srgb, var(--tone-a) 15%, var(--tm-bg-surface)) 42%,
+          color-mix(in srgb, var(--tone-b) 14%, var(--tm-bg-surface)) 72%,
+          var(--tm-bg-surface) 100%);
+    }
+
+    /* Aurora: blurred vertical ribbons. */
+    .scheme-zone[data-gradient-style="aurora"] .phone-gradient {
+      background:
+        radial-gradient(ellipse 42% 22% at 8% 0%, color-mix(in srgb, var(--tone-c) 3.5%, transparent) 0%, transparent 72%),
+        linear-gradient(180deg, var(--base-top) 0%, var(--tm-bg-page-mid) 58%, var(--tm-bg-surface) 84%);
+    }
+
+    .scheme-zone[data-gradient-style="aurora"] .phone-gradient::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: -10%;
+      left: -28%;
+      width: 156%;
+      height: 68%;
+      background: linear-gradient(108deg,
+        transparent 4%,
+        color-mix(in srgb, var(--tone-a) 20%, transparent) 20%,
+        transparent 38%,
+        color-mix(in srgb, var(--tone-b) 18%, transparent) 58%,
+        transparent 76%,
+        color-mix(in srgb, var(--tone-c) 10%, transparent) 90%,
+        transparent 98%);
+      filter: blur(24px);
+      transform: rotate(-8deg);
+    }
+
+    /* Soft rotation: low-contrast conic color movement. */
+    .scheme-zone[data-gradient-style="conic"] .phone-gradient {
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.18) 36%, var(--tm-bg-surface) 84%),
+        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.56) 0%, transparent 42%),
+        conic-gradient(from 218deg at 50% 26%,
+          color-mix(in srgb, var(--tone-c) 7%, var(--tm-bg-surface)),
+          color-mix(in srgb, var(--tone-a) 14%, var(--tm-bg-surface)),
+          color-mix(in srgb, var(--tone-b) 13%, var(--tm-bg-surface)),
+          color-mix(in srgb, var(--tone-a) 10%, var(--tm-bg-surface)),
+          color-mix(in srgb, var(--tone-c) 7%, var(--tm-bg-surface)));
+    }
+
+    @media (max-width: 1040px) {
+      .scheme-zone {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 180px));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .control-zone {
+        justify-content: center;
+        padding: 12px 16px;
+      }
+
+      .style-switcher {
+        grid-template-columns: repeat(4, minmax(68px, 1fr));
+        width: 100%;
+      }
+
+      .scheme-zone {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px 16px;
+        padding: 20px 16px;
+      }
+
+      figure,
+      .phone-gradient {
+        width: 100%;
+      }
+
+      .phone-gradient { border-radius: 14px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .style-switcher button { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="control-zone">
+    <div class="style-switcher" role="group" aria-label="渐变样式">
+      <button type="button" data-style="diffuse" aria-pressed="true">弥散</button>
+      <button type="button" data-style="linear" aria-pressed="false">线性</button>
+      <button type="button" data-style="aurora" aria-pressed="false">极光</button>
+      <button type="button" data-style="conic" aria-pressed="false">柔旋</button>
+    </div>
+  </header>
+
+  <main class="scheme-zone" data-gradient-style="diffuse" aria-label="配色方案">
+    <figure class="scheme-blue-green">
+      <figcaption>方案一 · 青蓝平衡</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案一：青蓝平衡"></div>
+    </figure>
+    <figure class="scheme-blue-gold">
+      <figcaption>方案二 · 蓝金晨光</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案二：蓝金晨光"></div>
+    </figure>
+    <figure class="scheme-jade-blue">
+      <figcaption>方案三 · 翡翠成长</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案三：翡翠成长"></div>
+    </figure>
+    <figure class="scheme-five-education">
+      <figcaption>方案四 · 金青清风</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案四：金青清风"></div>
+    </figure>
+    <figure class="scheme-morning-mist">
+      <figcaption>方案五 · 蓝绿清晨</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案五：蓝绿清晨"></div>
+    </figure>
+    <figure class="scheme-pink-cyan">
+      <figcaption>方案六 · 红青平衡</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案六：红青平衡"></div>
+    </figure>
+    <figure class="scheme-red-gold">
+      <figcaption>方案七 · 红金暖阳</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案七：红金暖阳"></div>
+    </figure>
+    <figure class="scheme-red-blue">
+      <figcaption>方案八 · 红蓝清晖</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案八：红蓝清晖"></div>
+    </figure>
+    <figure class="scheme-red-green">
+      <figcaption>方案九 · 红绿朝气</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案九：红绿朝气"></div>
+    </figure>
+    <figure class="scheme-orange-green">
+      <figcaption>方案十 · 橙绿活力</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案十：橙绿活力"></div>
+    </figure>
+    <figure class="scheme-red-blue-clean">
+      <figcaption>方案十一 · 红蓝清透</figcaption>
+      <div class="phone-gradient" role="img" aria-label="方案十一：红蓝清透"></div>
+    </figure>
+  </main>
+
+  <script>
+    const schemeZone = document.querySelector('.scheme-zone');
+    const styleButtons = document.querySelectorAll('[data-style]');
+
+    styleButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        schemeZone.dataset.gradientStyle = button.dataset.style;
+        styleButtons.forEach((item) => {
+          item.setAttribute('aria-pressed', String(item === button));
+        });
+      });
+    });
+  </script>
+</body>
+</html>

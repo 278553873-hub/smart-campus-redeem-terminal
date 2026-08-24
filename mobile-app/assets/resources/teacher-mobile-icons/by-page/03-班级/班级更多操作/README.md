@@ -8,7 +8,6 @@
 | `../../00-公共图标/chevron-right.svg` | 进入下一级 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/copy.svg` | 复制班级号 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/file-text.svg` | 作业录入 | 公共图标 | Lucide SVG |
-| `../../00-公共图标/folder-archive.svg` | 批量留档 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/gift.svg` | 兑换奖励 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/message-circle.svg` | 邀请家长加入 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/more-horizontal.svg` | 更多操作入口 | 公共图标 | Lucide SVG |

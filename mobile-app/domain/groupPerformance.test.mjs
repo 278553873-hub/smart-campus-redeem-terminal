@@ -8,12 +8,10 @@ const records = [
 ];
 
 assert.deepEqual(summarizeGroupPerformance(records, 'writing-1'), {
-  netScore: 2,
   praiseCount: 1,
   criticismCount: 1,
 });
 assert.deepEqual(summarizeGroupPerformance(records, 'reading-1'), {
-  netScore: 5,
   praiseCount: 1,
   criticismCount: 0,
 });

@@ -15,7 +15,7 @@ assert.match(classInfoSource, /label: '仅计算本学期'/, '当前学期选项
 assert.match(classInfoSource, /label: '累计所有学期'/, '累计选项应使用明确的数据范围文案。');
 assert.match(classDetailSource, /levelNetScore \?\? performance\.netScore/, '等级图标和进度环应使用独立的展示分值。');
 assert.match(classDetailSource, /等级分值\$\{levelNetScore \?\? performance\.netScore\}分/, '学生卡片读屏名称应与等级展示分值保持一致。');
-assert.match(classDetailSource, /StudentPerformanceCounts summary=\{performance\}/, '表扬和批评次数应保持原有统计口径。');
+assert.match(classDetailSource, /<StudentPerformanceCounts[\s\S]*summary=\{performance\}/, '表扬和批评次数应保持原有统计口径。');
 assert.match(appSource, /studentLevelDisplayMode \?\? 'term'/, '未配置的班级应默认使用学期等级。');
 assert.match(appSource, /CURRENT_PRINCIPAL_TERM/, '学期等级应使用学校当前学期边界。');
 

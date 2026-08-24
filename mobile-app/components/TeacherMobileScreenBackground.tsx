@@ -1,11 +1,16 @@
 import React from 'react';
+import {
+    getTeacherGradientPreviewVisual,
+    type TeacherGradientPreviewConfig,
+} from '../styles/teacherGradientPreview';
 
-export type TeacherMobileScreenBackgroundVariant = 'ambient' | 'plain' | 'record' | 'student-detail';
+export type TeacherMobileScreenBackgroundVariant = 'ambient' | 'me' | 'plain' | 'preview' | 'record' | 'student-detail';
 export type TeacherMobileRecordMode = 'student' | 'class';
 
 interface TeacherMobileScreenBackgroundProps {
     variant?: TeacherMobileScreenBackgroundVariant;
     recordMode?: TeacherMobileRecordMode;
+    preview?: TeacherGradientPreviewConfig;
 }
 
 const recordPanelClass = 'absolute inset-0 transition-opacity duration-500';
@@ -32,13 +37,57 @@ const RecordBackgroundPanel: React.FC<{
 const TeacherMobileScreenBackground: React.FC<TeacherMobileScreenBackgroundProps> = ({
     variant = 'ambient',
     recordMode = 'student',
+    preview,
 }) => {
+    if (variant === 'preview' && preview) {
+        const visual = getTeacherGradientPreviewVisual(preview);
+        return (
+            <div
+                className="absolute inset-0 overflow-hidden"
+                style={{
+                    backgroundColor: visual.backgroundColor,
+                    backgroundImage: visual.backgroundImage,
+                }}
+                aria-hidden="true"
+            >
+                {visual.overlayBackgroundImage && (
+                    <div
+                        className="absolute -left-[28%] -top-[10%] h-[68%] w-[156%]"
+                        style={{
+                            backgroundImage: visual.overlayBackgroundImage,
+                            filter: 'blur(24px)',
+                            transform: 'rotate(-8deg)',
+                        }}
+                    />
+                )}
+            </div>
+        );
+    }
+
     if (variant === 'plain') {
         return <div className="absolute inset-0 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />;
     }
 
     if (variant === 'student-detail') {
         return <div className="absolute inset-0 bg-[var(--tm-page-plain-content-bg)]" aria-hidden="true" />;
+    }
+
+    if (variant === 'me') {
+        return (
+            <div
+                className="absolute inset-0 overflow-hidden bg-[var(--tm-me-gradient-base)]"
+                style={{
+                    backgroundImage: [
+                        'linear-gradient(180deg, transparent 52%, var(--tm-me-gradient-tail-field) 100%)',
+                        'radial-gradient(ellipse 84% 50% at -8% 24%, var(--tm-me-gradient-primary-field) 0%, transparent 72%)',
+                        'radial-gradient(ellipse 82% 52% at 108% 34%, var(--tm-me-gradient-sky-field) 0%, transparent 74%)',
+                        'radial-gradient(ellipse 44% 24% at 20% -2%, var(--tm-me-gradient-jade-hint) 0%, transparent 70%)',
+                        'linear-gradient(180deg, var(--tm-me-gradient-base) 0%, var(--tm-bg-page-mid) 52%, var(--tm-bg-surface) 82%)',
+                    ].join(', '),
+                }}
+                aria-hidden="true"
+            />
+        );
     }
 
     return (

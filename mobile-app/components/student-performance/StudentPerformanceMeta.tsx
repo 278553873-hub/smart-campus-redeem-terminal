@@ -17,8 +17,12 @@ interface StudentPerformanceLevelIconsProps {
 }
 
 interface StudentPerformanceCountsProps {
-  summary: StudentPerformanceSummary;
+  summary: Pick<StudentPerformanceSummary, 'praiseCount' | 'criticismCount'>;
   className?: string;
+  ariaLabel?: string;
+  orientation?: 'horizontal' | 'vertical';
+  showPraiseCount?: boolean;
+  showCriticismCount?: boolean;
 }
 
 const TIER_META: Record<StudentPerformanceTier, { label: string; iconSrc: string }> = {
@@ -68,19 +72,39 @@ export const StudentPerformanceLevelIcons: React.FC<StudentPerformanceLevelIcons
   );
 };
 
-export const StudentPerformanceCounts: React.FC<StudentPerformanceCountsProps> = ({ summary, className = '' }) => (
-  <span
-    aria-label={`被表扬${summary.praiseCount}次，被批评${summary.criticismCount}次`}
-    className={`flex h-[18px] items-center justify-center gap-1.5 text-[10px] font-bold tabular-nums ${className}`}
-  >
-    <span aria-hidden="true" className="flex h-[18px] min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-praise-soft)] px-1 text-[var(--tm-student-praise)]">
-      {formatSignedCount(summary.praiseCount, '+')}
+export const StudentPerformanceCounts: React.FC<StudentPerformanceCountsProps> = ({
+  summary,
+  className = '',
+  ariaLabel,
+  orientation = 'horizontal',
+  showPraiseCount = true,
+  showCriticismCount = true,
+}) => {
+  if (!showPraiseCount && !showCriticismCount) return null;
+
+  const visibleCountLabel = [
+    showPraiseCount ? `被表扬${summary.praiseCount}次` : '',
+    showCriticismCount ? `被批评${summary.criticismCount}次` : '',
+  ].filter(Boolean).join('，');
+
+  return (
+    <span
+      aria-label={ariaLabel ?? visibleCountLabel}
+      className={`flex items-center justify-center text-[10px] font-bold tabular-nums ${orientation === 'vertical' ? 'h-10 flex-col gap-1' : 'h-[18px] gap-1.5'} ${className}`}
+    >
+      {showPraiseCount && (
+        <span aria-hidden="true" className="flex h-[18px] min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-praise-soft)] px-1 text-[var(--tm-student-praise)]">
+          {formatSignedCount(summary.praiseCount, '+')}
+        </span>
+      )}
+      {showCriticismCount && (
+        <span aria-hidden="true" className="flex h-[18px] min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-criticism-soft)] px-1 text-[var(--tm-student-criticism)]">
+          {formatSignedCount(summary.criticismCount, '-')}
+        </span>
+      )}
     </span>
-    <span aria-hidden="true" className="flex h-[18px] min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-criticism-soft)] px-1 text-[var(--tm-student-criticism)]">
-      {formatSignedCount(summary.criticismCount, '-')}
-    </span>
-  </span>
-);
+  );
+};
 
 const StudentPerformanceMeta: React.FC<StudentPerformanceMetaProps> = ({ level, summary }) => (
   <span className="flex min-h-0 w-full flex-1 flex-col items-center">

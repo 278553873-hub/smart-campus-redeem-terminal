@@ -10,20 +10,28 @@ const studentDetail = fs.readFileSync('mobile-app/views/DashboardView.tsx', 'utf
 assert.match(source, /variant\?: TeacherMobileScreenBackgroundVariant/);
 assert.match(source, /recordMode\?: TeacherMobileRecordMode/);
 assert.match(source, /variant === 'plain'/);
+assert.match(source, /variant === 'me'/);
 assert.match(source, /bg-\[var\(--tm-page-plain-header-bg\)\]/);
+assert.match(source, /radial-gradient\(ellipse 84% 50% at -8% 24%/);
+assert.match(source, /var\(--tm-me-gradient-primary-field\)/);
+assert.match(source, /var\(--tm-me-gradient-sky-field\)/);
+assert.match(source, /var\(--tm-me-gradient-jade-hint\)/);
+assert.match(source, /linear-gradient\(180deg, transparent 52%, var\(--tm-me-gradient-tail-field\) 100%\)/);
+assert.doesNotMatch(source, /conic-gradient/);
 assert.match(source, /var\(--tm-bg-page-low\)/);
 assert.match(source, /var\(--tm-glow-primary-subtle\)/);
 assert.match(source, /var\(--tm-glow-secondary-subtle\)/);
 assert.match(
   source,
   /const SharedAmbientBase[\s\S]*?<SharedAmbientBase \/>/,
-  '所有背景变体应复用同一环境底层，保证记录页下半屏与班级页、我的页一致',
+  '环境背景与记录页应复用同一底层，保持页面之间的连续感',
 );
 assert.doesNotMatch(source, /bottom-0 h-48/);
 assert.doesNotMatch(source, /linear-gradient\(180deg, var\(--tm-bg-page\) 0%, var\(--tm-bg-surface\) 100%\)/);
 
 assert.match(app, /<TeacherMobileScreenBackground variant="record" recordMode=\{activeLogTab\} \/>/);
 assert.match(app, /<TeacherMobileScreenBackground variant="plain" \/>/);
+assert.match(app, /<TeacherMobileScreenBackground variant="me" \/>/);
 assert.match(app, /<TeacherMobileScreenBackground \/>/);
 assert.doesNotMatch(app, /radial-gradient\(/);
 assert.doesNotMatch(record, /TeacherMobileScreenBackground|TeacherRecordAuroraBackground/);

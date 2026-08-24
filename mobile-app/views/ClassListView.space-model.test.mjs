@@ -11,7 +11,7 @@ const requireText = (source, needle, message) => {
 
 requireText(classListSource, 'currentSpace: TeacherSpaceOption;', '班级列表必须接收当前班级来源。');
 requireText(classListSource, 'classMembershipById: Record<string, TeacherClassMembership>;', '个人与协作来源必须提供班级归属关系。');
-requireText(classListSource, '<ClassSourceTrigger', '班级页应复用统一班级来源触发器。');
+assert.ok(!classListSource.includes('ClassSourceTrigger'), '班级页不得继续展示班级来源切换入口。');
 requireText(classListSource, '{visibleClasses.map(renderClassCard)}', '当前来源下应直接展示班级卡片。');
 assert.ok(!classListSource.includes("renderClassSection('创建的班级'"), '“我创建的班级”来源下不应重复展示创建分组。');
 assert.ok(!classListSource.includes("renderClassSection('加入的班级'"), '个人来源下不应混入加入的班级。');
@@ -45,7 +45,8 @@ requireText(appSource, "personal: {\n        c_2025_1: 'created',\n    }", '个�
 assert.ok(!appSource.includes("c_2024_2: 'joined'"), '加入的班级应通过独立协作来源展示。');
 requireText(appSource, "activeTeacherSpace.type === 'school'", '学校来源应保留学校班级集合。');
 requireText(appSource, 'classes={activeSpaceClasses}', '班级列表必须接收当前来源对应的班级。');
-requireText(appSource, "currentView === 'class_list'", '班级页必须能够打开统一来源切换弹窗。');
+assert.ok(!appSource.includes("(currentView === 'me' || currentView === 'class_list') && showTeacherSpaceSheet"), '班级页不得再挂载来源切换弹窗。');
+requireText(appSource, "currentView === 'me' && showTeacherSpaceSheet", '班级来源切换应保留在“我的”页。');
 requireText(appSource, 'if (!canManagePersonalClasses(activeTeacherSpace)) return;', '创建班级回调必须拒绝其他老师的协作来源和学校来源。');
 
 console.log('ClassListView source, version and permission model assertions passed');

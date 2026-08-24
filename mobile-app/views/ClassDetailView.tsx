@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Student, ClassInfo, GroupPlan, StudentGroup, type StudentGroupAvatarKey } from '../types';
+import { Student, ClassInfo, GroupPlan, StudentGroup, type GroupCardDisplaySettings, type StudentCardDisplaySettings, type StudentGroupAvatarKey } from '../types';
 import { GET_MOCK_GROUP_PLANS_FOR_CLASS } from '../constants';
-import { BackIcon, MaleIcon, FemaleIcon, CheckIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, ChevronRightIcon, PlusIcon, MenuIcon, EditIcon, DeleteIcon, CloseIcon } from '../components/Icons';
+import { BackIcon, MaleIcon, FemaleIcon, CheckIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, PlusIcon, MenuIcon, EditIcon, DeleteIcon, CloseIcon, EyeIcon, RetryIcon } from '../components/Icons';
 import { ASSETS } from '../assets/images';
 import {
     getAvailableStudentGroupAvatarKey,
@@ -12,6 +12,7 @@ import {
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSearchInput from '../components/ui/MobileSearchInput';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileSettingsSwitchRow from '../components/ui/MobileSettingsSwitchRow';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileToast from '../components/ui/MobileToast';
 import GroupPerformanceMeta from '../components/group/GroupPerformanceMeta';
@@ -26,7 +27,19 @@ import {
     getStudentPerformanceLevel,
     type StudentPerformanceSummary,
 } from '../domain/studentPerformance';
-import { createDemoGroupPerformanceSummary } from '../domain/groupPerformance';
+import {
+    createDemoGroupPerformanceSummary,
+    type GroupPerformanceSummary,
+} from '../domain/groupPerformance';
+import {
+    createEvaluationCountCheckpoint,
+    getEvaluationCountsSinceCheckpoint,
+    type EvaluationCountCheckpoint,
+} from '../domain/evaluationCountCheckpoint';
+import { getStudentCardDisplaySettings } from '../domain/studentCardDisplay';
+import { getGroupCardDisplaySettings } from '../domain/groupCardDisplay';
+
+type EvaluationRecountTarget = 'student' | 'group';
 
 interface ClassDetailViewProps {
     classInfo: ClassInfo;
@@ -43,8 +56,12 @@ interface ClassDetailViewProps {
     onBack?: () => void;
     onGroupingEditorChange?: (open: boolean) => void;
     performanceByStudentId?: Record<string, StudentPerformanceSummary>;
-    groupPerformanceByGroupId?: Record<string, StudentPerformanceSummary>;
+    groupPerformanceByGroupId?: Record<string, GroupPerformanceSummary>;
     levelNetScoreByStudentId?: Record<string, number>;
+    canResetStudentEvaluationCounts: boolean;
+    canConfigureCardDisplay: boolean;
+    onUpdateStudentCardDisplaySettings: (settings: StudentCardDisplaySettings) => void;
+    onUpdateGroupCardDisplaySettings: (settings: GroupCardDisplaySettings) => void;
 }
 
 const getClassRosterNumber = (studentNo: string) => {
@@ -102,6 +119,7 @@ interface StudentRosterCardProps {
     index: number;
     performance: StudentPerformanceSummary;
     levelNetScore?: number;
+    displaySettings: StudentCardDisplaySettings;
     showSelection: boolean;
     selected: boolean;
     selectionStatus?: string;
@@ -113,6 +131,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
     index,
     performance,
     levelNetScore,
+    displaySettings,
     showSelection,
     selected,
     selectionStatus,
@@ -122,14 +141,28 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
     const studentNo = student.studentNo || student.id;
     const rosterNumber = getClassRosterNumber(studentNo);
     const level = getStudentPerformanceLevel(levelNetScore ?? performance.netScore);
+    const showPerformanceCounts = displaySettings.showPraiseCount || displaySettings.showCriticismCount;
+    const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(showPerformanceCounts);
+    const cardHeightClass = visiblePerformanceRowCount === 2
+        ? 'h-[var(--tm-student-card-height-full)]'
+        : visiblePerformanceRowCount === 1
+            ? 'h-[var(--tm-student-card-height-compact)]'
+            : 'h-[var(--tm-student-card-height-minimal)]';
+    const accessibilityDetails = [
+        `${student.name}，学号${studentNo}`,
+        displaySettings.showLevel ? `等级分值${levelNetScore ?? performance.netScore}分` : '',
+        displaySettings.showPraiseCount ? `被表扬${performance.praiseCount}次` : '',
+        displaySettings.showCriticismCount ? `被批评${performance.criticismCount}次` : '',
+        selectionStatus ?? '',
+    ].filter(Boolean).join('，');
 
     return (
         <button
             type="button"
             onClick={onClick}
             aria-pressed={showSelection ? selected : undefined}
-            aria-label={`${student.name}，学号${studentNo}，等级分值${levelNetScore ?? performance.netScore}分，被表扬${performance.praiseCount}次，被批评${performance.criticismCount}次${selectionStatus ? `，${selectionStatus}` : ''}`}
-            className="relative flex h-[120px] w-full min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-1 text-center [box-shadow:var(--tm-shadow-card)] transition-[transform,box-shadow] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transition-none"
+            aria-label={accessibilityDetails}
+            className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-1 text-center [box-shadow:var(--tm-shadow-card)] transition-[transform,box-shadow] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transition-none ${cardHeightClass}`}
         >
             {showSelection && (
                 <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`}>
@@ -139,17 +172,26 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
                     }
                 </span>
             )}
-            <StudentPerformanceLevelIcons level={level} />
-            <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
-                <StudentPerformanceAvatar
-                    compact
-                    student={{ ...student, avatar: student.avatar || (student.gender === 'female' ? ASSETS.AVATAR.STUDENT_GIRL_DEFAULT : undefined) }}
-                    fallbackText={student.name.slice(-1)}
-                    fallbackClassName={`${bgClass} ${textClass} border ${borderClass}`}
-                    level={level}
-                />
+            <span className="flex min-h-0 w-full flex-1 flex-col items-center justify-center">
+                {displaySettings.showLevel && <StudentPerformanceLevelIcons level={level} />}
+                <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
+                    <StudentPerformanceAvatar
+                        compact
+                        student={{ ...student, avatar: student.avatar || (student.gender === 'female' ? ASSETS.AVATAR.STUDENT_GIRL_DEFAULT : undefined) }}
+                        fallbackText={student.name.slice(-1)}
+                        fallbackClassName={`${bgClass} ${textClass} border ${borderClass}`}
+                        level={level}
+                        showLevelProgress={displaySettings.showLevel}
+                    />
+                </span>
+                {showPerformanceCounts && (
+                    <StudentPerformanceCounts
+                        summary={performance}
+                        showPraiseCount={displaySettings.showPraiseCount}
+                        showCriticismCount={displaySettings.showCriticismCount}
+                    />
+                )}
             </span>
-            <StudentPerformanceCounts summary={performance} />
             <span className="flex h-4 w-full shrink-0 items-center justify-center px-0.5">
                 <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-0.5">
                     <span
@@ -242,7 +284,13 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     performanceByStudentId = {},
     groupPerformanceByGroupId = {},
     levelNetScoreByStudentId = {},
+    canResetStudentEvaluationCounts,
+    canConfigureCardDisplay,
+    onUpdateStudentCardDisplaySettings,
+    onUpdateGroupCardDisplaySettings,
 }) => {
+    const studentCardDisplaySettings = getStudentCardDisplaySettings(classInfo.studentCardDisplaySettings);
+    const groupCardDisplaySettings = getGroupCardDisplaySettings(classInfo.groupCardDisplaySettings);
     const [activeView, setActiveView] = useState<'student' | 'group'>('student');
     const [searchQuery, setSearchQuery] = useState('');
     const [groupPlans, setGroupPlans] = useState<GroupPlan[]>(() => GET_MOCK_GROUP_PLANS_FOR_CLASS(classInfo.id, students, currentTeacherName));
@@ -274,6 +322,15 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     const [showDiscardGroupingConfirm, setShowDiscardGroupingConfirm] = useState(false);
     const [draftActiveGroupId, setDraftActiveGroupId] = useState('');
     const [draftSearchQuery, setDraftSearchQuery] = useState('');
+    const [moreActionTarget, setMoreActionTarget] = useState<EvaluationRecountTarget | null>(null);
+    const [cardDisplayTarget, setCardDisplayTarget] = useState<EvaluationRecountTarget | null>(null);
+    const [recountTarget, setRecountTarget] = useState<EvaluationRecountTarget | null>(null);
+    const [recountSelectedIds, setRecountSelectedIds] = useState<Set<string>>(new Set());
+    const [showRecountConfirmation, setShowRecountConfirmation] = useState(false);
+    const [recountAcknowledged, setRecountAcknowledged] = useState(false);
+    const [recountCountdown, setRecountCountdown] = useState(5);
+    const [studentCountCheckpoints, setStudentCountCheckpoints] = useState<Record<string, EvaluationCountCheckpoint>>({});
+    const [groupCountCheckpoints, setGroupCountCheckpoints] = useState<Record<string, EvaluationCountCheckpoint>>({});
     const activeStudents = useMemo(() => students.filter(student => (student.status ?? 'active') === 'active'), [students]);
     const activeStudentKey = activeStudents.map(student => student.id).join('|');
     const studentsByGender = useMemo(() => ({
@@ -311,6 +368,15 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         setShowDiscardGroupingConfirm(false);
         setDraftSearchQuery('');
         setSearchQuery('');
+        setMoreActionTarget(null);
+        setCardDisplayTarget(null);
+        setRecountTarget(null);
+        setRecountSelectedIds(new Set());
+        setShowRecountConfirmation(false);
+        setRecountAcknowledged(false);
+        setRecountCountdown(5);
+        setStudentCountCheckpoints({});
+        setGroupCountCheckpoints({});
     }, [activeStudentKey, classInfo.id, currentTeacherName]);
 
     useEffect(() => {
@@ -331,7 +397,13 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         }
     }, [activeGroupPlanId, groupPlans]);
 
-    const isGroupingEditorOpen = Boolean(groupEditor);
+    useEffect(() => {
+        if (!showRecountConfirmation || recountCountdown <= 0) return undefined;
+        const timer = window.setTimeout(() => setRecountCountdown(current => Math.max(0, current - 1)), 1000);
+        return () => window.clearTimeout(timer);
+    }, [recountCountdown, showRecountConfirmation]);
+
+    const isGroupingEditorOpen = Boolean(groupEditor || moreActionTarget || cardDisplayTarget || recountTarget || showRecountConfirmation);
 
     useEffect(() => {
         onGroupingEditorChange?.(isGroupingEditorOpen);
@@ -355,6 +427,21 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
 
     const studentById = useMemo(() => new Map(activeStudents.map(student => [student.id, student])), [activeStudents]);
 
+    const getBaseStudentPerformance = (student: Student) => (
+        performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student)
+    );
+    const getDisplayedStudentPerformance = (student: Student) => getEvaluationCountsSinceCheckpoint(
+        getBaseStudentPerformance(student),
+        studentCountCheckpoints[student.id],
+    );
+    const getBaseGroupPerformance = (groupId: string) => (
+        groupPerformanceByGroupId[groupId] ?? createDemoGroupPerformanceSummary(groupId)
+    );
+    const getDisplayedGroupPerformance = (groupId: string) => getEvaluationCountsSinceCheckpoint(
+        getBaseGroupPerformance(groupId),
+        groupCountCheckpoints[groupId],
+    );
+
     const groupDetailTarget = activeGroupPlan?.groups.find(group => group.id === groupDetailTargetId) ?? null;
     const groupDetailMembers = groupDetailTarget?.memberIds.map(id => studentById.get(id)).filter(Boolean) as Student[] | undefined;
     const dissolveStudentGroupTarget = activeGroupPlan?.groups.find(group => group.id === dissolveStudentGroupTargetId) ?? null;
@@ -366,6 +453,10 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     }, [activeGroupPlan]);
 
     const activeGroupUngroupedCount = activeStudents.filter(student => !activeGroupMembershipByStudentId.has(student.id)).length;
+
+    const recountSelectedGroups = activeGroupPlan?.groups.filter(group => recountSelectedIds.has(group.id)) ?? [];
+    const recountSelectedStudents = activeStudents.filter(student => recountSelectedIds.has(student.id));
+    const recountSelectedCount = recountTarget === 'group' ? recountSelectedGroups.length : recountSelectedStudents.length;
 
     const adjustStudentGroupVisibleStudents = useMemo(() => {
         const normalizedQuery = adjustStudentGroupSearchQuery.trim().replace(/\s+/g, '').toLowerCase();
@@ -438,28 +529,41 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         });
     }, [activeStudents, searchQuery]);
 
+    const isStudentRecountSelection = recountTarget === 'student';
+    const isGroupRecountSelection = recountTarget === 'group';
+    const activeStudentSelectionIds = isStudentRecountSelection ? recountSelectedIds : selectedIds;
+    const isStudentSelectionActive = isSelectionMode || isStudentRecountSelection;
+    const isGroupSelectionActive = isGroupSelectionMode || isGroupRecountSelection;
     const isAllVisibleSelected = useMemo(() => {
-        return visibleStudents.length > 0 && visibleStudents.every(student => selectedIds.has(student.id));
-    }, [selectedIds, visibleStudents]);
+        return visibleStudents.length > 0 && visibleStudents.every(student => activeStudentSelectionIds.has(student.id));
+    }, [activeStudentSelectionIds, visibleStudents]);
     const isMaleQuickSelectionActive = studentsByGender.male.length > 0
-        && selectedIds.size === studentsByGender.male.length
-        && studentsByGender.male.every(student => selectedIds.has(student.id));
+        && activeStudentSelectionIds.size === studentsByGender.male.length
+        && studentsByGender.male.every(student => activeStudentSelectionIds.has(student.id));
     const isFemaleQuickSelectionActive = studentsByGender.female.length > 0
-        && selectedIds.size === studentsByGender.female.length
-        && studentsByGender.female.every(student => selectedIds.has(student.id));
+        && activeStudentSelectionIds.size === studentsByGender.female.length
+        && studentsByGender.female.every(student => activeStudentSelectionIds.has(student.id));
+
+    const updateActiveStudentSelection = (next: Set<string>) => {
+        if (isStudentRecountSelection) {
+            setRecountSelectedIds(next);
+            return;
+        }
+        onSelectionChange(next);
+    };
 
     const toggleSelection = (id: string) => {
-        const newSet = new Set(selectedIds);
+        const newSet = new Set(activeStudentSelectionIds);
         if (newSet.has(id)) {
             newSet.delete(id);
         } else {
             newSet.add(id);
         }
-        onSelectionChange(newSet);
+        updateActiveStudentSelection(newSet);
     };
 
     const handleStudentClick = (student: Student) => {
-        if (isSelectionMode) {
+        if (isStudentSelectionActive) {
             toggleSelection(student.id);
         } else {
             onSelectStudent(student);
@@ -467,24 +571,24 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     };
 
     const handleSelectAllVisibleStudents = () => {
-        const next = new Set(selectedIds);
+        const next = new Set(activeStudentSelectionIds);
         visibleStudents.forEach(student => next.add(student.id));
-        onSelectionChange(next);
+        updateActiveStudentSelection(next);
     };
 
     const handleClearVisibleStudents = () => {
         const visibleIds = new Set(visibleStudents.map(student => student.id));
-        const next = new Set(Array.from(selectedIds).filter(id => !visibleIds.has(id)));
-        onSelectionChange(next);
+        const next = new Set(Array.from(activeStudentSelectionIds).filter(id => !visibleIds.has(id)));
+        updateActiveStudentSelection(next);
     };
 
     const handleInvertVisibleStudents = () => {
-        const next = new Set(selectedIds);
+        const next = new Set(activeStudentSelectionIds);
         visibleStudents.forEach(student => {
             if (next.has(student.id)) next.delete(student.id);
             else next.add(student.id);
         });
-        onSelectionChange(next);
+        updateActiveStudentSelection(next);
     };
 
     const handleToggleGenderSelection = (gender: Student['gender']) => {
@@ -492,7 +596,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         const isCurrentQuickSelectionActive = gender === 'male'
             ? isMaleQuickSelectionActive
             : isFemaleQuickSelectionActive;
-        onSelectionChange(isCurrentQuickSelectionActive
+        updateActiveStudentSelection(isCurrentQuickSelectionActive
             ? new Set()
             : new Set(genderStudents.map(student => student.id)));
     };
@@ -520,6 +624,91 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             .filter(group => next.has(group.id))
             .flatMap(group => group.memberIds) ?? [];
         onSelectionChange(new Set(memberIds));
+    };
+
+    const resetRecountConfirmation = () => {
+        setShowRecountConfirmation(false);
+        setRecountAcknowledged(false);
+        setRecountCountdown(5);
+    };
+
+    const handleCancelRecount = () => {
+        setMoreActionTarget(null);
+        setRecountTarget(null);
+        setRecountSelectedIds(new Set());
+        resetRecountConfirmation();
+        setSearchQuery('');
+    };
+
+    const handleOpenCardDisplaySettings = (target: EvaluationRecountTarget) => {
+        if (!canConfigureCardDisplay) return;
+        setMoreActionTarget(null);
+        setCardDisplayTarget(target);
+    };
+
+    const handleStartRecountSelection = (target: EvaluationRecountTarget) => {
+        if (target === 'student' && !canResetStudentEvaluationCounts) return;
+        if (target === 'group' && !isActiveGroupPlanOwnedByCurrentTeacher) return;
+        setMoreActionTarget(null);
+        setRecountTarget(target);
+        setRecountSelectedIds(new Set());
+        resetRecountConfirmation();
+        setSearchQuery('');
+    };
+
+    const handleToggleRecountGroup = (groupId: string) => {
+        const next = new Set(recountSelectedIds);
+        if (next.has(groupId)) next.delete(groupId);
+        else next.add(groupId);
+        setRecountSelectedIds(next);
+    };
+
+    const handleToggleAllRecountGroups = () => {
+        const groupIds = activeGroupPlan?.groups.map(group => group.id) ?? [];
+        const allSelected = groupIds.length > 0 && groupIds.every(groupId => recountSelectedIds.has(groupId));
+        setRecountSelectedIds(allSelected ? new Set() : new Set(groupIds));
+    };
+
+    const handleOpenRecountConfirmation = () => {
+        if (recountSelectedCount === 0) return;
+        setRecountAcknowledged(false);
+        setRecountCountdown(5);
+        setShowRecountConfirmation(true);
+    };
+
+    const handleToggleRecountAcknowledgement = (checked: boolean) => {
+        setRecountAcknowledged(checked);
+    };
+
+    const handleConfirmRecount = () => {
+        if (!recountTarget || recountSelectedCount === 0 || recountCountdown > 0) return;
+        if (!recountAcknowledged) {
+            setGroupingToastMessage('请先勾选我已知晓');
+            return;
+        }
+        const resetAt = new Date().toISOString();
+        if (recountTarget === 'student') {
+            setStudentCountCheckpoints(current => {
+                const next = { ...current };
+                recountSelectedStudents.forEach(student => {
+                    next[student.id] = createEvaluationCountCheckpoint(getBaseStudentPerformance(student), resetAt);
+                });
+                return next;
+            });
+        } else {
+            setGroupCountCheckpoints(current => {
+                const next = { ...current };
+                recountSelectedGroups.forEach(group => {
+                    next[group.id] = createEvaluationCountCheckpoint(getBaseGroupPerformance(group.id), resetAt);
+                });
+                return next;
+            });
+        }
+        const successMessage = recountTarget === 'student'
+            ? `${recountSelectedCount}名学生已从现在开始重新计数`
+            : `${recountSelectedCount}个小组已从现在开始重新计数`;
+        handleCancelRecount();
+        setGroupingToastMessage(successMessage);
     };
 
     const createDraftGroups = (planId: string, groupName = '第1组') => ([{
@@ -913,7 +1102,36 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         setActiveView('group');
     };
 
-    const renderStudentToolbar = () => (
+    const renderStudentToolbar = () => {
+        if (isStudentRecountSelection) {
+            return (
+                <ClassDetailTabToolbar rowClassName="gap-1">
+                    <div className="min-w-0 flex-1">
+                        <MobileSearchInput
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
+                            placeholder="搜索姓名、学号"
+                            aria-label="搜索要重新计数的学生"
+                            density="compact"
+                            appearance="filled"
+                            containerClassName="flex min-h-11 items-center"
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        onClick={isAllVisibleSelected ? handleClearVisibleStudents : handleSelectAllVisibleStudents}
+                        className="min-h-11 shrink-0 px-2 text-[13px] font-semibold text-[var(--tm-text-primary)] active:text-[var(--tm-brand-primary)]"
+                    >
+                        {isAllVisibleSelected ? '取消全选' : '全选'}
+                    </button>
+                    <button type="button" onClick={handleCancelRecount} className="min-h-11 shrink-0 px-2 text-[13px] font-semibold text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]">
+                        取消
+                    </button>
+                </ClassDetailTabToolbar>
+            );
+        }
+
+        return (
         <ClassDetailTabToolbar rowClassName="student-action-row gap-1.5">
             <div className={`relative text-left transition-all duration-300 ease-out ${isSelectionMode ? 'w-11 flex-none opacity-70' : 'min-w-0 flex-1 opacity-100'}`}>
                     {isSelectionMode ? (
@@ -993,16 +1211,22 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             onToggleSelectionMode();
                         }}
                     />
+                    {!isSelectionMode && activeStudents.length > 0 && (canConfigureCardDisplay || canResetStudentEvaluationCounts) && (
+                        <button type="button" onClick={() => setMoreActionTarget('student')} aria-label="学生更多操作" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-primary)]">
+                            <MenuIcon className="h-5 w-5" />
+                        </button>
+                    )}
             </div>
         </ClassDetailTabToolbar>
-    );
+        );
+    };
 
     const renderStudentGrid = () => (
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-40 pt-3">
             <div className="student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3">
                 {visibleStudents.map((student, index) => {
-                    const isSelected = selectedIds.has(student.id);
-                    const performance = performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student);
+                    const isSelected = activeStudentSelectionIds.has(student.id);
+                    const performance = getDisplayedStudentPerformance(student);
                     return (
                         <StudentRosterCard
                             key={student.id}
@@ -1010,7 +1234,8 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             index={index}
                             performance={performance}
                             levelNetScore={levelNetScoreByStudentId[student.id]}
-                            showSelection={isSelectionMode}
+                            displaySettings={studentCardDisplaySettings}
+                            showSelection={isStudentSelectionActive}
                             selected={isSelected}
                             onClick={() => handleStudentClick(student)}
                         />
@@ -1035,7 +1260,10 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         <div className="flex min-h-0 flex-1 flex-col bg-[var(--tm-page-plain-content-bg)]">
             {activeGroupPlan && (hasActiveStudentGroups || orderedGroupPlans.length > 1) && (
                 <ClassDetailTabToolbar rowClassName="justify-between gap-2">
-                    <button
+                    {isGroupRecountSelection ? (
+                        <span className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">选择小组</span>
+                    ) : (
+                        <button
                             type="button"
                             onClick={() => setShowGroupPlanSheet(true)}
                             aria-label="切换分组"
@@ -1045,16 +1273,35 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                 <span className="truncate text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{activeGroupPlan.name}</span>
                                 <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-tertiary)]" />
                             </span>
-                    </button>
+                        </button>
+                    )}
                     <div className="flex shrink-0 items-center gap-1">
-                        <ClassDetailMultiSelectButton
-                            active={isGroupSelectionMode}
-                            onClick={() => {
-                                setIsGroupSelectionMode(prev => !prev);
-                                setGroupSelectionIds(new Set());
-                                onSelectionChange(new Set());
-                            }}
-                        />
+                        {isGroupRecountSelection ? (
+                            <>
+                                <button type="button" onClick={handleToggleAllRecountGroups} className="min-h-11 shrink-0 px-2 text-[13px] font-semibold text-[var(--tm-text-primary)] active:text-[var(--tm-brand-primary)]">
+                                    {activeGroupPlan.groups.length > 0 && activeGroupPlan.groups.every(group => recountSelectedIds.has(group.id)) ? '取消全选' : '全选'}
+                                </button>
+                                <button type="button" onClick={handleCancelRecount} className="min-h-11 shrink-0 px-2 text-[13px] font-semibold text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]">
+                                    取消
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <ClassDetailMultiSelectButton
+                                    active={isGroupSelectionMode}
+                                    onClick={() => {
+                                        setIsGroupSelectionMode(prev => !prev);
+                                        setGroupSelectionIds(new Set());
+                                        onSelectionChange(new Set());
+                                    }}
+                                />
+                                {!isGroupSelectionMode && hasActiveStudentGroups && (canConfigureCardDisplay || isActiveGroupPlanOwnedByCurrentTeacher) && (
+                                    <button type="button" onClick={() => setMoreActionTarget('group')} aria-label="小组更多操作" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-primary)]">
+                                        <MenuIcon className="h-5 w-5" />
+                                    </button>
+                                )}
+                            </>
+                        )}
                     </div>
                 </ClassDetailTabToolbar>
             )}
@@ -1063,42 +1310,47 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 {activeGroupPlan && hasActiveStudentGroups ? (
                     <div className="space-y-3">
                         {activeGroupPlan.groups.map((group, index) => {
-                            const isSelected = groupSelectionIds.has(group.id);
+                            const isSelected = isGroupRecountSelection ? recountSelectedIds.has(group.id) : groupSelectionIds.has(group.id);
                             const members = group.memberIds.map(id => studentById.get(id)).filter(Boolean) as Student[];
-                            const groupPerformance = groupPerformanceByGroupId[group.id] ?? createDemoGroupPerformanceSummary(group.id);
+                            const groupPerformance = getDisplayedGroupPerformance(group.id);
                             return (
                                 <button
                                     type="button"
                                     key={group.id}
-                                    onClick={() => isGroupSelectionMode
-                                        ? handleToggleGroupSelection(group.id)
-                                        : handleOpenStudentGroupDetail(group.id)}
-                                    aria-pressed={isGroupSelectionMode ? isSelected : undefined}
-                                    aria-label={isGroupSelectionMode
+                                    onClick={() => isGroupRecountSelection
+                                        ? handleToggleRecountGroup(group.id)
+                                        : isGroupSelectionMode
+                                            ? handleToggleGroupSelection(group.id)
+                                            : handleOpenStudentGroupDetail(group.id)}
+                                    aria-pressed={isGroupSelectionActive ? isSelected : undefined}
+                                    aria-label={isGroupSelectionActive
                                         ? `${isSelected ? '取消选择' : '选择'}${group.name}`
                                         : `查看${group.name}`}
-                                    className="relative flex min-h-[88px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.99]"
+                                    className="relative flex min-h-[76px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.99]"
                                 >
                                     <GroupAvatar avatarKey={group.avatarKey} index={index} />
                                     <span className="min-w-0 flex-1">
                                         <span className="block truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{group.name}</span>
-                                        <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{getGroupMemberSummary(members)}</span>
+                                        <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{getGroupMemberSummary(members)}</span>
                                     </span>
-                                    {!isGroupSelectionMode && (
-                                        <GroupPerformanceMeta summary={groupPerformance} className="w-[76px] shrink-0" />
+                                    {!isGroupSelectionActive && (groupCardDisplaySettings.showPraiseCount || groupCardDisplaySettings.showCriticismCount) && (
+                                        <GroupPerformanceMeta
+                                            summary={groupPerformance}
+                                            orientation="vertical"
+                                            showPraiseCount={groupCardDisplaySettings.showPraiseCount}
+                                            showCriticismCount={groupCardDisplaySettings.showCriticismCount}
+                                            className="w-6 shrink-0"
+                                        />
                                     )}
-                                    {isGroupSelectionMode && (
+                                    {isGroupSelectionActive && (
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2">
                                             {isSelected ? <CheckCircleIcon className="h-5 w-5 text-[var(--tm-brand-primary)]" /> : <CircleIcon className="h-5 w-5 text-[var(--tm-border-subtle)]" />}
                                         </span>
                                     )}
-                                    {!isGroupSelectionMode && (
-                                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
-                                    )}
                                 </button>
                             );
                         })}
-                        {isActiveGroupPlanOwnedByCurrentTeacher && !isGroupSelectionMode && (
+                        {isActiveGroupPlanOwnedByCurrentTeacher && !isGroupSelectionActive && (
                             <button
                                 type="button"
                                 onClick={handleStartAddStudentGroup}
@@ -1127,16 +1379,19 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     );
 
     return (
-        <div className="flex flex-col h-full bg-transparent">
+        <div className="relative flex h-full flex-col bg-transparent">
             <div className="class-detail-titlebar-switcher sticky top-0 z-[45] flex h-11 items-center justify-between border-b border-white/40 bg-white/38 px-4 backdrop-blur-md">
-                {onBack ? (
-                    <button onClick={onBack} aria-label="返回班级列表" className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]">
+                {onBack || recountTarget ? (
+                    <button onClick={recountTarget ? handleCancelRecount : onBack} aria-label={recountTarget ? '退出重新计数' : '返回班级列表'} className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]">
                         <BackIcon className="h-5 w-5 text-[var(--tm-text-secondary)]" />
                     </button>
                 ) : (
                     <div className="w-10" aria-hidden="true" />
                 )}
-                <div className="grid w-40 grid-cols-2 text-center text-[15px] font-bold" role="tablist" aria-label="班级成员视图">
+                {recountTarget ? (
+                    <h1 className="text-[15px] font-bold text-[var(--tm-text-primary)]">重新计数</h1>
+                ) : (
+                    <div className="grid w-40 grid-cols-2 text-center text-[15px] font-bold" role="tablist" aria-label="班级成员视图">
                     <button
                         type="button"
                         role="tab"
@@ -1157,7 +1412,8 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         分组
                         {activeView === 'group' && <span className="absolute bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]" />}
                     </button>
-                </div>
+                    </div>
+                )}
                 <div className="w-10" aria-hidden="true" />
             </div>
 
@@ -1167,6 +1423,122 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     {renderStudentGrid()}
                 </>
             ) : renderGroupView()}
+
+            {recountTarget && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[60] mx-auto max-w-md px-4">
+                    <button
+                        type="button"
+                        onClick={handleOpenRecountConfirmation}
+                        disabled={recountSelectedCount === 0}
+                        className="pointer-events-auto mx-auto flex min-h-[var(--tm-recount-bottom-action-height)] w-full max-w-[var(--tm-recount-bottom-action-max-width)] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-floating)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] disabled:[box-shadow:var(--tm-shadow-control)]"
+                    >
+                        {`重新计数（${recountSelectedCount}）`}
+                    </button>
+                </div>
+            )}
+
+            <MobileBottomSheet
+                open={Boolean(moreActionTarget)}
+                title={moreActionTarget === 'group' ? '小组操作' : '学生操作'}
+                onClose={() => setMoreActionTarget(null)}
+            >
+                <div className="space-y-1 pb-2">
+                    {canConfigureCardDisplay && moreActionTarget && (
+                        <button
+                            type="button"
+                            onClick={() => handleOpenCardDisplaySettings(moreActionTarget)}
+                            className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]"
+                        >
+                            <EyeIcon className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />
+                            {moreActionTarget === 'group' ? '小组卡片展示' : '学生卡片展示'}
+                        </button>
+                    )}
+                    {moreActionTarget && (
+                        (moreActionTarget === 'student' && canResetStudentEvaluationCounts)
+                        || (moreActionTarget === 'group' && isActiveGroupPlanOwnedByCurrentTeacher)
+                    ) && (
+                        <button
+                            type="button"
+                            onClick={() => handleStartRecountSelection(moreActionTarget)}
+                            className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]"
+                        >
+                            <RetryIcon className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />
+                            重新计数
+                        </button>
+                    )}
+                </div>
+            </MobileBottomSheet>
+
+            <MobileBottomSheet
+                open={Boolean(cardDisplayTarget)}
+                title={cardDisplayTarget === 'group' ? '小组卡片展示' : '学生卡片展示'}
+                onClose={() => setCardDisplayTarget(null)}
+            >
+                <div className="space-y-2 pb-2">
+                    {cardDisplayTarget === 'student' ? (
+                        <>
+                            <MobileSettingsSwitchRow
+                                label="显示等级"
+                                checked={studentCardDisplaySettings.showLevel}
+                                onChange={showLevel => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, showLevel })}
+                            />
+                            <MobileSettingsSwitchRow
+                                label="显示加分次数"
+                                checked={studentCardDisplaySettings.showPraiseCount}
+                                onChange={showPraiseCount => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, showPraiseCount })}
+                            />
+                            <MobileSettingsSwitchRow
+                                label="显示扣分次数"
+                                checked={studentCardDisplaySettings.showCriticismCount}
+                                onChange={showCriticismCount => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, showCriticismCount })}
+                            />
+                        </>
+                    ) : cardDisplayTarget === 'group' ? (
+                        <>
+                            <MobileSettingsSwitchRow
+                                label="显示加分次数"
+                                checked={groupCardDisplaySettings.showPraiseCount}
+                                onChange={showPraiseCount => onUpdateGroupCardDisplaySettings({ ...groupCardDisplaySettings, showPraiseCount })}
+                            />
+                            <MobileSettingsSwitchRow
+                                label="显示扣分次数"
+                                checked={groupCardDisplaySettings.showCriticismCount}
+                                onChange={showCriticismCount => onUpdateGroupCardDisplaySettings({ ...groupCardDisplaySettings, showCriticismCount })}
+                            />
+                        </>
+                    ) : null}
+                </div>
+            </MobileBottomSheet>
+
+            <MobileBottomSheet
+                open={showRecountConfirmation}
+                title="确认重新计数"
+                onClose={resetRecountConfirmation}
+                footerDivider={false}
+                footer={(
+                    <button type="button" onClick={handleConfirmRecount} disabled={recountCountdown > 0} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-status-negative-strong)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+                        {recountCountdown > 0 ? `${recountCountdown}秒后可确认` : '确认重新计数'}
+                    </button>
+                )}
+            >
+                <div className="space-y-4 pb-2">
+                    <p className="text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">
+                        重新计数以后，卡片上的数字将清零。已有的评价记录、积分等不受影响。
+                    </p>
+                    <label className="flex min-h-11 select-none items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-primary)]">
+                        <input
+                            type="checkbox"
+                            checked={recountAcknowledged}
+                            onChange={event => handleToggleRecountAcknowledgement(event.target.checked)}
+                            className="sr-only"
+                        />
+                        <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] transition-colors [transition-duration:var(--tm-duration-fast)] ${recountAcknowledged ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface)]'}`}>
+                            {recountAcknowledged && <CheckIcon className="h-3.5 w-3.5 text-[var(--tm-text-inverse)] [stroke-width:3]" />}
+                        </span>
+                        <span>重置后不可恢复，我已知晓</span>
+                    </label>
+                </div>
+            </MobileBottomSheet>
 
             <MobileBottomSheet open={showGroupPlanSheet} title="切换分组方案" onClose={() => setShowGroupPlanSheet(false)}>
                 <div className="pb-2">
@@ -1194,7 +1566,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                         </span>
                                         <span className="min-w-0 flex-1">
                                             <span className="block truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{plan.name}</span>
-                                            <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{plan.ownerName}创建 · {plan.groups.length}个小组 · {memberCount}人</span>
+                                            <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{plan.ownerName}创建 · {plan.groups.length}个小组 · {memberCount}人</span>
                                         </span>
                                     </button>
                                     {isOwned && (
@@ -1218,13 +1590,12 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             )}>
                 <div className="space-y-4 py-2">
                     <label className="block">
-                        <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">这套分组名称</span>
-                        <input value={newGroupName} onChange={event => setNewGroupName(event.target.value)} maxLength={20} placeholder="例如：阅读分组" aria-label="这套分组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
-                        <span className="mt-1.5 block text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">用于在不同分组之间切换</span>
+                        <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">分组方案名称</span>
+                        <input value={newGroupName} onChange={event => setNewGroupName(event.target.value)} maxLength={20} placeholder="例如：数学分组" aria-label="分组方案名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
                     </label>
                     <label className="block">
                         <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">第一个小组名称</span>
-                        <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：阅读1组" aria-label="第一个小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+                        <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：数学1组" aria-label="第一个小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
                     </label>
                 </div>
             </MobileBottomSheet>
@@ -1264,7 +1635,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 {addStudentGroupStep === 'name' ? (
                     <label className="block py-2">
                         <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">小组名称</span>
-                        <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：写作1组" aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+                        <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：语文1组" aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
                     </label>
                 ) : (
                     <div className="min-h-full">
@@ -1352,22 +1723,15 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             <div className="min-w-0 flex-1">
                                 <div className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{groupDetailTarget?.name}</div>
                                 <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">{groupDetailMembers?.length || 0}名学生</div>
-                                {groupDetailTarget && (
-                                    <GroupPerformanceMeta
-                                        summary={groupPerformanceByGroupId[groupDetailTarget.id] ?? createDemoGroupPerformanceSummary(groupDetailTarget.id)}
-                                        layout="inline"
-                                        className="mt-1.5 justify-start"
-                                    />
-                                )}
                             </div>
                             {isActiveGroupPlanOwnedByCurrentTeacher && (
                                 <div className="-mr-1 flex shrink-0 items-center gap-1">
                                     <button type="button" onClick={handleStartEditStudentGroup} className="flex min-h-11 shrink-0 items-center gap-1 px-1.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]" aria-label="编辑小组信息">
-                                        <EditIcon className="h-4 w-4" />
+                                        <EditIcon className="h-4 w-4 text-[var(--tm-action-icon-neutral)]" />
                                         编辑
                                     </button>
                                     <button type="button" onClick={handleRequestDissolveStudentGroup} className="flex min-h-11 shrink-0 items-center gap-1 px-1.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative)] active:text-[var(--tm-status-negative-strong)]" aria-label="解散小组">
-                                        <DeleteIcon className="h-4 w-4" />
+                                        <DeleteIcon className="h-4 w-4 text-[var(--tm-action-icon-danger)]" />
                                         解散
                                     </button>
                                 </div>
@@ -1376,7 +1740,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         {(groupDetailMembers?.length || 0) > 0 ? (
                             <div className="student-roster-grid grid gap-x-2.5 gap-y-3 pt-3">
                                 {groupDetailMembers?.map((student, index) => {
-                                    const performance = performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student);
+                                    const performance = getDisplayedStudentPerformance(student);
                                     return (
                                         <StudentRosterCard
                                             key={student.id}
@@ -1384,6 +1748,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                             index={index}
                                             performance={performance}
                                             levelNetScore={levelNetScoreByStudentId[student.id]}
+                                            displaySettings={studentCardDisplaySettings}
                                             showSelection={false}
                                             selected={false}
                                             onClick={() => handleOpenGroupMemberStudent(student)}
@@ -1463,11 +1828,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             <MobileBottomSheet open={Boolean(groupPlanActionTarget)} title={groupPlanActionTarget?.name || '分组管理'} onClose={() => setGroupPlanActionTarget(null)}>
                 <div className="space-y-1 pb-2">
                     <button type="button" onClick={handleStartRenameGroupPlan} className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]">
-                        <EditIcon className="h-5 w-5 text-[var(--tm-brand-primary)]" />
+                        <EditIcon className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />
                         重命名
                     </button>
                     <button type="button" onClick={handleRequestDeleteGroupPlan} className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative)] active:bg-[var(--tm-status-negative-soft)]">
-                        <DeleteIcon className="h-5 w-5" />
+                        <DeleteIcon className="h-5 w-5 text-[var(--tm-action-icon-danger)]" />
                         删除这套分组
                     </button>
                 </div>

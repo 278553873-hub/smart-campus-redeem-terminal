@@ -13,7 +13,6 @@
 | `../../00-公共图标/copy.svg` | 复制班级号 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/download.svg` | 下载 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/file-text.svg` | 作业录入 | 公共图标 | Lucide SVG |
-| `../../00-公共图标/folder-archive.svg` | 批量留档 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/gift.svg` | 兑换奖励 | 公共图标 | Lucide SVG |
 | `link.svg` | 链接邀请 | 本页面 | Lucide SVG |
 | `log-in.svg` | 加入班级 | 本页面 | Lucide SVG |

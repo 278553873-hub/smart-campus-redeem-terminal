@@ -8,6 +8,7 @@ interface StudentPerformanceAvatarProps {
   fallbackClassName: string;
   level: StudentPerformanceLevel;
   compact?: boolean;
+  showLevelProgress?: boolean;
 }
 
 const RADIUS = 27;
@@ -19,6 +20,7 @@ const StudentPerformanceAvatar: React.FC<StudentPerformanceAvatarProps> = ({
   fallbackClassName,
   level,
   compact = false,
+  showLevelProgress = true,
 }) => {
   const progressPercent = Math.round(level.progress * 100);
   const dashOffset = CIRCUMFERENCE * (1 - level.progress);
@@ -26,31 +28,33 @@ const StudentPerformanceAvatar: React.FC<StudentPerformanceAvatarProps> = ({
   return (
     <div
       role="img"
-      aria-label={`${student.name}头像，下一等级图标进度${progressPercent}%`}
+      aria-label={showLevelProgress ? `${student.name}头像，下一等级图标进度${progressPercent}%` : `${student.name}头像`}
       className={`relative shrink-0 ${compact ? 'h-[58px] w-[58px]' : 'h-[60px] w-[60px]'}`}
     >
-      <svg aria-hidden="true" className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 58 58">
-        <circle
-          cx="29"
-          cy="29"
-          r={RADIUS}
-          fill="none"
-          stroke="var(--tm-student-level-track)"
-          strokeWidth="3"
-        />
-        <circle
-          cx="29"
-          cy="29"
-          r={RADIUS}
-          fill="none"
-          stroke="var(--tm-student-level-progress)"
-          strokeDasharray={CIRCUMFERENCE}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
-          strokeWidth="3"
-          className="transition-[stroke-dashoffset] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:transition-none"
-        />
-      </svg>
+      {showLevelProgress && (
+        <svg aria-hidden="true" className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 58 58">
+          <circle
+            cx="29"
+            cy="29"
+            r={RADIUS}
+            fill="none"
+            stroke="var(--tm-student-level-track)"
+            strokeWidth="3"
+          />
+          <circle
+            cx="29"
+            cy="29"
+            r={RADIUS}
+            fill="none"
+            stroke="var(--tm-student-level-progress)"
+            strokeDasharray={CIRCUMFERENCE}
+            strokeDashoffset={dashOffset}
+            strokeLinecap="round"
+            strokeWidth="3"
+            className="transition-[stroke-dashoffset] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:transition-none"
+          />
+        </svg>
+      )}
 
       <div className={`absolute inset-1 overflow-hidden rounded-full ${fallbackClassName}`}>
         {student.avatar ? (

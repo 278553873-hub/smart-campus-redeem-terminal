@@ -8,6 +8,7 @@ const css = fs.readFileSync('mobile-app/index.css', 'utf8');
 const parent = fs.readFileSync('components/ParentApp.tsx', 'utf8');
 const guidelines = fs.readFileSync('design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', 'utf8');
 const classList = fs.readFileSync('mobile-app/views/ClassListView.tsx', 'utf8');
+const slidingSegmented = fs.readFileSync('mobile-app/components/ui/MobileSlidingSegmentedControl.tsx', 'utf8');
 
 const collectTeacherMobileSources = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
   const path = `${directory}/${entry.name}`;
@@ -26,9 +27,13 @@ for (const required of [
   "'--tm-record-student-text'",
   "'--tm-record-class-text'",
   "'--tm-nav-item-default'",
+  "'--tm-action-icon-neutral'",
+  "'--tm-action-icon-brand'",
+  "'--tm-action-icon-danger'",
   "'--tm-radius-card'",
   "'--tm-shadow-card'",
   "'--tm-shadow-card-on-white'",
+  "'--tm-shadow-card-ambient'",
   "'--tm-size-touch'",
   "'--tm-size-floating-action'",
   "'--tm-border-control'",
@@ -52,6 +57,11 @@ for (const required of [
   "'--tm-input-focus-ring'",
   "'--tm-page-plain-header-bg'",
   "'--tm-page-plain-content-bg'",
+  "'--tm-me-gradient-base'",
+  "'--tm-me-gradient-primary-field'",
+  "'--tm-me-gradient-sky-field'",
+  "'--tm-me-gradient-jade-hint'",
+  "'--tm-me-gradient-tail-field'",
   "'--tm-font-size-document-title'",
   "'--tm-font-size-compact'",
   "'--tm-font-size-metric'",
@@ -102,7 +112,10 @@ const classListGradeSelect = classList.match(/<select[\s\S]*?aria-label="按年�
 assert.match(classListGradeSelect, /bg-\[var\(--tm-bg-surface\)\]/, '班级页年级筛选默认状态必须使用白色表面。');
 assert.match(classListGradeSelect, /\[box-shadow:var\(--tm-shadow-control\)\]/, '班级页年级筛选必须使用统一控件阴影。');
 assert.match(classListGradeSelect, /focus-visible:bg-\[var\(--tm-bg-surface\)\]/, '班级页年级筛选聚焦时必须保持白底。');
-assert.match(classList, /variant="quiet"/, '班级页来源切换必须保持透明的 quiet 形态。');
+assert.doesNotMatch(classList, /ClassSourceTrigger/, '班级页不得继续提供来源切换。');
+assert.match(classList, /ariaLabel="班级内容分类"/, '班级与社团页签必须保留统一的页签语义。');
+assert.match(slidingSegmented, /--tm-bg-surface-glass/, '班级与社团页签必须使用记录页同源的轻玻璃底轨。');
+assert.doesNotMatch(classList, /--tm-selection-segment-track-bg/, '班级与社团页签不得继续使用通用灰色底轨。');
 assert.match(guidelines, /班级页学校版年级筛选是专项例外/, '教师手机端规范应明确班级页年级筛选的白底例外。');
 
 for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
@@ -130,11 +143,14 @@ assert.doesNotMatch(canonical, /teacherBrandPalette\.rose|\brose:\s*\{/);
 assert.match(guidelines, /不得维护或引入独立暗红色板/);
 assert.match(canonical, /page: '#F8F6F5'/);
 assert.match(canonical, /surfaceGlass: 'rgba\(255, 255, 255, 0\.96\)'/);
+assert.match(canonical, /tailField: 'rgba\(67, 176, 246, 0\.05\)'/);
 assert.match(canonical, /'--tm-shadow-card': '0 12px 28px -20px rgba\([^']+\)'/);
 assert.match(canonical, /'--tm-shadow-card-raised': '0 14px 32px -20px rgba\([^']+\)'/);
 assert.match(canonical, /'--tm-shadow-card-on-white': '0 1px 4px rgba\([^']+\), 0 12px 28px -14px rgba\([^']+\)'/);
+assert.match(canonical, /'--tm-shadow-card-ambient': '0 1px 3px rgba\([^']+\), 0 8px 20px -14px rgba\([^']+\)'/);
+assert.match(canonical, /'--tm-shadow-navigation': '0 -6px 18px -14px rgba\([^']+\)'/);
 
-const invalidFullShadowConsumer = /shadow-\[var\(--tm-shadow-(?:card|card-raised|card-on-white|control|icon|avatar|floating|navigation|sheet)\)\]/;
+const invalidFullShadowConsumer = /shadow-\[var\(--tm-shadow-(?:card|card-raised|card-on-white|card-ambient|control|icon|avatar|floating|navigation|sheet)\)\]/;
 for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
   const source = fs.readFileSync(sourcePath, 'utf8');
   assert.doesNotMatch(source, invalidFullShadowConsumer, `${sourcePath} 使用了无效的完整阴影 Token 工具类。`);

@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>教师手机端切换控件盘点</title>
+  <style>
+    :root {
+      --page: #f4f5f6;
+      --surface: #ffffff;
+      --surface-soft: #f7f5f4;
+      --track: #ece9e7;
+      --text: #241f1d;
+      --text-2: #6f6763;
+      --text-3: #9a918c;
+      --border: #e5dfdc;
+      --red: #e02727;
+      --red-strong: #b91f1f;
+      --red-soft: #fff0ef;
+      --orange: #b84c18;
+      --orange-soft: #fff1e7;
+      --green: #287a57;
+      --green-soft: #eaf7f0;
+      --amber: #8c6416;
+      --amber-soft: #fff5d9;
+      --shadow-control: 0 2px 7px rgba(46, 33, 28, .10);
+      --shadow-panel: 0 1px 2px rgba(46, 33, 28, .05), 0 10px 24px rgba(46, 33, 28, .06);
+      --radius: 8px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--page);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.55;
+      letter-spacing: 0;
+    }
+    button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .page { width: min(100%, 1360px); margin: 0 auto; padding: 32px 28px 64px; }
+    .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; }
+    .eyebrow { margin: 0 0 6px; color: var(--red-strong); font-size: 12px; font-weight: 750; }
+    h1 { margin: 0; font-size: 30px; line-height: 1.25; }
+    .subtitle { max-width: 800px; margin: 10px 0 0; color: var(--text-2); }
+    .scope { flex: none; color: var(--text-2); font-size: 12px; text-align: right; }
+    .scope strong { display: block; color: var(--text); font-size: 13px; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-top: 28px;
+      overflow: hidden;
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-panel);
+    }
+    .metric { min-height: 94px; padding: 18px 20px; border-right: 1px solid var(--border); }
+    .metric:last-child { border-right: 0; }
+    .metric strong { display: block; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+    .metric span { display: block; margin-top: 9px; color: var(--text-2); font-size: 12px; }
+    .metric.alert strong { color: var(--red-strong); }
+
+    .rule-band {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr 1fr;
+      gap: 1px;
+      margin-top: 18px;
+      overflow: hidden;
+      border-radius: var(--radius);
+      background: var(--border);
+      box-shadow: var(--shadow-panel);
+    }
+    .rule { min-height: 112px; padding: 18px 20px; background: var(--surface); }
+    .rule b { display: block; margin-bottom: 7px; }
+    .rule p { margin: 0; color: var(--text-2); font-size: 12px; }
+
+    .jump { display: flex; gap: 8px; margin-top: 20px; overflow-x: auto; }
+    .jump a { flex: none; border-radius: 7px; padding: 8px 12px; color: var(--text-2); background: var(--surface); font-size: 12px; font-weight: 700; text-decoration: none; box-shadow: 0 1px 3px rgba(46, 33, 28, .05); }
+    .jump a:first-child { color: var(--red-strong); }
+
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-top: 38px; }
+    h2 { margin: 0; font-size: 20px; line-height: 1.3; }
+    .section-note { max-width: 860px; margin: 5px 0 0; color: var(--text-2); font-size: 12px; }
+
+    .pattern-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+    .pattern-card { min-width: 0; padding: 16px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-panel); }
+    .pattern-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .code { color: var(--text-3); font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .tag { border-radius: 5px; padding: 3px 7px; color: var(--green); background: var(--green-soft); font-size: 10px; font-weight: 750; }
+    .tag.special { color: var(--amber); background: var(--amber-soft); }
+    .pattern-card h3 { margin: 10px 0 4px; font-size: 15px; }
+    .pattern-card p { min-height: 38px; margin: 0; color: var(--text-2); font-size: 12px; }
+    .demo { display: flex; min-height: 88px; align-items: center; justify-content: center; margin-top: 14px; padding: 14px; overflow: hidden; border-radius: 7px; background: #faf9f8; }
+    .touch-note { margin-top: 10px !important; min-height: 0 !important; color: var(--text-3) !important; font-size: 11px !important; }
+
+    .control { width: 100%; max-width: 330px; }
+    .compact-segment { display: inline-grid; grid-auto-flow: column; min-height: 44px; border-radius: 8px; background: var(--track); }
+    .compact-segment.full { display: grid; width: 100%; grid-auto-columns: 1fr; }
+    .compact-segment button { display: flex; min-width: 76px; min-height: 44px; align-items: center; justify-content: center; border: 0; padding: 4px; color: var(--text-2); background: transparent; font-size: 13px; font-weight: 650; }
+    .compact-segment button span { display: flex; width: 100%; height: 36px; align-items: center; justify-content: center; border-radius: 6px; padding: 0 9px; }
+    .compact-segment button.active span { color: var(--red); background: #fff; box-shadow: var(--shadow-control); }
+
+    .text-choice { display: flex; min-height: 44px; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+    .text-choice::-webkit-scrollbar { display: none; }
+    .text-choice button { flex: none; min-height: 44px; border: 0; padding: 0 12px; color: var(--text); background: transparent; font-size: 13px; font-weight: 500; white-space: nowrap; }
+    .text-choice button.active { color: var(--red); font-weight: 700; }
+
+    .pill-choice { display: flex; min-height: 44px; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+    .pill-choice::-webkit-scrollbar { display: none; }
+    .pill-choice button { display: flex; min-width: 60px; min-height: 44px; flex: none; align-items: center; justify-content: center; border: 0; padding: 0; background: transparent; }
+    .pill-choice button span { display: flex; height: 32px; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; color: var(--text-2); background: #fff; font-size: 12px; font-weight: 650; white-space: nowrap; }
+    .pill-choice button.active span { border-color: var(--red); color: #fff; background: var(--red); }
+
+    .open-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; height: 44px; }
+    .open-tabs button { position: relative; border: 0; color: var(--text-2); background: transparent; font-size: 13px; font-weight: 550; }
+    .open-tabs button.active { color: var(--red); font-weight: 700; }
+    .open-tabs button.active::after { position: absolute; right: calc(50% - 12px); bottom: 0; left: calc(50% - 12px); height: 2px; border-radius: 2px; background: var(--red); content: ""; }
+
+    .period-toolbar { display: grid; grid-template-columns: 76px 44px minmax(0, 1fr) 44px; width: 100%; height: 44px; align-items: center; }
+    .period-toolbar select { height: 36px; border: 1px solid var(--border); border-radius: 7px; padding: 0 8px; color: var(--text); background: #fff; font-size: 12px; font-weight: 650; }
+    .period-toolbar button { height: 44px; border: 0; color: var(--text-2); background: transparent; }
+    .period-toolbar .current { color: var(--text); font-size: 12px; font-weight: 700; }
+
+    .semantic-segment { position: relative; display: grid; grid-template-columns: 1fr 1fr; width: 190px; height: 44px; padding: 6px; }
+    .semantic-segment::before { position: absolute; inset: 4px 0; border-radius: 8px; background: rgba(255,255,255,.9); box-shadow: var(--shadow-control); content: ""; }
+    .semantic-segment button { position: relative; border: 0; border-radius: 6px; color: var(--text-2); background: transparent; font-size: 13px; font-weight: 650; }
+    .semantic-segment .student.active { color: var(--red-strong); background: var(--red-soft); }
+    .semantic-segment .class.active { color: var(--orange); background: var(--orange-soft); }
+
+    .inventory { margin-top: 16px; overflow: hidden; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-panel); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { color: var(--text-2); background: #faf9f8; font-size: 11px; }
+    td { font-size: 12px; }
+    tr:last-child td { border-bottom: 0; }
+    .style-ref { white-space: nowrap; color: var(--red-strong); font-weight: 700; }
+    .source { color: var(--text-3); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+    .legacy { color: var(--red-strong); background: var(--red-soft); }
+
+    .combo-list { margin-top: 16px; overflow: hidden; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-panel); }
+    .combo { display: grid; grid-template-columns: minmax(240px, .72fr) minmax(340px, 1.28fr); gap: 28px; padding: 26px; border-bottom: 1px solid var(--border); }
+    .combo:last-child { border-bottom: 0; }
+    .combo-copy { align-self: start; }
+    .combo-kicker { margin: 0; color: var(--red-strong); font-size: 11px; font-weight: 800; }
+    .combo h3 { margin: 5px 0 8px; font-size: 17px; }
+    .combo-copy > p:not(.combo-kicker) { margin: 0; color: var(--text-2); font-size: 12px; }
+    .layers { display: grid; gap: 7px; margin-top: 15px; }
+    .layers div { display: grid; grid-template-columns: 54px minmax(0, 1fr); align-items: center; gap: 8px; }
+    .layers b { border-radius: 5px; padding: 3px 6px; text-align: center; font-size: 10px; }
+    .layers div:nth-child(1) b { color: #fff; background: var(--red); }
+    .layers div:nth-child(2) b { color: var(--red-strong); background: var(--red-soft); }
+    .layers div:nth-child(3) b { color: var(--text-2); background: var(--track); }
+    .layers span { color: var(--text-2); font-size: 11px; }
+    .decision { margin-top: 14px; padding-left: 10px; border-left: 2px solid var(--red); font-size: 11px; font-weight: 650; }
+
+    .preview { display: flex; align-items: flex-start; justify-content: center; min-width: 0; padding: 18px; border-radius: 7px; background: #f1efee; }
+    .phone { width: min(100%, 390px); overflow: hidden; border: 1px solid #ddd7d4; border-radius: 18px; background: #f7f5f4; box-shadow: 0 10px 22px rgba(46,33,28,.08); }
+    .phone-bar { display: grid; grid-template-columns: 44px 1fr 44px; height: 44px; align-items: center; background: #fff; }
+    .phone-bar span { color: var(--text-2); text-align: center; font-size: 18px; }
+    .phone-bar strong { text-align: center; font-size: 15px; }
+    .phone-body { padding: 12px 16px 18px; }
+    .phone-body.no-top { padding-top: 0; }
+    .stack { display: grid; gap: 8px; }
+    .surface { margin-top: 12px; padding: 14px; border-radius: 8px; background: #fff; box-shadow: 0 4px 12px rgba(46,33,28,.05); }
+    .surface > strong { display: block; font-size: 14px; }
+    .lines { display: grid; gap: 7px; margin-top: 12px; }
+    .lines i { display: block; height: 8px; border-radius: 5px; background: var(--track); }
+    .lines i:nth-child(2) { width: 72%; }
+    .lines i:nth-child(3) { width: 88%; }
+    .source-pills { display: flex; min-height: 44px; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+    .source-pills button { flex: none; min-height: 44px; border: 0; padding: 0 4px; color: var(--text-2); background: transparent; font-size: 12px; white-space: nowrap; }
+    .source-pills span { display: inline-flex; height: 30px; align-items: center; border-radius: 999px; padding: 0 8px; }
+    .source-pills button.active span { color: #fff; background: var(--red); box-shadow: var(--shadow-control); font-weight: 700; }
+    .period-pills { display: grid; grid-template-columns: repeat(5, 1fr); height: 44px; }
+    .period-pills button { display: flex; min-width: 0; align-items: center; justify-content: center; border: 0; color: var(--text-2); background: transparent; font-size: 11px; }
+    .period-pills span { display: inline-flex; height: 28px; align-items: center; border-radius: 7px; padding: 0 7px; }
+    .period-pills button.active span { color: #fff; background: var(--red); font-weight: 700; }
+    .underline-tabs { display: flex; min-height: 44px; gap: 22px; overflow-x: auto; scrollbar-width: none; }
+    .underline-tabs button { position: relative; flex: none; border: 0; color: var(--text-2); background: transparent; font-size: 13px; font-weight: 550; }
+    .underline-tabs button.active { color: var(--text); font-weight: 650; }
+    .underline-tabs button.active::after { position: absolute; right: 4px; bottom: 1px; left: 4px; height: 2px; border-radius: 2px; background: var(--red); content: ""; }
+    .bold-tabs { display: flex; min-height: 44px; align-items: center; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    .bold-tabs button { flex: none; min-height: 44px; border: 0; padding: 0 9px; color: var(--text-2); background: transparent; font-size: 12px; }
+    .bold-tabs button.active { color: var(--text); font-weight: 750; }
+    .mini-list { margin-top: 8px; }
+    .mini-row { display: grid; grid-template-columns: 1fr auto; min-height: 42px; align-items: center; border-top: 1px solid var(--border); font-size: 11px; }
+    .mini-row:first-child { border-top: 0; }
+    .mini-row small { color: var(--text-3); }
+    .exception { display: inline-block; margin-top: 10px; border-radius: 5px; padding: 3px 7px; color: var(--amber); background: var(--amber-soft); font-size: 10px; font-weight: 750; }
+
+    .foot { margin-top: 28px; color: var(--text-3); font-size: 11px; }
+
+    @media (max-width: 980px) {
+      .summary { grid-template-columns: repeat(2, 1fr); }
+      .metric:nth-child(2) { border-right: 0; }
+      .metric:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+      .rule-band, .pattern-grid { grid-template-columns: 1fr; }
+      .combo { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .page { padding: 22px 14px 44px; }
+      .topbar { flex-direction: column; }
+      .scope { text-align: left; }
+      h1 { font-size: 24px; }
+      .inventory { overflow-x: auto; }
+      table { min-width: 780px; }
+      .combo { gap: 18px; padding: 18px 14px; }
+      .preview { padding: 10px 6px; }
+      .phone { border-radius: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">教师端 · 手机场景 · 已落地方案复核</p>
+        <h1>切换控件：独立使用与组合使用</h1>
+        <p class="subtitle">本页只统计同层级互斥选择控件，包括页签、分段、日期范围和横向条件选择。下拉筛选、开关、普通命令按钮、日历日期与底部主导航不计入。</p>
+      </div>
+      <div class="scope"><strong>代码基线 2026-08-17</strong>教师手机端当前可达页面</div>
+    </header>
+
+    <section class="summary" aria-label="盘点摘要">
+      <div class="metric"><strong>6</strong><span>已经明确的基础视觉样式</span></div>
+      <div class="metric"><strong>19</strong><span>独立出现的切换控件位置</span></div>
+      <div class="metric"><strong>7</strong><span>需要处理层级关系的组合场景</span></div>
+      <div class="metric alert"><strong>1</strong><span>仍待清理的蓝色遗留切换</span></div>
+    </section>
+
+    <section class="rule-band" aria-label="分类口径">
+      <article class="rule"><b>独立使用</b><p>同一连续区域只有一组互斥选择。即使页面其他卡片还有局部切换，只要已被卡片或明显留白隔开，也按独立控件管理。</p></article>
+      <article class="rule"><b>连续组合</b><p>两组以上切换连续出现且共同决定同一份内容。视觉强度必须逐级下降，下级不得强过上级。</p></article>
+      <article class="rule"><b>空间分隔</b><p>卡片已经重建局部任务层级时，可以重新使用强选中态，但不得进入更高的吸顶层级。</p></article>
+    </section>
+
+    <nav class="jump" aria-label="页面目录">
+      <a href="#patterns">基础样式</a><a href="#standalone">独立控件</a><a href="#combinations">组合控件</a>
+    </nav>
+
+    <section id="patterns">
+      <div class="section-head"><div><h2>6 类基础视觉样式</h2><p class="section-note">组合场景只复用这些基础样式，不再为单个页面创造新结构。所有按钮的触控高度保持 44 像素，可见色块可以更小。</p></div></div>
+      <div class="pattern-grid">
+        <article class="pattern-card"><div class="pattern-top"><span class="code">P01</span><span class="tag">通用组件</span></div><h3>紧凑分段</h3><p>灰色轨道、白色选中块、主题红文字和中性轻阴影。支持左对齐紧凑宽度与全宽等分。</p><div class="demo"><div class="compact-segment" data-switch><button class="active"><span>总分</span></button><button><span>进步幅度</span></button></div></div><p class="touch-note">组件：CompactSegmentedControl</p></article>
+        <article class="pattern-card"><div class="pattern-top"><span class="code">P02</span><span class="tag">通用组件</span></div><h3>纯文字选择</h3><p>选中项只使用主题红文字和半粗字重，不使用实底、边框、短线或阴影。</p><div class="demo"><div class="control text-choice" data-switch><button class="active">全部</button><button>评价奖励</button><button>阳光保底</button></div></div><p class="touch-note">组件：TextSelectionControl</p></article>
+        <article class="pattern-card"><div class="pattern-top"><span class="code">P03</span><span class="tag">通用组件</span></div><h3>胶囊选择</h3><p>选中项红底白字，未选项白底浅边框。用于需要明确条件边界的横向筛选。</p><div class="demo"><div class="control pill-choice" data-switch><button class="active"><span>全部</span></button><button><span>品德行为</span></button><button><span>学习习惯</span></button></div></div><p class="touch-note">组件：PillSelectionControl</p></article>
+        <article class="pattern-card"><div class="pattern-top"><span class="code">P04</span><span class="tag">稳定模式</span></div><h3>开放式文字页签</h3><p>透明背景，选中项使用主题文字和底部短线，适合页面级内容或日期范围切换。</p><div class="demo"><div class="control open-tabs" data-switch><button class="active">学生</button><button>分组</button></div></div><p class="touch-note">日期复用：ReportDateRangeTabs</p></article>
+        <article class="pattern-card"><div class="pattern-top"><span class="code">P05</span><span class="tag special">页面特例</span></div><h3>周期导航工具栏</h3><p>统计粒度、上一周期、当前周期和下一周期组合成上下文导航，不作为普通页签扩散。</p><div class="demo"><div class="period-toolbar"><select aria-label="统计粒度"><option>按周</option><option>按月</option><option>按学期</option></select><button>‹</button><button class="current">8月10日-8月16日</button><button>›</button></div></div><p class="touch-note">页面：班级评价报表</p></article>
+        <article class="pattern-card"><div class="pattern-top"><span class="code">P06</span><span class="tag special">业务特例</span></div><h3>记录对象语义分段</h3><p>学生红、班级橙只表达记录对象，限定在记录首页高频流程，不作为通用切换样式。</p><div class="demo"><div class="semantic-segment" data-switch><button class="student active">记录学生</button><button class="class">记录班级</button></div></div><p class="touch-note">页面：记录首页</p></article>
+      </div>
+    </section>
+
+    <section id="standalone">
+      <div class="section-head"><div><h2>独立使用：19 处</h2><p class="section-note">以下控件在自己的连续区域内没有第二组互斥选择与其竞争。卡内局部切换也归到这里，因为卡片已形成新的局部任务边界。</p></div></div>
+      <div class="inventory"><table><thead><tr><th>页面 / 区域</th><th>切换内容</th><th>采用样式</th><th>说明</th><th>源码</th></tr></thead><tbody>
+        <tr><td>记录首页</td><td>记录学生 / 记录班级</td><td class="style-ref">P06 语义分段</td><td>业务特例</td><td class="source">ClassRecordLogView.tsx</td></tr>
+        <tr><td>班级列表·学校空间</td><td>班级 / 社团与团队</td><td class="style-ref">P01 全宽分段</td><td>页面主内容切换</td><td class="source">ClassListView.tsx</td></tr>
+        <tr><td>班级详情</td><td>学生 / 分组</td><td class="style-ref">P04 开放页签</td><td>标题栏内切换</td><td class="source">ClassDetailView.tsx</td></tr>
+        <tr><td>学生详情</td><td>评价记录 / 成长报告</td><td class="style-ref">P01 全宽分段</td><td>吸顶主切换</td><td class="source">DashboardView.tsx</td></tr>
+        <tr><td>班级信息·家长绑定</td><td>未绑定 / 已绑定</td><td class="style-ref">P01 全宽分段</td><td>列表状态切换</td><td class="source">ClassInfoView.tsx</td></tr>
+        <tr><td>作业录入</td><td>语文 / 数学等学科</td><td class="style-ref">P01 全宽分段</td><td>当前班级学科较少</td><td class="source">HomeworkEntryView.tsx</td></tr>
+        <tr><td>问卷采集列表</td><td>收集中 / 已结束</td><td class="style-ref">P01 全宽分段</td><td>列表状态切换</td><td class="source">QuestionnaireManagementView.tsx</td></tr>
+        <tr><td>教师待办·采集详情</td><td>已完成 / 未完成</td><td class="style-ref">P01 全宽分段</td><td>答卷场景特例</td><td class="source">QuestionnaireManagementView.tsx</td></tr>
+        <tr><td>头像选择弹层</td><td>系统头像 / 上传头像</td><td class="style-ref">P01 全宽分段</td><td>弹层内单组切换</td><td class="source">StudentBasicEditView.tsx</td></tr>
+        <tr><td>教师登录</td><td>验证码登录 / 密码登录</td><td class="style-ref">P04 开放页签</td><td>登录方式切换</td><td class="source">TeacherLoginView.tsx</td></tr>
+        <tr><td>评价记录明细</td><td>今日 / 本周 / 本月 / 学期 / 自定义</td><td class="style-ref">P04 日期页签</td><td>班级范围是下拉，不计为切换组</td><td class="source">EvaluationRecordsLogView.tsx</td></tr>
+        <tr><td>班级报告·积分排行</td><td>总分 / 进步幅度</td><td class="style-ref">P01 紧凑分段</td><td>左对齐、卡内独立</td><td class="source">ClassReportView.tsx</td></tr>
+        <tr><td>班级报告·需要关注</td><td>全部 / 各评价维度</td><td class="style-ref">P03 胶囊选择</td><td>卡内独立</td><td class="source">ClassReportView.tsx</td></tr>
+        <tr><td>学生评价报表·教师榜</td><td>积极使用 / 使用较少</td><td class="style-ref">P01 紧凑分段</td><td>左对齐、卡内独立</td><td class="source">LeaderReportView.tsx</td></tr>
+        <tr><td>班级评价报表·班级排名</td><td>全校 / 各年级</td><td class="style-ref">P03 胶囊选择</td><td>卡内独立</td><td class="source">MoralEducationCockpitView.tsx</td></tr>
+        <tr><td>班级评价报表·周期趋势</td><td>平均得分 / 问题记录</td><td class="style-ref">P01 紧凑分段</td><td>标题右侧局部切换</td><td class="source">MoralEducationCockpitView.tsx</td></tr>
+        <tr><td>表单字段类型弹层</td><td>普通题型 / 采集字段</td><td class="style-ref">P01 全宽分段</td><td>条件出现</td><td class="source">FormBuilder.tsx</td></tr>
+        <tr><td>班主任助理·评价维度</td><td>各一级指标</td><td class="style-ref">P04 开放页签</td><td>角色色短线</td><td class="source">AiHeadteacherAssistantV2View.tsx</td></tr>
+        <tr class="legacy"><td>学期报告·学科页</td><td>语文 / 数学 / 英语等学科</td><td><strong>蓝色图标胶囊</strong></td><td>唯一剩余遗留，尚未进入本轮改动</td><td class="source">TermReportView.tsx</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section id="combinations">
+      <div class="section-head"><div><h2>组合使用：7 类</h2><p class="section-note">下面展示已经确认并落地的组合方式。示例可以点击；层级标签只用于评审，不进入真实业务页面。</p></div></div>
+      <div class="combo-list">
+        <article class="combo"><div class="combo-copy"><p class="combo-kicker">组合 01 · 连续父子</p><h3>班级报告：日期 → 来源</h3><p>页面底色已经是灰色，来源行不再增加灰色轨道。</p><div class="layers"><div><b>上级</b><span>P04 开放日期页签</span></div><div><b>下级</b><span>透明行 + 红底白字来源按钮</span></div></div><div class="decision">来源保留明确选中块，但不再制造第二条整行轨道。</div></div><div class="preview"><div class="phone"><div class="phone-bar"><span>‹</span><strong>班级报告</strong><span></span></div><div class="open-tabs" data-switch><button>今日</button><button class="active">本周</button><button>本月</button><button>学期</button><button>自定义</button></div><div class="phone-body no-top"><div class="source-pills" data-switch><button class="active"><span>全班汇总</span></button><button><span>我的记录(12)</span></button><button><span>周老师(8)</span></button></div><div class="surface"><strong>数据概况</strong><div class="lines"><i></i><i></i><i></i></div></div></div></div></div></article>
+
+        <article class="combo"><div class="combo-copy"><p class="combo-kicker">组合 02 · 连续父子</p><h3>校园币明细：收支 → 分类</h3><p>收支决定流水方向，分类只缩小当前方向下的范围。</p><div class="layers"><div><b>上级</b><span>P01 左对齐紧凑分段</span></div><div><b>下级</b><span>P02 纯红文字选择</span></div></div><div class="decision">分类无灰底、无边框、无阴影，视觉强度明确低于收支。</div></div><div class="preview"><div class="phone"><div class="phone-bar"><span>‹</span><strong>校园币明细</strong><span></span></div><div class="phone-body"><div class="stack"><div class="compact-segment" data-switch><button class="active"><span>收入</span></button><button><span>支出</span></button></div><div class="text-choice" data-switch><button class="active">全部</button><button>评价奖励</button><button>阳光保底</button><button>排名奖励</button></div></div><div class="surface"><strong>8月流水</strong><div class="mini-list"><div class="mini-row"><span>课堂表现奖励</span><b>+12</b></div><div class="mini-row"><span>阳光保底发放</span><b>+20</b></div></div></div></div></div></div></article>
+
+        <article class="combo"><div class="combo-copy"><p class="combo-kicker">组合 03 · 三级下钻</p><h3>问题分布：年级 → 一级指标 → 二级指标</h3><p>三级控件共同缩小同一份问题数据，必须逐级减弱。</p><div class="layers"><div><b>一级</b><span>P03 红底白字年级胶囊</span></div><div><b>二级</b><span>主文字 + 品牌短线</span></div><div><b>三级</b><span>透明背景 + 黑色粗体</span></div></div><div class="decision">第二层不使用红字，第三层不再使用任何色块。</div></div><div class="preview"><div class="phone"><div class="phone-body"><strong>问题分布</strong><div class="pill-choice" data-switch><button class="active"><span>全校</span></button><button><span>一年级</span></button><button><span>二年级</span></button></div><div class="surface"><div class="lines"><i></i><i></i><i></i></div></div><div class="underline-tabs" data-switch><button class="active">品德行为</button><button>学习习惯</button><button>身心健康</button></div><div class="bold-tabs" data-switch><button class="active">文明礼仪</button><button>规则意识</button><button>责任担当</button></div><div class="mini-list"><div class="mini-row"><span>课间文明</span><b>-18</b></div><div class="mini-row"><span>礼貌用语</span><b>-9</b></div></div></div></div></div></article>
+
+        <article class="combo"><div class="combo-copy"><p class="combo-kicker">组合 04 · 连续父子</p><h3>学生评价报表：报表类型 → 日期</h3><p>报表类型决定主内容，日期决定当前主内容的数据范围。</p><div class="layers"><div><b>上级</b><span>P04 开放文字页签</span></div><div><b>下级</b><span>无轨道日期行 + 红底白字选中项</span></div></div><div class="decision">日期行直接使用页面底色，吸顶后通过下边框和轻阴影与内容分层。</div></div><div class="preview"><div class="phone"><div class="phone-bar"><span>‹</span><strong>学生评价报表</strong><span></span></div><div class="open-tabs" data-switch><button class="active">教师使用</button><button>事件分布</button></div><div class="period-pills" data-switch><button><span>今日</span></button><button class="active"><span>本周</span></button><button><span>本月</span></button><button><span>学期</span></button><button><span>自定义</span></button></div><div class="phone-body"><div class="surface"><strong>教师使用概况</strong><div class="lines"><i></i><i></i><i></i></div></div></div></div></div></article>
+
+        <article class="combo"><div class="combo-copy"><p class="combo-kicker">组合 05 · 答卷场景特例</p><h3>问卷采集详情：数据 / 答卷 → 答卷状态</h3><p>通常下级应该降级，但答卷状态承担完整结果视图切换，纯文字效果辨识不足。</p><div class="layers"><div><b>上级</b><span>P01 全宽紧凑分段</span></div><div><b>下级</b><span>P01 全宽紧凑分段，二项或三项等分</span></div></div><span class="exception">仅限问卷答卷场景</span><div class="decision">两层允许同款，但通过垂直间距和内容条件出现表达父子；不得扩散到其他二级筛选。</div></div><div class="preview"><div class="phone"><div class="phone-bar"><span>‹</span><strong>采集详情</strong><span>···</span></div><div class="phone-body"><div class="surface"><strong>暑期家庭阅读情况调查</strong><div class="lines"><i></i><i></i></div></div><div class="stack" style="margin-top:12px"><div class="compact-segment full" data-switch data-parent="questionnaire"><button data-show="data"><span>数据</span></button><button class="active" data-show="responses"><span>答卷</span></button></div><div class="compact-segment full" data-switch data-child="questionnaire"><button class="active"><span>已完成</span></button><button><span>未完成</span></button><button><span>未绑定</span></button></div></div><div class="surface" data-response-content><div class="mini-list"><div class="mini-row"><span>林小满<small> · 2025级一班</small></span><b>已完成</b></div><div class="mini-row"><span>陈思睿<small> · 2025级一班</small></span><b>已完成</b></div></div></div><div class="surface" data-data-content hidden><strong>完成情况 8/11</strong><div class="lines"><i></i><i></i><i></i></div></div></div></div></div></article>
+
+        <article class="combo"><div class="combo-copy"><p class="combo-kicker">组合 06 · 连续条件 + 空间重置</p><h3>班级排行榜：日期 → 年级；卡内评价维度</h3><p>日期和年级在顶部连续出现，评价维度已被排行榜白色卡片隔开。</p><div class="layers"><div><b>上级</b><span>P04 开放日期页签</span></div><div><b>下级</b><span>P02 纯文字年级选择</span></div><div><b>卡内</b><span>P03 红色胶囊维度选择</span></div></div><div class="decision">年级位于日期下方且不使用胶囊；进入卡片后重新建立局部层级，维度可以使用红色胶囊。</div></div><div class="preview"><div class="phone"><div class="phone-bar"><span>‹</span><strong>班级排行榜</strong><span></span></div><div class="open-tabs" data-switch><button>今日</button><button class="active">本周</button><button>本月</button><button>学期</button><button>自定义</button></div><div class="text-choice" data-switch><button class="active">全部年级</button><button>一年级</button><button>二年级</button><button>三年级</button></div><div class="phone-body"><div class="surface" style="margin-top:0"><strong>班级排行榜</strong><div class="pill-choice" data-switch><button class="active"><span>综合评价</span></button><button><span>诗意中队</span></button><button><span>安全班级</span></button></div><div class="mini-list"><div class="mini-row"><span>2025级1班</span><b>98.6</b></div><div class="mini-row"><span>2025级3班</span><b>97.8</b></div></div></div></div></div></div></article>
+
+        <article class="combo"><div class="combo-copy"><p class="combo-kicker">组合 07 · 条件披露</p><h3>字段选择：字段来源 → 成长数据分类</h3><p>只有选择成长数据后才展示身体、健康、体测等分类。</p><div class="layers"><div><b>上级</b><span>P01 全宽紧凑分段</span></div><div><b>下级</b><span>P04 开放文字分类页签</span></div></div><div class="decision">分类通过条件出现建立父子关系，不复制上级的轨道和阴影。</div></div><div class="preview"><div class="phone"><div class="phone-bar"><span>×</span><strong>选择采集内容</strong><span></span></div><div class="phone-body"><div class="compact-segment full" data-switch data-parent="fields"><button data-show="base"><span>基础字段</span></button><button class="active" data-show="growth"><span>成长数据</span></button></div><div class="underline-tabs" data-switch data-child="fields" style="margin-top:8px"><button class="active">身体测量</button><button>健康记录</button><button>体测成绩</button></div><div class="surface" data-growth-content><div class="mini-list"><div class="mini-row"><span>身高</span><b>✓</b></div><div class="mini-row"><span>体重</span><b></b></div><div class="mini-row"><span>视力</span><b>✓</b></div></div></div><div class="surface" data-base-content hidden><div class="mini-list"><div class="mini-row"><span>姓名</span><b>✓</b></div><div class="mini-row"><span>性别</span><b></b></div><div class="mini-row"><span>出生日期</span><b>✓</b></div></div></div></div></div></div></article>
+      </div>
+    </section>
+
+    <p class="foot">说明：这是独立临时分析页，不属于教师端真实产品界面；评审说明、统计口径和源码位置不会进入业务页面。</p>
+  </main>
+
+  <script>
+    document.querySelectorAll('[data-switch]').forEach(group => {
+      group.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', button.classList.contains('active') ? 'true' : 'false'));
+      group.addEventListener('click', event => {
+        const button = event.target.closest('button');
+        if (!button || !group.contains(button)) return;
+        group.querySelectorAll('button').forEach(item => { item.classList.remove('active'); item.setAttribute('aria-pressed', 'false'); });
+        button.classList.add('active');
+        button.setAttribute('aria-pressed', 'true');
+        if (group.dataset.parent === 'questionnaire') {
+          const child = document.querySelector('[data-child="questionnaire"]');
+          if (child) child.hidden = button.dataset.show !== 'responses';
+          const responseContent = document.querySelector('[data-response-content]');
+          const dataContent = document.querySelector('[data-data-content]');
+          if (responseContent) responseContent.hidden = button.dataset.show !== 'responses';
+          if (dataContent) dataContent.hidden = button.dataset.show !== 'data';
+        }
+        if (group.dataset.parent === 'fields') {
+          const child = document.querySelector('[data-child="fields"]');
+          if (child) child.hidden = button.dataset.show !== 'growth';
+          const growthContent = document.querySelector('[data-growth-content]');
+          const baseContent = document.querySelector('[data-base-content]');
+          if (growthContent) growthContent.hidden = button.dataset.show !== 'growth';
+          if (baseContent) baseContent.hidden = button.dataset.show !== 'base';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

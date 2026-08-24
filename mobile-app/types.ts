@@ -109,6 +109,17 @@ export interface CampusCoinDetail {
 
 export type StudentLevelDisplayMode = 'term' | 'cumulative';
 
+export interface StudentCardDisplaySettings {
+  showLevel: boolean;
+  showPraiseCount: boolean;
+  showCriticismCount: boolean;
+}
+
+export interface GroupCardDisplaySettings {
+  showPraiseCount: boolean;
+  showCriticismCount: boolean;
+}
+
 export interface ClassInfo {
   id: string;
   name: string;
@@ -120,6 +131,8 @@ export interface ClassInfo {
   admissionYear?: number;
   classNumber?: number;
   studentLevelDisplayMode?: StudentLevelDisplayMode;
+  studentCardDisplaySettings?: StudentCardDisplaySettings;
+  groupCardDisplaySettings?: GroupCardDisplaySettings;
 }
 
 export type EducationStage = 'primary' | 'middle' | 'high';

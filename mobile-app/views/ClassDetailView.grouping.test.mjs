@@ -40,7 +40,7 @@ requireText(viewSource, "activeView, setActiveView] = useState<'student' | 'grou
 
 requireText(viewSource, 'class-detail-titlebar-switcher', '班级详情页应把学生/分组切换放入标题栏。');
 requireText(viewSource, 'onBack?: () => void;', '班级详情页应接管返回按钮，避免 App 额外显示班级标题。');
-requireText(viewSource, 'aria-label="返回班级列表"', '班级详情标题栏应保留返回入口。');
+requireText(viewSource, "aria-label={recountTarget ? '退出重新计数' : '返回班级列表'}", '班级详情标题栏应保留返回入口，并在重新计数时明确退出当前任务。');
 requireText(appSource, "currentView !== 'class_detail'", 'App 不应再为班级详情渲染显示班级名的 LocalHeader。');
 requireText(appSource, 'onBack={goBack}', 'App 应把返回能力传入班级详情内部标题栏。');
 if (appSource.includes("case 'class_detail': return MOCK_CLASSES.find")) {
@@ -65,8 +65,8 @@ requireText(viewSource, "aria-label={isMaleQuickSelectionActive ? '取消全选�
 requireText(viewSource, "aria-label={isFemaleQuickSelectionActive ? '取消全选女生' : '全选女生'}", '女生快捷按钮应明确表达互斥批量选择状态。');
 requireText(viewSource, 'aria-pressed={isMaleQuickSelectionActive}', '男生快捷按钮应暴露当前是否为唯一生效的快捷选择。');
 requireText(viewSource, 'aria-pressed={isFemaleQuickSelectionActive}', '女生快捷按钮应暴露当前是否为唯一生效的快捷选择。');
-requireText(viewSource, 'selectedIds.size === studentsByGender.male.length', '男生快捷按钮只有在当前恰好全选男生时才可高亮。');
-requireText(viewSource, 'selectedIds.size === studentsByGender.female.length', '女生快捷按钮只有在当前恰好全选女生时才可高亮。');
+requireText(viewSource, 'activeStudentSelectionIds.size === studentsByGender.male.length', '男生快捷按钮只有在当前任务恰好全选男生时才可高亮。');
+requireText(viewSource, 'activeStudentSelectionIds.size === studentsByGender.female.length', '女生快捷按钮只有在当前任务恰好全选女生时才可高亮。');
 requireText(viewSource, ': new Set(genderStudents.map(student => student.id))', '切换性别快捷选择时应替换现有选择，保证男生与女生互斥。');
 requireText(viewSource, 'bg-[var(--tm-gender-male-selection-bg)] text-white', '男生快捷按钮选中态应使用明亮嫩绿实底与白色图标。');
 requireText(viewSource, 'bg-[var(--tm-gender-female-selection-bg)] text-white', '女生快捷按钮选中态应使用明亮珊瑚红实底与白色图标。');
@@ -128,6 +128,7 @@ requireText(groupDetailSheet, 'onClick={handleStartEditStudentGroup}', '头像�
 requireText(groupDetailSheet, 'aria-label="编辑小组信息"', '小组信息编辑入口应提供明确的读屏名称。');
 requireText(groupDetailSheet, 'text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]', '小组编辑入口应使用中性色，不得与底部品牌主按钮争抢。');
 requireText(groupDetailSheet, 'text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]', '小组人数应使用600字重的次级文字。');
+if (groupDetailSheet.includes('<GroupPerformanceMeta')) failures.push('小组详情不应重复展示小组加分和减分次数。');
 requireText(groupDetailSheet, 'onClick={handleRequestDissolveStudentGroup}', '小组详情信息带应直接提供解散入口。');
 requireText(groupDetailSheet, 'aria-label="解散小组"', '小组解散入口应提供明确的读屏名称。');
 requireText(groupDetailSheet, 'onClick={handleStartAdjustStudentGroup}', '详情底部应直接提供唯一的调整学生主操作。');
@@ -141,6 +142,7 @@ if (viewSource.includes('groupActionTarget')) failures.push('小组详情不得�
 requireText(viewSource, 'getGroupMemberSummary', '小组卡片应集中生成简洁的成员摘要。');
 requireText(viewSource, 'members.slice(0, 3)', '小组卡片成员摘要最多展示前三名学生。');
 requireText(viewSource, '等${members.length}名学生', '人数较多时应按“姓名等总人数”展示。');
+requireText(viewSource, 'text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{getGroupMemberSummary(members)}', '小组卡片成员摘要应使用500字重。');
 requireText(viewSource, '<img src={avatar.src}', '小组卡片应展示正式图片头像，不再使用线性占位图标。');
 requireText(viewSource, "size === 'sheet' ? 'h-14 w-14' : 'h-11 w-11'", '小组卡片中的系统头像应保持44×44像素。');
 requireText(viewSource, 'studentGroupAvatarOptions.map', '小组设置应展示完整的系统预设头像目录。');
@@ -180,17 +182,27 @@ if (viewSource.includes('groupPlans.some(plan => plan.ownerName === currentTeach
   failures.push('是否需要方案命名应由班级是否已有方案决定，不能只判断当前老师是否已有方案。');
 }
 const createNamedGroupingSheet = viewSource.match(/<MobileBottomSheet open=\{showNewGroupNameSheet\}[\s\S]*?<\/MobileBottomSheet>/)?.[0] || '';
-requireText(createNamedGroupingSheet, '这套分组名称', '新建另一套分组时应明确填写用于切换识别的名称。');
-requireText(createNamedGroupingSheet, 'aria-label="这套分组名称"', '分组名称输入框应提供一致的读屏名称。');
+requireText(createNamedGroupingSheet, '分组方案名称', '新建另一套分组时应明确填写用于切换识别的方案名称。');
+requireText(createNamedGroupingSheet, 'aria-label="分组方案名称"', '分组方案名称输入框应提供一致的读屏名称。');
+requireText(createNamedGroupingSheet, 'placeholder="例如：数学分组"', '分组方案名称应使用数学分组作为简洁示例。');
 requireText(createNamedGroupingSheet, '第一个小组名称', '新建另一套分组时应同时定义第一个小组名称。');
 requireText(createNamedGroupingSheet, 'aria-label="第一个小组名称"', '第一个小组名称输入框应提供一致的读屏名称。');
-requireText(createNamedGroupingSheet, '用于在不同分组之间切换', '首次出现多套分组时应简短说明分组名称的用途。');
+requireText(createNamedGroupingSheet, 'placeholder="例如：数学1组"', '第一个小组名称应与方案名称示例保持同一学科语境。');
+if (createNamedGroupingSheet.includes('用于在不同分组之间切换')) {
+  failures.push('新建另一套分组弹窗不应展示额外的方案用途说明。');
+}
 requireText(createNamedGroupingSheet, 'maxLength={20}', '方案名称应限制为可在切换列表清晰展示的长度。');
 requireText(createNamedGroupingSheet, 'disabled={!newGroupName.trim() || !newStudentGroupName.trim()}', '两个名称均填写完整后才可选择学生。');
 requireText(createNamedGroupingSheet, '>选择学生</button>', '填写名称后的主按钮应直接说明下一步任务。');
 requireText(createNamedGroupingSheet, 'onClose={handleCloseNewGroupingDetails}', '新方案名称弹窗应使用统一关闭收口。');
 requireText(createNamedGroupingSheet, 'footerDivider={false}', '新方案名称弹窗底部不应增加横线。');
 requireText(viewSource, 'plan.ownerName', '每套分组应展示创建老师。');
+requireText(viewSource, 'text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{plan.ownerName}创建', '分组方案切换列表的元信息应使用500字重。');
+requireText(viewSource, '<EditIcon className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />', '重命名使用主文字色时应搭配次级灰图标。');
+requireText(viewSource, '<DeleteIcon className="h-5 w-5 text-[var(--tm-action-icon-danger)]" />', '删除分组方案应使用负向图标 Token。');
+requireText(teacherMobileTokensSource, "'--tm-action-icon-neutral': teacherActionSemantic.iconNeutral", '普通操作图标应使用统一中性 Token。');
+requireText(teacherMobileTokensSource, "'--tm-action-icon-brand': teacherActionSemantic.iconBrand", '品牌操作图标应使用统一品牌 Token。');
+requireText(teacherMobileTokensSource, "'--tm-action-icon-danger': teacherActionSemantic.iconDanger", '危险操作图标应使用统一负向 Token。');
 requireText(viewSource, 'isActiveGroupPlanOwnedByCurrentTeacher', '小组权限应统一继承当前分组方案的创建人。');
 requireText(viewSource, 'hasActiveStudentGroups', '分组缺省态应以当前是否存在实际小组判断，不应只判断方案对象。');
 requireText(viewSource, 'activeGroupPlan && hasActiveStudentGroups ? (', '当前方案不存在小组时应回到统一缺省态。');
@@ -220,6 +232,7 @@ requireText(viewSource, 'showNewStudentGroupNameSheet', '添加小组应先通�
 requireText(viewSource, 'handleConfirmStudentGroupName', '填写小组名称后应进入学生选择流程。');
 const addStudentGroupSheet = viewSource.match(/<MobileBottomSheet\n\s+open=\{showNewStudentGroupNameSheet\}[\s\S]*?<\/MobileBottomSheet>/)?.[0] || '';
 requireText(addStudentGroupSheet, '>选择学生</button>', '首次分组和添加小组的名称步骤应使用明确的“选择学生”主按钮。');
+requireText(addStudentGroupSheet, 'placeholder="例如：语文1组"', '首次分组和添加小组应使用语文1组作为小组名称示例。');
 requireText(viewSource, "addStudentGroupStep, setAddStudentGroupStep] = useState<'name' | 'members'>('name')", '添加小组应在同一弹窗内维护名称和选人两步状态。');
 requireText(viewSource, 'setAddStudentGroupStep(\'members\')', '填写小组名称后应在同一弹窗切换到选人步骤。');
 requireText(viewSource, 'aria-label="返回上一步"', '添加小组选人步骤应允许返回修改名称。');
@@ -233,8 +246,9 @@ if (viewSource.includes('放弃本次添加？')) {
   failures.push('关闭添加小组弹窗时不应再出现二次确认。');
 }
 requireText(viewSource, "size={addStudentGroupStep === 'members' ? 'tall' : 'content'}", '选人步骤应切换为高底部抽屉。');
-requireText(bottomSheetSource, "size?: 'content' | 'tall';", '公共底部抽屉应提供稳定的高抽屉规格。');
+requireText(bottomSheetSource, "size?: 'content' | 'tall' | 'full';", '公共底部抽屉应提供稳定的高抽屉与近全屏规格。');
 requireText(bottomSheetSource, "size === 'tall' ? 'h-[86%] max-h-[86%]'", '高底部抽屉应使用稳定高度承载学生选择。');
+requireText(bottomSheetSource, "size === 'full' ? 'h-[94%] max-h-[94%]'", '近全屏底部抽屉应提高高频编辑区的可视范围。');
 requireText(bottomSheetSource, 'overflow-hidden rounded-t-[var(--tm-radius-sheet)]', '公共底部抽屉应裁切滚动内容，避免卡片穿出弹窗圆角。');
 requireText(bottomSheetSource, 'relative z-20 shrink-0 bg-[var(--tm-bg-surface)]', '公共底部抽屉标题区应稳定覆盖滚动内容。');
 requireText(bottomSheetSource, 'relative z-0 isolate min-h-0 flex-1 overflow-y-auto overscroll-contain [clip-path:inset(0)]', '公共底部抽屉正文应使用独立低层级滚动容器，并裁切越界的列表内容。');
@@ -340,14 +354,21 @@ requireText(viewSource, 'const StudentRosterCard', '学生列表与小组详情�
 const rosterCardUsages = viewSource.match(/<StudentRosterCard\s/g)?.length || 0;
 if (rosterCardUsages !== 2) failures.push('完整花名册卡片只应用于班级学生列表和小组详情，不得重新侵入选人状态。');
 if (addStudentGroupSheet.includes('<StudentRosterCard')) failures.push('添加小组选人状态不得重新使用完整花名册卡片。');
-requireText(viewSource, '<GroupPerformanceMeta summary={groupPerformance}', '小组列表卡片应展示小组等级与正负向评价次数。');
-requireText(viewSource, 'groupPerformanceByGroupId[groupDetailTarget.id]', '小组详情头部应复用独立的小组表现数据。');
-requireText(groupPerformanceSource, '<StudentPerformanceLevelIcons', '小组表现应复用学生等级图标。');
+requireText(viewSource, '<GroupPerformanceMeta', '小组列表卡片应展示小组正负向评价次数。');
+requireText(viewSource, 'showPraiseCount={groupCardDisplaySettings.showPraiseCount}', '小组列表和详情应继承加分次数显示设置。');
+requireText(viewSource, 'showCriticismCount={groupCardDisplaySettings.showCriticismCount}', '小组列表和详情应继承扣分次数显示设置。');
+requireText(viewSource, 'orientation="vertical"', '小组列表评价次数应使用竖排。');
+requireText(viewSource, 'className="w-6 shrink-0"', '小组列表评价次数应使用24像素窄列。');
+if (viewSource.includes('ChevronRightIcon')) failures.push('小组卡片整卡可点击，不应继续显示右侧箭头。');
+requireText(viewSource, 'min-h-[76px]', '去掉等级后应收紧小组卡片高度。');
 requireText(groupPerformanceSource, '<StudentPerformanceCounts', '小组表现应复用正负向评价次数色片。');
+if (groupPerformanceSource.includes('StudentPerformanceLevelIcons')) failures.push('小组表现不得展示学生等级图标。');
+if (groupPerformanceDomainSource.includes('netScore')) failures.push('小组表现数据不应继续包含等级分值。');
 requireText(groupPerformanceDomainSource, 'if (record.groupId !== groupId) return summary;', '小组表现只应汇总直接指向该小组的原始评价事件。');
 if (groupPerformanceDomainSource.includes('memberIds')) failures.push('小组表现汇总不得依赖当前成员名单。');
 requireText(viewSource, '<StudentPerformanceAvatar', '共享学生卡应展示带进度环的学生头像。');
-requireText(viewSource, '<StudentPerformanceCounts summary={performance}', '共享学生卡应展示表扬与批评次数。');
+requireText(viewSource, '<StudentPerformanceCounts', '共享学生卡应展示表扬与批评次数。');
+requireText(viewSource, 'displaySettings={studentCardDisplaySettings}', '小组详情共享学生卡应继承当前班级的显示设置。');
 requireText(teacherMobileGuidelines, '统一复用通用层的紧凑学生选择项', '教师手机端规范应明确分组选人使用独立紧凑组件。');
 requireText(teacherMobileGuidelines, '`仅看未分组 / 人数`整行移入其下浅灰滚动内容区', '教师手机端规范应明确筛选行与学生项共用浅灰底。');
 requireText(teacherMobileGuidelines, '取消筛选后，筛选行不显示人数，人数分别由`未分组 → 当前方案内各小组`分区标题承载', '教师手机端规范应明确取消筛选后的数量展示与分区顺序。');
@@ -355,7 +376,7 @@ requireText(teacherMobileGuidelines, '取消勾选后按原顺序展示全班，
 requireText(teacherMobileGuidelines, '首次进入和解散最后一个小组后必须共用同一个', '教师手机端规范应明确统一分组缺省态。');
 requireText(teacherMobileGuidelines, '先填写小组名称，再选择学生', '教师手机端规范应明确首次分组的两步流程。');
 requireText(teacherMobileGuidelines, '主按钮统一使用明确动作`选择学生`', '教师手机端规范应统一名称步骤的主按钮文案。');
-requireText(teacherMobileGuidelines, '同时填写`这套分组名称`和`第一个小组名称`', '教师手机端规范应明确新方案首弹窗的两个名称。');
+requireText(teacherMobileGuidelines, '同时填写`分组方案名称`和`第一个小组名称`', '教师手机端规范应明确新方案首弹窗的两个名称。');
 requireText(teacherMobileGuidelines, '选人步骤不展示“仅看未分组”筛选', '教师手机端规范应明确新方案归组与当前方案相互独立。');
 requireText(teacherMobileGuidelines, '主要任务是直接查看全部成员，不先展示操作菜单', '教师手机端规范应明确小组卡片先进入成员详情。');
 requireText(teacherMobileGuidelines, '本人和其他老师创建的分组都可查看成员', '教师手机端规范应明确只读方案仍可查看成员。');
@@ -366,8 +387,10 @@ requireText(teacherMobileGuidelines, '编辑图标和文字使用次级中性色
 requireText(teacherMobileGuidelines, '人数使用600字重的次级文字', '教师手机端规范应明确小组人数的字重。');
 requireText(teacherMobileGuidelines, '头像与组名右侧并列展示轻量`编辑 / 解散`', '教师手机端规范应明确详情层直接展示解散入口。');
 requireText(teacherMobileGuidelines, '危险确认是唯一允许叠加在小组详情上的临时决策浮层', '教师手机端规范应明确危险确认是弹窗叠加的唯一例外。');
-requireText(teacherMobileGuidelines, '只汇总评价对象明确为该小组 ID 的原始评价事件', '教师手机端规范应明确小组表现数据口径。');
+requireText(teacherMobileGuidelines, '只统计评价对象明确为该小组 ID 的原始评价事件', '教师手机端规范应明确小组表现数据口径。');
 requireText(teacherMobileGuidelines, '不因学生移入、移出、调整或解散而回算历史', '教师手机端规范应明确成员变化不影响小组历史表现。');
+requireText(teacherMobileGuidelines, '小组只在分组列表卡片展示正向次数和负向次数，不展示等级', '教师手机端规范应明确小组次数只在列表展示且不展示等级。');
+requireText(teacherMobileGuidelines, '正向次数在上、负向次数在下', '教师手机端规范应明确列表卡片的评价次数竖排顺序。');
 requireText(viewSource, 'MobileBottomSheet', '分组浮层应复用教师端公共底部抽屉。');
 if (viewSource.includes('Math.random')) {
   failures.push('分组创建不得随机安排学生。');

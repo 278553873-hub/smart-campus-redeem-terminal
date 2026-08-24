@@ -1330,55 +1330,6 @@ export const getEnabledTemplatesForGrade = (workspace: ArchiveWorkspace, grade: 
   ))
 );
 
-export interface ArchiveStudentReadiness {
-  status: 'ready' | 'missing' | 'archived';
-  missingLabels: string[];
-  draftId?: string;
-}
-
-export const getStudentArchiveReadiness = (
-  workspace: ArchiveWorkspace,
-  template: ArchiveTemplate,
-  student: Student,
-): ArchiveStudentReadiness => {
-  const period = resolveArchivePeriod(template);
-  const draft = workspace.drafts.find(item => (
-    item.studentId === student.id
-    && item.templateId === template.id
-    && item.periodKey === period.key
-  ));
-  const definition = draft?.templateSnapshot ?? template;
-  const range = resolveArchiveDataRange(definition);
-  const archived = workspace.snapshots.some(snapshot => (
-    snapshot.status === 'archived'
-    && snapshot.studentId === student.id
-    && snapshot.templateId === template.id
-    && snapshot.templateVersion === (draft?.templateVersion ?? template.version)
-    && snapshot.periodKey === period.key
-  ));
-  if (archived && template.generationMode !== 'continuous') return { status: 'archived', missingLabels: [] };
-
-  const growthSnapshots = buildArchiveGrowthModuleSnapshots(student.id, definition.growthFields, range);
-  const missingLabels = [
-    ...definition.growthFields
-      .filter(field => getArchiveGrowthMissingPolicy(field) === 'required' && !growthSnapshots.some(snapshot => (
-        snapshot.status === 'available'
-        && snapshot.items.some(item => item.key === field.key && item.value.trim())
-      )))
-      .map(field => ARCHIVE_GROWTH_FIELD_GROUPS.flatMap(group => group.fields).find(item => item.key === field.key)?.label ?? '成长数据'),
-    ...definition.fields.flatMap(field => {
-      const error = getArchiveAnswerValidationError(field, draft?.answers[field.semanticKey]);
-      return error ? [field.label] : [];
-    }),
-  ];
-
-  return {
-    status: missingLabels.length > 0 ? 'missing' : 'ready',
-    missingLabels: Array.from(new Set(missingLabels)),
-    draftId: draft?.id,
-  };
-};
-
 export const createStudentArchiveDraft = (
   workspace: ArchiveWorkspace,
   templateId: string,
@@ -1603,51 +1554,6 @@ export const saveStudentArchiveDraft = (
       : [...workspace.snapshots, snapshot],
     auditEvents: [audit, ...workspace.auditEvents],
   };
-};
-
-export const batchArchiveStudents = (
-  workspace: ArchiveWorkspace,
-  templateId: string,
-  students: Student[],
-  classInfo: Pick<ClassInfo, 'id' | 'name'>,
-  operator: string,
-): { workspace: ArchiveWorkspace; archivedStudentIds: string[]; skippedStudentIds: string[] } => {
-  const template = workspace.templates.find(item => item.id === templateId && item.status === 'published' && !item.deletedAt);
-  if (!template) return { workspace, archivedStudentIds: [], skippedStudentIds: students.map(student => student.id) };
-
-  let nextWorkspace = workspace;
-  const archivedStudentIds: string[] = [];
-  const skippedStudentIds: string[] = [];
-
-  students.forEach(student => {
-    const readiness = getStudentArchiveReadiness(nextWorkspace, template, student);
-    if (readiness.status !== 'ready') {
-      skippedStudentIds.push(student.id);
-      return;
-    }
-    const draftResult = createStudentArchiveDraft(nextWorkspace, template.id, student, classInfo, operator);
-    const draft = draftResult.workspace.drafts.find(item => item.id === draftResult.draftId);
-    if (!draft) {
-      skippedStudentIds.push(student.id);
-      return;
-    }
-    const archiveDefinition = draft.templateSnapshot;
-    const archiveRange = resolveArchiveDataRange(archiveDefinition);
-    const systemValues = getArchiveSystemValues(student);
-    const growthSnapshots = buildArchiveGrowthModuleSnapshots(student.id, archiveDefinition.growthFields, archiveRange);
-    nextWorkspace = saveStudentArchiveDraft(
-      draftResult.workspace,
-      draft.id,
-      draft.answers,
-      true,
-      operator,
-      systemValues,
-      growthSnapshots,
-    );
-    archivedStudentIds.push(student.id);
-  });
-
-  return { workspace: nextWorkspace, archivedStudentIds, skippedStudentIds };
 };
 
 export const requestSnapshotCorrection = (

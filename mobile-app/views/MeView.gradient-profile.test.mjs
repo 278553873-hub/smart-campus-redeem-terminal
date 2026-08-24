@@ -27,9 +27,11 @@ requireText(appSource, "name: '大飞'", '个人版教师姓名应为大飞。')
 requireText(appSource, 'avatar: ASSETS.AVATAR.TEACHER_DEFAULT', '所有老师资料应统一继承小鹿默认头像。');
 requireText(source, 'text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]', '我的页面教师姓名字号应保持 22px，并使用品牌中性色 Token。');
 requireText(source, '编辑教师信息', '编辑按钮应保持独立可点击区域。');
-requireText(appSource, 'return <TeacherMobileScreenBackground />', '我的页面屏幕级背景应统一使用公共背景组件。');
+requireText(appSource, 'return <TeacherMobileScreenBackground variant="me" />', '我的页面屏幕级背景应使用专属背景变体。');
 const screenBackgroundSource = fs.readFileSync(new URL('../components/TeacherMobileScreenBackground.tsx', import.meta.url), 'utf8');
-requireText(screenBackgroundSource, 'bg-[var(--tm-bg-page)]', '我的页面屏幕级背景应使用页面背景 Token。');
+requireText(screenBackgroundSource, 'bg-[var(--tm-me-gradient-base)]', '我的页面屏幕级背景应使用方案八的专属背景 Token。');
+requireText(screenBackgroundSource, 'radial-gradient(ellipse 84% 50% at -8% 24%', '我的页面应使用方案八的弥散渐变结构。');
+requireText(screenBackgroundSource, 'linear-gradient(180deg, transparent 52%, var(--tm-me-gradient-tail-field) 100%)', '我的页面下半屏应延续当前辅助色的极浅续色，避免白卡落在纯白背景上。');
 requireText(source, 'flex min-h-[132px] items-center', '教师信息区应保留适度高度，并将内容垂直居中。');
 requireText(source, 'Camera', '教师头像右下角应使用相机图标。');
 requireText(source, 'border border-white bg-white text-[var(--tm-brand-primary)]', '我的页头像相机图标应使用白色实底和品牌红图标。');
@@ -72,7 +74,7 @@ requireText(source, '科目管理', '更多工具应包含科目管理。');
 requireText(source, '部门管理', '更多工具应包含部门管理。');
 requireText(source, '货币发放', '更多工具应包含货币发放。');
 requireText(source, '建议反馈', '更多工具应包含建议反馈。');
-requireText(source, "const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-card)] backdrop-blur-sm';", '“我的”页工具卡应使用干净的普通卡片阴影 Token。');
+requireText(source, "const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-ambient)]';", '“我的”页工具卡应使用不透明白色表面和克制的氛围背景卡片阴影 Token。');
 requireText(source, 'rounded-[var(--tm-radius-card)] p-4 ${toolCardSurfaceClass}', '管理工具、更多工具卡片应共享紧凑内边距、统一圆角和卡片表面。');
 requireText(source, 'className="relative overflow-hidden bg-transparent font-sans', '我的页不应重复增加底部安全留白。');
 requireText(source, 'min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)]', '待填写采集应收紧为 48px 紧凑待办卡。');
@@ -158,7 +160,7 @@ if (source.includes('ASSETS.MANAGEMENT.TEACHER_ME_HERO_BG')) {
 }
 
 if (appSource.includes('radial-gradient(circle_at_18%_6%')) {
-  throw new Error('我的页面背景不应继续用 CSS 绘制弥散渐变，应使用 pic 生成图片。');
+  throw new Error('我的页面业务入口不应直接声明渐变，应统一交给公共背景组件。');
 }
 
 if (source.includes('pointer-events-none absolute -left-24 -right-28 top-0')) {
@@ -167,6 +169,10 @@ if (source.includes('pointer-events-none absolute -left-24 -right-28 top-0')) {
 
 if (source.includes('bg-[#F4FCFF]')) {
   throw new Error('我的页根容器不应使用纯色底覆盖手机壳背景。');
+}
+
+if (source.includes("const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)]") || source.includes("[box-shadow:var(--tm-shadow-card)] backdrop-blur-sm")) {
+  throw new Error('我的页工具卡不应继续使用会混入渐变底色的半透明玻璃表面。');
 }
 
 if (source.includes('${phoneText.pageTitle} text-slate-950')) {

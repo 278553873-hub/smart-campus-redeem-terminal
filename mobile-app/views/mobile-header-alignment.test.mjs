@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const app = fs.readFileSync('mobile-app/App.tsx', 'utf8');
 const record = fs.readFileSync('mobile-app/views/ClassRecordLogView.tsx', 'utf8');
 const leader = fs.readFileSync('mobile-app/views/LeaderReportView.tsx', 'utf8');
+const segmentedControl = fs.readFileSync('mobile-app/components/ui/MobileSlidingSegmentedControl.tsx', 'utf8');
 
 const failures = [];
 
@@ -22,7 +23,7 @@ if (app.includes('className="h-14 flex items-center justify-between px-6 bg-whit
   failures.push('通用 LocalHeader 仍为 56px，会导致“我的班级”标题低于微信胶囊中心。');
 }
 
-if (!record.includes('h-[var(--tm-size-touch)] flex-1') || !record.includes('h-[var(--tm-size-touch)] shrink-0')) {
+if (!segmentedControl.includes('h-[var(--tm-size-touch)] min-w-0 flex-1') || !record.includes('h-[var(--tm-size-touch)] shrink-0')) {
   failures.push('记录页顶部模式和指标入口应使用至少 44px 的稳定触控高度。');
 }
 

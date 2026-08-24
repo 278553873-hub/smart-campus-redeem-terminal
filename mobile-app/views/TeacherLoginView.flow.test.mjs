@@ -16,7 +16,8 @@ assert.match(appSource, /const handleTeacherLogout = \(\) => \{[\s\S]*resetAuthe
 assert.match(appSource, /setHistory\(\[\]\);[\s\S]*setCurrentView\('home_log'\);/, '退出或登录时应重置历史栈与落地页。');
 assert.match(appSource, /<MineSettingsView onLogout=\{handleTeacherLogout\} \/>/, '设置页退出按钮应接入真实退出处理。');
 assert.doesNotMatch(appSource, /退出登录功能演示中/, '教师端不应保留退出登录演示提示。');
-assert.match(appSource, /<div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-\[var\(--tm-bg-surface\)\]">\s*<TeacherLoginView/, '登录页承载层应使用教师端基础表面色。');
+assert.match(appSource, /screenBackground=\{gradientPreview[\s\S]*?<TeacherMobileScreenBackground variant="preview" preview=\{gradientPreview\} \/>/, '渐变预览时登录页应复用统一屏幕背景。');
+assert.match(appSource, /gradientPreview \? 'bg-transparent' : 'bg-\[var\(--tm-bg-surface\)\]'/, '正常登录页承载层应保留教师端基础表面色，预览时允许透出渐变。');
 
 assert.match(loginSource, />\s*一键登录\s*<\/button>/, '登录页应把一键登录作为主操作。');
 assert.match(loginSource, />最近登录<[\s\S]*>190\*\*\*\*0000</, '登录页应在最近登录文案下方展示较小字号的脱敏手机号。');

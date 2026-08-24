@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const read = relativePath => fs.readFileSync(new URL(relativePath, import.meta.url), 'utf8');
+const typesSource = read('../types.ts');
+const domainSource = read('../domain/studentCardDisplay.ts');
+const groupDomainSource = read('../domain/groupCardDisplay.ts');
+const appSource = read('../App.tsx');
+const listSource = read('./ClassListView.tsx');
+const detailSource = read('./ClassDetailView.tsx');
+const switchSource = read('../components/ui/MobileSettingsSwitchRow.tsx');
+const tokenSource = read('../styles/teacherMobileTokens.ts');
+const guidelinesSource = read('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md');
+
+assert.match(typesSource, /studentCardDisplaySettings\?: StudentCardDisplaySettings/, '学生卡片显示设置应保存到班级信息。');
+assert.match(typesSource, /groupCardDisplaySettings\?: GroupCardDisplaySettings/, '小组卡片显示设置应保存到班级信息。');
+assert.match(domainSource, /showLevel: true[\s\S]*showPraiseCount: true[\s\S]*showCriticismCount: true/, '未配置班级应默认展示等级和加扣分次数。');
+assert.match(groupDomainSource, /showPraiseCount: true[\s\S]*showCriticismCount: true/, '未配置班级应默认展示小组加扣分次数。');
+assert.match(appSource, /handleUpdateStudentCardDisplaySettings/, '应用层应提供班级级学生卡片设置更新能力。');
+assert.match(appSource, /studentCardDisplaySettings: settings/, '学生卡片设置应回写当前班级覆盖数据。');
+assert.match(appSource, /groupCardDisplaySettings: settings/, '小组卡片设置应回写当前班级覆盖数据。');
+assert.doesNotMatch(listSource, /学生卡片展示|小组卡片展示/, '班级卡片更多操作不应承载学生或小组展示配置。');
+assert.match(detailSource, /aria-label="学生更多操作"/, '学生页应就近提供更多操作入口。');
+assert.match(detailSource, /aria-label="小组更多操作"/, '分组页应就近提供更多操作入口。');
+assert.match(detailSource, /moreActionTarget === 'group' \? '小组卡片展示' : '学生卡片展示'/, '学生与分组操作菜单应展示对应的卡片设置入口。');
+assert.match(detailSource, /title=\{cardDisplayTarget === 'group' \? '小组卡片展示' : '学生卡片展示'\}/, '卡片展示设置应使用独立公共底部弹窗。');
+assert.match(detailSource, /label="显示等级"[\s\S]*label="显示加分次数"[\s\S]*label="显示扣分次数"/, '学生设置应提供三个独立开关。');
+assert.match(switchSource, /role="switch"/, '通用设置行应提供开关语义。');
+assert.doesNotMatch(switchSource, /(?:^|\s)border(?:\s|\")/, '设置开关行不应使用实体边框。');
+assert.doesNotMatch(switchSource, /focus-visible:ring/, '手机端设置开关聚焦时不应出现品牌红外环。');
+assert.match(detailSource, /getStudentCardDisplaySettings\(classInfo\.studentCardDisplaySettings\)/, '学生页应读取当前班级的卡片显示设置。');
+assert.match(detailSource, /getGroupCardDisplaySettings\(classInfo\.groupCardDisplaySettings\)/, '分组页应读取当前班级的小组卡片显示设置。');
+assert.equal((detailSource.match(/displaySettings=\{studentCardDisplaySettings\}/g) ?? []).length, 2, '学生页和小组详情复用卡片都应使用同一显示设置。');
+assert.equal((detailSource.match(/showPraiseCount=\{groupCardDisplaySettings\.showPraiseCount\}/g) ?? []).length, 1, '小组加分次数显示设置应只作用于分组列表。');
+assert.equal((detailSource.match(/showCriticismCount=\{groupCardDisplaySettings\.showCriticismCount\}/g) ?? []).length, 1, '小组扣分次数显示设置应只作用于分组列表。');
+assert.match(detailSource, /displaySettings\.showLevel \? `等级分值/, '隐藏等级后读屏文案不应继续播报等级。');
+assert.match(detailSource, /displaySettings\.showPraiseCount \? `被表扬/, '隐藏加分次数后读屏文案不应继续播报加分。');
+assert.match(detailSource, /displaySettings\.showCriticismCount \? `被批评/, '隐藏扣分次数后读屏文案不应继续播报扣分。');
+assert.match(tokenSource, /'--tm-student-card-height-full': '120px'[\s\S]*'--tm-student-card-height-compact': '104px'[\s\S]*'--tm-student-card-height-minimal': '88px'/, '学生卡片三档高度应由教师手机端 Token 统一管理。');
+assert.match(detailSource, /visiblePerformanceRowCount === 2[\s\S]*--tm-student-card-height-full[\s\S]*--tm-student-card-height-compact[\s\S]*--tm-student-card-height-minimal/, '学生卡片应根据可见表现信息使用三档高度。');
+assert.match(detailSource, /setMoreActionTarget\(null\);[\s\S]*setCardDisplayTarget\(target\);/, '打开设置前应先关闭操作菜单，避免弹窗叠加。');
+assert.match(guidelinesSource, /学生页普通态工具栏的三点更多[\s\S]*设置按班级保存并默认全部开启/, '教师手机端规范应记录就近入口、默认值和保存范围。');
+
+console.log('学生与小组卡片显示设置校验通过。');

@@ -75,7 +75,7 @@ const secondaryIconClass = 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-bra
 const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)] transition active:scale-95 active:text-[var(--tm-brand-primary)]';
 const reportToolImageClass = 'h-14 w-14 max-w-none rounded-[var(--tm-radius-inner)] object-cover';
 const assistantToolImageClass = 'h-12 w-12 rounded-[var(--tm-radius-inner)] object-cover';
-const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-card)] backdrop-blur-sm';
+const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-ambient)]';
 
 const ToolSection: React.FC<ToolSectionProps> = ({ title, children }) => (
     <section className={`relative overflow-hidden rounded-[var(--tm-radius-card)] p-4 ${toolCardSurfaceClass}`}>

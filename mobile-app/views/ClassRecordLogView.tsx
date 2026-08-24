@@ -8,6 +8,7 @@ import { MOCK_STUDENTS_CLASS_1, MOCK_CLASS_RECORD_LOGS } from '../constants';
 import { ASSETS } from '../assets/images';
 import { Loader2, Sparkles } from 'lucide-react'; // Import directly if needed for icons not in components
 import voiceOnboardingArrow from '../assets/resources/teacher-mobile-icons/by-page/02-记录/记录首页/voice-onboarding-arrow-solid-gold.svg';
+import MobileSlidingSegmentedControl from '../components/ui/MobileSlidingSegmentedControl';
 
 const STUDENT_RECORD_GUIDE_EXAMPLES = [
     '张三同学今天主动帮助同学解决问题，值得表扬。',
@@ -459,23 +460,27 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                     <div>
                         {canRecordClass && (
                             <div className="[padding-right:var(--mini-program-capsule-right-inset,0px)]">
-                                <div className="relative flex h-[var(--mini-program-title-bar-height,44px)] w-[176px] items-center" role="group" aria-label="记录对象">
-                                    <div className="pointer-events-none absolute inset-x-0 top-1/2 h-[var(--tm-record-scope-visual-height)] -translate-y-1/2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-control)]" aria-hidden="true" />
-                                    <button
-                                        onClick={() => onTabChange('student')}
-                                        className="relative z-10 flex h-[var(--tm-size-touch)] flex-1 items-center justify-center px-0.5 text-[14px] font-semibold"
-                                        aria-pressed={activeTab === 'student'}
-                                    >
-                                        <span className={`flex h-8 w-full items-center justify-center rounded-[var(--tm-radius-control)] transition-[background-color,color] [transition-duration:var(--tm-duration-standard)] ${activeTab === 'student' ? 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}>记录学生</span>
-                                    </button>
-                                    <button
-                                        onClick={() => onTabChange('class')}
-                                        className="relative z-10 flex h-[var(--tm-size-touch)] flex-1 items-center justify-center px-0.5 text-[14px] font-semibold"
-                                        aria-pressed={activeTab === 'class'}
-                                    >
-                                        <span className={`flex h-8 w-full items-center justify-center rounded-[var(--tm-radius-control)] transition-[background-color,color] [transition-duration:var(--tm-duration-standard)] ${activeTab === 'class' ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}>记录班级</span>
-                                    </button>
-                                </div>
+                                <MobileSlidingSegmentedControl
+                                    value={activeTab}
+                                    items={[
+                                        {
+                                            value: 'student',
+                                            label: '记录学生',
+                                            indicatorClassName: 'bg-[var(--tm-record-student-soft)]',
+                                            activeTextClassName: 'text-[var(--tm-record-student-text)]',
+                                        },
+                                        {
+                                            value: 'class',
+                                            label: '记录班级',
+                                            indicatorClassName: 'bg-[var(--tm-record-class-soft)]',
+                                            activeTextClassName: 'text-[var(--tm-record-class-text)]',
+                                        },
+                                    ]}
+                                    onChange={onTabChange}
+                                    ariaLabel="记录对象"
+                                    semantics="group"
+                                    className="w-[192px]"
+                                />
                             </div>
                         )}
                         <div className={`relative flex h-[var(--mini-program-title-bar-height,44px)] items-center ${canRecordClass ? '' : '[padding-right:var(--mini-program-capsule-right-inset,0px)]'}`}>

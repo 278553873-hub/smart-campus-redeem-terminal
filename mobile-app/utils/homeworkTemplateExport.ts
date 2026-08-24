@@ -16,6 +16,11 @@ const LOGICAL_PAGE_HEIGHT = 2480;
 const MARGIN = 80;
 const TABLE_GAP = 50;
 const ASSIGNMENT_COUNT = 6;
+const HOMEWORK_STATUS_LABELS = ['优', '良', '合格', '待合格', '未交'] as const;
+const TABLE_ASSIGNMENT_HEADER_HEIGHT = 54;
+const TABLE_STATUS_HEADER_HEIGHT = 104;
+const TABLE_HEADER_HEIGHT = TABLE_ASSIGNMENT_HEADER_HEIGHT + TABLE_STATUS_HEADER_HEIGHT;
+const TABLE_SEQUENCE_WIDTH_RATIO = 0.07;
 
 const drawText = (
   context: CanvasRenderingContext2D,
@@ -54,6 +59,27 @@ const drawCell = (
   }
 };
 
+const drawVerticalCellText = (
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) => {
+  const characters = Array.from(text);
+  const fontSize = 24;
+  const lineHeight = 24;
+  const textHeight = characters.length * lineHeight;
+  characters.forEach((character, index) => {
+    drawText(context, character, x + width / 2, y + (height - textHeight) / 2 + lineHeight * (index + 0.5), {
+      size: fontSize,
+      weight: 600,
+      align: 'center',
+    });
+  });
+};
+
 const drawSequenceTable = ({
   context,
   sequences,
@@ -69,26 +95,35 @@ const drawSequenceTable = ({
   width: number;
   rowHeight: number;
 }) => {
-  const headerHeight = 74;
-  const sequenceWidth = width * 0.2;
-  const statusWidth = (width - sequenceWidth) / ASSIGNMENT_COUNT;
-  const columns = [
-    { label: '学号', width: sequenceWidth },
-    ...Array.from({ length: ASSIGNMENT_COUNT }, (_, index) => ({ label: String(index + 1), width: statusWidth })),
-  ];
-  let cursorX = x;
-  columns.forEach(column => {
-    drawCell(context, cursorX, y, column.width, headerHeight, column.label, { size: 24, weight: 600, fill: '#f3f4f6' });
-    cursorX += column.width;
+  const sequenceWidth = width * TABLE_SEQUENCE_WIDTH_RATIO;
+  const assignmentWidth = (width - sequenceWidth) / ASSIGNMENT_COUNT;
+  const statusWidth = assignmentWidth / HOMEWORK_STATUS_LABELS.length;
+
+  drawCell(context, x, y, sequenceWidth, TABLE_HEADER_HEIGHT, '学号', { size: 24, weight: 600, fill: '#f3f4f6' });
+  Array.from({ length: ASSIGNMENT_COUNT }, (_, assignmentIndex) => {
+    const assignmentX = x + sequenceWidth + assignmentIndex * assignmentWidth;
+    drawCell(context, assignmentX, y, assignmentWidth, TABLE_ASSIGNMENT_HEADER_HEIGHT, `作业${assignmentIndex + 1}`, { size: 24, weight: 600, fill: '#f3f4f6' });
+    HOMEWORK_STATUS_LABELS.forEach((label, statusIndex) => {
+      const statusX = assignmentX + statusIndex * statusWidth;
+      drawCell(context, statusX, y + TABLE_ASSIGNMENT_HEADER_HEIGHT, statusWidth, TABLE_STATUS_HEADER_HEIGHT, '', { fill: '#f9fafb' });
+      drawVerticalCellText(context, label, statusX, y + TABLE_ASSIGNMENT_HEADER_HEIGHT, statusWidth, TABLE_STATUS_HEADER_HEIGHT);
+    });
   });
+
   sequences.forEach((sequence, index) => {
-    const rowY = y + headerHeight + index * rowHeight;
-    let rowX = x;
+    const rowY = y + TABLE_HEADER_HEIGHT + index * rowHeight;
     const fontSize = Math.max(17, Math.min(25, rowHeight * 0.5));
-    const values = [sequence, '', '', '', '', '', ''];
-    columns.forEach((column, columnIndex) => {
-      drawCell(context, rowX, rowY, column.width, rowHeight, values[columnIndex], { size: fontSize });
-      rowX += column.width;
+    drawCell(context, x, rowY, sequenceWidth, rowHeight, sequence, { size: fontSize });
+    Array.from({ length: ASSIGNMENT_COUNT }, (_, assignmentIndex) => {
+      HOMEWORK_STATUS_LABELS.forEach((_, statusIndex) => {
+        drawCell(
+          context,
+          x + sequenceWidth + assignmentIndex * assignmentWidth + statusIndex * statusWidth,
+          rowY,
+          statusWidth,
+          rowHeight,
+        );
+      });
     });
   });
 };
@@ -116,7 +151,7 @@ export const createHomeworkTemplateCanvas = ({ pageSize = 'A4', renderWidth }: H
   const assignmentWidth = (LOGICAL_PAGE_WIDTH - MARGIN * 2) / ASSIGNMENT_COUNT;
   Array.from({ length: ASSIGNMENT_COUNT }, (_, index) => {
     const x = MARGIN + index * assignmentWidth;
-    drawCell(context, x, assignmentTop, assignmentWidth, 58, `作业 ${index + 1}`, { size: 24, weight: 600, fill: '#f3f4f6' });
+    drawCell(context, x, assignmentTop, assignmentWidth, 58, `作业${index + 1}`, { size: 24, weight: 600, fill: '#f3f4f6' });
     drawCell(context, x, assignmentTop + 58, assignmentWidth, 72, '日期：', { size: 22, align: 'left' });
     drawCell(context, x, assignmentTop + 130, assignmentWidth, assignmentHeight - 130, '主题：', { size: 22, align: 'left' });
   });
@@ -126,11 +161,11 @@ export const createHomeworkTemplateCanvas = ({ pageSize = 'A4', renderWidth }: H
   const tableWidth = (LOGICAL_PAGE_WIDTH - MARGIN * 2 - TABLE_GAP) / 2;
   const tableHeight = tableBottom - tableTop;
   const maxSideCount = Math.max(layout.leftSequences.length, layout.rightSequences.length, 1);
-  const rowHeight = (tableHeight - 74) / maxSideCount;
+  const rowHeight = (tableHeight - TABLE_HEADER_HEIGHT) / maxSideCount;
   drawSequenceTable({ context, sequences: layout.leftSequences, x: MARGIN, y: tableTop, width: tableWidth, rowHeight });
   drawSequenceTable({ context, sequences: layout.rightSequences, x: MARGIN + tableWidth + TABLE_GAP, y: tableTop, width: tableWidth, rowHeight });
 
-  drawText(context, '等级码：A = 优    B = 良    C = 合格    D = 待合格    X = 未交    空白 = 尚未登记', LOGICAL_PAGE_WIDTH / 2, LOGICAL_PAGE_HEIGHT - 72, { size: 26, weight: 600, align: 'center' });
+  drawText(context, '填写：每次作业只在对应等级格内打勾、划线或涂抹；空白 = 尚未登记', LOGICAL_PAGE_WIDTH / 2, LOGICAL_PAGE_HEIGHT - 72, { size: 24, weight: 600, align: 'center' });
   return canvas;
 };
 

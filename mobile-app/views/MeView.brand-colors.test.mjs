@@ -39,8 +39,8 @@ for (const required of [
   }
 }
 
-if (!tokenSource.includes("'--tm-shadow-navigation': '0 -10px 24px -12px rgba(64, 60, 58, 0.18)'")) {
-  throw new Error('教师手机端底部导航应使用向上扩散的中性阴影。');
+if (!tokenSource.includes("'--tm-shadow-navigation': '0 -6px 18px -14px rgba(64, 60, 58, 0.06)'")) {
+  throw new Error('教师手机端底部导航应使用短距离、极淡的向上中性阴影。');
 }
 
 if (bottomNavSource.includes('border-t') || bottomNavSource.includes('fill="currentColor"')) {

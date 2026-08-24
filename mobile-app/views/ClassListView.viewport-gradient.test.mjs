@@ -21,7 +21,8 @@ requireText(mobileApp, 'const hasScreenLevelBackground', '有屏幕级背景的�
 requireText(classList, 'text-lg font-semibold text-[var(--tm-text-primary)]', '班级卡片标题字号应为 18px，并使用正文 Token。');
 requireText(classList, 'px-2 py-0.5 text-xs font-normal text-[var(--tm-text-secondary)]', '普通学科标签字号应为 12px，并使用辅助文字 Token。');
 requireText(classList, "addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'", '真实手机效果下班级列表不应在小程序标题栏下重复增加顶距。');
-requireText(classList, 'variant="quiet"', '班级页的班级来源触发器应与记录页保持轻量样式一致。');
+if (classList.includes('ClassSourceTrigger')) failures.push('班级页不应继续展示班级来源触发器。');
+requireText(classList, 'ariaLabel="班级内容分类"', '班级与社团页签应进入顶部标题栏。');
 requireText(classList, 'bg-white px-4 py-3 [box-shadow:var(--tm-shadow-card)]', '白色班级卡片应引用普通卡片阴影令牌，禁止业务页面自拼阴影公式。');
 if (classList.includes('rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-white')) failures.push('班级卡片不应使用边框分割页面。');
 requireText(mobileApp, 'addDemoTopBreathingSpace={!showPhoneShell}', '班级页应获取手机壳环境以调整顶部呼吸空间。');

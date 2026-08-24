@@ -20,12 +20,20 @@ import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import RegionalPcAdmin from './components/RegionalPcAdmin';
+import UiRenovationDemo from './components/UiRenovationDemo';
 import PlatformBrandMark from './components/PlatformBrandMark';
 import Loader from './components/Loader';
 import { DeviceWrapper } from './components/DeviceWrapper';
 import { ASSETS as MOBILE_ASSETS } from './mobile-app/assets/images';
+import {
+  defaultTeacherGradientPreview,
+  teacherGradientSchemeOptions,
+  teacherGradientStyleOptions,
+  type TeacherGradientSchemeId,
+  type TeacherGradientStyleId,
+} from './mobile-app/styles/teacherGradientPreview';
 import './mobile-app/index.css';
-import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, X } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X } from 'lucide-react';
 import { playSound } from './utils/sound';
 
 // ============================================================
@@ -1248,16 +1256,19 @@ const AppSwitcher: React.FC = () => {
   const questionnaireInviteCode = useMemo(() => (
     new URLSearchParams(window.location.search).get('questionnaireInvite')?.trim() ?? ''
   ), []);
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen'>(() => {
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'ui-renovation'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen') {
+    if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation') {
       return app;
     }
     return 'terminal'; // default
   });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const [showPhoneShell, setShowPhoneShell] = useState(true);
+  const [teacherGradientScheme, setTeacherGradientScheme] = useState<TeacherGradientSchemeId>(defaultTeacherGradientPreview.schemeId);
+  const [teacherGradientStyle, setTeacherGradientStyle] = useState<TeacherGradientStyleId>(defaultTeacherGradientPreview.styleId);
+  const [isTeacherGradientControlsOpen, setIsTeacherGradientControlsOpen] = useState(false);
   const [showParentPhoneShell, setShowParentPhoneShell] = useState(false);
   const [showPhoneShellToggle, setShowPhoneShellToggle] = useState(false);
   const [demoPanelPosition, setDemoPanelPosition] = useState<{ left: number; top: number } | null>(null);
@@ -1445,7 +1456,13 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'pc-workspace' && <PcWorkspace />}
         {currentApp === 'region-pc' && <RegionalPcAdmin onLogout={handleRegionalPcLogout} />}
         {currentApp === 'region-pc-screen' && <RegionalPcAdmin screenOnly />}
-        {currentApp === 'admin' && <MobileApp showPhoneShell={showPhoneShell} />}
+        {currentApp === 'admin' && (
+          <MobileApp
+            showPhoneShell={showPhoneShell}
+            gradientPreview={{ schemeId: teacherGradientScheme, styleId: teacherGradientStyle }}
+          />
+        )}
+        {currentApp === 'ui-renovation' && <UiRenovationDemo />}
         {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && (questionnaireInviteCode
@@ -1460,17 +1477,69 @@ const AppSwitcher: React.FC = () => {
             const phoneShellEnabled = currentApp === 'parent' ? showParentPhoneShell : showPhoneShell;
             const togglePhoneShell = currentApp === 'parent' ? setShowParentPhoneShell : setShowPhoneShell;
             return (
-              <button
-                type="button"
-                onClick={() => togglePhoneShell(prev => !prev)}
-                className="flex min-h-11 items-center gap-3 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl active:bg-slate-50 transition-colors"
-                aria-pressed={phoneShellEnabled}
-              >
-                <span className="text-[12px] font-black text-slate-700">模拟真实手机效果</span>
-                <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${phoneShellEnabled ? 'bg-slate-900' : 'bg-slate-200'}`}>
-                  <span className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${phoneShellEnabled ? 'translate-x-5' : 'translate-x-0'}`}></span>
-                </span>
-              </button>
+              <div className="flex w-[232px] flex-col items-end gap-2 max-[900px]:w-auto">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => togglePhoneShell(prev => !prev)}
+                    className="flex min-h-11 items-center gap-3 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl active:bg-slate-50 transition-colors"
+                    aria-pressed={phoneShellEnabled}
+                  >
+                    <span className="text-[12px] font-black text-slate-700">模拟真实手机效果</span>
+                    <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${phoneShellEnabled ? 'bg-slate-900' : 'bg-slate-200'}`}>
+                      <span className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${phoneShellEnabled ? 'translate-x-5' : 'translate-x-0'}`}></span>
+                    </span>
+                  </button>
+                  {currentApp === 'admin' && (
+                    <button
+                      type="button"
+                      onClick={() => setIsTeacherGradientControlsOpen(prev => !prev)}
+                      className={`hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/90 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-colors max-[900px]:flex ${isTeacherGradientControlsOpen ? 'text-rose-600' : 'text-slate-600'}`}
+                      aria-label={isTeacherGradientControlsOpen ? '收起渐变预览配置' : '展开渐变预览配置'}
+                      aria-expanded={isTeacherGradientControlsOpen}
+                    >
+                      <Palette className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+
+                {currentApp === 'admin' && (
+                  <div className={`w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl ${isTeacherGradientControlsOpen ? 'max-[900px]:block' : 'max-[900px]:hidden'}`}>
+                    <label className="flex min-h-11 items-center gap-2">
+                      <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">配色方案</span>
+                      <span className="relative min-w-0 flex-1">
+                        <select
+                          aria-label="选择渐变配色方案"
+                          value={teacherGradientScheme}
+                          onChange={event => setTeacherGradientScheme(event.target.value as TeacherGradientSchemeId)}
+                          className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
+                        >
+                          {teacherGradientSchemeOptions.map(option => (
+                            <option key={option.id} value={option.id}>{option.label}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                      </span>
+                    </label>
+                    <label className="flex min-h-11 items-center gap-2">
+                      <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">渐变样式</span>
+                      <span className="relative min-w-0 flex-1">
+                        <select
+                          aria-label="选择渐变样式"
+                          value={teacherGradientStyle}
+                          onChange={event => setTeacherGradientStyle(event.target.value as TeacherGradientStyleId)}
+                          className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
+                        >
+                          {teacherGradientStyleOptions.map(option => (
+                            <option key={option.id} value={option.id}>{option.label}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                      </span>
+                    </label>
+                  </div>
+                )}
+              </div>
             );
           })()}
         </div>
@@ -1551,6 +1620,14 @@ const AppSwitcher: React.FC = () => {
             >
               <Smartphone size={22} className="mb-1" />
               <span className="text-[9px] font-bold leading-tight">C端改造</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('ui-renovation')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'ui-renovation' ? 'bg-rose-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="UI改造 - 渐变背景探索"
+            >
+              <Palette size={22} className="mb-1" />
+              <span className="text-[9px] font-bold leading-tight">UI改造</span>
             </button>
             <button
               onClick={() => setCurrentApp('parent')}

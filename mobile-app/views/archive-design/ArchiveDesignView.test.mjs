@@ -2,7 +2,6 @@ import fs from 'node:fs';
 
 const viewSource = fs.readFileSync(new URL('./ArchiveDesignView.tsx', import.meta.url), 'utf8');
 const studentViewSource = fs.readFileSync(new URL('./StudentArchiveView.tsx', import.meta.url), 'utf8');
-const classBatchViewSource = fs.readFileSync(new URL('./ClassArchiveBatchView.tsx', import.meta.url), 'utf8');
 const archiveFormRendererSource = fs.readFileSync(new URL('./ArchiveFormRenderer.tsx', import.meta.url), 'utf8');
 const archiveGrowthRendererSource = fs.readFileSync(new URL('./ArchiveGrowthDataRenderer.tsx', import.meta.url), 'utf8');
 const storeSource = fs.readFileSync(new URL('../../../shared/studentArchiveStore.ts', import.meta.url), 'utf8');
@@ -455,13 +454,9 @@ requireText(storeSource, 'sourceRecordId?: string', '成长字段快照必须保
 requireText(storeSource, 'sourceVersion?: number', '成长字段快照必须保存来源版本。');
 requireText(archiveGrowthRendererSource, 'item.recordedAt', '实时档案和历史档案必须逐字段展示记录日期。');
 
-for (const required of ['可留档', '待补充', '已留档', '批量留档 {selectedStudentIds.size} 人']) {
-  requireText(classBatchViewSource, required, `班级批量留档流程缺少：${required}`);
-}
-requireText(storeSource, 'getStudentArchiveReadiness', '单人和批量留档必须共用资料完整性判断。');
-requireText(storeSource, 'batchArchiveStudents', '档案数据层必须提供班级批量留档能力。');
-requireText(classListSource, "label: '批量留档'", '班级更多操作的学生管理分组必须提供批量留档入口。');
-requireText(appSource, '<ClassArchiveBatchView', '教师端必须注册班级批量留档页面。');
+forbidText(classListSource, '批量留档', '档案会在老师保存或问卷提交后自动入档，班级更多操作不应保留批量留档入口。');
+forbidText(appSource, 'class_archive_batch', '教师端不应注册需要老师再次确认的批量留档页面。');
+forbidText(storeSource, 'batchArchiveStudents', '档案自动建立或更新后，不应保留手动批量留档方法。');
 requireText(viewSource, "? '新建档案'", '新建档案编辑器顶部必须显示“新建档案”。');
 forbidText(viewSource, 'action={headerAction}', '档案标题栏不应承载预览、更多或状态操作。');
 requireText(viewSource, "ready: { label: '待启用'", '档案列表和详情必须提供待启用状态。');
@@ -549,7 +544,7 @@ forbidText(viewSource, '多行文字', '字段类型不应区分多行文字。'
 forbidText(viewSource, '分组说明', '分组不应配置分组说明。');
 forbidText(viewSource, '调整顺序', '顺序调整应在列表上直接操作，不出现在弹窗中。');
 forbidText(studentViewSource, '上期：', 'MVP 填写页不应展示上期对比内容。');
-const archiveVisualSources = [viewSource, studentViewSource, classBatchViewSource, archiveFormRendererSource, archiveGrowthRendererSource, primitivesSource].join('\n');
+const archiveVisualSources = [viewSource, studentViewSource, archiveFormRendererSource, archiveGrowthRendererSource, primitivesSource].join('\n');
 for (const rawStyle of ['text-white', 'bg-white/38', 'shadow-sm', 'shadow-[', 'backdrop-blur-[2px]']) {
   forbidText(archiveVisualSources, rawStyle, `档案页面不得残留未收敛到设计令牌的样式：${rawStyle}`);
 }

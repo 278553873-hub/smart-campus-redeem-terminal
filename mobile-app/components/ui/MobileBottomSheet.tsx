@@ -7,7 +7,7 @@ interface MobileBottomSheetProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
-  size?: 'content' | 'tall';
+  size?: 'content' | 'tall' | 'full';
   contentInset?: 'standard' | 'compact' | 'none';
   contentTone?: 'surface' | 'plain';
   footer?: React.ReactNode;
@@ -104,7 +104,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={`relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)] ${size === 'tall' ? 'h-[86%] max-h-[86%]' : 'max-h-[86%]'}`}
+        className={`relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)] ${size === 'full' ? 'h-[94%] max-h-[94%]' : size === 'tall' ? 'h-[86%] max-h-[86%]' : 'max-h-[86%]'}`}
       >
         <div className="relative z-20 shrink-0 bg-[var(--tm-bg-surface)]">
           {showHandle && <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />}

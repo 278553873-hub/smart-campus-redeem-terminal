@@ -4,7 +4,6 @@ import {
     ChevronDown,
     ChevronRight,
     Copy,
-    FolderArchive,
     LogIn,
     MessageCircle,
     Plus,
@@ -23,12 +22,11 @@ import {
     FileTextIcon,
     UserPlusIcon,
 } from '../components/Icons';
-import ClassSourceTrigger from '../components/ClassSourceTrigger';
 import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/ClassInviteFlow';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
-import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileFloatingImageButton from '../components/ui/MobileFloatingImageButton';
+import MobileSlidingSegmentedControl from '../components/ui/MobileSlidingSegmentedControl';
 import { ASSETS } from '../assets/images';
 import {
     canManagePersonalClasses,
@@ -46,9 +44,6 @@ interface ClassListViewProps {
     currentSpace: TeacherSpaceOption;
     classMembershipById: Record<string, TeacherClassMembership>;
     addDemoTopBreathingSpace?: boolean;
-    showClassSourceSwitcher: boolean;
-    isSpaceSheetOpen: boolean;
-    onOpenClassSourceSwitcher: () => void;
     onCreateClass: () => void;
     onJoinClass: () => void;
     onSelectClass: (classId: string) => void;
@@ -58,7 +53,6 @@ interface ClassListViewProps {
     onViewLeaderboard: () => void;
     onViewRewardVerification: (classId: string) => void;
     onBatchEditStudents: (classId: string) => void;
-    onBatchArchiveStudents: (classId: string) => void;
     onViewFaceUpdate: (classId: string) => void;
     onViewBankPassword: (classId: string) => void;
     onViewHomeworkEntry: (classId: string) => void;
@@ -99,9 +93,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     currentSpace,
     classMembershipById,
     addDemoTopBreathingSpace = false,
-    showClassSourceSwitcher,
-    isSpaceSheetOpen,
-    onOpenClassSourceSwitcher,
     onCreateClass,
     onJoinClass,
     onSelectClass,
@@ -111,7 +102,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onViewLeaderboard,
     onViewRewardVerification,
     onBatchEditStudents,
-    onBatchArchiveStudents,
     onViewFaceUpdate,
     onViewBankPassword,
     onViewHomeworkEntry,
@@ -249,18 +239,15 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     tone: 'secondary' as const,
                     onClick: () => runClassAction(onViewBankPassword),
                 },
-                ...(isSchoolSpace ? [{
-                    label: '批量留档',
-                    icon: FolderArchive,
-                    tone: 'positive' as const,
-                    onClick: () => runClassAction(onBatchArchiveStudents),
-                }] : [])] : []),
-                ...(activeActionPolicy.canMaintainClass ? [{
-                    label: '离校学生管理',
-                    icon: UsersIcon,
-                    tone: 'neutral' as const,
-                    onClick: () => runClassAction(setLeftStudentClassId),
-                }] : []),
+                ] : []),
+                ...(activeActionPolicy.canMaintainClass ? [
+                    {
+                        label: '离校学生管理',
+                        icon: UsersIcon,
+                        tone: 'neutral' as const,
+                        onClick: () => runClassAction(setLeftStudentClassId),
+                    },
+                ] : []),
             ],
         } : null,
         activeActionPolicy.canInviteTeacher || activeActionPolicy.canInviteParent ? {
@@ -399,33 +386,31 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             <div className={`relative z-10 h-full space-y-4 overflow-y-auto px-4 pb-[calc(var(--tm-floating-image-button-height)+var(--teacher-tabbar-height,66px)+var(--teacher-tabbar-bottom,16px)+var(--tm-space-3))] no-scrollbar ${addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'}`}>
                 <section className={`${isSchoolSpace ? 'space-y-3' : 'space-y-0'} px-1`}>
                     <div className="flex h-[var(--mini-program-title-bar-height,44px)] items-center [padding-right:var(--mini-program-capsule-right-inset,0px)]">
-                        {showClassSourceSwitcher ? (
-                            <ClassSourceTrigger
-                                name={currentSpace.title}
-                                type={currentSpace.type}
-                                expanded={isSpaceSheetOpen}
-                                onClick={onOpenClassSourceSwitcher}
-                                variant="quiet"
-                                className="min-w-0 flex-1"
+                        {isSchoolSpace ? (
+                            <MobileSlidingSegmentedControl
+                                value={activeListTab}
+                                items={[
+                                    {
+                                        value: 'class',
+                                        label: '班级',
+                                        indicatorClassName: 'bg-[var(--tm-record-student-soft)]',
+                                        activeTextClassName: 'text-[var(--tm-record-student-text)]',
+                                    },
+                                    {
+                                        value: 'team',
+                                        label: '社团与团队',
+                                        indicatorClassName: 'bg-[var(--tm-record-class-soft)]',
+                                        activeTextClassName: 'text-[var(--tm-record-class-text)]',
+                                    },
+                                ]}
+                                onChange={onListTabChange}
+                                ariaLabel="班级内容分类"
+                                className="w-[192px]"
                             />
                         ) : (
-                            <h1 className="truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{currentSpace.title}</h1>
+                            <h1 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">班级</h1>
                         )}
-
                     </div>
-
-                    {isSchoolSpace && (
-                        <CompactSegmentedControl
-                            value={activeListTab}
-                            items={[
-                                { value: 'class', label: '班级' },
-                                { value: 'team', label: '社团与团队' },
-                            ]}
-                            onChange={onListTabChange}
-                            ariaLabel="班级内容分类"
-                            fullWidth
-                        />
-                    )}
 
                     {activeListTab === 'class' && canManagePersonal && classes.length > 0 && (
                         <div className="flex min-h-11 items-center justify-between gap-3">

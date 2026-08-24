@@ -80,7 +80,10 @@ assert.doesNotMatch(source, /aria-label="任课教师"/, '批量识别不应要�
 
 assert.match(recognitionSource, /raw\.assignments\.slice\(0, 6\)/, '一张作业表最多生成6次作业。');
 assert.match(recognitionSource, /fileIndex === 0 && studentIndex === 3/, '演示数据应同时覆盖待核对和无异常图片。');
-assert.match(recognitionSource, /空白必须返回空字符串，绝不能把空白判断为X/, '识别提示必须明确空白规则。');
+assert.match(recognitionSource, /使用光学标记识别判断被标记的位置/, '识别服务应按固定等级位置进行光学标记识别。');
+assert.match(recognitionSource, /打勾、划线或涂抹/, '识别服务应支持老师常见的纸面标记方式。');
+assert.match(recognitionSource, /未标记必须返回空字符串，绝不能把空白判断为未交/, '识别提示必须明确空白规则。');
+assert.match(recognitionSource, /优=A、良=B、合格=C、待合格=D、未交=X/, '光学标记结果应继续映射到统一业务值。');
 assert.match(recognitionSource, /getHomeworkStatusFromCode\(rawResult\.code\)/, '等级码应统一映射业务值。');
 assert.match(recognitionSource, /classSequence/, '通用模板应通过纸面学号识别学生行。');
 assert.match(recognitionSource, /rosterBySequence/, '识别结果应以纸面学号映射现有班级学生。');

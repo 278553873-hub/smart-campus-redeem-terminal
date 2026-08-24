@@ -5,16 +5,31 @@ const classListSource = fs.readFileSync(new URL('./ClassListView.tsx', import.me
 const phoneMockupSource = fs.readFileSync(new URL('../../components/PhoneMockup.tsx', import.meta.url), 'utf8');
 const guidelineSource = fs.readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', import.meta.url), 'utf8');
 const floatingImageButtonSource = fs.readFileSync(new URL('../components/ui/MobileFloatingImageButton.tsx', import.meta.url), 'utf8');
+const slidingSegmentedSource = fs.readFileSync(new URL('../components/ui/MobileSlidingSegmentedControl.tsx', import.meta.url), 'utf8');
 const teacherMobileTokensSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 
 assert.ok(
   classListSource.includes('[padding-right:var(--mini-program-capsule-right-inset,0px)]'),
-  '顶部来源行必须消费微信胶囊右侧安全区。',
+  '顶部页签行必须消费微信胶囊右侧安全区。',
 );
 assert.ok(
   classListSource.includes('h-[var(--mini-program-title-bar-height,44px)] items-center [padding-right:var(--mini-program-capsule-right-inset,0px)]'),
-  '顶部来源行必须使用微信标题栏高度，并让来源切换上下居中。',
+  '顶部页签行必须使用微信标题栏高度，并让页签上下居中。',
 );
+assert.ok(!classListSource.includes('ClassSourceTrigger'), '班级页顶部不得保留来源切换。');
+const titleBarStart = classListSource.indexOf('h-[var(--mini-program-title-bar-height,44px)] items-center');
+const titleBarEnd = classListSource.indexOf("activeListTab === 'class' && canManagePersonal");
+const titleBarSource = classListSource.slice(titleBarStart, titleBarEnd);
+assert.ok(titleBarStart >= 0 && titleBarEnd > titleBarStart, '应能识别班级页标题栏。');
+assert.ok(titleBarSource.includes('<MobileSlidingSegmentedControl'), '班级与社团页签必须位于标题栏，并使用公共滑块控件。');
+assert.ok(titleBarSource.includes('ariaLabel="班级内容分类"'), '班级与社团页签必须保留明确的无障碍名称。');
+assert.ok(titleBarSource.includes('w-[192px]'), '顶部页签应在接近记录对象切换尺寸的同时，为“社团与团队”保留舒适宽度。');
+assert.ok(slidingSegmentedSource.includes('bg-[var(--tm-bg-surface-glass)]'), '顶部页签底轨应沿用记录对象切换的轻玻璃样式，不得铺灰色底。');
+assert.ok(titleBarSource.includes('bg-[var(--tm-record-student-soft)]'), '班级选中态应使用记录页同源的暖色弱底。');
+assert.ok(titleBarSource.includes('bg-[var(--tm-record-class-soft)]'), '社团与团队选中态应使用记录页同源的青色弱底。');
+assert.ok(!titleBarSource.includes('--tm-selection-segment-track-bg'), '顶部页签不得继续使用通用灰色分段控件底轨。');
+assert.ok(slidingSegmentedSource.includes('transition-[transform,background-color] [transition-duration:220ms]'), '选中滑块必须通过可中断的位移与颜色过渡完成切换。');
+assert.ok(slidingSegmentedSource.includes('motion-reduce:transition-none'), '选中滑块必须尊重系统减少动态效果设置。');
 assert.ok(!classListSource.includes('aria-label="打开班级操作"'), '标题栏不得继续放置添加班级按钮。');
 assert.ok(classListSource.includes('班级管理'), '个人来源应在标题栏下方提供语义明确的班级管理入口。');
 assert.ok(!classListSource.includes('<MobileFloatingCreateButton'), '班级页不得使用语义不完整的悬浮加号。');
@@ -49,7 +64,7 @@ assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-width'
 assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-height': '72px'"), '排行榜悬浮入口高度应缩放为上一版的约 80%。');
 assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-circle-size': '68px'"), '排行榜图标主体应使用圆形组件尺寸 Token。');
 assert.ok(!classListSource.includes('TrophyIcon'), '班级列表不应继续使用奖杯线性图标。');
-const toolbarStart = classListSource.indexOf('{isSchoolSpace && (');
+const toolbarStart = classListSource.indexOf("{activeListTab === 'class' && isSchoolSpace && (");
 const toolbarEnd = classListSource.indexOf('{visibleClasses.map(renderClassCard)}');
 const toolbarSource = classListSource.slice(toolbarStart, toolbarEnd);
 assert.ok(toolbarStart >= 0 && toolbarEnd > toolbarStart, '应能识别学校版筛选工具行。');

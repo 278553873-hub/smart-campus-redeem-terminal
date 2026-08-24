@@ -1,32 +1,36 @@
 import React from 'react';
-import type { StudentPerformanceSummary } from '../../domain/studentPerformance';
-import { getStudentPerformanceLevel } from '../../domain/studentPerformance';
-import {
-  StudentPerformanceCounts,
-  StudentPerformanceLevelIcons,
-} from '../student-performance/StudentPerformanceMeta';
+import type { GroupPerformanceSummary } from '../../domain/groupPerformance';
+import { StudentPerformanceCounts } from '../student-performance/StudentPerformanceMeta';
 
 interface GroupPerformanceMetaProps {
-  summary: StudentPerformanceSummary;
-  layout?: 'stacked' | 'inline';
+  summary: GroupPerformanceSummary;
   className?: string;
+  orientation?: 'horizontal' | 'vertical';
+  showPraiseCount?: boolean;
+  showCriticismCount?: boolean;
 }
 
 const GroupPerformanceMeta: React.FC<GroupPerformanceMetaProps> = ({
   summary,
-  layout = 'stacked',
   className = '',
+  orientation = 'horizontal',
+  showPraiseCount = true,
+  showCriticismCount = true,
 }) => {
-  const level = getStudentPerformanceLevel(summary.netScore);
+  const visibleCountLabel = [
+    showPraiseCount ? `被表扬${summary.praiseCount}次` : '',
+    showCriticismCount ? `被批评${summary.criticismCount}次` : '',
+  ].filter(Boolean).join('，');
 
   return (
-    <span
-      className={`${layout === 'inline' ? 'flex items-center gap-2' : 'flex flex-col items-center gap-1'} ${className}`}
-      aria-label={`小组等级，正向评价${summary.praiseCount}次，负向评价${summary.criticismCount}次`}
-    >
-      <StudentPerformanceLevelIcons level={level} />
-      <StudentPerformanceCounts summary={summary} />
-    </span>
+    <StudentPerformanceCounts
+      summary={summary}
+      ariaLabel={`小组${visibleCountLabel}`}
+      className={className}
+      orientation={orientation}
+      showPraiseCount={showPraiseCount}
+      showCriticismCount={showCriticismCount}
+    />
   );
 };
 

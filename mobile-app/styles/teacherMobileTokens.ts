@@ -111,6 +111,21 @@ export const teacherBrandSemantic = {
   chartHover: 'rgba(224, 39, 39, 0.06)',
 } as const;
 
+export const teacherActionSemantic = {
+  iconNeutral: teacherBrandSemantic.textSecondary,
+  iconBrand: teacherBrandSemantic.primary,
+  iconDanger: teacherBrandSemantic.negative,
+} as const;
+
+// “我的”页方案八：品牌红与清亮蓝从两侧低饱和扩散，玉石青只保留为顶部轻提示。
+export const teacherMePageGradientSemantic = {
+  base: teacherBrandPalette.red[50],
+  primaryField: 'rgba(224, 39, 39, 0.16)',
+  skyField: 'rgba(67, 176, 246, 0.14)',
+  jadeHint: 'rgba(39, 135, 121, 0.04)',
+  tailField: 'rgba(67, 176, 246, 0.05)',
+} as const;
+
 // 报表图形使用清亮填充色；深色只服务于数值、标签与必要边界。
 export const teacherReportChartPalette = {
   sky: { soft: '#F4FAFF', fill: '#43B0F6', text: '#176B9B' },
@@ -409,6 +424,9 @@ export const teacherBrandCssVariables = {
   '--tm-student-praise-soft': teacherStudentLevelSemantic.praiseSoft,
   '--tm-student-criticism': teacherStudentLevelSemantic.criticism,
   '--tm-student-criticism-soft': teacherStudentLevelSemantic.criticismSoft,
+  '--tm-student-card-height-full': '120px',
+  '--tm-student-card-height-compact': '104px',
+  '--tm-student-card-height-minimal': '88px',
   '--tm-archive-theme-clean-bg': teacherArchiveAppearanceSemantic.clean.background,
   '--tm-archive-theme-clean-swatch': teacherArchiveAppearanceSemantic.clean.swatch,
   '--tm-archive-theme-clean-accent': teacherArchiveAppearanceSemantic.clean.accent,
@@ -445,6 +463,11 @@ export const teacherBrandCssVariables = {
   '--tm-bg-surface-muted': teacherBrandSemantic.surfaceMuted,
   '--tm-bg-page-glass': teacherBrandSemantic.pageGlass,
   '--tm-bg-surface-glass': teacherBrandSemantic.surfaceGlass,
+  '--tm-me-gradient-base': teacherMePageGradientSemantic.base,
+  '--tm-me-gradient-primary-field': teacherMePageGradientSemantic.primaryField,
+  '--tm-me-gradient-sky-field': teacherMePageGradientSemantic.skyField,
+  '--tm-me-gradient-jade-hint': teacherMePageGradientSemantic.jadeHint,
+  '--tm-me-gradient-tail-field': teacherMePageGradientSemantic.tailField,
   // 无渐变分层页面：状态栏与标题栏纯白，内容区浅灰，用于承托白色卡片。
   '--tm-page-plain-header-bg': teacherBrandSemantic.surface,
   '--tm-page-plain-content-bg': teacherBrandSemantic.surfaceSoft,
@@ -453,6 +476,9 @@ export const teacherBrandCssVariables = {
   '--tm-text-tertiary': teacherBrandSemantic.textTertiary,
   '--tm-text-disabled': teacherBrandSemantic.textDisabled,
   '--tm-text-inverse': teacherBrandSemantic.surface,
+  '--tm-action-icon-neutral': teacherActionSemantic.iconNeutral,
+  '--tm-action-icon-brand': teacherActionSemantic.iconBrand,
+  '--tm-action-icon-danger': teacherActionSemantic.iconDanger,
   '--tm-nav-item-default': teacherBrandSemantic.textSecondary,
   '--tm-border-subtle': teacherBrandSemantic.border,
   '--tm-border-control': teacherBrandSemantic.borderControl,
@@ -541,13 +567,14 @@ export const teacherBrandCssVariables = {
   '--tm-shadow-card': '0 12px 28px -20px rgba(64, 60, 58, 0.12)',
   '--tm-shadow-card-raised': '0 14px 32px -20px rgba(64, 60, 58, 0.16)',
   '--tm-shadow-card-on-white': '0 1px 4px rgba(64, 60, 58, 0.10), 0 12px 28px -14px rgba(64, 60, 58, 0.16)',
+  '--tm-shadow-card-ambient': '0 1px 3px rgba(64, 60, 58, 0.04), 0 8px 20px -14px rgba(64, 60, 58, 0.08)',
   '--tm-shadow-control': '0 6px 16px -12px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-icon': '0 10px 22px -16px rgba(224, 39, 39, 0.24)',
   '--tm-shadow-avatar': '0 18px 28px -18px rgba(224, 39, 39, 0.24)',
   '--tm-shadow-floating': '0 -10px 24px -12px rgba(64, 60, 58, 0.18), 0 10px 28px -12px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-floating-raised': '0 14px 32px -12px var(--tm-shadow-brand-color), 0 8px 20px -10px var(--tm-shadow-neutral-color)',
   '--tm-floating-image-button-shadow': '0 3px 10px rgba(64, 60, 58, 0.20), 0 14px 26px -8px rgba(28, 128, 118, 0.28)',
-  '--tm-shadow-navigation': '0 -10px 24px -12px rgba(64, 60, 58, 0.18)',
+  '--tm-shadow-navigation': '0 -6px 18px -14px rgba(64, 60, 58, 0.06)',
   '--tm-shadow-sheet': '0 -20px 52px -34px rgba(64, 60, 58, 0.18)',
   '--tm-glow-primary': 'rgba(224, 39, 39, 0.13)',
   '--tm-glow-secondary': 'rgba(247, 92, 3, 0.11)',
@@ -611,6 +638,8 @@ export const teacherBrandCssVariables = {
   '--tm-sheet-footer-divider-width': '0px',
   '--tm-size-touch': '44px',
   '--tm-size-floating-action': '52px',
+  '--tm-recount-bottom-action-height': '52px',
+  '--tm-recount-bottom-action-max-width': '350px',
   '--tm-floating-image-button-width': '68px',
   '--tm-floating-image-button-height': '72px',
   '--tm-floating-image-button-circle-size': '68px',
@@ -758,6 +787,7 @@ export const phoneShadow = {
   card: '[box-shadow:var(--tm-shadow-card)]',
   raised: '[box-shadow:var(--tm-shadow-card-raised)]',
   onWhite: '[box-shadow:var(--tm-shadow-card-on-white)]',
+  ambient: '[box-shadow:var(--tm-shadow-card-ambient)]',
   floating: '[box-shadow:var(--tm-shadow-floating)]',
   floatingRaised: '[box-shadow:var(--tm-shadow-floating-raised)]',
   modal: '[box-shadow:var(--tm-shadow-sheet)]',

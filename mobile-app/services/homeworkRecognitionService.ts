@@ -70,10 +70,10 @@ const recognizeWithAi = async <T>(file: File, prompt: string): Promise<T> => {
   return parseJsonResponse<T>(response.text);
 };
 
-const homeworkPrompt = `识别这张通用作业登记表。表格包含一个完整班级、左右两个连续学号区和最多6次作业。等级码只有A、B、C、D、X，空白必须返回空字符串，绝不能把空白判断为X。
+const homeworkPrompt = `识别这张通用作业登记表。表格包含一个完整班级、左右两个连续学号区和最多6次作业。每次作业按优、良、合格、待合格、未交分成5个固定位置，老师会在其中一个格内打勾、划线或涂抹。请使用光学标记识别判断被标记的位置，不要识别或推测手写字母。未标记必须返回空字符串，绝不能把空白判断为未交；同一次作业出现多格标记、擦改痕迹或无法确定时降低confidence。
 严格返回 JSON：
 {"className":"2025级1班","subject":"学科","qualityIssues":[],"assignments":[{"date":"YYYY-MM-DD","title":"作业主题","results":[{"classSequence":"纸面学号，如01","code":"A/B/C/D/X或空字符串","confidence":0.99}]}]}
-学号必须按纸面印刷值返回，不识别或推测姓名、完整学生编号；只输出图片中真实存在的作业列，日期和主题不得推测。`;
+返回值按标记位置映射：优=A、良=B、合格=C、待合格=D、未交=X。学号必须按纸面印刷值返回，不识别或推测姓名、完整学生编号；只输出图片中真实存在的作业列，日期和主题不得推测。`;
 
 const buildMockHomeworkRecognition = (
   file: File,

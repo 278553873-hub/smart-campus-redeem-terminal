@@ -71,7 +71,7 @@ requireText(appSource, 'const teacherProfile = teacherProfilesBySpace[activeTeac
 requireText(appSource, '[activeTeacherSpace.id]: nextProfile', '编辑教师资料时只应更新当前来源。');
 requireText(appSource, "'school-qinghe': {", '普通任课老师学校应有独立教师资料。');
 requireText(appSource, "teachingAssignments: createTeachingAssignments(['c_2025_3', 'c_2025_6'], '体育')", '普通任课老师资料应包含任教班级和科目。');
-requireText(appSource, "{(currentView === 'me' || currentView === 'class_list') && showTeacherSpaceSheet && (", '班级来源抽屉应由 App 在班级页和我的页的全局层级复用。');
+requireText(appSource, "{currentView === 'me' && showTeacherSpaceSheet && (", '班级来源抽屉应只由“我的”页全局层级挂载。');
 requireText(appSource, '<ClassSourceSheet', 'App 应渲染班级来源抽屉。');
 
 const navIndex = appSource.indexOf('Teacher mobile bottom navigation');

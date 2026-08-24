@@ -5,7 +5,7 @@
 | 资源路径 | 页面用途 | 存放位置 | 类型 |
 | --- | --- | --- | --- |
 | `archive-restore.svg` | 恢复归档 | 本页面 | Lucide SVG |
-| `../../00-公共图标/archive.svg` | 归档 | 公共图标 | Lucide SVG |
+| `archive.svg` | 归档 | 本页面 | Lucide SVG |
 | `../../00-公共图标/arrow-left.svg` | 返回 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/arrow-up-down.svg` | 排序 | 公共图标 | Lucide SVG |
 | `../../00-公共图标/calendar-days.svg` | 日期选择 | 公共图标 | Lucide SVG |

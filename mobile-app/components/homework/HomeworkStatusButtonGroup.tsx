@@ -10,6 +10,7 @@ interface HomeworkStatusButtonGroupProps {
   onChange: (status: HomeworkStatus) => void;
   ariaLabel: string;
   showAllTones?: boolean;
+  size?: 'default' | 'compact';
 }
 
 const statusTone: Record<HomeworkStatus, { soft: string; selected: string }> = {
@@ -40,6 +41,7 @@ const HomeworkStatusButtonGroup: React.FC<HomeworkStatusButtonGroupProps> = ({
   onChange,
   ariaLabel,
   showAllTones = false,
+  size = 'default',
 }) => (
   <div className="grid grid-cols-5 gap-[var(--tm-space-1)]" role="group" aria-label={ariaLabel}>
     {HOMEWORK_STATUS_VALUES.map(status => {
@@ -53,9 +55,13 @@ const HomeworkStatusButtonGroup: React.FC<HomeworkStatusButtonGroupProps> = ({
           type="button"
           aria-pressed={selected}
           onClick={() => onChange(status)}
-          className={`min-h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control)] px-0.5 text-[length:var(--tm-font-size-badge)] font-semibold transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${tone}`}
+          className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center justify-center p-0 text-[length:var(--tm-font-size-badge)] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${size === 'compact' ? '' : `rounded-[var(--tm-radius-control)] transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] ${tone}`}`}
         >
-          {HOMEWORK_STATUS_META[status].label}
+          {size === 'compact' ? (
+            <span className={`flex h-9 w-full items-center justify-center rounded-[8px] px-0.5 transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] ${tone}`}>
+              {HOMEWORK_STATUS_META[status].label}
+            </span>
+          ) : HOMEWORK_STATUS_META[status].label}
         </button>
       );
     })}

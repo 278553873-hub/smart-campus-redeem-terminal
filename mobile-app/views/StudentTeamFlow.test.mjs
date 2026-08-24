@@ -13,8 +13,13 @@ const requireText = (source, needle, message) => {
   assert.ok(source.includes(needle), message);
 };
 
-requireText(classListSource, "{ value: 'class', label: '班级' }", '班级页必须保留老师可理解的“班级”页签。');
-requireText(classListSource, "{ value: 'team', label: '社团与团队' }", '班级页必须提供“社团与团队”页签。');
+requireText(classListSource, "value: 'class'", '班级页必须保留老师可理解的“班级”页签。');
+requireText(classListSource, "label: '班级'", '班级页签必须展示“班级”文案。');
+requireText(classListSource, "value: 'team'", '班级页必须提供“社团与团队”页签。');
+requireText(classListSource, "label: '社团与团队'", '团队页签必须展示“社团与团队”文案。');
+requireText(classListSource, '<MobileSlidingSegmentedControl', '班级与社团页签必须使用公共滑块控件。');
+assert.ok(!classListSource.includes('ClassSourceTrigger'), '班级页顶部不得继续提供来源切换。');
+requireText(classListSource, 'h-[var(--mini-program-title-bar-height,44px)] items-center [padding-right:var(--mini-program-capsule-right-inset,0px)]', '班级与社团页签必须和微信原生胶囊处于同一标题栏。');
 requireText(classListSource, "activeListTab: 'class' | 'team';", '班级页签必须由导航层持有，返回团队列表时不得重置。');
 requireText(appSource, "const [classListTab, setClassListTab]", 'App 必须保存班级页签状态。');
 requireText(classListSource, "activeListTab === 'team' && studentTeams.map(renderStudentTeamCard)", '社团与团队页签必须展示团队列表。');

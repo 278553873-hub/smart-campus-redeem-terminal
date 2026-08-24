@@ -7,6 +7,7 @@ const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8'
 const keyboardSource = fs.readFileSync(new URL('../components/VirtualKeyboard.tsx', import.meta.url), 'utf8');
 const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const spaceAccessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
+const slidingSegmentedSource = fs.readFileSync(new URL('../components/ui/MobileSlidingSegmentedControl.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -18,9 +19,11 @@ const forbidText = (source, needle, message) => {
 
 requireText(recordSource, 'canRecordClass?: boolean;', '记录页应接收当前来源的班级记录权限。');
 requireText(recordSource, "${canRecordClass ? '' : '[padding-right:var(--mini-program-capsule-right-inset,0px)]'}", '单一记录对象的指标行必须消费微信胶囊右侧安全区。');
-requireText(recordSource, 'h-[var(--mini-program-title-bar-height,44px)] w-[176px]', '记录对象切换行应与微信标题栏等高。');
-requireText(recordSource, 'h-[var(--tm-record-scope-visual-height)]', '记录对象切换胶囊应通过独立变量限制可见高度。');
-requireText(recordSource, 'h-[var(--tm-size-touch)] flex-1', '记录对象按钮应在紧凑视觉胶囊内保留 44 像素触控高度。');
+requireText(recordSource, 'className="w-[192px]"', '记录对象切换应与班级页顶部切换统一为 192 像素宽度。');
+requireText(recordSource, '<MobileSlidingSegmentedControl', '记录对象切换必须使用公共滑块控件。');
+requireText(slidingSegmentedSource, 'h-[var(--mini-program-title-bar-height,44px)]', '记录对象切换行应与微信标题栏等高。');
+requireText(slidingSegmentedSource, 'h-[var(--tm-record-scope-visual-height)]', '记录对象切换胶囊应通过独立变量限制可见高度。');
+requireText(slidingSegmentedSource, 'h-[var(--tm-size-touch)] min-w-0 flex-1', '记录对象按钮应在紧凑视觉胶囊内保留 44 像素触控高度。');
 requireText(recordSource, '<div className={`relative flex h-[var(--mini-program-title-bar-height,44px)] items-center', '指标和 AI 生成声明应共用独立标题栏行，双对象时位于切换胶囊下方。');
 requireText(tokenSource, "'--tm-record-scope-visual-height': '36px'", '记录对象切换胶囊可见高度应为 36 像素，低于 44 像素微信标题栏。');
 requireText(recordSource, '<div className="px-5 pt-0">', '记录页工具行应取消额外顶部留白，与微信胶囊视觉中心对齐。');
@@ -38,7 +41,7 @@ requireText(recordSource, 'px-1 text-[14px] font-semibold text-[var(--tm-text-se
 requireText(recordSource, '<ChevronRightIcon className="h-3.5 w-3.5" />', '指标入口箭头应与主文字同色，不降低透明度。');
 forbidText(recordSource, 'text-[13px] font-medium text-[var(--tm-text-secondary)]', '指标入口不得回退为 13 像素中等字重。');
 forbidText(recordSource, 'px-1 text-[14px] font-semibold text-[var(--tm-text-primary)]', '指标入口不得使用主文字色与底部高频输入控件争抢层级。');
-requireText(recordSource, 'bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-control)]', '分段控件应使用无边框轻表面和克制阴影。');
+requireText(slidingSegmentedSource, 'bg-[var(--tm-bg-surface-glass)] [box-shadow:var(--tm-shadow-control)]', '分段控件应使用无边框轻表面和克制阴影。');
 forbidText(recordSource, 'ring-1 ring-inset ring-[var(--tm-border-subtle)]', '无边框圆角体系不应为记录对象分段控件单独增加描边。');
 forbidText(recordSource, 'bg-[var(--tm-bg-surface-muted)] p-1', '记录对象未选中态不应使用类似禁用状态的灰色底板。');
 forbidText(recordSource, "canRecordClass ? 'grid-cols-[176px_minmax(0,1fr)]' : 'grid-cols-1'", '记录对象切换与指标不应继续使用同一行网格布局。');
@@ -54,7 +57,7 @@ if ((recordSource.match(/内容由AI生成/g) ?? []).length !== 1) {
 forbidText(recordSource, '<div className="pr-[116px]">', '顶部切换不应再通过右侧留白偏移。');
 requireText(appSource, 'canRecordClass={canRecordClassForActiveSpace}', '应将当前来源的班级记录权限传入记录页。');
 forbidText(appSource, "currentView === 'home_log' || currentView === 'class_list') && showTeacherSpaceSheet", '记录页不应再挂载班级来源选择抽屉。');
-requireText(appSource, "(currentView === 'me' || currentView === 'class_list') && showTeacherSpaceSheet", '班级页与我的页应继续共用全局班级来源抽屉。');
+requireText(appSource, "currentView === 'me' && showTeacherSpaceSheet", '班级来源抽屉应只保留在“我的”页。');
 requireText(appSource, "activeLogTab === 'class' && !canTeacherSpaceRecordClass(nextSpace)", '切换到不支持班级记录的来源时应回到记录学生。');
 requireText(spaceAccessSource, "space.type === 'school' && space.classRecordEnabled === true", '只有已开通能力的学校来源可以记录班级。');
 
