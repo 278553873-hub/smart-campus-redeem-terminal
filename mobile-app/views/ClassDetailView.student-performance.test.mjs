@@ -96,7 +96,9 @@ for (const iconName of ['sprout', 'star', 'moon', 'sun', 'crown']) {
 if (!appSource.includes('summarizeStudentPerformance(records)')) {
   throw new Error('应用数据层应把学生评价记录汇总为净得分和奖惩次数。');
 }
-if (!appSource.includes('const hasSelectionTarget = !isMultiSelectMode || targetIds.length > 0;') || !appSource.includes('disabled={!hasSelectionTarget}')) {
+if (!appSource.includes('const selectedTargetCount = isGroupSelectionTarget ? classGroupSelectionState.count : targetIds.length;')
+  || !appSource.includes('const hasSelectionTarget = !isMultiSelectMode || selectedTargetCount > 0;')
+  || !appSource.includes('disabled={!hasSelectionTarget}')) {
   throw new Error('多选未选中学生时应禁用底部录入，避免误录全班。');
 }
 

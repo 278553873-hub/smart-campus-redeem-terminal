@@ -379,9 +379,10 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
 interface MobileAppProps {
     showPhoneShell?: boolean;
     gradientPreview?: TeacherGradientPreviewConfig;
+    screenRef?: React.Ref<HTMLDivElement>;
 }
 
-const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview }) => {
+const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview, screenRef }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     // Default view is now the Log (Stream)
     const [currentView, setCurrentView] = useState<ViewState>('home_log');
@@ -555,6 +556,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
     // Multi-Selection State for Class Detail
     const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
     const [multiSelectIds, setMultiSelectIds] = useState<Set<string>>(new Set());
+    const [classGroupSelectionState, setClassGroupSelectionState] = useState({ active: false, count: 0 });
 
     const [activeLogTab, setActiveLogTab] = useState<'student' | 'class'>('class');
     const [recordGuidePending, setRecordGuidePending] = useState<Record<'student' | 'class', boolean>>({
@@ -1069,6 +1071,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
         // Reset selection mode after starting record
         setIsMultiSelectMode(false);
         setMultiSelectIds(new Set());
+        setClassGroupSelectionState({ active: false, count: 0 });
     };
 
     const handleAnalysisComplete = (result: any) => {
@@ -1247,6 +1250,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
         if (isMultiSelectMode) {
             setIsMultiSelectMode(false);
             setMultiSelectIds(new Set());
+            setClassGroupSelectionState({ active: false, count: 0 });
         } else {
             setIsMultiSelectMode(true);
         }
@@ -1348,7 +1352,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
     // Shared record input: a quiet white action surface above the bottom navigation.
     const GlobalInputBar = () => {
         const targetIds: string[] = isMultiSelectMode ? Array.from(multiSelectIds) : [];
-        const hasSelectionTarget = !isMultiSelectMode || targetIds.length > 0;
+        const isGroupSelectionTarget = isMultiSelectMode && classGroupSelectionState.active;
+        const selectedTargetCount = isGroupSelectionTarget ? classGroupSelectionState.count : targetIds.length;
+        const selectedTargetUnit = isGroupSelectionTarget ? '个小组' : '人';
+        const emptySelectionPrompt = isGroupSelectionTarget ? '请选择小组' : '请选择学生';
+        const hasSelectionTarget = !isMultiSelectMode || selectedTargetCount > 0;
 
         if (showKeyboard) {
             return (
@@ -1381,7 +1389,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
                     <button
                         onClick={() => handleStartRecord(targetIds, 'camera')}
                         disabled={!hasSelectionTarget}
-                        aria-label={hasSelectionTarget ? '拍照记录' : '请先选择学生'}
+                        aria-label={hasSelectionTarget ? '拍照记录' : emptySelectionPrompt}
                         className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-inner)] text-[var(--tm-text-primary)] transition active:scale-95 active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)] disabled:cursor-not-allowed disabled:opacity-35 disabled:active:scale-100"
                     >
                         <CameraIcon className="h-[22px] w-[22px]" />
@@ -1392,7 +1400,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
                         onPointerDown={(event) => beginVoiceRecording(event, targetIds)}
                         onContextMenu={(event) => event.preventDefault()}
                         disabled={!hasSelectionTarget}
-                        aria-label={!hasSelectionTarget ? '请先选择学生' : voicePressState === 'idle' ? '按住说话' : voicePressState === 'canceling' ? '松开取消' : '正在录音，松开发送'}
+                        aria-label={!hasSelectionTarget ? emptySelectionPrompt : voicePressState === 'idle' ? isMultiSelectMode ? `按住说话，已选${selectedTargetCount}${selectedTargetUnit}` : '按住说话' : voicePressState === 'canceling' ? '松开取消' : '正在录音，松开发送'}
                         className={`flex h-11 min-w-0 touch-none select-none items-center justify-center rounded-[var(--tm-radius-inner)] px-4 text-[15px] font-semibold transition ${voicePressState === 'idle'
                             ? 'text-[var(--tm-text-primary)] active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] disabled:cursor-not-allowed disabled:text-[var(--tm-text-disabled)] disabled:active:scale-100'
                             : voicePressState === 'canceling'
@@ -1401,16 +1409,16 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
                             }`}
                     >
                         <span>{!hasSelectionTarget
-                            ? '请选择学生'
+                            ? emptySelectionPrompt
                             : voicePressState === 'idle'
-                                ? isMultiSelectMode ? `按住说话 · ${targetIds.length}人` : '按住说话'
+                                ? isMultiSelectMode ? `按住说话 · ${selectedTargetCount}${selectedTargetUnit}` : '按住说话'
                                 : voicePressState === 'canceling' ? '松开取消' : '松开发送'}</span>
                     </button>
 
                     <button
                         onClick={() => setShowKeyboard(true)}
                         disabled={!hasSelectionTarget}
-                        aria-label={!hasSelectionTarget ? '请先选择学生' : isMultiSelectMode ? `已选${multiSelectIds.size}人，文字记录` : '文字记录'}
+                        aria-label={!hasSelectionTarget ? emptySelectionPrompt : isMultiSelectMode ? `已选${selectedTargetCount}${selectedTargetUnit}，文字记录` : '文字记录'}
                         className="relative flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-inner)] text-[var(--tm-text-primary)] transition active:scale-95 active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)] disabled:cursor-not-allowed disabled:opacity-35 disabled:active:scale-100"
                     >
                         <KeyboardIcon className="h-[22px] w-[22px]" />
@@ -1499,6 +1507,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
                 style={teacherBrandCssVariables as React.CSSProperties}
             >
                 <PhoneMockup
+                    screenRef={screenRef}
                     showDeviceFrame={showPhoneShell}
                     contentTopInsetMode="none"
                     screenBackground={gradientPreview
@@ -1523,6 +1532,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
             style={teacherBrandCssVariables as React.CSSProperties}
         >
             <PhoneMockup
+                screenRef={screenRef}
                 showDeviceFrame={showPhoneShell}
                 contentTopInsetMode={currentView === 'student_detail' ? 'none' : 'status-bar'}
                 screenBackground={getPhoneScreenBackground()}
@@ -1630,6 +1640,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview 
                                     onToggleSelectionMode={handleToggleMultiSelect}
                                     selectedIds={multiSelectIds}
                                     onSelectionChange={handleMultiSelectionChange}
+                                    onGroupSelectionStateChange={setClassGroupSelectionState}
                                     onBack={goBack}
                                     onGroupingEditorChange={setIsClassGroupingEditorOpen}
                                     performanceByStudentId={Object.fromEntries(

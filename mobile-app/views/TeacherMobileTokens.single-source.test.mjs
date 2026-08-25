@@ -109,14 +109,14 @@ assert.match(canonical, /'--tm-filter-shadow': 'none'/, '手机端筛选型下�
 assert.match(canonical, /'--tm-filter-focus-bg': 'transparent'/, '手机端筛选型下拉激活时必须保持透明。');
 assert.match(canonical, /'--tm-filter-focus-outline': 'none'/, '手机端筛选型下拉激活时必须取消浏览器轮廓。');
 const classListGradeSelect = classList.match(/<select[\s\S]*?aria-label="按年级筛选班级"[\s\S]*?<\/select>/)?.[0] ?? '';
-assert.match(classListGradeSelect, /bg-\[var\(--tm-bg-surface\)\]/, '班级页年级筛选默认状态必须使用白色表面。');
-assert.match(classListGradeSelect, /\[box-shadow:var\(--tm-shadow-control\)\]/, '班级页年级筛选必须使用统一控件阴影。');
-assert.match(classListGradeSelect, /focus-visible:bg-\[var\(--tm-bg-surface\)\]/, '班级页年级筛选聚焦时必须保持白底。');
+assert.match(classListGradeSelect, /bg-\[var\(--tm-filter-bg\)\]/, '班级页年级筛选默认状态必须使用透明筛选表面。');
+assert.match(classListGradeSelect, /\[box-shadow:var\(--tm-filter-shadow\)\]/, '班级页年级筛选必须使用无阴影筛选 Token。');
+assert.match(classListGradeSelect, /focus-visible:bg-\[var\(--tm-filter-focus-bg\)\]/, '班级页年级筛选聚焦时必须保持透明。');
 assert.doesNotMatch(classList, /ClassSourceTrigger/, '班级页不得继续提供来源切换。');
 assert.match(classList, /ariaLabel="班级内容分类"/, '班级与社团页签必须保留统一的页签语义。');
 assert.match(slidingSegmented, /--tm-bg-surface-glass/, '班级与社团页签必须使用记录页同源的轻玻璃底轨。');
 assert.doesNotMatch(classList, /--tm-selection-segment-track-bg/, '班级与社团页签不得继续使用通用灰色底轨。');
-assert.match(guidelines, /班级页学校版年级筛选是专项例外/, '教师手机端规范应明确班级页年级筛选的白底例外。');
+assert.match(guidelines, /班级页学校版年级筛选同样遵循该规则/, '教师手机端规范应明确班级页年级筛选沿用透明筛选规则。');
 
 for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
   const source = fs.readFileSync(sourcePath, 'utf8');

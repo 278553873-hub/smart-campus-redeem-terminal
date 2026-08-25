@@ -6,6 +6,7 @@ const bottomSheetSource = read('../components/ui/MobileBottomSheet.tsx');
 const searchInputSource = read('../components/ui/MobileSearchInput.tsx');
 const compactSelectSource = read('../components/student/StudentCompactSelectItem.tsx');
 const compactSelectGridSource = read('../components/student/StudentCompactSelectGrid.tsx');
+const mobileStylesSource = read('../index.css');
 const groupPerformanceSource = read('../components/group/GroupPerformanceMeta.tsx');
 const groupPerformanceDomainSource = read('../domain/groupPerformance.ts');
 const typesSource = read('../types.ts');
@@ -267,14 +268,24 @@ if (viewSource.includes('aria-label="搜索学生"\n                            
   failures.push('学生 Tab 应由整条工具栏承载白色分区，搜索输入框自身继续使用浅灰填充。');
 }
 requireText(searchInputSource, "'bg-[var(--tm-bg-surface)]' : 'bg-[var(--tm-bg-surface-soft)]'", '填充搜索框应支持白色与浅灰两种语义底色。');
-requireText(compactSelectGridSource, 'student-compact-select-grid grid grid-cols-5 gap-x-1 gap-y-2', '分组选人应使用一行5人的紧凑网格。');
+requireText(compactSelectGridSource, 'student-compact-select-grid grid gap-2', '分组选人网格应使用8像素间距。');
+requireText(mobileStylesSource, 'container: student-compact-select / inline-size;', '紧凑选人网格应按自身内容区域宽度响应，而不是跟随外层浏览器窗口。');
+requireText(mobileStylesSource, 'grid-template-columns: repeat(4, minmax(0, 1fr));', '常规手机宽度应一行展示4名学生。');
+requireText(mobileStylesSource, '@container student-compact-select (min-width: 480px)', '选人内容区达到480像素后才应进入宽屏布局。');
+requireText(mobileStylesSource, 'grid-template-columns: repeat(5, minmax(0, 1fr));', '宽屏选人布局应一行展示5名学生。');
 requireText(compactSelectSource, 'min-h-[76px]', '紧凑学生选择项应保持稳定高度和有效触控范围。');
+requireText(compactSelectSource, 'bg-[var(--tm-bg-surface)]', '紧凑学生选择项应使用白色表面与浅灰内容区分层。');
+requireText(compactSelectSource, 'absolute -right-1 -top-1 z-20', '紧凑选择项的勾选角标应与学生列表一致，附着在卡片右上角并向外偏移4像素。');
 requireText(compactSelectSource, 'h-12 w-12', '紧凑学生选择项应使用48像素真实头像。');
 requireText(compactSelectSource, 'text-[12px] font-medium', '紧凑学生姓名应使用12像素、500字重。');
 requireText(compactSelectSource, 'bg-[var(--tm-bg-surface-muted)] font-mono text-[8px]', '所有学生姓名前应显示灰底两位班内号。');
 if (compactSelectSource.includes('duplicateRosterNumber')) failures.push('学生头像上不得再按同名条件显示01、02数字角标。');
 if (compactSelectSource.includes('StudentPerformance') || compactSelectSource.includes('praiseCount') || compactSelectSource.includes('criticismCount')) {
   failures.push('紧凑学生选择项不得展示等级、成长进度或表扬批评信息。');
+}
+const compactSelectItemButtonClass = compactSelectSource.split('\n').find(line => line.includes('className="relative flex min-h-[76px]')) || '';
+if (compactSelectItemButtonClass.includes(' border-') || compactSelectItemButtonClass.includes(' shadow-') || compactSelectItemButtonClass.includes('[box-shadow:')) {
+  failures.push('紧凑学生选择项的白色表面不得增加边框或阴影。');
 }
 requireText(viewSource, 'footerDivider={false}', '添加小组弹窗底部操作区不应显示顶部分隔线。');
 requireText(bottomSheetSource, 'footerDivider?: boolean;', '公共底部抽屉应支持按场景关闭底部分隔线。');
@@ -396,6 +407,10 @@ if (viewSource.includes('Math.random')) {
   failures.push('分组创建不得随机安排学生。');
 }
 requireText(viewSource, 'groupSelectionIds', '分组多选状态应与学生多选状态隔离。');
+requireText(viewSource, 'onGroupSelectionStateChange?.({ active: true, count: next.size })', '勾选小组后应把小组数量回传给全局录入栏。');
+requireText(viewSource, 'if (isSelectionMode !== nextActive) onToggleSelectionMode();', '分组多选应同步开启全局录入栏的选择状态。');
+requireText(appSource, 'onGroupSelectionStateChange={setClassGroupSelectionState}', '应用层应接收分组多选状态。');
+requireText(appSource, '`按住说话 · ${selectedTargetCount}${selectedTargetUnit}`', '录入栏应按当前选择来源显示学生或小组数量。');
 requireText(viewSource, 'handleOpenGroupPlanActions', '本人创建的整套分组应通过切换抽屉的更多操作管理。');
 requireText(viewSource, "plan.ownerName !== currentTeacherName", '其他老师的分组必须禁止管理操作。');
 requireText(viewSource, '删除这套分组', '本人分组的更多操作应提供删除整套分组。');

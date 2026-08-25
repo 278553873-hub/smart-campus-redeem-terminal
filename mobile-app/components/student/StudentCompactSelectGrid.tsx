@@ -32,7 +32,7 @@ const StudentCompactSelectGrid: React.FC<StudentCompactSelectGridProps> = ({
             <span className="ml-auto text-[12px] font-normal text-[var(--tm-text-tertiary)]">{section.students.length}人</span>
           </div>
         )}
-        <div className="student-compact-select-grid grid grid-cols-5 gap-x-1 gap-y-2">
+        <div className="student-compact-select-grid grid gap-2">
           {section.students.map(student => (
             <StudentCompactSelectItem
               key={student.id}

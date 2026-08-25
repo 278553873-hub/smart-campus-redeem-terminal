@@ -6,6 +6,20 @@
   grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
 }
 
+.student-compact-select-sections {
+  container: student-compact-select / inline-size;
+}
+
+.student-compact-select-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@container student-compact-select (min-width: 480px) {
+  .student-compact-select-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
 .teacher-record-soft-page {
   background:
     radial-gradient(circle at 12% 0%, var(--tm-glow-primary), transparent 32%),

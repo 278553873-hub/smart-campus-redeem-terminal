@@ -32,15 +32,15 @@ const StudentCompactSelectItem: React.FC<StudentCompactSelectItemProps> = ({
       onClick={onClick}
       aria-pressed={selected}
       aria-label={`${student.name}，学号${studentNo}${selectionDescription ? `，${selectionDescription}` : ''}`}
-      className="relative flex min-h-[76px] min-w-0 select-none flex-col items-center justify-start gap-1 rounded-[var(--tm-radius-control)] px-0.5 py-1 text-center transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] motion-reduce:transition-none"
+      className="relative flex min-h-[76px] min-w-0 select-none flex-col items-center justify-start gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-0.5 py-1 text-center transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] motion-reduce:transition-none"
     >
+      <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`} aria-hidden="true">
+        {selected
+          ? <CheckIcon className="h-3 w-3 text-white [stroke-width:3]" />
+          : <CircleIcon className="h-[18px] w-[18px] fill-white text-[var(--tm-border-subtle)]" />}
+      </span>
       <span className="relative h-12 w-12 shrink-0">
         <img src={avatar} alt="" className="h-full w-full rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" decoding="async" />
-        <span className={`absolute -right-1 -top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
-          {selected
-            ? <CheckIcon className="h-3 w-3 text-[var(--tm-text-inverse)] [stroke-width:3]" />
-            : <CircleIcon className="h-[18px] w-[18px] fill-[var(--tm-bg-surface)] text-[var(--tm-border-subtle)]" />}
-        </span>
       </span>
       <span className="flex h-4 w-full min-w-0 items-center justify-center gap-0.5">
         <span className="flex h-[14px] w-3.5 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[8px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]" aria-hidden="true">

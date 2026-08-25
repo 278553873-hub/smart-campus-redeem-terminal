@@ -7,6 +7,7 @@ interface PhoneMockupProps {
   isAnalyzing?: boolean;
   safeAreaTop?: boolean;
   screenBackground?: React.ReactNode;
+  screenRef?: React.Ref<HTMLDivElement>;
   showDeviceFrame?: boolean;
   contentTopInsetMode?: 'full-chrome' | 'status-bar' | 'none';
 }
@@ -16,6 +17,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   isAnalyzing = false,
   safeAreaTop = true,
   screenBackground,
+  screenRef,
   showDeviceFrame = true,
   contentTopInsetMode = 'full-chrome',
 }) => {
@@ -68,6 +70,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
 
   const screenContent = (
     <div
+      ref={screenRef}
       className={`relative overflow-hidden border border-slate-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] ${showDeviceFrame ? 'rounded-[50px]' : 'rounded-none'}`}
       style={{
         width: `${screenWidth}px`,

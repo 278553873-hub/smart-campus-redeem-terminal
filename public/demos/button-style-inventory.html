@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师手机端按钮样式盘点</title>
+  <style>
+    :root {
+      --page: #f5f4f3; --surface: #fff; --surface-soft: #efedeb; --surface-muted: #e6e1de;
+      --text: #211d1b; --text-2: #68615d; --text-3: #958c87; --line: #ddd8d5;
+      --red: #d92d2d; --red-strong: #9d2320; --red-soft: #fff0ef; --green: #08a653; --blue: #3478f6;
+      --shadow: 0 12px 28px -24px rgba(48,39,35,.34); --control-shadow: 0 8px 18px -14px rgba(48,39,35,.42);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--page); }
+    body { margin: 0; background: var(--page); color: var(--text); font-family: "PingFang SC", "Noto Sans CJK SC", sans-serif; letter-spacing: 0; }
+    button, input { font: inherit; } button { cursor: pointer; }
+    .page { width: min(1280px, 100%); margin: 0 auto; padding: 30px 26px 64px; }
+    .hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; }
+    .eyebrow { margin: 0 0 7px; color: var(--red-strong); font-size: 12px; font-weight: 750; }
+    h1 { margin: 0; font-size: 29px; line-height: 1.2; }
+    .lead { max-width: 780px; margin: 11px 0 0; color: var(--text-2); font-size: 13px; line-height: 1.7; }
+    .scope { flex: none; color: var(--text-2); font-size: 11px; line-height: 1.65; text-align: right; }
+    .scope strong { display: block; color: var(--text); font-size: 12px; }
+    .summary { display: grid; grid-template-columns: repeat(5,1fr); margin-top: 24px; overflow: hidden; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    .metric { min-height: 88px; padding: 17px 18px; border-right: 1px solid var(--line); }
+    .metric:last-child { border-right: 0; } .metric strong { display: block; font-size: 25px; line-height: 1; }
+    .metric span { display: block; margin-top: 9px; color: var(--text-2); font-size: 11px; line-height: 1.35; }
+    .metric.warn strong { color: var(--red-strong); }
+    .jump { position: sticky; top: 0; z-index: 20; display: flex; gap: 7px; margin-top: 16px; padding: 9px 0; overflow-x: auto; background: color-mix(in srgb,var(--page) 93%,transparent); backdrop-filter: blur(12px); scrollbar-width: none; }
+    .jump::-webkit-scrollbar { display: none; }
+    .jump a { display: inline-flex; min-height: 40px; flex: none; align-items: center; border-radius: 8px; padding: 0 12px; background: var(--surface); box-shadow: var(--shadow); color: var(--text-2); font-size: 11px; font-weight: 700; text-decoration: none; }
+    .jump a:hover, .jump a:focus-visible { color: var(--red-strong); outline: 2px solid var(--red); outline-offset: 2px; }
+    section { scroll-margin-top: 64px; margin-top: 34px; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 13px; }
+    h2 { margin: 0; font-size: 20px; } .note { max-width: 720px; margin: 5px 0 0; color: var(--text-2); font-size: 11px; line-height: 1.65; }
+    .section-count { color: var(--text-3); font-size: 11px; white-space: nowrap; }
+    .create-row { display: flex; width: 100%; min-height: 52px; align-items: center; gap: 12px; margin-top: 8px; border: 0; border-radius: 12px; padding: 0 12px; background: var(--surface-soft); color: var(--red); font-size: 13px; font-weight: 700; text-align: left; }
+    .create-row:active { background: var(--red-soft); }
+    .plus-disc { display: inline-flex; width: 32px; height: 32px; flex: none; align-items: center; justify-content: center; border-radius: 999px; background: var(--red); color: white; font-size: 21px; font-weight: 500; }
+    .category + .category { margin-top: 22px; }
+    .category-head { display: flex; min-height: 42px; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 9px; }
+    .category-title { display: flex; min-width: 0; align-items: baseline; gap: 10px; }
+    .category-index { flex: none; color: var(--red-strong); font-size: 10px; font-weight: 800; }
+    .category-title h3 { margin: 0; font-size: 15px; }
+    .category-title p { margin: 0; color: var(--text-2); font-size: 10px; line-height: 1.5; }
+    .category-count { flex: none; color: var(--text-3); font-size: 10px; }
+    .variant-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); overflow: hidden; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    .variant { min-width: 0; padding: 16px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .variant:nth-child(3n) { border-right: 0; }
+    .variant-head { display: flex; min-height: 43px; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .variant-code { color: var(--red-strong); font-size: 9px; font-weight: 800; } .variant h3 { margin: 3px 0 0; font-size: 13px; }
+    .source { color: var(--text-3); font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size: 9px; text-align: right; }
+    .preview { display: flex; min-height: 92px; align-items: center; justify-content: center; gap: 8px; margin-top: 9px; overflow: hidden; border-radius: 6px; padding: 14px; background: var(--page); }
+    .spec { margin: 10px 0 0; color: var(--text-2); font-size: 10px; line-height: 1.55; }
+    .sample { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 12px; padding: 0 16px; color: var(--text); background: transparent; font-size: 12px; font-weight: 700; }
+    .sample:active { transform: scale(.97); } .sample.full { width: 100%; }
+    .primary { background: var(--red); color: white; } .primary-shadow { background: var(--red); box-shadow: 0 12px 26px -17px rgba(157,35,32,.7); color: white; }
+    .secondary-border { border: 1px solid var(--line); background: var(--surface); color: var(--text-2); }
+    .secondary-shadow { background: var(--surface); box-shadow: var(--control-shadow); }
+    .neutral { background: var(--surface-soft); } .soft-red { background: var(--red-soft); color: var(--red-strong); }
+    .text-red { color: var(--red-strong); } .text-neutral { color: var(--text-2); } .danger { background: var(--red); color: white; } .danger-text { color: var(--red); }
+    .green { min-width: 190px; border-radius: 999px; background: var(--green); color: white; }
+    .gradient { background: linear-gradient(100deg,#4c7cff,#6a54d7); color: white; box-shadow: 0 8px 18px -10px rgba(76,85,190,.65); }
+    .glass { border: 1px solid rgba(255,255,255,.3); border-radius: 999px; background: rgba(255,255,255,.17); color: white; }
+    .preview.dark { background: #4e4658; } .icon { width: 44px; height: 44px; padding: 0; font-size: 20px; }
+    .icon.circle { border-radius: 999px; } .icon.square { border-radius: 12px; } .icon.soft { background: var(--surface-muted); color: var(--text-2); }
+    .mini-touch { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; border: 0; background: transparent; }
+    .mini-touch span { display: inline-flex; height: 28px; align-items: center; border: 1px solid var(--red); border-radius: 8px; padding: 0 9px; color: var(--red); font-size: 10px; font-weight: 700; }
+    .row-sample { display: flex; width: 100%; min-height: 56px; align-items: center; gap: 10px; border: 0; border-radius: 12px; padding: 0 12px; background: var(--surface); color: var(--text); text-align: left; }
+    .row-sample.border { border: 1px solid var(--line); } .row-sample.soft { background: var(--surface-soft); }
+    .row-sample > b { flex: 1; font-size: 12px; } .row-sample > i { color: var(--text-3); font-size: 18px; font-style: normal; }
+    .tile { display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: 10px; background: var(--red-soft); color: var(--red); font-size: 18px; }
+    .tool { display: inline-flex; width: 44px; height: 44px; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 0; border-radius: 12px; background: transparent; color: var(--text-2); font-size: 9px; font-weight: 650; }
+    .tool b { font-size: 16px; line-height: 1; }
+    .float { width: 56px; height: 56px; border: 0; border-radius: 999px; background: var(--red); box-shadow: 0 14px 28px -15px rgba(157,35,32,.72); color: white; font-size: 25px; }
+    .image-float { position: relative; width: 78px; height: 66px; border: 0; background: transparent; }
+    .image-float::before { position: absolute; left: 11px; top: 0; display: flex; width: 54px; height: 54px; align-items: center; justify-content: center; border: 3px solid white; border-radius: 999px; background: #ffcf52; box-shadow: 0 8px 18px -10px rgba(48,39,35,.55); color: #533b15; content: "AI"; font-size: 12px; font-weight: 800; }
+    .image-float::after { position: absolute; bottom: 0; left: 6px; width: 66px; height: 20px; border: 1px solid var(--line); border-radius: 999px; background: white; color: var(--red-strong); content: "智能助理"; font-size: 9px; font-weight: 700; line-height: 18px; }
+    .key { min-width: 62px; height: 44px; border: 0; border-radius: 8px; background: white; box-shadow: 0 2px 5px rgba(35,30,28,.18); color: black; }
+    .selection { display: flex; width: 100%; min-height: 52px; align-items: center; gap: 10px; border: 1px solid var(--red); border-radius: 12px; padding: 0 12px; background: var(--red-soft); color: var(--text); font-size: 12px; text-align: left; }
+    .selection::after { width: 18px; height: 18px; margin-left: auto; border-radius: 999px; background: var(--red); box-shadow: inset 0 0 0 5px white; content: ""; }
+    .toggle { position: relative; width: 48px; height: 28px; border: 0; border-radius: 999px; background: var(--red); }
+    .toggle::after { position: absolute; right: 3px; top: 3px; width: 22px; height: 22px; border-radius: 999px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,.2); content: ""; }
+    .audit-shell { overflow: hidden; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    .audit-toolbar { display: flex; align-items: center; gap: 12px; padding: 13px; border-bottom: 1px solid var(--line); }
+    .search { min-width: 0; flex: 1; height: 42px; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; background: #faf9f8; color: var(--text); outline: none; font-size: 12px; }
+    .search:focus { border-color: var(--red); background: white; }
+    .mode { display: grid; grid-template-columns: repeat(2,1fr); padding: 3px; border-radius: 8px; background: var(--surface-soft); }
+    .mode button { min-height: 36px; border: 0; border-radius: 6px; padding: 0 12px; background: transparent; color: var(--text-2); font-size: 11px; font-weight: 700; }
+    .mode button[aria-pressed="true"] { background: white; box-shadow: var(--control-shadow); color: var(--text); }
+    .audit-status { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 12px; padding: 0 14px; border-bottom: 1px solid var(--line); color: var(--text-2); font-size: 10px; }
+    .audit-list { display: grid; } .audit-row { display: grid; grid-template-columns: 168px minmax(0,1fr) 250px; min-height: 88px; border-bottom: 1px solid var(--line); }
+    .audit-row:last-child { border-bottom: 0; } .audit-cell { min-width: 0; padding: 12px 14px; border-right: 1px solid var(--line); } .audit-cell:last-child { border-right: 0; }
+    .audit-id { color: var(--red-strong); font-size: 10px; font-weight: 800; } .audit-main { margin-top: 5px; font-size: 12px; font-weight: 700; }
+    .audit-sub { margin-top: 4px; color: var(--text-3); font-size: 9px; line-height: 1.45; }
+    .tokens { display: flex; flex-wrap: wrap; gap: 5px; } .token { max-width: 100%; overflow: hidden; border-radius: 4px; padding: 4px 6px; background: var(--page); color: var(--text-2); font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+    .token.child { background: var(--red-soft); color: var(--red-strong); } .location { color: var(--text-2); font-size: 10px; line-height: 1.5; }
+    .location code { color: var(--text-3); font-size: 8px; word-break: break-all; }
+    .load-more { display: flex; width: 100%; min-height: 46px; align-items: center; justify-content: center; border: 0; border-top: 1px solid var(--line); background: #faf9f8; color: var(--red-strong); font-size: 11px; font-weight: 750; }
+    .load-more[hidden] { display: none; }
+    .review-grid { display: grid; grid-template-columns: repeat(4,1fr); overflow: hidden; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    .review { min-height: 142px; padding: 17px; border-right: 1px solid var(--line); } .review:last-child { border-right: 0; }
+    .review strong { color: var(--red-strong); font-size: 10px; } .review h3 { margin: 7px 0 6px; font-size: 13px; }
+    .review p { margin: 0; color: var(--text-2); font-size: 10px; line-height: 1.65; } .foot { margin: 26px 0 0; color: var(--text-3); font-size: 10px; }
+    @media (max-width: 1020px) {
+      .summary { grid-template-columns: repeat(3,1fr); } .metric:nth-child(3) { border-right: 0; } .metric:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
+      .variant-grid { grid-template-columns: repeat(2,1fr); } .variant:nth-child(3n) { border-right: 1px solid var(--line); } .variant:nth-child(2n) { border-right: 0; }
+      .audit-row { grid-template-columns: 150px minmax(0,1fr); } .audit-row .audit-cell:last-child { grid-column: 1/-1; border-top: 1px solid var(--line); }
+      .review-grid { grid-template-columns: repeat(2,1fr); } .review:nth-child(2) { border-right: 0; } .review:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+    }
+    @media (max-width: 720px) {
+      .page { padding: 22px 13px 44px; } .hero { display: block; } .scope { margin-top: 12px; text-align: left; } h1 { font-size: 24px; }
+      .summary { grid-template-columns: repeat(2,1fr); } .metric,.metric:nth-child(3) { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); } .metric:nth-child(2n) { border-right: 0; } .metric:last-child { border-bottom: 0; }
+      .variant-grid { grid-template-columns: 1fr; } .variant,.variant:nth-child(3n),.variant:nth-child(2n) { border-right: 0; }
+      .category-head { align-items: flex-start; flex-direction: column; gap: 4px; } .category-title { align-items: flex-start; flex-direction: column; gap: 3px; }
+      .audit-toolbar { align-items: stretch; flex-direction: column; } .audit-row { grid-template-columns: 1fr; } .audit-cell,.audit-row .audit-cell:last-child { grid-column: auto; border-right: 0; border-top: 1px solid var(--line); } .audit-cell:first-child { border-top: 0; }
+      .section-head { align-items: flex-start; flex-direction: column; gap: 5px; } .review-grid { grid-template-columns: 1fr; } .review { border-right: 0; border-bottom: 1px solid var(--line); } .review:last-child { border-bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div><p class="eyebrow">教师端 · 手机场景 · 只读源码盘点</p><h1>按钮样式分类盘点</h1><p class="lead">按使用语义分为 7 类，再按“外层表面 + 文字 + 边界 + 阴影 + 圆角 + 尺寸 + 内层图标承载 + 交互状态”保留每类内部的真实差异。</p></div>
+      <div class="scope"><strong>代码基线 2026-08-25</strong>只读 mobile-app，排除测试与其他端</div>
+    </header>
+    <section class="summary" aria-label="盘点摘要">
+      <div class="metric warn"><strong>655</strong><span>按钮形控件总数</span></div><div class="metric"><strong>7</strong><span>按钮使用分类</span></div><div class="metric"><strong>27</strong><span>主要可见结构</span></div><div class="metric warn"><strong>441</strong><span>代码级视觉签名</span></div><div class="metric"><strong>94</strong><span>涉及源码文件</span></div>
+    </section>
+    <nav class="jump" aria-label="页面目录"><a href="#categories">分类盘点</a><a href="#audit">全量明细</a><a href="#review">归类结论</a></nav>
+
+    <section id="categories">
+      <div class="section-head"><div><h2>7 类按钮，27 种主要结构</h2><p class="note">先按按钮承担的任务分类，再在每类中比较真实视觉差异；更细的尺寸、颜色和状态组合保留在“全量明细”。</p></div><span class="section-count">点击可查看按压反馈</span></div>
+
+      <div class="category"><div class="category-head"><div class="category-title"><span class="category-index">C1</span><h3>主次命令</h3><p>提交、完成、取消等明确推进或结束任务的操作</p></div><span class="category-count">5 种结构</span></div><div class="variant-grid">
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C1-01</span><h3>品牌实底 · 全宽 52</h3></div><span class="source">ClassDetailView</span></div><div class="preview"><button class="sample primary full">选择学生</button></div><p class="spec">红底白字 · 12 圆角 · 无边框 · 无阴影</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C1-02</span><h3>品牌实底 · 紧凑 44</h3></div><span class="source">编辑底栏</span></div><div class="preview"><button class="sample primary">完成</button></div><p class="spec">44 高 · 自适应宽 · 12 圆角</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C1-03</span><h3>品牌实底 · 强阴影</h3></div><span class="source">MeFeatureViews</span></div><div class="preview"><button class="sample primary-shadow full">＋ 新增科目</button></div><p class="spec">48 高 · 20 圆角 · 品牌阴影</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C1-04</span><h3>白底描边次按钮</h3></div><span class="source">MobileConfirmSheet</span></div><div class="preview"><button class="sample secondary-border">取消</button></div><p class="spec">白底 · 中性文字 · 实体边框 · 12 圆角</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C1-05</span><h3>白底阴影次按钮</h3></div><span class="source">局部页面</span></div><div class="preview"><button class="sample secondary-shadow">继续编辑</button></div><p class="spec">白底 · 无边框 · 控件阴影 · 圆角存在多档</p></article>
+      </div></div>
+
+      <div class="category"><div class="category-head"><div class="category-title"><span class="category-index">C2</span><h3>轻量操作</h3><p>不改变主流程、视觉权重低于主次命令的局部操作</p></div><span class="category-count">4 种结构</span></div><div class="variant-grid">
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C2-01</span><h3>品牌浅底按钮</h3></div><span class="source">ClassListView</span></div><div class="preview"><button class="sample soft-red">清除筛选</button></div><p class="spec">品牌浅底 · 品牌深红字 · 12 圆角</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C2-02</span><h3>中性浅底按钮</h3></div><span class="source">ArchiveDesignView</span></div><div class="preview"><button class="sample neutral full">查看详情</button></div><p class="spec">浅灰实面 · 主文字 · 12/16 圆角并存</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C2-03</span><h3>品牌文字按钮</h3></div><span class="source">FormBuilder</span></div><div class="preview"><button class="sample text-red">＋ 添加选项</button></div><p class="spec">透明底 · 品牌文字 · 最低 44 触控高度</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C2-04</span><h3>中性文字按钮</h3></div><span class="source">ClassDetailView</span></div><div class="preview"><button class="sample text-neutral">取消</button></div><p class="spec">透明底 · 次级文字 · 部分按压仅改变文字色</p></article>
+      </div></div>
+
+      <div class="category"><div class="category-head"><div class="category-title"><span class="category-index">C3</span><h3>风险操作</h3><p>删除、解除、退出等需要负向语义或二次确认的操作</p></div><span class="category-count">2 种结构</span></div><div class="variant-grid">
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C3-01</span><h3>危险实底确认</h3></div><span class="source">MobileConfirmSheet</span></div><div class="preview"><button class="sample danger">确认删除</button></div><p class="spec">负向红底 · 反白文字 · 52 高 · 二次确认</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C3-02</span><h3>危险文字整行</h3></div><span class="source">FormBuilder</span></div><div class="preview"><button class="row-sample"><b class="danger-text">删除分组</b></button></div><p class="spec">透明或白底 · 负向文字 · 52/56 高</p></article>
+      </div></div>
+
+      <div class="category"><div class="category-head"><div class="category-title"><span class="category-index">C4</span><h3>整行操作与入口</h3><p>以完整行宽承载新增、选择方式或进入下一层内容的操作</p></div><span class="category-count">3 种结构</span></div><div class="variant-grid">
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C4-01</span><h3>灰底品牌新建行</h3></div><span class="source">ClassDetailView:1605</span></div><div class="preview"><button class="create-row"><span class="plus-disc">+</span>新建另一套分组</button></div><p class="spec">浅灰外层 · 红色圆形图标 · 红字 · 按压浅红</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C4-02</span><h3>白底描边整行入口</h3></div><span class="source">ClassInfoView</span></div><div class="preview"><button class="row-sample border"><span class="tile">↗</span><b>发送给微信好友</b><i>›</i></button></div><p class="spec">全宽 · 白底 · 细边框 · 44+ 高</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C4-03</span><h3>浅灰整行入口</h3></div><span class="source">ClassInviteFlow</span></div><div class="preview"><button class="row-sample soft"><span class="tile">◎</span><b>通过微信邀请</b><i>›</i></button></div><p class="spec">56 高 · 浅灰底 · 16 内层圆角 · 普通文字</p></article>
+      </div></div>
+
+      <div class="category"><div class="category-head"><div class="category-title"><span class="category-index">C5</span><h3>图标与工具</h3><p>返回、关闭、编辑以及编辑器工具栏中的紧凑操作</p></div><span class="category-count">5 种结构</span></div><div class="variant-grid">
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C5-01</span><h3>透明全圆图标</h3></div><span class="source">MobilePageHeader</span></div><div class="preview"><button class="sample icon circle" title="返回" aria-label="返回">‹</button><button class="sample icon circle" title="关闭" aria-label="关闭">×</button></div><p class="spec">44×44 · 透明底 · 全圆 · 按压浅灰</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C5-02</span><h3>浅灰全圆图标</h3></div><span class="source">LeaderReportView</span></div><div class="preview"><button class="sample icon circle soft" title="关闭" aria-label="关闭">×</button></div><p class="spec">40/44 并存 · 浅灰底 · 次级图标</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C5-03</span><h3>透明圆角方形图标</h3></div><span class="source">编辑工具与卡片</span></div><div class="preview"><button class="sample icon square" title="编辑" aria-label="编辑">✎</button><button class="sample icon square" title="删除" aria-label="删除">⌫</button></div><p class="spec">44×44 · 12 圆角 · 与全圆图标并存</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C5-04</span><h3>标题栏内嵌小描边</h3></div><span class="source">MobileBottomSheet</span></div><div class="preview"><button class="mini-touch"><span>暂不安排</span></button></div><p class="spec">外层 44 触控 · 内层 28 高 · 8 圆角 · 品牌描边</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C5-05</span><h3>透明图标 + 文案工具</h3></div><span class="source">问卷 / 档案编辑器</span></div><div class="preview"><button class="tool"><b>☷</b>大纲</button><button class="tool"><b>◈</b>风格</button><button class="tool"><b>⚙</b>设置</button></div><p class="spec">44×44 · 默认透明 · 按压浅灰 · 图标上下排布</p></article>
+      </div></div>
+
+      <div class="category"><div class="category-head"><div class="category-title"><span class="category-index">C6</span><h3>悬浮操作</h3><p>脱离内容流、固定于页面边缘的高频入口</p></div><span class="category-count">2 种结构</span></div><div class="variant-grid">
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C6-01</span><h3>品牌悬浮创建</h3></div><span class="source">MobileFloatingCreateButton</span></div><div class="preview"><button class="float" title="新增" aria-label="新增">+</button></div><p class="spec">56×56 · 全圆 · 红底 · 两档悬浮阴影</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C6-02</span><h3>图片角色悬浮入口</h3></div><span class="source">MobileFloatingImageButton</span></div><div class="preview"><button class="image-float" title="智能助理" aria-label="智能助理"></button></div><p class="spec">图片圆形承载 + 标签胶囊；另有无标签方形变体</p></article>
+      </div></div>
+
+      <div class="category"><div class="category-head"><div class="category-title"><span class="category-index">C7</span><h3>场景专用与状态控件</h3><p>受平台、深色背景、虚拟键盘或选择状态约束的专用按钮</p></div><span class="category-count">6 种结构</span></div><div class="variant-grid">
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C7-01</span><h3>平台绿色全圆登录</h3></div><span class="source">TeacherLoginView</span></div><div class="preview"><button class="sample green">微信授权登录</button></div><p class="spec">平台绿 · 全圆 · 52/56 高 · 登录专用</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C7-02</span><h3>历史渐变按钮</h3></div><span class="source">TermReportView</span></div><div class="preview"><button class="sample gradient">✎ 编辑</button></div><p class="spec">蓝紫渐变 · 白字 · 阴影；未使用教师端语义 Token</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C7-03</span><h3>键盘实体键</h3></div><span class="source">VirtualKeyboard</span></div><div class="preview"><button class="key">ABC</button><button class="key" style="background:var(--blue);color:white">发送</button></div><p class="spec">44 高 · 8 圆角 · 白/灰/蓝多种实体键</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C7-04</span><h3>选择型整行按钮</h3></div><span class="source">选择器 / 表单</span></div><div class="preview"><button class="selection">一年级</button></div><p class="spec">button 标签承载选择状态 · 品牌浅底与选中标识</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C7-05</span><h3>开关型按钮</h3></div><span class="source">档案 / 问卷设置</span></div><div class="preview"><button class="toggle" title="开启" aria-label="开启"></button></div><p class="spec">button 标签承载二元状态 · 全圆轨道 + 圆形滑块</p></article>
+        <article class="variant"><div class="variant-head"><div><span class="variant-code">C7-06</span><h3>半透明玻璃按钮</h3></div><span class="source">RecordInput / App</span></div><div class="preview dark"><button class="sample glass">知道了</button></div><p class="spec">半透明白底/描边 · 白字 · 深色或图片背景专用</p></article>
+      </div></div>
+    </section>
+
+    <section id="audit">
+      <div class="section-head"><div><h2>全量源码明细</h2><p class="note">审计数据由脚本直接读取源码生成。视觉签名包含按钮外层和内部承载元素；实例明细覆盖 651 个原生按钮与 4 个按钮形链接。</p></div><span class="section-count" id="coverage-label">正在载入审计数据</span></div>
+      <div class="audit-shell"><div class="audit-toolbar"><input id="audit-search" class="search" type="search" placeholder="搜索文案、页面、背景、圆角、尺寸或源码" aria-label="搜索按钮盘点"><div class="mode" aria-label="明细模式"><button type="button" data-mode="signatures" aria-pressed="true">视觉签名</button><button type="button" data-mode="controls" aria-pressed="false">全部实例</button></div></div>
+        <div class="audit-status"><span id="audit-result">载入中</span><span>每次显示 50 项</span></div><div id="audit-list" class="audit-list" aria-live="polite"></div><button id="load-more" class="load-more" type="button" hidden>继续显示</button></div>
+    </section>
+
+    <section id="review"><div class="section-head"><div><h2>归类结论</h2><p class="note">分类用于建立可比较的现状基线，不代表所有现有结构都应保留。</p></div></div><div class="review-grid">
+      <article class="review"><strong>01 · 分类规模</strong><h3>7 类下仍有 27 种主要结构</h3><p>按钮职责可以归类，但背景、边界、阴影、尺寸、圆角、内部图标承载和状态组合仍高度分散。</p></article><article class="review"><strong>02 · 结构差异</strong><h3>内部承载是独立变量</h3><p>新增操作同时存在纯文字、方形浅底图标、红色圆形图标与悬浮圆形按钮，外层相似不代表视觉相同。</p></article><article class="review"><strong>03 · 一致性</strong><h3>轻量操作表现最分散</h3><p>白底描边、白底阴影、浅灰实面、品牌浅底和透明文字同时承担次级语义，视觉强度缺少稳定规则。</p></article><article class="review"><strong>04 · 收敛顺序</strong><h3>先统一高频结构</h3><p>优先确定主次命令、整行操作、图标工具与悬浮操作的保留变体，再处理场景专用控件。</p></article>
+    </div></section>
+    <p class="foot">说明：这是“UI改造”项目内的独立审计页，不属于教师手机端真实产品界面。</p>
+  </main>
+  <script>
+    const listElement=document.getElementById('audit-list');const searchElement=document.getElementById('audit-search');const resultElement=document.getElementById('audit-result');const coverageElement=document.getElementById('coverage-label');const loadMoreButton=document.getElementById('load-more');const modeButtons=[...document.querySelectorAll('[data-mode]')];let audit=null;let mode='signatures';let visibleCount=50;
+    const escapeHtml=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+    const tokenList=(items,className='')=>items.map(item=>`<span class="token ${className}" title="${escapeHtml(item)}">${escapeHtml(item)}</span>`).join('');
+    const signatureTokens=signature=>{const outer=[...signature.backgrounds,...signature.textColors,...signature.borders,...signature.shadows,...signature.radii,...signature.heights,...signature.widths];const children=signature.childDimensions.flatMap(child=>[...child.backgrounds,...child.textColors,...child.borders,...child.shadows,...child.radii,...child.heights,...child.widths]);return `<div class="tokens">${tokenList(outer)}${tokenList(children,'child')}</div>`;};
+    const signatureRow=(signature,index)=>{const example=signature.examples[0];return `<article class="audit-row"><div class="audit-cell"><div class="audit-id">S${String(index+1).padStart(3,'0')} · ${signature.count} 处</div><div class="audit-main">${escapeHtml(signature.structure)}</div><div class="audit-sub">粉色标签表示按钮内部承载元素</div></div><div class="audit-cell">${signatureTokens(signature)||'<span class="audit-sub">样式由动态表达式或父容器提供</span>'}</div><div class="audit-cell location">${escapeHtml(example?.label)}<br><code>${escapeHtml(example?.file)}:${escapeHtml(example?.line)}</code></div></article>`;};
+    const controlRow=(control,index)=>`<article class="audit-row"><div class="audit-cell"><div class="audit-id">I${String(index+1).padStart(3,'0')} · &lt;${control.element}&gt;</div><div class="audit-main">${escapeHtml(control.label)}</div><div class="audit-sub">${control.childClassNames.length} 个内部样式承载</div></div><div class="audit-cell"><div class="tokens">${tokenList(control.className.split(/\s+/).filter(Boolean))}${tokenList(control.childClassNames,'child')}</div></div><div class="audit-cell location"><code>${escapeHtml(control.file)}:${escapeHtml(control.line)}</code></div></article>`;
+    const render=()=>{if(!audit)return;const query=searchElement.value.trim().toLowerCase();const source=mode==='signatures'?audit.signatures:audit.controls;const filtered=query?source.filter(item=>JSON.stringify(item).toLowerCase().includes(query)):source;const visible=filtered.slice(0,visibleCount);listElement.innerHTML=visible.map((item,index)=>mode==='signatures'?signatureRow(item,index):controlRow(item,index)).join('');const noun=mode==='signatures'?'个视觉签名':'个按钮实例';resultElement.textContent=`找到 ${filtered.length} ${noun}，已显示 ${visible.length}`;loadMoreButton.hidden=visible.length>=filtered.length;};
+    modeButtons.forEach(button=>button.addEventListener('click',()=>{mode=button.dataset.mode;visibleCount=50;modeButtons.forEach(item=>item.setAttribute('aria-pressed',String(item===button)));render();}));searchElement.addEventListener('input',()=>{visibleCount=50;render();});loadMoreButton.addEventListener('click',()=>{visibleCount+=50;render();});
+    fetch('/demos/button-style-audit.json').then(response=>{if(!response.ok)throw new Error('审计数据加载失败');return response.json();}).then(data=>{audit=data;coverageElement.textContent=`${data.buttonCount+data.buttonLikeAnchorCount} / ${data.controlCount} 已覆盖`;render();}).catch(error=>{resultElement.textContent=error.message;coverageElement.textContent='载入失败';});
+  </script>
+</body>
+</html>

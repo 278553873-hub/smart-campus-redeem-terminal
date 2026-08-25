@@ -432,30 +432,39 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     )}
 
                     {activeListTab === 'class' && isSchoolSpace && (
-                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                            <label className="relative min-w-0">
-                                <span className="sr-only">按年级筛选班级</span>
+                        <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2">
+                            <label className="relative inline-flex min-h-11 items-center justify-self-start rounded-[var(--tm-radius-control)] focus-within:bg-[var(--tm-filter-focus-bg)]">
+                                <span className="pointer-events-none flex items-center gap-[var(--tm-space-1)] px-3 text-[13px] font-medium text-[var(--tm-text-secondary)]" aria-hidden="true">
+                                    <span>{gradeFilter === '全部' ? '全部年级' : gradeFilter}</span>
+                                    <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
+                                </span>
                                 <select
                                     value={gradeFilter}
                                     onChange={event => setGradeFilter(event.target.value)}
-                                    className="min-h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-transparent bg-[var(--tm-bg-surface)] px-3 pr-9 text-[13px] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none focus-visible:bg-[var(--tm-bg-surface)]"
+                                    className="absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-filter-border)] bg-[var(--tm-filter-bg)] opacity-0 [box-shadow:var(--tm-filter-shadow)] [outline:var(--tm-filter-focus-outline)] focus-visible:bg-[var(--tm-filter-focus-bg)]"
                                     aria-label="按年级筛选班级"
                                 >
-                                    {gradeOptions.map(option => <option key={option} value={option}>{option}</option>)}
+                                    {gradeOptions.map(option => <option key={option} value={option}>{option === '全部' ? '全部年级' : option}</option>)}
                                 </select>
-                                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
                             </label>
                             <button
                                 type="button"
                                 aria-pressed={showTeachingOnly}
                                 onClick={() => setShowTeachingOnly(current => !current)}
-                                className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-medium [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] ${showTeachingOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
+                                className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-transparent px-2.5 text-[13px] font-medium transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] focus-visible:bg-[var(--tm-bg-surface-soft)] ${showTeachingOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                             >
-                                <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] text-[10px] ${showTeachingOnly ? 'bg-white text-[var(--tm-brand-primary)]' : 'ring-1 ring-inset ring-[var(--tm-border-control)]'}`}>
-                                    {showTeachingOnly && '✓'}
+                                <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showTeachingOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
+                                    {showTeachingOnly && <Check className="h-3 w-3" strokeWidth={3} />}
                                 </span>
                                 任教班级
                             </button>
+                            <span
+                                className="justify-self-end whitespace-nowrap text-[12px] font-medium text-[var(--tm-text-tertiary)]"
+                                aria-live="polite"
+                                aria-atomic="true"
+                            >
+                                {visibleClasses.length}个班级
+                            </span>
                         </div>
                     )}
 

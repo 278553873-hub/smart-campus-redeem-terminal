@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { ViewState, Student, Product, BankAccount, Deposit, TierLevel } from './types';
 import { EXCHANGE_RATE, BANK_CONFIG, MOCK_PRODUCTS } from './constants';
 import FaceScanner from './components/FaceScanner';
@@ -21,6 +21,7 @@ import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import RegionalPcAdmin from './components/RegionalPcAdmin';
 import UiRenovationDemo from './components/UiRenovationDemo';
+import TeacherMobileDeveloperNotes from './components/TeacherMobileDeveloperNotes';
 import PlatformBrandMark from './components/PlatformBrandMark';
 import Loader from './components/Loader';
 import { DeviceWrapper } from './components/DeviceWrapper';
@@ -33,8 +34,9 @@ import {
   type TeacherGradientStyleId,
 } from './mobile-app/styles/teacherGradientPreview';
 import './mobile-app/index.css';
-import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X, Camera, Check, LoaderCircle } from 'lucide-react';
 import { playSound } from './utils/sound';
+import { exportElementAsPng } from './utils/exportElementAsPng';
 
 // ============================================================
 // 档位配置（与 GrowthView 保持一致）
@@ -67,6 +69,11 @@ const resolveTeacherProfile = (loginId: string): TeacherProfile => {
   const digits = trimmed.replace(/\D/g, '');
   const seed = digits.split('').reduce((sum, char) => sum + Number(char), 0);
   return DEMO_TEACHER_PROFILES[seed % DEMO_TEACHER_PROFILES.length];
+};
+
+const formatLocalScreenshotTimestamp = (date: Date) => {
+  const pad = (value: number) => value.toString().padStart(2, '0');
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 };
 
 function computeLeaderboard(bonusPool: number, configs: ScoreConfig[]): SimStudent[] {
@@ -1271,10 +1278,15 @@ const AppSwitcher: React.FC = () => {
   const [isTeacherGradientControlsOpen, setIsTeacherGradientControlsOpen] = useState(false);
   const [showParentPhoneShell, setShowParentPhoneShell] = useState(false);
   const [showPhoneShellToggle, setShowPhoneShellToggle] = useState(false);
+  const [teacherScreenshotStatus, setTeacherScreenshotStatus] = useState<'idle' | 'capturing' | 'success' | 'error'>('idle');
+  const [showTeacherDeveloperNotes, setShowTeacherDeveloperNotes] = useState(false);
+  const [hasTeacherDeveloperNotesContext, setHasTeacherDeveloperNotesContext] = useState(false);
   const [demoPanelPosition, setDemoPanelPosition] = useState<{ left: number; top: number } | null>(null);
   const [demoPanelSide, setDemoPanelSide] = useState<'left' | 'right' | 'top' | 'bottom'>('right');
   const [isDemoPanelSnapped, setIsDemoPanelSnapped] = useState(false);
   const demoPanelRef = useRef<HTMLDivElement | null>(null);
+  const teacherPhoneScreenRef = useRef<HTMLDivElement | null>(null);
+  const teacherScreenshotResetTimerRef = useRef<number | null>(null);
   const demoDragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -1415,6 +1427,70 @@ const AppSwitcher: React.FC = () => {
       setShowPhoneShellToggle(prev => !prev);
     }
   };
+
+  useEffect(() => {
+    const syncTeacherDeveloperNotesContext = () => {
+      const hasContext = currentApp === 'admin'
+        && Boolean(teacherPhoneScreenRef.current?.querySelector('.student-compact-select-grid'));
+      setHasTeacherDeveloperNotesContext(previous => previous === hasContext ? previous : hasContext);
+      if (!hasContext) setShowTeacherDeveloperNotes(false);
+    };
+
+    syncTeacherDeveloperNotesContext();
+    const observer = new MutationObserver(syncTeacherDeveloperNotesContext);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, [currentApp]);
+
+  const handleTeacherScreenshot = async () => {
+    const screen = teacherPhoneScreenRef.current;
+    if (teacherScreenshotStatus === 'capturing') return;
+
+    if (teacherScreenshotResetTimerRef.current !== null) {
+      window.clearTimeout(teacherScreenshotResetTimerRef.current);
+      teacherScreenshotResetTimerRef.current = null;
+    }
+
+    const resetScreenshotStatusAfter = (delay: number) => {
+      teacherScreenshotResetTimerRef.current = window.setTimeout(() => {
+        teacherScreenshotResetTimerRef.current = null;
+        setTeacherScreenshotStatus('idle');
+      }, delay);
+    };
+
+    if (!screen) {
+      console.error('[教师手机端截图] 未找到手机屏幕内容区域');
+      setTeacherScreenshotStatus('error');
+      resetScreenshotStatusAfter(3000);
+      return;
+    }
+
+    setTeacherScreenshotStatus('capturing');
+    const timestamp = formatLocalScreenshotTimestamp(new Date());
+
+    try {
+      await exportElementAsPng(screen, {
+        fileName: `教师手机端-${timestamp}.png`,
+        pixelRatio: 3,
+      });
+      console.info('[教师手机端截图] 导出成功', {
+        fileName: `教师手机端-${timestamp}.png`,
+        includeNativeChrome: showPhoneShell,
+        logicalSize: `${screen.offsetWidth}x${screen.offsetHeight}`,
+      });
+      setTeacherScreenshotStatus('success');
+      resetScreenshotStatusAfter(1800);
+    } catch (error) {
+      console.error('[教师手机端截图] 导出失败', {
+        error,
+        includeNativeChrome: showPhoneShell,
+        logicalSize: `${screen.offsetWidth}x${screen.offsetHeight}`,
+      });
+      setTeacherScreenshotStatus('error');
+      resetScreenshotStatusAfter(3000);
+    }
+  };
   const demoPanelClosedClass = demoPanelSide === 'left'
     ? '-translate-x-[calc(100%-32px)]'
     : demoPanelSide === 'top'
@@ -1447,6 +1523,13 @@ const AppSwitcher: React.FC = () => {
       : {}),
     transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)',
   };
+  const teacherScreenshotLabel = teacherScreenshotStatus === 'capturing'
+    ? '正在生成截图'
+    : teacherScreenshotStatus === 'success'
+      ? '截图已保存'
+      : teacherScreenshotStatus === 'error'
+        ? '截图失败，请重试'
+        : '拍照截图';
 
   return (
     <>
@@ -1459,6 +1542,7 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'admin' && (
           <MobileApp
             showPhoneShell={showPhoneShell}
+            screenRef={teacherPhoneScreenRef}
             gradientPreview={{ schemeId: teacherGradientScheme, styleId: teacherGradientStyle }}
           />
         )}
@@ -1478,18 +1562,39 @@ const AppSwitcher: React.FC = () => {
             const togglePhoneShell = currentApp === 'parent' ? setShowParentPhoneShell : setShowPhoneShell;
             return (
               <div className="flex w-[232px] flex-col items-end gap-2 max-[900px]:w-auto">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => togglePhoneShell(prev => !prev)}
-                    className="flex min-h-11 items-center gap-3 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl active:bg-slate-50 transition-colors"
+                    className="flex h-11 items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-colors active:bg-slate-50 max-[900px]:px-2"
                     aria-pressed={phoneShellEnabled}
+                    aria-label="模拟真实手机"
+                    title="模拟真实手机"
                   >
-                    <span className="text-[12px] font-black text-slate-700">模拟真实手机效果</span>
-                    <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${phoneShellEnabled ? 'bg-slate-900' : 'bg-slate-200'}`}>
-                      <span className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${phoneShellEnabled ? 'translate-x-5' : 'translate-x-0'}`}></span>
+                    <Smartphone className="hidden h-4 w-4 text-slate-600 max-[900px]:block" aria-hidden="true" />
+                    <span className="whitespace-nowrap text-[12px] font-semibold text-slate-700 max-[900px]:sr-only">模拟真实手机</span>
+                    <span className={`relative h-[22px] w-10 shrink-0 rounded-full p-0.5 transition-colors ${phoneShellEnabled ? 'bg-slate-800' : 'bg-slate-300'}`}>
+                      <span className={`block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform ${phoneShellEnabled ? 'translate-x-[18px]' : 'translate-x-0'}`}></span>
                     </span>
                   </button>
+                  {currentApp === 'admin' && (
+                    <button
+                      type="button"
+                      onClick={handleTeacherScreenshot}
+                      disabled={teacherScreenshotStatus === 'capturing'}
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors active:bg-slate-200/70 disabled:cursor-wait ${teacherScreenshotStatus === 'error' ? 'text-rose-600' : 'text-slate-600'}`}
+                      aria-label={teacherScreenshotLabel}
+                      title={teacherScreenshotLabel}
+                    >
+                      {teacherScreenshotStatus === 'capturing' ? (
+                        <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : teacherScreenshotStatus === 'success' ? (
+                        <Check className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Camera className="h-4 w-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  )}
                   {currentApp === 'admin' && (
                     <button
                       type="button"
@@ -1502,6 +1607,13 @@ const AppSwitcher: React.FC = () => {
                     </button>
                   )}
                 </div>
+
+                {currentApp === 'admin' && hasTeacherDeveloperNotesContext && (
+                  <TeacherMobileDeveloperNotes
+                    open={showTeacherDeveloperNotes}
+                    onToggle={() => setShowTeacherDeveloperNotes(prev => !prev)}
+                  />
+                )}
 
                 {currentApp === 'admin' && (
                   <div className={`w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl ${isTeacherGradientControlsOpen ? 'max-[900px]:block' : 'max-[900px]:hidden'}`}>

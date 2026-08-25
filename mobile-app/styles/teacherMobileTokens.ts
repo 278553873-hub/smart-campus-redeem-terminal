@@ -644,7 +644,7 @@ export const teacherBrandCssVariables = {
   '--tm-floating-image-button-height': '72px',
   '--tm-floating-image-button-circle-size': '68px',
   '--tm-floating-image-button-image-size': '44px',
-  '--tm-floating-image-button-label-width': '64px',
+  '--tm-floating-image-button-label-width': '72px',
   '--tm-floating-image-button-label-height': '20px',
   '--tm-floating-image-button-border-width': '2px',
   '--tm-floating-image-button-bg': 'var(--tm-bg-surface)',

@@ -51,6 +51,7 @@ interface ClassDetailViewProps {
     onToggleSelectionMode: () => void;
     selectedIds: Set<string>;
     onSelectionChange: (ids: Set<string>) => void;
+    onGroupSelectionStateChange?: (state: { active: boolean; count: number }) => void;
     onStartRecord?: (studentIds: string[]) => void;
     onViewRecords?: () => void;
     onBack?: () => void;
@@ -279,6 +280,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     onToggleSelectionMode,
     selectedIds,
     onSelectionChange,
+    onGroupSelectionStateChange,
     onBack,
     onGroupingEditorChange,
     performanceByStudentId = {},
@@ -347,6 +349,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         setShowGroupPlanSheet(false);
         setIsGroupSelectionMode(false);
         setGroupSelectionIds(new Set());
+        onGroupSelectionStateChange?.({ active: false, count: 0 });
         setGroupEditor(null);
         setNewGroupName('');
         setShowNewGroupNameSheet(false);
@@ -557,6 +560,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             setRecountSelectedIds(next);
             return;
         }
+        onGroupSelectionStateChange?.({ active: false, count: 0 });
         onSelectionChange(next);
     };
 
@@ -619,6 +623,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         if (isSelectionMode) onToggleSelectionMode();
         setIsGroupSelectionMode(false);
         setGroupSelectionIds(new Set());
+        onGroupSelectionStateChange?.({ active: false, count: 0 });
         onSelectionChange(new Set());
         setActiveView(view);
     };
@@ -628,6 +633,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
         if (next.has(groupId)) next.delete(groupId);
         else next.add(groupId);
         setGroupSelectionIds(next);
+        onGroupSelectionStateChange?.({ active: true, count: next.size });
         const memberIds = activeGroupPlan?.groups
             .filter(group => next.has(group.id))
             .flatMap(group => group.memberIds) ?? [];
@@ -1219,6 +1225,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             if (!isSelectionMode) {
                                 setSearchQuery('');
                             }
+                            onGroupSelectionStateChange?.({ active: false, count: 0 });
                             onToggleSelectionMode();
                         }}
                     />
@@ -1301,9 +1308,12 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                 <ClassDetailMultiSelectButton
                                     active={isGroupSelectionMode}
                                     onClick={() => {
-                                        setIsGroupSelectionMode(prev => !prev);
+                                        const nextActive = !isGroupSelectionMode;
+                                        setIsGroupSelectionMode(nextActive);
                                         setGroupSelectionIds(new Set());
                                         onSelectionChange(new Set());
+                                        onGroupSelectionStateChange?.({ active: nextActive, count: 0 });
+                                        if (isSelectionMode !== nextActive) onToggleSelectionMode();
                                     }}
                                 />
                                 {!isGroupSelectionMode && hasActiveStudentGroups && (canConfigureCardDisplay || isActiveGroupPlanOwnedByCurrentTeacher) && (

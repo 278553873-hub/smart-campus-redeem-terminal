@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师手机端圆角盘点</title>
+  <style>
+    :root {
+      --page: #f5f4f3;
+      --surface: #fff;
+      --surface-soft: #efedeb;
+      --text: #1f1c1a;
+      --text-2: #68615d;
+      --text-3: #958c87;
+      --line: #ded9d6;
+      --red: #dc2d2d;
+      --red-strong: #92221f;
+      --red-soft: #fff0ef;
+      --amber: #9a5b00;
+      --amber-soft: #fff6df;
+      --green: #247765;
+      --green-soft: #eaf7f3;
+      --shadow: 0 12px 30px -24px rgba(48, 39, 35, .28);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--page); }
+    body { margin: 0; color: var(--text); background: var(--page); font-family: "PingFang SC", "Noto Sans CJK SC", sans-serif; letter-spacing: 0; }
+    button, a { font: inherit; }
+    .page { width: min(1240px, 100%); margin: 0 auto; padding: 34px 28px 64px; }
+    .hero { display: flex; justify-content: space-between; gap: 40px; align-items: flex-start; }
+    .eyebrow { margin: 0 0 8px; color: var(--red-strong); font-size: 12px; font-weight: 750; }
+    h1 { margin: 0; font-size: 30px; line-height: 1.2; }
+    .lead { max-width: 720px; margin: 12px 0 0; color: var(--text-2); font-size: 14px; line-height: 1.7; }
+    .scope { flex: none; text-align: right; color: var(--text-2); font-size: 12px; line-height: 1.6; }
+    .scope strong { display: block; color: var(--text); font-size: 13px; }
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 26px; overflow: hidden; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    .metric { min-height: 94px; padding: 18px 20px; border-right: 1px solid var(--line); }
+    .metric:last-child { border-right: 0; }
+    .metric strong { display: block; font-size: 28px; line-height: 1; }
+    .metric span { display: block; margin-top: 10px; color: var(--text-2); font-size: 12px; }
+    .metric.warn strong { color: var(--red-strong); }
+    .jump { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; margin: 18px 0 0; padding: 10px 0; background: color-mix(in srgb, var(--page) 92%, transparent); backdrop-filter: blur(12px); }
+    .jump a { min-height: 40px; display: inline-flex; align-items: center; border-radius: 8px; padding: 0 13px; color: var(--text-2); background: var(--surface); text-decoration: none; font-size: 12px; font-weight: 650; box-shadow: var(--shadow); }
+    .jump a:hover, .jump a:focus-visible { color: var(--red-strong); outline: 2px solid var(--red); outline-offset: 2px; }
+    section { scroll-margin-top: 64px; margin-top: 38px; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 14px; }
+    h2 { margin: 0; font-size: 21px; }
+    .note { margin: 5px 0 0; color: var(--text-2); font-size: 12px; line-height: 1.6; }
+    .scale { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); overflow: hidden; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    .radius-item { min-width: 0; padding: 22px 16px 18px; border-right: 1px solid var(--line); }
+    .radius-item:last-child { border-right: 0; }
+    .shape-wrap { height: 92px; display: flex; align-items: center; justify-content: center; }
+    .shape { width: 74px; height: 74px; border: 1px solid color-mix(in srgb, var(--red) 20%, var(--line)); background: var(--red-soft); box-shadow: inset 0 0 0 8px rgba(255,255,255,.54); }
+    .r8 { border-radius: 8px; } .r12 { border-radius: 12px; } .r16 { border-radius: 16px; }
+    .r20 { border-radius: 20px; } .r28 { border-radius: 28px; } .rfull { border-radius: 999px; }
+    .radius-item b { display: block; font-size: 14px; }
+    .radius-item code { display: block; min-height: 32px; margin-top: 5px; color: var(--red-strong); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+    .radius-item p { margin: 7px 0 0; color: var(--text-2); font-size: 11px; line-height: 1.55; }
+    .inventory { overflow: hidden; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+    th { color: var(--text-2); background: #faf9f8; font-size: 11px; }
+    td { font-size: 12px; }
+    tr:last-child td { border-bottom: 0; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+    .token { color: var(--red-strong); font-weight: 700; white-space: nowrap; }
+    .sample { display: inline-block; width: 34px; height: 26px; vertical-align: middle; background: var(--surface-soft); border: 1px solid var(--line); }
+    .usage { color: var(--text-2); }
+    .history-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 16px; }
+    .panel { padding: 20px; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    .panel h3 { margin: 0; font-size: 16px; }
+    .bars { display: grid; gap: 11px; margin-top: 18px; }
+    .bar-row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 38px; align-items: center; gap: 10px; font-size: 11px; }
+    .track { height: 8px; overflow: hidden; border-radius: 999px; background: var(--surface-soft); }
+    .fill { height: 100%; border-radius: inherit; background: var(--red); }
+    .bar-row b { text-align: right; font-variant-numeric: tabular-nums; }
+    .issues { display: grid; gap: 10px; margin-top: 16px; }
+    .issue { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 12px; border-radius: 8px; background: var(--amber-soft); }
+    .issue strong { display: flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; color: var(--amber); background: #fff; font-size: 11px; }
+    .issue b { display: block; font-size: 12px; }
+    .issue p { margin: 3px 0 0; color: var(--text-2); font-size: 11px; line-height: 1.55; }
+    .rule { margin-top: 16px; padding: 14px 16px; border-left: 3px solid var(--green); background: var(--green-soft); color: var(--text-2); font-size: 12px; line-height: 1.65; }
+    .foot { margin: 28px 0 0; color: var(--text-3); font-size: 11px; }
+    @media (max-width: 920px) {
+      .summary { grid-template-columns: repeat(2, 1fr); }
+      .metric:nth-child(2) { border-right: 0; }
+      .metric:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .scale { grid-template-columns: repeat(3, 1fr); }
+      .radius-item:nth-child(3) { border-right: 0; }
+      .radius-item:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
+      .history-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .page { padding: 24px 14px 44px; }
+      .hero { display: block; }
+      .scope { margin-top: 14px; text-align: left; }
+      h1 { font-size: 25px; }
+      .scale { grid-template-columns: repeat(2, 1fr); }
+      .radius-item { border-bottom: 1px solid var(--line); }
+      .radius-item:nth-child(odd) { border-right: 1px solid var(--line); }
+      .radius-item:nth-child(even) { border-right: 0; }
+      .radius-item:nth-last-child(-n+2) { border-bottom: 0; }
+      .inventory { overflow-x: auto; }
+      table { min-width: 760px; }
+      .jump { overflow-x: auto; }
+      .jump a { flex: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">教师端 · 手机场景 · 只读源码盘点</p>
+        <h1>圆角：语义尺度与历史写法</h1>
+        <p class="lead">本页对当前教师手机端的圆角 Token（设计令牌）、工具类和局部写法做统一映射。统计用于评审，不修改真实页面，也不把分析说明带入业务界面。</p>
+      </div>
+      <div class="scope"><strong>代码基线 2026-08-24</strong>排除测试、构建产物与其他端</div>
+    </header>
+
+    <section class="summary" aria-label="盘点摘要">
+      <div class="metric"><strong>6</strong><span>设计体系中的语义圆角档位</span></div>
+      <div class="metric"><strong>4</strong><span>全局样式核心圆角 Token</span></div>
+      <div class="metric warn"><strong>30+</strong><span>源码中仍可识别的圆角写法</span></div>
+      <div class="metric"><strong>5</strong><span>需要区分的历史写法类型</span></div>
+    </section>
+
+    <nav class="jump" aria-label="页面目录"><a href="#scale">语义尺度</a><a href="#inventory">Token盘点</a><a href="#history">历史写法</a></nav>
+
+    <section id="scale">
+      <div class="section-head"><div><h2>6 档语义圆角</h2><p class="note">圆角大小跟随组件层级，不跟随页面或业务模块随意变化。</p></div></div>
+      <div class="scale">
+        <article class="radius-item"><div class="shape-wrap"><div class="shape r8"></div></div><b>8 像素 · 小型</b><code>phoneRadius.sm</code><p>紧凑筛选、小型标签和局部可见色块。</p></article>
+        <article class="radius-item"><div class="shape-wrap"><div class="shape r12"></div></div><b>12 像素 · 控件</b><code>--tm-radius-control</code><p>按钮、输入框、图标承载和普通选择项。</p></article>
+        <article class="radius-item"><div class="shape-wrap"><div class="shape r16"></div></div><b>16 像素 · 内层</b><code>--tm-radius-inner</code><p>卡内分组、列表块和复合控件轨道。</p></article>
+        <article class="radius-item"><div class="shape-wrap"><div class="shape r20"></div></div><b>20 像素 · 卡片</b><code>--tm-radius-card</code><p>页面一级内容卡片与核心业务表面。</p></article>
+        <article class="radius-item"><div class="shape-wrap"><div class="shape r28"></div></div><b>28 像素 · 弹层</b><code>--tm-radius-sheet</code><p>底部抽屉和高层级浮层顶部边角。</p></article>
+        <article class="radius-item"><div class="shape-wrap"><div class="shape rfull"></div></div><b>全圆 · 形状</b><code>phoneRadius.full</code><p>头像、开关、圆形图标按钮和胶囊。</p></article>
+      </div>
+    </section>
+
+    <section id="inventory">
+      <div class="section-head"><div><h2>Token 与真实使用映射</h2><p class="note">组件级 Token 优先；8 像素与全圆是受控形状特例。</p></div></div>
+      <div class="inventory"><table><thead><tr><th>视觉</th><th>语义</th><th>当前代码入口</th><th>主要用途</th><th>代表性组件 / 页面</th></tr></thead><tbody>
+        <tr><td><span class="sample r8"></span></td><td class="token">小型 8 像素</td><td><code>phoneRadius.sm<br>--tm-selection-pill-radius</code></td><td class="usage">筛选胶囊、年级选择、小操作</td><td>ArchiveDesignView / PillSelectionControl</td></tr>
+        <tr><td><span class="sample r12"></span></td><td class="token">控件 12 像素</td><td><code>--tm-radius-control</code></td><td class="usage">主次按钮、输入、选择、图标容器</td><td>MobileConfirmSheet / 多数表单页</td></tr>
+        <tr><td><span class="sample r16"></span></td><td class="token">内层 16 像素</td><td><code>--tm-radius-inner</code></td><td class="usage">操作块、卡内分区、复合控件</td><td>MobileCard flat / 操作抽屉</td></tr>
+        <tr><td><span class="sample r20"></span></td><td class="token">卡片 20 像素</td><td><code>--tm-radius-card</code></td><td class="usage">普通卡片、报告板块、记录卡</td><td>MobileCard card / ReportSection</td></tr>
+        <tr><td><span class="sample r28"></span></td><td class="token">弹层 28 像素</td><td><code>--tm-radius-sheet</code></td><td class="usage">底部抽屉、确认浮层</td><td>MobileBottomSheet</td></tr>
+        <tr><td><span class="sample rfull"></span></td><td class="token">全圆</td><td><code>phoneRadius.full<br>rounded-full</code></td><td class="usage">头像、开关、徽标、圆形按钮</td><td>MobileFloatingCreateButton / Switch</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section id="history">
+      <div class="section-head"><div><h2>历史写法分布</h2><p class="note">下列次数来自源码文本扫描，包含按钮、卡片、头像、标签和图表等全部圆角元素。</p></div></div>
+      <div class="history-grid">
+        <article class="panel"><h3>高频写法</h3><div class="bars">
+          <div class="bar-row"><code>rounded-full</code><div class="track"><div class="fill" style="width:100%"></div></div><b>362</b></div>
+          <div class="bar-row"><code>control Token</code><div class="track"><div class="fill" style="width:80%"></div></div><b>290</b></div>
+          <div class="bar-row"><code>inner Token</code><div class="track"><div class="fill" style="width:32%"></div></div><b>115</b></div>
+          <div class="bar-row"><code>card Token</code><div class="track"><div class="fill" style="width:28%"></div></div><b>100</b></div>
+          <div class="bar-row"><code>rounded-2xl</code><div class="track"><div class="fill" style="width:9%"></div></div><b>33</b></div>
+          <div class="bar-row"><code>rounded-lg</code><div class="track"><div class="fill" style="width:9%"></div></div><b>33</b></div>
+          <div class="bar-row"><code>rounded-xl</code><div class="track"><div class="fill" style="width:8%"></div></div><b>30</b></div>
+          <div class="bar-row"><code>rounded-3xl</code><div class="track"><div class="fill" style="width:4%"></div></div><b>14</b></div>
+        </div></article>
+        <article class="panel"><h3>5 类偏差</h3><div class="issues">
+          <div class="issue"><strong>01</strong><div><b>同值不同写法</b><p>8/12/16/20/28 像素同时存在 Token、Tailwind（工具类）别名和直接像素值。</p></div></div>
+          <div class="issue"><strong>02</strong><div><b>一次性中间值</b><p>3/4/5/6/10/18/24/26 像素缺少稳定语义，难以判断是否应复用。</p></div></div>
+          <div class="issue"><strong>03</strong><div><b>弹层 32 像素</b><p>部分报告底部抽屉使用 32 像素，与统一的 28 像素弹层 Token 不一致。</p></div></div>
+          <div class="issue"><strong>04</strong><div><b>旧页面工具类</b><p>记录、学期报告等区域仍保留 lg/xl/2xl/3xl 写法。</p></div></div>
+          <div class="issue"><strong>05</strong><div><b>局部计算值</b><p>存在“控件圆角减 4 像素”等计算圆角，需要确认属于内部结构还是临时修补。</p></div></div>
+        </div></article>
+      </div>
+      <div class="rule"><strong>评审边界：</strong>本页先建立共同口径，不直接把所有形状压成同一个圆角。头像、开关、图表端点和底部抽屉等几何特例必须保留；后续只收敛缺少语义的一次性写法。</div>
+    </section>
+
+    <p class="foot">说明：这是 UI 改造项目内的独立盘点页，不属于教师手机端真实产品界面。</p>
+  </main>
+</body>
+</html>

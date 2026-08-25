@@ -62,7 +62,7 @@ const MobileFloatingImageButton: React.FC<MobileFloatingImageButtonProps> = ({
       {visibleLabel && (
         <span
           aria-hidden="true"
-          className="absolute bottom-0 left-1/2 flex h-[var(--tm-floating-image-button-label-height)] w-[var(--tm-floating-image-button-label-width)] -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-full border border-[var(--tm-floating-image-button-label-border)] bg-[var(--tm-floating-image-button-label-bg)] text-[var(--tm-font-size-badge)] font-semibold text-[var(--tm-floating-image-button-label-text)] [box-shadow:var(--tm-shadow-control)]"
+          className="absolute bottom-0 left-1/2 flex h-[var(--tm-floating-image-button-label-height)] w-[var(--tm-floating-image-button-label-width)] -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-full border border-[var(--tm-floating-image-button-label-border)] bg-[var(--tm-floating-image-button-label-bg)] text-[var(--tm-font-size-badge)] font-medium text-[var(--tm-floating-image-button-label-text)] [box-shadow:var(--tm-shadow-control)]"
         >
           {visibleLabel}
         </span>

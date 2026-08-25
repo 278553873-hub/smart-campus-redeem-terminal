@@ -13,6 +13,18 @@ const renovationDemos = [
     src: '/demos/tab-switch-exploration.html',
     title: 'UI改造：教师手机端切换控件盘点',
   },
+  {
+    id: 'radius',
+    label: '圆角',
+    src: '/demos/radius-inventory.html',
+    title: 'UI改造：教师手机端圆角盘点',
+  },
+  {
+    id: 'buttons',
+    label: '按钮样式',
+    src: '/demos/button-style-inventory.html',
+    title: 'UI改造：教师手机端按钮样式盘点',
+  },
 ] as const;
 
 type RenovationDemoId = (typeof renovationDemos)[number]['id'];
@@ -40,7 +52,11 @@ const UiRenovationDemo: React.FC = () => {
         <h1 className="absolute left-5 text-sm font-semibold text-slate-900 max-[520px]:sr-only">
           UI改造
         </h1>
-        <nav className="flex h-full items-stretch" role="tablist" aria-label="UI改造方案">
+        <nav
+          className="flex h-full max-w-full items-stretch overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+          aria-label="UI改造方案"
+        >
           {renovationDemos.map((demo, index) => {
             const isActive = demo.id === activeDemoId;
             return (
@@ -54,7 +70,7 @@ const UiRenovationDemo: React.FC = () => {
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveDemoId(demo.id)}
                 onKeyDown={event => handleTabKeyDown(event, index)}
-                className={`relative min-w-24 px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-500 ${
+                className={`relative min-w-24 shrink-0 px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-500 ${
                   isActive ? 'text-red-600' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
