@@ -374,12 +374,12 @@ const StudentCard: React.FC<{
           <Check size={12} strokeWidth={3} />
         </div>
       )}
-      <div className="flex h-5 w-full shrink-0 items-center justify-center">
+      <div className="flex h-5 w-full items-center justify-center">
         <div className="flex items-center justify-center">
           <ClassroomStudentLevelIcons level={level} compact />
         </div>
       </div>
-      <div className="mt-px flex h-[68px] w-full shrink-0 items-center justify-center">
+      <div className="mt-px flex h-[68px] w-full items-center justify-center">
         <ClassroomStudentAvatar
           name={student.name}
           avatar={student.avatar}
@@ -387,7 +387,7 @@ const StudentCard: React.FC<{
           compact
         />
       </div>
-      <div className="mt-px flex h-[18px] w-full shrink-0 items-center justify-center">
+      <div className="mt-px flex h-[18px] w-full items-center justify-center">
         <ClassroomStudentCounts summary={performance} compact />
       </div>
       <div className="mt-1.5 flex h-[18px] w-full shrink-0 items-center justify-center text-center">

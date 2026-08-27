@@ -61,7 +61,7 @@ export const ClassroomStudentAvatar: React.FC<ClassroomStudentAvatarProps> = ({
       aria-label={`${name}头像，下一枚等级图标进度${progressPercent}%`}
       className={`relative shrink-0 ${compact ? 'h-[68px] w-[68px]' : 'h-[76px] w-[76px]'}`}
     >
-      <svg aria-hidden="true" className="absolute inset-0 z-10 h-full w-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+      <svg aria-hidden="true" className="absolute inset-0 z-10 h-full w-full" viewBox={`0 0 ${size} ${size}`}>
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e2eaf3" strokeWidth={4} />
         <circle
           cx={size / 2}
@@ -73,6 +73,7 @@ export const ClassroomStudentAvatar: React.FC<ClassroomStudentAvatarProps> = ({
           strokeDashoffset={dashOffset}
           strokeLinecap="round"
           strokeWidth={4}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
           className="transition-[stroke-dashoffset] duration-300 ease-out motion-reduce:transition-none"
         />
       </svg>
