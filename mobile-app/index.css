@@ -223,6 +223,14 @@
 }
 
 /* --- App Simulation Wrappers --- */
+.teacher-mobile-app {
+  font-weight: var(--tm-font-weight-regular);
+}
+
+.tm-font-regular {
+  font-weight: var(--tm-font-weight-regular);
+}
+
 .teacher-mobile-app,
 .teacher-mobile-app * {
   -ms-overflow-style: none;

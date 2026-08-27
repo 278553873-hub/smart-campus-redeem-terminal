@@ -488,9 +488,9 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                                 {formatScore(record.score)}
                                             </strong>
                                         </div>
-                                        <p className="mt-3 text-[length:var(--tm-font-size-body)] font-normal leading-6 text-[var(--tm-text-primary)]">{record.reason}</p>
+                                        <p className="mt-3 text-[length:var(--tm-font-size-body)] tm-font-regular leading-6 text-[var(--tm-text-primary)]">{record.reason}</p>
                                         <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--tm-border-subtle)] pt-3">
-                                            <time className="text-[length:var(--tm-font-size-meta)] font-normal tabular-nums text-[var(--tm-text-tertiary)]">{formatRecordTime(record.occurredAt, today)}</time>
+                                            <time className="text-[length:var(--tm-font-size-meta)] tm-font-regular tabular-nums text-[var(--tm-text-tertiary)]">{formatRecordTime(record.occurredAt, today)}</time>
                                             <span className="shrink-0 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{record.operator}</span>
                                         </div>
                                     </button>

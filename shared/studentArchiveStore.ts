@@ -17,7 +17,7 @@ export type ArchiveFieldType = 'text' | 'single-select' | 'multiple-select' | 'd
 export type ArchiveDataRangeMode = 'semester' | 'school_year' | 'custom';
 export type ArchiveGenerationMode = 'once' | 'semester' | 'school_year' | 'continuous';
 export type ArchiveThemeId = 'clean' | 'sky' | 'leaf' | 'sunny';
-export type ArchiveHeaderImageId = 'none' | 'learning' | 'growth' | 'sports' | 'creativity';
+export type ArchiveHeaderImageId = 'none' | 'ambient-flow' | 'ambient-tech' | 'learning' | 'growth' | 'sports' | 'creativity';
 export type ArchiveSystemFieldKey = 'name' | 'studentNo' | 'gender' | 'birthDate' | 'grade' | 'class';
 export type ArchiveGrowthModuleKey = GrowthFieldGroupKey | 'semester_goal' | 'daily_performance';
 export type ArchiveGrowthFieldKey =
@@ -169,7 +169,7 @@ export interface ArchiveAppearance {
 
 export const DEFAULT_ARCHIVE_APPEARANCE: ArchiveAppearance = {
   themeId: 'clean',
-  headerImageId: 'none',
+  headerImageId: 'ambient-flow',
 };
 
 export const getArchiveGrowthMissingPolicy = (field: ArchiveGrowthFieldConfig): ArchiveGrowthMissingPolicy => (

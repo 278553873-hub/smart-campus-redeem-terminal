@@ -43,7 +43,11 @@ export const archiveHeaderImageOptions: Array<{
   id: ArchiveHeaderImageId;
   label: string;
   image?: string;
-}> = questionnaireHeaderImageOptions;
+}> = questionnaireHeaderImageOptions.filter(option => option.id !== 'none');
+
+export const getArchiveHeaderImageId = (appearance: ArchiveAppearance): ArchiveHeaderImageId => (
+  appearance.headerImageId === 'none' ? 'ambient-flow' : appearance.headerImageId
+);
 
 export const getArchiveTheme = (appearance: ArchiveAppearance) => (
   archiveThemeOptions.find(option => option.id === appearance.themeId) ?? archiveThemeOptions[0]
@@ -62,5 +66,5 @@ export const getArchiveThemeStyle = (appearance: ArchiveAppearance): CSSProperti
 };
 
 export const getArchiveHeaderImage = (appearance: ArchiveAppearance) => (
-  archiveHeaderImageOptions.find(option => option.id === appearance.headerImageId)?.image
+  archiveHeaderImageOptions.find(option => option.id === getArchiveHeaderImageId(appearance))?.image
 );

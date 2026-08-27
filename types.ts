@@ -63,9 +63,9 @@ export enum TermType {
 
 export interface TransactionRecord {
   id: string;
-  title: string;
+  category: 'growth_award' | 'class_reward' | 'bank_interest' | 'vending_exchange' | 'class_exchange';
+  detail: string;
   amount: number;
   type: 'income' | 'expense';
   date: string;
-  category: string;
 }

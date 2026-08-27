@@ -38,6 +38,7 @@ outputs/
 tmp/
 assets/generated/
 design-assets/
+.codex-output/
 deliverables/
 
 # Local QA artifacts

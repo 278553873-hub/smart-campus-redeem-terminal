@@ -12,9 +12,9 @@ import {
     Plus,
     Shield,
     Trash2,
-    X,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import CompactRemoveButton from '../components/ui/CompactRemoveButton';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import type { CoinIssuanceConfig } from '../types';
 
@@ -339,9 +339,10 @@ export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ 
                     {images.map((image, index) => (
                         <div key={`${image}-${index}`} className="relative flex aspect-square items-center justify-center rounded-2xl bg-[var(--tm-bg-surface-soft)] text-[12px] font-semibold text-[var(--tm-text-secondary)]">
                             {image}
-                            <button type="button" onClick={() => onRemoveImage(index)} className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--tm-status-negative)] text-white shadow-[0_8px_18px_-12px_var(--tm-shadow-neutral-color)]" aria-label={`删除第${index + 1}张反馈图片`}>
-                                <X className="h-3.5 w-3.5" />
-                            </button>
+                            <CompactRemoveButton
+                                onClick={() => onRemoveImage(index)}
+                                ariaLabel={`删除第${index + 1}张反馈图片`}
+                            />
                         </div>
                     ))}
                     {canAddImage && (

@@ -130,7 +130,7 @@ const ChartAnalysis = ({ summary, supplement }: ClassReportChartAnalysis) => (
             <div className="min-w-0">
                 <p className="text-[var(--tm-font-size-body)] font-semibold leading-5 text-[var(--tm-text-primary)]">{summary}</p>
                 {supplement && (
-                    <p className="mt-1 text-[var(--tm-font-size-compact)] font-normal leading-5 text-[var(--tm-text-tertiary)]">{supplement}</p>
+                    <p className="mt-1 text-[var(--tm-font-size-compact)] tm-font-regular leading-5 text-[var(--tm-text-tertiary)]">{supplement}</p>
                 )}
             </div>
         </div>
@@ -297,7 +297,7 @@ const StudentCoverageList = ({
                                 className={`flex h-[var(--tm-report-coverage-value-height)] items-center justify-center text-[length:var(--tm-font-size-compact)] tabular-nums ${
                                     evaluationMissing
                                         ? 'font-semibold text-[var(--tm-chart-negative-text)]'
-                                        : 'font-normal text-[var(--tm-text-secondary)]'
+                                        : 'tm-font-regular text-[var(--tm-text-secondary)]'
                                 }`}
                             >
                                 {row.evaluationCount}
@@ -307,7 +307,7 @@ const StudentCoverageList = ({
                                 className={`flex h-[var(--tm-report-coverage-value-height)] items-center justify-center text-[length:var(--tm-font-size-compact)] tabular-nums ${
                                     teacherMissing
                                         ? 'font-semibold text-[var(--tm-chart-negative-text)]'
-                                        : 'font-normal text-[var(--tm-text-secondary)]'
+                                        : 'tm-font-regular text-[var(--tm-text-secondary)]'
                                 }`}
                             >
                                 {row.teacherCount}

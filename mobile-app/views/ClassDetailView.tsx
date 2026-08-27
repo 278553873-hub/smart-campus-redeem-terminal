@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Student, ClassInfo, GroupPlan, StudentGroup, type GroupCardDisplaySettings, type StudentCardDisplaySettings, type StudentGroupAvatarKey } from '../types';
+import { Student, ClassInfo, GroupPlan, StudentGroup, type GroupCardDisplaySettings, type StudentCardDisplaySettings, type StudentGroupAvatarKey, type StudentLevelDisplayMode } from '../types';
 import { GET_MOCK_GROUP_PLANS_FOR_CLASS } from '../constants';
 import { BackIcon, MaleIcon, FemaleIcon, CheckIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, PlusIcon, MenuIcon, EditIcon, DeleteIcon, CloseIcon, EyeIcon, RetryIcon } from '../components/Icons';
 import { ASSETS } from '../assets/images';
@@ -13,18 +13,14 @@ import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSearchInput from '../components/ui/MobileSearchInput';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileSettingsSwitchRow from '../components/ui/MobileSettingsSwitchRow';
+import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileToast from '../components/ui/MobileToast';
 import GroupPerformanceMeta from '../components/group/GroupPerformanceMeta';
 import StudentCompactSelectGrid, { type StudentCompactSelectSection } from '../components/student/StudentCompactSelectGrid';
-import StudentPerformanceAvatar from '../components/student-performance/StudentPerformanceAvatar';
-import {
-    StudentPerformanceCounts,
-    StudentPerformanceLevelIcons,
-} from '../components/student-performance/StudentPerformanceMeta';
+import StudentRosterCard, { StudentRosterAddCard } from '../components/student/StudentRosterCard';
 import {
     createDemoStudentPerformanceSummary,
-    getStudentPerformanceLevel,
     type StudentPerformanceSummary,
 } from '../domain/studentPerformance';
 import {
@@ -40,6 +36,11 @@ import { getStudentCardDisplaySettings } from '../domain/studentCardDisplay';
 import { getGroupCardDisplaySettings } from '../domain/groupCardDisplay';
 
 type EvaluationRecountTarget = 'student' | 'group';
+
+const LEVEL_DISPLAY_OPTIONS: Array<{ value: StudentLevelDisplayMode; label: string }> = [
+    { value: 'term', label: '仅计算本学期' },
+    { value: 'cumulative', label: '累计所有学期' },
+];
 
 interface ClassDetailViewProps {
     classInfo: ClassInfo;
@@ -61,26 +62,13 @@ interface ClassDetailViewProps {
     levelNetScoreByStudentId?: Record<string, number>;
     canResetStudentEvaluationCounts: boolean;
     canConfigureCardDisplay: boolean;
+    canConfigureLevelDisplay: boolean;
+    canAddStudent: boolean;
+    onAddStudent: () => void;
     onUpdateStudentCardDisplaySettings: (settings: StudentCardDisplaySettings) => void;
+    onUpdateStudentLevelDisplayMode: (mode: StudentLevelDisplayMode) => void;
     onUpdateGroupCardDisplaySettings: (settings: GroupCardDisplaySettings) => void;
 }
-
-const getClassRosterNumber = (studentNo: string) => {
-    const trailingDigits = studentNo.match(/(\d+)$/)?.[1];
-    if (!trailingDigits) return studentNo.slice(-2);
-    return trailingDigits.slice(-2).padStart(2, '0');
-};
-
-// 头像点缀色：不承载语义，按序轮换品牌派生的低饱和浅底，丰富花名册层次。
-const getAvatarStyle = (student: Student, index: number) => {
-    const avatarTones = [
-        ['bg-[var(--tm-tag-jade-soft)]', 'text-[var(--tm-tag-jade-strong)]', 'border-[var(--tm-tag-jade-border)]'],
-        ['bg-[var(--tm-tag-orange-soft)]', 'text-[var(--tm-tag-orange-strong)]', 'border-[var(--tm-tag-orange-border)]'],
-        ['bg-[var(--tm-tag-red-soft)]', 'text-[var(--tm-tag-red-strong)]', 'border-[var(--tm-tag-red-border)]'],
-        ['bg-[var(--tm-tag-gold-soft)]', 'text-[var(--tm-tag-gold-strong)]', 'border-[var(--tm-tag-gold-border)]'],
-    ];
-    return avatarTones[index % avatarTones.length];
-};
 
 const GroupAvatar: React.FC<{ avatarKey?: StudentGroupAvatarKey; index?: number; size?: 'card' | 'sheet' }> = ({ avatarKey, index = 0, size = 'card' }) => {
     const avatar = getStudentGroupAvatarOption(avatarKey, index);
@@ -113,101 +101,6 @@ const getGroupedStudentSelectionSections = (
         if (groupStudents.length > 0) sections.push({ id: group.id, label: group.name, students: groupStudents });
     });
     return sections;
-};
-
-interface StudentRosterCardProps {
-    student: Student;
-    index: number;
-    performance: StudentPerformanceSummary;
-    levelNetScore?: number;
-    displaySettings: StudentCardDisplaySettings;
-    showSelection: boolean;
-    selected: boolean;
-    selectionStatus?: string;
-    onClick: () => void;
-}
-
-const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
-    student,
-    index,
-    performance,
-    levelNetScore,
-    displaySettings,
-    showSelection,
-    selected,
-    selectionStatus,
-    onClick,
-}) => {
-    const [bgClass, textClass, borderClass] = getAvatarStyle(student, index);
-    const studentNo = student.studentNo || student.id;
-    const rosterNumber = getClassRosterNumber(studentNo);
-    const level = getStudentPerformanceLevel(levelNetScore ?? performance.netScore);
-    const showPerformanceCounts = displaySettings.showPraiseCount || displaySettings.showCriticismCount;
-    const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(showPerformanceCounts);
-    const cardHeightClass = visiblePerformanceRowCount === 2
-        ? 'h-[var(--tm-student-card-height-full)]'
-        : visiblePerformanceRowCount === 1
-            ? 'h-[var(--tm-student-card-height-compact)]'
-            : 'h-[var(--tm-student-card-height-minimal)]';
-    const accessibilityDetails = [
-        `${student.name}，学号${studentNo}`,
-        displaySettings.showLevel ? `等级分值${levelNetScore ?? performance.netScore}分` : '',
-        displaySettings.showPraiseCount ? `被表扬${performance.praiseCount}次` : '',
-        displaySettings.showCriticismCount ? `被批评${performance.criticismCount}次` : '',
-        selectionStatus ?? '',
-    ].filter(Boolean).join('，');
-
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-pressed={showSelection ? selected : undefined}
-            aria-label={accessibilityDetails}
-            className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-1 text-center [box-shadow:var(--tm-shadow-card)] transition-[transform,box-shadow] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transition-none ${cardHeightClass}`}
-        >
-            {showSelection && (
-                <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`}>
-                    {selected
-                        ? <CheckIcon className="h-3 w-3 text-white [stroke-width:3]" />
-                        : <CircleIcon className="h-[18px] w-[18px] fill-white text-[var(--tm-border-subtle)]" />
-                    }
-                </span>
-            )}
-            <span className="flex min-h-0 w-full flex-1 flex-col items-center justify-center">
-                {displaySettings.showLevel && <StudentPerformanceLevelIcons level={level} />}
-                <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
-                    <StudentPerformanceAvatar
-                        compact
-                        student={{ ...student, avatar: student.avatar || (student.gender === 'female' ? ASSETS.AVATAR.STUDENT_GIRL_DEFAULT : undefined) }}
-                        fallbackText={student.name.slice(-1)}
-                        fallbackClassName={`${bgClass} ${textClass} border ${borderClass}`}
-                        level={level}
-                        showLevelProgress={displaySettings.showLevel}
-                    />
-                </span>
-                {showPerformanceCounts && (
-                    <StudentPerformanceCounts
-                        summary={performance}
-                        showPraiseCount={displaySettings.showPraiseCount}
-                        showCriticismCount={displaySettings.showCriticismCount}
-                    />
-                )}
-            </span>
-            <span className="flex h-4 w-full shrink-0 items-center justify-center px-0.5">
-                <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-0.5">
-                    <span
-                        aria-label={`学号${studentNo}`}
-                        className="flex h-[14px] w-4 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[9px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]"
-                    >
-                        {rosterNumber}
-                    </span>
-                    <span className="block min-w-0 max-w-[52px] truncate text-[13px] font-semibold leading-4 text-[var(--tm-text-primary)]">
-                        {student.name}
-                    </span>
-                </span>
-            </span>
-        </button>
-    );
 };
 
 interface ClassDetailTabToolbarProps {
@@ -258,7 +151,7 @@ const OnlyUngroupedFilter: React.FC<OnlyUngroupedFilterProps> = ({ checked, ungr
         </span>
         <span>仅看未分组</span>
         {checked && (
-            <span className="ml-auto text-[length:var(--tm-font-size-meta)] font-normal text-[var(--tm-text-secondary)]">{ungroupedCount}人</span>
+            <span className="ml-auto text-[length:var(--tm-font-size-meta)] tm-font-regular text-[var(--tm-text-secondary)]">{ungroupedCount}人</span>
         )}
     </label>
 );
@@ -288,7 +181,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     levelNetScoreByStudentId = {},
     canResetStudentEvaluationCounts,
     canConfigureCardDisplay,
+    canConfigureLevelDisplay,
+    canAddStudent,
+    onAddStudent,
     onUpdateStudentCardDisplaySettings,
+    onUpdateStudentLevelDisplayMode,
     onUpdateGroupCardDisplaySettings,
 }) => {
     const studentCardDisplaySettings = getStudentCardDisplaySettings(classInfo.studentCardDisplaySettings);
@@ -1259,9 +1156,15 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         />
                     );
                 })}
+                {canAddStudent && !isStudentSelectionActive && !hasSearchQuery && (
+                    <StudentRosterAddCard
+                        displaySettings={studentCardDisplaySettings}
+                        onClick={onAddStudent}
+                    />
+                )}
             </div>
 
-            {visibleStudents.length === 0 && (
+            {visibleStudents.length === 0 && (hasSearchQuery || !canAddStudent) && (
                 <MobileEmptyState
                     imageSrc={hasSearchQuery ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR}
                     title={hasSearchQuery ? '没有匹配的学生' : '暂无学生'}
@@ -1418,7 +1321,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         role="tab"
                         aria-selected={activeView === 'student'}
                         onClick={() => handleSwitchView('student')}
-                        className={`relative h-11 transition-colors active:scale-95 ${activeView === 'student' ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}
+                        className={`relative h-11 transition-colors active:scale-95 ${activeView === 'student' ? 'text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                     >
                         学生
                         {activeView === 'student' && <span className="absolute bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]" />}
@@ -1428,7 +1331,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         role="tab"
                         aria-selected={activeView === 'group'}
                         onClick={() => handleSwitchView('group')}
-                        className={`relative h-11 transition-colors active:scale-95 ${activeView === 'group' ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}
+                        className={`relative h-11 transition-colors active:scale-95 ${activeView === 'group' ? 'text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                     >
                         分组
                         {activeView === 'group' && <span className="absolute bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]" />}
@@ -1460,7 +1363,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
 
             <MobileBottomSheet
                 open={Boolean(moreActionTarget)}
-                title={moreActionTarget === 'group' ? '小组操作' : '学生操作'}
+                title="更多操作"
                 onClose={() => setMoreActionTarget(null)}
             >
                 <div className="space-y-1 pb-2">
@@ -1503,6 +1406,21 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                 checked={studentCardDisplaySettings.showLevel}
                                 onChange={showLevel => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, showLevel })}
                             />
+                            {studentCardDisplaySettings.showLevel && canConfigureLevelDisplay && (
+                                <div className="rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] pb-[var(--tm-space-3)] pt-[var(--tm-space-2)]">
+                                    <div className="flex min-h-[var(--tm-size-touch)] items-center text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">
+                                        等级展示规则
+                                    </div>
+                                    <CompactSegmentedControl
+                                        value={classInfo.studentLevelDisplayMode ?? 'term'}
+                                        items={LEVEL_DISPLAY_OPTIONS}
+                                        onChange={onUpdateStudentLevelDisplayMode}
+                                        ariaLabel="等级展示规则"
+                                        fullWidth
+                                        semantics="group"
+                                    />
+                                </div>
+                            )}
                             <MobileSettingsSwitchRow
                                 label="显示加分次数"
                                 checked={studentCardDisplaySettings.showPraiseCount}

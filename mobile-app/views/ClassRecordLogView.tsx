@@ -516,7 +516,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                     {STUDENT_RECORD_GUIDE_EXAMPLES.map((example, index) => (
                                         <li key={example} className="flex items-start gap-[var(--tm-space-3)] py-[var(--tm-space-2)]">
                                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--tm-record-student-soft)] text-[length:var(--tm-font-size-meta)] font-bold tabular-nums text-[var(--tm-record-student-text)]">{index + 1}</span>
-                                            <span className="text-pretty pt-0.5 text-[length:var(--tm-font-size-body)] font-normal leading-6 text-[var(--tm-text-secondary)]">{example}</span>
+                                            <span className="text-pretty pt-0.5 text-[length:var(--tm-font-size-body)] tm-font-regular leading-6 text-[var(--tm-text-secondary)]">{example}</span>
                                         </li>
                                     ))}
                                 </ol>
@@ -528,7 +528,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                     {CLASS_RECORD_GUIDE_EXAMPLES.map((example, index) => (
                                         <li key={example} className="flex items-start gap-[var(--tm-space-3)] py-[var(--tm-space-2)]">
                                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--tm-record-class-soft)] text-[length:var(--tm-font-size-meta)] font-bold tabular-nums text-[var(--tm-record-class-text)]">{index + 1}</span>
-                                            <span className="text-pretty pt-0.5 text-[length:var(--tm-font-size-body)] font-normal leading-6 text-[var(--tm-text-secondary)]">{example}</span>
+                                            <span className="text-pretty pt-0.5 text-[length:var(--tm-font-size-body)] tm-font-regular leading-6 text-[var(--tm-text-secondary)]">{example}</span>
                                         </li>
                                     ))}
                                 </ol>

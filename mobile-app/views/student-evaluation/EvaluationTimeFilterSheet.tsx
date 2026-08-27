@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown } from 'lucide-react';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 
 export type EvaluationTimeFilter = 'all' | 'this-week' | 'last-week' | 'this-month' | 'last-month' | 'custom';
@@ -95,6 +95,7 @@ export const getEvaluationTimeFilterLabel = (
   referenceDate: Date,
 ) => {
   if (value.type === 'all') return '全学期';
+  if (value.type === 'custom' && (!value.customStart || !value.customEnd)) return '选择起止日期';
   const range = getEvaluationDateRange(value, termStartDate, termEndDate, referenceDate);
   const rangeText = formatShortRange(range.startDate, range.endDate);
   if (value.type === 'this-week') return `本周 ${rangeText}`;
@@ -147,9 +148,28 @@ const EvaluationTimeFilterSheet: React.FC<EvaluationTimeFilterSheetProps> = ({
     || customRange.customStart < termStartDate
     || customRange.customEnd > termEndDate;
 
-  const selectClass = (selected: boolean) => `flex min-h-[var(--tm-size-touch)] w-full items-center justify-between rounded-[var(--tm-radius-control)] px-3 text-left transition-colors ${selected
-    ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
-    : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`;
+  const selectedRangeLabel = getEvaluationTimeFilterLabel(value, termStartDate, termEndDate, referenceDate);
+  const optionClass = (selected: boolean) => `relative flex min-h-[58px] w-full items-center justify-between rounded-[var(--tm-radius-control)] border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${selected
+    ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
+    : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`;
+
+  const renderOption = (label: string, range: string, type: EvaluationTimeFilter) => {
+    const selected = value.type === type;
+    return (
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={() => selectImmediately(type)}
+        className={optionClass(selected)}
+      >
+        <span className="min-w-0">
+          <span className="block text-[13px] font-semibold">{label}</span>
+          <span className={`mt-0.5 block text-[11px] ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>{range}</span>
+        </span>
+        {selected && <Check className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" />}
+      </button>
+    );
+  };
 
   const selectImmediately = (type: EvaluationTimeFilter) => {
     onSelect({ type, customStart: '', customEnd: '' });
@@ -158,34 +178,41 @@ const EvaluationTimeFilterSheet: React.FC<EvaluationTimeFilterSheetProps> = ({
 
   return (
     <MobileBottomSheet open={open} title="选择记录时间" onClose={onClose}>
-      <div className="space-y-5 pb-2">
+      <div className="space-y-4 pb-2">
+        <div className="flex items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
+            <CalendarDays className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <span className="block text-[11px] font-medium text-[var(--tm-text-tertiary)]">当前范围</span>
+            <span className="mt-0.5 block truncate text-[13px] font-semibold text-[var(--tm-text-primary)]">{selectedRangeLabel}</span>
+          </div>
+        </div>
+
         <section>
-          <div className="space-y-1">
-            <button type="button" onClick={() => selectImmediately('all')} className={selectClass(value.type === 'all')}>
-              <span className="text-[13px] font-medium">全学期</span>
-              {value.type === 'all' && <Check className="h-4 w-4" />}
-            </button>
-            {relativeOptions.map(option => (
-              <button key={option.value} type="button" onClick={() => selectImmediately(option.value)} className={selectClass(value.type === option.value)}>
-                <span className="flex min-w-0 items-baseline gap-2">
-                  <span className="text-[13px] font-medium">{option.label}</span>
-                  <span className="text-[12px] text-[var(--tm-text-tertiary)]">{option.range}</span>
-                </span>
-                {value.type === option.value && <Check className="h-4 w-4 shrink-0" />}
-              </button>
-            ))}
+          <h3 className="mb-2 text-[12px] font-semibold text-[var(--tm-text-secondary)]">快捷时间</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2">{renderOption('全学期', `${formatShortRange(termStartDate, termEndDate)}`, 'all')}</div>
+            {relativeOptions.map(option => <div key={option.value}>{renderOption(option.label, option.range, option.value)}</div>)}
           </div>
         </section>
 
         <section>
           <button
             type="button"
+            aria-pressed={value.type === 'custom'}
             onClick={() => setShowCustomRange(current => !current)}
             aria-expanded={showCustomRange}
-            className={selectClass(value.type === 'custom')}
+            className={`${optionClass(value.type === 'custom' || showCustomRange)} min-h-[54px]`}
           >
-            <span className="text-[13px] font-medium">自定义</span>
-            {value.type === 'custom' && <Check className="h-4 w-4" />}
+            <span className="flex min-w-0 items-center gap-2">
+              <CalendarDays className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" />
+              <span className="min-w-0">
+                <span className="block text-[13px] font-semibold">自定义日期</span>
+                <span className="mt-0.5 block truncate text-[11px] text-[var(--tm-text-tertiary)]">{value.type === 'custom' && value.customStart && value.customEnd ? selectedRangeLabel : '选择起止日期'}</span>
+              </span>
+            </span>
+            {value.type === 'custom' ? <Check className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" /> : <ChevronDown className={`h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)] transition-transform ${showCustomRange ? 'rotate-180' : ''}`} />}
           </button>
           {showCustomRange && (
             <div className="mt-3 space-y-3">

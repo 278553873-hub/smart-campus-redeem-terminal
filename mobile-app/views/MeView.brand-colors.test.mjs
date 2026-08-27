@@ -24,13 +24,19 @@ for (const required of [
 }
 
 for (const required of [
-  'NotebookPen',
-  'School',
-  'UserRound',
+  'ASSETS.TEACHER_BOTTOM_NAVIGATION.RECORD.ACTIVE',
+  'ASSETS.TEACHER_BOTTOM_NAVIGATION.RECORD.DEFAULT',
+  'ASSETS.TEACHER_BOTTOM_NAVIGATION.CLASS.ACTIVE',
+  'ASSETS.TEACHER_BOTTOM_NAVIGATION.CLASS.DEFAULT',
+  'ASSETS.TEACHER_BOTTOM_NAVIGATION.ME.ACTIVE',
+  'ASSETS.TEACHER_BOTTOM_NAVIGATION.ME.DEFAULT',
   "? 'text-[var(--tm-brand-primary)]'",
   ": 'text-[var(--tm-nav-item-default)]'",
   'border-0 bg-white/95 [box-shadow:var(--tm-shadow-navigation)] backdrop-blur-xl',
-  'strokeWidth={isActive ? 2.5 : 2}',
+  'src={isActive ? icon.active : icon.default}',
+  'relative flex h-[22px] w-[22px] items-center justify-center',
+  "group-active:scale-[0.86] motion-reduce:transition-none ${isActive ? 'scale-100' : 'scale-90'}",
+  'text-xs font-medium',
   "aria-current={isActive ? 'page' : undefined}",
   'bg-[var(--tm-status-negative)]',
 ]) {
@@ -43,8 +49,12 @@ if (!tokenSource.includes("'--tm-shadow-navigation': '0 -6px 18px -14px rgba(64,
   throw new Error('教师手机端底部导航应使用短距离、极淡的向上中性阴影。');
 }
 
-if (bottomNavSource.includes('border-t') || bottomNavSource.includes('fill="currentColor"')) {
-  throw new Error('教师手机端底部导航不应保留明显顶部分隔线或强制填充线性图标。');
+if (bottomNavSource.includes('border-t') || bottomNavSource.includes('lucide-react')) {
+  throw new Error('教师手机端底部导航不应保留明显顶部分隔线或通用线性图标。');
+}
+
+if (bottomNavSource.includes('active:scale-95') || bottomNavSource.includes("isActive ? 'text-xs font-semibold'")) {
+  throw new Error('教师手机端底部导航切换时不应缩放按钮或改变文字字重。');
 }
 
 for (const legacyBottomNavColor of ["text-[#1E9AAA]", "text-[#AAB6C4]", 'border-[#EEF4F8]']) {

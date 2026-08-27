@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {
   applyStudentPerformanceEvent,
+  createDemoStudentLevelEvaluationRecords,
+  createDemoStudentPerformanceSummary,
   getStudentLevelNetScore,
   getStudentPerformanceLevel,
   revertStudentPerformanceEvent,
@@ -83,6 +85,27 @@ const currentTerm = { startDate: '2026-02-23', endDate: '2026-07-31' };
 
 assert.equal(getStudentLevelNetScore(crossTermRecords, 'term', currentTerm), 2, '学期等级只应汇总当前学期评价。');
 assert.equal(getStudentLevelNetScore(crossTermRecords, 'cumulative', currentTerm), 15, '累计等级应汇总全部历史评价。');
+
+const demoStudent = { id: 'student-08', studentNo: '20250008' };
+const demoLevelRecords = createDemoStudentLevelEvaluationRecords(demoStudent, currentTerm);
+const demoTermScore = getStudentLevelNetScore(demoLevelRecords, 'term', currentTerm);
+const demoCumulativeScore = getStudentLevelNetScore(demoLevelRecords, 'cumulative', currentTerm);
+
+assert.equal(
+  demoTermScore,
+  createDemoStudentPerformanceSummary(demoStudent).netScore,
+  '模拟学生的本学期等级分值应与卡片默认净得分一致。',
+);
+assert.ok(demoCumulativeScore > demoTermScore, '模拟学生切换累计所有学期后，等级分值应包含历史学期数据。');
+assert.notDeepEqual(
+  getStudentPerformanceLevel(demoCumulativeScore),
+  getStudentPerformanceLevel(demoTermScore),
+  '模拟学生切换统计范围后，卡片等级图标或头像进度应发生变化。',
+);
+assert.ok(
+  demoLevelRecords.some(record => record.evaluation_date < currentTerm.startDate),
+  '模拟等级记录应包含当前学期开始前的历史记录。',
+);
 
 const moonBoundarySummary = { netScore: 10, praiseCount: 6, criticismCount: 1 };
 const downgradedSummary = applyStudentPerformanceEvent(moonBoundarySummary, -1);

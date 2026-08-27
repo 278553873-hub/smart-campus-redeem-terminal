@@ -1,4 +1,4 @@
-import { NotebookPen, School, UserRound, type LucideIcon } from 'lucide-react';
+import { ASSETS } from '../assets/images';
 
 export type TeacherBottomTab = 'record' | 'class' | 'me';
 
@@ -11,11 +11,35 @@ interface TeacherBottomNavigationProps {
 const tabItems: Array<{
     id: TeacherBottomTab;
     label: string;
-    icon: LucideIcon;
+    icon: {
+        active: string;
+        default: string;
+    };
 }> = [
-    { id: 'record', label: '记录', icon: NotebookPen },
-    { id: 'class', label: '班级', icon: School },
-    { id: 'me', label: '我的', icon: UserRound },
+    {
+        id: 'record',
+        label: '记录',
+        icon: {
+            active: ASSETS.TEACHER_BOTTOM_NAVIGATION.RECORD.ACTIVE,
+            default: ASSETS.TEACHER_BOTTOM_NAVIGATION.RECORD.DEFAULT,
+        },
+    },
+    {
+        id: 'class',
+        label: '班级',
+        icon: {
+            active: ASSETS.TEACHER_BOTTOM_NAVIGATION.CLASS.ACTIVE,
+            default: ASSETS.TEACHER_BOTTOM_NAVIGATION.CLASS.DEFAULT,
+        },
+    },
+    {
+        id: 'me',
+        label: '我的',
+        icon: {
+            active: ASSETS.TEACHER_BOTTOM_NAVIGATION.ME.ACTIVE,
+            default: ASSETS.TEACHER_BOTTOM_NAVIGATION.ME.DEFAULT,
+        },
+    },
 ];
 
 export default function TeacherBottomNavigation({
@@ -29,7 +53,7 @@ export default function TeacherBottomNavigation({
             aria-label="教师端主要导航"
         >
             <div className="grid h-full grid-cols-3 items-center text-center">
-                {tabItems.map(({ id, label, icon: Icon }) => {
+                {tabItems.map(({ id, label, icon }) => {
                     const isActive = activeTab === id;
                     const tone = isActive
                         ? 'text-[var(--tm-brand-primary)]'
@@ -41,12 +65,13 @@ export default function TeacherBottomNavigation({
                             type="button"
                             onClick={() => onTabChange(id)}
                             aria-current={isActive ? 'page' : undefined}
-                            className={`flex h-full min-w-0 flex-col items-center justify-center gap-1 transition-[color,transform] duration-150 active:scale-95 ${tone}`}
+                            className={`group flex h-full min-w-0 flex-col items-center justify-center gap-1 transition-colors [transition-duration:var(--tm-duration-fast)] ${tone}`}
                         >
-                            <span className="relative flex h-[21px] w-[21px] items-center justify-center">
-                                <Icon
-                                    className="h-[21px] w-[21px]"
-                                    strokeWidth={isActive ? 2.5 : 2}
+                            <span className="relative flex h-[22px] w-[22px] items-center justify-center">
+                                <img
+                                    src={isActive ? icon.active : icon.default}
+                                    alt=""
+                                    className={`h-[22px] w-[22px] object-contain transition-transform [transition-duration:var(--tm-duration-fast)] ease-out group-active:scale-[0.86] motion-reduce:transition-none ${isActive ? 'scale-100' : 'scale-90'}`}
                                     aria-hidden="true"
                                 />
                                 {id === 'me' && pendingCollectionCount > 0 && (
@@ -55,7 +80,7 @@ export default function TeacherBottomNavigation({
                                     </span>
                                 )}
                             </span>
-                            <span className={isActive ? 'text-xs font-semibold' : 'text-xs font-medium'}>{label}</span>
+                            <span className="text-xs font-medium">{label}</span>
                         </button>
                     );
                 })}

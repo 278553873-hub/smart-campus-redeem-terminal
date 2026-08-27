@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const viewSource = readFileSync(new URL('./LeaderReportView.tsx', import.meta.url), 'utf8');
 const serviceSource = readFileSync(new URL('../services/leaderReportService.ts', import.meta.url), 'utf8');
+const reportDateTabsSource = readFileSync(new URL('../components/report/ReportDateRangeTabs.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, text, message) => {
   if (!source.includes(text)) throw new Error(message);
@@ -23,8 +24,8 @@ for (const required of [
   'confirmedDateRange',
   'openCustomDateSheet',
   'applyCustomDateRange',
+  'handleReportPeriodChange',
   'getDateRangeError',
-  'getCustomRangeCompactLabel',
   'getCustomQuickDateRange',
   'customDateQuickRanges',
   "{ key: 'yesterday', label: '昨天' }",
@@ -37,21 +38,38 @@ for (const required of [
   '确认使用',
   '不能选择未来日期',
   '开始日期不能晚于结束日期',
-  'aria-label="打开自定义时间段选择"',
-  '自定义时间段',
   'type="date"',
   'activePeriod === \'custom\'',
 ]) {
   requireText(viewSource, required, `学校数据报表自定义时间段交互缺少：${required}`);
 }
 
-requireText(viewSource, 'grid h-[var(--tm-report-filter-row-height)] grid-cols-5', '学校报表时间筛选应使用与类型切换相同高度的五等分单行布局');
-requireText(viewSource, 'h-[var(--tm-report-period-pill-height)]', '五等分时间筛选需要使用独立 Token 控制紧凑选中色块高度');
-requireText(viewSource, 'px-[var(--tm-report-period-pill-inline)]', '时间筛选色块需要随文字宽度收敛并复用水平留白 Token');
+for (const required of [
+  '<ReportDateRangeTabs',
+  'items={leaderReportDateTabs}',
+  'ariaLabel="学生评价报表时间范围"',
+  '自定义时间：',
+  '{confirmedDateRange.startDate} 至 {confirmedDateRange.endDate}',
+  'aria-label="修改自定义日期范围"',
+  'onClick={openCustomDateSheet}',
+  'after:-inset-1.5',
+  '<PencilLine aria-hidden="true"',
+]) {
+  requireText(viewSource, required, `学校报表日期选择需要复用班级报告交互，缺少：${required}`);
+}
+requireText(reportDateTabsSource, 'grid h-[var(--tm-size-touch)] grid-cols-5', '学校报表日期筛选应复用班级报告的五等分开放式文字页签');
+requireText(reportDateTabsSource, 'h-[var(--tm-report-date-indicator-height)]', '学校报表日期选中态应复用班级报告底部短线');
+
+for (const forbidden of ['--tm-report-period-pill-height', '--tm-report-period-pill-inline', '--tm-report-period-font-size']) {
+  if (viewSource.includes(forbidden)) {
+    throw new Error(`学校报表日期筛选不应保留旧实底胶囊 Token：${forbidden}`);
+  }
+}
 
 for (const forbidden of [
   '按开始日期和结束日期统计',
   '>选择</span>',
+  '>修改日期</',
   '自定义时间段会同步刷新全部报表模块',
   '当前待确认范围',
   '不能选择未来日期；开始日期不能晚于结束日期。',
@@ -59,6 +77,18 @@ for (const forbidden of [
   if (viewSource.includes(forbidden)) {
     throw new Error(`自定义时间段界面不应出现低价值说明文案：${forbidden}`);
   }
+}
+
+const periodChangeStart = viewSource.indexOf('const handleReportPeriodChange');
+const periodChangeEnd = viewSource.indexOf('const applyCustomDateRange', periodChangeStart);
+const periodChangeSource = viewSource.slice(periodChangeStart, periodChangeEnd);
+for (const required of [
+  "if (confirmedDateRange)",
+  "setActivePeriod('custom')",
+  'return;',
+  'openCustomDateSheet()',
+]) {
+  requireText(periodChangeSource, required, `已有自定义日期时应在当前页面会话内直接恢复，缺少：${required}`);
 }
 
 const customDateSheetStart = viewSource.indexOf('{showCustomDateSheet && (');

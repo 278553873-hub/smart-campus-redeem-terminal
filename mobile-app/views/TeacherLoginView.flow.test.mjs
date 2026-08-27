@@ -37,11 +37,13 @@ assert.doesNotMatch(loginSource, /h-\[84px\] w-\[84px\][^\n]*border/, '登录 Ic
 assert.match(loginSource, /欢迎使用 AI素养评价<\/h1>\s*<p[^>]*>看见每一个孩子的成长<\/p>/, '登录页应在欢迎标题下方展示品牌 Slogan。');
 assert.match(loginSource, /<h1 className="[^\"]*text-balance[^\"]*">欢迎使用 AI素养评价<\/h1>/, '登录标题应使用平衡换行。');
 assert.match(loginSource, /<p className="mt-\[var\(--tm-space-2\)\] text-pretty text-\[length:var\(--tm-font-size-body\)\][^>]*text-\[var\(--tm-text-secondary\)\]">看见每一个孩子的成长<\/p>/, '品牌 Slogan 应使用优化换行、正文尺寸与次级文字色 Token。');
+assert.match(loginSource, /<p className="[^"]*font-medium[^"]*">看见每一个孩子的成长<\/p>/, '品牌 Slogan 应使用 500 中等字重。');
 assert.match(loginSource, /wechatLoginButtonClass = '[^']*max-w-\[300px\][^']*rounded-full/, '一键登录主按钮应适度加宽并使用全圆角。');
 assert.match(loginSource, /wechatLoginButtonClass = '[^']*bg-\[var\(--tm-platform-wechat\)\]/, '一键登录按钮应使用微信平台色 Token。');
 assert.match(loginSource, /recentLoginButtonClass = '[^']*flex-col[^']*bg-\[var\(--tm-brand-primary\)\][^']*text-\[var\(--tm-text-inverse\)\]/, '最近登录按钮应使用品牌红并纵向排列文案。');
 assert.match(loginSource, /wechatLoginButtonClass = '[^']*h-14/, '一键登录按钮高度应为 56px。');
 assert.match(loginSource, /recentLoginButtonClass = '[^']*h-14/, '最近登录按钮高度应为 56px。');
+assert.match(loginSource, /recentLoginButtonClass = '[^']*font-medium/, '最近登录按钮应使用 500 中等字重。');
 assert.match(loginSource, /wechatLoginButtonClass = '[^']*transition-\[transform,background-color,opacity\][^']*active:scale-\[0\.96\]/, '一键登录按钮应仅过渡必要属性并使用 0.96 按压缩放。');
 assert.match(loginSource, /recentLoginButtonClass = '[^']*transition-\[transform,background-color,opacity\][^']*active:scale-\[0\.96\]/, '最近登录按钮应仅过渡必要属性并使用 0.96 按压缩放。');
 assert.match(loginSource, /sheetPrimaryButtonClass = '[^']*transition-\[transform,background-color,opacity\][^']*active:scale-\[0\.96\]/, '弹窗主按钮应仅过渡必要属性并使用 0.96 按压缩放。');
@@ -50,6 +52,7 @@ assert.match(loginSource, /recentLoginButtonClass = '[^']*focus-visible:ring-\[v
 assert.match(loginSource, /phoneLoginLinkClass = '[^']*focus-visible:ring-\[var\(--tm-focus-ring\)\]/, '手机号登录入口应使用设计 Token 聚焦环。');
 assert.match(loginSource, /sheetPrimaryButtonClass = '[^']*focus-visible:ring-\[var\(--tm-focus-ring\)\]/, '弹窗主按钮应使用设计 Token 聚焦环。');
 assert.match(loginSource, /text-\[length:var\(--tm-font-size-card-title\)\][^>]*>最近登录</, '最近登录标题应使用 15px 字号 Token。');
+assert.match(loginSource, /text-\[length:var\(--tm-font-size-card-title\)\] font-medium[^>]*>最近登录</, '最近登录标题应与按钮统一使用 500 中等字重。');
 assert.match(loginSource, /mt-\[calc\(var\(--tm-space-8\)\*2\)\] flex w-full flex-col items-center/, 'Slogan 与登录操作区应使用 64px 间距。');
 assert.match(loginSource, /wechatLoginButtonClass} mt-\[var\(--tm-space-3\)\]/, '最近登录与一键登录之间应使用 12px 间距。');
 assert.match(loginSource, /bg-\[var\(--tm-bg-surface\)\] text-\[var\(--tm-text-primary\)\] antialiased/, '登录页应保持基础表面色并启用字体平滑。');

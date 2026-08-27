@@ -16,9 +16,7 @@ import StudentEvaluationRecordsView, { type StudentEvaluationRecord } from './St
 import { EvaluationRecordDetailContent } from './student-evaluation/EvaluationRecordDetailView';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import {
-    teacherBrandPalette,
     teacherBrandSemantic,
-    teacherFiveEducationSemantic,
 } from '../styles/teacherMobileTokens';
 
 interface DashboardViewProps {
@@ -68,11 +66,11 @@ const getTermValueForEvaluationDate = (value: string) => (
 
 const getFiveEducationTone = (category: string) => {
     switch (category) {
-        case 'moral': return { main: teacherFiveEducationSemantic.virtue, soft: teacherBrandPalette.red[50], strong: teacherBrandPalette.red[700] };
-        case 'intellectual': return { main: teacherFiveEducationSemantic.wisdom, soft: teacherBrandPalette.orange[50], strong: teacherBrandPalette.orange[700] };
-        case 'physical': return { main: teacherFiveEducationSemantic.fitness, soft: teacherBrandPalette.green[50], strong: teacherBrandPalette.green[700] };
-        case 'aesthetic': return { main: teacherFiveEducationSemantic.aesthetic, soft: teacherBrandPalette.jade[50], strong: teacherBrandPalette.jade[700] };
-        case 'labor': return { main: teacherFiveEducationSemantic.labor, soft: teacherBrandPalette.gold[50], strong: teacherBrandPalette.gold[700] };
+        case 'moral': return { main: 'var(--tm-chart-edu-virtue)', soft: 'var(--tm-brand-primary-soft)', strong: 'var(--tm-edu-virtue)' };
+        case 'intellectual': return { main: 'var(--tm-chart-edu-wisdom)', soft: 'var(--tm-brand-secondary-soft)', strong: 'var(--tm-edu-wisdom)' };
+        case 'physical': return { main: 'var(--tm-chart-edu-fitness)', soft: 'var(--tm-status-positive-soft)', strong: 'var(--tm-edu-fitness)' };
+        case 'aesthetic': return { main: 'var(--tm-chart-edu-aesthetic)', soft: 'var(--tm-tag-jade-soft)', strong: 'var(--tm-edu-aesthetic)' };
+        case 'labor': return { main: 'var(--tm-chart-edu-labor)', soft: 'var(--tm-brand-reward-soft)', strong: 'var(--tm-edu-labor)' };
         default: return { main: teacherBrandSemantic.textSecondary, soft: teacherBrandSemantic.surfaceSoft, strong: teacherBrandSemantic.textPrimary };
     }
 };
@@ -337,12 +335,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         return deltas;
     }, [evaluationRecords]);
     const currentScores = useMemo(() => {
-        const offsets = TERM_SCORE_OFFSETS[currentTermOption.value] ?? {};
-        const recordDeltas = evaluationScoreDeltas[currentTermOption.value] ?? {};
+        const offsets = TERM_SCORE_OFFSETS[selectedTermOption.value] ?? {};
+        const recordDeltas = evaluationScoreDeltas[selectedTermOption.value] ?? {};
         return scores
             .filter(score => score.category !== 'creativity')
             .map(score => ({ ...score, score: Math.max(0, Math.min(100, score.score + (offsets[score.category] ?? 0) + (recordDeltas[score.category] ?? 0))) }));
-    }, [currentTermOption.value, evaluationScoreDeltas, scores]);
+    }, [evaluationScoreDeltas, scores, selectedTermOption.value]);
     const studentStatusLabel = student.status === 'left' ? '离校' : '在校';
     const formatCompactClassName = (className: string) => {
         const match = className.match(/^(\d{4}级)(.+)$/);
@@ -367,7 +365,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
     const renderEvaluationTab = () => (
         <div className="space-y-3 pb-24 animate-in fade-in duration-300">
-            {/* C. Compact Current Semester Five-Education Summary */}
+            <StudentTermSelector value={selectedTerm} options={STUDENT_TERM_OPTIONS} onChange={setSelectedTerm} ariaLabel="选择评价记录学期" />
+
+            {/* C. Compact Selected-Term Five-Education Summary */}
             <section className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
                 <button
                     type="button"
@@ -376,8 +376,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-3 px-4 text-left active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
-                        本学期五育积分
-                        <span className="rounded-full bg-[var(--tm-status-positive-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--tm-status-positive-strong)]">实时</span>
+                        {selectedTermOption.isCurrent ? '本学期' : '该学期'}五育积分
                     </h3>
                     <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">
                         {showAbilityModel ? '收起' : '能力模型'}
@@ -407,12 +406,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             <StudentEvaluationRecordsView
                 embedded
                 records={evaluationRecords}
-                selectedTerm={currentTermOption.value}
+                selectedTerm={selectedTerm}
                 termOptions={STUDENT_TERM_OPTIONS}
                 currentTeacherId={currentTeacherId}
                 currentTeacherName={currentTeacherName}
                 canEditOtherTeachersRecords={canEditOtherTeachersEvaluationRecords}
-                onSelectedTermChange={() => undefined}
+                onSelectedTermChange={setSelectedTerm}
                 onUpdateRecord={onUpdateEvaluationRecord}
                 onBack={() => undefined}
                 onSelectRecord={(record) => {
@@ -478,7 +477,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         return (
             <StudentEvaluationRecordsView
                 records={evaluationRecords}
-                selectedTerm={currentTermOption.value}
+                selectedTerm={selectedTerm}
                 termOptions={STUDENT_TERM_OPTIONS}
                 currentTeacherId={currentTeacherId}
                 currentTeacherName={currentTeacherName}

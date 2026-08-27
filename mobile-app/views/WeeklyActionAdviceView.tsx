@@ -36,7 +36,7 @@ const AnalysisProgress: React.FC<{ visibleStepCount: number }> = ({ visibleStepC
                 return (
                     <div key={step} className="animate-in fade-in slide-in-from-bottom-1 flex items-start gap-3 duration-300">
                         <span className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${active ? 'animate-pulse bg-[var(--tm-assistant-role-primary)]' : 'bg-[var(--tm-border-subtle)]'}`} aria-hidden="true" />
-                        <p className={`text-[length:var(--tm-font-size-meta)] font-normal leading-5 ${active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-tertiary)]'}`}>{step}</p>
+                        <p className={`text-[length:var(--tm-font-size-meta)] tm-font-regular leading-5 ${active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-tertiary)]'}`}>{step}</p>
                     </div>
                 );
             })}

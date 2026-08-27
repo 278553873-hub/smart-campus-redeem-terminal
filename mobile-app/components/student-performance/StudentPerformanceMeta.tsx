@@ -21,6 +21,7 @@ interface StudentPerformanceCountsProps {
   className?: string;
   ariaLabel?: string;
   orientation?: 'horizontal' | 'vertical';
+  variant?: 'default' | 'student-card';
   showPraiseCount?: boolean;
   showCriticismCount?: boolean;
 }
@@ -77,10 +78,18 @@ export const StudentPerformanceCounts: React.FC<StudentPerformanceCountsProps> =
   className = '',
   ariaLabel,
   orientation = 'horizontal',
+  variant = 'default',
   showPraiseCount = true,
   showCriticismCount = true,
 }) => {
   if (!showPraiseCount && !showCriticismCount) return null;
+
+  const isStudentCard = variant === 'student-card';
+  const typographyClass = isStudentCard
+    ? 'text-[length:var(--tm-student-card-count-font-size)] font-bold'
+    : 'text-[10px] font-bold';
+  const horizontalHeightClass = isStudentCard ? 'h-[var(--tm-student-card-count-height)]' : 'h-[18px]';
+  const chipHeightClass = isStudentCard ? 'h-[var(--tm-student-card-count-height)]' : 'h-[18px]';
 
   const visibleCountLabel = [
     showPraiseCount ? `被表扬${summary.praiseCount}次` : '',
@@ -90,15 +99,15 @@ export const StudentPerformanceCounts: React.FC<StudentPerformanceCountsProps> =
   return (
     <span
       aria-label={ariaLabel ?? visibleCountLabel}
-      className={`flex items-center justify-center text-[10px] font-bold tabular-nums ${orientation === 'vertical' ? 'h-10 flex-col gap-1' : 'h-[18px] gap-1.5'} ${className}`}
+      className={`flex items-center justify-center tabular-nums ${typographyClass} ${orientation === 'vertical' ? 'h-10 flex-col gap-1' : `${horizontalHeightClass} gap-1.5`} ${className}`}
     >
       {showPraiseCount && (
-        <span aria-hidden="true" className="flex h-[18px] min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-praise-soft)] px-1 text-[var(--tm-student-praise)]">
+        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-praise-soft)] px-1 text-[var(--tm-student-praise)] ${chipHeightClass}`}>
           {formatSignedCount(summary.praiseCount, '+')}
         </span>
       )}
       {showCriticismCount && (
-        <span aria-hidden="true" className="flex h-[18px] min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-criticism-soft)] px-1 text-[var(--tm-student-criticism)]">
+        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-criticism-soft)] px-1 text-[var(--tm-student-criticism)] ${chipHeightClass}`}>
           {formatSignedCount(summary.criticismCount, '-')}
         </span>
       )}

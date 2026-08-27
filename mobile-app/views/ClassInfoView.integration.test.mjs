@@ -15,17 +15,12 @@ assert.match(viewSource, /copyText\(classInfo\.classCode\)/, '班级信息页的
 assert.match(viewSource, /'班级详情'/, '页面标题应与产品原型一致。');
 assert.match(viewSource, /老师列表/, '班级详情应包含老师列表。');
 assert.match(viewSource, /家长绑定列表/, '班级详情应包含家长绑定列表。');
-assert.match(viewSource, /等级展示规则/, '班级详情应直接提供等级展示规则。');
+assert.doesNotMatch(viewSource, /等级展示规则/, '班级详情不应重复提供学生卡片的等级展示规则。');
 assert.match(tokenSource, /'--tm-class-info-title-font-size': '20px'/, '班级信息标题应使用 20 像素组件字号 Token。');
 assert.match(viewSource, /text-\[length:var\(--tm-class-info-title-font-size\)\]/, '班级名称应消费班级信息标题字号 Token。');
 assert.match(viewSource, /TeacherAvatar[\s\S]*?tm-font-size-compact\)\] font-medium/, '首页老师姓名应使用 500 字重。');
 assert.match(viewSource, /tm-font-size-meta\)\] font-medium[\s\S]*?已绑定/, '首页绑定状态应使用 500 字重。');
-assert.match(viewSource, /仅计算本学期/, '等级展示规则应明确只计算当前学期。');
-assert.match(viewSource, /累计所有学期/, '等级展示规则应明确累计全部学期。');
 assert.doesNotMatch(viewSource, />班级设置</, '班级详情不应重复展示“班级设置”分组标题。');
-assert.match(viewSource, /effectiveRole === 'headTeacher'/, '等级展示方式只允许班主任配置。');
-assert.match(viewSource, /role="radiogroup"/, '等级展示方式应使用可访问的单选结构。');
-assert.match(viewSource, /studentLevelDisplayMode: levelDisplayDraft/, '等级展示方式应随班级信息回写。');
 assert.doesNotMatch(detailOverviewSource, /邀请老师/, '班级详情首页的老师列表不应展示邀请快捷入口。');
 assert.doesNotMatch(detailOverviewSource, /邀请家长绑定/, '班级详情首页的家长绑定列表不应展示邀请快捷入口。');
 assert.match(viewSource, /page === 'teachers' && canInvite[\s\S]*邀请老师/, '完整老师列表应保留邀请入口。');

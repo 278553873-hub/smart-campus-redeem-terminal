@@ -16,6 +16,7 @@ const evaluationRecordsSource = read('./StudentEvaluationRecordsView.tsx');
 const termSelectorSource = read('../components/student-detail/StudentTermSelector.tsx');
 const timeRangeSelectorSource = read('../components/student-detail/StudentTimeRangeSelector.tsx');
 const coinFormatSource = read('../utils/coinFormat.ts');
+const coinFlowSource = read('../domain/campusCoinFlow.ts');
 const questionnaireStoreSource = read('../../shared/questionnaireStore.ts');
 const collectionHistorySource = read('./student-collection/StudentCollectionHistoryTab.tsx');
 const collectionDetailSource = read('./student-collection/StudentCollectionRecordDetailView.tsx');
@@ -46,8 +47,14 @@ requireText(constantsSource, 'consumeRecords', '校园币 Mock 应包含消耗�
 requireText(constantsSource, 'settlementEstimate', '校园币 Mock 应包含结算预估。');
 requireText(constantsSource, 'sunshinePool', '校园币预估应读取阳光保底比例计算保底奖池。');
 requireText(constantsSource, 'rankingPool', '校园币预估应读取积分排行比例计算排行奖池。');
-requireText(constantsSource, "'周度综合表现结算'", '周结算配置下的流水标题应使用周度语义。');
-requireText(constantsSource, "'月度综合表现结算'", '月结算配置下的流水标题应使用月度语义。');
+requireText(constantsSource, "category: 'growth_award'", '成长嘉奖流水应使用明确分类，不根据文案猜测。');
+requireText(constantsSource, "startDate: '2025-12-29', endDate: '2026-01-04'", 'Mock 数据应直接展示跨年成长嘉奖边界。');
+requireText(coinFlowSource, "start.year !== end.year", '成长嘉奖跨年时应展示完整年份。');
+requireText(coinFlowSource, "`${start.month}月${start.day}日-${end.month}月${end.day}日奖励`", '同年周奖励应省略年份并保留完整月日。');
+requireText(coinDetailSource, 'item.categoryLabel', '校园币流水第一层应展示分类。');
+requireText(coinDetailSource, 'item.detail', '校园币流水第二层应展示明细。');
+requireText(coinDetailSource, 'formatCampusCoinFlowTime(item.time)', '校园币流水第三层应独立展示时间。');
+requireText(coinDetailSource, '`${record.productName} ×${record.quantity}`', '兑换商品数量应统一使用乘号。');
 
 requireText(appSource, "'student_basic_edit'", 'App 路由应包含学生基础信息编辑子页面。');
 requireText(appSource, "'student_coin_detail'", 'App 路由应包含校园币详情子页面。');
@@ -217,12 +224,14 @@ requireText(timeRangeSelectorSource, 'bg-[var(--tm-bg-surface)]', '学生学期�
 requireText(timeRangeSelectorSource, '[box-shadow:var(--tm-shadow-control)]', '学生学期筛选必须使用统一控件轻阴影。');
 requireText(timeRangeSelectorSource, 'focus-visible:bg-[var(--tm-bg-surface)]', '学生学期筛选聚焦后必须保持白色表面。');
 requireText(termSelectorSource, '（本学期）', '学期选择器必须明确当前学期。');
-requireText(dashboardSource, '本学期五育积分', '五育积分应明确为本学期实时累计结果。');
-requireText(dashboardSource, 'currentTermOption', '评价记录页必须固定读取当前学期数据。');
-const evaluationSource = dashboardSource.slice(dashboardSource.indexOf('const renderEvaluationTab'), dashboardSource.indexOf('const renderReportTab'));
-if (evaluationSource.includes('<StudentTermSelector')) {
-  throw new Error('评价记录页只展示本学期数据，不应提供历史学期筛选。');
+requireText(dashboardSource, "selectedTermOption.isCurrent ? '本学期' : '该学期'", '五育积分标题应根据当前选择的学期显示。');
+if (dashboardSource.includes('>实时</span>')) {
+  throw new Error('五育积分板块不应显示实时标签。');
 }
+requireText(dashboardSource, 'selectedTermOption', '评价记录页必须读取当前选择的学期数据。');
+const evaluationSource = dashboardSource.slice(dashboardSource.indexOf('const renderEvaluationTab'), dashboardSource.indexOf('const renderReportTab'));
+requireText(evaluationSource, '<StudentTermSelector value={selectedTerm}', '评价记录页必须提供学期筛选。');
+requireText(evaluationSource, 'onChange={setSelectedTerm}', '评价记录页学期筛选必须更新详情页当前学期。');
 if (dashboardSource.includes('Filter Bar (Term Selector)') || dashboardSource.includes('merged basic info')) {
   throw new Error('学生信息、资产和学期筛选不应继续使用旧的混合布局。');
 }
@@ -268,7 +277,8 @@ for (const legacyColor of ['blue-', 'purple-', 'violet-', 'indigo-', 'cyan-', 'p
   }
 }
 for (const required of [
-  'teacherFiveEducationSemantic',
+  '--tm-chart-edu-virtue',
+  '--tm-edu-virtue',
   '--tm-brand-reward-soft',
   '--tm-brand-primary-soft',
   '办理离校',
@@ -286,7 +296,7 @@ if (dashboardSource.includes('showFiveComparison') || dashboardSource.includes('
 }
 requireText(evaluationSource, '<StudentEvaluationRecordsView', '评价记录页必须直接展示评价记录列表。');
 requireText(evaluationSource, 'embedded', '评价记录必须复用页内模式，避免复制筛选与列表逻辑。');
-requireText(evaluationSource, 'selectedTerm={currentTermOption.value}', '评价记录必须固定为本学期。');
+requireText(evaluationSource, 'selectedTerm={selectedTerm}', '评价记录必须跟随当前选择的学期。');
 requireText(evaluationSource, 'onSelectRecord={(record) => {', '点击评价记录后必须渐进披露单条详情。');
 requireText(evaluationSource, 'setActiveEvaluationRecordId(record.id);', '点击评价记录后必须保存当前记录用于详情抽屉。');
 if (evaluationSource.includes('bodyGrowthMetrics') || evaluationSource.includes('onViewBodyMeasurements') || evaluationSource.includes('>成长数据<')) {

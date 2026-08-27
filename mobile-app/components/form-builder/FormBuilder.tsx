@@ -606,21 +606,21 @@ const FormBuilder = <TType extends string>({
     }
     if (field.type === 'date') {
       const placeholder: Record<FormDateFormat, string> = { ymd: '年-月-日', ym: '年-月', year: '年份' };
-      return <div className="mt-4 flex h-10 items-center border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-compact)] font-normal text-[var(--tm-input-readonly-text)]" aria-hidden="true">{previewMeta?.placeholder ?? placeholder[settings.dateFormat ?? 'ymd']}</div>;
+      return <div className="mt-4 flex h-10 items-center border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-compact)] tm-font-regular text-[var(--tm-input-readonly-text)]" aria-hidden="true">{previewMeta?.placeholder ?? placeholder[settings.dateFormat ?? 'ymd']}</div>;
     }
     if (field.type === 'number') {
       const placeholder: Record<FormNumberFormat, string> = { integer: '请输入整数', 'decimal-1': '请输入数字（1位小数）', 'decimal-2': '请输入数字（2位小数）' };
       return (
-        <div className="mt-4 flex h-10 items-center justify-between gap-3 border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-compact)] font-normal text-[var(--tm-input-readonly-text)]" aria-hidden="true">
+        <div className="mt-4 flex h-10 items-center justify-between gap-3 border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-compact)] tm-font-regular text-[var(--tm-input-readonly-text)]" aria-hidden="true">
           <span className="min-w-0 flex-1">{previewMeta?.placeholder ?? placeholder[settings.numberFormat ?? 'integer']}</span>
           {previewMeta?.suffix && <span className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{previewMeta.suffix}</span>}
         </div>
       );
     }
     if (field.type === 'short_text') {
-      return <div className="mt-4 h-10 border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-compact)] font-normal text-[var(--tm-input-readonly-text)]" aria-hidden="true">{previewMeta?.placeholder ?? '请输入内容'}</div>;
+      return <div className="mt-4 h-10 border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-compact)] tm-font-regular text-[var(--tm-input-readonly-text)]" aria-hidden="true">{previewMeta?.placeholder ?? '请输入内容'}</div>;
     }
-    return <div className={`mt-3 min-h-[72px] px-3 py-2.5 text-[length:var(--tm-font-size-compact)] font-normal ${readonlyPreviewSurfaceClass}`} aria-hidden="true">{previewMeta?.placeholder ?? '请输入内容'}</div>;
+    return <div className={`mt-3 min-h-[72px] px-3 py-2.5 text-[length:var(--tm-font-size-compact)] tm-font-regular ${readonlyPreviewSurfaceClass}`} aria-hidden="true">{previewMeta?.placeholder ?? '请输入内容'}</div>;
   };
 
   const setRatingRange = (field: ConfigurableFormField<TType>, ratingMin: number, ratingMax: number) => {
@@ -975,7 +975,7 @@ const FormBuilder = <TType extends string>({
           />
         )}
         {typePickerTab === 'secondary' && typePickerSecondaryTab?.description && (
-          <div className="mb-3 flex items-start gap-2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-[length:var(--tm-font-size-meta)] font-normal leading-5 text-[var(--tm-text-secondary)]">
+          <div className="mb-3 flex items-start gap-2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-[length:var(--tm-font-size-meta)] tm-font-regular leading-5 text-[var(--tm-text-secondary)]">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
             <p>{typePickerSecondaryTab.description}</p>
           </div>

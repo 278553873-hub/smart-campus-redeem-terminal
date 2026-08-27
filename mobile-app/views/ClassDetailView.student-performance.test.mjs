@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 
-const source = fs.readFileSync(new URL('./ClassDetailView.tsx', import.meta.url), 'utf8');
+const viewSource = fs.readFileSync(new URL('./ClassDetailView.tsx', import.meta.url), 'utf8');
+const cardSource = fs.readFileSync(new URL('../components/student/StudentRosterCard.tsx', import.meta.url), 'utf8');
+const source = `${viewSource}\n${cardSource}`;
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const mobileStyles = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
 const avatarSource = fs.readFileSync(new URL('../components/student-performance/StudentPerformanceAvatar.tsx', import.meta.url), 'utf8');
@@ -32,13 +34,17 @@ requireText('getClassRosterNumber', '学生卡片应统一派生两位班内学�
 requireText("padStart(2, '0')", '两位班内学号应保留前导零。');
 requireText('inline-flex min-w-0 max-w-full items-center justify-center gap-0.5', '班内学号与姓名应组成完整身份组并整体居中。');
 requireText('w-4 shrink-0 items-center justify-center', '班内学号应保持稳定宽度，不因姓名长度发生变化。');
-requireText('text-[13px] font-semibold leading-4', '手机端姓名应使用13像素、600字重，保持清晰但不过重。');
+requireText('text-[length:var(--tm-student-card-name-font-size)] [font-weight:var(--tm-student-card-name-font-weight)] leading-4', '手机端姓名应使用12像素字号 Token 和550字重。');
+requireText('h-[var(--tm-student-card-roster-height)]', '班内学号承载矩形应使用14像素高度 Token。');
+requireText('self-center', '班内学号应在16像素姓名信息行内垂直居中。');
+requireText('text-[length:var(--tm-student-card-roster-font-size)] font-semibold', '班内学号应使用9像素字号 Token 和600字重。');
 if (source.includes('absolute right-full')) {
   throw new Error('班内学号不应再通过绝对定位脱离身份组，避免四字姓名时越出卡片。');
 }
 requireText('StudentPerformanceAvatar', '学生卡片应展示头像等级进度环。');
 requireText('StudentPerformanceLevelIcons', '学生卡片应单独展示居中的等级图标。');
 requireText('StudentPerformanceCounts', '学生卡片应单独展示奖惩次数。');
+requireText('variant="student-card"', '学生卡片应使用独立的紧凑奖惩次数规格，避免影响小组卡片。');
 const levelIndex = source.indexOf('displaySettings.showLevel && <StudentPerformanceLevelIcons level={level} />');
 const avatarIndex = source.indexOf('<StudentPerformanceAvatar', levelIndex);
 const countsIndex = source.indexOf('<StudentPerformanceCounts', avatarIndex);
@@ -70,6 +76,11 @@ if (!metaSource.includes('bg-[var(--tm-student-praise-soft)]') || !metaSource.in
 }
 if (!metaSource.includes('min-w-[24px]') || metaSource.includes('w-full grid-cols-2')) {
   throw new Error('奖惩色片应保持局部尺寸，不得再次形成贴边通栏。');
+}
+if (!metaSource.includes("variant === 'student-card'")
+  || !metaSource.includes('h-[var(--tm-student-card-count-height)]')
+  || !metaSource.includes('text-[length:var(--tm-student-card-count-font-size)] font-bold')) {
+  throw new Error('奖惩次数应使用16像素高度、10像素字号和700字重的学生卡片 Token。');
 }
 if (!metaSource.includes('h-[18px] w-[18px]')) {
   throw new Error('手机花名册等级图标应使用18像素尺寸。');

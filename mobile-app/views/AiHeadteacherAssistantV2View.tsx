@@ -227,7 +227,7 @@ const WeeklyReportContent: React.FC<{
 const ConversationAnswerContent: React.FC<{
     answer: ClassEvaluationAssistantAnswer;
 }> = ({ answer }) => (
-    <div className="space-y-3 text-pretty text-[14px] font-normal leading-6 text-[var(--tm-text-primary)]">
+    <div className="space-y-3 text-pretty text-[14px] tm-font-regular leading-6 text-[var(--tm-text-primary)]">
         <p className="whitespace-pre-line">{answer.message}</p>
 
         {answer.breakdown.length > 0 && (
@@ -515,7 +515,7 @@ const AgentGenerationProgress: React.FC<{ visibleStepCount: number }> = ({ visib
                         <span className={'mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ' + (active
                             ? 'animate-pulse bg-[var(--tm-assistant-role-primary)]'
                             : 'bg-[var(--tm-border-subtle)]')} aria-hidden="true" />
-                        <p className={'text-[13px] font-normal leading-5 ' + (active
+                        <p className={'text-[13px] tm-font-regular leading-5 ' + (active
                             ? 'text-[var(--tm-text-secondary)]'
                             : 'text-[var(--tm-text-tertiary)]')}>{step}</p>
                     </div>

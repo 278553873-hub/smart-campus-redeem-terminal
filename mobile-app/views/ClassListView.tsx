@@ -24,9 +24,12 @@ import {
 } from '../components/Icons';
 import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/ClassInviteFlow';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileFloatingImageButton from '../components/ui/MobileFloatingImageButton';
 import MobileSlidingSegmentedControl from '../components/ui/MobileSlidingSegmentedControl';
+import StudentTeamEditorView, { type StudentTeamEditorMode, type StudentTeamEditorValue } from './student-team/StudentTeamEditorView';
+import StudentTeamManagementActions from './student-team/StudentTeamManagementActions';
 import { ASSETS } from '../assets/images';
 import {
     canManagePersonalClasses,
@@ -60,8 +63,14 @@ interface ClassListViewProps {
     activeListTab: 'class' | 'team';
     onListTabChange: (tab: 'class' | 'team') => void;
     studentTeams: SchoolStudentTeam[];
+    studentTeamEditableClasses: ClassInfo[];
+    allStudents: Student[];
+    currentTeacherId: string;
+    isSchoolManager: boolean;
     canCreateStudentTeam: boolean;
-    onCreateStudentTeam: () => void;
+    onCreateStudentTeam: (value: StudentTeamEditorValue) => void;
+    onUpdateStudentTeam: (teamId: string, value: StudentTeamEditorValue) => void;
+    onArchiveStudentTeam: (teamId: string) => void;
     onSelectStudentTeam: (teamId: string) => void;
 }
 
@@ -109,12 +118,19 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     activeListTab,
     onListTabChange,
     studentTeams,
+    studentTeamEditableClasses,
+    allStudents,
+    currentTeacherId,
+    isSchoolManager,
     canCreateStudentTeam,
     onCreateStudentTeam,
+    onUpdateStudentTeam,
+    onArchiveStudentTeam,
     onSelectStudentTeam,
 }) => {
     const [activeActionClassId, setActiveActionClassId] = useState<string | null>(null);
     const [showTeachingOnly, setShowTeachingOnly] = useState(false);
+    const [showParticipatingTeamsOnly, setShowParticipatingTeamsOnly] = useState(false);
     const [gradeFilter, setGradeFilter] = useState('全部');
     const [leftStudentClassId, setLeftStudentClassId] = useState<string | null>(null);
     const [showClassManagement, setShowClassManagement] = useState(false);
@@ -122,6 +138,10 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const [hiddenClassIdsBySpace, setHiddenClassIdsBySpace] = useState<Record<string, string[]>>({});
     const [copyFeedback, setCopyFeedback] = useState<{ classId: string; message: string; success: boolean } | null>(null);
     const [inviteContext, setInviteContext] = useState<{ audience: ClassInviteAudience; classInfo: ClassInfo } | null>(null);
+    const [activeActionTeamId, setActiveActionTeamId] = useState<string | null>(null);
+    const [teamEditor, setTeamEditor] = useState<{ mode: StudentTeamEditorMode; teamId?: string } | null>(null);
+    const [studentTeamInviteId, setStudentTeamInviteId] = useState<string | null>(null);
+    const [archiveStudentTeamId, setArchiveStudentTeamId] = useState<string | null>(null);
 
     const teachingClassIds = useMemo(() => (
         new Set(teacherProfile.teachingAssignments.map(assignment => assignment.classId))
@@ -148,6 +168,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         if (isSchoolSpace && showTeachingOnly && !assignedClassIds.has(classInfo.id)) return false;
         return true;
     }), [assignedClassIds, classes, gradeFilter, hiddenClassIds, isSchoolSpace, showTeachingOnly]);
+    const visibleStudentTeams = useMemo(() => studentTeams.filter(team => (
+        !showParticipatingTeamsOnly
+        || team.ownerId === currentTeacherId
+        || team.collaboratorIds.includes(currentTeacherId)
+    )), [currentTeacherId, showParticipatingTeamsOnly, studentTeams]);
 
     const leftStudentClass = useMemo(() => classes.find(classInfo => classInfo.id === leftStudentClassId) || null, [classes, leftStudentClassId]);
     const leftStudents = useMemo(() => (
@@ -155,6 +180,10 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     ), [getStudentsForClass, leftStudentClassId]);
     const showLeftStudentSheet = leftStudentClassId !== null;
     const activeActionClass = useMemo(() => classes.find(classInfo => classInfo.id === activeActionClassId) || null, [classes, activeActionClassId]);
+    const activeActionTeam = useMemo(() => studentTeams.find(team => team.id === activeActionTeamId) || null, [activeActionTeamId, studentTeams]);
+    const editingStudentTeam = useMemo(() => studentTeams.find(team => team.id === teamEditor?.teamId), [studentTeams, teamEditor?.teamId]);
+    const invitedStudentTeam = useMemo(() => studentTeams.find(team => team.id === studentTeamInviteId), [studentTeamInviteId, studentTeams]);
+    const archivedStudentTeam = useMemo(() => studentTeams.find(team => team.id === archiveStudentTeamId), [archiveStudentTeamId, studentTeams]);
 
     useEffect(() => {
         setActiveActionClassId(null);
@@ -163,6 +192,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         setShowDisplaySettings(false);
         setGradeFilter('全部');
         setShowTeachingOnly(false);
+        setShowParticipatingTeamsOnly(false);
+        setActiveActionTeamId(null);
+        setTeamEditor(null);
+        setStudentTeamInviteId(null);
+        setArchiveStudentTeamId(null);
     }, [currentSpace.id]);
 
     useEffect(() => {
@@ -185,6 +219,24 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     });
 
     const closeActionSheet = () => setActiveActionClassId(null);
+    const closeTeamActionSheet = () => setActiveActionTeamId(null);
+
+    const openTeamEditor = (mode: StudentTeamEditorMode, teamId?: string) => {
+        closeTeamActionSheet();
+        setTeamEditor({ mode, teamId });
+    };
+
+    const openStudentTeamInvite = () => {
+        if (!activeActionTeam) return;
+        setStudentTeamInviteId(activeActionTeam.id);
+        closeTeamActionSheet();
+    };
+
+    const openArchiveStudentTeam = () => {
+        if (!activeActionTeam) return;
+        setArchiveStudentTeamId(activeActionTeam.id);
+        closeTeamActionSheet();
+    };
 
     const runClassAction = (action: (classId: string) => void) => {
         if (!activeActionClass) return;
@@ -311,7 +363,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                     </span>
                                 )}
                                 {subjectTags.map(tag => (
-                                    <span key={tag} className="whitespace-nowrap rounded-lg bg-[var(--tm-bg-surface-muted)] px-2 py-0.5 text-xs font-normal text-[var(--tm-text-secondary)]">
+                                    <span key={tag} className="whitespace-nowrap rounded-lg bg-[var(--tm-bg-surface-muted)] px-2 py-0.5 text-xs tm-font-regular text-[var(--tm-text-secondary)]">
                                         {tag}
                                     </span>
                                 ))}
@@ -355,21 +407,27 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     };
 
     const renderStudentTeamCard = (team: SchoolStudentTeam) => (
-        <button
-            key={team.id}
-            type="button"
-            onClick={() => onSelectStudentTeam(team.id)}
-            className="flex min-h-[92px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition-transform active:scale-[0.99]"
-        >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]">
-                <UsersRound className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <span className="min-w-0 flex-1">
-                <span className="block truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{team.name}</span>
-                <span className="mt-1 block truncate text-[13px] text-[var(--tm-text-secondary)]">{team.ownerName}负责 · {team.memberIds.length}人</span>
-            </span>
-            <ChevronRight className="h-5 w-5 shrink-0 text-[var(--tm-text-disabled)]" />
-        </button>
+        <article key={team.id} className="flex min-h-[92px] items-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-2 py-3 [box-shadow:var(--tm-shadow-card)]">
+            <button
+                type="button"
+                onClick={() => onSelectStudentTeam(team.id)}
+                className="flex min-h-[68px] min-w-0 flex-1 items-center gap-3 rounded-[var(--tm-radius-inner)] px-2 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+                aria-label={`${team.name}，${team.ownerName}负责，${team.memberIds.length}人`}
+            >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]">
+                    <UsersRound className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{team.name}</span>
+                    <span className="mt-1 block truncate text-[13px] text-[var(--tm-text-secondary)]">{team.ownerName}负责 · {team.memberIds.length}人</span>
+                </span>
+            </button>
+            {team.ownerId === currentTeacherId && (
+                <button type="button" aria-label={`${team.name}更多操作`} onClick={() => setActiveActionTeamId(team.id)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]">
+                    <WechatMoreIcon className="h-5 w-5" />
+                </button>
+            )}
+        </article>
     );
 
     return (
@@ -433,7 +491,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
 
                     {activeListTab === 'class' && isSchoolSpace && (
                         <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2">
-                            <label className="relative inline-flex min-h-11 items-center justify-self-start rounded-[var(--tm-radius-control)] focus-within:bg-[var(--tm-filter-focus-bg)]">
+                            <label className="relative inline-flex min-h-11 w-[96px] items-center justify-self-start rounded-[var(--tm-radius-control)] focus-within:bg-[var(--tm-filter-focus-bg)]">
                                 <span className="pointer-events-none flex items-center gap-[var(--tm-space-1)] px-3 text-[13px] font-medium text-[var(--tm-text-secondary)]" aria-hidden="true">
                                     <span>{gradeFilter === '全部' ? '全部年级' : gradeFilter}</span>
                                     <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
@@ -469,12 +527,27 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     )}
 
                     {activeListTab === 'team' && (
-                        <div className="flex min-h-11 items-center justify-between gap-3">
-                            <span className="text-[13px] font-medium text-[var(--tm-text-tertiary)]">共 {studentTeams.length} 个社团或团队</span>
+                        <div className="grid min-h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
+                            {isSchoolManager ? (
+                                <button
+                                    type="button"
+                                    aria-pressed={showParticipatingTeamsOnly}
+                                    onClick={() => setShowParticipatingTeamsOnly(current => !current)}
+                                    className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-transparent px-2.5 text-[13px] font-medium transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] focus-visible:bg-[var(--tm-bg-surface-soft)] ${showParticipatingTeamsOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                >
+                                    <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showParticipatingTeamsOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
+                                        {showParticipatingTeamsOnly && <Check className="h-3 w-3" strokeWidth={3} />}
+                                    </span>
+                                    我参与的
+                                </button>
+                            ) : <span />}
+                            <span className="justify-self-end whitespace-nowrap text-[12px] font-medium text-[var(--tm-text-tertiary)]" aria-live="polite" aria-atomic="true">
+                                {visibleStudentTeams.length}个社团或团队
+                            </span>
                             {canCreateStudentTeam && (
                                 <button
                                     type="button"
-                                    onClick={onCreateStudentTeam}
+                                    onClick={() => openTeamEditor('create')}
                                     className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
                                 >
                                     <Plus className="h-4 w-4" />
@@ -489,7 +562,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     <>{visibleClasses.map(renderClassCard)}</>
                 )}
 
-                {activeListTab === 'team' && studentTeams.map(renderStudentTeamCard)}
+                {activeListTab === 'team' && visibleStudentTeams.map(renderStudentTeamCard)}
 
                 {activeListTab === 'class' && (
                     <>
@@ -524,13 +597,18 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     </>
                 )}
 
-                {activeListTab === 'team' && studentTeams.length === 0 && (
+                {activeListTab === 'team' && visibleStudentTeams.length === 0 && (
                     <section className="px-2 py-6 text-center">
                         <MobileEmptyState
                             imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
-                            title="暂无社团或团队"
+                            title={showParticipatingTeamsOnly ? '还没有参与社团或团队' : '暂无社团或团队'}
                             imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
                         />
+                        {showParticipatingTeamsOnly && (
+                            <button type="button" onClick={() => setShowParticipatingTeamsOnly(false)} className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]">
+                                查看全部
+                            </button>
+                        )}
                     </section>
                 )}
             </div>
@@ -545,6 +623,49 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     placement="middle-right"
                 />
             )}
+
+            <MobileBottomSheet open={Boolean(activeActionTeam)} title="更多操作" onClose={closeTeamActionSheet}>
+                {activeActionTeam && (
+                    <StudentTeamManagementActions
+                        onEditMembers={() => openTeamEditor('members', activeActionTeam.id)}
+                        onEditSettings={() => openTeamEditor('settings', activeActionTeam.id)}
+                        onInvite={openStudentTeamInvite}
+                        onArchive={openArchiveStudentTeam}
+                    />
+                )}
+            </MobileBottomSheet>
+
+            <StudentTeamEditorView
+                open={Boolean(teamEditor)}
+                mode={teamEditor?.mode ?? 'create'}
+                team={editingStudentTeam}
+                classes={studentTeamEditableClasses}
+                allStudents={allStudents}
+                getStudentsForClass={getStudentsForClass}
+                onClose={() => setTeamEditor(null)}
+                onSave={value => {
+                    if (teamEditor?.teamId) onUpdateStudentTeam(teamEditor.teamId, value);
+                    else onCreateStudentTeam(value);
+                    setTeamEditor(null);
+                }}
+            />
+
+            {invitedStudentTeam && (
+                <ClassInviteFlow open audience="teacher" studentTeam={{ id: invitedStudentTeam.id, name: invitedStudentTeam.name }} inviterName={teacherProfile.name} schoolName={currentSpace.title} onClose={() => setStudentTeamInviteId(null)} />
+            )}
+
+            <MobileConfirmSheet
+                open={Boolean(archivedStudentTeam)}
+                title={archivedStudentTeam ? `解散${archivedStudentTeam.name}` : '解散社团或团队'}
+                description="解散后不再显示该团队，已有学生评价记录不受影响。"
+                confirmLabel="确认解散"
+                tone="danger"
+                onClose={() => setArchiveStudentTeamId(null)}
+                onConfirm={() => {
+                    if (archiveStudentTeamId) onArchiveStudentTeam(archiveStudentTeamId);
+                    setArchiveStudentTeamId(null);
+                }}
+            />
 
             <MobileBottomSheet open={canManagePersonal && showClassManagement} title="班级管理" onClose={() => setShowClassManagement(false)}>
                 <div className="space-y-[var(--tm-space-2)]">

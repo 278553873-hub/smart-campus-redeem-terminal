@@ -3,9 +3,10 @@ import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ClassListView from './views/ClassListView';
 import StudentTeamDetailView from './views/student-team/StudentTeamDetailView';
-import StudentTeamEditorView from './views/student-team/StudentTeamEditorView';
+import type { StudentTeamEditorValue } from './views/student-team/StudentTeamEditorView';
 import ClassInfoView, { type ClassInfoRole } from './views/ClassInfoView';
 import ClassDetailView from './views/ClassDetailView';
+import AddStudentView, { type AddStudentDraft } from './views/AddStudentView';
 import RecordInputView from './views/RecordInputView';
 import ClassRecordLogView from './views/ClassRecordLogView';
 import MeView, { ClassSourceSheet, type TeacherSpaceOption } from './views/MeView';
@@ -111,7 +112,11 @@ import {
 import { CURRENT_PRINCIPAL_TERM } from './data/principalTermReport';
 import { canManagePersonalClasses, canTeacherSpaceRecordClass, getHeadteacherAssistantScopes } from './domain/teacherSpaceAccess';
 import { useReportGenerationTask } from './hooks/useReportGenerationTask';
-import { getStudentLevelNetScore, summarizeStudentPerformance } from './domain/studentPerformance';
+import {
+    createDemoStudentLevelEvaluationRecords,
+    getStudentLevelNetScore,
+    summarizeStudentPerformance,
+} from './domain/studentPerformance';
 import {
     buildRosterVersion,
     getCurrentRosterVersions,
@@ -225,7 +230,10 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
         id: 'team-basketball',
         spaceId: 'school-star',
         name: '篮球社',
+        ownerId: 'teacher-liufei',
         ownerName: '刘飞',
+        collaboratorIds: [],
+        visibility: 'collaborators',
         memberIds: [
             ...getDemoStudentIds('c_2025_1', [1, 4, 8, 12]),
             ...getDemoStudentIds('c_2024_3', [0, 5, 11, 17]),
@@ -237,7 +245,10 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
         id: 'team-choir',
         spaceId: 'school-star',
         name: '合唱团',
+        ownerId: 'teacher-zhoutingting',
         ownerName: '周婷婷',
+        collaboratorIds: [],
+        visibility: 'management',
         memberIds: [
             ...getDemoStudentIds('c_2025_2', [0, 3, 6, 9, 12]),
             ...getDemoStudentIds('c_2024_1', [2, 5, 8, 11, 14]),
@@ -248,7 +259,10 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
         id: 'team-student-leaders',
         spaceId: 'school-star',
         name: '学生干部',
+        ownerId: 'teacher-liufei',
         ownerName: '刘飞',
+        collaboratorIds: [],
+        visibility: 'management',
         memberIds: [
             ...getDemoStudentIds('c_2025_4', [0, 1, 2]),
             ...getDemoStudentIds('c_2024_2', [0, 1, 2]),
@@ -271,6 +285,7 @@ const createTeachingAssignments = (classIds: string[], subject: string) => (
 );
 
 const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
+    id: 'teacher-liufei',
     name: '刘飞',
     avatar: ASSETS.AVATAR.TEACHER_DEFAULT,
     schoolName: '星河实验小学',
@@ -331,7 +346,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_info' | 'class_detail' | 'class_report' | 'student_team_detail' | 'student_team_editor' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
 
 const PRINCIPAL_REPORT_VIEWS: ViewState[] = [
     'principal_weekly_report',
@@ -352,9 +367,9 @@ const HEADTEACHER_REPORT_VIEWS: ViewState[] = [
 const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
     'class_info',
     'class_detail',
+    'student_add',
     'class_report',
     'student_team_detail',
-    'student_team_editor',
     'class_evaluation_records',
     'student_batch_edit',
     'reward_verification',
@@ -392,7 +407,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
 
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'record_input') return 0;
-        if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'class_report' || view === 'student_team_detail' || view === 'student_team_editor' || view === 'student_batch_edit' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
+        if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'student_add' || view === 'class_report' || view === 'student_team_detail' || view === 'student_batch_edit' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
         if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'weekly_duty_schedule' || view === 'homework_batch_import' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
         return 0;
     };
@@ -405,6 +420,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const [studentDetailInitialSection, setStudentDetailInitialSection] = useState<'evaluation' | 'report' | 'collection'>('evaluation');
     const [activeStudentCollectionRecord, setActiveStudentCollectionRecord] = useState<StudentCollectionHistoryItem | null>(null);
     const [studentOverrides, setStudentOverrides] = useState<Record<string, Student>>({});
+    const [studentAdditionsByClassId, setStudentAdditionsByClassId] = useState<Record<string, Student[]>>({});
     const [classOverrides, setClassOverrides] = useState<Record<string, ClassInfo>>({});
     const classes = MOCK_CLASSES.map(classInfo => classOverrides[classInfo.id] ?? classInfo);
     const [homeworkRosterVersions] = useState<HomeworkRosterVersion[]>(() => (
@@ -448,7 +464,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const [homeworkImportTasks, setHomeworkImportTasks] = useState<HomeworkImportDraft[]>([]);
     const [studentTeams, setStudentTeams] = useState<SchoolStudentTeam[]>(INITIAL_SCHOOL_STUDENT_TEAMS);
     const [selectedStudentTeamId, setSelectedStudentTeamId] = useState('team-basketball');
-    const [editingStudentTeamId, setEditingStudentTeamId] = useState<string | null>(null);
     const [evaluationRecordsByStudentId, setEvaluationRecordsByStudentId] = useState<Record<string, StudentEvaluationRecord[]>>({});
     const activeStudent = studentOverrides[selectedStudent.id] ?? selectedStudent;
     const [coinIssuanceConfig, setCoinIssuanceConfig] = useState<CoinIssuanceConfig>(DEFAULT_COIN_ISSUANCE_CONFIG);
@@ -467,12 +482,20 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const headteacherAssistantScopes = getHeadteacherAssistantScopes(activeTeacherSpace);
     const canRecordClassForActiveSpace = canTeacherSpaceRecordClass(activeTeacherSpace);
     const teacherProfile = teacherProfilesBySpace[activeTeacherSpace.id] ?? DEFAULT_TEACHER_PROFILE;
+    const activeTeacherId = teacherProfile.id;
+    const isSchoolManager = activeTeacherSpace.type === 'school' && Boolean(teacherProfile.departmentId);
     const activeClassMembershipById = CLASS_MEMBERSHIP_BY_SPACE[activeTeacherSpace.id] ?? {};
     const activeSpaceClasses = activeTeacherSpace.type === 'school'
         ? classes
         : classes.filter(classInfo => activeClassMembershipById[classInfo.id]);
     const activeSpaceStudentTeams = studentTeams.filter(team => (
-        team.spaceId === activeTeacherSpace.id && team.status === 'active'
+        team.spaceId === activeTeacherSpace.id
+        && team.status === 'active'
+        && (
+            team.ownerId === activeTeacherId
+            || team.collaboratorIds.includes(activeTeacherId)
+            || (isSchoolManager && team.visibility === 'management')
+        )
     ));
     const hasSchoolWideQuestionnaireAccess = activeTeacherSpace.type === 'school'
         && (activeTeacherSpace.role === 'leader' || activeTeacherSpace.role === 'administrator');
@@ -484,7 +507,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
             || (teacherProfile.deputyHomeroomClassIds ?? []).includes(classInfo.id)
             || teacherProfile.teachingAssignments.some(item => item.classId === classInfo.id)
         ));
-    const activeTeacherId = `${activeTeacherSpace.id}:${teacherProfile.name}`;
     const activeStudentClassId = classes.find(classInfo => classInfo.name === activeStudent.class)?.id ?? selectedClassId;
     const activeStudentClassSize = classes.find(classInfo => classInfo.id === activeStudentClassId)?.studentCount ?? 60;
     const activeCampusCoinDetail = GET_MOCK_CAMPUS_COIN_DETAIL(activeStudent, coinIssuanceConfig, activeStudentClassSize);
@@ -762,7 +784,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                 status: student.status,
             }))
             : GET_MOCK_STUDENTS_FOR_CLASS(classId);
-        return sourceStudents.map(student => {
+        const sourceStudentIds = new Set(sourceStudents.map(student => student.id));
+        const addedStudents = (studentAdditionsByClassId[classId] ?? [])
+            .filter(student => !sourceStudentIds.has(student.id));
+        return [...sourceStudents, ...addedStudents].map(student => {
             const mergedStudent = studentOverrides[student.id] ?? student;
             if (!sourceClassInfo || !currentClassInfo || mergedStudent.class !== sourceClassInfo.name) return mergedStudent;
             return {
@@ -774,8 +799,17 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     };
 
     const activeSpaceStudents = activeSpaceClasses.flatMap(classInfo => getMergedStudentsForClass(classInfo.id));
+    const activeTeacherClassIds = new Set([
+        ...teacherProfile.teachingAssignments.map(item => item.classId),
+        ...teacherProfile.homeroomClassIds,
+        ...(teacherProfile.deputyHomeroomClassIds ?? []),
+    ]);
+    const studentTeamEditableClasses = isSchoolManager
+        ? activeSpaceClasses
+        : activeSpaceClasses.filter(classInfo => activeTeacherClassIds.has(classInfo.id));
     const activeSpaceStudentById = new Map(activeSpaceStudents.map(student => [student.id, student]));
-    const selectedStudentTeam = studentTeams.find(team => team.id === selectedStudentTeamId);
+    const selectedStudentTeam = activeSpaceStudentTeams.find(team => team.id === selectedStudentTeamId);
+    const canManageSelectedStudentTeam = selectedStudentTeam?.ownerId === activeTeacherId;
     const selectedStudentTeamStudents = selectedStudentTeam
         ? selectedStudentTeam.memberIds
             .map(studentId => activeSpaceStudentById.get(studentId))
@@ -789,48 +823,38 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         navigateTo('student_team_detail');
     };
 
-    const handleCreateStudentTeam = () => {
-        setEditingStudentTeamId(null);
-        navigateTo('student_team_editor');
-    };
-
-    const handleEditStudentTeam = () => {
-        if (!selectedStudentTeam) return;
-        setEditingStudentTeamId(selectedStudentTeam.id);
-        navigateTo('student_team_editor');
-    };
-
-    const handleSaveStudentTeam = (value: { name: string; memberIds: string[] }) => {
-        if (editingStudentTeamId) {
-            setStudentTeams(current => current.map(team => team.id === editingStudentTeamId
-                ? { ...team, name: value.name, memberIds: value.memberIds }
-                : team));
-            setSelectedStudentTeamId(editingStudentTeamId);
-            setHistory(current => current.slice(0, -1));
-            setCurrentView('student_team_detail');
-            setEditingStudentTeamId(null);
-            return;
-        }
-
+    const handleCreateStudentTeam = (value: StudentTeamEditorValue) => {
         const teamId = `team-${Date.now()}`;
         setStudentTeams(current => [...current, {
             id: teamId,
             spaceId: activeTeacherSpace.id,
             name: value.name,
+            ownerId: activeTeacherId,
             ownerName: teacherProfile.name,
+            collaboratorIds: [],
+            visibility: value.visibility,
             memberIds: value.memberIds,
             status: 'active',
         }]);
         setSelectedStudentTeamId(teamId);
-        setCurrentView('student_team_detail');
+        navigateTo('student_team_detail');
     };
 
-    const handleArchiveStudentTeam = () => {
-        if (!selectedStudentTeam) return;
-        setStudentTeams(current => current.map(team => team.id === selectedStudentTeam.id
-            ? { ...team, status: 'archived' }
-            : team));
-        goBack();
+    const handleUpdateStudentTeam = (teamId: string, value: StudentTeamEditorValue) => {
+        const team = studentTeams.find(item => item.id === teamId);
+        if (!team || team.ownerId !== activeTeacherId) return;
+        setStudentTeams(current => current.map(item => item.id === teamId
+            ? { ...item, name: value.name, memberIds: value.memberIds, visibility: value.visibility }
+            : item));
+    };
+
+    const handleArchiveStudentTeam = (teamId: string) => {
+        const team = studentTeams.find(item => item.id === teamId);
+        if (!team || team.ownerId !== activeTeacherId) return;
+        setStudentTeams(current => current.map(item => item.id === teamId
+            ? { ...item, status: 'archived' }
+            : item));
+        if (currentView === 'student_team_detail' && selectedStudentTeamId === teamId) goBack();
     };
 
     const handleChangeStudentBasicInfo = (student: Student) => {
@@ -939,6 +963,35 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         setCurrentView('class_detail');
     };
 
+    const handleAddStudents = (drafts: AddStudentDraft[]) => {
+        const classInfo = classes.find(item => item.id === selectedClassId);
+        if (!classInfo || drafts.length === 0) return;
+        const existingStudentCount = getMergedStudentsForClass(selectedClassId).length;
+        const createdAt = Date.now();
+        const addedStudents = drafts.map((draft, index): Student => ({
+            id: `student-added-${selectedClassId}-${createdAt}-${index + 1}`,
+            name: draft.name,
+            studentNo: draft.studentNo,
+            gender: draft.gender,
+            grade: classInfo.gradeLevel,
+            class: classInfo.name,
+            status: 'active',
+        }));
+
+        setStudentAdditionsByClassId(current => ({
+            ...current,
+            [selectedClassId]: [...(current[selectedClassId] ?? []), ...addedStudents],
+        }));
+        setClassOverrides(current => ({
+            ...current,
+            [selectedClassId]: {
+                ...(current[selectedClassId] ?? classInfo),
+                studentCount: existingStudentCount + addedStudents.length,
+            },
+        }));
+        goBack();
+    };
+
     const handleCreateClass = () => {
         if (!canManagePersonalClasses(activeTeacherSpace)) return;
         alert('创建班级流程演示中');
@@ -964,6 +1017,17 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
             return {
                 ...current,
                 [classId]: { ...classInfo, studentCardDisplaySettings: settings },
+            };
+        });
+    };
+
+    const handleUpdateStudentLevelDisplayMode = (classId: string, mode: ClassInfo['studentLevelDisplayMode']) => {
+        setClassOverrides(current => {
+            const classInfo = current[classId] ?? MOCK_CLASSES.find(item => item.id === classId);
+            if (!classInfo || !mode) return current;
+            return {
+                ...current,
+                [classId]: { ...classInfo, studentLevelDisplayMode: mode },
             };
         });
     };
@@ -1281,7 +1345,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
             case 'class_list': return '我的班级';
             case 'class_report': return '班级报告';
             case 'student_team_detail': return selectedStudentTeam?.name ?? '社团与团队';
-            case 'student_team_editor': return editingStudentTeamId ? '编辑社团或团队' : '新建社团或团队';
             case 'student_detail': return '学生详情';
             case 'student_archive': return '学生成长档案';
             case 'student_collection_detail': return '采集详情';
@@ -1434,12 +1497,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const primaryTabViewKey = showTabBar ? 'teacher-primary-tabs' : currentView;
     const pageTransitionClass = showTabBar ? '' : 'animate-page-enter';
     const isHeadteacherAssistantView = currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2';
-    const viewHandlesScroll = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'student_team_detail', 'student_team_editor', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule'].includes(currentView) || isHeadteacherAssistantView;
+    const viewHandlesScroll = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule'].includes(currentView) || isHeadteacherAssistantView;
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView);
     const hasStudentDetailBackground = currentView === 'student_detail';
-    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design'].includes(currentView) || isHeadteacherAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
+    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design'].includes(currentView) || isHeadteacherAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const activeBottomTab: TeacherBottomTab = activeIndex === 1 ? 'class' : activeIndex === 2 ? 'me' : 'record';
 
     const getPhoneScreenBackground = () => {
@@ -1543,7 +1606,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-11 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />
                         )}
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_team_detail' && currentView !== 'student_team_editor' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_add' && currentView !== 'student_team_detail' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -1609,8 +1672,14 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     activeListTab={classListTab}
                                     onListTabChange={setClassListTab}
                                     studentTeams={activeSpaceStudentTeams}
+                                    studentTeamEditableClasses={studentTeamEditableClasses}
+                                    allStudents={activeSpaceStudents}
+                                    currentTeacherId={activeTeacherId}
+                                    isSchoolManager={isSchoolManager}
                                     canCreateStudentTeam={activeTeacherSpace.type === 'school'}
                                     onCreateStudentTeam={handleCreateStudentTeam}
+                                    onUpdateStudentTeam={handleUpdateStudentTeam}
+                                    onArchiveStudentTeam={handleArchiveStudentTeam}
                                     onSelectStudentTeam={handleSelectStudentTeam}
                                 />
                             )}
@@ -1650,19 +1719,38 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                         ]),
                                     )}
                                     levelNetScoreByStudentId={Object.fromEntries(
-                                        Object.entries(evaluationRecordsByStudentId).map(([studentId, records]) => [
-                                            studentId,
-                                            getStudentLevelNetScore(
-                                                records,
-                                                classes.find(classInfo => classInfo.id === selectedClassId)?.studentLevelDisplayMode ?? 'term',
-                                                CURRENT_PRINCIPAL_TERM,
-                                            ),
-                                        ]),
+                                        getMergedStudentsForClass(selectedClassId).map(student => {
+                                            const confirmedRecords = evaluationRecordsByStudentId[student.id];
+                                            const levelRecords = confirmedRecords?.length
+                                                ? confirmedRecords
+                                                : createDemoStudentLevelEvaluationRecords(student, CURRENT_PRINCIPAL_TERM);
+
+                                            return [
+                                                student.id,
+                                                getStudentLevelNetScore(
+                                                    levelRecords,
+                                                    classes.find(classInfo => classInfo.id === selectedClassId)?.studentLevelDisplayMode ?? 'term',
+                                                    CURRENT_PRINCIPAL_TERM,
+                                                ),
+                                            ];
+                                        }),
                                     )}
                                     canResetStudentEvaluationCounts={selectedClassRole === 'headTeacher' || selectedClassRole === 'deputyHeadTeacher'}
                                     canConfigureCardDisplay={selectedClassRole === 'headTeacher' || selectedClassRole === 'deputyHeadTeacher'}
+                                    canConfigureLevelDisplay={selectedClassRole === 'headTeacher'}
+                                    canAddStudent={selectedClassRole === 'headTeacher' || selectedClassRole === 'deputyHeadTeacher'}
+                                    onAddStudent={() => navigateTo('student_add')}
                                     onUpdateStudentCardDisplaySettings={settings => handleUpdateStudentCardDisplaySettings(selectedClassId, settings)}
+                                    onUpdateStudentLevelDisplayMode={mode => handleUpdateStudentLevelDisplayMode(selectedClassId, mode)}
                                     onUpdateGroupCardDisplaySettings={settings => handleUpdateGroupCardDisplaySettings(selectedClassId, settings)}
+                                />
+                            )}
+
+                            {currentView === 'student_add' && selectedClassInfo && (
+                                <AddStudentView
+                                    existingStudents={getMergedStudentsForClass(selectedClassInfo.id)}
+                                    onBack={goBack}
+                                    onSave={handleAddStudents}
                                 />
                             )}
 
@@ -1670,9 +1758,15 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                 <StudentTeamDetailView
                                     team={selectedStudentTeam}
                                     students={selectedStudentTeamStudents}
+                                    currentTeacherName={teacherProfile.name}
+                                    schoolName={teacherProfile.schoolName}
+                                    canManage={canManageSelectedStudentTeam}
+                                    classes={studentTeamEditableClasses}
+                                    allStudents={activeSpaceStudents}
+                                    getStudentsForClass={getMergedStudentsForClass}
                                     onBack={goBack}
                                     onSelectStudent={handleSelectStudent}
-                                    onEdit={handleEditStudentTeam}
+                                    onUpdate={handleUpdateStudentTeam}
                                     onArchive={handleArchiveStudentTeam}
                                     isSelectionMode={isMultiSelectMode}
                                     onToggleSelectionMode={handleToggleMultiSelect}
@@ -1684,18 +1778,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                             summarizeStudentPerformance(records),
                                         ]),
                                     )}
-                                />
-                            )}
-
-                            {currentView === 'student_team_editor' && (
-                                <StudentTeamEditorView
-                                    team={editingStudentTeamId
-                                        ? studentTeams.find(team => team.id === editingStudentTeamId)
-                                        : undefined}
-                                    classes={activeSpaceClasses}
-                                    getStudentsForClass={getMergedStudentsForClass}
-                                    onBack={goBack}
-                                    onSave={handleSaveStudentTeam}
                                 />
                             )}
 
@@ -2001,6 +2083,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     onBack={goBack}
                                     teacherId={activeTeacherId}
                                     teacherName={teacherProfile.name}
+                                    teacherAvatar={teacherProfile.avatar}
                                     spaceId={activeTeacherSpace.id}
                                     homeroomClassIds={teacherProfile.homeroomClassIds}
                                     initialMode={questionnaireEntryMode}

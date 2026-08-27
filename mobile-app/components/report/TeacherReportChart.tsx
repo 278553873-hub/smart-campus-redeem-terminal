@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { EChartsCoreOption, EChartsType } from 'echarts/core';
+import { teacherTypographySemantic } from '../../styles/teacherMobileTokens';
 
 type EChartsRuntime = typeof import('echarts/core');
 
@@ -394,12 +395,12 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
             axisLabel: {
                 color: theme.textPrimary,
                 fontSize: 11,
-                fontWeight: onCategorySelect ? 600 : 400,
+                fontWeight: onCategorySelect ? teacherTypographySemantic.semibold : teacherTypographySemantic.regular,
                 interval: 0,
                 formatter: onCategorySelect ? (value: string) => `{label|${value}} {arrow|›}` : undefined,
                 rich: onCategorySelect ? {
-                    label: { color: theme.textPrimary, fontSize: 11, fontWeight: 600 },
-                    arrow: { color: theme.textSecondary, fontSize: 11, fontWeight: 400 },
+                    label: { color: theme.textPrimary, fontSize: 11, fontWeight: teacherTypographySemantic.semibold },
+                    arrow: { color: theme.textSecondary, fontSize: 11, fontWeight: teacherTypographySemantic.regular },
                 } : undefined,
             },
         },

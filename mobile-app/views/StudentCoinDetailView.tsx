@@ -8,6 +8,7 @@ import { CampusCoinDetail, Student } from '../types';
 import { phoneText } from '../styles/teacherMobileTokens';
 import { formatCoinAmount } from '../utils/coinFormat';
 import { GROWTH_COIN_TERMS } from '../../shared/growthCoinTerminology';
+import { formatCampusCoinFlowTime, getCampusCoinIssueDetail } from '../domain/campusCoinFlow';
 
 interface StudentCoinDetailViewProps {
   student: Student;
@@ -16,12 +17,12 @@ interface StudentCoinDetailViewProps {
 }
 
 type FlowFilter = 'income' | 'expense';
-type FlowCategory = 'all' | 'dividend' | 'reward' | 'interest' | 'vending_shop' | 'class_shop';
+type FlowCategory = 'all' | 'growth_award' | 'class_reward' | 'bank_interest' | 'vending_exchange' | 'class_exchange';
 
 interface CoinFlowItem {
   id: string;
-  title: string;
-  description: string;
+  categoryLabel: string;
+  detail: string;
   amount: number;
   time: string;
   type: 'income' | 'expense';
@@ -30,11 +31,11 @@ interface CoinFlowItem {
 
 const categoryLabels: Record<FlowCategory, string> = {
   all: '全部',
-  dividend: '结算发放',
-  reward: '班级奖励',
-  interest: '银行利息',
-  vending_shop: '货柜兑换',
-  class_shop: '班级兑换',
+  growth_award: '成长嘉奖',
+  class_reward: '班级奖励',
+  bank_interest: '银行利息',
+  vending_exchange: '货柜兑换',
+  class_exchange: '班级兑换',
 };
 
 const flowFilterOptions: Array<{ value: FlowFilter; label: string }> = [
@@ -43,48 +44,30 @@ const flowFilterOptions: Array<{ value: FlowFilter; label: string }> = [
 ];
 
 const categoryOptionsByFilter: Record<FlowFilter, FlowCategory[]> = {
-  income: ['all', 'dividend', 'reward', 'interest'],
-  expense: ['all', 'vending_shop', 'class_shop'],
+  income: ['all', 'growth_award', 'class_reward', 'bank_interest'],
+  expense: ['all', 'vending_exchange', 'class_exchange'],
 };
 
 const getFlowIcon = (category: FlowCategory, type: FlowFilter) => {
   const toneClass = type === 'income' ? 'text-[var(--tm-brand-reward)]' : 'text-[var(--tm-brand-primary)]';
   switch (category) {
-    case 'vending_shop':
-    case 'class_shop':
+    case 'vending_exchange':
+    case 'class_exchange':
       return <ShoppingBag className={`h-[18px] w-[18px] ${toneClass}`} />;
-    case 'dividend':
+    case 'growth_award':
       return <TrendingUp className={`h-[18px] w-[18px] ${toneClass}`} />;
-    case 'reward':
+    case 'class_reward':
       return <Sparkles className={`h-[18px] w-[18px] ${toneClass}`} />;
-    case 'interest':
+    case 'bank_interest':
       return <Landmark className={`h-[18px] w-[18px] ${toneClass}`} />;
     default:
       return <Clock className={`h-[18px] w-[18px] ${toneClass}`} />;
   }
 };
 
-const getIssueCategory = (source: string): FlowCategory => {
-  if (source.includes('结算') || source.includes('分红')) return 'dividend';
-  if (source.includes('班级') || source.includes('奖励')) return 'reward';
-  if (source.includes('银行') || source.includes('利息')) return 'interest';
-  return 'reward';
-};
-
-const getConsumeCategory = (scene: string): FlowCategory => {
-  if (scene.includes('货柜')) return 'vending_shop';
-  return 'class_shop';
-};
-
 const formatMonthLabel = (monthKey: string) => {
   const [year, month] = monthKey.split('-');
   return `${year}年${Number(month)}月`;
-};
-
-const formatFlowTime = (value: string) => {
-  const [date, time] = value.split(' ');
-  const [, month, day] = date.split('-');
-  return `${Number(month)}月${Number(day)}日${time ? ` ${time.slice(0, 5)}` : ''}`;
 };
 
 const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, coinDetail, onBack }) => {
@@ -96,21 +79,21 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
   const flowItems = useMemo<CoinFlowItem[]>(() => {
     const incomeItems = issueRecords.map(record => ({
       id: record.id,
-      title: record.source,
-      description: `${record.description} · ${record.operator}`,
+      categoryLabel: categoryLabels[record.category],
+      detail: getCampusCoinIssueDetail(record),
       amount: record.amount,
       time: record.time,
       type: 'income' as const,
-      category: getIssueCategory(record.source),
+      category: record.category,
     }));
     const expenseItems = consumeRecords.map(record => ({
       id: record.id,
-      title: record.item,
-      description: record.scene,
+      categoryLabel: categoryLabels[record.category],
+      detail: `${record.productName} ×${record.quantity}`,
       amount: record.amount,
       time: record.time,
       type: 'expense' as const,
-      category: getConsumeCategory(record.scene),
+      category: record.category,
     }));
     return [...incomeItems, ...expenseItems].sort((a, b) => b.time.localeCompare(a.time));
   }, [consumeRecords, issueRecords]);
@@ -263,15 +246,16 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                       <h2 className="mb-[var(--tm-space-2)] px-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{formatMonthLabel(group.month)}</h2>
                       <div className="divide-y divide-[var(--tm-border-subtle)]">
                         {group.items.map(item => (
-                          <div key={item.id} className="flex min-h-[78px] items-start gap-[var(--tm-space-3)] py-[var(--tm-space-3)]">
+                          <div key={item.id} className="flex min-h-[92px] items-start gap-[var(--tm-space-3)] py-[var(--tm-space-3)]">
                             <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${item.type === 'income' ? 'bg-[var(--tm-brand-reward-soft)]' : 'bg-[var(--tm-brand-primary-soft)]'}`}>
                               {getFlowIcon(item.category, item.type)}
                             </span>
                             <div className="min-w-0 flex-1">
-                              <h3 className="line-clamp-2 text-[length:var(--tm-font-size-card-title)] font-semibold leading-5 text-[var(--tm-text-primary)]">{item.title}</h3>
-                              <p className="mt-[var(--tm-space-1)] line-clamp-2 text-[length:var(--tm-font-size-meta)] font-medium leading-4 text-[var(--tm-text-secondary)]">
-                                {formatFlowTime(item.time)} · {item.description}
-                              </p>
+                              <h3 className="text-[length:var(--tm-font-size-card-title)] font-semibold leading-5 text-[var(--tm-text-primary)]">{item.categoryLabel}</h3>
+                              <p className="mt-[var(--tm-space-1)] line-clamp-2 text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">{item.detail}</p>
+                              <time dateTime={item.time} className="mt-[var(--tm-space-1)] block text-[length:var(--tm-font-size-meta)] font-medium leading-4 tabular-nums text-[var(--tm-text-tertiary)]">
+                                {formatCampusCoinFlowTime(item.time)}
+                              </time>
                             </div>
                             <span className="shrink-0 pt-[var(--tm-space-1)] text-[length:var(--tm-font-size-card-title)] font-semibold leading-none tabular-nums text-[var(--tm-text-primary)]">
                               {item.type === 'income' ? '+' : '-'}{formatCoinAmount(item.amount)}

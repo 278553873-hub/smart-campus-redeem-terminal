@@ -32,6 +32,12 @@ import dailyArtCreativityMobileImg from './resources/highlight-defaults/daily-ar
 import schoolReportV2Icon from './resources/school-report-v2.png';
 import classEvaluationReportIcon from './resources/class-evaluation-report.png';
 import termReportV2Icon from './resources/term-report-v2.png';
+import teacherBottomNavRecordActive from './resources/teacher-bottom-navigation/record-active.png';
+import teacherBottomNavRecordDefault from './resources/teacher-bottom-navigation/record-default.png';
+import teacherBottomNavClassActive from './resources/teacher-bottom-navigation/class-active.png';
+import teacherBottomNavClassDefault from './resources/teacher-bottom-navigation/class-default.png';
+import teacherBottomNavMeActive from './resources/teacher-bottom-navigation/me-active.png';
+import teacherBottomNavMeDefault from './resources/teacher-bottom-navigation/me-default.png';
 import {
   studentBoyAvatarGroups,
   studentBoyAvatars,
@@ -154,6 +160,20 @@ export const ASSETS = {
     TEACHER_ME_PAGE_BG: teacherMePageBg,
     TEACHER_LOGIN_ICON: teacherLoginIconImg,
     CLASS_LEADERBOARD: classLeaderboardIconImg,
+  },
+  TEACHER_BOTTOM_NAVIGATION: {
+    RECORD: {
+      ACTIVE: teacherBottomNavRecordActive,
+      DEFAULT: teacherBottomNavRecordDefault,
+    },
+    CLASS: {
+      ACTIVE: teacherBottomNavClassActive,
+      DEFAULT: teacherBottomNavClassDefault,
+    },
+    ME: {
+      ACTIVE: teacherBottomNavMeActive,
+      DEFAULT: teacherBottomNavMeDefault,
+    },
   },
   DEFAULT_STATE: {
     WORRIED_CLIPBOARD: defaultStateWorriedClipboardImg,

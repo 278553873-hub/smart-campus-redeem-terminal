@@ -32,7 +32,6 @@ import type {
   EducationStage,
   GuardianRelation,
   Student,
-  StudentLevelDisplayMode,
   TeacherProfile,
 } from '../types';
 import { copyText } from '../utils/copyText';
@@ -85,11 +84,6 @@ type ParentBindingTab = 'unbound' | 'bound';
 type InviteAudience = 'teacher' | 'parent';
 type InviteStep = 'methods' | 'copy' | 'qr';
 type DangerStep = 'check' | 'final';
-
-const LEVEL_DISPLAY_OPTIONS: Array<{ value: StudentLevelDisplayMode; label: string }> = [
-  { value: 'term', label: '仅计算本学期' },
-  { value: 'cumulative', label: '累计所有学期' },
-];
 
 const createDraft = (classInfo: ClassInfo): EditDraft => ({
   educationStage: inferEducationStage(classInfo),
@@ -190,8 +184,6 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
   const [parentItems, setParentItems] = useState<ParentBindingItem[]>(() => buildParentBindings(students));
   const [parentTab, setParentTab] = useState<ParentBindingTab>('unbound');
   const [showEditSheet, setShowEditSheet] = useState(false);
-  const [showLevelDisplaySheet, setShowLevelDisplaySheet] = useState(false);
-  const [levelDisplayDraft, setLevelDisplayDraft] = useState<StudentLevelDisplayMode>(classInfo.studentLevelDisplayMode ?? 'term');
   const [activeTeacher, setActiveTeacher] = useState<ClassTeacherItem | null>(null);
   const [removeTeacherTarget, setRemoveTeacherTarget] = useState<ClassTeacherItem | null>(null);
   const [showTransferSheet, setShowTransferSheet] = useState(false);
@@ -209,15 +201,12 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
   const [toast, setToast] = useState<{ message: string; success: boolean } | null>(null);
 
   const canEdit = effectiveRole === 'headTeacher' || effectiveRole === 'deputyHeadTeacher';
-  const canConfigureLevelDisplay = effectiveRole === 'headTeacher';
   const canInvite = canEdit;
   const canManageTeachers = effectiveRole === 'headTeacher';
   const canManageParents = effectiveRole === 'headTeacher' || effectiveRole === 'deputyHeadTeacher';
   const canTransfer = effectiveRole === 'headTeacher';
   const isPersonalOwner = spaceType === 'personal' && effectiveRole === 'headTeacher';
   const teachers = useMemo(() => sortTeachers(teacherItems), [teacherItems]);
-  const levelDisplayMode = classInfo.studentLevelDisplayMode ?? 'term';
-  const levelDisplayLabel = LEVEL_DISPLAY_OPTIONS.find(option => option.value === levelDisplayMode)?.label ?? '仅计算本学期';
   const unboundParents = useMemo(() => parentItems.filter(item => item.guardians.length === 0), [parentItems]);
   const boundParents = useMemo(() => parentItems.filter(item => item.guardians.length > 0), [parentItems]);
   const boundParentCount = boundParents.length;
@@ -421,17 +410,6 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
     </div>
   );
 
-  const openLevelDisplaySheet = () => {
-    setLevelDisplayDraft(levelDisplayMode);
-    setShowLevelDisplaySheet(true);
-  };
-
-  const saveLevelDisplayMode = () => {
-    onSave({ ...classInfo, studentLevelDisplayMode: levelDisplayDraft });
-    setShowLevelDisplaySheet(false);
-    showToast('等级展示规则已更新');
-  };
-
   const renderDetail = () => (
     <>
       <MobileCard variant="card" padding="md" className="relative">
@@ -464,23 +442,6 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
           <span className="shrink-0 tabular-nums">{classInfo.studentCount}人</span>
         </div>
       </MobileCard>
-
-      {canConfigureLevelDisplay && (
-        <section className="mt-[var(--tm-space-4)]" aria-label="等级展示规则">
-          <button
-            type="button"
-            onClick={openLevelDisplaySheet}
-            className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] py-[var(--tm-space-2)] text-left [box-shadow:var(--tm-shadow-card)] active:bg-[var(--tm-bg-surface-soft)]"
-            aria-label={`等级展示规则，当前为${levelDisplayLabel}`}
-          >
-            <span className={`${phoneText.body} font-semibold text-[var(--tm-text-primary)]`}>等级展示规则</span>
-            <span className="flex shrink-0 items-center gap-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
-              {levelDisplayLabel}
-              <ChevronRight className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
-            </span>
-          </button>
-        </section>
-      )}
 
       <MobileCard variant="card" padding="md" className="mt-[var(--tm-space-4)]">
         {renderSectionHeader('老师列表', `${teachers.length}人`, () => setPage('teachers'), '查看完整老师列表')}
@@ -746,39 +707,6 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
               <span className="shrink-0 text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]">班</span>
             </div>
           </label>
-        </div>
-      </MobileBottomSheet>
-
-      <MobileBottomSheet
-        open={showLevelDisplaySheet}
-        title="等级展示规则"
-        onClose={() => setShowLevelDisplaySheet(false)}
-        footer={(
-          <div className="grid grid-cols-2 gap-[var(--tm-space-2)]">
-            <button type="button" onClick={() => setShowLevelDisplaySheet(false)} className={secondaryButtonClass}>取消</button>
-            <button type="button" onClick={saveLevelDisplayMode} className={primaryButtonClass}>完成</button>
-          </div>
-        )}
-      >
-        <div className="space-y-[var(--tm-space-2)] pb-[var(--tm-space-2)]" role="radiogroup" aria-label="选择等级展示方式">
-          {LEVEL_DISPLAY_OPTIONS.map(option => {
-            const selected = levelDisplayDraft === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => setLevelDisplayDraft(option.value)}
-                className={`flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] px-[var(--tm-space-4)] text-left transition-colors ${selected ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]'}`}
-              >
-                <span className={`${phoneText.body} font-semibold`}>{option.label}</span>
-                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
-                  {selected && <Check className="h-3.5 w-3.5" />}
-                </span>
-              </button>
-            );
-          })}
         </div>
       </MobileBottomSheet>
 

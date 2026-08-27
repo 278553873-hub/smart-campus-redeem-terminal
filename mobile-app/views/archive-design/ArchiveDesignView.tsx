@@ -72,6 +72,7 @@ import {
   archiveHeaderImageOptions,
   archiveThemeOptions,
   getArchiveHeaderImage,
+  getArchiveHeaderImageId,
   getArchiveTheme,
   getArchiveThemeStyle,
 } from './archiveAppearance';
@@ -981,21 +982,20 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
               <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">档案头图</h3>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 {archiveHeaderImageOptions.map(option => {
-                  const selected = templateDraft.appearance.headerImageId === option.id;
+                  const selected = getArchiveHeaderImageId(templateDraft.appearance) === option.id;
                   return (
                     <button
                       key={option.id}
                       type="button"
+                      aria-label={`选择档案头图：${option.label}`}
                       aria-pressed={selected}
                       onClick={() => setTemplateDraft({ ...templateDraft, appearance: { ...templateDraft.appearance, headerImageId: option.id } })}
-                      className={`overflow-hidden rounded-[var(--tm-radius-card)] text-left transition ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : '[box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                      className={`relative overflow-hidden rounded-[var(--tm-radius-card)] text-left transition ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : '[box-shadow:var(--tm-shadow-card-on-white)]'}`}
                     >
                       {option.image
                         ? <img src={option.image} alt="" className="aspect-[16/7] w-full object-cover" />
                         : <span className="flex aspect-[16/7] w-full items-center justify-center bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]"><ImageOff className="h-5 w-5" /></span>}
-                      <span className={`flex min-h-10 items-center justify-between bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-meta)] font-semibold ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}>
-                        {option.label}{selected && <Check className="h-4 w-4" />}
-                      </span>
+                      {selected && <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]"><Check className="h-4 w-4" /></span>}
                     </button>
                   );
                 })}

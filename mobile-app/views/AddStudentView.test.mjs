@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const read = relativePath => fs.readFileSync(new URL(relativePath, import.meta.url), 'utf8');
+const viewSource = read('./AddStudentView.tsx');
+const classDetailSource = read('./ClassDetailView.tsx');
+const rosterCardSource = read('../components/student/StudentRosterCard.tsx');
+const compactRemoveSource = read('../components/ui/CompactRemoveButton.tsx');
+const tokenSource = read('../styles/teacherMobileTokens.ts');
+const guidelineSource = read('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md');
+const appSource = read('../App.tsx');
+
+assert.match(viewSource, /<MobilePageHeader title="添加学生" onBack=\{onBack\}/, '添加学生应使用教师手机端公共标题栏。');
+assert.match(viewSource, /<MobileBottomSheet[\s\S]*title="扫码识别表格"/, '扫码识别应复用公共底部弹窗。');
+assert.match(viewSource, /拍摄纸质名单，识别后可再修改/, '扫码弹窗应保留线框图定义的识别提示。');
+assert.match(viewSource, /fillStudentsFromScannedTable/, '扫码识别应支持模拟结果回填。');
+assert.match(viewSource, /studentInputRows[\s\S]*createEmptyRow\(1\)/, '添加学生默认应展示一行。');
+assert.match(viewSource, /gender: 'male'/, '新增学生性别应默认选择男。');
+assert.match(viewSource, /placeholder="姓名"/, '学生行应提供姓名输入。');
+assert.match(viewSource, /placeholder="学号必填"/, '学生行应明确学号必填。');
+assert.match(viewSource, /填写学号后，可说“1号和3号同学打架”进行评价。/, '学号评价说明应简洁表达填写后的使用方式。');
+assert.doesNotMatch(viewSource, /填写后可支持学号进行评价/, '添加学生页不得保留冗长的旧学号说明。');
+assert.match(viewSource, /aria-required="true"/, '姓名与学号输入应提供必填语义。');
+assert.match(viewSource, /disabled=\{!canSubmitStudents\}/, '必填信息未完成时应禁用完成按钮。');
+assert.match(viewSource, /duplicateStudentNumbers/, '添加学生应阻止重复学号。');
+assert.match(viewSource, /addStudentInputRow/, '页面应支持继续添加一名学生。');
+assert.match(viewSource, /removeStudentInputRow/, '多行录入应支持删除误添加学生。');
+assert.match(viewSource, /text-\[length:var\(--tm-font-size-body\)\][^\n]*扫码识别表格|tm-font-size-body[^\n]*font-semibold[\s\S]*扫码识别表格/, '扫码识别表格应使用14像素正文 Token。');
+assert.match(viewSource, /hasStudentData = Boolean\(row\.name\.trim\(\) \|\| row\.studentNo\.trim\(\)\)/, '姓名或学号任一有值时应显示删除入口。');
+assert.match(viewSource, /<CompactRemoveButton[\s\S]*removeStudentInputRow\(row\.id\)/, '学生行删除入口应复用公共紧凑删除组件。');
+assert.match(compactRemoveSource, /absolute -right-\[var\(--tm-compact-remove-corner-offset\)\] -top-\[var\(--tm-compact-remove-corner-offset\)\]/, '删除入口应通过公共组件 Token 悬浮在承载对象右上角。');
+assert.match(compactRemoveSource, /h-\[var\(--tm-compact-remove-control-size\)\] w-\[var\(--tm-compact-remove-control-size\)\]/, '删除入口的布局盒应使用32像素组件 Token。');
+assert.match(compactRemoveSource, /before:-inset-\[var\(--tm-compact-remove-hit-slop\)\]/, '删除入口应通过透明外扩补足44像素触控区域。');
+assert.match(compactRemoveSource, /tm-compact-remove-visible-size[^\n]*rounded-full[^\n]*tm-compact-remove-bg[^\n]*tm-compact-remove-icon/, '公共删除组件应通过 Token 承载圆底、尺寸与图标色。');
+assert.match(compactRemoveSource, /<X className="h-\[var\(--tm-compact-remove-icon-size\)\] w-\[var\(--tm-compact-remove-icon-size\)\]"/, '删除图标尺寸应由组件 Token 控制。');
+assert.doesNotMatch(viewSource, /<X className="(?:h-7 w-7|h-4 w-4)|bg-\[var\(--tm-text-primary\)\]/, '删除入口不得在业务页写死尺寸或借用正文颜色作为背景。');
+assert.doesNotMatch(viewSource, /Trash2|pr-\[var\(--tm-space-8\)\]/, '删除入口不得使用垃圾桶或压缩数据输入空间。');
+assert.match(viewSource, /space-y-\[var\(--tm-space-2\)\]/, '学生卡片间距应收紧为8像素。');
+assert.match(viewSource, /rounded-\[var\(--tm-radius-inner\)\] bg-\[var\(--tm-compact-editor-row-bg\)\] p-\[var\(--tm-space-2\)\]/, '学生卡片应移除边框并使用8像素内边距。');
+assert.match(viewSource, /grid-cols-\[minmax\(0,1\.5fr\)_minmax\(68px,0\.8fr\)_38px_38px\] gap-\[var\(--tm-space-2\)\]/, '姓名、学号和性别之间应统一使用8像素间距 Token。');
+assert.match(viewSource, /h-9 w-\[38px\][^\n]*rounded-\[var\(--tm-radius-control\)\] border/, '性别按钮的可见区域应为38×36像素。');
+assert.match(viewSource, /rounded-\[var\(--tm-radius-control\)\] border[\s\S]*border-\[var\(--tm-compact-editor-control-border\)\]/, '未选中的性别按钮应保留浅色边框。');
+assert.match(viewSource, /row\.gender === 'male'[\s\S]*border-\[var\(--tm-gender-male-selection-bg\)\][^\n]*bg-\[var\(--tm-gender-male-selection-bg\)\]/, '男生选中态应使用男生性别实色。');
+assert.match(viewSource, /row\.gender === 'female'[\s\S]*border-\[var\(--tm-gender-female-selection-bg\)\][^\n]*bg-\[var\(--tm-gender-female-selection-bg\)\]/, '女生选中态应使用女生性别实色。');
+assert.match(viewSource, />\s*稍后添加\s*</, '页面应保留稍后添加返回入口。');
+assert.doesNotMatch(viewSource, /(?:bg|text|border)-(?:gray|slate|red|blue)-/, '添加学生页面不得绕过教师手机端颜色 Token。');
+
+assert.match(tokenSource, /'--tm-compact-remove-control-size': '32px'/, '紧凑删除布局盒应使用32像素组件 Token。');
+assert.match(tokenSource, /'--tm-compact-remove-visible-size': '24px'/, '紧凑删除圆底应保持24像素组件 Token。');
+assert.match(tokenSource, /'--tm-compact-remove-hit-slop': '6px'/, '紧凑删除入口应向四周透明外扩6像素。');
+assert.match(tokenSource, /'--tm-compact-remove-corner-offset': '9px'/, '紧凑删除入口应向承载对象右上角外移9像素，使圆底约五分之一位于对象外。');
+assert.match(tokenSource, /'--tm-compact-remove-icon-size': '12px'/, '紧凑删除图标应使用12像素组件 Token。');
+assert.match(tokenSource, /'--tm-compact-remove-bg': 'var\(--tm-status-negative\)'/, '紧凑删除圆底应使用负向红色实底。');
+assert.match(tokenSource, /'--tm-compact-remove-icon': 'var\(--tm-text-inverse\)'/, '紧凑删除图标应使用反白色。');
+assert.match(tokenSource, /'--tm-compact-remove-pressed-bg': 'var\(--tm-status-negative-strong\)'/, '紧凑删除按压态应使用更深的负向色。');
+assert.match(guidelineSource, /tm-compact-remove-\*/, '教师手机端规范应记录公共紧凑删除入口的组件 Token 规则。');
+
+assert.match(classDetailSource, /<StudentRosterAddCard[\s\S]*onClick=\{onAddStudent\}/, '学生列表末尾应接入新增学生卡片。');
+assert.match(classDetailSource, /canAddStudent && !isStudentSelectionActive && !hasSearchQuery/, '新增入口不得侵入搜索或多选任务。');
+assert.match(rosterCardSource, /StudentRosterAddCard[\s\S]*getStudentRosterCardHeightClass\(displaySettings\)/, '新增入口应与学生卡片共享高度规则。');
+assert.match(rosterCardSource, /aria-label="添加学生"/, '添加学生卡片应提供明确读屏名称。');
+assert.match(rosterCardSource, /StudentRosterAddCard[\s\S]*items-center justify-center[\s\S]*flex-col items-center justify-center/, '添加学生卡片的图标与文案应作为整体垂直居中。');
+assert.match(rosterCardSource, /text-\[var\(--tm-brand-primary\)\][\s\S]*添加学生/, '添加学生文案应与分组页添加入口统一使用品牌红。');
+assert.doesNotMatch(rosterCardSource, /StudentRosterAddCard[\s\S]*rounded-full bg-\[var\(--tm-bg-surface-muted\)\]/, '添加学生入口不应在加号外增加灰色圆形。');
+
+assert.match(appSource, /'student_add'/, '应用层应注册添加学生页面。');
+assert.match(appSource, /studentAdditionsByClassId/, '应用层应按班级保存新增学生。');
+assert.match(appSource, /studentCount: existingStudentCount \+ addedStudents\.length/, '保存后应同步班级学生数量。');
+assert.match(appSource, /onAddStudent=\{\(\) => navigateTo\('student_add'\)\}/, '新增卡片应进入添加学生页面。');
+assert.match(appSource, /onSave=\{handleAddStudents\}/, '完成添加后应保存并返回学生列表。');
+
+console.log('添加学生页面与列表入口校验通过。');

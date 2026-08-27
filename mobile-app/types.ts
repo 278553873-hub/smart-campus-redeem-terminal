@@ -50,7 +50,10 @@ export interface SchoolStudentTeam {
   id: string;
   spaceId: string;
   name: string;
+  ownerId: string;
   ownerName: string;
+  collaboratorIds: string[];
+  visibility: 'collaborators' | 'management';
   memberIds: string[];
   status: 'active' | 'archived';
 }
@@ -63,21 +66,32 @@ export interface GroupPlan {
   groups: StudentGroup[];
 }
 
-export interface CampusCoinIssueRecord {
+export type CampusCoinIncomeCategory = 'growth_award' | 'class_reward' | 'bank_interest';
+
+export type CampusCoinGrowthAwardPeriod =
+  | { type: 'weekly'; startDate: string; endDate: string }
+  | { type: 'monthly'; month: string };
+
+interface CampusCoinIssueRecordBase {
   id: string;
-  source: string;
   amount: number;
   time: string;
-  description: string;
-  operator: string;
 }
+
+export type CampusCoinIssueRecord = CampusCoinIssueRecordBase & (
+  | { category: 'growth_award'; period: CampusCoinGrowthAwardPeriod }
+  | { category: 'class_reward' | 'bank_interest'; detail: string }
+);
+
+export type CampusCoinExpenseCategory = 'vending_exchange' | 'class_exchange';
 
 export interface CampusCoinConsumeRecord {
   id: string;
-  item: string;
+  category: CampusCoinExpenseCategory;
+  productName: string;
+  quantity: number;
   amount: number;
   time: string;
-  scene: string;
 }
 
 export type CampusCoinSettlementPeriod = 'weekly' | 'monthly';
@@ -148,6 +162,7 @@ export interface TeacherDepartment {
 }
 
 export interface TeacherProfile {
+  id: string;
   name: string;
   avatar: string;
   schoolName: string;

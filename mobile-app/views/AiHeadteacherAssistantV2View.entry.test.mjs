@@ -157,7 +157,7 @@ const conversationAnswerSource = viewSource.slice(
   viewSource.indexOf('const ConversationAnswerContent'),
   viewSource.indexOf('const ConversationThread'),
 );
-requireText(conversationAnswerSource, 'space-y-3 text-pretty text-[14px] font-normal leading-6 text-[var(--tm-text-primary)]', '快捷问题回答应使用统一的普通正文样式。');
+requireText(conversationAnswerSource, 'space-y-3 text-pretty text-[14px] tm-font-regular leading-6 text-[var(--tm-text-primary)]', '快捷问题回答应使用统一的普通正文样式。');
 requireText(conversationAnswerSource, '具体来看，{answer.breakdown.map', '分类数据应转换为自然文本段落。');
 requireText(conversationAnswerSource, "<p>从分析结果看，{answer.analysis.map(item => item.body).join('')}</p>", '分析内容应通过承接语合并为一个自然段。');
 requireText(conversationAnswerSource, "<p>接下来，{answer.suggestions.map(item => item.body).join('')}</p>", '行动建议应通过承接语合并为一个自然段。');

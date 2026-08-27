@@ -252,6 +252,12 @@ requireText(viewSource, "[['once', '仅填写一次'], ['continuous', '可重复
 requireText(storeSource, 'hasArchiveDesignDraftContent', '档案草稿必须提供统一的有效内容判断。');
 requireText(viewSource, 'if (!hasArchiveDesignDraftContent(templateDraft))', '完全空白的新建档案不得自动保存草稿。');
 requireText(archiveAppearanceSource, 'questionnaireHeaderImageOptions', '档案和采集必须复用同一套系统头图。');
+requireText(questionnaireThemeSource, 'header-defaults/ambient-flow.png', '档案必须提供流光通用头图资源。');
+requireText(questionnaireThemeSource, 'header-defaults/ambient-tech.png', '档案必须提供科技通用头图资源。');
+requireText(archiveAppearanceSource, "option.id !== 'none'", '档案头图设置不得继续展示无头图选项。');
+requireText(archiveAppearanceSource, "appearance.headerImageId === 'none' ? 'ambient-flow'", '历史无头图档案必须自动兼容为首张通用头图。');
+requireText(viewSource, 'aria-label={`选择档案头图：${option.label}`}', '无名称头图选项必须保留明确的无障碍名称。');
+forbidText(viewSource, '{option.label}{selected &&', '档案头图缩略图下方不得显示名称。');
 for (const preset of ['learning', 'growth', 'sports', 'creativity']) requireText(questionnaireThemeSource, `id: '${preset}'`, `档案头图缺少系统预设：${preset}`);
 
 for (const required of [
@@ -426,7 +432,7 @@ requireText(growthCatalogSource, "key: 'height_cm', label: '身高', groupKey: '
 requireText(formBuilderSource, '!activeFieldHasFixedContent && <button', '内容固定字段的更多菜单不应提供复制操作。');
 forbidText(formBuilderSource, '<CalendarDays className="h-4.5 w-4.5"', '日期字段非编辑态不应单独展示题型图标。');
 forbidText(formBuilderSource, '<Hash className="h-4.5 w-4.5"', '数字字段非编辑态不应单独展示题型图标。');
-requireText(formBuilderSource, 'text-[length:var(--tm-font-size-compact)] font-normal text-[var(--tm-input-readonly-text)]', '字段提示文案必须弱于字段标题。');
+requireText(formBuilderSource, 'text-[length:var(--tm-font-size-compact)] tm-font-regular text-[var(--tm-input-readonly-text)]', '字段提示文案必须弱于字段标题。');
 requireText(formBuilderSource, 'text-[length:var(--tm-font-size-card-title)] font-semibold leading-5', '字段标题必须统一使用卡片标题字号。');
 requireText(formBuilderSource, 'text-[var(--tm-status-negative)]"><Trash2', '删除字段和分组必须使用标准警示色。');
 requireText(viewSource, 'text-[var(--tm-status-negative)]', '档案删除操作必须使用标准警示色。');

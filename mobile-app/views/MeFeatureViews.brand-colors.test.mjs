@@ -82,9 +82,19 @@ for (const required of [
   'export const SuggestionFeedbackView',
   'const canSubmit = Boolean(text.trim())',
   'aria-label="上传反馈图片"',
+  '<CompactRemoveButton',
+  'ariaLabel={`删除第${index + 1}张反馈图片`}',
   'border border-dashed border-[var(--tm-brand-primary-soft-strong)] bg-white',
 ]) {
   requireText(featureSource, required, `管理子页面迁移后缺少原有能力或语义色：${required}`);
+}
+
+if (featureSource.includes('h-7 w-7') || featureSource.includes('<X className="h-3.5 w-3.5"')) {
+  throw new Error('反馈图片删除入口不得保留页面内写死的旧尺寸。');
+}
+
+if (featureSource.includes('tm-compact-remove-corner-offset') || featureSource.includes('-right-[var(--tm-space-4)]')) {
+  throw new Error('反馈图片删除入口应由公共组件统一控制右上角重叠比例。');
 }
 
 if ((featureSource.match(/ASSETS\.DEFAULT_STATE\.BOX_CLIPBOARD/g) ?? []).length !== 2) {

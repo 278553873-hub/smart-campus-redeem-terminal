@@ -10,7 +10,8 @@ type InviteStep = 'methods' | 'wechat-select' | 'wechat-confirm' | 'qr' | 'link'
 interface ClassInviteFlowProps {
   open: boolean;
   audience: ClassInviteAudience;
-  classInfo: ClassInfo;
+  classInfo?: ClassInfo;
+  studentTeam?: { id: string; name: string };
   inviterName: string;
   schoolName: string;
   onClose: () => void;
@@ -20,7 +21,7 @@ const actionClass = 'flex min-h-[56px] w-full items-center gap-[var(--tm-space-3
 const iconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]';
 const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
 
-const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, classInfo, inviterName, schoolName, onClose }) => {
+const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, classInfo, studentTeam, inviterName, schoolName, onClose }) => {
   const [step, setStep] = useState<InviteStep>('methods');
   const [selectedChats, setSelectedChats] = useState<string[]>([]);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -32,17 +33,24 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
     setSelectedChats([]);
     setCopySuccess(false);
     setSent(false);
-  }, [audience, classInfo.id, open]);
+  }, [audience, classInfo?.id, open, studentTeam?.id]);
 
   const inviter = inviterName.endsWith('老师') ? inviterName : `${inviterName}老师`;
-  const title = audience === 'teacher' ? '邀请老师加入' : '邀请家长加入';
+  const targetName = studentTeam?.name ?? classInfo?.name ?? '';
+  const targetCode = studentTeam?.id ?? classInfo?.classCode ?? '';
+  const isStudentTeamInvite = Boolean(studentTeam);
+  const title = isStudentTeamInvite ? '邀请协作老师' : audience === 'teacher' ? '邀请老师加入' : '邀请家长加入';
   const qrAsset = audience === 'teacher' ? '/assets/ai_literacy_qr.png' : '/assets/compass_qr.png';
-  const inviteText = audience === 'teacher'
-    ? `${inviter}邀请你加入「${classInfo.name}」，共同参与班级管理。点击链接 ai-literacy://join-class?code=${classInfo.classCode}，直接加入班级。`
-    : `家长您好，${inviter}邀请您绑定「${classInfo.name}」的学生，查看孩子的日常评价记录和成长报告。点击链接 ai-literacy://bind-student?code=${classInfo.classCode}，直接完成绑定。`;
-  const qrText = audience === 'teacher'
-    ? `${inviter}邀请你加入「${classInfo.name}」，微信扫描二维码即可加入班级。`
-    : `家长您好，${inviter}邀请您绑定「${classInfo.name}」的学生，微信扫描二维码即可完成绑定。`;
+  const inviteText = isStudentTeamInvite
+    ? `${inviter}邀请你成为「${targetName}」的协作老师，共同评价团队学生。点击链接 ai-literacy://join-team?code=${targetCode}，直接加入。`
+    : audience === 'teacher'
+      ? `${inviter}邀请你加入「${targetName}」，共同参与班级管理。点击链接 ai-literacy://join-class?code=${targetCode}，直接加入班级。`
+      : `家长您好，${inviter}邀请您绑定「${targetName}」的学生，查看孩子的日常评价记录和成长报告。点击链接 ai-literacy://bind-student?code=${targetCode}，直接完成绑定。`;
+  const qrText = isStudentTeamInvite
+    ? `${inviter}邀请你成为「${targetName}」的协作老师，微信扫描二维码即可加入。`
+    : audience === 'teacher'
+      ? `${inviter}邀请你加入「${targetName}」，微信扫描二维码即可加入班级。`
+      : `家长您好，${inviter}邀请您绑定「${targetName}」的学生，微信扫描二维码即可完成绑定。`;
   const chats = useMemo(() => ['陈老师', '一年级备课组', '李老师', '王老师'], []);
 
   const closeFlow = () => {
@@ -130,7 +138,7 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
             <div className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{selectedChats.join('、')}</div>
             <div className="mt-[var(--tm-space-4)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-control)]">
               <div className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">AI素养评价</div>
-              <div className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{inviter}邀请你加入「{classInfo.name}」</div>
+              <div className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{inviter}邀请你加入「{targetName}」</div>
             </div>
           </div>
           <button type="button" onClick={() => setSent(true)} className={`${primaryButtonClass} mt-[var(--tm-space-4)]`}>
@@ -147,7 +155,7 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
             <img src={qrAsset} alt={audience === 'teacher' ? 'AI素养评价小程序二维码' : '素养指南针小程序二维码'} className="mx-auto mt-[var(--tm-space-4)] aspect-square w-40 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] object-contain p-[var(--tm-space-3)]" />
             <p className="mt-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">{qrText}</p>
           </div>
-          <a href={qrAsset} download={`${classInfo.name}-${audience === 'teacher' ? '老师' : '家长'}邀请.png`} className={`${primaryButtonClass} mt-[var(--tm-space-4)]`}>
+          <a href={qrAsset} download={`${targetName}-${audience === 'teacher' ? '老师' : '家长'}邀请.png`} className={`${primaryButtonClass} mt-[var(--tm-space-4)]`}>
             <Download className="h-[18px] w-[18px]" />保存图片
           </a>
         </div>

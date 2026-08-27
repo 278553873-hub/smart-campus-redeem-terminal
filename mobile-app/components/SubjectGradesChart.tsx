@@ -54,7 +54,7 @@ const SubjectGradesChart: React.FC<SubjectGradesChartProps> = ({ subjects, onSub
       {/* 查看详情提示 */}
       {onSubjectClick && showClickHint && (
         <div className="mt-4 text-center">
-          <span className="text-xs text-slate-400 font-normal">
+          <span className="text-xs text-slate-400 tm-font-regular">
             点击学科方块查看详细学科分析报告
           </span>
         </div>

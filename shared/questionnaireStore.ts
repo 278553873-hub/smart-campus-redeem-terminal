@@ -93,6 +93,7 @@ export interface QuestionnaireResultRecord {
   classId: string;
   className: string;
   respondentRole: QuestionnaireRespondentRole;
+  respondentId?: string;
   respondentLabel: string;
   completedAt: string;
   answers: Record<string, QuestionnaireAnswer>;
@@ -1086,6 +1087,7 @@ export const getQuestionnaireResultRecords = (record: QuestionnaireRecord): Ques
           classId: item.classId || target.classId,
           className: item.className || target.className,
           respondentRole: 'teacher' as const,
+          respondentId: item.assigneeTeacherId,
           respondentLabel: item.assigneeTeacherName ?? record.creatorName,
           completedAt: item.updatedAt,
           answers: item.answers,

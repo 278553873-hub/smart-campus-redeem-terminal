@@ -57,7 +57,7 @@ for (const required of [
   'border-[var(--tm-evaluation-indicator-border)]',
   'text-[var(--tm-evaluation-indicator-text)]',
   'text-[length:var(--tm-font-size-meta)] font-medium',
-  'font-normal leading-6',
+  'tm-font-regular leading-6',
 ]) {
   assert.ok(viewSource.includes(required), `评价卡片应使用统一颜色的三个连续标签保持完整单行指标路径，缺少：${required}`);
 }

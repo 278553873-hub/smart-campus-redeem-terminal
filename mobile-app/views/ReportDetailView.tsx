@@ -332,7 +332,7 @@ const ReportDetailView: React.FC<ReportDetailViewProps> = ({
                     autoFocus
                  />
              ) : (
-                <div className="text-sm text-slate-700 leading-7 whitespace-pre-line font-normal text-justify relative z-10">
+                <div className="text-sm text-slate-700 leading-7 whitespace-pre-line tm-font-regular text-justify relative z-10">
                     {section.content}
                 </div>
              )}

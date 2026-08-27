@@ -6,6 +6,7 @@ const bottomSheetSource = read('../components/ui/MobileBottomSheet.tsx');
 const searchInputSource = read('../components/ui/MobileSearchInput.tsx');
 const compactSelectSource = read('../components/student/StudentCompactSelectItem.tsx');
 const compactSelectGridSource = read('../components/student/StudentCompactSelectGrid.tsx');
+const rosterCardSource = read('../components/student/StudentRosterCard.tsx');
 const mobileStylesSource = read('../index.css');
 const groupPerformanceSource = read('../components/group/GroupPerformanceMeta.tsx');
 const groupPerformanceDomainSource = read('../domain/groupPerformance.ts');
@@ -361,7 +362,7 @@ requireText(viewSource, 'sections.push({ id: group.id, label: group.name', '取�
 requireText(viewSource, "import StudentCompactSelectGrid, { type StudentCompactSelectSection } from '../components/student/StudentCompactSelectGrid'", '添加与调整选人应复用通用层紧凑学生选择网格。');
 const compactSelectGridUsages = viewSource.match(/<StudentCompactSelectGrid/g)?.length || 0;
 if (compactSelectGridUsages !== 2) failures.push('紧凑学生选择网格应只用于添加小组和调整学生两个选人状态。');
-requireText(viewSource, 'const StudentRosterCard', '学生列表与小组详情应继续复用完整花名册卡片。');
+requireText(viewSource, "import StudentRosterCard, { StudentRosterAddCard } from '../components/student/StudentRosterCard'", '学生列表与小组详情应从通用层复用完整花名册卡片。');
 const rosterCardUsages = viewSource.match(/<StudentRosterCard\s/g)?.length || 0;
 if (rosterCardUsages !== 2) failures.push('完整花名册卡片只应用于班级学生列表和小组详情，不得重新侵入选人状态。');
 if (addStudentGroupSheet.includes('<StudentRosterCard')) failures.push('添加小组选人状态不得重新使用完整花名册卡片。');
@@ -377,8 +378,8 @@ if (groupPerformanceSource.includes('StudentPerformanceLevelIcons')) failures.pu
 if (groupPerformanceDomainSource.includes('netScore')) failures.push('小组表现数据不应继续包含等级分值。');
 requireText(groupPerformanceDomainSource, 'if (record.groupId !== groupId) return summary;', '小组表现只应汇总直接指向该小组的原始评价事件。');
 if (groupPerformanceDomainSource.includes('memberIds')) failures.push('小组表现汇总不得依赖当前成员名单。');
-requireText(viewSource, '<StudentPerformanceAvatar', '共享学生卡应展示带进度环的学生头像。');
-requireText(viewSource, '<StudentPerformanceCounts', '共享学生卡应展示表扬与批评次数。');
+requireText(rosterCardSource, '<StudentPerformanceAvatar', '共享学生卡应展示带进度环的学生头像。');
+requireText(rosterCardSource, '<StudentPerformanceCounts', '共享学生卡应展示表扬与批评次数。');
 requireText(viewSource, 'displaySettings={studentCardDisplaySettings}', '小组详情共享学生卡应继承当前班级的显示设置。');
 requireText(teacherMobileGuidelines, '统一复用通用层的紧凑学生选择项', '教师手机端规范应明确分组选人使用独立紧凑组件。');
 requireText(teacherMobileGuidelines, '`仅看未分组 / 人数`整行移入其下浅灰滚动内容区', '教师手机端规范应明确筛选行与学生项共用浅灰底。');

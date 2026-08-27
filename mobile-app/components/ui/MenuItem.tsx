@@ -35,7 +35,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
         </div>
       </div>
       <div className="ml-3 flex shrink-0 items-center gap-2">
-        {value && <span className="max-w-[120px] truncate text-[15px] font-normal leading-snug text-slate-400">{value}</span>}
+        {value && <span className="max-w-[120px] truncate text-[15px] tm-font-regular leading-snug text-slate-400">{value}</span>}
         {interactive && <ChevronRight className="h-5 w-5 text-slate-300" strokeWidth={2} />}
       </div>
     </>

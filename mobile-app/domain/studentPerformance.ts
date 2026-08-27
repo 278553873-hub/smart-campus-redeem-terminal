@@ -133,3 +133,20 @@ export const createDemoStudentPerformanceSummary = (
     criticismCount,
   };
 };
+
+export const createDemoStudentLevelEvaluationRecords = (
+  student: Pick<Student, 'id' | 'studentNo'>,
+  termRange: StudentPerformanceTermRange,
+): Pick<StudentEvaluationRecord, 'evaluation_date' | 'scoreChange'>[] => {
+  const numericSuffix = (student.studentNo || student.id).match(/(\d{1,2})$/)?.[1];
+  const serialNumber = Math.max(1, Number(numericSuffix) || 1);
+  const currentTermScore = createDemoStudentPerformanceSummary(student).netScore;
+  const historicalScore = 11 + ((serialNumber * 7) % 37);
+  const previousTermDate = new Date(`${termRange.startDate}T00:00:00Z`);
+  previousTermDate.setUTCDate(previousTermDate.getUTCDate() - 1);
+
+  return [
+    { evaluation_date: termRange.startDate, scoreChange: currentTermScore },
+    { evaluation_date: previousTermDate.toISOString().slice(0, 10), scoreChange: historicalScore },
+  ];
+};

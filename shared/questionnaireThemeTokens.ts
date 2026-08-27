@@ -2,6 +2,8 @@ import learningHeader from '../mobile-app/assets/resources/highlight-defaults/da
 import growthHeader from '../mobile-app/assets/resources/highlight-defaults/daily-default-growth.png';
 import sportsHeader from '../mobile-app/assets/resources/highlight-defaults/daily-sports-vitality.png';
 import creativityHeader from '../mobile-app/assets/resources/highlight-defaults/daily-art-creativity.png';
+import ambientFlowHeader from '../mobile-app/assets/resources/header-defaults/ambient-flow.png';
+import ambientTechHeader from '../mobile-app/assets/resources/header-defaults/ambient-tech.png';
 
 export const questionnaireThemePalette = {
   red: {
@@ -31,7 +33,7 @@ export const questionnaireThemePalette = {
 } as const;
 
 export type QuestionnaireThemeId = 'classic-red' | 'growth-green' | 'learning-blue';
-export type QuestionnaireHeaderImageId = 'none' | 'learning' | 'growth' | 'sports' | 'creativity';
+export type QuestionnaireHeaderImageId = 'none' | 'ambient-flow' | 'ambient-tech' | 'learning' | 'growth' | 'sports' | 'creativity';
 
 export const questionnaireHeaderImageOptions: Array<{
   id: QuestionnaireHeaderImageId;
@@ -39,6 +41,8 @@ export const questionnaireHeaderImageOptions: Array<{
   image?: string;
 }> = [
   { id: 'none', label: '无头图' },
+  { id: 'ambient-flow', label: '通用头图一', image: ambientFlowHeader },
+  { id: 'ambient-tech', label: '通用头图二', image: ambientTechHeader },
   { id: 'learning', label: '学习探索', image: learningHeader },
   { id: 'growth', label: '成长记录', image: growthHeader },
   { id: 'sports', label: '活力运动', image: sportsHeader },

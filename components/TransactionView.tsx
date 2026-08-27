@@ -10,83 +10,118 @@ interface TransactionViewProps {
 const MOCK_TRANSACTIONS: TransactionRecord[] = [
   {
     id: 'tx_1',
-    title: '货柜兑换（炫彩盲盒）',
+    category: 'vending_exchange',
+    detail: '炫彩盲盒 ×1',
     amount: 35.00,
     type: 'expense',
     date: '2026-03-05 14:15',
-    category: 'vending_shop'
   },
   {
     id: 'tx_2',
-    title: '2026年3月分红',
+    category: 'growth_award',
+    detail: '3月奖励',
     amount: 145.50,
     type: 'income',
     date: '2026-03-01 08:30',
-    category: 'dividend'
   },
   {
     id: 'tx_3',
-    title: '班级奖励 (流动红旗)',
+    category: 'class_reward',
+    detail: '流动红旗',
     amount: 50.00,
     type: 'income',
     date: '2026-02-25 10:00',
-    category: 'reward'
   },
   {
     id: 'tx_4',
-    title: '银行利息（活期存单）',
+    category: 'bank_interest',
+    detail: '活期存单',
     amount: 102.38,
     type: 'income',
     date: '2026-02-15 09:00',
-    category: 'interest'
   },
   {
     id: 'tx_5',
-    title: '2026年1月分红',
+    category: 'growth_award',
+    detail: '2025年12月29日-2026年1月4日奖励',
     amount: 120.00,
     type: 'income',
     date: '2026-02-01 08:30',
-    category: 'dividend'
   },
   {
     id: 'tx_6',
-    title: '班级兑换（卡通笔袋）',
+    category: 'class_exchange',
+    detail: '卡通笔袋 ×1',
     amount: 45.00,
     type: 'expense',
     date: '2026-01-20 16:40',
-    category: 'class_shop'
+  },
+  {
+    id: 'tx_7',
+    category: 'growth_award',
+    detail: '8月17日-8月23日奖励',
+    amount: 128.00,
+    type: 'income',
+    date: '2025-08-24 08:30',
   }
 ];
+
+const CATEGORY_LABELS: Record<TransactionRecord['category'], string> = {
+  growth_award: '成长嘉奖',
+  class_reward: '班级奖励',
+  bank_interest: '银行利息',
+  vending_exchange: '货柜兑换',
+  class_exchange: '班级兑换',
+};
+
+const INCOME_CATEGORIES: Array<TransactionRecord['category']> = ['growth_award', 'class_reward', 'bank_interest'];
+const EXPENSE_CATEGORIES: Array<TransactionRecord['category']> = ['vending_exchange', 'class_exchange'];
+
+const formatFlowTime = (value: string) => {
+  const [date, time] = value.split(' ');
+  const [, month, day] = date.split('-');
+  return `${Number(month)}月${Number(day)}日${time ? ` ${time.slice(0, 5)}` : ''}`;
+};
 
 const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [activeYear, setActiveYear] = useState<string>('2026'); // defaulted to current display year
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
-  const filteredTransactions = MOCK_TRANSACTIONS.filter(t => 
-    (activeFilter === 'all' ? true : t.type === activeFilter) &&
-    (activeCategory === 'all' ? true : t.category === activeCategory) &&
-    t.date.startsWith(activeYear)
-  );
+  const filteredTransactions = MOCK_TRANSACTIONS
+    .filter(t =>
+      (activeFilter === 'all' ? true : t.type === activeFilter) &&
+      (activeCategory === 'all' ? true : t.category === activeCategory) &&
+      t.date.startsWith(activeYear)
+    )
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  const groupedTransactions = filteredTransactions.reduce<Array<{ month: string; items: TransactionRecord[] }>>((groups, transaction) => {
+    const month = transaction.date.slice(0, 7);
+    const currentGroup = groups[groups.length - 1];
+    if (currentGroup?.month === month) currentGroup.items.push(transaction);
+    else groups.push({ month, items: [transaction] });
+    return groups;
+  }, []);
 
   const getIcon = (category: string) => {
     switch(category) {
-      case 'vending_shop': return <ShoppingBag size={20} className="text-pink-500" />;
-      case 'class_shop': return <ShoppingBag size={20} className="text-pink-500" />;
-      case 'dividend': return <TrendingUp size={20} className="text-orange-500" />;
-      case 'reward': return <Sparkles size={20} className="text-yellow-500" />;
-      case 'interest': return <Landmark size={20} className="text-blue-500" />;
+      case 'vending_exchange':
+      case 'class_exchange': return <ShoppingBag size={20} className="text-pink-500" />;
+      case 'growth_award': return <TrendingUp size={20} className="text-orange-500" />;
+      case 'class_reward': return <Sparkles size={20} className="text-yellow-500" />;
+      case 'bank_interest': return <Landmark size={20} className="text-blue-500" />;
       default: return <Clock size={20} className="text-slate-500" />;
     }
   };
 
   const getBgColor = (category: string) => {
     switch(category) {
-      case 'vending_shop': return 'bg-pink-50 ring-pink-100';
-      case 'class_shop': return 'bg-pink-50 ring-pink-100';
-      case 'dividend': return 'bg-orange-50 ring-orange-100';
-      case 'reward': return 'bg-yellow-50 ring-yellow-100';
-      case 'interest': return 'bg-blue-50 ring-blue-100';
+      case 'vending_exchange':
+      case 'class_exchange': return 'bg-pink-50 ring-pink-100';
+      case 'growth_award': return 'bg-orange-50 ring-orange-100';
+      case 'class_reward': return 'bg-yellow-50 ring-yellow-100';
+      case 'bank_interest': return 'bg-blue-50 ring-blue-100';
       default: return 'bg-slate-50 ring-slate-100';
     }
   };
@@ -142,73 +177,59 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
            >
              全部
            </button>
-           {(activeFilter === 'all' || activeFilter === 'income') && (
-             <>
-               <button 
-                 onClick={() => setActiveCategory('dividend')} 
-                 className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-all h-8 flex items-center justify-center ${activeCategory === 'dividend' ? 'bg-blue-100 text-blue-700 shadow-sm border border-blue-200' : 'bg-white text-slate-500 border border-slate-200 active:bg-slate-50'}`}
-               >
-                 月度分红
-               </button>
-               <button 
-                 onClick={() => setActiveCategory('reward')} 
-                 className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-all h-8 flex items-center justify-center ${activeCategory === 'reward' ? 'bg-blue-100 text-blue-700 shadow-sm border border-blue-200' : 'bg-white text-slate-500 border border-slate-200 active:bg-slate-50'}`}
-               >
-                 班级奖励
-               </button>
-               <button 
-                 onClick={() => setActiveCategory('interest')} 
-                 className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-all h-8 flex items-center justify-center ${activeCategory === 'interest' ? 'bg-blue-100 text-blue-700 shadow-sm border border-blue-200' : 'bg-white text-slate-500 border border-slate-200 active:bg-slate-50'}`}
-               >
-                 银行利息
-               </button>
-             </>
-           )}
-           {(activeFilter === 'all' || activeFilter === 'expense') && (
-             <>
-               <button 
-                 onClick={() => setActiveCategory('vending_shop')} 
-                 className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-all h-8 flex items-center justify-center ${activeCategory === 'vending_shop' ? 'bg-blue-100 text-blue-700 shadow-sm border border-blue-200' : 'bg-white text-slate-500 border border-slate-200 active:bg-slate-50'}`}
-               >
-                 货柜兑换
-               </button>
-               <button 
-                 onClick={() => setActiveCategory('class_shop')} 
-                 className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-all h-8 flex items-center justify-center ${activeCategory === 'class_shop' ? 'bg-blue-100 text-blue-700 shadow-sm border border-blue-200' : 'bg-white text-slate-500 border border-slate-200 active:bg-slate-50'}`}
-               >
-                 班级兑换
-               </button>
-             </>
-           )}
+           {(activeFilter === 'all' || activeFilter === 'income') && INCOME_CATEGORIES.map(category => (
+             <button
+               key={category}
+               onClick={() => setActiveCategory(category)}
+               className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-all h-8 flex items-center justify-center ${activeCategory === category ? 'bg-blue-100 text-blue-700 shadow-sm border border-blue-200' : 'bg-white text-slate-500 border border-slate-200 active:bg-slate-50'}`}
+             >
+               {CATEGORY_LABELS[category]}
+             </button>
+           ))}
+           {(activeFilter === 'all' || activeFilter === 'expense') && EXPENSE_CATEGORIES.map(category => (
+             <button
+               key={category}
+               onClick={() => setActiveCategory(category)}
+               className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-all h-8 flex items-center justify-center ${activeCategory === category ? 'bg-blue-100 text-blue-700 shadow-sm border border-blue-200' : 'bg-white text-slate-500 border border-slate-200 active:bg-slate-50'}`}
+             >
+               {CATEGORY_LABELS[category]}
+             </button>
+           ))}
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-3">
-        {filteredTransactions.length === 0 ? (
+        {groupedTransactions.length === 0 ? (
            <div className="h-64 flex flex-col items-center justify-center text-slate-400 opacity-60">
              <Clock size={48} className="mb-4 text-slate-300" />
              <p className="font-bold text-sm">暂无符合条件的流水记录</p>
            </div>
         ) : (
-          filteredTransactions.map((tx) => (
-            <div key={tx.id} className="bg-white p-4 rounded-3xl border-2 border-slate-50 shadow-sm flex items-center gap-4 transition-transform active:scale-[0.98]">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ring-4 ring-white shadow-sm ${getBgColor(tx.category)}`}>
-                {getIcon(tx.category)}
+          groupedTransactions.map(group => (
+            <section key={group.month} className="space-y-2">
+              <h3 className="px-1 text-xs font-bold text-slate-500">{group.month.split('-')[0]}年{Number(group.month.split('-')[1])}月</h3>
+              <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm">
+                {group.items.map((tx) => (
+                  <div key={tx.id} className="flex min-h-[92px] items-start gap-3 px-4 py-3 transition-transform active:scale-[0.98]">
+                    <div className={`mt-0.5 flex h-10 w-10 rounded-xl items-center justify-center shrink-0 ring-4 ring-white ${getBgColor(tx.category)}`}>
+                      {getIcon(tx.category)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <h4 className="min-w-0 truncate text-base font-bold text-slate-800">{CATEGORY_LABELS[tx.category]}</h4>
+                        <div className={`shrink-0 font-black text-lg font-[NumberFont] flex items-center gap-1 leading-none ${tx.type === 'income' ? 'text-green-500' : 'text-slate-700'}`}>
+                          {tx.type === 'income' ? '+' : '-'}
+                          <span>{formatCoin(tx.amount)}</span>
+                          <img src="/assets/coin.png" className="h-[0.9em] w-[0.9em]" alt="成长币" />
+                        </div>
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-slate-500">{tx.detail}</p>
+                      <time dateTime={tx.date} className="mt-1 block text-xs font-bold leading-4 text-slate-400">{formatFlowTime(tx.date)}</time>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-slate-800 text-base truncate mb-1">{tx.title}</h4>
-                <div className="flex items-center gap-2 text-xs font-bold font-[NumberFont] text-slate-400">
-                   <span>{tx.date}</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-end shrink-0 pl-2">
-                <div className={`font-black text-2xl font-[NumberFont] flex items-center gap-1 leading-none ${tx.type === 'income' ? 'text-green-500' : 'text-slate-700'}`}>
-                   {tx.type === 'income' ? '+' : '-'}
-                   <span>{formatCoin(tx.amount)}</span>
-                   <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[1px]" alt="coin" />
-                </div>
-              </div>
-            </div>
+            </section>
           ))
         )}
       </div>

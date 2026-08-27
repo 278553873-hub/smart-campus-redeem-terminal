@@ -153,6 +153,7 @@ interface QuestionnaireManagementViewProps {
   onBack: () => void;
   teacherId: string;
   teacherName: string;
+  teacherAvatar: string;
   spaceId: string;
   homeroomClassIds: string[];
   classes: ClassInfo[];
@@ -264,6 +265,19 @@ const createRatingOptions = (count: number) => Array.from({ length: count }, (_,
 
 const formatSuggestedDeadline = (deadline: string) => deadline.replace('2026-', '').replace('-', '月').replace(' ', '日 ');
 const formatCollectionDate = (createdAt: string) => `${createdAt.slice(5, 7)}月${createdAt.slice(8, 10)}日`;
+const formatCompletedAt = (completedAt: string) => {
+  const parts = completedAt.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})/);
+  if (!parts) return completedAt;
+  const [, year, month, day, hour, minute] = parts;
+  const parsed = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(parsed);
+};
 const QUESTIONNAIRE_TEXT_STOP_WORDS = new Set([
   '希望', '可以', '学校', '孩子', '一些', '进行', '增加', '提供', '方面', '能够', '建议', '需要', '比较', '定期', '班级',
 ]);
@@ -430,6 +444,77 @@ const StudentAnswerRow: React.FC<{
       <span className={`rounded-full px-2.5 py-1 text-[length:var(--tm-font-size-badge)] font-semibold ${statusClassName}`}>{statusLabel}</span>
     </span>
   </button>
+);
+
+const StudentIdentityRow: React.FC<{
+  avatarSrc: string;
+  studentName: string;
+  studentClassName: string;
+  className?: string;
+}> = ({ avatarSrc, studentName, studentClassName, className = '' }) => (
+  <div className={`flex min-w-0 items-center gap-3 ${className}`}>
+    <img src={avatarSrc} alt="" className="h-10 w-10 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" />
+    <div className="min-w-0 flex-1">
+      <div className="truncate text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{studentName}</div>
+      <div className="mt-0.5 truncate text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{studentClassName}</div>
+    </div>
+  </div>
+);
+
+const AnswerContextCard: React.FC<{
+  studentAvatar: string;
+  studentName: string;
+  studentClassName: string;
+  respondentRole: QuestionnaireRespondentRole;
+  respondentName: string;
+  respondentAvatar?: string;
+  completedAt: string;
+}> = ({
+  studentAvatar,
+  studentName,
+  studentClassName,
+  respondentRole,
+  respondentName,
+  respondentAvatar,
+  completedAt,
+}) => (
+  <section
+    className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]"
+    aria-label="答卷对象与填写信息"
+  >
+    <div className="grid min-h-[56px] grid-cols-[56px_minmax(0,1fr)] items-center gap-3 px-4 py-2.5">
+      <div className="text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">采集对象</div>
+      <div className="flex min-w-0 items-center gap-2.5">
+        <img
+          src={studentAvatar}
+          alt=""
+          className="h-8 w-8 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover outline outline-1 -outline-offset-1 outline-black/10"
+        />
+        <div className="flex min-w-0 flex-1 items-baseline gap-2">
+          <div className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{studentName}</div>
+          <div className="shrink-0 truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{studentClassName}</div>
+        </div>
+      </div>
+    </div>
+    <div className="grid min-h-[56px] grid-cols-[56px_minmax(0,1fr)] items-center gap-3 border-t border-[var(--tm-border-subtle)] px-4 py-2.5">
+      <div className="text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">填写人</div>
+      <div className="flex min-w-0 items-center gap-2.5">
+        {respondentRole === 'teacher' ? (
+          <img
+            src={respondentAvatar ?? ASSETS.AVATAR.TEACHER_DEFAULT}
+            alt=""
+            className="h-8 w-8 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover outline outline-1 -outline-offset-1 outline-black/10"
+          />
+        ) : (
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--tm-border-subtle)] text-[var(--tm-text-secondary)]" aria-hidden="true">
+            <UsersRound className="h-4 w-4" />
+          </span>
+        )}
+        <div className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{respondentName}</div>
+        <div className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">{completedAt}</div>
+      </div>
+    </div>
+  </section>
 );
 
 const editorToolButton = 'flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-[var(--tm-radius-inner)] bg-transparent text-[length:var(--tm-font-size-badge)] font-semibold leading-none text-[var(--tm-text-secondary)] transition active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-35';
@@ -637,6 +722,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   onBack,
   teacherId,
   teacherName,
+  teacherAvatar,
   spaceId,
   homeroomClassIds,
   classes,
@@ -664,6 +750,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const [collectionMode, setCollectionMode] = useState<QuestionnaireCollectionMode>('guardian_questionnaire');
   const [studentAssignmentMode, setStudentAssignmentMode] = useState<StudentAssignmentMode>('creator');
   const [draftId, setDraftId] = useState('');
+  const [isEditingExistingDraft, setIsEditingExistingDraft] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftDescription, setDraftDescription] = useState('');
   const [draftLayoutMode, setDraftLayoutMode] = useState<FormLayoutMode>('flat');
@@ -1003,6 +1090,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setCollectionMode(resolvedMode);
     setStudentAssignmentMode(record?.studentAssignmentMode ?? 'creator');
     setDraftId(record?.id ?? '');
+    setIsEditingExistingDraft(Boolean(record));
     setDraftTitle(record?.title ?? '');
     if (!record && archiveTemplateSnapshot) setDraftTitle(`${archiveTemplateSnapshot.name}采集`);
     setDraftDescription(record?.description ?? '');
@@ -1956,7 +2044,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24" style={editorThemeStyle}>
         <PageHeader
-          title={draftId ? '编辑采集' : '新建采集'}
+          title={isEditingExistingDraft ? '编辑采集' : '新建采集'}
           onBack={() => {
             if (createStep > 1) {
               setCreateStep(step => step - 1);
@@ -2217,16 +2305,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                     <button
                       key={option.id}
                       type="button"
+                      aria-label={`选择采集头图：${option.label}`}
                       aria-pressed={selected}
                       onClick={() => setDraftHeaderImageId(option.id)}
-                      className={`overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left transition ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : '[box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                      className={`relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left transition ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : '[box-shadow:var(--tm-shadow-card-on-white)]'}`}
                     >
                       {option.image
                         ? <img src={option.image} alt="" className="aspect-[16/7] w-full object-cover" />
                         : <span className="flex aspect-[16/7] w-full items-center justify-center bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-tertiary)]"><ImageOff className="h-5 w-5" /></span>}
-                      <span className={`flex min-h-11 items-center justify-between px-3 text-[length:var(--tm-font-size-meta)] font-semibold ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}>
-                        {option.label}{selected && <Check className="h-4 w-4" />}
-                      </span>
+                      {selected && <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]"><Check className="h-4 w-4" /></span>}
                     </button>
                   );
                 })}
@@ -2407,20 +2494,30 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     };
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-page)] pb-24" style={getTeacherQuestionnaireThemeStyle(activeRecord.themeId)}>
-        <PageHeader title={activeRecord.title} onBack={() => setPageMode('detail')} />
+        <PageHeader title="采集录入" onBack={() => setPageMode('detail')} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-28 no-scrollbar">
           {(!oneQuestionPerPage || showQuestionnaireIntro) && <QuestionnaireHeaderImage headerImageId={activeRecord.headerImageId} className="-mx-5" />}
           {showQuestionnaireIntro ? (
             <section className="pb-5 pt-6">
               <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{activeRecord.title}</h1>
               <p className="mt-3 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">{activeRecord.description}</p>
-              <div className="mt-5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{studentRecord.studentName} · {studentRecord.className}</div>
+              <StudentIdentityRow
+                avatarSrc={getStudentAvatar(studentRecord.studentNo)}
+                studentName={studentRecord.studentName}
+                studentClassName={studentRecord.className}
+                className="mt-5"
+              />
             </section>
           ) : (
             <>
               <div className="pb-3 pt-4">
-                <div className="truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)]">{oneQuestionPerPage ? studentRecord.studentName : activeRecord.title}</div>
-                <div className="mt-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{studentRecord.className}{studentRecord.assigneeTeacherName ? ` · ${studentRecord.assigneeTeacherName}` : ''}</div>
+                <div className="truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)]">{activeRecord.title}</div>
+                <StudentIdentityRow
+                  avatarSrc={getStudentAvatar(studentRecord.studentNo)}
+                  studentName={studentRecord.studentName}
+                  studentClassName={studentRecord.className}
+                  className="mt-2"
+                />
               </div>
             </>
           )}
@@ -2706,17 +2803,30 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
   const renderResponseDetail = () => {
     if (!activeRecord || !activeResultRecord) return renderDetail();
-    const respondent = activeResultRecord.respondentRole === 'teacher'
+    const respondentName = activeResultRecord.respondentRole === 'teacher'
       ? `${activeResultRecord.respondentLabel.replace(/老师$/, '')}老师`
-      : `${activeResultRecord.studentName}的${activeResultRecord.respondentLabel}`;
+      : activeResultRecord.respondentLabel;
+    const respondentAvatar = activeResultRecord.respondentRole === 'teacher'
+      && (activeResultRecord.respondentId === teacherId
+        || (!activeResultRecord.respondentId && activeResultRecord.respondentLabel.replace(/老师$/, '') === teacherName))
+      ? teacherAvatar
+      : undefined;
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
-        <PageHeader title="预览问卷" onBack={() => setPageMode('detail')} />
+        <PageHeader title="答卷详情" onBack={() => setPageMode('detail')} />
         <main className="min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain px-5 py-4 no-scrollbar">
           <header className="pb-2">
             <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{activeRecord.title}</h1>
             {activeRecord.description && <p className="mt-2 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]">{activeRecord.description}</p>}
-            <div className="mt-3 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">填写人：{respondent}</div>
+            <AnswerContextCard
+              studentAvatar={getStudentAvatar(activeResultRecord.studentNo)}
+              studentName={activeResultRecord.studentName}
+              studentClassName={activeResultRecord.className}
+              respondentRole={activeResultRecord.respondentRole}
+              respondentName={respondentName}
+              respondentAvatar={respondentAvatar}
+              completedAt={formatCompletedAt(activeResultRecord.completedAt)}
+            />
           </header>
           {activeRecord.questions.map((question, index) => {
             const answer = activeResultRecord.answers[question.id];

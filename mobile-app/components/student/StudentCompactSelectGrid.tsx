@@ -29,7 +29,7 @@ const StudentCompactSelectGrid: React.FC<StudentCompactSelectGridProps> = ({
         {section.label && (
           <div className="flex h-8 items-center text-[13px] font-semibold text-[var(--tm-text-secondary)]">
             <h3 id={`student-select-section-${section.id}`}>{section.label}</h3>
-            <span className="ml-auto text-[12px] font-normal text-[var(--tm-text-tertiary)]">{section.students.length}人</span>
+            <span className="ml-auto text-[12px] tm-font-regular text-[var(--tm-text-tertiary)]">{section.students.length}人</span>
           </div>
         )}
         <div className="student-compact-select-grid grid gap-2">

@@ -129,10 +129,9 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (
   const sunshineReward = issuanceConfig.enabled ? roundCoin(sunshinePool / Math.max(1, classStudentCount)) : 0;
   const estimatedRankingReward = issuanceConfig.enabled ? roundCoin(rankingPool * mockRankingShare) : 0;
   const isWeeklySettlement = issuanceConfig.period === 'weekly';
-  const settlementSource = isWeeklySettlement ? '周度综合表现结算' : '月度综合表现结算';
-  const settlementDescription = isWeeklySettlement
-    ? '根据上周五育评价记录自动发放校园币'
-    : '根据上月五育评价记录自动发放校园币';
+  const settlementPeriod = isWeeklySettlement
+    ? { type: 'weekly' as const, startDate: '2026-02-16', endDate: '2026-02-22' }
+    : { type: 'monthly' as const, month: '2026-02' };
 
   return {
     balance,
@@ -140,50 +139,57 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (
     issueRecords: [
       {
         id: `${student.id}-issue-1`,
-        source: settlementSource,
+        category: 'growth_award',
+        period: settlementPeriod,
         amount: basePerformance,
-        time: '2026-02-01 09:00',
-        description: settlementDescription,
-        operator: '系统规则',
+        time: '2026-02-23 09:00',
       },
       {
         id: `${student.id}-issue-2`,
-        source: '班级排行榜奖励',
+        category: 'class_reward',
+        detail: '流动红旗',
         amount: rankingReward,
         time: '2026-02-03 10:30',
-        description: '班级积分榜前列奖励',
-        operator: '班主任刘老师',
       },
       {
         id: `${student.id}-issue-3`,
-        source: '劳动服务加币',
+        category: 'bank_interest',
+        detail: '定期7天',
         amount: classBonus,
         time: '2026-02-05 16:20',
-        description: '主动协助整理班级图书角',
-        operator: '劳动老师',
+      },
+      {
+        id: `${student.id}-issue-cross-year`,
+        category: 'growth_award',
+        period: { type: 'weekly', startDate: '2025-12-29', endDate: '2026-01-04' },
+        amount: basePerformance - 8,
+        time: '2026-01-05 09:00',
       },
     ],
     consumeRecords: [
       {
         id: `${student.id}-consume-1`,
-        item: '得力中性笔 x 2',
+        category: 'vending_exchange',
+        productName: '晨光软头水彩笔',
+        quantity: 1,
         amount: 100,
         time: '2026-02-06 12:30',
-        scene: '教学楼A区货柜',
       },
       {
         id: `${student.id}-consume-2`,
-        item: '免除一次大扫除',
+        category: 'class_exchange',
+        productName: '免除一次大扫除',
+        quantity: 1,
         amount: 120,
         time: '2026-02-04 15:40',
-        scene: '班主任手动兑换',
       },
       {
         id: `${student.id}-consume-3`,
-        item: '指定优选座位一周',
+        category: 'class_exchange',
+        productName: '指定优选座位一周',
+        quantity: 1,
         amount: 200,
         time: '2026-01-28 10:15',
-        scene: '班级奖励兑换',
       },
     ],
     settlementEstimate: {

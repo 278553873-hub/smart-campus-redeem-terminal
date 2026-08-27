@@ -48,6 +48,7 @@ for (const required of [
   "'--tm-input-readonly-border'",
   "'--tm-input-readonly-text'",
   "'--tm-input-focus-border'",
+  "'--tm-compact-remove-corner-offset'",
   "'--tm-filter-bg'",
   "'--tm-filter-border'",
   "'--tm-filter-shadow'",
@@ -65,6 +66,8 @@ for (const required of [
   "'--tm-font-size-document-title'",
   "'--tm-font-size-compact'",
   "'--tm-font-size-metric'",
+  "'--tm-font-weight-minimum'",
+  "'--tm-font-weight-regular'",
   "'--tm-audience-guardian-primary'",
   "'--tm-audience-student-primary'",
   "'--tm-role-headteacher-primary'",
@@ -72,6 +75,13 @@ for (const required of [
   "'--tm-report-source-pill-height'",
   "'--tm-report-date-indicator-width'",
   "'--tm-report-filter-padding-pinned'",
+  "'--tm-student-card-name-font-size'",
+  "'--tm-student-card-name-font-weight'",
+  "'--tm-student-card-roster-font-size'",
+  "'--tm-student-card-count-font-size'",
+  "'--tm-student-card-identity-height'",
+  "'--tm-student-card-roster-height'",
+  "'--tm-student-card-count-height'",
   "'--tm-archive-theme-clean-bg'",
   "'--tm-archive-theme-sky-bg'",
   "'--tm-archive-theme-leaf-bg'",
@@ -117,9 +127,16 @@ assert.match(classList, /ariaLabel="班级内容分类"/, '班级与社团页签
 assert.match(slidingSegmented, /--tm-bg-surface-glass/, '班级与社团页签必须使用记录页同源的轻玻璃底轨。');
 assert.doesNotMatch(classList, /--tm-selection-segment-track-bg/, '班级与社团页签不得继续使用通用灰色底轨。');
 assert.match(guidelines, /班级页学校版年级筛选同样遵循该规则/, '教师手机端规范应明确班级页年级筛选沿用透明筛选规则。');
+assert.match(canonical, /minimum: 500/);
+assert.match(canonical, /regular: 500/);
+assert.match(css, /\.teacher-mobile-app\s*\{\s*font-weight: var\(--tm-font-weight-regular\);\s*\}/);
+assert.match(css, /\.tm-font-regular\s*\{\s*font-weight: var\(--tm-font-weight-regular\);\s*\}/);
+assert.match(guidelines, /所有可见文字最低使用 500 中等字重/);
 
 for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
   const source = fs.readFileSync(sourcePath, 'utf8');
+  assert.doesNotMatch(source, /\bfont-(?:thin|extralight|light|normal)\b/, `${sourcePath} 不得使用低于 500 的 Tailwind 字重。`);
+  assert.doesNotMatch(source, /fontWeight\s*:[^\n,}]*(?:100|200|300|400)\b/, `${sourcePath} 的图形文字字重不得低于 500。`);
   for (const selectBlock of source.match(/<select[\s\S]*?<\/select>/g) ?? []) {
     assert.doesNotMatch(selectBlock, /--tm-focus-ring/, `${sourcePath} 的下拉控件不得复用品牌色焦点环。`);
     assert.doesNotMatch(selectBlock, /focus-visible:ring/, `${sourcePath} 的手机端下拉控件聚焦时不得增加描边。`);
@@ -131,6 +148,7 @@ for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
     }
   }
 }
+assert.doesNotMatch(css, /font-weight:\s*(?:100|200|300|400)\b/, '教师手机端 CSS 不得声明低于 500 的字重。');
 assert.match(canonical, /'--tm-input-disabled-bg': teacherBrandSemantic\.surfaceMuted/);
 assert.match(canonical, /'--tm-input-readonly-bg': teacherBrandSemantic\.surfaceSoft/);
 assert.match(guidelines, /禁止把可编辑输入框默认画成灰底/);

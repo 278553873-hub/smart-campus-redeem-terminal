@@ -38,6 +38,7 @@ const studentRecordPageSource = viewSource.slice(viewSource.indexOf('const rende
 const createPreviewSource = viewSource.slice(viewSource.indexOf('const openCreatePreview'), viewSource.indexOf('const openListPreview'));
 const detailSource = viewSource.slice(viewSource.indexOf('const renderDetail'), viewSource.indexOf('const renderResponseDetail'));
 const responseDetailSource = viewSource.slice(viewSource.indexOf('const renderResponseDetail'), viewSource.indexOf('const renderQuestionResponses'));
+const answerContextCardSource = viewSource.slice(viewSource.indexOf('const AnswerContextCard'), viewSource.indexOf('const editorToolButton'));
 const originalPreviewSource = viewSource.slice(viewSource.indexOf('const renderPreview'), viewSource.indexOf('const renderPage'));
 const legacyParentQuestionnaireSource = parentSource.slice(parentSource.indexOf('const QuestionnaireForm'), parentSource.indexOf('const ArchiveDetail'));
 
@@ -130,6 +131,10 @@ requireText(createSource, 'value={draftTitle} maxLength={40}', '采集名称必�
 requireText(createSource, '<AutoResizeTextarea id="survey-description"', '新建和草稿编辑页必须直接展示可编辑的说明输入框。');
 requireText(viewSource, "setDraftTitle(record?.title ?? '')", '进入草稿编辑时必须回显问卷标题。');
 requireText(viewSource, "setDraftDescription(record?.description ?? '')", '进入草稿编辑时必须回显问卷说明。');
+requireText(viewSource, "const [isEditingExistingDraft, setIsEditingExistingDraft] = useState(false)", '创建页必须独立记录是否从既有草稿进入。');
+requireText(viewSource, 'setIsEditingExistingDraft(Boolean(record))', '进入创建页时必须按入口记录新建或编辑状态。');
+requireText(createSource, "title={isEditingExistingDraft ? '编辑采集' : '新建采集'}", '自动保存生成草稿编号后，新建页标题必须保持不变。');
+forbidText(createSource, "title={draftId ? '编辑采集' : '新建采集'}", '页面标题不得使用自动生成的草稿编号判断新建或编辑。');
 forbidText(viewSource, 'activeBasicInfoField', '问卷基础信息不应再使用隐藏的点击编辑态。');
 requireText(viewSource, "const titlePlaceholder = '请输入采集名称'", '采集名称不应因填写人或字段类型不同而改变。');
 requireText(viewSource, "const descriptionPlaceholder = '请输入采集说明(非必填)'", '采集说明应使用统一文案。');
@@ -311,10 +316,12 @@ for (const [pattern, message] of [
   if (pattern.test(assignedSource)) throw new Error(message);
 }
 requireText(questionnaireThemeSource, "export type QuestionnaireThemeId = 'classic-red' | 'growth-green' | 'learning-blue'", '采集必须提供三种受控主题风格。');
-requireText(questionnaireThemeSource, "export type QuestionnaireHeaderImageId = 'none' | 'learning' | 'growth' | 'sports' | 'creativity'", '采集必须复用系统预设头图类型。');
-for (const headerLabel of ['无头图', '学习探索', '成长记录', '活力运动', '兴趣创造']) {
+requireText(questionnaireThemeSource, "export type QuestionnaireHeaderImageId = 'none' | 'ambient-flow' | 'ambient-tech' | 'learning' | 'growth' | 'sports' | 'creativity'", '采集必须复用系统预设头图类型。');
+for (const headerLabel of ['无头图', '通用头图一', '通用头图二', '学习探索', '成长记录', '活力运动', '兴趣创造']) {
   requireText(questionnaireThemeSource, `label: '${headerLabel}'`, `采集风格缺少系统头图：${headerLabel}`);
 }
+requireText(viewSource, 'aria-label={`选择采集头图：${option.label}`}', '无名称采集头图选项必须保留明确的无障碍名称。');
+forbidText(viewSource, '{option.label}{selected &&', '采集头图缩略图下方不得显示名称。');
 requireText(storeSource, 'headerImageId?: QuestionnaireHeaderImageId', '采集任务必须保存头图标识。');
 requireText(storeSource, "headerImageId: rest.headerImageId ?? 'none'", '历史采集必须默认兼容为无头图。');
 requireText(questionnaireHeaderSource, 'aspect-[16/7]', '共享采集头图必须保持16:7固定比例。');
@@ -532,13 +539,62 @@ requireText(floatingCreateSource, ": 'calc(var(--tm-space-5) + env(safe-area-ins
 if (viewSource.includes('subtitle?: string') || viewSource.includes('subtitle={`第${createStep}步，共3步`}')) {
   throw new Error('问卷顶部不应承载步骤或答卷副标题。');
 }
-requireText(responseDetailSource, '<PageHeader title="预览问卷"', '点击已完成记录必须进入预览问卷。');
-requireText(responseDetailSource, '填写人：{respondent}', '已完成答卷预览必须在问卷信息后展示实际填写人。');
-requireText(responseDetailSource, "`${activeResultRecord.studentName}的${activeResultRecord.respondentLabel}`", '家长填写人必须展示学生姓名和家长关系。');
+requireText(responseDetailSource, '<PageHeader title="答卷详情"', '点击已完成记录必须进入答卷详情。');
+forbidText(responseDetailSource, '<PageHeader title="预览问卷"', '已完成答卷不得继续冒充原始问卷预览。');
+requireText(responseDetailSource, '<AnswerContextCard', '答卷详情必须使用组合信息卡组织学生和填写来源。');
+requireText(responseDetailSource, 'studentName={activeResultRecord.studentName}', '答卷详情必须展示采集对象姓名。');
+requireText(responseDetailSource, 'studentClassName={activeResultRecord.className}', '答卷详情必须展示采集对象班级。');
+requireText(responseDetailSource, 'respondentName={respondentName}', '答卷详情必须在学生身份后展示实际填写人。');
+requireText(responseDetailSource, 'completedAt={formatCompletedAt(activeResultRecord.completedAt)}', '答卷详情必须展示格式化后的完成时间。');
+requireText(viewSource, "completedAt.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})[ T](\\d{1,2}):(\\d{2})/)", '完成时间必须兼容不补零的月、日和小时。');
+requireText(responseDetailSource, ': activeResultRecord.respondentLabel;', '家长填写人必须与学生身份分开显示。');
+forbidText(responseDetailSource, "`${activeResultRecord.studentName}的${activeResultRecord.respondentLabel}`", '家长填写人不得重复拼接学生姓名。');
 requireText(responseDetailSource, "`${activeResultRecord.respondentLabel.replace(/老师$/, '')}老师`", '老师填写人必须展示老师姓名和老师后缀。');
+requireText(answerContextCardSource, 'aria-label="答卷对象与填写信息"', '组合信息卡必须提供明确的无障碍语义。');
+requireText(answerContextCardSource, '>采集对象</div>', '组合信息卡必须明确标识采集对象。');
+requireText(answerContextCardSource, '>填写人</div>', '组合信息卡必须明确标识实际填写人。');
+requireText(answerContextCardSource, 'grid-cols-[56px_minmax(0,1fr)]', '两行角色标签必须使用固定宽度列保持对齐。');
+requireText(answerContextCardSource, 'border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]', '组合信息卡必须使用浅边框和白色表面保持页面边界。');
+requireText(answerContextCardSource, 'gap-3 border-t border-[var(--tm-border-subtle)] px-4 py-2.5', '采集对象与填写人必须仅使用一条浅分隔线建立层级。');
+forbidText(answerContextCardSource, 'bg-[var(--tm-bg-surface-soft)]', '填写人行不得继续使用与页面背景融合的灰色表面。');
+requireText(answerContextCardSource, 'src={respondentAvatar ?? ASSETS.AVATAR.TEACHER_DEFAULT}', '教师头像缺失时必须回退教师默认头像。');
+if ((answerContextCardSource.match(/className="h-8 w-8 shrink-0/g) ?? []).length !== 2
+  || !answerContextCardSource.includes('className="flex h-8 w-8 shrink-0')) {
+  throw new Error('学生头像、教师头像和家长关系图标容器必须统一为32像素。');
+}
+if ((answerContextCardSource.match(/min-h-\[56px\]/g) ?? []).length !== 2) {
+  throw new Error('采集对象和填写人两行必须统一为56像素高度。');
+}
+if ((answerContextCardSource.match(/outline outline-1 -outline-offset-1 outline-black\/10/g) ?? []).length !== 2) {
+  throw new Error('学生和教师真人头像必须使用一致的向内中性细描边。');
+}
+requireText(answerContextCardSource, '<UsersRound className="h-4 w-4" />', '家长填写必须使用关系图标而不是伪造真人头像。');
+if ((answerContextCardSource.match(/text-\[length:var\(--tm-font-size-body\)\] font-semibold text-\[var\(--tm-text-primary\)\]/g) ?? []).length !== 2) {
+  throw new Error('学生姓名与填写人姓名必须使用相同的正文字号、字重和主文字色。');
+}
+if ((answerContextCardSource.match(/text-\[length:var\(--tm-font-size-meta\)\] font-medium/g) ?? []).length !== 2) {
+  throw new Error('班级与完成时间必须使用相同的辅助字号和字重。');
+}
+requireText(answerContextCardSource, '>{respondentName}</div>', '填写人姓名必须和完成时间在同一行展示。');
+requireText(answerContextCardSource, 'shrink-0 text-[length:var(--tm-font-size-meta)]', '完成时间必须完整保留并固定在填写人行右侧。');
+forbidText(answerContextCardSource, '{respondentName}填写', '已有填写人标签后不得在姓名后重复展示填写动作。');
+forbidText(responseDetailSource, '填写人：', '答卷详情不得退回字段标签式信息堆叠。');
+forbidText(responseDetailSource, '完成时间：', '完成时间应归入填写来源，不得作为并列字段堆叠。');
+requireText(storeSource, 'respondentId?: string', '答卷结果必须保留填写教师标识以匹配头像。');
+requireText(storeSource, 'respondentId: item.assigneeTeacherId', '老师填写结果必须透传实际负责人标识。');
+requireText(appSource, 'teacherAvatar={teacherProfile.avatar}', '问卷页面必须接收当前教师真实头像。');
+requireText(responseDetailSource, 'activeResultRecord.respondentId === teacherId', '答卷详情必须按填写教师标识匹配当前教师头像。');
 requireText(originalPreviewSource, '<PageHeader title="预览问卷"', '老师填写的原始问卷预览必须使用预览问卷标题。');
 forbidText(originalPreviewSource, '填写人：', '原始问卷预览不得展示填写人。');
 requireText(assignedSource, '>预览问卷</h1>', '家长填写的原始问卷预览必须使用预览问卷标题。');
+requireText(viewSource, 'const StudentIdentityRow: React.FC', '逐生页面必须复用问卷业务内的学生身份行。');
+requireText(studentRecordPageSource, '<PageHeader title="采集录入"', '未完成学生必须进入固定标题的采集录入页。');
+forbidText(studentRecordPageSource, '<PageHeader title={activeRecord.title}', '采集名称不得占用逐生录入页标题。');
+if ((studentRecordPageSource.match(/<StudentIdentityRow/g) ?? []).length !== 2) {
+  throw new Error('采集录入的首页与题目页都必须展示学生身份。');
+}
+requireText(studentRecordPageSource, 'studentName={studentRecord.studentName}', '采集录入必须持续展示当前学生姓名。');
+requireText(studentRecordPageSource, 'studentClassName={studentRecord.className}', '采集录入必须持续展示当前学生班级。');
 
 requireText(viewSource, 'typePickerPrimaryLabel="普通题型"', '添加内容必须提供普通题型页签。');
 requireText(viewSource, "label: '成长数据'", '添加内容必须提供成长数据页签。');

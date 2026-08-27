@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import {
-    Calendar,
+    CalendarRange,
     ChevronLeft,
     ChevronRight,
     ClipboardList,
     Info,
+    PencilLine,
     Trophy,
     UserCheck,
     Users,
@@ -33,6 +34,8 @@ import {
     type LeaderReportTeacherScoreSummary,
     type LeaderReportTeacherUsage,
 } from '../services/leaderReportService';
+import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
+import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 
 type RankingType = 'active' | 'low';
 type ReportTab = 'teacher' | 'event';
@@ -88,9 +91,14 @@ const getPercentageLevel = (percent: number): PercentageLevel => (
 const getCoveragePercentageTone = (percent: number) => coveragePercentageToneMap[getPercentageLevel(percent)];
 const getCoverageChartColor = (percent: number) => teacherReportChartSemantic.percentage[getPercentageLevel(percent)].fill;
 
-const reportTypeTabs: { key: ReportTab; label: string }[] = [
-    { key: 'teacher', label: '教师使用' },
-    { key: 'event', label: '事件分布' },
+const reportTypeTabs: { value: ReportTab; label: string }[] = [
+    { value: 'teacher', label: '教师使用' },
+    { value: 'event', label: '事件分布' },
+];
+
+const leaderReportDateTabs: { value: LeaderReportPeriod; label: string }[] = [
+    ...leaderReportPeriods.map(period => ({ value: period.key, label: period.label })),
+    { value: 'custom', label: '自定义' },
 ];
 
 const ReportTypeTabs = ({
@@ -100,35 +108,16 @@ const ReportTypeTabs = ({
     value: ReportTab;
     onChange: (value: ReportTab) => void;
 }) => (
-    <div
-        role="tablist"
-        aria-label="学生评价报表类型"
-        className="grid h-[var(--tm-report-filter-row-height)] grid-cols-2 bg-[var(--tm-bg-surface)]"
-    >
-        {reportTypeTabs.map(tab => {
-            const selected = value === tab.key;
-            return (
-                <button
-                    key={tab.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={selected}
-                    onClick={() => onChange(tab.key)}
-                    className={`relative flex min-w-0 items-center justify-center text-[length:var(--tm-report-type-font-size)] ${selected
-                        ? 'font-semibold text-[var(--tm-brand-primary)]'
-                        : 'font-medium text-[var(--tm-text-secondary)]'}`}
-                >
-                    {tab.label}
-                    {selected && (
-                        <span
-                            aria-hidden="true"
-                            className="absolute bottom-0 left-1/2 h-[var(--tm-report-date-indicator-height)] w-[var(--tm-report-date-indicator-width)] -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]"
-                        />
-                    )}
-                </button>
-            );
-        })}
-    </div>
+    <CompactSegmentedControl
+        value={value}
+        items={reportTypeTabs}
+        onChange={onChange}
+        ariaLabel="学生评价报表类型"
+        className="w-[var(--tm-report-header-tabs-width)]"
+        semantics="tabs"
+        density="compact"
+        motion="sliding"
+    />
 );
 
 const useAnimatedNumber = (targetValue: number, duration = 650, replayKey?: string) => {
@@ -472,15 +461,6 @@ const customDateQuickRanges: { key: CustomDateQuickRange; label: string }[] = [
     { key: 'lastWeek', label: '上周' },
     { key: 'lastMonth', label: '上月' },
 ];
-
-const getCustomRangeCompactLabel = (range: LeaderReportDateRange | null) => {
-    if (!range?.startDate || !range.endDate) return '自定义';
-    const format = (value: string) => {
-        const [, month, day] = value.split('-');
-        return `${Number(month)}/${Number(day)}`;
-    };
-    return `${format(range.startDate)}-${format(range.endDate)}`;
-};
 
 const getDateRangeError = (range: LeaderReportDateRange) => {
     if (!range.startDate || !range.endDate) return '请选择开始日期和结束日期';
@@ -1296,36 +1276,36 @@ const IndicatorUsageSheet = ({
                         return level === 'second' ? (
                             <section key={group.id} className="space-y-2">
                                 {secondItems.map(second => (
-                                    <div key={second.id} className="flex min-h-[44px] items-center justify-between gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-sm ring-1 ring-[var(--tm-border-subtle)]">
+                                    <div key={second.id} className="flex min-h-[44px] items-center justify-between gap-3 rounded-xl bg-[var(--tm-bg-surface)] px-3 py-2.5">
                                         <div className="min-w-0 truncate text-[15px] font-semibold text-[var(--tm-text-primary)]">{second.name}</div>
                                         <div className={`w-14 shrink-0 text-right text-xl font-black tabular-nums ${second.count > 0 ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}>{second.count}</div>
                                     </div>
                                 ))}
                             </section>
                         ) : (
-                            <section key={group.id} className="space-y-2.5">
+                            <div key={group.id} className="space-y-3">
                                 {secondItems.map(second => {
                                     const thirdItems = second.children
                                         .map(third => ({ ...third, count: getIndicatorCount(third, period) }))
                                         .sort((a, b) => a.count - b.count || a.name.localeCompare(b.name, 'zh-Hans-CN'));
                                     return (
-                                        <div key={second.id} className="rounded-3xl bg-white p-2.5 shadow-sm ring-1 ring-[var(--tm-border-subtle)]">
-                                            <div className="mb-1.5 flex items-center gap-2 px-1">
+                                        <section key={second.id} className="space-y-2">
+                                            <div className="flex items-center gap-2 px-1">
                                                 <span className="h-5 w-1 rounded-full" style={{ backgroundColor: color }} />
                                                 <div className="text-[13px] font-bold text-[var(--tm-text-secondary)]">{second.name}</div>
                                             </div>
                                             <div className="space-y-1.5">
                                                 {thirdItems.map(third => (
-                                                    <div key={third.id} className="flex min-h-[38px] items-center justify-between gap-3 rounded-xl border border-[var(--tm-border-subtle)] bg-white px-3 py-2">
+                                                    <div key={third.id} className="flex min-h-[38px] items-center justify-between gap-3 rounded-xl bg-[var(--tm-bg-surface)] px-3 py-2">
                                                         <div className="min-w-0 truncate text-sm font-semibold text-[var(--tm-text-primary)]">{third.name}</div>
                                                         <div className={`w-14 shrink-0 text-right text-lg font-black tabular-nums ${third.count > 0 ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}>{third.count}</div>
                                                     </div>
                                                 ))}
                                             </div>
-                                        </div>
+                                        </section>
                                     );
                                 })}
-                            </section>
+                            </div>
                         );
                     })}
                 </div>
@@ -1858,9 +1838,7 @@ const ClassCoverageChart = ({ classes, animationKey }: { classes: LeaderReportCl
             ],
         };
 
-        setBarChartOptionWithReplay(chart, option, dataAnimationKey, lastAnimationKeyRef, () => {
-            chart.resize();
-        });
+        setBarChartOptionWithReplay(chart, option, dataAnimationKey, lastAnimationKeyRef);
 
         const handleClick = (params: { dataIndex?: number }) => {
             if (typeof params.dataIndex !== 'number') return;
@@ -1985,7 +1963,7 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
                 {
                     type: 'bar',
                     data: sortedClasses.map(item => ({
-                        value: Math.round(item.evaluationRecords * displayedProgress),
+                        value: item.evaluationRecords * displayedProgress,
                         itemStyle: {
                             color: teacherReportChartSemantic.dataDefault,
                             borderRadius: [8, 8, 3, 3],
@@ -1993,7 +1971,7 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
                         label: {
                             show: true,
                             position: 'top',
-                            formatter: '{c}条',
+                            formatter: (params: { value?: number }) => `${Math.round(Number(params.value ?? 0))}条`,
                             color: teacherReportChartSemantic.dataDefaultText,
                             fontSize: 12,
                             fontWeight: 800,
@@ -2010,9 +1988,7 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
             ],
         };
 
-        setBarChartOptionWithReplay(chart, option, dataAnimationKey, lastAnimationKeyRef, () => {
-            chart.resize();
-        });
+        setBarChartOptionWithReplay(chart, option, dataAnimationKey, lastAnimationKeyRef);
 
         const handleClick = (params: { dataIndex?: number }) => {
             if (typeof params.dataIndex !== 'number') return;
@@ -2065,8 +2041,6 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
     const periodQuery = activePeriod === 'custom' && confirmedDateRange
         ? { period: 'custom' as const, ...confirmedDateRange }
         : { period: activePeriod === 'custom' ? 'week' as const : activePeriod };
-    const customCompactLabel = getCustomRangeCompactLabel(confirmedDateRange);
-
     useEffect(() => {
         let disposed = false;
         setIsLoading(true);
@@ -2127,6 +2101,17 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
         setDraftDateRange(confirmedDateRange ?? getPresetDateRange(activePeriod === 'custom' ? 'week' : activePeriod));
         setShowCustomDateSheet(true);
     };
+    const handleReportPeriodChange = (period: LeaderReportPeriod) => {
+        if (period === 'custom') {
+            if (confirmedDateRange) {
+                setActivePeriod('custom');
+                return;
+            }
+            openCustomDateSheet();
+            return;
+        }
+        handlePresetPeriodChange(period);
+    };
     const applyCustomDateRange = () => {
         if (dateRangeError) return;
         setConfirmedDateRange(draftDateRange);
@@ -2143,11 +2128,14 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
             className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-page-plain-content-bg)] text-[var(--tm-text-primary)]"
             style={teacherBrandCssVariables as React.CSSProperties}
         >
-            <div className="relative z-40 flex h-11 shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] px-4">
+            <div className="relative z-40 flex h-11 shrink-0 items-center justify-between bg-[var(--tm-page-plain-header-bg)] px-4">
                 <button onClick={onBack} aria-label="返回" className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-muted)]">
                     <ChevronLeft className="h-5 w-5" />
                 </button>
-                <div className="absolute left-1/2 -translate-x-1/2 text-[17px] font-bold tracking-tight">学生评价报表</div>
+                <h1 className="sr-only">学生评价报表</h1>
+                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2">
+                    <ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />
+                </div>
                 <div className="w-10" aria-hidden="true" />
             </div>
 
@@ -2155,51 +2143,36 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                 <div className={`sticky -top-px z-30 -mt-px border-b bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-report-page-inline)] pt-px transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${isFilterPinned
                     ? 'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]'
                     : 'border-transparent'}`}>
-                    <div className="-mx-[var(--tm-report-page-inline)] bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)]">
-                        <ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />
-                    </div>
-                    <div className="grid h-[var(--tm-report-filter-row-height)] grid-cols-5" role="group" aria-label="学生评价报表时间范围">
-                        {leaderReportPeriods.map(period => (
-                            <button
-                                key={period.key}
-                                type="button"
-                                aria-pressed={activePeriod === period.key}
-                                onClick={() => handlePresetPeriodChange(period.key)}
-                                className="flex min-w-0 items-center justify-center px-[var(--tm-space-1)]"
-                            >
-                                <span className={`flex h-[var(--tm-report-period-pill-height)] min-w-0 items-center justify-center rounded-[var(--tm-radius-control)] px-[var(--tm-report-period-pill-inline)] text-[length:var(--tm-report-period-font-size)] ${activePeriod === period.key
-                                    ? 'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)]'
-                                    : 'font-medium text-[var(--tm-text-secondary)]'}`}
-                                >
-                                    {period.label.replace('本学期', '学期')}
-                                </span>
-                            </button>
-                        ))}
-                        <button
-                            type="button"
-                            aria-pressed={activePeriod === 'custom'}
-                            onClick={openCustomDateSheet}
-                            aria-label="打开自定义时间段选择"
-                            className="flex min-w-0 items-center justify-center px-[var(--tm-space-1)]"
-                        >
-                            <span className={`flex h-[var(--tm-report-period-pill-height)] min-w-0 items-center justify-center rounded-[var(--tm-radius-control)] px-[var(--tm-report-period-pill-inline)] text-[length:var(--tm-report-period-font-size)] ${activePeriod === 'custom'
-                                ? 'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)]'
-                                : 'font-medium text-[var(--tm-text-secondary)]'}`}
-                            >
-                                自定义
-                            </span>
-                        </button>
-                    </div>
+                    <ReportDateRangeTabs
+                        value={activePeriod}
+                        items={leaderReportDateTabs}
+                        onChange={handleReportPeriodChange}
+                        ariaLabel="学生评价报表时间范围"
+                        className="-mx-[var(--tm-report-page-inline)]"
+                    />
                     {activePeriod === 'custom' && confirmedDateRange && (
-                        <button
-                            type="button"
-                            onClick={openCustomDateSheet}
-                            aria-label={`当前自定义时间段${customCompactLabel}，点击修改`}
-                            className="flex h-[var(--tm-report-custom-range-height)] w-full items-center justify-center gap-1 border-t border-[var(--tm-border-subtle)] text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]"
+                        <div
+                            aria-label={`当前自定义日期范围：${confirmedDateRange.startDate}至${confirmedDateRange.endDate}`}
+                            className="-mx-[var(--tm-report-page-inline)] flex h-[var(--tm-report-custom-range-height)] items-center justify-between gap-0.5 bg-[var(--tm-bg-surface-soft)] px-[var(--tm-report-page-inline)]"
                         >
-                            <Calendar aria-hidden="true" className="h-3.5 w-3.5" />
-                            <span className="tabular-nums">{customCompactLabel}</span>
-                        </button>
+                            <div className="flex min-w-0 items-center gap-1">
+                                <CalendarRange aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-secondary)]" />
+                                <span className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">
+                                    自定义时间：
+                                </span>
+                                <strong className="truncate text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums text-[var(--tm-text-primary)]">
+                                    {confirmedDateRange.startDate} 至 {confirmedDateRange.endDate}
+                                </strong>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={openCustomDateSheet}
+                                aria-label="修改自定义日期范围"
+                                className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition-[color,scale] [transition-duration:var(--tm-duration-standard)] after:absolute after:-inset-1.5 active:scale-[0.96] active:text-[var(--tm-text-primary)] motion-reduce:transform-none"
+                            >
+                                <PencilLine aria-hidden="true" className="h-4 w-4" />
+                            </button>
+                        </div>
                     )}
                 </div>
 

@@ -73,7 +73,7 @@ assert.ok(toolbarStart >= 0 && toolbarEnd > toolbarStart, '应能识别学校版
 assert.ok(!toolbarSource.includes('ring-[var(--tm-border-subtle)]'), '年级、任教班级与排行榜不应使用常驻外边框。');
 assert.ok(toolbarSource.includes('bg-[var(--tm-filter-bg)]'), '年级筛选应使用透明筛选表面 Token。');
 assert.ok(toolbarSource.includes('[box-shadow:var(--tm-filter-shadow)]'), '年级筛选应使用无阴影筛选 Token。');
-assert.ok(toolbarSource.includes('relative inline-flex min-h-11 items-center justify-self-start'), '年级筛选应按当前值自适应宽度，并保留完整触控高度。');
+assert.ok(toolbarSource.includes('relative inline-flex min-h-11 w-[96px] items-center justify-self-start'), '年级筛选应使用可容纳“全部年级”的固定宽度，并保留完整触控高度。');
 assert.ok(toolbarSource.includes('gap-[var(--tm-space-1)]'), '年级文字与下拉箭头应使用最小基础间距紧邻排列。');
 assert.ok(!toolbarSource.includes('absolute right-3 top-1/2'), '年级箭头不得继续跟随整列宽度靠右定位。');
 assert.ok(toolbarSource.includes('bg-transparent px-2.5'), '任教班级应保持透明，只通过勾选框表达状态。');

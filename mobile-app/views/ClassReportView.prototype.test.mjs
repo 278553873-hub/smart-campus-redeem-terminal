@@ -70,7 +70,7 @@ assert.ok(viewSource.includes('<ChartAnalysis {...recordDistributionAnalysis} />
 assert.ok(viewSource.includes('<ChartAnalysis {...educationScoreAnalysis} />'), '五育得分分布应展示总结与补充。');
 assert.ok(viewSource.includes('<ChartAnalysis {...educationEventAnalysis} />'), '五育事件分布应展示总结与补充。');
 assert.ok(viewSource.includes('role="note"') && viewSource.includes('aria-label="数据解析"'), '数据解析提示块应具备可识别的无障碍语义。');
-assert.ok(viewSource.includes('font-semibold') && viewSource.includes('font-normal'), '图表解析应使用较强字重的总结和常规字重的补充。');
+assert.ok(viewSource.includes('font-semibold') && viewSource.includes('tm-font-regular'), '图表解析应使用较强字重的总结和常规字重的补充。');
 assert.ok(viewSource.includes('<Quote') && viewSource.includes('<Triangle'), '图表解析应使用图标库还原引用符号与顶部指向。');
 assert.ok(!viewSource.includes('chartSummaryClass'), '图表解析不应继续使用普通段落样式。');
 

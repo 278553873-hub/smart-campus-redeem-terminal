@@ -16,6 +16,11 @@ const sheetSource = read('../components/ui/MobileBottomSheet.tsx');
 const requireText = (source, text, message) => assert.ok(source.includes(text), message);
 
 requireText(listSource, '<EvaluationTimeFilterSheet', '记录时间必须使用独立底部抽屉。');
+requireText(timeFilterSource, '当前范围', '时间筛选弹窗应展示当前范围摘要。');
+requireText(timeFilterSource, '快捷时间', '时间筛选弹窗应提供清晰的快捷时间分组。');
+requireText(timeFilterSource, 'grid grid-cols-2', '快捷时间应使用紧凑双列布局。');
+requireText(timeFilterSource, '自定义日期', '自定义时间筛选应作为独立的渐进展开入口。');
+requireText(timeFilterSource, 'aria-pressed={selected}', '时间选项应提供可访问的选中状态。');
 requireText(listSource, '<EvaluationTeacherFilterSheet', '评价人必须使用独立底部抽屉。');
 requireText(listSource, '<EvaluationIndicatorFilterSheet', '指标必须使用独立底部抽屉。');
 requireText(timeFilterSource, "value: 'last-week'", '当前学期记录时间必须支持筛选上周。');
