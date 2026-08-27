@@ -48,6 +48,7 @@ import {
   readQuestionnaires,
   type QuestionnaireRecord,
 } from '../shared/questionnaireStore';
+import { formatQuestionnaireCompletionTime } from '../shared/questionnaireTime';
 
 interface ParentAppProps {
   showPhoneShell?: boolean;
@@ -2650,9 +2651,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-black leading-5 text-slate-950">{questionnaire.title}</span>
                   <span className={`mt-1 block truncate text-[12px] font-bold ${isQuestionnaireOverdue(questionnaire) ? 'text-amber-600' : 'text-slate-400'}`}>
-                    {questionnaire.creatorName} · {questionnaire.suggestedDeadline
-                      ? questionnaire.suggestedDeadline.replace('2026-', '').replace('-', '月').replace(' ', '日 ')
-                      : '不限时间'}
+                    {questionnaire.creatorName}{questionnaire.suggestedDeadline
+                      ? ` · ${formatQuestionnaireCompletionTime(questionnaire.suggestedDeadline)}`
+                      : ''}
                   </span>
                 </span>
                 <span className="flex h-10 min-w-[62px] shrink-0 items-center justify-center rounded-[14px] border border-[#BFEAED] bg-white px-3 text-[15px] font-black text-[#0797A8] shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">{questionnaire.submissions.some(submission => submission.studentNo === activeChild.studentNo && submission.reviewStatus === 'returned') ? '修改' : '填写'}</span>

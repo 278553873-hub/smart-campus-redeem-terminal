@@ -206,13 +206,13 @@ const SortableFieldCard: React.FC<{
             {...listeners}
             aria-label={`拖动排序${itemLabel}：${fieldLabel}`}
             title={`拖动排序${itemLabel}`}
-            className={`relative flex min-h-[76px] w-12 touch-none cursor-grab items-start justify-center pt-4 text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums text-[var(--tm-brand-primary-strong)] transition-colors active:cursor-grabbing active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)] ${children ? 'row-span-2' : ''}`}
+            className={`relative flex min-h-[76px] w-12 touch-none cursor-grab items-start justify-center pt-4 text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums text-[var(--tm-text-primary)] transition-colors active:cursor-grabbing active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)] ${children ? 'row-span-2' : ''}`}
           >
             {fieldNumber}
             {required && <span className="ml-0.5 text-[var(--tm-status-negative-strong)]" aria-hidden="true">*</span>}
             <GripVertical className="absolute top-10 h-3.5 w-3.5 text-[var(--tm-text-disabled)]" aria-hidden="true" />
           </button>
-        ) : <div className={`relative flex min-h-[76px] w-12 items-start justify-center pt-4 text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums text-[var(--tm-brand-primary-strong)] ${children ? 'row-span-2' : ''}`}>{fieldNumber}{required && <span className="ml-0.5 text-[var(--tm-status-negative-strong)]">*</span>}</div>}
+        ) : <div className={`relative flex min-h-[76px] w-12 items-start justify-center pt-4 text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums text-[var(--tm-text-primary)] ${children ? 'row-span-2' : ''}`}>{fieldNumber}{required && <span className="ml-0.5 text-[var(--tm-status-negative-strong)]">*</span>}</div>}
         {header && <div className="min-w-0 flex-1">{header}</div>}
         {children && <div className="col-start-2 min-w-0">{children}</div>}
       </div>

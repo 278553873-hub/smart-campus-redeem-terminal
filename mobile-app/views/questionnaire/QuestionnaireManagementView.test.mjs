@@ -18,6 +18,7 @@ const qrInviteSheetSource = fs.readFileSync(new URL('../../components/ui/MobileQ
 const growthFieldPickerSource = fs.readFileSync(new URL('../../components/growth/GrowthFieldCategoryPicker.tsx', import.meta.url), 'utf8');
 const formDefinitionSource = fs.readFileSync(new URL('../../../shared/formDefinition.ts', import.meta.url), 'utf8');
 const questionnaireThemeSource = fs.readFileSync(new URL('../../../shared/questionnaireThemeTokens.ts', import.meta.url), 'utf8');
+const questionnaireTimeSource = fs.readFileSync(new URL('../../../shared/questionnaireTime.ts', import.meta.url), 'utf8');
 const questionnaireHeaderSource = fs.readFileSync(new URL('../../../components/questionnaire/QuestionnaireHeaderImage.tsx', import.meta.url), 'utf8');
 const growthFormsSource = fs.readFileSync(new URL('./GrowthCollectionForms.tsx', import.meta.url), 'utf8');
 const growthDefinitionSource = fs.readFileSync(new URL('../../../shared/growthCollectionDefinition.ts', import.meta.url), 'utf8');
@@ -36,6 +37,7 @@ const createStepThreeSource = createSource.slice(createSource.indexOf('{createSt
 const studentDetailSource = viewSource.slice(viewSource.indexOf('const renderStudentCollectionDetail'), viewSource.indexOf('const renderStudentRecordPage'));
 const studentRecordPageSource = viewSource.slice(viewSource.indexOf('const renderStudentRecordPage'), viewSource.indexOf('const renderDataSummary'));
 const createPreviewSource = viewSource.slice(viewSource.indexOf('const openCreatePreview'), viewSource.indexOf('const openListPreview'));
+const completePublishSource = viewSource.slice(viewSource.indexOf('const completePublishQuestionnaire'), viewSource.indexOf('const toggleClass'));
 const detailSource = viewSource.slice(viewSource.indexOf('const renderDetail'), viewSource.indexOf('const renderResponseDetail'));
 const responseDetailSource = viewSource.slice(viewSource.indexOf('const renderResponseDetail'), viewSource.indexOf('const renderQuestionResponses'));
 const answerContextCardSource = viewSource.slice(viewSource.indexOf('const AnswerContextCard'), viewSource.indexOf('const editorToolButton'));
@@ -89,14 +91,14 @@ for (const questionType of ["single: { label: '单选题'", "multiple: { label: 
 
 requireText(storeSource, 'getActiveQuestionnaireTargets(record).filter(target => target.reachable).length', '完成率分母必须只使用当前有效且可送达的学生数。');
 requireText(storeSource, 'completed / reachable', '完成率必须使用对应采集模式的已完成数除以目标数。');
-requireText(storeSource, 'suggestedDeadline: string', '问卷必须将建议完成时间与状态分开保存。');
+requireText(storeSource, 'suggestedDeadline: string', '问卷必须将完成时间与状态分开保存。');
 requireText(storeSource, 'isQuestionnaireOverdue', '问卷必须能够识别仅用于提示的逾期状态。');
 requireText(storeSource, "questionnaire?.status === 'active'", '家长提交时必须再次确认问卷仍在收集中。');
 requireText(storeSource, "if (existing && existing.status !== 'draft') return current;", '共享数据层必须拒绝覆盖已发布问卷。');
 requireText(storeSource, 'export const publishQuestionnaire', '正式发布必须通过受控的数据层方法。');
 requireText(storeSource, 'inviteCode?: string;', '问卷必须保存不含学生隐私信息的邀请凭证。');
 requireText(storeSource, 'getQuestionnaireByInviteCode', '家长扫码后必须通过邀请凭证查找问卷。');
-requireText(storeSource, "rest.suggestedDeadline ?? deadline ?? ''", '历史问卷的截止时间必须兼容迁移为建议完成时间。');
+requireText(storeSource, "rest.suggestedDeadline ?? deadline ?? ''", '历史问卷的截止时间必须兼容迁移为完成时间。');
 for (const mockId of ['survey-autumn-trip-202607', 'survey-uniform-202607', 'survey-meal-202606', 'survey-summer-care-202607', 'survey-campus-activity-202605']) {
   requireText(storeSource, mockId, `演示数据缺少问卷：${mockId}`);
 }
@@ -212,6 +214,10 @@ forbidText(formBuilderSource, 'className="border-t border-[var(--tm-border-subtl
 forbidText(formBuilderSource, 'items-center justify-between border-t border-[var(--tm-border-subtle)] pt-3', '必填与更多操作上方不应保留分隔线。');
 requireText(formBuilderSource, "expanded ? 'border-[var(--tm-brand-primary)]'", '展开态必须使用品牌焦点边框表达当前编辑题目。');
 requireText(formBuilderSource, 'fieldNumber={index + 1}', '题号必须作为独立左侧序号列展示。');
+if ((formBuilderSource.match(/tabular-nums text-\[var\(--tm-text-primary\)\]/g) ?? []).length < 2) {
+  throw new Error('题号与字段序号必须在可排序和只读状态统一使用主文字色。');
+}
+forbidText(formBuilderSource, 'tabular-nums text-[var(--tm-brand-primary-strong)]', '题号与字段序号不应继续使用品牌红。');
 requireText(formBuilderSource, 'renderFieldPreview(field, choice, rating, usesSubFields)', '列表态必须复用真实填写控件外观进行预览。');
 requireText(formBuilderSource, 'border-transparent', '非编辑题目不应保留常驻描边。');
 requireText(formBuilderSource, 'aria-invalid={Boolean(fieldError?.label)}', '题目错误必须向读屏软件暴露无效状态。');
@@ -222,6 +228,9 @@ requireText(formBuilderSource, '<h2 className="text-[length:var(--tm-font-size-c
 requireText(formBuilderSource, 'showItemLabel = true', '共享构建器必须通过配置控制题目或字段标题显隐，不能写死业务规则。');
 requireText(createSource, 'showItemLabel={false}', '普通问卷不应因老师或家长填写而重复展示题目标题。');
 requireText(viewSource, "['采集内容', '学生范围', '确认发布']", '填写人已在进入编辑器前选择，创建进度第一步只应表达采集内容。');
+const stepIndicatorSource = viewSource.slice(viewSource.indexOf('const StepIndicator'), viewSource.indexOf('interface StudentCollectionFormProps'));
+requireText(stepIndicatorSource, 'font-semibold text-[var(--tm-text-primary)]', '创建步骤名称必须统一使用主文字色。');
+forbidText(stepIndicatorSource, "complete ? 'text-[var(--tm-brand-primary-strong)]'", '创建步骤名称不应通过品牌红重复表达进度。');
 requireText(viewSource, "title=\"谁来填写\"", '点击新建采集后必须先选择老师填写或家长填写。');
 forbidText(createStepOneSource, '填写人，当前', '填写人已在入口确定，采集内容编辑页不应重复展示或修改。');
 forbidText(createStepOneSource, "setRespondentSheetMode('edit')", '采集内容编辑页不应再次打开填写人选择。');
@@ -399,7 +408,7 @@ if (detailSource.includes('<StatusPill') || detailSource.includes('grid-cols-[0.
 if (detailSource.includes('statusMeta[activeRecord.status]') || detailSource.includes('getQuestionnaireTargetLabel(activeRecord)') || detailSource.includes('<UsersRound')) {
   throw new Error('问卷详情卡不应展示问卷状态或发送对象。');
 }
-requireText(detailSource, 'activeRecord.suggestedDeadline &&', '问卷详情卡只应在设置后展示建议完成时间。');
+requireText(detailSource, 'activeRecord.suggestedDeadline &&', '问卷详情卡只应在设置后展示完成时间。');
 if (viewSource.includes('提醒未完成家长') || viewSource.includes('发送提醒') || storeSource.includes('QuestionnaireReminder') || storeSource.includes('sendQuestionnaireReminder') || parentSource.includes('老师提醒')) {
   throw new Error('问卷流程不应提供提醒未完成家长功能。');
 }
@@ -409,13 +418,17 @@ if (viewSource.includes('{answers.length}条回答') || viewSource.includes('{an
 if (viewSource.includes('描述性统计') || viewSource.includes('不进行自动总结') || viewSource.includes("['overview', '概览']") || viewSource.includes("['analysis', '题目分析']")) {
   throw new Error('问卷数据页不应保留重复页签或解释性统计文案。');
 }
-requireText(viewSource, '建议完成时间', '创建与详情页必须使用建议完成时间。');
-requireText(viewSource, 'const [hasSuggestedDeadline, setHasSuggestedDeadline] = useState(false);', '新问卷默认不设置建议完成时间。');
+requireText(viewSource, '>完成时间</div>', '创建页必须使用完成时间文案。');
+forbidText(viewSource, '建议完成时间', '用户界面不应继续使用建议完成时间文案。');
+requireText(viewSource, 'const [hasSuggestedDeadline, setHasSuggestedDeadline] = useState(false);', '新问卷默认不设置完成时间。');
 requireText(viewSource, 'upsertQuestionnaireDraftForSource(record)', '采集设计必须按当前来源自动覆盖保存一份草稿。');
 requireText(viewSource, "if (pageMode !== 'create') return undefined", '自动草稿只应在新建和编辑采集期间保存。');
 requireText(viewSource, "if (!hasMeaningfulDraftContent())", '完全空白的采集不应保存草稿。');
 forbidText(createSource, '保存草稿', '采集设计底部不应继续展示手动保存草稿按钮。');
 requireText(viewSource, 'onClick={createStep === 3 ? () => setShowPublishConfirm(true) : advanceCreateStep}', '下一步必须可点击并主动触发校验，发布前必须进入二次确认。');
+requireText(completePublishSource, "setListFilter('active');", '发布成功后必须切换到收集中列表。');
+requireText(completePublishSource, "setPageMode('list');", '发布成功后必须返回问卷列表。');
+forbidText(completePublishSource, "setPageMode('detail');", '发布成功后不应进入空数据详情页。');
 requireText(viewSource, "&& buildTargets(effectiveGrowthFields.length > 0 || Boolean(draftArchiveTemplateId)).length === 0", '发送范围为空时必须通过主动反馈阻止进入发布确认。');
 requireText(viewSource, "target?.scrollIntoView({ behavior: 'smooth', block: 'center' })", '校验失败后必须滚动到首个错误。');
 requireText(viewSource, 'fieldErrors={stepOneValidationAttempt ? stepOneFieldErrors : undefined}', '题目错误必须在字段内就地展示。');
@@ -427,18 +440,25 @@ if (viewSource.includes("createStep === 1 ? persistCurrentDraft") || viewSource.
 }
 requireText(viewSource, "'采集已重新开放'", '已结束采集必须支持重新开放。');
 requireText(viewSource, '>结束收集</button>', '收集中问卷必须支持人工结束。');
-requireText(viewSource, '已到建议完成时间', '逾期后必须向老师提供结束收集入口。');
+requireText(viewSource, '已到完成时间', '逾期后必须向老师提供结束收集入口。');
 if (viewSource.includes('>截止时间<') || viewSource.includes('提前结束问卷')) {
   throw new Error('问卷不应再使用强截止或提前结束文案。');
 }
-requireText(parentSource, "? questionnaire.suggestedDeadline.replace('2026-', '').replace('-', '月').replace(' ', '日 ')", '家长端建议完成时间必须仅显示具体时间。');
+requireText(parentSource, 'formatQuestionnaireCompletionTime(questionnaire.suggestedDeadline)', '家长端完成时间必须使用共享格式化方法。');
+forbidText(parentSource, "'不限时间'", '未设置完成时间时，家长端不应展示不限时间。');
+requireText(questionnaireTimeSource, '(\\d{1,2})-(\\d{1,2})', '完成时间必须兼容历史未补零的月份和日期。');
+requireText(questionnaireTimeSource, '`${Number(month)}月${Number(day)}日`', '完成时间必须按真实月份和日期格式化。');
+forbidText(questionnaireTimeSource, "replace('2026-'", '完成时间格式化不得写死年份。');
 if (listSource.includes('当前收集中') || listSource.includes('等待家长提交')) {
   throw new Error('问卷列表顶部不应展示重复统计信息。');
 }
 if (listSource.includes('<StatusPill') || listSource.includes('继续编辑') || listSource.includes('record.questions.length')) {
   throw new Error('问卷列表不应重复显示状态标签或草稿题目统计。');
 }
-requireText(listSource, '? formatSuggestedDeadline(record.suggestedDeadline)', '问卷卡片时间必须仅显示具体时间。');
+requireText(listSource, "getQuestionnaireRespondentRole(record) === 'guardian' && record.suggestedDeadline", '仅设置了完成时间的家长填写卡片可以展示时间。');
+requireText(listSource, 'formatQuestionnaireCompletionTime(record.suggestedDeadline)', '问卷卡片必须使用共享完成时间格式化方法。');
+forbidText(listSource, 'formatCollectionDate(record.createdAt)', '老师填写卡片不应展示创建日期。');
+forbidText(listSource, "'不限时间'", '未设置完成时间的卡片不应展示不限时间。');
 requireText(listSource, 'text-[length:var(--tm-font-size-card-title)] font-bold leading-[22px]', '问卷名称必须使用教师端卡片标题层级。');
 requireText(listSource, '{completed}/{reachable}</span>', '问卷采集卡片必须保留直观的完成进度分数。');
 requireText(listSource, 'mt-2 h-1.5 w-full overflow-hidden rounded-full', '双列采集卡必须展示完整宽度的紧凑进度条。');

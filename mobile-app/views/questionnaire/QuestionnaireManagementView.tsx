@@ -134,6 +134,10 @@ import {
   type GrowthFieldDefinition,
 } from '../../../shared/studentGrowthFieldCatalog';
 import {
+  formatQuestionnaireCompletionTime,
+  formatQuestionnaireTimestamp,
+} from '../../../shared/questionnaireTime';
+import {
   ARCHIVE_STORE_EVENT,
   createArchiveTemplateSnapshot,
   getArchiveGrowthMissingPolicy,
@@ -263,8 +267,6 @@ const getCollectionBadgeLabel = (record: QuestionnaireRecord) => {
 
 const createRatingOptions = (count: number) => Array.from({ length: count }, (_, index) => String(index + 1));
 
-const formatSuggestedDeadline = (deadline: string) => deadline.replace('2026-', '').replace('-', '月').replace(' ', '日 ');
-const formatCollectionDate = (createdAt: string) => `${createdAt.slice(5, 7)}月${createdAt.slice(8, 10)}日`;
 const formatCompletedAt = (completedAt: string) => {
   const parts = completedAt.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})/);
   if (!parts) return completedAt;
@@ -304,7 +306,7 @@ const getDefaultSuggestedDeadline = () => {
   const pad = (part: number) => String(part).padStart(2, '0');
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}`;
 };
-const nowText = () => new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
+const nowText = () => formatQuestionnaireTimestamp();
 const demoLinkedStudentName = (student: Student) => {
   if (student.studentNo === '20250101') return '郑小磊';
   if (student.studentNo === '20250102') return '林小满';
@@ -529,7 +531,7 @@ const StepIndicator: React.FC<{ current: number }> = ({ current }) => (
       return (
         <div key={label} className="min-w-0">
           <div className={`h-1.5 rounded-full ${complete || active ? 'bg-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-muted)]'}`} />
-          <div className={`mt-2 truncate text-[length:var(--tm-font-size-meta)] font-semibold ${active ? 'text-[var(--tm-text-primary)]' : complete ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>
+          <div className="mt-2 truncate text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-primary)]">
             {label}
           </div>
         </div>
@@ -1563,7 +1565,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setRecords(readQuestionnaires());
     setActiveRecordId(publishedRecord.id);
     setDetailTab('data');
-    setPageMode('detail');
+    setListFilter('active');
+    setPageMode('list');
     setShowPublishConfirm(false);
     if (respondentRole === 'guardian') setInviteRecordId(publishedRecord.id);
     showToast(respondentRole === 'teacher' ? '已开始采集' : '已发布到家长端');
@@ -1790,6 +1793,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               const completion = getCompletionRate(record);
               const completed = mode === 'student_information' ? getStudentCollectionCompletedCount(record) : getQuestionnaireCompletedCount(record);
               const overdue = isQuestionnaireOverdue(record);
+              const completionTime = getQuestionnaireRespondentRole(record) === 'guardian' && record.suggestedDeadline
+                ? formatQuestionnaireCompletionTime(record.suggestedDeadline)
+                : '';
               return (
                 <article key={record.id} className="min-w-0">
                   <button
@@ -1804,8 +1810,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                       <span className={`inline-flex h-6 max-w-full items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{getCollectionBadgeLabel(record)}</span></span>
                     </div>
                     <div className="mt-auto flex min-w-0 items-center justify-between gap-2 pt-3 text-[length:var(--tm-font-size-meta)] font-medium">
-                      <span className={`min-w-0 truncate ${overdue ? 'text-[var(--tm-brand-reward-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>{mode === 'student_information' ? formatCollectionDate(record.createdAt) : record.suggestedDeadline ? formatSuggestedDeadline(record.suggestedDeadline) : '不限时间'}</span>
-                      <span className="shrink-0 tabular-nums font-semibold text-[var(--tm-text-secondary)]">{completed}/{reachable}</span>
+                      {completionTime && <span className={`min-w-0 truncate ${overdue ? 'text-[var(--tm-brand-reward-strong)]' : 'text-[var(--tm-text-tertiary)]'}`}>{completionTime}</span>}
+                      <span className="ml-auto shrink-0 tabular-nums font-semibold text-[var(--tm-text-secondary)]">{completed}/{reachable}</span>
                     </div>
                     <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" aria-hidden="true">
                       <div className={`h-full rounded-full ${record.status === 'ended' ? 'bg-[var(--tm-text-disabled)]' : modeMeta.progressClass}`} style={{ width: `${completion}%` }} />
@@ -1914,6 +1920,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             const reachable = getReachableTargetCount(record);
             const completion = getCompletionRate(record);
             const completed = mode === 'student_information' ? getStudentCollectionCompletedCount(record) : getQuestionnaireCompletedCount(record);
+            const completionTime = getQuestionnaireRespondentRole(record) === 'guardian' && record.suggestedDeadline
+              ? formatQuestionnaireCompletionTime(record.suggestedDeadline)
+              : '';
             return (
               <button
                 key={record.id}
@@ -1926,7 +1935,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 <div className="mt-3.5 flex min-w-0 items-center justify-between gap-3 text-[length:var(--tm-font-size-meta)]">
                   <div className="flex min-w-0 items-center gap-2 font-medium text-[var(--tm-text-tertiary)]">
                     <span className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[length:var(--tm-font-size-badge)] font-semibold ${modeMeta.badgeClass}`}><ModeIcon className="h-3.5 w-3.5" />{getCollectionBadgeLabel(record)}</span>
-                    <span className="truncate">{mode === 'student_information' ? formatCollectionDate(record.createdAt) : record.suggestedDeadline ? formatSuggestedDeadline(record.suggestedDeadline) : '不限时间'}</span>
+                    {completionTime && <span className="truncate">{completionTime}</span>}
                   </div>
                   <div className="flex shrink-0 items-center gap-2.5">
                     <div className="h-1.5 w-12 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" aria-hidden="true">
@@ -2216,10 +2225,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               )}
               {!isTeacherRespondent && <section className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
                 <div className="flex min-h-11 items-center justify-between gap-4">
-                  <div><div className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">建议完成时间</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">选填</div></div>
+                  <div><div className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">完成时间</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">选填</div></div>
                   <button
                     type="button"
-                    aria-label="设置建议完成时间"
+                    aria-label="设置完成时间"
                     aria-pressed={hasSuggestedDeadline}
                     onClick={() => {
                       const next = !hasSuggestedDeadline;
@@ -2232,7 +2241,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   </button>
                 </div>
                 {hasSuggestedDeadline && (
-                  <input aria-label="建议完成时间" type="datetime-local" value={suggestedDeadline} onChange={event => setSuggestedDeadline(event.target.value)} className="mt-3 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
+                  <input aria-label="完成时间" type="datetime-local" value={suggestedDeadline} onChange={event => setSuggestedDeadline(event.target.value)} className="mt-3 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
                 )}
               </section>}
               {!isTeacherRespondent && unreachableCount > 0 && (
@@ -2588,7 +2597,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         {record.status === 'active' && isQuestionnaireOverdue(record) && (
           <button type="button" onClick={() => requestCloseRecord(record)} className="flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-reward-soft)] px-4 text-left active:bg-[var(--tm-brand-reward-soft)]">
             <CalendarDays className="h-4 w-4 shrink-0 text-[var(--tm-brand-reward-strong)]" />
-            <span className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-reward-strong)]">已到建议完成时间</span>
+            <span className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-reward-strong)]">已到完成时间</span>
             <span className="shrink-0 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-brand-reward-strong)]">结束收集</span>
           </button>
         )}
@@ -2770,7 +2779,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             {activeRecord.suggestedDeadline && (
               <div className="mt-2.5 inline-flex items-center gap-1.5 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">
                 <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-tertiary)]" />
-                {formatSuggestedDeadline(activeRecord.suggestedDeadline)}
+                {formatQuestionnaireCompletionTime(activeRecord.suggestedDeadline)}
               </div>
             )}
           </section>
