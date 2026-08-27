@@ -271,14 +271,7 @@ const formatCompletedAt = (completedAt: string) => {
   const parts = completedAt.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})/);
   if (!parts) return completedAt;
   const [, year, month, day, hour, minute] = parts;
-  const parsed = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
-  return new Intl.DateTimeFormat('zh-CN', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(parsed);
+  return `${Number(year)}年${Number(month)}月${Number(day)}日 ${String(Number(hour)).padStart(2, '0')}:${minute}`;
 };
 const QUESTIONNAIRE_TEXT_STOP_WORDS = new Set([
   '希望', '可以', '学校', '孩子', '一些', '进行', '增加', '提供', '方面', '能够', '建议', '需要', '比较', '定期', '班级',
@@ -463,7 +456,7 @@ const StudentIdentityRow: React.FC<{
   </div>
 );
 
-const AnswerContextCard: React.FC<{
+const AnswerContextMeta: React.FC<{
   studentAvatar: string;
   studentName: string;
   studentClassName: string;
@@ -481,40 +474,26 @@ const AnswerContextCard: React.FC<{
   completedAt,
 }) => (
   <section
-    className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]"
+    className="mt-3 space-y-1.5 text-[length:var(--tm-font-size-compact)] font-medium leading-5"
     aria-label="答卷对象与填写信息"
   >
-    <div className="grid min-h-[56px] grid-cols-[56px_minmax(0,1fr)] items-center gap-3 px-4 py-2.5">
-      <div className="text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">采集对象</div>
-      <div className="flex min-w-0 items-center gap-2.5">
-        <img
-          src={studentAvatar}
-          alt=""
-          className="h-8 w-8 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover outline outline-1 -outline-offset-1 outline-black/10"
-        />
-        <div className="flex min-w-0 flex-1 items-baseline gap-2">
-          <div className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{studentName}</div>
-          <div className="shrink-0 truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{studentClassName}</div>
-        </div>
-      </div>
+    <div className="flex min-w-0 items-center">
+      <span className="shrink-0 text-[var(--tm-text-secondary)]">采集对象：</span>
+      <img src={studentAvatar} alt="" className="mr-1 h-[var(--tm-font-size-compact)] w-[var(--tm-font-size-compact)] shrink-0 rounded-full object-cover" />
+      <span className="min-w-0 truncate text-[var(--tm-text-secondary)]">{studentName}（{studentClassName}）</span>
     </div>
-    <div className="grid min-h-[56px] grid-cols-[56px_minmax(0,1fr)] items-center gap-3 border-t border-[var(--tm-border-subtle)] px-4 py-2.5">
-      <div className="text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">填写人</div>
-      <div className="flex min-w-0 items-center gap-2.5">
-        {respondentRole === 'teacher' ? (
-          <img
-            src={respondentAvatar ?? ASSETS.AVATAR.TEACHER_DEFAULT}
-            alt=""
-            className="h-8 w-8 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover outline outline-1 -outline-offset-1 outline-black/10"
-          />
-        ) : (
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--tm-border-subtle)] text-[var(--tm-text-secondary)]" aria-hidden="true">
-            <UsersRound className="h-4 w-4" />
-          </span>
-        )}
-        <div className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{respondentName}</div>
-        <div className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">{completedAt}</div>
-      </div>
+    <div className="flex min-w-0 items-center">
+      <span className="shrink-0 text-[var(--tm-text-secondary)]">填写人员：</span>
+      {respondentRole === 'teacher' ? (
+        <img src={respondentAvatar ?? ASSETS.AVATAR.TEACHER_DEFAULT} alt="" className="mr-1 h-[var(--tm-font-size-compact)] w-[var(--tm-font-size-compact)] shrink-0 rounded-full object-cover" />
+      ) : (
+        <UsersRound className="mr-1 h-[var(--tm-font-size-compact)] w-[var(--tm-font-size-compact)] shrink-0 text-[var(--tm-text-secondary)]" aria-hidden="true" />
+      )}
+      <span className="min-w-0 truncate text-[var(--tm-text-secondary)]">{respondentName}</span>
+    </div>
+    <div className="flex min-w-0 items-center">
+      <span className="shrink-0 text-[var(--tm-text-secondary)]">填写日期：</span>
+      <span className="min-w-0 truncate tabular-nums text-[var(--tm-text-secondary)]">{completedAt}</span>
     </div>
   </section>
 );
@@ -2471,7 +2450,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               />
             );
           })}
-          {visibleRecords.length === 0 && <div className="px-4 py-12 text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">暂无匹配学生</div>}
+          {visibleRecords.length === 0 && (
+            <MobileEmptyState
+              imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER}
+              title="暂无匹配学生"
+              className="min-h-64 py-4"
+              imageClassName="w-[52%] min-w-[140px] max-w-[176px]"
+            />
+          )}
         </section>
       </div>
     );
@@ -2827,7 +2813,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <header className="pb-2">
             <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{activeRecord.title}</h1>
             {activeRecord.description && <p className="mt-2 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]">{activeRecord.description}</p>}
-            <AnswerContextCard
+            <AnswerContextMeta
               studentAvatar={getStudentAvatar(activeResultRecord.studentNo)}
               studentName={activeResultRecord.studentName}
               studentClassName={activeResultRecord.className}
@@ -2909,7 +2895,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 </div>
               </article>
             ))}
-            {visibleRows.length === 0 && <div className="py-14 text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">暂无匹配回答</div>}
+            {visibleRows.length === 0 && (
+              <MobileEmptyState
+                imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER}
+                title="暂无匹配回答"
+                className="min-h-64 py-4"
+                imageClassName="w-[52%] min-w-[140px] max-w-[176px]"
+              />
+            )}
           </div>
           {filteredRows.length > visibleRows.length && (
             <button type="button" onClick={() => setVisibleQuestionResponseCount(count => count + 20)} className="mt-4 min-h-11 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-card)] active:scale-[0.96]">加载更多</button>

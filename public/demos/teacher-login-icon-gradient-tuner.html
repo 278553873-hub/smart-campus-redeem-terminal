@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 Icon 背景调试</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --brand: #e02727;
+      --brand-soft: #fff1f1;
+      --page: #f5f3f1;
+      --surface: #ffffff;
+      --surface-soft: #efedeb;
+      --line: #ded9d6;
+      --text: #1c1917;
+      --text-secondary: #6f6864;
+      --focus: rgba(224, 39, 39, 0.22);
+      --shadow: 0 22px 54px -40px rgba(44, 37, 33, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-width: 320px;
+      min-height: 100%;
+      background: var(--page);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background: var(--page);
+      font-family: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select { font: inherit; }
+
+    button { cursor: pointer; }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: 64px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-width: 0;
+      padding: 0 24px;
+      border-bottom: 1px solid rgba(222, 217, 214, 0.9);
+      background: rgba(255, 255, 255, 0.88);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: baseline;
+      min-width: 0;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .current-state {
+      overflow: hidden;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      flex: none;
+      gap: 8px;
+    }
+
+    .command {
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .command:hover { background: #faf9f8; }
+
+    .command.primary {
+      border-color: var(--brand);
+      color: #fff;
+      background: var(--brand);
+    }
+
+    .command.primary:hover { background: #c92121; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      min-height: 0;
+    }
+
+    .preview-zone {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      overflow: auto;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(250px, 420px));
+      gap: 40px;
+      width: min(920px, 100%);
+      align-items: start;
+      justify-content: center;
+    }
+
+    .preview-item {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .preview-heading {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .download-one {
+      min-height: 36px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 7px;
+      color: var(--brand);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .download-one:hover { background: var(--brand-soft); }
+
+    .main-canvas {
+      display: block;
+      width: min(100%, 420px);
+      height: auto;
+      aspect-ratio: 1;
+      filter: drop-shadow(var(--shadow));
+    }
+
+    .size-checks {
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 16px;
+      min-height: 108px;
+    }
+
+    .size-check {
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .size-check canvas {
+      display: block;
+      filter: drop-shadow(0 5px 10px rgba(44, 37, 33, 0.12));
+    }
+
+    .inspector {
+      min-width: 0;
+      overflow-y: auto;
+      border-left: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .control-group {
+      padding: 22px 20px;
+      border-bottom: 1px solid #ebe8e6;
+    }
+
+    .control-title {
+      display: block;
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .teacher-switches {
+      padding: 8px;
+      border: 1px solid rgba(222, 217, 214, 0.8);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 12px 40px -30px rgba(44, 37, 33, 0.45);
+    }
+
+    .select-row {
+      display: flex;
+      min-height: 44px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .select-label {
+      width: 56px;
+      flex: none;
+      padding-left: 4px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .select-wrap {
+      position: relative;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .select-wrap::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 11px;
+      width: 7px;
+      height: 7px;
+      border-right: 1.5px solid #9b9490;
+      border-bottom: 1.5px solid #9b9490;
+      pointer-events: none;
+      transform: translateY(-65%) rotate(45deg);
+    }
+
+    .select-field {
+      width: 100%;
+      height: 36px;
+      appearance: none;
+      padding: 0 30px 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 160ms ease;
+    }
+
+    .select-field:focus { border-color: #9b9490; }
+
+    .scheme-preview {
+      display: flex;
+      height: 8px;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 4px;
+      background: var(--surface-soft);
+    }
+
+    .scheme-preview span { flex: 1; }
+
+    .toggle-row {
+      display: flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .toggle-row input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--brand);
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .color-field {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      min-height: 44px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .color-field input[type="color"] {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      overflow: hidden;
+      border: 0;
+      border-radius: 6px;
+      background: none;
+    }
+
+    .color-field input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-field input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
+
+    .color-meta {
+      display: grid;
+      min-width: 0;
+      gap: 1px;
+    }
+
+    .color-name {
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .color-value {
+      overflow: hidden;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr) 42px;
+      align-items: center;
+      gap: 10px;
+      min-height: 40px;
+    }
+
+    .range-row + .range-row { margin-top: 6px; }
+
+    .range-label {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--brand);
+    }
+
+    .range-value {
+      color: var(--text);
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    details { border-bottom: 1px solid #ebe8e6; }
+
+    summary {
+      display: flex;
+      min-height: 50px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 13px;
+      font-weight: 700;
+      list-style: none;
+      cursor: pointer;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; color: var(--text-secondary); font-size: 18px; font-weight: 500; }
+    details[open] summary::after { content: "−"; }
+
+    .details-content { padding: 0 20px 20px; }
+
+    .status-toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 30;
+      max-width: calc(100vw - 40px);
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: #fff;
+      background: rgba(28, 25, 23, 0.92);
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .status-toast.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1040px) {
+      .workspace { grid-template-columns: minmax(0, 1fr) 310px; }
+      .preview-zone { padding: 28px; }
+      .preview-grid { gap: 24px; }
+    }
+
+    @media (max-width: 820px) {
+      .app { grid-template-rows: auto minmax(0, 1fr); }
+      .toolbar { position: static; min-height: 64px; flex-wrap: wrap; padding: 12px 16px; }
+      .title-wrap { width: 100%; }
+      .toolbar-actions { width: 100%; }
+      .toolbar-actions .command { flex: 1; }
+      .workspace { display: flex; flex-direction: column; }
+      .preview-zone { padding: 24px 16px; overflow: visible; }
+      .preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+      .inspector { overflow: visible; border-top: 1px solid var(--line); border-left: 0; }
+    }
+
+    @media (max-width: 560px) {
+      .current-state { display: none; }
+      .preview-grid { grid-template-columns: 1fr; gap: 28px; }
+      .preview-item { width: min(100%, 380px); margin: 0 auto; }
+      .size-checks { min-height: 96px; }
+      .color-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .status-toast { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="toolbar">
+      <div class="title-wrap">
+        <h1>登录 Icon 背景调试</h1>
+        <span class="current-state" id="currentState">弥散 · 方案六 · 红青平衡</span>
+      </div>
+      <div class="toolbar-actions">
+        <button class="command" type="button" id="resetButton">重置</button>
+        <button class="command" type="button" id="copyButton">复制 CSS</button>
+        <button class="command primary" type="button" id="downloadBothButton">下载两种图标</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="preview-zone" aria-label="图标预览">
+        <div class="preview-grid">
+          <article class="preview-item">
+            <div class="preview-heading">
+              <span>方形</span>
+              <button class="download-one" type="button" data-download="square">下载 PNG</button>
+            </div>
+            <canvas class="main-canvas" id="squareCanvas" width="1024" height="1024" aria-label="方形图标预览"></canvas>
+            <div class="size-checks" aria-label="方形图标小尺寸预览">
+              <span class="size-check"><canvas id="square84" width="1024" height="1024" style="width:84px;height:84px"></canvas><span>84px</span></span>
+              <span class="size-check"><canvas id="square40" width="1024" height="1024" style="width:40px;height:40px"></canvas><span>40px</span></span>
+            </div>
+          </article>
+
+          <article class="preview-item">
+            <div class="preview-heading">
+              <span>圆形</span>
+              <button class="download-one" type="button" data-download="circle">下载 PNG</button>
+            </div>
+            <canvas class="main-canvas" id="circleCanvas" width="1024" height="1024" aria-label="圆形图标预览"></canvas>
+            <div class="size-checks" aria-label="圆形图标小尺寸预览">
+              <span class="size-check"><canvas id="circle84" width="1024" height="1024" style="width:84px;height:84px"></canvas><span>84px</span></span>
+              <span class="size-check"><canvas id="circle40" width="1024" height="1024" style="width:40px;height:40px"></canvas><span>40px</span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <aside class="inspector" aria-label="背景参数">
+        <section class="control-group">
+          <div class="teacher-switches">
+            <label class="select-row">
+              <span class="select-label">配色方案</span>
+              <span class="select-wrap">
+                <select class="select-field" id="schemeSelect" aria-label="选择渐变配色方案"></select>
+              </span>
+            </label>
+            <label class="select-row">
+              <span class="select-label">渐变样式</span>
+              <span class="select-wrap">
+                <select class="select-field" id="styleSelect" aria-label="选择渐变样式"></select>
+              </span>
+            </label>
+          </div>
+          <div class="scheme-preview" aria-hidden="true">
+            <span id="schemeToneA"></span>
+            <span id="schemeToneB"></span>
+            <span id="schemeToneC"></span>
+            <span id="schemeBase"></span>
+          </div>
+        </section>
+
+        <details>
+          <summary>自定义微调</summary>
+          <div class="details-content">
+            <label class="toggle-row"><span>临时查看纯白背景</span><input type="checkbox" id="whiteBackground"></label>
+            <div class="color-grid">
+              <label class="color-field">
+                <input type="color" id="toneA" value="#e02727" aria-label="主色">
+                <span class="color-meta"><span class="color-name">主色</span><span class="color-value" data-color-value="toneA">#E02727</span></span>
+              </label>
+              <label class="color-field">
+                <input type="color" id="toneB" value="#45ced1" aria-label="辅助色">
+                <span class="color-meta"><span class="color-name">辅助色</span><span class="color-value" data-color-value="toneB">#45CED1</span></span>
+              </label>
+              <label class="color-field">
+                <input type="color" id="toneC" value="#fa9c00" aria-label="点缀色">
+                <span class="color-meta"><span class="color-name">点缀色</span><span class="color-value" data-color-value="toneC">#FA9C00</span></span>
+              </label>
+              <label class="color-field">
+                <input type="color" id="base" value="#fff1f1" aria-label="底色">
+                <span class="color-meta"><span class="color-name">底色</span><span class="color-value" data-color-value="base">#FFF1F1</span></span>
+              </label>
+            </div>
+            <label class="range-row"><span class="range-label">颜色强度</span><input type="range" id="intensity" min="0" max="200" step="1" value="100"><span class="range-value" data-range-value="intensity">100%</span></label>
+            <label class="range-row"><span class="range-label">扩散范围</span><input type="range" id="spread" min="55" max="150" step="1" value="100"><span class="range-value" data-range-value="spread">100%</span></label>
+            <label class="range-row" id="angleRow" hidden><span class="range-label">渐变角度</span><input type="range" id="angle" min="0" max="360" step="1" value="142"><span class="range-value" data-range-value="angle">142°</span></label>
+            <label class="range-row"><span class="range-label">主色 X</span><input type="range" id="aX" min="-20" max="120" value="-8"><span class="range-value" data-range-value="aX">-8%</span></label>
+            <label class="range-row"><span class="range-label">主色 Y</span><input type="range" id="aY" min="-20" max="120" value="24"><span class="range-value" data-range-value="aY">24%</span></label>
+            <label class="range-row"><span class="range-label">辅助 X</span><input type="range" id="bX" min="-20" max="120" value="108"><span class="range-value" data-range-value="bX">108%</span></label>
+            <label class="range-row"><span class="range-label">辅助 Y</span><input type="range" id="bY" min="-20" max="120" value="34"><span class="range-value" data-range-value="bY">34%</span></label>
+          </div>
+        </details>
+
+        <details>
+          <summary>前景微调</summary>
+          <div class="details-content">
+            <label class="range-row"><span class="range-label">缩放</span><input type="range" id="foregroundScale" min="85" max="120" value="100"><span class="range-value" data-range-value="foregroundScale">100%</span></label>
+            <label class="range-row"><span class="range-label">水平</span><input type="range" id="foregroundX" min="-15" max="15" value="0"><span class="range-value" data-range-value="foregroundX">0%</span></label>
+            <label class="range-row"><span class="range-label">垂直</span><input type="range" id="foregroundY" min="-15" max="15" value="0"><span class="range-value" data-range-value="foregroundY">0%</span></label>
+          </div>
+        </details>
+      </aside>
+    </main>
+  </div>
+
+  <div class="status-toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const SIZE = 1024;
+    const SURFACE = '#ffffff';
+    const PAGE_MID = '#fbfaf9';
+    const schemes = [
+      { id: 'scheme-1', label: '方案一 · 青蓝平衡', a: '#477eae', b: '#278779', c: '#e02727', base: '#f4faff' },
+      { id: 'scheme-2', label: '方案二 · 蓝金晨光', a: '#43b0f6', b: '#fa9c00', c: '#e02727', base: '#fff8e5' },
+      { id: 'scheme-3', label: '方案三 · 翡翠成长', a: '#278779', b: '#48a04d', c: '#e02727', base: '#ecf8f6' },
+      { id: 'scheme-4', label: '方案四 · 金青清风', a: '#fa9c00', b: '#45ced1', c: '#e02727', base: '#fff8e5' },
+      { id: 'scheme-5', label: '方案五 · 蓝绿清晨', a: '#43b0f6', b: '#48a04d', c: '#e02727', base: '#f4fbf4' },
+      { id: 'scheme-6', label: '方案六 · 红青平衡', a: '#e02727', b: '#45ced1', c: '#fa9c00', base: '#fff1f1' },
+      { id: 'scheme-7', label: '方案七 · 红金暖阳', a: '#e02727', b: '#fa9c00', c: '#f75c03', base: '#fff1f1' },
+      { id: 'scheme-8', label: '方案八 · 红蓝清晖', a: '#e02727', b: '#43b0f6', c: '#278779', base: '#fff1f1' },
+      { id: 'scheme-9', label: '方案九 · 红绿朝气', a: '#e02727', b: '#48a04d', c: '#ff8176', base: '#fff7f4' },
+      { id: 'scheme-10', label: '方案十 · 橙绿活力', a: '#f75c03', b: '#48a04d', c: '#e02727', base: '#fff5ec' },
+      { id: 'scheme-11', label: '方案十一 · 红蓝清透', a: '#e02727', b: '#43b0f6', c: '#e02727', base: '#ffffff', cleanDiffuse: true },
+    ];
+    const styles = [
+      { id: 'diffuse', label: '弥散' },
+      { id: 'linear', label: '线性' },
+      { id: 'aurora', label: '极光' },
+      { id: 'conic', label: '柔旋' },
+    ];
+
+    const defaults = {
+      style: 'diffuse',
+      schemeId: 'scheme-6',
+      toneA: '#e02727',
+      toneB: '#45ced1',
+      toneC: '#fa9c00',
+      base: '#fff1f1',
+      whiteBackground: false,
+      intensity: 100,
+      spread: 100,
+      linearAngle: 142,
+      conicAngle: 218,
+      aX: -8,
+      aY: 24,
+      bX: 108,
+      bY: 34,
+      foregroundScale: 100,
+      foregroundX: 0,
+      foregroundY: 0,
+    };
+
+    const stored = (() => {
+      try { return JSON.parse(localStorage.getItem('teacher-login-icon-tuner-v2') || '{}'); }
+      catch { return {}; }
+    })();
+    const state = { ...defaults, ...stored };
+    if (!styles.some(item => item.id === state.style)) state.style = defaults.style;
+    if (!schemes.some(item => item.id === state.schemeId)) state.schemeId = defaults.schemeId;
+
+    const foreground = new Image();
+    foreground.src = './assets/teacher-login-icon-foreground.png';
+    const canvases = {
+      square: [document.getElementById('squareCanvas'), document.getElementById('square84'), document.getElementById('square40')],
+      circle: [document.getElementById('circleCanvas'), document.getElementById('circle84'), document.getElementById('circle40')],
+    };
+
+    const hexToRgb = (hex) => {
+      const value = Number.parseInt(hex.replace('#', ''), 16);
+      return { r: (value >> 16) & 255, g: (value >> 8) & 255, b: value & 255 };
+    };
+
+    const rgba = (hex, alpha) => {
+      const { r, g, b } = hexToRgb(hex);
+      return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
+    };
+
+    const alpha = (value) => value * state.intensity / 100;
+    const currentScheme = () => schemes.find(item => item.id === state.schemeId) || schemes[5];
+    const currentAngle = () => state.style === 'conic' ? state.conicAngle : state.linearAngle;
+
+    const clipShape = (context, shape) => {
+      context.beginPath();
+      if (shape === 'circle') {
+        context.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 8, 0, Math.PI * 2);
+      } else if (context.roundRect) {
+        context.roundRect(8, 8, SIZE - 16, SIZE - 16, SIZE * 0.22);
+      } else {
+        context.rect(8, 8, SIZE - 16, SIZE - 16);
+      }
+      context.clip();
+    };
+
+    const drawLinear = (context, angle, stops, bounds = { x: 0, y: 0, width: SIZE, height: SIZE }) => {
+      const radians = angle * Math.PI / 180;
+      const dx = Math.sin(radians);
+      const dy = -Math.cos(radians);
+      const half = Math.abs(dx) * bounds.width / 2 + Math.abs(dy) * bounds.height / 2;
+      const cx = bounds.x + bounds.width / 2;
+      const cy = bounds.y + bounds.height / 2;
+      const gradient = context.createLinearGradient(cx - dx * half, cy - dy * half, cx + dx * half, cy + dy * half);
+      stops.forEach(([offset, color]) => gradient.addColorStop(offset, color));
+      context.fillStyle = gradient;
+      context.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+    };
+
+    const drawEllipse = (context, color, xPercent, yPercent, widthPercent, heightPercent, fadeAt) => {
+      const spread = state.spread / 100;
+      const x = SIZE * xPercent / 100;
+      const y = SIZE * yPercent / 100;
+      const radiusX = SIZE * widthPercent / 100 * spread;
+      const radiusY = SIZE * heightPercent / 100 * spread;
+      context.save();
+      context.translate(x, y);
+      context.scale(radiusX, radiusY);
+      const gradient = context.createRadialGradient(0, 0, 0, 0, 0, 1);
+      gradient.addColorStop(0, color);
+      gradient.addColorStop(fadeAt, 'rgba(0, 0, 0, 0)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      context.fillStyle = gradient;
+      context.fillRect(-x / radiusX, -y / radiusY, SIZE / radiusX, SIZE / radiusY);
+      context.restore();
+    };
+
+    const drawTailWash = (context) => {
+      drawLinear(context, 180, [
+        [0, 'rgba(0, 0, 0, 0)'],
+        [0.52, 'rgba(0, 0, 0, 0)'],
+        [1, rgba(state.toneB, alpha(0.05))],
+      ]);
+    };
+
+    const drawAuroraOverlay = (context) => {
+      const width = SIZE * 1.56;
+      const height = SIZE * 0.68;
+      const cx = -SIZE * 0.28 + width / 2;
+      const cy = -SIZE * 0.10 + height / 2;
+      context.save();
+      context.translate(cx, cy);
+      context.rotate(-8 * Math.PI / 180);
+      context.filter = 'blur(24px)';
+      drawLinear(context, 108, [
+        [0.04, 'rgba(0, 0, 0, 0)'],
+        [0.20, rgba(state.toneA, alpha(0.20))],
+        [0.38, 'rgba(0, 0, 0, 0)'],
+        [0.58, rgba(state.toneB, alpha(0.18))],
+        [0.76, 'rgba(0, 0, 0, 0)'],
+        [0.90, rgba(state.toneC, alpha(0.10))],
+        [0.98, 'rgba(0, 0, 0, 0)'],
+      ], { x: -width / 2, y: -height / 2, width, height });
+      context.restore();
+    };
+
+    const drawBackground = (context) => {
+      context.fillStyle = state.whiteBackground ? SURFACE : state.base;
+      context.fillRect(0, 0, SIZE, SIZE);
+      if (state.whiteBackground) return;
+
+      if (state.style === 'linear') {
+        drawLinear(context, state.linearAngle, [
+          [0, rgba(state.toneC, alpha(0.05))],
+          [0.42, rgba(state.toneA, alpha(0.15))],
+          [0.72, rgba(state.toneB, alpha(0.14))],
+          [1, SURFACE],
+        ]);
+        drawLinear(context, 180, [
+          [0, 'rgba(255, 255, 255, 0)'],
+          [0.38, 'rgba(255, 255, 255, 0)'],
+          [0.64, rgba(SURFACE, 0.52)],
+          [0.86, SURFACE],
+          [1, SURFACE],
+        ]);
+        drawTailWash(context);
+        return;
+      }
+
+      if (state.style === 'aurora') {
+        drawLinear(context, 180, [[0, state.base], [0.58, PAGE_MID], [0.84, SURFACE], [1, SURFACE]]);
+        drawEllipse(context, rgba(state.toneC, alpha(0.035)), 8, 0, 42, 22, 0.72);
+        drawTailWash(context);
+        drawAuroraOverlay(context);
+        return;
+      }
+
+      if (state.style === 'conic' && context.createConicGradient) {
+        const gradient = context.createConicGradient((state.conicAngle - 90) * Math.PI / 180, SIZE * 0.5, SIZE * 0.26);
+        [
+          [0, rgba(state.toneC, alpha(0.07))],
+          [0.25, rgba(state.toneA, alpha(0.14))],
+          [0.50, rgba(state.toneB, alpha(0.13))],
+          [0.75, rgba(state.toneA, alpha(0.10))],
+          [1, rgba(state.toneC, alpha(0.07))],
+        ].forEach(([offset, color]) => gradient.addColorStop(offset, color));
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, SIZE, SIZE);
+        drawEllipse(context, rgba(SURFACE, 0.56), 50, 28, 42, 42, 0.42);
+        drawLinear(context, 180, [[0, 'rgba(255, 255, 255, 0)'], [0.36, rgba(SURFACE, 0.18)], [0.84, SURFACE], [1, SURFACE]]);
+        drawTailWash(context);
+        return;
+      }
+
+      if (currentScheme().cleanDiffuse) {
+        drawLinear(context, 180, [[0, SURFACE], [0.56, PAGE_MID], [0.86, SURFACE], [1, SURFACE]]);
+        drawEllipse(context, rgba(state.toneB, alpha(0.10)), state.bX, 30, 60, 44, 0.72);
+        drawEllipse(context, rgba(state.toneA, alpha(0.11)), state.aX, 22, 62, 42, 0.70);
+      } else {
+        drawLinear(context, 180, [[0, state.base], [0.52, PAGE_MID], [0.82, SURFACE], [1, SURFACE]]);
+        drawEllipse(context, rgba(state.toneC, alpha(0.04)), 20, -2, 44, 24, 0.70);
+        drawEllipse(context, rgba(state.toneB, alpha(0.14)), state.bX, state.bY, 82, 52, 0.74);
+        drawEllipse(context, rgba(state.toneA, alpha(0.16)), state.aX, state.aY, 84, 50, 0.72);
+      }
+      drawTailWash(context);
+    };
+
+    const renderCanvas = (canvas, shape) => {
+      const context = canvas.getContext('2d');
+      context.clearRect(0, 0, SIZE, SIZE);
+      context.save();
+      clipShape(context, shape);
+      drawBackground(context);
+      const scale = state.foregroundScale / 100;
+      const size = SIZE * scale;
+      const x = (SIZE - size) / 2 + SIZE * state.foregroundX / 100;
+      const y = (SIZE - size) / 2 + SIZE * state.foregroundY / 100;
+      context.drawImage(foreground, x, y, size, size);
+      context.restore();
+    };
+
+    const render = () => {
+      Object.entries(canvases).forEach(([shape, group]) => group.forEach(canvas => renderCanvas(canvas, shape)));
+      syncControls();
+      try { localStorage.setItem('teacher-login-icon-tuner-v2', JSON.stringify(state)); } catch {}
+    };
+
+    const syncControls = () => {
+      document.getElementById('schemeSelect').value = state.schemeId;
+      document.getElementById('styleSelect').value = state.style;
+      document.getElementById('whiteBackground').checked = state.whiteBackground;
+      ['toneA', 'toneB', 'toneC', 'base'].forEach(id => {
+        document.getElementById(id).value = state[id];
+        document.querySelector(`[data-color-value="${id}"]`).textContent = state[id].toUpperCase();
+      });
+      ['intensity', 'spread', 'aX', 'aY', 'bX', 'bY', 'foregroundScale', 'foregroundX', 'foregroundY'].forEach(id => {
+        document.getElementById(id).value = state[id];
+      });
+      document.getElementById('angle').value = currentAngle();
+      document.querySelector('[data-range-value="intensity"]').textContent = `${state.intensity}%`;
+      document.querySelector('[data-range-value="spread"]').textContent = `${state.spread}%`;
+      document.querySelector('[data-range-value="angle"]').textContent = `${currentAngle()}°`;
+      ['aX', 'aY', 'bX', 'bY', 'foregroundScale', 'foregroundX', 'foregroundY'].forEach(id => {
+        document.querySelector(`[data-range-value="${id}"]`).textContent = `${state[id]}%`;
+      });
+      document.getElementById('angleRow').hidden = !['linear', 'conic'].includes(state.style);
+      document.getElementById('schemeToneA').style.background = state.toneA;
+      document.getElementById('schemeToneB').style.background = state.toneB;
+      document.getElementById('schemeToneC').style.background = state.toneC;
+      document.getElementById('schemeBase').style.background = state.base;
+      const styleLabel = state.whiteBackground ? '纯白' : styles.find(item => item.id === state.style)?.label;
+      document.getElementById('currentState').textContent = `${styleLabel} · ${currentScheme().label}`;
+    };
+
+    const cssBackground = () => {
+      if (state.whiteBackground) return 'background-color: #FFFFFF;';
+      const tailWash = `linear-gradient(180deg, transparent 52%, ${rgba(state.toneB, alpha(0.05))} 100%)`;
+      if (state.style === 'linear') {
+        return `background-color: ${state.base.toUpperCase()};\nbackground-image: ${tailWash}, linear-gradient(180deg, transparent 0%, transparent 38%, ${rgba(SURFACE, 0.52)} 64%, ${SURFACE} 86%), linear-gradient(${state.linearAngle}deg, ${rgba(state.toneC, alpha(0.05))} 0%, ${rgba(state.toneA, alpha(0.15))} 42%, ${rgba(state.toneB, alpha(0.14))} 72%, ${SURFACE} 100%);`;
+      }
+      if (state.style === 'aurora') {
+        return `background-color: ${state.base.toUpperCase()};\nbackground-image: ${tailWash}, radial-gradient(ellipse 42% 22% at 8% 0%, ${rgba(state.toneC, alpha(0.035))} 0%, transparent 72%), linear-gradient(180deg, ${state.base} 0%, ${PAGE_MID} 58%, ${SURFACE} 84%);\n/* overlay: linear-gradient(108deg, transparent 4%, ${rgba(state.toneA, alpha(0.20))} 20%, transparent 38%, ${rgba(state.toneB, alpha(0.18))} 58%, transparent 76%, ${rgba(state.toneC, alpha(0.10))} 90%, transparent 98%); blur(24px); rotate(-8deg) */`;
+      }
+      if (state.style === 'conic') {
+        return `background-color: ${state.base.toUpperCase()};\nbackground-image: ${tailWash}, linear-gradient(180deg, transparent 0%, ${rgba(SURFACE, 0.18)} 36%, ${SURFACE} 84%), radial-gradient(circle at 50% 28%, ${rgba(SURFACE, 0.56)} 0%, transparent 42%), conic-gradient(from ${state.conicAngle}deg at 50% 26%, ${rgba(state.toneC, alpha(0.07))}, ${rgba(state.toneA, alpha(0.14))}, ${rgba(state.toneB, alpha(0.13))}, ${rgba(state.toneA, alpha(0.10))}, ${rgba(state.toneC, alpha(0.07))});`;
+      }
+      if (currentScheme().cleanDiffuse) {
+        return `background-color: ${SURFACE};\nbackground-image: ${tailWash}, radial-gradient(ellipse 62% 42% at ${state.aX}% 22%, ${rgba(state.toneA, alpha(0.11))} 0%, transparent 70%), radial-gradient(ellipse 60% 44% at ${state.bX}% 30%, ${rgba(state.toneB, alpha(0.10))} 0%, transparent 72%), linear-gradient(180deg, ${SURFACE} 0%, ${PAGE_MID} 56%, ${SURFACE} 86%);`;
+      }
+      return `background-color: ${state.base.toUpperCase()};\nbackground-image: ${tailWash}, radial-gradient(ellipse 84% 50% at ${state.aX}% ${state.aY}%, ${rgba(state.toneA, alpha(0.16))} 0%, transparent 72%), radial-gradient(ellipse 82% 52% at ${state.bX}% ${state.bY}%, ${rgba(state.toneB, alpha(0.14))} 0%, transparent 74%), radial-gradient(ellipse 44% 24% at 20% -2%, ${rgba(state.toneC, alpha(0.04))} 0%, transparent 70%), linear-gradient(180deg, ${state.base} 0%, ${PAGE_MID} 52%, ${SURFACE} 82%);`;
+    };
+
+    const showToast = (message) => {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('visible');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('visible'), 1600);
+    };
+
+    const downloadCanvas = (shape) => {
+      const canvas = canvases[shape][0];
+      canvas.toBlob(blob => {
+        if (!blob) return;
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `teacher-login-icon-${shape}.png`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      }, 'image/png');
+    };
+
+    const applyScheme = (scheme) => {
+      state.schemeId = scheme.id;
+      state.toneA = scheme.a;
+      state.toneB = scheme.b;
+      state.toneC = scheme.c;
+      state.base = scheme.base;
+      state.whiteBackground = false;
+    };
+
+    const schemeSelect = document.getElementById('schemeSelect');
+    const styleSelect = document.getElementById('styleSelect');
+    schemes.forEach(scheme => schemeSelect.add(new Option(scheme.label, scheme.id)));
+    styles.forEach(style => styleSelect.add(new Option(style.label, style.id)));
+
+    schemeSelect.addEventListener('change', event => {
+      const scheme = schemes.find(item => item.id === event.target.value);
+      if (!scheme) return;
+      applyScheme(scheme);
+      render();
+    });
+
+    styleSelect.addEventListener('change', event => {
+      state.style = event.target.value;
+      state.whiteBackground = false;
+      render();
+    });
+
+    document.getElementById('whiteBackground').addEventListener('change', event => {
+      state.whiteBackground = event.target.checked;
+      render();
+    });
+
+    ['toneA', 'toneB', 'toneC', 'base'].forEach(id => {
+      document.getElementById(id).addEventListener('input', event => {
+        state[id] = event.target.value;
+        state.whiteBackground = false;
+        render();
+      });
+    });
+
+    ['intensity', 'spread', 'aX', 'aY', 'bX', 'bY', 'foregroundScale', 'foregroundX', 'foregroundY'].forEach(id => {
+      document.getElementById(id).addEventListener('input', event => {
+        state[id] = Number(event.target.value);
+        render();
+      });
+    });
+
+    document.getElementById('angle').addEventListener('input', event => {
+      const value = Number(event.target.value);
+      if (state.style === 'conic') state.conicAngle = value;
+      else state.linearAngle = value;
+      render();
+    });
+
+    document.getElementById('resetButton').addEventListener('click', () => {
+      Object.assign(state, defaults);
+      render();
+      showToast('已重置为方案六 · 弥散');
+    });
+
+    document.getElementById('copyButton').addEventListener('click', async () => {
+      const value = `${cssBackground()}\n/* foreground: scale ${state.foregroundScale}%, x ${state.foregroundX}%, y ${state.foregroundY}% */`;
+      try {
+        await navigator.clipboard.writeText(value);
+      } catch {
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      }
+      showToast('CSS 已复制');
+    });
+
+    document.querySelectorAll('[data-download]').forEach(button => {
+      button.addEventListener('click', () => downloadCanvas(button.dataset.download));
+    });
+
+    document.getElementById('downloadBothButton').addEventListener('click', () => {
+      downloadCanvas('square');
+      setTimeout(() => downloadCanvas('circle'), 220);
+      showToast('正在下载方形与圆形');
+    });
+
+    foreground.addEventListener('load', render);
+    foreground.addEventListener('error', () => showToast('前景图片加载失败'));
+    syncControls();
+    if (foreground.complete && foreground.naturalWidth) render();
+  </script>
+</body>
+</html>

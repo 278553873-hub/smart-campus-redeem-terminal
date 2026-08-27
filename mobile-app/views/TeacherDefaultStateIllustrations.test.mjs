@@ -24,6 +24,7 @@ for (const fileName of [
 }
 
 requireText(questionnaireSource, 'ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD', '问卷采集为空时应使用担忧清单缺省图。');
+requireText(questionnaireSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '采集详情搜索无结果时应使用放大镜缺省图。');
 requireText(archiveSource, 'ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD', '档案为空时应使用担忧清单缺省图。');
 requireText(collectionHistorySource, 'ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD', '学生采集记录为空时应使用担忧清单缺省图。');
 requireText(classDetailSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '学生搜索无结果时应使用放大镜缺省图。');

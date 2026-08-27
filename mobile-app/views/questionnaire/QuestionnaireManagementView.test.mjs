@@ -40,7 +40,7 @@ const createPreviewSource = viewSource.slice(viewSource.indexOf('const openCreat
 const completePublishSource = viewSource.slice(viewSource.indexOf('const completePublishQuestionnaire'), viewSource.indexOf('const toggleClass'));
 const detailSource = viewSource.slice(viewSource.indexOf('const renderDetail'), viewSource.indexOf('const renderResponseDetail'));
 const responseDetailSource = viewSource.slice(viewSource.indexOf('const renderResponseDetail'), viewSource.indexOf('const renderQuestionResponses'));
-const answerContextCardSource = viewSource.slice(viewSource.indexOf('const AnswerContextCard'), viewSource.indexOf('const editorToolButton'));
+const answerContextMetaSource = viewSource.slice(viewSource.indexOf('const AnswerContextMeta'), viewSource.indexOf('const editorToolButton'));
 const originalPreviewSource = viewSource.slice(viewSource.indexOf('const renderPreview'), viewSource.indexOf('const renderPage'));
 const legacyParentQuestionnaireSource = parentSource.slice(parentSource.indexOf('const QuestionnaireForm'), parentSource.indexOf('const ArchiveDetail'));
 
@@ -68,6 +68,11 @@ requireText(plainBackgroundList, "'questionnaire'", '问卷采集应使用屏幕
 if ((viewSource.match(/ASSETS\.DEFAULT_STATE\.WORRIED_CLIPBOARD/g) ?? []).length !== 3) {
   throw new Error('问卷采集主列表、待填写和已归档空状态必须统一使用担忧清单缺省图。');
 }
+if ((viewSource.match(/imageSrc=\{ASSETS\.DEFAULT_STATE\.MAGNIFIER\}/g) ?? []).length !== 2) {
+  throw new Error('采集详情中的学生搜索和全部回答搜索无结果必须统一使用放大镜缺省图。');
+}
+requireText(viewSource, 'title="暂无匹配学生"', '采集详情搜索无结果必须保留明确结果文案。');
+requireText(viewSource, 'title="暂无匹配回答"', '全部回答搜索无结果必须保留明确结果文案。');
 requireText(viewSource, 'title={`暂无${statusMeta[listFilter].label}内容`}', '问卷采集筛选空状态必须保留当前状态文案。');
 requireText(viewSource, 'title="暂无待填写采集"', '待填写采集空状态必须保留明确文案。');
 requireText(viewSource, 'title="暂无已归档采集"', '已归档采集空状态必须保留明确文案。');
@@ -561,43 +566,36 @@ if (viewSource.includes('subtitle?: string') || viewSource.includes('subtitle={`
 }
 requireText(responseDetailSource, '<PageHeader title="答卷详情"', '点击已完成记录必须进入答卷详情。');
 forbidText(responseDetailSource, '<PageHeader title="预览问卷"', '已完成答卷不得继续冒充原始问卷预览。');
-requireText(responseDetailSource, '<AnswerContextCard', '答卷详情必须使用组合信息卡组织学生和填写来源。');
+requireText(responseDetailSource, '<AnswerContextMeta', '答卷详情必须使用紧凑文本元信息组织学生和填写来源。');
 requireText(responseDetailSource, 'studentName={activeResultRecord.studentName}', '答卷详情必须展示采集对象姓名。');
 requireText(responseDetailSource, 'studentClassName={activeResultRecord.className}', '答卷详情必须展示采集对象班级。');
 requireText(responseDetailSource, 'respondentName={respondentName}', '答卷详情必须在学生身份后展示实际填写人。');
 requireText(responseDetailSource, 'completedAt={formatCompletedAt(activeResultRecord.completedAt)}', '答卷详情必须展示格式化后的完成时间。');
 requireText(viewSource, "completedAt.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})[ T](\\d{1,2}):(\\d{2})/)", '完成时间必须兼容不补零的月、日和小时。');
+requireText(viewSource, "`${Number(year)}年${Number(month)}月${Number(day)}日 ${String(Number(hour)).padStart(2, '0')}:${minute}`", '答卷详情填写日期必须显示完整年月日和时间。');
 requireText(responseDetailSource, ': activeResultRecord.respondentLabel;', '家长填写人必须与学生身份分开显示。');
 forbidText(responseDetailSource, "`${activeResultRecord.studentName}的${activeResultRecord.respondentLabel}`", '家长填写人不得重复拼接学生姓名。');
 requireText(responseDetailSource, "`${activeResultRecord.respondentLabel.replace(/老师$/, '')}老师`", '老师填写人必须展示老师姓名和老师后缀。');
-requireText(answerContextCardSource, 'aria-label="答卷对象与填写信息"', '组合信息卡必须提供明确的无障碍语义。');
-requireText(answerContextCardSource, '>采集对象</div>', '组合信息卡必须明确标识采集对象。');
-requireText(answerContextCardSource, '>填写人</div>', '组合信息卡必须明确标识实际填写人。');
-requireText(answerContextCardSource, 'grid-cols-[56px_minmax(0,1fr)]', '两行角色标签必须使用固定宽度列保持对齐。');
-requireText(answerContextCardSource, 'border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]', '组合信息卡必须使用浅边框和白色表面保持页面边界。');
-requireText(answerContextCardSource, 'gap-3 border-t border-[var(--tm-border-subtle)] px-4 py-2.5', '采集对象与填写人必须仅使用一条浅分隔线建立层级。');
-forbidText(answerContextCardSource, 'bg-[var(--tm-bg-surface-soft)]', '填写人行不得继续使用与页面背景融合的灰色表面。');
-requireText(answerContextCardSource, 'src={respondentAvatar ?? ASSETS.AVATAR.TEACHER_DEFAULT}', '教师头像缺失时必须回退教师默认头像。');
-if ((answerContextCardSource.match(/className="h-8 w-8 shrink-0/g) ?? []).length !== 2
-  || !answerContextCardSource.includes('className="flex h-8 w-8 shrink-0')) {
-  throw new Error('学生头像、教师头像和家长关系图标容器必须统一为32像素。');
+requireText(answerContextMetaSource, 'aria-label="答卷对象与填写信息"', '答卷上下文必须提供明确的无障碍语义。');
+requireText(answerContextMetaSource, '>采集对象：</span>', '文本元信息必须明确标识采集对象。');
+requireText(answerContextMetaSource, '>填写人员：</span>', '文本元信息必须使用填写人员字段名。');
+requireText(answerContextMetaSource, '>填写日期：</span>', '文本元信息必须独立展示填写日期字段。');
+requireText(answerContextMetaSource, 'space-y-1.5 text-[length:var(--tm-font-size-compact)]', '三行上下文必须统一使用13像素紧凑字号。');
+for (const heavyStyle of ['rounded-[var(--tm-radius-card)]', 'border border-[var(--tm-border-subtle)]', 'bg-[var(--tm-bg-surface)]', '[box-shadow:var(--tm-shadow-card)]', 'min-h-[56px]']) {
+  forbidText(answerContextMetaSource, heavyStyle, `答卷上下文不应继续使用重卡片样式：${heavyStyle}`);
 }
-if ((answerContextCardSource.match(/min-h-\[56px\]/g) ?? []).length !== 2) {
-  throw new Error('采集对象和填写人两行必须统一为56像素高度。');
+requireText(answerContextMetaSource, 'src={respondentAvatar ?? ASSETS.AVATAR.TEACHER_DEFAULT}', '教师头像缺失时必须回退教师默认头像。');
+if ((answerContextMetaSource.match(/h-\[var\(--tm-font-size-compact\)\] w-\[var\(--tm-font-size-compact\)\] shrink-0/g) ?? []).length !== 3) {
+  throw new Error('学生头像、教师头像和家长关系图标必须统一为与13像素文字等高。');
 }
-if ((answerContextCardSource.match(/outline outline-1 -outline-offset-1 outline-black\/10/g) ?? []).length !== 2) {
-  throw new Error('学生和教师真人头像必须使用一致的向内中性细描边。');
+requireText(answerContextMetaSource, '{studentName}（{studentClassName}）', '采集对象必须以姓名后跟括号班级的文本形式展示。');
+requireText(answerContextMetaSource, '<UsersRound className="mr-1 h-[var(--tm-font-size-compact)]', '家长填写必须使用紧凑关系图标而不是伪造真人头像。');
+if ((answerContextMetaSource.match(/text-\[var\(--tm-text-secondary\)\]/g) ?? []).length < 6) {
+  throw new Error('字段标签、学生姓名班级、填写人员和填写日期必须统一使用灰色文字。');
 }
-requireText(answerContextCardSource, '<UsersRound className="h-4 w-4" />', '家长填写必须使用关系图标而不是伪造真人头像。');
-if ((answerContextCardSource.match(/text-\[length:var\(--tm-font-size-body\)\] font-semibold text-\[var\(--tm-text-primary\)\]/g) ?? []).length !== 2) {
-  throw new Error('学生姓名与填写人姓名必须使用相同的正文字号、字重和主文字色。');
-}
-if ((answerContextCardSource.match(/text-\[length:var\(--tm-font-size-meta\)\] font-medium/g) ?? []).length !== 2) {
-  throw new Error('班级与完成时间必须使用相同的辅助字号和字重。');
-}
-requireText(answerContextCardSource, '>{respondentName}</div>', '填写人姓名必须和完成时间在同一行展示。');
-requireText(answerContextCardSource, 'shrink-0 text-[length:var(--tm-font-size-meta)]', '完成时间必须完整保留并固定在填写人行右侧。');
-forbidText(answerContextCardSource, '{respondentName}填写', '已有填写人标签后不得在姓名后重复展示填写动作。');
+requireText(answerContextMetaSource, '>{respondentName}</span>', '填写人员姓名必须独立展示。');
+requireText(answerContextMetaSource, '>{completedAt}</span>', '填写日期必须作为独立字段展示并保持完整。');
+forbidText(answerContextMetaSource, '{respondentName}填写', '已有填写人标签后不得在姓名后重复展示填写动作。');
 forbidText(responseDetailSource, '填写人：', '答卷详情不得退回字段标签式信息堆叠。');
 forbidText(responseDetailSource, '完成时间：', '完成时间应归入填写来源，不得作为并列字段堆叠。');
 requireText(storeSource, 'respondentId?: string', '答卷结果必须保留填写教师标识以匹配头像。');
