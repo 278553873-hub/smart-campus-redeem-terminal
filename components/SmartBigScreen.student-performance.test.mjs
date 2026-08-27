@@ -42,7 +42,9 @@ assert.match(screenSource, /student\.studentNo\.slice\(-2\)/, '课堂大屏卡�
 assert.match(screenSource, /inline-flex min-w-0 max-w-\[110px\] items-center justify-center gap-1[\s\S]*?h-\[18px\] w-\[22px\] shrink-0[\s\S]*?text-\[11px\][\s\S]*?text-slate-600/, '两位学号与姓名应组成稳定宽度的居中身份组');
 assert.match(studentCardSource, /text-\[16px\] font-semibold leading-\[18px\][\s\S]*?>\{student\.name\}<\/h3>/, '课堂大屏姓名应使用16像素、600字重，保持远距离可读且不过重');
 assert.match(screenSource, /resolveStudentsBySpokenNumbers\(normalized, students\)/, '语音评价应使用通用学号解析模块映射当前班级学生');
-assert.match(studentCardSource, /flex h-5 w-full items-center justify-center[\s\S]*?<ClassroomStudentLevelIcons level=\{level\} compact \/>/, '等级图标应独占顶部并相对整张卡片居中');
+assert.match(studentCardSource, /flex h-5 w-full shrink-0 items-center justify-center[\s\S]*?<ClassroomStudentLevelIcons level=\{level\} compact \/>/, '等级图标应独占顶部、不可被浏览器压缩并相对整张卡片居中');
+assert.match(studentCardSource, /mt-px flex h-\[68px\] w-full shrink-0 items-center justify-center[\s\S]*?<ClassroomStudentAvatar/, '头像区域应保持68像素固定高度，避免浏览器缩放时挤压后续内容');
+assert.match(studentCardSource, /mt-px flex h-\[18px\] w-full shrink-0 items-center justify-center[\s\S]*?<ClassroomStudentCounts/, '奖惩次数区域应保持18像素固定高度，避免与头像或身份行错位');
 assert.match(studentCardSource, /mt-1\.5 flex h-\[18px\] w-full shrink-0 items-center justify-center text-center[\s\S]*?inline-flex min-w-0 max-w-\[110px\] items-center justify-center gap-1[\s\S]*?>\{student\.name\}<\/h3>/, '学号与姓名应作为一个完整身份组相对卡片居中');
 assert.doesNotMatch(studentCardSource, /right-\[calc\(100%\+4px\)\]/, '学号不应再使用绝对定位，避免四字姓名时越出卡片');
 assert.match(displaySource, /h-\[18px\] w-full gap-2/, '紧凑卡片的正负向统计应在头像下方独立成行');
