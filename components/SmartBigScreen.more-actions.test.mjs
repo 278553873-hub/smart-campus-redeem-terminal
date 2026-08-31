@@ -16,6 +16,8 @@ for (const text of [
   '重新计数',
   '重置后不可恢复，我已知晓',
   '秒后可确认',
+  '请选择${isGroupRecountSelection ? \'小组\' : \'学生\'}卡片',
+  '已选${recountSelectedCount}${isGroupRecountSelection ? \'个小组\' : \'名学生\'}',
   'createEvaluationCountCheckpoint',
   'getEvaluationCountsSinceCheckpoint',
 ]) {
@@ -32,7 +34,7 @@ assert.match(displaySource, /showPraiseCount\?\: boolean[\s\S]*showCriticismCoun
 assert.match(displaySource, /if \(visibleCountLabels\.length === 0\) return null/, '关闭全部统计后不应渲染空统计容器');
 assert.match(screenSource, /const \[recountTarget, setRecountTarget\] = useState<'student' \| 'group' \| null>\(null\)/, '学生与小组重新计数应共享明确的目标状态');
 assert.match(screenSource, /const \[recountSelectedIds, setRecountSelectedIds\] = useState<Set<string>>\(new Set\(\)\)/, '重新计数应使用独立的对象选择集合');
-assert.match(screenSource, /重新计数（\{recountSelectedCount\}）/, '重新计数主操作应显示已选择人数');
+assert.match(screenSource, /recountSelectedCount > 0[\s\S]*重新计数（\$\{recountSelectedCount\}）/, '重新计数主操作应在有选择时显示已选择人数');
 assert.match(screenSource, /const startRecountSelection = \(target: 'student' \| 'group'\) =>/, '点击更多操作中的重新计数应按当前视图进入对应选择态');
 assert.match(screenSource, /const openRecountConfirmation = \(\) => \{[\s\S]*if \(recountSelectedCount === 0\) return;/, '未选择学生时不能打开确认弹窗');
 assert.match(screenSource, /recountSelectedStudents\.forEach\(student => \{/, '确认重新计数只能为所选学生创建检查点');

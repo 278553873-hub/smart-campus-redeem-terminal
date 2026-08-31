@@ -138,7 +138,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
 
         {screenOverlay && (
           <div
-            className={`absolute inset-0 z-[110] overflow-hidden ${screenCornerClass}`}
+            className={`pointer-events-none absolute inset-0 z-[110] overflow-hidden ${screenCornerClass}`}
             style={screenClipStyle}
           >
             {screenOverlay}

@@ -28,6 +28,7 @@ assert.match(phoneMockup, /ref=\{screenRef\}/, '截图引用应落在手机屏�
 assert.match(phoneMockup, /const shouldShowNativeChrome = showDeviceFrame && safeAreaTop;/, '原生状态区应继续受真实手机效果联动控制。');
 assert.match(phoneMockup, /screenOverlay\?: React\.ReactNode/, '手机壳应提供不受页面安全区影响的整屏覆盖层。');
 assert.match(phoneMockup, /absolute inset-0 z-\[110\]/, '整屏覆盖层应覆盖状态栏并由手机屏幕统一裁切。');
+assert.match(phoneMockup, /pointer-events-none absolute inset-0 z-\[110\]/, '无弹窗时整屏覆盖层不得拦截手机页面点击。');
 assert.match(phoneMockup, /clipPath: 'inset\(0 round 50px\)'/, '缩放预览中的蒙层必须按手机屏幕圆角强制裁切。');
 assert.match(phoneMockup, /contain: 'paint'/, '手机屏幕应建立独立绘制边界，避免蒙层越过底部圆角。');
 assert.match(campaignPreview, /screenOverlay=\{\(/, '活动预览必须通过手机壳整屏覆盖层展示蒙层。');

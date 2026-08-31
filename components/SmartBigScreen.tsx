@@ -1860,7 +1860,18 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
   const modeUtilityControl = (
     <div className="flex items-center gap-2">
-      {!isSidebarOpen && viewMode === 'student' && (
+      {isRecountSelection && (
+        <div className="flex h-10 max-w-[320px] items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 text-blue-700 shadow-sm" role="status" aria-live="polite">
+          <RotateCcw size={15} strokeWidth={2.5} className="shrink-0" />
+          <span className="shrink-0 text-sm font-bold">重新计数</span>
+          <span className="truncate text-xs font-medium text-blue-600">
+            {recountSelectedCount > 0
+              ? `已选${recountSelectedCount}${isGroupRecountSelection ? '个小组' : '名学生'}`
+              : `请选择${isGroupRecountSelection ? '小组' : '学生'}卡片`}
+          </span>
+        </div>
+      )}
+      {!isRecountSelection && !isSidebarOpen && viewMode === 'student' && (
         <button onClick={() => setIsSidebarOpen(true)} className="h-10 min-w-[220px] flex items-center justify-center gap-2 px-6 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-all active:scale-95">
           <Search size={16} /><span className="text-sm font-black tracking-tight">快速定位学生</span>
         </button>
@@ -2932,7 +2943,9 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                 disabled={recountSelectedCount === 0}
                 className="flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-sm font-black text-white shadow-lg transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
               >
-                重新计数（{recountSelectedCount}）
+                {recountSelectedCount > 0
+                  ? `重新计数（${recountSelectedCount}）`
+                  : `请选择${isGroupRecountSelection ? '小组' : '学生'}`}
               </button>
               <div className="h-6 w-px bg-slate-200" />
               <button

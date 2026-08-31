@@ -39,6 +39,20 @@ export interface TermReportAnchorItem {
     label: string;
 }
 
+export type TermReportSectionId =
+    | 'cover'
+    | 'teacher-attention'
+    | 'growth-radar'
+    | 'subject-results'
+    | 'school-achievement'
+    | 'highlights'
+    | 'overall'
+    | 'future-potential'
+    | 'growth-suggestions'
+    | 'parent-activities'
+    | 'parent-feedback'
+    | 'student-feedback';
+
 interface TermReportViewProps {
     student: Student;
     onBack: () => void;
@@ -47,6 +61,8 @@ interface TermReportViewProps {
     additionalMobileAnchorItems?: TermReportAnchorItem[];
     initialViewMode?: 'mobile' | 'a4';
     showViewModeToggle?: boolean;
+    enabledSections?: Partial<Record<TermReportSectionId, boolean>>;
+    showLegacyOptionalSections?: boolean;
 }
 
 // --- 1. DESIGN SYSTEM (TYPOGRAPHY & LAYOUT) ---
@@ -363,7 +379,7 @@ const PageTeacherAttention = ({ mode = 'a4', id }: { mode?: 'a4' | 'mobile', id?
 };
 
 // 4. Growth Overview (EDITABLE)
-const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFullContent = true }: { mode?: 'a4' | 'mobile', student: Student, id?: string, onSubjectClick?: (subject: string) => void, showFullContent?: boolean, key?: any }) => {
+const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFullContent = true, sectionFilteringEnabled = false, showRadar = true, showSubjectResults = true, showHighlights = true, showOverall = true }: { mode?: 'a4' | 'mobile', student: Student, id?: string, onSubjectClick?: (subject: string) => void, showFullContent?: boolean, sectionFilteringEnabled?: boolean, showRadar?: boolean, showSubjectResults?: boolean, showHighlights?: boolean, showOverall?: boolean, key?: any }) => {
     // 五维度数据（崇德、求知、向阳、尚美、躬行）
     // 基础分60分，其余维度根据学期表现调整
     const fiveDimensions = [
@@ -401,6 +417,29 @@ const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFull
 
     const oneSentence = "你用行动诠释着做好当下的力量，用真诚编织着与同伴的温暖连接，未来值得期待。";
 
+    const radarCard = (
+        <ReportCard className="bg-white pb-6">
+            <div className="text-[13px] font-black text-slate-700 mb-6 text-center tracking-tight">5维度发展对比图</div>
+            <div className="flex flex-col items-center">
+                <FiveEducationRadarSimple
+                    dimensions={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.dimensionScores : MOCK_TERM_REPORT_AI_DATA.dimensionScores}
+                    startDimensions={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.startDimensionScores : MOCK_TERM_REPORT_AI_DATA.startDimensionScores}
+                    classAverageDimensions={[
+                        { label: '崇德', score: 82 },
+                        { label: '求知', score: 78 },
+                        { label: '向阳', score: 85 },
+                        { label: '尚美', score: 75 },
+                        { label: '躬行', score: 80 }
+                    ]}
+                />
+            </div>
+        </ReportCard>
+    );
+    const subjectResultsCard = (
+        <ReportCard className="bg-gradient-to-br from-slate-50/30 to-white">
+            <SubjectGradesChart subjects={MOCK_SUBJECTS} onSubjectClick={onSubjectClick} showClickHint={true} />
+        </ReportCard>
+    );
     return (
         <ReportPageContainer mode={mode} id={id}>
             <ReportSectionHeader title="成长概览" subTitle="Overview" icon={TrendingUp} />
@@ -410,33 +449,25 @@ const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFull
             </ReportCaption>
 
             {/* 双图表区域 */}
-            <div className="grid grid-cols-1 gap-4 mb-4">
-                {/* 六维度雷达图 */}
-                <ReportCard className="bg-white pb-6">
-                    <div className="text-[13px] font-black text-slate-700 mb-6 text-center tracking-tight">5维度发展对比图</div>
-                    <div className="flex flex-col items-center">
-                        <FiveEducationRadarSimple
-                            dimensions={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.dimensionScores : MOCK_TERM_REPORT_AI_DATA.dimensionScores}
-                            startDimensions={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.startDimensionScores : MOCK_TERM_REPORT_AI_DATA.startDimensionScores}
-                            classAverageDimensions={[
-                                { label: '崇德', score: 82 },
-                                { label: '求知', score: 78 },
-                                { label: '向阳', score: 85 },
-                                { label: '尚美', score: 75 },
-                                { label: '躬行', score: 80 }
-                            ]}
-                        />
+            {sectionFilteringEnabled ? (
+                (showRadar || showSubjectResults) && (
+                    <div className="grid grid-cols-1 gap-4 mb-4">
+                        {showRadar && <div id="section-growth-radar" className="scroll-mt-[100px]">{radarCard}</div>}
+                        {showSubjectResults && <div id="section-subject-results" className="scroll-mt-[100px]">{subjectResultsCard}</div>}
                     </div>
-                </ReportCard>
+                )
+            ) : (
+                <div className="grid grid-cols-1 gap-4 mb-4">
+                    {radarCard}
+                    {subjectResultsCard}
+                </div>
+            )}
 
-                {/* 学科成绩分布 */}
-                <ReportCard className="bg-gradient-to-br from-slate-50/30 to-white">
-                    <SubjectGradesChart subjects={MOCK_SUBJECTS} onSubjectClick={onSubjectClick} showClickHint={true} />
-
-                </ReportCard>
-            </div>
-
-            <HighbrightMomentsContent student={student} id="section-highlights" className="mb-4" />
+            {sectionFilteringEnabled ? (
+                showHighlights && <HighbrightMomentsContent student={student} id="section-highlights" className="mb-4" />
+            ) : (
+                <HighbrightMomentsContent student={student} id="section-highlights" className="mb-4" />
+            )}
 
             {/* 六育亮点（仅男生版显示） */}
             {showFullContent && (
@@ -461,26 +492,49 @@ const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFull
             )}
 
             {/* 总体评价 - AI Generated HTML */}
-            <div>
-                <ReportSectionHeader
-                    title="总体评价"
-                    subTitle="Overall"
-                    icon={Star}
-                    className="mt-4"
-                    rightElement={
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition-all">
-                            <PenLine className="w-3.5 h-3.5" />
-                            <span className="text-[12px] font-bold">编辑</span>
-                        </button>
-                    }
-                />
-                <ReportCard className="mb-4 bg-white border-slate-100">
-                    <RichTextDisplay
-                        html={(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.overallAssessment : MOCK_TERM_REPORT_AI_DATA.overallAssessment)
-                            .replace(/{name}/g, student.name.length > 2 ? student.name.substring(student.name.length - 2) : student.name)}
+            {sectionFilteringEnabled ? (
+                showOverall && <div id="section-overall" className="scroll-mt-[100px]">
+                    <ReportSectionHeader
+                        title="总体评价"
+                        subTitle="Overall"
+                        icon={Star}
+                        className="mt-4"
+                        rightElement={
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition-all">
+                                <PenLine className="w-3.5 h-3.5" />
+                                <span className="text-[12px] font-bold">编辑</span>
+                            </button>
+                        }
                     />
-                </ReportCard>
-            </div>
+                    <ReportCard className="mb-4 bg-white border-slate-100">
+                        <RichTextDisplay
+                            html={(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.overallAssessment : MOCK_TERM_REPORT_AI_DATA.overallAssessment)
+                                .replace(/{name}/g, student.name.length > 2 ? student.name.substring(student.name.length - 2) : student.name)}
+                        />
+                    </ReportCard>
+                </div>
+            ) : (
+                <div>
+                    <ReportSectionHeader
+                        title="总体评价"
+                        subTitle="Overall"
+                        icon={Star}
+                        className="mt-4"
+                        rightElement={
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition-all">
+                                <PenLine className="w-3.5 h-3.5" />
+                                <span className="text-[12px] font-bold">编辑</span>
+                            </button>
+                        }
+                    />
+                    <ReportCard className="mb-4 bg-white border-slate-100">
+                        <RichTextDisplay
+                            html={(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.overallAssessment : MOCK_TERM_REPORT_AI_DATA.overallAssessment)
+                                .replace(/{name}/g, student.name.length > 2 ? student.name.substring(student.name.length - 2) : student.name)}
+                        />
+                    </ReportCard>
+                </div>
+            )}
 
             {/* 教师寄语（仅男生版显示） */}
             {showFullContent && (
@@ -2198,6 +2252,8 @@ const TermReportView: React.FC<TermReportViewProps> = ({
     additionalMobileAnchorItems = [],
     initialViewMode = 'mobile',
     showViewModeToggle = true,
+    enabledSections,
+    showLegacyOptionalSections = enabledSections === undefined,
 }) => {
     const [viewMode, setViewMode] = useState<'mobile' | 'a4'>(initialViewMode);
     const [currentPage, setCurrentPage] = useState(0);
@@ -2205,8 +2261,26 @@ const TermReportView: React.FC<TermReportViewProps> = ({
     const [showSubjectSubPage, setShowSubjectSubPage] = useState(false);
     const [currentSubjectName, setCurrentSubjectName] = useState('');
     const isMale = student.gender === 'male';
+    const isConfiguredPreview = enabledSections !== undefined;
+    const sectionEnabled = (id: TermReportSectionId) => enabledSections?.[id] !== false;
+    const growthOverviewEnabled = sectionEnabled('growth-radar')
+        || sectionEnabled('subject-results')
+        || sectionEnabled('highlights')
+        || sectionEnabled('overall');
 
-    const mobileAnchorItems = isMale ? [
+    const mobileAnchorItems = isConfiguredPreview ? [
+        ...(sectionEnabled('teacher-attention') ? [{ id: 'section-teacher', label: '教师关注' }] : []),
+        ...(sectionEnabled('growth-radar') ? [{ id: 'section-growth-radar', label: '五育雷达图' }] : []),
+        ...(sectionEnabled('subject-results') ? [{ id: 'section-subject-results', label: '学科成绩' }] : []),
+        ...(sectionEnabled('school-achievement') ? additionalMobileAnchorItems : []),
+        ...(sectionEnabled('highlights') ? [{ id: 'section-highlights', label: '高光时刻' }] : []),
+        ...(sectionEnabled('overall') ? [{ id: 'section-overall', label: '总体评价' }] : []),
+        ...(sectionEnabled('future-potential') ? [{ id: 'section-future', label: '未来潜力' }] : []),
+        ...(sectionEnabled('growth-suggestions') ? [{ id: 'section-future-suggestions', label: '成长建议' }] : []),
+        ...(sectionEnabled('parent-activities') ? [{ id: 'section-activities', label: '亲子活动指南' }] : []),
+        ...(sectionEnabled('parent-feedback') ? [{ id: 'section-parent', label: '家长自评' }] : []),
+        ...(sectionEnabled('student-feedback') ? [{ id: 'section-student', label: '学生自评' }] : []),
+    ] : isMale ? [
         { id: 'section-teacher', label: '教师关注' },
         { id: 'section-growth', label: '成长概览' },
         ...additionalMobileAnchorItems,
@@ -2225,7 +2299,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
 
     const handleStartReading = () => {
         if (viewMode === 'a4') {
-            setCurrentPage(page => Math.min(page + 1, a4Pages.length - 1));
+            setCurrentPage(page => Math.min(page + 1, resolvedA4Pages.length - 1));
         } else if (firstAnchorId) {
             scrollToSection(firstAnchorId);
         }
@@ -2253,6 +2327,30 @@ const TermReportView: React.FC<TermReportViewProps> = ({
 
     const a4Pages = isMale ? [
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
+        // ...additionalA4Pages,
+        ...(sectionEnabled('teacher-attention') ? [<PageTeacherAttention key="teacher" mode="a4" id="section-teacher" />] : []),
+        ...(growthOverviewEnabled ? [<PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={!isConfiguredPreview} sectionFilteringEnabled showRadar={sectionEnabled('growth-radar')} showSubjectResults={sectionEnabled('subject-results')} showHighlights={sectionEnabled('highlights')} showOverall={sectionEnabled('overall')} />] : []),
+        ...(sectionEnabled('school-achievement') ? additionalA4Pages : []),
+        ...(sectionEnabled('future-potential') ? [<PageFuturePotential key="future" mode="a4" id="section-future" />] : []),
+        ...(sectionEnabled('growth-suggestions') ? [<PageFutureGrowthSuggestions key="future-suggestions" mode="a4" id="section-future-suggestions" />] : []),
+        ...(showLegacyOptionalSections ? [
+            <PageStrengthsEnhancement key="strengths" mode="a4" id="section-strengths" />,
+            <PageWeaknessImprovement key="weakness" mode="a4" id="section-weakness" />,
+        ] : []),
+        ...(sectionEnabled('parent-activities') ? [<PageParentChildActivities key="activities" mode="a4" id="section-activities" />] : []),
+        ...(showLegacyOptionalSections ? [<PageHolidayNotice key="holiday" mode="a4" id="section-holiday" />] : []),
+        ...(sectionEnabled('parent-feedback') ? [<PageParentFeedback key="parent" mode="a4" id="section-parent" />] : []),
+        ...(sectionEnabled('student-feedback') ? [<PageStudentFeedback key="student" mode="a4" id="section-student" />] : []),
+    ] : [
+        <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
+        ...(growthOverviewEnabled ? [<PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={false} sectionFilteringEnabled showRadar={sectionEnabled('growth-radar')} showSubjectResults={sectionEnabled('subject-results')} showHighlights={sectionEnabled('highlights')} showOverall={sectionEnabled('overall')} />] : []),
+        ...(sectionEnabled('school-achievement') ? additionalA4Pages : []),
+        ...(sectionEnabled('growth-suggestions') ? [<PageComprehensiveGrowthAdvice key="advice" student={student} mode="a4" id="section-future-suggestions" />] : []),
+        ...(sectionEnabled('parent-activities') ? [<PageSimpleParentChildActivities key="activities" student={student} mode="a4" id="section-activities" />] : []),
+    ];
+
+    const a4PagesLegacy = isMale ? [
+        <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
         <PageTeacherAttention key="teacher" mode="a4" />,
         <PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={true} />,
         ...additionalA4Pages,
@@ -2272,12 +2370,17 @@ const TermReportView: React.FC<TermReportViewProps> = ({
         <PageSimpleParentChildActivities key="activities" student={student} mode="a4" />
     ];
 
-    const totalPages = a4Pages.length;
+    const resolvedA4Pages = isConfiguredPreview ? a4Pages : a4PagesLegacy;
+
+    const totalPages = resolvedA4Pages.length;
+    useEffect(() => {
+        setCurrentPage(page => Math.min(page, Math.max(0, totalPages - 1)));
+    }, [totalPages]);
     const handlePrevPage = () => setCurrentPage(page => Math.max(0, page - 1));
     const handleNextPage = () => setCurrentPage(page => Math.min(totalPages - 1, page + 1));
     const handlePrint = () => window.print();
 
-    const mobilePages = isMale ? [
+    const mobilePagesLegacy = isMale ? [
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
         <PageTeacherAttention key="teacher" mode="mobile" id="section-teacher" />,
         <PageGrowthOverview key="growth" student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={true} />,
@@ -2297,6 +2400,30 @@ const TermReportView: React.FC<TermReportViewProps> = ({
         <PageComprehensiveGrowthAdvice key="advice" student={student} mode="mobile" id="section-advice" />,
         <PageSimpleParentChildActivities key="activities" student={student} mode="mobile" id="section-activities" />
     ];
+
+    const mobilePagesConfigured = isMale ? [
+        <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
+        ...(sectionEnabled('teacher-attention') ? [<PageTeacherAttention key="teacher" mode="mobile" id="section-teacher" />] : []),
+        ...(growthOverviewEnabled ? [<PageGrowthOverview key="growth" student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={false} sectionFilteringEnabled showRadar={sectionEnabled('growth-radar')} showSubjectResults={sectionEnabled('subject-results')} showHighlights={sectionEnabled('highlights')} showOverall={sectionEnabled('overall')} />] : []),
+        ...(sectionEnabled('school-achievement') ? additionalMobilePages : []),
+        ...(sectionEnabled('future-potential') ? [<PageFuturePotential key="future" mode="mobile" id="section-future" />] : []),
+        ...(sectionEnabled('growth-suggestions') ? [<PageFutureGrowthSuggestions key="future-suggestions" mode="mobile" id="section-future-suggestions" />] : []),
+        ...(sectionEnabled('parent-activities') ? [<PageParentChildActivities key="activities" mode="mobile" id="section-activities" />] : []),
+        ...(sectionEnabled('parent-feedback') ? [<PageParentFeedback key="parent" mode="mobile" id="section-parent" />] : []),
+        ...(sectionEnabled('student-feedback') ? [<PageStudentFeedback key="student" mode="mobile" id="section-student" />] : []),
+    ] : [
+        <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
+        ...(sectionEnabled('teacher-attention') ? [<PageTeacherAttention key="teacher" mode="mobile" id="section-teacher" />] : []),
+        ...(growthOverviewEnabled ? [<PageGrowthOverview key="growth" student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={false} sectionFilteringEnabled showRadar={sectionEnabled('growth-radar')} showSubjectResults={sectionEnabled('subject-results')} showHighlights={sectionEnabled('highlights')} showOverall={sectionEnabled('overall')} />] : []),
+        ...(sectionEnabled('school-achievement') ? additionalMobilePages : []),
+        ...(sectionEnabled('future-potential') ? [<PageFuturePotential key="future" mode="mobile" id="section-future" />] : []),
+        ...(sectionEnabled('growth-suggestions') ? [<PageComprehensiveGrowthAdvice key="advice" student={student} mode="mobile" id="section-future-suggestions" />] : []),
+        ...(sectionEnabled('parent-activities') ? [<PageSimpleParentChildActivities key="activities" student={student} mode="mobile" id="section-activities" />] : []),
+        ...(sectionEnabled('parent-feedback') ? [<PageParentFeedback key="parent" mode="mobile" id="section-parent" />] : []),
+        ...(sectionEnabled('student-feedback') ? [<PageStudentFeedback key="student" mode="mobile" id="section-student" />] : []),
+    ];
+
+    const resolvedMobilePages = isConfiguredPreview ? mobilePagesConfigured : mobilePagesLegacy;
 
 
     return (
@@ -2380,18 +2507,18 @@ const TermReportView: React.FC<TermReportViewProps> = ({
                     <>
                         {viewMode === 'mobile' && (
                             <div className="w-full bg-white overflow-hidden pb-10 print:hidden">
-                                {mobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
+                                {resolvedMobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
                                 <div className="p-8 text-center text-[10px] text-slate-300 uppercase tracking-widest font-bold">- End of Report -</div>
                             </div>
                         )}
 
                         {viewMode === 'a4' && (
                             <div className="w-full bg-slate-100 py-4 print:hidden">
-                                {a4Pages[currentPage]}
+                                {resolvedA4Pages[currentPage]}
                             </div>
                         )}
                         <div className="hidden print:block w-full">
-                            {a4Pages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
+                            {resolvedA4Pages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
                         </div>
                     </>
                 )}

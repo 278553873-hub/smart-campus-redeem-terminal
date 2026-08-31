@@ -37,8 +37,8 @@ for (const required of [
   "aria-label={viewMode === 'a4' ? '返回手机报告' : '预览A4报告'}",
   'aria-label="打印A4报告"',
   "{viewMode === 'a4' && !showSubjectSubPage && (",
-  '{a4Pages[currentPage]}',
-  '{a4Pages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}',
+  '{resolvedA4Pages[currentPage]}',
+  '{resolvedA4Pages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}',
   '] : additionalMobileAnchorItems;',
   'additionalMobilePages = [],',
   'additionalA4Pages = [],',
@@ -46,7 +46,8 @@ for (const required of [
   '...additionalA4Pages,',
   "{viewMode === 'mobile' && isMale && mobileAnchorItems.length > 0 && (",
   '<MobileAnchorBar activeSection={activeSection} onNavigate={scrollToSection} items={mobileAnchorItems} />',
-  '{mobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}',
+  '{resolvedMobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}',
+  'scrollContainer.scrollTo({ top: Math.max(0, targetTop), behavior: \'smooth\' });',
   '<PageSubjectReportsWithTabs',
   "onClick={showSubjectSubPage ? () => setShowSubjectSubPage(false) : onBack}",
   "{showSubjectSubPage ? '学科报告' : '学期报告'}",
@@ -89,6 +90,10 @@ for (const required of [
   if (!subjectReportPage.includes(required)) {
     throw new Error(`学科报告页缺少中文化或返回逻辑配套结构：${required}`);
   }
+}
+
+if (mainView.includes("el.scrollIntoView({ behavior: 'smooth' })")) {
+  throw new Error('快捷导航不应滚动手机壳外层页面');
 }
 
 const subjectIndex = growthOverview.indexOf('<SubjectGradesChart');

@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import {
   BookOpenCheck,
-  Check,
   FileText,
   Footprints,
+  LockKeyhole,
   MapPinned,
   Smartphone,
   Sparkles,
@@ -20,6 +20,7 @@ import TermReportView, {
   ReportSectionHeader,
   ReportTag,
   type TermReportAnchorItem,
+  type TermReportSectionId,
 } from '../mobile-app/views/TermReportView';
 
 type CustomModuleId = 'school-profile' | 'behavior-trace' | 'term-change' | 'school-achievement';
@@ -63,10 +64,42 @@ const customModules: CustomModuleDefinition[] = [
   },
 ];
 
+type ReportConfigSectionId = TermReportSectionId;
+
+interface ReportConfigSection {
+  id: ReportConfigSectionId;
+  label: string;
+  defaultEnabled: boolean;
+  locked?: boolean;
+}
+
+const reportConfigSections: ReportConfigSection[] = [
+  { id: 'cover', label: '封面', defaultEnabled: true, locked: true },
+  { id: 'teacher-attention', label: '教师关注', defaultEnabled: false },
+  { id: 'growth-radar', label: '五育雷达图', defaultEnabled: true },
+  { id: 'subject-results', label: '学科成绩', defaultEnabled: true },
+  { id: 'school-achievement', label: '专题成果', defaultEnabled: true },
+  { id: 'highlights', label: '高光时刻', defaultEnabled: false },
+  { id: 'overall', label: '总体评价', defaultEnabled: true },
+  { id: 'future-potential', label: '未来潜力', defaultEnabled: false },
+  { id: 'growth-suggestions', label: '成长建议', defaultEnabled: true },
+  { id: 'parent-activities', label: '亲子活动指南', defaultEnabled: true },
+  { id: 'parent-feedback', label: '家长自评', defaultEnabled: false },
+  { id: 'student-feedback', label: '学生自评', defaultEnabled: false },
+];
+
+const defaultEnabledSections = reportConfigSections.reduce<Record<ReportConfigSectionId, boolean>>(
+  (result, section) => {
+    result[section.id] = section.defaultEnabled;
+    return result;
+  },
+  {} as Record<ReportConfigSectionId, boolean>,
+);
+
 const demoStudent: Student = {
   id: 'school-demo-li-yiyang',
   name: '李亦洋',
-  gender: 'male',
+  gender: 'female',
   grade: '五年级',
   class: '2021级二班',
   studentNo: '20210200324',
@@ -193,34 +226,63 @@ const createModulePages = (mode: ReportDisplayMode, enabledModules: Record<Custo
 
 const TermReportRedesignDemo: React.FC = () => {
   const [previewMode, setPreviewMode] = useState<ReportDisplayMode>('mobile');
-  const [enabledModules, setEnabledModules] = useState<Record<CustomModuleId, boolean>>({
-    'school-profile': true,
-    'behavior-trace': true,
-    'term-change': true,
-    'school-achievement': true,
-  });
-  const [activeModuleId, setActiveModuleId] = useState<CustomModuleId | 'original'>('original');
+  const [enabledSections, setEnabledSections] = useState<Record<ReportConfigSectionId, boolean>>(defaultEnabledSections);
+  const [activeSectionId, setActiveSectionId] = useState<ReportConfigSectionId>('cover');
 
   const additionalMobilePages = useMemo(
-    () => createModulePages('mobile', enabledModules),
-    [enabledModules],
+    () => createModulePages('mobile', {
+      'school-profile': false,
+      'behavior-trace': false,
+      'term-change': false,
+      'school-achievement': enabledSections['school-achievement'],
+    }),
+    [enabledSections],
   );
   const additionalA4Pages = useMemo(
-    () => createModulePages('a4', enabledModules),
-    [enabledModules],
+    () => createModulePages('a4', {
+      'school-profile': false,
+      'behavior-trace': false,
+      'term-change': false,
+      'school-achievement': enabledSections['school-achievement'],
+    }),
+    [enabledSections],
   );
   const additionalMobileAnchorItems = useMemo<TermReportAnchorItem[]>(
-    () => customModules
-      .filter(module => enabledModules[module.id])
-      .map(module => ({ id: `section-${module.id}`, label: module.label.replace('校本', '') })),
-    [enabledModules],
+    () => enabledSections['school-achievement']
+      ? [{ id: 'section-school-achievement', label: '专题成果' }]
+      : [],
+    [enabledSections],
   );
 
-  const focusSection = (id: CustomModuleId | 'original') => {
-    setActiveModuleId(id);
-    const sectionId = id === 'original' ? 'section-growth' : `section-${id}`;
+  const focusSection = (id: ReportConfigSectionId) => {
+    setActiveSectionId(id);
     requestAnimationFrame(() => {
       const scrollContainer = document.getElementById('report-scroll-container');
+      if (id === 'cover') {
+        scrollContainer?.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      const sectionId = id === 'teacher-attention'
+        ? 'section-teacher'
+        : id === 'growth-radar'
+          ? 'section-growth-radar'
+          : id === 'subject-results'
+            ? 'section-subject-results'
+            : id === 'school-achievement'
+              ? 'section-school-achievement'
+              : id === 'highlights'
+                ? 'section-highlights'
+                : id === 'overall'
+                  ? 'section-overall'
+                  : id === 'future-potential'
+                    ? 'section-future'
+                    : id === 'growth-suggestions'
+                      ? 'section-future-suggestions'
+                      : id === 'parent-activities'
+                        ? 'section-activities'
+                        : id === 'parent-feedback'
+                          ? 'section-parent'
+                          : 'section-student';
       const target = scrollContainer?.querySelector<HTMLElement>(`[id="${sectionId}"]`);
       if (!scrollContainer || !target) return;
       const targetTop = target.getBoundingClientRect().top
@@ -230,9 +292,10 @@ const TermReportRedesignDemo: React.FC = () => {
     });
   };
 
-  const toggleModule = (id: CustomModuleId) => {
-    setEnabledModules(current => ({ ...current, [id]: !current[id] }));
-    if (activeModuleId === id && enabledModules[id]) setActiveModuleId('original');
+  const toggleSection = (id: ReportConfigSectionId) => {
+    if (id === 'cover') return;
+    setEnabledSections(current => ({ ...current, [id]: !current[id] }));
+    if (activeSectionId === id && enabledSections[id]) setActiveSectionId('cover');
   };
 
   return (
@@ -270,30 +333,37 @@ const TermReportRedesignDemo: React.FC = () => {
             <h2 className="text-sm font-bold text-slate-900">报告板块</h2>
           </div>
           <div className="p-2">
-            <button type="button" onClick={() => focusSection('original')} className={`flex min-h-14 w-full items-center justify-between rounded-md px-3 text-left ${activeModuleId === 'original' ? 'bg-red-50 text-red-700' : 'text-slate-700 hover:bg-slate-50'}`}>
-              <span><span className="block text-sm font-semibold">原有报告</span><span className="mt-1 block text-[11px] text-slate-400">完整保留现有样式与交互</span></span>
-              <Check className="h-4 w-4 shrink-0 text-emerald-600" />
-            </button>
-            <div className="my-2 border-t border-slate-100" />
-            {customModules.map(module => (
-              <div key={module.id} className={`flex min-h-16 items-center rounded-md ${activeModuleId === module.id ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
-                <button type="button" onClick={() => enabledModules[module.id] && focusSection(module.id)} className="min-w-0 flex-1 px-3 py-2 text-left">
-                  <span className={`block truncate text-sm font-semibold ${activeModuleId === module.id ? 'text-red-700' : 'text-slate-700'}`}>{module.label}</span>
-                  <span className="mt-1 block text-[11px] text-slate-400">本次新增</span>
-                </button>
-                <button type="button" role="switch" aria-checked={enabledModules[module.id]} aria-label={`${enabledModules[module.id] ? '关闭' : '开启'}${module.label}`} onClick={() => toggleModule(module.id)} className={`relative mr-3 h-5 w-9 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${enabledModules[module.id] ? 'bg-red-600' : 'bg-slate-300'}`}>
-                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${enabledModules[module.id] ? 'left-0.5 translate-x-4' : 'left-0.5'}`} />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="mx-4 mt-2 border-t border-slate-100 pt-4">
-            <div className="text-xs font-bold text-slate-700">原有内容</div>
-            <div className="mt-3 space-y-2 text-xs text-slate-500">
-              {['报告封面', '成长概览与学科结果', '总体评价', '未来成长建议', '学科详细报告'].map(item => (
-                <div key={item} className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600" />{item}</div>
-              ))}
-            </div>
+            {reportConfigSections.map(section => {
+              const isEnabled = enabledSections[section.id];
+              const isActive = activeSectionId === section.id;
+              return (
+                <div key={section.id} className={`flex min-h-12 items-center rounded-md ${isActive ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
+                  <button
+                    type="button"
+                    onClick={() => focusSection(section.id)}
+                    className={`min-w-0 flex-1 px-3 py-2 text-left text-sm font-semibold ${isActive ? 'text-red-700' : 'text-slate-700'}`}
+                  >
+                    <span className="block truncate">{section.label}</span>
+                  </button>
+                  {section.locked ? (
+                    <span className="mr-3 flex h-8 w-8 items-center justify-center text-slate-400" aria-label="封面固定开启">
+                      <LockKeyhole className="h-4 w-4" />
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isEnabled}
+                      aria-label={`${isEnabled ? '关闭' : '开启'}${section.label}`}
+                      onClick={() => toggleSection(section.id)}
+                      className={`relative mr-3 h-5 w-9 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${isEnabled ? 'bg-red-600' : 'bg-slate-300'}`}
+                    >
+                      <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${isEnabled ? 'left-0.5 translate-x-4' : 'left-0.5'}`} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </aside>
 
@@ -309,6 +379,8 @@ const TermReportRedesignDemo: React.FC = () => {
                 additionalMobileAnchorItems={additionalMobileAnchorItems}
                 initialViewMode="mobile"
                 showViewModeToggle={false}
+                enabledSections={enabledSections}
+                showLegacyOptionalSections={false}
               />
             </PhoneMockup>
           ) : (
@@ -322,6 +394,8 @@ const TermReportRedesignDemo: React.FC = () => {
                 additionalMobileAnchorItems={additionalMobileAnchorItems}
                 initialViewMode="a4"
                 showViewModeToggle={false}
+                enabledSections={enabledSections}
+                showLegacyOptionalSections={false}
               />
             </div>
           )}

@@ -17,6 +17,7 @@ import {
     ChartIcon,
     WechatMoreIcon,
     GiftIcon,
+    AwardIcon,
     ScanFaceIcon,
     ShieldIcon,
     FileTextIcon,
@@ -55,6 +56,7 @@ interface ClassListViewProps {
     onViewClassReport: (classId: string) => void;
     onViewLeaderboard: () => void;
     onViewRewardVerification: (classId: string) => void;
+    onViewMedalIssuance: (classId: string) => void;
     onBatchEditStudents: (classId: string) => void;
     onViewFaceUpdate: (classId: string) => void;
     onViewBankPassword: (classId: string) => void;
@@ -110,6 +112,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onViewClassReport,
     onViewLeaderboard,
     onViewRewardVerification,
+    onViewMedalIssuance,
     onBatchEditStudents,
     onViewFaceUpdate,
     onViewBankPassword,
@@ -267,6 +270,12 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     icon: GiftIcon,
                     tone: 'reward' as const,
                     onClick: () => runClassAction(onViewRewardVerification),
+                },
+                {
+                    label: '颁发奖章',
+                    icon: AwardIcon,
+                    tone: 'reward' as const,
+                    onClick: () => runClassAction(onViewMedalIssuance),
                 },
             ],
         } : null,
