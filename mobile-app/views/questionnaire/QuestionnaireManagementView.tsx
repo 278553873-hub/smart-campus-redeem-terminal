@@ -1652,7 +1652,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     setRecords(readQuestionnaires());
     setShowRecordMenu(false);
     setActiveListActionId('');
-    setPageMode('archived-list');
+    setListFilter('ended');
+    setPageMode('list');
     showToast('采集已归档');
   };
 

@@ -50,15 +50,15 @@ import {
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import TeacherMobileScreenBackground from './components/TeacherMobileScreenBackground';
 import TeacherBottomNavigation, { type TeacherBottomTab } from './components/TeacherBottomNavigation';
+import TeacherRecordInputBar from './components/TeacherRecordInputBar';
 import { teacherBrandCssVariables } from './styles/teacherMobileTokens';
 import type { TeacherGradientPreviewConfig } from './styles/teacherGradientPreview';
 import { DeviceWrapper } from '../components/DeviceWrapper';
 import PhoneMockup from '../components/PhoneMockup';
 import { ASSETS } from './assets/images';
 import {
-    CameraIcon, VolumeIcon,
     PlusIcon, FileIcon, CloseIcon, ChevronDownIcon, AlertCircleIcon,
-    CheckCircleIcon, KeyboardIcon
+    CheckCircleIcon
 } from './components/Icons';
 
 import {
@@ -74,6 +74,15 @@ import {
     BellIcon as BellLucide, ActivityIcon as ActivityBaseLucide, Camera as CameraLucideComponent, History as HistoryLucide, ChevronLeft as ChevronLeftLucide, ShieldCheck as ShieldCheckLucide,
     Smartphone as SmartphoneLucide, FileText as FileTextLucide, BookOpen as BookOpenLucide, User as UserLucideComponent, MoreHorizontal as MoreHorizontalLucide, Activity as ActivityComponent
 } from 'lucide-react';
+
+import TeacherCampaignModal from './components/TeacherCampaignModal';
+import {
+    getNextTeacherCampaign,
+    readTeacherCampaigns,
+    recordTeacherCampaignEvent,
+    TEACHER_CAMPAIGNS_UPDATED_EVENT,
+    type TeacherCampaign,
+} from './data/teacherCampaigns';
 
 import './styles/navigation.css';
 
@@ -134,6 +143,7 @@ const StudentCoinDetailView = lazy(() => import('./views/StudentCoinDetailView')
 const QuestionnaireManagementView = lazy(() => import('./views/questionnaire/QuestionnaireManagementView'));
 const ArchiveDesignView = lazy(() => import('./views/archive-design/ArchiveDesignView'));
 const StudentArchiveView = lazy(() => import('./views/archive-design/StudentArchiveView'));
+const TeacherIndicatorCatalogView = lazy(() => import('./views/TeacherIndicatorCatalogView'));
 
 const TERMS = [
     "2025-2026学年 下学期",
@@ -346,7 +356,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'indicator_catalog' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'face_update' | 'bank_password' | 'homework_entry';
 
 const PRINCIPAL_REPORT_VIEWS: ViewState[] = [
     'principal_weekly_report',
@@ -365,6 +375,7 @@ const HEADTEACHER_REPORT_VIEWS: ViewState[] = [
 ];
 
 const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
+    'indicator_catalog',
     'class_info',
     'class_detail',
     'student_add',
@@ -406,7 +417,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const pendingScrollTopRef = useRef<number | null>(0);
 
     const getActiveTabIndex = (view: ViewState): number => {
-        if (view === 'home_log' || view === 'record_input') return 0;
+        if (view === 'home_log' || view === 'indicator_catalog' || view === 'record_input') return 0;
         if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'student_add' || view === 'class_report' || view === 'student_team_detail' || view === 'student_batch_edit' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
         if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'weekly_duty_schedule' || view === 'homework_batch_import' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
         return 0;
@@ -483,6 +494,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const canRecordClassForActiveSpace = canTeacherSpaceRecordClass(activeTeacherSpace);
     const teacherProfile = teacherProfilesBySpace[activeTeacherSpace.id] ?? DEFAULT_TEACHER_PROFILE;
     const activeTeacherId = teacherProfile.id;
+    const activeTeacherEdition: TeacherCampaignEdition = activeTeacherSpace.type === 'school' ? 'school' : 'personal';
     const isSchoolManager = activeTeacherSpace.type === 'school' && Boolean(teacherProfile.departmentId);
     const activeClassMembershipById = CLASS_MEMBERSHIP_BY_SPACE[activeTeacherSpace.id] ?? {};
     const activeSpaceClasses = activeTeacherSpace.type === 'school'
@@ -635,10 +647,38 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         body: '数据量较大，稍后可以在学生详情页进行查看',
     });
     const [isOverlayActive, setIsOverlayActive] = useState(false);
+    const [teacherCampaigns, setTeacherCampaigns] = useState<TeacherCampaign[]>(() => readTeacherCampaigns());
+    const [activeCampaignModal, setActiveCampaignModal] = useState<TeacherCampaign | null>(null);
+    const [campaignOpportunityConsumed, setCampaignOpportunityConsumed] = useState(false);
+
+    useEffect(() => {
+        const refreshCampaigns = () => setTeacherCampaigns(readTeacherCampaigns());
+        window.addEventListener(TEACHER_CAMPAIGNS_UPDATED_EVENT, refreshCampaigns);
+        window.addEventListener('storage', refreshCampaigns);
+        return () => {
+            window.removeEventListener(TEACHER_CAMPAIGNS_UPDATED_EVENT, refreshCampaigns);
+            window.removeEventListener('storage', refreshCampaigns);
+        };
+    }, []);
 
     // Keyboard States
     const [showKeyboard, setShowKeyboard] = useState(false);
     const [inputText, setInputText] = useState('');
+
+    useEffect(() => {
+        if (!isAuthenticated || activeCampaignModal || campaignOpportunityConsumed) return undefined;
+        const eligibleSurface = ['home_log', 'class_list', 'me'].includes(currentView);
+        const safeToShow = eligibleSurface && !showKeyboard && !isOverlayActive && !showPlusMenu;
+        if (!safeToShow) return undefined;
+        const timer = window.setTimeout(() => {
+            const campaign = getNextTeacherCampaign(teacherCampaigns, activeTeacherId, activeTeacherEdition);
+            if (!campaign) return;
+            recordTeacherCampaignEvent(campaign, activeTeacherId, 'impression');
+            setCampaignOpportunityConsumed(true);
+            setActiveCampaignModal(campaign);
+        }, 900);
+        return () => window.clearTimeout(timer);
+    }, [activeCampaignModal, activeTeacherEdition, activeTeacherId, campaignOpportunityConsumed, currentView, isAuthenticated, isOverlayActive, showKeyboard, showPlusMenu, teacherCampaigns]);
 
     // Close plus menu when clicking outside
     useEffect(() => {
@@ -728,6 +768,29 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         setIsOverlayActive(false);
         setShowKeyboard(false);
         setInputText('');
+        setActiveCampaignModal(null);
+        setCampaignOpportunityConsumed(false);
+    };
+
+    const handleCampaignJump = (campaign: TeacherCampaign) => {
+        const target = campaign.actionTarget?.trim();
+        if (!target) return;
+
+        recordTeacherCampaignEvent(campaign, activeTeacherId, 'click');
+        setActiveCampaignModal(null);
+
+        if (/^https?:\/\//i.test(target)) {
+            window.open(target, '_blank', 'noopener,noreferrer');
+            return;
+        }
+
+        const internalRoutes: Record<string, ViewState> = {
+            '/teacher/records': 'home_log',
+            '/teacher/classes': 'class_list',
+            '/teacher/me': 'me',
+        };
+        const targetView = internalRoutes[target];
+        if (targetView) switchTab(targetView);
     };
 
     const handleTeacherLogout = () => {
@@ -1420,74 +1483,23 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         const selectedTargetUnit = isGroupSelectionTarget ? '个小组' : '人';
         const emptySelectionPrompt = isGroupSelectionTarget ? '请选择小组' : '请选择学生';
         const hasSelectionTarget = !isMultiSelectMode || selectedTargetCount > 0;
-
-        if (showKeyboard) {
-            return (
-                <div className="pointer-events-none absolute bottom-[292px] left-0 right-0 z-[85] mx-auto max-w-md px-4">
-                    <div className="pointer-events-auto mx-auto grid h-16 max-w-[350px] grid-cols-[minmax(0,1fr)_48px] items-center gap-1 rounded-[var(--tm-radius-card)] bg-white px-2.5 [box-shadow:var(--tm-shadow-floating)]">
-                        <div
-                            role="textbox"
-                            aria-label="记录内容"
-                            aria-readonly="true"
-                            className={`min-w-0 truncate px-3 text-[15px] font-medium ${inputText ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}
-                        >
-                            {inputText || '输入记录内容'}
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setShowKeyboard(false)}
-                            aria-label="切换到语音记录"
-                            className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-inner)] text-[var(--tm-text-primary)] transition active:scale-95 active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)]"
-                        >
-                            <VolumeIcon className="h-[22px] w-[22px]" />
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
         return (
-            <div className={`pointer-events-none absolute ${showTabBar ? 'bottom-[82px]' : 'bottom-4'} left-0 right-0 z-[60] mx-auto max-w-md px-4 transition-all duration-300`}>
-                <div className="pointer-events-auto mx-auto grid h-16 max-w-[350px] grid-cols-[48px_minmax(0,1fr)_48px] items-center rounded-[var(--tm-radius-card)] bg-white px-2.5 [box-shadow:var(--tm-shadow-floating)]">
-                    <button
-                        onClick={() => handleStartRecord(targetIds, 'camera')}
-                        disabled={!hasSelectionTarget}
-                        aria-label={hasSelectionTarget ? '拍照记录' : emptySelectionPrompt}
-                        className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-inner)] text-[var(--tm-text-primary)] transition active:scale-95 active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)] disabled:cursor-not-allowed disabled:opacity-35 disabled:active:scale-100"
-                    >
-                        <CameraIcon className="h-[22px] w-[22px]" />
-                    </button>
-
-                    <button
-                        type="button"
-                        onPointerDown={(event) => beginVoiceRecording(event, targetIds)}
-                        onContextMenu={(event) => event.preventDefault()}
-                        disabled={!hasSelectionTarget}
-                        aria-label={!hasSelectionTarget ? emptySelectionPrompt : voicePressState === 'idle' ? isMultiSelectMode ? `按住说话，已选${selectedTargetCount}${selectedTargetUnit}` : '按住说话' : voicePressState === 'canceling' ? '松开取消' : '正在录音，松开发送'}
-                        className={`flex h-11 min-w-0 touch-none select-none items-center justify-center rounded-[var(--tm-radius-inner)] px-4 text-[15px] font-semibold transition ${voicePressState === 'idle'
-                            ? 'text-[var(--tm-text-primary)] active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] disabled:cursor-not-allowed disabled:text-[var(--tm-text-disabled)] disabled:active:scale-100'
-                            : voicePressState === 'canceling'
-                                ? 'bg-[var(--tm-status-negative-soft)] text-[var(--tm-status-negative-strong)]'
-                                : 'bg-[var(--tm-brand-primary)] text-white'
-                            }`}
-                    >
-                        <span>{!hasSelectionTarget
-                            ? emptySelectionPrompt
-                            : voicePressState === 'idle'
-                                ? isMultiSelectMode ? `按住说话 · ${selectedTargetCount}${selectedTargetUnit}` : '按住说话'
-                                : voicePressState === 'canceling' ? '松开取消' : '松开发送'}</span>
-                    </button>
-
-                    <button
-                        onClick={() => setShowKeyboard(true)}
-                        disabled={!hasSelectionTarget}
-                        aria-label={!hasSelectionTarget ? emptySelectionPrompt : isMultiSelectMode ? `已选${selectedTargetCount}${selectedTargetUnit}，文字记录` : '文字记录'}
-                        className="relative flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-inner)] text-[var(--tm-text-primary)] transition active:scale-95 active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-brand-primary)] disabled:cursor-not-allowed disabled:opacity-35 disabled:active:scale-100"
-                    >
-                        <KeyboardIcon className="h-[22px] w-[22px]" />
-                    </button>
-                </div>
-            </div>
+            <TeacherRecordInputBar
+                showKeyboard={showKeyboard}
+                showTabBar={showTabBar}
+                inputText={inputText}
+                hasSelectionTarget={hasSelectionTarget}
+                emptySelectionPrompt={emptySelectionPrompt}
+                isMultiSelectMode={isMultiSelectMode}
+                selectedTargetCount={selectedTargetCount}
+                selectedTargetUnit={selectedTargetUnit}
+                voicePressState={voicePressState}
+                onCloseKeyboard={() => setShowKeyboard(false)}
+                onCameraClick={() => handleStartRecord(targetIds, 'camera')}
+                onVoicePointerDown={event => beginVoiceRecording(event, targetIds)}
+                onVoiceContextMenu={event => event.preventDefault()}
+                onKeyboardClick={() => setShowKeyboard(true)}
+            />
         );
     };
 
@@ -1497,7 +1509,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const primaryTabViewKey = showTabBar ? 'teacher-primary-tabs' : currentView;
     const pageTransitionClass = showTabBar ? '' : 'animate-page-enter';
     const isHeadteacherAssistantView = currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2';
-    const viewHandlesScroll = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule'].includes(currentView) || isHeadteacherAssistantView;
+    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule'].includes(currentView) || isHeadteacherAssistantView;
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView);
@@ -1599,6 +1611,16 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                 showDeviceFrame={showPhoneShell}
                 contentTopInsetMode={currentView === 'student_detail' ? 'none' : 'status-bar'}
                 screenBackground={getPhoneScreenBackground()}
+                screenOverlay={(
+                    <TeacherCampaignModal
+                        campaign={activeCampaignModal}
+                        onClose={() => {
+                            if (activeCampaignModal) recordTeacherCampaignEvent(activeCampaignModal, activeTeacherId, 'close');
+                            setActiveCampaignModal(null);
+                        }}
+                        onOpenDetail={() => activeCampaignModal && handleCampaignJump(activeCampaignModal)}
+                    />
+                )}
             >
 
                     <div className={`flex-1 flex flex-col relative overflow-hidden ${hasStudentDetailBackground ? 'bg-transparent' : hasPlainBackground ? 'bg-[var(--tm-page-plain-content-bg)]' : hasScreenLevelBackground ? 'bg-transparent' : 'bg-white'}`}>
@@ -1606,7 +1628,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-11 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />
                         )}
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_add' && currentView !== 'student_team_detail' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'indicator_catalog' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_add' && currentView !== 'student_team_detail' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -1646,6 +1668,14 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     onToggleModal={setIsOverlayActive}
                                     addDemoTopBreathingSpace={!showPhoneShell}
                                     canRecordClass={canRecordClassForActiveSpace}
+                                    onViewIndicators={() => navigateTo('indicator_catalog')}
+                                />
+                            )}
+
+                            {currentView === 'indicator_catalog' && (
+                                <TeacherIndicatorCatalogView
+                                    scope={activeLogTab}
+                                    onBack={goBack}
                                 />
                             )}
 

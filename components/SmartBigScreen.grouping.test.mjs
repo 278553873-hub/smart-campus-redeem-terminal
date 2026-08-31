@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const source = readFileSync(new URL('./SmartBigScreen.tsx', import.meta.url), 'utf8');
+const performanceSource = readFileSync(new URL('../mobile-app/components/student-performance/StudentPerformanceMeta.tsx', import.meta.url), 'utf8');
+
+const requireText = (text, message) => assert.ok(source.includes(text), message);
+
+requireText('studentGroupAvatarOptions', 'PC小组卡片与设置应复用手机端的系统头像目录');
+requireText('getGroupCardDisplaySettings', 'PC小组卡片应复用统一展示设置');
+requireText('createDemoGroupPerformanceSummary', 'PC小组卡片应接入小组统计摘要');
+requireText('groupCountCheckpoints', 'PC小组重新计数应维护独立统计起点');
+requireText("const [groupPlans, setGroupPlans] = useState<GroupPlan[]>", '分组方案应为可编辑状态，不应继续使用只读派生数据');
+requireText('isActiveGroupPlanOwnedByCurrentTeacher', '分组管理能力应受方案创建人权限约束');
+requireText('新建另一套分组', '方案菜单应支持创建新方案');
+requireText('分组方案名称', '新方案应先填写方案名称');
+requireText('第一个小组名称', '新方案应同时定义第一个小组名称');
+requireText('添加小组', '当前教师自己的方案应支持继续添加小组');
+requireText("type GroupDrawerMode = 'view' | 'adjust' | 'settings' | 'create-members'", '小组详情、成员调整和设置应在同一抽屉流程中渐进披露');
+requireText('调整学生', '小组详情应支持调整成员');
+requireText('仅看未分组', '成员调整应支持只查看未分组学生');
+requireText('小组头像', '小组设置应支持选择正式头像');
+requireText('confirmDissolveGroup', '小组详情应提供受权限保护的解散能力');
+requireText("viewMode === 'group' ? '小组卡片展示' : '学生卡片展示'", '更多操作必须按当前视图区分学生和小组展示设置');
+requireText("startRecountSelection(viewMode)", '更多操作中的重新计数必须作用于当前视图对象');
+requireText('updateGroupPerformance(targetGroupIds, scoreChange)', '小组评价应更新小组自身统计');
+requireText("updateGroupPerformance(record.groupIds ?? [], record.scoreChange, 'revert')", '撤销小组评价时应同步恢复小组统计');
+requireText('groupIds: [matchedGroup.id]', '语音识别到小组时应保留小组目标');
+requireText('updateGroupPerformance(targets.groupIds ?? [], scoreChange)', '语音小组评价应更新小组统计');
+requireText("[nextGroup.id]: { praiseCount: 0, criticismCount: 0 }", '新建小组统计必须从零开始');
+requireText("const GROUP_DRAWER_WIDTH = 'min(560px, calc(100vw - 32px))'", '小组相关侧栏应共享紧凑且适配窄视口的宽度规则');
+requireText('width={GROUP_DRAWER_WIDTH}', '小组抽屉必须使用统一侧栏宽度');
+requireText('zIndex={10010}', '小组抽屉应高于演示环境切换器，避免右侧控件侵入内容');
+requireText('组内学生', '小组详情应使用明确的成员区标题承载调整入口');
+requireText('grid-cols-[repeat(auto-fill,136px)] justify-start', '小组成员卡片应从内容区左侧稳定排列');
+requireText('absolute right-2 top-[58px]', '方案管理操作应使用局部浮层，不得撑高方案列表项');
+requireText("const groupCardHeightClassName = groupCardSpan === 2 ? 'h-[120px]' : 'h-[112px]'", '添加小组入口必须与当前尺寸的小组卡片等高');
+requireText('bodyStyle={{ padding: 0 }}', '所有小组抽屉模式必须复用同一内容内边距规则');
+requireText('const GroupDrawerBody', '小组详情、新增、调整与设置应复用统一抽屉内容容器');
+requireText('groupEditorStudentSections', '关闭仅看未分组后，学生选择结果必须按现有小组组织');
+requireText('GroupMemberSelectCard', '添加小组应使用统一的头像、学号与姓名选择卡片');
+requireText('grid grid-cols-5 gap-2', 'PC抽屉内学生卡片应保持紧凑且稳定的五列布局');
+requireText('block min-w-0 truncate text-[12px]', '小组卡片成员姓名应沿用手机端的单行省略展示');
+requireText('const visibleNameCount = 3', '小组卡片应沿用手机端最多展示三个成员姓名的规则');
+requireText('GroupPerformanceMeta', '小组评价统计应复用手机端的带底色统计组件');
+requireText('orientation="vertical"', '小组评价统计应保持正负向纵向底色块布局');
+requireText('grid-cols-[repeat(auto-fill,minmax(152px,1fr))]', 'PC小组卡片需要比学生卡片更宽的承载空间');
+requireText('等${group.memberCount}名学生', '超过三个成员时应沿用手机端的等人数文案');
+requireText('，共${group.memberCount}名学生', '不超过三个成员时应沿用手机端的共人数文案');
+requireText('const groupMoveNotice = useMemo', '跨组选择提醒应由当前选择状态实时汇总');
+requireText('已选：${nameSummary}', '跨组选择提醒应展示已选学生摘要');
+assert.doesNotMatch(source, /const toggleGroupDraftMember[\s\S]{0,500}setToastMsg/, '跨组选择提醒不应使用短时全局 toast 定时消失');
+assert.ok(performanceSource.includes('var(--tm-student-praise-soft,#ecfdf5)'), 'PC页面缺少手机端统计组件主题变量时应使用正向统计底色兜底');
+assert.ok(performanceSource.includes('var(--tm-student-criticism-soft,#fff1f2)'), 'PC页面缺少手机端统计组件主题变量时应使用负向统计底色兜底');
+requireText('z-[10030]', '全局提示必须高于抽屉和弹窗层级');
+requireText('role="status" aria-live="polite"', '抽屉内学生移动提示应使用可感知的状态语义');
+requireText('MobileEmptyState', '学生选择为空时应复用现有缺省状态组件');
+requireText('ASSETS.DEFAULT_STATE.MAGNIFIER', '搜索无结果时应使用现有放大镜缺省图片');
+requireText('ASSETS.DEFAULT_STATE.CHAIR', '无可选学生时应使用现有座椅缺省图片');
+
+assert.doesNotMatch(source, /const groupPlans = useMemo\(\(\) => GENERATE_MOCK_GROUP_PLANS/, '分组方案不得继续在渲染层按只读数据生成');
+assert.doesNotMatch(source, /bg-gradient-to-br from-indigo-500 to-purple-600[\s\S]{0,180}group\.name\.slice/, '小组卡片不得继续使用首字渐变占位头像');
+assert.doesNotMatch(source, /flex items-center justify-end gap-1 border-t border-slate-100 bg-slate-50/, '方案管理操作不得展开为额外列表行');
+
+console.log('SmartBigScreen grouping assertions passed');

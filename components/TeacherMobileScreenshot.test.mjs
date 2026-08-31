@@ -4,6 +4,7 @@ import fs from 'node:fs';
 const rootApp = fs.readFileSync('App.tsx', 'utf8');
 const mobileApp = fs.readFileSync('mobile-app/App.tsx', 'utf8');
 const phoneMockup = fs.readFileSync('components/PhoneMockup.tsx', 'utf8');
+const campaignPreview = fs.readFileSync('mobile-app/components/TeacherCampaignPreview.tsx', 'utf8');
 const exporter = fs.readFileSync('utils/exportElementAsPng.ts', 'utf8');
 
 assert.match(rootApp, /screenRef=\{teacherPhoneScreenRef\}/, '教师手机端应显式绑定截图目标。');
@@ -25,6 +26,12 @@ assert.match(mobileApp, /screenRef\?: React\.Ref<HTMLDivElement>/, '教师手机
 assert.equal((mobileApp.match(/screenRef=\{screenRef\}/g) ?? []).length, 2, '登录前后都应绑定同一截图目标。');
 assert.match(phoneMockup, /ref=\{screenRef\}/, '截图引用应落在手机屏幕内容层。');
 assert.match(phoneMockup, /const shouldShowNativeChrome = showDeviceFrame && safeAreaTop;/, '原生状态区应继续受真实手机效果联动控制。');
+assert.match(phoneMockup, /screenOverlay\?: React\.ReactNode/, '手机壳应提供不受页面安全区影响的整屏覆盖层。');
+assert.match(phoneMockup, /absolute inset-0 z-\[110\]/, '整屏覆盖层应覆盖状态栏并由手机屏幕统一裁切。');
+assert.match(phoneMockup, /clipPath: 'inset\(0 round 50px\)'/, '缩放预览中的蒙层必须按手机屏幕圆角强制裁切。');
+assert.match(phoneMockup, /contain: 'paint'/, '手机屏幕应建立独立绘制边界，避免蒙层越过底部圆角。');
+assert.match(campaignPreview, /screenOverlay=\{\(/, '活动预览必须通过手机壳整屏覆盖层展示蒙层。');
+assert.match(mobileApp, /screenOverlay=\{\(/, '教师手机端活动弹窗必须与后台预览共用整屏覆盖能力。');
 assert.match(exporter, /domToBlob/, '截图应使用浏览器原生排版导出。');
 assert.match(exporter, /restoreScrollPosition: true/, '截图应保留当前滚动位置。');
 assert.match(exporter, /borderRadius: '0'/, '导出图片不应保留手机屏幕圆角。');

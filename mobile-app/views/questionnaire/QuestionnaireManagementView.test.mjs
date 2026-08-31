@@ -38,6 +38,7 @@ const studentDetailSource = viewSource.slice(viewSource.indexOf('const renderStu
 const studentRecordPageSource = viewSource.slice(viewSource.indexOf('const renderStudentRecordPage'), viewSource.indexOf('const renderDataSummary'));
 const createPreviewSource = viewSource.slice(viewSource.indexOf('const openCreatePreview'), viewSource.indexOf('const openListPreview'));
 const completePublishSource = viewSource.slice(viewSource.indexOf('const completePublishQuestionnaire'), viewSource.indexOf('const toggleClass'));
+const archiveActiveRecordSource = viewSource.slice(viewSource.indexOf('const archiveActiveRecord'), viewSource.indexOf('const restoreActiveRecord'));
 const detailSource = viewSource.slice(viewSource.indexOf('const renderDetail'), viewSource.indexOf('const renderResponseDetail'));
 const responseDetailSource = viewSource.slice(viewSource.indexOf('const renderResponseDetail'), viewSource.indexOf('const renderQuestionResponses'));
 const answerContextMetaSource = viewSource.slice(viewSource.indexOf('const AnswerContextMeta'), viewSource.indexOf('const editorToolButton'));
@@ -492,6 +493,9 @@ if (listSource.includes("['archived', '已归档']")) {
   throw new Error('已归档不应侵入顶部高频状态页签。');
 }
 requireText(viewSource, "setPageMode('archived-list')", '已归档问卷必须通过二级入口访问。');
+requireText(archiveActiveRecordSource, "setListFilter('ended')", '问卷归档后必须保持已结束筛选。');
+requireText(archiveActiveRecordSource, "setPageMode('list')", '问卷归档后必须返回主列表。');
+forbidText(archiveActiveRecordSource, "setPageMode('archived-list')", '问卷归档后不得自动跳转到已归档列表。');
 requireText(listSource, 'mt-2 flex justify-end', '已归档入口必须右对齐。');
 if (listSource.includes('>{archivedRecords.length}</span>')) {
   throw new Error('已归档入口不应显示归档数量。');

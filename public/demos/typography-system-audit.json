@@ -1,0 +1,2991 @@
+{
+  "generatedAt": "2026-08-27T09:54:15.995Z",
+  "scope": "mobile-app/**/*.tsx（排除测试）+ teacherMobileTokens.ts + 教师端问卷实际调用的 questionnaireThemeTokens.ts",
+  "sourceFileCount": 126,
+  "typographyTokenCount": 21,
+  "typographyTokens": [
+    {
+      "name": "--tm-student-card-name-font-size",
+      "value": "'var(--tm-font-size-meta)'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 438
+    },
+    {
+      "name": "--tm-student-card-roster-font-size",
+      "value": "'9px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 440
+    },
+    {
+      "name": "--tm-student-card-count-font-size",
+      "value": "'10px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 441
+    },
+    {
+      "name": "--tm-font-size-document-title",
+      "value": "'26px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 691
+    },
+    {
+      "name": "--tm-font-size-page-title",
+      "value": "'22px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 692
+    },
+    {
+      "name": "--tm-font-size-group-title",
+      "value": "'18px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 693
+    },
+    {
+      "name": "--tm-font-size-form-group-label",
+      "value": "'14px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 694
+    },
+    {
+      "name": "--tm-font-size-section-title",
+      "value": "'17px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 695
+    },
+    {
+      "name": "--tm-font-size-card-title",
+      "value": "'15px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 696
+    },
+    {
+      "name": "--tm-font-size-body",
+      "value": "'14px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 697
+    },
+    {
+      "name": "--tm-font-size-compact",
+      "value": "'13px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 698
+    },
+    {
+      "name": "--tm-font-size-meta",
+      "value": "'12px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 699
+    },
+    {
+      "name": "--tm-font-size-badge",
+      "value": "'11px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 700
+    },
+    {
+      "name": "--tm-font-size-metric",
+      "value": "'24px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 701
+    },
+    {
+      "name": "--tm-font-weight-minimum",
+      "value": "`${teacherTypographySemantic.minimum}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 702
+    },
+    {
+      "name": "--tm-font-weight-regular",
+      "value": "`${teacherTypographySemantic.regular}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 703
+    },
+    {
+      "name": "--tm-font-weight-semibold",
+      "value": "`${teacherTypographySemantic.semibold}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 704
+    },
+    {
+      "name": "--tm-font-weight-bold",
+      "value": "`${teacherTypographySemantic.bold}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 705
+    },
+    {
+      "name": "--tm-font-weight-heavy",
+      "value": "`${teacherTypographySemantic.heavy}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 706
+    },
+    {
+      "name": "--tm-class-info-title-font-size",
+      "value": "'20px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 707
+    },
+    {
+      "name": "--tm-selection-segment-compact-font-size",
+      "value": "'15px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 719
+    }
+  ],
+  "sharedQuestionnaireTypographyTokenCount": 12,
+  "sharedQuestionnaireTypographyTokens": [
+    {
+      "name": "--tm-font-size-page-title",
+      "value": "'22px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 153
+    },
+    {
+      "name": "--tm-font-size-document-title",
+      "value": "'22px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 154
+    },
+    {
+      "name": "--tm-font-size-group-title",
+      "value": "'18px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 155
+    },
+    {
+      "name": "--tm-font-size-form-group-label",
+      "value": "'14px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 156
+    },
+    {
+      "name": "--tm-font-size-question-title",
+      "value": "'16px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 157
+    },
+    {
+      "name": "--tm-font-size-control",
+      "value": "'14px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 158
+    },
+    {
+      "name": "--tm-font-size-section-title",
+      "value": "'17px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 159
+    },
+    {
+      "name": "--tm-font-size-card-title",
+      "value": "'15px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 160
+    },
+    {
+      "name": "--tm-font-size-body",
+      "value": "'14px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 161
+    },
+    {
+      "name": "--tm-font-size-compact",
+      "value": "'13px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 162
+    },
+    {
+      "name": "--tm-font-size-meta",
+      "value": "'12px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 163
+    },
+    {
+      "name": "--tm-font-size-badge",
+      "value": "'11px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 164
+    }
+  ],
+  "effectiveTypographyTokenCount": 23,
+  "effectiveTypographyTokens": [
+    {
+      "name": "--tm-student-card-name-font-size",
+      "value": "'var(--tm-font-size-meta)'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 438
+    },
+    {
+      "name": "--tm-student-card-roster-font-size",
+      "value": "'9px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 440
+    },
+    {
+      "name": "--tm-student-card-count-font-size",
+      "value": "'10px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 441
+    },
+    {
+      "name": "--tm-font-size-document-title",
+      "value": "'22px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 154
+    },
+    {
+      "name": "--tm-font-size-page-title",
+      "value": "'22px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 153
+    },
+    {
+      "name": "--tm-font-size-group-title",
+      "value": "'18px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 155
+    },
+    {
+      "name": "--tm-font-size-form-group-label",
+      "value": "'14px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 156
+    },
+    {
+      "name": "--tm-font-size-section-title",
+      "value": "'17px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 159
+    },
+    {
+      "name": "--tm-font-size-card-title",
+      "value": "'15px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 160
+    },
+    {
+      "name": "--tm-font-size-body",
+      "value": "'14px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 161
+    },
+    {
+      "name": "--tm-font-size-compact",
+      "value": "'13px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 162
+    },
+    {
+      "name": "--tm-font-size-meta",
+      "value": "'12px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 163
+    },
+    {
+      "name": "--tm-font-size-badge",
+      "value": "'11px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 164
+    },
+    {
+      "name": "--tm-font-size-metric",
+      "value": "'24px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 701
+    },
+    {
+      "name": "--tm-font-weight-minimum",
+      "value": "`${teacherTypographySemantic.minimum}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 702
+    },
+    {
+      "name": "--tm-font-weight-regular",
+      "value": "`${teacherTypographySemantic.regular}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 703
+    },
+    {
+      "name": "--tm-font-weight-semibold",
+      "value": "`${teacherTypographySemantic.semibold}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 704
+    },
+    {
+      "name": "--tm-font-weight-bold",
+      "value": "`${teacherTypographySemantic.bold}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 705
+    },
+    {
+      "name": "--tm-font-weight-heavy",
+      "value": "`${teacherTypographySemantic.heavy}`",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 706
+    },
+    {
+      "name": "--tm-class-info-title-font-size",
+      "value": "'20px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 707
+    },
+    {
+      "name": "--tm-selection-segment-compact-font-size",
+      "value": "'15px'",
+      "file": "mobile-app/styles/teacherMobileTokens.ts",
+      "line": 719
+    },
+    {
+      "name": "--tm-font-size-question-title",
+      "value": "'16px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 157
+    },
+    {
+      "name": "--tm-font-size-control",
+      "value": "'14px'",
+      "file": "shared/questionnaireThemeTokens.ts",
+      "line": 158
+    }
+  ],
+  "typographyTokenVariantCount": 1,
+  "typographyTokenVariants": [
+    {
+      "name": "--tm-font-size-document-title",
+      "definitions": [
+        {
+          "name": "--tm-font-size-document-title",
+          "value": "'26px'",
+          "file": "mobile-app/styles/teacherMobileTokens.ts",
+          "line": 691
+        },
+        {
+          "name": "--tm-font-size-document-title",
+          "value": "'22px'",
+          "file": "shared/questionnaireThemeTokens.ts",
+          "line": 154
+        }
+      ]
+    }
+  ],
+  "fontVariableReferenceCount": 757,
+  "fontVariableStyleCount": 18,
+  "fontVariableFileCount": 65,
+  "undefinedFontVariableCount": 0,
+  "undefinedFontVariables": [],
+  "arbitraryFontSizeCount": 524,
+  "arbitraryFontSizeStyleCount": 19,
+  "arbitraryFontSizeFileCount": 66,
+  "namedFontSizeCount": 315,
+  "namedFontSizeStyleCount": 8,
+  "namedFontSizeFileCount": 26,
+  "fontWeightCount": 1420,
+  "fontWeightStyleCount": 6,
+  "normalOrLighterWeightCount": 0,
+  "lineHeightCount": 236,
+  "lineHeightStyleCount": 19,
+  "fontFamilyCount": 33,
+  "fontFamilyStyleCount": 3,
+  "letterSpacingCount": 34,
+  "letterSpacingStyleCount": 8,
+  "fontVariables": [
+    {
+      "value": "--tm-font-size-body",
+      "count": 230,
+      "fileCount": 43,
+      "examples": [
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 93,
+          "context": "<p className=\"whitespace-pre-line text-[length:var(--tm-font-size-body)] leading-7 text-[var(--tm-text-secondary)]\">"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 129,
+          "context": "{item.title && <h3 className=\"text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]\">{item.title}</h3>}"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 130,
+          "context": "<p className={`${item.title ? 'mt-1' : ''} text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]`}>{item.body}</p>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 161,
+          "context": "{item.title && <h3 className=\"text-[length:var(--tm-font-size-body)] font-semibold leading-6 text-[var(--tm-text-primary)]\">{item.title}</h3>}"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 162,
+          "context": "<p className={`${item.title ? 'mt-1' : ''} text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]`}>{item.body}</p>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 226,
+          "context": "<dd className=\"mt-1 text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]\">{row.value}</dd>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportContractError.tsx",
+          "line": 10,
+          "context": "<p className=\"mt-2 text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]\">报告内容未完整返回，请稍后重试。</p>"
+        },
+        {
+          "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+          "line": 20,
+          "context": "const actionClass = 'flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-compact",
+      "count": 198,
+      "fileCount": 41,
+      "examples": [
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 109,
+          "context": "<p className=\"mt-1 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-assistant-role-text)]\">{item.change}</p>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 112,
+          "context": "<p className=\"mt-1 text-[length:var(--tm-font-size-compact)] leading-4 text-[var(--tm-text-secondary)]\">{item.detail}</p>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 125,
+          "context": "<span className=\"flex h-6 w-6 items-center justify-center rounded-full bg-[var(--tm-assistant-role-soft)] text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-assistant-role-text)]\">"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 132,
+          "context": "<dl className=\"mt-[var(--tm-space-2)] space-y-1 text-[length:var(--tm-font-size-compact)] leading-5 text-[var(--tm-text-tertiary)]\">"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 157,
+          "context": "<p className=\"mb-1 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-assistant-role-text)]\">"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 167,
+          "context": "className=\"mt-1 flex min-h-11 items-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-assistant-role-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]\""
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportFooter.tsx",
+          "line": 10,
+          "context": "<footer className={`mx-[var(--tm-report-page-inline)] border-t border-[var(--tm-border-subtle)] py-[var(--tm-space-5)] text-[length:var(--tm-font-size-compact)] leading-5 text-[var(--tm-text-tertiary)] ${className}`}>"
+        },
+        {
+          "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+          "line": 89,
+          "context": "<button type=\"button\" onClick={backToMethods} className=\"mb-[var(--tm-space-2)] flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] pr-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semi"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-meta",
+      "count": 142,
+      "fileCount": 36,
+      "examples": [
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 104,
+          "context": "<p className=\"text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]\">{item.label}</p>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 225,
+          "context": "<dt className=\"text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-assistant-role-text)]\">{row.label}</dt>"
+        },
+        {
+          "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+          "line": 137,
+          "context": "<div className=\"text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]\">发送给</div>"
+        },
+        {
+          "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+          "line": 140,
+          "context": "<div className=\"text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]\">AI素养评价</div>"
+        },
+        {
+          "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+          "line": 167,
+          "context": "<div className=\"mt-[var(--tm-space-3)] text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]\">{schoolName}</div>"
+        },
+        {
+          "file": "mobile-app/components/evaluation/EvaluationIndicatorCascadePicker.tsx",
+          "line": 25,
+          "context": "<div className=\"flex h-9 shrink-0 items-center justify-center bg-[var(--tm-evaluation-indicator-editor-header-bg)] text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]\">"
+        },
+        {
+          "file": "mobile-app/components/evaluation/EvaluationIndicatorCascadePicker.tsx",
+          "line": 51,
+          "context": "<div className=\"flex min-h-11 items-center justify-center text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-disabled)]\" aria-hidden=\"true\">—</div>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 616,
+          "context": "{previewMeta?.suffix && <span className=\"shrink-0 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]\">{previewMeta.suffix}</span>}"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-card-title",
+      "count": 75,
+      "fileCount": 27,
+      "examples": [
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 82,
+          "context": "<h2 className=\"min-w-0 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 219,
+          "context": "<h3 className=\"text-[length:var(--tm-font-size-card-title)] font-semibold leading-6 text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+          "line": 138,
+          "context": "<div className=\"mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]\">{selectedChats.join('、')}</div>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 209,
+          "context": "className={`relative flex min-h-[76px] w-12 touch-none cursor-grab items-start justify-center pt-4 text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums text-[var(--tm-text-primary)] transition-colors active:cursor-grabbing active:bg-[var(--t"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 215,
+          "context": ") : <div className={`relative flex min-h-[76px] w-12 items-start justify-center pt-4 text-[length:var(--tm-font-size-card-title)] font-semibold tabular-nums text-[var(--tm-text-primary)] ${children ? 'row-span-2' : ''}`}>{fieldNumber}{required && <span classNa"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 696,
+          "context": "<span className=\"block break-words text-[length:var(--tm-font-size-card-title)] font-semibold leading-5 text-[var(--tm-text-primary)]\">{field.label || `未命名${itemLabel}`}</span>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 939,
+          "context": "{showItemLabel && <h2 className=\"text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]\">{itemLabel}</h2>}"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 1083,
+          "context": "<button type=\"button\" disabled={!sectionDraft.label.trim()} onClick={saveSection} className=\"mt-4 inline-flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-c"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-badge",
+      "count": 55,
+      "fileCount": 18,
+      "examples": [
+        {
+          "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+          "line": 100,
+          "context": "<span className=\"rounded-full bg-[var(--tm-brand-reward-soft)] px-[var(--tm-space-2)] py-[var(--tm-space-1)] text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-brand-reward-strong)]\">推荐</span>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 682,
+          "context": "<span className=\"mt-1 flex items-center gap-1.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]\"><TypeIcon className=\"h-3.5 w-3.5 shrink-0\" />{getLockedFieldSubtitle?.(field) ?? meta?.label ?? field.type}</span>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 726,
+          "context": "{!fixedContent && fieldError?.label && <p id={`form-field-${field.id}-error`} className=\"mt-1.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]\">{fieldError.label}</p>}"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 748,
+          "context": "<span className=\"flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-badge)] font-bold text-[var(--tm-text-secondary)]\">{optionIndex + 1}</span>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 783,
+          "context": "{custom && <div className=\"ml-8 mt-1 px-1 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-brand-primary-strong)]\">选中后需填写</div>}"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 787,
+          "context": "{fieldError?.options && <p id={`form-field-${field.id}-options-error`} className=\"px-0.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]\">{fieldError.options}</p>}"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 804,
+          "context": "<span className=\"flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-badge)] font-bold text-[var(--tm-text-secondary)]\">{subFieldIndex + 1}</span>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 842,
+          "context": "{fieldError?.subFields && <p id={`form-field-${field.id}-sub-fields-error`} className=\"px-0.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]\">{fieldError.subFields}</p>}"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-section-title",
+      "count": 26,
+      "fileCount": 18,
+      "examples": [
+        {
+          "file": "mobile-app/components/AssistantSubpageHeader.tsx",
+          "line": 36,
+          "context": "<h1 className={`${centeredContentClassName} pointer-events-none truncate text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]`}>"
+        },
+        {
+          "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+          "line": 154,
+          "context": "<div className=\"text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]\">{audience === 'teacher' ? '加入AI素养评价' : '绑定学生'}</div>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 1101,
+          "context": "<h2 className=\"text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]\">删除“{deleteTarget.label}”？</h2>"
+        },
+        {
+          "file": "mobile-app/components/ui/MobilePageHeader.tsx",
+          "line": 19,
+          "context": "<h1 className=\"pointer-events-none absolute inset-x-16 truncate text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 737,
+          "context": "<h2 id=\"week-data-title\" className=\"shrink-0 text-balance text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]\">本周数据</h2>"
+        },
+        {
+          "file": "mobile-app/views/ClassReportView.tsx",
+          "line": 102,
+          "context": "<h2 id={id} className=\"text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/DashboardView.tsx",
+          "line": 89,
+          "context": "<h1 className=\"pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/HomeworkBatchImportView.tsx",
+          "line": 433,
+          "context": "<h1 className=\"pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]\">{title}</h1>"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-control",
+      "count": 6,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 578,
+          "context": "{question.type === 'short_text' && <input id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className=\"mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] "
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 579,
+          "context": "{question.type === 'text' && <textarea id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} rows={4} className=\"mt-3 min-h-[120px] w-full resize-none rounded-[var"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 580,
+          "context": "{question.type === 'number' && <input id={inputId} disabled={!editable} type=\"number\" inputMode=\"decimal\" min={settings.minValue} max={settings.maxValue} step={settings.numberFormat === 'decimal-1' ? 0.1 : settings.numberFormat === 'decimal-2' ? 0.01 : 1} valu"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 581,
+          "context": "{question.type === 'date' && <input id={inputId} disabled={!editable} type={settings.dateFormat === 'year' ? 'number' : settings.dateFormat === 'ym' ? 'month' : 'date'} inputMode={settings.dateFormat === 'year' ? 'numeric' : undefined} min={settings.dateFormat"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 603,
+          "context": "className={`flex min-h-[52px] w-full items-center gap-2.5 px-3 text-left text-[length:var(--tm-font-size-control)] font-medium transition active:scale-[0.98] disabled:active:scale-100 disabled:opacity-45 ${selected ? 'text-[var(--tm-text-primary)]' : 'text-[va"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 618,
+          "context": "className=\"h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeh"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-metric",
+      "count": 6,
+      "fileCount": 4,
+      "examples": [
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 105,
+          "context": "<p className=\"mt-[var(--tm-space-2)] text-[length:var(--tm-font-size-metric)] font-bold tabular-nums text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/ClassReportView.tsx",
+          "line": 752,
+          "context": "<strong className=\"text-[var(--tm-font-size-metric)] leading-none\">{reportData.totalRecords}</strong>"
+        },
+        {
+          "file": "mobile-app/views/ClassReportView.tsx",
+          "line": 762,
+          "context": "<strong className=\"text-[var(--tm-font-size-metric)] leading-none\">{reportData.coveredStudents}</strong>"
+        },
+        {
+          "file": "mobile-app/views/face-update/FaceUpdateView.tsx",
+          "line": 49,
+          "context": "<div><div className=\"text-[length:var(--tm-font-size-metric)] font-bold tabular-nums text-[var(--tm-text-primary)]\">{completedCount}<span className=\"ml-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)]\">/ {s"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2574,
+          "context": "<div className=\"mt-1 text-[length:var(--tm-font-size-metric)] font-bold tabular-nums text-[var(--tm-text-primary)]\">{completed}<span className=\"ml-1 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-tertiary)]\">/{reachable}</span><"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2722,
+          "context": "{ratingAverage && <div className=\"mt-3 flex items-baseline gap-2\"><span className=\"text-[length:var(--tm-font-size-metric)] font-bold tabular-nums text-[var(--tm-text-primary)]\">{ratingAverage}</span><span className=\"text-[length:var(--tm-font-size-meta)] font"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-document-title",
+      "count": 5,
+      "fileCount": 2,
+      "examples": [
+        {
+          "file": "mobile-app/components/ui/MobileDocumentTitleInput.tsx",
+          "line": 35,
+          "context": "className={`min-h-[var(--tm-size-touch)] w-full border-0 border-b bg-transparent px-0 py-1 text-[length:var(--tm-font-size-document-title)] font-bold leading-9 text-[var(--tm-text-primary)] outline-none placeholder:font-medium placeholder:text-[var(--tm-text-t"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2497,
+          "context": "<h1 className=\"text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]\">{activeRecord.title}</h1>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2814,
+          "context": "<h1 className=\"text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]\">{activeRecord.title}</h1>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2930,
+          "context": "<h1 className=\"text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]\">{previewRecord.title}</h1>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2935,
+          "context": "<h1 className=\"text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]\">{previewRecord.title}</h1>"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-group-title",
+      "count": 3,
+      "fileCount": 3,
+      "examples": [
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 907,
+          "context": "<h3 className=\"min-w-0 flex-1 truncate text-[length:var(--tm-font-size-group-title)] font-bold leading-6 text-[var(--tm-text-primary)]\">{section.label}</h3>"
+        },
+        {
+          "file": "mobile-app/views/ClassListView.tsx",
+          "line": 734,
+          "context": "<span className=\"min-w-0 truncate text-[length:var(--tm-font-size-group-title)] font-semibold text-[var(--tm-text-primary)]\">{activeActionClass.name}</span>"
+        },
+        {
+          "file": "mobile-app/views/WeeklyDutyScheduleView.tsx",
+          "line": 153,
+          "context": "<h2 className=\"truncate text-center text-[length:var(--tm-font-size-group-title)] font-bold tabular-nums text-[var(--tm-text-primary)]\" aria-live=\"polite\">"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-page-title",
+      "count": 3,
+      "fileCount": 2,
+      "examples": [
+        {
+          "file": "mobile-app/views/TeacherLoginView.tsx",
+          "line": 133,
+          "context": "<h1 className=\"mt-[var(--tm-space-6)] text-balance text-[length:var(--tm-font-size-page-title)] font-bold leading-tight\">欢迎使用 AI素养评价</h1>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2190,
+          "context": "<div key={String(label)}><div className=\"text-[length:var(--tm-font-size-page-title)] font-bold tabular-nums text-[var(--tm-text-primary)]\">{value}</div><div className=\"mt-1 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]\">{l"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2381,
+          "context": "<div className=\"text-[length:var(--tm-font-size-page-title)] font-bold tabular-nums text-[var(--tm-text-primary)]\">{completed}<span className=\"ml-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-tertiary)]\">/{studentRecords.length}"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-form-group-label",
+      "count": 2,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 640,
+          "context": "{section?.label && <h2 className=\"mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)] font-semibold leading-5 text-[var(--tm-text-secondary)]\">{section.label}</h2>}"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 652,
+          "context": "{questionGroup.label && <h2 className=\"mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)] font-semibold leading-5 text-[var(--tm-text-secondary)]\">{questionGroup.label}</h2>}"
+        }
+      ]
+    },
+    {
+      "value": "--tm-class-info-title-font-size",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/ClassInfoView.tsx",
+          "line": 426,
+          "context": "<h2 className={`truncate text-[length:var(--tm-class-info-title-font-size)] font-bold leading-tight text-[var(--tm-text-primary)] ${canEdit ? 'pr-[calc(var(--tm-size-touch)+var(--tm-space-2))]' : ''}`}>"
+        }
+      ]
+    },
+    {
+      "value": "--tm-font-size-question-title",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 575,
+          "context": "<label htmlFor={['short_text', 'text', 'number', 'date'].includes(question.type) ? inputId : undefined} className=\"block text-[length:var(--tm-font-size-question-title)] font-bold leading-[1.45] text-[var(--tm-text-primary)]\">"
+        }
+      ]
+    },
+    {
+      "value": "--tm-selection-segment-compact-font-size",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/components/ui/CompactSegmentedControl.tsx",
+          "line": 39,
+          "context": "className={`${fullWidth ? 'grid w-full' : 'inline-grid'} relative h-[var(--tm-selection-touch-height)] items-center ${compact ? 'text-[length:var(--tm-selection-segment-compact-font-size)]' : 'text-[length:var(--tm-font-size-body)]'} ${className}`}"
+        }
+      ]
+    },
+    {
+      "value": "--tm-student-card-count-font-size",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/components/student-performance/StudentPerformanceMeta.tsx",
+          "line": 89,
+          "context": "? 'text-[length:var(--tm-student-card-count-font-size)] font-bold'"
+        }
+      ]
+    },
+    {
+      "value": "--tm-student-card-name-font-size",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/components/student/StudentRosterCard.tsx",
+          "line": 136,
+          "context": "<span className=\"block min-w-0 max-w-[52px] truncate text-[length:var(--tm-student-card-name-font-size)] [font-weight:var(--tm-student-card-name-font-weight)] leading-4 text-[var(--tm-text-primary)]\">"
+        }
+      ]
+    },
+    {
+      "value": "--tm-student-card-roster-font-size",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/components/student/StudentRosterCard.tsx",
+          "line": 132,
+          "context": "className=\"flex h-[var(--tm-student-card-roster-height)] w-4 shrink-0 items-center justify-center self-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[length:var(--tm-student-card-roster-font-size)] font-semibold leading-none tabular-nums "
+        }
+      ]
+    }
+  ],
+  "arbitraryFontSizes": [
+    {
+      "value": "text-[13px]",
+      "count": 131,
+      "fileCount": 37,
+      "examples": [
+        {
+          "file": "mobile-app/components/AssistantClassSwitchButton.tsx",
+          "line": 20,
+          "context": "? 'px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] enabled:active:text-[var(--tm-text-primary)]'"
+        },
+        {
+          "file": "mobile-app/components/AssistantHistoryLink.tsx",
+          "line": 18,
+          "context": "className={`flex min-h-11 shrink-0 items-center gap-1.5 px-1 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] transition active:scale-[0.98] active:text-[var(--tm-assistant-role-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visi"
+        },
+        {
+          "file": "mobile-app/components/ClassSourceTrigger.tsx",
+          "line": 33,
+          "context": "? 'gap-1.5 rounded-[var(--tm-radius-control)] px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] shadow-none active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]'"
+        },
+        {
+          "file": "mobile-app/components/ClassSourceTrigger.tsx",
+          "line": 35,
+          "context": "? 'group text-[13px] font-semibold text-[var(--tm-text-primary)]'"
+        },
+        {
+          "file": "mobile-app/components/ClassSourceTrigger.tsx",
+          "line": 36,
+          "context": ": 'gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3.5 text-[13px] font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]';"
+        },
+        {
+          "file": "mobile-app/components/student-detail/StudentTimeRangeSelector.tsx",
+          "line": 28,
+          "context": "className=\"h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-transparent bg-[var(--tm-bg-surface)] pl-10 pr-10 text-[13px] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none focus-visible:bg-[v"
+        },
+        {
+          "file": "mobile-app/components/student/StudentCompactSelectGrid.tsx",
+          "line": 30,
+          "context": "<div className=\"flex h-8 items-center text-[13px] font-semibold text-[var(--tm-text-secondary)]\">"
+        },
+        {
+          "file": "mobile-app/components/ui/MobileSearchInput.tsx",
+          "line": 31,
+          "context": "? 'h-9 rounded-full pl-9 pr-3 text-[13px]'"
+        }
+      ]
+    },
+    {
+      "value": "text-[11px]",
+      "count": 74,
+      "fileCount": 21,
+      "examples": [
+        {
+          "file": "mobile-app/components/SubjectRadarChart.tsx",
+          "line": 240,
+          "context": "className=\"text-[11px] font-bold\""
+        },
+        {
+          "file": "mobile-app/components/ui/ClassRankingList.tsx",
+          "line": 49,
+          "context": "<span className=\"mt-0.5 block text-[11px] tabular-nums text-[var(--tm-chart-negative-text)]\">扣{item.deduction}分</span>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 156,
+          "context": "<dt className=\"truncate text-[11px] font-medium text-[var(--tm-text-tertiary)]\">{metric.label}</dt>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 169,
+          "context": "<div className=\"mt-0.5 truncate text-[11px] text-[var(--tm-text-tertiary)]\">{item.detail}</div>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 584,
+          "context": "<span className=\"mt-1 block text-[11px] tabular-nums text-[var(--tm-text-tertiary)]\">数据截至 {report.dataRangeLabel} · {formatGeneratedAt(report.generatedAt)}生成</span>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 621,
+          "context": "<div className=\"text-[11px] font-medium text-[var(--tm-text-tertiary)]\">原文</div>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 742,
+          "context": "className=\"flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-control)] pl-2 pr-1.5 text-[11px] font-medium tabular-nums text-[var(--tm-text-tertiary)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var("
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 753,
+          "context": "<dt className=\"text-[11px] font-medium text-[var(--tm-text-tertiary)]\">本周总分</dt>"
+        }
+      ]
+    },
+    {
+      "value": "text-[12px]",
+      "count": 74,
+      "fileCount": 28,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2359,
+          "context": "<div className=\"max-w-full rounded-full bg-[var(--tm-text-primary)] px-4 py-2 text-center text-[12px] font-medium text-white shadow-[0_4px_8px_rgba(44,37,34,0.18)]\">"
+        },
+        {
+          "file": "mobile-app/components/FiveEducationRadarSimple.tsx",
+          "line": 164,
+          "context": "className=\"text-[12px] font-bold fill-slate-500\""
+        },
+        {
+          "file": "mobile-app/components/student/StudentCompactSelectGrid.tsx",
+          "line": 32,
+          "context": "<span className=\"ml-auto text-[12px] tm-font-regular text-[var(--tm-text-tertiary)]\">{section.students.length}人</span>"
+        },
+        {
+          "file": "mobile-app/components/student/StudentCompactSelectItem.tsx",
+          "line": 49,
+          "context": "<span className=\"min-w-0 truncate text-[12px] font-medium leading-4 text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/components/ui/ClassRankingList.tsx",
+          "line": 41,
+          "context": "className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold tabular-nums ${rankToneClasses[item.rank - 1] ?? 'text-[var(--tm-text-disabled)]'}`}"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 196,
+          "context": "<div key={item.label} className=\"flex min-h-9 items-center justify-between gap-2 text-[12px]\">"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 307,
+          "context": "className=\"min-h-[var(--tm-size-touch)] shrink-0 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-glass)] px-3 text-[12px] font-semibold text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] transition-[scale,ba"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 596,
+          "context": "<p className=\"mt-1 text-[12px] text-[var(--tm-text-tertiary)]\">报告只在主动生成后保存</p>"
+        }
+      ]
+    },
+    {
+      "value": "text-[14px]",
+      "count": 67,
+      "fileCount": 26,
+      "examples": [
+        {
+          "file": "mobile-app/components/AssistantClassSwitchButton.tsx",
+          "line": 21,
+          "context": ": 'px-2 text-[14px] font-semibold text-[var(--tm-text-primary)] enabled:active:bg-[var(--tm-role-headteacher-glass-surface)]';"
+        },
+        {
+          "file": "mobile-app/components/AssistantReportFeedback.tsx",
+          "line": 25,
+          "context": "<p className=\"mt-3 max-w-[300px] text-[14px] leading-6 text-[var(--tm-text-secondary)]\">{message}</p>"
+        },
+        {
+          "file": "mobile-app/components/report/ReportPeriodCalendar.tsx",
+          "line": 35,
+          "context": "`relative flex min-h-[58px] items-center justify-center rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-[14px] font-semibold tabular-nums transition-[color,background-color,transform] [transition-duration:var(--tm-duration-fast)] ${selected"
+        },
+        {
+          "file": "mobile-app/components/ui/ClassRankingList.tsx",
+          "line": 45,
+          "context": "<span className=\"min-w-0 truncate text-[14px] font-semibold text-[var(--tm-text-primary)]\">{item.name}</span>"
+        },
+        {
+          "file": "mobile-app/components/ui/MobileNoticeSheet.tsx",
+          "line": 67,
+          "context": "<p id={descriptionId} className=\"mt-4 text-[14px] leading-6 text-[var(--tm-text-secondary)]\">{message}</p>"
+        },
+        {
+          "file": "mobile-app/components/ui/MobileSlidingSegmentedControl.tsx",
+          "line": 59,
+          "context": "className=\"relative z-10 flex h-[var(--tm-size-touch)] min-w-0 flex-1 items-center justify-center px-0.5 text-[14px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]\""
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 230,
+          "context": "<div className=\"space-y-3 text-pretty text-[14px] tm-font-regular leading-6 text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 486,
+          "context": "className=\"w-full resize-none bg-transparent px-2.5 py-2.5 text-[14px] font-medium leading-6 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-disabled)]\""
+        }
+      ]
+    },
+    {
+      "value": "text-[15px]",
+      "count": 43,
+      "fileCount": 21,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1434,
+          "context": "className={`min-w-0 truncate px-3 text-[15px] font-medium ${inputText ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1469,
+          "context": "className={`flex h-11 min-w-0 touch-none select-none items-center justify-center rounded-[var(--tm-radius-inner)] px-4 text-[15px] font-semibold transition ${voicePressState === 'idle'"
+        },
+        {
+          "file": "mobile-app/components/AssistantReportFeedback.tsx",
+          "line": 30,
+          "context": "className=\"mt-6 flex min-h-12 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-role-principal-primary)] px-5 text-[15px] font-semibold text-white transition active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)] focus-"
+        },
+        {
+          "file": "mobile-app/components/HomeroomClassPickerSheet.tsx",
+          "line": 90,
+          "context": "<span className=\"min-w-0 flex-1 text-[15px] font-semibold\">{classInfo.name}</span>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportContractError.tsx",
+          "line": 15,
+          "context": "className=\"mt-5 flex min-h-12 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-assistant-role-primary)] px-5 text-[15px] font-semibold text-white active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible"
+        },
+        {
+          "file": "mobile-app/components/ui/ClassRankingList.tsx",
+          "line": 47,
+          "context": "<strong className=\"block text-[15px] font-bold tabular-nums text-[var(--tm-text-primary)]\">{item.score}分</strong>"
+        },
+        {
+          "file": "mobile-app/components/ui/MenuItem.tsx",
+          "line": 38,
+          "context": "{value && <span className=\"max-w-[120px] truncate text-[15px] tm-font-regular leading-snug text-slate-400\">{value}</span>}"
+        },
+        {
+          "file": "mobile-app/components/ui/MobileNoticeSheet.tsx",
+          "line": 72,
+          "context": "className=\"mt-5 flex min-h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[15px] font-semibold text-white transition active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:"
+        }
+      ]
+    },
+    {
+      "value": "text-[10px]",
+      "count": 39,
+      "fileCount": 8,
+      "examples": [
+        {
+          "file": "mobile-app/components/student-performance/StudentPerformanceMeta.tsx",
+          "line": 90,
+          "context": ": 'text-[10px] font-bold';"
+        },
+        {
+          "file": "mobile-app/components/student/StudentRosterCard.tsx",
+          "line": 103,
+          "context": "<span className=\"flex h-[18px] w-full shrink-0 items-center justify-center truncate px-1 text-[10px] font-medium leading-[18px] text-[var(--tm-text-tertiary)]\">"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 216,
+          "context": "<span className=\"flex h-5 w-5 items-center justify-center rounded-full bg-[var(--tm-assistant-role-soft-strong)] text-[10px] font-bold text-[var(--tm-assistant-role-text)]\" aria-hidden=\"true\">{index + 1}</span>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 639,
+          "context": "<span className=\"text-[10px] font-semibold tabular-nums leading-none text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 658,
+          "context": "<div className=\"grid min-h-8 grid-cols-[minmax(0,1fr)_88px_60px_60px] items-center rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-glass-surface-strong)] px-2 text-[10px] font-medium text-[var(--tm-text-tertiary)]\">"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 761,
+          "context": "<dt className=\"whitespace-nowrap text-[10px] font-medium text-[var(--tm-text-tertiary)]\">年级排名</dt>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 762,
+          "context": "<dd className=\"mt-1.5 whitespace-nowrap text-[20px] font-bold tabular-nums leading-none text-[var(--tm-text-primary)]\">第{week.gradeRank}<span className=\"ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]\">名</span></dd>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 765,
+          "context": "<dt className=\"whitespace-nowrap text-[10px] font-medium text-[var(--tm-text-tertiary)]\">学校排名</dt>"
+        }
+      ]
+    },
+    {
+      "value": "text-[17px]",
+      "count": 37,
+      "fileCount": 23,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1563,
+          "context": "<h2 className={`text-[17px] font-bold text-[var(--tm-text-primary)] tracking-tight ${!onBack ? 'mx-auto' : ''}`}>{title}</h2>"
+        },
+        {
+          "file": "mobile-app/components/Header.tsx",
+          "line": 20,
+          "context": "<h1 className=\"text-[17px] font-bold text-slate-900 flex-none\">{title}</h1>"
+        },
+        {
+          "file": "mobile-app/components/HomeroomClassPickerSheet.tsx",
+          "line": 73,
+          "context": "<h2 id={titleId} className=\"text-[17px] font-semibold text-[var(--tm-text-primary)]\">选择班级</h2>"
+        },
+        {
+          "file": "mobile-app/components/ui/MobileBottomSheet.tsx",
+          "line": 113,
+          "context": "<h2 className=\"min-w-0 flex-1 truncate text-[17px] font-semibold text-[var(--tm-text-primary)]\">{title}</h2>"
+        },
+        {
+          "file": "mobile-app/components/ui/MobileNoticeSheet.tsx",
+          "line": 56,
+          "context": "<h2 id={titleId} className=\"text-[17px] font-semibold text-[var(--tm-text-primary)]\">{title}</h2>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 1338,
+          "context": "<p className=\"ai-assistant-typewriter-shine min-h-16 whitespace-pre-line text-pretty text-[17px] font-bold leading-7\">"
+        },
+        {
+          "file": "mobile-app/views/ClassDetailView.tsx",
+          "line": 1558,
+          "context": "<h2 className=\"truncate text-center text-[17px] font-semibold text-[var(--tm-text-primary)]\">选择学生</h2>"
+        },
+        {
+          "file": "mobile-app/views/ClassDetailView.tsx",
+          "line": 1630,
+          "context": "<h2 className=\"min-w-0 flex-1 truncate text-[17px] font-semibold text-[var(--tm-text-primary)]\">{groupDetailMode === 'adjust' ? '调整学生' : '小组设置'}</h2>"
+        }
+      ]
+    },
+    {
+      "value": "text-[20px]",
+      "count": 17,
+      "fileCount": 8,
+      "examples": [
+        {
+          "file": "mobile-app/components/AssistantReportFeedback.tsx",
+          "line": 24,
+          "context": "<h2 className=\"mt-6 text-[20px] font-semibold text-[var(--tm-text-primary)]\">{title}</h2>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportContractError.tsx",
+          "line": 9,
+          "context": "<h2 className=\"mt-5 text-[20px] font-semibold text-[var(--tm-text-primary)]\">报告暂时无法展示</h2>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 560,
+          "context": "<h1 id=\"history-title\" className=\"px-1 text-[20px] font-bold text-[var(--tm-text-primary)]\">历史报告</h1>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 762,
+          "context": "<dd className=\"mt-1.5 whitespace-nowrap text-[20px] font-bold tabular-nums leading-none text-[var(--tm-text-primary)]\">第{week.gradeRank}<span className=\"ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]\">名</span></dd>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 766,
+          "context": "<dd className=\"mt-1.5 whitespace-nowrap text-[20px] font-bold tabular-nums leading-none text-[var(--tm-text-primary)]\">第{week.schoolRank}<span className=\"ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]\">名</span></dd>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 921,
+          "context": "<h1 className=\"truncate text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]\">{week.label}</h1>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 1298,
+          "context": "<h1 id=\"active-report-title\" className=\"min-w-0 text-pretty text-[20px] font-bold leading-7 text-[var(--tm-text-primary)]\">本周班级评比分析</h1>"
+        },
+        {
+          "file": "mobile-app/views/PrincipalPeriodicReportView.tsx",
+          "line": 82,
+          "context": "<h2 className=\"mt-6 text-[20px] font-semibold\">{report.loadingTitle}</h2>"
+        }
+      ]
+    },
+    {
+      "value": "text-[16px]",
+      "count": 13,
+      "fileCount": 7,
+      "examples": [
+        {
+          "file": "mobile-app/components/report/ReportPeriodCalendar.tsx",
+          "line": 63,
+          "context": "<strong className=\"truncate text-center text-[16px] font-semibold tabular-nums text-[var(--tm-text-primary)]\">{label}</strong>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 612,
+          "context": "<div className=\"shrink-0 text-[16px] font-bold tabular-nums text-[var(--tm-status-negative)]\">-{record.deduction.toFixed(1)}分</div>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 954,
+          "context": "<h2 id=\"week-dimensions-title\" className=\"text-[16px] font-bold text-[var(--tm-text-primary)]\">分类数据</h2>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 967,
+          "context": "<h2 id=\"week-records-title\" className=\"text-[16px] font-bold text-[var(--tm-text-primary)]\">扣分明细</h2>"
+        },
+        {
+          "file": "mobile-app/views/MeFeatureViews.tsx",
+          "line": 374,
+          "context": "<div className=\"text-[16px] font-bold text-[var(--tm-text-primary)]\">{title}</div>"
+        },
+        {
+          "file": "mobile-app/views/MeFeatureViews.tsx",
+          "line": 394,
+          "context": "<div className=\"px-2 pb-4 pt-1 text-center text-[16px] font-bold text-[var(--tm-text-primary)]\">{title}</div>"
+        },
+        {
+          "file": "mobile-app/views/archive-design/StudentArchiveView.tsx",
+          "line": 461,
+          "context": "<h2 className=\"text-[16px] font-bold text-[var(--tm-text-primary)]\">{activeSnapshot.templateName}</h2>"
+        },
+        {
+          "file": "mobile-app/views/student-growth/SemesterGoalPlanView.tsx",
+          "line": 26,
+          "context": "<h2 className=\"mt-3 text-[16px] font-bold text-[var(--tm-text-primary)]\">暂无学期目标</h2>"
+        }
+      ]
+    },
+    {
+      "value": "text-[9px]",
+      "count": 11,
+      "fileCount": 4,
+      "examples": [
+        {
+          "file": "mobile-app/components/TeacherBottomNavigation.tsx",
+          "line": 78,
+          "context": "<span className=\"absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--tm-status-negative)] px-1 text-[9px] font-bold leading-none tabular-nums text-white\">"
+        },
+        {
+          "file": "mobile-app/views/HomeworkBatchImportView.tsx",
+          "line": 497,
+          "context": "<span aria-label={`学号${resultItem.studentNo}`} className=\"flex h-[14px] w-4 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[9px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]\">{getStud"
+        },
+        {
+          "file": "mobile-app/views/HomeworkEntryView.tsx",
+          "line": 271,
+          "context": "<span className={`absolute bottom-0 flex h-3 min-w-4 items-center justify-center rounded-[4px] px-1 text-[9px] font-semibold leading-3 ${selected ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-tex"
+        },
+        {
+          "file": "mobile-app/views/HomeworkEntryView.tsx",
+          "line": 353,
+          "context": "<span aria-label={`学号${result.studentNo}`} className=\"flex h-[14px] w-4 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[9px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]\">{getStudentN"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 68,
+          "context": "<span className=\"text-[9px] text-slate-300 font-bold tracking-widest uppercase\">Student Growth Pulse</span>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 69,
+          "context": "<span className=\"text-[9px] text-slate-300 page-number\"></span>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 250,
+          "context": "<div className=\"absolute bottom-6 text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em]\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 324,
+          "context": "<div className=\"text-[9px] text-slate-400 font-medium bg-slate-50 px-1.5 py-0.5 rounded mt-0.5\">{t.role}</div>"
+        }
+      ]
+    },
+    {
+      "value": "text-[18px]",
+      "count": 4,
+      "fileCount": 4,
+      "examples": [
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 157,
+          "context": "<dd className={'mt-1 truncate text-[18px] font-bold tabular-nums ' + (metric.tone === 'negative' ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-assistant-role-text)]')}>{metric.value}</dd>"
+        },
+        {
+          "file": "mobile-app/views/RecordInputView.tsx",
+          "line": 322,
+          "context": "<span className=\"text-[18px] font-bold tracking-wide\">"
+        },
+        {
+          "file": "mobile-app/views/student-collection/StudentCollectionRecordDetailView.tsx",
+          "line": 49,
+          "context": "<h2 className=\"text-balance text-[18px] font-bold leading-6 text-slate-950\">{item.title}</h2>"
+        },
+        {
+          "file": "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+          "line": 260,
+          "context": "<span className=\"text-[18px] font-bold tabular-nums text-[var(--tm-text-primary)]\">{currentBmi}</span>"
+        }
+      ]
+    },
+    {
+      "value": "text-[22px]",
+      "count": 3,
+      "fileCount": 3,
+      "examples": [
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 399,
+          "context": "<span className=\"text-[22px] font-bold leading-none\">{formatScoreValue(totalScore)}</span>"
+        },
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 348,
+          "context": "<h2 className=\"truncate text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]\">{teacherName}</h2>"
+        },
+        {
+          "file": "mobile-app/views/student-evaluation/EvaluationRecordEditView.tsx",
+          "line": 108,
+          "context": "<span className={`text-[22px] font-bold tabular-nums ${scoreChange < 0 ? 'text-[var(--tm-record-negative-text)]' : 'text-[var(--tm-record-positive-text)]'}`}>"
+        }
+      ]
+    },
+    {
+      "value": "text-[23px]",
+      "count": 3,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 939,
+          "context": "<dd className=\"mt-2 whitespace-nowrap text-[23px] font-bold tabular-nums text-[var(--tm-assistant-role-text)]\">{formatScore(snapshot.finalScore)}<span className=\"ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]\">分</span></dd>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 943,
+          "context": "<dd className=\"mt-2 whitespace-nowrap text-[23px] font-bold tabular-nums text-[var(--tm-text-primary)]\">第{week.gradeRank}<span className=\"ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]\">名</span></dd>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 947,
+          "context": "<dd className=\"mt-2 whitespace-nowrap text-[23px] font-bold tabular-nums text-[var(--tm-text-primary)]\">第{week.schoolRank}<span className=\"ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]\">名</span></dd>"
+        }
+      ]
+    },
+    {
+      "value": "text-[24px]",
+      "count": 3,
+      "fileCount": 3,
+      "examples": [
+        {
+          "file": "mobile-app/views/PrincipalPeriodicReportView.tsx",
+          "line": 111,
+          "context": "<h2 className=\"mt-1.5 text-[24px] font-bold leading-8\">{report.reportTitle}</h2>"
+        },
+        {
+          "file": "mobile-app/views/PrincipalTermReportView.tsx",
+          "line": 108,
+          "context": "<h1 className=\"mt-1.5 text-[24px] font-bold leading-8\">学生综合素质评价系统学期运营报告</h1>"
+        },
+        {
+          "file": "mobile-app/views/student-evaluation/EvaluationRecordDetailView.tsx",
+          "line": 47,
+          "context": "<span className={`text-[24px] font-bold leading-none tabular-nums ${resultTextClass}`}>"
+        }
+      ]
+    },
+    {
+      "value": "text-[19px]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+          "line": 326,
+          "context": "{latestMetrics.map(item => <div key={item.key} className=\"min-w-0 px-1\"><div className=\"truncate text-[19px] font-bold tabular-nums text-[var(--tm-text-primary)]\">{item.formattedValue}</div><div className=\"mt-1 truncate text-xs text-[var(--tm-text-secondary)]\""
+        }
+      ]
+    },
+    {
+      "value": "text-[30px]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 754,
+          "context": "<dd className=\"mt-1 whitespace-nowrap text-[30px] font-bold tabular-nums leading-none text-[var(--tm-assistant-role-text)]\">{formatScore(snapshot.finalScore)}<span className=\"ml-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]\">分</span></dd>"
+        }
+      ]
+    },
+    {
+      "value": "text-[32px]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 213,
+          "context": "<h1 className=\"text-[32px] sm:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-3\">学期成长手册</h1>"
+        }
+      ]
+    },
+    {
+      "value": "text-[40px]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 213,
+          "context": "<h1 className=\"text-[32px] sm:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-3\">学期成长手册</h1>"
+        }
+      ]
+    },
+    {
+      "value": "text-[8px]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/components/student/StudentCompactSelectItem.tsx",
+          "line": 46,
+          "context": "<span className=\"flex h-[14px] w-3.5 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[8px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]\" aria-hidden=\"true\">"
+        }
+      ]
+    }
+  ],
+  "namedFontSizes": [
+    {
+      "value": "text-sm",
+      "count": 129,
+      "fileCount": 19,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2389,
+          "context": "className=\"w-full flex items-center justify-between bg-white border border-slate-100 text-slate-800 text-sm font-bold px-4 py-3 rounded-xl shadow-sm active:bg-slate-50 transition-colors\""
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2404,
+          "context": "className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${term === selectedTerm ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2419,
+          "context": "className=\"w-full flex items-center justify-between bg-white border border-slate-100 text-slate-800 text-sm font-bold px-4 py-3 rounded-xl shadow-sm active:bg-slate-50 transition-colors\""
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2434,
+          "context": "className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${grade === selectedGradeScope ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-second"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2450,
+          "context": "className=\"w-full flex items-center justify-between bg-white border border-slate-100 text-slate-800 text-sm font-bold px-4 py-3 rounded-xl shadow-sm active:bg-slate-50 transition-colors\""
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2465,
+          "context": "className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${subject === selectedSubjectScope ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-se"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2489,
+          "context": "className=\"flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm active:bg-slate-50 transition-colors bg-white/50\""
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2495,
+          "context": "className=\"flex-1 rounded-xl bg-[var(--tm-brand-primary)] py-3.5 text-sm font-bold text-white [box-shadow:var(--tm-shadow-control)] transition-all active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)]\""
+        }
+      ]
+    },
+    {
+      "value": "text-xs",
+      "count": 120,
+      "fileCount": 21,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2386,
+          "context": "<label className=\"text-xs font-bold text-slate-500 mb-1.5 block ml-1\">报告所属学期</label>"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2416,
+          "context": "<label className=\"text-xs font-bold text-slate-500 mb-1.5 block ml-1\">生成年级范围</label>"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2447,
+          "context": "<label className=\"text-xs font-bold text-slate-500 mb-1.5 block ml-1\">学科范围</label>"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2480,
+          "context": "<div className=\"text-xs leading-relaxed text-orange-800 opacity-90\">"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2521,
+          "context": "<p className=\"text-xs text-slate-300 leading-relaxed mb-6\">"
+        },
+        {
+          "file": "mobile-app/components/FiveEducationRadarSimple.tsx",
+          "line": 179,
+          "context": "<span className=\"text-xs font-medium text-slate-500\">期末评价</span>"
+        },
+        {
+          "file": "mobile-app/components/FiveEducationRadarSimple.tsx",
+          "line": 188,
+          "context": "<span className=\"text-xs font-medium text-slate-500\">期初评价</span>"
+        },
+        {
+          "file": "mobile-app/components/FiveEducationRadarSimple.tsx",
+          "line": 198,
+          "context": "<span className=\"text-xs font-medium text-slate-500\">班级平均</span>"
+        }
+      ]
+    },
+    {
+      "value": "text-lg",
+      "count": 25,
+      "fileCount": 11,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2373,
+          "context": "<h3 className=\"text-lg font-bold text-slate-800\">"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2518,
+          "context": "<h3 className=\"text-lg font-bold mb-2\">"
+        },
+        {
+          "file": "mobile-app/views/ClassListView.tsx",
+          "line": 357,
+          "context": "<h3 className=\"truncate text-lg font-semibold text-[var(--tm-text-primary)]\">{classInfo.name}</h3>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 563,
+          "context": "<h3 className=\"text-lg font-semibold text-slate-800\">选择日期</h3>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 611,
+          "context": "<h3 className=\"text-lg font-semibold text-slate-800\">选择班级</h3>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 665,
+          "context": "<h3 className=\"text-lg font-semibold text-slate-800\">修改得分项</h3>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 712,
+          "context": "<h3 className=\"text-lg font-semibold text-slate-800\">涉及学生</h3>"
+        },
+        {
+          "file": "mobile-app/views/DashboardView.tsx",
+          "line": 393,
+          "context": "<span className=\"mt-1 text-lg font-bold leading-none tabular-nums\" style={{ color: tone.strong }}>{score.score}</span>"
+        }
+      ]
+    },
+    {
+      "value": "text-xl",
+      "count": 16,
+      "fileCount": 6,
+      "examples": [
+        {
+          "file": "mobile-app/components/VirtualKeyboard.tsx",
+          "line": 19,
+          "context": "<button key={key} onClick={() => onKeyPress(key.toLowerCase())} className=\"flex-1 h-11 bg-white rounded-lg shadow-sm text-black font-medium text-xl active:bg-gray-300 transition-colors\">"
+        },
+        {
+          "file": "mobile-app/components/VirtualKeyboard.tsx",
+          "line": 26,
+          "context": "<button key={key} onClick={() => onKeyPress(key.toLowerCase())} className=\"flex-1 h-11 bg-white rounded-lg shadow-sm text-black font-medium text-xl active:bg-gray-300 transition-colors\">"
+        },
+        {
+          "file": "mobile-app/components/VirtualKeyboard.tsx",
+          "line": 36,
+          "context": "<button key={key} onClick={() => onKeyPress(key.toLowerCase())} className=\"flex-1 h-11 bg-white rounded-lg shadow-sm text-black font-medium text-xl active:bg-gray-300 transition-colors\">"
+        },
+        {
+          "file": "mobile-app/components/VirtualKeyboard.tsx",
+          "line": 51,
+          "context": "<button onClick={() => onKeyPress(' ')} className=\"flex-[6] h-11 bg-white rounded-lg shadow-sm text-black font-medium text-xl active:bg-gray-300\">"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 575,
+          "context": "<div className=\"text-xl font-semibold text-slate-800\">2025</div>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 579,
+          "context": "<div className=\"text-xl font-semibold text-slate-800\">11</div>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 583,
+          "context": "<div className=\"text-xl font-semibold text-slate-700 opacity-40\">11</div>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 584,
+          "context": "<div className=\"text-xl font-semibold text-slate-800 py-2\">12</div>"
+        }
+      ]
+    },
+    {
+      "value": "text-base",
+      "count": 15,
+      "fileCount": 8,
+      "examples": [
+        {
+          "file": "mobile-app/components/VirtualKeyboard.tsx",
+          "line": 45,
+          "context": "<button onClick={onClose} className=\"flex-[2] h-11 bg-[#BFC3CE] rounded-lg shadow-sm text-black font-medium text-base active:bg-gray-400\">"
+        },
+        {
+          "file": "mobile-app/components/VirtualKeyboard.tsx",
+          "line": 54,
+          "context": "<button onClick={onSubmit} className=\"flex-[3] h-11 bg-blue-500 rounded-lg shadow-sm text-white font-medium text-base active:bg-blue-600\">"
+        },
+        {
+          "file": "mobile-app/components/student-performance/StudentPerformanceAvatar.tsx",
+          "line": 63,
+          "context": "<span className=\"flex h-full w-full items-center justify-center text-base font-semibold\">{fallbackText}</span>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 730,
+          "context": "<button onClick={() => setShowStudentListModal(false)} className=\"w-full rounded-2xl bg-[var(--tm-record-student-primary)] py-4 text-base font-semibold text-white transition-all active:scale-[0.98]\">"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 2423,
+          "context": "<div className=\"text-base font-semibold text-[var(--tm-text-primary)]\">{selectedGrade.name}班级覆盖率</div>"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 2466,
+          "context": "<div className=\"text-base font-semibold text-[var(--tm-text-primary)]\">{selectedEvaluationGrade.name}班级评价数</div>"
+        },
+        {
+          "file": "mobile-app/views/RecordInputView.tsx",
+          "line": 368,
+          "context": "className=\"flex-1 w-full resize-none outline-none text-slate-700 text-base leading-relaxed bg-transparent p-2 mt-[56px]\""
+        },
+        {
+          "file": "mobile-app/views/ReportDetailView.tsx",
+          "line": 297,
+          "context": "<h3 className=\"text-base font-bold text-slate-800\">{section.title}</h3>"
+        }
+      ]
+    },
+    {
+      "value": "text-2xl",
+      "count": 4,
+      "fileCount": 4,
+      "examples": [
+        {
+          "file": "mobile-app/components/StudentInfoCard.tsx",
+          "line": 19,
+          "context": "<h2 className=\"text-2xl font-bold tracking-tight\">{student.name}</h2>"
+        },
+        {
+          "file": "mobile-app/views/DashboardView.tsx",
+          "line": 540,
+          "context": "<h2 className=\"flex min-w-0 items-center gap-2 text-2xl font-bold text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 1207,
+          "context": "<span className=\"text-2xl font-bold leading-none\">{item.coverageRate}</span>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 230,
+          "context": "<div className=\"text-2xl font-black text-slate-800\">{student.name}</div>"
+        }
+      ]
+    },
+    {
+      "value": "text-3xl",
+      "count": 3,
+      "fileCount": 2,
+      "examples": [
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 241,
+          "context": "<div className=\"text-3xl font-bold leading-none tracking-normal text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 1111,
+          "context": "<div className=\"mt-1 text-3xl font-bold leading-none tracking-normal text-[var(--tm-text-primary)]\">{displayedTotalEvents}</div>"
+        },
+        {
+          "file": "mobile-app/views/ReportDetailView.tsx",
+          "line": 208,
+          "context": "<div className=\"mt-2 text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-white to-blue-200\">"
+        }
+      ]
+    },
+    {
+      "value": "text-4xl",
+      "count": 3,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 891,
+          "context": "<div className=\"absolute top-2 left-4 text-4xl font-serif opacity-30 text-amber-500 pointer-events-none\">\"</div>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1150,
+          "context": "<div className=\"text-4xl font-black text-slate-900 tracking-tight\">{calculatedGrade}</div>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1392,
+          "context": "<div className=\"text-4xl font-black text-slate-900 tracking-tight\">{calculatedGrade}</div>"
+        }
+      ]
+    }
+  ],
+  "fontWeights": [
+    {
+      "value": "font-semibold",
+      "count": 665,
+      "fileCount": 91,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1469,
+          "context": "className={`flex h-11 min-w-0 touch-none select-none items-center justify-center rounded-[var(--tm-radius-inner)] px-4 text-[15px] font-semibold transition ${voicePressState === 'idle'"
+        },
+        {
+          "file": "mobile-app/components/AssistantClassSwitchButton.tsx",
+          "line": 21,
+          "context": ": 'px-2 text-[14px] font-semibold text-[var(--tm-text-primary)] enabled:active:bg-[var(--tm-role-headteacher-glass-surface)]';"
+        },
+        {
+          "file": "mobile-app/components/AssistantHistoryLink.tsx",
+          "line": 18,
+          "context": "className={`flex min-h-11 shrink-0 items-center gap-1.5 px-1 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] transition active:scale-[0.98] active:text-[var(--tm-assistant-role-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visi"
+        },
+        {
+          "file": "mobile-app/components/AssistantReportFeedback.tsx",
+          "line": 24,
+          "context": "<h2 className=\"mt-6 text-[20px] font-semibold text-[var(--tm-text-primary)]\">{title}</h2>"
+        },
+        {
+          "file": "mobile-app/components/AssistantReportFeedback.tsx",
+          "line": 30,
+          "context": "className=\"mt-6 flex min-h-12 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-role-principal-primary)] px-5 text-[15px] font-semibold text-white transition active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)] focus-"
+        },
+        {
+          "file": "mobile-app/components/ClassSourceTrigger.tsx",
+          "line": 35,
+          "context": "? 'group text-[13px] font-semibold text-[var(--tm-text-primary)]'"
+        },
+        {
+          "file": "mobile-app/components/ClassSourceTrigger.tsx",
+          "line": 36,
+          "context": ": 'gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3.5 text-[13px] font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]';"
+        },
+        {
+          "file": "mobile-app/components/HomeroomClassPickerSheet.tsx",
+          "line": 73,
+          "context": "<h2 id={titleId} className=\"text-[17px] font-semibold text-[var(--tm-text-primary)]\">选择班级</h2>"
+        }
+      ]
+    },
+    {
+      "value": "font-medium",
+      "count": 362,
+      "fileCount": 78,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1434,
+          "context": "className={`min-w-0 truncate px-3 text-[15px] font-medium ${inputText ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2359,
+          "context": "<div className=\"max-w-full rounded-full bg-[var(--tm-text-primary)] px-4 py-2 text-center text-[12px] font-medium text-white shadow-[0_4px_8px_rgba(44,37,34,0.18)]\">"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2404,
+          "context": "className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${term === selectedTerm ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2434,
+          "context": "className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${grade === selectedGradeScope ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-second"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2465,
+          "context": "className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${subject === selectedSubjectScope ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-se"
+        },
+        {
+          "file": "mobile-app/components/AssistantClassSwitchButton.tsx",
+          "line": 20,
+          "context": "? 'px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] enabled:active:text-[var(--tm-text-primary)]'"
+        },
+        {
+          "file": "mobile-app/components/ClassSourceTrigger.tsx",
+          "line": 33,
+          "context": "? 'gap-1.5 rounded-[var(--tm-radius-control)] px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] shadow-none active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]'"
+        },
+        {
+          "file": "mobile-app/components/FiveEducationRadarSimple.tsx",
+          "line": 179,
+          "context": "<span className=\"text-xs font-medium text-slate-500\">期末评价</span>"
+        }
+      ]
+    },
+    {
+      "value": "font-bold",
+      "count": 348,
+      "fileCount": 63,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1283,
+          "context": "系统将基于 <span className=\"font-bold underline decoration-orange-300\">{selectedTerm}</span> 数据，为"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1284,
+          "context": "<span className=\"font-bold underline decoration-orange-300 ml-1 mr-1\">{gradeText}</span>"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1286,
+          "context": "<span className=\"font-bold underline decoration-orange-300 ml-1\">{subjectText}</span>"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1295,
+          "context": "系统将基于 <span className=\"font-bold underline decoration-orange-300\">{selectedTerm}</span> 数据，为"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1296,
+          "context": "<span className=\"font-bold underline decoration-orange-300 ml-1\">{gradeText}</span>"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1563,
+          "context": "<h2 className={`text-[17px] font-bold text-[var(--tm-text-primary)] tracking-tight ${!onBack ? 'mx-auto' : ''}`}>{title}</h2>"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2373,
+          "context": "<h3 className=\"text-lg font-bold text-slate-800\">"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2386,
+          "context": "<label className=\"text-xs font-bold text-slate-500 mb-1.5 block ml-1\">报告所属学期</label>"
+        }
+      ]
+    },
+    {
+      "value": "tm-font-regular",
+      "count": 26,
+      "fileCount": 13,
+      "examples": [
+        {
+          "file": "mobile-app/components/SubjectGradesChart.tsx",
+          "line": 57,
+          "context": "<span className=\"text-xs text-slate-400 tm-font-regular\">"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 609,
+          "context": "return <div className=\"mt-4 flex h-10 items-center border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-compact)] tm-font-regular text-[var(--tm-input-readonly-text)]\" aria-hidden=\"true\">{previewMeta?.placeholder ?? placeholder[set"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 614,
+          "context": "<div className=\"mt-4 flex h-10 items-center justify-between gap-3 border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-compact)] tm-font-regular text-[var(--tm-input-readonly-text)]\" aria-hidden=\"true\">"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 621,
+          "context": "return <div className=\"mt-4 h-10 border-b border-[var(--tm-input-readonly-border)] text-[length:var(--tm-font-size-compact)] tm-font-regular text-[var(--tm-input-readonly-text)]\" aria-hidden=\"true\">{previewMeta?.placeholder ?? '请输入内容'}</div>;"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 623,
+          "context": "return <div className={`mt-3 min-h-[72px] px-3 py-2.5 text-[length:var(--tm-font-size-compact)] tm-font-regular ${readonlyPreviewSurfaceClass}`} aria-hidden=\"true\">{previewMeta?.placeholder ?? '请输入内容'}</div>;"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 978,
+          "context": "<div className=\"mb-3 flex items-start gap-2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-[length:var(--tm-font-size-meta)] tm-font-regular leading-5 text-[var(--tm-text-secondary)]\">"
+        },
+        {
+          "file": "mobile-app/components/report/RecordDistributionComparison.tsx",
+          "line": 68,
+          "context": "<th scope=\"col\" className=\"px-1 pb-2.5 text-left tm-font-regular\">事件类型</th>"
+        },
+        {
+          "file": "mobile-app/components/report/RecordDistributionComparison.tsx",
+          "line": 70,
+          "context": "<th scope=\"col\" className=\"px-1 pb-2.5 text-center tm-font-regular\">上周期</th>"
+        }
+      ]
+    },
+    {
+      "value": "font-black",
+      "count": 16,
+      "fileCount": 2,
+      "examples": [
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 566,
+          "context": "<div className={`w-14 shrink-0 text-right text-xl font-black tabular-nums ${item.count > 0 ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}>{item.count}</div>"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 1281,
+          "context": "<div className={`w-14 shrink-0 text-right text-xl font-black tabular-nums ${second.count > 0 ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}>{second.count}</div>"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 1301,
+          "context": "<div className={`w-14 shrink-0 text-right text-lg font-black tabular-nums ${third.count > 0 ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}>{third.count}</div>"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 2425,
+          "context": "<span className={`text-xl font-black leading-none ${getCoveragePercentageTone(rate(selectedGrade.covered, selectedGrade.total)).text}`}>"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 2468,
+          "context": "<span className=\"text-xl font-black leading-none text-[var(--tm-brand-primary-pressed)]\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 85,
+          "context": "<span className=\"px-2 py-1 rounded bg-blue-50 text-blue-600 text-[10px] font-black tracking-wider uppercase border border-blue-100\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 213,
+          "context": "<h1 className=\"text-[32px] sm:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-3\">学期成长手册</h1>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 230,
+          "context": "<div className=\"text-2xl font-black text-slate-800\">{student.name}</div>"
+        }
+      ]
+    },
+    {
+      "value": "font-extrabold",
+      "count": 3,
+      "fileCount": 3,
+      "examples": [
+        {
+          "file": "mobile-app/components/ui/MobileClassCascadePicker.tsx",
+          "line": 73,
+          "context": "className={`mb-2 flex min-h-11 w-full flex-col items-center justify-center rounded-[var(--tm-radius-control)] text-xs font-extrabold transition-all last:mb-0 active:scale-95 ${active ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] [box-shadow:var"
+        },
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 348,
+          "context": "<h2 className=\"truncate text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]\">{teacherName}</h2>"
+        },
+        {
+          "file": "mobile-app/views/ReportDetailView.tsx",
+          "line": 208,
+          "context": "<div className=\"mt-2 text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-white to-blue-200\">"
+        }
+      ]
+    }
+  ],
+  "lineHeights": [
+    {
+      "value": "leading-5",
+      "count": 63,
+      "fileCount": 30,
+      "examples": [
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 132,
+          "context": "<dl className=\"mt-[var(--tm-space-2)] space-y-1 text-[length:var(--tm-font-size-compact)] leading-5 text-[var(--tm-text-tertiary)]\">"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportFooter.tsx",
+          "line": 10,
+          "context": "<footer className={`mx-[var(--tm-report-page-inline)] border-t border-[var(--tm-border-subtle)] py-[var(--tm-space-5)] text-[length:var(--tm-font-size-compact)] leading-5 text-[var(--tm-text-tertiary)] ${className}`}>"
+        },
+        {
+          "file": "mobile-app/components/evaluation/EvaluationIndicatorCascadePicker.tsx",
+          "line": 42,
+          "context": "className={`flex min-h-11 w-full items-center justify-center rounded-[var(--tm-radius-inner)] px-1.5 py-1 text-center text-[length:var(--tm-font-size-compact)] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visibl"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 681,
+          "context": "<span className=\"block break-words text-[length:var(--tm-font-size-body)] font-semibold leading-5 text-[var(--tm-text-primary)]\">{field.label || `未命名${itemLabel}`}</span>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 696,
+          "context": "<span className=\"block break-words text-[length:var(--tm-font-size-card-title)] font-semibold leading-5 text-[var(--tm-text-primary)]\">{field.label || `未命名${itemLabel}`}</span>"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 722,
+          "context": "className={`w-full min-h-11 max-h-[84px] resize-none py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 outline-none transition-[border-color,border-width,background-color,color] placeholder:text-[var(--tm-text-tertiary)] ${fixedContent"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+          "line": 978,
+          "context": "<div className=\"mb-3 flex items-start gap-2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-[length:var(--tm-font-size-meta)] tm-font-regular leading-5 text-[var(--tm-text-secondary)]\">"
+        },
+        {
+          "file": "mobile-app/components/form-builder/FormOutlineSorter.tsx",
+          "line": 79,
+          "context": "<span className=\"min-w-0 flex-1 break-words py-3 pr-3 text-[length:var(--tm-font-size-compact)] font-semibold leading-5 text-[var(--tm-text-primary)]\">"
+        }
+      ]
+    },
+    {
+      "value": "leading-6",
+      "count": 59,
+      "fileCount": 28,
+      "examples": [
+        {
+          "file": "mobile-app/components/AssistantReportFeedback.tsx",
+          "line": 25,
+          "context": "<p className=\"mt-3 max-w-[300px] text-[14px] leading-6 text-[var(--tm-text-secondary)]\">{message}</p>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 130,
+          "context": "<p className={`${item.title ? 'mt-1' : ''} text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]`}>{item.body}</p>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 161,
+          "context": "{item.title && <h3 className=\"text-[length:var(--tm-font-size-body)] font-semibold leading-6 text-[var(--tm-text-primary)]\">{item.title}</h3>}"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 162,
+          "context": "<p className={`${item.title ? 'mt-1' : ''} text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]`}>{item.body}</p>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 219,
+          "context": "<h3 className=\"text-[length:var(--tm-font-size-card-title)] font-semibold leading-6 text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 226,
+          "context": "<dd className=\"mt-1 text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]\">{row.value}</dd>"
+        },
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportContractError.tsx",
+          "line": 10,
+          "context": "<p className=\"mt-2 text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]\">报告内容未完整返回，请稍后重试。</p>"
+        },
+        {
+          "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+          "line": 156,
+          "context": "<p className=\"mt-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]\">{qrText}</p>"
+        }
+      ]
+    },
+    {
+      "value": "leading-none",
+      "count": 34,
+      "fileCount": 19,
+      "examples": [
+        {
+          "file": "mobile-app/components/TeacherBottomNavigation.tsx",
+          "line": 78,
+          "context": "<span className=\"absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--tm-status-negative)] px-1 text-[9px] font-bold leading-none tabular-nums text-white\">"
+        },
+        {
+          "file": "mobile-app/components/student/StudentCompactSelectItem.tsx",
+          "line": 46,
+          "context": "<span className=\"flex h-[14px] w-3.5 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[8px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]\" aria-hidden=\"true\">"
+        },
+        {
+          "file": "mobile-app/components/student/StudentRosterCard.tsx",
+          "line": 132,
+          "context": "className=\"flex h-[var(--tm-student-card-roster-height)] w-4 shrink-0 items-center justify-center self-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[length:var(--tm-student-card-roster-font-size)] font-semibold leading-none tabular-nums "
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 639,
+          "context": "<span className=\"text-[10px] font-semibold tabular-nums leading-none text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 754,
+          "context": "<dd className=\"mt-1 whitespace-nowrap text-[30px] font-bold tabular-nums leading-none text-[var(--tm-assistant-role-text)]\">{formatScore(snapshot.finalScore)}<span className=\"ml-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]\">分</span></dd>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 762,
+          "context": "<dd className=\"mt-1.5 whitespace-nowrap text-[20px] font-bold tabular-nums leading-none text-[var(--tm-text-primary)]\">第{week.gradeRank}<span className=\"ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]\">名</span></dd>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 766,
+          "context": "<dd className=\"mt-1.5 whitespace-nowrap text-[20px] font-bold tabular-nums leading-none text-[var(--tm-text-primary)]\">第{week.schoolRank}<span className=\"ml-0.5 text-[10px] font-medium text-[var(--tm-text-tertiary)]\">名</span></dd>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 399,
+          "context": "<span className=\"text-[22px] font-bold leading-none\">{formatScoreValue(totalScore)}</span>"
+        }
+      ]
+    },
+    {
+      "value": "leading-relaxed",
+      "count": 24,
+      "fileCount": 7,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2480,
+          "context": "<div className=\"text-xs leading-relaxed text-orange-800 opacity-90\">"
+        },
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 2521,
+          "context": "<p className=\"text-xs text-slate-300 leading-relaxed mb-6\">"
+        },
+        {
+          "file": "mobile-app/views/DashboardView.tsx",
+          "line": 463,
+          "context": "<div className=\"border-t border-[var(--tm-border-subtle)] px-4 pb-4 pt-3 pl-[4.25rem] text-xs leading-relaxed text-[var(--tm-text-secondary)]\">"
+        },
+        {
+          "file": "mobile-app/views/DashboardView.tsx",
+          "line": 741,
+          "context": "<p id=\"leave-student-confirm-description\" className=\"mt-2 text-sm leading-relaxed text-[var(--tm-text-secondary)]\">"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 2220,
+          "context": "<div className=\"pointer-events-none absolute left-0 top-9 z-20 w-56 rounded-2xl bg-[var(--tm-text-primary)] px-3 py-2 text-xs font-medium leading-relaxed text-white shadow-xl\">"
+        },
+        {
+          "file": "mobile-app/views/RecordInputView.tsx",
+          "line": 282,
+          "context": "<p className=\"mt-3 text-xs font-medium leading-relaxed text-slate-400\">"
+        },
+        {
+          "file": "mobile-app/views/RecordInputView.tsx",
+          "line": 368,
+          "context": "className=\"flex-1 w-full resize-none outline-none text-slate-700 text-base leading-relaxed bg-transparent p-2 mt-[56px]\""
+        },
+        {
+          "file": "mobile-app/views/RecordResultView.tsx",
+          "line": 35,
+          "context": "<p className=\"text-xs text-indigo-700 leading-relaxed\">"
+        }
+      ]
+    },
+    {
+      "value": "leading-4",
+      "count": 11,
+      "fileCount": 8,
+      "examples": [
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 112,
+          "context": "<p className=\"mt-1 text-[length:var(--tm-font-size-compact)] leading-4 text-[var(--tm-text-secondary)]\">{item.detail}</p>"
+        },
+        {
+          "file": "mobile-app/components/student/StudentCompactSelectItem.tsx",
+          "line": 49,
+          "context": "<span className=\"min-w-0 truncate text-[12px] font-medium leading-4 text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/components/student/StudentRosterCard.tsx",
+          "line": 136,
+          "context": "<span className=\"block min-w-0 max-w-[52px] truncate text-[length:var(--tm-student-card-name-font-size)] [font-weight:var(--tm-student-card-name-font-weight)] leading-4 text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/components/student/StudentRosterCard.tsx",
+          "line": 159,
+          "context": "<span className=\"text-[length:var(--tm-font-size-compact)] font-medium leading-4 text-[var(--tm-brand-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 1413,
+          "context": "<p className=\"px-4 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1 text-center text-[10px] leading-4 text-[var(--tm-text-disabled)]\">内容由AI生成仅供参考。</p>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 499,
+          "context": "? 'ml-auto text-right text-[11px] font-medium leading-4 text-[var(--tm-text-disabled)]'"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 500,
+          "context": ": 'pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-center text-[11px] font-medium leading-4 text-[var(--tm-text-disabled)]'"
+        },
+        {
+          "file": "mobile-app/views/StudentCoinDetailView.tsx",
+          "line": 182,
+          "context": "<p className=\"shrink-0 text-right text-[length:var(--tm-font-size-meta)] font-medium leading-4 text-[var(--tm-text-secondary)]\">"
+        }
+      ]
+    },
+    {
+      "value": "leading-7",
+      "count": 9,
+      "fileCount": 7,
+      "examples": [
+        {
+          "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+          "line": 93,
+          "context": "<p className=\"whitespace-pre-line text-[length:var(--tm-font-size-body)] leading-7 text-[var(--tm-text-secondary)]\">"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 1298,
+          "context": "<h1 id=\"active-report-title\" className=\"min-w-0 text-pretty text-[20px] font-bold leading-7 text-[var(--tm-text-primary)]\">本周班级评比分析</h1>"
+        },
+        {
+          "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+          "line": 1338,
+          "context": "<p className=\"ai-assistant-typewriter-shine min-h-16 whitespace-pre-line text-pretty text-[17px] font-bold leading-7\">"
+        },
+        {
+          "file": "mobile-app/views/AiPrincipalAssistantView.tsx",
+          "line": 157,
+          "context": "<p className=\"ai-assistant-typewriter-shine whitespace-pre-line text-[15px] font-semibold leading-7\">"
+        },
+        {
+          "file": "mobile-app/views/ReportDetailView.tsx",
+          "line": 335,
+          "context": "<div className=\"text-sm text-slate-700 leading-7 whitespace-pre-line tm-font-regular text-justify relative z-10\">"
+        },
+        {
+          "file": "mobile-app/views/TeacherIndicatorCatalogView.tsx",
+          "line": 192,
+          "context": "<span className=\"min-w-0 flex-1 text-[length:var(--tm-font-size-body)] font-medium leading-7 text-[var(--tm-text-primary)]\">{example}</span>"
+        },
+        {
+          "file": "mobile-app/views/TeacherIndicatorCatalogView.tsx",
+          "line": 234,
+          "context": "<p className={`text-[length:var(--tm-font-size-body)] font-medium leading-7 ${value ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-tertiary)]'}`}>"
+        },
+        {
+          "file": "mobile-app/views/TeacherLoginView.tsx",
+          "line": 180,
+          "context": "<h2 className=\"text-xl font-bold leading-7 text-[var(--tm-text-primary)]\">申请获取并验证你的手机号</h2>"
+        }
+      ]
+    },
+    {
+      "value": "leading-[22px]",
+      "count": 7,
+      "fileCount": 2,
+      "examples": [
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 169,
+          "context": "<span className=\"min-w-0 truncate text-[17px] font-semibold leading-[22px] text-[var(--tm-text-primary)]\">{space.title}</span>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 1787,
+          "context": "<div className=\"line-clamp-2 min-h-11 text-pretty pt-1 text-[length:var(--tm-font-size-card-title)] font-bold leading-[22px] text-[var(--tm-text-primary)]\">{record.title}</div>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 1867,
+          "context": "<div className=\"line-clamp-2 text-pretty text-[length:var(--tm-font-size-card-title)] font-bold leading-[22px] text-[var(--tm-text-primary)]\">{record.title}</div>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 1913,
+          "context": "<div className=\"line-clamp-2 text-pretty text-[length:var(--tm-font-size-card-title)] font-bold leading-[22px] text-[var(--tm-text-primary)]\">{record.title}</div>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2815,
+          "context": "{activeRecord.description && <p className=\"mt-2 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]\">{activeRecord.description}</p>}"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2936,
+          "context": "{previewRecord.description && <p className=\"mt-2 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]\">{previewRecord.description}</p>}"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 3089,
+          "context": "<span className=\"line-clamp-2 min-h-11 text-[length:var(--tm-font-size-card-title)] font-bold leading-[22px] text-[var(--tm-text-primary)]\">{template.name}</span>"
+        }
+      ]
+    },
+    {
+      "value": "leading-8",
+      "count": 7,
+      "fileCount": 4,
+      "examples": [
+        {
+          "file": "mobile-app/views/PrincipalPeriodicReportView.tsx",
+          "line": 111,
+          "context": "<h2 className=\"mt-1.5 text-[24px] font-bold leading-8\">{report.reportTitle}</h2>"
+        },
+        {
+          "file": "mobile-app/views/PrincipalTermReportView.tsx",
+          "line": 108,
+          "context": "<h1 className=\"mt-1.5 text-[24px] font-bold leading-8\">学生综合素质评价系统学期运营报告</h1>"
+        },
+        {
+          "file": "mobile-app/views/TeacherEvaluationReviewView.tsx",
+          "line": 54,
+          "context": "<h2 className=\"text-center text-[20px] font-bold leading-8 text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2497,
+          "context": "<h1 className=\"text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]\">{activeRecord.title}</h1>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2814,
+          "context": "<h1 className=\"text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]\">{activeRecord.title}</h1>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2930,
+          "context": "<h1 className=\"text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]\">{previewRecord.title}</h1>"
+        },
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 2935,
+          "context": "<h1 className=\"text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]\">{previewRecord.title}</h1>"
+        }
+      ]
+    },
+    {
+      "value": "leading-tight",
+      "count": 5,
+      "fileCount": 5,
+      "examples": [
+        {
+          "file": "mobile-app/views/ClassInfoView.tsx",
+          "line": 426,
+          "context": "<h2 className={`truncate text-[length:var(--tm-class-info-title-font-size)] font-bold leading-tight text-[var(--tm-text-primary)] ${canEdit ? 'pr-[calc(var(--tm-size-touch)+var(--tm-space-2))]' : ''}`}>"
+        },
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 348,
+          "context": "<h2 className=\"truncate text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]\">{teacherName}</h2>"
+        },
+        {
+          "file": "mobile-app/views/ReportDetailView.tsx",
+          "line": 205,
+          "context": "<h2 className=\"text-xl font-bold text-white leading-tight\">"
+        },
+        {
+          "file": "mobile-app/views/TeacherLoginView.tsx",
+          "line": 133,
+          "context": "<h1 className=\"mt-[var(--tm-space-6)] text-balance text-[length:var(--tm-font-size-page-title)] font-bold leading-tight\">欢迎使用 AI素养评价</h1>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 111,
+          "context": "<h3 className={`text-[15px] font-bold text-slate-800 mb-2 leading-tight ${className}`}>"
+        }
+      ]
+    },
+    {
+      "value": "leading-[18px]",
+      "count": 4,
+      "fileCount": 2,
+      "examples": [
+        {
+          "file": "mobile-app/components/student/StudentRosterCard.tsx",
+          "line": 103,
+          "context": "<span className=\"flex h-[18px] w-full shrink-0 items-center justify-center truncate px-1 text-[10px] font-medium leading-[18px] text-[var(--tm-text-tertiary)]\">"
+        },
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 135,
+          "context": "<span className=\"max-w-[72px] whitespace-nowrap text-[12px] font-medium leading-[18px] text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 171,
+          "context": "<span className={`rounded-full px-3 py-1 text-[13px] font-medium leading-[18px] ${isActive ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-pressed)]' : 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]'}`}>{tag}</span>"
+        },
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 172,
+          "context": "{isActive && <span className=\"rounded-full bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-[var(--tm-text-inverse)]\">当前</span>}"
+        }
+      ]
+    },
+    {
+      "value": "leading-snug",
+      "count": 3,
+      "fileCount": 3,
+      "examples": [
+        {
+          "file": "mobile-app/components/ui/MenuItem.tsx",
+          "line": 38,
+          "context": "{value && <span className=\"max-w-[120px] truncate text-[15px] tm-font-regular leading-snug text-slate-400\">{value}</span>}"
+        },
+        {
+          "file": "mobile-app/views/ClassListView.tsx",
+          "line": 783,
+          "context": "<span className=\"min-w-0 flex-1 text-[length:var(--tm-font-size-body)] font-semibold leading-snug text-[var(--tm-text-primary)]\">{item.label}</span>"
+        },
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 82,
+          "context": "<h3 className=\"flex items-center gap-3 text-[17px] font-bold leading-snug text-[var(--tm-text-primary)]\">"
+        }
+      ]
+    },
+    {
+      "value": "leading-[1.55]",
+      "count": 2,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 379,
+          "context": "<p className=\"mb-3.5 text-[14px] font-medium leading-[1.55] text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 437,
+          "context": "<div className=\"mt-3 border-t border-[var(--tm-border-subtle)] pt-3 text-[13px] font-medium leading-[1.55] text-[var(--tm-text-primary)]\">"
+        }
+      ]
+    },
+    {
+      "value": "leading-[1.8]",
+      "count": 2,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 895,
+          "context": "className=\"relative z-10 min-h-[120px] w-full resize-none rounded-xl border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] p-3 pt-1 text-[15px] leading-[1.8] text-[var(--tm-input-text)] shadow-inner outline-none\""
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 902,
+          "context": "<div className=\"text-[15px] leading-[1.8] relative z-10 pt-1 text-slate-700 text-justify tracking-wide\">"
+        }
+      ]
+    },
+    {
+      "value": "leading-[1.45]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+          "line": 575,
+          "context": "<label htmlFor={['short_text', 'text', 'number', 'date'].includes(question.type) ? inputId : undefined} className=\"block text-[length:var(--tm-font-size-question-title)] font-bold leading-[1.45] text-[var(--tm-text-primary)]\">"
+        }
+      ]
+    },
+    {
+      "value": "leading-[21px]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/student-collection/StudentCollectionHistoryTab.tsx",
+          "line": 125,
+          "context": "<span className=\"line-clamp-2 block text-pretty text-[15px] font-semibold leading-[21px] text-[var(--tm-text-primary)]\">{item.title}</span>"
+        }
+      ]
+    },
+    {
+      "value": "leading-[30px]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/WeeklyActionAdviceView.tsx",
+          "line": 115,
+          "context": "<h2 className=\"mx-auto min-h-[60px] max-w-[300px] text-[20px] font-bold leading-[30px] text-[var(--tm-text-primary)]\">"
+        }
+      ]
+    },
+    {
+      "value": "leading-3",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/HomeworkEntryView.tsx",
+          "line": 271,
+          "context": "<span className={`absolute bottom-0 flex h-3 min-w-4 items-center justify-center rounded-[4px] px-1 text-[9px] font-semibold leading-3 ${selected ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-tex"
+        }
+      ]
+    },
+    {
+      "value": "leading-9",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/components/ui/MobileDocumentTitleInput.tsx",
+          "line": 35,
+          "context": "className={`min-h-[var(--tm-size-touch)] w-full border-0 border-b bg-transparent px-0 py-1 text-[length:var(--tm-font-size-document-title)] font-bold leading-9 text-[var(--tm-text-primary)] outline-none placeholder:font-medium placeholder:text-[var(--tm-text-t"
+        }
+      ]
+    },
+    {
+      "value": "leading-normal",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 123,
+          "context": "<p className={`text-[11px] text-slate-400 leading-normal ${className}`}>"
+        }
+      ]
+    }
+  ],
+  "fontFamilies": [
+    {
+      "value": "font-sans",
+      "count": 22,
+      "fileCount": 21,
+      "examples": [
+        {
+          "file": "mobile-app/views/AiPrincipalAssistantView.tsx",
+          "line": 134,
+          "context": "<div className=\"ai-assistant-theme-principal teacher-assistant-page relative min-h-full overflow-hidden font-sans text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/DashboardView.tsx",
+          "line": 496,
+          "context": "<div className=\"relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent font-sans\">"
+        },
+        {
+          "file": "mobile-app/views/DashboardView.tsx",
+          "line": 512,
+          "context": "<div className=\"relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent font-sans\">"
+        },
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 322,
+          "context": "className=\"relative overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]\""
+        },
+        {
+          "file": "mobile-app/views/MyFilesView.tsx",
+          "line": 140,
+          "context": "<div className=\"min-h-screen bg-slate-50 flex flex-col font-sans\">"
+        },
+        {
+          "file": "mobile-app/views/PrincipalPeriodicReportView.tsx",
+          "line": 58,
+          "context": "<div className=\"ai-assistant-theme-principal principal-report-page min-h-full bg-transparent font-sans text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/PrincipalReportHistoryView.tsx",
+          "line": 83,
+          "context": "<div className=\"ai-assistant-theme-principal principal-report-page min-h-full bg-transparent font-sans text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/StudentBasicEditView.tsx",
+          "line": 365,
+          "context": "<div className=\"h-full min-h-0 overflow-hidden bg-[var(--tm-bg-page)] font-sans\">"
+        }
+      ]
+    },
+    {
+      "value": "font-mono",
+      "count": 8,
+      "fileCount": 8,
+      "examples": [
+        {
+          "file": "mobile-app/components/student/StudentCompactSelectItem.tsx",
+          "line": 46,
+          "context": "<span className=\"flex h-[14px] w-3.5 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[8px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]\" aria-hidden=\"true\">"
+        },
+        {
+          "file": "mobile-app/components/student/StudentRosterCard.tsx",
+          "line": 132,
+          "context": "className=\"flex h-[var(--tm-student-card-roster-height)] w-4 shrink-0 items-center justify-center self-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[length:var(--tm-student-card-roster-font-size)] font-semibold leading-none tabular-nums "
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 693,
+          "context": "className={`flex h-12 flex-1 items-center justify-center rounded-xl font-mono font-semibold transition-all ${editingLog.score?.value === v ? `${v < 0 ? 'bg-[var(--tm-status-negative)]' : 'bg-[var(--tm-status-positive)]'} scale-105 text-white` : `${v < 0 ? 'tex"
+        },
+        {
+          "file": "mobile-app/views/HomeworkBatchImportView.tsx",
+          "line": 497,
+          "context": "<span aria-label={`学号${resultItem.studentNo}`} className=\"flex h-[14px] w-4 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[9px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]\">{getStud"
+        },
+        {
+          "file": "mobile-app/views/HomeworkEntryView.tsx",
+          "line": 353,
+          "context": "<span aria-label={`学号${result.studentNo}`} className=\"flex h-[14px] w-4 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[9px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]\">{getStudentN"
+        },
+        {
+          "file": "mobile-app/views/MyFilesView.tsx",
+          "line": 206,
+          "context": "<p className=\"text-xs text-slate-400 mt-0.5 font-mono\">{file.date} <span className=\"ml-2\">{file.size}</span></p>"
+        },
+        {
+          "file": "mobile-app/views/RecordInputView.tsx",
+          "line": 298,
+          "context": "<span className=\"ml-3 font-mono text-blue-500\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 2139,
+          "context": "<span className=\"text-[10px] text-slate-400 font-mono\">{activity.time}</span>"
+        }
+      ]
+    },
+    {
+      "value": "font-serif",
+      "count": 3,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 268,
+          "context": "<div className=\"text-lg font-serif italic\">博学笃行，格物致知</div>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 481,
+          "context": "<div className=\"px-4 text-base font-serif font-medium text-slate-800 text-center leading-relaxed italic\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 891,
+          "context": "<div className=\"absolute top-2 left-4 text-4xl font-serif opacity-30 text-amber-500 pointer-events-none\">\"</div>"
+        }
+      ]
+    }
+  ],
+  "letterSpacing": [
+    {
+      "value": "tracking-wider",
+      "count": 11,
+      "fileCount": 2,
+      "examples": [
+        {
+          "file": "mobile-app/views/RecordResultView.tsx",
+          "line": 44,
+          "context": "<h3 className=\"text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider flex items-center gap-2\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 85,
+          "context": "<span className=\"px-2 py-1 rounded bg-blue-50 text-blue-600 text-[10px] font-black tracking-wider uppercase border border-blue-100\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1686,
+          "context": "<div className=\"text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1697,
+          "context": "<div className=\"text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1792,
+          "context": "<div className=\"text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1803,
+          "context": "<div className=\"text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1919,
+          "context": "<div className=\"text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1930,
+          "context": "<div className=\"text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1\">"
+        }
+      ]
+    },
+    {
+      "value": "tracking-tight",
+      "count": 8,
+      "fileCount": 4,
+      "examples": [
+        {
+          "file": "mobile-app/App.tsx",
+          "line": 1563,
+          "context": "<h2 className={`text-[17px] font-bold text-[var(--tm-text-primary)] tracking-tight ${!onBack ? 'mx-auto' : ''}`}>{title}</h2>"
+        },
+        {
+          "file": "mobile-app/components/StudentInfoCard.tsx",
+          "line": 19,
+          "context": "<h2 className=\"text-2xl font-bold tracking-tight\">{student.name}</h2>"
+        },
+        {
+          "file": "mobile-app/views/MeView.tsx",
+          "line": 348,
+          "context": "<h2 className=\"truncate text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]\">{teacherName}</h2>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 213,
+          "context": "<h1 className=\"text-[32px] sm:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-3\">学期成长手册</h1>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 241,
+          "context": "className={`text-[11px] px-3 py-1.5 rounded-lg font-black tracking-tight border whitespace-nowrap ${COVER_TRAITS[idx % COVER_TRAITS.length].className}`}"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 406,
+          "context": "<div className=\"text-[13px] font-black text-slate-700 mb-6 text-center tracking-tight\">5维度发展对比图</div>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1150,
+          "context": "<div className=\"text-4xl font-black text-slate-900 tracking-tight\">{calculatedGrade}</div>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 1392,
+          "context": "<div className=\"text-4xl font-black text-slate-900 tracking-tight\">{calculatedGrade}</div>"
+        }
+      ]
+    },
+    {
+      "value": "tracking-widest",
+      "count": 6,
+      "fileCount": 3,
+      "examples": [
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 670,
+          "context": "<label className=\"text-xs font-bold text-slate-400 uppercase tracking-widest block mb-3\">选择指标</label>"
+        },
+        {
+          "file": "mobile-app/views/ClassRecordLogView.tsx",
+          "line": 687,
+          "context": "<label className=\"text-xs font-bold text-slate-400 uppercase tracking-widest block mb-3\">分值调整</label>"
+        },
+        {
+          "file": "mobile-app/views/RecordInputView.tsx",
+          "line": 356,
+          "context": "<span className=\"text-sm tracking-widest\">轻触拍照</span>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 68,
+          "context": "<span className=\"text-[9px] text-slate-300 font-bold tracking-widest uppercase\">Student Growth Pulse</span>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 267,
+          "context": "<div className=\"text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1\">Motto</div>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 2354,
+          "context": "<div className=\"p-8 text-center text-[10px] text-slate-300 uppercase tracking-widest font-bold\">- End of Report -</div>"
+        }
+      ]
+    },
+    {
+      "value": "tracking-wide",
+      "count": 3,
+      "fileCount": 2,
+      "examples": [
+        {
+          "file": "mobile-app/views/RecordInputView.tsx",
+          "line": 322,
+          "context": "<span className=\"text-[18px] font-bold tracking-wide\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 231,
+          "context": "<div className=\"flex items-center justify-center gap-3 text-[13px] text-slate-600 font-semibold tracking-wide whitespace-nowrap\">"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 902,
+          "context": "<div className=\"text-[15px] leading-[1.8] relative z-10 pt-1 text-slate-700 text-justify tracking-wide\">"
+        }
+      ]
+    },
+    {
+      "value": "tracking-[0.3em]",
+      "count": 2,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 214,
+          "context": "<p className=\"text-xs font-bold text-slate-300 uppercase tracking-[0.3em]\">Semester Growth Report</p>"
+        },
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 236,
+          "context": "<div className=\"text-[11px] text-slate-400 font-bold uppercase tracking-[0.3em]\">{termLabel}</div>"
+        }
+      ]
+    },
+    {
+      "value": "tracking-normal",
+      "count": 2,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 241,
+          "context": "<div className=\"text-3xl font-bold leading-none tracking-normal text-[var(--tm-text-primary)]\">"
+        },
+        {
+          "file": "mobile-app/views/LeaderReportView.tsx",
+          "line": 1111,
+          "context": "<div className=\"mt-1 text-3xl font-bold leading-none tracking-normal text-[var(--tm-text-primary)]\">{displayedTotalEvents}</div>"
+        }
+      ]
+    },
+    {
+      "value": "tracking-[0.28em]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/RecordInputView.tsx",
+          "line": 279,
+          "context": "<p className={`text-[13px] font-bold tracking-[0.28em] ${cancelThreshold ? 'text-orange-600' : 'text-blue-500'}`}>"
+        }
+      ]
+    },
+    {
+      "value": "tracking-[0.2em]",
+      "count": 1,
+      "fileCount": 1,
+      "examples": [
+        {
+          "file": "mobile-app/views/TermReportView.tsx",
+          "line": 250,
+          "context": "<div className=\"absolute bottom-6 text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em]\">"
+        }
+      ]
+    }
+  ]
+}

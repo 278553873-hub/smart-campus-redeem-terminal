@@ -31,6 +31,8 @@ interface ClassroomStudentLevelIconsProps {
 interface ClassroomStudentCountsProps {
   summary: StudentPerformanceSummary;
   compact?: boolean;
+  showPraiseCount?: boolean;
+  showCriticismCount?: boolean;
 }
 
 const TIER_META: Record<StudentPerformanceTier, { label: string; iconSrc: string }> = {
@@ -123,19 +125,37 @@ export const ClassroomStudentLevelIcons: React.FC<ClassroomStudentLevelIconsProp
   );
 };
 
-export const ClassroomStudentCounts: React.FC<ClassroomStudentCountsProps> = ({ summary, compact = false }) => (
-  <div
-    aria-label={`被表扬${summary.praiseCount}次，被批评${summary.criticismCount}次`}
-    className={`flex items-center justify-center font-black tabular-nums ${compact ? 'h-[18px] w-full gap-2 text-[10px]' : 'h-5 gap-2 text-[11px]'}`}
-  >
-    <span aria-hidden="true" className={`flex items-center justify-center bg-emerald-50 text-emerald-600 ${compact ? 'h-[18px] min-w-6 rounded-md px-1' : 'h-5 min-w-7 rounded-[5px] px-1.5'}`}>
-      {formatSignedCount(summary.praiseCount, '+')}
-    </span>
-    <span aria-hidden="true" className={`flex items-center justify-center bg-rose-50 text-rose-500 ${compact ? 'h-[18px] min-w-6 rounded-md px-1' : 'h-5 min-w-7 rounded-[5px] px-1.5'}`}>
-      {formatSignedCount(summary.criticismCount, '-')}
-    </span>
-  </div>
-);
+export const ClassroomStudentCounts: React.FC<ClassroomStudentCountsProps> = ({
+  summary,
+  compact = false,
+  showPraiseCount = true,
+  showCriticismCount = true,
+}) => {
+  const visibleCountLabels = [
+    showPraiseCount ? `被表扬${summary.praiseCount}次` : '',
+    showCriticismCount ? `被批评${summary.criticismCount}次` : '',
+  ].filter(Boolean);
+
+  if (visibleCountLabels.length === 0) return null;
+
+  return (
+    <div
+      aria-label={visibleCountLabels.join('，')}
+      className={`flex items-center justify-center font-black tabular-nums ${compact ? 'h-[18px] w-full gap-2 text-[10px]' : 'h-5 gap-2 text-[11px]'}`}
+    >
+      {showPraiseCount && (
+        <span aria-hidden="true" className={`flex items-center justify-center bg-emerald-50 text-emerald-600 ${compact ? 'h-[18px] min-w-6 rounded-md px-1' : 'h-5 min-w-7 rounded-[5px] px-1.5'}`}>
+          {formatSignedCount(summary.praiseCount, '+')}
+        </span>
+      )}
+      {showCriticismCount && (
+        <span aria-hidden="true" className={`flex items-center justify-center bg-rose-50 text-rose-500 ${compact ? 'h-[18px] min-w-6 rounded-md px-1' : 'h-5 min-w-7 rounded-[5px] px-1.5'}`}>
+          {formatSignedCount(summary.criticismCount, '-')}
+        </span>
+      )}
+    </div>
+  );
+};
 
 export const ClassroomStudentMeta: React.FC<ClassroomStudentMetaProps> = ({ level, summary, compact = false }) => {
   if (compact) {

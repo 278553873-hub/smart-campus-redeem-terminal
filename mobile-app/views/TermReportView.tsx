@@ -34,9 +34,19 @@ const RichTextDisplay = ({ html, className = "" }: { html: string, className?: s
     />
 );
 
+export interface TermReportAnchorItem {
+    id: string;
+    label: string;
+}
+
 interface TermReportViewProps {
     student: Student;
     onBack: () => void;
+    additionalMobilePages?: React.ReactNode[];
+    additionalA4Pages?: React.ReactNode[];
+    additionalMobileAnchorItems?: TermReportAnchorItem[];
+    initialViewMode?: 'mobile' | 'a4';
+    showViewModeToggle?: boolean;
 }
 
 // --- 1. DESIGN SYSTEM (TYPOGRAPHY & LAYOUT) ---
@@ -50,7 +60,7 @@ const SPACING = {
 };
 
 // A. Page Container (Base Wrapper)
-const ReportPageContainer = ({ children, className = "", mode = 'mobile', id }: { children: React.ReactNode, className?: string, mode?: 'a4' | 'mobile', id?: string, key?: any }) => (
+export const ReportPageContainer = ({ children, className = "", mode = 'mobile', id }: { children: React.ReactNode, className?: string, mode?: 'a4' | 'mobile', id?: string, key?: any }) => (
     <div
         id={id}
         className={`
@@ -74,7 +84,7 @@ const ReportPageContainer = ({ children, className = "", mode = 'mobile', id }: 
 
 // B. Section Header (Standardized Title Block)
 // B. Section Header (Standardized Title Block)
-const ReportSectionHeader = ({ title, subTitle, icon: Icon, className = "", badge, rightElement }: { title: string, subTitle: string, icon: any, className?: string, badge?: string, rightElement?: React.ReactNode }) => (
+export const ReportSectionHeader = ({ title, subTitle, icon: Icon, className = "", badge, rightElement }: { title: string, subTitle: string, icon: any, className?: string, badge?: string, rightElement?: React.ReactNode }) => (
     <div className={`flex items-center justify-between mb-5 ${className}`}>
         <div className="flex items-center gap-2">
             <Icon className="w-5 h-5 text-blue-600" />
@@ -92,7 +102,7 @@ const ReportSectionHeader = ({ title, subTitle, icon: Icon, className = "", badg
 );
 
 // C. Standard Card (White Box)
-const ReportCard = ({ children, className = "", noPadding = false, highlight = false }: { children: React.ReactNode, className?: string, noPadding?: boolean, highlight?: boolean, key?: any }) => (
+export const ReportCard = ({ children, className = "", noPadding = false, highlight = false }: { children: React.ReactNode, className?: string, noPadding?: boolean, highlight?: boolean, key?: any }) => (
     <div className={`
         rounded-2xl border transition-all duration-300
         ${highlight
@@ -113,19 +123,19 @@ const ReportCardTitle = ({ children, className = "" }: { children: React.ReactNo
     </h3>
 );
 
-const ReportBodyText = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+export const ReportBodyText = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
     <div className={`text-[13px] text-slate-600 leading-7 text-justify ${className}`}>
         {children}
     </div>
 );
 
-const ReportCaption = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+export const ReportCaption = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
     <p className={`text-[11px] text-slate-400 leading-normal ${className}`}>
         {children}
     </p>
 );
 
-const ReportTag = ({ children, color = "blue" }: { children: React.ReactNode, color?: 'blue' | 'green' | 'orange' | 'purple' }) => {
+export const ReportTag = ({ children, color = "blue" }: { children: React.ReactNode, color?: 'blue' | 'green' | 'orange' | 'purple' }) => {
     const styles = {
         blue: "bg-blue-50 text-blue-600",
         green: "bg-emerald-50 text-emerald-600",
@@ -2180,8 +2190,16 @@ const MobileAnchorBar = ({ activeSection, onNavigate, items }: { activeSection: 
 
 // --- MAIN WRAPPER ---
 
-const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
-    const [viewMode, setViewMode] = useState<'mobile' | 'a4'>('mobile');
+const TermReportView: React.FC<TermReportViewProps> = ({
+    student,
+    onBack,
+    additionalMobilePages = [],
+    additionalA4Pages = [],
+    additionalMobileAnchorItems = [],
+    initialViewMode = 'mobile',
+    showViewModeToggle = true,
+}) => {
+    const [viewMode, setViewMode] = useState<'mobile' | 'a4'>(initialViewMode);
     const [currentPage, setCurrentPage] = useState(0);
     const [activeSection, setActiveSection] = useState('cover');
     const [showSubjectSubPage, setShowSubjectSubPage] = useState(false);
@@ -2191,6 +2209,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
     const mobileAnchorItems = isMale ? [
         { id: 'section-teacher', label: '教师关注' },
         { id: 'section-growth', label: '成长概览' },
+        ...additionalMobileAnchorItems,
         { id: 'section-highlights', label: '高光时刻' },
         { id: 'section-future', label: '未来潜力' },
         { id: 'section-future-suggestions', label: '成长建议' },
@@ -2200,7 +2219,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
         { id: 'section-holiday', label: '寒假须知' },
         { id: 'section-parent', label: '家长反馈' },
         { id: 'section-student', label: '学生自评' }
-    ] : [];
+    ] : additionalMobileAnchorItems;
 
     const firstAnchorId = mobileAnchorItems[0]?.id;
 
@@ -2213,11 +2232,16 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
     };
 
     const scrollToSection = (id: string) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth' });
-            setActiveSection(id);
-        }
+        const scrollContainer = document.getElementById('report-scroll-container');
+        const el = scrollContainer?.querySelector<HTMLElement>(`[id="${id}"]`);
+        if (!scrollContainer || !el) return;
+
+        // 只滚动报告内部容器，避免快捷导航把手机壳外层一起移出视口。
+        const targetTop = el.getBoundingClientRect().top
+            - scrollContainer.getBoundingClientRect().top
+            + scrollContainer.scrollTop;
+        scrollContainer.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+        setActiveSection(id);
     };
 
     // 处理学科选择 - 跳转到学科报告页
@@ -2231,6 +2255,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
         <PageTeacherAttention key="teacher" mode="a4" />,
         <PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={true} />,
+        ...additionalA4Pages,
         <PageFuturePotential key="future" mode="a4" />,
         <PageFutureGrowthSuggestions key="future-suggestions" mode="a4" />,
         <PageStrengthsEnhancement key="strengths" mode="a4" />,
@@ -2242,6 +2267,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
     ] : [
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
         <PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={false} />,
+        ...additionalA4Pages,
         <PageComprehensiveGrowthAdvice key="advice" student={student} mode="a4" />,
         <PageSimpleParentChildActivities key="activities" student={student} mode="a4" />
     ];
@@ -2255,6 +2281,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
         <PageTeacherAttention key="teacher" mode="mobile" id="section-teacher" />,
         <PageGrowthOverview key="growth" student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={true} />,
+        ...additionalMobilePages,
         <PageFuturePotential key="future" mode="mobile" id="section-future" />,
         <PageFutureGrowthSuggestions key="future-suggestions" mode="mobile" id="section-future-suggestions" />,
         <PageStrengthsEnhancement key="strengths" mode="mobile" id="section-strengths" />,
@@ -2266,6 +2293,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
     ] : [
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
         <PageGrowthOverview student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={false} />,
+        ...additionalMobilePages,
         <PageComprehensiveGrowthAdvice key="advice" student={student} mode="mobile" id="section-advice" />,
         <PageSimpleParentChildActivities key="activities" student={student} mode="mobile" id="section-activities" />
     ];
@@ -2293,17 +2321,19 @@ const TermReportView: React.FC<TermReportViewProps> = ({ student, onBack }) => {
                             <Printer className="h-4 w-4" />
                         </button>
                     )}
-                    <button
-                        onClick={() => {
-                            setViewMode(mode => mode === 'mobile' ? 'a4' : 'mobile');
-                            setShowSubjectSubPage(false);
-                        }}
-                        className={`flex h-8 w-8 items-center justify-center rounded-full active:bg-slate-100 ${viewMode === 'a4' ? 'bg-blue-50 text-blue-600' : 'text-slate-700'}`}
-                        aria-label={viewMode === 'a4' ? '返回手机报告' : '预览A4报告'}
-                        title={viewMode === 'a4' ? '返回手机报告' : '预览A4报告'}
-                    >
-                        <FileText className="h-4 w-4" />
-                    </button>
+                    {showViewModeToggle && (
+                        <button
+                            onClick={() => {
+                                setViewMode(mode => mode === 'mobile' ? 'a4' : 'mobile');
+                                setShowSubjectSubPage(false);
+                            }}
+                            className={`flex h-8 w-8 items-center justify-center rounded-full active:bg-slate-100 ${viewMode === 'a4' ? 'bg-blue-50 text-blue-600' : 'text-slate-700'}`}
+                            aria-label={viewMode === 'a4' ? '返回手机报告' : '预览A4报告'}
+                            title={viewMode === 'a4' ? '返回手机报告' : '预览A4报告'}
+                        >
+                            <FileText className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
             </div>
 

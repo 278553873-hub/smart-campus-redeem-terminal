@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>登录 Icon 背景调试</title>
+  <title>UI改造 · 教师端登录 Icon 方案</title>
   <style>
     :root {
       color-scheme: light;
@@ -122,6 +122,8 @@
     }
 
     .command.primary:hover { background: #c92121; }
+
+    .file-input { display: none; }
 
     .workspace {
       display: grid;
@@ -419,6 +421,28 @@
 
     .details-content { padding: 0 20px 20px; }
 
+    .layer-control + .layer-control { margin-top: 18px; }
+
+    .layer-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .layer-title::after {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--brand);
+      content: "";
+    }
+
+    .layer-control.giraffe .layer-title::after { background: #f99a2f; }
+
     .status-toast {
       position: fixed;
       right: 20px;
@@ -474,13 +498,15 @@
   <div class="app">
     <header class="toolbar">
       <div class="title-wrap">
-        <h1>登录 Icon 背景调试</h1>
+        <h1>教师端登录 Icon 方案</h1>
         <span class="current-state" id="currentState">弥散 · 方案六 · 红青平衡</span>
       </div>
       <div class="toolbar-actions">
+        <input class="file-input" type="file" id="imageInput" accept="image/png,image/jpeg,image/webp">
+        <button class="command" type="button" id="importButton">导入图片</button>
         <button class="command" type="button" id="resetButton">重置</button>
         <button class="command" type="button" id="copyButton">复制 CSS</button>
-        <button class="command primary" type="button" id="downloadBothButton">下载两种图标</button>
+        <button class="command primary" type="button" id="downloadBothButton" title="导出方形与圆形 PNG">导出图片</button>
       </div>
     </header>
 
@@ -570,11 +596,20 @@
         </details>
 
         <details>
-          <summary>前景微调</summary>
+          <summary>图层微调</summary>
           <div class="details-content">
-            <label class="range-row"><span class="range-label">缩放</span><input type="range" id="foregroundScale" min="85" max="120" value="100"><span class="range-value" data-range-value="foregroundScale">100%</span></label>
-            <label class="range-row"><span class="range-label">水平</span><input type="range" id="foregroundX" min="-15" max="15" value="0"><span class="range-value" data-range-value="foregroundX">0%</span></label>
-            <label class="range-row"><span class="range-label">垂直</span><input type="range" id="foregroundY" min="-15" max="15" value="0"><span class="range-value" data-range-value="foregroundY">0%</span></label>
+            <div class="layer-control ai">
+              <div class="layer-title">AI 文字</div>
+              <label class="range-row"><span class="range-label">缩放</span><input type="range" id="aiScale" min="55" max="150" value="100"><span class="range-value" data-range-value="aiScale">100%</span></label>
+              <label class="range-row"><span class="range-label">水平</span><input type="range" id="aiX" min="-30" max="30" value="0"><span class="range-value" data-range-value="aiX">0%</span></label>
+              <label class="range-row"><span class="range-label">垂直</span><input type="range" id="aiY" min="-30" max="30" value="0"><span class="range-value" data-range-value="aiY">0%</span></label>
+            </div>
+            <div class="layer-control giraffe">
+              <div class="layer-title">小鹿</div>
+              <label class="range-row"><span class="range-label">缩放</span><input type="range" id="giraffeScale" min="55" max="150" value="84"><span class="range-value" data-range-value="giraffeScale">84%</span></label>
+              <label class="range-row"><span class="range-label">水平</span><input type="range" id="giraffeX" min="-30" max="30" value="0"><span class="range-value" data-range-value="giraffeX">0%</span></label>
+              <label class="range-row"><span class="range-label">垂直</span><input type="range" id="giraffeY" min="-30" max="30" value="0"><span class="range-value" data-range-value="giraffeY">0%</span></label>
+            </div>
           </div>
         </details>
       </aside>
@@ -623,21 +658,31 @@
       aY: 24,
       bX: 108,
       bY: 34,
-      foregroundScale: 100,
-      foregroundX: 0,
-      foregroundY: 0,
+      aiScale: 100,
+      aiX: 0,
+      aiY: 0,
+      giraffeScale: 84,
+      giraffeX: 0,
+      giraffeY: 0,
+      imageData: '',
     };
 
     const stored = (() => {
-      try { return JSON.parse(localStorage.getItem('teacher-login-icon-tuner-v2') || '{}'); }
+      try { return JSON.parse(localStorage.getItem('teacher-login-icon-inventory-v1') || '{}'); }
       catch { return {}; }
     })();
     const state = { ...defaults, ...stored };
     if (!styles.some(item => item.id === state.style)) state.style = defaults.style;
     if (!schemes.some(item => item.id === state.schemeId)) state.schemeId = defaults.schemeId;
 
-    const foreground = new Image();
-    foreground.src = './assets/teacher-login-icon-foreground.png';
+    const aiLayer = new Image();
+    const giraffeLayer = new Image();
+    const defaultAiLayer = './assets/teacher-login-icon-ai.png';
+    const defaultGiraffeLayer = './assets/teacher-login-icon-giraffe.png';
+    const setDefaultLayers = () => {
+      aiLayer.src = defaultAiLayer;
+      giraffeLayer.src = defaultGiraffeLayer;
+    };
     const canvases = {
       square: [document.getElementById('squareCanvas'), document.getElementById('square84'), document.getElementById('square40')],
       circle: [document.getElementById('circleCanvas'), document.getElementById('circle84'), document.getElementById('circle40')],
@@ -656,6 +701,12 @@
     const alpha = (value) => value * state.intensity / 100;
     const currentScheme = () => schemes.find(item => item.id === state.schemeId) || schemes[5];
     const currentAngle = () => state.style === 'conic' ? state.conicAngle : state.linearAngle;
+
+    // 两层裁切框对应老 Icon 的原始构图，变换只作用于各自图层。
+    const layerCrops = {
+      ai: { x: 0, y: 0, width: 0.55, height: 0.5 },
+      giraffe: { x: 0.15, y: 0.3, width: 0.85, height: 0.7 },
+    };
 
     const clipShape = (context, shape) => {
       context.beginPath();
@@ -729,6 +780,19 @@
       context.restore();
     };
 
+    const drawLayer = (context, layer, image, scale, xOffset, yOffset) => {
+      if (!image.naturalWidth || !image.naturalHeight) return;
+      const crop = layerCrops[layer];
+      const centerX = SIZE * (crop.x + crop.width / 2);
+      const centerY = SIZE * (crop.y + crop.height / 2);
+      context.save();
+      context.translate(centerX + SIZE * xOffset / 100, centerY + SIZE * yOffset / 100);
+      context.scale(scale / 100, scale / 100);
+      context.translate(-centerX, -centerY);
+      context.drawImage(image, 0, 0, SIZE, SIZE);
+      context.restore();
+    };
+
     const drawBackground = (context) => {
       context.fillStyle = state.whiteBackground ? SURFACE : state.base;
       context.fillRect(0, 0, SIZE, SIZE);
@@ -796,18 +860,15 @@
       context.save();
       clipShape(context, shape);
       drawBackground(context);
-      const scale = state.foregroundScale / 100;
-      const size = SIZE * scale;
-      const x = (SIZE - size) / 2 + SIZE * state.foregroundX / 100;
-      const y = (SIZE - size) / 2 + SIZE * state.foregroundY / 100;
-      context.drawImage(foreground, x, y, size, size);
+      drawLayer(context, 'giraffe', giraffeLayer, state.giraffeScale, state.giraffeX, state.giraffeY);
+      drawLayer(context, 'ai', aiLayer, state.aiScale, state.aiX, state.aiY);
       context.restore();
     };
 
     const render = () => {
       Object.entries(canvases).forEach(([shape, group]) => group.forEach(canvas => renderCanvas(canvas, shape)));
       syncControls();
-      try { localStorage.setItem('teacher-login-icon-tuner-v2', JSON.stringify(state)); } catch {}
+      try { localStorage.setItem('teacher-login-icon-inventory-v1', JSON.stringify(state)); } catch {}
     };
 
     const syncControls = () => {
@@ -818,14 +879,14 @@
         document.getElementById(id).value = state[id];
         document.querySelector(`[data-color-value="${id}"]`).textContent = state[id].toUpperCase();
       });
-      ['intensity', 'spread', 'aX', 'aY', 'bX', 'bY', 'foregroundScale', 'foregroundX', 'foregroundY'].forEach(id => {
+      ['intensity', 'spread', 'aX', 'aY', 'bX', 'bY', 'aiScale', 'aiX', 'aiY', 'giraffeScale', 'giraffeX', 'giraffeY'].forEach(id => {
         document.getElementById(id).value = state[id];
       });
       document.getElementById('angle').value = currentAngle();
       document.querySelector('[data-range-value="intensity"]').textContent = `${state.intensity}%`;
       document.querySelector('[data-range-value="spread"]').textContent = `${state.spread}%`;
       document.querySelector('[data-range-value="angle"]').textContent = `${currentAngle()}°`;
-      ['aX', 'aY', 'bX', 'bY', 'foregroundScale', 'foregroundX', 'foregroundY'].forEach(id => {
+      ['aX', 'aY', 'bX', 'bY', 'aiScale', 'aiX', 'aiY', 'giraffeScale', 'giraffeX', 'giraffeY'].forEach(id => {
         document.querySelector(`[data-range-value="${id}"]`).textContent = `${state[id]}%`;
       });
       document.getElementById('angleRow').hidden = !['linear', 'conic'].includes(state.style);
@@ -915,7 +976,7 @@
       });
     });
 
-    ['intensity', 'spread', 'aX', 'aY', 'bX', 'bY', 'foregroundScale', 'foregroundX', 'foregroundY'].forEach(id => {
+    ['intensity', 'spread', 'aX', 'aY', 'bX', 'bY', 'aiScale', 'aiX', 'aiY', 'giraffeScale', 'giraffeX', 'giraffeY'].forEach(id => {
       document.getElementById(id).addEventListener('input', event => {
         state[id] = Number(event.target.value);
         render();
@@ -931,12 +992,30 @@
 
     document.getElementById('resetButton').addEventListener('click', () => {
       Object.assign(state, defaults);
+      state.imageData = '';
+      setDefaultLayers();
       render();
       showToast('已重置为方案六 · 弥散');
     });
 
+    document.getElementById('importButton').addEventListener('click', () => {
+      document.getElementById('imageInput').click();
+    });
+
+    document.getElementById('imageInput').addEventListener('change', event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        state.imageData = String(reader.result || '');
+        splitImportedImage(state.imageData);
+      });
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    });
+
     document.getElementById('copyButton').addEventListener('click', async () => {
-      const value = `${cssBackground()}\n/* foreground: scale ${state.foregroundScale}%, x ${state.foregroundX}%, y ${state.foregroundY}% */`;
+      const value = `${cssBackground()}\n/* AI: scale ${state.aiScale}%, x ${state.aiX}%, y ${state.aiY}%; giraffe: scale ${state.giraffeScale}%, x ${state.giraffeX}%, y ${state.giraffeY}% */`;
       try {
         await navigator.clipboard.writeText(value);
       } catch {
@@ -960,10 +1039,49 @@
       showToast('正在下载方形与圆形');
     });
 
-    foreground.addEventListener('load', render);
-    foreground.addEventListener('error', () => showToast('前景图片加载失败'));
+    aiLayer.addEventListener('load', render);
+    giraffeLayer.addEventListener('load', render);
+    aiLayer.addEventListener('error', () => showToast('AI 图层加载失败'));
+    giraffeLayer.addEventListener('error', () => showToast('小鹿图层加载失败'));
+    const splitImportedImage = (dataUrl) => {
+      const source = new Image();
+      source.addEventListener('load', () => {
+        const width = source.naturalWidth;
+        const height = source.naturalHeight;
+        const sourceCanvas = document.createElement('canvas');
+        sourceCanvas.width = width;
+        sourceCanvas.height = height;
+        const sourceContext = sourceCanvas.getContext('2d');
+        if (!sourceContext) return;
+        sourceContext.drawImage(source, 0, 0, width, height);
+        const pixels = sourceContext.getImageData(0, 0, width, height);
+        const aiPixels = new ImageData(new Uint8ClampedArray(pixels.data), width, height);
+        const giraffePixels = new ImageData(new Uint8ClampedArray(pixels.data), width, height);
+        for (let y = 0; y < height; y += 1) {
+          for (let x = 0; x < width; x += 1) {
+            const offset = (y * width + x) * 4;
+            const inAi = pixels.data[offset + 3] > 0 && x / width < 0.54 && y / height < 0.46;
+            if (inAi) giraffePixels.data[offset + 3] = 0;
+            else aiPixels.data[offset + 3] = 0;
+          }
+        }
+        const aiCanvas = document.createElement('canvas');
+        const giraffeCanvas = document.createElement('canvas');
+        aiCanvas.width = giraffeCanvas.width = width;
+        aiCanvas.height = giraffeCanvas.height = height;
+        aiCanvas.getContext('2d')?.putImageData(aiPixels, 0, 0);
+        giraffeCanvas.getContext('2d')?.putImageData(giraffePixels, 0, 0);
+        aiLayer.src = aiCanvas.toDataURL('image/png');
+        giraffeLayer.src = giraffeCanvas.toDataURL('image/png');
+        showToast('图片已导入');
+      });
+      source.addEventListener('error', () => showToast('图片导入失败'));
+      source.src = dataUrl;
+    };
+    setDefaultLayers();
+    if (state.imageData) splitImportedImage(state.imageData);
     syncControls();
-    if (foreground.complete && foreground.naturalWidth) render();
+    if (aiLayer.complete && giraffeLayer.complete && aiLayer.naturalWidth && giraffeLayer.naturalWidth) render();
   </script>
 </body>
 </html>

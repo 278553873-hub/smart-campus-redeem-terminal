@@ -1,0 +1,119 @@
+{
+  "scope": "mobile-app 教师手机端源码中的模态弹窗与阻断式覆盖层；不含 Toast、普通下拉菜单、上下文菜单、页面内展开区和全屏业务页面",
+  "auditDate": "2026-08-27",
+  "verdict": "未统一",
+  "visualStyleCount": 7,
+  "shellImplementationCount": 12,
+  "parallelBottomShellCount": 9,
+  "standardBottomSheetReferenceCount": 87,
+  "standardBottomSheetFileCount": 35,
+  "standardConfirmReferenceCount": 11,
+  "standardConfirmFileCount": 8,
+  "implementationFamilies": [
+    {
+      "id": "mobile-bottom-sheet",
+      "style": "标准全宽底部抽屉",
+      "source": "mobile-app/components/ui/MobileBottomSheet.tsx",
+      "stateCount": 87,
+      "fileCount": 35,
+      "status": "标准",
+      "notes": "28px 顶部圆角、tm-mask、tm-shadow-sheet、无背景模糊、统一标题与滚动层、Portal、焦点循环、Esc 关闭"
+    },
+    {
+      "id": "mobile-notice-sheet",
+      "style": "图标提示底部抽屉",
+      "source": "mobile-app/components/ui/MobileNoticeSheet.tsx",
+      "stateCount": 1,
+      "status": "近似但重复",
+      "notes": "视觉接近标准抽屉，但自行实现遮罩、标题、焦点和按钮，且增加背景模糊"
+    },
+    {
+      "id": "homeroom-class-picker",
+      "style": "班级选择底部抽屉",
+      "source": "mobile-app/components/HomeroomClassPickerSheet.tsx",
+      "stateCount": 6,
+      "fileCount": 5,
+      "status": "近似但重复",
+      "notes": "具备焦点循环和 Esc，但外壳、标题、遮罩和列表滚动仍独立实现"
+    },
+    {
+      "id": "dashboard-leave-confirm",
+      "style": "离校确认底部抽屉",
+      "source": "mobile-app/views/DashboardView.tsx",
+      "stateCount": 1,
+      "status": "重复实现",
+      "notes": "外观接近标准确认抽屉，但没有复用 MobileConfirmSheet，按钮高度、圆角和模糊策略不同"
+    },
+    {
+      "id": "class-record-local",
+      "style": "班级记录编辑抽屉",
+      "source": "mobile-app/views/ClassRecordLogView.tsx",
+      "stateCount": 4,
+      "status": "重复实现",
+      "notes": "共享了两个局部 class 字符串，但标题、关闭入口、颜色、语义和焦点管理仍散落在页面"
+    },
+    {
+      "id": "archive-local-bottom-sheet",
+      "style": "档案局部底部抽屉",
+      "source": "mobile-app/views/archive-design/archivePagePrimitives.tsx",
+      "stateCount": 3,
+      "status": "重复基础组件",
+      "notes": "使用正确 Token，但滚动整个表面、手柄颜色和焦点管理与标准组件不一致"
+    },
+    {
+      "id": "questionnaire-local-bottom-sheet",
+      "style": "问卷局部底部抽屉",
+      "source": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "stateCount": 4,
+      "status": "重复基础组件",
+      "notes": "与档案局部组件高度相似，但各自维护，增加 2px 背景模糊且缺少统一标题与焦点管理"
+    },
+    {
+      "id": "leader-report-legacy",
+      "style": "校长报表旧式抽屉",
+      "source": "mobile-app/views/LeaderReportView.tsx",
+      "stateCount": 6,
+      "status": "明显偏离",
+      "notes": "硬编码 32px 顶部圆角、white、shadow-2xl、40px 关闭按钮和背景模糊，缺少标准弹窗语义与焦点管理"
+    },
+    {
+      "id": "me-feature-floating",
+      "style": "底部悬浮编辑与删除面板",
+      "source": "mobile-app/views/MeFeatureViews.tsx",
+      "stateCount": 3,
+      "status": "独立形态",
+      "notes": "四周 16px 留白、28px 全圆角、玻璃表面，标题与按钮布局均不同，缺少 dialog 语义和焦点管理"
+    },
+    {
+      "id": "term-report-floating",
+      "style": "期末报告图片浮动面板",
+      "source": "mobile-app/views/TermReportView.tsx",
+      "stateCount": 2,
+      "status": "明显偏离",
+      "notes": "黑色遮罩、24px 全圆角、shadow-2xl 和局部 Portal，未使用教师手机端弹层 Token 与公共语义"
+    },
+    {
+      "id": "report-generate-centered",
+      "style": "居中玻璃确认弹窗",
+      "source": "mobile-app/App.tsx",
+      "stateCount": 1,
+      "status": "明显偏离",
+      "notes": "白色半透明遮罩、24px 全圆角玻璃卡片、缩放入场和旧 slate/orange 色系，没有 dialog 语义与焦点管理"
+    },
+    {
+      "id": "report-feedback-centered",
+      "style": "居中深色反馈弹窗",
+      "source": "mobile-app/App.tsx",
+      "stateCount": 1,
+      "status": "明显偏离",
+      "notes": "虽然命名为 Toast，但实际阻断全屏并要求点击关闭；黑色遮罩、深色面板和闪光动效均不属于公共提示样式"
+    }
+  ],
+  "excludedPatterns": [
+    "MobileToast 等非阻断式短反馈",
+    "MyFilesView 与 ClassRecordLogView 的卡片上下文菜单",
+    "日期、学期等控件内部下拉列表",
+    "RecordInputView 等全屏业务页面覆盖层",
+    "图片卡片内部的局部编辑遮罩"
+  ]
+}

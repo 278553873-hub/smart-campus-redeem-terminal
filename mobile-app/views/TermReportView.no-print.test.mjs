@@ -28,7 +28,9 @@ for (const forbidden of [
 }
 
 for (const required of [
-  "const [viewMode, setViewMode] = useState<'mobile' | 'a4'>('mobile');",
+  "initialViewMode = 'mobile',",
+  "showViewModeToggle = true,",
+  "const [viewMode, setViewMode] = useState<'mobile' | 'a4'>(initialViewMode);",
   "const [currentPage, setCurrentPage] = useState(0);",
   'const a4Pages = isMale ? [',
   'const handlePrint = () => window.print();',
@@ -37,7 +39,11 @@ for (const required of [
   "{viewMode === 'a4' && !showSubjectSubPage && (",
   '{a4Pages[currentPage]}',
   '{a4Pages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}',
-  '] : [];',
+  '] : additionalMobileAnchorItems;',
+  'additionalMobilePages = [],',
+  'additionalA4Pages = [],',
+  'additionalMobileAnchorItems = [],',
+  '...additionalA4Pages,',
   "{viewMode === 'mobile' && isMale && mobileAnchorItems.length > 0 && (",
   '<MobileAnchorBar activeSection={activeSection} onNavigate={scrollToSection} items={mobileAnchorItems} />',
   '{mobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}',

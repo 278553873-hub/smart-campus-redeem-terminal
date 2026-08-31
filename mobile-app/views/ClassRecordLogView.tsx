@@ -37,6 +37,7 @@ interface ClassRecordLogViewProps {
     onTabChange: (tab: 'student' | 'class') => void;
     canRecordClass?: boolean;
     showFirstRecordGuide?: boolean;
+    onViewIndicators: () => void;
 }
 
 // Data Models
@@ -149,7 +150,8 @@ const INITIAL_LOGS: LogItem[] = [
 
 const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     classNameStr, onBack, onStartRecord, isMainView = false, newRecordData, onClearNewRecord, onToggleModal,
-    addDemoTopBreathingSpace = false, activeTab, onTabChange, canRecordClass = false, showFirstRecordGuide = false
+    addDemoTopBreathingSpace = false, activeTab, onTabChange, canRecordClass = false, showFirstRecordGuide = false,
+    onViewIndicators
 }) => {
     // State
     const [logs, setLogs] = useState<LogItem[]>(INITIAL_LOGS);
@@ -486,6 +488,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         <div className={`relative flex h-[var(--mini-program-title-bar-height,44px)] items-center ${canRecordClass ? '' : '[padding-right:var(--mini-program-capsule-right-inset,0px)]'}`}>
                             <button
                                 type="button"
+                                onClick={onViewIndicators}
                                 className="relative z-10 flex h-[var(--tm-size-touch)] shrink-0 items-center gap-0.5 rounded-[var(--tm-radius-control)] px-1 text-[14px] font-semibold text-[var(--tm-text-secondary)] transition-[background-color,color,transform] duration-200 active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
                                 aria-label={`查看${activeTab === 'student' ? '学生' : '班级'}指标`}
                             >

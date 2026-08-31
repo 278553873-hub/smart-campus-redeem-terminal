@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
+
+const TermReportRedesignDemo = lazy(() => import('./TermReportRedesignDemo'));
 
 const renovationDemos = [
   {
@@ -8,10 +10,28 @@ const renovationDemos = [
     title: 'UI改造：手机端渐变背景方案',
   },
   {
+    id: 'login-icon',
+    label: '登录 Icon',
+    src: '/demos/teacher-login-icon-inventory.html',
+    title: 'UI改造：教师端登录 Icon 方案',
+  },
+  {
     id: 'tabs',
     label: 'Tab切换',
     src: '/demos/tab-switch-exploration.html',
     title: 'UI改造：教师手机端切换控件盘点',
+  },
+  {
+    id: 'colors',
+    label: '颜色系统',
+    src: '/demos/color-system-inventory.html',
+    title: 'UI改造：教师手机端颜色系统盘点',
+  },
+  {
+    id: 'typography',
+    label: '字体系统',
+    src: '/demos/typography-system-inventory.html',
+    title: 'UI改造：教师手机端字体系统盘点',
   },
   {
     id: 'radius',
@@ -25,7 +45,23 @@ const renovationDemos = [
     src: '/demos/button-style-inventory.html',
     title: 'UI改造：教师手机端按钮样式盘点',
   },
-] as const;
+  {
+    id: 'modals',
+    label: '弹窗样式',
+    src: '/demos/modal-style-inventory.html',
+    title: 'UI改造：教师手机端弹窗样式盘点',
+  },
+  {
+    id: 'term-report',
+    label: '期末报告新样式',
+    title: 'UI改造：学生期末成长报告新样式',
+  },
+] as const satisfies ReadonlyArray<{
+  id: string;
+  label: string;
+  src?: string;
+  title: string;
+}>;
 
 type RenovationDemoId = (typeof renovationDemos)[number]['id'];
 
@@ -88,12 +124,18 @@ const UiRenovationDemo: React.FC = () => {
         aria-labelledby={`renovation-tab-${activeDemo.id}`}
         className="min-h-0 flex-1"
       >
-        <iframe
-          key={activeDemo.id}
-          className="h-full w-full border-0"
-          src={activeDemo.src}
-          title={activeDemo.title}
-        />
+        {activeDemo.id === 'term-report' ? (
+          <Suspense fallback={<div className="grid h-full place-items-center text-sm text-slate-500">正在加载报告方案...</div>}>
+            <TermReportRedesignDemo />
+          </Suspense>
+        ) : (
+          <iframe
+            key={activeDemo.id}
+            className="h-full w-full border-0"
+            src={activeDemo.src}
+            title={activeDemo.title}
+          />
+        )}
       </section>
     </main>
   );

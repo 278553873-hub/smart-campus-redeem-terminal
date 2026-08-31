@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师手机端弹窗样式盘点</title>
+  <style>
+    :root {
+      --page:#f5f4f3;--surface:#fff;--soft:#efedeb;--muted:#e6e1de;--text:#211d1b;--text-2:#68615d;--text-3:#958c87;
+      --line:#ddd8d5;--red:#e02727;--red-strong:#9d2320;--red-soft:#fff0ef;--mask:rgba(23,21,19,.42);
+      --shadow:0 12px 28px -20px rgba(64,60,58,.18);--sheet:0 -20px 52px -34px rgba(64,60,58,.32);
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth;background:var(--page)}body{margin:0;background:var(--page);color:var(--text);font-family:"PingFang SC","Noto Sans CJK SC",sans-serif;letter-spacing:0}
+    button{font:inherit}.page{width:min(1260px,100%);margin:0 auto;padding:30px 26px 64px}.hero{display:flex;align-items:flex-start;justify-content:space-between;gap:32px}
+    .eyebrow{margin:0 0 7px;color:var(--red-strong);font-size:12px;font-weight:750}h1{margin:0;font-size:29px;line-height:1.2}.lead{max-width:790px;margin:11px 0 0;color:var(--text-2);font-size:13px;line-height:1.7}
+    .scope{flex:none;color:var(--text-2);font-size:11px;line-height:1.65;text-align:right}.scope strong{display:block;color:var(--text);font-size:12px}.summary{display:grid;grid-template-columns:repeat(5,1fr);margin-top:24px;overflow:hidden;border-radius:8px;background:var(--surface);box-shadow:var(--shadow)}
+    .metric{min-height:88px;padding:17px 18px;border-right:1px solid var(--line)}.metric:last-child{border-right:0}.metric strong{display:block;font-size:25px;line-height:1}.metric span{display:block;margin-top:9px;color:var(--text-2);font-size:11px;line-height:1.35}.metric.warn strong{color:var(--red-strong)}
+    .jump{position:sticky;top:0;z-index:20;display:flex;gap:7px;margin-top:16px;padding:9px 0;overflow-x:auto;background:color-mix(in srgb,var(--page) 93%,transparent);backdrop-filter:blur(12px);scrollbar-width:none}.jump::-webkit-scrollbar{display:none}.jump a{display:inline-flex;min-height:40px;flex:none;align-items:center;border-radius:8px;padding:0 12px;background:var(--surface);box-shadow:var(--shadow);color:var(--text-2);font-size:11px;font-weight:700;text-decoration:none}.jump a:focus-visible,.jump a:hover{color:var(--red-strong);outline:2px solid var(--red);outline-offset:2px}
+    section{scroll-margin-top:64px;margin-top:34px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:13px}h2{margin:0;font-size:20px}.note{max-width:760px;margin:5px 0 0;color:var(--text-2);font-size:11px;line-height:1.65}.section-count{color:var(--text-3);font-size:11px;white-space:nowrap}
+    .verdict{display:grid;grid-template-columns:240px 1fr;overflow:hidden;border-radius:8px;background:var(--surface);box-shadow:var(--shadow)}.verdict-mark{display:flex;flex-direction:column;justify-content:center;padding:22px;background:var(--red-soft);color:var(--red-strong)}.verdict-mark b{font-size:18px}.verdict-mark span{margin-top:6px;font-size:11px;line-height:1.55}.verdict-copy{padding:19px 22px}.verdict-copy p{margin:0;color:var(--text-2);font-size:12px;line-height:1.75}.verdict-copy p+p{margin-top:7px}
+    .style-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:hidden;border-radius:8px;background:var(--surface);box-shadow:var(--shadow)}.style-card{min-width:0;padding:16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.style-card:nth-child(3n){border-right:0}.style-card:nth-last-child(-n+3){border-bottom:0}.style-head{display:flex;min-height:48px;align-items:flex-start;justify-content:space-between;gap:10px}.style-code{color:var(--red-strong);font-size:9px;font-weight:800}.style-card h3{margin:3px 0 0;font-size:13px}.count{color:var(--text-3);font-size:9px;text-align:right}.preview{position:relative;display:flex;height:156px;align-items:end;justify-content:center;margin-top:8px;overflow:hidden;border-radius:6px;background:#e7e3e1}.preview.center{align-items:center;padding:18px}.preview::before{position:absolute;inset:0;background:var(--mask);content:""}.sheet-demo{position:relative;width:100%;height:112px;border-radius:28px 28px 0 0;background:white;box-shadow:var(--sheet)}.sheet-demo.r32{border-radius:32px 32px 0 0;box-shadow:0 -8px 25px rgba(20,18,17,.15)}.sheet-demo::before{position:absolute;top:8px;left:50%;width:40px;height:4px;border-radius:999px;background:var(--line);content:""}.sheet-demo .title{position:absolute;top:25px;left:16px;font-size:11px;font-weight:700}.sheet-demo .close{position:absolute;top:18px;right:10px;display:grid;width:36px;height:36px;place-items:center;border-radius:999px;color:var(--text-2);font-size:16px}.sheet-demo .body{position:absolute;inset:62px 16px 12px;border-radius:10px;background:var(--soft)}.sheet-demo.confirm .body{display:grid;grid-template-columns:1fr 1fr;gap:7px;background:transparent}.sheet-demo.confirm .body i{border-radius:9px;background:var(--soft)}.sheet-demo.confirm .body i:last-child{background:var(--red)}
+    .floating-demo{position:relative;width:calc(100% - 28px);height:104px;margin-bottom:12px;border-radius:28px;background:rgba(255,255,255,.96);box-shadow:0 20px 44px -26px rgba(20,18,17,.48)}.floating-demo .title{padding:15px;text-align:center;font-size:11px;font-weight:700}.floating-demo .rows{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:5px 14px}.floating-demo .rows i{height:34px;border-radius:14px;background:var(--soft)}.floating-demo .rows i:first-child{background:var(--red-soft)}
+    .dialog-demo{position:relative;width:82%;min-height:108px;border:1px solid rgba(255,255,255,.55);border-radius:24px;background:rgba(255,255,255,.92);box-shadow:0 20px 50px -22px rgba(20,18,17,.48);padding:14px}.dialog-demo.dark{background:rgba(32,29,28,.94);color:white;text-align:center}.dialog-demo b{display:block;font-size:11px}.dialog-demo p{height:28px;margin:10px 0;border-radius:7px;background:var(--soft)}.dialog-demo.dark p{width:70%;margin:10px auto;background:rgba(255,255,255,.12)}.dialog-demo i{display:block;height:28px;border-radius:8px;background:var(--red)}
+    .spec{margin:10px 0 0;color:var(--text-2);font-size:10px;line-height:1.6}.spec b{color:var(--text)}.tag{display:inline-flex;margin-top:8px;border-radius:999px;padding:3px 7px;background:var(--soft);color:var(--text-2);font-size:9px;font-weight:700}.tag.good{background:#edf8f1;color:#287348}.tag.bad{background:var(--red-soft);color:var(--red-strong)}
+    .matrix,.index{width:100%;border-collapse:collapse;overflow:hidden;border-radius:8px;background:var(--surface);box-shadow:var(--shadow);font-size:11px}.matrix th,.matrix td,.index th,.index td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.matrix tr:last-child td,.index tr:last-child td{border-bottom:0}.matrix th,.index th{background:var(--soft);color:var(--text-2);font-size:10px}.matrix td:first-child{width:138px;font-weight:700}.status{white-space:nowrap;font-weight:750}.status.no{color:var(--red-strong)}.status.part{color:#8a5b0a}.status.yes{color:#287348}.index code{color:var(--red-strong);font-size:10px}.index td:nth-child(1){width:48px;color:var(--text-3)}.index td:nth-child(2){width:190px;font-weight:700}.index td:nth-child(4){width:94px}.index td:nth-child(5){width:112px}
+    .priority{display:grid;grid-template-columns:repeat(3,1fr);overflow:hidden;border-radius:8px;background:var(--surface);box-shadow:var(--shadow)}.priority article{padding:17px;border-right:1px solid var(--line)}.priority article:last-child{border-right:0}.priority b{font-size:13px}.priority p{margin:8px 0 0;color:var(--text-2);font-size:10px;line-height:1.65}.priority em{display:block;margin-bottom:6px;color:var(--red-strong);font-size:9px;font-style:normal;font-weight:800}.boundary{margin-top:14px;border-left:3px solid var(--red);padding:10px 13px;background:var(--surface);color:var(--text-2);font-size:10px;line-height:1.65}.boundary strong{color:var(--text)}.foot{margin:34px 0 0;color:var(--text-3);font-size:10px;text-align:center}
+    @media(max-width:900px){.summary{grid-template-columns:repeat(3,1fr)}.metric:nth-child(3){border-right:0}.metric:nth-child(-n+3){border-bottom:1px solid var(--line)}.style-grid{grid-template-columns:repeat(2,1fr)}.style-card:nth-child(3n){border-right:1px solid var(--line)}.style-card:nth-child(2n){border-right:0}.style-card:nth-last-child(-n+3){border-bottom:1px solid var(--line)}.style-card:nth-last-child(-n+2){border-bottom:0}.index{min-width:820px}.table-scroll{overflow-x:auto}}
+    @media(max-width:620px){.page{padding:22px 14px 48px}.hero{display:block}.scope{margin-top:12px;text-align:left}.summary{grid-template-columns:repeat(2,1fr)}.metric,.metric:nth-child(3){border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.metric:nth-child(2n){border-right:0}.metric:last-child{border-bottom:0}.style-grid,.priority{grid-template-columns:1fr}.style-card,.style-card:nth-child(2n),.style-card:nth-child(3n),.style-card:nth-last-child(-n+3){border-right:0;border-bottom:1px solid var(--line)}.style-card:last-child{border-bottom:0}.verdict{grid-template-columns:1fr}.priority article{border-right:0;border-bottom:1px solid var(--line)}.priority article:last-child{border-bottom:0}.section-head{align-items:start}.section-count{display:none}h1{font-size:25px}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="hero">
+      <div><p class="eyebrow">教师-手机端 · 弹窗样式审计</p><h1>弹窗样式盘点</h1><p class="lead">按弹层外壳、遮罩、圆角、标题、滚动、动作区、动效与无障碍逐项归类。结论不是要求不同任务共用同一内容，而是要求同类任务复用同一基础弹层。</p></div>
+      <div class="scope"><strong>扫描范围</strong>mobile-app 教师手机端源码<br>口径：模态弹窗与阻断式覆盖层<br>日期：2026-08-27</div>
+    </div>
+    <div class="summary">
+      <div class="metric"><strong>7</strong><span>类可见样式</span></div><div class="metric"><strong>12</strong><span>套弹层外壳实现</span></div><div class="metric"><strong>87</strong><span>公共抽屉 JSX 引用</span></div><div class="metric"><strong>9</strong><span>主组件之外的底部外壳</span></div><div class="metric warn"><strong>未统一</strong><span>视觉近似，基础实现分散</span></div>
+    </div>
+    <nav class="jump" aria-label="报告目录"><a href="#verdict">结论</a><a href="#styles">样式分类</a><a href="#matrix">一致性</a><a href="#index">全量索引</a><a href="#priority">收敛建议</a></nav>
+
+    <section id="verdict"><div class="section-head"><div><h2>结论：未统一</h2><p class="note">主流视觉已经形成，但“看起来接近”不等于组件、交互和维护方式统一。</p></div></div>
+      <div class="verdict"><div class="verdict-mark"><b>主干统一，旁路分散</b><span>公共底部抽屉覆盖 35 个文件，但仍有 9 套平行底部外壳和 2 套居中弹窗。</span></div><div class="verdict-copy"><p><strong>统一的部分：</strong>大多数业务已经使用白色全宽底部抽屉，采用中性遮罩、顶部圆角、短手柄和关闭入口，基本方向正确。</p><p><strong>不统一的部分：</strong>遮罩有无模糊、圆角 24/28/32 像素、标题高度、关闭按钮、底部按钮、滚动结构、动效和焦点管理均存在多套写法。校长报表、班级记录、个人资料和期末报告偏差最明显。</p></div></div>
+    </section>
+
+    <section id="styles"><div class="section-head"><div><h2>7 类可见样式</h2><p class="note">按用户实际看到的外壳与动作结构分类；同一类内部仍可能由多套代码实现。</p></div><span class="section-count">全部模态样式</span></div>
+      <div class="style-grid">
+        <article class="style-card"><div class="style-head"><div><span class="style-code">S1</span><h3>标准全宽底部抽屉</h3></div><span class="count">87 处引用<br>35 个文件</span></div><div class="preview"><div class="sheet-demo"><b class="title">抽屉标题</b><span class="close">×</span><i class="body"></i></div></div><p class="spec"><b>外壳：</b>28px 顶部圆角、统一遮罩与阴影、无背景模糊、标题/正文/页脚分层。</p><span class="tag good">标准基线</span></article>
+        <article class="style-card"><div class="style-head"><div><span class="style-code">S2 · MobileConfirmSheet</span><h3>标准确认抽屉</h3></div><span class="count">11 处引用<br>8 个文件</span></div><div class="preview"><div class="sheet-demo confirm"><b class="title">确认操作</b><span class="close">×</span><div class="body"><i></i><i></i></div></div></div><p class="spec"><b>结构：</b>沿用标准外壳，正文说明加“取消 / 确认”双按钮，支持主操作与危险操作。</p><span class="tag good">统一内容变体</span></article>
+        <article class="style-card"><div class="style-head"><div><span class="style-code">S3</span><h3>近似标准的局部抽屉</h3></div><span class="count">19 个状态<br>6 套外壳</span></div><div class="preview"><div class="sheet-demo"><b class="title">选择或编辑</b><span class="close">×</span><i class="body"></i></div></div><p class="spec"><b>来源：</b>提示、班级选择、离校确认、班级记录、档案和问卷。视觉接近，交互能力不一致。</p><span class="tag bad">重复实现</span></article>
+        <article class="style-card"><div class="style-head"><div><span class="style-code">S4</span><h3>校长报表旧式抽屉</h3></div><span class="count">6 个状态<br>1 个页面</span></div><div class="preview"><div class="sheet-demo r32"><b class="title">报表明细</b><span class="close" style="background:#efedeb">×</span><i class="body"></i></div></div><p class="spec"><b>偏差：</b>32px 硬编码圆角、shadow-2xl、背景模糊、40px 关闭按钮，缺少标准弹窗语义。</p><span class="tag bad">明显偏离</span></article>
+        <article class="style-card"><div class="style-head"><div><span class="style-code">S5</span><h3>底部悬浮面板</h3></div><span class="count">5 个状态<br>2 个区域</span></div><div class="preview"><div class="floating-demo"><div class="title">悬浮编辑面板</div><div class="rows"><i></i><i></i></div></div></div><p class="spec"><b>外壳：</b>四周留白、24/28px 全圆角、玻璃或白色表面。个人资料与期末报告又各有一套。</p><span class="tag bad">独立形态未定义</span></article>
+        <article class="style-card"><div class="style-head"><div><span class="style-code">S6</span><h3>居中玻璃确认弹窗</h3></div><span class="count">1 个状态<br>报告生成</span></div><div class="preview center"><div class="dialog-demo"><b>确认生成报告？</b><p></p><i></i></div></div><p class="spec"><b>偏差：</b>白色半透明遮罩、24px 玻璃卡片、缩放动效和旧 slate/orange 色系。</p><span class="tag bad">明显偏离</span></article>
+        <article class="style-card"><div class="style-head"><div><span class="style-code">S7</span><h3>居中深色反馈弹窗</h3></div><span class="count">1 个状态<br>生成反馈</span></div><div class="preview center"><div class="dialog-demo dark"><b>正在生成</b><p></p><i></i></div></div><p class="spec"><b>问题：</b>命名为 Toast（短反馈），实际阻断全屏并要求点击关闭，深色与闪光动效均无公共语义。</p><span class="tag bad">类型与命名错位</span></article>
+      </div>
+    </section>
+
+    <section id="matrix"><div class="section-head"><div><h2>是否统一</h2><p class="note">统一不只看圆角，还要看结构、反馈与可访问能力是否由同一基础组件保障。</p></div></div><div class="table-scroll"><table class="matrix"><thead><tr><th>检查项</th><th>当前状态</th><th>判断依据</th></tr></thead><tbody>
+      <tr><td>呈现位置</td><td class="status part">部分统一</td><td>主流为全宽底部抽屉，但另有底部悬浮、居中浅色和居中深色三种外壳。</td></tr>
+      <tr><td>圆角</td><td class="status no">未统一</td><td>标准是 28px 顶部圆角；仍存在 32px 顶部圆角，以及 24/28px 全圆角。</td></tr>
+      <tr><td>遮罩与模糊</td><td class="status no">未统一</td><td>标准只用 tm-mask；局部实现叠加 2px/sm/md 模糊，居中弹窗另用黑色或白色半透明遮罩。</td></tr>
+      <tr><td>表面与阴影</td><td class="status no">未统一</td><td>标准使用 surface 与 tm-shadow-sheet；旧式弹层混用 white、玻璃、深色和 shadow-2xl。</td></tr>
+      <tr><td>标题与关闭</td><td class="status no">未统一</td><td>存在 56px 标准标题栏、局部 padding 标题、居中标题、文字取消、40/44px 圆形关闭等多种结构。</td></tr>
+      <tr><td>动作区</td><td class="status part">部分统一</td><td>标准支持独立页脚；局部弹层把按钮放进滚动正文，确认按钮高度、圆角和主次关系不一致。</td></tr>
+      <tr><td>滚动与裁切</td><td class="status part">部分统一</td><td>标准采用单一正文滚动层并裁切；档案、问卷和旧报表有整面滚动或页面内自管滚动。</td></tr>
+      <tr><td>动效</td><td class="status no">未统一</td><td>标准使用 200/300ms Token；旧实现有无动效、100/200/300ms、zoom 和 transition-all 等写法。</td></tr>
+      <tr><td>语义与焦点</td><td class="status no">未统一</td><td>标准组件有 dialog、焦点循环、Esc 和焦点恢复；多数页面自制弹层只实现点击遮罩关闭。</td></tr>
+    </tbody></table></div></section>
+
+    <section id="index"><div class="section-head"><div><h2>全量实现索引</h2><p class="note">以下 12 套是源码中实际维护的弹层外壳；内容型包装组件不重复算外壳。</p></div><span class="section-count">12 / 12</span></div><div class="table-scroll"><table class="index"><thead><tr><th>#</th><th>实现族</th><th>源码位置</th><th>状态数</th><th>判断</th></tr></thead><tbody>
+      <tr><td>01</td><td>公共底部抽屉</td><td><code>components/ui/MobileBottomSheet.tsx</code></td><td>87 引用</td><td class="status yes">标准</td></tr>
+      <tr><td>02</td><td>图标提示抽屉</td><td><code>components/ui/MobileNoticeSheet.tsx</code></td><td>1</td><td class="status part">近似重复</td></tr>
+      <tr><td>03</td><td>班级选择抽屉</td><td><code>components/HomeroomClassPickerSheet.tsx</code></td><td>6</td><td class="status part">近似重复</td></tr>
+      <tr><td>04</td><td>离校确认抽屉</td><td><code>views/DashboardView.tsx</code></td><td>1</td><td class="status no">重复实现</td></tr>
+      <tr><td>05</td><td>班级记录抽屉</td><td><code>views/ClassRecordLogView.tsx</code></td><td>4</td><td class="status no">重复实现</td></tr>
+      <tr><td>06</td><td>档案局部抽屉</td><td><code>views/archive-design/archivePagePrimitives.tsx</code></td><td>3</td><td class="status no">重复基础层</td></tr>
+      <tr><td>07</td><td>问卷局部抽屉</td><td><code>views/questionnaire/QuestionnaireManagementView.tsx</code></td><td>4</td><td class="status no">重复基础层</td></tr>
+      <tr><td>08</td><td>校长报表旧式抽屉</td><td><code>views/LeaderReportView.tsx</code></td><td>6</td><td class="status no">明显偏离</td></tr>
+      <tr><td>09</td><td>个人资料悬浮面板</td><td><code>views/MeFeatureViews.tsx</code></td><td>3</td><td class="status no">独立形态</td></tr>
+      <tr><td>10</td><td>期末报告图片面板</td><td><code>views/TermReportView.tsx</code></td><td>2</td><td class="status no">明显偏离</td></tr>
+      <tr><td>11</td><td>报告生成居中弹窗</td><td><code>mobile-app/App.tsx</code></td><td>1</td><td class="status no">明显偏离</td></tr>
+      <tr><td>12</td><td>生成反馈深色弹窗</td><td><code>mobile-app/App.tsx</code></td><td>1</td><td class="status no">类型错位</td></tr>
+    </tbody></table></div><div class="boundary"><strong>边界：</strong>不把非阻断式 Toast、普通下拉、卡片上下文菜单、全屏业务页面和图片内部编辑遮罩算作弹窗；“生成反馈”虽然代码命名为 Toast，但它有全屏遮罩并阻断操作，因此纳入。</div></section>
+
+    <section id="priority"><div class="section-head"><div><h2>收敛建议</h2><p class="note">先收基础层，再处理有明确产品理由的特殊形态，避免把所有弹窗机械改成一模一样。</p></div></div><div class="priority">
+      <article><em>P1 · 先处理高差异高复用</em><b>校长报表与班级记录</b><p>6 个报表抽屉和 4 个记录抽屉迁移到 MobileBottomSheet；同时消除 32px、shadow-2xl、背景模糊和局部标题结构。</p></article>
+      <article><em>P2 · 收回重复基础组件</em><b>提示、班级选择、档案、问卷、确认</b><p>保留业务内容组件，把外壳交给公共底部抽屉；班级选择的初始聚焦能力应作为公共组件可配置项保留。</p></article>
+      <article><em>P3 · 明确特殊形态</em><b>悬浮面板与居中反馈</b><p>个人资料和图片选择先判断是否确需悬浮；报告生成改为标准抽屉，阻断式深色“Toast”改为页面进度或统一反馈组件。</p></article>
+    </div></section>
+    <p class="foot">说明：这是“UI改造”项目内的独立审计页，不属于教师手机端真实产品界面。</p>
+  </main>
+</body>
+</html>

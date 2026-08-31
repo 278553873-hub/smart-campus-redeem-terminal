@@ -102,12 +102,12 @@ export const StudentPerformanceCounts: React.FC<StudentPerformanceCountsProps> =
       className={`flex items-center justify-center tabular-nums ${typographyClass} ${orientation === 'vertical' ? 'h-10 flex-col gap-1' : `${horizontalHeightClass} gap-1.5`} ${className}`}
     >
       {showPraiseCount && (
-        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-praise-soft)] px-1 text-[var(--tm-student-praise)] ${chipHeightClass}`}>
+        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-praise-soft,#ecfdf5)] px-1 text-[var(--tm-student-praise,#059669)] ${chipHeightClass}`}>
           {formatSignedCount(summary.praiseCount, '+')}
         </span>
       )}
       {showCriticismCount && (
-        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-criticism-soft)] px-1 text-[var(--tm-student-criticism)] ${chipHeightClass}`}>
+        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-criticism-soft,#fff1f2)] px-1 text-[var(--tm-student-criticism,#f43f5e)] ${chipHeightClass}`}>
           {formatSignedCount(summary.criticismCount, '-')}
         </span>
       )}

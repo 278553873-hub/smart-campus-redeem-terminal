@@ -7,6 +7,7 @@ interface PhoneMockupProps {
   isAnalyzing?: boolean;
   safeAreaTop?: boolean;
   screenBackground?: React.ReactNode;
+  screenOverlay?: React.ReactNode;
   screenRef?: React.Ref<HTMLDivElement>;
   showDeviceFrame?: boolean;
   contentTopInsetMode?: 'full-chrome' | 'status-bar' | 'none';
@@ -17,6 +18,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   isAnalyzing = false,
   safeAreaTop = true,
   screenBackground,
+  screenOverlay,
   screenRef,
   showDeviceFrame = true,
   contentTopInsetMode = 'full-chrome',
@@ -67,14 +69,24 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   const simulatedCapsuleRightInset = shouldShowNativeChrome ? 112 : 0;
   const deviceFrameVisibility = showDeviceFrame ? 'opacity-100' : 'opacity-0';
   const nativeChromeVisibility = shouldShowNativeChrome ? 'opacity-100' : 'opacity-0';
+  const screenCornerClass = showDeviceFrame ? 'rounded-[50px]' : 'rounded-none';
+  const screenClipStyle: React.CSSProperties = showDeviceFrame
+    ? {
+        clipPath: 'inset(0 round 50px)',
+        WebkitClipPath: 'inset(0 round 50px)',
+        contain: 'paint',
+        isolation: 'isolate',
+      }
+    : {};
 
   const screenContent = (
     <div
       ref={screenRef}
-      className={`relative overflow-hidden border border-slate-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] ${showDeviceFrame ? 'rounded-[50px]' : 'rounded-none'}`}
+      className={`relative overflow-hidden border border-slate-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] ${screenCornerClass}`}
       style={{
         width: `${screenWidth}px`,
         height: `${screenHeight}px`,
+        ...screenClipStyle,
         '--mini-program-status-bar-height': `${simulatedStatusBarHeight}px`,
         '--mini-program-title-bar-height': `${simulatedTitleBarHeight}px`,
         '--mini-program-capsule-right-inset': `${simulatedCapsuleRightInset}px`,
@@ -123,6 +135,15 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
         <div className={`absolute bottom-0 left-0 w-full h-7 flex justify-center items-end pb-2 z-[90] pointer-events-none ${nativeChromeVisibility}`} aria-hidden={!shouldShowNativeChrome}>
             <div className="w-32 h-[4px] bg-black/10 rounded-full"></div>
         </div>
+
+        {screenOverlay && (
+          <div
+            className={`absolute inset-0 z-[110] overflow-hidden ${screenCornerClass}`}
+            style={screenClipStyle}
+          >
+            {screenOverlay}
+          </div>
+        )}
     </div>
   );
 
