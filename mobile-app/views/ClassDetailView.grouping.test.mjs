@@ -6,6 +6,7 @@ const bottomSheetSource = read('../components/ui/MobileBottomSheet.tsx');
 const searchInputSource = read('../components/ui/MobileSearchInput.tsx');
 const compactSelectSource = read('../components/student/StudentCompactSelectItem.tsx');
 const compactSelectGridSource = read('../components/student/StudentCompactSelectGrid.tsx');
+const pickerSource = read('../components/student/MobileStudentPickerSheet.tsx');
 const rosterCardSource = read('../components/student/StudentRosterCard.tsx');
 const mobileStylesSource = read('../index.css');
 const groupPerformanceSource = read('../components/group/GroupPerformanceMeta.tsx');
@@ -15,6 +16,7 @@ const constantsSource = read('../constants.ts');
 const groupAvatarCatalogSource = read('../assets/groupAvatarCatalog.ts');
 const teacherMobileTokensSource = read('../styles/teacherMobileTokens.ts');
 const appSource = read('../App.tsx');
+const recordInputBarSource = read('../components/TeacherRecordInputBar.tsx');
 const teacherMobileGuidelines = read('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md');
 
 const failures = [];
@@ -122,7 +124,7 @@ if (viewSource.includes('disabled={!isGroupSelectionMode && !isActiveGroupPlanOw
 requireText(viewSource, 'groupDetailMode, setGroupDetailMode', '小组详情应在同一弹窗维护查看与调整状态。');
 requireText(viewSource, "useState<'view' | 'adjust' | 'settings'>('view')", '小组详情应在同一弹窗维护查看、调整和设置状态。');
 requireText(viewSource, "groupDetailMode === 'settings' ? '小组设置' : '小组详情'", '小组详情、调整与设置应复用同一个高底部弹窗。');
-const groupDetailSheet = viewSource.match(/<MobileBottomSheet\n\s+open=\{Boolean\(groupDetailTarget\)\}[\s\S]*?<\/MobileBottomSheet>/)?.[0] || '';
+const groupDetailSheet = viewSource.match(/<MobileBottomSheet\n\s+open=\{Boolean\(groupDetailTarget\)[^}]*\}[\s\S]*?<\/MobileBottomSheet>/)?.[0] || '';
 requireText(viewSource, 'groupDetailMembers?.map((student, index)', '小组详情应直接展示全部成员。');
 requireText(viewSource, 'onClick={() => handleOpenGroupMemberStudent(student)}', '小组详情中的学生卡应可继续进入学生详情。');
 requireText(groupDetailSheet, '{isActiveGroupPlanOwnedByCurrentTeacher && (', '编辑入口应只在本人方案的小组详情查看态出现。');
@@ -232,12 +234,12 @@ requireText(teacherMobileGuidelines, '### 2.5 边界与分隔', '教师手机端
 requireText(teacherMobileGuidelines, '禁止使用纯黑、近黑、深灰或其他高对比线条', '教师手机端规范应明确禁止高对比四周线框。');
 requireText(viewSource, 'showNewStudentGroupNameSheet', '添加小组应先通过底部抽屉填写名称。');
 requireText(viewSource, 'handleConfirmStudentGroupName', '填写小组名称后应进入学生选择流程。');
-const addStudentGroupSheet = viewSource.match(/<MobileBottomSheet\n\s+open=\{showNewStudentGroupNameSheet\}[\s\S]*?<\/MobileBottomSheet>/)?.[0] || '';
-requireText(addStudentGroupSheet, '>选择学生</button>', '首次分组和添加小组的名称步骤应使用明确的“选择学生”主按钮。');
-requireText(addStudentGroupSheet, 'placeholder="例如：语文1组"', '首次分组和添加小组应使用语文1组作为小组名称示例。');
+const addStudentGroupNameSheet = viewSource.match(/<MobileBottomSheet\n\s+open=\{showNewStudentGroupNameSheet && addStudentGroupStep === 'name'\}[\s\S]*?<\/MobileBottomSheet>/)?.[0] || '';
+requireText(addStudentGroupNameSheet, '>选择学生</button>', '首次分组和添加小组的名称步骤应使用明确的“选择学生”主按钮。');
+requireText(addStudentGroupNameSheet, 'placeholder="例如：语文1组"', '首次分组和添加小组应使用语文1组作为小组名称示例。');
 requireText(viewSource, "addStudentGroupStep, setAddStudentGroupStep] = useState<'name' | 'members'>('name')", '添加小组应在同一弹窗内维护名称和选人两步状态。');
 requireText(viewSource, 'setAddStudentGroupStep(\'members\')', '填写小组名称后应在同一弹窗切换到选人步骤。');
-requireText(viewSource, 'aria-label="返回上一步"', '添加小组选人步骤应允许返回修改名称。');
+requireText(pickerSource, 'aria-label="返回上一步"', '添加小组选人步骤应允许返回修改名称。');
 requireText(viewSource, "groups: groupEditor.groups.map((group, index) => index === 0 ? { ...group, name: groupName } : group)", '修改小组名称时应保留已选择的学生。');
 requireText(viewSource, 'handleCloseStudentGroupNameSheet', '从名称步骤关闭时应收口放弃添加流程。');
 const closeStudentGroupSheetHandler = viewSource.match(/const handleCloseStudentGroupNameSheet = \(\) => \{[\s\S]*?\n    \};/)?.[0] || '';
@@ -247,7 +249,7 @@ requireText(closeStudentGroupSheetHandler, 'setShowDiscardGroupingConfirm(true)'
 if (viewSource.includes('放弃本次添加？')) {
   failures.push('关闭添加小组弹窗时不应再出现二次确认。');
 }
-requireText(viewSource, "size={addStudentGroupStep === 'members' ? 'tall' : 'content'}", '选人步骤应切换为高底部抽屉。');
+requireText(pickerSource, "size = 'tall'", '公共学生选择弹窗应默认使用高底部抽屉。');
 requireText(bottomSheetSource, "size?: 'content' | 'tall' | 'full';", '公共底部抽屉应提供稳定的高抽屉与近全屏规格。');
 requireText(bottomSheetSource, "size === 'tall' ? 'h-[86%] max-h-[86%]'", '高底部抽屉应使用稳定高度承载学生选择。');
 requireText(bottomSheetSource, "size === 'full' ? 'h-[94%] max-h-[94%]'", '近全屏底部抽屉应提高高频编辑区的可视范围。');
@@ -255,16 +257,13 @@ requireText(bottomSheetSource, 'overflow-hidden rounded-t-[var(--tm-radius-sheet
 requireText(bottomSheetSource, 'relative z-20 shrink-0 bg-[var(--tm-bg-surface)]', '公共底部抽屉标题区应稳定覆盖滚动内容。');
 requireText(bottomSheetSource, 'relative z-0 isolate min-h-0 flex-1 overflow-y-auto overscroll-contain [clip-path:inset(0)]', '公共底部抽屉正文应使用独立低层级滚动容器，并裁切越界的列表内容。');
 requireText(bottomSheetSource, 'relative z-20 shrink-0 bg-[var(--tm-bg-surface-glass)]', '公共底部抽屉底部操作区应稳定覆盖滚动内容。');
-requireText(viewSource, "contentTone={addStudentGroupStep === 'members' ? 'plain' : 'surface'}", '选人步骤应使用浅灰内容底承载紧凑学生选择项。');
+requireText(pickerSource, 'contentTone="plain"', '公共学生选择弹窗应使用浅灰内容底承载紧凑学生选择项。');
 requireText(bottomSheetSource, "contentTone?: 'surface' | 'plain';", '公共底部抽屉应提供语义化内容底色。');
-requireText(viewSource, 'sticky top-0 z-20 -mx-3 bg-[var(--tm-bg-surface)] px-3 py-2', '选人步骤的搜索工具条应覆盖滚动学生卡并使用横向铺满的白色矩形底。');
-const selectionSearchBars = viewSource.match(/<div className="sticky top-0 z-20 -mx-3 bg-\[var\(--tm-bg-surface\)\] px-3 py-2">[\s\S]*?<\/div>/g) || [];
-if (selectionSearchBars.length < 2 || selectionSearchBars.some(searchBar => searchBar.includes('<OnlyUngroupedFilter'))) {
-  failures.push('添加和调整学生时，仅看未分组与人数都不得继续放在白色搜索操作区内。');
+requireText(pickerSource, 'sticky top-0 z-20 -mx-3 bg-[var(--tm-bg-surface)] px-3 py-2', '公共选人弹窗的搜索工具条应覆盖滚动学生卡并使用横向铺满的白色矩形底。');
+requireText(pickerSource, 'appearance="filled"', '公共选人弹窗的搜索框应使用无边框填充样式。');
+if (!pickerSource.includes('</div>\n        {auxiliary}')) {
+  failures.push('辅助筛选行应位于白色搜索区之后的浅灰内容区。');
 }
-requireText(viewSource, 'appearance="filled"', '选人步骤的搜索框应使用无边框填充样式。');
-const filledSearchUsages = viewSource.match(/appearance="filled"/g)?.length || 0;
-if (filledSearchUsages < 2) failures.push('学生 Tab 与添加小组选人弹窗应统一使用无边框填充搜索框。');
 if (viewSource.includes('aria-label="搜索学生"\n                            density="compact"\n                            appearance="filled"\n                            fillTone="surface"')) {
   failures.push('学生 Tab 应由整条工具栏承载白色分区，搜索输入框自身继续使用浅灰填充。');
 }
@@ -297,9 +296,9 @@ requireText(viewSource, 'title="重命名分组" onClose={() => setRenameGroupPl
 requireText(teacherMobileGuidelines, '`--tm-sheet-footer-divider-width` 固定为 `0px`', '教师手机端规范应明确底部弹窗按钮区不使用顶部横线。');
 requireText(viewSource, "mode: 'add-group'", '添加小组应使用独立编辑模式，避免侵入调整分组。');
 requireText(viewSource, 'const OnlyUngroupedFilter', '添加和调整小组应复用“仅看未分组”筛选组件。');
-requireText(addStudentGroupSheet, "groupEditor?.mode === 'add-group' && (", '仅添加现有方案的小组时才应展示“仅看未分组”。');
-requireText(addStudentGroupSheet, "const assignedGroup = groupEditor?.mode === 'add-group'", '新方案选人不得读取当前方案的学生归属。');
-requireText(addStudentGroupSheet, "return assignedGroup ? `当前在${assignedGroup.name}` : '未分组';", '添加小组时应向紧凑学生选择项传入归组信息。');
+requireText(viewSource, "auxiliary={groupEditor?.mode === 'add-group' ? (", '仅添加现有方案的小组时才应展示“仅看未分组”。');
+requireText(viewSource, "const assignedGroup = groupEditor?.mode === 'add-group'", '新方案选人不得读取当前方案的学生归属。');
+requireText(viewSource, "return assignedGroup ? `当前在${assignedGroup.name}` : '未分组';", '添加小组时应向紧凑学生选择项传入归组信息。');
 requireText(compactSelectSource, "${selectionDescription ? `，${selectionDescription}` : ''}", '紧凑学生选择项应通过读屏名称保留归组信息。');
 requireText(viewSource, 'type="checkbox"', '仅看未分组应使用符合筛选语义的复选框。');
 requireText(viewSource, '{checked && (', '“仅看未分组”人数应只在筛选开启时显示。');
@@ -360,12 +359,15 @@ requireText(viewSource, 'visibleStudents.filter(student => !membershipByStudentI
 requireText(viewSource, "sections.push({ id: 'ungrouped', label: '未分组'", '取消筛选后应提供明确的未分组分区。');
 requireText(viewSource, 'sections.push({ id: group.id, label: group.name', '取消筛选后应按具体小组名称继续分区。');
 requireText(viewSource, "import StudentCompactSelectGrid, { type StudentCompactSelectSection } from '../components/student/StudentCompactSelectGrid'", '添加与调整选人应复用通用层紧凑学生选择网格。');
+requireText(viewSource, "import MobileStudentPickerSheet from '../components/student/MobileStudentPickerSheet'", '添加与调整选人应复用完整的公共学生选择弹窗。');
 const compactSelectGridUsages = viewSource.match(/<StudentCompactSelectGrid/g)?.length || 0;
-if (compactSelectGridUsages !== 2) failures.push('紧凑学生选择网格应只用于添加小组和调整学生两个选人状态。');
+if (compactSelectGridUsages !== 0) failures.push('班级详情页不应再直接拼装学生选择网格，网格应由公共学生选择弹窗承载。');
+const studentPickerUsages = viewSource.match(/<MobileStudentPickerSheet/g)?.length || 0;
+if (studentPickerUsages !== 2) failures.push('添加小组和调整学生应使用同一个公共学生选择弹窗。');
 requireText(viewSource, "import StudentRosterCard, { StudentRosterAddCard } from '../components/student/StudentRosterCard'", '学生列表与小组详情应从通用层复用完整花名册卡片。');
 const rosterCardUsages = viewSource.match(/<StudentRosterCard\s/g)?.length || 0;
 if (rosterCardUsages !== 2) failures.push('完整花名册卡片只应用于班级学生列表和小组详情，不得重新侵入选人状态。');
-if (addStudentGroupSheet.includes('<StudentRosterCard')) failures.push('添加小组选人状态不得重新使用完整花名册卡片。');
+if (addStudentGroupNameSheet.includes('<StudentRosterCard')) failures.push('添加小组选人状态不得重新使用完整花名册卡片。');
 requireText(viewSource, '<GroupPerformanceMeta', '小组列表卡片应展示小组正负向评价次数。');
 requireText(viewSource, 'showPraiseCount={groupCardDisplaySettings.showPraiseCount}', '小组列表和详情应继承加分次数显示设置。');
 requireText(viewSource, 'showCriticismCount={groupCardDisplaySettings.showCriticismCount}', '小组列表和详情应继承扣分次数显示设置。');
@@ -411,7 +413,8 @@ requireText(viewSource, 'groupSelectionIds', '分组多选状态应与学生多�
 requireText(viewSource, 'onGroupSelectionStateChange?.({ active: true, count: next.size })', '勾选小组后应把小组数量回传给全局录入栏。');
 requireText(viewSource, 'if (isSelectionMode !== nextActive) onToggleSelectionMode();', '分组多选应同步开启全局录入栏的选择状态。');
 requireText(appSource, 'onGroupSelectionStateChange={setClassGroupSelectionState}', '应用层应接收分组多选状态。');
-requireText(appSource, '`按住说话 · ${selectedTargetCount}${selectedTargetUnit}`', '录入栏应按当前选择来源显示学生或小组数量。');
+requireText(appSource, 'selectedTargetUnit={selectedTargetUnit}', '应用层应把当前选择对象单位传入录入栏。');
+requireText(recordInputBarSource, '`按住说话 · ${selectedTargetCount}${selectedTargetUnit}`', '录入栏应按当前选择来源显示学生或小组数量。');
 requireText(viewSource, 'handleOpenGroupPlanActions', '本人创建的整套分组应通过切换抽屉的更多操作管理。');
 requireText(viewSource, "plan.ownerName !== currentTeacherName", '其他老师的分组必须禁止管理操作。');
 requireText(viewSource, '删除这套分组', '本人分组的更多操作应提供删除整套分组。');

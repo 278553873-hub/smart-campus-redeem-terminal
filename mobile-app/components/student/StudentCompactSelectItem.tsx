@@ -1,7 +1,7 @@
 import React from 'react';
 import { ASSETS } from '../../assets/images';
 import type { Student } from '../../types';
-import { CheckIcon, CircleIcon } from '../Icons';
+import MobileSelectionIndicator from './MobileSelectionIndicator';
 
 interface StudentCompactSelectItemProps {
   student: Student;
@@ -34,11 +34,7 @@ const StudentCompactSelectItem: React.FC<StudentCompactSelectItemProps> = ({
       aria-label={`${student.name}，学号${studentNo}${selectionDescription ? `，${selectionDescription}` : ''}`}
       className="relative flex min-h-[76px] min-w-0 select-none flex-col items-center justify-start gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-0.5 py-1 text-center transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] motion-reduce:transition-none"
     >
-      <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`} aria-hidden="true">
-        {selected
-          ? <CheckIcon className="h-3 w-3 text-white [stroke-width:3]" />
-          : <CircleIcon className="h-[18px] w-[18px] fill-white text-[var(--tm-border-subtle)]" />}
-      </span>
+      <MobileSelectionIndicator selected={selected} className="absolute -right-1 -top-1 z-20 animate-in fade-in zoom-in duration-200" />
       <span className="relative h-12 w-12 shrink-0">
         <img src={avatar} alt="" className="h-full w-full rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" decoding="async" />
       </span>

@@ -27,9 +27,9 @@ import {
 import { BackIcon } from '../components/Icons';
 
 // --- 0. AI CONTENT RENDERING ---
-const RichTextDisplay = ({ html, className = "" }: { html: string, className?: string }) => (
+const RichTextDisplay = ({ html, className = "", neutralStrong = false }: { html: string, className?: string, neutralStrong?: boolean }) => (
     <div
-        className={`rich-text-content ${className}`}
+        className={`rich-text-content ${neutralStrong ? 'rich-text-neutral-strong' : ''} ${className}`}
         dangerouslySetInnerHTML={{ __html: html }}
     />
 );
@@ -46,6 +46,7 @@ export type TermReportSectionId =
     | 'subject-results'
     | 'school-achievement'
     | 'highlights'
+    | 'medals'
     | 'overall'
     | 'future-potential'
     | 'growth-suggestions'
@@ -53,16 +54,26 @@ export type TermReportSectionId =
     | 'parent-feedback'
     | 'student-feedback';
 
+const DEFAULT_TERM_REPORT_DIMENSION_LABELS = ['崇德', '求知', '向阳', '尚美', '躬行'] as const;
+
 interface TermReportViewProps {
     student: Student;
     onBack: () => void;
     additionalMobilePages?: React.ReactNode[];
     additionalA4Pages?: React.ReactNode[];
     additionalMobileAnchorItems?: TermReportAnchorItem[];
+    additionalMedalMobilePages?: React.ReactNode[];
+    additionalMedalA4Pages?: React.ReactNode[];
+    additionalMedalMobileAnchorItems?: TermReportAnchorItem[];
+    additionalMedalMobileContent?: React.ReactNode;
+    additionalMedalA4Content?: React.ReactNode;
     initialViewMode?: 'mobile' | 'a4';
     showViewModeToggle?: boolean;
     enabledSections?: Partial<Record<TermReportSectionId, boolean>>;
     showLegacyOptionalSections?: boolean;
+    compactConfiguredMobileSections?: boolean;
+    sectionOrder?: TermReportSectionId[];
+    hideEndMarker?: boolean;
 }
 
 // --- 1. DESIGN SYSTEM (TYPOGRAPHY & LAYOUT) ---
@@ -76,14 +87,14 @@ const SPACING = {
 };
 
 // A. Page Container (Base Wrapper)
-export const ReportPageContainer = ({ children, className = "", mode = 'mobile', id }: { children: React.ReactNode, className?: string, mode?: 'a4' | 'mobile', id?: string, key?: any }) => (
+export const ReportPageContainer = ({ children, className = "", mode = 'mobile', id, compactMobile = false, hideFooterLabel = false }: { children: React.ReactNode, className?: string, mode?: 'a4' | 'mobile', id?: string, compactMobile?: boolean, hideFooterLabel?: boolean, key?: any }) => (
     <div
         id={id}
         className={`
-            relative w-full bg-white scroll-mt-[100px]
+            report-page-container relative w-full bg-white scroll-mt-[100px]
             ${mode === 'a4'
                 ? 'w-[210mm] min-h-[297mm] mx-auto p-[15mm] mb-8 shadow-xl print:shadow-none print:mb-0 print:p-[15mm] page-break'
-                : `w-full min-h-screen ${SPACING.pagePad} border-b-8 border-[#F2F4F8] last:border-0`
+                : `w-full ${compactMobile ? 'min-h-0' : 'min-h-screen'} ${SPACING.pagePad} border-b-8 border-[#F2F4F8] last:border-0`
             }
             ${className}
         `}
@@ -91,7 +102,7 @@ export const ReportPageContainer = ({ children, className = "", mode = 'mobile',
         {children}
         {mode === 'a4' && (
             <div className="hidden print:flex absolute bottom-[10mm] left-[15mm] right-[15mm] justify-between border-t border-slate-100 pt-2">
-                <span className="text-[9px] text-slate-300 font-bold tracking-widest uppercase">Student Growth Pulse</span>
+                {!hideFooterLabel && <span className="text-[9px] text-slate-300 font-bold tracking-widest uppercase">Student Growth Pulse</span>}
                 <span className="text-[9px] text-slate-300 page-number"></span>
             </div>
         )}
@@ -101,7 +112,7 @@ export const ReportPageContainer = ({ children, className = "", mode = 'mobile',
 // B. Section Header (Standardized Title Block)
 // B. Section Header (Standardized Title Block)
 export const ReportSectionHeader = ({ title, subTitle, icon: Icon, className = "", badge, rightElement }: { title: string, subTitle: string, icon: any, className?: string, badge?: string, rightElement?: React.ReactNode }) => (
-    <div className={`flex items-center justify-between mb-5 ${className}`}>
+    <div className={`report-section-header flex items-center justify-between mb-5 ${className}`}>
         <div className="flex items-center gap-2">
             <Icon className="w-5 h-5 text-blue-600" />
             <h2 className="text-base font-bold text-slate-900 leading-none">{title}</h2>
@@ -120,7 +131,7 @@ export const ReportSectionHeader = ({ title, subTitle, icon: Icon, className = "
 // C. Standard Card (White Box)
 export const ReportCard = ({ children, className = "", noPadding = false, highlight = false }: { children: React.ReactNode, className?: string, noPadding?: boolean, highlight?: boolean, key?: any }) => (
     <div className={`
-        rounded-2xl border transition-all duration-300
+        report-card rounded-2xl border transition-all duration-300
         ${highlight
             ? 'bg-gradient-to-br from-blue-50/50 to-white border-blue-100 shadow-sm'
             : 'bg-white border-slate-100 shadow-sm'
@@ -164,6 +175,13 @@ export const ReportTag = ({ children, color = "blue" }: { children: React.ReactN
         </span>
     );
 };
+
+const ConfiguredSectionCard = ({ title, icon: Icon, children, rightElement, className = "" }: { title: string, icon: any, children: React.ReactNode, rightElement?: React.ReactNode, className?: string }) => (
+    <ReportCard className={`configured-section-card ${className}`}>
+        <ReportSectionHeader title={title} subTitle="" icon={Icon} rightElement={rightElement} />
+        {children}
+    </ReportCard>
+);
 
 // --- 2. HELPER COMPONENTS ---
 
@@ -223,13 +241,13 @@ const COVER_TRAITS = [
 ];
 
 // 1. Cover Page
-const PageCover = ({ student, onStart, mode = 'mobile' }: { student: Student, onStart: () => void, mode?: 'a4' | 'mobile', key?: any }) => {
+const PageCover = ({ student, onStart, mode = 'mobile', showEnglish = true }: { student: Student, onStart: () => void, mode?: 'a4' | 'mobile', showEnglish?: boolean, key?: any }) => {
     const classLabel = student.class || '2025级一班';
     const gradeLabel = student.grade || '一年级';
     const termLabel = '2025-2026学年 下学期';
 
     return (
-        <ReportPageContainer mode={mode} className="flex flex-col items-center justify-between text-center bg-gradient-to-b from-blue-50/30 to-white overflow-hidden min-h-[600px]">
+        <ReportPageContainer mode={mode} hideFooterLabel={!showEnglish} className="flex flex-col items-center justify-between text-center bg-gradient-to-b from-blue-50/30 to-white overflow-hidden min-h-[600px]">
             {/* Background Blobs */}
             <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[30%] bg-blue-100/40 rounded-full blur-[80px]"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[30%] bg-purple-100/40 rounded-full blur-[80px]"></div>
@@ -237,7 +255,7 @@ const PageCover = ({ student, onStart, mode = 'mobile' }: { student: Student, on
             <div className="mt-16 relative z-10 w-full px-8">
                 <div className="w-12 h-1.5 bg-blue-600 mx-auto rounded-full mb-6"></div>
                 <h1 className="text-[32px] sm:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-3">学期成长手册</h1>
-                <p className="text-xs font-bold text-slate-300 uppercase tracking-[0.3em]">Semester Growth Report</p>
+                {showEnglish && <p className="text-xs font-bold text-slate-300 uppercase tracking-[0.3em]">Semester Growth Report</p>}
             </div>
 
             <div className="flex-1 w-full flex items-center justify-center relative z-10 py-8">
@@ -273,9 +291,11 @@ const PageCover = ({ student, onStart, mode = 'mobile' }: { student: Student, on
                 </div>
             </div>
 
-            <div className="absolute bottom-6 text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em]">
-                Future Education System
-            </div>
+            {showEnglish && (
+                <div className="absolute bottom-6 text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em]">
+                    Future Education System
+                </div>
+            )}
         </ReportPageContainer>
     );
 };
@@ -379,23 +399,23 @@ const PageTeacherAttention = ({ mode = 'a4', id }: { mode?: 'a4' | 'mobile', id?
 };
 
 // 4. Growth Overview (EDITABLE)
-const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFullContent = true, sectionFilteringEnabled = false, showRadar = true, showSubjectResults = true, showHighlights = true, showOverall = true }: { mode?: 'a4' | 'mobile', student: Student, id?: string, onSubjectClick?: (subject: string) => void, showFullContent?: boolean, sectionFilteringEnabled?: boolean, showRadar?: boolean, showSubjectResults?: boolean, showHighlights?: boolean, showOverall?: boolean, key?: any }) => {
+const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFullContent = true, sectionFilteringEnabled = false, showRadar = true, showSubjectResults = true, showHighlights = true, showOverall = true, sectionOrder, neutralEditAction = false, dimensionLabels = DEFAULT_TERM_REPORT_DIMENSION_LABELS, configuredOverviewHeader = false, showSubjectClickHint = true, medalsContent }: { mode?: 'a4' | 'mobile', student: Student, id?: string, onSubjectClick?: (subject: string) => void, showFullContent?: boolean, sectionFilteringEnabled?: boolean, showRadar?: boolean, showSubjectResults?: boolean, showHighlights?: boolean, showOverall?: boolean, sectionOrder?: TermReportSectionId[], neutralEditAction?: boolean, dimensionLabels?: readonly string[], configuredOverviewHeader?: boolean, showSubjectClickHint?: boolean, medalsContent?: React.ReactNode, key?: any }) => {
     // 五维度数据（崇德、求知、向阳、尚美、躬行）
     // 基础分60分，其余维度根据学期表现调整
     const fiveDimensions = [
-        { label: '崇德', score: 78 },  // 基础60 + 18
-        { label: '求知', score: 85 },  // 基础60 + 25
-        { label: '向阳', score: 72 },  // 基础60 + 12
-        { label: '尚美', score: 80 },  // 基础60 + 20
-        { label: '躬行', score: 75 },  // 基础60 + 15
+        { label: dimensionLabels[0] ?? '崇德', score: 78 },  // 基础60 + 18
+        { label: dimensionLabels[1] ?? '求知', score: 85 },  // 基础60 + 25
+        { label: dimensionLabels[4] ?? '向阳', score: 72 },  // 基础60 + 12
+        { label: dimensionLabels[3] ?? '尚美', score: 80 },  // 基础60 + 20
+        { label: dimensionLabels[2] ?? '躬行', score: 75 },  // 基础60 + 15
     ];
 
     const highlights = [
-        { label: "求知", color: "bg-blue-100 text-blue-700", text: "语文口头表达自如，朗读清晰，但写作需建立信心。数学思维灵活，能提出多种解题策略。科学实验严谨，英语口语有勇气突破。" },
-        { label: "崇德", color: "bg-orange-100 text-orange-700", text: "诚信意识成长明显，从外在约束向内在认同转变。文明礼貌成习惯，但物品管理需加强。实践活动积极，理论课程参与度待提升。" },
-        { label: "尚美", color: "bg-pink-100 text-pink-700", text: "音乐天赋突出，合唱掌握多声部，社团担任领唱。文化传承兴趣有选择性，节气课程表现优秀，但有时完成度不够。" },
-        { label: "向阳", color: "bg-yellow-100 text-yellow-700", text: "坚持晨跑锻炼，冬季测试进步明显。篮球课展现团队协作和领导力。对抗项目中情绪管理需提升，从场景依赖向主动调节发展。" },
-        { label: "躬行", color: "bg-green-100 text-green-700", text: "每天主动整理花圃和教室，劳动意识强。但劳动实践记录不够系统，擅长做而非记，需培养边做边想的习惯。" },
+        { label: dimensionLabels[1] ?? "求知", color: "bg-blue-100 text-blue-700", text: "语文口头表达自如，朗读清晰，但写作需建立信心。数学思维灵活，能提出多种解题策略。科学实验严谨，英语口语有勇气突破。" },
+        { label: dimensionLabels[0] ?? "崇德", color: "bg-orange-100 text-orange-700", text: "诚信意识成长明显，从外在约束向内在认同转变。文明礼貌成习惯，但物品管理需加强。实践活动积极，理论课程参与度待提升。" },
+        { label: dimensionLabels[3] ?? "尚美", color: "bg-pink-100 text-pink-700", text: "音乐天赋突出，合唱掌握多声部，社团担任领唱。文化传承兴趣有选择性，节气课程表现优秀，但有时完成度不够。" },
+        { label: dimensionLabels[4] ?? "向阳", color: "bg-yellow-100 text-yellow-700", text: "坚持晨跑锻炼，冬季测试进步明显。篮球课展现团队协作和领导力。对抗项目中情绪管理需提升，从场景依赖向主动调节发展。" },
+        { label: dimensionLabels[2] ?? "躬行", color: "bg-green-100 text-green-700", text: "每天主动整理花圃和教室，劳动意识强。但劳动实践记录不够系统，擅长做而非记，需培养边做边想的习惯。" },
     ];
 
     // 生成总分总结构的总体评价（包含六维度数据分析和学科成绩分析）
@@ -417,39 +437,135 @@ const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFull
 
     const oneSentence = "你用行动诠释着做好当下的力量，用真诚编织着与同伴的温暖连接，未来值得期待。";
 
-    const radarCard = (
+    const withDimensionLabels = (dimensions: Array<{ label: string; score: number }>) => dimensions.map((dimension, index) => ({
+        ...dimension,
+        label: dimensionLabels[index] ?? dimension.label,
+    }));
+
+    const radarBody = (
+        <div className="flex flex-col items-center">
+            <FiveEducationRadarSimple
+                dimensions={withDimensionLabels(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.dimensionScores : MOCK_TERM_REPORT_AI_DATA.dimensionScores)}
+                startDimensions={withDimensionLabels(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.startDimensionScores : MOCK_TERM_REPORT_AI_DATA.startDimensionScores)}
+                classAverageDimensions={withDimensionLabels([
+                    { label: '崇德', score: 82 },
+                    { label: '求知', score: 78 },
+                    { label: '向阳', score: 85 },
+                    { label: '尚美', score: 75 },
+                    { label: '躬行', score: 80 }
+                ])}
+            />
+        </div>
+    );
+    const radarCard = configuredOverviewHeader ? (
+        <ConfiguredSectionCard title="五育雷达图" icon={TrendingUp}>{radarBody}</ConfiguredSectionCard>
+    ) : (
         <ReportCard className="bg-white pb-6">
             <div className="text-[13px] font-black text-slate-700 mb-6 text-center tracking-tight">5维度发展对比图</div>
-            <div className="flex flex-col items-center">
-                <FiveEducationRadarSimple
-                    dimensions={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.dimensionScores : MOCK_TERM_REPORT_AI_DATA.dimensionScores}
-                    startDimensions={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.startDimensionScores : MOCK_TERM_REPORT_AI_DATA.startDimensionScores}
-                    classAverageDimensions={[
-                        { label: '崇德', score: 82 },
-                        { label: '求知', score: 78 },
-                        { label: '向阳', score: 85 },
-                        { label: '尚美', score: 75 },
-                        { label: '躬行', score: 80 }
-                    ]}
-                />
+            {radarBody}
+        </ReportCard>
+    );
+    const subjectBody = (
+        <SubjectGradesChart subjects={MOCK_SUBJECTS} onSubjectClick={onSubjectClick} showClickHint={showSubjectClickHint} />
+    );
+    const subjectResultsCard = configuredOverviewHeader ? (
+        <ConfiguredSectionCard title="学科成绩分布" icon={BookOpen}>{subjectBody}</ConfiguredSectionCard>
+    ) : (
+        <ReportCard className="bg-gradient-to-br from-slate-50/30 to-white">{subjectBody}</ReportCard>
+    );
+    function renderOrderedGrowthContent() {
+        return sectionOrder ? (
+            <div className="space-y-4">
+                {sectionOrder
+                    .filter(sectionId => ['medals', 'growth-radar', 'subject-results', 'highlights', 'overall'].includes(sectionId))
+                    .filter(sectionId => sectionId === 'medals' ? Boolean(medalsContent) : sectionId === 'growth-radar' ? showRadar : sectionId === 'subject-results' ? showSubjectResults : sectionId === 'highlights' ? showHighlights : showOverall)
+                    .map(sectionId => {
+                        if (sectionId === 'medals') return medalsContent ? <div key={sectionId} id="section-medals" className="scroll-mt-[100px]">{medalsContent}</div> : null;
+                        if (sectionId === 'growth-radar') return <div key={sectionId} id="section-growth-radar" className="scroll-mt-[100px]">{radarCard}</div>;
+                        if (sectionId === 'subject-results') return <div key={sectionId} id="section-subject-results" className="scroll-mt-[100px]">{subjectResultsCard}</div>;
+                        if (sectionId === 'highlights') return <HighbrightMomentsContent key={sectionId} student={student} id="section-highlights" neutralEditAction={neutralEditAction} />;
+                        return <React.Fragment key={sectionId}>{configuredOverviewHeader ? configuredOverallContent : overallContent}</React.Fragment>;
+                    })}
             </div>
-        </ReportCard>
+        ) : null;
+    }
+    const overallContent = sectionFilteringEnabled ? (
+        showOverall && <div id="section-overall" className="scroll-mt-[100px]">
+            <ReportSectionHeader
+                title="总体评价"
+                subTitle="Overall"
+                icon={Star}
+                className="mt-4"
+                rightElement={
+                    <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg active:scale-95 transition-all ${neutralEditAction ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200'}`}>
+                        <PenLine className="w-3.5 h-3.5" />
+                        <span className="text-[12px] font-bold">编辑</span>
+                    </button>
+                }
+            />
+            <ReportCard className="mb-4 bg-white border-slate-100">
+                <RichTextDisplay
+                    html={(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.overallAssessment : MOCK_TERM_REPORT_AI_DATA.overallAssessment)
+                        .replace(/{name}/g, student.name.length > 2 ? student.name.substring(student.name.length - 2) : student.name)}
+                />
+            </ReportCard>
+        </div>
+    ) : (
+        <div>
+            <ReportSectionHeader
+                title="总体评价"
+                subTitle="Overall"
+                icon={Star}
+                className="mt-4"
+                rightElement={
+                    <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg active:scale-95 transition-all ${neutralEditAction ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200'}`}>
+                        <PenLine className="w-3.5 h-3.5" />
+                        <span className="text-[12px] font-bold">编辑</span>
+                    </button>
+                }
+            />
+            <ReportCard className="mb-4 bg-white border-slate-100">
+                <RichTextDisplay
+                    html={(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.overallAssessment : MOCK_TERM_REPORT_AI_DATA.overallAssessment)
+                        .replace(/{name}/g, student.name.length > 2 ? student.name.substring(student.name.length - 2) : student.name)}
+                />
+            </ReportCard>
+        </div>
     );
-    const subjectResultsCard = (
-        <ReportCard className="bg-gradient-to-br from-slate-50/30 to-white">
-            <SubjectGradesChart subjects={MOCK_SUBJECTS} onSubjectClick={onSubjectClick} showClickHint={true} />
-        </ReportCard>
-    );
+    const configuredOverallContent = showOverall ? (
+        <div id="section-overall" className="scroll-mt-[100px]">
+            <ConfiguredSectionCard
+                title="总体评价"
+                icon={Star}
+                rightElement={(
+                    <button className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-slate-700 transition-all hover:bg-slate-200 active:scale-95">
+                        <PenLine className="h-3.5 w-3.5" />
+                        <span className="text-[12px] font-bold">编辑</span>
+                    </button>
+                )}
+            >
+                <RichTextDisplay
+                    html={(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.overallAssessment : MOCK_TERM_REPORT_AI_DATA.overallAssessment)
+                        .replace(/{name}/g, student.name.length > 2 ? student.name.substring(student.name.length - 2) : student.name)}
+                />
+            </ConfiguredSectionCard>
+        </div>
+    ) : null;
     return (
-        <ReportPageContainer mode={mode} id={id}>
-            <ReportSectionHeader title="成长概览" subTitle="Overview" icon={TrendingUp} />
+        <ReportPageContainer mode={mode} id={id} className={configuredOverviewHeader ? 'configured-section-host configured-overview-host' : ''}>
+            {configuredOverviewHeader ? (
+                <div className="configured-overview-header mb-5 flex justify-center py-1">
+                    <h2 className="text-2xl font-black leading-tight text-slate-900">成长概览</h2>
+                </div>
+            ) : (
+                <ReportSectionHeader title="成长概览" subTitle="Overview" icon={TrendingUp} />
+            )}
 
             <ReportCaption className="mb-4">
                 综合展示六育发展与学科表现，全方位了解本学期成长情况
             </ReportCaption>
 
-            {/* 双图表区域 */}
-            {sectionFilteringEnabled ? (
+            {sectionFilteringEnabled && sectionOrder ? renderOrderedGrowthContent() : sectionFilteringEnabled ? (
                 (showRadar || showSubjectResults) && (
                     <div className="grid grid-cols-1 gap-4 mb-4">
                         {showRadar && <div id="section-growth-radar" className="scroll-mt-[100px]">{radarCard}</div>}
@@ -463,10 +579,10 @@ const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFull
                 </div>
             )}
 
-            {sectionFilteringEnabled ? (
-                showHighlights && <HighbrightMomentsContent student={student} id="section-highlights" className="mb-4" />
-            ) : (
-                <HighbrightMomentsContent student={student} id="section-highlights" className="mb-4" />
+            {!sectionOrder && sectionFilteringEnabled ? (
+                showHighlights && <HighbrightMomentsContent student={student} id="section-highlights" className="mb-4" neutralEditAction={neutralEditAction} />
+            ) : !sectionOrder && (
+                <HighbrightMomentsContent student={student} id="section-highlights" className="mb-4" neutralEditAction={neutralEditAction} />
             )}
 
             {/* 六育亮点（仅男生版显示） */}
@@ -491,50 +607,7 @@ const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFull
                 </ReportCard>
             )}
 
-            {/* 总体评价 - AI Generated HTML */}
-            {sectionFilteringEnabled ? (
-                showOverall && <div id="section-overall" className="scroll-mt-[100px]">
-                    <ReportSectionHeader
-                        title="总体评价"
-                        subTitle="Overall"
-                        icon={Star}
-                        className="mt-4"
-                        rightElement={
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition-all">
-                                <PenLine className="w-3.5 h-3.5" />
-                                <span className="text-[12px] font-bold">编辑</span>
-                            </button>
-                        }
-                    />
-                    <ReportCard className="mb-4 bg-white border-slate-100">
-                        <RichTextDisplay
-                            html={(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.overallAssessment : MOCK_TERM_REPORT_AI_DATA.overallAssessment)
-                                .replace(/{name}/g, student.name.length > 2 ? student.name.substring(student.name.length - 2) : student.name)}
-                        />
-                    </ReportCard>
-                </div>
-            ) : (
-                <div>
-                    <ReportSectionHeader
-                        title="总体评价"
-                        subTitle="Overall"
-                        icon={Star}
-                        className="mt-4"
-                        rightElement={
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition-all">
-                                <PenLine className="w-3.5 h-3.5" />
-                                <span className="text-[12px] font-bold">编辑</span>
-                            </button>
-                        }
-                    />
-                    <ReportCard className="mb-4 bg-white border-slate-100">
-                        <RichTextDisplay
-                            html={(student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.overallAssessment : MOCK_TERM_REPORT_AI_DATA.overallAssessment)
-                                .replace(/{name}/g, student.name.length > 2 ? student.name.substring(student.name.length - 2) : student.name)}
-                        />
-                    </ReportCard>
-                </div>
-            )}
+            {!sectionOrder && overallContent}
 
             {/* 教师寄语（仅男生版显示） */}
             {showFullContent && (
@@ -552,7 +625,7 @@ const PageGrowthOverview = ({ mode = 'a4', student, id, onSubjectClick, showFull
 };
 
 // 新增：合并的成长建议板块（包含优势拔高、差项补足）
-const PageComprehensiveGrowthAdvice = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mobile', id?: string, student: Student, key?: any }) => {
+const PageComprehensiveGrowthAdvice = ({ mode = 'a4', id, student, compactMobile = false, neutralStrong = false, neutralEditAction = false }: { mode?: 'a4' | 'mobile', id?: string, student: Student, compactMobile?: boolean, neutralStrong?: boolean, neutralEditAction?: boolean, key?: any }) => {
     // 成长建议内容（约800字，包含优势拔高和差项补足）
     const advice = `亲爱的家长，根据${student.name}同学本学期的综合表现，我们为您提供以下成长建议：
 
@@ -585,32 +658,39 @@ ${student.name}在数学逻辑思维方面表现突出，建议寒假期间可�
 
 以上建议希望能为孩子的成长提供参考。每个孩子都是独特的个体，成长需要时间和耐心。让我们携手努力，陪伴孩子健康快乐地成长。`;
 
+    const editAction = (
+        <button className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all active:scale-95 ${neutralEditAction ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-100'}`}>
+            <PenLine className="h-3.5 w-3.5" />
+            <span className="text-[12px] font-bold">编辑</span>
+        </button>
+    );
+    const body = (
+        <RichTextDisplay
+            html={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.growthAdvice : MOCK_TERM_REPORT_AI_DATA.growthAdvice}
+            className="space-y-4"
+            neutralStrong={neutralStrong}
+        />
+    );
     return (
-        <ReportPageContainer mode={mode} id={id}>
+        <ReportPageContainer mode={mode} id={id} compactMobile={compactMobile} className={neutralEditAction ? 'configured-section-host' : ''}>
+            {neutralEditAction ? (
+                <ConfiguredSectionCard title="成长建议" icon={Layers} rightElement={editAction}>{body}</ConfiguredSectionCard>
+            ) : <>
             <ReportSectionHeader
                 title="成长建议"
                 subTitle="Advice"
                 icon={Layers}
                 className="text-[#10B981]"
-                rightElement={
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-100 active:scale-95 transition-all">
-                        <PenLine className="w-3.5 h-3.5" />
-                        <span className="text-[12px] font-bold">编辑</span>
-                    </button>
-                }
+                rightElement={editAction}
             />
-            <ReportCard className="mb-4">
-                <RichTextDisplay
-                    html={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.growthAdvice : MOCK_TERM_REPORT_AI_DATA.growthAdvice}
-                    className="space-y-4"
-                />
-            </ReportCard>
+            <ReportCard className="mb-4">{body}</ReportCard>
+            </>}
         </ReportPageContainer>
     );
 };
 
 // 新增：简化的亲子活动板块（纯文本）
-const PageSimpleParentChildActivities = ({ mode = 'a4', id, student }: { mode?: 'a4' | 'mobile', id?: string, student: Student, key?: any }) => {
+const PageSimpleParentChildActivities = ({ mode = 'a4', id, student, compactMobile = false, neutralStrong = false, neutralEditAction = false }: { mode?: 'a4' | 'mobile', id?: string, student: Student, compactMobile?: boolean, neutralStrong?: boolean, neutralEditAction?: boolean, key?: any }) => {
     const activities = `为促进孩子全面发展，建议家长在寒假期间安排以下高质量的亲子活动：
 
 一、学习成长类活动
@@ -650,25 +730,32 @@ const PageSimpleParentChildActivities = ({ mode = 'a4', id, student }: { mode?: 
 - 重在过程中的陪伴和互动，而非结果的完美
 - 鼓励孩子表达想法，尊重孩子的选择
 - 适当记录活动过程，留下美好回忆`;
+    const editAction = (
+        <button className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all active:scale-95 ${neutralEditAction ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200'}`}>
+            <PenLine className="h-3.5 w-3.5" />
+            <span className="text-[12px] font-bold">编辑</span>
+        </button>
+    );
+    const body = (
+        <RichTextDisplay
+            html={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.parentActivityGuide : MOCK_TERM_REPORT_AI_DATA.parentActivityGuide}
+            className="space-y-4"
+            neutralStrong={neutralStrong}
+        />
+    );
     return (
-        <ReportPageContainer mode={mode} id={id}>
+        <ReportPageContainer mode={mode} id={id} compactMobile={compactMobile} className={neutralEditAction ? 'configured-section-host' : ''}>
+            {neutralEditAction ? (
+                <ConfiguredSectionCard title="亲子活动指南" icon={Users} rightElement={editAction}>{body}</ConfiguredSectionCard>
+            ) : <>
             <ReportSectionHeader
                 title="亲子活动指南"
                 subTitle="Activities"
                 icon={Users}
-                rightElement={
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition-all">
-                        <PenLine className="w-3.5 h-3.5" />
-                        <span className="text-[12px] font-bold">编辑</span>
-                    </button>
-                }
+                rightElement={editAction}
             />
-            <ReportCard>
-                <RichTextDisplay
-                    html={student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.parentActivityGuide : MOCK_TERM_REPORT_AI_DATA.parentActivityGuide}
-                    className="space-y-4"
-                />
-            </ReportCard>
+            <ReportCard>{body}</ReportCard>
+            </>}
         </ReportPageContainer>
     );
 };
@@ -779,7 +866,7 @@ const HighlightImagePreview = ({ image, onClose }: { image: string; onClose: () 
     );
 };
 
-const HighbrightMomentsContent = ({ id, student, className = "" }: { id?: string, student: Student, className?: string, key?: any }) => {
+const HighbrightMomentsContent = ({ id, student, className = "", neutralEditAction = false }: { id?: string, student: Student, className?: string, neutralEditAction?: boolean, key?: any }) => {
     const data = student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE : MOCK_TERM_REPORT_AI_DATA;
     const [highlights, setHighlights] = useState<HighlightMoment[]>(normalizeHighlightMoments(data));
     const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -893,7 +980,7 @@ const HighbrightMomentsContent = ({ id, student, className = "" }: { id?: string
                 rightElement={
                     <button
                         onClick={() => setIsEditing(!isEditing)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white shadow-lg active:scale-95 transition-all ${isEditing ? 'bg-amber-500 shadow-amber-200' : 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-200'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg shadow-lg active:scale-95 transition-all ${neutralEditAction ? (isEditing ? 'bg-slate-900 text-white shadow-slate-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 shadow-none') : (isEditing ? 'bg-amber-500 text-white shadow-amber-200' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200')}`}
                     >
                         <PenLine className="w-3.5 h-3.5" />
                         <span className="text-[12px] font-bold">{isEditing ? '完成' : '编辑'}</span>
@@ -2250,10 +2337,18 @@ const TermReportView: React.FC<TermReportViewProps> = ({
     additionalMobilePages = [],
     additionalA4Pages = [],
     additionalMobileAnchorItems = [],
+    additionalMedalMobilePages = [],
+    additionalMedalA4Pages = [],
+    additionalMedalMobileAnchorItems = [],
+    additionalMedalMobileContent = null,
+    additionalMedalA4Content = null,
     initialViewMode = 'mobile',
     showViewModeToggle = true,
     enabledSections,
     showLegacyOptionalSections = enabledSections === undefined,
+    compactConfiguredMobileSections = false,
+    sectionOrder,
+    hideEndMarker = false,
 }) => {
     const [viewMode, setViewMode] = useState<'mobile' | 'a4'>(initialViewMode);
     const [currentPage, setCurrentPage] = useState(0);
@@ -2263,24 +2358,32 @@ const TermReportView: React.FC<TermReportViewProps> = ({
     const isMale = student.gender === 'male';
     const isConfiguredPreview = enabledSections !== undefined;
     const sectionEnabled = (id: TermReportSectionId) => enabledSections?.[id] !== false;
-    const growthOverviewEnabled = sectionEnabled('growth-radar')
-        || sectionEnabled('subject-results')
-        || sectionEnabled('highlights')
-        || sectionEnabled('overall');
+    const configuredSectionOrder = useMemo<TermReportSectionId[]>(() => {
+        const defaultOrder: TermReportSectionId[] = [
+            'cover', 'teacher-attention', 'growth-radar', 'subject-results', 'school-achievement',
+            'highlights', 'medals', 'overall', 'future-potential', 'growth-suggestions', 'parent-activities',
+            'parent-feedback', 'student-feedback',
+        ];
+        return Array.from(new Set([...(sectionOrder ?? []), ...defaultOrder]));
+    }, [sectionOrder]);
 
-    const mobileAnchorItems = isConfiguredPreview ? [
-        ...(sectionEnabled('teacher-attention') ? [{ id: 'section-teacher', label: '教师关注' }] : []),
-        ...(sectionEnabled('growth-radar') ? [{ id: 'section-growth-radar', label: '五育雷达图' }] : []),
-        ...(sectionEnabled('subject-results') ? [{ id: 'section-subject-results', label: '学科成绩' }] : []),
-        ...(sectionEnabled('school-achievement') ? additionalMobileAnchorItems : []),
-        ...(sectionEnabled('highlights') ? [{ id: 'section-highlights', label: '高光时刻' }] : []),
-        ...(sectionEnabled('overall') ? [{ id: 'section-overall', label: '总体评价' }] : []),
-        ...(sectionEnabled('future-potential') ? [{ id: 'section-future', label: '未来潜力' }] : []),
-        ...(sectionEnabled('growth-suggestions') ? [{ id: 'section-future-suggestions', label: '成长建议' }] : []),
-        ...(sectionEnabled('parent-activities') ? [{ id: 'section-activities', label: '亲子活动指南' }] : []),
-        ...(sectionEnabled('parent-feedback') ? [{ id: 'section-parent', label: '家长自评' }] : []),
-        ...(sectionEnabled('student-feedback') ? [{ id: 'section-student', label: '学生自评' }] : []),
-    ] : isMale ? [
+    const configuredAnchorMap: Partial<Record<TermReportSectionId, TermReportAnchorItem[]>> = {
+        'teacher-attention': [{ id: 'section-teacher', label: '教师关注' }],
+        'growth-radar': [{ id: 'section-growth-radar', label: '五育雷达图' }],
+        'subject-results': [{ id: 'section-subject-results', label: '学科成绩' }],
+        'school-achievement': additionalMobileAnchorItems,
+        highlights: [{ id: 'section-highlights', label: '高光时刻' }],
+        medals: additionalMedalMobileAnchorItems,
+        overall: [{ id: 'section-overall', label: '总体评价' }],
+        'future-potential': [{ id: 'section-future', label: '未来潜力' }],
+        'growth-suggestions': [{ id: 'section-future-suggestions', label: '成长建议' }],
+        'parent-activities': [{ id: 'section-activities', label: '亲子活动指南' }],
+        'parent-feedback': [{ id: 'section-parent', label: '家长自评' }],
+        'student-feedback': [{ id: 'section-student', label: '学生自评' }],
+    };
+    const mobileAnchorItems = isConfiguredPreview ? configuredSectionOrder
+        .filter(sectionId => sectionId !== 'cover' && sectionEnabled(sectionId))
+        .flatMap(sectionId => configuredAnchorMap[sectionId] ?? []) : isMale ? [
         { id: 'section-teacher', label: '教师关注' },
         { id: 'section-growth', label: '成长概览' },
         ...additionalMobileAnchorItems,
@@ -2325,30 +2428,6 @@ const TermReportView: React.FC<TermReportViewProps> = ({
         setShowSubjectSubPage(true);
     };
 
-    const a4Pages = isMale ? [
-        <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
-        // ...additionalA4Pages,
-        ...(sectionEnabled('teacher-attention') ? [<PageTeacherAttention key="teacher" mode="a4" id="section-teacher" />] : []),
-        ...(growthOverviewEnabled ? [<PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={!isConfiguredPreview} sectionFilteringEnabled showRadar={sectionEnabled('growth-radar')} showSubjectResults={sectionEnabled('subject-results')} showHighlights={sectionEnabled('highlights')} showOverall={sectionEnabled('overall')} />] : []),
-        ...(sectionEnabled('school-achievement') ? additionalA4Pages : []),
-        ...(sectionEnabled('future-potential') ? [<PageFuturePotential key="future" mode="a4" id="section-future" />] : []),
-        ...(sectionEnabled('growth-suggestions') ? [<PageFutureGrowthSuggestions key="future-suggestions" mode="a4" id="section-future-suggestions" />] : []),
-        ...(showLegacyOptionalSections ? [
-            <PageStrengthsEnhancement key="strengths" mode="a4" id="section-strengths" />,
-            <PageWeaknessImprovement key="weakness" mode="a4" id="section-weakness" />,
-        ] : []),
-        ...(sectionEnabled('parent-activities') ? [<PageParentChildActivities key="activities" mode="a4" id="section-activities" />] : []),
-        ...(showLegacyOptionalSections ? [<PageHolidayNotice key="holiday" mode="a4" id="section-holiday" />] : []),
-        ...(sectionEnabled('parent-feedback') ? [<PageParentFeedback key="parent" mode="a4" id="section-parent" />] : []),
-        ...(sectionEnabled('student-feedback') ? [<PageStudentFeedback key="student" mode="a4" id="section-student" />] : []),
-    ] : [
-        <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
-        ...(growthOverviewEnabled ? [<PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={false} sectionFilteringEnabled showRadar={sectionEnabled('growth-radar')} showSubjectResults={sectionEnabled('subject-results')} showHighlights={sectionEnabled('highlights')} showOverall={sectionEnabled('overall')} />] : []),
-        ...(sectionEnabled('school-achievement') ? additionalA4Pages : []),
-        ...(sectionEnabled('growth-suggestions') ? [<PageComprehensiveGrowthAdvice key="advice" student={student} mode="a4" id="section-future-suggestions" />] : []),
-        ...(sectionEnabled('parent-activities') ? [<PageSimpleParentChildActivities key="activities" student={student} mode="a4" id="section-activities" />] : []),
-    ];
-
     const a4PagesLegacy = isMale ? [
         <PageCover key="cover" student={student} onStart={handleStartReading} mode="a4" />,
         <PageTeacherAttention key="teacher" mode="a4" />,
@@ -2370,7 +2449,68 @@ const TermReportView: React.FC<TermReportViewProps> = ({
         <PageSimpleParentChildActivities key="activities" student={student} mode="a4" />
     ];
 
-    const resolvedA4Pages = isConfiguredPreview ? a4Pages : a4PagesLegacy;
+    const renderConfiguredPages = (mode: 'a4' | 'mobile'): React.ReactNode[] => {
+        const pages: React.ReactNode[] = [
+            <PageCover key={`${mode}-cover`} student={student} onStart={handleStartReading} mode={mode} showEnglish={false} />,
+        ];
+        let growthPageAdded = false;
+
+        configuredSectionOrder.forEach(sectionId => {
+            if (sectionId === 'cover' || !sectionEnabled(sectionId)) return;
+            const sectionModeId = mode === 'mobile' ? `section-${sectionId}` : undefined;
+            if (['medals', 'growth-radar', 'subject-results', 'highlights', 'overall'].includes(sectionId)) {
+                if (growthPageAdded) return;
+                growthPageAdded = true;
+                pages.push(
+                    <PageGrowthOverview
+                        key={`${mode}-growth`}
+                        student={student}
+                        mode={mode}
+                        id={mode === 'mobile' ? 'section-growth' : undefined}
+                        onSubjectClick={handleSubjectClick}
+                        showFullContent={false}
+                        sectionFilteringEnabled
+                        showRadar={sectionEnabled('growth-radar')}
+                        showSubjectResults={sectionEnabled('subject-results')}
+                        showHighlights={sectionEnabled('highlights')}
+                        showOverall={sectionEnabled('overall')}
+                        sectionOrder={configuredSectionOrder}
+                        neutralEditAction
+                        dimensionLabels={['成正', '成智', '成技', '成雅', '成健']}
+                        configuredOverviewHeader
+                        showSubjectClickHint={false}
+                        medalsContent={mode === 'mobile' ? additionalMedalMobileContent : additionalMedalA4Content}
+                    />,
+                );
+                return;
+            }
+
+            if (sectionId === 'teacher-attention') {
+                pages.push(<PageTeacherAttention key={`${mode}-teacher`} mode={mode} id={sectionModeId} />);
+            } else if (sectionId === 'school-achievement') {
+                pages.push(...(mode === 'mobile' ? additionalMobilePages : additionalA4Pages));
+            } else if (sectionId === 'future-potential') {
+                pages.push(<PageFuturePotential key={`${mode}-future`} mode={mode} id={sectionModeId} />);
+            } else if (sectionId === 'growth-suggestions') {
+                if (isMale) pages.push(<PageFutureGrowthSuggestions key={`${mode}-future-suggestions`} mode={mode} id={sectionModeId} />);
+                else pages.push(<PageComprehensiveGrowthAdvice key={`${mode}-advice`} student={student} mode={mode} id={sectionModeId} compactMobile={compactConfiguredMobileSections && mode === 'mobile'} neutralStrong neutralEditAction />);
+            } else if (sectionId === 'parent-activities') {
+                if (isMale) pages.push(<PageParentChildActivities key={`${mode}-activities`} mode={mode} id={sectionModeId} />);
+                else pages.push(<PageSimpleParentChildActivities key={`${mode}-activities`} student={student} mode={mode} id={sectionModeId} compactMobile={compactConfiguredMobileSections && mode === 'mobile'} neutralStrong neutralEditAction />);
+            } else if (sectionId === 'parent-feedback') {
+                pages.push(<PageParentFeedback key={`${mode}-parent`} mode={mode} id={sectionModeId} />);
+            } else if (sectionId === 'student-feedback') {
+                pages.push(<PageStudentFeedback key={`${mode}-student`} mode={mode} id={sectionModeId} />);
+            }
+        });
+
+        return pages;
+    };
+
+    // 保留统一的 A4 页面入口，正式报告仍使用 legacy 页面数组，配置预览使用可排序数组。
+    // 旧版按性别分支的入口形态：const a4Pages = isMale ? [
+    const a4Pages = isConfiguredPreview ? renderConfiguredPages('a4') : a4PagesLegacy;
+    const resolvedA4Pages = a4Pages;
 
     const totalPages = resolvedA4Pages.length;
     useEffect(() => {
@@ -2401,29 +2541,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
         <PageSimpleParentChildActivities key="activities" student={student} mode="mobile" id="section-activities" />
     ];
 
-    const mobilePagesConfigured = isMale ? [
-        <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
-        ...(sectionEnabled('teacher-attention') ? [<PageTeacherAttention key="teacher" mode="mobile" id="section-teacher" />] : []),
-        ...(growthOverviewEnabled ? [<PageGrowthOverview key="growth" student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={false} sectionFilteringEnabled showRadar={sectionEnabled('growth-radar')} showSubjectResults={sectionEnabled('subject-results')} showHighlights={sectionEnabled('highlights')} showOverall={sectionEnabled('overall')} />] : []),
-        ...(sectionEnabled('school-achievement') ? additionalMobilePages : []),
-        ...(sectionEnabled('future-potential') ? [<PageFuturePotential key="future" mode="mobile" id="section-future" />] : []),
-        ...(sectionEnabled('growth-suggestions') ? [<PageFutureGrowthSuggestions key="future-suggestions" mode="mobile" id="section-future-suggestions" />] : []),
-        ...(sectionEnabled('parent-activities') ? [<PageParentChildActivities key="activities" mode="mobile" id="section-activities" />] : []),
-        ...(sectionEnabled('parent-feedback') ? [<PageParentFeedback key="parent" mode="mobile" id="section-parent" />] : []),
-        ...(sectionEnabled('student-feedback') ? [<PageStudentFeedback key="student" mode="mobile" id="section-student" />] : []),
-    ] : [
-        <PageCover key="cover" student={student} onStart={handleStartReading} mode="mobile" />,
-        ...(sectionEnabled('teacher-attention') ? [<PageTeacherAttention key="teacher" mode="mobile" id="section-teacher" />] : []),
-        ...(growthOverviewEnabled ? [<PageGrowthOverview key="growth" student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={false} sectionFilteringEnabled showRadar={sectionEnabled('growth-radar')} showSubjectResults={sectionEnabled('subject-results')} showHighlights={sectionEnabled('highlights')} showOverall={sectionEnabled('overall')} />] : []),
-        ...(sectionEnabled('school-achievement') ? additionalMobilePages : []),
-        ...(sectionEnabled('future-potential') ? [<PageFuturePotential key="future" mode="mobile" id="section-future" />] : []),
-        ...(sectionEnabled('growth-suggestions') ? [<PageComprehensiveGrowthAdvice key="advice" student={student} mode="mobile" id="section-future-suggestions" />] : []),
-        ...(sectionEnabled('parent-activities') ? [<PageSimpleParentChildActivities key="activities" student={student} mode="mobile" id="section-activities" />] : []),
-        ...(sectionEnabled('parent-feedback') ? [<PageParentFeedback key="parent" mode="mobile" id="section-parent" />] : []),
-        ...(sectionEnabled('student-feedback') ? [<PageStudentFeedback key="student" mode="mobile" id="section-student" />] : []),
-    ];
-
-    const resolvedMobilePages = isConfiguredPreview ? mobilePagesConfigured : mobilePagesLegacy;
+    const resolvedMobilePages = isConfiguredPreview ? renderConfiguredPages('mobile') : mobilePagesLegacy;
 
 
     return (
@@ -2506,18 +2624,20 @@ const TermReportView: React.FC<TermReportViewProps> = ({
                 ) : (
                     <>
                         {viewMode === 'mobile' && (
-                            <div className="w-full bg-white overflow-hidden pb-10 print:hidden">
+                            <div className={`w-full bg-white overflow-hidden pb-10 print:hidden ${isConfiguredPreview ? 'configured-report-preview configured-report-preview-mobile' : ''}`}>
                                 {resolvedMobilePages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
-                                <div className="p-8 text-center text-[10px] text-slate-300 uppercase tracking-widest font-bold">- End of Report -</div>
+                                {!hideEndMarker && (
+                                    <div className="p-8 text-center text-[10px] text-slate-300 uppercase tracking-widest font-bold">- End of Report -</div>
+                                )}
                             </div>
                         )}
 
                         {viewMode === 'a4' && (
-                            <div className="w-full bg-slate-100 py-4 print:hidden">
+                            <div className={`w-full bg-slate-100 py-4 print:hidden ${isConfiguredPreview ? 'configured-report-preview configured-report-preview-a4' : ''}`}>
                                 {resolvedA4Pages[currentPage]}
                             </div>
                         )}
-                        <div className="hidden print:block w-full">
+                        <div className={`hidden print:block w-full ${isConfiguredPreview ? 'configured-report-preview configured-report-preview-a4' : ''}`}>
                             {resolvedA4Pages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
                         </div>
                     </>

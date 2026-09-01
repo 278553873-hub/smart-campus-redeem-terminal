@@ -18,6 +18,7 @@ import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileToast from '../components/ui/MobileToast';
 import GroupPerformanceMeta from '../components/group/GroupPerformanceMeta';
 import StudentCompactSelectGrid, { type StudentCompactSelectSection } from '../components/student/StudentCompactSelectGrid';
+import MobileStudentPickerSheet from '../components/student/MobileStudentPickerSheet';
 import StudentRosterCard, { StudentRosterAddCard } from '../components/student/StudentRosterCard';
 import {
     createDemoStudentPerformanceSummary,
@@ -1543,27 +1544,44 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             </MobileBottomSheet>
 
             <MobileBottomSheet
-                open={showNewStudentGroupNameSheet}
-                title={addStudentGroupStep === 'name' ? '添加小组' : '选择学生'}
-                size={addStudentGroupStep === 'members' ? 'tall' : 'content'}
-                contentInset={addStudentGroupStep === 'members' ? 'compact' : 'standard'}
-                contentTone={addStudentGroupStep === 'members' ? 'plain' : 'surface'}
-                footerDivider={false}
+                open={showNewStudentGroupNameSheet && addStudentGroupStep === 'name'}
+                title="添加小组"
                 onClose={handleCloseStudentGroupNameSheet}
-                header={addStudentGroupStep === 'members' ? (
-                    <header className="grid h-14 shrink-0 grid-cols-[44px_1fr_44px] items-center px-2">
-                        <button type="button" onClick={handleReturnToStudentGroupName} aria-label="返回上一步" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
-                            <BackIcon className="h-5 w-5" />
-                        </button>
-                        <h2 className="truncate text-center text-[17px] font-semibold text-[var(--tm-text-primary)]">选择学生</h2>
-                        <button type="button" onClick={handleCloseStudentGroupNameSheet} aria-label="关闭选择学生" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
-                            <CloseIcon className="h-5 w-5" />
-                        </button>
-                    </header>
-                ) : undefined}
-                footer={addStudentGroupStep === 'name' ? (
+                footerDivider={false}
+                footer={(
                     <button type="button" onClick={handleConfirmStudentGroupName} disabled={!newStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
-                ) : (
+                )}
+            >
+                <label className="block py-2">
+                    <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">小组名称</span>
+                    <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：语文1组" aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+                </label>
+            </MobileBottomSheet>
+
+            <MobileStudentPickerSheet
+                open={showNewStudentGroupNameSheet && addStudentGroupStep === 'members'}
+                title="选择学生"
+                onBack={handleReturnToStudentGroupName}
+                onClose={handleCloseStudentGroupNameSheet}
+                searchValue={draftSearchQuery}
+                onSearchChange={event => setDraftSearchQuery(event.target.value)}
+                sections={draftStudentSelectionSections}
+                isSelected={studentId => draftActiveGroup?.memberIds.includes(studentId) ?? false}
+                getSelectionDescription={student => {
+                    const assignedGroup = groupEditor?.mode === 'add-group' ? activeGroupMembershipByStudentId.get(student.id) : undefined;
+                    return assignedGroup ? `当前在${assignedGroup.name}` : '未分组';
+                }}
+                onToggle={handleToggleDraftStudent}
+                auxiliary={groupEditor?.mode === 'add-group' ? (
+                    <OnlyUngroupedFilter
+                        checked={addGroupShowOnlyUngrouped}
+                        ungroupedCount={addGroupUngroupedStudentIds?.size ?? 0}
+                        onChange={setAddGroupShowOnlyUngrouped}
+                    />
+                ) : undefined}
+                emptyImageSrc={draftSearchQuery.trim() ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR}
+                emptyTitle={draftSearchQuery.trim() ? '没有匹配的学生' : groupEditor?.mode === 'add-group' && addGroupShowOnlyUngrouped ? '没有未分组学生' : '暂无学生'}
+                footer={(
                     <div className="relative">
                         <MobileActionToast message={studentSelectionMoveNotice} />
                         <button type="button" onClick={handleFinishGrouping} disabled={!draftActiveGroup?.memberIds.length} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
@@ -1573,48 +1591,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         </button>
                     </div>
                 )}
-            >
-                {addStudentGroupStep === 'name' ? (
-                    <label className="block py-2">
-                        <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">小组名称</span>
-                        <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：语文1组" aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
-                    </label>
-                ) : (
-                    <div className="min-h-full">
-                        <div className="sticky top-0 z-20 -mx-3 bg-[var(--tm-bg-surface)] px-3 py-2">
-                            <MobileSearchInput value={draftSearchQuery} onChange={event => setDraftSearchQuery(event.target.value)} placeholder="搜索姓名、学号" aria-label="搜索学生" density="compact" appearance="filled" containerClassName="flex min-h-11 items-center" />
-                        </div>
-                        {groupEditor?.mode === 'add-group' && (
-                            <OnlyUngroupedFilter
-                                checked={addGroupShowOnlyUngrouped}
-                                ungroupedCount={addGroupUngroupedStudentIds?.size ?? 0}
-                                onChange={setAddGroupShowOnlyUngrouped}
-                            />
-                        )}
-                        <StudentCompactSelectGrid
-                            sections={draftStudentSelectionSections}
-                            className={groupEditor?.mode === 'add-group' ? 'pt-1' : 'pt-3'}
-                            isSelected={studentId => draftActiveGroup?.memberIds.includes(studentId) ?? false}
-                            getSelectionDescription={student => {
-                                const assignedGroup = groupEditor?.mode === 'add-group' ? activeGroupMembershipByStudentId.get(student.id) : undefined;
-                                return assignedGroup ? `当前在${assignedGroup.name}` : '未分组';
-                            }}
-                            onToggle={handleToggleDraftStudent}
-                        />
-                        {draftVisibleStudents.length === 0 && (
-                            <MobileEmptyState
-                                imageSrc={draftSearchQuery.trim() ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR}
-                                title={draftSearchQuery.trim() ? '没有匹配的学生' : groupEditor?.mode === 'add-group' && addGroupShowOnlyUngrouped ? '没有未分组学生' : '暂无学生'}
-                                className="min-h-[320px] py-4"
-                            />
-                        )}
-                    </div>
-                )}
-            </MobileBottomSheet>
+            />
 
             <MobileBottomSheet
-                open={Boolean(groupDetailTarget)}
-                title={groupDetailMode === 'adjust' ? '调整学生' : groupDetailMode === 'settings' ? '小组设置' : '小组详情'}
+                open={Boolean(groupDetailTarget) && groupDetailMode !== 'adjust'}
+                title={groupDetailMode === 'settings' ? '小组设置' : '小组详情'}
                 size="tall"
                 contentInset="compact"
                 contentTone="plain"
@@ -1622,12 +1603,12 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 onClose={handleCloseStudentGroupDetail}
                 header={(
                     <header className="flex h-14 shrink-0 items-center px-2">
-                        {groupDetailMode !== 'view' ? (
+                        {groupDetailMode === 'settings' ? (
                             <>
                                 <button type="button" onClick={handleBackToStudentGroupDetail} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回小组详情">
                                     <BackIcon className="h-5 w-5" />
                                 </button>
-                                <h2 className="min-w-0 flex-1 truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{groupDetailMode === 'adjust' ? '调整学生' : '小组设置'}</h2>
+                                <h2 className="min-w-0 flex-1 truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">小组设置</h2>
                             </>
                         ) : (
                             <div className="min-w-0 flex-1 pl-2">
@@ -1641,14 +1622,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         </div>
                     </header>
                 )}
-                footer={groupDetailMode === 'adjust' ? (
-                    <div className="relative">
-                        <MobileActionToast message={studentSelectionMoveNotice} />
-                        <button type="button" onClick={handleSaveAdjustStudentGroup} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]">
-                            {`保存（${adjustStudentGroupMemberIds.size}人${adjustStudentGroupMovedStudentCount > 0 ? `，含移动${adjustStudentGroupMovedStudentCount}人` : ''}）`}
-                        </button>
-                    </div>
-                ) : groupDetailMode === 'settings' ? (
+                footer={groupDetailMode === 'settings' ? (
                     <button type="button" onClick={handleSaveStudentGroupSettings} disabled={!renameStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
                         保存
                     </button>
@@ -1702,34 +1676,6 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.CHAIR} title="暂无学生" className="min-h-[360px] py-4" />
                         )}
                     </div>
-                ) : groupDetailMode === 'adjust' ? (
-                    <div className="min-h-full">
-                        <div className="sticky top-0 z-20 -mx-3 bg-[var(--tm-bg-surface)] px-3 py-2">
-                            <MobileSearchInput value={adjustStudentGroupSearchQuery} onChange={event => setAdjustStudentGroupSearchQuery(event.target.value)} placeholder="搜索姓名、学号" aria-label="搜索学生" density="compact" appearance="filled" containerClassName="flex min-h-11 items-center" />
-                        </div>
-                        <OnlyUngroupedFilter
-                            checked={adjustStudentGroupShowOnlyUngrouped}
-                            ungroupedCount={activeGroupUngroupedCount}
-                            onChange={setAdjustStudentGroupShowOnlyUngrouped}
-                        />
-                        <StudentCompactSelectGrid
-                            sections={adjustStudentSelectionSections}
-                            className="pt-1"
-                            isSelected={studentId => adjustStudentGroupMemberIds.has(studentId)}
-                            getSelectionDescription={student => {
-                                const assignedGroup = activeGroupMembershipByStudentId.get(student.id);
-                                return assignedGroup ? `当前在${assignedGroup.name}` : '未分组';
-                            }}
-                            onToggle={handleToggleAdjustStudentGroupMember}
-                        />
-                        {adjustStudentGroupVisibleStudents.length === 0 && (
-                            <MobileEmptyState
-                                imageSrc={adjustStudentGroupSearchQuery.trim() ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR}
-                                title={adjustStudentGroupSearchQuery.trim() ? '没有匹配的学生' : adjustStudentGroupShowOnlyUngrouped ? '没有未分组学生' : '暂无学生'}
-                                className="min-h-[320px] py-4"
-                            />
-                        )}
-                    </div>
                 ) : (
                     <div className="-mx-3 min-h-full space-y-3 pb-3">
                         <section className="bg-[var(--tm-bg-surface)] px-4 py-4">
@@ -1766,6 +1712,39 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     </div>
                 )}
             </MobileBottomSheet>
+
+            <MobileStudentPickerSheet
+                open={Boolean(groupDetailTarget) && groupDetailMode === 'adjust'}
+                title="调整学生"
+                onBack={handleBackToStudentGroupDetail}
+                onClose={handleCloseStudentGroupDetail}
+                searchValue={adjustStudentGroupSearchQuery}
+                onSearchChange={event => setAdjustStudentGroupSearchQuery(event.target.value)}
+                sections={adjustStudentSelectionSections}
+                isSelected={studentId => adjustStudentGroupMemberIds.has(studentId)}
+                getSelectionDescription={student => {
+                    const assignedGroup = activeGroupMembershipByStudentId.get(student.id);
+                    return assignedGroup ? `当前在${assignedGroup.name}` : '未分组';
+                }}
+                onToggle={handleToggleAdjustStudentGroupMember}
+                auxiliary={(
+                    <OnlyUngroupedFilter
+                        checked={adjustStudentGroupShowOnlyUngrouped}
+                        ungroupedCount={activeGroupUngroupedCount}
+                        onChange={setAdjustStudentGroupShowOnlyUngrouped}
+                    />
+                )}
+                emptyImageSrc={adjustStudentGroupSearchQuery.trim() ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR}
+                emptyTitle={adjustStudentGroupSearchQuery.trim() ? '没有匹配的学生' : adjustStudentGroupShowOnlyUngrouped ? '没有未分组学生' : '暂无学生'}
+                footer={(
+                    <div className="relative">
+                        <MobileActionToast message={studentSelectionMoveNotice} />
+                        <button type="button" onClick={handleSaveAdjustStudentGroup} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]">
+                            {`保存（${adjustStudentGroupMemberIds.size}人${adjustStudentGroupMovedStudentCount > 0 ? `，含移动${adjustStudentGroupMovedStudentCount}人` : ''}）`}
+                        </button>
+                    </div>
+                )}
+            />
 
             <MobileBottomSheet open={Boolean(groupPlanActionTarget)} title={groupPlanActionTarget?.name || '分组管理'} onClose={() => setGroupPlanActionTarget(null)}>
                 <div className="space-y-1 pb-2">

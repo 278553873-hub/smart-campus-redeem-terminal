@@ -36,6 +36,8 @@ requireText(typeSource, 'collaboratorIds: string[];', '团队必须保存受邀�
 requireText(editorSource, 'classes: ClassInfo[];', '创建团队必须接收学校内多个班级。');
 requireText(editorSource, 'const [selectedIds, setSelectedIds]', '跨班切换时必须保留已选成员。');
 requireText(editorSource, 'activeStudents.forEach(student =>', '成员选择必须支持按班全选。');
+requireText(editorSource, "allActiveSelected ? '取消全选' : '全选'", '团队选人应统一使用“全选 / 取消全选”文案。');
+assert.ok(!editorSource.includes('全选本班') && !editorSource.includes('取消全班'), '团队选人不应使用局限于本班的旧文案。');
 requireText(editorSource, '谁可以看到', '创建团队必须要求老师选择可见范围。');
 requireText(editorSource, '仅自己和协作老师', '私密范围文案必须符合老师认知。');
 requireText(editorSource, '管理人员也可见', '公开范围文案必须明确管理人员也可查看。');

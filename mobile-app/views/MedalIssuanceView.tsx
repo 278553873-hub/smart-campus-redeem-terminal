@@ -1,10 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { Award, BookOpen, Check, ChevronLeft, Heart, Plus, Search, Star, Trophy } from 'lucide-react';
+import { Award, Check, ChevronLeft, ImagePlus, Plus } from 'lucide-react';
 import type { ClassInfo, Student } from '../types';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
-import StudentCompactSelectGrid from '../components/student/StudentCompactSelectGrid';
-import { DEFAULT_CLASS_MEDALS, DEFAULT_PLATFORM_MEDALS, DEFAULT_SCHOOL_MEDALS, type MedalIconKey, type MedalScope } from '../domain/medal';
+import MobileStudentPickerSheet from '../components/student/MobileStudentPickerSheet';
+import MobileSelectionIndicator from '../components/student/MobileSelectionIndicator';
+import MedalIconView from '../components/medal/MedalIcon';
+import MobileEmptyState from '../components/ui/MobileEmptyState';
+import { ASSETS } from '../assets/images';
+import { DEFAULT_ACTIVITY_MEDALS, DEFAULT_CLASS_MEDALS, DEFAULT_DAILY_MEDALS, DEFAULT_PLATFORM_MEDALS, DEFAULT_SEMESTER_MEDALS, DEFAULT_SCHOOL_MEDALS, type MedalIcon, type MedalScope } from '../domain/medal';
 
 interface MedalIssuanceViewProps {
   classInfo: ClassInfo;
@@ -14,13 +18,35 @@ interface MedalIssuanceViewProps {
 
 type SheetMode = 'students' | 'confirm' | null;
 
-const medalIconMap: Record<MedalIconKey, React.ComponentType<{ className?: string }>> = {
-  award: Award,
-  book: BookOpen,
-  heart: Heart,
-  star: Star,
-  trophy: Trophy,
+const PLATFORM_MEDAL_IMAGE_ASSETS: Record<string, string> = {
+  'platform-deyu-star': ASSETS.MEDALS.PLATFORM_DEYU_STAR,
+  'platform-zhiyu-star': ASSETS.MEDALS.PLATFORM_ZHIYU_STAR,
+  'platform-tiyu-star': ASSETS.MEDALS.PLATFORM_TIYU_STAR,
+  'platform-meiyu-star': ASSETS.MEDALS.PLATFORM_MEIYU_STAR,
+  'platform-laoyu-star': ASSETS.MEDALS.PLATFORM_LAOYU_STAR,
+  'platform-three-good-student': ASSETS.MEDALS.SEMESTER_THREE_GOOD,
+  'platform-excellent-cadre': ASSETS.MEDALS.SEMESTER_CADRE,
+  'platform-excellent-young-pioneer': ASSETS.MEDALS.SEMESTER_YOUNG_PIONEER,
+  'platform-excellent-student': ASSETS.MEDALS.SEMESTER_EXCELLENT_STUDENT,
+  'platform-progress-star': ASSETS.MEDALS.DAILY_PROGRESS,
+  'platform-diligent-star': ASSETS.MEDALS.DAILY_DILIGENT,
+  'platform-civilized-star': ASSETS.MEDALS.DAILY_CIVILIZED,
+  'platform-disciplined-star': ASSETS.MEDALS.DAILY_DISCIPLINED,
+  'platform-friendly-star': ASSETS.MEDALS.DAILY_FRIENDLY,
+  'platform-sports-talent': ASSETS.MEDALS.ACTIVITY_SPORTS,
+  'platform-art-talent': ASSETS.MEDALS.ACTIVITY_ART,
+  'platform-tech-talent': ASSETS.MEDALS.ACTIVITY_TECH,
+  'platform-reading-talent': ASSETS.MEDALS.ACTIVITY_READING,
+  'platform-performance-talent': ASSETS.MEDALS.ACTIVITY_PERFORMANCE,
 };
+
+const PLATFORM_MEDALS = [...DEFAULT_PLATFORM_MEDALS, ...DEFAULT_SEMESTER_MEDALS, ...DEFAULT_DAILY_MEDALS, ...DEFAULT_ACTIVITY_MEDALS];
+const PLATFORM_MEDAL_GROUPS = [
+  { id: 'daily', label: '日常激励', medals: DEFAULT_DAILY_MEDALS },
+  { id: 'activity', label: '活动特长', medals: DEFAULT_ACTIVITY_MEDALS },
+  { id: 'honors', label: '综合荣誉', medals: DEFAULT_SEMESTER_MEDALS },
+  { id: 'five-education', label: '五育之星', medals: DEFAULT_PLATFORM_MEDALS },
+] as const;
 
 const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, students, onBack }) => {
   const [scope, setScope] = useState<MedalScope>('platform');
@@ -32,15 +58,19 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
   const [feedback, setFeedback] = useState('');
   const [showCreateMedal, setShowCreateMedal] = useState(false);
   const [newMedalName, setNewMedalName] = useState('');
-  const [newMedalIcon, setNewMedalIcon] = useState<MedalIconKey>('star');
+  const [newMedalIconId, setNewMedalIconId] = useState<string | null>(PLATFORM_MEDALS[0].id);
+  const [newMedalUploadedIcon, setNewMedalUploadedIcon] = useState<string | null>(null);
 
-  const medals = scope === 'platform'
-      ? DEFAULT_PLATFORM_MEDALS
-      : scope === 'school'
-        ? DEFAULT_SCHOOL_MEDALS
-      : classMedals;
+  const medals = scope === 'class' ? classMedals : [];
+  const schoolMedals = DEFAULT_SCHOOL_MEDALS;
+  const resolveMedalIcon = (medalId: string, icon: MedalIcon): MedalIcon => (
+    PLATFORM_MEDAL_IMAGE_ASSETS[medalId]
+      ? { type: 'image' as const, src: PLATFORM_MEDAL_IMAGE_ASSETS[medalId], alt: '' }
+      : icon
+  );
+  const selectedNewMedal = PLATFORM_MEDALS.find(medal => medal.id === newMedalIconId) ?? PLATFORM_MEDALS[0];
   const selectedMedals = useMemo(
-    () => [...DEFAULT_PLATFORM_MEDALS, ...DEFAULT_SCHOOL_MEDALS, ...classMedals].filter(medal => selectedMedalIds.has(medal.id)),
+    () => [...PLATFORM_MEDALS, ...schoolMedals, ...classMedals].filter(medal => selectedMedalIds.has(medal.id)),
     [classMedals, selectedMedalIds],
   );
   const activeStudents = useMemo(() => students.filter(student => (student.status ?? 'active') === 'active'), [students]);
@@ -56,7 +86,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
     () => activeStudents.filter(student => selectedStudentIds.has(student.id)),
     [activeStudents, selectedStudentIds],
   );
-  const allVisibleSelected = visibleStudents.length > 0 && visibleStudents.every(student => selectedStudentIds.has(student.id));
+  const allStudentsSelected = activeStudents.length > 0 && activeStudents.every(student => selectedStudentIds.has(student.id));
 
   const toggleMedal = (medalId: string) => {
     setSelectedMedalIds(current => {
@@ -76,17 +106,28 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
     });
   };
 
-  const toggleVisibleStudents = () => {
+  const toggleAllStudents = () => {
     setSelectedStudentIds(current => {
       const next = new Set(current);
-      if (allVisibleSelected) visibleStudents.forEach(student => next.delete(student.id));
-      else visibleStudents.forEach(student => next.add(student.id));
+      if (allStudentsSelected) activeStudents.forEach(student => next.delete(student.id));
+      else activeStudents.forEach(student => next.add(student.id));
       return next;
     });
   };
 
   const handleScopeChange = (nextScope: MedalScope) => {
     setScope(nextScope);
+  };
+
+  const handleMedalIconUpload = (file: File | undefined) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+      setNewMedalUploadedIcon(reader.result);
+      setNewMedalIconId(null);
+    };
+    reader.readAsDataURL(file);
   };
 
   const createClassMedal = () => {
@@ -96,11 +137,14 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
       id: `class-custom-${Date.now()}`,
       name,
       scope: 'class',
-      icon: newMedalIcon,
+      icon: newMedalUploadedIcon
+        ? { type: 'image' as const, src: newMedalUploadedIcon, alt: '' }
+        : resolveMedalIcon(selectedNewMedal.id, selectedNewMedal.icon),
       quantity: 1,
     }]);
     setNewMedalName('');
-    setNewMedalIcon('star');
+    setNewMedalIconId(PLATFORM_MEDALS[0].id);
+    setNewMedalUploadedIcon(null);
     setShowCreateMedal(false);
   };
 
@@ -114,82 +158,145 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
   };
 
   const selectedMedalNames = selectedMedals.map(medal => medal.name).join('、');
-  const selectedStudentNames = selectedStudents.slice(0, 4).map(student => student.name).join('、');
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-surface)]">
       <header className="relative flex h-[var(--tm-size-touch)] shrink-0 items-center bg-[var(--tm-page-plain-header-bg)] pl-[var(--tm-space-4)] [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]">
         <button type="button" onClick={onBack} className="-ml-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回班级列表"><ChevronLeft className="h-5 w-5" /></button>
         <h1 className="pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">颁发奖章</h1>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-24 pt-[var(--tm-space-4)] no-scrollbar">
-        <CompactSegmentedControl
-          value={scope}
-          onChange={handleScopeChange}
-          ariaLabel="奖章分类"
-          fullWidth
-          density="compact"
-          motion="sliding"
-          semantics="tabs"
-          className="mb-[var(--tm-space-4)] w-full"
-          items={[
-            { value: 'platform', label: '平台奖章' },
-            { value: 'school', label: '学校奖章' },
-            { value: 'class', label: '班级奖章' },
-          ]}
-        />
+      <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[calc(var(--tm-size-touch)+var(--tm-space-8)+var(--tm-space-8)+var(--tm-space-4))] no-scrollbar">
+        <div className="sticky top-0 z-30 -mx-[var(--tm-space-4)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] pb-[var(--tm-space-3)] pt-[var(--tm-space-4)]">
+          <CompactSegmentedControl
+            value={scope}
+            onChange={handleScopeChange}
+            ariaLabel="奖章分类"
+            fullWidth
+            motion="sliding"
+            semantics="tabs"
+            className="w-full"
+            items={[
+              { value: 'platform', label: '平台奖章' },
+              { value: 'school', label: '学校奖章' },
+              { value: 'class', label: '班级奖章' },
+            ]}
+          />
+        </div>
 
-        <div className="grid grid-cols-3 gap-[var(--tm-space-2)]" role="list" aria-label="可选奖章">
-          {medals.map((medal, index) => {
+        {scope === 'platform' && (
+          <div className="space-y-5" aria-label="平台奖章分类">
+            {PLATFORM_MEDAL_GROUPS.map(group => (
+              <section key={group.id} aria-labelledby={`medal-group-${group.id}`}>
+                <h2 id={`medal-group-${group.id}`} className="mb-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{group.label}</h2>
+                <div className="grid grid-flow-row grid-cols-4 gap-[var(--tm-space-1)]" role="list" aria-label={`${group.label}奖章`}>
+                  {group.medals.map(medal => {
+                  const selected = selectedMedalIds.has(medal.id);
+                  const medalCardClassName = [
+                    'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-control)] border border-transparent px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)] transition active:scale-[0.98]',
+                  ].join(' ');
+                  return (
+                    <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
+                      <span className="relative flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 text-[var(--tm-brand-reward)]" /><MobileSelectionIndicator selected={selected} showUnselected={false} className="absolute -right-1 -top-1" /></span>
+                      <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{medal.name}</span>
+                    </button>
+                  );
+                })}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+
+        {scope === 'school' && (
+          <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="请联系学校管理员添加" className="min-h-[360px]" imageClassName="w-[58%] min-w-[152px] max-w-[196px]" />
+        )}
+
+        {scope === 'class' && <div className="grid grid-flow-row grid-cols-4 gap-[var(--tm-space-1)]" role="list" aria-label="班级奖章">
+          {medals.map(medal => {
             const selected = selectedMedalIds.has(medal.id);
-            const Icon = medalIconMap[medal.icon];
-            const medalIconClassName = [
-              'flex h-11 w-11 shrink-0 items-center justify-center rounded-full',
-              selected ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-reward-strong)]' : 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward)]',
-            ].join(' ');
             const medalCardClassName = [
-              'relative flex min-h-[100px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-[var(--tm-radius-card)] px-2 py-2.5 text-center [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.98]',
-              medals.length === 4 && index === 3 ? 'col-start-2' : '',
-              selected ? 'bg-[var(--tm-brand-reward-soft)] ring-2 ring-inset ring-[var(--tm-brand-reward)]' : 'bg-[var(--tm-bg-surface)]',
+              'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-control)] border border-transparent px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)] transition active:scale-[0.98]',
             ].filter(Boolean).join(' ');
             return (
               <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
-                <span className={medalIconClassName}><Icon className="h-5 w-5" /></span>
+                <span className="relative flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 text-[var(--tm-brand-reward)]" /><MobileSelectionIndicator selected={selected} showUnselected={false} className="absolute -right-1 -top-1" /></span>
                 <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{medal.name}</span>
-                {selected && <Check className="absolute right-2 top-2 h-4 w-4 text-[var(--tm-brand-reward-strong)]" aria-hidden="true" />}
               </button>
             );
           })}
           {scope === 'class' && (
-            <button type="button" onClick={() => setShowCreateMedal(true)} className="relative flex min-h-[100px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-[var(--tm-radius-card)] border border-dashed border-[var(--tm-border-control)] px-2 py-2.5 text-center text-[var(--tm-text-secondary)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)]"><Plus className="h-5 w-5" /></span>
+            <button type="button" onClick={() => setShowCreateMedal(true)} className="relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center px-0 py-[var(--tm-space-2)] text-center text-[var(--tm-text-secondary)] [gap:var(--tm-space-1)] transition active:scale-[0.98] active:text-[var(--tm-text-primary)]">
+              <span className="flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><Plus className="h-7 w-7" /></span>
               <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold">新增奖章</span>
             </button>
           )}
-        </div>
+        </div>}
       </div>
 
       <footer className="absolute inset-x-0 bottom-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-4)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)] backdrop-blur-xl">
-        <button type="button" disabled={selectedMedalIds.size === 0} onClick={() => selectedStudentIds.size > 0 ? setSheetMode('confirm') : setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">{selectedStudentIds.size > 0 ? '确认颁发' : '选择学生'}</button>
+        {selectedMedals.length > 0 && (
+          <div aria-live="polite" className="mb-[var(--tm-space-2)] flex min-h-6 items-center gap-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold">
+            <span className="shrink-0 text-[var(--tm-brand-primary)]">已选 {selectedMedals.length} 枚</span>
+            <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-[var(--tm-text-secondary)] no-scrollbar">{selectedMedalNames}</span>
+          </div>
+        )}
+        <button type="button" disabled={selectedMedalIds.size === 0} onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
       </footer>
 
-      <MobileBottomSheet open={sheetMode === 'students'} title="选择学生" size="full" onClose={() => setSheetMode(null)} footer={(
-        <button type="button" disabled={selectedStudentIds.size === 0} onClick={() => setSheetMode(null)} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">完成</button>
-      )}>
-        <div className="space-y-3">
-          <label className="flex h-[var(--tm-size-touch)] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 text-[var(--tm-text-tertiary)]"><Search className="h-4 w-4 shrink-0" /><input value={studentSearch} onChange={event => setStudentSearch(event.target.value)} placeholder="搜索姓名或学号" aria-label="搜索学生" className="min-w-0 flex-1 bg-transparent text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" /></label>
-          <div className="flex items-center justify-end"><button type="button" onClick={toggleVisibleStudents} disabled={visibleStudents.length === 0} className="min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control)] px-3 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)] disabled:text-[var(--tm-text-disabled)]">{allVisibleSelected ? '取消全选' : '全选当前'}</button></div>
-          {visibleStudents.length > 0 ? <StudentCompactSelectGrid sections={[{ id: classInfo.id, students: visibleStudents }]} isSelected={studentId => selectedStudentIds.has(studentId)} onToggle={toggleStudent} /> : <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-8 text-center text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)]">没有找到匹配的学生</div>}
-        </div>
-      </MobileBottomSheet>
+      <MobileStudentPickerSheet
+        open={sheetMode === 'students'}
+        title="选择学生"
+        onClose={() => setSheetMode(null)}
+        searchValue={studentSearch}
+        onSearchChange={event => setStudentSearch(event.target.value)}
+        sections={[{ id: classInfo.id, students: visibleStudents }]}
+        isSelected={studentId => selectedStudentIds.has(studentId)}
+        onToggle={toggleStudent}
+        emptyImageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER}
+        emptyTitle="没有匹配的学生"
+        selectAllAction={{
+          allSelected: allStudentsSelected,
+          disabled: activeStudents.length === 0,
+          onToggle: toggleAllStudents,
+        }}
+        footer={(
+          <button type="button" disabled={selectedStudentIds.size === 0} onClick={() => setSheetMode('confirm')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+            {selectedStudentIds.size > 0 ? `颁发奖章（${selectedStudentIds.size}人）` : '颁发奖章'}
+          </button>
+        )}
+      />
 
-      <MobileBottomSheet open={sheetMode === 'confirm'} title="确认颁发" onClose={() => setSheetMode(null)} footer={(
-        <button type="button" onClick={issueMedals} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)]"><Award className="h-[18px] w-[18px]" />确认颁发</button>
+      <MobileBottomSheet open={sheetMode === 'confirm'} title="确认发放" onClose={() => setSheetMode(null)} footer={(
+        <div className="grid grid-cols-2 gap-[var(--tm-space-3)]">
+          <button type="button" onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"><ChevronLeft className="h-4 w-4" />返回修改</button>
+          <button type="button" onClick={issueMedals} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-3 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)]"><Award className="h-[18px] w-[18px]" />确认发放</button>
+        </div>
       )}>
-        <div className="space-y-3">
-          <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-brand-reward-soft)] p-4"><div className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-tertiary)]">奖章</div><div className="mt-1 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{selectedMedalNames}</div></div>
-          <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-4"><div className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-tertiary)]">发放对象</div><div className="mt-1 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{selectedStudentNames}{selectedStudents.length > 4 ? '等' : ''}</div></div>
+        <div className="space-y-[var(--tm-space-5)] pb-[var(--tm-space-2)]">
+          <section aria-labelledby="confirm-medals-title">
+            <div className="flex items-center justify-between gap-[var(--tm-space-3)]">
+              <h3 id="confirm-medals-title" className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">发放奖章</h3>
+              <span className="shrink-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-tertiary)]">{selectedMedals.length}枚</span>
+            </div>
+            <div className="mt-[var(--tm-space-3)] grid grid-cols-2 gap-x-[var(--tm-space-4)] gap-y-[var(--tm-space-3)]">
+              {selectedMedals.map(medal => (
+                <div key={medal.id} className="flex min-w-0 items-center gap-[var(--tm-space-2)]">
+                  <MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-9 w-9 shrink-0" />
+                  <span className="min-w-0 truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{medal.name}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+          <section aria-labelledby="confirm-students-title" className="border-t border-[var(--tm-border-subtle)] pt-[var(--tm-space-4)]">
+            <div className="flex items-center justify-between gap-[var(--tm-space-3)]">
+              <h3 id="confirm-students-title" className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">发放学生</h3>
+              <span className="shrink-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-tertiary)]">{selectedStudents.length}人</span>
+            </div>
+            <div className="mt-[var(--tm-space-3)] grid grid-cols-3 gap-x-[var(--tm-space-3)] gap-y-[var(--tm-space-2)]" role="list" aria-label="待发放学生">
+              {selectedStudents.map(student => <span key={student.id} role="listitem" className="min-w-0 break-words text-center text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-primary)]">{student.name}</span>)}
+            </div>
+          </section>
         </div>
       </MobileBottomSheet>
 
@@ -204,11 +311,15 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
           <fieldset className="space-y-2">
             <legend className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">选择图标</legend>
             <div className="grid grid-cols-5 gap-2">
-              {(Object.keys(medalIconMap) as MedalIconKey[]).map(iconKey => {
-                const Icon = medalIconMap[iconKey];
-                const selected = newMedalIcon === iconKey;
-                return <button key={iconKey} type="button" aria-label={`选择${iconKey}图标`} aria-pressed={selected} onClick={() => setNewMedalIcon(iconKey)} className={`flex h-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] ${selected ? 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)] ring-2 ring-inset ring-[var(--tm-brand-reward)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]'}`}><Icon className="h-5 w-5" /></button>;
+              {PLATFORM_MEDALS.map(platformMedal => {
+                const selected = !newMedalUploadedIcon && selectedNewMedal.id === platformMedal.id;
+                return <button key={platformMedal.id} type="button" aria-label={`选择${platformMedal.name}图标`} aria-pressed={selected} onClick={() => { setNewMedalIconId(platformMedal.id); setNewMedalUploadedIcon(null); }} className={`flex min-h-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] px-1 ${selected ? 'bg-[var(--tm-brand-reward-soft)] ring-2 ring-inset ring-[var(--tm-brand-reward)]' : 'bg-[var(--tm-bg-surface-soft)]'}`}><MedalIconView icon={resolveMedalIcon(platformMedal.id, platformMedal.icon)} className="h-9 w-9" /></button>;
               })}
+              <label className={`relative flex min-h-[var(--tm-size-touch)] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[var(--tm-radius-control)] px-1 text-[var(--tm-text-secondary)] ${newMedalUploadedIcon ? 'bg-[var(--tm-brand-reward-soft)] ring-2 ring-inset ring-[var(--tm-brand-reward)]' : 'bg-[var(--tm-bg-surface-soft)]'}`}>
+                {newMedalUploadedIcon ? <img src={newMedalUploadedIcon} alt="已上传图标" className="h-9 w-9 object-contain" /> : <ImagePlus className="h-5 w-5" aria-hidden="true" />}
+                <span className="text-[10px] font-semibold leading-4">上传图片</span>
+                <input type="file" accept="image/*" className="sr-only" aria-label="上传奖章图标" onChange={event => handleMedalIconUpload(event.target.files?.[0])} />
+              </label>
             </div>
           </fieldset>
         </div>

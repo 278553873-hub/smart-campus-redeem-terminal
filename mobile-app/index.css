@@ -14,6 +14,10 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.student-compact-select-last-column {
+  grid-column: -2 / -1;
+}
+
 @container student-compact-select (min-width: 480px) {
   .student-compact-select-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -440,6 +444,60 @@
   display: inline-block;
   margin-bottom: 0.5rem;
   letter-spacing: 0;
+}
+
+.rich-text-content.rich-text-neutral-strong strong {
+  color: #0f172a;
+}
+
+/* 配置预览的统一板块层级，不影响正式教师端报告。 */
+.configured-report-preview .report-page-container {
+  border: 1px solid #e2e8f0 !important;
+  border-bottom-width: 1px !important;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  margin-bottom: 16px;
+}
+
+.configured-report-preview-mobile > .report-page-container:not(:first-child) {
+  min-height: 0;
+}
+
+.configured-report-preview .configured-section-host {
+  background: transparent;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.configured-report-preview-mobile .configured-section-host {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.configured-report-preview-mobile .configured-overview-host {
+  padding-top: 24px !important;
+}
+
+.configured-report-preview .report-card {
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
+}
+
+.configured-report-preview .report-section-header h2 {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.configured-report-preview .configured-overview-header h2 {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.configured-report-preview .report-section-header > div:first-child > svg {
+  color: #334155 !important;
 }
 
 .rich-text-content li br {

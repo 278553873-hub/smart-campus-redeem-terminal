@@ -1,17 +1,38 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Award,
   BookOpenCheck,
   FileText,
   Footprints,
+  GripVertical,
   LockKeyhole,
   MapPinned,
+  Minus,
+  Check,
+  PencilLine,
+  Plus,
   Smartphone,
   Sparkles,
+  Trash2,
   TrendingUp,
+  X,
 } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 import type { Student } from '../mobile-app/types';
+import { ASSETS } from '../mobile-app/assets/images';
 import { teacherBrandCssVariables } from '../mobile-app/styles/teacherMobileTokens';
+import MobileBottomSheet from '../mobile-app/components/ui/MobileBottomSheet';
+import CompactSegmentedControl from '../mobile-app/components/ui/CompactSegmentedControl';
+import {
+  DEFAULT_ACTIVITY_MEDALS,
+  DEFAULT_CLASS_MEDALS,
+  DEFAULT_DAILY_MEDALS,
+  DEFAULT_PLATFORM_MEDALS,
+  DEFAULT_SCHOOL_MEDALS,
+  DEFAULT_SEMESTER_MEDALS,
+  type MedalDefinition,
+  type MedalScope,
+} from '../mobile-app/domain/medal';
 import TermReportView, {
   ReportBodyText,
   ReportCaption,
@@ -75,10 +96,11 @@ interface ReportConfigSection {
 
 const reportConfigSections: ReportConfigSection[] = [
   { id: 'cover', label: '封面', defaultEnabled: true, locked: true },
+  { id: 'medals', label: '成长奖章', defaultEnabled: true },
   { id: 'teacher-attention', label: '教师关注', defaultEnabled: false },
   { id: 'growth-radar', label: '五育雷达图', defaultEnabled: true },
   { id: 'subject-results', label: '学科成绩', defaultEnabled: true },
-  { id: 'school-achievement', label: '专题成果', defaultEnabled: true },
+  { id: 'school-achievement', label: '专题成果', defaultEnabled: false },
   { id: 'highlights', label: '高光时刻', defaultEnabled: false },
   { id: 'overall', label: '总体评价', defaultEnabled: true },
   { id: 'future-potential', label: '未来潜力', defaultEnabled: false },
@@ -95,6 +117,202 @@ const defaultEnabledSections = reportConfigSections.reduce<Record<ReportConfigSe
   },
   {} as Record<ReportConfigSectionId, boolean>,
 );
+
+interface ReportMedalItem {
+  id: string;
+  name: string;
+  image: string;
+  quantity: number;
+}
+
+const MEDAL_IMAGE_ASSETS: Record<string, string> = {
+  'platform-deyu-star': ASSETS.MEDALS.PLATFORM_DEYU_STAR,
+  'platform-zhiyu-star': ASSETS.MEDALS.PLATFORM_ZHIYU_STAR,
+  'platform-tiyu-star': ASSETS.MEDALS.PLATFORM_TIYU_STAR,
+  'platform-meiyu-star': ASSETS.MEDALS.PLATFORM_MEIYU_STAR,
+  'platform-laoyu-star': ASSETS.MEDALS.PLATFORM_LAOYU_STAR,
+  'platform-three-good-student': ASSETS.MEDALS.SEMESTER_THREE_GOOD,
+  'platform-excellent-cadre': ASSETS.MEDALS.SEMESTER_CADRE,
+  'platform-excellent-young-pioneer': ASSETS.MEDALS.SEMESTER_YOUNG_PIONEER,
+  'platform-excellent-student': ASSETS.MEDALS.SEMESTER_EXCELLENT_STUDENT,
+  'platform-progress-star': ASSETS.MEDALS.DAILY_PROGRESS,
+  'platform-diligent-star': ASSETS.MEDALS.DAILY_DILIGENT,
+  'platform-civilized-star': ASSETS.MEDALS.DAILY_CIVILIZED,
+  'platform-disciplined-star': ASSETS.MEDALS.DAILY_DISCIPLINED,
+  'platform-friendly-star': ASSETS.MEDALS.DAILY_FRIENDLY,
+  'platform-sports-talent': ASSETS.MEDALS.ACTIVITY_SPORTS,
+  'platform-art-talent': ASSETS.MEDALS.ACTIVITY_ART,
+  'platform-tech-talent': ASSETS.MEDALS.ACTIVITY_TECH,
+  'platform-reading-talent': ASSETS.MEDALS.ACTIVITY_READING,
+  'platform-performance-talent': ASSETS.MEDALS.ACTIVITY_PERFORMANCE,
+};
+
+const REPORT_MEDAL_NAME_OVERRIDES: Record<string, string> = {
+  'platform-deyu-star': '成正少年',
+  'platform-zhiyu-star': '成智少年',
+  'platform-tiyu-star': '成健少年',
+  'platform-meiyu-star': '成雅少年',
+  'platform-laoyu-star': '成技少年',
+};
+
+const medalOptionFromDefinition = (definition: MedalDefinition): Omit<ReportMedalItem, 'quantity'> => ({
+  id: definition.id,
+  name: REPORT_MEDAL_NAME_OVERRIDES[definition.id] ?? definition.name,
+  // 班级/学校奖章可能没有预置图片，沿用教师端默认奖章图标作为占位。
+  image: MEDAL_IMAGE_ASSETS[definition.id] ?? ASSETS.MEDALS.PLATFORM_DEYU_STAR,
+});
+
+const medalCatalog: Record<MedalScope, Omit<ReportMedalItem, 'quantity'>[]> = {
+  platform: [...DEFAULT_PLATFORM_MEDALS, ...DEFAULT_SEMESTER_MEDALS, ...DEFAULT_DAILY_MEDALS, ...DEFAULT_ACTIVITY_MEDALS].map(medalOptionFromDefinition),
+  school: DEFAULT_SCHOOL_MEDALS.map(medalOptionFromDefinition),
+  class: DEFAULT_CLASS_MEDALS.map(medalOptionFromDefinition),
+};
+
+const medalOptions = Object.values(medalCatalog).flat();
+
+const initialReportMedals: ReportMedalItem[] = [
+  { ...medalOptions[0], quantity: 1 },
+  { ...medalOptions[1], quantity: 1 },
+  { ...medalOptions[2], quantity: 1 },
+  { ...medalOptions[3], quantity: 1 },
+  { ...medalOptions[4], quantity: 1 },
+];
+
+interface ReportMedalsPageProps {
+  mode: ReportDisplayMode;
+  medals: ReportMedalItem[];
+  onChange: (medalId: string, quantity: number) => void;
+  onRemove: (medalId: string) => void;
+  onAdd: (medal: ReportMedalItem) => void;
+  embedded?: boolean;
+}
+
+const ReportMedalsPage: React.FC<ReportMedalsPageProps> = ({ mode, medals, onChange, onRemove, onAdd, embedded = false }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [medalScope, setMedalScope] = useState<MedalScope>('platform');
+  const [draftQuantities, setDraftQuantities] = useState<Record<string, number>>(() => Object.fromEntries(medals.map(medal => [medal.id, medal.quantity])));
+  useEffect(() => {
+    setDraftQuantities(Object.fromEntries(medals.map(medal => [medal.id, medal.quantity])));
+  }, [medals]);
+  const updateQuantity = (medalId: string, quantity: number) => {
+    setDraftQuantities(current => ({ ...current, [medalId]: quantity }));
+    onChange(medalId, quantity);
+  };
+  const medalRows = isEditing
+    ? medals.filter(medal => medal.quantity > 0).map(medal => ({ ...medal, quantity: draftQuantities[medal.id] ?? medal.quantity }))
+    : medals.filter(medal => medal.quantity > 0);
+  const availableMedals = medalCatalog[medalScope].filter(option => !medals.some(medal => medal.id === option.id && medal.quantity > 0));
+
+  const medalContent = (
+    <ReportCard className="report-medals-card">
+    <>
+      <ReportSectionHeader
+        title="成长奖章"
+        subTitle="Medals"
+        icon={Award}
+        rightElement={(
+          <button
+            type="button"
+            onClick={() => setIsEditing(current => !current)}
+            className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-bold transition-colors ${isEditing ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+          >
+            {isEditing ? <Check className="h-3.5 w-3.5" /> : <PencilLine className="h-3.5 w-3.5" />}
+            <span>{isEditing ? '完成' : '编辑'}</span>
+          </button>
+        )}
+      />
+      {isEditing && (
+        <div className="mb-3 flex justify-end">
+          <button type="button" onClick={() => setIsAddOpen(true)} className="flex h-8 items-center gap-1.5 rounded-lg bg-slate-100 px-3 text-xs font-bold text-slate-700 hover:bg-slate-200">
+            <Plus className="h-3.5 w-3.5" />添加奖章
+          </button>
+        </div>
+      )}
+      {medalRows.length > 0 ? (
+        <div className="grid grid-cols-3 gap-x-3 gap-y-4">
+            {medalRows.map(medal => (
+            <div key={medal.id} className="relative flex min-h-[116px] min-w-0 flex-col items-center justify-center gap-1 px-1 py-3">
+              <img src={medal.image} alt="" className="h-12 w-12 shrink-0 object-contain" />
+              {!isEditing && medal.quantity > 1 && <span className="absolute right-1 top-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold leading-none text-slate-500">×{medal.quantity}</span>}
+              <div className="relative w-full min-w-0 text-center">
+                <span className="break-words text-[11px] font-bold leading-4 text-slate-800">{medal.name}</span>
+              </div>
+              {isEditing && (
+                <div className="mt-1 flex h-7 items-center gap-1">
+                  <button type="button" onClick={() => updateQuantity(medal.id, Math.max(1, medal.quantity - 1))} className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50" aria-label={`减少${medal.name}数量`} title={`减少${medal.name}数量`}><Minus className="h-3 w-3" /></button>
+                  <span className="min-w-4 text-center text-xs font-black text-slate-900">{medal.quantity}</span>
+                  <button type="button" onClick={() => updateQuantity(medal.id, medal.quantity + 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50" aria-label={`增加${medal.name}数量`} title={`增加${medal.name}数量`}><Plus className="h-3 w-3" /></button>
+                </div>
+              )}
+              {isEditing && (
+                <button type="button" onClick={() => onRemove(medal.id)} className="absolute right-0.5 top-1 flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label={`删除${medal.name}`} title={`删除${medal.name}`}>
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="py-4 text-center text-sm text-slate-400">暂无奖章</div>
+      )}
+      {/* MobileBottomSheet renders role="dialog" and focus management for this flow. */}
+      <MobileBottomSheet
+        open={isAddOpen}
+        title="添加奖章"
+        onClose={() => setIsAddOpen(false)}
+        size="tall"
+        contentInset="compact"
+        contentTone="plain"
+      >
+        <div className="sticky top-0 z-10 bg-[var(--tm-page-plain-content-bg)] pb-3 pt-2">
+          <CompactSegmentedControl
+            value={medalScope}
+            items={[
+              { value: 'platform' as const, label: '平台奖章' },
+              { value: 'school' as const, label: '学校奖章' },
+              { value: 'class' as const, label: '班级奖章' },
+            ]}
+            onChange={setMedalScope}
+            ariaLabel="奖章来源"
+            fullWidth
+            density="compact"
+            motion="sliding"
+          />
+        </div>
+        {availableMedals.length > 0 ? (
+          <div className="grid grid-cols-3 gap-x-2 gap-y-3 pb-6">
+            {availableMedals.map(option => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => { onAdd({ ...option, quantity: 1 }); setIsAddOpen(false); }}
+                className="flex min-h-[104px] min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-center transition-colors hover:bg-white active:bg-slate-100"
+              >
+                <img src={option.image} alt="" className="h-12 w-12 object-contain" />
+                <span className="break-words text-[12px] font-semibold leading-4 text-slate-700">{option.name}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex min-h-[220px] items-center justify-center text-sm text-slate-400">暂无{medalScope === 'school' ? '学校' : medalScope === 'class' ? '班级' : '平台'}奖章</div>
+        )}
+      </MobileBottomSheet>
+    </>
+    </ReportCard>
+  );
+
+  return embedded ? (
+    <div id="section-medals" className="scroll-mt-[100px]">
+      {medalContent}
+    </div>
+  ) : (
+    <ReportPageContainer mode={mode} id={mode === 'mobile' ? 'section-medals' : undefined} compactMobile={mode === 'mobile'}>
+      {medalContent}
+    </ReportPageContainer>
+  );
+};
+
 
 const demoStudent: Student = {
   id: 'school-demo-li-yiyang',
@@ -227,7 +445,14 @@ const createModulePages = (mode: ReportDisplayMode, enabledModules: Record<Custo
 const TermReportRedesignDemo: React.FC = () => {
   const [previewMode, setPreviewMode] = useState<ReportDisplayMode>('mobile');
   const [enabledSections, setEnabledSections] = useState<Record<ReportConfigSectionId, boolean>>(defaultEnabledSections);
+  const [sectionOrder, setSectionOrder] = useState<ReportConfigSectionId[]>(() => reportConfigSections.map(section => section.id));
   const [activeSectionId, setActiveSectionId] = useState<ReportConfigSectionId>('cover');
+  const [draggingSectionId, setDraggingSectionId] = useState<ReportConfigSectionId | null>(null);
+  const [reportMedals, setReportMedals] = useState<ReportMedalItem[]>(initialReportMedals);
+
+  const orderedReportConfigSections = sectionOrder
+    .map(id => reportConfigSections.find(section => section.id === id))
+    .filter((section): section is ReportConfigSection => Boolean(section));
 
   const additionalMobilePages = useMemo(
     () => createModulePages('mobile', {
@@ -246,6 +471,26 @@ const TermReportRedesignDemo: React.FC = () => {
       'school-achievement': enabledSections['school-achievement'],
     }),
     [enabledSections],
+  );
+  const additionalMedalMobilePages = useMemo(
+    () => enabledSections.medals ? [<ReportMedalsPage key="mobile-medals" mode="mobile" medals={reportMedals} onChange={(medalId, quantity) => setReportMedals(current => current.map(medal => medal.id === medalId ? { ...medal, quantity } : medal))} onRemove={medalId => setReportMedals(current => current.filter(medal => medal.id !== medalId))} onAdd={medal => setReportMedals(current => [...current, medal])} />] : [],
+    [enabledSections.medals, reportMedals],
+  );
+  const additionalMedalA4Pages = useMemo(
+    () => enabledSections.medals ? [<ReportMedalsPage key="a4-medals" mode="a4" medals={reportMedals} onChange={(medalId, quantity) => setReportMedals(current => current.map(medal => medal.id === medalId ? { ...medal, quantity } : medal))} onRemove={medalId => setReportMedals(current => current.filter(medal => medal.id !== medalId))} onAdd={medal => setReportMedals(current => [...current, medal])} />] : [],
+    [enabledSections.medals, reportMedals],
+  );
+  const additionalMedalMobileContent = useMemo(
+    () => enabledSections.medals ? <ReportMedalsPage mode="mobile" medals={reportMedals} onChange={(medalId, quantity) => setReportMedals(current => current.map(medal => medal.id === medalId ? { ...medal, quantity } : medal))} onRemove={medalId => setReportMedals(current => current.filter(medal => medal.id !== medalId))} onAdd={medal => setReportMedals(current => [...current, medal])} embedded /> : null,
+    [enabledSections.medals, reportMedals],
+  );
+  const additionalMedalA4Content = useMemo(
+    () => enabledSections.medals ? <ReportMedalsPage mode="a4" medals={reportMedals} onChange={(medalId, quantity) => setReportMedals(current => current.map(medal => medal.id === medalId ? { ...medal, quantity } : medal))} onRemove={medalId => setReportMedals(current => current.filter(medal => medal.id !== medalId))} onAdd={medal => setReportMedals(current => [...current, medal])} embedded /> : null,
+    [enabledSections.medals, reportMedals],
+  );
+  const additionalMedalMobileAnchorItems = useMemo<TermReportAnchorItem[]>(
+    () => enabledSections.medals ? [{ id: 'section-medals', label: '成长奖章' }] : [],
+    [enabledSections.medals],
   );
   const additionalMobileAnchorItems = useMemo<TermReportAnchorItem[]>(
     () => enabledSections['school-achievement']
@@ -268,8 +513,10 @@ const TermReportRedesignDemo: React.FC = () => {
           ? 'section-growth-radar'
           : id === 'subject-results'
             ? 'section-subject-results'
-            : id === 'school-achievement'
-              ? 'section-school-achievement'
+              : id === 'school-achievement'
+                ? 'section-school-achievement'
+              : id === 'medals'
+                ? 'section-medals'
               : id === 'highlights'
                 ? 'section-highlights'
                 : id === 'overall'
@@ -297,6 +544,31 @@ const TermReportRedesignDemo: React.FC = () => {
     setEnabledSections(current => ({ ...current, [id]: !current[id] }));
     if (activeSectionId === id && enabledSections[id]) setActiveSectionId('cover');
   };
+
+  const handleSectionDragStart = (event: React.DragEvent<HTMLDivElement>, id: ReportConfigSectionId) => {
+    if (id === 'cover') {
+      event.preventDefault();
+      return;
+    }
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', id);
+    setDraggingSectionId(id);
+  };
+
+  const handleSectionDrop = (event: React.DragEvent<HTMLDivElement>, targetId: ReportConfigSectionId) => {
+    event.preventDefault();
+    const sourceId = event.dataTransfer.getData('text/plain') as ReportConfigSectionId;
+    if (!sourceId || sourceId === targetId || sourceId === 'cover' || targetId === 'cover') return;
+
+    setSectionOrder(currentOrder => {
+      const nextOrder = currentOrder.filter(id => id !== sourceId);
+      const targetIndex = nextOrder.indexOf(targetId);
+      nextOrder.splice(targetIndex < 0 ? nextOrder.length : targetIndex, 0, sourceId);
+      return nextOrder[0] === 'cover' ? nextOrder : ['cover', ...nextOrder.filter(id => id !== 'cover')];
+    });
+  };
+
+  const handleSectionDragEnd = () => setDraggingSectionId(null);
 
   return (
     <main className="flex h-full min-h-0 flex-col bg-slate-100" style={teacherBrandCssVariables as React.CSSProperties}>
@@ -333,11 +605,26 @@ const TermReportRedesignDemo: React.FC = () => {
             <h2 className="text-sm font-bold text-slate-900">报告板块</h2>
           </div>
           <div className="p-2">
-            {reportConfigSections.map(section => {
+            {orderedReportConfigSections.map(section => {
               const isEnabled = enabledSections[section.id];
               const isActive = activeSectionId === section.id;
               return (
-                <div key={section.id} className={`flex min-h-12 items-center rounded-md ${isActive ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
+                <div
+                  key={section.id}
+                  draggable={!section.locked}
+                  onDragStart={event => handleSectionDragStart(event, section.id)}
+                  onDragOver={event => event.preventDefault()}
+                  onDrop={event => handleSectionDrop(event, section.id)}
+                  onDragEnd={handleSectionDragEnd}
+                  className={`flex min-h-12 items-center rounded-md border border-transparent ${isActive ? 'bg-red-50' : 'hover:bg-slate-50'} ${draggingSectionId === section.id ? 'border-dashed border-red-300 bg-red-50/70 opacity-60' : ''}`}
+                >
+                  <span
+                    className={`flex h-10 w-8 shrink-0 cursor-grab items-center justify-center text-slate-400 active:cursor-grabbing ${section.locked ? 'invisible' : ''}`}
+                    aria-label={section.locked ? undefined : `拖动排序${section.label}`}
+                    title={section.locked ? undefined : `拖动排序${section.label}`}
+                  >
+                    <GripVertical className="h-4 w-4" aria-hidden="true" />
+                  </span>
                   <button
                     type="button"
                     onClick={() => focusSection(section.id)}
@@ -370,33 +657,54 @@ const TermReportRedesignDemo: React.FC = () => {
         <section className={`min-h-0 bg-slate-100 ${previewMode === 'mobile' ? 'p-4 max-[720px]:p-2' : 'overflow-auto p-4'}`} aria-label={previewMode === 'mobile' ? '教师手机端报告预览' : 'A4报告预览'}>
           {previewMode === 'mobile' ? (
             <PhoneMockup showDeviceFrame contentTopInsetMode="status-bar">
-              <TermReportView
-                key="mobile-report"
-                student={demoStudent}
-                onBack={() => undefined}
-                additionalMobilePages={additionalMobilePages}
-                additionalA4Pages={additionalA4Pages}
-                additionalMobileAnchorItems={additionalMobileAnchorItems}
-                initialViewMode="mobile"
-                showViewModeToggle={false}
-                enabledSections={enabledSections}
-                showLegacyOptionalSections={false}
-              />
+              <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                <TermReportView
+                  key="mobile-report"
+                  student={demoStudent}
+                  onBack={() => undefined}
+                  additionalMobilePages={additionalMobilePages}
+                  additionalA4Pages={additionalA4Pages}
+                  additionalMobileAnchorItems={additionalMobileAnchorItems}
+                  additionalMedalMobilePages={additionalMedalMobilePages}
+                  additionalMedalA4Pages={additionalMedalA4Pages}
+                  additionalMedalMobileAnchorItems={additionalMedalMobileAnchorItems}
+                  additionalMedalMobileContent={additionalMedalMobileContent}
+                  additionalMedalA4Content={additionalMedalA4Content}
+                  initialViewMode="mobile"
+                  showViewModeToggle={false}
+                  enabledSections={enabledSections}
+                  sectionOrder={sectionOrder}
+                  showLegacyOptionalSections={false}
+                  compactConfiguredMobileSections
+                  hideEndMarker
+                />
+                <div id="teacher-mobile-overlay-root" className="pointer-events-none absolute inset-0 z-[1000]" />
+              </div>
             </PhoneMockup>
           ) : (
             <div className="mx-auto h-full min-h-[620px] min-w-[794px] max-w-[920px] overflow-hidden shadow-sm">
-              <TermReportView
-                key="a4-report"
-                student={demoStudent}
-                onBack={() => undefined}
-                additionalMobilePages={additionalMobilePages}
-                additionalA4Pages={additionalA4Pages}
-                additionalMobileAnchorItems={additionalMobileAnchorItems}
-                initialViewMode="a4"
-                showViewModeToggle={false}
-                enabledSections={enabledSections}
-                showLegacyOptionalSections={false}
-              />
+              <div className="relative h-full min-h-0 overflow-hidden">
+                <TermReportView
+                  key="a4-report"
+                  student={demoStudent}
+                  onBack={() => undefined}
+                  additionalMobilePages={additionalMobilePages}
+                  additionalA4Pages={additionalA4Pages}
+                  additionalMobileAnchorItems={additionalMobileAnchorItems}
+                  additionalMedalMobilePages={additionalMedalMobilePages}
+                  additionalMedalA4Pages={additionalMedalA4Pages}
+                  additionalMedalMobileAnchorItems={additionalMedalMobileAnchorItems}
+                  additionalMedalMobileContent={additionalMedalMobileContent}
+                  additionalMedalA4Content={additionalMedalA4Content}
+                  initialViewMode="a4"
+                  showViewModeToggle={false}
+                  enabledSections={enabledSections}
+                  sectionOrder={sectionOrder}
+                  showLegacyOptionalSections={false}
+                  hideEndMarker
+                />
+                <div id="teacher-mobile-overlay-root" className="pointer-events-none absolute inset-0 z-[1000]" />
+              </div>
             </div>
           )}
         </section>

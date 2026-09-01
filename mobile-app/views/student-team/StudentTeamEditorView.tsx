@@ -248,7 +248,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
 
                   <div className="mt-2 flex items-center gap-2">
                     <MobileSearchInput value={classQuery} onChange={event => setClassQuery(event.target.value)} placeholder="搜索姓名" aria-label="搜索当前班级学生" className="min-w-0 flex-1" containerClassName="flex min-h-11 min-w-0 flex-1 items-center" density="compact" appearance="filled" />
-                    <button type="button" onClick={toggleActiveClass} className="min-h-11 shrink-0 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]">{allActiveSelected ? '取消全班' : '全选本班'}</button>
+                    <button type="button" onClick={toggleActiveClass} className="min-h-11 shrink-0 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]">{allActiveSelected ? '取消全选' : '全选'}</button>
                   </div>
                 </>
               )}

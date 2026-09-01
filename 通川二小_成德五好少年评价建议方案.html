@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="通川二小成德五好少年综合评价建议方案：老师随手记录，AI自动分析并匹配指标，减少集中填表和重复整理。">
+  <title>通川二小｜成德五好少年综合评价建议方案</title>
+  <style>
+    :root {
+      --ink: #17201d;
+      --muted: #65706b;
+      --line: #dbe2de;
+      --paper: #ffffff;
+      --wash: #f4f7f5;
+      --forest: #174f3c;
+      --forest-deep: #10382b;
+      --gold: #d0a32d;
+      --red: #a94b44;
+      --blue: #2f6599;
+      --green: #28745a;
+      --amber: #9a7420;
+      --orange: #a96122;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      letter-spacing: 0;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(47, 101, 153, 0.35);
+      outline-offset: 3px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 64px));
+      margin: 0 auto;
+    }
+
+    .report-header {
+      color: #fff;
+      background: var(--forest-deep);
+      border-bottom: 6px solid var(--gold);
+    }
+
+    .header-inner {
+      position: relative;
+      padding: 58px 0 48px;
+    }
+
+    .school-name {
+      margin-bottom: 10px;
+      color: #f0c75a;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    h1,
+    h2 {
+      font-family: "Songti SC", "STSong", serif;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 840px;
+      margin-bottom: 18px;
+      font-size: 52px;
+      line-height: 1.18;
+    }
+
+    .header-summary {
+      max-width: 820px;
+      margin-bottom: 0;
+    }
+
+    .header-summary strong,
+    .header-summary span {
+      display: block;
+    }
+
+    .header-summary strong {
+      margin-bottom: 7px;
+      color: #fff;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 24px;
+      line-height: 1.45;
+    }
+
+    .header-summary span {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 16px;
+    }
+
+    .export-button {
+      position: absolute;
+      top: 58px;
+      right: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 38px;
+      padding: 0 13px;
+      color: #fff;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .export-button:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .export-button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    .export-button svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .section {
+      padding: 66px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section.alt {
+      background: var(--wash);
+    }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      gap: 48px;
+      align-items: end;
+      margin-bottom: 30px;
+    }
+
+    .kicker {
+      margin-bottom: 7px;
+      color: var(--forest);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    h2 {
+      margin-bottom: 0;
+      font-size: 39px;
+      line-height: 1.25;
+    }
+
+    .section-heading > p:last-child {
+      margin-bottom: 2px;
+      color: var(--muted);
+    }
+
+    .source-map {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) 58px minmax(235px, 0.75fr);
+      align-items: stretch;
+      border-top: 1px solid var(--ink);
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .step-flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-top: 1px solid var(--ink);
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .step-item {
+      min-height: 216px;
+      padding: 25px 22px 23px;
+      border-right: 1px solid var(--line);
+      border-top: 4px solid var(--forest);
+    }
+
+    .step-item:last-child {
+      border-right: 0;
+    }
+
+    .step-item.result-step {
+      color: #fff;
+      background: var(--forest);
+      border-top-color: var(--gold);
+    }
+
+    .step-number {
+      display: block;
+      margin-bottom: 20px;
+      color: var(--forest);
+      font-family: Georgia, serif;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .result-step .step-number {
+      color: #f0c75a;
+    }
+
+    .step-item h3 {
+      margin-bottom: 10px;
+      font-size: 19px;
+      line-height: 1.4;
+    }
+
+    .step-item p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .result-step p {
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .source-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .source-item {
+      min-height: 176px;
+      padding: 27px 24px;
+      border-right: 1px solid var(--line);
+    }
+
+    .source-number {
+      display: block;
+      margin-bottom: 22px;
+      color: var(--forest);
+      font-family: Georgia, serif;
+      font-size: 13px;
+    }
+
+    .source-item h3 {
+      margin-bottom: 9px;
+      font-size: 20px;
+      line-height: 1.4;
+    }
+
+    .source-item p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .map-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--forest);
+      font-family: Georgia, serif;
+      font-size: 28px;
+      border-right: 1px solid var(--line);
+    }
+
+    .report-result {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 28px;
+      color: #fff;
+      background: var(--forest);
+    }
+
+    .report-result span {
+      margin-bottom: 10px;
+      color: #f0c75a;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .report-result strong {
+      margin-bottom: 8px;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 26px;
+      line-height: 1.35;
+    }
+
+    .report-result p {
+      margin-bottom: 0;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+    }
+
+    .indicator-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 22px;
+      margin-bottom: 22px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .indicator-meta strong {
+      margin-right: 4px;
+      color: var(--ink);
+      font-family: Georgia, serif;
+      font-size: 20px;
+    }
+
+    .mindmap {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 36px;
+      align-items: center;
+    }
+
+    .mindmap-root {
+      position: relative;
+      display: flex;
+      min-height: 132px;
+      padding: 22px 18px;
+      flex-direction: column;
+      justify-content: center;
+      color: #fff;
+      background: var(--forest-deep);
+      border-left: 5px solid var(--gold);
+    }
+
+    .mindmap-root::after {
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      width: 36px;
+      border-top: 1px solid #9cad9f;
+      content: "";
+    }
+
+    .mindmap-root span {
+      margin-bottom: 6px;
+      color: #f0c75a;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .mindmap-root strong {
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 22px;
+      line-height: 1.35;
+    }
+
+    .mindmap-branches {
+      position: relative;
+      display: grid;
+      gap: 14px;
+    }
+
+    .mindmap-branches::before {
+      position: absolute;
+      top: 52px;
+      bottom: 52px;
+      left: -36px;
+      border-left: 1px solid #9cad9f;
+      content: "";
+    }
+
+    .mindmap-branch {
+      position: relative;
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      min-height: 104px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+    }
+
+    .mindmap-branch::before {
+      position: absolute;
+      top: 50%;
+      right: 100%;
+      width: 36px;
+      border-top: 1px solid #9cad9f;
+      content: "";
+    }
+
+    .dimension-node {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 16px 12px;
+      color: #fff;
+      background: var(--dimension-color);
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 21px;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .group-nodes {
+      display: grid;
+      grid-template-columns: repeat(var(--group-count), minmax(0, 1fr));
+    }
+
+    .group-node {
+      min-width: 0;
+      padding: 14px 13px;
+      border-left: 1px solid var(--line);
+    }
+
+    .group-node h4 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .leaf-nodes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .leaf-node {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 2px 8px;
+      color: #39423e;
+      background: #f1f5f3;
+      border: 1px solid #d9e3de;
+      border-radius: 3px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .archive-summary {
+      padding: 18px 20px;
+      background: var(--forest-deep);
+      color: #fff;
+      border-left: 5px solid var(--gold);
+      margin-bottom: 22px;
+    }
+
+    .archive-summary strong {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .archive-summary span {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+    }
+
+    .archive-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-top: 1px solid var(--ink);
+    }
+
+    .archive-table th,
+    .archive-table td {
+      padding: 17px 18px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .archive-table th {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .archive-table th:first-child,
+    .archive-table td:first-child {
+      width: 18%;
+    }
+
+    .archive-table th:last-child,
+    .archive-table td:last-child {
+      width: 27%;
+    }
+
+    .archive-table td:first-child {
+      font-weight: 700;
+    }
+
+    .archive-table td:last-child {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .medal-band {
+      color: #fff;
+      background: var(--ink);
+    }
+
+    .medal-inner {
+      display: grid;
+      grid-template-columns: minmax(250px, 0.9fr) minmax(0, 1.4fr);
+      gap: 54px;
+      align-items: center;
+      padding: 42px 0;
+    }
+
+    .medal-inner h2 {
+      margin-bottom: 8px;
+      font-size: 30px;
+    }
+
+    .medal-inner p {
+      margin-bottom: 0;
+      color: rgba(255, 255, 255, 0.66);
+      font-size: 14px;
+    }
+
+    .medal-content {
+      display: grid;
+      gap: 14px;
+    }
+
+    .medal-list {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .medal-list li {
+      padding: 12px 8px;
+      text-align: center;
+      border-right: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .medal-list li:last-child {
+      border-right: 0;
+    }
+
+    .medal-fields {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 14px;
+    }
+
+    .medal-fields strong {
+      color: #f0c75a;
+    }
+
+    .term-report-preview {
+      background: #f3f6f4;
+    }
+
+    .term-report-preview-grid {
+      display: grid;
+      grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+      gap: 72px;
+      align-items: start;
+    }
+
+    .term-report-export-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 38px;
+      margin-top: 16px;
+      padding: 0 13px;
+      color: var(--forest);
+      background: #fff;
+      border: 1px solid #cbd9d1;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .term-report-export-button:hover {
+      background: #f7faf8;
+      border-color: #9fb9aa;
+    }
+
+    .term-report-export-button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    .term-report-export-button svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .term-report-preview.is-exporting .report-phone-screen {
+      height: auto;
+      overflow: visible;
+    }
+
+    .report-phone-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 18px;
+    }
+
+    .report-phone {
+      position: relative;
+      width: 409px;
+      padding: 8px;
+      background: #151515;
+      border: 0;
+      border-radius: 50px;
+      box-shadow: 0 26px 60px rgba(24, 38, 31, 0.2), 0 5px 12px rgba(24, 38, 31, 0.12);
+    }
+
+    .report-phone-screen {
+      position: relative;
+      width: 393px;
+      height: 852px;
+      overflow-y: auto;
+      background: #f8fafc;
+      border-radius: 50px;
+      scrollbar-width: none;
+    }
+
+    .report-phone-screen::-webkit-scrollbar {
+      display: none;
+    }
+
+    .report-phone-island {
+      position: absolute;
+      z-index: 2;
+      top: 12px;
+      left: 50%;
+      width: 86px;
+      height: 22px;
+      background: #101010;
+      border-radius: 999px;
+      transform: translateX(-50%);
+    }
+
+    .report-phone-status {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 54px;
+      padding: 0 22px 11px;
+      color: #17201d;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .report-phone-status > span:last-child {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #17201d;
+    }
+
+    .report-phone-status svg {
+      width: 13px;
+      height: 13px;
+      stroke-width: 2.2;
+    }
+
+    .report-phone-battery {
+      position: relative;
+      display: inline-block;
+      width: 22px;
+      height: 11px;
+      border: 1.2px solid rgba(0, 0, 0, 0.22);
+      border-radius: 3px;
+    }
+
+    .report-phone-battery::before {
+      position: absolute;
+      top: 2px;
+      right: -3px;
+      width: 1.5px;
+      height: 4px;
+      border-radius: 0 2px 2px 0;
+      background: rgba(0, 0, 0, 0.3);
+      content: "";
+    }
+
+    .report-phone-battery::after {
+      position: absolute;
+      inset: 1.5px;
+      width: 92%;
+      border-radius: 1px;
+      background: #17201d;
+      content: "";
+    }
+
+    .report-screen-content {
+      padding: 0 14px 24px;
+    }
+
+    .report-screen-cover {
+      position: relative;
+      min-height: 470px;
+      padding: 42px 18px 22px;
+      overflow: hidden;
+      color: #17201d;
+      text-align: center;
+      background: linear-gradient(180deg, #eaf3ff 0%, #fff 78%);
+      border-radius: 24px;
+    }
+
+    .report-screen-cover::before,
+    .report-screen-cover::after {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: rgba(191, 219, 254, 0.34);
+      content: "";
+    }
+
+    .report-screen-cover::before {
+      top: -66px;
+      left: -56px;
+    }
+
+    .report-screen-cover::after {
+      right: -64px;
+      bottom: -76px;
+      background: rgba(221, 214, 254, 0.28);
+    }
+
+    .report-cover-rule {
+      position: relative;
+      z-index: 1;
+      width: 34px;
+      height: 4px;
+      margin: 0 auto 12px;
+      background: #2563eb;
+      border-radius: 999px;
+    }
+
+    .report-screen-cover h3 {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 18px;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 29px;
+      line-height: 1.2;
+    }
+
+    .report-cover-student {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .report-cover-student img {
+      width: 188px;
+      height: 188px;
+      object-fit: contain;
+      filter: drop-shadow(0 7px 8px rgba(30, 64, 175, 0.16));
+    }
+
+    .report-cover-info {
+      width: 100%;
+      padding: 14px 12px 12px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+    }
+
+    .report-cover-student strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 22px;
+    }
+
+    .report-cover-student span {
+      color: #64748b;
+      font-size: 10px;
+    }
+
+    .report-cover-term {
+      display: block;
+      margin-top: 5px;
+      color: #94a3b8;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .report-screen-card {
+      margin-top: 10px;
+      padding: 14px;
+      background: #fff;
+      border: 1px solid #e7ece9;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    .report-screen-card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: #17201d;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .report-screen-card-title i,
+    .report-screen-card-title svg {
+      display: inline-flex;
+      width: 14px;
+      height: 14px;
+      margin-right: 5px;
+      color: #2563eb;
+      vertical-align: -3px;
+    }
+
+    .report-screen-overview-title {
+      padding: 15px 0 4px;
+      color: #17201d;
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    .report-screen-overview-caption {
+      margin: 0 12px 4px;
+      color: #64748b;
+      font-size: 10px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .report-cover-tags {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 12px;
+    }
+
+    .report-cover-tags span {
+      padding: 4px 7px;
+      color: #4f46e5;
+      background: #eef2ff;
+      border: 1px solid #e0e7ff;
+      border-radius: 7px;
+      font-size: 9px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .report-medal-preview {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 4px;
+      text-align: center;
+    }
+
+    .report-medal-preview div {
+      min-width: 0;
+      color: #334155;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .report-medal-preview img {
+      display: block;
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 4px;
+      object-fit: contain;
+    }
+
+    .report-radar {
+      display: block;
+      width: 190px;
+      height: 168px;
+      margin: 0 auto;
+    }
+
+    .report-subject-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .report-subject-grid div {
+      padding: 8px 4px;
+      color: #334155;
+      font-size: 10px;
+      text-align: center;
+      background: #f0fdf4;
+      border-radius: 9px;
+    }
+
+    .report-subject-grid strong {
+      display: block;
+      margin-top: 2px;
+      color: #059669;
+      font-size: 12px;
+    }
+
+    .report-copy {
+      margin: 0;
+      color: #475569;
+      font-size: 11px;
+      line-height: 1.75;
+    }
+
+    .report-copy strong {
+      color: #17201d;
+      font-weight: 800;
+    }
+
+    .report-outline {
+      padding-top: 10px;
+    }
+
+    .report-outline h3 {
+      margin: 0 0 20px;
+      color: var(--ink);
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 27px;
+      line-height: 1.3;
+    }
+
+    .report-outline-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid var(--ink);
+    }
+
+    .report-outline-list li {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      padding: 17px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .report-outline-number {
+      color: var(--forest);
+      font-family: Georgia, serif;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .report-outline-list strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .report-outline-list span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .footer {
+      padding: 24px 32px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      h1 {
+        font-size: 44px;
+      }
+
+      h2 {
+        font-size: 35px;
+      }
+
+      .source-map {
+        grid-template-columns: 1fr;
+      }
+
+      .step-flow {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .step-item:nth-child(2) {
+        border-right: 0;
+      }
+
+      .step-item:nth-child(n + 3) {
+        border-top: 1px solid var(--line);
+      }
+
+      .step-item.result-step {
+        border-top-color: var(--gold);
+      }
+
+      .map-arrow {
+        min-height: 50px;
+        border-top: 1px solid var(--line);
+        border-right: 0;
+        transform: rotate(90deg);
+      }
+
+      .report-result {
+        min-height: 150px;
+      }
+
+      .section-heading,
+      .medal-inner {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .term-report-preview-grid {
+        grid-template-columns: 1fr;
+        gap: 34px;
+      }
+
+      .mindmap {
+        grid-template-columns: 120px minmax(0, 1fr);
+        gap: 28px;
+      }
+
+      .mindmap-root::after,
+      .mindmap-branch::before {
+        width: 28px;
+      }
+
+      .mindmap-branches::before {
+        left: -28px;
+      }
+
+      .mindmap-branch {
+        grid-template-columns: 112px minmax(0, 1fr);
+      }
+
+      .group-nodes {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .group-node:nth-child(n + 3) {
+        border-top: 1px solid var(--line);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .wrap {
+        width: calc(100% - 36px);
+      }
+
+      .header-inner {
+        padding: 42px 0 36px;
+      }
+
+      h1 {
+        padding-right: 42px;
+        font-size: 36px;
+      }
+
+      h2 {
+        font-size: 30px;
+      }
+
+      .header-summary {
+        padding-right: 4px;
+      }
+
+      .header-summary strong {
+        font-size: 20px;
+      }
+
+      .header-summary span {
+        font-size: 15px;
+      }
+
+      .export-button {
+        top: 42px;
+        width: 38px;
+        padding: 0;
+      }
+
+      .export-button span {
+        display: none;
+      }
+
+      .section {
+        padding: 50px 0;
+      }
+
+      .source-list {
+        grid-template-columns: 1fr;
+      }
+
+      .step-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .step-item,
+      .step-item:nth-child(n + 3) {
+        min-height: 0;
+        border-right: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .step-item:first-child {
+        border-top: 4px solid var(--forest);
+      }
+
+      .step-item.result-step {
+        border-top: 4px solid var(--gold);
+      }
+
+      .source-item {
+        min-height: 0;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .mindmap {
+        display: block;
+      }
+
+      .mindmap-root {
+        min-height: 0;
+        margin-bottom: 28px;
+        padding: 16px 18px;
+      }
+
+      .mindmap-root::after {
+        top: 100%;
+        left: 50%;
+        width: 0;
+        height: 28px;
+        border-top: 0;
+        border-left: 1px solid #9cad9f;
+      }
+
+      .mindmap-branches::before,
+      .mindmap-branch::before {
+        display: none;
+      }
+
+      .mindmap-branch {
+        grid-template-columns: 1fr;
+      }
+
+      .dimension-node {
+        justify-content: flex-start;
+        padding: 12px 14px;
+        text-align: left;
+      }
+
+      .archive-table,
+      .archive-table tbody,
+      .archive-table tr,
+      .archive-table td {
+        display: block;
+        width: 100% !important;
+      }
+
+      .archive-table thead {
+        display: none;
+      }
+
+      .archive-table tr {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .archive-table td {
+        padding: 4px 0;
+        border: 0;
+      }
+
+      .medal-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .medal-list li {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+      }
+
+      .report-phone-wrap {
+        padding-top: 0;
+      }
+
+      .report-outline {
+        padding-top: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 12mm;
+      }
+
+      body {
+        color: #000;
+        background: #fff;
+        font-size: 9.5pt;
+      }
+
+      .export-button {
+        display: none !important;
+      }
+
+      .report-header,
+      .report-result,
+      .archive-summary,
+      .medal-band {
+        color: #000;
+        background: #fff !important;
+        border: 1px solid #888;
+      }
+
+      .header-summary,
+      .report-result p,
+      .archive-summary span,
+      .medal-inner p,
+      .medal-fields {
+        color: #333;
+      }
+
+      .header-inner,
+      .section,
+      .medal-inner {
+        padding-top: 8mm;
+        padding-bottom: 8mm;
+      }
+
+      .source-map,
+      .archive-table,
+      .medal-band {
+        break-inside: avoid;
+      }
+
+      .mindmap {
+        grid-template-columns: 28mm minmax(0, 1fr);
+        gap: 7mm;
+      }
+
+      .mindmap-root,
+      .dimension-node {
+        color: #000;
+        background: #eee !important;
+      }
+
+      .mindmap-root {
+        border: 1px solid #888;
+      }
+
+      .mindmap-branch {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="report-header">
+    <div class="wrap header-inner">
+      <p class="school-name">通川二小｜老师减负方案</p>
+      <h1>成德五好少年综合评价建议方案</h1>
+      <p class="header-summary">
+        <strong>老师随手说、随手拍；日常评价的分析与指标匹配交给AI。</strong>
+        <span>从“围绕指标集中填表”变为“围绕学生随手记录”，大幅减少重复整理。</span>
+      </p>
+      <button class="export-button" type="button" onclick="exportReportImage()" aria-label="导出汇报长图" data-html2canvas-ignore="true">
+        <i data-lucide="image-down" aria-hidden="true"></i>
+        <span>导出图片</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" aria-labelledby="scheme-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">方案运行方式</p>
+            <h2 id="scheme-title">四步落地，老师少填表</h2>
+          </div>
+          <p>学校确定指标，老师轻量记录，系统完成匹配与汇总。</p>
+        </div>
+
+        <div class="step-flow" aria-label="四步落地流程">
+          <article class="step-item">
+            <span class="step-number">STEP 01</span>
+            <h3>优化五育指标</h3>
+            <p>学校与厂商共建可观察的三级指标，让老师的日常记录都能被AI识别并归入对应指标。</p>
+          </article>
+          <article class="step-item">
+            <span class="step-number">STEP 02</span>
+            <h3>按需建立阶段档案</h3>
+            <p>只有报告需要体测、成长画像等阶段数据时，才创建对应档案；不需要的档案不启用，不增加老师额外录入工作。</p>
+          </article>
+          <article class="step-item">
+            <span class="step-number">STEP 03</span>
+            <h3>班主任发放勋章</h3>
+            <p>厂商开发勋章功能，班主任根据学生表现手动颁发成正、成智、成健、成雅、成技勋章。</p>
+          </article>
+          <article class="step-item result-step">
+            <span class="step-number">STEP 04</span>
+            <h3>生成期末报告</h3>
+            <p>系统综合AI日常记录、阶段档案、期末成绩和勋章，呈现学生成长表现与获奖高光。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" aria-labelledby="indicator-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">指标重构</p>
+            <h2 id="indicator-title">五育指标一图总览</h2>
+          </div>
+          <p>保留五个一级称号并复用原有二级文案；每个二级指标设置2-3项可观察行为。指标只用于匹配日常行为，不承载成绩、获奖或体测数值。</p>
+        </div>
+
+        <div class="indicator-meta" aria-label="指标数量">
+          <span><strong>5</strong>一级称号</span>
+          <span><strong>16</strong>二级指标</span>
+          <span><strong>38</strong>三级指标</span>
+        </div>
+
+        <div class="mindmap" aria-label="成德五好少年三级指标思维导图">
+          <div class="mindmap-root">
+            <span>评价目标</span>
+            <strong>成德五好少年</strong>
+          </div>
+          <div class="mindmap-branches" id="indicator-map"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="archive-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">阶段档案</p>
+            <h2 id="archive-title">按需创建，补充报告数据</h2>
+          </div>
+          <p>只有当期末报告需要呈现体测、成长画像或专项测评等数据时，才创建对应档案；不需要的档案无需启用，避免增加老师额外录入工作。</p>
+        </div>
+
+        <div class="archive-summary">
+          <strong>按需启用</strong>
+          <span>报告需要什么数据，就创建什么档案；未启用的档案不增加录入工作</span>
+        </div>
+
+        <table class="archive-table">
+          <thead>
+            <tr>
+              <th scope="col">档案模板</th>
+              <th scope="col">主要字段</th>
+              <th scope="col">适用数据</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>体质健康</td>
+              <td>身高、体重、BMI、肺活量、各体测项目数值、综合等级</td>
+              <td>学期体测、专项运动测试、身体指标变化</td>
+            </tr>
+            <tr>
+              <td>成长画像</td>
+              <td>学业基础、专注习惯、兴趣偏好、学习方式、问题解决、社交风格</td>
+              <td>入学初始档案、学年成长画像、阶段性问卷</td>
+            </tr>
+            <tr>
+              <td>专项测评</td>
+              <td>测评项目、评价维度、得分或等级、评价结论、测评日期</td>
+              <td>艺术素养、运动技能、生活技能、劳动技能</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="medal-band" aria-labelledby="medal-title">
+      <div class="wrap medal-inner">
+        <div>
+          <h2 id="medal-title">勋章由老师手动发放</h2>
+          <p>系统只负责记录和呈现，暂不根据指标自动判断荣誉。</p>
+        </div>
+        <div class="medal-content">
+          <ul class="medal-list" aria-label="五类勋章">
+            <li>成正少年</li>
+            <li>成智少年</li>
+            <li>成健少年</li>
+            <li>成雅少年</li>
+            <li>成技少年</li>
+          </ul>
+          <div class="medal-fields"><strong>发放信息：</strong>学生、勋章、发放理由</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <section class="section term-report-preview" aria-labelledby="term-report-preview-title">
+    <div class="wrap">
+      <div class="section-heading">
+        <div>
+          <p class="kicker">期末报告样式</p>
+          <h2 id="term-report-preview-title">一份报告，完整呈现学生成长</h2>
+        </div>
+        <div>
+          <p>报告板块可按学校需要开启、关闭和排序；以下为手机端默认展示样式。</p>
+          <button class="term-report-export-button" type="button" onclick="exportTermReportPreviewImage()" data-html2canvas-ignore="true" aria-label="导出期末报告长图">
+            <i data-lucide="image-down" aria-hidden="true"></i>
+            <span>导出期末报告长图</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="term-report-preview-grid">
+        <div class="report-phone-wrap" aria-label="手机端期末报告预览">
+          <div class="report-phone">
+            <div class="report-phone-screen">
+              <div class="report-phone-island" aria-hidden="true"></div>
+              <div class="report-phone-status" aria-hidden="true">
+                <span>09:41</span>
+                <span><i data-lucide="signal"></i><i data-lucide="wifi"></i><b class="report-phone-battery"></b></span>
+              </div>
+              <div class="report-screen-content">
+                <div class="report-screen-cover">
+                  <div class="report-cover-rule"></div>
+                  <h3>学期成长手册</h3>
+                  <div class="report-cover-student">
+                    <img src="mobile-app/assets/resources/girl.png" alt="" />
+                    <div class="report-cover-info">
+                      <strong>李亦洋</strong>
+                      <span>2021级二班 · 五年级</span>
+                      <small class="report-cover-term">2025-2026学年 下学期</small>
+                      <div class="report-cover-tags"><span>全面发展</span><span>成熟可靠</span><span>独立自主</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="report-screen-overview-title">成长概览</div>
+                <p class="report-screen-overview-caption">综合展示五育发展与学科表现，全方位了解本学期成长情况</p>
+
+                <div class="report-screen-card">
+                  <div class="report-screen-card-title"><span><i data-lucide="award" aria-hidden="true"></i>成长奖章</span></div>
+                  <div class="report-medal-preview">
+                    <div><img src="mobile-app/assets/resources/medals/platform-deyu-star.png" alt="" />成正少年</div>
+                    <div><img src="mobile-app/assets/resources/medals/platform-zhiyu-star.png" alt="" />成智少年</div>
+                    <div><img src="mobile-app/assets/resources/medals/platform-tiyu-star.png" alt="" />成健少年</div>
+                    <div><img src="mobile-app/assets/resources/medals/platform-meiyu-star.png" alt="" />成雅少年</div>
+                    <div><img src="mobile-app/assets/resources/medals/platform-laoyu-star.png" alt="" />成技少年</div>
+                  </div>
+                </div>
+
+                <div class="report-screen-card">
+                  <div class="report-screen-card-title"><span><i data-lucide="trending-up" aria-hidden="true"></i>五育雷达图</span></div>
+                  <svg class="report-radar" viewBox="0 0 220 190" role="img" aria-label="成正、成智、成健、成雅、成技五育雷达图">
+                    <g transform="translate(110 91)">
+                      <polygon points="0,-66 63,-20 39,53 -39,53 -63,-20" fill="#f8fafc" stroke="#dbe4ef" />
+                      <polygon points="0,-48 46,-15 28,39 -28,39 -46,-15" fill="none" stroke="#e2e8f0" stroke-dasharray="3 3" />
+                      <polygon points="0,-56 52,-17 31,44 -32,42 -48,-16" fill="rgba(59,130,246,.18)" stroke="#3b82f6" stroke-width="2.5" />
+                      <line x1="0" y1="0" x2="0" y2="-66" stroke="#e2e8f0" />
+                      <line x1="0" y1="0" x2="63" y2="-20" stroke="#e2e8f0" />
+                      <line x1="0" y1="0" x2="39" y2="53" stroke="#e2e8f0" />
+                      <line x1="0" y1="0" x2="-39" y2="53" stroke="#e2e8f0" />
+                      <line x1="0" y1="0" x2="-63" y2="-20" stroke="#e2e8f0" />
+                      <text x="0" y="-78" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">成智</text>
+                      <text x="76" y="-20" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">成健</text>
+                      <text x="46" y="68" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">成技</text>
+                      <text x="-46" y="68" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">成雅</text>
+                      <text x="-76" y="-20" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">成正</text>
+                    </g>
+                  </svg>
+                </div>
+
+                <div class="report-screen-card">
+                  <div class="report-screen-card-title"><span><i data-lucide="book-open" aria-hidden="true"></i>学科成绩分布</span></div>
+                  <div class="report-subject-grid">
+                    <div>语文<strong>优</strong></div><div>数学<strong>优</strong></div><div>英语<strong>优</strong></div>
+                    <div>科学<strong>优</strong></div><div>体育<strong>优</strong></div><div>美术<strong>优</strong></div>
+                  </div>
+                </div>
+
+                <div class="report-screen-card">
+                  <div class="report-screen-card-title"><span><i data-lucide="star" aria-hidden="true"></i>总体评价</span></div>
+                  <p class="report-copy">亲爱的李亦洋，翻开你这学期的成长记录，老师仿佛看到了一个像小松树一样挺拔、向上的身影。你在语文、数学、英语等学科上表现出了极佳的专注力和学习习惯，特别是在听写全对和课堂积极互动上的表现，更是令人欣喜；在体育锻炼和劳动实践中，你也从不懈怠，展现出了满满的活力与责任感。</p>
+                  <p class="report-copy" style="margin-top:7px">最让老师感动的是那些藏在细节里的美好：你是那个坐姿最端正的孩子，是那个会耐心等待的孩子，也是那个学具收拾得最利落的孩子。这些“润物细无声”的好习惯，是你送给自己一年级生活最珍贵的礼物。愿你继续保持这份笃定与认真，向着阳光，快乐生长！</p>
+                </div>
+
+                <div class="report-screen-card">
+                  <div class="report-screen-card-title"><span><i data-lucide="layers" aria-hidden="true"></i>成长建议</span></div>
+                  <p class="report-copy">针对你目前的成长阶段，老师为你准备了几个生活中的小锦囊：</p>
+                  <p class="report-copy" style="margin-top:7px"><strong>表达的小巨人</strong><br />你已经很会“听”了，不妨尝试多“说”。每天找一个机会，大声地把你的想法或观察到的趣事讲给身边的人听，让大家听到你自信的声音。</p>
+                  <p class="report-copy" style="margin-top:7px"><strong>阅读的探险家</strong><br />建议每天睡前坚持15分钟的亲子阅读时光，去绘本的世界里探险，让故事给你的想象力插上翅膀。</p>
+                </div>
+
+                <div class="report-screen-card">
+                  <div class="report-screen-card-title"><span><i data-lucide="users" aria-hidden="true"></i>亲子活动指南</span></div>
+                  <p class="report-copy">为了呵护孩子这份宝贵的专注与自律，我们建议家长在碎片化时间里尝试以下活动：</p>
+                  <p class="report-copy" style="margin-top:7px"><strong>角色互换游戏</strong><br />周末时，请孩子当一次“小老师”，教家长一个他在学校学到的新单词或新规矩。这能增强孩子的自信心，巩固学习成果。</p>
+                  <p class="report-copy" style="margin-top:7px"><strong>户外“撒野”</strong><br />假期多带孩子去大自然中奔跑、攀爬，动静结合，保持身心的平衡与健康。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="report-outline">
+          <h3>期末报告板块顺序</h3>
+          <ol class="report-outline-list">
+            <li><span class="report-outline-number">01</span><div><strong>封面</strong><span>学生信息与学期身份，建立报告的第一印象。</span></div></li>
+            <li><span class="report-outline-number">02</span><div><strong>成长奖章</strong><span>展示老师手动发放的五类成长奖章及数量。</span></div></li>
+            <li><span class="report-outline-number">03</span><div><strong>成长概览</strong><span>以五育雷达图、学科成绩和总体评价集中呈现学期表现。</span></div></li>
+            <li><span class="report-outline-number">04</span><div><strong>成长建议</strong><span>基于过程记录和学科结果，给出下一阶段可执行的建议。</span></div></li>
+            <li><span class="report-outline-number">05</span><div><strong>亲子活动指南</strong><span>把报告结论转化为家庭可参与的陪伴活动。</span></div></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">通川二小 · 成德五好少年综合评价建议方案</footer>
+
+  <script>
+    const dimensions = {
+      zheng: {
+        name: "成正少年",
+        color: "#a94b44",
+        groups: [
+          { level2: "思想品德", level3: ["诚实守信", "尊重友善", "家国情怀"] },
+          { level2: "德育常规", level3: ["文明守纪", "责任担当"] },
+          { level2: "家校共育", level3: ["孝亲敬长", "主动分担"] },
+          { level2: "德育活动", level3: ["活动参与", "志愿服务"] }
+        ]
+      },
+      zhi: {
+        name: "成智少年",
+        color: "#2f6599",
+        groups: [
+          { level2: "语文", level3: ["阅读积累", "规范书写", "语言表达"] },
+          { level2: "数学", level3: ["准确计算", "思路表达", "灵活解题"] },
+          { level2: "英语", level3: ["主动朗读", "口语交流", "书面表达"] }
+        ]
+      },
+      jian: {
+        name: "成健少年",
+        color: "#28745a",
+        groups: [
+          { level2: "身体健康", level3: ["健康习惯", "运动参与", "运动技能"] },
+          { level2: "心理健康", level3: ["自我认知", "情绪调适", "人际交往"] },
+          { level2: "体质健康测试", level3: ["体能素质", "成长进步"] }
+        ]
+      },
+      ya: {
+        name: "成雅少年",
+        color: "#9a7420",
+        groups: [
+          { level2: "艺术选修", level3: ["兴趣发展", "持续练习"] },
+          { level2: "才艺展演", level3: ["自信展示", "创意表达"] },
+          { level2: "艺术测评", level3: ["音乐素养", "美术素养"] }
+        ]
+      },
+      ji: {
+        name: "成技少年",
+        color: "#a96122",
+        groups: [
+          { level2: "劳动与生活", level3: ["生活自理", "主动劳动"] },
+          { level2: "研学实践", level3: ["实践体验", "成果表达"] },
+          { level2: "科技创新", level3: ["科学探究", "创意制作"] }
+        ]
+      }
+    };
+
+    function branchMarkup(dimension) {
+      const groups = dimension.groups.map(group => `
+        <section class="group-node">
+          <h4>${group.level2}</h4>
+          <div class="leaf-nodes">
+            ${group.level3.map(item => `<span class="leaf-node">${item}</span>`).join("")}
+          </div>
+        </section>
+      `).join("");
+
+      return `
+        <article class="mindmap-branch" style="--dimension-color: ${dimension.color}; --group-count: ${dimension.groups.length};">
+          <h3 class="dimension-node">${dimension.name}</h3>
+          <div class="group-nodes">${groups}</div>
+        </article>
+      `;
+    }
+
+    document.getElementById("indicator-map").innerHTML = Object.values(dimensions)
+      .map(branchMarkup)
+      .join("");
+  </script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+    if (window.lucide) window.lucide.createIcons();
+
+    let exportInProgress = false;
+
+    async function exportReportImage() {
+      const button = document.querySelector(".export-button");
+      const label = button.querySelector("span");
+      const preview = document.querySelector(".term-report-preview");
+
+      if (exportInProgress) return;
+
+      if (!window.html2canvas) {
+        window.alert("图片导出组件加载失败，请稍后重试。");
+        return;
+      }
+
+      exportInProgress = true;
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      label.textContent = "导出中";
+      preview?.classList.add("is-exporting");
+
+      try {
+        const canvas = await window.html2canvas(document.body, {
+          backgroundColor: "#ffffff",
+          scale: Math.min(2, window.devicePixelRatio || 1),
+          useCORS: true,
+          logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: document.documentElement.scrollWidth,
+          windowHeight: document.documentElement.scrollHeight
+        });
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+        if (!blob) throw new Error("PNG generation failed");
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "通川二小_成德五好少年评价建议方案.png";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (error) {
+        console.error(error);
+        window.alert("图片导出失败，请稍后重试。");
+      } finally {
+        preview?.classList.remove("is-exporting");
+        exportInProgress = false;
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+        label.textContent = "导出图片";
+      }
+    }
+
+    async function exportTermReportPreviewImage() {
+      const button = document.querySelector(".term-report-export-button");
+      const label = button?.querySelector("span");
+      const preview = document.querySelector(".term-report-preview");
+
+      if (exportInProgress || !button || !preview) return;
+
+      if (!window.html2canvas) {
+        window.alert("图片导出组件加载失败，请稍后重试。");
+        return;
+      }
+
+      exportInProgress = true;
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      if (label) label.textContent = "生成中";
+      preview.classList.add("is-exporting");
+
+      try {
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const canvas = await window.html2canvas(preview, {
+          backgroundColor: "#f3f6f4",
+          scale: Math.min(2, window.devicePixelRatio || 1),
+          useCORS: true,
+          logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: preview.scrollWidth,
+          windowHeight: preview.scrollHeight
+        });
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+        if (!blob) throw new Error("PNG generation failed");
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "期末报告样式预览_长图.png";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (error) {
+        console.error(error);
+        window.alert("期末报告长图导出失败，请稍后重试。");
+      } finally {
+        preview.classList.remove("is-exporting");
+        exportInProgress = false;
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+        if (label) label.textContent = "导出期末报告长图";
+      }
+    }
+  </script>
+</body>
+</html>

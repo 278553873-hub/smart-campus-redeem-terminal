@@ -18,6 +18,25 @@ import teacherMePageBg from './resources/teacher-me-page-bg.png';
 import teacherLoginIconImg from './resources/teacher-login-icon.jpg';
 import teacherDefaultAvatarImg from './resources/teacher-default-avatar.png';
 import classLeaderboardIconImg from './resources/class-leaderboard-icon.png';
+import platformDeyuStarMedalImg from './resources/medals/platform-deyu-star.png';
+import platformZhiyuStarMedalImg from './resources/medals/platform-zhiyu-star.png';
+import platformTiyuStarMedalImg from './resources/medals/platform-tiyu-star.png';
+import platformMeiyuStarMedalImg from './resources/medals/platform-meiyu-star.png';
+import platformLaoyuStarMedalImg from './resources/medals/platform-laoyu-star.png';
+import semesterThreeGoodMedalImg from './resources/medals/semester-three-good.png';
+import semesterCadreMedalImg from './resources/medals/semester-cadre.png';
+import semesterYoungPioneerMedalImg from './resources/medals/semester-young-pioneer.png';
+import semesterExcellentStudentMedalImg from './resources/medals/semester-excellent-student.png';
+import dailyProgressMedalImg from './resources/medals/daily-progress.png';
+import dailyDiligentMedalImg from './resources/medals/daily-diligent.png';
+import dailyCivilizedMedalImg from './resources/medals/daily-civilized.png';
+import dailyDisciplinedMedalImg from './resources/medals/daily-disciplined.png';
+import dailyFriendlyMedalImg from './resources/medals/daily-friendly.png';
+import activitySportsMedalImg from './resources/medals/activity-sports.png';
+import activityArtMedalImg from './resources/medals/activity-art.png';
+import activityTechMedalImg from './resources/medals/activity-tech.png';
+import activityReadingMedalImg from './resources/medals/activity-reading.png';
+import activityPerformanceMedalImg from './resources/medals/activity-performance.png';
 import defaultStateWorriedClipboardImg from './resources/default-states/default-state-giraffe-worried-clipboard-3d-color-v1.png';
 import defaultStateChairImg from './resources/default-states/default-state-giraffe-chair-3d-color-v1.png';
 import defaultStateMagnifierImg from './resources/default-states/default-state-giraffe-magnifier-3d-color-v1.png';
@@ -160,6 +179,27 @@ export const ASSETS = {
     TEACHER_ME_PAGE_BG: teacherMePageBg,
     TEACHER_LOGIN_ICON: teacherLoginIconImg,
     CLASS_LEADERBOARD: classLeaderboardIconImg,
+  },
+  MEDALS: {
+    PLATFORM_DEYU_STAR: platformDeyuStarMedalImg,
+    PLATFORM_ZHIYU_STAR: platformZhiyuStarMedalImg,
+    PLATFORM_TIYU_STAR: platformTiyuStarMedalImg,
+    PLATFORM_MEIYU_STAR: platformMeiyuStarMedalImg,
+    PLATFORM_LAOYU_STAR: platformLaoyuStarMedalImg,
+    SEMESTER_THREE_GOOD: semesterThreeGoodMedalImg,
+    SEMESTER_CADRE: semesterCadreMedalImg,
+    SEMESTER_YOUNG_PIONEER: semesterYoungPioneerMedalImg,
+    SEMESTER_EXCELLENT_STUDENT: semesterExcellentStudentMedalImg,
+    DAILY_PROGRESS: dailyProgressMedalImg,
+    DAILY_DILIGENT: dailyDiligentMedalImg,
+    DAILY_CIVILIZED: dailyCivilizedMedalImg,
+    DAILY_DISCIPLINED: dailyDisciplinedMedalImg,
+    DAILY_FRIENDLY: dailyFriendlyMedalImg,
+    ACTIVITY_SPORTS: activitySportsMedalImg,
+    ACTIVITY_ART: activityArtMedalImg,
+    ACTIVITY_TECH: activityTechMedalImg,
+    ACTIVITY_READING: activityReadingMedalImg,
+    ACTIVITY_PERFORMANCE: activityPerformanceMedalImg,
   },
   TEACHER_BOTTOM_NAVIGATION: {
     RECORD: {

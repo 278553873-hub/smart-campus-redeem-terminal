@@ -663,6 +663,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         };
     }, []);
 
+    useEffect(() => {
+        // 切换应用页面后开启新的广告展示机会，按优先级继续寻找未展示的广告。
+        setCampaignOpportunityConsumed(false);
+    }, [currentView]);
+
     // Keyboard States
     const [showKeyboard, setShowKeyboard] = useState(false);
     const [inputText, setInputText] = useState('');
@@ -673,7 +678,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         const safeToShow = eligibleSurface && !showKeyboard && !isOverlayActive && !showPlusMenu;
         if (!safeToShow) return undefined;
         const timer = window.setTimeout(() => {
-            const campaign = getNextTeacherCampaign(teacherCampaigns, activeTeacherId, activeTeacherEdition);
+            const campaign = getNextTeacherCampaign(teacherCampaigns, activeTeacherId, activeTeacherEdition, undefined, {
+                schoolId: activeTeacherSpace.type === 'school' ? activeTeacherSpace.id : undefined,
+                role: activeTeacherSpace.role,
+                isPaidPersonal: activeTeacherEdition === 'personal' ? false : undefined,
+                page: currentView as 'home_log' | 'class_list' | 'me',
+            });
             if (!campaign) return;
             recordTeacherCampaignEvent(campaign, activeTeacherId, 'impression');
             setCampaignOpportunityConsumed(true);

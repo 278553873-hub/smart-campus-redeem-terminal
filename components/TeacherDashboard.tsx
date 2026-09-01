@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Cascader, DatePicker, Input, Message, Select as ArcoSelect, Switch, Table, Popconfirm } from '@arco-design/web-react';
+import { Alert, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Popconfirm } from '@arco-design/web-react';
 import {
     LayoutDashboard, FileText, ClipboardList, PenTool,
     Settings, Users, BookOpen, Database, Download,
     Menu, User, ChevronDown, ChevronRight, Package,
-    Landmark, ArrowLeftRight, Coins, Monitor, AlertCircle,
+    Landmark, ArrowLeftRight, ArrowUpDown, Coins, Monitor, AlertCircle,
     Info, Search, Plus, Sparkles,
-    Check, Upload, KeyRound, Eye, Move, Megaphone, Pause, Play
+    Check, Upload, KeyRound, Eye, Move, Megaphone, Pause, Play, CircleHelp
 } from 'lucide-react';
 import HealthDataImportView from './HealthDataImportView';
 import GrowthDataSettingsView from './GrowthDataSettingsView';
@@ -17,7 +17,13 @@ import {
     type TeacherCampaign,
     type TeacherCampaignFrequency,
     type TeacherCampaignEdition,
-    type TeacherCampaignStatus,
+    type TeacherCampaignPersonalScope,
+    type TeacherCampaignSchoolScope,
+    type TeacherCampaignRoleScope,
+    type TeacherCampaignPlacement,
+    type TeacherCampaignPageScope,
+    type TeacherCampaignPage,
+    type TeacherCampaignPublishStatus,
 } from '../mobile-app/data/teacherCampaigns';
 
 interface TeacherDashboardProps {
@@ -85,6 +91,8 @@ interface StudentScoreDetailRow {
     artScore: number;
     laborScore: number;
 }
+
+type TeacherCampaignAudience = Pick<TeacherCampaign, 'edition' | 'personalScope' | 'schoolScope' | 'schoolIds' | 'roleScope' | 'roleNames' | 'pageScope' | 'pageIds'>;
 
 type StudentScoreQuickRange = '本周' | '本月' | '本学期';
 
@@ -175,7 +183,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         {
             title: '运营中心', icon: <Megaphone size={18} />,
-            children: ['活动投放']
+            children: ['广告投放']
         },
         {
             title: '数据中心', icon: <Database size={18} />,
@@ -1745,30 +1753,100 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [modalRate, setModalRate] = useState(1.0);
 
     const [teacherCampaigns, setTeacherCampaigns] = useState<TeacherCampaign[]>(() => readTeacherCampaigns());
+    const [campaignPublishStatusFilter, setCampaignPublishStatusFilter] = useState<'all' | TeacherCampaignPublishStatus>('all');
+    const [campaignNameSearch, setCampaignNameSearch] = useState('');
+    const [campaignPrioritySort, setCampaignPrioritySort] = useState<'none' | 'desc' | 'asc'>('none');
+    const [campaignPlacementTab, setCampaignPlacementTab] = useState<TeacherCampaignPlacement>('teacher_global_modal');
+    const [campaignPage, setCampaignPage] = useState(1);
+    const campaignPageSize = 10;
     const [campaignModalOpen, setCampaignModalOpen] = useState(false);
     const [editingCampaign, setEditingCampaign] = useState<TeacherCampaign | null>(null);
     const [campaignForm, setCampaignForm] = useState({
-        name: '', type: '节日关怀', startAt: '2026-09-01T00:00', endAt: '2026-09-10T23:59',
-        edition: 'school' as TeacherCampaignEdition, priority: '10', frequency: 'once_per_campaign' as TeacherCampaignFrequency,
+        name: '', startAt: '2026-09-01T00:00', endAt: '2026-09-10T23:59',
+        edition: 'school' as TeacherCampaignEdition,
+        personalScope: 'all' as TeacherCampaignPersonalScope,
+        schoolScope: 'all' as TeacherCampaignSchoolScope,
+        schoolIds: [] as string[],
+        roleScope: 'all' as TeacherCampaignRoleScope,
+        roleNames: [] as string[],
+        pageScope: 'all' as TeacherCampaignPageScope,
+        pageIds: [] as TeacherCampaignPage[],
+        priority: '10', frequency: 'once_per_campaign' as TeacherCampaignFrequency,
         imageUrl: '', jumpEnabled: false, actionTarget: '',
     });
 
-    const campaignStatusLabels: Record<TeacherCampaignStatus, string> = {
-        draft: '草稿', scheduled: '待投放', running: '投放中', paused: '已暂停', ended: '已结束',
+    const campaignPublishStatusLabels: Record<TeacherCampaignPublishStatus, string> = {
+        online: '上架', offline: '下架',
+    };
+    const campaignPlacementLabels: Record<TeacherCampaignPlacement, string> = {
+        splash: '启动页', teacher_global_modal: '应用内弹窗',
     };
     const campaignFrequencyLabels: Record<TeacherCampaignFrequency, string> = {
-        once_per_campaign: '仅一次', once_per_day: '每天一次',
+        once_per_campaign: '仅一次', once_per_week: '每周一次',
     };
     const campaignEditionLabels: Record<TeacherCampaignEdition, string> = {
-        personal: '个人版', school: '学校版',
+        personal: '个人版', school: '学校版', all: '个人版和学校版',
     };
-    const getCampaignStatus = (campaign: TeacherCampaign): TeacherCampaignStatus => {
-        const now = new Date();
-        if (campaign.status === 'paused' || campaign.status === 'draft') return campaign.status;
-        if (now < new Date(campaign.startAt)) return 'scheduled';
-        if (now > new Date(campaign.endAt)) return 'ended';
-        return 'running';
+    const campaignSchoolOptions = [
+        { label: '成都七中初中附属小学', value: 'school-qizhong' },
+        { label: '星河实验小学', value: 'school-star' },
+        { label: '青禾实验小学', value: 'school-qinghe' },
+    ];
+    const campaignRoleOptions = [
+        { label: '教师', value: 'teacher' },
+        { label: '班主任', value: 'homeroomTeacher' },
+        { label: '学校管理者', value: 'leader' },
+        { label: '管理员', value: 'administrator' },
+    ];
+    const campaignPageOptions: Array<{ label: string; value: TeacherCampaignPage }> = [
+        { label: '记录页', value: 'home_log' },
+        { label: '班级页', value: 'class_list' },
+        { label: '我的', value: 'me' },
+    ];
+    const getCampaignPageLabel = (campaign: Pick<TeacherCampaign, 'pageScope' | 'pageIds'>) => campaign.pageScope === 'all'
+        ? '全部页面'
+        : (campaign.pageIds ?? []).map(page => campaignPageOptions.find(option => option.value === page)?.label || page).join('、');
+    const getCampaignAudienceLabel = (form: typeof campaignForm) => {
+        if (form.edition === 'all') return '个人版和学校版 · 全部';
+        if (form.edition === 'personal') return `个人版 · ${form.personalScope === 'unpaid' ? '未付费个人' : '全部个人'}`;
+        const schools = form.schoolScope === 'selected' && form.schoolIds.length > 0
+            ? form.schoolIds.map(id => campaignSchoolOptions.find(option => option.value === id)?.label || id).join('、')
+            : '全部学校';
+        const roles = form.roleScope === 'selected' && form.roleNames.length > 0
+            ? form.roleNames.map(name => campaignRoleOptions.find(option => option.value === name)?.label || name).join('、')
+            : '全部角色';
+        return `学校版 · ${schools} · ${roles}`;
     };
+    const campaignsAudienceOverlap = (left: TeacherCampaignAudience, right: TeacherCampaignAudience) => {
+        const pagesOverlap = left.pageScope === 'all' || right.pageScope === 'all'
+            || (left.pageIds ?? []).some(page => (right.pageIds ?? []).includes(page));
+        if (!pagesOverlap) return false;
+        if (left.edition === 'all' || right.edition === 'all') return true;
+        if (left.edition !== right.edition) return false;
+        if (left.edition === 'personal') return left.personalScope === 'all' || right.personalScope === 'all' || left.personalScope === right.personalScope;
+        const schoolsOverlap = left.schoolScope === 'all' || right.schoolScope === 'all'
+            || (left.schoolIds ?? []).some(id => (right.schoolIds ?? []).includes(id));
+        const rolesOverlap = left.roleScope === 'all' || right.roleScope === 'all'
+            || (left.roleNames ?? []).some(name => (right.roleNames ?? []).includes(name));
+        return schoolsOverlap && rolesOverlap;
+    };
+    const filteredTeacherCampaigns = teacherCampaigns.filter(campaign => {
+        const nameMatches = !campaignNameSearch.trim() || campaign.name.toLowerCase().includes(campaignNameSearch.trim().toLowerCase());
+        const statusMatches = campaignPublishStatusFilter === 'all' || campaign.publishStatus === campaignPublishStatusFilter;
+        return nameMatches && statusMatches && campaign.placement === campaignPlacementTab;
+    });
+    const displayedTeacherCampaigns = campaignPrioritySort === 'none'
+        ? filteredTeacherCampaigns
+        : [...filteredTeacherCampaigns].sort((a, b) => campaignPrioritySort === 'desc' ? b.priority - a.priority : a.priority - b.priority);
+    const campaignTotal = displayedTeacherCampaigns.length;
+    const campaignPageCount = Math.max(1, Math.ceil(campaignTotal / campaignPageSize));
+    const pagedTeacherCampaigns = displayedTeacherCampaigns.slice((campaignPage - 1) * campaignPageSize, campaignPage * campaignPageSize);
+    useEffect(() => {
+        setCampaignPage(current => Math.min(current, campaignPageCount));
+    }, [campaignPageCount]);
+    useEffect(() => {
+        setCampaignPage(1);
+    }, [campaignPlacementTab, campaignNameSearch, campaignPublishStatusFilter, campaignPrioritySort]);
     const overlappingCampaigns = (() => {
         if (!campaignForm.startAt || !campaignForm.endAt) return [];
         const start = new Date(campaignForm.startAt).getTime();
@@ -1776,7 +1854,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         if (!Number.isFinite(start) || !Number.isFinite(end) || start >= end) return [];
         return teacherCampaigns.filter(item => {
             if (editingCampaign && item.id === editingCampaign.id) return false;
-            if (item.placement !== 'teacher_global_modal' || item.edition !== campaignForm.edition || item.status === 'draft' || item.status === 'paused') return false;
+            if (item.placement !== campaignPlacementTab || item.publishStatus !== 'online' || item.status === 'draft' || item.status === 'paused') return false;
+            if (!campaignsAudienceOverlap(item, campaignForm)) return false;
             return new Date(item.startAt).getTime() <= end && new Date(item.endAt).getTime() >= start;
         });
     })();
@@ -1788,6 +1867,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         && Number(campaignForm.priority) >= 0
         && Number(campaignForm.priority) <= 99
         && campaignForm.edition
+        && (campaignForm.edition !== 'school' || (campaignForm.schoolScope === 'all' || campaignForm.schoolIds.length > 0))
+        && (campaignForm.edition !== 'school' || (campaignForm.roleScope === 'all' || campaignForm.roleNames.length > 0))
+        && (campaignForm.pageScope === 'all' || campaignForm.pageIds.length > 0)
         && campaignForm.frequency
         && campaignForm.imageUrl
         && (!campaignForm.jumpEnabled || campaignForm.actionTarget.trim())
@@ -1795,21 +1877,26 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const campaignPreview: TeacherCampaign = {
         id: editingCampaign?.id || 'campaign-preview',
         version: editingCampaign?.version || 1,
-        name: campaignForm.name || '活动图片',
-        type: campaignForm.type,
+        name: campaignForm.name || '广告图片',
+        type: editingCampaign?.type || '营销活动',
         status: editingCampaign?.status ?? 'scheduled',
+        publishStatus: editingCampaign?.publishStatus ?? 'offline',
         startAt: campaignForm.startAt,
         endAt: campaignForm.endAt,
         edition: campaignForm.edition,
-        personalScope: campaignForm.edition === 'personal' ? 'all' : undefined,
-        schoolScope: 'all',
-        roleScope: 'all',
-        audienceLabel: campaignForm.edition === 'personal' ? '个人版 · 全部个人' : '学校版 · 全部学校 · 全部角色',
-        placement: 'teacher_global_modal',
+        personalScope: campaignForm.edition === 'personal' ? campaignForm.personalScope : undefined,
+        schoolScope: campaignForm.edition === 'school' ? campaignForm.schoolScope : 'all',
+        schoolIds: campaignForm.edition === 'school' ? campaignForm.schoolIds : [],
+        roleScope: campaignForm.edition === 'school' ? campaignForm.roleScope : 'all',
+        roleNames: campaignForm.edition === 'school' ? campaignForm.roleNames : [],
+        audienceLabel: getCampaignAudienceLabel(campaignForm),
+        placement: campaignPlacementTab,
+        pageScope: campaignForm.pageScope,
+        pageIds: campaignForm.pageIds,
         priority: Number(campaignForm.priority) || 0,
         frequency: campaignForm.frequency,
         imageUrl: campaignForm.imageUrl,
-        imageAlt: campaignForm.name || '活动图片',
+        imageAlt: campaignForm.name || '广告图片',
         actionTarget: campaignForm.jumpEnabled ? campaignForm.actionTarget : undefined,
         createdAt: editingCampaign?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -1818,14 +1905,21 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     };
     const openCampaignModal = (campaign: TeacherCampaign | null = null) => {
         setEditingCampaign(campaign);
+        if (campaign) setCampaignPlacementTab(campaign.placement);
         setCampaignForm(campaign ? {
-            name: campaign.name, type: campaign.type, startAt: campaign.startAt, endAt: campaign.endAt,
-            edition: campaign.edition, priority: String(campaign.priority), frequency: campaign.frequency,
+            name: campaign.name, startAt: campaign.startAt, endAt: campaign.endAt,
+            edition: campaign.edition,
+            personalScope: campaign.personalScope ?? 'all',
+            schoolScope: campaign.schoolScope ?? 'all', schoolIds: campaign.schoolIds ?? [],
+            roleScope: campaign.roleScope ?? 'all', roleNames: campaign.roleNames ?? [],
+            pageScope: campaign.pageScope ?? 'all', pageIds: campaign.pageIds ?? [],
+            priority: String(campaign.priority), frequency: campaign.frequency,
             imageUrl: campaign.imageUrl, jumpEnabled: Boolean(campaign.actionTarget),
             actionTarget: campaign.actionTarget || '',
         } : {
-            name: '', type: '节日关怀', startAt: '2026-09-01T00:00', endAt: '2026-09-10T23:59',
-            edition: 'school', priority: '10', frequency: 'once_per_campaign',
+            name: '', startAt: '2026-09-01T00:00', endAt: '2026-09-10T23:59',
+            edition: 'school', personalScope: 'all', schoolScope: 'all', schoolIds: [], roleScope: 'all', roleNames: [], pageScope: 'all', pageIds: [],
+            priority: '10', frequency: 'once_per_campaign',
             imageUrl: '', jumpEnabled: false, actionTarget: '',
         });
         setCampaignModalOpen(true);
@@ -1833,19 +1927,22 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const saveCampaign = () => {
         if (!campaignForm.name.trim() || !campaignForm.imageUrl.trim()) return;
         const now = new Date().toISOString();
-        const audienceLabel = campaignForm.edition === 'personal'
-            ? '个人版 · 全部个人'
-            : '学校版 · 全部学校 · 全部角色';
+        const audienceLabel = getCampaignAudienceLabel(campaignForm);
         const nextCampaign: TeacherCampaign = {
             id: editingCampaign?.id || `campaign-${Date.now()}`,
             version: (editingCampaign?.version || 0) + 1,
-            name: campaignForm.name.trim(), type: campaignForm.type,
+            name: campaignForm.name.trim(), type: editingCampaign?.type || '营销活动',
             status: editingCampaign?.status === 'paused' ? 'paused' : 'scheduled',
+            publishStatus: editingCampaign?.publishStatus ?? 'offline',
             startAt: campaignForm.startAt, endAt: campaignForm.endAt,
             edition: campaignForm.edition,
-            personalScope: campaignForm.edition === 'personal' ? 'all' : undefined,
-            schoolScope: 'all', roleScope: 'all', audienceLabel,
-            placement: 'teacher_global_modal', priority: Math.max(0, Number(campaignForm.priority) || 0),
+            personalScope: campaignForm.edition === 'personal' ? campaignForm.personalScope : undefined,
+            schoolScope: campaignForm.edition === 'school' ? campaignForm.schoolScope : 'all',
+            schoolIds: campaignForm.edition === 'school' ? campaignForm.schoolIds : [],
+            roleScope: campaignForm.edition === 'school' ? campaignForm.roleScope : 'all',
+            roleNames: campaignForm.edition === 'school' ? campaignForm.roleNames : [], audienceLabel,
+            placement: campaignPlacementTab, pageScope: campaignForm.pageScope, pageIds: campaignForm.pageIds,
+            priority: Math.max(0, Number(campaignForm.priority) || 0),
             frequency: campaignForm.frequency, maxImpressions: campaignForm.frequency === 'once_per_campaign' ? 1 : undefined,
             imageUrl: campaignForm.imageUrl.trim(), imageAlt: campaignForm.name.trim(),
             actionTarget: campaignForm.jumpEnabled && campaignForm.actionTarget.trim() ? campaignForm.actionTarget.trim() : undefined,
@@ -1860,9 +1957,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setCampaignModalOpen(false);
         setEditingCampaign(null);
     };
-    const toggleCampaignStatus = (campaign: TeacherCampaign) => {
-        const nextStatus: TeacherCampaignStatus = campaign.status === 'paused' ? 'running' : 'paused';
-        const next = teacherCampaigns.map(item => item.id === campaign.id ? { ...item, status: nextStatus, updatedAt: new Date().toISOString() } : item);
+    const toggleCampaignPublishStatus = (campaign: TeacherCampaign) => {
+        const nextPublishStatus: TeacherCampaignPublishStatus = campaign.publishStatus === 'online' ? 'offline' : 'online';
+        const next = teacherCampaigns.map(item => item.id === campaign.id ? {
+            ...item,
+            publishStatus: nextPublishStatus,
+            status: nextPublishStatus === 'online' && item.status === 'paused' ? 'scheduled' : item.status,
+            updatedAt: new Date().toISOString(),
+        } : item);
         setTeacherCampaigns(next);
         writeTeacherCampaigns(next);
     };
@@ -2549,36 +2651,68 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         </div>
                     )}
 
-                    {activeMenu === '活动投放' && (
-                        <div className="overflow-hidden rounded border border-[#E5E6EB] bg-white animate-in fade-in duration-300">
-                                <div className="flex items-center justify-between border-b border-[#F2F3F5] px-6 py-4">
-                                    <span className="text-sm text-[#86909C]">共 {teacherCampaigns.length} 条</span>
-                                    <Button type="primary" icon={<Plus size={14} className="inline-block align-[-2px]" />} onClick={() => openCampaignModal()}>新建活动</Button>
+            {activeMenu === '广告投放' && (
+                <div className="overflow-hidden rounded border border-[#E5E6EB] bg-white animate-in fade-in duration-300">
+                                <div className="flex items-center gap-6 border-b border-[#F2F3F5] px-6" role="tablist" aria-label="广告投放位">
+                                    {(['splash', 'teacher_global_modal'] as TeacherCampaignPlacement[]).map(placement => (
+                                        <button key={placement} type="button" role="tab" aria-selected={campaignPlacementTab === placement} onClick={() => setCampaignPlacementTab(placement)} className={`relative h-12 text-sm ${campaignPlacementTab === placement ? 'font-medium text-[#165DFF]' : 'text-[#4E5969] hover:text-[#1D2129]'}`}>
+                                            {campaignPlacementLabels[placement]}
+                                            {campaignPlacementTab === placement && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#165DFF]" />}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center justify-between gap-4 border-b border-[#F2F3F5] px-6 py-4">
+                                    <span className="text-sm text-[#86909C]">{campaignPlacementLabels[campaignPlacementTab]}</span>
+                                    <Button type="primary" icon={<Plus size={14} className="inline-block align-[-2px]" />} onClick={() => openCampaignModal()}>新建广告</Button>
+                                </div>
+                                <div className="pc-filter-bar flex flex-wrap items-center gap-3 border-b border-[#F2F3F5] px-6 py-4" aria-label="广告列表筛选">
+                                    <Input
+                                        allowClear
+                                        prefix={<Search size={14} className="text-[#86909C]" />}
+                                        placeholder="搜索广告名称"
+                                        value={campaignNameSearch}
+                                        onChange={setCampaignNameSearch}
+                                        style={{ width: 240 }}
+                                        aria-label="广告名称筛选"
+                                    />
+                                    <ArcoSelect
+                                        allowClear
+                                        placeholder="全部状态"
+                                        value={campaignPublishStatusFilter === 'all' ? undefined : campaignPublishStatusFilter}
+                                        options={[{ label: '上架', value: 'online' }, { label: '下架', value: 'offline' }]}
+                                        onChange={(value) => setCampaignPublishStatusFilter(value ? String(value) as TeacherCampaignPublishStatus : 'all')}
+                                        style={{ width: 160 }}
+                                        aria-label="广告状态筛选"
+                                    />
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full min-w-[980px] text-left text-sm">
                                         <thead className="bg-[#F7F8FA] text-xs font-semibold text-[#4E5969]">
-                                            <tr><th className="px-6 py-3">活动</th><th className="px-4 py-3">投放时间</th><th className="px-4 py-3">人群</th><th className="px-4 py-3">优先级</th><th className="px-4 py-3">频控</th><th className="px-4 py-3">状态</th><th className="px-4 py-3">数据</th><th className="px-6 py-3 text-right">操作</th></tr>
+                                            <tr><th className="px-6 py-3">广告</th><th className="px-4 py-3">投放时间</th><th className="px-4 py-3">人群</th><th className="px-4 py-3" aria-sort={campaignPrioritySort === 'none' ? 'none' : campaignPrioritySort === 'desc' ? 'descending' : 'ascending'}><button type="button" className="inline-flex items-center gap-1 text-[#4E5969] hover:text-[#165DFF]" onClick={() => setCampaignPrioritySort(current => current === 'none' ? 'desc' : current === 'desc' ? 'asc' : 'none')} aria-label={`优先级排序，当前${campaignPrioritySort === 'none' ? '未排序' : campaignPrioritySort === 'desc' ? '从高到低' : '从低到高'}`}>优先级<ArrowUpDown size={13} aria-hidden="true" /></button></th><th className="px-4 py-3">频控</th><th className="px-4 py-3">状态</th><th className="px-4 py-3">数据</th><th className="px-6 py-3 text-right">操作</th></tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {teacherCampaigns.map(campaign => {
-                                                const status = getCampaignStatus(campaign);
-                                                const overlapCount = teacherCampaigns.filter(item => item.id !== campaign.id && item.placement === campaign.placement && item.edition === campaign.edition && item.status !== 'draft' && item.status !== 'paused' && new Date(item.startAt).getTime() <= new Date(campaign.endAt).getTime() && new Date(item.endAt).getTime() >= new Date(campaign.startAt).getTime()).length;
+                                            {pagedTeacherCampaigns.map(campaign => {
+                                                const overlapCount = teacherCampaigns.filter(item => item.id !== campaign.id && item.placement === campaign.placement && item.publishStatus === 'online' && item.status !== 'draft' && item.status !== 'paused' && campaignsAudienceOverlap(item, campaign) && new Date(item.startAt).getTime() <= new Date(campaign.endAt).getTime() && new Date(item.endAt).getTime() >= new Date(campaign.startAt).getTime()).length;
                                                 return (
                                                     <tr key={campaign.id} className="hover:bg-slate-50/70">
-                                                        <td className="px-6 py-4"><div className="flex items-center gap-3"><img src={campaign.imageUrl} alt="" className="h-12 w-9 rounded object-cover" /><div><div className="font-medium text-[#1D2129]">{campaign.name}</div><div className="mt-1 text-xs text-[#86909C]">{campaign.type}</div></div></div></td>
+                                                        <td className="px-6 py-4"><div className="flex items-center gap-3"><img src={campaign.imageUrl} alt="" className="h-12 w-9 rounded object-cover" /><div className="font-medium text-[#1D2129]">{campaign.name}</div></div></td>
                                                         <td className="px-4 py-4 text-xs text-slate-600"><div>{campaign.startAt.replace('T', ' ')}</div><div className="mt-1">至 {campaign.endAt.replace('T', ' ')}</div></td>
-                                                        <td className="px-4 py-4 text-slate-600">{campaign.audienceLabel}</td>
+                                                        <td className="px-4 py-4 text-slate-600"><div>{campaign.audienceLabel}</div><div className="mt-1 text-xs text-slate-400">{getCampaignPageLabel(campaign)}</div></td>
                                                         <td className="px-4 py-4 font-semibold text-slate-700">{campaign.priority}</td>
                                                         <td className="px-4 py-4 text-slate-600">{campaignFrequencyLabels[campaign.frequency]}</td>
-                                                        <td className="px-4 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${status === 'running' ? 'bg-green-50 text-green-700' : status === 'paused' ? 'bg-orange-50 text-orange-700' : status === 'ended' ? 'bg-slate-100 text-slate-500' : 'bg-blue-50 text-blue-700'}`}>{campaignStatusLabels[status]}</span>{overlapCount > 0 && <div className="mt-1 text-[11px] text-orange-600">有 {overlapCount} 个时间重叠活动</div>}</td>
+                                                        <td className="px-4 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${campaign.publishStatus === 'online' ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{campaignPublishStatusLabels[campaign.publishStatus]}</span>{campaign.publishStatus === 'online' && overlapCount > 0 && <div className="mt-1 text-[11px] text-orange-600">有 {overlapCount} 个时间重叠广告</div>}</td>
                                                         <td className="px-4 py-4 text-xs text-slate-500"><div>曝光 {campaign.impressions}</div><div className="mt-1">点击 {campaign.clicks}</div></td>
-                                                        <td className="px-6 py-4"><div className="flex justify-end gap-3"><button type="button" onClick={() => openCampaignModal(campaign)} className="text-[#165DFF] hover:text-[#4080FF]">编辑</button><button type="button" onClick={() => toggleCampaignStatus(campaign)} disabled={status === 'draft' || status === 'ended'} className="text-[#4E5969] hover:text-[#165DFF] disabled:cursor-not-allowed disabled:text-[#C9CDD4]">{status === 'paused' ? '恢复' : '暂停'}</button><Popconfirm title={`确认删除“${campaign.name}”？`} onOk={() => deleteCampaign(campaign)}><button type="button" className="text-[#F53F3F] hover:text-[#F76560]">删除</button></Popconfirm></div></td>
+                                                        <td className="px-6 py-4"><div className="flex justify-end gap-3"><button type="button" onClick={() => openCampaignModal(campaign)} className="text-[#165DFF] hover:text-[#4080FF]">编辑</button><button type="button" onClick={() => toggleCampaignPublishStatus(campaign)} className="text-[#4E5969] hover:text-[#165DFF]">{campaign.publishStatus === 'online' ? '下架' : '上架'}</button><Popconfirm title={`确认删除“${campaign.name}”？`} onOk={() => deleteCampaign(campaign)}><button type="button" className="text-[#F53F3F] hover:text-[#F76560]">删除</button></Popconfirm></div></td>
                                                     </tr>
                                                 );
                                             })}
+                                            {campaignTotal === 0 && <tr><td colSpan={8} className="px-6 py-12 text-center text-sm text-[#86909C]">暂无符合条件的广告</td></tr>}
                                         </tbody>
                                     </table>
+                                </div>
+                                <div className="flex items-center justify-between gap-4 border-t border-[#F2F3F5] px-6 py-4">
+                                    <span className="text-sm text-[#86909C]">共 {campaignTotal} 条</span>
+                                    {campaignTotal > 0 && <Pagination current={campaignPage} pageSize={campaignPageSize} total={campaignTotal} showTotal={false} showJumper={campaignPageCount > 1} onChange={setCampaignPage} />}
                                 </div>
                         </div>
                     )}
@@ -4358,38 +4492,59 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-6 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="flex h-[min(820px,92vh)] w-[1080px] max-w-full flex-col overflow-hidden rounded border border-[#E5E6EB] bg-white shadow-2xl">
                         <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#E5E6EB] px-6">
-                            <h3 className="text-base font-semibold text-[#1D2129]">{editingCampaign ? '编辑活动' : '新建活动'}</h3>
-                            <button type="button" onClick={() => setCampaignModalOpen(false)} className="flex h-9 w-9 items-center justify-center text-[#86909C] hover:text-[#4E5969]" aria-label="关闭活动编辑弹窗">×</button>
+                            <h3 className="text-base font-semibold text-[#1D2129]">{editingCampaign ? '编辑广告' : '新建广告'}</h3>
+                            <button type="button" onClick={() => setCampaignModalOpen(false)} className="flex h-9 w-9 items-center justify-center text-[#86909C] hover:text-[#4E5969]" aria-label="关闭广告编辑弹窗">×</button>
                         </div>
                         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_360px] overflow-hidden">
-                            <div className="overflow-y-auto p-6">
+                            <div className="pc-form overflow-y-auto p-6">
                                 <div className="space-y-6">
                                     <section className="space-y-4">
-                                        <h4 className="text-sm font-semibold text-[#1D2129]">活动信息</h4>
-                                        <label className="block text-sm font-medium text-[#1D2129]">活动名称<input value={campaignForm.name} onChange={event => setCampaignForm(form => ({ ...form, name: event.target.value }))} placeholder="例如：2026 教师节祝福" className="mt-2 h-10 w-full rounded border border-[#E5E6EB] px-3 text-sm outline-none focus:border-[#165DFF]" /></label>
-                                        <div className="grid grid-cols-2 gap-4"><label className="text-sm font-medium text-[#1D2129]">活动类型<select value={campaignForm.type} onChange={event => setCampaignForm(form => ({ ...form, type: event.target.value }))} className="mt-2 h-10 w-full rounded border border-[#E5E6EB] bg-white px-3 text-sm outline-none focus:border-[#165DFF]"><option>营销活动</option><option>运营活动</option><option>节日关怀</option><option>通知公告</option></select></label><label className="text-sm font-medium text-[#1D2129]">优先级<input type="number" min="0" max="99" value={campaignForm.priority} onChange={event => setCampaignForm(form => ({ ...form, priority: event.target.value }))} className="mt-2 h-10 w-full rounded border border-[#E5E6EB] px-3 text-sm outline-none focus:border-[#165DFF]" /></label></div>
+                                        <h4 className="flex items-center gap-2 text-sm font-semibold text-[#1D2129]"><span className="h-4 w-1 rounded-full bg-[#165DFF]" aria-hidden="true" />广告信息</h4>
+                                        <label className="block text-sm font-medium text-[#1D2129]">广告名称<Input value={campaignForm.name} onChange={value => setCampaignForm(form => ({ ...form, name: value }))} placeholder="例如：2026 教师节祝福" className="campaign-editable-input mt-2" aria-label="广告名称" /></label>
+                                        <div className="max-w-[260px] text-sm font-medium text-[#1D2129]"><div>优先级</div><InputNumber min={0} max={99} value={campaignForm.priority === '' ? undefined : Number(campaignForm.priority)} onChange={value => setCampaignForm(form => ({ ...form, priority: String(value ?? '') }))} className="mt-2 w-full" aria-label="优先级" /></div>
                                     </section>
 
                                     <section className="space-y-4 border-t border-[#F2F3F5] pt-6">
-                                        <h4 className="text-sm font-semibold text-[#1D2129]">投放设置</h4>
-                                        <div><div className="mb-2 text-sm font-medium text-[#1D2129]">版本</div><div className="inline-flex rounded border border-[#E5E6EB] p-1">{([{ value: 'personal', label: '个人版' }, { value: 'school', label: '学校版' }] as const).map(option => <button key={option.value} type="button" onClick={() => setCampaignForm(form => ({ ...form, edition: option.value }))} className={`h-8 min-w-20 rounded px-3 text-sm ${campaignForm.edition === option.value ? 'bg-[#E8F3FF] font-medium text-[#165DFF]' : 'text-[#4E5969] hover:bg-[#F7F8FA]'}`}>{option.label}</button>)}</div></div>
-                                        {campaignForm.edition === 'school' && <div className="grid grid-cols-2 gap-4"><label className="text-sm font-medium text-[#1D2129]">学校<select disabled className="mt-2 h-10 w-full rounded border border-[#E5E6EB] bg-[#F7F8FA] px-3 text-sm text-[#4E5969]"><option>全部学校</option></select></label><label className="text-sm font-medium text-[#1D2129]">角色<select disabled className="mt-2 h-10 w-full rounded border border-[#E5E6EB] bg-[#F7F8FA] px-3 text-sm text-[#4E5969]"><option>全部角色</option></select></label></div>}
-                                        {campaignForm.edition === 'personal' && <label className="block w-[calc(50%_-_8px)] text-sm font-medium text-[#1D2129]">个人<select disabled className="mt-2 h-10 w-full rounded border border-[#E5E6EB] bg-[#F7F8FA] px-3 text-sm text-[#4E5969]"><option>全部个人</option></select></label>}
-                                        <label className="block w-[calc(50%_-_8px)] text-sm font-medium text-[#1D2129]">展示频率<select value={campaignForm.frequency} onChange={event => setCampaignForm(form => ({ ...form, frequency: event.target.value as TeacherCampaignFrequency }))} className="mt-2 h-10 w-full rounded border border-[#E5E6EB] bg-white px-3 text-sm outline-none focus:border-[#165DFF]"><option value="once_per_campaign">仅一次</option><option value="once_per_day">每天一次</option></select></label>
+                                        <h4 className="flex items-center gap-2 text-sm font-semibold text-[#1D2129]"><span className="h-4 w-1 rounded-full bg-[#165DFF]" aria-hidden="true" />投放设置</h4>
+                                        <div><div className="mb-2 text-sm font-medium text-[#1D2129]">投放范围</div><Radio.Group value={campaignForm.edition} onChange={value => setCampaignForm(form => ({ ...form, edition: String(value) as TeacherCampaignEdition }))}><Radio value="personal">个人版</Radio><Radio value="school">学校版</Radio><Radio value="all">全部</Radio></Radio.Group></div>
+                                        {campaignForm.edition === 'personal' && <label className="block text-sm font-medium text-[#1D2129]">个人范围<ArcoSelect value={campaignForm.personalScope} onChange={value => setCampaignForm(form => ({ ...form, personalScope: String(value) as TeacherCampaignPersonalScope }))} options={[{ label: '全部个人', value: 'all' }, { label: '未付费个人', value: 'unpaid' }]} className="mt-2 w-full" aria-label="个人范围" /></label>}
+                                        {campaignForm.edition === 'school' && <div className="grid grid-cols-2 gap-4"><label className="text-sm font-medium text-[#1D2129]">学校范围<ArcoSelect value={campaignForm.schoolScope} onChange={value => setCampaignForm(form => ({ ...form, schoolScope: String(value) as TeacherCampaignSchoolScope, schoolIds: String(value) === 'all' ? [] : form.schoolIds }))} options={[{ label: '全部学校', value: 'all' }, { label: '指定学校', value: 'selected' }]} className="mt-2 w-full" aria-label="学校范围" /></label><label className="text-sm font-medium text-[#1D2129]">角色范围<ArcoSelect value={campaignForm.roleScope} onChange={value => setCampaignForm(form => ({ ...form, roleScope: String(value) as TeacherCampaignRoleScope, roleNames: String(value) === 'all' ? [] : form.roleNames }))} options={[{ label: '全部角色', value: 'all' }, { label: '指定角色', value: 'selected' }]} className="mt-2 w-full" aria-label="角色范围" /></label></div>}
+                                        {campaignForm.edition === 'school' && campaignForm.schoolScope === 'selected' && <label className="block text-sm font-medium text-[#1D2129]">选择学校<ArcoSelect mode="multiple" allowClear maxTagCount={2} value={campaignForm.schoolIds} onChange={value => setCampaignForm(form => ({ ...form, schoolIds: value.map(String) }))} options={campaignSchoolOptions} className="mt-2 w-full" aria-label="选择学校" placeholder="请选择学校" /> </label>}
+                                        {campaignForm.edition === 'school' && campaignForm.roleScope === 'selected' && <label className="block text-sm font-medium text-[#1D2129]">选择角色<ArcoSelect mode="multiple" allowClear maxTagCount={2} value={campaignForm.roleNames} onChange={value => setCampaignForm(form => ({ ...form, roleNames: value.map(String) }))} options={campaignRoleOptions} className="mt-2 w-full" aria-label="选择角色" placeholder="请选择角色" /> </label>}
+                                        {campaignPlacementTab === 'teacher_global_modal' && <div><div className="mb-2 text-sm font-medium text-[#1D2129]">展示页面</div><Radio.Group value={campaignForm.pageScope} onChange={value => setCampaignForm(form => ({ ...form, pageScope: String(value) as TeacherCampaignPageScope, pageIds: String(value) === 'all' ? [] : form.pageIds }))}><Radio value="all">全部页面</Radio><Radio value="selected">指定页面</Radio></Radio.Group></div>}
+                                        {campaignPlacementTab === 'teacher_global_modal' && campaignForm.pageScope === 'selected' && <label className="block text-sm font-medium text-[#1D2129]">选择页面<ArcoSelect mode="multiple" allowClear value={campaignForm.pageIds} onChange={value => setCampaignForm(form => ({ ...form, pageIds: value.map(String) as TeacherCampaignPage[] }))} options={campaignPageOptions} className="mt-2 w-full" aria-label="选择页面" placeholder="请选择页面" /></label>}
+                                        <label className="block w-[calc(50%_-_8px)] text-sm font-medium text-[#1D2129]">展示频率<ArcoSelect value={campaignForm.frequency} onChange={value => setCampaignForm(form => ({ ...form, frequency: String(value) as TeacherCampaignFrequency }))} options={[{ label: '仅一次', value: 'once_per_campaign' }, { label: '每周一次', value: 'once_per_week' }]} className="mt-2 w-full" aria-label="展示频率" /></label>
                                         <div className="grid grid-cols-2 gap-4"><label className="text-sm font-medium text-[#1D2129]">开始时间<input type="datetime-local" value={campaignForm.startAt} onChange={event => setCampaignForm(form => ({ ...form, startAt: event.target.value }))} className="mt-2 h-10 w-full rounded border border-[#E5E6EB] px-3 text-sm outline-none focus:border-[#165DFF]" /></label><label className="text-sm font-medium text-[#1D2129]">结束时间<input type="datetime-local" value={campaignForm.endAt} onChange={event => setCampaignForm(form => ({ ...form, endAt: event.target.value }))} className="mt-2 h-10 w-full rounded border border-[#E5E6EB] px-3 text-sm outline-none focus:border-[#165DFF]" /></label></div>
-                                        {overlappingCampaigns.length > 0 && <Alert type="warning" showIcon content={<details className="group w-full"><summary className="flex cursor-pointer list-none items-center justify-between gap-4"><span className="text-[#4E5969]">同版本、同时段存在 {overlappingCampaigns.length} 个活动，将按优先级依次展示；达到展示频率后自动展示下一个活动。</span><span className="shrink-0 font-medium text-[#165DFF] group-open:hidden">查看冲突活动</span><span className="hidden shrink-0 font-medium text-[#165DFF] group-open:inline">收起</span></summary><div className="mt-3 space-y-4 border-t border-[#FFD591] pt-3">{overlappingCampaigns.map(campaign => <div key={campaign.id}><div className="flex items-center justify-between gap-4"><span className="min-w-0 truncate font-medium text-[#1D2129]">{campaign.name}</span><span className="shrink-0 text-xs text-[#4E5969]">优先级 {campaign.priority}</span></div><dl className="mt-2 grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs"><dt className="text-[#86909C]">投放版本</dt><dd className="text-[#4E5969]">{campaignEditionLabels[campaign.edition]}</dd><dt className="text-[#86909C]">投放时间</dt><dd className="text-[#4E5969]">{campaign.startAt.replace('T', ' ')} 至 {campaign.endAt.replace('T', ' ')}</dd><dt className="text-[#86909C]">展示频率</dt><dd className="text-[#4E5969]">{campaignFrequencyLabels[campaign.frequency]}</dd></dl><div className="mt-2 text-xs text-[#86909C]">{campaign.frequency === 'once_per_campaign' ? '该活动向每位老师展示 1 次后，老师下次进入时可继续看到其他活动。' : '该活动向每位老师当日展示 1 次后，老师当天再次进入时可继续看到其他活动。'}</div></div>)}</div></details>} />}
+                                        {overlappingCampaigns.length > 0 && <Alert type="warning" showIcon content={<details className="group w-full"><summary className="flex cursor-pointer list-none items-center justify-between gap-4"><span className="text-[#4E5969]">同投放对象、同时段存在 {overlappingCampaigns.length} 个广告，将按优先级依次展示；达到展示频率后自动展示下一个广告。</span><span className="shrink-0 font-medium text-[#165DFF] group-open:hidden">查看冲突广告</span><span className="hidden shrink-0 font-medium text-[#165DFF] group-open:inline">收起</span></summary><div className="mt-3 space-y-4 border-t border-[#FFD591] pt-3">{overlappingCampaigns.map(campaign => <div key={campaign.id}><div className="flex items-center justify-between gap-4"><span className="min-w-0 truncate font-medium text-[#1D2129]">{campaign.name}</span><span className="shrink-0 text-xs text-[#4E5969]">优先级 {campaign.priority}</span></div><dl className="mt-2 grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs"><dt className="text-[#86909C]">投放版本</dt><dd className="text-[#4E5969]">{campaignEditionLabels[campaign.edition]}</dd><dt className="text-[#86909C]">展示页面</dt><dd className="text-[#4E5969]">{getCampaignPageLabel(campaign)}</dd><dt className="text-[#86909C]">投放时间</dt><dd className="text-[#4E5969]">{campaign.startAt.replace('T', ' ')} 至 {campaign.endAt.replace('T', ' ')}</dd><dt className="text-[#86909C]">展示频率</dt><dd className="text-[#4E5969]">{campaignFrequencyLabels[campaign.frequency]}</dd></dl><div className="mt-2 text-xs text-[#86909C]">{campaign.frequency === 'once_per_campaign' ? '该广告向每位老师展示 1 次后，老师下次进入时可继续看到其他广告。' : '该广告向每位老师本周展示 1 次后，老师本周再次进入时可继续看到其他广告。'}</div></div>)}</div></details>} />}
                                     </section>
 
                                     <section className="space-y-4 border-t border-[#F2F3F5] pt-6">
-                                        <h4 className="text-sm font-semibold text-[#1D2129]">活动素材</h4>
-                                        <div>{campaignForm.imageUrl ? <div className="flex items-center gap-4 rounded border border-[#E5E6EB] p-3"><img src={campaignForm.imageUrl} alt="活动图片预览" className="h-24 w-20 rounded object-cover" /><div className="flex gap-3"><label className="cursor-pointer text-sm text-[#165DFF] hover:text-[#4080FF]">重新上传<input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setCampaignForm(form => ({ ...form, imageUrl: reader.result })); }; reader.readAsDataURL(file); }} /></label><button type="button" onClick={() => setCampaignForm(form => ({ ...form, imageUrl: '' }))} className="text-sm text-[#F53F3F]">移除</button></div></div> : <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-[#C9CDD4] text-[#86909C] hover:border-[#165DFF] hover:text-[#165DFF]"><Upload size={24} /><span className="mt-2 text-sm">上传图片</span><input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setCampaignForm(form => ({ ...form, imageUrl: reader.result })); }; reader.readAsDataURL(file); }} /></label>}</div>
-                                        <div className="border-t border-[#F2F3F5] pt-4"><div className="flex items-center justify-between"><span className="text-sm font-medium text-[#1D2129]">点击跳转</span><Switch checked={campaignForm.jumpEnabled} onChange={checked => setCampaignForm(form => ({ ...form, jumpEnabled: checked }))} /></div>{campaignForm.jumpEnabled && <label className="mt-4 block text-sm font-medium text-[#1D2129]">跳转路径<input value={campaignForm.actionTarget} onChange={event => setCampaignForm(form => ({ ...form, actionTarget: event.target.value }))} placeholder="应用内路径或 https:// 外部链接" className="mt-2 h-10 w-full rounded border border-[#E5E6EB] px-3 text-sm outline-none focus:border-[#165DFF]" /></label>}</div>
+                                        <h4 className="flex items-center gap-2 text-sm font-semibold text-[#1D2129]"><span className="h-4 w-1 rounded-full bg-[#165DFF]" aria-hidden="true" />广告素材<Popover
+                                            trigger="click"
+                                            position="right"
+                                            content={<div className="w-[280px] text-xs leading-5 text-[#4E5969]">
+                                                <div className="mb-2 text-sm font-semibold text-[#1D2129]">素材展示规则</div>
+                                                <ul className="m-0 list-disc space-y-1 pl-4">
+                                                    <li>图片会放在统一宽度的手机弹窗中，左右保留边距。</li>
+                                                    <li>图片按原比例缩放，不拉伸、不裁剪。</li>
+                                                    <li>图片过高时会自动缩小，保证整张图片一屏完整展示，不需要上下滚动。</li>
+                                                    <li>推荐上传 750 × 1000 px（3:4）竖版图片；过宽或过长的素材可能显示较小。</li>
+                                                </ul>
+                                            </div>}
+                                        >
+                                            <button type="button" className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#86909C] transition hover:bg-[#F2F3F5] hover:text-[#4E5969] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#165DFF]" aria-label="查看广告素材展示规则">
+                                                <CircleHelp size={16} aria-hidden="true" />
+                                            </button>
+                                        </Popover></h4>
+                                        <p className="-mt-2 text-xs text-[#86909C]">建议尺寸 750 × 1000 px（3:4 竖版），支持 PNG、JPG、WebP</p>
+                                        <div>{campaignForm.imageUrl ? <div className="flex items-center gap-4 rounded border border-[#E5E6EB] p-3"><img src={campaignForm.imageUrl} alt="广告图片预览" className="h-24 w-20 rounded object-cover" /><div className="flex gap-3"><label className="cursor-pointer text-sm text-[#165DFF] hover:text-[#4080FF]">重新上传<input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setCampaignForm(form => ({ ...form, imageUrl: reader.result })); }; reader.readAsDataURL(file); }} /></label><button type="button" onClick={() => setCampaignForm(form => ({ ...form, imageUrl: '' }))} className="text-sm text-[#F53F3F]">移除</button></div></div> : <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-[#C9CDD4] text-[#86909C] hover:border-[#165DFF] hover:text-[#165DFF]"><Upload size={24} /><span className="mt-2 text-sm">上传图片</span><input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setCampaignForm(form => ({ ...form, imageUrl: reader.result })); }; reader.readAsDataURL(file); }} /></label>}</div>
+                                        <div className="border-t border-[#F2F3F5] pt-4"><div className="flex items-center justify-between"><span className="text-sm font-medium text-[#1D2129]">点击跳转</span><Switch checked={campaignForm.jumpEnabled} onChange={checked => setCampaignForm(form => ({ ...form, jumpEnabled: checked }))} /></div>{campaignForm.jumpEnabled && <label className="mt-4 block text-sm font-medium text-[#1D2129]">跳转路径<Input value={campaignForm.actionTarget} onChange={value => setCampaignForm(form => ({ ...form, actionTarget: value }))} placeholder="应用内路径或 https:// 外部链接" className="mt-2" aria-label="跳转路径" /></label>}</div>
                                     </section>
                                 </div>
                             </div>
                             <aside className="flex min-h-0 items-stretch justify-center border-l border-[#F2F3F5] bg-[#F7F8FA] p-4"><TeacherCampaignPreview campaign={campaignForm.imageUrl ? campaignPreview : null} /></aside>
                         </div>
-                        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4"><Button onClick={() => setCampaignModalOpen(false)}>取消</Button><Button type="primary" onClick={saveCampaign} disabled={!isCampaignFormValid}>保存活动</Button></div>
+                        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4"><Button onClick={() => setCampaignModalOpen(false)}>取消</Button><Button type="primary" onClick={saveCampaign} disabled={!isCampaignFormValid}>保存广告</Button></div>
                     </div>
                 </div>
             )}

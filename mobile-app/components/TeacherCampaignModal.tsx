@@ -13,7 +13,7 @@ const TeacherCampaignModal: React.FC<TeacherCampaignModalProps> = ({ campaign, o
 
     return (
         <div className="pointer-events-auto absolute inset-0 z-[1100] flex items-center justify-center bg-black/[0.64] px-5 animate-in fade-in [animation-duration:var(--tm-duration-standard)]">
-            <button type="button" className="absolute inset-0" onClick={onClose} aria-label="关闭活动弹窗" />
+            <button type="button" className="absolute inset-0" onClick={onClose} aria-label="关闭广告弹窗" />
             <section
                 role="dialog"
                 aria-modal="true"
@@ -23,7 +23,7 @@ const TeacherCampaignModal: React.FC<TeacherCampaignModalProps> = ({ campaign, o
                 <button
                     type="button"
                     onClick={onClose}
-                    aria-label="关闭活动弹窗"
+                    aria-label="关闭广告弹窗"
                     className="absolute right-2 top-2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm active:bg-black/40"
                 >
                     <X className="h-5 w-5" aria-hidden="true" />
@@ -35,10 +35,10 @@ const TeacherCampaignModal: React.FC<TeacherCampaignModalProps> = ({ campaign, o
                         className="block w-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]"
                         aria-label={`${campaign.imageAlt}，点击跳转`}
                     >
-                        <img src={campaign.imageUrl} alt={campaign.imageAlt} className="block h-auto max-h-[70dvh] w-full object-cover" />
+                        <img src={campaign.imageUrl} alt={campaign.imageAlt} className="mx-auto block max-h-[70dvh] max-w-full object-contain" />
                     </button>
                 ) : (
-                    <img src={campaign.imageUrl} alt={campaign.imageAlt} className="block h-auto max-h-[70dvh] w-full object-cover" />
+                    <img src={campaign.imageUrl} alt={campaign.imageAlt} className="mx-auto block max-h-[70dvh] max-w-full object-contain" />
                 )}
             </section>
         </div>

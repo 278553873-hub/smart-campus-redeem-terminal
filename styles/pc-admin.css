@@ -47,6 +47,66 @@
   color: #165dff !important;
 }
 
+/* 配置表单中的可编辑控件使用白底，与真实禁用态明确区分。 */
+.pc-form .arco-input-inner-wrapper,
+.pc-form .arco-select-view,
+.pc-form .arco-picker {
+  background: #fff !important;
+  border: 1px solid #e5e6eb !important;
+  color: #1d2129 !important;
+}
+
+.pc-form .arco-input-inner-wrapper:hover,
+.pc-form .arco-select:not(.arco-select-disabled) .arco-select-view:hover,
+.pc-form .arco-picker:hover {
+  border-color: #165dff !important;
+}
+
+.pc-form .arco-input-inner-wrapper-focus,
+.pc-form .arco-select-focused .arco-select-view,
+.pc-form .arco-picker-focused {
+  border-color: #165dff !important;
+  box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.12) !important;
+}
+
+.pc-form .arco-input-inner-wrapper-disabled,
+.pc-form .arco-select-disabled .arco-select-view {
+  background: #f7f8fa !important;
+  border-color: #e5e6eb !important;
+  color: #86909c !important;
+  cursor: not-allowed;
+}
+
+.pc-form .arco-input,
+.pc-form .arco-select-view-value,
+.pc-form .arco-picker-input input {
+  color: #1d2129 !important;
+}
+
+.pc-form .arco-input::placeholder,
+.pc-form .arco-select-view-placeholder,
+.pc-form .arco-picker-input input::placeholder {
+  color: #86909c !important;
+}
+
+.pc-form .campaign-editable-input,
+.pc-form .campaign-editable-input.arco-input {
+  background: #fff !important;
+  border: 1px solid #e5e6eb !important;
+  color: #1d2129 !important;
+}
+
+.pc-form .campaign-editable-input:hover,
+.pc-form .campaign-editable-input.arco-input:hover {
+  border-color: #165dff !important;
+}
+
+.pc-form .campaign-editable-input:focus,
+.pc-form .campaign-editable-input.arco-input:focus {
+  border-color: #165dff !important;
+  box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.12) !important;
+}
+
 /* Arco Cascader 多选回显统一保持单行，选中值过长时由 tag 自身省略，不撑高控件。 */
 .arco-cascader-multiple .arco-cascader-view {
   overflow: hidden;

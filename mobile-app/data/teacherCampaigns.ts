@@ -1,6 +1,13 @@
 export type TeacherCampaignStatus = 'draft' | 'scheduled' | 'running' | 'paused' | 'ended';
-export type TeacherCampaignFrequency = 'once_per_campaign' | 'once_per_day';
-export type TeacherCampaignEdition = 'personal' | 'school';
+export type TeacherCampaignPublishStatus = 'online' | 'offline';
+export type TeacherCampaignFrequency = 'once_per_campaign' | 'once_per_week';
+export type TeacherCampaignEdition = 'personal' | 'school' | 'all';
+export type TeacherCampaignPersonalScope = 'all' | 'unpaid';
+export type TeacherCampaignSchoolScope = 'all' | 'selected';
+export type TeacherCampaignRoleScope = 'all' | 'selected';
+export type TeacherCampaignPlacement = 'splash' | 'teacher_global_modal';
+export type TeacherCampaignPageScope = 'all' | 'selected';
+export type TeacherCampaignPage = 'home_log' | 'class_list' | 'me';
 
 export interface TeacherCampaign {
     id: string;
@@ -8,14 +15,19 @@ export interface TeacherCampaign {
     name: string;
     type: string;
     status: TeacherCampaignStatus;
+    publishStatus: TeacherCampaignPublishStatus;
     startAt: string;
     endAt: string;
     edition: TeacherCampaignEdition;
-    personalScope?: 'all';
-    schoolScope: 'all';
-    roleScope: 'all';
+    personalScope?: TeacherCampaignPersonalScope;
+    schoolScope: TeacherCampaignSchoolScope;
+    schoolIds?: string[];
+    roleScope: TeacherCampaignRoleScope;
+    roleNames?: string[];
     audienceLabel: string;
-    placement: 'teacher_global_modal';
+    placement: TeacherCampaignPlacement;
+    pageScope: TeacherCampaignPageScope;
+    pageIds?: TeacherCampaignPage[];
     priority: number;
     frequency: TeacherCampaignFrequency;
     maxImpressions?: number;
@@ -50,6 +62,7 @@ export const DEFAULT_TEACHER_CAMPAIGNS: TeacherCampaign[] = [
         name: '2026 教师节祝福',
         type: '节日关怀',
         status: 'running',
+        publishStatus: 'online',
         startAt: '2026-08-24T00:00',
         endAt: '2026-09-30T23:59',
         edition: 'school',
@@ -58,6 +71,8 @@ export const DEFAULT_TEACHER_CAMPAIGNS: TeacherCampaign[] = [
         roleScope: 'all',
         audienceLabel: '学校版 · 全部学校 · 全部角色',
         placement: 'teacher_global_modal',
+        pageScope: 'all',
+        pageIds: [],
         priority: 10,
         frequency: 'once_per_campaign',
         maxImpressions: 1,
@@ -80,13 +95,19 @@ export const readTeacherCampaigns = (): TeacherCampaign[] => {
         if (!Array.isArray(parsed)) return DEFAULT_TEACHER_CAMPAIGNS;
         return parsed.map((campaign: TeacherCampaign) => ({
             ...campaign,
+            placement: campaign.placement === 'splash' ? 'splash' : 'teacher_global_modal',
+            pageScope: campaign.pageScope ?? 'all',
+            pageIds: campaign.pageIds ?? [],
+            publishStatus: campaign.publishStatus ?? (campaign.status === 'paused' ? 'offline' : 'online'),
             edition: campaign.edition ?? 'school',
-            personalScope: campaign.edition === 'personal' ? 'all' : undefined,
-            schoolScope: 'all',
-            roleScope: 'all',
-            frequency: (campaign as { frequency?: string }).frequency === 'once_per_session'
-                ? 'once_per_campaign'
-                : campaign.frequency,
+            personalScope: campaign.edition === 'personal' ? (campaign.personalScope ?? 'all') : undefined,
+            schoolScope: campaign.schoolScope ?? 'all',
+            schoolIds: campaign.schoolIds ?? [],
+            roleScope: campaign.roleScope ?? 'all',
+            roleNames: campaign.roleNames ?? [],
+            frequency: (campaign as { frequency?: string }).frequency === 'once_per_week'
+                ? 'once_per_week'
+                : 'once_per_campaign',
         }));
     } catch {
         return DEFAULT_TEACHER_CAMPAIGNS;
@@ -100,6 +121,7 @@ export const writeTeacherCampaigns = (campaigns: TeacherCampaign[]) => {
 };
 
 export const isTeacherCampaignEligible = (campaign: TeacherCampaign, now = new Date()) => {
+    if (campaign.publishStatus === 'offline') return false;
     if (campaign.status !== 'running' && campaign.status !== 'scheduled') return false;
     const start = new Date(campaign.startAt);
     const end = new Date(campaign.endAt);
@@ -150,11 +172,47 @@ export const hasTeacherCampaignImpression = (campaign: TeacherCampaign, teacherI
     ));
     if (campaign.frequency === 'once_per_campaign') return impressions.length > 0;
     if (campaign.maxImpressions && impressions.length >= campaign.maxImpressions) return true;
-    if (campaign.frequency === 'once_per_day') {
-        const today = new Date().toISOString().slice(0, 10);
-        return impressions.some(event => event.createdAt.slice(0, 10) === today);
+    if (campaign.frequency === 'once_per_week') {
+        const getWeekStart = (value: string | Date) => {
+            const date = new Date(value);
+            const day = (date.getDay() + 6) % 7;
+            date.setHours(0, 0, 0, 0);
+            date.setDate(date.getDate() - day);
+            return date.getTime();
+        };
+        const currentWeek = getWeekStart(new Date());
+        return impressions.some(event => getWeekStart(event.createdAt) === currentWeek);
     }
     return false;
+};
+
+export interface TeacherCampaignAudienceContext {
+    schoolId?: string;
+    role?: string;
+    isPaidPersonal?: boolean;
+    page?: TeacherCampaignPage;
+}
+
+const isTeacherCampaignAudienceMatch = (
+    campaign: TeacherCampaign,
+    edition: TeacherCampaignEdition,
+    audience: TeacherCampaignAudienceContext,
+) => {
+    if (campaign.edition !== 'all' && campaign.edition !== edition) return false;
+    const pageMatch = campaign.pageScope === 'all'
+        || !audience.page
+        || (campaign.pageIds ?? []).includes(audience.page);
+    if (edition === 'personal') {
+        const personalMatch = campaign.personalScope !== 'unpaid' || audience.isPaidPersonal === false;
+        return personalMatch && pageMatch;
+    }
+    const schoolMatch = campaign.schoolScope === 'all'
+        || !audience.schoolId
+        || (campaign.schoolIds ?? []).includes(audience.schoolId);
+    const roleMatch = campaign.roleScope === 'all'
+        || !audience.role
+        || (campaign.roleNames ?? []).includes(audience.role);
+    return schoolMatch && roleMatch && pageMatch;
 };
 
 export const getNextTeacherCampaign = (
@@ -162,10 +220,11 @@ export const getNextTeacherCampaign = (
     teacherId: string,
     edition: TeacherCampaignEdition,
     now = new Date(),
+    audience: TeacherCampaignAudienceContext = {},
 ) => (
     sortTeacherCampaigns(campaigns).find(campaign => (
         campaign.placement === 'teacher_global_modal'
-        && campaign.edition === edition
+        && isTeacherCampaignAudienceMatch(campaign, edition, audience)
         && isTeacherCampaignEligible(campaign, now)
         && !hasTeacherCampaignImpression(campaign, teacherId)
     )) ?? null

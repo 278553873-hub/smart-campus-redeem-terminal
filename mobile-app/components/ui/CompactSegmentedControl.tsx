@@ -33,6 +33,9 @@ const CompactSegmentedControl = <TValue extends string,>({
   const activeHeightClass = compact
     ? 'h-[var(--tm-selection-segment-compact-active-height)]'
     : 'h-[var(--tm-selection-segment-visible-height)]';
+  const motionInsetClass = compact
+    ? 'px-[var(--tm-selection-segment-compact-inset)]'
+    : 'px-[var(--tm-space-1)]';
 
   return (
     <div
@@ -43,21 +46,25 @@ const CompactSegmentedControl = <TValue extends string,>({
     >
       <span
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 ${compact ? 'h-[var(--tm-selection-segment-compact-track-height)] rounded-[var(--tm-selection-segment-compact-track-radius)] bg-[var(--tm-selection-segment-track-bg)]' : 'h-[var(--tm-selection-touch-height)] rounded-[var(--tm-radius-control)] bg-[var(--tm-selection-segment-track-bg)]'}`}
+        className={`pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 ${compact ? 'h-[var(--tm-selection-segment-compact-track-height)] rounded-[var(--tm-selection-segment-compact-track-radius)] bg-[var(--tm-selection-segment-track-bg)]' : 'h-[var(--tm-selection-touch-height)] rounded-[var(--tm-selection-segment-track-radius)] bg-[var(--tm-selection-segment-track-bg)]'}`}
       />
       {motion === 'sliding' && (
         <span
           aria-hidden="true"
-          className={`pointer-events-none absolute top-1/2 z-[1] -translate-y-1/2 ${compact ? 'inset-x-[var(--tm-selection-segment-compact-inset)]' : 'inset-x-[var(--tm-space-1)]'}`}
+          className="pointer-events-none absolute inset-x-0 top-1/2 z-[1] -translate-y-1/2"
         >
           <span
             data-sliding-indicator
-            className={`block rounded-[var(--tm-radius-control)] bg-[var(--tm-selection-segment-active-bg)] [box-shadow:var(--tm-selection-segment-active-shadow)] transition-transform [transition-duration:var(--tm-selection-segment-slide-duration)] [transition-timing-function:var(--tm-selection-segment-slide-easing)] motion-reduce:transition-none ${activeHeightClass}`}
+            className={`block transition-transform [transition-duration:var(--tm-selection-segment-slide-duration)] [transition-timing-function:var(--tm-selection-segment-slide-easing)] motion-reduce:transition-none ${activeHeightClass}`}
             style={{
               width: `${100 / Math.max(items.length, 1)}%`,
               transform: `translate3d(${selectedIndex * 100}%, 0, 0)`,
             }}
-          />
+          >
+            <span
+              className={`block h-full bg-[var(--tm-selection-segment-active-bg)] [box-shadow:var(--tm-selection-segment-active-shadow)] ${compact ? 'mx-[var(--tm-selection-segment-compact-inset)] rounded-[var(--tm-radius-control)]' : 'mx-[var(--tm-space-1)] rounded-[var(--tm-selection-segment-active-radius)]'}`}
+            />
+          </span>
         </span>
       )}
       {items.map(item => {
@@ -76,7 +83,7 @@ const CompactSegmentedControl = <TValue extends string,>({
             aria-selected={semantics === 'tabs' ? selected : undefined}
             aria-pressed={semantics === 'group' ? selected : undefined}
             onClick={() => onChange(item.value)}
-            className={`${fullWidth ? 'min-w-0' : 'min-w-[72px]'} relative z-10 flex min-h-[var(--tm-selection-touch-height)] items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${motion === 'sliding' ? 'px-0.5' : 'p-[var(--tm-space-1)] transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] motion-reduce:transition-none motion-reduce:active:scale-100'}`}
+            className={`${fullWidth ? 'min-w-0' : 'min-w-[72px]'} relative z-10 flex min-h-[var(--tm-selection-touch-height)] items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${motion === 'sliding' ? motionInsetClass : 'p-[var(--tm-space-1)] transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] motion-reduce:transition-none motion-reduce:active:scale-100'}`}
           >
             <span className={`relative z-10 flex w-full items-center justify-center rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] [transition-duration:var(--tm-duration-fast)] motion-reduce:transition-none ${motion === 'sliding' ? 'transition-colors' : 'transition-[background-color,color,box-shadow]'} ${activeHeightClass} ${selectedClass}`}>
               {item.label}

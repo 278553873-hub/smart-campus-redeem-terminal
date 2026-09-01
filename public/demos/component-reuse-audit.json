@@ -1,0 +1,79 @@
+{
+  "scope": "components、mobile-app/components、mobile-app/views 下的教师手机端及 UI 改造相关 React 源码；按组件定义、import 关系、JSX 使用和实现位置盘点，不修改业务代码",
+  "auditDate": "2026-09-01",
+  "verdict": "部分统一，复用边界未收敛",
+  "sourceFileCount": 171,
+  "componentDefinitionCount": 596,
+  "importRelationCount": 1648,
+  "highReuseComponentCount": 7,
+  "duplicateImplementationCandidateCount": 12,
+  "toUnifyComponentCount": 8,
+  "scanNotes": [
+    "组件定义按可复用 React 组件声明归一统计；同一文件的局部渲染函数不重复计为页面组件。",
+    "引用次数按源码中的 JSX 使用或 import 关系统计；数字用于发现复用热点，不代表运行时实例数。",
+    "重复实现候选是视觉或交互职责相近、但代码入口分散的对象，需产品确认后再进入改造排期。"
+  ],
+  "componentFamilies": [
+    {
+      "id": "foundation",
+      "layer": "基础层",
+      "label": "Token 与基础控件",
+      "examples": ["teacherMobileTokens", "MobileSelectionIndicator", "Icons", "MenuItem"],
+      "currentState": "有统一令牌源，但部分页面仍直接组合 Tailwind 类或局部尺寸。",
+      "risk": "中",
+      "recommendation": "基础层只提供语义、尺寸和状态，不承载业务规则；新增视觉值先进入 Token。"
+    },
+    {
+      "id": "controls",
+      "layer": "通用组件层",
+      "label": "导航、选择、搜索与反馈控件",
+      "examples": ["CompactSegmentedControl", "PillSelectionControl", "TextSelectionControl", "MobileSearchInput", "MobileToast"],
+      "currentState": "主流控件已有公共组件，仍存在同类页面内手写控件。",
+      "risk": "高",
+      "recommendation": "按交互语义复用，业务只传选项、当前值和回调，不传颜色、圆角和间距。"
+    },
+    {
+      "id": "containers",
+      "layer": "通用组件层",
+      "label": "弹窗、缺省态与卡片容器",
+      "examples": ["MobileBottomSheet", "MobileConfirmSheet", "MobileEmptyState", "MobileCard"],
+      "currentState": "MobileBottomSheet 覆盖面最大，但仍有局部外壳重复实现。",
+      "risk": "高",
+      "recommendation": "公共容器统一结构、焦点、滚动、动效和可访问能力；业务只提供内容和动作。"
+    },
+    {
+      "id": "domain",
+      "layer": "业务组合层",
+      "label": "学生、报告、班级与奖章业务组合",
+      "examples": ["StudentCompactSelectGrid", "StudentRosterCard", "TeacherRecordInputBar", "ClassInviteFlow"],
+      "currentState": "业务组合组件已出现，但相近流程的选择器和卡片仍由页面分别拼装。",
+      "risk": "高",
+      "recommendation": "先抽稳定的交互骨架，再通过配置传入业务差异；禁止业务组件反向修改基础 Token。"
+    }
+  ],
+  "reuseHotspots": [
+    {"name": "MobileBottomSheet", "layer": "通用组件层", "fileCount": 39, "jsxUseCount": 92, "state": "高复用，仍有旁路实现", "action": "收敛全部底部弹层外壳"},
+    {"name": "MobileEmptyState", "layer": "通用组件层", "fileCount": 17, "jsxUseCount": 26, "state": "高复用", "action": "统一图片、文案和最小高度的配置接口"},
+    {"name": "CompactSegmentedControl", "layer": "通用组件层", "fileCount": 9, "jsxUseCount": 11, "state": "中高复用，存在手写 Tab", "action": "统一切换层级和触控高度"},
+    {"name": "MobileSearchInput", "layer": "通用组件层", "fileCount": 8, "jsxUseCount": 10, "state": "中复用", "action": "选择学生、班级和密码搜索统一入口"},
+    {"name": "MobileConfirmSheet", "layer": "通用组件层", "fileCount": 8, "jsxUseCount": 11, "state": "中复用，部分确认弹窗旁路", "action": "统一确认与危险操作语义"},
+    {"name": "MobileToast", "layer": "通用组件层", "fileCount": 8, "jsxUseCount": 9, "state": "中复用，需区分阻断弹窗", "action": "短反馈与阻断反馈分型"},
+    {"name": "PillSelectionControl", "layer": "通用组件层", "fileCount": 4, "jsxUseCount": 5, "state": "低中复用", "action": "保留为条件筛选，不扩散到一级视图切换"}
+  ],
+  "duplicateCandidates": [
+    {"name": "学生选择器", "locations": ["ClassDetailView 分组", "MedalIssuanceView 颁发奖章", "StudentTeamEditorView 调整成员", "批量操作流程"], "risk": "高", "reason": "搜索、网格、选中态和提交区容易被每个业务重新实现", "recommendedComponent": "MobileStudentPickerSheet"},
+    {"name": "底部弹窗外壳", "locations": ["MobileNoticeSheet", "HomeroomClassPickerSheet", "DashboardView", "ClassRecordLogView", "档案与问卷局部抽屉"], "risk": "高", "reason": "圆角、遮罩、滚动和焦点管理出现多套写法", "recommendedComponent": "MobileBottomSheet"},
+    {"name": "确认操作", "locations": ["离校确认", "删除确认", "报告生成确认", "奖章发放确认"], "risk": "中高", "reason": "按钮主次、危险色和关闭行为不一致", "recommendedComponent": "MobileConfirmSheet"},
+    {"name": "Tab 与分段切换", "locations": ["报告、校园币、问卷、指标选择"], "risk": "中高", "reason": "同为互斥视图却混用底线、胶囊和局部按钮", "recommendedComponent": "CompactSegmentedControl / TextSelectionControl / PillSelectionControl"},
+    {"name": "学生卡片", "locations": ["花名册、选择学生、学生详情入口"], "risk": "中", "reason": "信息密度和点击区域相近，但展示与选择职责未明确分层", "recommendedComponent": "StudentRosterCard + StudentCompactSelectItem"}
+  ],
+  "studentPickerContract": {
+    "scenarios": ["添加小组", "调整成员", "颁发奖章", "批量操作"],
+    "mustReuse": ["底部弹窗外壳", "白色吸顶搜索区", "学生网格布局", "学生项基础结构", "统一选中标记", "空状态", "底部主操作区"],
+    "businessInputs": ["候选学生集合", "默认选中学生", "是否仅看未分组", "是否全选当前结果", "是否显示归组信息", "是否允许跨组移动", "底部动作名称", "提交后的业务回调"],
+    "forbiddenOverrides": ["业务页面自定义圆角", "业务页面自定义遮罩或阴影", "业务页面复制搜索框样式", "业务页面自行拼接人数文案", "用奖章业务规则污染学生选择基础组件"],
+    "status": "待产品确认后进入公共组件设计任务；教师手机端页面保持现状。"
+  },
+  "inventoryFields": ["组件名称", "所属层级", "当前实现数量", "引用文件数", "使用页面", "视觉变体数", "行为差异", "重复风险", "推荐公共组件", "业务例外", "统一状态"],
+  "excludedPatterns": ["测试文件中的示例组件", "与教师手机端无关的大屏和兑换业务组件", "不产生 UI 的纯数据函数", "本次盘点过程中产生的日志或过程记录"]
+}
