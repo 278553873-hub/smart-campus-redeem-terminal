@@ -637,7 +637,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         ? `custom-${appliedCustomRange.start}-${appliedCustomRange.end}`
         : resolvedReportPeriod;
     const reportKey = `${reportSourceKey}-${appliedPeriodKey}`;
-
     return (
         <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent text-[var(--tm-text-primary)]">
             <div className="min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar" onScroll={handleReportScroll}>

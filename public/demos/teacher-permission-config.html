@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师端权限配置演示</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --line: #e6eaf0;
+      --line-strong: #d9e0ea;
+      --ink: #1d2939;
+      --muted: #667085;
+      --subtle: #98a2b3;
+      --blue: #1769e0;
+      --blue-soft: #edf4ff;
+      --green: #159570;
+      --green-soft: #ecfdf5;
+      --amber: #b7791f;
+      --amber-soft: #fff8e7;
+      --danger: #d92d20;
+      --radius: 10px;
+      --shadow: 0 1px 2px rgba(16, 24, 40, .03), 0 8px 28px rgba(16, 24, 40, .035);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 1120px;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { min-height: 100vh; display: flex; }
+    .sidebar {
+      width: 232px;
+      flex: 0 0 232px;
+      min-height: 100vh;
+      background: #101828;
+      color: #d0d5dd;
+      display: flex;
+      flex-direction: column;
+    }
+    .brand { height: 72px; display: flex; align-items: center; gap: 11px; padding: 0 22px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: #2e90fa; color: white; font-weight: 800; letter-spacing: -1px; }
+    .brand-title { color: #fff; font-weight: 700; letter-spacing: .2px; }
+    .brand-subtitle { margin-top: 2px; color: #98a2b3; font-size: 11px; }
+    .nav { padding: 20px 12px; }
+    .nav-label { padding: 0 12px 9px; color: #667085; font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+    .nav-item { height: 42px; display: flex; align-items: center; gap: 11px; padding: 0 12px; border-radius: 7px; color: #98a2b3; }
+    .nav-item + .nav-item { margin-top: 4px; }
+    .nav-item.active { background: rgba(46,144,250,.16); color: #fff; }
+    .nav-item.active svg { color: #53b1fd; }
+    .workspace-switch { margin-top: auto; padding: 18px; border-top: 1px solid rgba(255,255,255,.08); }
+    .workspace-card { padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 8px; background: rgba(255,255,255,.045); }
+    .workspace-eyebrow { color: #667085; font-size: 11px; }
+    .workspace-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; color: #f2f4f7; font-weight: 600; }
+
+    .main { min-width: 0; flex: 1; }
+    .topbar { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 34px; background: var(--panel); border-bottom: 1px solid var(--line); }
+    .breadcrumbs { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+    .breadcrumbs strong { color: var(--ink); font-weight: 600; }
+    .top-actions { display: flex; align-items: center; gap: 20px; color: var(--muted); }
+    .top-icon { width: 32px; height: 32px; display: grid; place-items: center; border: 0; background: transparent; color: var(--muted); border-radius: 7px; }
+    .top-icon:hover { background: var(--panel-soft); color: var(--ink); }
+    .user-chip { display: flex; align-items: center; gap: 9px; padding-left: 18px; border-left: 1px solid var(--line); }
+    .avatar { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 50%; background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 700; }
+    .user-name { color: var(--ink); font-weight: 600; }
+    .user-role { color: var(--subtle); font-size: 11px; }
+    .content { max-width: 1450px; margin: 0 auto; padding: 30px 34px 48px; }
+    .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 24px; line-height: 1.25; letter-spacing: -.02em; }
+    .page-caption { margin-top: 7px; color: var(--muted); }
+    .role-control { display: flex; align-items: center; gap: 10px; }
+    .role-label { color: var(--muted); font-size: 13px; }
+    select { appearance: none; min-height: 38px; padding: 0 34px 0 12px; border: 1px solid var(--line-strong); border-radius: 7px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 11px center; color: var(--ink); outline: none; }
+    select:focus { border-color: #84adf2; box-shadow: 0 0 0 3px rgba(23,105,224,.1); }
+    .role-select { width: 166px; font-weight: 600; }
+
+    .role-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .metric { padding: 15px 17px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1px 2px rgba(16,24,40,.02); }
+    .metric-label { color: var(--muted); font-size: 12px; }
+    .metric-value { margin-top: 5px; font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+    .metric-value.blue { color: var(--blue); }
+    .metric-value.green { color: var(--green); }
+    .metric-value.amber { color: var(--amber); }
+
+    .config-layout { display: grid; grid-template-columns: minmax(520px, 1.02fr) minmax(460px, .98fr); gap: 18px; align-items: start; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 68px; padding: 0 22px; border-bottom: 1px solid var(--line); }
+    .panel-title { font-size: 15px; font-weight: 700; }
+    .panel-kicker { margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .panel-body { padding: 20px 22px; }
+    .business-tabs { display: flex; gap: 26px; height: 42px; border-bottom: 1px solid var(--line); }
+    .business-tab { position: relative; padding: 0 1px; border: 0; background: transparent; color: var(--muted); font-weight: 600; }
+    .business-tab.active { color: var(--blue); }
+    .business-tab.active::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; border-radius: 2px 2px 0 0; background: var(--blue); }
+    .business-state { display: flex; align-items: center; gap: 6px; color: var(--green); font-size: 12px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .permission-group { padding: 17px 0 18px; border-bottom: 1px solid var(--line); }
+    .permission-group:last-child { border-bottom: 0; padding-bottom: 0; }
+    .group-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+    .group-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    .group-count { color: var(--subtle); font-size: 12px; font-weight: 500; }
+    .tree-row { min-height: 43px; display: flex; align-items: center; gap: 9px; padding: 0 10px; border-radius: 6px; }
+    .tree-row:hover { background: #f8fafc; }
+    .tree-row.child { padding-left: 37px; }
+    .tree-row.deep { padding-left: 64px; }
+    .tree-expander { width: 22px; height: 22px; display: grid; place-items: center; border: 0; background: transparent; color: var(--subtle); }
+    .tree-label { flex: 1; color: var(--ink); }
+    .tree-label.muted { color: var(--muted); }
+    .tree-meta { color: var(--subtle); font-size: 12px; }
+    .check { position: relative; width: 16px; height: 16px; flex: 0 0 16px; margin: 0; accent-color: var(--blue); }
+    .check:disabled { accent-color: #aab4c2; }
+    .check-label { display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1; }
+    .action-row { display: flex; align-items: center; gap: 7px; padding-left: 27px; }
+    .action-check { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .action-check .check { width: 14px; height: 14px; flex-basis: 14px; }
+    .permission-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; padding-top: 17px; border-top: 1px solid var(--line); }
+    .tiny-note { color: var(--muted); font-size: 12px; }
+
+    .data-panel { min-height: 640px; }
+    .scope-section { padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .scope-section:first-child { padding-top: 0; }
+    .scope-section:last-child { border-bottom: 0; padding-bottom: 0; }
+    .scope-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .scope-title { font-weight: 700; }
+    .scope-desc { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .fixed-badge, .inherit-badge, .editable-badge { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: 600; }
+    .fixed-badge { color: #175cd3; background: var(--blue-soft); }
+    .inherit-badge { color: #475467; background: #f2f4f7; }
+    .editable-badge { color: #9a6700; background: var(--amber-soft); }
+    .scope-card { margin-top: 13px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-soft); }
+    .scope-card.fixed { border-color: #cfe0ff; background: #f5f9ff; }
+    .scope-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .scope-object { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .scope-object svg { color: var(--blue); }
+    .scope-control { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 12px; }
+    .scope-control + .scope-control { margin-top: 9px; }
+    .control-label { color: var(--muted); font-size: 12px; }
+    .scope-select { width: 190px; min-height: 34px; font-size: 12px; }
+    .fixed-value { display: inline-flex; align-items: center; gap: 6px; color: var(--blue); font-weight: 600; }
+    .fixed-value svg { width: 14px; height: 14px; }
+    .subtle-divider { height: 1px; margin: 14px 0; background: var(--line); }
+    .advanced-toggle { display: flex; align-items: center; gap: 7px; width: 100%; padding: 0; border: 0; background: transparent; color: var(--blue); font-size: 12px; font-weight: 600; text-align: left; }
+    .advanced-body { display: none; margin-top: 12px; }
+    .advanced-body.open { display: block; }
+    .advanced-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .mini-control { padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+    .mini-control .control-label { display: block; margin-bottom: 6px; }
+    .mini-control select { width: 100%; min-height: 32px; font-size: 12px; }
+    .scope-empty { display: flex; align-items: center; gap: 10px; padding: 14px; border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--muted); background: #fbfcfe; }
+    .scope-empty svg { color: var(--subtle); }
+    .role-preview { margin-top: 18px; padding: 16px; border: 1px solid #d6e5ff; border-radius: 8px; background: linear-gradient(180deg, #f6f9ff 0%, #fff 100%); }
+    .preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .preview-title { font-weight: 700; }
+    .preview-label { color: var(--blue); font-size: 12px; font-weight: 600; }
+    .preview-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .preview-item { display: flex; align-items: flex-start; gap: 8px; padding: 9px; border: 1px solid #e1eaff; border-radius: 7px; background: rgba(255,255,255,.82); color: var(--muted); font-size: 12px; }
+    .preview-item svg { flex: 0 0 auto; margin-top: 1px; color: var(--green); }
+    .preview-item strong { display: block; color: var(--ink); font-size: 12px; }
+    .footer-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .btn { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 1px solid var(--line-strong); border-radius: 7px; background: #fff; color: var(--ink); font-weight: 600; }
+    .btn:hover { border-color: #b6c1d0; background: #f9fafb; }
+    .btn-primary { border-color: var(--blue); background: var(--blue); color: #fff; box-shadow: 0 1px 2px rgba(23,105,224,.18); }
+    .btn-primary:hover { border-color: #1554b5; background: #1554b5; }
+    .toast { position: fixed; right: 28px; bottom: 24px; display: flex; align-items: center; gap: 8px; padding: 11px 15px; border: 1px solid #b7ebd2; border-radius: 7px; background: #f0fdf4; color: #067647; box-shadow: 0 8px 22px rgba(16,24,40,.1); opacity: 0; transform: translateY(8px); pointer-events: none; transition: .2s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .hidden { display: none !important; }
+    @media (max-width: 1220px) {
+      body { min-width: 980px; }
+      .sidebar { width: 208px; flex-basis: 208px; }
+      .content { padding-right: 24px; padding-left: 24px; }
+      .config-layout { grid-template-columns: minmax(490px, 1fr) minmax(420px, .92fr); gap: 14px; }
+      .panel-head, .panel-body { padding-right: 18px; padding-left: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">育</div>
+        <div>
+          <div class="brand-title">校园成长平台</div>
+          <div class="brand-subtitle">学校管理后台</div>
+        </div>
+      </div>
+      <nav class="nav" aria-label="后台导航">
+        <div class="nav-label">平台管理</div>
+        <div class="nav-item"><i data-lucide="layout-dashboard"></i><span>工作台</span></div>
+        <div class="nav-item"><i data-lucide="school"></i><span>学校与业务</span></div>
+        <div class="nav-item active"><i data-lucide="shield-check"></i><span>角色与权限</span></div>
+        <div class="nav-item"><i data-lucide="users"></i><span>账号管理</span></div>
+        <div class="nav-item"><i data-lucide="settings-2"></i><span>系统设置</span></div>
+      </nav>
+      <div class="workspace-switch">
+        <div class="workspace-card">
+          <div class="workspace-eyebrow">当前学校</div>
+          <div class="workspace-name"><span>成都七中初中附属小学</span><i data-lucide="chevrons-up-down"></i></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>平台管理</span><i data-lucide="chevron-right"></i><strong>角色与权限</strong></div>
+        <div class="top-actions">
+          <button class="top-icon" aria-label="帮助"><i data-lucide="circle-help"></i></button>
+          <button class="top-icon" aria-label="通知"><i data-lucide="bell"></i></button>
+          <div class="user-chip"><div class="avatar">郭</div><div><div class="user-name">郭老师</div><div class="user-role">系统管理员</div></div><i data-lucide="chevron-down"></i></div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="page-head">
+          <div>
+            <h1>配置角色权限</h1>
+            <p class="page-caption">按业务功能和数据范围管理教师端访问权限</p>
+          </div>
+          <div class="role-control">
+            <span class="role-label">当前角色</span>
+            <select id="roleSelect" class="role-select" aria-label="选择角色">
+              <option value="homeroom">班主任</option>
+              <option value="duty">值周老师</option>
+              <option value="admin">学校管理员</option>
+              <option value="subject">任课老师</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="role-summary" aria-label="角色权限概览">
+          <div class="metric"><div class="metric-label">已启用业务</div><div id="metricBusiness" class="metric-value blue">2 项</div></div>
+          <div class="metric"><div class="metric-label">功能权限</div><div id="metricFeature" class="metric-value">12 项</div></div>
+          <div class="metric"><div class="metric-label">数据范围</div><div id="metricScope" class="metric-value green">3 类</div></div>
+          <div class="metric"><div class="metric-label">最近更新</div><div class="metric-value amber">今天 14:32</div></div>
+        </div>
+
+        <div class="config-layout">
+          <section class="panel" aria-labelledby="featureTitle">
+            <div class="panel-head">
+              <div><div id="featureTitle" class="panel-title">功能权限</div><div class="panel-kicker">先选择角色能使用的功能</div></div>
+              <button class="btn" id="resetFeatures" type="button"><i data-lucide="rotate-ccw"></i>恢复默认</button>
+            </div>
+            <div class="panel-body">
+              <div class="business-tabs" role="tablist" aria-label="业务切换">
+                <button class="business-tab active" type="button" data-business="student" role="tab" aria-selected="true">学生评价</button>
+                <button class="business-tab" type="button" data-business="class" role="tab" aria-selected="false">班级评价</button>
+              </div>
+
+              <div id="studentFeatures" class="business-content" data-business-content="student">
+                <div class="permission-group">
+                  <div class="group-head"><div class="group-name"><i data-lucide="user-round"></i>学生管理</div><span class="group-count">4 项</span></div>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="student-list" checked><span class="tree-label">学生列表</span></span><span class="tree-meta">页面</span></label>
+                  <label class="tree-row child"><span class="check-label"><input class="check action-check-input" type="checkbox" data-feature="student-list-view" checked><span class="tree-label muted">查看学生详情</span></span></label>
+                  <label class="tree-row child"><span class="check-label"><input class="check action-check-input" type="checkbox" data-feature="student-list-edit" checked><span class="tree-label muted">编辑学生信息</span></span></label>
+                  <label class="tree-row child"><span class="check-label"><input class="check action-check-input" type="checkbox" data-feature="student-list-export"><span class="tree-label muted">导出学生名单</span></span></label>
+                </div>
+                <div class="permission-group">
+                  <div class="group-head"><div class="group-name"><i data-lucide="clipboard-pen-line"></i>学生评价</div><span class="group-count">5 项</span></div>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="student-evaluation" checked><span class="tree-label">学生评价录入</span></span><span class="tree-meta">页面</span></label>
+                  <div class="action-row">
+                    <label class="action-check"><input class="check" type="checkbox" checked>新增</label>
+                    <label class="action-check"><input class="check" type="checkbox" checked>查看</label>
+                    <label class="action-check"><input class="check" type="checkbox">修改</label>
+                    <label class="action-check"><input class="check" type="checkbox">删除</label>
+                  </div>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="student-records" checked><span class="tree-label">学生评价记录</span></span><span class="tree-meta">页面</span></label>
+                  <div class="action-row">
+                    <label class="action-check"><input class="check" type="checkbox" checked>查看</label>
+                    <label class="action-check"><input class="check" type="checkbox">修改</label>
+                    <label class="action-check"><input class="check" type="checkbox">删除</label>
+                    <label class="action-check"><input class="check" type="checkbox">导出</label>
+                  </div>
+                </div>
+                <div class="permission-group">
+                  <div class="group-head"><div class="group-name"><i data-lucide="file-bar-chart-2"></i>学生评价报表</div><span class="group-count">2 项</span></div>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="student-report" checked><span class="tree-label">学生评价报表</span></span><span class="tree-meta">页面</span></label>
+                  <div class="action-row"><label class="action-check"><input class="check" type="checkbox" checked>查看</label><label class="action-check"><input class="check" type="checkbox">导出</label></div>
+                </div>
+              </div>
+
+              <div id="classFeatures" class="business-content hidden" data-business-content="class">
+                <div class="permission-group">
+                  <div class="group-head"><div class="group-name"><i data-lucide="trophy"></i>班级评价</div><span class="group-count">6 项</span></div>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="class-entry" checked><span class="tree-label">班级评价录入</span></span><span class="tree-meta">页面</span></label>
+                  <div class="action-row"><label class="action-check"><input class="check" type="checkbox" checked>新增</label><label class="action-check"><input class="check" type="checkbox">修改</label><label class="action-check"><input class="check" type="checkbox">删除</label></div>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="class-leaderboard" checked><span class="tree-label">班级排行榜</span></span><span class="tree-meta">页面</span></label>
+                  <div class="action-row"><label class="action-check"><input class="check" type="checkbox" checked>查看</label></div>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="class-records" checked><span class="tree-label">班级评价记录</span></span><span class="tree-meta">页面</span></label>
+                  <div class="action-row"><label class="action-check"><input class="check" type="checkbox" checked>查看</label><label class="action-check"><input class="check" type="checkbox">修改</label><label class="action-check"><input class="check" type="checkbox">删除</label><label class="action-check"><input class="check" type="checkbox">导出</label></div>
+                </div>
+                <div class="permission-group">
+                  <div class="group-head"><div class="group-name"><i data-lucide="chart-no-axes-combined"></i>班级评价报表</div><span class="group-count">2 项</span></div>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="class-report"><span class="tree-label">班级评价报表</span></span><span class="tree-meta">页面</span></label>
+                  <div class="action-row"><label class="action-check"><input class="check" type="checkbox">查看</label><label class="action-check"><input class="check" type="checkbox">导出</label></div>
+                </div>
+                <div class="permission-group">
+                  <div class="group-head"><div class="group-name"><i data-lucide="settings-2"></i>班级工具</div><span class="group-count">3 项</span></div>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="class-reward"><span class="tree-label">班级奖励兑换</span></span><span class="tree-meta">页面</span></label>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="class-homework"><span class="tree-label">作业录入</span></span><span class="tree-meta">页面</span></label>
+                  <label class="tree-row"><span class="check-label"><input class="check feature-check" type="checkbox" data-feature="class-face"><span class="tree-label">更新人脸数据</span></span><span class="tree-meta">页面</span></label>
+                </div>
+              </div>
+
+              <div class="permission-footer"><span class="tiny-note"><span id="selectedCount">12</span> 项功能已授权</span><span class="tiny-note">功能关闭后，相关数据权限不生效</span></div>
+            </div>
+          </section>
+
+          <section class="panel data-panel" aria-labelledby="dataTitle">
+            <div class="panel-head">
+              <div><div id="dataTitle" class="panel-title">数据权限</div><div class="panel-kicker">按数据对象继承默认范围，特殊情况单独覆盖</div></div>
+              <div class="business-state"><span class="status-dot"></span><span id="businessState">学生评价已开通</span></div>
+            </div>
+            <div class="panel-body">
+              <div id="studentData" class="data-content" data-data-content="student">
+                <div class="scope-section">
+                  <div class="scope-heading"><div><div class="scope-title">学生及评价记录</div><div class="scope-desc">学生列表、学生详情、学生评价记录默认使用同一范围</div></div><span class="inherit-badge"><i data-lucide="link-2"></i>默认继承</span></div>
+                  <div class="scope-card">
+                    <div class="scope-card-head"><div class="scope-object"><i data-lucide="users-round"></i>学生数据</div><span class="editable-badge"><i data-lucide="sliders-horizontal"></i>可配置</span></div>
+                    <div class="scope-control"><span class="control-label">查看范围</span><select class="scope-select"><option>我负责或任教的班级</option><option>我负责的班级</option><option>我任教的班级</option><option>全校学生</option></select></div>
+                    <div class="scope-control"><span class="control-label">评价录入对象</span><select class="scope-select"><option>当前可见学生</option><option>全校学生</option><option>我负责的班级</option></select></div>
+                  </div>
+                  <div class="scope-card">
+                    <div class="scope-card-head"><div class="scope-object"><i data-lucide="clipboard-list"></i>学生评价记录</div><span class="inherit-badge"><i data-lucide="link-2"></i>跟随学生范围</span></div>
+                    <div class="scope-control"><span class="control-label">查看、详情、导出</span><span class="fixed-value"><i data-lucide="corner-down-left"></i>继承学生数据范围</span></div>
+                    <div class="subtle-divider"></div>
+                    <button class="advanced-toggle" type="button"><i data-lucide="chevron-right"></i>展开操作范围</button>
+                    <div class="advanced-body"><div class="advanced-grid"><div class="mini-control"><span class="control-label">修改</span><select><option>本人创建的记录</option><option>跟随查看范围</option><option>无权限</option></select></div><div class="mini-control"><span class="control-label">删除</span><select><option>无权限</option><option>本人创建的记录</option><option>跟随查看范围</option></select></div></div></div>
+                  </div>
+                </div>
+                <div class="scope-section"><div class="scope-heading"><div><div class="scope-title">数据范围来源</div><div class="scope-desc">账号实际范围根据角色和教师与班级关系自动计算</div></div></div><div class="scope-empty"><i data-lucide="git-merge"></i><span>当前角色使用“我负责或任教的班级”，无需为每个账号单独配置</span></div></div>
+              </div>
+
+              <div id="classData" class="data-content hidden" data-data-content="class">
+                <div class="scope-section">
+                  <div class="scope-heading"><div><div class="scope-title">班级排行榜汇总</div><div class="scope-desc">只返回班级排名、分数等汇总结果，不包含原始评价明细</div></div><span class="fixed-badge"><i data-lucide="lock-keyhole"></i>固定规则</span></div>
+                  <div class="scope-card fixed">
+                    <div class="scope-card-head"><div class="scope-object"><i data-lucide="trophy"></i>排行榜汇总</div><span class="fixed-badge">无需配置</span></div>
+                    <div class="scope-control"><span class="control-label">查看范围</span><span class="fixed-value"><i data-lucide="globe-2"></i>当前学校全部班级</span></div>
+                    <div class="scope-control"><span class="control-label">开放条件</span><span class="fixed-value"><i data-lucide="check-circle-2"></i>拥有“班级排行榜-查看”</span></div>
+                  </div>
+                </div>
+                <div class="scope-section">
+                  <div class="scope-heading"><div><div class="scope-title">班级评价记录</div><div class="scope-desc">班主任查看负责班级，值周老师按录入范围处理记录</div></div><span class="editable-badge"><i data-lucide="sliders-horizontal"></i>可配置</span></div>
+                  <div class="scope-card">
+                    <div class="scope-card-head"><div class="scope-object"><i data-lucide="clipboard-list"></i>班级评价记录</div><span class="editable-badge">角色默认</span></div>
+                    <div class="scope-control"><span class="control-label">查看、详情、导出</span><select class="scope-select"><option>我负责的班级</option><option>本人创建的记录</option><option>全校班级</option><option>指定年级或班级</option></select></div>
+                    <div class="subtle-divider"></div>
+                    <button class="advanced-toggle" type="button"><i data-lucide="chevron-right"></i>展开操作范围</button>
+                    <div class="advanced-body"><div class="advanced-grid"><div class="mini-control"><span class="control-label">新增</span><select><option>全校班级</option><option>我负责的班级</option><option>指定值周范围</option></select></div><div class="mini-control"><span class="control-label">修改</span><select><option>本人创建的记录</option><option>我负责的班级</option><option>无权限</option></select></div><div class="mini-control"><span class="control-label">删除</span><select><option>无权限</option><option>本人创建的记录</option><option>全校班级</option></select></div><div class="mini-control"><span class="control-label">导出</span><select><option>跟随查看范围</option><option>无权限</option><option>全校班级</option></select></div></div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="role-preview">
+                <div class="preview-head"><div class="preview-title">当前角色权限预览</div><span class="preview-label" id="previewRole">班主任</span></div>
+                <div class="preview-list" id="previewList">
+                  <div class="preview-item"><i data-lucide="check-circle-2"></i><div><strong>排行榜</strong>可查看当前学校全部班级的排名汇总</div></div>
+                  <div class="preview-item"><i data-lucide="check-circle-2"></i><div><strong>评价记录</strong>只可查看本人负责班级的明细</div></div>
+                  <div class="preview-item"><i data-lucide="check-circle-2"></i><div><strong>学生数据</strong>可查看负责或任教班级的学生</div></div>
+                  <div class="preview-item"><i data-lucide="check-circle-2"></i><div><strong>权限继承</strong>同一角色下的账号按班级关系自动生效</div></div>
+                </div>
+              </div>
+              <div class="footer-bar"><button class="btn" type="button" id="cancelBtn">取消</button><button class="btn btn-primary" type="button" id="saveBtn"><i data-lucide="save"></i>保存角色权限</button></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status"><i data-lucide="check-circle-2"></i><span>角色权限已保存</span></div>
+
+  <script>
+    const roleData = {
+      homeroom: { name: '班主任', feature: '12', scope: '3', features: ['student-list', 'student-evaluation', 'student-records', 'student-report', 'class-entry', 'class-leaderboard', 'class-records'], preview: ['可查看当前学校全部班级的排名汇总', '只可查看本人负责班级的明细', '可查看负责或任教班级的学生', '同一角色下的账号按班级关系自动生效'] },
+      duty: { name: '值周老师', feature: '9', scope: '3', features: ['student-list', 'student-evaluation', 'student-records', 'class-entry', 'class-leaderboard', 'class-records'], preview: ['可查看当前学校全部班级的排名汇总', '可录入值周范围内的班级评价', '可查看本人创建的班级评价记录', '学生数据按任教范围计算'] },
+      admin: { name: '学校管理员', feature: '18', scope: '1', features: ['student-list', 'student-evaluation', 'student-records', 'student-report', 'class-entry', 'class-leaderboard', 'class-records', 'class-report', 'class-reward', 'class-homework', 'class-face'], preview: ['可查看当前学校全部班级的排名汇总', '可查看和管理全校班级评价记录', '可查看全校学生及学生评价记录', '可配置其他角色的权限'] },
+      subject: { name: '任课老师', feature: '7', scope: '3', features: ['student-list', 'student-evaluation', 'student-records', 'class-leaderboard'], preview: ['可查看当前学校全部班级的排名汇总', '默认不开放班级评价明细', '可查看任教班级的学生数据', '可录入学生评价'] }
+    };
+
+    const icons = () => window.lucide && window.lucide.createIcons();
+    const byId = id => document.getElementById(id);
+    const showToast = message => {
+      byId('toast').querySelector('span').textContent = message;
+      byId('toast').classList.add('show');
+      window.clearTimeout(window.__toastTimer);
+      window.__toastTimer = window.setTimeout(() => byId('toast').classList.remove('show'), 2200);
+    };
+    const updateRole = role => {
+      const current = roleData[role];
+      document.querySelectorAll('.feature-check').forEach(input => {
+        input.checked = current.features.includes(input.dataset.feature);
+      });
+      byId('previewRole').textContent = current.name;
+      byId('metricFeature').textContent = `${current.feature} 项`;
+      byId('metricScope').textContent = `${current.scope} 类`;
+      byId('selectedCount').textContent = current.feature;
+      const previewList = byId('previewList');
+      previewList.innerHTML = current.preview.map((item, index) => `<div class="preview-item"><i data-lucide="check-circle-2"></i><div><strong>${['排行榜', '评价记录', '学生数据', '权限继承'][index]}</strong>${item}</div></div>`).join('');
+      if (role === 'admin') {
+        byId('businessState').textContent = '学生评价已开通';
+      }
+      icons();
+    };
+
+    document.querySelectorAll('.business-tab').forEach(tab => tab.addEventListener('click', () => {
+      const business = tab.dataset.business;
+      document.querySelectorAll('.business-tab').forEach(item => { item.classList.toggle('active', item === tab); item.setAttribute('aria-selected', item === tab ? 'true' : 'false'); });
+      document.querySelectorAll('[data-business-content]').forEach(item => item.classList.toggle('hidden', item.dataset.businessContent !== business));
+      document.querySelectorAll('[data-data-content]').forEach(item => item.classList.toggle('hidden', item.dataset.dataContent !== business));
+      byId('businessState').textContent = business === 'student' ? '学生评价已开通' : '班级评价已开通';
+      byId('metricBusiness').textContent = '2 项';
+      icons();
+    }));
+
+    document.querySelectorAll('.advanced-toggle').forEach(button => button.addEventListener('click', () => {
+      const body = button.nextElementSibling;
+      const open = body.classList.toggle('open');
+      button.querySelector('svg')?.remove();
+      button.insertAdjacentHTML('afterbegin', `<i data-lucide="${open ? 'chevron-down' : 'chevron-right'}"></i>`);
+      icons();
+    }));
+
+    document.querySelectorAll('.feature-check').forEach(input => input.addEventListener('change', () => {
+      const row = input.closest('.tree-row');
+      row?.classList.toggle('feature-disabled', !input.checked);
+      const count = document.querySelectorAll('.feature-check:checked').length + document.querySelectorAll('.action-row .check:checked').length;
+      byId('selectedCount').textContent = count;
+    }));
+    byId('roleSelect').addEventListener('change', event => { updateRole(event.target.value); showToast(`已切换至${roleData[event.target.value].name}角色`); });
+    byId('saveBtn').addEventListener('click', () => showToast('角色权限已保存'));
+    byId('cancelBtn').addEventListener('click', () => showToast('未保存本次修改'));
+    byId('resetFeatures').addEventListener('click', () => { updateRole(byId('roleSelect').value); byId('selectedCount').textContent = roleData[byId('roleSelect').value].feature; showToast(`已恢复${roleData[byId('roleSelect').value].name}默认权限`); });
+    icons();
+  </script>
+</body>
+</html>

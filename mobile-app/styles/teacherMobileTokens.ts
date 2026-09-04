@@ -44,6 +44,12 @@ export const teacherBrandPalette = {
     800: '#124943',
     900: '#103D38',
   },
+  blue: {
+    50: '#EEF5FA',
+    100: '#DCEAF4',
+    500: '#477EAE',
+    700: '#315F88',
+  },
   neutral: {
     ...questionnaireThemePalette.neutral,
     25: '#FFFCFA',
@@ -123,6 +129,22 @@ export const teacherActionSemantic = {
   iconNeutral: teacherBrandSemantic.textSecondary,
   iconBrand: teacherBrandSemantic.primary,
   iconDanger: teacherBrandSemantic.negative,
+} as const;
+
+// 班级更多操作按业务分组稳定着色；颜色只帮助识别分类，不表达优先级或状态。
+export const teacherClassActionGroupSemantic = {
+  daily: {
+    icon: teacherBrandPalette.red[500],
+    background: teacherBrandPalette.red[50],
+  },
+  student: {
+    icon: teacherBrandPalette.jade[500],
+    background: teacherBrandPalette.jade[50],
+  },
+  collaboration: {
+    icon: teacherBrandPalette.blue[500],
+    background: teacherBrandPalette.blue[50],
+  },
 } as const;
 
 // “我的”页方案八：品牌红与清亮蓝从两侧低饱和扩散，玉石青只保留为顶部轻提示。
@@ -515,6 +537,12 @@ export const teacherBrandCssVariables = {
   '--tm-action-icon-neutral': teacherActionSemantic.iconNeutral,
   '--tm-action-icon-brand': teacherActionSemantic.iconBrand,
   '--tm-action-icon-danger': teacherActionSemantic.iconDanger,
+  '--tm-class-action-daily-icon': teacherClassActionGroupSemantic.daily.icon,
+  '--tm-class-action-daily-bg': teacherClassActionGroupSemantic.daily.background,
+  '--tm-class-action-student-icon': teacherClassActionGroupSemantic.student.icon,
+  '--tm-class-action-student-bg': teacherClassActionGroupSemantic.student.background,
+  '--tm-class-action-collaboration-icon': teacherClassActionGroupSemantic.collaboration.icon,
+  '--tm-class-action-collaboration-bg': teacherClassActionGroupSemantic.collaboration.background,
   '--tm-nav-item-default': teacherBrandSemantic.textSecondary,
   '--tm-border-subtle': teacherBrandSemantic.border,
   '--tm-border-control': teacherBrandSemantic.borderControl,
@@ -693,9 +721,28 @@ export const teacherBrandCssVariables = {
   '--tm-radius-control': '12px',
   '--tm-radius-inner': '16px',
   '--tm-radius-card': '20px',
+  '--tm-class-list-card-radius': '12px',
+  '--tm-class-list-card-min-height': '160px',
+  '--tm-class-list-card-compact-min-height': '128px',
+  '--tm-class-list-card-action-space': '48px',
+  '--tm-class-list-card-action-content-height': '44px',
+  '--tm-class-list-action-icon-size': '14px',
+  '--tm-class-list-toolbar-row-gap': '0px',
+  '--tm-class-list-toolbar-card-gap': '8px',
+  '--tm-class-list-divider': '#EEEEEE',
+  '--tm-class-list-divider-thickness': '0.5px',
+  '--tm-class-list-divider-vertical-height': '20px',
   '--tm-radius-sheet': '28px',
   '--tm-sheet-footer-divider-width': '0px',
   '--tm-size-touch': '44px',
+  '--tm-class-action-header-bottom-space': '16px',
+  '--tm-class-action-group-gap': '24px',
+  '--tm-class-action-title-grid-gap': '8px',
+  '--tm-action-grid-item-height': '84px',
+  '--tm-action-grid-icon-size': '22px',
+  '--tm-action-grid-icon-bg-size': '48px',
+  '--tm-action-grid-icon-radius': '16px',
+  '--tm-action-grid-label-height': '18px',
   '--tm-size-floating-action': '52px',
   '--tm-medal-grid-icon-size': '64px',
   '--tm-medal-grid-item-min-height': '112px',

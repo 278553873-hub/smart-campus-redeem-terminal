@@ -4,9 +4,25 @@ import {
   canManagePersonalClasses,
   canViewClassLeaderboard,
   getHeadteacherAssistantScopes,
+  getTeacherClassDisplayName,
+  getTeacherSchoolGradeOptions,
   getTeacherClassActionPolicy,
   getTeacherSpaceMenuPolicy,
 } from './teacherSpaceAccess.ts';
+
+const schoolClass = (gradeLevel, name, educationStage) => ({ gradeLevel, name, educationStage });
+const twelveYearSchool = { id: 'school-twelve', title: '十二年一贯制学校', type: 'school', role: 'leader', schoolType: 'twelveYear' };
+const primarySchool = { id: 'school-primary', title: '小学', type: 'school', role: 'teacher', schoolType: 'primary' };
+
+assert.deepEqual(getTeacherSchoolGradeOptions(twelveYearSchool), [
+  '一年级', '二年级', '三年级', '四年级', '五年级', '六年级',
+  '七年级', '八年级', '九年级', '高一', '高二', '高三',
+]);
+assert.equal(getTeacherClassDisplayName(schoolClass('一年级', '2026级1班', 'primary'), twelveYearSchool), '小2026级1班');
+assert.equal(getTeacherClassDisplayName(schoolClass('七年级', '2026级1班', 'middle'), twelveYearSchool), '初2026级1班');
+assert.equal(getTeacherClassDisplayName(schoolClass('高一', '2026级1班', 'high'), twelveYearSchool), '高2026级1班');
+assert.equal(getTeacherClassDisplayName(schoolClass('一年级', '2026级1班', 'primary'), primarySchool), '2026级1班');
+assert.equal(getTeacherClassDisplayName(schoolClass('一年级', '2026级一班', 'primary'), twelveYearSchool), '小2026级1班');
 
 const policyFor = (type, role) => getTeacherSpaceMenuPolicy({ id: `${type}-${role}`, title: '测试来源', type, role });
 

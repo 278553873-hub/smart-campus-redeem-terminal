@@ -127,6 +127,7 @@ const SCHOOL_MAX_SCORE = 100;
 const DIMENSION_MAX_SCORE = 20;
 const CLASS_COUNT_PER_GRADE = 5;
 const TREND_WINDOW_SIZE = 4;
+const DEMO_FIRST_GRADE_ADMISSION_YEAR = 2025;
 
 const roundOne = (value: number) => Math.round((value + Number.EPSILON) * 10) / 10;
 const clampScore = (value: number, maxScore = SCHOOL_MAX_SCORE) => Math.max(0, Math.min(maxScore, roundOne(value)));
@@ -363,12 +364,13 @@ const distributeCount = (total: number, index: number) => {
 const createWeeklyClasses = (config: WeekConfig) => BASE_GRADES.flatMap(grade => {
     const scoreAdjustments = [0.8, -0.6, 0.2, -1.1, 0.7];
     const scaledIssueCount = scaleCount(grade.issueCount, config.issueScale);
+    const admissionYear = DEMO_FIRST_GRADE_ADMISSION_YEAR - BASE_GRADES.findIndex(item => item.id === grade.id);
     return scoreAdjustments.map((adjustment, index): MoralEducationClassSummary => {
         const score = clampScore(config.averageScore + grade.scoreOffset + adjustment);
         return {
             id: `${grade.id}c${index + 1}`,
             gradeId: grade.id,
-            name: `${grade.name}${index + 1}班`,
+            name: `${admissionYear}级${index + 1}班`,
             score,
             maxScore: SCHOOL_MAX_SCORE,
             deduction: roundOne(SCHOOL_MAX_SCORE - score),

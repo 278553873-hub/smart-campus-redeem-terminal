@@ -1,4 +1,49 @@
+import type { ClassInfo } from '../types';
+
 export type TeacherSpaceType = 'personal' | 'collaboration' | 'school';
+
+export type TeacherSchoolType = 'primary' | 'middle' | 'high' | 'nineYear' | 'twelveYear' | 'completeMiddle';
+
+export const TEACHER_SCHOOL_TYPE_LABELS: Record<TeacherSchoolType, string> = {
+    primary: '小学',
+    middle: '初中',
+    high: '高中',
+    nineYear: '九年一贯制',
+    twelveYear: '十二年一贯制',
+    completeMiddle: '完全中学',
+};
+
+const PRIMARY_GRADE_LABELS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
+const MIDDLE_GRADE_LABELS = ['七年级', '八年级', '九年级'];
+const HIGH_GRADE_LABELS = ['高一', '高二', '高三'];
+
+const CLASS_NUMBER_LABELS: Record<string, string> = {
+    一: '1',
+    二: '2',
+    三: '3',
+    四: '4',
+    五: '5',
+    六: '6',
+    七: '7',
+    八: '8',
+    九: '9',
+    十: '10',
+};
+
+const normalizeTeacherClassName = (name: string) => name.replace(
+    /([小初高]?\d{4}级)(一|二|三|四|五|六|七|八|九|十)班$/,
+    (_match, grade: string, classNumber: string) => `${grade}${CLASS_NUMBER_LABELS[classNumber]}班`,
+);
+
+export const getTeacherSchoolGradeOptions = (space: TeacherSpaceOption): string[] | undefined => {
+    if (space.type !== 'school' || !space.schoolType) return undefined;
+    if (space.schoolType === 'primary') return [...PRIMARY_GRADE_LABELS];
+    if (space.schoolType === 'middle') return [...MIDDLE_GRADE_LABELS];
+    if (space.schoolType === 'high') return [...HIGH_GRADE_LABELS];
+    if (space.schoolType === 'nineYear') return [...PRIMARY_GRADE_LABELS, ...MIDDLE_GRADE_LABELS];
+    if (space.schoolType === 'twelveYear') return [...PRIMARY_GRADE_LABELS, ...MIDDLE_GRADE_LABELS, ...HIGH_GRADE_LABELS];
+    return [...MIDDLE_GRADE_LABELS, ...HIGH_GRADE_LABELS];
+};
 
 export type TeacherSpaceRole =
     | 'owner'
@@ -17,6 +62,7 @@ export interface TeacherSpaceOption {
     title: string;
     type: TeacherSpaceType;
     role: TeacherSpaceRole;
+    schoolType?: TeacherSchoolType;
     classRecordEnabled?: boolean;
     classLeaderboardSettlementCycle?: ClassLeaderboardSettlementCycle;
     enabledManagementTools?: TeacherManagementToolId[];
@@ -25,6 +71,33 @@ export interface TeacherSpaceOption {
     homeworkAiEnabled?: boolean;
     homeworkOperator?: boolean;
 }
+
+export const getTeacherSchoolTypeLabel = (space: TeacherSpaceOption): string | undefined => (
+    space.type === 'school' && space.schoolType ? TEACHER_SCHOOL_TYPE_LABELS[space.schoolType] : undefined
+);
+
+type TeacherClassDisplayInfo = Pick<ClassInfo, 'name' | 'gradeLevel' | 'educationStage'>;
+
+const getClassEducationStage = (classInfo: TeacherClassDisplayInfo) => {
+    if (classInfo.educationStage) return classInfo.educationStage;
+    if (/^(七|八|九)年级/.test(classInfo.gradeLevel)) return 'middle';
+    if (classInfo.gradeLevel.startsWith('高')) return 'high';
+    return 'primary';
+};
+
+export const getTeacherClassDisplayName = (classInfo: TeacherClassDisplayInfo, space: TeacherSpaceOption): string => {
+    const normalizedName = normalizeTeacherClassName(classInfo.name);
+    if (space.type !== 'school' || !space.schoolType) return normalizedName;
+
+    const prefixBySchoolType: Partial<Record<TeacherSchoolType, Record<'primary' | 'middle' | 'high', string>>> = {
+        nineYear: { primary: '小', middle: '初', high: '' },
+        twelveYear: { primary: '小', middle: '初', high: '高' },
+        completeMiddle: { primary: '', middle: '初', high: '高' },
+    };
+    const prefix = prefixBySchoolType[space.schoolType]?.[getClassEducationStage(classInfo)] ?? '';
+    if (!prefix || normalizedName.startsWith(prefix)) return normalizedName;
+    return `${prefix}${normalizedName}`;
+};
 
 export type TeacherManagementToolId =
     | 'schoolReport'

@@ -18,6 +18,15 @@ const SOURCE_ICONS = {
     school: Building2,
 } satisfies Record<TeacherSpaceType, typeof UserRound>;
 
+export const ClassSourceIcon: React.FC<{
+    type: TeacherSpaceType;
+    className?: string;
+    strokeWidth?: number;
+}> = ({ type, className, strokeWidth = 2.2 }) => {
+    const SourceIcon = SOURCE_ICONS[type];
+    return <SourceIcon className={className} strokeWidth={strokeWidth} aria-hidden="true" />;
+};
+
 const ClassSourceTrigger: React.FC<ClassSourceTriggerProps> = ({
     name,
     type,
@@ -27,7 +36,6 @@ const ClassSourceTrigger: React.FC<ClassSourceTriggerProps> = ({
     variant = 'surface',
     density = 'default',
 }) => {
-    const SourceIcon = SOURCE_ICONS[type];
     const isCompactSurface = variant === 'surface' && density === 'compact';
     const variantClass = variant === 'quiet'
         ? 'gap-1.5 rounded-[var(--tm-radius-control)] px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] shadow-none active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]'
@@ -37,7 +45,7 @@ const ClassSourceTrigger: React.FC<ClassSourceTriggerProps> = ({
 
     const content = (
         <>
-            <SourceIcon className={`h-4 w-4 shrink-0 ${variant === 'quiet' ? 'text-[var(--tm-text-tertiary)]' : 'text-[var(--tm-brand-primary)]'}`} strokeWidth={2.2} />
+            <ClassSourceIcon type={type} className={`h-4 w-4 shrink-0 ${variant === 'quiet' ? 'text-[var(--tm-text-tertiary)]' : 'text-[var(--tm-brand-primary)]'}`} />
             <span className="min-w-0 truncate">{name}</span>
             <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-disabled)]" strokeWidth={2.2} />
         </>

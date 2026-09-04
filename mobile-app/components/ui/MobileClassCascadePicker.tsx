@@ -14,6 +14,7 @@ interface MobileClassCascadePickerBaseProps {
   activeGrade: string;
   onActiveGradeChange: (grade: string) => void;
   getClassMeta?: (classInfo: ClassInfo) => React.ReactNode;
+  getClassLabel?: (classInfo: ClassInfo) => string;
   ariaLabel?: string;
 }
 
@@ -43,6 +44,7 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
     activeGrade,
     onActiveGradeChange,
     getClassMeta,
+    getClassLabel = classInfo => classInfo.name,
     ariaLabel = '班级级联选择',
   } = props;
   const singleSelection = props.selectionMode === 'single';
@@ -123,19 +125,20 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
           {activeClasses.map(classInfo => {
             const selected = selectedClassIds.has(classInfo.id);
             const meta = getClassMeta?.(classInfo);
+            const classLabel = getClassLabel(classInfo);
             return (
               <button
                 key={classInfo.id}
                 type="button"
                 onClick={() => singleSelection ? props.onSelectClass(classInfo.id) : props.onToggleClass(classInfo.id)}
                 aria-pressed={selected}
-                aria-label={`${selected && !singleSelection ? '取消选择' : '选择'}${classInfo.name}`}
+                aria-label={`${selected && !singleSelection ? '取消选择' : '选择'}${classLabel}`}
                 className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] border px-3 text-left text-[length:var(--tm-font-size-compact)] font-bold transition-all active:scale-[0.99] ${classSelectionOptionClass(selected)}`}
               >
                 <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] text-transparent'}`}>
                   <Check className="h-3 w-3" strokeWidth={3} />
                 </span>
-                <span className="min-w-0 flex-1 truncate">{classInfo.name}</span>
+                <span className="min-w-0 flex-1 truncate">{classLabel}</span>
                 {meta != null && <span className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">{meta}</span>}
               </button>
             );

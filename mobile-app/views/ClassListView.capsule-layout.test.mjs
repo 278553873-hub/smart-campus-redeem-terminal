@@ -2,11 +2,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const classListSource = fs.readFileSync(new URL('./ClassListView.tsx', import.meta.url), 'utf8');
+const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const phoneMockupSource = fs.readFileSync(new URL('../../components/PhoneMockup.tsx', import.meta.url), 'utf8');
 const guidelineSource = fs.readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', import.meta.url), 'utf8');
-const floatingImageButtonSource = fs.readFileSync(new URL('../components/ui/MobileFloatingImageButton.tsx', import.meta.url), 'utf8');
 const slidingSegmentedSource = fs.readFileSync(new URL('../components/ui/MobileSlidingSegmentedControl.tsx', import.meta.url), 'utf8');
-const teacherMobileTokensSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 
 assert.ok(
   classListSource.includes('[padding-right:var(--mini-program-capsule-right-inset,0px)]'),
@@ -42,45 +41,36 @@ assert.ok(
   '班级页不得继续通过 12 像素补白将标题栏控件整体下移。',
 );
 assert.ok(
-  classListSource.includes('grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2'),
-  '学校来源的筛选行应按年级、任教班级、结果数量从左到右排列。',
+  classListSource.includes('flex min-h-11 items-center justify-between gap-2 max-[359px]:flex-wrap'),
+  '学校来源的筛选区应使用单行弹性布局，让左侧筛选条件与右侧排行榜保持两端对齐。',
 );
+assert.ok(!classListSource.includes("isSchoolSpace ? 'space-y-3' : 'space-y-0'"), '班级页筛选行应紧接标题栏，不额外增加12像素间距。');
 assert.ok(classListSource.includes('任教班级'), '筛选文案应精简为“任教班级”。');
-assert.ok(classListSource.includes('<MobileFloatingImageButton'), '排行榜应使用公共悬浮图片按钮。');
-assert.ok(classListSource.includes('imageSrc={ASSETS.MANAGEMENT.CLASS_LEADERBOARD}'), '排行榜悬浮入口应使用独立图片素材。');
-assert.ok(classListSource.includes('label="查看班级排行榜"'), '排行榜入口必须保留完整读屏名称。');
-assert.ok(classListSource.includes('visibleLabel="班级排行榜"'), '排行榜入口必须展示由页面渲染的清晰文字。');
-assert.ok(classListSource.includes('imageMode="full-bleed"'), '完整圆形排行榜图片必须铺满入口，不得再次嵌入空白圆框。');
-assert.ok(classListSource.includes('placement="middle-right"'), '排行榜悬浮入口应位于班级页中部靠右。');
-assert.ok(classListSource.includes('pb-[calc(var(--tm-floating-image-button-height)'), '班级列表必须为放大后的悬浮入口预留滚动空间。');
-assert.ok(floatingImageButtonSource.includes('visibleLabel?: string;'), '公共悬浮图片按钮应提供可选的可见文字能力。');
-assert.ok(floatingImageButtonSource.includes("imageMode?: 'contained' | 'full-bleed';"), '公共悬浮图片按钮应区分留白图标与完整圆形图片。');
-assert.ok(floatingImageButtonSource.includes("? 'h-full w-full object-cover'"), '完整圆形图片必须铺满圆形展示区。');
-assert.ok(floatingImageButtonSource.includes("placement?: 'middle-right' | 'above-tab-bar' | 'safe-bottom';"), '公共悬浮图片按钮应通过位置变体管理页面锚点。');
-assert.ok(floatingImageButtonSource.includes("isMiddleRight ? 'top-1/2 -translate-y-1/2' : ''"), '中部靠右变体应相对页面垂直居中。');
-assert.ok(floatingImageButtonSource.includes('border-[length:var(--tm-floating-image-button-border-width)]'), '带文字的悬浮图片按钮应消费组件边框 Token。');
-assert.ok(floatingImageButtonSource.includes('[box-shadow:var(--tm-floating-image-button-shadow)]'), '带文字的悬浮图片按钮应消费组件阴影 Token。');
-assert.ok(floatingImageButtonSource.includes('text-[var(--tm-font-size-badge)] font-medium'), '排行榜悬浮入口文字签应使用 500 字重，与插画保持协调。');
-assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-width': '68px'"), '排行榜悬浮入口宽度应缩放为上一版的约 80%。');
-assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-height': '72px'"), '排行榜悬浮入口高度应缩放为上一版的约 80%。');
-assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-circle-size': '68px'"), '排行榜图标主体应使用圆形组件尺寸 Token。');
-assert.ok(teacherMobileTokensSource.includes("'--tm-floating-image-button-label-width': '72px'"), '排行榜文字签应只略宽于圆形插画，为文字、边框和字体渲染保留完整空间。');
+assert.ok(classListSource.includes('className="inline-flex min-h-11 shrink-0 items-center justify-self-end'), '排行榜入口应固定在筛选区第一行右侧，并保留完整触控高度。');
+assert.ok(classListSource.includes('aria-label="查看班级排行榜"'), '排行榜入口必须保留完整读屏名称。');
+assert.ok(classListSource.includes('text-[var(--tm-brand-primary)]'), '排行榜入口应使用标准品牌色文字建立重要操作识别。');
+assert.ok(classListSource.includes('pb-[calc(var(--teacher-tabbar-height,66px)'), '班级列表底部只需为底部导航预留滚动空间。');
+assert.ok(!classListSource.includes('<MobileFloatingImageButton'), '排行榜不应继续使用中部悬浮图片入口。');
 assert.ok(!classListSource.includes('TrophyIcon'), '班级列表不应继续使用奖杯线性图标。');
 const toolbarStart = classListSource.indexOf("{activeListTab === 'class' && isSchoolSpace && (");
 const toolbarEnd = classListSource.indexOf('{visibleClasses.map(renderClassCard)}');
 const toolbarSource = classListSource.slice(toolbarStart, toolbarEnd);
 assert.ok(toolbarStart >= 0 && toolbarEnd > toolbarStart, '应能识别学校版筛选工具行。');
 assert.ok(!toolbarSource.includes('ring-[var(--tm-border-subtle)]'), '年级、任教班级与排行榜不应使用常驻外边框。');
-assert.ok(toolbarSource.includes('bg-[var(--tm-filter-bg)]'), '年级筛选应使用透明筛选表面 Token。');
-assert.ok(toolbarSource.includes('[box-shadow:var(--tm-filter-shadow)]'), '年级筛选应使用无阴影筛选 Token。');
-assert.ok(toolbarSource.includes('relative inline-flex min-h-11 w-[96px] items-center justify-self-start'), '年级筛选应使用可容纳“全部年级”的固定宽度，并保留完整触控高度。');
+assert.ok(toolbarSource.includes('aria-haspopup="dialog"'), '年级筛选应通过底部弹窗展示选项。');
+assert.ok(toolbarSource.includes('showGradeFilter'), '年级筛选应维护底部弹窗打开状态。');
+assert.ok(toolbarSource.includes('inline-flex min-h-11 w-[96px] shrink-0 items-center gap-['), '年级筛选触发器应使用可容纳“全部年级”的固定宽度，并保留完整触控高度。');
 assert.ok(toolbarSource.includes('gap-[var(--tm-space-1)]'), '年级文字与下拉箭头应使用最小基础间距紧邻排列。');
 assert.ok(!toolbarSource.includes('absolute right-3 top-1/2'), '年级箭头不得继续跟随整列宽度靠右定位。');
 assert.ok(toolbarSource.includes('bg-transparent px-2.5'), '任教班级应保持透明，只通过勾选框表达状态。');
 assert.ok(!toolbarSource.includes('[box-shadow:var(--tm-shadow-control)]'), '年级与任教班级筛选不得继续使用实体控件阴影。');
-assert.ok(toolbarSource.includes("option === '全部' ? '全部年级' : option"), '年级筛选默认文案应明确展示“全部年级”。');
+assert.ok(toolbarSource.includes("gradeFilter === '全部' ? '全部年级' : gradeFilter"), '年级筛选默认文案应明确展示“全部年级”。');
 assert.ok(toolbarSource.includes('{visibleClasses.length}个班级'), '筛选行最右侧应展示当前可见班级数量。');
 assert.ok(toolbarSource.includes('aria-live="polite"'), '班级数量变化应提供克制的动态读屏反馈。');
+assert.ok(toolbarSource.includes('block h-[18px] whitespace-nowrap pl-3 text-[12px]'), '班级统计应使用18像素普通信息行，不再单独占用44像素触控行。');
+assert.ok(!toolbarSource.includes('grid-rows-[44px_44px]'), '紧凑筛选区不应再为班级统计单独保留44像素行。');
+assert.ok(toolbarSource.includes('flex min-h-11 items-center justify-between gap-2'), '筛选条件和排行榜应共享同一44像素工具行。');
+assert.ok(tokenSource.includes("'--tm-class-list-toolbar-card-gap': '8px'"), '统计信息与第一张卡片之间应保留8像素视觉留白。');
 
 assert.ok(phoneMockupSource.includes("'--mini-program-capsule-right-inset'"), '演示手机壳必须注入胶囊安全区变量。');
 assert.ok(phoneMockupSource.includes("'--mini-program-title-bar-height'"), '演示手机壳必须注入微信标题栏高度变量。');

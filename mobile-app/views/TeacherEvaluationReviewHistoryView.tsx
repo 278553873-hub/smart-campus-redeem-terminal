@@ -14,6 +14,7 @@ interface TeacherEvaluationReviewHistoryViewProps {
     classes: ClassInfo[];
     initialClassId: string;
     onClassChange?: (classId: string) => void;
+    getClassLabel?: (classInfo: ClassInfo) => string;
 }
 
 interface ReviewYearGroup {
@@ -41,6 +42,7 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
     classes,
     initialClassId,
     onClassChange,
+    getClassLabel = classInfo => classInfo.name,
 }) => {
     const [selectedReport, setSelectedReport] = useState<TeacherEvaluationReviewReport | null>(null);
     const [activeClassId, setActiveClassId] = useState(initialClassId);
@@ -58,6 +60,9 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
         return (
             <TeacherEvaluationReviewView
                 report={selectedReport}
+                homeroomClasses={classes}
+                activeClassId={activeClass?.id}
+                getClassLabel={getClassLabel}
                 onBack={() => setSelectedReport(null)}
                 simulateLoading={false}
             />
@@ -79,13 +84,13 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
                             type="button"
                             onClick={() => setShowClassPicker(true)}
                             className="mb-3 flex h-11 items-center gap-1 text-[14px] font-semibold text-slate-700 active:text-[#1E9AAA]"
-                            aria-label={`切换班级，当前${activeClass.name}`}
+                            aria-label={`切换班级，当前${getClassLabel(activeClass)}`}
                         >
-                            {activeClass.name}
+                            {getClassLabel(activeClass)}
                             <ChevronDown className="h-4 w-4 text-slate-400" strokeWidth={2.1} />
                         </button>
                     ) : (
-                        <p className="mb-3 flex h-11 items-center text-[14px] font-semibold text-slate-700">{activeClass.name}</p>
+                        <p className="mb-3 flex h-11 items-center text-[14px] font-semibold text-slate-700">{getClassLabel(activeClass)}</p>
                     )
                 )}
 
@@ -134,6 +139,7 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
                         onClassChange?.(classId);
                         setShowClassPicker(false);
                     }}
+                    getClassLabel={getClassLabel}
                 />
             )}
         </div>

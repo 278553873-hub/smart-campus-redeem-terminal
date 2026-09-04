@@ -14,6 +14,7 @@ import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker';
 import { MobileEditableRow } from '../components/ui/MobileEditableRow';
 import { phoneText } from '../styles/teacherMobileTokens';
+import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions } from '../domain/teacherSpaceAccess';
 
 interface TeacherProfileEditViewProps {
     profile: TeacherProfile;
@@ -34,7 +35,7 @@ interface TeachingGroup {
 }
 
 const getClassOrder = (classInfo: ClassInfo) => Number(classInfo.id.split('_')[2] || 0);
-const getGradeLabel = (classInfo: ClassInfo) => classInfo.name.match(/^(.+?级)/)?.[1] || classInfo.gradeLevel;
+const getGradeLabel = (classInfo: ClassInfo) => classInfo.gradeLevel;
 const getClassShortLabel = (classInfo: ClassInfo) => `${getClassOrder(classInfo)}班`;
 
 const groupClassesByGrade = (classes: ClassInfo[]) => {
@@ -47,17 +48,17 @@ const groupClassesByGrade = (classes: ClassInfo[]) => {
     }, {});
 };
 
-const summarizeClassIds = (classIds: string[], classes: ClassInfo[]) => {
+const summarizeClassIds = (classIds: string[], classes: ClassInfo[], currentSpace: TeacherSpaceOption) => {
     const classMap = new Map(classes.map(classInfo => [classInfo.id, classInfo]));
     const selectedClasses = classIds
         .map(id => classMap.get(id))
         .filter((classInfo): classInfo is ClassInfo => Boolean(classInfo))
         .sort((a, b) => getGradeLabel(b).localeCompare(getGradeLabel(a), 'zh-CN') || getClassOrder(a) - getClassOrder(b));
 
-    const gradeGroups = selectedClasses.reduce<Record<string, number[]>>((groups, classInfo) => {
+    const gradeGroups = selectedClasses.reduce<Record<string, { orders: number[]; sample: ClassInfo }>>((groups, classInfo) => {
         const grade = getGradeLabel(classInfo);
-        groups[grade] = groups[grade] || [];
-        groups[grade].push(getClassOrder(classInfo));
+        groups[grade] = groups[grade] || { orders: [], sample: classInfo };
+        groups[grade].orders.push(getClassOrder(classInfo));
         return groups;
     }, {});
 
@@ -82,11 +83,14 @@ const summarizeClassIds = (classIds: string[], classes: ClassInfo[]) => {
     };
 
     return Object.entries(gradeGroups)
-        .map(([grade, orders]) => `${grade}${rangeText(orders)}`)
+        .map(([, group]) => {
+            const classPrefix = getTeacherClassDisplayName(group.sample, currentSpace).replace(/\d+班$/, '');
+            return `${classPrefix}${rangeText(group.orders)}`;
+        })
         .join('、');
 };
 
-export const groupTeachingAssignmentsBySubject = (assignments: TeacherTeachingAssignment[], classes: ClassInfo[]): TeachingGroup[] => {
+export const groupTeachingAssignmentsBySubject = (assignments: TeacherTeachingAssignment[], classes: ClassInfo[], currentSpace: TeacherSpaceOption): TeachingGroup[] => {
     const groups = assignments.reduce<Record<string, string[]>>((result, assignment) => {
         result[assignment.subject] = result[assignment.subject] || [];
         result[assignment.subject].push(assignment.classId);
@@ -96,7 +100,7 @@ export const groupTeachingAssignmentsBySubject = (assignments: TeacherTeachingAs
     return Object.entries(groups).map(([subject, classIds]) => ({
         subject,
         classIds: [...new Set(classIds)],
-        summary: summarizeClassIds(classIds, classes),
+        summary: summarizeClassIds(classIds, classes, currentSpace),
     }));
 };
 
@@ -115,11 +119,13 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     const albumInputRef = useRef<HTMLInputElement>(null);
 
     const classesByGrade = useMemo(() => groupClassesByGrade(classes), [classes]);
-    const gradeOptions = useMemo(() => Object.keys(classesByGrade), [classesByGrade]);
-    const teachingGroups = useMemo(() => groupTeachingAssignmentsBySubject(draft.teachingAssignments, classes), [draft.teachingAssignments, classes]);
-    const schoolNameLocked = currentSpace.type === 'school';
-    const showManagementResponsibilities = currentSpace.type !== 'personal';
-    const displaySchoolName = schoolNameLocked ? currentSpace.title : draft.schoolName;
+    const gradeOptions = useMemo(() => (
+        getTeacherSchoolGradeOptions(currentSpace) ?? Object.keys(classesByGrade)
+    ), [classesByGrade, currentSpace]);
+    const teachingGroups = useMemo(() => groupTeachingAssignmentsBySubject(draft.teachingAssignments, classes, currentSpace), [draft.teachingAssignments, classes, currentSpace]);
+    const schoolNameLocked = currentSpace.type !== 'personal';
+    const showManagementResponsibilities = currentSpace.type === 'school';
+    const displaySchoolName = currentSpace.type === 'school' ? currentSpace.title : draft.schoolName;
 
     const applyProfileChange = (updater: (current: TeacherProfile) => TeacherProfile) => {
         const next = updater(draft);
@@ -314,6 +320,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                         activeGrade={activeGrade}
                         onActiveGradeChange={setActiveGrade}
                         onToggleClass={toggleClass}
+                        getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, currentSpace)}
                     />
                 </div>
                 {isTeaching && (
@@ -493,7 +500,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     const renderSchoolDialog = () => renderTextEditorSheet('修改学校', '学校', schoolDraft, setSchoolDraft, saveSchoolName, 30);
 
 
-    const roleSummary = (ids: string[]) => ids.length > 0 ? summarizeClassIds(ids, classes) : '未设置';
+    const roleSummary = (ids: string[]) => ids.length > 0 ? summarizeClassIds(ids, classes, currentSpace) : '未设置';
     const gradeLeaderSummary = draft.gradeLeaderGrades.length > 0 ? draft.gradeLeaderGrades.join('、') : '未设置';
     const renderConfigValue = (value: string, selected: boolean) => (
         <span className={`min-w-0 truncate text-right text-sm ${selected ? 'font-semibold text-[var(--tm-text-primary)]' : 'font-medium text-[var(--tm-text-tertiary)]'}`}>{value}</span>
@@ -549,7 +556,10 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                         {schoolNameLocked ? (
                             <div className="grid min-h-14 grid-cols-[80px_minmax(0,1fr)] items-center gap-3 py-1.5">
                                 <span className={fieldLabelClass}>学校</span>
-                                {renderConfigValue(displaySchoolName || '未设置', Boolean(displaySchoolName))}
+                                <span className="flex min-w-0 items-center justify-end gap-2 text-sm">
+                                    {renderConfigValue(displaySchoolName || '未设置', Boolean(displaySchoolName))}
+                                    <span className="h-4 w-4 shrink-0" aria-hidden="true" />
+                                </span>
                             </div>
                         ) : (
                             <MobileEditableRow
@@ -564,13 +574,6 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                 </span>
                             </MobileEditableRow>
                         )}
-                        <MobileEditableRow onClick={openDepartmentSelector} className={editableRowLayoutClass} aria-label={`修改部门，当前${draft.departmentName || '未设置'}`}>
-                            <span className={fieldLabelClass}>部门</span>
-                            <span className={`flex min-w-0 items-center justify-end gap-2 text-sm ${draft.departmentName ? 'font-semibold text-[var(--tm-text-primary)]' : 'font-medium text-[var(--tm-text-tertiary)]'}`}>
-                                <span className="truncate">{draft.departmentName || '未设置'}</span>
-                                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
-                            </span>
-                        </MobileEditableRow>
                     </div>
                 </MobileCard>
 
@@ -617,6 +620,13 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                 <span className={fieldLabelClass}>分管年级</span>
                                 <span className="flex min-w-0 items-center justify-end gap-2">
                                     {renderConfigValue(gradeLeaderSummary, draft.gradeLeaderGrades.length > 0)}
+                                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
+                                </span>
+                            </MobileEditableRow>
+                            <MobileEditableRow onClick={openDepartmentSelector} className={editableRowLayoutClass} aria-label={`修改部门，当前${draft.departmentName || '未设置'}`}>
+                                <span className={fieldLabelClass}>部门</span>
+                                <span className={`flex min-w-0 items-center justify-end gap-2 text-sm ${draft.departmentName ? 'font-semibold text-[var(--tm-text-primary)]' : 'font-medium text-[var(--tm-text-tertiary)]'}`}>
+                                    <span className="truncate">{draft.departmentName || '未设置'}</span>
                                     <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
                                 </span>
                             </MobileEditableRow>

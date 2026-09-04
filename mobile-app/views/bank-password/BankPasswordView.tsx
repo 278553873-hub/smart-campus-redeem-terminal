@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Check, ChevronLeft, Edit3, Eye, EyeOff } from 'lucide-react';
 import type { ClassInfo, Student } from '../../types';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
 
 interface BankPasswordViewProps {
   classInfo: ClassInfo;
+  currentSpace: TeacherSpaceOption;
   students: Student[];
   onBack: () => void;
 }
@@ -19,7 +21,7 @@ const generateStablePassword = (studentId: string) => {
   return String(100000 + hash).slice(-6);
 };
 
-const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classInfo, students: classStudents, onBack }) => {
+const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classInfo, currentSpace, students: classStudents, onBack }) => {
   const [students, setStudents] = useState<PasswordStudent[]>(() => classStudents.map(student => ({
     ...student,
     password: generateStablePassword(student.id),
@@ -63,7 +65,7 @@ const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classInfo, students
       <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
         <div className="px-[var(--tm-space-4)] pt-[var(--tm-space-3)]">
           <div className="flex items-center justify-between rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
-            <div className="min-w-0"><h2 className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{classInfo.name}</h2><p className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">共 {students.length} 名学生</p></div>
+            <div className="min-w-0"><h2 className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{getTeacherClassDisplayName(classInfo, currentSpace)}</h2><p className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">共 {students.length} 名学生</p></div>
             <span className="rounded-full bg-[var(--tm-brand-primary-soft)] px-[var(--tm-space-3)] py-[var(--tm-space-1)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary)]">6位数字</span>
           </div>
         </div>

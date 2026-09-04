@@ -6,6 +6,7 @@ import {
   Footprints,
   GripVertical,
   LockKeyhole,
+  Layers,
   MapPinned,
   Minus,
   Check,
@@ -40,6 +41,7 @@ import TermReportView, {
   ReportPageContainer,
   ReportSectionHeader,
   ReportTag,
+  ConfiguredSectionCard,
   type TermReportAnchorItem,
   type TermReportSectionId,
 } from '../mobile-app/views/TermReportView';
@@ -99,6 +101,7 @@ const reportConfigSections: ReportConfigSection[] = [
   { id: 'medals', label: '成长奖章', defaultEnabled: true },
   { id: 'teacher-attention', label: '教师关注', defaultEnabled: false },
   { id: 'growth-radar', label: '五育雷达图', defaultEnabled: true },
+  { id: 'five-education-detail', label: '五育成长表现', defaultEnabled: true },
   { id: 'subject-results', label: '学科成绩', defaultEnabled: true },
   { id: 'school-achievement', label: '专题成果', defaultEnabled: false },
   { id: 'highlights', label: '高光时刻', defaultEnabled: false },
@@ -331,12 +334,75 @@ const profileItems = [
   { label: '成技', color: 'green' as const, title: '动手有序，主动收尾', detail: '完成生活技能任务时逐渐减少依赖，并能主动整理工具与操作环境。' },
 ];
 
-const behaviorRecords = [
-  { date: '3月12日', teacher: '班主任王老师', text: '课后主动整理讲台，并提醒值日同学检查工具摆放。', path: '成正 / 德育常规 / 责任担当' },
-  { date: '4月18日', teacher: '数学李老师', text: '数学文化节小组展示中，用两种方法讲解同一道题。', path: '成智 / 数学 / 数学文化节' },
-  { date: '5月22日', teacher: '劳动周老师', text: '劳动实践课独立完成配菜和翻炒，并主动清理操作台。', path: '成技 / 劳动与生活 / 生活技能' },
-  { date: '6月5日', teacher: '体育刘老师', text: '足球联赛训练中主动补位，并在失球后鼓励队友继续配合。', path: '成健 / 身体健康 / 运动特长' },
+type FiveEducationDimension = '成正' | '成健' | '成智' | '成雅' | '成技';
+type BehaviorRecordTone = 'positive' | 'critical';
+
+interface BehaviorRecord {
+  dimension: FiveEducationDimension;
+  tone: BehaviorRecordTone;
+  date: string;
+  teacher: string;
+  text: string;
+  path: string;
+}
+
+const behaviorRecords: BehaviorRecord[] = [
+  { dimension: '成正', tone: 'positive', date: '3月12日', teacher: '班主任王老师', text: '课后主动整理讲台，并提醒值日同学检查工具摆放。', path: '成正 / 德育常规 / 责任担当' },
+  { dimension: '成雅', tone: 'positive', date: '3月28日', teacher: '音乐王老师', text: '合唱排练中保持自己的声部节奏，并帮助同伴找到进入拍点。', path: '成雅 / 艺术表达 / 合唱排练' },
+  { dimension: '成智', tone: 'positive', date: '4月18日', teacher: '数学李老师', text: '数学文化节小组展示中，用两种方法讲解同一道题。', path: '成智 / 数学 / 数学文化节' },
+  { dimension: '成技', tone: 'positive', date: '5月22日', teacher: '劳动周老师', text: '劳动实践课独立完成配菜和翻炒，并主动清理操作台。', path: '成技 / 劳动与生活 / 生活技能' },
+  { dimension: '成健', tone: 'positive', date: '6月5日', teacher: '体育刘老师', text: '足球联赛训练中主动补位，并在失球后鼓励队友继续配合。', path: '成健 / 身体健康 / 运动特长' },
 ];
+
+const fiveEducationDetails = [
+  {
+    label: '成正',
+    color: 'orange' as const,
+    title: '从完成分工到主动担当',
+    detail: '从按要求完成值日，成长为会主动整理讲台、提醒同伴检查工具的班级成员。',
+  },
+  {
+    label: '成健',
+    color: 'green' as const,
+    title: '在运动中形成协作意识',
+    detail: '持续参与足球训练，能在团队变化中主动补位，并用鼓励帮助队友保持配合。',
+  },
+  {
+    label: '成智',
+    color: 'blue' as const,
+    title: '从给出答案到讲清方法',
+    detail: '数学文化节展示中尝试用两种方法解题，开始主动解释思路并回应同伴提问。',
+  },
+  {
+    label: '成雅',
+    color: 'purple' as const,
+    title: '稳定表达，也愿意成就同伴',
+    detail: '合唱排练中保持自己的声部节奏，同时帮助同伴找到拍点，表现出稳定的艺术投入。',
+  },
+  {
+    label: '成技',
+    color: 'green' as const,
+    title: '动手有序并主动收尾',
+    detail: '生活技能实践中能够独立完成操作，并主动清理操作台，逐渐减少对他人的依赖。',
+  },
+];
+
+const getFiveEducationDetail = (item: (typeof fiveEducationDetails)[number]) => {
+  const records = behaviorRecords.filter(record => record.dimension === item.label);
+  if (records.some(record => record.tone === 'positive')) return item;
+  if (records.length === 0) {
+    return {
+      ...item,
+      title: '成长证据正在积累',
+      detail: '本学期暂未形成该维度的有效表现记录，先保留观察空间，待后续出现稳定表现后再更新说明。',
+    };
+  }
+  return {
+    ...item,
+    title: '从关注点开始持续改进',
+    detail: '本学期相关表现仍在形成中，暂不以单次记录下结论，后续将结合连续的日常表现更新成长说明。',
+  };
+};
 
 const SchoolGrowthProfilePage: React.FC<CustomReportPageProps> = ({ mode }) => (
   <ReportPageContainer mode={mode} id={mode === 'mobile' ? 'section-school-profile' : undefined}>
@@ -372,6 +438,25 @@ const BehaviorTracePage: React.FC<CustomReportPageProps> = ({ mode }) => (
       ))}
     </ReportCard>
   </ReportPageContainer>
+);
+
+const FiveEducationDetailCard: React.FC = () => (
+  <ConfiguredSectionCard title="五育成长表现" icon={Layers}>
+    {fiveEducationDetails.map((item, index) => {
+      const detail = getFiveEducationDetail(item);
+      return (
+        <div key={item.label} className={`py-4 first:pt-0 last:pb-0 ${index < fiveEducationDetails.length - 1 ? 'border-b border-slate-100' : ''}`}>
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 pt-0.5"><ReportTag color={item.color}>{item.label}</ReportTag></div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-bold text-slate-800">{detail.title}</div>
+              <div className="mt-1 text-xs leading-relaxed text-slate-600">{detail.detail}</div>
+            </div>
+          </div>
+        </div>
+      );
+    })}
+  </ConfiguredSectionCard>
 );
 
 const TermChangePage: React.FC<CustomReportPageProps> = ({ mode }) => (
@@ -511,6 +596,8 @@ const TermReportRedesignDemo: React.FC = () => {
         ? 'section-teacher'
         : id === 'growth-radar'
           ? 'section-growth-radar'
+          : id === 'five-education-detail'
+            ? 'section-five-education-detail'
           : id === 'subject-results'
             ? 'section-subject-results'
               : id === 'school-achievement'
@@ -673,6 +760,7 @@ const TermReportRedesignDemo: React.FC = () => {
                   initialViewMode="mobile"
                   showViewModeToggle={false}
                   enabledSections={enabledSections}
+                  fiveEducationDetailContent={<FiveEducationDetailCard />}
                   sectionOrder={sectionOrder}
                   showLegacyOptionalSections={false}
                   compactConfiguredMobileSections
@@ -699,6 +787,7 @@ const TermReportRedesignDemo: React.FC = () => {
                   initialViewMode="a4"
                   showViewModeToggle={false}
                   enabledSections={enabledSections}
+                  fiveEducationDetailContent={<FiveEducationDetailCard />}
                   sectionOrder={sectionOrder}
                   showLegacyOptionalSections={false}
                   hideEndMarker

@@ -120,7 +120,7 @@ import {
     TEACHER_EVALUATION_REVIEW_CURRENT_BY_CLASS,
 } from './data/teacherEvaluationReview';
 import { CURRENT_PRINCIPAL_TERM } from './data/principalTermReport';
-import { canManagePersonalClasses, canTeacherSpaceRecordClass, getHeadteacherAssistantScopes } from './domain/teacherSpaceAccess';
+import { canManagePersonalClasses, canTeacherSpaceRecordClass, getHeadteacherAssistantScopes, getTeacherClassDisplayName, getTeacherSchoolGradeOptions } from './domain/teacherSpaceAccess';
 import { useReportGenerationTask } from './hooks/useReportGenerationTask';
 import {
     createDemoStudentLevelEvaluationRecords,
@@ -198,9 +198,9 @@ const CLASS_RECORD_ENABLED_SPACE_IDS = new Set(['school-qizhong', 'school-star']
 const TEACHER_SPACE_OPTIONS: TeacherSpaceOption[] = ([
     { id: 'personal', title: '我创建的班级', type: 'personal', role: 'owner' },
     { id: 'collab-li', title: '李明老师的班级', type: 'collaboration', role: 'collaborator' },
-    { id: 'school-qizhong', title: '成都七中初中附属小学', type: 'school', role: 'homeroomTeacher', classLeaderboardSettlementCycle: 'week', enabledManagementTools: [], headteacherAssistantEnabled: true, evaluationScopes: ['class'] },
-    { id: 'school-star', title: '星河实验小学', type: 'school', role: 'leader', classLeaderboardSettlementCycle: 'week', enabledManagementTools: ['schoolReport', 'moralEducationCockpit', 'termReport', 'principalAssistant'], headteacherAssistantEnabled: true, evaluationScopes: ['student', 'class'], homeworkAiEnabled: true, homeworkOperator: true },
-    { id: 'school-qinghe', title: '青禾实验小学', type: 'school', role: 'homeroomTeacher', enabledManagementTools: [], headteacherAssistantEnabled: true, evaluationScopes: ['student'] },
+    { id: 'school-qizhong', title: '成都七中初中附属小学', type: 'school', schoolType: 'primary', role: 'homeroomTeacher', classLeaderboardSettlementCycle: 'week', enabledManagementTools: [], headteacherAssistantEnabled: true, evaluationScopes: ['class'] },
+    { id: 'school-star', title: '星河实验学校', type: 'school', schoolType: 'twelveYear', role: 'leader', classLeaderboardSettlementCycle: 'week', enabledManagementTools: ['schoolReport', 'moralEducationCockpit', 'termReport', 'principalAssistant'], headteacherAssistantEnabled: true, evaluationScopes: ['student', 'class'], homeworkAiEnabled: true, homeworkOperator: true },
+    { id: 'school-qinghe', title: '青禾实验小学', type: 'school', schoolType: 'primary', role: 'homeroomTeacher', enabledManagementTools: [], headteacherAssistantEnabled: true, evaluationScopes: ['student'] },
 ] satisfies TeacherSpaceOption[]).map(space => ({
     ...space,
     classRecordEnabled: CLASS_RECORD_ENABLED_SPACE_IDS.has(space.id),
@@ -299,7 +299,7 @@ const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
     id: 'teacher-liufei',
     name: '刘飞',
     avatar: ASSETS.AVATAR.TEACHER_DEFAULT,
-    schoolName: '星河实验小学',
+    schoolName: '星河实验学校',
     departmentId: 'student-development',
     departmentName: '学发中心',
     teachingAssignments: [
@@ -309,7 +309,7 @@ const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
         ...createTeachingAssignments(['c_2025_1'], '书法'),
     ],
     homeroomClassIds: ['c_2025_4', 'c_2025_1', 'c_2024_2', 'c_2025_7'],
-    gradeLeaderGrades: ['2025级'],
+    gradeLeaderGrades: ['一年级'],
 };
 
 const INITIAL_TEACHER_PROFILES_BY_SPACE: Record<string, TeacherProfile> = {
@@ -325,7 +325,7 @@ const INITIAL_TEACHER_PROFILES_BY_SPACE: Record<string, TeacherProfile> = {
     },
     'collab-li': {
         ...DEFAULT_TEACHER_PROFILE,
-        schoolName: '李明老师的班级',
+        schoolName: '星河实验学校',
         departmentId: '',
         departmentName: '',
         teachingAssignments: createTeachingAssignments(['c_2025_2'], '体育'),
@@ -439,7 +439,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const [homeworkRosterVersions] = useState<HomeworkRosterVersion[]>(() => (
         MOCK_CLASSES.map(classInfo => buildRosterVersion({
             schoolId: DEFAULT_TEACHER_SPACE_ID,
-            schoolName: '星河实验小学',
+            schoolName: '星河实验学校',
             classInfo,
             students: GET_MOCK_STUDENTS_FOR_CLASS(classInfo.id),
         }))
@@ -448,7 +448,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         [
             ...createDemoHomeworkAssignments({
                 schoolId: DEFAULT_TEACHER_SPACE_ID,
-                schoolName: '星河实验小学',
+                schoolName: '星河实验学校',
                 classInfo: MOCK_CLASSES[0],
                 students: GET_MOCK_STUDENTS_FOR_CLASS(MOCK_CLASSES[0].id),
                 teacherName: DEFAULT_TEACHER_PROFILE.name,
@@ -462,7 +462,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
             }),
             ...createDemoHomeworkAssignments({
                 schoolId: DEFAULT_TEACHER_SPACE_ID,
-                schoolName: '星河实验小学',
+                schoolName: '星河实验学校',
                 classInfo: MOCK_CLASSES[0],
                 students: GET_MOCK_STUDENTS_FOR_CLASS(MOCK_CLASSES[0].id),
                 teacherName: DEFAULT_TEACHER_PROFILE.name,
@@ -492,6 +492,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const principalTermReportTask = useReportGenerationTask({ stepCount: 4, initialStatus: 'generated' });
     const [currentTeacherSpaceId, setCurrentTeacherSpaceId] = useState(DEFAULT_TEACHER_SPACE_ID);
     const activeTeacherSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === currentTeacherSpaceId) ?? TEACHER_SPACE_OPTIONS[0];
+    const gradeScopeOptions = ['全年级', ...(getTeacherSchoolGradeOptions(activeTeacherSpace) ?? GRADE_SCOPES.slice(1))];
     const headteacherAssistantScopes = getHeadteacherAssistantScopes(activeTeacherSpace);
     const canRecordClassForActiveSpace = canTeacherSpaceRecordClass(activeTeacherSpace);
     const teacherProfile = teacherProfilesBySpace[activeTeacherSpace.id] ?? DEFAULT_TEACHER_PROFILE;
@@ -1465,7 +1466,10 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
             case 'medal_issuance': return '颁发奖章';
             case 'face_update': return '更新人脸数据';
             case 'bank_password': return '设置兑换密码';
-            case 'homework_entry': return classes.find(c => c.id === selectedClassId)?.name || '作业录入';
+            case 'homework_entry': {
+                const classInfo = classes.find(c => c.id === selectedClassId);
+                return classInfo ? getTeacherClassDisplayName(classInfo, activeTeacherSpace) : '作业录入';
+            }
             default: return '';
         }
     };
@@ -1687,6 +1691,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     addDemoTopBreathingSpace={!showPhoneShell}
                                     canRecordClass={canRecordClassForActiveSpace}
                                     onViewIndicators={() => navigateTo('indicator_catalog')}
+                                    classes={activeSpaceClasses}
+                                    currentSpace={activeTeacherSpace}
                                 />
                             )}
 
@@ -1738,6 +1744,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     classInfo={selectedClassInfo}
                                     classRole={selectedClassRole}
                                     spaceType={activeTeacherSpace.type}
+                                    currentSpace={activeTeacherSpace}
                                     teacherProfile={teacherProfile}
                                     students={getMergedStudentsForClass(selectedClassInfo.id)}
                                     onBack={goBack}
@@ -1809,6 +1816,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     students={selectedStudentTeamStudents}
                                     currentTeacherName={teacherProfile.name}
                                     schoolName={teacherProfile.schoolName}
+                                    currentSpace={activeTeacherSpace}
                                     canManage={canManageSelectedStudentTeam}
                                     classes={studentTeamEditableClasses}
                                     allStudents={activeSpaceStudents}
@@ -1850,6 +1858,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'class_leaderboard' && (
                                 <ClassLeaderboardView
                                     settlementCycle={activeTeacherSpace.classLeaderboardSettlementCycle ?? 'week'}
+                                    currentSpace={activeTeacherSpace}
+                                    classes={activeSpaceClasses}
                                     onOpenEvaluationRecords={handleViewClassEvaluationRecords}
                                 />
                             )}
@@ -1857,6 +1867,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'class_evaluation_records' && (
                                 <EvaluationRecordsLogView
                                     classes={activeSpaceClasses}
+                                    currentSpace={activeTeacherSpace}
                                     canEditRecords={canEditClassEvaluationRecords}
                                     canDeleteRecords={canDeleteClassEvaluationRecords}
                                 />
@@ -1864,12 +1875,14 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
 
                             {currentView === 'leader_report' && (
                                 <LeaderReportView
+                                    currentSpace={activeTeacherSpace}
                                     onBack={goBack}
                                 />
                             )}
 
                             {currentView === 'moral_education_cockpit' && (
                                 <MoralEducationCockpitView
+                                    currentSpace={activeTeacherSpace}
                                     onBack={goBack}
                                 />
                             )}
@@ -1877,6 +1890,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'reward_verification' && selectedClassInfo && (
                                 <RewardVerificationView
                                     classInfo={selectedClassInfo}
+                                    currentSpace={activeTeacherSpace}
                                     students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
                                     onBack={goBack}
                                 />
@@ -1893,6 +1907,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'face_update' && selectedClassInfo && (
                                 <FaceUpdateView
                                     classInfo={selectedClassInfo}
+                                    currentSpace={activeTeacherSpace}
                                     students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
                                     onBack={goBack}
                                 />
@@ -1901,6 +1916,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'bank_password' && selectedClassInfo && (
                                 <BankPasswordView
                                     classInfo={selectedClassInfo}
+                                    currentSpace={activeTeacherSpace}
                                     students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
                                     onBack={goBack}
                                 />
@@ -1911,6 +1927,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     schoolId={activeTeacherSpace.id}
                                     schoolName={activeTeacherSpace.title}
                                     classInfo={classes.find(c => c.id === selectedClassId)!}
+                                    currentSpace={activeTeacherSpace}
                                     students={getMergedStudentsForClass(selectedClassId).filter(student => (student.status ?? 'active') === 'active')}
                                     subjects={Array.from(new Set(teacherProfile.teachingAssignments.filter(item => item.classId === selectedClassId).map(item => item.subject)))}
                                     teacherName={teacherProfile.name}
@@ -1923,6 +1940,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'student_detail' && (
                                 <DashboardView
                                     student={activeStudent}
+                                    classInfo={classes.find(classInfo => classInfo.id === activeStudentClassId)}
+                                    currentSpace={activeTeacherSpace}
                                     scores={MOCK_SCORES}
                                     growthReports={MOCK_GROWTH_REPORTS}
                                     onViewTermReport={handleViewTermReport}
@@ -1990,7 +2009,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'student_basic_edit' && (
                                 <StudentBasicEditView
                                     student={activeStudent}
-                                    classes={classes}
+                                    classes={activeSpaceClasses}
+                                    currentSpace={activeTeacherSpace}
                                     onBack={goBack}
                                     onChange={handleChangeStudentBasicInfo}
                                 />
@@ -2009,6 +2029,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                 <div className="flex-1 overflow-y-auto no-scrollbar">
                                     <TermReportView
                                         student={activeStudent}
+                                        classInfo={classes.find(classInfo => classInfo.id === activeStudentClassId)}
+                                        currentSpace={activeTeacherSpace}
                                         onBack={goBack}
                                     />
                                 </div>
@@ -2058,13 +2080,15 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     onSyncAssignments={handleSyncRecognizedHomework}
                                     onDeleteTask={handleDeleteHomeworkImportTask}
                                     onBack={goBack}
+                                    classes={activeSpaceClasses}
+                                    currentSpace={activeTeacherSpace}
                                 />
                             )}
 
                             {currentView === 'teacher_profile_edit' && (
                                 <TeacherProfileEditView
                                     profile={teacherProfile}
-                                    classes={classes}
+                                    classes={activeSpaceClasses}
                                     subjects={TEACHER_PROFILE_SUBJECTS}
                                     departments={TEACHER_PROFILE_DEPARTMENTS}
                                     currentSpace={activeTeacherSpace}
@@ -2147,6 +2171,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     initialArchiveTemplateId={questionnaireInitialArchiveTemplateId || undefined}
                                     initialRecordId={questionnaireInitialRecordId || undefined}
                                     classes={questionnaireAuthorizedClasses}
+                                    currentSpace={activeTeacherSpace}
                                     allScopeLabel={hasSchoolWideQuestionnaireAccess ? '全部年级' : '全部班级'}
                                     getStudentsForClass={getMergedStudentsForClass}
                                 />
@@ -2157,6 +2182,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     onBack={goBack}
                                     teacherProfile={teacherProfile}
                                     spaceId={activeTeacherSpace.id}
+                                    currentSpace={activeTeacherSpace}
                                     classes={classes.filter(classInfo => (
                                         teacherProfile.homeroomClassIds.includes(classInfo.id)
                                         || teacherProfile.teachingAssignments.some(item => item.classId === classInfo.id)
@@ -2168,6 +2194,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {(currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2') && (
                                 <AiHeadteacherAssistantV2View
                                     onBack={goBack}
+                                    getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, activeTeacherSpace)}
                                     homeroomClasses={homeroomClasses}
                                     activeClassId={headteacherAssistantClassId}
                                     onClassChange={setHeadteacherAssistantClassId}
@@ -2187,6 +2214,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'weekly_action_advice' && (
                                 <WeeklyActionAdviceView
                                     data={activeWeeklyAdvice}
+                                    getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, activeTeacherSpace)}
                                     homeroomClasses={homeroomClasses}
                                     activeClassId={headteacherAssistantClassId}
                                     onClassChange={setHeadteacherAssistantClassId}
@@ -2198,6 +2226,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'weekly_action_history' && (
                                 <WeeklyActionAdviceHistoryView
                                     onBack={goBack}
+                                    getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, activeTeacherSpace)}
                                     classes={homeroomClasses}
                                     initialClassId={headteacherAssistantClassId}
                                     onClassChange={setHeadteacherAssistantClassId}
@@ -2207,6 +2236,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'teacher_evaluation_review' && (
                                 <TeacherEvaluationReviewView
                                     data={activeEvaluationReview}
+                                    getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, activeTeacherSpace)}
                                     homeroomClasses={homeroomClasses}
                                     activeClassId={headteacherAssistantClassId}
                                     onClassChange={setHeadteacherAssistantClassId}
@@ -2218,6 +2248,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             {currentView === 'teacher_evaluation_review_history' && (
                                 <TeacherEvaluationReviewHistoryView
                                     onBack={goBack}
+                                    getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, activeTeacherSpace)}
                                     classes={homeroomClasses}
                                     initialClassId={headteacherAssistantClassId}
                                     onClassChange={setHeadteacherAssistantClassId}
@@ -2471,7 +2502,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
 
                                             {showGradeSelect && (
                                                 <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-lg z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
-                                                    {GRADE_SCOPES.map(grade => (
+                                                    {gradeScopeOptions.map(grade => (
                                                         <button
                                                             key={grade}
                                                             onClick={() => {

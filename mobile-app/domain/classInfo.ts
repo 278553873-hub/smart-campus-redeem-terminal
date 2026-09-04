@@ -20,7 +20,7 @@ const CHINESE_CLASS_NUMBERS: Record<string, number> = {
 };
 
 const PRIMARY_GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
-const MIDDLE_GRADES = ['初一', '初二', '初三'];
+const MIDDLE_GRADES = ['七年级', '八年级', '九年级'];
 const HIGH_GRADES = ['高一', '高二', '高三'];
 
 export const getCurrentAcademicYear = (date = new Date()): number => (
@@ -29,7 +29,7 @@ export const getCurrentAcademicYear = (date = new Date()): number => (
 
 export const inferEducationStage = (classInfo: ClassInfo): EducationStage => {
   if (classInfo.educationStage) return classInfo.educationStage;
-  if (classInfo.gradeLevel.startsWith('初')) return 'middle';
+  if (/^(初一|初二|初三|七年级|八年级|九年级)/.test(classInfo.gradeLevel)) return 'middle';
   if (classInfo.gradeLevel.startsWith('高')) return 'high';
   return 'primary';
 };

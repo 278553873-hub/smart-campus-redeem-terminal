@@ -57,6 +57,7 @@ interface AiHeadteacherAssistantV2ViewProps {
     showClassEvaluation: boolean;
     onOpenWeeklyActionAdvice: (classId: string) => void;
     onOpenEvaluationReview: (classId: string) => void;
+    getClassLabel?: (classInfo: ClassInfo) => string;
 }
 
 interface ChatMessage {
@@ -820,6 +821,7 @@ const ClassContextPanel: React.FC<{
     onOpenDetails: () => void;
     onOpenWeekDetail: () => void;
     onStudentQuestionSelect: (action: typeof STUDENT_EVALUATION_QUESTIONS[number]['action']) => void;
+    getClassLabel: (classInfo: ClassInfo) => string;
 }> = ({
     activeClass,
     canSwitchClass,
@@ -834,12 +836,14 @@ const ClassContextPanel: React.FC<{
     onOpenDetails,
     onOpenWeekDetail,
     onStudentQuestionSelect,
+    getClassLabel,
 }) => (
     <section className="headteacher-agent-glass headteacher-context-card relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)] p-2" aria-label="当前班级数据与分析功能">
         {canSwitchClass && (
             <div className="mb-1 flex min-h-10 items-center px-3">
                 <AssistantClassSwitchButton
                     activeClass={activeClass}
+                    classLabel={activeClass ? getClassLabel(activeClass) : undefined}
                     onClick={onClassPickerOpen}
                     variant="quiet"
                     className="-ml-1 justify-start"
@@ -875,10 +879,11 @@ const WeekDataDetailPage: React.FC<{
     classId: string;
     initialDimension?: string;
     activeClass?: ClassInfo;
+    getClassLabel: (classInfo: ClassInfo) => string;
     onBack: () => void;
     onClassPickerOpen: () => void;
     onWeekChange: (weekId: string) => void;
-}> = ({ weekId, classId, initialDimension, activeClass, onBack, onClassPickerOpen, onWeekChange }) => {
+}> = ({ weekId, classId, initialDimension, activeClass, getClassLabel, onBack, onClassPickerOpen, onWeekChange }) => {
     const weekIndex = CLASS_EVALUATION_WEEKS.findIndex(item => item.id === weekId);
     const week = getClassEvaluationWeek(weekId);
     const snapshot = getClassEvaluationSnapshot(classId, weekId);
@@ -902,7 +907,7 @@ const WeekDataDetailPage: React.FC<{
             <AssistantSubpageHeader
                 onBack={onBack}
                 surface="transparent"
-                centerContent={<AssistantClassSwitchButton activeClass={activeClass} onClick={onClassPickerOpen} />}
+                centerContent={<AssistantClassSwitchButton activeClass={activeClass} classLabel={activeClass ? getClassLabel(activeClass) : undefined} onClick={onClassPickerOpen} />}
             />
 
             <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(24px+env(safe-area-inset-bottom))] no-scrollbar">
@@ -996,6 +1001,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     showClassEvaluation,
     onOpenWeeklyActionAdvice,
     onOpenEvaluationReview,
+    getClassLabel = classInfo => classInfo.name,
 }) => {
     const resolvedClassId = homeroomClasses.some(classInfo => classInfo.id === activeClassId)
         ? activeClassId
@@ -1170,7 +1176,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                 });
                 const report = saveClassEvaluationReport({
                     classId: resolvedClassId,
-                    className: activeClass?.name ?? '当前班级',
+                    className: activeClass ? getClassLabel(activeClass) : '当前班级',
                     weekId: currentWeek.id,
                     weekLabel: currentWeek.label,
                     dataRangeLabel: currentWeek.dataRangeLabel,
@@ -1262,6 +1268,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     classId={resolvedClassId}
                     initialDimension={detailInitialDimension ?? undefined}
                     activeClass={activeClass}
+                    getClassLabel={getClassLabel}
                     onBack={() => setWeekDetailOpen(false)}
                     onClassPickerOpen={() => setShowClassPicker(true)}
                     onWeekChange={setDetailWeekId}
@@ -1270,6 +1277,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     <HomeroomClassPickerSheet
                         classes={homeroomClasses}
                         selectedClassId={resolvedClassId}
+                        getClassLabel={getClassLabel}
                         onSelect={handleClassSelect}
                         onClose={() => setShowClassPicker(false)}
                     />
@@ -1352,6 +1360,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     {(showClassEvaluation || showStudentEvaluation) && (
                         <ClassContextPanel
                             activeClass={activeClass}
+                            getClassLabel={getClassLabel}
                             canSwitchClass={homeroomClasses.length > 1}
                             showClassEvaluation={showClassEvaluation}
                             showStudentEvaluation={showStudentEvaluation}
@@ -1418,6 +1427,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                 <HomeroomClassPickerSheet
                     classes={homeroomClasses}
                     selectedClassId={resolvedClassId}
+                    getClassLabel={getClassLabel}
                     onSelect={handleClassSelect}
                     onClose={() => setShowClassPicker(false)}
                 />

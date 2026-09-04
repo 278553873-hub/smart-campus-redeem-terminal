@@ -38,6 +38,8 @@ import {
   getHomeworkTemplatePreviewDataUrl,
   printHomeworkTemplate,
 } from '../utils/homeworkTemplateExport';
+import type { ClassInfo } from '../types';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 interface StagedImage {
   id: string;
@@ -57,6 +59,8 @@ interface HomeworkBatchImportViewProps {
   onSyncAssignments: (assignments: HomeworkAssignment[]) => void;
   onDeleteTask: (task: HomeworkImportDraft) => void;
   onBack: () => void;
+  classes: ClassInfo[];
+  currentSpace: TeacherSpaceOption;
 }
 
 const templatePageSizes: HomeworkTemplatePageSize[] = ['A4', 'A3'];
@@ -143,6 +147,8 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
   onSyncAssignments,
   onDeleteTask,
   onBack,
+  classes,
+  currentSpace,
 }) => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -174,6 +180,15 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
   const actionDraft = drafts.find(draft => draft.id === actionDraftId) ?? null;
   const deleteDraft = drafts.find(draft => draft.id === deleteDraftId) ?? null;
   const unresolvedIssues = activeDraft?.issues.filter(issue => !issue.resolved) ?? [];
+  const getRosterClassLabel = (roster: HomeworkRosterVersion) => {
+    const classInfo = classes.find(classInfo => classInfo.id === roster.classId);
+    return classInfo ? getTeacherClassDisplayName(classInfo, currentSpace) : roster.className;
+  };
+  const getDraftClassLabel = (draft: HomeworkImportDraft) => {
+    const classId = draft.assignments[0]?.classId;
+    const classInfo = classes.find(item => item.id === classId || item.name === draft.className);
+    return classInfo ? getTeacherClassDisplayName(classInfo, currentSpace) : draft.className;
+  };
 
   const showToast = (message: string) => {
     setToast(message);
@@ -481,7 +496,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
         {renderHeader('作业结果', () => setActiveAssignmentDetailId(null))}
         <main className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[var(--tm-space-5)] pt-[var(--tm-space-3)] no-scrollbar">
           <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
-            <strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{activeDraft.className || '待匹配班级'} · {activeDraft.subject || '待补充学科'}</strong>
+            <strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{getDraftClassLabel(activeDraft) || '待匹配班级'} · {activeDraft.subject || '待补充学科'}</strong>
             <div className="mt-[var(--tm-space-3)] grid grid-cols-2 gap-[var(--tm-space-2)]">
               <input aria-label="作业日期" type="date" value={activeAssignmentDetail.date} onChange={event => updateAssignment(activeAssignmentDetail.id, item => ({ ...item, date: event.target.value }))} className="h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]" />
               <input aria-label="作业主题" value={activeAssignmentDetail.title} onChange={event => updateAssignment(activeAssignmentDetail.id, item => ({ ...item, title: event.target.value }))} placeholder="作业主题" className="h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]" />
@@ -518,7 +533,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
               {activeDraft.previewUrl ? <img src={activeDraft.previewUrl} alt="作业表原图" className="h-full w-full object-cover" /> : <FileImage className="h-6 w-6 text-[var(--tm-text-tertiary)]" />}
             </span>
             <div className="min-w-0 flex-1">
-              <strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{activeDraft.className || '待匹配班级'} · {activeDraft.subject || '待补充学科'}</strong>
+              <strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{getDraftClassLabel(activeDraft) || '待匹配班级'} · {activeDraft.subject || '待补充学科'}</strong>
               <span className="mt-1 block text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{activeDraft.assignments.length}次作业</span>
             </div>
           </section>
@@ -561,7 +576,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
                           <div className="mt-[var(--tm-space-2)] flex gap-[var(--tm-space-2)]">
                             <select aria-label="选择班级" value={classMatchSelections[issue.id] ?? ''} onChange={event => setClassMatchSelections(current => ({ ...current, [issue.id]: event.target.value }))} className="h-[var(--tm-size-touch)] min-w-0 flex-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]">
                               <option value="">选择班级</option>
-                              {currentRosters.map(roster => <option key={roster.id} value={roster.id}>{roster.className}</option>)}
+                              {currentRosters.map(roster => <option key={roster.id} value={roster.id}>{getRosterClassLabel(roster)}</option>)}
                             </select>
                             <button type="button" disabled={!classMatchSelections[issue.id]} onClick={() => matchDraftToRoster(issue.id, classMatchSelections[issue.id])} className="h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-disabled)]">匹配</button>
                           </div>
@@ -592,7 +607,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
                   <span className="mb-[var(--tm-space-1)] block text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">班级</span>
                   <select aria-label="修改班级" value={currentRosters.find(roster => roster.classId === activeDraft.assignments[0]?.classId)?.id ?? ''} onChange={event => requestDraftRosterChange(event.target.value)} className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]">
                     <option value="">选择班级</option>
-                    {currentRosters.map(roster => <option key={roster.id} value={roster.id}>{roster.className}</option>)}
+                    {currentRosters.map(roster => <option key={roster.id} value={roster.id}>{getRosterClassLabel(roster)}</option>)}
                   </select>
                 </label>
                 <label className="block min-w-0">
@@ -623,7 +638,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
             </div>
           )}
         >
-          <p className="pb-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">更换为{currentRosters.find(roster => roster.id === pendingRosterId)?.className ?? '新班级'}后，将按该班级学生名单重新匹配所有学生。</p>
+          <p className="pb-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">更换为{currentRosters.find(roster => roster.id === pendingRosterId) ? getRosterClassLabel(currentRosters.find(roster => roster.id === pendingRosterId)!) : '新班级'}后，将按该班级学生名单重新匹配所有学生。</p>
         </MobileBottomSheet>
         <MobileToast message={toast} />
       </div>
@@ -645,17 +660,17 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
             const issueCount = draft.issues.filter(issue => !issue.resolved).length;
             return (
               <article key={draft.id} className="flex min-h-[88px] w-full items-center overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
-                <button type="button" onClick={() => openDraft(draft)} className="flex min-w-0 flex-1 items-center gap-[var(--tm-space-3)] p-[var(--tm-space-3)] pr-[var(--tm-space-1)] text-left" aria-label={`查看${draft.className || '待匹配班级'}${draft.subject || '待补充学科'}识别结果`}>
+                <button type="button" onClick={() => openDraft(draft)} className="flex min-w-0 flex-1 items-center gap-[var(--tm-space-3)] p-[var(--tm-space-3)] pr-[var(--tm-space-1)] text-left" aria-label={`查看${getDraftClassLabel(draft) || '待匹配班级'}${draft.subject || '待补充学科'}识别结果`}>
                   <span className="flex h-[68px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)]">
                     {draft.previewUrl ? <img src={draft.previewUrl} alt="" className="h-full w-full object-cover" /> : <FileImage className="h-6 w-6 text-[var(--tm-text-tertiary)]" />}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{draft.className || '待匹配班级'} · {draft.subject || '待补充学科'}</strong>
+                    <strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{getDraftClassLabel(draft) || '待匹配班级'} · {draft.subject || '待补充学科'}</strong>
                     <span className="mt-1 block text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{draft.assignments.length}次作业</span>
                     <span className={`mt-1 block text-[length:var(--tm-font-size-compact)] font-semibold ${issueCount > 0 ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-status-positive-strong)]'}`}>{issueCount > 0 ? `${issueCount}项待核对` : '已录入'}</span>
                   </span>
                 </button>
-                <button type="button" onClick={() => setActionDraftId(draft.id)} className="mr-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label={`${draft.className || '当前'}识别任务更多操作`} title="更多操作"><MoreHorizontal className="h-5 w-5" /></button>
+                <button type="button" onClick={() => setActionDraftId(draft.id)} className="mr-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label={`${getDraftClassLabel(draft) || '当前'}识别任务更多操作`} title="更多操作"><MoreHorizontal className="h-5 w-5" /></button>
               </article>
             );
           })}
@@ -736,7 +751,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
       <MobileConfirmSheet
         open={Boolean(deleteDraft)}
         title="删除识别任务"
-        description={`删除后，将同时撤销${deleteDraft?.className || '该班级'}本次识别产生的${deleteDraft?.assignments.length ?? 0}次作业。`}
+        description={`删除后，将同时撤销${deleteDraft ? getDraftClassLabel(deleteDraft) || '该班级' : '该班级'}本次识别产生的${deleteDraft?.assignments.length ?? 0}次作业。`}
         confirmLabel="删除"
         tone="danger"
         onConfirm={confirmDeleteTask}

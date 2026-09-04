@@ -20,6 +20,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { ClassInfo, Student, TeacherProfile } from '../../types';
+import { getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import FormBuilder, { type FormFieldTypeOption } from '../../components/form-builder/FormBuilder';
 import FormOutlineSorter, { type FormOutlineValue } from '../../components/form-builder/FormOutlineSorter';
 import GrowthFieldCategoryPicker from '../../components/growth/GrowthFieldCategoryPicker';
@@ -82,6 +83,7 @@ interface ArchiveDesignViewProps {
   teacherProfile: TeacherProfile;
   spaceId: string;
   classes: ClassInfo[];
+  currentSpace: TeacherSpaceOption;
   getStudentsForClass: (classId: string) => Student[];
 }
 
@@ -167,7 +169,7 @@ const getGrowthBuilderField = (
 };
 
 
-const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherProfile, spaceId, classes, getStudentsForClass }) => {
+const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherProfile, spaceId, classes, currentSpace, getStudentsForClass }) => {
   const [workspace, setWorkspace] = useState<ArchiveWorkspace>(() => readArchiveWorkspace({
     spaceId,
     teacherName: teacherProfile.name,
@@ -531,7 +533,8 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
     const appearanceTheme = getArchiveTheme(templateDraft.appearance);
     const headerImage = getArchiveHeaderImage(templateDraft.appearance);
     const appearanceStyle = getArchiveThemeStyle(templateDraft.appearance);
-    const gradeOptions = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级', '高一', '高二', '高三'];
+    const gradeOptions = getTeacherSchoolGradeOptions(currentSpace)
+      ?? ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级', '高一', '高二', '高三'];
     const fallbackSectionId = templateDraft.layoutMode === 'grouped' ? templateDraft.sections[0]?.id : undefined;
     const combinedBuilderEntries: Array<{ order: number; field: ConfigurableFormField<ArchiveFieldType> }> = [
       ...templateDraft.growthFields.map((config, index) => ({

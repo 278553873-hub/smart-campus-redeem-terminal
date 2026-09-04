@@ -2,9 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { Camera, CheckCircle2, ChevronLeft, Image, UserRound } from 'lucide-react';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import type { ClassInfo, Student } from '../../types';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 
 interface FaceUpdateViewProps {
   classInfo: ClassInfo;
+  currentSpace: TeacherSpaceOption;
   students: Student[];
   onBack: () => void;
 }
@@ -14,7 +16,7 @@ interface FaceStudent extends Student {
   isUploading: boolean;
 }
 
-const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, students: classStudents, onBack }) => {
+const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace, students: classStudents, onBack }) => {
   const [students, setStudents] = useState<FaceStudent[]>(() => classStudents.map((student, index) => ({
     ...student,
     hasFaceData: Boolean(student.avatar) && index < Math.ceil(classStudents.length * 0.6),
@@ -46,7 +48,7 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, students: cl
       <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)] no-scrollbar">
         <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
           <div className="flex items-end justify-between gap-[var(--tm-space-3)]">
-            <div><div className="text-[length:var(--tm-font-size-metric)] font-bold tabular-nums text-[var(--tm-text-primary)]">{completedCount}<span className="ml-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)]">/ {students.length}</span></div><div className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">{classInfo.name}已录入</div></div>
+            <div><div className="text-[length:var(--tm-font-size-metric)] font-bold tabular-nums text-[var(--tm-text-primary)]">{completedCount}<span className="ml-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)]">/ {students.length}</span></div><div className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">{getTeacherClassDisplayName(classInfo, currentSpace)}已录入</div></div>
             <span className="text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums text-[var(--tm-status-positive-strong)]">{Math.round(progress)}%</span>
           </div>
           <div className="mt-[var(--tm-space-3)] h-2 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]"><div className="h-full rounded-full bg-[var(--tm-status-positive)] transition-[width] duration-500" style={{ width: `${progress}%` }} /></div>

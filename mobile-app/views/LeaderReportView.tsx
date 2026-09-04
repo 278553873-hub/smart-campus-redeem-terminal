@@ -36,6 +36,7 @@ import {
 } from '../services/leaderReportService';
 import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
+import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 type RankingType = 'active' | 'low';
 type ReportTab = 'teacher' | 'event';
@@ -49,6 +50,7 @@ type CustomDateQuickRange = 'yesterday' | 'lastWeek' | 'lastMonth';
 
 interface LeaderReportViewProps {
     onBack: () => void;
+    currentSpace: TeacherSpaceOption;
 }
 
 type PercentageLevel = 'low' | 'medium' | 'high';
@@ -691,6 +693,37 @@ const loadReportChartsRuntime = async () => {
 const getDefaultCoverageGradeId = (grades: LeaderReportGradeCoverage[]) => {
     if (!grades.length) return null;
     return grades[0].id;
+};
+
+const getDisplayGradeCoverages = (
+    grades: LeaderReportGradeCoverage[],
+    currentSpace: TeacherSpaceOption,
+): LeaderReportGradeCoverage[] => {
+    const gradeLabels = getTeacherSchoolGradeOptions(currentSpace);
+    if (!gradeLabels) return grades;
+
+    return gradeLabels.map((label, index) => {
+        const existingGrade = grades[index];
+        if (existingGrade) {
+            return {
+                ...existingGrade,
+                name: label,
+                classes: existingGrade.classes.map(classInfo => ({
+                    ...classInfo,
+                    name: getTeacherClassDisplayName({ name: classInfo.name, gradeLevel: label }, currentSpace),
+                })),
+            };
+        }
+        return {
+            id: `grade-${index + 1}`,
+            name: label,
+            shortName: label.replace('年级', '').replace('高', ''),
+            covered: 0,
+            total: 0,
+            evaluationRecords: 0,
+            classes: [],
+        };
+    });
 };
 
 const getEvaluationRecordsAxis = (values: number[]) => {
@@ -2013,7 +2046,7 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
     );
 };
 
-const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
+const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpace }) => {
     const [activeReportTab, setActiveReportTab] = useState<ReportTab>('teacher');
     const [activePeriod, setActivePeriod] = useState<LeaderReportPeriod>('week');
     const [rankingTab, setRankingTab] = useState<RankingType>('active');
@@ -2041,6 +2074,10 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
     const periodQuery = activePeriod === 'custom' && confirmedDateRange
         ? { period: 'custom' as const, ...confirmedDateRange }
         : { period: activePeriod === 'custom' ? 'week' as const : activePeriod };
+    const displayGradeCoverages = useMemo(
+        () => getDisplayGradeCoverages(snapshot?.gradeCoverages ?? [], currentSpace),
+        [currentSpace, snapshot?.gradeCoverages],
+    );
     useEffect(() => {
         let disposed = false;
         setIsLoading(true);
@@ -2050,14 +2087,14 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                 if (disposed) return;
                 setSnapshot(data);
                 setSelectedGradeId(current => (
-                    data.gradeCoverages.some(grade => grade.id === current)
+                    getDisplayGradeCoverages(data.gradeCoverages, currentSpace).some(grade => grade.id === current)
                         ? current
-                        : getDefaultCoverageGradeId(data.gradeCoverages)
+                        : getDefaultCoverageGradeId(getDisplayGradeCoverages(data.gradeCoverages, currentSpace))
                 ));
                 setSelectedEvaluationGradeId(current => (
-                    data.gradeCoverages.some(grade => grade.id === current)
+                    getDisplayGradeCoverages(data.gradeCoverages, currentSpace).some(grade => grade.id === current)
                         ? current
-                        : getDefaultCoverageGradeId(data.gradeCoverages)
+                        : getDefaultCoverageGradeId(getDisplayGradeCoverages(data.gradeCoverages, currentSpace))
                 ));
             })
             .finally(() => {
@@ -2067,30 +2104,30 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
         return () => {
             disposed = true;
         };
-    }, [periodQuery.period, 'startDate' in periodQuery ? periodQuery.startDate : '', 'endDate' in periodQuery ? periodQuery.endDate : '']);
+    }, [currentSpace, periodQuery.period, 'startDate' in periodQuery ? periodQuery.startDate : '', 'endDate' in periodQuery ? periodQuery.endDate : '']);
 
     const visibleRanking = snapshot ? (rankingTab === 'active' ? snapshot.activeRanking : snapshot.lowRanking) : [];
     const fullRanking = snapshot ? (fullRankingType === 'active' ? snapshot.activeRanking : snapshot.lowRanking) : [];
     const fullScoreRanking = snapshot ? getSortedTeacherScores(snapshot.teacherScoreSummaries, fullScoreRankingSort) : [];
-    const selectedGrade = snapshot?.gradeCoverages.find(grade => grade.id === selectedGradeId)
-        ?? snapshot?.gradeCoverages.find(grade => grade.id === getDefaultCoverageGradeId(snapshot.gradeCoverages))
+    const selectedGrade = displayGradeCoverages.find(grade => grade.id === selectedGradeId)
+        ?? displayGradeCoverages.find(grade => grade.id === getDefaultCoverageGradeId(displayGradeCoverages))
         ?? null;
-    const selectedEvaluationGrade = snapshot?.gradeCoverages.find(grade => grade.id === selectedEvaluationGradeId)
-        ?? snapshot?.gradeCoverages.find(grade => grade.id === getDefaultCoverageGradeId(snapshot.gradeCoverages))
+    const selectedEvaluationGrade = displayGradeCoverages.find(grade => grade.id === selectedEvaluationGradeId)
+        ?? displayGradeCoverages.find(grade => grade.id === getDefaultCoverageGradeId(displayGradeCoverages))
         ?? null;
     const reportAnimationKey = `${activeReportTab}-${activePeriod}-${isLoading ? 'loading' : 'ready'}`;
 
     const openClassCoverageSheet = (gradeId?: string) => {
-        if (!snapshot?.gradeCoverages.length) return;
-        const fallbackGradeId = getDefaultCoverageGradeId(snapshot.gradeCoverages);
-        const fallbackGrade = snapshot.gradeCoverages.find(grade => grade.id === fallbackGradeId) ?? snapshot.gradeCoverages[0];
+        if (!displayGradeCoverages.length) return;
+        const fallbackGradeId = getDefaultCoverageGradeId(displayGradeCoverages);
+        const fallbackGrade = displayGradeCoverages.find(grade => grade.id === fallbackGradeId) ?? displayGradeCoverages[0];
         setSelectedGradeId(gradeId ?? selectedGradeId ?? fallbackGrade.id);
         setShowClassCoverageSheet(true);
     };
     const openClassEvaluationRecordsSheet = (gradeId?: string) => {
-        if (!snapshot?.gradeCoverages.length) return;
-        const fallbackGradeId = getDefaultCoverageGradeId(snapshot.gradeCoverages);
-        const fallbackGrade = snapshot.gradeCoverages.find(grade => grade.id === fallbackGradeId) ?? snapshot.gradeCoverages[0];
+        if (!displayGradeCoverages.length) return;
+        const fallbackGradeId = getDefaultCoverageGradeId(displayGradeCoverages);
+        const fallbackGrade = displayGradeCoverages.find(grade => grade.id === fallbackGradeId) ?? displayGradeCoverages[0];
         setSelectedEvaluationGradeId(gradeId ?? selectedEvaluationGradeId ?? fallbackGrade.id);
         setShowClassEvaluationRecordsSheet(true);
     };
@@ -2190,7 +2227,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                         <ReportSectionAction label="查看班级明细" onClick={() => openClassCoverageSheet()} />
                     </div>
                     <GradeCoverageChart
-                        grades={snapshot?.gradeCoverages ?? []}
+                        grades={displayGradeCoverages}
                         selectedGradeId={selectedGrade?.id ?? selectedGradeId}
                         onSelect={setSelectedGradeId}
                         tooltipEnabled={!showClassCoverageSheet}
@@ -2225,7 +2262,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                         <ReportSectionAction label="查看班级明细" onClick={() => openClassEvaluationRecordsSheet()} />
                     </div>
                     <GradeEvaluationRecordsChart
-                        grades={snapshot?.gradeCoverages ?? []}
+                        grades={displayGradeCoverages}
                         selectedGradeId={selectedEvaluationGrade?.id ?? selectedEvaluationGradeId}
                         onSelect={setSelectedEvaluationGradeId}
                         tooltipEnabled={!showClassEvaluationRecordsSheet}
@@ -2403,7 +2440,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                         </div>
                         <div className="border-b border-[var(--tm-border-subtle)] px-5 py-3">
                             <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                                {snapshot.gradeCoverages.map(grade => {
+                                {displayGradeCoverages.map(grade => {
                                     const selected = selectedGradeId === grade.id;
                                     return (
                                         <button
@@ -2446,7 +2483,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack }) => {
                         </div>
                         <div className="border-b border-[var(--tm-border-subtle)] px-5 py-3">
                             <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                                {snapshot.gradeCoverages.map(grade => {
+                                {displayGradeCoverages.map(grade => {
                                     const selected = selectedEvaluationGradeId === grade.id;
                                     return (
                                         <button

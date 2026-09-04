@@ -5,6 +5,7 @@ import type { ClassInfo } from '../types';
 interface HomeroomClassPickerSheetProps {
     classes: ClassInfo[];
     selectedClassId?: string;
+    getClassLabel?: (classInfo: ClassInfo) => string;
     onSelect: (classId: string) => void;
     onClose: () => void;
 }
@@ -12,6 +13,7 @@ interface HomeroomClassPickerSheetProps {
 const HomeroomClassPickerSheet: React.FC<HomeroomClassPickerSheetProps> = ({
     classes,
     selectedClassId,
+    getClassLabel = classInfo => classInfo.name,
     onSelect,
     onClose,
 }) => {
@@ -87,7 +89,7 @@ const HomeroomClassPickerSheet: React.FC<HomeroomClassPickerSheetProps> = ({
                                 className={`flex min-h-14 w-full items-center border-b border-[var(--tm-border-subtle)] px-1 text-left transition active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-primary)]'}`}
                                 aria-current={selected ? 'true' : undefined}
                             >
-                                <span className="min-w-0 flex-1 text-[15px] font-semibold">{classInfo.name}</span>
+                                <span className="min-w-0 flex-1 text-[15px] font-semibold">{getClassLabel(classInfo)}</span>
                                 {selected && <Check className="h-5 w-5 shrink-0" strokeWidth={2.3} aria-hidden="true" />}
                             </button>
                         );

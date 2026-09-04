@@ -469,12 +469,18 @@ const StudentCard: React.FC<{
     displaySettings.showLevel ? `净得分${performance.netScore}分` : '',
     ...visibleCountLabels,
   ].filter(Boolean).join('，');
+  const hasVisibleCounts = displaySettings.showPraiseCount || displaySettings.showCriticismCount;
+  const cardHeightClassName = displaySettings.showLevel
+    ? 'h-[148px]'
+    : hasVisibleCounts
+      ? 'h-[136px]'
+      : 'h-[116px]';
 
   return (
     <div
       onClick={onClick}
       aria-label={ariaLabel}
-      className={`relative flex h-[148px] w-[136px] flex-col items-center rounded-lg border-2 bg-white px-1 pb-2 pt-1 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+      className={`relative flex ${cardHeightClassName} w-[136px] flex-col items-center justify-center rounded-lg border-2 bg-white px-1 pb-2 pt-1 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
     >
       {isSelectable && (
         <div className={`absolute right-0 top-0 z-20 flex h-5 w-5 items-center justify-center rounded-md border shadow-sm transition-all ${selected ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-200 bg-white/90 text-slate-300'}`}>
@@ -496,7 +502,7 @@ const StudentCard: React.FC<{
           compact
         />
       </div>
-      {(displaySettings.showPraiseCount || displaySettings.showCriticismCount) && (
+      {hasVisibleCounts && (
         <div className="mt-px flex h-[18px] w-full items-center justify-center">
           <ClassroomStudentCounts
             summary={performance}

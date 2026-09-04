@@ -12,6 +12,7 @@ import MobileSettingsSwitchRow from '../../components/ui/MobileSettingsSwitchRow
 import { ASSETS } from '../../assets/images';
 import { createDemoStudentPerformanceSummary, type StudentPerformanceSummary } from '../../domain/studentPerformance';
 import { getStudentCardDisplaySettings } from '../../domain/studentCardDisplay';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import StudentTeamEditorView, { type StudentTeamEditorMode, type StudentTeamEditorValue } from './StudentTeamEditorView';
 import StudentTeamManagementActions from './StudentTeamManagementActions';
 
@@ -20,6 +21,7 @@ interface StudentTeamDetailViewProps {
   students: Student[];
   currentTeacherName: string;
   schoolName: string;
+  currentSpace: TeacherSpaceOption;
   canManage: boolean;
   classes: ClassInfo[];
   allStudents: Student[];
@@ -40,6 +42,7 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
   students,
   currentTeacherName,
   schoolName,
+  currentSpace,
   canManage,
   classes,
   allStudents,
@@ -203,6 +206,8 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
         classes={classes}
         allStudents={allStudents}
         getStudentsForClass={getStudentsForClass}
+        getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, currentSpace)}
+        currentSpace={currentSpace}
         onClose={() => setEditorMode(null)}
         onSave={value => {
           onUpdate(team.id, value);

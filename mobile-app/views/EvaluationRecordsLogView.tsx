@@ -8,9 +8,11 @@ import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker'
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import type { ClassInfo } from '../types';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 interface EvaluationRecordsLogViewProps {
     classes: ClassInfo[];
+    currentSpace: TeacherSpaceOption;
     canEditRecords: boolean;
     canDeleteRecords: boolean;
 }
@@ -140,22 +142,21 @@ const toDateInputValue = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
-const getGradeLabel = (classInfo: ClassInfo) => classInfo.admissionYear
-    ? `${classInfo.admissionYear}级`
-    : classInfo.name.match(/^\d{4}级/)?.[0] ?? classInfo.gradeLevel;
+const getGradeLabel = (classInfo: ClassInfo) => classInfo.gradeLevel;
 
 const getClassLabel = (classInfo: ClassInfo) => classInfo.name.replace(getGradeLabel(classInfo), '') || classInfo.name;
 
-const createEvaluationRecords = (classes: ClassInfo[], today: Date): EvaluationRecord[] => classes.flatMap((classInfo, classIndex) => (
+const createEvaluationRecords = (classes: ClassInfo[], today: Date, getClassLabel: (classInfo: ClassInfo) => string): EvaluationRecord[] => classes.flatMap((classInfo, classIndex) => (
     recordTemplates.map((template, templateIndex) => {
         const occurredAt = addDays(today, -template.dayOffset);
         occurredAt.setHours(template.hour, (classIndex * 7 + templateIndex * 11) % 60, 0, 0);
-        const originalContent = template.originalContent.replace('{className}', classInfo.name);
+        const classLabel = getClassLabel(classInfo);
+        const originalContent = template.originalContent.replace('{className}', classLabel);
 
         return {
             id: `${classInfo.id}-evaluation-${templateIndex}`,
             classId: classInfo.id,
-            className: classInfo.name,
+            className: classLabel,
             indicatorPath: template.indicatorPath,
             reason: template.reason,
             originalContent,
@@ -219,7 +220,7 @@ const EvaluationIndicatorPath: React.FC<EvaluationIndicatorPathProps> = ({ indic
     );
 };
 
-const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ classes, canEditRecords, canDeleteRecords }) => {
+const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ classes, currentSpace, canEditRecords, canDeleteRecords }) => {
     const today = useMemo(() => startOfDay(new Date()), []);
     const [selectedGrade, setSelectedGrade] = useState('all');
     const [selectedClassId, setSelectedClassId] = useState('all');
@@ -233,7 +234,8 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
         end: toDateInputValue(today),
     }));
     const [draftCustomRange, setDraftCustomRange] = useState(customRange);
-    const [records, setRecords] = useState(() => createEvaluationRecords(classes, today));
+    const getClassLabel = (classInfo: ClassInfo) => getTeacherClassDisplayName(classInfo, currentSpace);
+    const [records, setRecords] = useState(() => createEvaluationRecords(classes, today, getClassLabel));
     const [activeRecordId, setActiveRecordId] = useState('');
     const [isEditingRecord, setIsEditingRecord] = useState(false);
     const [recordEditScope, setRecordEditScope] = useState<RecordEditScope | null>(null);
@@ -243,19 +245,20 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
     const [statusMessage, setStatusMessage] = useState('');
 
     useEffect(() => {
-        setRecords(createEvaluationRecords(classes, today));
+        setRecords(createEvaluationRecords(classes, today, getClassLabel));
         setActiveRecordId('');
-    }, [classes, today]);
+    }, [classes, currentSpace, today]);
 
     useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
-    const gradeGroups = useMemo(() => classes.reduce<Array<{ grade: string; classes: ClassInfo[] }>>((groups, classInfo) => {
-        const grade = getGradeLabel(classInfo);
-        const currentGroup = groups.find(group => group.grade === grade);
-        if (currentGroup) currentGroup.classes.push(classInfo);
-        else groups.push({ grade, classes: [classInfo] });
-        return groups;
-    }, []), [classes]);
+    const gradeGroups = useMemo(() => {
+        const gradeLabels = getTeacherSchoolGradeOptions(currentSpace)
+            ?? Array.from(new Set(classes.map(classInfo => getGradeLabel(classInfo))));
+        return gradeLabels.map(grade => ({
+            grade,
+            classes: classes.filter(classInfo => getGradeLabel(classInfo) === grade),
+        }));
+    }, [classes, currentSpace]);
     const filteredRecords = useMemo(() => records.filter(record => {
         if (selectedClassId !== 'all' && record.classId !== selectedClassId) return false;
         if (selectedGrade !== 'all') {
@@ -280,8 +283,13 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
         || draftCustomRange.start > draftCustomRange.end;
     const selectedClass = classes.find(classInfo => classInfo.id === selectedClassId);
     const selectedGradeLabel = selectedGrade === 'all' ? '全部年级' : selectedGrade;
-    const selectedScopeLabel = selectedClass?.name ?? selectedGradeLabel;
+    const selectedScopeLabel = selectedClass ? getClassLabel(selectedClass) : selectedGradeLabel;
     const activeRecord = records.find(record => record.id === activeRecordId) ?? null;
+    const getRecordClassLabel = (record: EvaluationRecord) => (
+        classes.find(classInfo => classInfo.id === record.classId)
+            ? getClassLabel(classes.find(classInfo => classInfo.id === record.classId)!)
+            : record.className
+    );
     const detailSheetTitle = isEditingRecord && recordEditScope
         ? ({ date: '修改识别日期', class: '修改记录对象', indicator: '修改指标', score: '修改得分' } as const)[recordEditScope]
         : '评价详情';
@@ -386,7 +394,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
             ...record,
             occurredAt: nextOccurredAt,
             classId: nextClass.id,
-            className: nextClass.name,
+            className: getClassLabel(nextClass),
             indicatorPath: recordDraft.indicatorPath.map(item => item.trim()).join(' / '),
             score: Number(draftScore.toFixed(2)),
         } : record));
@@ -476,11 +484,11 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                     <button
                                         type="button"
                                         onClick={() => openRecordDetail(record)}
-                                        aria-label={`查看${record.className}评价详情，${formatScore(record.score)}`}
+                                        aria-label={`查看${getRecordClassLabel(record)}评价详情，${formatScore(record.score)}`}
                                         className="w-full rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] text-left [box-shadow:var(--tm-shadow-card)] transition-transform active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                     >
                                         {selectedClassId === 'all' && (
-                                            <p className="truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{record.className}</p>
+                                            <p className="truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{getRecordClassLabel(record)}</p>
                                         )}
                                         <div className={`grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 ${selectedClassId === 'all' ? 'mt-3' : ''}`}>
                                             <EvaluationIndicatorPath indicatorPath={record.indicatorPath} />
@@ -584,14 +592,14 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                         <button
                                             type="button"
                                             onClick={() => startEditingRecord('class')}
-                                            aria-label={`修改记录对象，当前${activeRecord.className}`}
+                                            aria-label={`修改记录对象，当前${getRecordClassLabel(activeRecord)}`}
                                             className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-inner)] px-2 text-left text-[var(--tm-evaluation-ai-editable-text)] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                         >
-                                            <span className="truncate text-[length:var(--tm-font-size-body)] font-semibold">{activeRecord.className}</span>
+                                            <span className="truncate text-[length:var(--tm-font-size-body)] font-semibold">{getRecordClassLabel(activeRecord)}</span>
                                             <Pencil aria-hidden="true" className="h-3 w-3 shrink-0" />
                                         </button>
                                     ) : (
-                                        <p className="flex min-h-11 items-center text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{activeRecord.className}</p>
+                                        <p className="flex min-h-11 items-center text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{getRecordClassLabel(activeRecord)}</p>
                                     )}
                                 </div>
                                 <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1">
@@ -691,7 +699,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                     onChange={event => setRecordDraft(current => current ? { ...current, classId: event.target.value } : current)}
                                     className={recordFieldClass}
                                 >
-                                    {classes.map(classInfo => <option key={classInfo.id} value={classInfo.id}>{classInfo.name}</option>)}
+                                    {classes.map(classInfo => <option key={classInfo.id} value={classInfo.id}>{getClassLabel(classInfo)}</option>)}
                                 </select>
                             </label>
                         )}
@@ -754,6 +762,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                         onActiveGradeChange={handleDraftGradeChange}
                         selectedClassId={draftSelectedClassId}
                         onSelectClass={setDraftSelectedClassId}
+                        getClassLabel={getClassLabel}
                         allClassesLabel="全部班级"
                         ariaLabel="评价记录班级范围级联选择"
                     />

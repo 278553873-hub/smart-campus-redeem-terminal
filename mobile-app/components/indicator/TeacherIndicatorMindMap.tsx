@@ -61,7 +61,7 @@ const RootNode = ({ data }: NodeProps<IndicatorCanvasNode>) => (
   <button
     type="button"
     onClick={data.onReturnToOverview}
-    className="nodrag nopan flex h-[var(--tm-indicator-canvas-root-height)] w-[var(--tm-indicator-canvas-root-width)] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-indicator-canvas-root-bg)] px-[var(--tm-space-3)] text-center text-[length:var(--tm-indicator-canvas-root-font-size)] font-bold leading-5 text-[var(--tm-indicator-canvas-root-text)] shadow-[var(--tm-shadow-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
+    className="nodrag nopan flex h-[var(--tm-indicator-canvas-root-height)] w-[var(--tm-indicator-canvas-root-width)] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-indicator-canvas-root-bg)] px-[var(--tm-space-3)] text-center text-[length:var(--tm-indicator-canvas-root-font-size)] font-bold leading-5 text-[var(--tm-indicator-canvas-root-text)] [box-shadow:var(--tm-shadow-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
     aria-label="返回指标体系总览"
   >
     {data.label}
@@ -73,7 +73,7 @@ const LevelOneNode = ({ data }: NodeProps<IndicatorCanvasNode>) => (
   <button
     type="button"
     onClick={() => data.branchId && data.onToggleBranch?.(data.branchId)}
-    className="nodrag nopan flex h-[var(--tm-indicator-canvas-level-one-height)] w-[var(--tm-indicator-canvas-level-one-width)] items-center overflow-hidden rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-left text-[length:var(--tm-indicator-canvas-level-one-font-size)] font-bold text-[var(--tm-text-primary)] shadow-[var(--tm-shadow-control)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
+    className="nodrag nopan flex h-[var(--tm-indicator-canvas-level-one-height)] w-[var(--tm-indicator-canvas-level-one-width)] items-center overflow-hidden rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-left text-[length:var(--tm-indicator-canvas-level-one-font-size)] font-bold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
     style={{
       borderLeft: `4px solid ${data.branchColor}`,
       backgroundColor: data.expanded
@@ -487,7 +487,7 @@ const TeacherIndicatorMindMap: React.FC<TeacherIndicatorMindMapProps> = ({ catal
         aria-label={`${catalog.title}三级结构画布`}
       />
 
-      <div className="absolute bottom-[calc(var(--tm-space-3)+env(safe-area-inset-bottom))] left-1/2 z-10 flex -translate-x-1/2 items-center overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-indicator-canvas-toolbar-bg)] shadow-[var(--tm-shadow-control)] backdrop-blur-sm" aria-label="指标画布操作">
+      <div className="absolute bottom-[calc(var(--tm-space-3)+env(safe-area-inset-bottom))] left-1/2 z-10 flex -translate-x-1/2 items-center overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-indicator-canvas-toolbar-bg)] [box-shadow:var(--tm-shadow-control)] backdrop-blur-sm" aria-label="指标画布操作">
         <CanvasTextButton label="总览" onClick={returnToOverview} />
         <CanvasTextButton label="展开全部" onClick={expandAll} disabled={allExpanded} />
         <CanvasTextButton label="收起全部" onClick={returnToOverview} disabled={allCollapsed} />

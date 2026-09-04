@@ -11,11 +11,13 @@ import {
   type HomeworkStatus,
 } from '../domain/homework';
 import type { ClassInfo, Student } from '../types';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 interface HomeworkEntryViewProps {
   schoolId: string;
   schoolName: string;
   classInfo: ClassInfo;
+  currentSpace: TeacherSpaceOption;
   students: Student[];
   subjects: string[];
   teacherName: string;
@@ -79,6 +81,7 @@ const HomeworkEntryView: React.FC<HomeworkEntryViewProps> = ({
   schoolId,
   schoolName,
   classInfo,
+  currentSpace,
   students,
   subjects,
   teacherName,
@@ -233,7 +236,7 @@ const HomeworkEntryView: React.FC<HomeworkEntryViewProps> = ({
       <main className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)] no-scrollbar">
         <div className="mb-[var(--tm-space-3)] flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)]">
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{classInfo.name}</h2>
+            <h2 className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{getTeacherClassDisplayName(classInfo, currentSpace)}</h2>
             {availableSubjects.length === 1 && <div className="mt-[var(--tm-space-1)] truncate text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{subject}</div>}
           </div>
         </div>

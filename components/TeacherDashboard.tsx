@@ -209,11 +209,11 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
     // 模拟班级数据字典 (班级名称 -> 班级人数)
     const classData: Record<string, number> = {
-        '1年级1班': 42,
-        '1年级2班': 45,
-        '2年级1班': 40,
-        '2年级2班': 43,
-        '3年级1班': 48,
+        '2025级1班': 42,
+        '2025级2班': 45,
+        '2024级1班': 40,
+        '2024级2班': 43,
+        '2023级1班': 48,
     };
     const selectedClassStudentCount = classData[manualClass] || 0;
     const totalManualIssuance = selectedClassStudentCount * manualPerStudent;
@@ -287,12 +287,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const gradeMonthOptions = Array.from({ length: 12 }, (_, index) => `${index + 1}月`);
     const gradeLevelOptions = ['2020级', '2021级', '2022级', '2023级', '2024级', '2025级'];
     const gradeLevelLabelMap: Record<string, string> = {
-        '2020级': '2020级（六年级）',
-        '2021级': '2021级（五年级）',
-        '2022级': '2022级（四年级）',
-        '2023级': '2023级（三年级）',
-        '2024级': '2024级（二年级）',
-        '2025级': '2025级（一年级）'
+        '2020级': '六年级',
+        '2021级': '五年级',
+        '2022级': '四年级',
+        '2023级': '三年级',
+        '2024级': '二年级',
+        '2025级': '一年级'
     };
     const formatGradeLevelLabel = (level: string) => gradeLevelLabelMap[level] || level;
     const gradeClassCountMap: Record<string, number> = { '2020级': 5, '2021级': 6, '2022级': 7, '2023级': 15, '2024级': 6, '2025级': 8 };
@@ -467,7 +467,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         { title: '学号', dataIndex: 'studentNo', width: 120 },
         { title: '姓名', dataIndex: 'name', width: 110 },
-        { title: '年级', dataIndex: 'grade', width: 120 },
+        { title: '年级', dataIndex: 'grade', width: 120, render: (grade: string) => formatGradeLevelLabel(grade) },
         { title: '班级', dataIndex: 'className', width: 130 },
         { title: '总净得分', dataIndex: 'totalNetScore', width: 120, align: 'right' as const, render: renderStudentScoreValue },
         { title: '德', dataIndex: 'moralityScore', width: 90, align: 'right' as const, render: renderStudentScoreValue },
@@ -4421,7 +4421,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         placeholder="全部年级 / 班级"
                                         value={studentScoreGradeClassFilters}
                                         options={gradeLevelOptions.map(level => ({
-                                            label: level,
+                                            label: formatGradeLevelLabel(level),
                                             value: level,
                                             children: getClassOptionsByLevel(level).map(className => ({ label: className, value: className }))
                                         }))}

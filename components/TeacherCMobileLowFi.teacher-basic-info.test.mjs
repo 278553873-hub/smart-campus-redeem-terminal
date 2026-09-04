@@ -34,20 +34,20 @@ requireText("if (pageKey === 'teacherBasicInfoPersonal') return '15A';", '个人
 requireText("if (pageKey === 'teacherBasicInfoSchool') return '15B';", '学校版基本信息设置编号应为 15B。');
 requireText("teacherBasicInfoPersonal: {", '应存在 15A 元信息。');
 requireText("title: '基本信息设置（个人版）'", '15A 标题应标明个人版。');
-requireText("modules: ['头像', '姓名', '任教班级', '部门设置']", '15A 应保留头像、姓名、任教班级、部门设置。');
-requireText("normal: '个人版展示头像、姓名、任教班级和部门设置。'", '15A 状态说明应体现任教班级配置。');
+requireText("modules: ['头像', '姓名', '学校', '任教班级']", '15A 应保留头像、姓名、学校、任教班级。');
+requireText("normal: '个人版展示头像、姓名、可编辑学校和任教班级。'", '15A 状态说明应体现学校和任教班级配置。');
 requireText("teacherBasicInfoSchool: {", '应存在 15B 元信息。');
 requireText("title: '基本信息设置（学校版）'", '15B 标题应标明学校版。');
-requireText("modules: ['头像', '姓名', '任教班级', '带班班级', '分管年级', '部门设置']", '15B 应保留完整学校版配置。');
-requireText("{ title: '我的(个人版)', pages: ['minePersonal', 'teacherBasicInfoPersonal'] }", '页面导图应拆出我的(个人版)：14A 到 15A。');
-requireText("{ title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement'] }", '页面导图应拆出我的(学校版)：14B 到 15B/16/18/19/21。');
+requireText("modules: ['头像', '姓名', '学校', '任教班级', '带班班级', '分管年级', '部门']", '15B 应保留完整学校版配置。');
+requireText("{ title: '我的(个人版)', pages: ['minePersonal', 'teacherBasicInfoPersonal', 'suggestionFeedback'] }", '页面导图应拆出我的(个人版)：14A 到 15A。');
+requireText("{ title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement', 'suggestionFeedback'] }", '页面导图应拆出我的(学校版)：14B 到 15B/16/18/19/21/22。');
 requireText('<PageNodeButton item="teacherBasicInfoPersonal" lane={lane.title} />', '页面导图应展示 15A 节点。');
 requireText('<PageNodeButton item="teacherBasicInfoSchool" lane={lane.title} />', '页面导图应展示 15B 节点。');
 requireText("onClick={() => navigate(hasMultipleVersions ? 'teacherBasicInfoSchool' : 'teacherBasicInfoPersonal')}", '14A/14B 头像入口应分别进入 15A/15B。');
 
 requireText("setShowTeachingSheet(true)", '15B 应复用任教班级底部弹窗。');
 requireText("aria-label=\"配置任教信息\"", '任教班级配置弹窗应保留可访问语义。');
-requireText("const classOptions = Array.from({ length: 12 }).map((_, index) => `${teachingGrade}${index + 1}班`);", '任教班级弹窗应提供完整班级名称。');
+requireText("const classOptionNames = Array.from({ length: 12 }).map((_, index) => buildClassName(getTeachingEntryYear(teachingGrade), index + 1));", '任教班级弹窗应提供完整班级名称。');
 requireText("选择学科", '任教班级弹窗应在下方选择学科。');
 requireText("grid h-[280px] min-h-0 grid-cols-[92px_1fr]", '任教班级弹窗年级/班级选择区应有固定高度以支持内部滚动。');
 requireText("min-h-0 overflow-y-auto overscroll-contain border-r border-gray-200 bg-gray-100 p-2 touch-pan-y", '任教班级弹窗左侧年级应可上下滑动。');
@@ -64,16 +64,25 @@ requireText("title: '部门设置'", '15A/15B 部门设置应可打开选择弹�
 requireText("className={cx('flex min-h-14 w-full shrink-0 items-center justify-center rounded-2xl border border-gray-200 text-sm font-black'", '配置项弹窗保存按钮应固定足够高度，不被选项列表挤压。');
 
 requirePageText('const isPersonalBasicInfo = page === \'teacherBasicInfoPersonal\';', '页面实现应识别 15A 个人版。');
-requirePageText("...(!isPersonalBasicInfo ? [", '15A 应移除学校版专属配置项。');
-requirePageText("{ key: 'headClass' as const, label: '带班班级', value: teacherBasicConfigValues.headClass }", '带班班级应只作为 15B 配置项存在。');
-requirePageText("{ key: 'gradeLeader' as const, label: '分管年级', value: teacherBasicConfigValues.gradeLeader }", '分管年级应只作为 15B 配置项存在。');
-requirePageText("{ key: 'department' as const, label: '部门设置', value: teacherBasicConfigValues.department }", '15A/15B 都应展示部门设置。');
+requirePageText("...(!isPersonalBasicInfo && currentSpace.type === 'school' ? [", '只有学校版应展示管理职责。');
+requirePageText("{ key: 'headClass' as const, label: '带班班级', value: getStoredTeachingClassDisplayName(teacherBasicConfigValues.headClass, currentSpace) }", '带班班级应只作为学校版管理职责存在。');
+requirePageText("{ key: 'gradeLeader' as const, label: '分管年级', value: teacherBasicConfigValues.gradeLeader }", '分管年级应只作为学校版管理职责存在。');
+requirePageText("{ key: 'department' as const, label: '部门', value: teacherBasicConfigValues.department }", '部门应作为学校版管理职责最后一项。');
+requirePageText('管理职责', '学校版应单独展示管理职责板块。');
+requireText("schoolName: '星河实验学校'", '协作版学校字段应使用邀请方学校。');
+requirePageText('h-4 w-4 shrink-0" aria-hidden="true"', '只读学校字段应保留右箭头占位空间。');
+if (pageBlock.includes("label: '部门设置'")) {
+  throw new Error('部门展示文案应统一为“部门”。');
+}
+if (pageBlock.indexOf("{ key: 'department'") < pageBlock.indexOf("{ key: 'gradeLeader'")) {
+  throw new Error('部门应排在分管年级之后。');
+}
 requirePageText('aria-label="新增任教班级"', '15A/15B 任教班级应提供新增入口。');
 requirePageText('teachingInfoRows.map((item, index)', '15A/15B 任教班级应根据真实数组渲染多条信息。');
 requirePageText('onClick={() => removeTeachingRow(index)}', '15A/15B 任教班级每条信息应可删除。');
 requirePageText('openTeacherBasicConfigSheet(row.key)', '配置项行应可点击编辑。');
-requirePageText("item.classes.join('、')", '15B 任教班级应展示完整班级名称。');
-requirePageText('value: teacherBasicConfigValues.department', '部门设置应展示可编辑状态中的部门值。');
+requirePageText("item.classes.map((className) => getStoredTeachingClassDisplayName(className, currentSpace)).join('、')", '任教班级应展示完整班级名称。');
+requirePageText('value: teacherBasicConfigValues.department', '部门应展示可编辑状态中的部门值。');
 requirePageText('divide-y divide-gray-100', '低保真页面应使用轻分隔线组织列表项。');
 requireText('rounded-t-[28px]', '配置相关编辑应使用底部浮层弹窗体系。');
 

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Student, ScoreItem, GrowthReportItem, CampusCoinDetail } from '../types';
+import { Student, ScoreItem, GrowthReportItem, CampusCoinDetail, ClassInfo } from '../types';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 import { ASSETS } from '../assets/images';
 import {
     MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
@@ -21,6 +22,8 @@ import {
 
 interface DashboardViewProps {
     student: Student;
+    classInfo?: ClassInfo;
+    currentSpace: TeacherSpaceOption;
     scores: ScoreItem[];
     growthReports: GrowthReportItem[];
     onViewTermReport?: () => void; // New optional prop
@@ -276,6 +279,8 @@ const FiveEducationRadar = ({
 
 const DashboardView: React.FC<DashboardViewProps> = ({
     student,
+    classInfo,
+    currentSpace,
     scores,
     growthReports,
     onViewTermReport,
@@ -360,6 +365,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         const classText = match[2].replace('班', '');
         return `${match[1]}${classNumberMap[classText] ?? classText}班`;
     };
+    const displayStudentClassName = classInfo
+        ? getTeacherClassDisplayName(classInfo, currentSpace)
+        : formatCompactClassName(student.class);
 
     // --- Sub-renderers ---
 
@@ -553,7 +561,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                 </button>
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">{formatCompactClassName(student.class)}</span>
+                                <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">{displayStudentClassName}</span>
                                 <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">ID: {student.id}</span>
                                 <span className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]'}`}>
                                     <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />

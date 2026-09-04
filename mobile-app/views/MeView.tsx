@@ -14,10 +14,11 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
-import ClassSourceTrigger from '../components/ClassSourceTrigger';
+import ClassSourceTrigger, { ClassSourceIcon } from '../components/ClassSourceTrigger';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import type { TeacherProfile } from '../types';
 import {
+    getTeacherSchoolTypeLabel,
     getTeacherSpaceMenuPolicy,
     type TeacherManagementToolId,
     type TeacherMoreToolId,
@@ -25,6 +26,10 @@ import {
 } from '../domain/teacherSpaceAccess';
 
 export type { TeacherSpaceOption } from '../domain/teacherSpaceAccess';
+
+const getClassSourceTypeLabel = (space: TeacherSpaceOption) => (
+    space.type === 'personal' ? '个人' : space.type === 'collaboration' ? '协作' : '学校'
+);
 
 interface MeViewProps {
     teacherProfile: TeacherProfile;
@@ -141,34 +146,35 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
     </div>
 );
 
-const getClassSourceTag = (space: TeacherSpaceOption) => {
-    if (space.type === 'personal') return '个人';
-    if (space.type === 'collaboration') return '协作';
-    return '学校';
-};
-
 export const ClassSourceSheet: React.FC<{
     currentSpace: TeacherSpaceOption;
     spaceOptions: TeacherSpaceOption[];
     onClose: () => void;
     onSelectSpace: (spaceId: string) => void;
 }> = ({ currentSpace, spaceOptions, onClose, onSelectSpace }) => (
-    <MobileBottomSheet open title="切换班级来源" onClose={onClose}>
-        <div className="space-y-3">
+    <MobileBottomSheet open title="切换班级来源" onClose={onClose} contentTone="plain">
+        <div className="space-y-3 py-[var(--tm-space-3)]">
             {spaceOptions.map(space => {
                 const isActive = space.id === currentSpace.id;
-                const tag = getClassSourceTag(space);
+                const schoolTypeLabel = getTeacherSchoolTypeLabel(space);
+                const sourceTypeLabel = getClassSourceTypeLabel(space);
                 return (
                     <button
                         key={space.id}
                         type="button"
                         aria-pressed={isActive}
+                        aria-label={`${isActive ? '当前' : '切换至'}${space.title}，${sourceTypeLabel}${schoolTypeLabel ? `，${schoolTypeLabel}` : ''}`}
                         onClick={() => onSelectSpace(space.id)}
                         className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-inner)] px-4 text-left transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
                     >
-                        <span className="min-w-0 truncate text-[17px] font-semibold leading-[22px] text-[var(--tm-text-primary)]">{space.title}</span>
+                        <span className="flex min-w-0 flex-1 items-center gap-3">
+                            <span className={`flex h-10 w-10 shrink-0 items-center justify-center ${isActive ? 'text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}>
+                                <ClassSourceIcon type={space.type} className="h-5 w-5" />
+                            </span>
+                            <span className="min-w-0 truncate text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)]">{space.title}</span>
+                        </span>
                         <span className="ml-3 flex shrink-0 items-center gap-2">
-                            <span className={`rounded-full px-3 py-1 text-[13px] font-medium leading-[18px] ${isActive ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-pressed)]' : 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]'}`}>{tag}</span>
+                            {schoolTypeLabel && <span className={`rounded-full px-3 py-1 text-[13px] font-medium leading-[18px] ${isActive ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-pressed)]' : 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]'}`}>{schoolTypeLabel}</span>}
                             {isActive && <span className="rounded-full bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-[var(--tm-text-inverse)]">当前</span>}
                         </span>
                     </button>

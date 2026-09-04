@@ -52,7 +52,8 @@ type Priority = 'P0' | 'P1' | 'P2' | 'P3';
 type PhoneLoginTab = 'sms' | 'password';
 type SchoolAdminLoginTab = 'password' | 'sms' | 'scan';
 type ClassActionKey = 'reward' | 'batchStudents' | 'password' | 'face' | 'homework' | 'leftStudents' | 'inviteTeacher' | 'inviteParent' | 'classInfo';
-type TeachingGrade = '2025级' | '2024级' | '2023级';
+type TeacherGradeLabel = '一年级' | '二年级' | '三年级' | '四年级' | '五年级' | '六年级' | '七年级' | '八年级' | '九年级' | '高一' | '高二' | '高三';
+type TeachingGrade = TeacherGradeLabel;
 type WechatInviteMode = 'select' | 'confirm' | 'received';
 type InviteAudience = 'teacher' | 'parent';
 type ClassRole = 'headTeacher' | 'deputyHeadTeacher' | 'teacher';
@@ -63,7 +64,7 @@ type ParentIdentityRelation = '家长' | '爸爸' | '妈妈' | '爷爷' | '奶�
 type TeacherSpaceId = 'personal' | 'collabLi' | 'schoolA' | 'schoolB';
 type SchoolBasicInfoTab = 'term' | 'subject' | 'department';
 type CoinIssuePeriod = 'weekly' | 'monthly';
-type SchoolClassGradeFilter = '全部' | '一年级' | '二年级' | '三年级' | '四年级' | '五年级' | '六年级' | '初一' | '初二' | '初三' | '高一' | '高二' | '高三';
+type SchoolClassGradeFilter = '全部' | TeacherGradeLabel;
 type TeacherBasicConfigKey = 'headClass' | 'gradeLeader' | 'department';
 type ClassDissolveStep = 'check' | 'final';
 type TeachingInfoRow = {
@@ -75,7 +76,10 @@ type TeacherSpaceProfile = {
   id: TeacherSpaceId;
   title: string;
   type: 'personal' | 'collaboration' | 'school';
+  schoolName?: string;
+  schoolType?: TeacherSchoolType;
 };
+type TeacherSchoolType = 'primary' | 'middle' | 'high' | 'nineYear' | 'twelveYear' | 'completeMiddle';
 type ClassProfile = {
   name: string;
   code: string;
@@ -384,9 +388,9 @@ const surfaceTabs: Array<{ key: CEndSurface; label: string }> = [
 
 const teacherSpaces: TeacherSpaceProfile[] = [
   { id: 'personal', title: '我创建的', type: 'personal' },
-  { id: 'collabLi', title: '李明老师', type: 'collaboration' },
-  { id: 'schoolA', title: '成都七中初中附属小学', type: 'school' },
-  { id: 'schoolB', title: '星河实验小学', type: 'school' },
+  { id: 'collabLi', title: '李明老师', type: 'collaboration', schoolName: '星河实验学校' },
+  { id: 'schoolA', title: '成都七中初中附属小学', type: 'school', schoolType: 'primary' },
+  { id: 'schoolB', title: '星河实验学校', type: 'school', schoolType: 'twelveYear' },
 ];
 const defaultTeacherSpaceId: TeacherSpaceId = 'schoolB';
 const TERM_REPORT_SAMPLE_IMAGE = '/assets/term-report-sample.jpg';
@@ -1160,16 +1164,15 @@ const pageMeta: Record<PageKey, PageMeta> = {
   teacherBasicInfoPersonal: {
     title: '基本信息设置（个人版）',
     subtitle: '编辑头像、姓名、学校和个人版基础配置。',
-    modules: ['头像', '姓名', '学校', '任教班级', '部门设置'],
+    modules: ['头像', '姓名', '学校', '任教班级'],
     ctas: [
       { label: '头像', priority: 'P0', position: '顶部头像区，点击打开更换头像弹窗' },
       { label: '姓名', priority: 'P1', position: '头像下方行，点击打开修改姓名弹窗' },
       { label: '学校', priority: 'P1', position: '姓名下方行，点击打开修改学校弹窗' },
       { label: '任教班级', priority: 'P1', position: '配置项右侧 icon，点击打开底部弹窗' },
-      { label: '部门设置', priority: 'P1', position: '配置项行，点击打开底部弹窗' },
     ],
     states: {
-      normal: '个人版展示头像、姓名、可编辑学校、任教班级和部门设置。',
+      normal: '个人版展示头像、姓名、可编辑学校和任教班级。',
       loading: '基本信息加载中。',
       empty: '基本信息缺失。',
       network: '加载失败，提供重试。',
@@ -1179,14 +1182,14 @@ const pageMeta: Record<PageKey, PageMeta> = {
   teacherBasicInfoSchool: {
     title: '基本信息设置（学校版）',
     subtitle: '编辑头像、姓名和教师基础配置。',
-    modules: ['头像', '姓名', '学校', '任教班级', '带班班级', '分管年级', '部门设置'],
+    modules: ['头像', '姓名', '学校', '任教班级', '带班班级', '分管年级', '部门'],
     ctas: [
       { label: '头像', priority: 'P0', position: '顶部头像区，点击打开更换头像弹窗' },
       { label: '姓名', priority: 'P1', position: '头像下方行，点击打开修改姓名弹窗' },
       { label: '任教班级', priority: 'P1', position: '配置项右侧 icon，点击打开底部弹窗' },
     ],
     states: {
-      normal: '学校版展示头像、姓名、只读学校、任教班级、带班班级、分管年级和部门设置。',
+      normal: '学校版展示头像、姓名、只读学校、任教班级、带班班级、分管年级和部门。',
       loading: '基本信息加载中。',
       empty: '基本信息缺失。',
       network: '加载失败，提供重试。',
@@ -1742,7 +1745,7 @@ const inferGradeLabel = (stage: '小学' | '初中' | '高中', entryYearValue: 
   const gradeIndex = Math.max(1, 2025 - entryYearValue + 1);
   const gradeMap = {
     小学: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
-    初中: ['初一', '初二', '初三'],
+    初中: ['七年级', '八年级', '九年级'],
     高中: ['高一', '高二', '高三'],
   };
   return gradeMap[stage][Math.min(gradeIndex, gradeMap[stage].length) - 1];
@@ -1750,6 +1753,54 @@ const inferGradeLabel = (stage: '小学' | '初中' | '高中', entryYearValue: 
 
 const buildClassName = (entryYearValue: string | number, classNumberValue: string | number) => `${entryYearValue}级${classNumberValue}班`;
 const getClassNumberFromName = (name: string) => name.match(/级(\d+)班/)?.[1] ?? '1';
+const PRIMARY_GRADE_LABELS: TeacherGradeLabel[] = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
+const MIDDLE_GRADE_LABELS: TeacherGradeLabel[] = ['七年级', '八年级', '九年级'];
+const HIGH_GRADE_LABELS: TeacherGradeLabel[] = ['高一', '高二', '高三'];
+const ALL_GRADE_LABELS: TeacherGradeLabel[] = [...PRIMARY_GRADE_LABELS, ...MIDDLE_GRADE_LABELS, ...HIGH_GRADE_LABELS];
+const getTeacherSchoolGradeOptions = (space: TeacherSpaceProfile): TeacherGradeLabel[] => {
+  if (space.type !== 'school' || !space.schoolType) return [...ALL_GRADE_LABELS];
+  if (space.schoolType === 'primary') return [...PRIMARY_GRADE_LABELS];
+  if (space.schoolType === 'middle') return [...MIDDLE_GRADE_LABELS];
+  if (space.schoolType === 'high') return [...HIGH_GRADE_LABELS];
+  if (space.schoolType === 'nineYear') return [...PRIMARY_GRADE_LABELS, ...MIDDLE_GRADE_LABELS];
+  if (space.schoolType === 'twelveYear') return [...ALL_GRADE_LABELS];
+  return [...MIDDLE_GRADE_LABELS, ...HIGH_GRADE_LABELS];
+};
+const getTeacherSchoolTypeLabel = (space: TeacherSpaceProfile) => {
+  const labels: Record<TeacherSchoolType, string> = {
+    primary: '小学',
+    middle: '初中',
+    high: '高中',
+    nineYear: '九年一贯制',
+    twelveYear: '十二年一贯制',
+    completeMiddle: '完全中学',
+  };
+  return space.type === 'school' && space.schoolType ? labels[space.schoolType] : undefined;
+};
+const getClassDisplayName = ({ name, stage }: Pick<ClassProfile, 'name' | 'stage'>, space: TeacherSpaceProfile) => {
+  const baseName = name.replace(/^[小初高](?=\d{4}级)/, '');
+  const prefixBySchoolType: Partial<Record<TeacherSchoolType, Record<'小学' | '初中' | '高中', string>>> = {
+    nineYear: { 小学: '小', 初中: '初', 高中: '' },
+    twelveYear: { 小学: '小', 初中: '初', 高中: '高' },
+    completeMiddle: { 小学: '', 初中: '初', 高中: '高' },
+  };
+  const prefix = space.type === 'school' && space.schoolType ? prefixBySchoolType[space.schoolType]?.[stage] ?? '' : '';
+  return prefix ? `${prefix}${baseName}` : baseName;
+};
+const getStageForGradeLabel = (grade: TeacherGradeLabel): ClassProfile['stage'] => (
+  grade.startsWith('高') ? '高中' : ['七年级', '八年级', '九年级'].includes(grade) ? '初中' : '小学'
+);
+const getTeachingEntryYear = (grade: TeacherGradeLabel) => 2025 - ALL_GRADE_LABELS.indexOf(grade);
+const getTeachingGradeFromClassName = (name: string): TeacherGradeLabel => {
+  const entryYear = Number(name.match(/(\d{4})级/)?.[1] ?? 2025);
+  return ALL_GRADE_LABELS[Math.max(0, Math.min(ALL_GRADE_LABELS.length - 1, 2025 - entryYear))] ?? '一年级';
+};
+const getClassDisplayNameForGrade = (name: string, grade: TeacherGradeLabel, space: TeacherSpaceProfile) => (
+  getClassDisplayName({ name, stage: getStageForGradeLabel(grade) }, space)
+);
+const getStoredTeachingClassDisplayName = (name: string, space: TeacherSpaceProfile) => (
+  getClassDisplayNameForGrade(name, getTeachingGradeFromClassName(name), space)
+);
 const maskChineseName = (name: string) => {
   if (name.length <= 1) return name;
   if (name.length === 2) return `${name.slice(0, 1)}*`;
@@ -1931,13 +1982,13 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [inviteTeachingSubjects, setInviteTeachingSubjects] = useState<string[]>([]);
   const [hasOtherClassMemberships, setHasOtherClassMemberships] = useState(true);
   const [editingTeachingIndex, setEditingTeachingIndex] = useState<number | null>(null);
-  const [teachingGrade, setTeachingGrade] = useState<TeachingGrade>('2025级');
+  const [teachingGrade, setTeachingGrade] = useState<TeachingGrade>('一年级');
   const [teachingSelectedClasses, setTeachingSelectedClasses] = useState<string[]>(['2025级1班', '2025级2班']);
   const [teachingSubject, setTeachingSubject] = useState('英语');
   const [activeTeacherBasicConfig, setActiveTeacherBasicConfig] = useState<TeacherBasicConfigKey | null>(null);
   const [teacherBasicConfigValues, setTeacherBasicConfigValues] = useState<Record<TeacherBasicConfigKey, string>>({
     headClass: '2025级1班',
-    gradeLeader: '2025级',
+    gradeLeader: '一年级',
     department: '学发中心',
   });
   const [draftTeacherBasicConfigValue, setDraftTeacherBasicConfigValue] = useState('');
@@ -2128,7 +2179,11 @@ const TeacherCMobileLowFi: React.FC = () => {
     no: student.no,
     gender: student.gender,
   }));
-  const activeClassTitle = `${activeClassProfile.name}（${inferGradeLabel(activeClassProfile.stage, activeClassProfile.entryYearValue)}）`;
+  const activeClassSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
+  const activeClassDisplayName = getClassDisplayName(activeClassProfile, activeClassSpace);
+  const demoPrimaryClassName = getClassDisplayName({ name: '2025级1班', stage: '小学' }, activeClassSpace);
+  const demoPrimarySchoolName = activeClassSpace.type === 'school' ? getTeacherSpaceDisplayName(activeClassSpace) : '星河实验学校';
+  const activeClassTitle = `${activeClassDisplayName}（${inferGradeLabel(activeClassProfile.stage, activeClassProfile.entryYearValue)}）`;
   const isParentInviteBinding = parentPage === 'bindInviteMatched';
   const isParentMatchedBinding = parentPage === 'bindSelfMatched' || parentPage === 'bindInviteMatched';
   const matchedParentStudents = parentMatchedStudentCandidates.filter((student) => student.reservedPhone === parentIdentityForm.phone);
@@ -2156,8 +2211,8 @@ const TeacherCMobileLowFi: React.FC = () => {
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-xl font-black text-gray-500">{studentName.slice(0, 1)}</div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-xl font-black leading-7 text-gray-950">{studentName}</div>
-          <div className="mt-1 text-sm font-semibold text-gray-500">2025级1班</div>
-          <div className="mt-1 text-xs font-medium text-gray-400">星河实验小学</div>
+          <div className="mt-1 text-sm font-semibold text-gray-500">{demoPrimaryClassName}</div>
+          <div className="mt-1 text-xs font-medium text-gray-400">{demoPrimarySchoolName}</div>
         </div>
       </div>
     </article>
@@ -2461,6 +2516,8 @@ const TeacherCMobileLowFi: React.FC = () => {
 
   const selectTeacherSpace = (spaceId: TeacherSpaceId, targetPage?: PageKey) => {
     setCurrentSpaceId(spaceId);
+    setSchoolClassGradeFilter('全部');
+    setSchoolClassTeachingOnly(false);
     setShowSpaceSelectSheet(false);
     navigate(targetPage ?? getClassListPageForSpace(spaceId));
   };
@@ -2646,7 +2703,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   };
 
   const openSchoolNameSheet = () => {
-    setDraftTeacherSchoolName(teacherSchoolName.trim() || '星河实验小学');
+    setDraftTeacherSchoolName(teacherSchoolName.trim() || '星河实验学校');
     setShowSchoolNameSheet(true);
   };
 
@@ -2659,7 +2716,7 @@ const TeacherCMobileLowFi: React.FC = () => {
 
   const openTeachingCreate = () => {
     setEditingTeachingIndex(null);
-    setTeachingGrade('2025级');
+    setTeachingGrade('一年级');
     setTeachingSelectedClasses(['2025级1班']);
     setTeachingSubject('英语');
     setShowTeachingSheet(true);
@@ -2669,7 +2726,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     const row = teachingInfoRows[index];
     if (!row) return;
     setEditingTeachingIndex(index);
-    const rowGrade = (row.classes[0]?.slice(0, 5) || '2025级') as TeachingGrade;
+    const rowGrade = getTeachingGradeFromClassName(row.classes[0] || '2025级1班');
     setTeachingGrade(rowGrade);
     setTeachingSelectedClasses(row.classes);
     setTeachingSubject(row.subject);
@@ -2678,7 +2735,7 @@ const TeacherCMobileLowFi: React.FC = () => {
 
   const selectTeachingGrade = (grade: TeachingGrade) => {
     setTeachingGrade(grade);
-    setTeachingSelectedClasses([`${grade}1班`]);
+    setTeachingSelectedClasses([buildClassName(getTeachingEntryYear(grade), 1)]);
   };
 
   const toggleTeachingClass = (className: string) => {
@@ -2932,7 +2989,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   );
 
   const openInviteForClass = (audience: InviteAudience, returnPage: PageKey, classInfo?: { name: string; code: string }) => {
-    const targetClass = classInfo ?? { name: activeClassProfile.name, code: activeClassProfile.code };
+    const targetClass = classInfo ?? { name: activeClassDisplayName, code: activeClassProfile.code };
     const inviteSchool = teacherSpaces.find((space) => space.id === currentSpaceId && space.type === 'school')?.title
       || teacherSchoolName.trim()
       || '成都七中初中附属小学';
@@ -3041,21 +3098,23 @@ const TeacherCMobileLowFi: React.FC = () => {
     }),
   })).filter((group) => group.items.length > 0);
 
-  const ClassCard = ({ name, code, stage, entryYearValue, tags, count, creatorName, isCreator, role }: { name: string; code: string; stage: '小学' | '初中' | '高中'; entryYearValue: number; tags: string[]; count: number; creatorName: string; isCreator: boolean; role: ClassRole }) => (
+  const ClassCard = ({ name, code, stage, entryYearValue, tags, count, creatorName, isCreator, role }: { name: string; code: string; stage: '小学' | '初中' | '高中'; entryYearValue: number; tags: string[]; count: number; creatorName: string; isCreator: boolean; role: ClassRole }) => {
+    const displayName = getClassDisplayName({ name, stage }, activeClassSpace);
+    return (
     <div className="relative rounded-2xl bg-gray-50 p-4">
       <button
         type="button"
-        aria-label={`${name}更多操作`}
+        aria-label={`${displayName}更多操作`}
         onClick={() => {
           setActiveClassProfile({ name, code, stage, entryYearValue, count, creatorName, isCreator, role });
-          setActiveClassAction({ name, code });
+          setActiveClassAction({ name: displayName, code });
         }}
         className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white active:bg-gray-100"
       >
         <MoreHorizontal size={18} />
       </button>
       <div className="min-w-0 pr-10">
-        <div className="truncate text-base font-black">{name}（{inferGradeLabel(stage, entryYearValue)}）</div>
+        <div className="truncate text-base font-black">{displayName}（{inferGradeLabel(stage, entryYearValue)}）</div>
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
         {tags.map((tag) => (
@@ -3067,7 +3126,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           type="button"
           onClick={() => void copyClassCode(code)}
           className="inline-flex min-h-11 min-w-0 items-center gap-1.5 text-left tabular-nums active:text-gray-950"
-          aria-label={`复制${name}班级号${code}`}
+          aria-label={`复制${displayName}班级号${code}`}
         >
           <span className="shrink-0 whitespace-nowrap">班级号：{formatClassCode(code)}</span>
           <Copy size={13} className="shrink-0 text-gray-500" />
@@ -3079,7 +3138,8 @@ const TeacherCMobileLowFi: React.FC = () => {
         <button type="button" onClick={() => navigate('classReport')} className="h-11 rounded-xl border border-gray-200 bg-gray-900 text-xs font-black text-white">班级报告</button>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderClassActionSheet = () => {
     if (!activeClassAction) return null;
@@ -3194,7 +3254,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
           <h3 className="text-base font-black">确认移除老师</h3>
           <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
-            移除后，{removeTeacherCandidate.name}将不再管理「{activeClassProfile.name}」。
+            移除后，{removeTeacherCandidate.name}将不再管理「{activeClassDisplayName}」。
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
@@ -3444,7 +3504,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-gray-300" aria-hidden="true" />
           <h3 className="text-base font-black">确认转移班主任</h3>
           <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
-            将「{activeClassProfile.name}」班主任转移给{transferHeadTeacherCandidate.name}。确认后，你不再拥有该班级班主任权限。
+            将「{activeClassDisplayName}」班主任转移给{transferHeadTeacherCandidate.name}。确认后，你不再拥有该班级班主任权限。
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={close} className="h-12 rounded-2xl border border-gray-200 bg-white text-sm font-black active:bg-gray-100">取消</button>
@@ -3922,7 +3982,7 @@ const TeacherCMobileLowFi: React.FC = () => {
             </div>
           ) : (
             <p className="mt-3 text-sm font-medium leading-7 text-gray-700">
-              退出后，你将无法查看和记录「{activeClassProfile.name}」的数据。
+              退出后，你将无法查看和记录「{activeClassDisplayName}」的数据。
             </p>
           )}
           <div className="mt-4 grid grid-cols-2 gap-2">
@@ -4759,7 +4819,7 @@ const TeacherCMobileLowFi: React.FC = () => {
         <div className="flex-1 space-y-4 overflow-y-auto">
           <section className="rounded-3xl bg-gray-50 px-4 py-5">
             <div className="text-sm font-black text-gray-500">邀请班级</div>
-            <div className="mt-4 text-xl font-black leading-7 text-gray-950">2025级1班</div>
+            <div className="mt-4 text-xl font-black leading-7 text-gray-950">{demoPrimaryClassName}</div>
           </section>
           <label className="block rounded-3xl bg-gray-50 px-4 py-5 text-base font-black text-gray-950">
             学生姓名
@@ -4904,7 +4964,7 @@ const TeacherCMobileLowFi: React.FC = () => {
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-[18px] font-black leading-tight text-gray-950">郑小磊</h2>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px] font-bold text-gray-500">
-                <span className="rounded-xl bg-white px-2.5 py-1 text-gray-700">2025级1班</span>
+                <span className="rounded-xl bg-white px-2.5 py-1 text-gray-700">{demoPrimaryClassName}</span>
                 <span className="rounded-xl bg-white px-2.5 py-1 text-gray-600">20250101</span>
               </div>
             </div>
@@ -5004,7 +5064,7 @@ const TeacherCMobileLowFi: React.FC = () => {
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-black text-gray-400">郑</div>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-black leading-5 text-gray-950">郑小磊</div>
-              <div className="mt-1 truncate text-[11px] font-black leading-4 text-gray-500">2025级1班 · 20250101</div>
+              <div className="mt-1 truncate text-[11px] font-black leading-4 text-gray-500">{demoPrimaryClassName} · 20250101</div>
             </div>
             <button type="button" className="h-10 shrink-0 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black text-gray-700 active:bg-gray-50">
               切换
@@ -6040,9 +6100,12 @@ const TeacherCMobileLowFi: React.FC = () => {
                 >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-black">{getTeacherSpaceDisplayName(space)}</span>
-                    </span>
+                  </span>
                   <span className="flex shrink-0 items-center gap-2">
                     <span className="rounded-lg bg-gray-100 px-2 py-1 text-[11px] font-black text-gray-600">{getTeacherSpaceTag(space)}</span>
+                    {getTeacherSchoolTypeLabel(space) && (
+                      <span className="rounded-lg bg-gray-100 px-2 py-1 text-[11px] font-black text-gray-600">{getTeacherSchoolTypeLabel(space)}</span>
+                    )}
                     {active && <span className="rounded-lg bg-gray-900 px-2 py-1 text-[11px] font-black text-white">当前</span>}
                   </span>
                 </button>
@@ -6341,8 +6404,9 @@ const TeacherCMobileLowFi: React.FC = () => {
   const renderTeachingSheet = () => {
     if (!showTeachingSheet) return null;
     const close = () => setShowTeachingSheet(false);
-    const gradeOptions: TeachingGrade[] = ['2025级', '2024级', '2023级'];
-    const classOptions = Array.from({ length: 12 }).map((_, index) => `${teachingGrade}${index + 1}班`);
+    const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
+    const gradeOptions = getTeacherSchoolGradeOptions(currentSpace);
+    const classOptionNames = Array.from({ length: 12 }).map((_, index) => buildClassName(getTeachingEntryYear(teachingGrade), index + 1));
     const subjectOptions = ['语文', '数学', '英语', '音乐', '体育', '美术'];
 
     return (
@@ -6369,7 +6433,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                 </div>
                 <div className="flex min-h-0 min-w-0 flex-col p-3">
                   <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 touch-pan-y">
-                    {classOptions.map((item) => {
+                    {classOptionNames.map((item) => {
                       const selected = teachingSelectedClasses.includes(item);
                       return (
                         <button
@@ -6379,7 +6443,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                           className={cx('flex min-h-12 w-full items-center gap-2 rounded-xl border border-gray-200 px-3 text-left', selected ? 'bg-gray-900 text-white' : 'bg-white')}
                         >
                           <span className={cx('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-black', selected ? 'border-white bg-white text-gray-900' : 'border-gray-300 text-transparent')}>✓</span>
-                          <span className="min-w-0 flex-1 truncate text-[13px] font-normal">{item}</span>
+                          <span className="min-w-0 flex-1 truncate text-[13px] font-normal">{getClassDisplayNameForGrade(item, teachingGrade, currentSpace)}</span>
                         </button>
                       );
                     })}
@@ -6415,6 +6479,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const renderTeacherBasicConfigSheet = () => {
     if (!activeTeacherBasicConfig) return null;
     const close = () => setActiveTeacherBasicConfig(null);
+    const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
     const configMeta: Record<TeacherBasicConfigKey, { title: string; options: string[] }> = {
       headClass: {
         title: '选择带班班级',
@@ -6422,7 +6487,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       },
       gradeLeader: {
         title: '选择分管年级',
-        options: ['2025级', '2024级', '2023级', '2022级', '2021级', '2020级'],
+        options: getTeacherSchoolGradeOptions(currentSpace),
       },
       department: {
         title: '部门设置',
@@ -6440,6 +6505,9 @@ const TeacherCMobileLowFi: React.FC = () => {
           <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 touch-pan-y">
             {currentMeta.options.map((item) => {
               const selected = draftTeacherBasicConfigValue === item;
+              const displayItem = activeTeacherBasicConfig === 'headClass'
+                ? getStoredTeachingClassDisplayName(item, currentSpace)
+                : item;
               return (
                 <button
                   key={item}
@@ -6447,7 +6515,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                   onClick={() => setDraftTeacherBasicConfigValue(item)}
                   className={cx('flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl px-4 text-left text-sm font-normal active:bg-gray-100', selected ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900')}
                 >
-                  <span className="min-w-0 flex-1 truncate">{item}</span>
+                  <span className="min-w-0 flex-1 truncate">{displayItem}</span>
                   {selected && <CheckCircle2 size={16} className="shrink-0" />}
                 </button>
               );
@@ -6926,8 +6994,8 @@ const TeacherCMobileLowFi: React.FC = () => {
       const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
       const recordGuideExamples = [
         '张三同学今天主动帮助同学解决问题，值得表扬。',
-        '2025级1班全体同学积极参加体育锻炼。',
-        '2025级1班的1号，2号，3号，4号，7号同学在语文课堂上积极举手发言。',
+        `${demoPrimaryClassName}全体同学积极参加体育锻炼。`,
+        `${demoPrimaryClassName}的1号，2号，3号，4号，7号同学在语文课堂上积极举手发言。`,
         '李四同学昨天言语辱骂王五同学。',
       ];
       return (
@@ -7050,7 +7118,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       const isSchoolList = isSchoolClassListPage(page);
       const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
       const isPersonalOwnedSource = canCreateClassInTeacherSpace(currentSpaceId);
-      const gradeFilterOptions: SchoolClassGradeFilter[] = ['全部', '一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三', '高一', '高二', '高三'];
+      const gradeFilterOptions: SchoolClassGradeFilter[] = ['全部', ...getTeacherSchoolGradeOptions(currentSpace)];
       const classCards = [
         { name: '2025级1班', code: '58273914', stage: '小学' as const, entryYearValue: 2025, tags: ['班主任', '语文'], count: 2, creatorName: teacherName.trim() || '郭老师', isCreator: true, role: 'headTeacher' as const },
         { name: '2024级2班', code: '73948162', stage: '小学' as const, entryYearValue: 2024, tags: ['副班主任', '数学'], count: 32, creatorName: '陈老师', isCreator: false, role: 'deputyHeadTeacher' as const },
@@ -7215,7 +7283,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                         aria-pressed={checked}
                       >
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-black">{item.name}（{inferGradeLabel(item.stage, item.entryYearValue)}）</span>
+                          <span className="block truncate text-sm font-black">{getClassDisplayName(item, currentSpace)}（{inferGradeLabel(item.stage, item.entryYearValue)}）</span>
                           <span className="mt-1 block text-xs font-medium text-gray-500">班级号：{formatClassCode(item.code)}</span>
                         </span>
                         <span className={cx('flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-black', checked ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white text-transparent')}>✓</span>
@@ -7335,7 +7403,7 @@ const TeacherCMobileLowFi: React.FC = () => {
       const classRole = getClassRoleForPage(page);
       const permissions = classRolePermissions[classRole];
       const openInviteFromList = () => {
-        openInviteForClass('teacher', page, { name: activeClassProfile.name, code: activeClassProfile.code });
+        openInviteForClass('teacher', page, { name: activeClassDisplayName, code: activeClassProfile.code });
       };
       const renderTeacherRow = (teacher: ClassTeacherProfile) => (
         <div key={teacher.id} className="flex min-h-[92px] items-center gap-3 rounded-2xl bg-gray-50 p-4">
@@ -7560,7 +7628,7 @@ const TeacherCMobileLowFi: React.FC = () => {
     if (page === 'studentDetail') {
       return (
         <>
-          <ScreenHeader title="王小明" sub="20250101｜男｜2025级1班" />
+          <ScreenHeader title="王小明" sub={`20250101｜男｜${demoPrimaryClassName}`} />
           <div className="space-y-3 p-5">
             <div className="grid grid-cols-3 gap-2 text-center text-xs font-black"><div className="rounded-2xl bg-gray-50 p-3">总记录<br />12</div><div className="rounded-2xl bg-gray-50 p-3">加分<br />10</div><div className="rounded-2xl bg-gray-50 p-3">减分<br />2</div></div>
             <button onClick={() => navigate('record')} className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">为该学生记录</button>
@@ -7734,13 +7802,17 @@ const TeacherCMobileLowFi: React.FC = () => {
     if (page === 'teacherBasicInfoPersonal' || page === 'teacherBasicInfoSchool') {
       const isPersonalBasicInfo = page === 'teacherBasicInfoPersonal';
       const currentSpace = teacherSpaces.find((space) => space.id === currentSpaceId) ?? teacherSpaces[0];
-      const displayedSchoolName = isPersonalBasicInfo ? (teacherSchoolName.trim() || '星河实验小学') : getTeacherSpaceDisplayName(currentSpace);
-      const basicInfoRows = [
-        ...(!isPersonalBasicInfo ? [
-          { key: 'headClass' as const, label: '带班班级', value: teacherBasicConfigValues.headClass },
+      const displayedSchoolName = isPersonalBasicInfo
+        ? (teacherSchoolName.trim() || '星河实验学校')
+        : currentSpace.type === 'school'
+          ? getTeacherSpaceDisplayName(currentSpace)
+          : (currentSpace.schoolName || '星河实验学校');
+      const managementRows = [
+        ...(!isPersonalBasicInfo && currentSpace.type === 'school' ? [
+          { key: 'headClass' as const, label: '带班班级', value: getStoredTeachingClassDisplayName(teacherBasicConfigValues.headClass, currentSpace) },
           { key: 'gradeLeader' as const, label: '分管年级', value: teacherBasicConfigValues.gradeLeader },
+          { key: 'department' as const, label: '部门', value: teacherBasicConfigValues.department },
         ] : []),
-        { key: 'department' as const, label: '部门设置', value: teacherBasicConfigValues.department },
       ];
       return (
         <>
@@ -7768,13 +7840,16 @@ const TeacherCMobileLowFi: React.FC = () => {
                   <span className="text-sm font-normal text-gray-500">学校</span>
                   <span className="flex min-w-0 items-center gap-2 text-sm font-normal text-gray-900">
                     <span className="truncate">{displayedSchoolName}</span>
-                    <Edit3 size={15} className="shrink-0 text-gray-500" />
+                    <ChevronRight size={16} className="shrink-0 text-gray-500" />
                   </span>
                 </button>
               ) : (
                 <div className="flex min-h-[52px] w-full items-center justify-between gap-3 border-t border-gray-100 px-4 text-left">
                   <span className="text-sm font-normal text-gray-500">学校</span>
-                  <span className="min-w-0 truncate text-sm font-normal text-gray-900">{displayedSchoolName}</span>
+                  <span className="flex min-w-0 items-center gap-2 text-sm font-normal text-gray-900">
+                    <span className="min-w-0 truncate">{displayedSchoolName}</span>
+                    <span className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </span>
                 </div>
               )}
             </section>
@@ -7800,7 +7875,7 @@ const TeacherCMobileLowFi: React.FC = () => {
                             <span className="text-sm font-semibold text-gray-900">{item.subject}</span>
                             <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-gray-500">{item.classes.length} 个班</span>
                           </span>
-                          <span className="mt-1 block truncate text-xs font-normal text-gray-500">{item.classes.join('、')}</span>
+                          <span className="mt-1 block truncate text-xs font-normal text-gray-500">{item.classes.map((className) => getStoredTeachingClassDisplayName(className, currentSpace)).join('、')}</span>
                         </div>
                         <button type="button" onClick={() => removeTeachingRow(index)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-red-500 active:bg-red-50" aria-label={`删除任教班级${index + 1}`}>
                           <Trash2 size={15} />
@@ -7810,17 +7885,27 @@ const TeacherCMobileLowFi: React.FC = () => {
                   </div>
                 </div>
 
-                {basicInfoRows.map((row) => (
-                  <button key={row.label} type="button" onClick={() => openTeacherBasicConfigSheet(row.key)} className="flex min-h-[52px] w-full items-center justify-between gap-3 px-4 text-left active:bg-gray-50" aria-label={`编辑${row.label}`}>
-                    <span className="text-sm font-normal text-gray-500">{row.label}</span>
-                    <span className="flex min-w-0 items-center gap-2 text-right text-sm font-normal text-gray-900">
-                      <span className="min-w-0 truncate">{row.value}</span>
-                      <Edit3 size={15} className="shrink-0 text-gray-400" />
-                    </span>
-                  </button>
-                ))}
               </div>
             </section>
+
+            {managementRows.length > 0 && (
+              <section className="overflow-hidden rounded-3xl bg-white">
+                <div className="px-4 py-3">
+                  <div className="text-sm font-semibold text-gray-900">管理职责</div>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {managementRows.map((row) => (
+                    <button key={row.label} type="button" onClick={() => openTeacherBasicConfigSheet(row.key)} className="flex min-h-[52px] w-full items-center justify-between gap-3 px-4 text-left active:bg-gray-50" aria-label={`编辑${row.label}`}>
+                      <span className="text-sm font-normal text-gray-500">{row.label}</span>
+                      <span className="flex min-w-0 items-center gap-2 text-right text-sm font-normal text-gray-900">
+                        <span className="min-w-0 truncate">{row.value}</span>
+                        <ChevronRight size={16} className="shrink-0 text-gray-400" />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </>
       );

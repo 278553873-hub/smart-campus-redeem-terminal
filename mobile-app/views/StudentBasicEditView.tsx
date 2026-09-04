@@ -8,10 +8,12 @@ import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import { MobileEditableRow } from '../components/ui/MobileEditableRow';
 import MobileToast from '../components/ui/MobileToast';
 import { phoneText } from '../styles/teacherMobileTokens';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 interface StudentBasicEditViewProps {
   student: Student;
   classes: ClassInfo[];
+  currentSpace: TeacherSpaceOption;
   onBack: () => void;
   onChange: (student: Student) => void | Promise<void>;
 }
@@ -101,8 +103,6 @@ const getInitialContacts = (student: Student): GuardianContact[] => {
 };
 
 
-const getClassYear = (className: string) => className.match(/^(\d{4}级)/)?.[1] || className;
-
 const formatCompactClassName = (className: string) => {
   const match = className.match(/^(\d{4}级)(.+)$/);
   const classNumberMap: Record<string, string> = {
@@ -135,7 +135,7 @@ const formatBirthDate = (birthDate?: string) => {
   return `${year}年${Number(month)}月${Number(day)}日`;
 };
 
-const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, classes, onBack, onChange }) => {
+const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, classes, currentSpace, onBack, onChange }) => {
   const [draft, setDraft] = useState<Student>({
     ...student,
     status: student.status ?? 'active',
@@ -145,7 +145,9 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
   const draftRef = useRef(draft);
   const persistedContactsRef = useRef(normalizeContacts(draft.guardianContacts ?? []));
   const [showClassPicker, setShowClassPicker] = useState(false);
-  const [classPickerYear, setClassPickerYear] = useState(getClassYear(student.class || classes[0]?.name || ''));
+  const [classPickerGrade, setClassPickerGrade] = useState(
+    classes.find(item => item.name === student.class || getTeacherClassDisplayName(item, currentSpace) === student.class)?.gradeLevel ?? classes[0]?.gradeLevel ?? '',
+  );
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
   const [avatarSheetMode, setAvatarSheetMode] = useState<AvatarSheetMode>('system');
   const [pendingAvatar, setPendingAvatar] = useState('');
@@ -166,9 +168,16 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
     contacts: persistedContactsRef.current,
   });
 
-  const selectedClass = useMemo(() => classes.find(item => item.name === draft.class), [classes, draft.class]);
-  const yearOptions = useMemo(() => Array.from(new Set(classes.map(item => getClassYear(item.name)))), [classes]);
-  const classOptions = useMemo(() => classes.filter(item => getClassYear(item.name) === classPickerYear), [classes, classPickerYear]);
+  const selectedClass = useMemo(
+    () => classes.find(item => item.name === draft.class || getTeacherClassDisplayName(item, currentSpace) === draft.class),
+    [classes, currentSpace, draft.class],
+  );
+  const displayStudentClassName = selectedClass
+    ? getTeacherClassDisplayName(selectedClass, currentSpace)
+    : formatCompactClassName(draft.class);
+  const gradeOptions = useMemo(() => getTeacherSchoolGradeOptions(currentSpace)
+    ?? Array.from(new Set(classes.map(item => item.gradeLevel))), [classes, currentSpace]);
+  const classOptions = useMemo(() => classes.filter(item => item.gradeLevel === classPickerGrade), [classes, classPickerGrade]);
   const systemAvatarGroups = useMemo(() => getSystemAvatarGroups(draft.gender), [draft.gender]);
   const currentContactValidationErrors = useMemo(
     () => getContactValidationErrors(contactForm, draft.guardianContacts ?? [], editingContactIndex),
@@ -237,15 +246,15 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
   };
 
   const openClassPicker = () => {
-    setClassPickerYear(selectedClass ? getClassYear(selectedClass.name) : getClassYear(draft.class || yearOptions[0] || ''));
+    setClassPickerGrade(selectedClass?.gradeLevel ?? draft.grade ?? gradeOptions[0] ?? '');
     setShowClassPicker(true);
   };
 
   const selectClass = (item: ClassInfo) => {
     updateDraft(prev => ({ ...prev, grade: item.gradeLevel, class: item.name }));
-    setClassPickerYear(getClassYear(item.name));
+    setClassPickerGrade(item.gradeLevel);
     setShowClassPicker(false);
-    setToastMessage(`已调整至${formatCompactClassName(item.name)}`);
+    setToastMessage(`已调整至${getTeacherClassDisplayName(item, currentSpace)}`);
   };
 
   const openAvatarSheet = () => {
@@ -457,11 +466,11 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
               <MobileEditableRow
                 onClick={openClassPicker}
                 className={editableRowLayoutClass}
-                aria-label={`选择所在班级，当前${formatCompactClassName(draft.class)}`}
+                aria-label={`选择所在班级，当前${displayStudentClassName}`}
               >
                 <span className={compactLabelClass}>所在班级</span>
                 <span className="flex min-w-0 items-center justify-end gap-2 text-sm font-semibold text-[var(--tm-text-primary)]">
-                  <span className="truncate">{formatCompactClassName(draft.class)}</span>
+                  <span className="truncate">{displayStudentClassName}</span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
                 </span>
               </MobileEditableRow>
@@ -545,16 +554,16 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
           onClose={() => setShowClassPicker(false)}
         >
           <div className="grid h-72 grid-cols-[92px_1fr] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]" aria-label="班级级联选择">
-            <div className="overflow-y-auto border-r border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-2 no-scrollbar" aria-label="左侧先选入学年级">
-              {yearOptions.map(year => (
+            <div className="overflow-y-auto border-r border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-2 no-scrollbar" aria-label="左侧先选年级">
+              {gradeOptions.map(grade => (
                 <button
-                  key={year}
+                  key={grade}
                   type="button"
-                  aria-pressed={classPickerYear === year}
-                  onClick={() => setClassPickerYear(year)}
-                  className={`mb-1 flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-xs font-bold transition-all ${classPickerYear === year ? 'bg-[var(--tm-brand-primary)] text-white' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface)]'}`}
+                  aria-pressed={classPickerGrade === grade}
+                  onClick={() => setClassPickerGrade(grade)}
+                  className={`mb-1 flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-xs font-bold transition-all ${classPickerGrade === grade ? 'bg-[var(--tm-brand-primary)] text-white' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface)]'}`}
                 >
-                  {year}
+                  {grade}
                 </button>
               ))}
             </div>
@@ -569,7 +578,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                     aria-pressed={isSelected}
                     className={`flex min-h-11 w-full items-center justify-between rounded-[var(--tm-radius-control)] px-3 text-left text-sm active:bg-[var(--tm-bg-surface-soft)] ${isSelected ? 'font-semibold text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                   >
-                    <span>{formatCompactClassName(item.name)}</span>
+                    <span>{getTeacherClassDisplayName(item, currentSpace)}</span>
                     {isSelected && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
                   </button>
                 );

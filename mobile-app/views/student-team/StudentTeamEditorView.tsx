@@ -8,6 +8,7 @@ import MobileConfirmSheet from '../../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
 import { ASSETS } from '../../assets/images';
+import { getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 
 export type StudentTeamEditorMode = 'create' | 'settings' | 'members';
 export type StudentTeamEditorValue = {
@@ -25,6 +26,8 @@ interface StudentTeamEditorViewProps {
   getStudentsForClass: (classId: string) => Student[];
   onClose: () => void;
   onSave: (value: StudentTeamEditorValue) => void;
+  getClassLabel?: (classInfo: ClassInfo) => string;
+  currentSpace?: TeacherSpaceOption;
 }
 
 type EditorPage = 'details' | 'members' | 'exact-search';
@@ -38,8 +41,13 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
   getStudentsForClass,
   onClose,
   onSave,
+  getClassLabel = classInfo => classInfo.name,
+  currentSpace,
 }) => {
-  const gradeOptions = useMemo(() => Array.from(new Set(classes.map(item => item.gradeLevel))), [classes]);
+  const gradeOptions = useMemo(() => (
+    (currentSpace ? getTeacherSchoolGradeOptions(currentSpace) : undefined)
+      ?? Array.from(new Set(classes.map(item => item.gradeLevel)))
+  ), [classes, currentSpace]);
   const classScopeKey = classes.map(item => `${item.id}:${item.gradeLevel}`).join('|');
   const teamDraftKey = team ? `${team.id}:${team.name}:${team.visibility}:${team.memberIds.join(',')}` : '';
   const [page, setPage] = useState<EditorPage>('details');
@@ -84,7 +92,10 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
     !normalizedClassQuery || student.name.replace(/\s+/g, '').includes(normalizedClassQuery)
   )), [activeStudents, normalizedClassQuery]);
   const allActiveSelected = activeStudents.length > 0 && activeStudents.every(student => selectedIds.has(student.id));
-  const authorizedClassNames = useMemo(() => new Set(classes.map(item => item.name)), [classes]);
+  const authorizedClassNames = useMemo(
+    () => new Set(classes.flatMap(item => [item.name, getClassLabel(item)])),
+    [classes, getClassLabel],
+  );
   const restrictedStudents = useMemo(() => allStudents.filter(student => (
     (student.status ?? 'active') === 'active' && !authorizedClassNames.has(student.class)
   )), [allStudents, authorizedClassNames]);
@@ -240,7 +251,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
                     <label className="relative min-w-0">
                       <span className="sr-only">选择班级</span>
                       <select value={activeClassId} onChange={event => { setActiveClassId(event.target.value); setClassQuery(''); }} className="min-h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 pr-8 text-[13px] font-medium text-[var(--tm-input-text)] outline-none">
-                        {gradeClasses.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+                        {gradeClasses.map(item => <option key={item.id} value={item.id}>{getClassLabel(item)}</option>)}
                       </select>
                       <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--tm-text-tertiary)]" />
                     </label>
@@ -283,7 +294,10 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{student.name}</span>
-                        <span className="mt-0.5 block truncate text-[12px] font-medium text-[var(--tm-text-tertiary)]">{student.class}</span>
+                        <span className="mt-0.5 block truncate text-[12px] font-medium text-[var(--tm-text-tertiary)]">{(() => {
+                          const studentClass = classes.find(item => item.name === student.class);
+                          return studentClass ? getClassLabel(studentClass) : student.class;
+                        })()}</span>
                       </span>
                     </button>
                   );

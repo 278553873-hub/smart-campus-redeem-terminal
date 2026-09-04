@@ -5,10 +5,13 @@ import ReportPeriodCalendar from '../components/report/ReportPeriodCalendar';
 import ClassRankingList from '../components/ui/ClassRankingList';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
-import type { ClassLeaderboardSettlementCycle } from '../domain/teacherSpaceAccess';
+import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type ClassLeaderboardSettlementCycle, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
+import type { ClassInfo } from '../types';
 
 interface ClassLeaderboardViewProps {
     settlementCycle: ClassLeaderboardSettlementCycle;
+    currentSpace: TeacherSpaceOption;
+    classes: ClassInfo[];
     onOpenEvaluationRecords: () => void;
 }
 
@@ -30,14 +33,12 @@ type ClassRankingItem = {
 };
 
 const dimensions: Dimension[] = ['total', '诗意中队', '安全班级', '健体班级', '文雅班级', '美净班级'];
-const GRADES = ['2025级', '2024级', '2023级', '2022级', '2021级', '2020级'];
-
 const recentRecords = [
-    { id: 'r_1', className: '2025级一班', indicator: '安全班级 / 课间纪律 / 走廊奔跑', score: -2, time: '2分钟前' },
-    { id: 'r_2', className: '2024级三班', indicator: '美净班级 / 卫生保持 / 地面清洁', score: 1, time: '8分钟前' },
-    { id: 'r_3', className: '2023级五班', indicator: '诗意中队 / 少先队礼仪 / 佩戴规范', score: 2, time: '16分钟前' },
-    { id: 'r_4', className: '2022级四班', indicator: '文雅班级 / 路队管理 / 文明放学', score: -1, time: '25分钟前' },
-    { id: 'r_5', className: '2021级二班', indicator: '健体班级 / 早操体锻 / 队列姿态', score: 2, time: '36分钟前' },
+    { id: 'r_1', classId: 'c_2025_1', className: '2025级1班', indicator: '安全班级 / 课间纪律 / 走廊奔跑', score: -2, time: '2分钟前' },
+    { id: 'r_2', classId: 'c_2024_3', className: '2024级3班', indicator: '美净班级 / 卫生保持 / 地面清洁', score: 1, time: '8分钟前' },
+    { id: 'r_3', classId: 'c_2023_5', className: '2023级5班', indicator: '诗意中队 / 少先队礼仪 / 佩戴规范', score: 2, time: '16分钟前' },
+    { id: 'r_4', classId: 'c_2022_4', className: '2022级4班', indicator: '文雅班级 / 路队管理 / 文明放学', score: -1, time: '25分钟前' },
+    { id: 'r_5', classId: 'c_2021_2', className: '2021级2班', indicator: '健体班级 / 早操体锻 / 队列姿态', score: 2, time: '36分钟前' },
 ] as const;
 
 const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -112,17 +113,17 @@ const getRankedClasses = (items: ClassRankingItem[]): Array<ClassRankingItem & {
     });
 };
 
-const getRankings = (grade: string, periodId: string, activeDimension: Dimension) => {
+const getRankings = (grade: string, periodId: string, activeDimension: Dimension, classes: ClassInfo[], currentSpace: TeacherSpaceOption) => {
     const baseScore = activeDimension === 'total' ? 100 : 20;
     const seed = hashText(`${grade}-${periodId}-${activeDimension}`);
+    const scopedClasses = grade === '全部年级' ? classes : classes.filter(classInfo => classInfo.gradeLevel === grade);
 
-    const rankings = Array.from({ length: 12 }, (_, index) => {
-        const displayGrade = grade === '全部年级' ? GRADES[index % GRADES.length] : grade;
+    const rankings = scopedClasses.map((classInfo, index) => {
         const deductionStep = activeDimension === 'total' ? 1.5 : 0.5;
         const deduction = Math.floor(index * deductionStep) + ((seed + index * 7) % 2);
         return {
-            id: `${displayGrade}-${index + 1}`,
-            name: `${displayGrade}${index + 1}班`,
+            id: classInfo.id,
+            name: getTeacherClassDisplayName(classInfo, currentSpace),
             score: Math.max(0, baseScore - deduction),
         };
     });
@@ -130,7 +131,7 @@ const getRankings = (grade: string, periodId: string, activeDimension: Dimension
     return getRankedClasses(rankings);
 };
 
-const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementCycle, onOpenEvaluationRecords }) => {
+const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementCycle, currentSpace, classes, onOpenEvaluationRecords }) => {
     const today = useMemo(() => startOfDay(new Date()), []);
     const periods = useMemo(() => createSettlementPeriods(settlementCycle, today), [settlementCycle, today]);
     const [selectedPeriodId, setSelectedPeriodId] = useState(() => periods[periods.length - 1]?.id ?? '');
@@ -143,8 +144,8 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
     const selectedPeriodIndex = periods.findIndex(period => period.id === selectedPeriod?.id);
     const currentPeriod = periods[periods.length - 1];
     const rankings = useMemo(
-        () => getRankings(activeGrade, selectedPeriod?.id ?? '', activeDimension),
-        [activeDimension, activeGrade, selectedPeriod?.id],
+        () => getRankings(activeGrade, selectedPeriod?.id ?? '', activeDimension, classes, currentSpace),
+        [activeDimension, activeGrade, classes, currentSpace, selectedPeriod?.id],
     );
     const currentPeriodPrefix = settlementCycle === 'week' ? '本周' : '本月';
     const selectedPeriodLabel = selectedPeriod?.id === currentPeriod?.id
@@ -152,7 +153,13 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
         : selectedPeriod?.label ?? '';
     const periodUnitLabel = settlementCycle === 'week' ? '周' : '月';
     const periodPickerTitle = settlementCycle === 'week' ? '选择周' : '选择月份';
-    const gradeOptions = ['全部年级', ...GRADES];
+    const gradeOptions = ['全部年级', ...(getTeacherSchoolGradeOptions(currentSpace) ?? Array.from(new Set(classes.map(classInfo => classInfo.gradeLevel))))];
+    const displayRecentRecords = recentRecords.map(record => ({
+        ...record,
+        className: classes.find(classInfo => classInfo.id === record.classId)
+            ? getTeacherClassDisplayName(classes.find(classInfo => classInfo.id === record.classId)!, currentSpace)
+            : record.className,
+    }));
 
     const changePeriod = (offset: number) => {
         const targetPeriod = periods[selectedPeriodIndex + offset];
@@ -246,7 +253,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
                         </div>
 
                         <div role="list" aria-label="全校最新评价记录">
-                            {recentRecords.map(record => (
+                            {displayRecentRecords.map(record => (
                                 <div key={record.id} role="listitem" className="flex min-h-[58px] items-start gap-3 border-b border-[var(--tm-border-subtle)] py-3 last:border-0">
                                     <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${record.score > 0 ? 'bg-[var(--tm-chart-positive)]' : 'bg-[var(--tm-chart-negative)]'}`} aria-hidden="true" />
                                     <div className="min-w-0 flex-1">

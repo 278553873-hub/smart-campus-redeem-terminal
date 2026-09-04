@@ -118,8 +118,8 @@ assert.ok(viewSource.includes('min-h-[var(--tm-report-summary-min-height)]'), '�
 assert.ok(viewSource.includes('bg-[var(--tm-report-summary-surface)]'), '数据概况应使用组件级中性表面 Token。');
 assert.ok(viewSource.includes('bg-[var(--tm-report-summary-data-surface)]'), '数据概况主数据区应使用克制的数据色表面建立完成度。');
 assert.ok(viewSource.includes('较上期 {averageScoreDelta > 0 ? \'+\' : \'\'}{averageScoreDelta}分'), '平均得分应基于真实周期趋势展示较上期变化。');
-assert.ok(viewSource.includes('const highestRankedClass = snapshot?.classRanking[0]'), '数据概况应从真实排名中获取最高班级。');
-assert.ok(viewSource.includes('const lowestRankedClass = snapshot?.classRanking[snapshot.classRanking.length - 1]'), '数据概况应从真实排名中获取最低班级。');
+assert.ok(viewSource.includes('const highestRankedClass = displaySnapshot?.classRanking[0]'), '数据概况应从展示排名中获取最高班级。');
+assert.ok(viewSource.includes('const lowestRankedClass = displaySnapshot?.classRanking[displaySnapshot.classRanking.length - 1]'), '数据概况应从展示排名中获取最低班级。');
 assert.ok(viewSource.includes('最高班级'), '数据概况应直接展示可定位的最高班级。');
 assert.ok(viewSource.includes('{highestRankedClass.name}'), '最高班级应展示真实班级名称。');
 assert.ok(viewSource.includes('{highestRankedClass.score}分'), '最高班级应展示真实班级得分。');

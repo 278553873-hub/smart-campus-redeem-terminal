@@ -3,9 +3,11 @@ import { Check, ChevronLeft, Gift, Pencil, Plus, Trash2 } from 'lucide-react';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import { GET_MOCK_CAMPUS_COIN_DETAIL } from '../../constants';
 import type { ClassInfo, Student } from '../../types';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 
 interface RewardVerificationViewProps {
   classInfo: ClassInfo;
+  currentSpace: TeacherSpaceOption;
   students: Student[];
   onBack: () => void;
 }
@@ -34,7 +36,7 @@ const INITIAL_GOODS: ClassGood[] = [
 
 const inputClass = 'h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 
-const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({ classInfo, students: classStudents, onBack }) => {
+const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({ classInfo, currentSpace, students: classStudents, onBack }) => {
   const [students, setStudents] = useState<RewardStudent[]>(() => classStudents.map(student => ({
     ...student,
     campusCoins: GET_MOCK_CAMPUS_COIN_DETAIL(student).balance,
@@ -111,7 +113,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({ classIn
 
       <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-28 pt-[var(--tm-space-3)] no-scrollbar">
         <div className="mb-[var(--tm-space-3)] flex items-center justify-between text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">
-          <span className="truncate">{classInfo.name}</span>
+          <span className="truncate">{getTeacherClassDisplayName(classInfo, currentSpace)}</span>
           <span>已选 {selectedStudentIds.size} 人</span>
         </div>
         <div className="grid grid-cols-3 gap-[var(--tm-space-2)]">

@@ -177,6 +177,7 @@ interface WeeklyActionAdviceViewProps {
     homeroomClasses?: ClassInfo[];
     activeClassId?: string;
     onClassChange?: (classId: string) => void;
+    getClassLabel?: (classInfo: ClassInfo) => string;
     data?: WeeklyActionAdvicePageData;
     report?: WeeklyActionAdviceReport;
     reportPayload?: unknown;
@@ -190,6 +191,7 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
     homeroomClasses = [],
     activeClassId,
     onClassChange,
+    getClassLabel = classInfo => classInfo.name,
     data,
     report,
     reportPayload,
@@ -247,7 +249,7 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
     }, [activeClassId]);
 
     const title = viewingExample ? WEEKLY_ACTION_ADVICE_SAMPLE_REPORT.title : pageData.title;
-    const className = viewingExample ? WEEKLY_ACTION_ADVICE_SAMPLE_REPORT.className : pageData.className;
+    const className = viewingExample ? WEEKLY_ACTION_ADVICE_SAMPLE_REPORT.className : activeClass ? getClassLabel(activeClass) : pageData.className;
     const showHeaderTitle = title !== '本周行动建议';
 
     return (
@@ -257,6 +259,7 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
                 centerContent={activeClass && !viewingExample ? (
                     <AssistantClassSwitchButton
                         activeClass={activeClass}
+                        classLabel={activeClass ? getClassLabel(activeClass) : undefined}
                         onClick={homeroomClasses.length > 1 ? () => setShowClassPicker(true) : undefined}
                     />
                 ) : undefined}
@@ -315,6 +318,7 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
                         onClassChange(classId);
                         setShowClassPicker(false);
                     }}
+                    getClassLabel={getClassLabel}
                 />
             )}
         </div>

@@ -33,6 +33,8 @@ import {
   UsersRound,
 } from 'lucide-react';
 import type { ClassInfo, Student } from '../../types';
+import type { TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
+import { getTeacherClassDisplayName } from '../../domain/teacherSpaceAccess';
 import FormBuilder, { type FormFieldTypeOption } from '../../components/form-builder/FormBuilder';
 import FormOutlineSorter, { type FormOutlineValue } from '../../components/form-builder/FormOutlineSorter';
 import GrowthFieldCategoryPicker from '../../components/growth/GrowthFieldCategoryPicker';
@@ -161,6 +163,7 @@ interface QuestionnaireManagementViewProps {
   spaceId: string;
   homeroomClassIds: string[];
   classes: ClassInfo[];
+  currentSpace: TeacherSpaceOption;
   allScopeLabel?: string;
   getStudentsForClass: (classId: string) => Student[];
   initialMode?: 'owned' | 'assigned';
@@ -707,6 +710,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   spaceId,
   homeroomClassIds,
   classes,
+  currentSpace,
   allScopeLabel = '全部班级',
   getStudentsForClass,
   initialMode = 'owned',
@@ -827,6 +831,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   }, [toast]);
 
   const availableClasses = useMemo(() => classes, [classes]);
+  const getClassDisplayName = (classId: string, fallback: string) => {
+    const classInfo = availableClasses.find(item => item.id === classId)
+      ?? classes.find(item => item.name === fallback);
+    return classInfo ? getTeacherClassDisplayName(classInfo, currentSpace) : fallback;
+  };
   const gradeGroups = useMemo(() => {
     const groups = new Map<string, ClassInfo[]>();
     availableClasses.forEach(classInfo => {
@@ -2147,6 +2156,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                       onToggleClass={toggleClass}
                       onToggleGrade={toggleGradeClasses}
                       getClassMeta={classInfo => `${activeStudentCountByClassId.get(classInfo.id) ?? 0}人`}
+                      getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, currentSpace)}
                       ariaLabel="采集范围班级级联选择"
                     />
                   </div>
@@ -2410,10 +2420,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       : getActiveQuestionnaireTargets(record).map(target => getStudentRecord(record, target.studentNo)).filter(Boolean) as StudentCollectionRecord[];
     const visibleRecords = studentRecords.filter(item => {
       const matchesStatus = studentRecordFilter === 'incomplete' ? item.status !== 'completed' : item.status === 'completed';
+      const displayClassName = getClassDisplayName(item.classId, item.className);
       return matchesStatus && (!normalizedSearch
         || item.studentName.toLowerCase().includes(normalizedSearch)
         || item.studentNo.toLowerCase().includes(normalizedSearch)
-        || item.className.toLowerCase().includes(normalizedSearch));
+        || displayClassName.toLowerCase().includes(normalizedSearch));
     });
     const studentStatusMeta = {
       pending: { label: '未完成', className: 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' },
@@ -2437,12 +2448,13 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             const resultRecord = item.status === 'completed'
               ? getQuestionnaireResultRecords(record).find(result => result.studentNo === item.studentNo)
               : undefined;
+            const displayClassName = getClassDisplayName(item.classId, item.className);
             return (
               <StudentAnswerRow
                 key={item.id}
                 avatarSrc={getStudentAvatar(item.studentNo)}
                 studentName={item.studentName}
-                className={item.className}
+                className={displayClassName}
                 statusLabel={studentStatusMeta[item.status].label}
                 statusClassName={studentStatusMeta[item.status].className}
                 onClick={item.status === 'completed' && resultRecord
@@ -2500,7 +2512,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               <StudentIdentityRow
                 avatarSrc={getStudentAvatar(studentRecord.studentNo)}
                 studentName={studentRecord.studentName}
-                studentClassName={studentRecord.className}
+                studentClassName={getClassDisplayName(studentRecord.classId, studentRecord.className)}
                 className="mt-5"
               />
             </section>
@@ -2511,7 +2523,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 <StudentIdentityRow
                   avatarSrc={getStudentAvatar(studentRecord.studentNo)}
                   studentName={studentRecord.studentName}
-                  studentClassName={studentRecord.className}
+                  studentClassName={getClassDisplayName(studentRecord.classId, studentRecord.className)}
                   className="mt-2"
                 />
               </div>
@@ -2614,6 +2626,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
           {rows.map(row => {
             const isCompleted = 'completedAt' in row;
+            const displayClassName = getClassDisplayName(row.classId, row.className);
             const statusMeta = isCompleted
               ? { label: '已完成', className: 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]' }
               : responseFilter === 'unreachable'
@@ -2624,7 +2637,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 key={isCompleted ? row.id : row.studentNo}
                 avatarSrc={getStudentAvatar(row.studentNo)}
                 studentName={row.studentName}
-                className={row.className}
+                className={displayClassName}
                 statusLabel={statusMeta.label}
                 statusClassName={statusMeta.className}
                 onClick={isCompleted ? () => { setActiveResultRecord(row); setPageMode('response'); } : undefined}
@@ -2817,7 +2830,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             <AnswerContextMeta
               studentAvatar={getStudentAvatar(activeResultRecord.studentNo)}
               studentName={activeResultRecord.studentName}
-              studentClassName={activeResultRecord.className}
+              studentClassName={getClassDisplayName(activeResultRecord.classId, activeResultRecord.className)}
               respondentRole={activeResultRecord.respondentRole}
               respondentName={respondentName}
               respondentAvatar={respondentAvatar}
@@ -2847,7 +2860,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         id: result.id,
         studentNo: result.studentNo,
         studentName: result.studentName,
-        className: result.className || '未分班级',
+        className: getClassDisplayName(result.classId, result.className || '未分班级'),
         submittedAt: result.completedAt,
         answer: question.type === 'text'
           ? typeof answer === 'string' ? answer.trim() : ''

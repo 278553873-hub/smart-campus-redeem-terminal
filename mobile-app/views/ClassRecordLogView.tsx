@@ -9,6 +9,8 @@ import { ASSETS } from '../assets/images';
 import { Loader2, Sparkles } from 'lucide-react'; // Import directly if needed for icons not in components
 import voiceOnboardingArrow from '../assets/resources/teacher-mobile-icons/by-page/02-记录/记录首页/voice-onboarding-arrow-solid-gold.svg';
 import MobileSlidingSegmentedControl from '../components/ui/MobileSlidingSegmentedControl';
+import type { ClassInfo } from '../types';
+import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 const STUDENT_RECORD_GUIDE_EXAMPLES = [
     '张三同学今天主动帮助同学解决问题，值得表扬。',
@@ -38,6 +40,8 @@ interface ClassRecordLogViewProps {
     canRecordClass?: boolean;
     showFirstRecordGuide?: boolean;
     onViewIndicators: () => void;
+    classes?: ClassInfo[];
+    currentSpace?: TeacherSpaceOption;
 }
 
 // Data Models
@@ -151,7 +155,7 @@ const INITIAL_LOGS: LogItem[] = [
 const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     classNameStr, onBack, onStartRecord, isMainView = false, newRecordData, onClearNewRecord, onToggleModal,
     addDemoTopBreathingSpace = false, activeTab, onTabChange, canRecordClass = false, showFirstRecordGuide = false,
-    onViewIndicators
+    onViewIndicators, classes = [], currentSpace
 }) => {
     // State
     const [logs, setLogs] = useState<LogItem[]>(INITIAL_LOGS);
@@ -168,6 +172,29 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     const [showScoreEdit, setShowScoreEdit] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [selectedGradeFilter, setSelectedGradeFilter] = useState<string>('全部');
+    const gradeOptions = ['全部', ...(currentSpace
+        ? getTeacherSchoolGradeOptions(currentSpace) ?? Array.from(new Set(classes.map(classInfo => classInfo.gradeLevel)))
+        : ['一年级', '二年级', '三年级', '四年级'])];
+    const classPickerItems = classes.length > 0
+        ? classes.map(classInfo => ({
+            id: classInfo.id,
+            grade: classInfo.gradeLevel,
+            name: classInfo.name,
+            displayName: currentSpace ? getTeacherClassDisplayName(classInfo, currentSpace) : classInfo.name,
+        }))
+        : [
+            { id: 'demo-1', grade: '一年级', name: '2025级1班', displayName: '2025级1班' },
+            { id: 'demo-2', grade: '一年级', name: '2025级2班', displayName: '2025级2班' },
+            { id: 'demo-3', grade: '二年级', name: '2024级1班', displayName: '2024级1班' },
+            { id: 'demo-4', grade: '二年级', name: '2024级2班', displayName: '2024级2班' },
+            { id: 'demo-5', grade: '二年级', name: '2024级3班', displayName: '2024级3班' },
+            { id: 'demo-6', grade: '三年级', name: '2023级1班', displayName: '2023级1班' },
+            { id: 'demo-7', grade: '四年级', name: '2022级1班', displayName: '2022级1班' },
+        ];
+    const formatClassReferences = (value: string) => classes.reduce(
+        (text, classInfo) => text.split(classInfo.name).join(currentSpace ? getTeacherClassDisplayName(classInfo, currentSpace) : classInfo.name),
+        value,
+    );
 
     // Sync modal state to parent
     useEffect(() => {
@@ -314,6 +341,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     // --- Render Log Item Logic ---
     // --- Render Log Item Logic ---
     const renderLogItem = (log: LogItem) => {
+        const displayContent = formatClassReferences(log.content);
         // 1. PROCESSING STATE
         if (log.status === 'processing') {
             const processingTone = activeTab === 'class'
@@ -346,7 +374,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             <FileIcon className="h-5 w-5" />
                         </div>
                         <div className="flex-1 overflow-hidden min-w-0">
-                            <div className="truncate text-sm font-semibold text-[var(--tm-text-primary)]">{log.content}</div>
+                            <div className="truncate text-sm font-semibold text-[var(--tm-text-primary)]">{displayContent}</div>
                             <div className="mt-1 text-[11px] font-medium text-[var(--tm-text-disabled)]">文件记录</div>
                         </div>
                     </div>
@@ -377,7 +405,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                 {log.type === 'voice' && <VoicePlayback active={log.scope} duration={log.audioDuration} />}
 
                 <p className="mb-3.5 text-[14px] font-medium leading-[1.55] text-[var(--tm-text-primary)]">
-                    {log.content}
+                    {displayContent}
                 </p>
 
                 <button
@@ -414,7 +442,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                             {(log.students || []).slice(0, 1).map(stu => (
                                 <span key={stu.id} className="inline-flex min-h-[28px] max-w-full items-center text-[13px] font-semibold text-[var(--tm-text-primary)]">
-                                    {stu.name.replace(/ /g, '')}
+                                    {formatClassReferences(stu.name).replace(/ /g, '')}
                                 </span>
                             ))}
                             {log.students && log.students.length > 1 && (
@@ -613,7 +641,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             </div>
                             {/* Grade Filter Tabs */}
                             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                                {['全部', '一年级', '二年级', '三年级', '四年级'].map(grade => (
+                                {gradeOptions.map(grade => (
                                     <button
                                         key={grade}
                                         onClick={() => setSelectedGradeFilter(grade)}
@@ -628,26 +656,18 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                            {[
-                                { g: '一年级', n: '2025级1班' },
-                                { g: '一年级', n: '2025级2班' },
-                                { g: '二年级', n: '2024级1班' },
-                                { g: '二年级', n: '2024级2班' },
-                                { g: '二年级', n: '2024级3班' },
-                                { g: '三年级', n: '2023级1班' },
-                                { g: '四年级', n: '2022级1班' },
-                            ]
-                                .filter(item => selectedGradeFilter === '全部' || item.g === selectedGradeFilter)
+                            {classPickerItems
+                                .filter(item => selectedGradeFilter === '全部' || item.grade === selectedGradeFilter)
                                 .map(cls => (
                                     <button
-                                        key={cls.n}
-                                        onClick={() => handleUpdateLogObject(editingLog.id, cls.n)}
+                                        key={cls.id}
+                                        onClick={() => handleUpdateLogObject(editingLog.id, cls.name)}
                                         className="w-full text-left p-4 rounded-2xl bg-slate-50   font-bold text-sm transition-colors border border-transparent  flex items-center justify-between group"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="h-1.5 w-1.5 rounded-full bg-[var(--tm-record-class-primary)]"></div>
-                                            <span>{cls.n}</span>
-                                            <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 rounded-md group- group-">{cls.g}</span>
+                                            <span>{cls.displayName}</span>
+                                            <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 rounded-md group- group-">{cls.grade}</span>
                                         </div>
                                         <ChevronRightIcon className="w-4 h-4 opacity-0 group- transition-opacity" />
                                     </button>

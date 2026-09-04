@@ -18,7 +18,8 @@ assert.ok(!classListSource.includes("renderClassSection('加入的班级'"), '�
 assert.ok(!classListSource.includes("renderClassSection('协作班级'"), '协作来源下不应重复展示协作分组。');
 
 requireText(classListSource, 'const showLeaderboard = canViewClassLeaderboard(currentSpace);', '排行榜显示条件必须来自统一空间权限规则。');
-requireText(classListSource, "activeListTab === 'class' && showLeaderboard", '排行榜入口必须同时校验班级页签和空间能力。');
+requireText(classListSource, "activeListTab === 'class' && isSchoolSpace", '排行榜入口必须只在班级页签的学校空间筛选区内展示。');
+requireText(classListSource, 'showLeaderboard && (', '排行榜入口必须同时校验空间能力。');
 requireText(classListSource, 'const canManagePersonal = canManagePersonalClasses(currentSpace);', '个人版加号必须来自统一空间权限规则。');
 requireText(classListSource, '显示${visibleClasses.length}/${classes.length}个班级', '个人来源的管理工具行应同时反馈班级显示数量。');
 requireText(classListSource, 'open={canManagePersonal && showClassManagement}', '班级管理弹窗也必须校验当前为本人创建来源。');
@@ -32,7 +33,7 @@ requireText(classListSource, 'canManagePersonal && classes.length > 0', '已有�
 requireText(classListSource, 'getTeacherClassActionPolicy({', '更多操作必须根据来源、版本和班级角色生成。');
 requireText(classListSource, 'activeActionPolicy.canMaintainClass', '班级维护操作必须受权限控制。');
 requireText(classListSource, 'activeActionPolicy.canInviteParent', '邀请家长必须受权限控制。');
-requireText(classListSource, "label: '邀请家长加入'", '协同管理应支持邀请家长。');
+requireText(classListSource, "label: '邀请家长'", '协同管理应支持邀请家长。');
 requireText(classListSource, 'onClick={() => onViewClassReport(classInfo.id)}', '所有可见班级都应在卡片外层提供班级报告。');
 assert.ok(!classListSource.includes('const hasMoreActions = Object.values(classActionPolicy).some(Boolean);'), '更多按钮应始终提供班级号复制能力，管理操作再按权限生成。');
 

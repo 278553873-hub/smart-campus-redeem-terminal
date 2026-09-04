@@ -27,6 +27,7 @@ import {
   inferEducationStage,
 } from '../domain/classInfo';
 import { phoneText } from '../styles/teacherMobileTokens';
+import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 import type {
   ClassInfo,
   EducationStage,
@@ -43,6 +44,7 @@ interface ClassInfoViewProps {
   classInfo: ClassInfo;
   classRole: ClassInfoRole;
   spaceType: ClassInfoSpaceType;
+  currentSpace: TeacherSpaceOption;
   teacherProfile: TeacherProfile;
   students: Student[];
   onBack: () => void;
@@ -173,6 +175,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
   classInfo,
   classRole,
   spaceType,
+  currentSpace,
   teacherProfile,
   students,
   onBack,
@@ -228,7 +231,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
   );
   const classNumber = Number(draft.classNumber);
   const canCompleteEdit = /^\d{1,2}$/.test(draft.classNumber) && classNumber > 0;
-  const displayClassName = buildClassName(inferAdmissionYear(classInfo), inferClassNumber(classInfo));
+  const displayClassName = getTeacherClassDisplayName(classInfo, currentSpace);
   const title = page === 'teachers' ? '老师列表' : page === 'parents' ? '家长绑定列表' : '班级详情';
   const inviteTitle = inviteAudience === 'teacher' ? '邀请老师加入' : '邀请家长绑定';
   const currentTeacherFullName = teacherProfile.name.trim();

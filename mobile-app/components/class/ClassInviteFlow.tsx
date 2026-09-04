@@ -11,6 +11,7 @@ interface ClassInviteFlowProps {
   open: boolean;
   audience: ClassInviteAudience;
   classInfo?: ClassInfo;
+  getClassLabel?: (classInfo: ClassInfo) => string;
   studentTeam?: { id: string; name: string };
   inviterName: string;
   schoolName: string;
@@ -21,7 +22,7 @@ const actionClass = 'flex min-h-[56px] w-full items-center gap-[var(--tm-space-3
 const iconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]';
 const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
 
-const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, classInfo, studentTeam, inviterName, schoolName, onClose }) => {
+const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, classInfo, getClassLabel = item => item.name, studentTeam, inviterName, schoolName, onClose }) => {
   const [step, setStep] = useState<InviteStep>('methods');
   const [selectedChats, setSelectedChats] = useState<string[]>([]);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -36,7 +37,7 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
   }, [audience, classInfo?.id, open, studentTeam?.id]);
 
   const inviter = inviterName.endsWith('老师') ? inviterName : `${inviterName}老师`;
-  const targetName = studentTeam?.name ?? classInfo?.name ?? '';
+  const targetName = studentTeam?.name ?? (classInfo ? getClassLabel(classInfo) : '');
   const targetCode = studentTeam?.id ?? classInfo?.classCode ?? '';
   const isStudentTeamInvite = Boolean(studentTeam);
   const title = isStudentTeamInvite ? '邀请协作老师' : audience === 'teacher' ? '邀请老师加入' : '邀请家长加入';

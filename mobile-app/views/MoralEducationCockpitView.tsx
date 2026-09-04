@@ -23,9 +23,11 @@ import {
     type MoralEducationPeriodType,
 } from '../services/moralEducationCockpitService';
 import { teacherBrandCssVariables } from '../styles/teacherMobileTokens';
+import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 interface MoralEducationCockpitViewProps {
     onBack: () => void;
+    currentSpace: TeacherSpaceOption;
 }
 
 type TrendMetric = 'averageScore' | 'deduction';
@@ -39,6 +41,44 @@ const periodTypeNames: Record<MoralEducationPeriodType, string> = {
 };
 
 const reportPeriodType: MoralEducationPeriodType = 'week';
+
+const getDisplaySnapshot = (
+    snapshot: MoralEducationCockpitSnapshot,
+    currentSpace: TeacherSpaceOption,
+): MoralEducationCockpitSnapshot => {
+    const gradeLabels = getTeacherSchoolGradeOptions(currentSpace);
+    if (!gradeLabels) return snapshot;
+
+    const grades = gradeLabels.map((label, index) => {
+        const existingGrade = snapshot.grades[index];
+        if (existingGrade) {
+            return {
+                ...existingGrade,
+                name: label,
+                classes: existingGrade.classes.map(classInfo => ({
+                    ...classInfo,
+                    name: getTeacherClassDisplayName({ name: classInfo.name, gradeLevel: label }, currentSpace),
+                })),
+            };
+        }
+        return { id: `grade-${index + 1}`, name: label, classes: [] };
+    });
+    const classRanking = snapshot.classRanking.map(classInfo => {
+        const grade = grades.find(item => item.id === classInfo.gradeId);
+        return {
+            ...classInfo,
+            name: getTeacherClassDisplayName({ name: classInfo.name, gradeLevel: grade?.name ?? '' }, currentSpace),
+        };
+    });
+    const existingReports = new Map(snapshot.gradeReports.map(report => [report.gradeId, report]));
+    const emptyReport = { dimensions: [], scoreTree: [], problemDimensions: [] };
+    const gradeReports = [
+        existingReports.get('all') ?? { gradeId: 'all', ...emptyReport },
+        ...grades.map(grade => existingReports.get(grade.id) ?? { gradeId: grade.id, ...emptyReport }),
+    ];
+
+    return { ...snapshot, grades, classRanking, gradeReports };
+};
 
 const trendMetricOptions: Array<{ key: TrendMetric; label: string }> = [
     { key: 'averageScore', label: '平均得分' },
@@ -210,7 +250,7 @@ const getTrendAxisRange = (snapshot: MoralEducationCockpitSnapshot, metric: Tren
     return { minValue: Math.max(0, minimum), maxValue: snapshot.summary.maxScore };
 };
 
-const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ onBack }) => {
+const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ onBack, currentSpace }) => {
     const [periodOptions, setPeriodOptions] = useState<MoralEducationPeriodOption[]>([]);
     const [selectedPeriodId, setSelectedPeriodId] = useState('');
     const [snapshot, setSnapshot] = useState<MoralEducationCockpitSnapshot | null>(null);
@@ -224,6 +264,10 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
     const [problemGradeId, setProblemGradeId] = useState('all');
     const [problemDimensionId, setProblemDimensionId] = useState('');
     const [problemCategoryId, setProblemCategoryId] = useState('');
+    const displaySnapshot = useMemo(
+        () => (snapshot ? getDisplaySnapshot(snapshot, currentSpace) : null),
+        [currentSpace, snapshot],
+    );
 
     useEffect(() => {
         let disposed = false;
@@ -284,16 +328,16 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
         return roundScore(current - previous);
     }, [snapshot]);
     const filteredRanking = useMemo(() => {
-        if (!snapshot) return [];
-        if (rankingGradeId === 'all') return snapshot.classRanking;
-        return snapshot.grades.find(grade => grade.id === rankingGradeId)?.classes ?? [];
-    }, [rankingGradeId, snapshot]);
-    const highestRankedClass = snapshot?.classRanking[0];
-    const lowestRankedClass = snapshot?.classRanking[snapshot.classRanking.length - 1];
+        if (!displaySnapshot) return [];
+        if (rankingGradeId === 'all') return displaySnapshot.classRanking;
+        return displaySnapshot.grades.find(grade => grade.id === rankingGradeId)?.classes ?? [];
+    }, [displaySnapshot, rankingGradeId]);
+    const highestRankedClass = displaySnapshot?.classRanking[0];
+    const lowestRankedClass = displaySnapshot?.classRanking[displaySnapshot.classRanking.length - 1];
     const problemGradeReport = useMemo(() => (
-        snapshot?.gradeReports.find(report => report.gradeId === problemGradeId)
-        ?? snapshot?.gradeReports[0]
-    ), [problemGradeId, snapshot]);
+        displaySnapshot?.gradeReports.find(report => report.gradeId === problemGradeId)
+        ?? displaySnapshot?.gradeReports[0]
+    ), [displaySnapshot, problemGradeId]);
     const selectedProblemDimension = useMemo(() => (
         problemGradeReport?.problemDimensions.find(dimension => dimension.id === problemDimensionId)
         ?? problemGradeReport?.problemDimensions[0]
@@ -442,7 +486,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                             <section className={reportCardClassName} aria-labelledby="moral-ranking-title">
                                 <SectionHeader title="班级排名" />
                                 <GradeTabs
-                                    grades={snapshot.grades}
+                                    grades={displaySnapshot.grades}
                                     value={rankingGradeId}
                                     onChange={setRankingGradeId}
                                     ariaLabel="班级排名年级筛选"
@@ -460,7 +504,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                             <section className={reportCardClassName} aria-label="问题分布">
                                 <SectionHeader title="问题分布" />
                                 <GradeTabs
-                                    grades={snapshot.grades}
+                                    grades={displaySnapshot.grades}
                                     value={problemGradeId}
                                     onChange={changeProblemGrade}
                                     ariaLabel="问题分布年级筛选"
@@ -590,7 +634,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                 {snapshot && (
                     <>
                         <GradeTabs
-                            grades={snapshot.grades}
+                            grades={displaySnapshot.grades}
                             value={rankingGradeId}
                             onChange={setRankingGradeId}
                             ariaLabel="完整班级排名年级筛选"

@@ -158,7 +158,6 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
   };
 
   const selectedMedalNames = selectedMedals.map(medal => medal.name).join('、');
-
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-surface)]">
       <header className="relative flex h-[var(--tm-size-touch)] shrink-0 items-center bg-[var(--tm-page-plain-header-bg)] pl-[var(--tm-space-4)] [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]">
@@ -189,15 +188,16 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
             {PLATFORM_MEDAL_GROUPS.map(group => (
               <section key={group.id} aria-labelledby={`medal-group-${group.id}`}>
                 <h2 id={`medal-group-${group.id}`} className="mb-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{group.label}</h2>
-                <div className="grid grid-flow-row grid-cols-4 gap-[var(--tm-space-1)]" role="list" aria-label={`${group.label}奖章`}>
+                <div className="grid grid-flow-row grid-cols-4 gap-x-[var(--tm-space-2)] gap-y-[var(--tm-space-3)]" role="list" aria-label={`${group.label}奖章`}>
                   {group.medals.map(medal => {
                   const selected = selectedMedalIds.has(medal.id);
                   const medalCardClassName = [
-                    'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-control)] border border-transparent px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)] transition active:scale-[0.98]',
+                    'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)] transition active:scale-[0.98]',
                   ].join(' ');
                   return (
                     <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
-                      <span className="relative flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 text-[var(--tm-brand-reward)]" /><MobileSelectionIndicator selected={selected} showUnselected={false} className="absolute -right-1 -top-1" /></span>
+                      <MobileSelectionIndicator selected={selected} showUnselected={false} className="absolute -right-1 -top-1 z-20" />
+                      <span className="relative flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 text-[var(--tm-brand-reward)]" /></span>
                       <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{medal.name}</span>
                     </button>
                   );
@@ -212,15 +212,16 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
           <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="请联系学校管理员添加" className="min-h-[360px]" imageClassName="w-[58%] min-w-[152px] max-w-[196px]" />
         )}
 
-        {scope === 'class' && <div className="grid grid-flow-row grid-cols-4 gap-[var(--tm-space-1)]" role="list" aria-label="班级奖章">
+        {scope === 'class' && <div className="grid grid-flow-row grid-cols-4 gap-x-[var(--tm-space-2)] gap-y-[var(--tm-space-3)]" role="list" aria-label="班级奖章">
           {medals.map(medal => {
             const selected = selectedMedalIds.has(medal.id);
             const medalCardClassName = [
-              'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-control)] border border-transparent px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)] transition active:scale-[0.98]',
+              'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)] transition active:scale-[0.98]',
             ].filter(Boolean).join(' ');
             return (
               <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
-                <span className="relative flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 text-[var(--tm-brand-reward)]" /><MobileSelectionIndicator selected={selected} showUnselected={false} className="absolute -right-1 -top-1" /></span>
+                <MobileSelectionIndicator selected={selected} showUnselected={false} className="absolute -right-1 -top-1 z-20" />
+                <span className="relative flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 text-[var(--tm-brand-reward)]" /></span>
                 <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{medal.name}</span>
               </button>
             );

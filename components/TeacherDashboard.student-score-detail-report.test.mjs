@@ -34,7 +34,7 @@ requireText('placeholder={[\'开始日期\', \'结束日期\']}', '日期范围�
 requireText('disabledDate={isStudentScoreDateDisabled}', '日期选择应限制在当前学期内，避免跨学期大范围查询。');
 requireText("{ id: 'score-12'", '学生得分明细表 mock 数据应扩展到 2 页，用分页体现全校学生数据量。');
 requireText('pagination={{ pageSize: 6, total: filteredStudentScoreDetailRows.length, showTotal: true }}', '学生得分明细表应展示分页，demo 每页 6 条形成 2 页效果。');
-requireText("{ title: '年级', dataIndex: 'grade', width: 120 }", '年级列应直接展示 2025级，不应追加括号年级说明。');
+requireText("{ title: '年级', dataIndex: 'grade', width: 120, render: (grade: string) => formatGradeLevelLabel(grade) }", '年级列应展示当前年级名称，不应直接展示届次。');
 requireText('placeholder="全部年级 / 班级"', '年级和班级筛选应合并为一个级联选择器。');
 requireText('checkedStrategy="all"', '年级班级级联选择器应支持选择年级本身，也支持选择具体班级。');
 requireText('studentScoreGradeClassFilters', '学生得分明细表应使用统一的年级班级筛选状态。');
@@ -59,5 +59,5 @@ forbidText('导入 Excel', '本页按钮应为导出excel，不应出现导入 E
 forbidText('导出 Excel', '导出按钮文案应统一为导出excel。');
 forbidText('当前查询：', '表格上方不应展示当前查询口径文案。');
 forbidText("{ title: '学年-学期', dataIndex: 'term', width: 180 }", '学生得分明细表不应再展示学年-学期列。');
-forbidText('formatGradeLevelLabel(grade)', '学生得分明细表年级列不应显示括号年级说明。');
+requireText('formatGradeLevelLabel(grade)', '学生得分明细表年级列应使用当前年级名称。');
 forbidText('setStudentScoreTermFilter', '学生得分明细表不应再使用学年学期下拉作为主时间筛选。');

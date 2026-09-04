@@ -9,7 +9,8 @@ const studentCardSource = screenSource.slice(
 );
 
 assert.match(screenSource, /getStudentPerformanceLevel\(performance\.netScore\)/, '卡片等级应由净得分实时派生');
-assert.match(screenSource, /h-\[148px\] w-\[136px\]/, '课堂大屏学生卡片应使用136乘148像素的高密度布局');
+assert.match(screenSource, /w-\[136px\]/, '课堂大屏学生卡片应保持136像素宽度');
+assert.match(studentCardSource, /const cardHeightClassName = displaySettings\.showLevel[\s\S]*'h-\[148px\]'[\s\S]*'h-\[136px\]'[\s\S]*'h-\[116px\]'/, '学生卡片应根据可见信息使用三档高度');
 assert.match(screenSource, /px-1 pb-2 pt-1/, '学生姓名与卡片底部应保留呼吸空间');
 assert.match(screenSource, /const CARD_GAP = 12;/, '学生单元应使用12像素间距稳定实现1280视口每行8人');
 assert.match(screenSource, /rounded-lg border-2 bg-white/, '学生单元应保留清晰的白色卡片形状');
@@ -45,6 +46,7 @@ assert.match(screenSource, /inline-flex min-w-0 max-w-\[110px\] items-center jus
 assert.match(studentCardSource, /text-\[16px\] font-semibold leading-\[18px\][\s\S]*?>\{student\.name\}<\/h3>/, '课堂大屏姓名应使用16像素、600字重，保持远距离可读且不过重');
 assert.match(screenSource, /resolveStudentsBySpokenNumbers\(normalized, students\)/, '语音评价应使用通用学号解析模块映射当前班级学生');
 assert.match(studentCardSource, /flex h-5 w-full items-center justify-center[\s\S]*?<ClassroomStudentLevelIcons level=\{level\} compact \/>/, '等级图标应独占顶部并相对整张卡片居中');
+assert.match(studentCardSource, /relative flex \$\{cardHeightClassName\} w-\[136px\] flex-col items-center justify-center/, '学生卡片的可选信息区域应在卡片内垂直居中');
 assert.match(studentCardSource, /mt-1\.5 flex h-\[18px\] w-full shrink-0 items-center justify-center text-center[\s\S]*?inline-flex min-w-0 max-w-\[110px\] items-center justify-center gap-1[\s\S]*?>\{student\.name\}<\/h3>/, '学号与姓名应作为一个完整身份组相对卡片居中');
 assert.doesNotMatch(studentCardSource, /right-\[calc\(100%\+4px\)\]/, '学号不应再使用绝对定位，避免四字姓名时越出卡片');
 assert.match(displaySource, /h-\[18px\] w-full gap-2/, '紧凑卡片的正负向统计应在头像下方独立成行');

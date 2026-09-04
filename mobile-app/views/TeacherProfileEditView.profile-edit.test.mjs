@@ -23,12 +23,16 @@ requireText(appSource, '<TeacherProfileEditView', 'App 应渲染教师信息编�
 requireText(appSource, 'TEACHER_PROFILE_DEPARTMENTS', 'App 应提供部门列表的模拟数据。');
 requireText(appSource, 'departments={TEACHER_PROFILE_DEPARTMENTS}', '编辑页应接收部门列表。');
 requireText(appSource, 'currentSpace={activeTeacherSpace}', '编辑页应接收当前班级来源，用于判断学校字段是否可编辑。');
+if (!/<TeacherProfileEditView[\s\S]*?classes=\{activeSpaceClasses\}/.test(appSource)) {
+  throw new Error('编辑页应使用当前班级来源下的班级范围。');
+}
 
 requireText(typesSource, 'TeacherDepartment', '类型层应定义教师部门。');
 requireText(typesSource, 'departmentId: string;', '教师资料应保存部门 id，并允许使用空字符串表达未设置。');
 requireText(typesSource, 'gradeLeaderGrades: string[];', '教师资料应保存分管年级。');
 
 requireText(editSource, 'applyProfileChange', '字段修改后应立即同步到教师资料。');
+requireText(editSource, 'getTeacherSchoolGradeOptions(currentSpace)', '分管年级应按当前学校类型生成选项。');
 if (editSource.includes('onSave(draft)')) {
   throw new Error('教师个人信息采用字段独立生效，不应保留整页保存按钮。');
 }
@@ -42,7 +46,7 @@ requireText(editSource, 'teacher-avatar-card', '头像应作为独立卡片展�
 requireText(editSource, 'teacher-basic-info-card', '姓名、学校和部门应合并为基础资料卡。');
 requireText(editSource, 'teacher-teaching-card', '学科和任教范围应合并为任教信息卡。');
 requireText(editSource, 'teacher-management-card', '带班班级和分管年级应合并为管理职责卡。');
-requireText(editSource, "const showManagementResponsibilities = currentSpace.type !== 'personal';", '个人版不应展示管理职责。');
+requireText(editSource, "const showManagementResponsibilities = currentSpace.type === 'school';", '只有学校版应展示管理职责。');
 requireText(editSource, '{showManagementResponsibilities && (', '管理职责卡应根据当前来源类型条件渲染。');
 for (const oldCard of ['teacher-name-card', 'teacher-school-card', 'teacher-homeroom-card', 'teacher-grade-leader-card', 'teacher-department-card']) {
   if (editSource.includes(oldCard)) throw new Error(`教师个人信息页不应继续保留碎片化卡片：${oldCard}`);
@@ -72,7 +76,8 @@ requireText(editSource, '从相册选择', '头像弹窗应提供从相册选择
 
 requireText(editSource, 'renderNameDialog', '姓名应通过弹窗修改。');
 requireText(editSource, 'renderSchoolDialog', '非学校来源下的学校名称应通过弹窗修改。');
-requireText(editSource, "const schoolNameLocked = currentSpace.type === 'school';", '学校来源下的学校字段应锁定。');
+requireText(editSource, "const schoolNameLocked = currentSpace.type !== 'personal';", '协作版和学校版的学校字段应锁定。');
+requireText(editSource, "const displaySchoolName = currentSpace.type === 'school' ? currentSpace.title : draft.schoolName;", '协作版学校字段应展示邀请方的学校值。');
 requireText(editSource, 'schoolNameLocked ? (', '学校锁定时不应渲染编辑入口。');
 requireText(editSource, 'focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '输入框聚焦状态应继续使用透明焦点令牌。');
 
@@ -80,9 +85,9 @@ const basicInfoCardSource = editSource.slice(
   editSource.indexOf('teacher-basic-info-card'),
   editSource.indexOf('teacher-teaching-card'),
 );
-requireText(basicInfoCardSource, '>部门</span>', '部门应放在基础资料卡内。');
-requireText(basicInfoCardSource, "draft.departmentName || '未设置'", '部门为空时应显示未设置。');
-requireText(basicInfoCardSource, 'openDepartmentSelector', '点击部门整行应打开部门选择弹窗。');
+if (basicInfoCardSource.includes('>部门</span>')) {
+  throw new Error('部门不应继续放在基础资料卡。');
+}
 
 const teachingCardSource = editSource.slice(
   editSource.indexOf('teacher-teaching-card'),
@@ -136,9 +141,13 @@ const managementCardSource = editSource.slice(
 );
 requireText(managementCardSource, '>带班班级</span>', '管理职责卡应包含带班班级。');
 requireText(managementCardSource, '>分管年级</span>', '管理职责卡应包含分管年级。');
-if (managementCardSource.includes('>部门</span>')) {
-  throw new Error('部门不应放在管理职责卡，应归入基础资料。');
+requireText(managementCardSource, '>部门</span>', '部门应作为管理职责最后一项。');
+if (managementCardSource.indexOf('>部门</span>') < managementCardSource.indexOf('>分管年级</span>')) {
+  throw new Error('部门应排在分管年级之后。');
 }
+requireText(editSource, 'h-4 w-4 shrink-0" aria-hidden="true"', '只读学校字段应保留右箭头占位空间。');
+requireText(editSource, "currentSpace.type !== 'personal'", '协作版和学校版应复用学校字段只读判定。');
+requireText(appSource, "schoolName: '星河实验学校'", '协作版应展示邀请方的学校字段。');
 
 requireText(editSource, '<MobileBottomSheet', '页面弹窗应统一复用公共底部弹窗。');
 requireText(bottomSheetSource, 'role="dialog"', '公共底部弹窗应具备对话框语义。');

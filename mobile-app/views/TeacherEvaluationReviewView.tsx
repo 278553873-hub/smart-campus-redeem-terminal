@@ -87,6 +87,7 @@ interface TeacherEvaluationReviewViewProps {
     homeroomClasses?: ClassInfo[];
     activeClassId?: string;
     onClassChange?: (classId: string) => void;
+    getClassLabel?: (classInfo: ClassInfo) => string;
     data?: TeacherEvaluationReviewPageData;
     report?: TeacherEvaluationReviewReport;
     reportPayload?: unknown;
@@ -100,6 +101,7 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
     homeroomClasses = [],
     activeClassId,
     onClassChange,
+    getClassLabel = classInfo => classInfo.name,
     data,
     report,
     reportPayload,
@@ -157,7 +159,7 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
     }, [activeClassId]);
 
     const title = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.title : pageData.title;
-    const className = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.className : pageData.className;
+    const className = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.className : activeClass ? getClassLabel(activeClass) : pageData.className;
     const dataRange = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.dataRange : pageData.dataRange;
     const showHeaderTitle = title !== '我的评价复盘';
 
@@ -168,6 +170,7 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
                 centerContent={activeClass && !viewingExample ? (
                     <AssistantClassSwitchButton
                         activeClass={activeClass}
+                        classLabel={activeClass ? getClassLabel(activeClass) : undefined}
                         onClick={homeroomClasses.length > 1 ? () => setShowClassPicker(true) : undefined}
                     />
                 ) : undefined}
@@ -226,6 +229,7 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
                         onClassChange(classId);
                         setShowClassPicker(false);
                     }}
+                    getClassLabel={getClassLabel}
                 />
             )}
         </div>
