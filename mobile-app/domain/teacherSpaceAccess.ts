@@ -131,6 +131,7 @@ export interface TeacherClassActionPolicy {
     canMaintainClass: boolean;
     canInviteTeacher: boolean;
     canInviteParent: boolean;
+    canConfigureParentEvaluationVisibility: boolean;
 }
 
 interface TeacherClassAccessContext {
@@ -270,5 +271,6 @@ export const getTeacherClassActionPolicy = ({
         canMaintainClass: canManageClass,
         canInviteTeacher: canManageClass,
         canInviteParent: canManageClass,
+        canConfigureParentEvaluationVisibility: isHomeroomTeacher,
     };
 };

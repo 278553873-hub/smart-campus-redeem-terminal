@@ -24,6 +24,10 @@ interface StudentPerformanceCountsProps {
   variant?: 'default' | 'student-card';
   showPraiseCount?: boolean;
   showCriticismCount?: boolean;
+  fontSize?: number;
+  itemHeight?: number;
+  itemMinWidth?: number;
+  gap?: number;
 }
 
 const TIER_META: Record<StudentPerformanceTier, { label: string; iconSrc: string }> = {
@@ -81,10 +85,18 @@ export const StudentPerformanceCounts: React.FC<StudentPerformanceCountsProps> =
   variant = 'default',
   showPraiseCount = true,
   showCriticismCount = true,
+  fontSize,
+  itemHeight,
+  itemMinWidth,
+  gap,
 }) => {
   if (!showPraiseCount && !showCriticismCount) return null;
 
   const isStudentCard = variant === 'student-card';
+  const visibleCountCount = [showPraiseCount, showCriticismCount].filter(Boolean).length;
+  const verticalHeight = itemHeight
+    ? itemHeight * visibleCountCount + (gap ?? 4) * Math.max(0, visibleCountCount - 1)
+    : undefined;
   const typographyClass = isStudentCard
     ? 'text-[length:var(--tm-student-card-count-font-size)] font-bold'
     : 'text-[10px] font-bold';
@@ -99,15 +111,19 @@ export const StudentPerformanceCounts: React.FC<StudentPerformanceCountsProps> =
   return (
     <span
       aria-label={ariaLabel ?? visibleCountLabel}
-      className={`flex items-center justify-center tabular-nums ${typographyClass} ${orientation === 'vertical' ? 'h-10 flex-col gap-1' : `${horizontalHeightClass} gap-1.5`} ${className}`}
+      className={`flex items-center justify-center tabular-nums ${typographyClass} ${orientation === 'vertical' ? 'min-h-10 flex-col' : `${horizontalHeightClass}`} ${className}`}
+      style={{
+        ...(fontSize ? { fontSize } : {}),
+        ...(orientation === 'vertical' ? { height: verticalHeight, gap: gap ?? 4 } : { gap: gap ?? 6 }),
+      }}
     >
       {showPraiseCount && (
-        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-praise-soft,#ecfdf5)] px-1 text-[var(--tm-student-praise,#059669)] ${chipHeightClass}`}>
+        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-praise-soft,#ecfdf5)] px-1 text-[var(--tm-student-praise,#059669)] ${chipHeightClass}`} style={{ height: itemHeight, minWidth: itemMinWidth }}>
           {formatSignedCount(summary.praiseCount, '+')}
         </span>
       )}
       {showCriticismCount && (
-        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-criticism-soft,#fff1f2)] px-1 text-[var(--tm-student-criticism,#f43f5e)] ${chipHeightClass}`}>
+        <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-criticism-soft,#fff1f2)] px-1 text-[var(--tm-student-criticism,#f43f5e)] ${chipHeightClass}`} style={{ height: itemHeight, minWidth: itemMinWidth }}>
           {formatSignedCount(summary.criticismCount, '-')}
         </span>
       )}

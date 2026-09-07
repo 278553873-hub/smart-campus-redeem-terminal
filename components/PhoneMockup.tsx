@@ -8,6 +8,7 @@ interface PhoneMockupProps {
   safeAreaTop?: boolean;
   screenBackground?: React.ReactNode;
   screenOverlay?: React.ReactNode;
+  screenOverlayRootId?: string;
   screenRef?: React.Ref<HTMLDivElement>;
   showDeviceFrame?: boolean;
   contentTopInsetMode?: 'full-chrome' | 'status-bar' | 'none';
@@ -19,6 +20,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   safeAreaTop = true,
   screenBackground,
   screenOverlay,
+  screenOverlayRootId,
   screenRef,
   showDeviceFrame = true,
   contentTopInsetMode = 'full-chrome',
@@ -105,6 +107,13 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
         >
           {children}
         </div>
+
+        {screenOverlayRootId && (
+          <div
+            id={screenOverlayRootId}
+            className="pointer-events-none absolute inset-0 z-[1000]"
+          />
+        )}
 
         {/* iOS 状态栏 (Overlay) */}
         <div className={`absolute top-0 left-0 w-full h-[54px] flex justify-between items-end px-8 pb-3 text-[12px] font-bold text-black z-[90] pointer-events-none ${nativeChromeVisibility}`} aria-hidden={!shouldShowNativeChrome}>

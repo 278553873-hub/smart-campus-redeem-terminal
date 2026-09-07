@@ -3,16 +3,18 @@ import { readFileSync } from 'node:fs';
 
 const screenSource = readFileSync(new URL('./SmartBigScreen.tsx', import.meta.url), 'utf8');
 const displaySource = readFileSync(new URL('./student-performance/ClassroomStudentPerformance.tsx', import.meta.url), 'utf8');
+const classroomDisplaySource = readFileSync(new URL('../shared/classroomDisplay.ts', import.meta.url), 'utf8');
 
 for (const text of [
   'aria-label="更多操作"',
   'aria-label="课堂大屏更多操作"',
   'title="更多操作"',
   '显示学生等级',
-  '显示正向统计',
-  '显示负面统计',
+  '表扬次数',
+  '批评次数',
   '仅计算本学期',
   '累计所有学期',
+  '从现在开始重新统计表扬次数和批评次数',
   '重新计数',
   '重置后不可恢复，我已知晓',
   '秒后可确认',
@@ -25,7 +27,24 @@ for (const text of [
 }
 
 assert.match(screenSource, /import \{[^}]*Switch[^}]*\} from '@arco-design\/web-react'/, 'PC端展示设置应复用Arco公共开关组件');
-assert.match(screenSource, /<Drawer[\s\S]*?width=\{GROUP_DRAWER_WIDTH\}[\s\S]*?visible=\{isMoreActionsOpen\}[\s\S]*?title="更多操作"/, '更多操作与小组管理必须复用同一Arco抽屉基础样式');
+assert.match(screenSource, /<Drawer[\s\S]*?width=\{groupDrawerWidth\}[\s\S]*?visible=\{isMoreActionsOpen\}[\s\S]*?title="更多操作"/, '更多操作与小组管理必须复用同一Arco抽屉基础样式');
+assert.match(screenSource, /CLASSROOM_DISPLAY_MODE_OPTIONS[\s\S]*?getClassroomDisplayConfig/, '课堂大屏应通过统一配置提供展示档位');
+assert.match(classroomDisplaySource, /\{ value: 'auto', label: '自动' \}[\s\S]*\{ value: 'standard', label: '小' \}[\s\S]*\{ value: 'classroom', label: '标准' \}[\s\S]*\{ value: 'distant', label: '大' \}/, '显示大小应使用自动、小、标准、大的直观文案');
+assert.match(screenSource, /aria-label="显示大小"/, '显示大小控件应使用面向老师的语义名称');
+assert.match(screenSource, /const displayModeControl = !isRecountSelection[\s\S]*CLASSROOM_DISPLAY_MODE_OPTIONS/, '展示档位应作为底部常驻操作控件');
+assert.match(screenSource, /<footer[\s\S]*displayModeControl/, '展示档位应放在底部操作区');
+assert.match(screenSource, /<footer className="grid[\s\S]*grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/, '底部操作区应使用左右等宽、中间自适应的三列布局');
+assert.match(screenSource, /min-w-0 justify-self-start[\s\S]*displayModeControl/, '正常状态下展示档位应固定在底部左侧');
+assert.match(screenSource, /min-w-0 items-center justify-self-center[\s\S]*批量评价[\s\S]*随机点/, '批量评价和随机点名应位于底部中央主操作区');
+assert.match(screenSource, /min-w-0 justify-self-end[\s\S]*setHistoryOpen\(true\)/, '点评记录应固定在底部右侧');
+assert.match(screenSource, /!isMultiSelect && !isRecountSelection && displayModeControl/, '进入选择态后应隐藏左侧展示档位，保持任务聚焦');
+assert.doesNotMatch(screenSource, /当前：\{classroomDisplay\.label\}/, '展示档位的选中态已表达当前设置，不应重复显示当前档位文案');
+assert.doesNotMatch(screenSource, /<section className="mb-8">[\s\S]{0,500}展示档位/, '展示档位不应继续放在更多操作抽屉');
+assert.match(screenSource, /classroomDisplay\.toolbar\.height[\s\S]*classroomDisplay\.toolbar\.fontSize[\s\S]*classroomDisplay\.toolbar\.iconSize/, '底部操作控件应按展示档位同步放大');
+assert.match(screenSource, /shell\.classMenuWidth[\s\S]*shell\.classMenuItemHeight[\s\S]*shell\.classMenuFontSize/, '班级切换菜单应按展示档位同步放大');
+assert.match(screenSource, /classroom-display-input[\s\S]*classroomDisplayInputStyle/, 'Arco 输入框内部文字应通过局部样式跟随展示档位');
+assert.match(screenSource, /min-h-0 flex-1 overflow-y-auto custom-scrollbar/, '随机点名结果区应在弹窗内独立滚动');
+assert.match(screenSource, /gridTemplateColumns: `repeat\(auto-fill, minmax\(\$\{classroomDisplay\.modal\.avatarOptionMinWidth\}px, 1fr\)\)`/, '头像选择网格应按展示档位自适应列数');
 assert.match(screenSource, /checked=\{studentCardDisplaySettings\.showLevel\}[\s\S]*aria-label="显示学生等级"/, '等级开关应由公共组件提供状态与无障碍语义');
 assert.match(screenSource, /studentCardDisplaySettings\.showLevel && \([\s\S]*等级展示规则[\s\S]*仅计算本学期[\s\S]*累计所有学期/, '等级展示规则应作为显示学生等级的渐进披露子配置');
 assert.doesNotMatch(screenSource, /relative h-7 w-12[\s\S]*translate-x-6/, '课堂大屏不应手写开关轨道、圆点和位移');

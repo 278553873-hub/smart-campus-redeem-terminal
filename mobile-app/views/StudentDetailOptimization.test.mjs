@@ -126,6 +126,9 @@ requireText(scrollHandledViews, "'student_detail'", '学生详情页应在手机
 requireText(dashboardSource, 'relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent', '学生详情根容器应占满屏幕、保持透明，并支持固定标题栏布局。');
 requireText(dashboardSource, 'min-h-0 flex-1 overflow-y-auto pb-safe no-scrollbar', '学生详情标题栏下方内容应独立滚动，避免底部抽屉挂到长页面底部。');
 requireText(dashboardSource, 'aria-label="编辑基础信息"', '学生头像编辑入口必须保留无障碍标签。');
+requireText(dashboardSource, 'aria-label="编辑学生姓名和性别"', '学生姓名和性别应可进入基础信息编辑页。');
+requireText(dashboardSource, '编辑所在班级，当前', '学生班级应可进入基础信息编辑页。');
+requireText(dashboardSource, '编辑学号，当前', '学生学号应可进入基础信息编辑页。');
 requireText(dashboardSource, '<Camera', '学生头像右下角必须展示相机图标。');
 const studentProfileCardSource = dashboardSource.slice(
   dashboardSource.indexOf('{/* A. Student Profile Card */}'),
@@ -134,11 +137,24 @@ const studentProfileCardSource = dashboardSource.slice(
 if (studentProfileCardSource.includes('<Pencil')) {
   throw new Error('学生身份卡顶部不应继续展示独立铅笔编辑按钮。');
 }
-if (dashboardSource.indexOf('aria-label="编辑基础信息"') < dashboardSource.indexOf('<div className="flex min-w-0 items-start gap-4">')) {
-  throw new Error('基础信息编辑入口必须绑定在学生卡片的头像上。');
+const editableStudentProfileEntryLabels = [
+  'aria-label="编辑基础信息"',
+  'aria-label="编辑学生姓名和性别"',
+  '编辑所在班级，当前',
+  '编辑学号，当前',
+];
+for (const label of editableStudentProfileEntryLabels) {
+  if (!dashboardSource.includes(label)) throw new Error(`学生详情页缺少基础信息编辑入口：${label}`);
 }
 if (dashboardSource.includes('>编辑基础信息<')) {
   throw new Error('学生详情页不应额外显示“编辑基础信息”文字操作。');
+}
+const studentStatusLabelIndex = studentProfileCardSource.indexOf('{studentStatusLabel}');
+const studentStatusElementStart = studentProfileCardSource.lastIndexOf('<', studentStatusLabelIndex);
+const studentStatusElementEnd = studentProfileCardSource.indexOf('</span>', studentStatusLabelIndex) + '</span>'.length;
+const studentStatusSource = studentProfileCardSource.slice(studentStatusElementStart, studentStatusElementEnd);
+if (studentStatusSource.includes('onClick') || studentStatusSource.includes('<button')) {
+  throw new Error('学籍状态仅用于展示，不应成为基础信息编辑入口。');
 }
 if (dashboardSource.includes('handleUpdateFaceClick') || dashboardSource.includes('选择人脸更新方式')) {
   throw new Error('学生详情页头像只负责进入基础信息编辑页，不应直接触发换脸流程。');
@@ -445,18 +461,18 @@ if (basicEditSource.includes('border-white/40 bg-white/38')) {
 if (basicEditSource.includes('学生状态') || basicEditSource.includes('设为离校') || basicEditSource.includes('学籍状态')) {
   throw new Error('基础信息编辑页不应包含学生状态或设为离校入口，学籍状态应在学生详情页单独操作。');
 }
-requireText(basicEditSource, 'classPickerYear', '所在班级选择应采用左侧年份、右侧班级的级联状态。');
-requireText(basicEditSource, 'yearOptions.map', '所在班级选择左侧应展示 2020级、2021级等年份选项。');
+requireText(basicEditSource, 'classPickerGrade', '所在班级选择应采用左侧年级、右侧班级的级联状态。');
+requireText(basicEditSource, 'gradeOptions.map', '所在班级选择左侧应展示年级选项。');
 requireText(basicEditSource, 'classOptions.map', '所在班级选择右侧应根据年份展示班级选项。');
 requireText(basicEditSource, 'grid-cols-[92px_1fr]', '班级级联应采用左右两栏布局。');
-requireText(basicEditSource, 'aria-label="左侧先选入学年级"', '班级级联左侧应先选入学年级。');
+requireText(basicEditSource, 'aria-label="左侧先选年级"', '班级级联左侧应先选年级。');
 requireText(basicEditSource, 'aria-label="右侧再选该年级下的班级"', '班级级联右侧应展示该年级下的班级。');
-requireText(basicEditSource, 'formatCompactClassName(item.name)', '右侧班级应展示 2020级1班 这样的紧凑班级名。');
+requireText(basicEditSource, 'getTeacherClassDisplayName(item, currentSpace)', '右侧班级应展示当前学校版式的紧凑班级名。');
 requireText(basicEditSource, 'open={showClassPicker}', '所在班级应使用底部弹窗承载级联选择。');
 requireText(basicEditSource, 'title="选择班级"', '班级选择弹窗应使用明确标题。');
 requireText(basicEditSource, 'onClick={() => selectClass(item)}', '点击具体班级后应立即应用选择。');
-requireText(basicEditSource, 'setToastMessage(`已调整至${formatCompactClassName(item.name)}`)', '换班成功后应提供轻量结果反馈。');
-requireText(basicEditSource, 'aria-label={`选择所在班级，当前${formatCompactClassName(draft.class)}`}', '所在班级入口应整行可点击并说明当前值。');
+requireText(basicEditSource, 'setToastMessage(`已调整至${getTeacherClassDisplayName(item, currentSpace)}`)', '换班成功后应提供轻量结果反馈。');
+requireText(basicEditSource, 'aria-label={`选择所在班级，当前${displayStudentClassName}`}', '所在班级入口应整行可点击并说明当前值。');
 if (basicEditSource.includes('>更换</span>') || basicEditSource.includes('toggleClassPicker')) {
   throw new Error('所在班级入口不应保留“更换”文案或页内展开逻辑。');
 }
@@ -525,10 +541,12 @@ requireText(basicEditSource, '删除后，该手机将无法查看学生报告',
 requireText(basicEditSource, '暂无联系方式', '删除最后一条联系方式后应展示真实空状态。');
 requireText(basicEditSource, 'h-full min-h-0 overflow-hidden', '基础信息编辑子页面应使用手机壳内高度，避免底部按钮裁切。');
 requireText(basicEditSource, 'StudentBasicEditView', '基础信息编辑页应独立封装。');
+requireText(basicEditSource, "getTeacherSchoolGradeOptions(currentSpace)", '基础信息编辑页使用年级选项时必须具备对应依赖。');
+requireText(basicEditSource, "getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption", '基础信息编辑页必须导入年级选项依赖，避免进入页面后运行时空白。');
 requireText(basicEditSource, "max={editingField === 'birthDate' ? maxBirthDate : undefined}", '出生日期弹窗不得允许选择未来日期。');
 requireText(basicEditSource, "return '未设置';", '出生日期为空时应显示未设置，不展示浏览器年月日占位。');
 requireText(basicEditSource, 'aria-pressed={draft.gender === option.value}', '性别选中状态应能被辅助技术识别。');
-requireText(basicEditSource, 'aria-pressed={classPickerYear === year}', '班级年份选中状态应能被辅助技术识别。');
+requireText(basicEditSource, 'aria-pressed={classPickerGrade === grade}', '班级年级选中状态应能被辅助技术识别。');
 requireText(basicEditSource, 'h-11 w-11 items-center justify-center', '标题栏返回按钮应满足 44 像素最小触控尺寸。');
 if (basicEditSource.includes('学生基础资料') || basicEditSource.includes('本次 Demo 保存后在当前会话内生效') || basicEditSource.includes('UserRound')) {
   throw new Error('基础信息编辑页不应展示顶部说明卡，应直接进入表单。');

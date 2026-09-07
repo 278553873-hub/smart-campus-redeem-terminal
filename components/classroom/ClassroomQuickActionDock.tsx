@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import type { ClassroomDisplayConfig } from '../../shared/classroomDisplay';
 
 interface ClassroomQuickActionDockProps {
   assistantIconSrc: string;
@@ -7,6 +8,7 @@ interface ClassroomQuickActionDockProps {
   voiceLevel: number;
   onToggleVoice: () => void;
   onSecondaryAction?: () => void;
+  layout: ClassroomDisplayConfig['quickActions'];
 }
 
 interface DockPosition {
@@ -16,24 +18,21 @@ interface DockPosition {
 
 type FanDirection = 'up-left' | 'up-right' | 'down-left' | 'down-right';
 
-const DOCK_SIZE = 64;
 const VIEWPORT_GUTTER = 12;
-const MIC_FAN_OFFSET = { x: 21, y: 77 };
-const ASSISTANT_FAN_OFFSET = { x: 69, y: 40 };
 const MICROPHONE_GLYPH_SRC = '/assets/classroom/microphone-glyph.png';
 
-const VoiceWaveGlyph: React.FC<{ level: number }> = ({ level }) => {
+const VoiceWaveGlyph: React.FC<{ level: number; size: number }> = ({ level, size }) => {
   const bars = [0.35, 0.65, 1, 0.78, 0.48];
 
   return (
-    <div className="relative z-10 flex h-7 w-8 items-center justify-center gap-0.5">
+    <div className="relative z-10 flex items-center justify-center gap-0.5" style={{ width: size, height: size * 0.875 }}>
       {bars.map((weight, index) => {
         const height = 7 + Math.round(level * weight * 18);
         return (
           <span
             key={index}
-            className="w-1 rounded-full bg-white transition-[height] duration-75 ease-out"
-            style={{ height: `${height}px` }}
+            className="rounded-full bg-white transition-[height] duration-75 ease-out"
+            style={{ width: Math.max(3, Math.round(size * 0.125)), height: `${height}px` }}
           />
         );
       })}
@@ -48,6 +47,7 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
   voiceLevel,
   onToggleVoice,
   onSecondaryAction,
+  layout,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [position, setPosition] = useState<DockPosition | null>(null);
@@ -68,11 +68,11 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
   const clampPosition = (x: number, y: number): DockPosition => ({
     x: Math.min(
       Math.max(VIEWPORT_GUTTER, x),
-      Math.max(VIEWPORT_GUTTER, window.innerWidth - DOCK_SIZE - VIEWPORT_GUTTER),
+      Math.max(VIEWPORT_GUTTER, window.innerWidth - layout.dockSize - VIEWPORT_GUTTER),
     ),
     y: Math.min(
       Math.max(VIEWPORT_GUTTER, y),
-      Math.max(VIEWPORT_GUTTER, window.innerHeight - DOCK_SIZE - VIEWPORT_GUTTER),
+      Math.max(VIEWPORT_GUTTER, window.innerHeight - layout.dockSize - VIEWPORT_GUTTER),
     ),
   });
 
@@ -181,12 +181,12 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
   const verticalSign = fanDirection.startsWith('up') ? -1 : 1;
   const horizontalSign = fanDirection.endsWith('left') ? -1 : 1;
   const micOffset = {
-    x: MIC_FAN_OFFSET.x * horizontalSign,
-    y: MIC_FAN_OFFSET.y * verticalSign,
+    x: layout.fanOffsetX * horizontalSign,
+    y: layout.fanOffsetY * verticalSign,
   };
   const assistantOffset = {
-    x: ASSISTANT_FAN_OFFSET.x * horizontalSign,
-    y: ASSISTANT_FAN_OFFSET.y * verticalSign,
+    x: layout.assistantOffsetX * horizontalSign,
+    y: layout.assistantOffsetY * verticalSign,
   };
   const getActionMotionStyle = (offset: DockPosition, isVisible = isExpanded): React.CSSProperties => ({
     opacity: isVisible ? 1 : 0,
@@ -200,15 +200,16 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
   });
 
   const voiceStatusStyle: React.CSSProperties = {
-    ...(verticalSign < 0 ? { bottom: '76px' } : { top: '76px' }),
-    ...(horizontalSign < 0 ? { right: '68px' } : { left: '68px' }),
+    ...(verticalSign < 0 ? { bottom: `${layout.statusOffset}px` } : { top: `${layout.statusOffset}px` }),
+    ...(horizontalSign < 0 ? { right: `${layout.statusOffset - 8}px` } : { left: `${layout.statusOffset - 8}px` }),
+    width: layout.statusWidth,
   };
 
   return (
     <div
       ref={rootRef}
-      className={`fixed z-[80] h-16 w-16 ${position ? '' : 'bottom-28 right-10'}`}
-      style={position ? { left: `${position.x}px`, top: `${position.y}px` } : undefined}
+      className={`fixed z-[80] ${position ? '' : 'bottom-28 right-10'}`}
+      style={{ width: layout.dockSize, height: layout.dockSize, ...(position ? { left: `${position.x}px`, top: `${position.y}px` } : {}) }}
     >
       <button
         ref={launcherButtonRef}
@@ -227,11 +228,12 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
         }}
         tabIndex={isVoiceListening ? -1 : 0}
         aria-hidden={isVoiceListening}
-        className={`relative z-20 flex h-16 w-16 touch-none select-none items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_18px_36px_rgba(15,23,42,0.22)] transition-[transform,opacity,box-shadow] cursor-grab active:cursor-grabbing focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 ${
+        className={`relative z-20 flex touch-none select-none items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_18px_36px_rgba(15,23,42,0.22)] transition-[transform,opacity,box-shadow] cursor-grab active:cursor-grabbing focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 ${
           isVoiceListening
             ? 'pointer-events-none scale-75 opacity-0'
             : `opacity-100 hover:scale-105 active:scale-95 ${isExpanded ? 'ring-4 ring-blue-200/70' : 'ring-1 ring-white/80'}`
         }`}
+        style={{ width: layout.dockSize, height: layout.dockSize }}
         title={isExpanded ? '收起课堂快捷功能' : '展开课堂快捷功能'}
         aria-label={isExpanded ? '收起课堂快捷功能' : '展开课堂快捷功能'}
         aria-expanded={isExpanded}
@@ -263,9 +265,10 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
               if (isVoiceListening) setIsExpanded(false);
               onToggleVoice();
             }}
-            className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(180deg,#7BCDFC_0%,#54BAF6_52%,#2D99DF_100%)] text-white shadow-[0_12px_28px_rgba(45,153,223,0.30)] transition-[transform,background-image,box-shadow] hover:scale-105 hover:bg-[linear-gradient(180deg,#8AD7FF_0%,#61C5FB_52%,#38A8E8_100%)] active:scale-95 active:bg-[linear-gradient(180deg,#62BFEF_0%,#43ACEB_52%,#258ACD_100%)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#B9E8FF] ${
+            className={`relative flex items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(180deg,#7BCDFC_0%,#54BAF6_52%,#2D99DF_100%)] text-white shadow-[0_12px_28px_rgba(45,153,223,0.30)] transition-[transform,background-image,box-shadow] hover:scale-105 hover:bg-[linear-gradient(180deg,#8AD7FF_0%,#61C5FB_52%,#38A8E8_100%)] active:scale-95 active:bg-[linear-gradient(180deg,#62BFEF_0%,#43ACEB_52%,#258ACD_100%)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#B9E8FF] ${
               isVoiceListening ? 'ring-4 ring-[#54BAF6]/25' : ''
             }`}
+            style={{ width: layout.actionSize, height: layout.actionSize }}
             title={isVoiceListening ? '停止语音录入' : '开始语音录入'}
             aria-label={isVoiceListening ? '停止语音录入' : '开始语音录入'}
             aria-pressed={isVoiceListening}
@@ -276,13 +279,14 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
             />
             {isVoiceListening && <span className="absolute inset-0 rounded-full bg-[#54BAF6]/30 animate-ping" />}
             {isVoiceListening
-              ? <VoiceWaveGlyph level={voiceLevel} />
+              ? <VoiceWaveGlyph level={voiceLevel} size={layout.iconSize} />
               : (
                 <img
                   src={MICROPHONE_GLYPH_SRC}
                   alt=""
                   draggable={false}
-                  className="relative z-10 h-8 w-8 select-none object-contain"
+                  className="relative z-10 select-none object-contain"
+                  style={{ width: layout.iconSize, height: layout.iconSize }}
                 />
               )}
           </button>
@@ -300,7 +304,8 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
               setIsExpanded(false);
               onSecondaryAction?.();
             }}
-            className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full shadow-[0_12px_28px_rgba(15,23,42,0.18)] transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300"
+            className="flex items-center justify-center overflow-hidden rounded-full shadow-[0_12px_28px_rgba(15,23,42,0.18)] transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300"
+            style={{ width: layout.actionSize, height: layout.actionSize }}
             title="课堂助手"
             aria-label="课堂助手"
           >
@@ -317,16 +322,16 @@ const ClassroomQuickActionDock: React.FC<ClassroomQuickActionDockProps> = ({
       <div
         aria-live="polite"
         aria-hidden={!isVoiceListening}
-        className={`pointer-events-none absolute w-max max-w-[320px] rounded-2xl border border-blue-100 bg-white px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.10)] transition-all duration-200 ${
+        className={`pointer-events-none absolute rounded-2xl border border-blue-100 bg-white px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.10)] transition-all duration-200 ${
           isVoiceListening ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
         }`}
         style={voiceStatusStyle}
       >
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-          <span className="text-[12px] font-black text-slate-500">录音采集中</span>
+          <span className="font-black text-slate-500" style={{ fontSize: layout.statusTitleFontSize }}>录音采集中</span>
         </div>
-        <p className="mt-1.5 text-[16px] font-black leading-snug text-slate-800">点击麦克风结束</p>
+        <p className="mt-1.5 font-black leading-snug text-slate-800" style={{ fontSize: layout.statusBodyFontSize }}>点击麦克风结束</p>
       </div>
     </div>
   );

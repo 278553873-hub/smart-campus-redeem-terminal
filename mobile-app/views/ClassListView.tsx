@@ -6,12 +6,13 @@ import {
     Copy,
     LogIn,
     MessageCircle,
+    MonitorSmartphone,
     Plus,
     SlidersHorizontal,
     UsersRound,
     X,
 } from 'lucide-react';
-import { ClassInfo, Student, TeacherProfile, type SchoolStudentTeam } from '../types';
+import { ClassInfo, Student, TeacherProfile, type ParentEvaluationVisibilitySettings as ParentVisibilitySettings, type SchoolStudentTeam } from '../types';
 import {
     UsersIcon,
     ChartIcon,
@@ -24,7 +25,9 @@ import {
     UserPlusIcon,
 } from '../components/Icons';
 import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/ClassInviteFlow';
+import ParentEvaluationVisibilitySettings from '../components/class/ParentEvaluationVisibilitySettings';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSlidingSegmentedControl from '../components/ui/MobileSlidingSegmentedControl';
@@ -63,6 +66,7 @@ interface ClassListViewProps {
     onViewBankPassword: (classId: string) => void;
     onViewHomeworkEntry: (classId: string) => void;
     onEditClassInfo: (classId: string) => void;
+    onUpdateParentEvaluationVisibility: (classId: string, settings: ParentVisibilitySettings) => void;
     activeListTab: 'class' | 'team';
     onListTabChange: (tab: 'class' | 'team') => void;
     studentTeams: SchoolStudentTeam[];
@@ -123,6 +127,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onViewBankPassword,
     onViewHomeworkEntry,
     onEditClassInfo,
+    onUpdateParentEvaluationVisibility,
     activeListTab,
     onListTabChange,
     studentTeams,
@@ -151,6 +156,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const [teamEditor, setTeamEditor] = useState<{ mode: StudentTeamEditorMode; teamId?: string } | null>(null);
     const [studentTeamInviteId, setStudentTeamInviteId] = useState<string | null>(null);
     const [archiveStudentTeamId, setArchiveStudentTeamId] = useState<string | null>(null);
+    const [parentVisibilityClassId, setParentVisibilityClassId] = useState<string | null>(null);
 
     const teachingClassIds = useMemo(() => (
         new Set(teacherProfile.teachingAssignments.map(assignment => assignment.classId))
@@ -193,6 +199,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const editingStudentTeam = useMemo(() => studentTeams.find(team => team.id === teamEditor?.teamId), [studentTeams, teamEditor?.teamId]);
     const invitedStudentTeam = useMemo(() => studentTeams.find(team => team.id === studentTeamInviteId), [studentTeamInviteId, studentTeams]);
     const archivedStudentTeam = useMemo(() => studentTeams.find(team => team.id === archiveStudentTeamId), [archiveStudentTeamId, studentTeams]);
+    const parentVisibilityClass = useMemo(() => classes.find(classInfo => classInfo.id === parentVisibilityClassId) ?? null, [classes, parentVisibilityClassId]);
 
     useEffect(() => {
         setActiveActionClassId(null);
@@ -207,6 +214,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         setTeamEditor(null);
         setStudentTeamInviteId(null);
         setArchiveStudentTeamId(null);
+        setParentVisibilityClassId(null);
     }, [currentSpace.id]);
 
     useEffect(() => {
@@ -258,6 +266,12 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const openInviteFlow = (audience: ClassInviteAudience) => {
         if (!activeActionClass) return;
         setInviteContext({ audience, classInfo: activeActionClass });
+        closeActionSheet();
+    };
+
+    const openParentEvaluationVisibility = () => {
+        if (!activeActionClass) return;
+        setParentVisibilityClassId(activeActionClass.id);
         closeActionSheet();
     };
 
@@ -313,7 +327,9 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 ] : []),
             ],
         } : null,
-        activeActionPolicy.canInviteTeacher || activeActionPolicy.canInviteParent ? {
+        activeActionPolicy.canInviteTeacher
+        || activeActionPolicy.canInviteParent
+        || activeActionPolicy.canConfigureParentEvaluationVisibility ? {
             title: '协同管理',
             tone: 'collaboration',
             items: [
@@ -326,6 +342,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     label: '邀请家长',
                     icon: MessageCircle,
                     onClick: () => openInviteFlow('parent'),
+                }] : []),
+                ...(activeActionPolicy.canConfigureParentEvaluationVisibility ? [{
+                    label: '家长端展示',
+                    icon: MonitorSmartphone,
+                    onClick: openParentEvaluationVisibility,
                 }] : []),
             ],
         } : null,
@@ -513,7 +534,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         aria-haspopup="dialog"
                                         aria-expanded={showGradeFilter}
                                         onClick={() => setShowGradeFilter(true)}
-                                        className="inline-flex min-h-11 w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] px-3 text-[13px] font-medium text-[var(--tm-text-secondary)] transition-[background-color,color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] focus-visible:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                        className="inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                     >
                                         <span>{gradeFilter === '全部' ? '全部年级' : gradeFilter}</span>
                                         <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
@@ -522,7 +543,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         type="button"
                                         aria-pressed={showTeachingOnly}
                                         onClick={() => setShowTeachingOnly(current => !current)}
-                                        className={`flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-transparent px-2 text-[13px] font-medium transition-[background-color,color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] focus-visible:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${showTeachingOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                        className={`flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] whitespace-nowrap rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${showTeachingOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                                     >
                                         <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showTeachingOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
                                             {showTeachingOnly && <Check className="h-3 w-3" strokeWidth={3} />}
@@ -530,24 +551,29 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         任教班级
                                     </button>
                                 </div>
-                            {showLeaderboard && (
-                                <button
-                                    type="button"
-                                    aria-label="查看班级排行榜"
-                                    onClick={onViewLeaderboard}
-                                    className="inline-flex min-h-11 shrink-0 items-center justify-self-end gap-1 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-medium text-[var(--tm-brand-primary)] transition-[background-color,color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
-                                >
-                                    班级排行榜
-                                    <span aria-hidden="true" className="ml-px inline-flex h-4 w-4 items-center justify-center text-[16px] leading-none">›</span>
-                                </button>
-                            )}
+                                {showLeaderboard && (
+                                    <button
+                                        type="button"
+                                        aria-label="查看班级排行榜"
+                                        onClick={onViewLeaderboard}
+                                        className="inline-flex h-[var(--tm-class-list-leaderboard-touch-height)] w-[var(--tm-class-list-leaderboard-touch-width)] shrink-0 items-center justify-self-end justify-center rounded-none transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
+                                    >
+                                        <img
+                                            src={ASSETS.CLASS.LEADERBOARD_ENTRY}
+                                            alt=""
+                                            draggable={false}
+                                            aria-hidden="true"
+                                            className="h-[var(--tm-class-list-leaderboard-image-height)] w-[var(--tm-class-list-leaderboard-image-width)] select-none object-contain"
+                                        />
+                                    </button>
+                                )}
                             </div>
                             <span
                                 className="block h-[18px] whitespace-nowrap pl-3 text-[12px] font-medium leading-[18px] tabular-nums text-[var(--tm-text-secondary)]"
                                 aria-live="polite"
                                 aria-atomic="true"
                             >
-                                {visibleClasses.length}个班级
+                                共{visibleClasses.length}个班级
                             </span>
                         </div>
                     )}
@@ -647,27 +673,18 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 )}
             </div>
 
-            <MobileBottomSheet open={showGradeFilter} title="选择年级" onClose={() => setShowGradeFilter(false)} contentInset="none">
-                <div className="space-y-1 px-4 pb-[var(--tm-space-4)]">
-                    {gradeOptions.map(option => {
-                        const selected = gradeFilter === option;
-                        return (
-                            <button
-                                key={option}
-                                type="button"
-                                aria-pressed={selected}
-                                onClick={() => {
-                                    setGradeFilter(option);
-                                    setShowGradeFilter(false);
-                                }}
-                                className={`flex min-h-11 w-full items-center rounded-[var(--tm-radius-control)] px-3 text-left text-[13px] font-medium transition-[background-color,color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${selected ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
-                            >
-                                {option === '全部' ? '全部年级' : option}
-                            </button>
-                        );
-                    })}
-                </div>
-            </MobileBottomSheet>
+            <MobileGradePickerSheet
+                open={showGradeFilter}
+                selectionMode="single"
+                value={gradeFilter}
+                options={gradeOptions.map(option => ({
+                    value: option,
+                    label: option === '全部' ? '全部年级' : option,
+                }))}
+                onChange={setGradeFilter}
+                onClose={() => setShowGradeFilter(false)}
+                ariaLabel="班级列表年级筛选"
+            />
 
             <MobileBottomSheet open={Boolean(activeActionTeam)} title="更多操作" onClose={closeTeamActionSheet}>
                 {activeActionTeam && (
@@ -836,6 +853,20 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             </section>
                         ))}
                     </div>
+                )}
+            </MobileBottomSheet>
+
+            <MobileBottomSheet
+                open={Boolean(parentVisibilityClass)}
+                title="家长端评价展示"
+                onClose={() => setParentVisibilityClassId(null)}
+            >
+                {parentVisibilityClass && (
+                    <ParentEvaluationVisibilitySettings
+                        classDisplayName={getTeacherClassDisplayName(parentVisibilityClass, currentSpace)}
+                        settings={parentVisibilityClass.parentEvaluationVisibility}
+                        onChange={settings => onUpdateParentEvaluationVisibility(parentVisibilityClass.id, settings)}
+                    />
                 )}
             </MobileBottomSheet>
 

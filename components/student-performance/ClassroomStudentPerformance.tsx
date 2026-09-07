@@ -15,17 +15,27 @@ interface ClassroomStudentAvatarProps {
   avatar: string;
   level: StudentPerformanceLevel;
   compact?: boolean;
+  size?: number;
 }
 
 interface ClassroomStudentMetaProps {
   level: StudentPerformanceLevel;
   summary: StudentPerformanceSummary;
   compact?: boolean;
+  layout?: {
+    iconSize?: number;
+    countFontSize?: number;
+    countItemHeight?: number;
+    countItemMinWidth?: number;
+    countGap?: number;
+    gap?: number;
+  };
 }
 
 interface ClassroomStudentLevelIconsProps {
   level: StudentPerformanceLevel;
   compact?: boolean;
+  iconSize?: number;
 }
 
 interface ClassroomStudentCountsProps {
@@ -33,6 +43,10 @@ interface ClassroomStudentCountsProps {
   compact?: boolean;
   showPraiseCount?: boolean;
   showCriticismCount?: boolean;
+  fontSize?: number;
+  itemHeight?: number;
+  itemMinWidth?: number;
+  gap?: number;
 }
 
 const TIER_META: Record<StudentPerformanceTier, { label: string; iconSrc: string }> = {
@@ -50,9 +64,11 @@ export const ClassroomStudentAvatar: React.FC<ClassroomStudentAvatarProps> = ({
   avatar,
   level,
   compact = false,
+  size: requestedSize,
 }) => {
-  const size = compact ? 68 : 76;
-  const radius = compact ? 32 : 35;
+  const size = requestedSize ?? (compact ? 68 : 76);
+  const inset = compact ? Math.max(4, Math.round(size * 0.088)) : Math.max(6, Math.round(size * 0.092));
+  const radius = size / 2 - inset / 2;
   const circumference = 2 * Math.PI * radius;
   const progressPercent = Math.round(level.progress * 100);
   const dashOffset = circumference * (1 - level.progress);
@@ -61,7 +77,8 @@ export const ClassroomStudentAvatar: React.FC<ClassroomStudentAvatarProps> = ({
     <div
       role="img"
       aria-label={`${name}头像，下一枚等级图标进度${progressPercent}%`}
-      className={`relative shrink-0 ${compact ? 'h-[68px] w-[68px]' : 'h-[76px] w-[76px]'}`}
+      className="relative shrink-0"
+      style={{ width: size, height: size }}
     >
       <svg aria-hidden="true" className="absolute inset-0 z-10 h-full w-full" viewBox={`0 0 ${size} ${size}`}>
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e2eaf3" strokeWidth={4} />
@@ -82,13 +99,14 @@ export const ClassroomStudentAvatar: React.FC<ClassroomStudentAvatarProps> = ({
       <img
         src={avatar}
         alt=""
-        className={`absolute rounded-full object-cover ${compact ? 'inset-1.5 h-14 w-14' : 'inset-[7px] h-[62px] w-[62px]'}`}
+        className="absolute rounded-full object-cover"
+        style={{ inset, width: size - inset * 2, height: size - inset * 2 }}
       />
     </div>
   );
 };
 
-export const ClassroomStudentLevelIcons: React.FC<ClassroomStudentLevelIconsProps> = ({ level, compact = false }) => {
+export const ClassroomStudentLevelIcons: React.FC<ClassroomStudentLevelIconsProps> = ({ level, compact = false, iconSize = 20 }) => {
   const currentTier = TIER_META[level.tier];
   const currentLevelLabel = level.iconCount > 0
     ? `${level.iconCount}个${currentTier.label}`
@@ -101,6 +119,7 @@ export const ClassroomStudentLevelIcons: React.FC<ClassroomStudentLevelIconsProp
     <div
       aria-label={`${currentLevelLabel}，${nextLevelLabel}`}
       className={`flex items-center justify-center ${compact ? 'h-5 min-w-20 gap-0' : 'h-5'}`}
+      style={{ height: iconSize, minWidth: compact ? iconSize * 4 : undefined }}
     >
       {level.iconCount === 0 && (
         <img
@@ -108,7 +127,8 @@ export const ClassroomStudentLevelIcons: React.FC<ClassroomStudentLevelIconsProp
           alt=""
           aria-hidden="true"
           draggable={false}
-          className="h-5 w-5 shrink-0 select-none object-contain"
+          className="shrink-0 select-none object-contain"
+          style={{ width: iconSize, height: iconSize }}
         />
       )}
       {Array.from({ length: level.iconCount }, (_, index) => (
@@ -118,7 +138,8 @@ export const ClassroomStudentLevelIcons: React.FC<ClassroomStudentLevelIconsProp
           alt=""
           aria-hidden="true"
           draggable={false}
-          className="h-5 w-5 shrink-0 select-none object-contain"
+          className="shrink-0 select-none object-contain"
+          style={{ width: iconSize, height: iconSize }}
         />
       ))}
     </div>
@@ -130,11 +151,16 @@ export const ClassroomStudentCounts: React.FC<ClassroomStudentCountsProps> = ({
   compact = false,
   showPraiseCount = true,
   showCriticismCount = true,
+  fontSize,
+  itemHeight,
+  itemMinWidth,
+  gap,
 }) => {
   const visibleCountLabels = [
     showPraiseCount ? `被表扬${summary.praiseCount}次` : '',
     showCriticismCount ? `被批评${summary.criticismCount}次` : '',
   ].filter(Boolean);
+  const resolvedItemHeight = itemHeight ?? (compact ? 18 : 20);
 
   if (visibleCountLabels.length === 0) return null;
 
@@ -142,14 +168,19 @@ export const ClassroomStudentCounts: React.FC<ClassroomStudentCountsProps> = ({
     <div
       aria-label={visibleCountLabels.join('，')}
       className={`flex items-center justify-center font-black tabular-nums ${compact ? 'h-[18px] w-full gap-2 text-[10px]' : 'h-5 gap-2 text-[11px]'}`}
+      style={{
+        ...(fontSize ? { fontSize } : {}),
+        height: resolvedItemHeight,
+        ...(gap ? { gap } : {}),
+      }}
     >
       {showPraiseCount && (
-        <span aria-hidden="true" className={`flex items-center justify-center bg-emerald-50 text-emerald-600 ${compact ? 'h-[18px] min-w-6 rounded-md px-1' : 'h-5 min-w-7 rounded-[5px] px-1.5'}`}>
+        <span aria-hidden="true" className={`flex items-center justify-center bg-emerald-50 text-emerald-600 ${compact ? 'h-[18px] min-w-6 rounded-md px-1' : 'h-5 min-w-7 rounded-[5px] px-1.5'}`} style={{ height: resolvedItemHeight, minWidth: itemMinWidth }}>
           {formatSignedCount(summary.praiseCount, '+')}
         </span>
       )}
       {showCriticismCount && (
-        <span aria-hidden="true" className={`flex items-center justify-center bg-rose-50 text-rose-500 ${compact ? 'h-[18px] min-w-6 rounded-md px-1' : 'h-5 min-w-7 rounded-[5px] px-1.5'}`}>
+        <span aria-hidden="true" className={`flex items-center justify-center bg-rose-50 text-rose-500 ${compact ? 'h-[18px] min-w-6 rounded-md px-1' : 'h-5 min-w-7 rounded-[5px] px-1.5'}`} style={{ height: resolvedItemHeight, minWidth: itemMinWidth }}>
           {formatSignedCount(summary.criticismCount, '-')}
         </span>
       )}
@@ -157,20 +188,26 @@ export const ClassroomStudentCounts: React.FC<ClassroomStudentCountsProps> = ({
   );
 };
 
-export const ClassroomStudentMeta: React.FC<ClassroomStudentMetaProps> = ({ level, summary, compact = false }) => {
+export const ClassroomStudentMeta: React.FC<ClassroomStudentMetaProps> = ({ level, summary, compact = false, layout }) => {
+  const iconSize = layout?.iconSize ?? (compact ? 20 : 20);
+  const countFontSize = layout?.countFontSize;
+  const countItemHeight = layout?.countItemHeight;
+  const countItemMinWidth = layout?.countItemMinWidth;
+  const countGap = layout?.countGap;
+  const gap = layout?.gap ?? (compact ? 4 : 6);
   if (compact) {
     return (
-      <div className="flex w-full flex-col items-center gap-1">
-        <ClassroomStudentLevelIcons level={level} compact />
-        <ClassroomStudentCounts summary={summary} compact />
+      <div className="flex w-full flex-col items-center" style={{ gap }}>
+        <ClassroomStudentLevelIcons level={level} compact iconSize={iconSize} />
+        <ClassroomStudentCounts summary={summary} compact fontSize={countFontSize} itemHeight={countItemHeight} itemMinWidth={countItemMinWidth} gap={countGap} />
       </div>
     );
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-1.5">
-      <ClassroomStudentLevelIcons level={level} />
-      <ClassroomStudentCounts summary={summary} />
+    <div className="flex w-full flex-col items-center" style={{ gap }}>
+      <ClassroomStudentLevelIcons level={level} iconSize={iconSize} />
+      <ClassroomStudentCounts summary={summary} fontSize={countFontSize} itemHeight={countItemHeight} itemMinWidth={countItemMinWidth} gap={countGap} />
     </div>
   );
 };

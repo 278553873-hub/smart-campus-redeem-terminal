@@ -351,7 +351,14 @@ const MeView: React.FC<MeViewProps> = ({
                         </button>
 
                         <div className="min-w-0 flex-1 pt-3">
-                            <h2 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]">{teacherName}</h2>
+                            <button
+                                type="button"
+                                onClick={onEditTeacherProfile}
+                                className="flex min-h-11 max-w-full items-center text-left active:opacity-70"
+                                aria-label="编辑姓名"
+                            >
+                                <h2 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]">{teacherName}</h2>
+                            </button>
                             <ClassSourceTrigger
                                 name={classSourceName}
                                 type={currentSpace.type}

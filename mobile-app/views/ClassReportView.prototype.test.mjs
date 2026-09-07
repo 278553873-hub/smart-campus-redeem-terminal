@@ -181,7 +181,7 @@ assert.ok(coverageDomainSource.includes('evaluationCount') && coverageDomainSour
 assert.ok(coverageDomainSource.includes('sortStudentCoverageRows'), '学生覆盖排序应收敛到独立领域模块。');
 assert.ok(bottomSheetSource.includes('role="dialog"') && bottomSheetSource.includes('aria-modal="true"'), '共享底部抽屉应具备模态无障碍语义。');
 assert.ok(bottomSheetSource.includes("createPortal") && bottomSheetSource.includes("getElementById('teacher-mobile-overlay-root')"), '共享底部抽屉应挂载到手机端统一浮层，避免受页面滚动与动画变换影响。');
-assert.ok(appSource.includes('id="teacher-mobile-overlay-root"'), '教师手机端壳层应提供统一浮层挂载点。');
+assert.ok(appSource.includes('screenOverlayRootId="teacher-mobile-overlay-root"'), '教师手机端壳层应提供统一浮层挂载点。');
 assert.ok(viewSource.includes('min-h-[var(--tm-size-touch)]'), '学生覆盖清单行应使用教师端触控尺寸令牌。');
 assert.ok(viewSource.includes('min-h-[var(--tm-size-touch)] grid-cols-[minmax(0,1fr)_var(--tm-report-coverage-evaluation-column)_var(--tm-report-coverage-teacher-column)]'), '学生覆盖表头应使用教师端触控尺寸令牌并保持稳定的数值列宽。');
 assert.ok(uiGuidelineSource.includes('列表不设置独立的排序 Tab') && uiGuidelineSource.includes('无边框的浅中性圆角表面'), '教师手机端规范应固化学生覆盖的表头排序交互与视觉层级。');

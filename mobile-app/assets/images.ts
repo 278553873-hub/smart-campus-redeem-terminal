@@ -17,7 +17,6 @@ import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
 import teacherMePageBg from './resources/teacher-me-page-bg.png';
 import teacherLoginIconImg from './resources/teacher-login-icon.jpg';
 import teacherDefaultAvatarImg from './resources/teacher-default-avatar.png';
-import classLeaderboardIconImg from './resources/class-leaderboard-icon.png';
 import platformDeyuStarMedalImg from './resources/medals/platform-deyu-star.png';
 import platformZhiyuStarMedalImg from './resources/medals/platform-zhiyu-star.png';
 import platformTiyuStarMedalImg from './resources/medals/platform-tiyu-star.png';
@@ -57,6 +56,7 @@ import teacherBottomNavClassActive from './resources/teacher-bottom-navigation/c
 import teacherBottomNavClassDefault from './resources/teacher-bottom-navigation/class-default.png';
 import teacherBottomNavMeActive from './resources/teacher-bottom-navigation/me-active.png';
 import teacherBottomNavMeDefault from './resources/teacher-bottom-navigation/me-default.png';
+import classLeaderboardEntryImg from './resources/class-leaderboard-entry.png';
 import {
   studentBoyAvatarGroups,
   studentBoyAvatars,
@@ -163,6 +163,9 @@ export const ASSETS = {
     SCIENCE: encodeSVG(activityScienceSVG),
     SCHOOL: encodeSVG(schoolSchoolSVG),
   },
+  CLASS: {
+    LEADERBOARD_ENTRY: classLeaderboardEntryImg,
+  },
   MANAGEMENT: {
     SUBJECT: subjectReportIcon,
     TERM: termReportIcon,
@@ -178,7 +181,6 @@ export const ASSETS = {
     TEACHER_ME_HERO_BG: teacherMeHeroBg,
     TEACHER_ME_PAGE_BG: teacherMePageBg,
     TEACHER_LOGIN_ICON: teacherLoginIconImg,
-    CLASS_LEADERBOARD: classLeaderboardIconImg,
   },
   MEDALS: {
     PLATFORM_DEYU_STAR: platformDeyuStarMedalImg,

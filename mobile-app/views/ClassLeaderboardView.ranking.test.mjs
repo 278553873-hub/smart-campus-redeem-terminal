@@ -7,6 +7,7 @@ const pillSource = readFileSync(new URL('../components/ui/PillSelectionControl.t
 const rankingListSource = readFileSync(new URL('../components/ui/ClassRankingList.tsx', import.meta.url), 'utf8');
 const periodCalendarSource = readFileSync(new URL('../components/report/ReportPeriodCalendar.tsx', import.meta.url), 'utf8');
 const bottomSheetSource = readFileSync(new URL('../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
+const gradePickerSource = readFileSync(new URL('../components/ui/MobileGradePickerSheet.tsx', import.meta.url), 'utf8');
 const guidelineSource = readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', import.meta.url), 'utf8');
 
 for (const required of [
@@ -73,13 +74,23 @@ if (!(periodSwitcherIndex >= 0 && periodSwitcherIndex < rankingSectionIndex && g
 }
 
 for (const required of [
-  '<select',
+  '<MobileGradePickerSheet',
+  'isGradeSheetOpen',
   'aria-label="班级排行榜年级筛选"',
-  'text-[length:var(--tm-font-size-compact)]',
   '<PillSelectionControl',
   'ariaLabel="班级排行榜维度"',
 ]) {
   if (!source.includes(required)) throw new Error(`排行榜局部筛选缺少：${required}`);
+}
+
+for (const required of [
+  'selectionMode?: \'single\'',
+  'selectionMode: \'multiple\'',
+  'onConfirm',
+  'onClear',
+  'h-[var(--tm-choice-pill-touch-height)] w-full',
+]) {
+  if (!gradePickerSource.includes(required)) throw new Error(`公共年级选择弹窗缺少：${required}`);
 }
 
 for (const required of [

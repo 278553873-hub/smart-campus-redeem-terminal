@@ -52,6 +52,7 @@ import { VirtualKeyboard } from './components/VirtualKeyboard';
 import TeacherMobileScreenBackground from './components/TeacherMobileScreenBackground';
 import TeacherBottomNavigation, { type TeacherBottomTab } from './components/TeacherBottomNavigation';
 import TeacherRecordInputBar from './components/TeacherRecordInputBar';
+import MobileGradePickerSheet from './components/ui/MobileGradePickerSheet';
 import { teacherBrandCssVariables } from './styles/teacherMobileTokens';
 import type { TeacherGradientPreviewConfig } from './styles/teacherGradientPreview';
 import { DeviceWrapper } from '../components/DeviceWrapper';
@@ -1124,6 +1125,20 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         });
     };
 
+    const handleUpdateParentEvaluationVisibility = (
+        classId: string,
+        settings: NonNullable<ClassInfo['parentEvaluationVisibility']>,
+    ) => {
+        setClassOverrides(current => {
+            const classInfo = current[classId] ?? MOCK_CLASSES.find(item => item.id === classId);
+            if (!classInfo) return current;
+            return {
+                ...current,
+                [classId]: { ...classInfo, parentEvaluationVisibility: settings },
+            };
+        });
+    };
+
     const openSubjectEditor = (item?: SchoolSubjectItem) => {
         setActiveNameEditor('subject');
         setSubjectDraftTarget(item ?? null);
@@ -1607,16 +1622,13 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                     screenRef={screenRef}
                     showDeviceFrame={showPhoneShell}
                     contentTopInsetMode="none"
+                    screenOverlayRootId="teacher-mobile-overlay-root"
                     screenBackground={gradientPreview
                         ? <TeacherMobileScreenBackground variant="preview" preview={gradientPreview} />
                         : undefined}
                 >
                     <div className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${gradientPreview ? 'bg-transparent' : 'bg-[var(--tm-bg-surface)]'}`}>
                         <TeacherLoginView onLogin={handleTeacherLogin} />
-                        <div
-                            id="teacher-mobile-overlay-root"
-                            className="pointer-events-none absolute inset-0 z-[1000]"
-                        />
                     </div>
                 </PhoneMockup>
             </div>
@@ -1632,6 +1644,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                 screenRef={screenRef}
                 showDeviceFrame={showPhoneShell}
                 contentTopInsetMode={currentView === 'student_detail' ? 'none' : 'status-bar'}
+                screenOverlayRootId="teacher-mobile-overlay-root"
                 screenBackground={getPhoneScreenBackground()}
                 screenOverlay={(
                     <TeacherCampaignModal
@@ -1724,6 +1737,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     onViewBankPassword={handleViewBankPassword}
                                     onViewHomeworkEntry={handleViewHomeworkEntry}
                                     onEditClassInfo={handleEditClassInfo}
+                                    onUpdateParentEvaluationVisibility={handleUpdateParentEvaluationVisibility}
                                     activeListTab={classListTab}
                                     onListTabChange={setClassListTab}
                                     studentTeams={activeSpaceStudentTeams}
@@ -2337,11 +2351,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             </Suspense>
                         </main>
 
-                        <div
-                            id="teacher-mobile-overlay-root"
-                            className="pointer-events-none absolute inset-0 z-[1000]"
-                        />
-
                         {showInputBar && <GlobalInputBar />}
 
                         {activeNameEditor === 'subject' && (
@@ -2499,24 +2508,6 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                                 {selectedGradeScope}
                                                 <ChevronDownIcon className={`w-4 h-4 text-slate-400 transition-transform ${showGradeSelect ? 'rotate-180' : ''}`} />
                                             </button>
-
-                                            {showGradeSelect && (
-                                                <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-xl shadow-lg z-20 py-1 animate-in slide-in-from-top-2 duration-100 overflow-hidden">
-                                                    {gradeScopeOptions.map(grade => (
-                                                        <button
-                                                            key={grade}
-                                                            onClick={() => {
-                                                                setSelectedGradeScope(grade);
-                                                                setShowGradeSelect(false);
-                                                            }}
-                                                            className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium active:bg-[var(--tm-bg-surface-soft)] ${grade === selectedGradeScope ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
-                                                        >
-                                                            {grade}
-                                                            {grade === selectedGradeScope && <div className="h-2 w-2 rounded-full bg-[var(--tm-brand-primary)]"></div>}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
                                         </div>
                                     )}
 
@@ -2579,6 +2570,17 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                 </div>
                             </div>
                         )}
+
+                        <MobileGradePickerSheet
+                            open={showGradeSelect}
+                            selectionMode="single"
+                            value={selectedGradeScope}
+                            options={gradeScopeOptions.map(grade => ({ value: grade, label: grade }))}
+                            onChange={setSelectedGradeScope}
+                            onClose={() => setShowGradeSelect(false)}
+                            title="选择生成年级范围"
+                            ariaLabel="报告生成年级范围"
+                        />
 
                         {/* Success Toast Overlay */}
                         {showSuccessToast && (

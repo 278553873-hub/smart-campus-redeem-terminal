@@ -111,6 +111,7 @@ assert.deepEqual(classPolicyFor({ type: 'personal', role: 'owner', membership: '
   canMaintainClass: true,
   canInviteTeacher: true,
   canInviteParent: true,
+  canConfigureParentEvaluationVisibility: false,
 });
 
 assert.deepEqual(classPolicyFor({ type: 'personal', role: 'owner', membership: 'joined' }), {
@@ -120,6 +121,7 @@ assert.deepEqual(classPolicyFor({ type: 'personal', role: 'owner', membership: '
   canMaintainClass: false,
   canInviteTeacher: false,
   canInviteParent: false,
+  canConfigureParentEvaluationVisibility: false,
 });
 
 assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1', teaching: ['class-1'] }), {
@@ -129,6 +131,7 @@ assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'cla
   canMaintainClass: false,
   canInviteTeacher: false,
   canInviteParent: false,
+  canConfigureParentEvaluationVisibility: false,
 });
 
 assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1' }), {
@@ -138,6 +141,7 @@ assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'cla
   canMaintainClass: false,
   canInviteTeacher: false,
   canInviteParent: false,
+  canConfigureParentEvaluationVisibility: false,
 });
 
 assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'class-1', deputyHomeroom: ['class-1'] }), {
@@ -147,7 +151,15 @@ assert.deepEqual(classPolicyFor({ type: 'school', role: 'teacher', classId: 'cla
   canMaintainClass: true,
   canInviteTeacher: true,
   canInviteParent: true,
+  canConfigureParentEvaluationVisibility: false,
 });
+
+assert.equal(
+  classPolicyFor({ type: 'school', role: 'homeroomTeacher', classId: 'class-1', homeroom: ['class-1'] })
+    .canConfigureParentEvaluationVisibility,
+  true,
+  '只有班主任可修改班级级家长端评价展示策略。',
+);
 
 assert.equal(
   policyFor('school', 'teacher').moreTools.includes('homeworkBatchImport'),

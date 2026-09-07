@@ -545,12 +545,19 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         </button>
                         <div className="min-w-0 flex-1">
                             <div className="flex min-w-0 items-start justify-between gap-2">
-                                <h2 className="flex min-w-0 items-center gap-2 text-2xl font-bold text-[var(--tm-text-primary)]">
-                                    <span className="truncate">{student.name}</span>
-                                    {student.gender === 'male'
-                                        ? <MaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-male)]" />
-                                        : <FemaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-female)]" />}
-                                </h2>
+                                <button
+                                    type="button"
+                                    onClick={onEditBasicInfo}
+                                    aria-label="编辑学生姓名和性别"
+                                    className="flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-2 rounded-[var(--tm-radius-inner)] text-left active:opacity-70"
+                                >
+                                    <h2 className="flex min-w-0 items-center gap-2 text-2xl font-bold text-[var(--tm-text-primary)]">
+                                        <span className="truncate">{student.name}</span>
+                                        {student.gender === 'male'
+                                            ? <MaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-male)]" />
+                                            : <FemaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-female)]" />}
+                                    </h2>
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowMoreActionsSheet(true)}
@@ -561,8 +568,22 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                 </button>
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">{displayStudentClassName}</span>
-                                <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">ID: {student.id}</span>
+                                <button
+                                    type="button"
+                                    onClick={onEditBasicInfo}
+                                    aria-label={`编辑所在班级，当前${displayStudentClassName}`}
+                                    className="flex min-h-[var(--tm-size-touch)] items-center text-left active:opacity-70"
+                                >
+                                    <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">{displayStudentClassName}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={onEditBasicInfo}
+                                    aria-label={`编辑学号，当前${student.id}`}
+                                    className="flex min-h-[var(--tm-size-touch)] items-center text-left active:opacity-70"
+                                >
+                                    <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">ID: {student.id}</span>
+                                </button>
                                 <span className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]'}`}>
                                     <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
                                     {studentStatusLabel}

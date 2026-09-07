@@ -31,6 +31,8 @@ interface TeacherDashboardProps {
     embedded?: boolean;
 }
 
+const TEACHER_CAMPAIGN_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,image/apng';
+
 interface GradeExamRow {
     id: number;
     term: string;
@@ -4529,6 +4531,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     <li>图片按原比例缩放，不拉伸、不裁剪。</li>
                                                     <li>图片过高时会自动缩小，保证整张图片一屏完整展示，不需要上下滚动。</li>
                                                     <li>推荐上传 750 × 1000 px（3:4）竖版图片；过宽或过长的素材可能显示较小。</li>
+                                                    <li>支持 PNG、JPG、WebP、GIF 和 APNG；动态图片会保留动画效果。</li>
                                                 </ul>
                                             </div>}
                                         >
@@ -4536,8 +4539,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 <CircleHelp size={16} aria-hidden="true" />
                                             </button>
                                         </Popover></h4>
-                                        <p className="-mt-2 text-xs text-[#86909C]">建议尺寸 750 × 1000 px（3:4 竖版），支持 PNG、JPG、WebP</p>
-                                        <div>{campaignForm.imageUrl ? <div className="flex items-center gap-4 rounded border border-[#E5E6EB] p-3"><img src={campaignForm.imageUrl} alt="广告图片预览" className="h-24 w-20 rounded object-cover" /><div className="flex gap-3"><label className="cursor-pointer text-sm text-[#165DFF] hover:text-[#4080FF]">重新上传<input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setCampaignForm(form => ({ ...form, imageUrl: reader.result })); }; reader.readAsDataURL(file); }} /></label><button type="button" onClick={() => setCampaignForm(form => ({ ...form, imageUrl: '' }))} className="text-sm text-[#F53F3F]">移除</button></div></div> : <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-[#C9CDD4] text-[#86909C] hover:border-[#165DFF] hover:text-[#165DFF]"><Upload size={24} /><span className="mt-2 text-sm">上传图片</span><input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setCampaignForm(form => ({ ...form, imageUrl: reader.result })); }; reader.readAsDataURL(file); }} /></label>}</div>
+                                        <p className="-mt-2 text-xs text-[#86909C]">建议尺寸 750 × 1000 px（3:4 竖版），支持 PNG、JPG、WebP、GIF、APNG（动态图片保留动画）</p>
+                                        <div>{campaignForm.imageUrl ? <div className="flex items-center gap-4 rounded border border-[#E5E6EB] p-3"><img src={campaignForm.imageUrl} alt="广告图片预览" className="h-24 w-20 rounded object-contain" /><div className="flex gap-3"><label className="cursor-pointer text-sm text-[#165DFF] hover:text-[#4080FF]">重新上传<input type="file" accept={TEACHER_CAMPAIGN_IMAGE_ACCEPT} className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setCampaignForm(form => ({ ...form, imageUrl: reader.result })); }; reader.readAsDataURL(file); }} /></label><button type="button" onClick={() => setCampaignForm(form => ({ ...form, imageUrl: '' }))} className="text-sm text-[#F53F3F]">移除</button></div></div> : <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded border border-dashed border-[#C9CDD4] text-[#86909C] hover:border-[#165DFF] hover:text-[#165DFF]"><Upload size={24} /><span className="mt-2 text-sm">上传图片</span><input type="file" accept={TEACHER_CAMPAIGN_IMAGE_ACCEPT} className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { if (typeof reader.result === 'string') setCampaignForm(form => ({ ...form, imageUrl: reader.result })); }; reader.readAsDataURL(file); }} /></label>}</div>
                                         <div className="border-t border-[#F2F3F5] pt-4"><div className="flex items-center justify-between"><span className="text-sm font-medium text-[#1D2129]">点击跳转</span><Switch checked={campaignForm.jumpEnabled} onChange={checked => setCampaignForm(form => ({ ...form, jumpEnabled: checked }))} /></div>{campaignForm.jumpEnabled && <label className="mt-4 block text-sm font-medium text-[#1D2129]">跳转路径<Input value={campaignForm.actionTarget} onChange={value => setCampaignForm(form => ({ ...form, actionTarget: value }))} placeholder="应用内路径或 https:// 外部链接" className="mt-2" aria-label="跳转路径" /></label>}</div>
                                     </section>
                                 </div>

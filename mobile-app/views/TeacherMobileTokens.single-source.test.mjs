@@ -8,6 +8,7 @@ const css = fs.readFileSync('mobile-app/index.css', 'utf8');
 const parent = fs.readFileSync('components/ParentApp.tsx', 'utf8');
 const guidelines = fs.readFileSync('design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', 'utf8');
 const classList = fs.readFileSync('mobile-app/views/ClassListView.tsx', 'utf8');
+const gradePicker = fs.readFileSync('mobile-app/components/ui/MobileGradePickerSheet.tsx', 'utf8');
 const slidingSegmented = fs.readFileSync('mobile-app/components/ui/MobileSlidingSegmentedControl.tsx', 'utf8');
 
 const collectTeacherMobileSources = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -118,9 +119,11 @@ assert.match(canonical, /'--tm-filter-border': 'transparent'/, '手机端筛选�
 assert.match(canonical, /'--tm-filter-shadow': 'none'/, '手机端筛选型下拉不得显示容器阴影。');
 assert.match(canonical, /'--tm-filter-focus-bg': 'transparent'/, '手机端筛选型下拉激活时必须保持透明。');
 assert.match(canonical, /'--tm-filter-focus-outline': 'none'/, '手机端筛选型下拉激活时必须取消浏览器轮廓。');
-assert.match(classList, /aria-haspopup="dialog"/, '班级页年级筛选必须通过底部弹窗触发。');
-assert.match(classList, /title="选择年级"/, '班级页年级筛选底部弹窗必须有明确标题。');
-assert.match(classList, /gradeOptions\.map\(option =>/, '班级页年级筛选底部弹窗必须展示动态年级选项。');
+assert.match(classList, /import MobileGradePickerSheet from '\.\.\/components\/ui\/MobileGradePickerSheet';/, '班级页必须接入公共年级选择弹窗。');
+assert.match(classList, /<MobileGradePickerSheet[\s\S]*?options=\{gradeOptions\.map\(option =>/, '班级页必须向公共年级选择弹窗传入动态年级选项。');
+assert.match(gradePicker, /import MobileBottomSheet from '\.\/MobileBottomSheet';/, '公共年级选择弹窗必须复用统一底部弹窗语义。');
+assert.match(gradePicker, /title = '选择年级'/, '公共年级选择弹窗必须有明确默认标题。');
+assert.match(gradePicker, /h-\[var\(--tm-choice-pill-touch-height\)\] w-full/, '公共年级选择弹窗选项必须保留移动端触控热区。');
 assert.doesNotMatch(classList, /ClassSourceTrigger/, '班级页不得继续提供来源切换。');
 assert.match(classList, /ariaLabel="班级内容分类"/, '班级与社团页签必须保留统一的页签语义。');
 assert.match(slidingSegmented, /--tm-bg-surface-glass/, '班级与社团页签必须使用记录页同源的轻玻璃底轨。');

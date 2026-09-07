@@ -4,6 +4,7 @@ import { ChevronRightIcon } from '../components/Icons';
 import ReportPeriodCalendar from '../components/report/ReportPeriodCalendar';
 import ClassRankingList from '../components/ui/ClassRankingList';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
 import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type ClassLeaderboardSettlementCycle, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 import type { ClassInfo } from '../types';
@@ -137,6 +138,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
     const [selectedPeriodId, setSelectedPeriodId] = useState(() => periods[periods.length - 1]?.id ?? '');
     const [isPeriodSheetOpen, setIsPeriodSheetOpen] = useState(false);
     const [activeGrade, setActiveGrade] = useState('全部年级');
+    const [isGradeSheetOpen, setIsGradeSheetOpen] = useState(false);
     const [activeDimension, setActiveDimension] = useState<Dimension>('total');
     const [showFullRanking, setShowFullRanking] = useState(false);
 
@@ -209,18 +211,17 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
                     <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
                         <div className="flex min-h-11 items-center justify-between gap-3">
                             <h3 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">班级排行榜</h3>
-                            <label className="relative -mr-2 flex min-h-[var(--tm-size-touch)] min-w-0 items-center">
-                                <span className="sr-only">班级排行榜年级筛选</span>
-                                <select
-                                    value={activeGrade}
-                                    onChange={event => setActiveGrade(event.target.value)}
-                                    aria-label="班级排行榜年级筛选"
-                                    className="h-[var(--tm-size-touch)] max-w-[128px] appearance-none bg-transparent pl-2 pr-7 text-right text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] outline-none focus-visible:text-[var(--tm-text-primary)]"
-                                >
-                                    {gradeOptions.map(grade => <option key={grade} value={grade}>{grade}</option>)}
-                                </select>
-                                <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 h-4 w-4 text-[var(--tm-text-tertiary)]" />
-                            </label>
+                            <button
+                                type="button"
+                                onClick={() => setIsGradeSheetOpen(true)}
+                                aria-label="班级排行榜年级筛选"
+                                aria-haspopup="dialog"
+                                aria-expanded={isGradeSheetOpen}
+                                className="-mr-2 flex h-[var(--tm-size-touch)] min-w-0 items-center gap-1 rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                            >
+                                <span className="max-w-[112px] truncate">{activeGrade}</span>
+                                <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
+                            </button>
                         </div>
 
                         <PillSelectionControl
@@ -306,6 +307,16 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
                     />
                     <ClassRankingList items={rankings} ariaLabel="全部班级排名" />
                 </MobileBottomSheet>
+
+                <MobileGradePickerSheet
+                    open={isGradeSheetOpen}
+                    selectionMode="single"
+                    value={activeGrade}
+                    options={gradeOptions.map(grade => ({ value: grade, label: grade }))}
+                    onChange={setActiveGrade}
+                    onClose={() => setIsGradeSheetOpen(false)}
+                    ariaLabel="班级排行榜年级选项"
+                />
             </div>
         </div>
     );

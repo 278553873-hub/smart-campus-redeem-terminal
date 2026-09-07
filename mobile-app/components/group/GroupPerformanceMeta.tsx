@@ -8,6 +8,10 @@ interface GroupPerformanceMetaProps {
   orientation?: 'horizontal' | 'vertical';
   showPraiseCount?: boolean;
   showCriticismCount?: boolean;
+  fontSize?: number;
+  itemHeight?: number;
+  itemMinWidth?: number;
+  gap?: number;
 }
 
 const GroupPerformanceMeta: React.FC<GroupPerformanceMetaProps> = ({
@@ -16,6 +20,10 @@ const GroupPerformanceMeta: React.FC<GroupPerformanceMetaProps> = ({
   orientation = 'horizontal',
   showPraiseCount = true,
   showCriticismCount = true,
+  fontSize,
+  itemHeight,
+  itemMinWidth,
+  gap,
 }) => {
   const visibleCountLabel = [
     showPraiseCount ? `被表扬${summary.praiseCount}次` : '',
@@ -30,6 +38,10 @@ const GroupPerformanceMeta: React.FC<GroupPerformanceMetaProps> = ({
       orientation={orientation}
       showPraiseCount={showPraiseCount}
       showCriticismCount={showCriticismCount}
+      fontSize={fontSize}
+      itemHeight={itemHeight}
+      itemMinWidth={itemMinWidth}
+      gap={gap}
     />
   );
 };

@@ -1124,6 +1124,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
     modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '了解学校版', '管理工具', '期末报告', '更多工具', '科目管理', '部门管理', '货币发放管理', '建议反馈', '学校版功能弹窗', '顾问微信二维码'],
     ctas: [
       { label: '头像', priority: 'P0', position: '教师信息区，点击进入基本信息设置页' },
+      { label: '姓名', priority: 'P1', position: '教师信息区，点击进入基本信息设置页' },
       { label: '扫一扫', priority: 'P1', position: '页面右上角 icon' },
       { label: '设置', priority: 'P1', position: '页面右上角 icon，点击进入设置页' },
       { label: '货币发放管理', priority: 'P1', position: '更多工具卡片，点击进入货币发放管理' },
@@ -1145,6 +1146,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
     modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '班级来源入口', '管理工具', '学校报表', '期末报告', '更多工具', '科目管理', '部门管理', '货币发放管理', '建议反馈', '切换班级来源弹窗'],
     ctas: [
       { label: '头像', priority: 'P0', position: '教师信息区，点击进入基本信息设置页' },
+      { label: '姓名', priority: 'P1', position: '教师信息区，点击进入基本信息设置页' },
       { label: '扫一扫', priority: 'P1', position: '页面右上角 icon' },
       { label: '设置', priority: 'P1', position: '页面右上角 icon，点击进入设置页' },
       { label: '切换班级来源', priority: 'P0', position: '教师信息区班级来源胶囊，点击打开底部弹窗' },
@@ -7707,7 +7709,14 @@ const TeacherCMobileLowFi: React.FC = () => {
                 郭
               </button>
               <div className="min-w-0 flex-1">
-                  <div className="truncate text-xl font-black">郭老师</div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(hasMultipleVersions ? 'teacherBasicInfoSchool' : 'teacherBasicInfoPersonal')}
+                    className="flex min-h-11 max-w-full items-center text-left active:opacity-70"
+                    aria-label="编辑姓名"
+                  >
+                    <div className="truncate text-xl font-black">郭老师</div>
+                  </button>
                   {userHasMultipleClassSources && (
                     <button
                       type="button"

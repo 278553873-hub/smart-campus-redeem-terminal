@@ -41,6 +41,7 @@ requireText("title: '基本信息设置（学校版）'", '15B 标题应标明�
 requireText("modules: ['头像', '姓名', '学校', '任教班级', '带班班级', '分管年级', '部门']", '15B 应保留完整学校版配置。');
 requireText("{ title: '我的(个人版)', pages: ['minePersonal', 'teacherBasicInfoPersonal', 'suggestionFeedback'] }", '页面导图应拆出我的(个人版)：14A 到 15A。');
 requireText("{ title: '我的(学校版)', pages: ['mineSchool', 'teacherBasicInfoSchool', 'mineSettings', 'subjectManagement', 'departmentManagement', 'coinIssuanceManagement', 'suggestionFeedback'] }", '页面导图应拆出我的(学校版)：14B 到 15B/16/18/19/21/22。');
+requireText("{ label: '姓名', priority: 'P1', position: '教师信息区，点击进入基本信息设置页' }", '我的页面元信息应标记姓名可进入基本信息设置页。');
 requireText('<PageNodeButton item="teacherBasicInfoPersonal" lane={lane.title} />', '页面导图应展示 15A 节点。');
 requireText('<PageNodeButton item="teacherBasicInfoSchool" lane={lane.title} />', '页面导图应展示 15B 节点。');
 requireText("onClick={() => navigate(hasMultipleVersions ? 'teacherBasicInfoSchool' : 'teacherBasicInfoPersonal')}", '14A/14B 头像入口应分别进入 15A/15B。');
@@ -69,6 +70,9 @@ requirePageText("{ key: 'headClass' as const, label: '带班班级', value: getS
 requirePageText("{ key: 'gradeLeader' as const, label: '分管年级', value: teacherBasicConfigValues.gradeLeader }", '分管年级应只作为学校版管理职责存在。');
 requirePageText("{ key: 'department' as const, label: '部门', value: teacherBasicConfigValues.department }", '部门应作为学校版管理职责最后一项。');
 requirePageText('管理职责', '学校版应单独展示管理职责板块。');
+requireText('onClick={() => navigate(hasMultipleVersions ? \'teacherBasicInfoSchool\' : \'teacherBasicInfoPersonal\')}', '点击教师姓名应进入对应的基本信息设置页。');
+requireText('aria-label="编辑姓名"', '教师姓名入口应具备明确的无障碍标签。');
+requireText('flex min-h-11 max-w-full items-center text-left active:opacity-70', '教师姓名入口应保留 44 像素触控区域。');
 requireText("schoolName: '星河实验学校'", '协作版学校字段应使用邀请方学校。');
 requirePageText('h-4 w-4 shrink-0" aria-hidden="true"', '只读学校字段应保留右箭头占位空间。');
 if (pageBlock.includes("label: '部门设置'")) {

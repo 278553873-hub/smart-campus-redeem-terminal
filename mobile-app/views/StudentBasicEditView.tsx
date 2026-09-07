@@ -8,7 +8,7 @@ import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import { MobileEditableRow } from '../components/ui/MobileEditableRow';
 import MobileToast from '../components/ui/MobileToast';
 import { phoneText } from '../styles/teacherMobileTokens';
-import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
+import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 interface StudentBasicEditViewProps {
   student: Student;

@@ -14,16 +14,16 @@ assert.match(screenSource, /ClassroomQuickActionDock/, '课堂大屏应复用课
 assert.match(screenSource, /onToggleVoice=\{toggleVoiceCapture\}/, '麦克风子入口应保留原有语音录入逻辑');
 assert.doesNotMatch(screenSource, /handleVoiceDockPointer/, '课堂大屏页面不应继续承载悬浮入口拖拽细节');
 
-assert.match(dockSource, /h-16 w-16/, '主悬浮入口应保持64像素尺寸');
+assert.match(dockSource, /layout\.dockSize/, '主悬浮入口尺寸应来自课堂展示档位配置');
 assert.match(dockSource, /scale-\[1\.12\]/, '主悬浮入口的默认长颈鹿图标应在按钮内适度放大');
-assert.match(dockSource, /MIC_FAN_OFFSET = \{ x: 21, y: 77 \}/, '麦克风应沿接近竖直方向的扇形半径展开');
-assert.match(dockSource, /ASSISTANT_FAN_OFFSET = \{ x: 69, y: 40 \}/, '第二功能应沿左上扇形方向展开');
+assert.match(dockSource, /layout\.fanOffsetX[\s\S]*layout\.fanOffsetY/, '麦克风扇形半径应来自课堂展示档位配置');
+assert.match(dockSource, /layout\.assistantOffsetX[\s\S]*layout\.assistantOffsetY/, '第二功能扇形半径应来自课堂展示档位配置');
 assert.match(dockSource, /resolveFanDirection/, '拖动主入口后应根据屏幕剩余空间镜像扇形方向');
 assert.match(dockSource, /translate3d\(\$\{offset\.x\}px, \$\{offset\.y\}px, 0\) scale\(1\)/, '子入口应从主入口中心沿半径运动');
 assert.match(dockSource, /transitionDuration: isVisible \? '220ms' : '160ms'/, '展开和收起应使用符合物理感知的不同持续时间');
 assert.match(dockSource, /setIsExpanded\(false\);[\s\S]*setPosition\(clampPosition/, '拖拽主入口时应先收起子功能');
 assert.doesNotMatch(dockSource, /flex-col gap-3/, '两个子入口不应继续垂直堆叠');
-assert.match(dockSource, /h-12 w-12/g, '子入口应保持48像素点击区域');
+assert.match(dockSource, /layout\.actionSize/, '子入口点击区域应来自课堂展示档位配置');
 assert.match(dockSource, /bg-\[linear-gradient\(180deg,#7BCDFC_0%,#54BAF6_52%,#2D99DF_100%\)\]/, '麦克风默认态应使用与其他入口一致的天空蓝渐变');
 assert.match(dockSource, /hover:bg-\[linear-gradient\(180deg,#8AD7FF_0%,#61C5FB_52%,#38A8E8_100%\)\]/, '麦克风悬停态应整体提亮');
 assert.match(dockSource, /active:bg-\[linear-gradient\(180deg,#62BFEF_0%,#43ACEB_52%,#258ACD_100%\)\]/, '麦克风按下态应整体压暗');

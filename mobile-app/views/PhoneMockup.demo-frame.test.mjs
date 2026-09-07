@@ -42,5 +42,9 @@ assert.doesNotMatch(
   /fillContainerWhenFrameless/,
   '教师手机端不应请求无机身全屏填充。',
 );
+assert.match(phoneMockupSource, /screenOverlayRootId\?: string/, '手机壳应提供整屏弹窗挂载点。');
+assert.match(phoneMockupSource, /id=\{screenOverlayRootId\}[\s\S]*absolute inset-0 z-\[1000\]/, '整屏弹窗挂载点应直接位于手机屏幕层。');
+assert.match(teacherAppSource, /screenOverlayRootId="teacher-mobile-overlay-root"/, '教师手机端应将公共弹窗挂载到整屏层。');
+assert.doesNotMatch(teacherAppSource, /<div\s+id="teacher-mobile-overlay-root"/, '教师手机端不应在状态栏内缩的内容区重复挂载弹窗根节点。');
 
 console.log('PhoneMockup demo frame regression checks passed.');

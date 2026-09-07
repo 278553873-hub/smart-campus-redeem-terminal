@@ -19,6 +19,8 @@ const modalAuditPath = 'public/demos/modal-style-audit.json';
 const componentInventoryPath = 'public/demos/component-reuse-inventory.html';
 const componentAuditPath = 'public/demos/component-reuse-audit.json';
 const termReportRedesignPath = 'components/TermReportRedesignDemo.tsx';
+const componentReuseDemoPath = 'components/ComponentReuseDemo.tsx';
+const publicComponentsDemoPath = 'components/PublicComponentsDemo.tsx';
 const termReportViewPath = 'mobile-app/views/TermReportView.tsx';
 const removedTermReportHtmlPath = 'public/demos/term-report-redesign.html';
 
@@ -34,6 +36,7 @@ assert.match(demo, /section: 'showcase'/);
 assert.match(demo, /section: 'inventory'/);
 assert.match(demo, /label: '方案展示'/);
 assert.match(demo, /label: '盘点报告'/);
+assert.match(demo, /label: '公共组件'/);
 assert.match(demo, /label: '颜色系统'/);
 assert.match(demo, /label: '字体系统'/);
 assert.match(demo, /label: '圆角'/);
@@ -51,6 +54,10 @@ assert.match(demo, /src: '\/demos\/button-style-inventory\.html'/);
 assert.match(demo, /src: '\/demos\/modal-style-inventory\.html'/);
 assert.match(demo, /lazy\(\(\) => import\('\.\/TermReportRedesignDemo'\)\)/);
 assert.match(demo, /activeDemo\.id === 'term-report'/);
+assert.match(demo, /activeDemo\.id === 'components'/);
+assert.match(demo, /activeSectionId === 'public-components'/);
+assert.match(demo, /PublicComponentsDemo/);
+assert.match(demo, /ComponentReuseDemo/);
 assert.match(demo, /overflow-x-auto/);
 assert.match(demo, /role="tablist"/);
 assert.match(demo, /role="tabpanel"/);
@@ -72,6 +79,8 @@ assert.equal(fs.existsSync(modalInventoryPath), true, 'UI改造弹窗盘点页�
 assert.equal(fs.existsSync(modalAuditPath), true, '弹窗盘点应提供可追溯的审计数据。');
 assert.equal(fs.existsSync(componentInventoryPath), true, '组件盘点页应位于正式 Demo 目录。');
 assert.equal(fs.existsSync(componentAuditPath), true, '组件盘点应提供可追溯的审计数据。');
+assert.equal(fs.existsSync(componentReuseDemoPath), true, '组件与复用盘点页面应保留。');
+assert.equal(fs.existsSync(publicComponentsDemoPath), true, '公共组件页面应独立存在。');
 
 const componentInventory = fs.readFileSync(componentInventoryPath, 'utf8');
 assert.match(componentInventory, /<title>教师手机端组件与复用盘点<\/title>/);
@@ -79,6 +88,8 @@ assert.match(componentInventory, /结论：部分统一，复用边界未收敛/
 assert.match(componentInventory, /MobileStudentPickerSheet/);
 assert.match(componentInventory, /公共组件复用热点/);
 assert.match(componentInventory, /每个组件的盘点字段/);
+assert.match(componentInventory, /年级选择弹窗/);
+assert.match(componentInventory, /MobileGradePickerSheet/);
 assert.doesNotMatch(componentInventory, /更新日志|本次更新|过程记录|本次只盘点|本次只登记/);
 
 const componentAudit = JSON.parse(fs.readFileSync(componentAuditPath, 'utf8'));

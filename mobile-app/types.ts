@@ -134,6 +134,13 @@ export interface GroupCardDisplaySettings {
   showCriticismCount: boolean;
 }
 
+export type ParentEvaluationVisibility = 'hidden' | 'summary' | 'summaryAndDetails';
+
+export interface ParentEvaluationVisibilitySettings {
+  positive: ParentEvaluationVisibility;
+  negative: ParentEvaluationVisibility;
+}
+
 export interface ClassInfo {
   id: string;
   name: string;
@@ -147,6 +154,7 @@ export interface ClassInfo {
   studentLevelDisplayMode?: StudentLevelDisplayMode;
   studentCardDisplaySettings?: StudentCardDisplaySettings;
   groupCardDisplaySettings?: GroupCardDisplaySettings;
+  parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;
 }
 
 export type EducationStage = 'primary' | 'middle' | 'high';

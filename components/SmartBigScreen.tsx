@@ -71,6 +71,12 @@ import {
 } from './student-performance/ClassroomStudentPerformance';
 import ClassroomQuickActionDock from './classroom/ClassroomQuickActionDock';
 import { resolveStudentsBySpokenNumbers } from './classroom/classroomVoiceTargets.mjs';
+import {
+  CLASSROOM_DISPLAY_MODE_OPTIONS,
+  getClassroomDisplayConfig,
+  type ClassroomDisplayMode,
+  type ClassroomDisplayConfig,
+} from '../shared/classroomDisplay';
 
 declare global { interface Window { confetti?: (options: Record<string, unknown>) => void; } }
 
@@ -152,10 +158,6 @@ interface SmartBigScreenProps {
 }
 
 const CLASSES = ['2025级1班', '2025级2班', '2025级3班'];
-const CARD_WIDTH = 136;
-const CARD_GAP = 12;
-const FILTER_SIDEBAR_WIDTH = 320;
-const GROUP_DRAWER_WIDTH = 'min(560px, calc(100vw - 32px))';
 const CLASSROOM_ASSISTANT_ICON = '/assets/classroom/quick-action-giraffe.png';
 const CLASSROOM_SECONDARY_ICON = '/assets/classroom/open-app-icon.png';
 const CURRENT_TEACHER_NAME = '郭老师';
@@ -342,6 +344,7 @@ const GroupCard: React.FC<{
   memberNames?: string[];
   performance: GroupPerformanceSummary;
   displaySettings: GroupCardDisplaySettings;
+  layout: ClassroomDisplayConfig['groupCard'];
   selected?: boolean;
   isSelectable?: boolean;
   isRolling?: boolean;
@@ -358,7 +361,8 @@ const GroupCard: React.FC<{
   isRolling = false,
   onClick,
   className = '',
-  compact = false
+  compact = false,
+  layout,
 }) => {
   const visibleNameCount = 3;
   const visibleNames = memberNames.slice(0, visibleNameCount);
@@ -370,72 +374,77 @@ const GroupCard: React.FC<{
     : '暂无学生';
 
   const baseClassName = compact
-    ? 'h-[112px] w-full rounded-lg px-5 gap-3'
-    : 'h-[120px] w-full rounded-lg px-6 gap-4';
+    ? 'h-auto w-full rounded-lg px-5 gap-3'
+    : 'h-auto w-full rounded-lg px-6 gap-4';
 
-  const checkClassName = compact
-    ? 'top-3 right-3 w-5 h-5 rounded-md'
-    : 'top-4 right-4 w-5 h-5 rounded-md';
+  const checkClassName = compact ? 'top-3 right-3' : 'top-4 right-4';
 
   return (
     <div
       onClick={onClick}
       className={`relative bg-white flex items-center border-2 shadow-[0_8px_20px_rgba(0,0,0,0.03)] transition-all ${baseClassName} ${selected ? 'border-blue-500 shadow-lg z-10' : 'border-white hover:border-blue-500 hover:shadow-xl'} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''} ${className}`}
+      style={{ height: compact ? layout.compactHeight : layout.fullHeight, gap: layout.gap }}
     >
       {isSelectable && (
-        <div className={`absolute border flex items-center justify-center transition-all ${checkClassName} ${selected ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-200 bg-white/80 text-slate-300'}`}>
-          <Check size={12} strokeWidth={4} />
+        <div className={`absolute flex items-center justify-center rounded-md border transition-all ${checkClassName} ${selected ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-200 bg-white/80 text-slate-300'}`} style={{ width: Math.max(20, Math.round(layout.titleFontSize * 1.3)), height: Math.max(20, Math.round(layout.titleFontSize * 1.3)) }}>
+          <Check size={Math.max(12, Math.round(layout.titleFontSize * 0.7))} strokeWidth={4} />
         </div>
       )}
-      <img src={avatar.src} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover shadow-sm" decoding="async" />
+      <img src={avatar.src} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover shadow-sm" style={{ width: layout.avatarSize, height: layout.avatarSize }} decoding="async" />
       <div className="flex flex-col gap-2 overflow-hidden min-w-0 flex-1">
         <div className="min-w-0 pr-2">
-          <h3 className="truncate text-[17px] font-bold leading-none text-slate-800">
+          <h3 className="truncate font-bold leading-none text-slate-800" style={{ fontSize: layout.titleFontSize }}>
             {group.name}
           </h3>
         </div>
-        <span className="block min-w-0 truncate text-[12px] font-bold leading-4 text-slate-500" title={memberNames.join('、')}>
+        <span className="block min-w-0 truncate font-bold leading-4 text-slate-500" style={{ fontSize: layout.memberFontSize }} title={memberNames.join('、')}>
             {memberSummary}
         </span>
       </div>
-      {!isSelectable && (displaySettings.showPraiseCount || displaySettings.showCriticismCount) && (
+      {(displaySettings.showPraiseCount || displaySettings.showCriticismCount) && (
         <GroupPerformanceMeta
           summary={performance}
           orientation="vertical"
           showPraiseCount={displaySettings.showPraiseCount}
           showCriticismCount={displaySettings.showCriticismCount}
-          className="w-7 shrink-0"
+          fontSize={layout.countFontSize}
+          itemHeight={layout.countItemHeight}
+          itemMinWidth={layout.countItemMinWidth}
+          gap={layout.countGap}
+          className="shrink-0"
         />
       )}
     </div>
   );
 };
 
-const GroupDrawerBody: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="min-h-full bg-white px-6 py-5">{children}</div>
+const GroupDrawerBody: React.FC<{ children: React.ReactNode; layout?: ClassroomDisplayConfig }> = ({ children, layout }) => (
+  <div className="min-h-full bg-white" style={{ padding: layout ? `${Math.round(layout.modal.bodyFontSize * 1.5)}px` : undefined }}>{children}</div>
 );
 
 const GroupMemberSelectCard: React.FC<{
   student: StudentData;
   selected: boolean;
   onClick: () => void;
-}> = ({ student, selected, onClick }) => (
+  layout: ClassroomDisplayConfig['memberSelect'];
+}> = ({ student, selected, onClick, layout }) => (
   <button
     type="button"
     aria-pressed={selected}
     aria-label={`${student.name}，学号${student.studentNo}`}
     onClick={onClick}
     className={`relative flex min-h-[96px] min-w-0 flex-col items-center justify-start gap-2 rounded-lg border px-2 py-2 text-center transition-[transform,border-color,background-color,box-shadow] active:scale-[0.97] ${selected ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-slate-100 bg-white hover:border-blue-300 hover:bg-blue-50/40'}`}
+    style={{ minHeight: layout.minHeight, gap: layout.gap }}
   >
-    <span className={`absolute right-2 top-2 flex h-[18px] w-[18px] items-center justify-center rounded-full border ${selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-transparent'}`} aria-hidden="true">
-      <Check size={11} strokeWidth={3} />
+    <span className={`absolute right-2 top-2 flex items-center justify-center rounded-full border ${selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-transparent'}`} style={{ width: Math.max(20, Math.round(layout.nameFontSize * 1.7)), height: Math.max(20, Math.round(layout.nameFontSize * 1.7)) }} aria-hidden="true">
+      <Check size={Math.max(12, Math.round(layout.nameFontSize * 0.9))} strokeWidth={3} />
     </span>
-    <img src={student.avatar} alt="" className="h-12 w-12 shrink-0 rounded-full bg-slate-100 object-cover" decoding="async" />
+    <img src={student.avatar} alt="" className="h-12 w-12 shrink-0 rounded-full bg-slate-100 object-cover" style={{ width: layout.avatarSize, height: layout.avatarSize }} decoding="async" />
     <span className="flex h-4 w-full min-w-0 items-center justify-center gap-1">
-      <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded bg-slate-100 px-1 font-mono text-[9px] font-semibold leading-none tabular-nums text-slate-400" aria-hidden="true">
+      <span className="flex shrink-0 items-center justify-center rounded bg-slate-100 px-1 font-mono font-semibold leading-none tabular-nums text-slate-400" style={{ minWidth: Math.max(16, Math.round(layout.nameFontSize * 1.35)), height: Math.max(16, Math.round(layout.nameFontSize * 1.35)), fontSize: Math.max(10, Math.round(layout.nameFontSize * 0.75)) }} aria-hidden="true">
         {getStudentRosterNumber(student.studentNo)}
       </span>
-      <span className="min-w-0 truncate text-xs font-semibold leading-4 text-slate-700">{student.name}</span>
+      <span className="min-w-0 truncate text-xs font-semibold leading-4 text-slate-700" style={{ fontSize: layout.nameFontSize }}>{student.name}</span>
     </span>
   </button>
 );
@@ -449,6 +458,7 @@ const StudentCard: React.FC<{
   isFocused?: boolean;
   isRolling?: boolean;
   onClick?: () => void;
+  layout?: ClassroomDisplayConfig['studentCard'];
 }> = ({
   student,
   performance,
@@ -457,7 +467,8 @@ const StudentCard: React.FC<{
   isSelectable = false,
   isFocused = false,
   isRolling = false,
-  onClick
+  onClick,
+  layout = getClassroomDisplayConfig('standard').studentCard,
 }) => {
   const level = getStudentPerformanceLevel(performance.netScore);
   const visibleCountLabels = [
@@ -470,54 +481,60 @@ const StudentCard: React.FC<{
     ...visibleCountLabels,
   ].filter(Boolean).join('，');
   const hasVisibleCounts = displaySettings.showPraiseCount || displaySettings.showCriticismCount;
-  const cardHeightClassName = displaySettings.showLevel
-    ? 'h-[148px]'
+  const cardHeight = displaySettings.showLevel
+    ? layout.fullHeight
     : hasVisibleCounts
-      ? 'h-[136px]'
-      : 'h-[116px]';
+      ? layout.countsHeight
+      : layout.identityOnlyHeight;
 
   return (
     <div
       onClick={onClick}
       aria-label={ariaLabel}
-      className={`relative flex ${cardHeightClassName} w-[136px] flex-col items-center justify-center rounded-lg border-2 bg-white px-1 pb-2 pt-1 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+      className={`relative flex h-auto w-auto flex-col items-center justify-center rounded-lg border-2 bg-white px-1 pb-2 pt-1 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+      style={{ width: layout.width, height: cardHeight }}
     >
       {isSelectable && (
-        <div className={`absolute right-0 top-0 z-20 flex h-5 w-5 items-center justify-center rounded-md border shadow-sm transition-all ${selected ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-200 bg-white/90 text-slate-300'}`}>
-          <Check size={12} strokeWidth={3} />
+        <div className={`absolute right-0 top-0 z-20 flex items-center justify-center rounded-md border shadow-sm transition-all ${selected ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-200 bg-white/90 text-slate-300'}`} style={{ width: Math.max(20, Math.round(layout.rosterFontSize * 2)), height: Math.max(20, Math.round(layout.rosterFontSize * 2)) }}>
+          <Check size={Math.max(12, Math.round(layout.rosterFontSize * 0.9))} strokeWidth={3} />
         </div>
       )}
       {displaySettings.showLevel && (
-        <div className="flex h-5 w-full items-center justify-center">
+        <div className="flex h-5 w-full items-center justify-center" style={{ height: layout.levelHeight }}>
           <div className="flex items-center justify-center">
-            <ClassroomStudentLevelIcons level={level} compact />
+            <ClassroomStudentLevelIcons level={level} compact iconSize={layout.levelIconSize} />
           </div>
         </div>
       )}
-      <div className="mt-px flex h-[68px] w-full items-center justify-center">
+      <div className="mt-px flex w-full items-center justify-center" style={{ height: layout.avatarSize }}>
         <ClassroomStudentAvatar
           name={student.name}
           avatar={student.avatar}
           level={level}
           compact
+          size={layout.avatarSize}
         />
       </div>
       {hasVisibleCounts && (
-        <div className="mt-px flex h-[18px] w-full items-center justify-center">
+        <div className="mt-px flex h-[18px] w-full items-center justify-center" style={{ height: layout.countHeight }}>
           <ClassroomStudentCounts
             summary={performance}
             compact
             showPraiseCount={displaySettings.showPraiseCount}
             showCriticismCount={displaySettings.showCriticismCount}
+            fontSize={layout.countFontSize}
+            itemHeight={layout.countItemHeight}
+            itemMinWidth={layout.countItemMinWidth}
+            gap={layout.countGap}
           />
         </div>
       )}
-      <div className="mt-1.5 flex h-[18px] w-full shrink-0 items-center justify-center text-center">
-        <div className="inline-flex min-w-0 max-w-[110px] items-center justify-center gap-1">
-          <span className="flex h-[18px] w-[22px] shrink-0 items-center justify-center rounded-md bg-slate-100 px-0.5 font-mono text-[11px] font-black tabular-nums text-slate-600">
+      <div className="mt-1.5 flex h-[18px] w-full shrink-0 items-center justify-center text-center" style={{ height: layout.identityHeight }}>
+        <div className="inline-flex min-w-0 items-center justify-center gap-1" style={{ maxWidth: layout.width - 8 }}>
+          <span className="flex shrink-0 items-center justify-center rounded-md bg-slate-100 px-0.5 font-mono font-black tabular-nums text-slate-600" style={{ width: Math.max(22, Math.round(layout.rosterFontSize * 2)), height: Math.max(18, Math.round(layout.rosterFontSize * 1.65)), fontSize: layout.rosterFontSize }}>
             {student.studentNo.slice(-2)}
           </span>
-          <h3 className={`min-w-0 max-w-[84px] truncate text-[16px] font-semibold leading-[18px] tracking-normal text-slate-800 ${isRolling ? 'opacity-80' : ''}`}>{student.name}</h3>
+          <h3 className={`min-w-0 truncate font-semibold tracking-normal text-slate-800 ${isRolling ? 'opacity-80' : ''}`} style={{ maxWidth: layout.width - 8 - Math.max(22, Math.round(layout.rosterFontSize * 2)) - 4, fontSize: layout.nameFontSize, lineHeight: `${layout.nameLineHeight}px` }}>{student.name}</h3>
         </div>
       </div>
     </div>
@@ -532,6 +549,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
+  const [classroomDisplayMode, setClassroomDisplayMode] = useState<ClassroomDisplayMode>('auto');
   const [studentCardDisplaySettings, setStudentCardDisplaySettings] = useState<StudentCardDisplaySettings>(() => getStudentCardDisplaySettings());
   const [groupCardDisplaySettings, setGroupCardDisplaySettings] = useState<GroupCardDisplaySettings>(() => getGroupCardDisplaySettings());
   const [levelDisplayMode, setLevelDisplayMode] = useState<StudentLevelDisplayMode>('term');
@@ -613,6 +631,12 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const demoRecordClassRef = useRef<string | null>(null);
   const deckContainerRef = useRef<HTMLDivElement | null>(null);
   const [deckContainerWidth, setDeckContainerWidth] = useState(0);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+
+  const classroomDisplay = useMemo(
+    () => getClassroomDisplayConfig(classroomDisplayMode, viewportSize.width, viewportSize.height),
+    [classroomDisplayMode, viewportSize.height, viewportSize.width],
+  );
 
   const students = useMemo(() => GENERATE_MOCK_DATA(currentClass), [currentClass]);
   const studentById = useMemo(() => new Map(students.map(student => [student.id, student])), [students]);
@@ -781,6 +805,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   }, []);
 
   useEffect(() => {
+    const updateViewportSize = () => setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    updateViewportSize();
+    window.addEventListener('resize', updateViewportSize);
+    return () => window.removeEventListener('resize', updateViewportSize);
+  }, []);
+
+  useEffect(() => {
     const node = deckContainerRef.current;
     if (!node) return;
     let frameId: number | null = null;
@@ -791,7 +822,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       }
 
       frameId = window.requestAnimationFrame(() => {
-        const nextWidth = getDeckWidth(node.clientWidth, CARD_WIDTH, CARD_GAP);
+        const nextWidth = node.clientWidth;
         setDeckContainerWidth(prev => (prev === nextWidth ? prev : nextWidth));
         frameId = null;
       });
@@ -935,10 +966,18 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     [viewMode, filteredStudents, students, groups]
   );
 
-  const sharedDeckWidth = deckContainerWidth;
+  const deckItemWidth = viewMode === 'student'
+    ? classroomDisplay.studentCard.width
+    : classroomDisplay.groupCard.width;
+  const deckGap = viewMode === 'student' ? classroomDisplay.studentCard.gap : classroomDisplay.groupCard.gap;
+  const sharedDeckWidth = getDeckWidth(deckContainerWidth, deckItemWidth, deckGap);
 
-  const groupCardSpan = sharedDeckWidth >= 344 ? 2 : 1;
-  const groupCardHeightClassName = groupCardSpan === 2 ? 'h-[120px]' : 'h-[112px]';
+  const groupDrawerWidth = `min(${classroomDisplay.groupDrawerWidth}px, calc(100vw - 32px))`;
+  const formModalWidth = `min(${classroomDisplay.formModalWidth}px, calc(100vw - 32px))`;
+  const classroomDisplayInputStyle = {
+    height: classroomDisplay.modal.inputHeight,
+    '--classroom-display-input-font-size': `${classroomDisplay.modal.bodyFontSize}px`,
+  } as React.CSSProperties;
 
   const maxRandomSelectableCount = useMemo(() => {
     if (randomPool.length === 0) return 0;
@@ -1801,25 +1840,33 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const hasRandomResults = currentRandomIds.length > 0;
   const allRandomSelected = hasRandomResults && currentRandomIds.every(id => selectedIds.includes(id));
   const selectedRandomCount = currentRandomIds.filter(id => selectedIds.includes(id)).length;
-  const embeddedToolbarMinWidth = viewMode === 'group' ? 'min-w-[240px]' : 'min-w-[220px]';
+  const shell = classroomDisplay.shell;
   const deckShellStyle = sharedDeckWidth > 0 ? { width: `${sharedDeckWidth}px`, maxWidth: '100%' } : { width: '100%', maxWidth: '100%' };
+  const groupCardFlexItemStyle: React.CSSProperties | undefined = viewMode === 'group'
+    ? {
+        flex: `0 0 min(100%, ${classroomDisplay.groupCard.width}px)`,
+        width: `min(100%, ${classroomDisplay.groupCard.width}px)`,
+        maxWidth: '100%',
+      }
+    : undefined;
   const sidebarTiming = { transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' } as const;
 
   const classSwitcher = (
     <div className="relative">
       <button
         onClick={() => setIsClassMenuOpen(!isClassMenuOpen)}
-        className={`h-11 min-w-[220px] max-w-[260px] flex items-center justify-between gap-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all active:scale-95 ${
+        className={`flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 text-slate-700 shadow-sm transition-all active:scale-95 ${
           isClassMenuOpen ? 'border-blue-300 bg-blue-50 text-blue-700' : 'hover:border-blue-300 hover:text-blue-600'
         }`}
+        style={{ height: shell.classSwitcherHeight, minWidth: shell.classSwitcherMinWidth, maxWidth: shell.classSwitcherMinWidth + 40 }}
       >
-        <span className="truncate text-sm font-black tracking-tight">{currentClass}</span>
-        <ChevronDown className={`w-4 h-4 shrink-0 text-slate-300 transition-transform ${isClassMenuOpen ? 'rotate-180' : ''}`} />
+        <span className="truncate font-black tracking-tight" style={{ fontSize: shell.classSwitcherFontSize }}>{currentClass}</span>
+        <ChevronDown size={shell.viewSwitcherIconSize} className={`shrink-0 text-slate-300 transition-transform ${isClassMenuOpen ? 'rotate-180' : ''}`} />
       </button>
       {isClassMenuOpen && (
         <>
           <div className="fixed inset-0 z-[60]" onClick={() => setIsClassMenuOpen(false)} />
-          <div className="absolute top-14 left-0 w-56 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-slate-100 p-1.5 z-[70] animate-in slide-in-from-top-2 duration-200">
+          <div className="absolute left-0 z-[70] rounded-2xl border border-slate-100 bg-white p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.15)] animate-in slide-in-from-top-2 duration-200" style={{ top: 'calc(100% + 8px)', width: shell.classMenuWidth }}>
             {CLASSES.map(cls => (
               <button
                 key={cls}
@@ -1831,12 +1878,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                   setIsGroupPlanMenuOpen(false);
                   resetFilters();
                 }}
-                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all active:scale-95 ${
+                className={`flex w-full items-center justify-between rounded-xl px-4 transition-all active:scale-95 ${
                   currentClass === cls ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-50 font-bold'
                 }`}
+                style={{ minHeight: shell.classMenuItemHeight, fontSize: shell.classMenuFontSize }}
               >
-                <span className="text-sm">{cls}</span>
-                {currentClass === cls && <Check size={16} strokeWidth={3} />}
+                <span>{cls}</span>
+                {currentClass === cls && <Check size={shell.classMenuIconSize} strokeWidth={3} />}
               </button>
             ))}
           </div>
@@ -1846,20 +1894,22 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   );
 
   const viewModeSwitcher = (
-    <div className="inline-flex bg-white/85 backdrop-blur-md p-1 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="inline-flex rounded-2xl border border-slate-200 bg-white/85 p-1 shadow-sm backdrop-blur-md">
       <button
         onClick={() => { if (isRecountSelection) return; setViewMode('student'); setSelectedIds([]); setIsMultiSelect(false); setIsGroupPlanMenuOpen(false); }}
         disabled={isRecountSelection}
-        className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-black text-sm transition-all ${viewMode === 'student' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+        className={`flex items-center gap-2 rounded-xl px-8 font-black transition-all ${viewMode === 'student' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+        style={{ height: shell.viewSwitcherHeight, fontSize: shell.viewSwitcherFontSize }}
       >
-        <User size={18} strokeWidth={2.5} />学生
+        <User size={shell.viewSwitcherIconSize} strokeWidth={2.5} />学生
       </button>
       <button
         onClick={() => { if (isRecountSelection) return; setViewMode('group'); setSelectedIds([]); setIsMultiSelect(false); setIsSidebarOpen(false); resetFilters(); }}
         disabled={isRecountSelection}
-        className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-black text-sm transition-all ${viewMode === 'group' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+        className={`flex items-center gap-2 rounded-xl px-8 font-black transition-all ${viewMode === 'group' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+        style={{ height: shell.viewSwitcherHeight, fontSize: shell.viewSwitcherFontSize }}
       >
-        <Users size={18} strokeWidth={2.5} />小组
+        <Users size={shell.viewSwitcherIconSize} strokeWidth={2.5} />小组
       </button>
     </div>
   );
@@ -1867,10 +1917,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const modeUtilityControl = (
     <div className="flex items-center gap-2">
       {isRecountSelection && (
-        <div className="flex h-10 max-w-[320px] items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 text-blue-700 shadow-sm" role="status" aria-live="polite">
-          <RotateCcw size={15} strokeWidth={2.5} className="shrink-0" />
-          <span className="shrink-0 text-sm font-bold">重新计数</span>
-          <span className="truncate text-xs font-medium text-blue-600">
+        <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 text-blue-700 shadow-sm" style={{ minHeight: classroomDisplay.toolbar.height, maxWidth: classroomDisplay.toolbar.utilityMinWidth + 112 }} role="status" aria-live="polite">
+          <RotateCcw size={classroomDisplay.toolbar.iconSize} strokeWidth={2.5} className="shrink-0" />
+          <span className="shrink-0 font-bold" style={{ fontSize: classroomDisplay.toolbar.fontSize }}>重新计数</span>
+          <span className="truncate font-medium text-blue-600" style={{ fontSize: classroomDisplay.toolbar.countFontSize }}>
             {recountSelectedCount > 0
               ? `已选${recountSelectedCount}${isGroupRecountSelection ? '个小组' : '名学生'}`
               : `请选择${isGroupRecountSelection ? '小组' : '学生'}卡片`}
@@ -1878,8 +1928,8 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         </div>
       )}
       {!isRecountSelection && !isSidebarOpen && viewMode === 'student' && (
-        <button onClick={() => setIsSidebarOpen(true)} className="h-10 min-w-[220px] flex items-center justify-center gap-2 px-6 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-all active:scale-95">
-          <Search size={16} /><span className="text-sm font-black tracking-tight">快速定位学生</span>
+        <button onClick={() => setIsSidebarOpen(true)} className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 text-slate-500 shadow-sm hover:text-blue-600 hover:border-blue-400 transition-all active:scale-95" style={{ minWidth: classroomDisplay.toolbar.utilityMinWidth, height: classroomDisplay.toolbar.height, fontSize: classroomDisplay.toolbar.fontSize }}>
+          <Search size={classroomDisplay.toolbar.iconSize} /><span className="font-black tracking-tight">快速定位学生</span>
         </button>
       )}
       {viewMode === 'group' && !isRecountSelection && (
@@ -1887,14 +1937,15 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           {isGroupPlanMenuOpen && <div className="fixed inset-0 z-[60]" onClick={() => setIsGroupPlanMenuOpen(false)} />}
           <button
             onClick={() => setIsGroupPlanMenuOpen(open => !open)}
-            className="h-10 min-w-[240px] max-w-[320px] px-4 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-all active:scale-95 flex items-center justify-between gap-3 relative z-[70]"
+            className="px-4 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-all active:scale-95 flex items-center justify-between gap-3 relative z-[70]"
+            style={{ height: classroomDisplay.toolbar.height, minWidth: classroomDisplay.toolbar.groupPlanMinWidth, maxWidth: classroomDisplay.toolbar.groupPlanMinWidth + 120 }}
           >
-            <span className="truncate text-sm font-black">{activeGroupPlan?.planName || '选择方案'}</span>
-            <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform ${isGroupPlanMenuOpen ? 'rotate-180' : ''}`} />
+            <span className="truncate font-black" style={{ fontSize: classroomDisplay.toolbar.fontSize }}>{activeGroupPlan?.planName || '选择方案'}</span>
+            <ChevronDown size={classroomDisplay.toolbar.iconSize} className={`shrink-0 text-slate-300 transition-transform ${isGroupPlanMenuOpen ? 'rotate-180' : ''}`} />
           </button>
           <div
-            className={`absolute top-12 right-0 w-[360px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[70] transition-all duration-300 ${isGroupPlanMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
-            style={sidebarTiming}
+            className="absolute right-0 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[70] transition-all duration-300"
+            style={{ top: classroomDisplay.toolbar.height + 8, width: classroomDisplay.toolbar.groupPlanMenuWidth, opacity: isGroupPlanMenuOpen ? 1 : 0, transform: isGroupPlanMenuOpen ? 'translateY(0)' : 'translateY(-8px)', pointerEvents: isGroupPlanMenuOpen ? 'auto' : 'none', ...sidebarTiming }}
           >
             {groupPlans.map(plan => {
               const memberCount = new Set(plan.groups.flatMap(group => group.memberIds)).size;
@@ -1910,13 +1961,14 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                         setIsGroupPlanMenuOpen(false);
                       }}
                       className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left"
+                      style={{ minHeight: classroomDisplay.toolbar.menuButtonSize }}
                     >
-                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${isCurrent ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
-                        <Check size={12} strokeWidth={3} />
+                      <span className={`flex shrink-0 items-center justify-center rounded-full border ${isCurrent ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white text-transparent'}`} style={{ width: Math.max(20, classroomDisplay.toolbar.iconSize + 2), height: Math.max(20, classroomDisplay.toolbar.iconSize + 2) }}>
+                        <Check size={classroomDisplay.toolbar.countFontSize} strokeWidth={3} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-slate-700">{plan.planName}</span>
-                        <span className="mt-1 block truncate text-xs font-medium text-slate-400">{plan.teacherName}创建 · {plan.groups.length}个小组 · {memberCount}人</span>
+                        <span className="block truncate font-bold text-slate-700" style={{ fontSize: classroomDisplay.toolbar.fontSize }}>{plan.planName}</span>
+                        <span className="mt-1 block truncate font-medium text-slate-400" style={{ fontSize: classroomDisplay.toolbar.groupPlanMetaFontSize }}>{plan.teacherName}创建 · {plan.groups.length}个小组 · {memberCount}人</span>
                       </span>
                     </button>
                     {isOwned && (
@@ -1924,37 +1976,40 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                         type="button"
                         aria-label={`管理${plan.planName}`}
                         onClick={() => setGroupPlanActionTargetId(current => current === plan.id ? null : plan.id)}
-                        className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-slate-700"
+                        className="mr-1 flex shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-slate-700"
+                        style={{ width: classroomDisplay.toolbar.menuButtonSize, height: classroomDisplay.toolbar.menuButtonSize }}
                       >
-                        <MoreHorizontal size={17} />
+                        <MoreHorizontal size={Math.max(16, classroomDisplay.toolbar.iconSize - 2)} />
                       </button>
                     )}
                   </div>
                   {groupPlanActionTargetId === plan.id && (
-                    <div className="absolute right-2 top-[58px] z-[80] w-[128px] rounded-lg border border-slate-200 bg-white p-1 shadow-[0_12px_32px_rgba(15,23,42,0.16)]">
+                    <div className="absolute right-2 z-[80] rounded-lg border border-slate-200 bg-white p-1 shadow-[0_12px_32px_rgba(15,23,42,0.16)]" style={{ top: `calc(100% + 4px)`, width: classroomDisplay.toolbar.groupPlanActionMenuWidth }}>
                       <Button
                         type="text"
-                        size="small"
                         long
+                        className="classroom-display-action-button"
+                        style={{ minHeight: classroomDisplay.toolbar.groupPlanActionItemHeight, fontSize: classroomDisplay.toolbar.groupPlanActionFontSize }}
                         onClick={() => {
                           setRenamePlanTargetId(plan.id);
                           setRenamePlanName(plan.planName);
                           setIsGroupPlanMenuOpen(false);
                         }}
                       >
-                        <span className="inline-flex items-center gap-2"><Pencil size={14} />重命名</span>
+                        <span className="inline-flex items-center gap-2"><Pencil size={classroomDisplay.toolbar.groupPlanActionIconSize} />重命名</span>
                       </Button>
                       <Button
                         type="text"
-                        size="small"
                         status="danger"
                         long
+                        className="classroom-display-action-button"
+                        style={{ minHeight: classroomDisplay.toolbar.groupPlanActionItemHeight, fontSize: classroomDisplay.toolbar.groupPlanActionFontSize }}
                         onClick={() => {
                           setDeletePlanTargetId(plan.id);
                           setIsGroupPlanMenuOpen(false);
                         }}
                       >
-                        <span className="inline-flex items-center gap-2"><Trash2 size={14} />删除</span>
+                        <span className="inline-flex items-center gap-2"><Trash2 size={classroomDisplay.toolbar.groupPlanActionIconSize} />删除</span>
                       </Button>
                     </div>
                   )}
@@ -1972,27 +2027,53 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                   setIsGroupPlanMenuOpen(false);
                 }}
               >
-                <span className="inline-flex items-center gap-2"><Plus size={15} />新建另一套分组</span>
+                <span className="inline-flex items-center gap-2" style={{ fontSize: classroomDisplay.toolbar.groupPlanActionFontSize }}><Plus size={classroomDisplay.toolbar.groupPlanCreateIconSize} />新建另一套分组</span>
               </Button>
             </div>
           </div>
         </div>
       )}
       {((isSidebarOpen && viewMode === 'student') || (!isSidebarOpen && viewMode !== 'student' && viewMode !== 'group')) && (
-        <div className={`h-10 ${embeddedToolbarMinWidth}`} />
+        <div className="shrink-0" style={{ minWidth: viewMode === 'group' ? classroomDisplay.toolbar.groupPlanMinWidth : classroomDisplay.toolbar.utilityMinWidth, height: classroomDisplay.toolbar.height }} />
       )}
       {!isRecountSelection && <button
         type="button"
         onClick={() => setIsMoreActionsOpen(true)}
         aria-label="更多操作"
         aria-expanded={isMoreActionsOpen}
-        title="更多操作"
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-white shadow-sm transition-all active:scale-95 ${isMoreActionsOpen ? 'border-blue-300 text-blue-600' : 'border-slate-200 text-slate-400 hover:border-blue-300 hover:text-blue-600'}`}
+        title={<span style={{ fontSize: classroomDisplay.moreActions.titleFontSize }}>更多操作</span>}
+        className={`flex shrink-0 items-center justify-center rounded-xl border bg-white shadow-sm transition-all active:scale-95 ${isMoreActionsOpen ? 'border-blue-300 text-blue-600' : 'border-slate-200 text-slate-400 hover:border-blue-300 hover:text-blue-600'}`}
+        style={{ width: classroomDisplay.toolbar.menuButtonSize, height: classroomDisplay.toolbar.menuButtonSize }}
       >
-        <MoreHorizontal size={19} strokeWidth={2.5} />
+        <MoreHorizontal size={classroomDisplay.toolbar.iconSize} strokeWidth={2.5} />
       </button>}
     </div>
   );
+
+  const displayModeControl = !isRecountSelection ? (
+    <div className="flex min-w-0 items-center gap-2 text-slate-500" style={{ fontSize: classroomDisplay.toolbar.fontSize }}>
+      <Monitor size={classroomDisplay.toolbar.iconSize} className="shrink-0 text-blue-500" aria-hidden="true" />
+      <div
+        className="flex min-w-0 shrink items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1"
+        style={{ width: 'clamp(260px, 30vw, 400px)', height: classroomDisplay.toolbar.height }}
+        role="group"
+        aria-label="显示大小"
+      >
+        {CLASSROOM_DISPLAY_MODE_OPTIONS.map(option => (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={classroomDisplayMode === option.value}
+            onClick={() => setClassroomDisplayMode(option.value)}
+            className={`min-w-0 flex-1 rounded-lg px-2 font-bold transition-colors ${classroomDisplayMode === option.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            style={{ height: classroomDisplay.toolbar.height - 8, fontSize: classroomDisplay.toolbar.fontSize }}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  ) : null;
 
   const showPageVoiceButton = !evaluationModalOpen && !groupDrawerMode && !randomModalOpen && !historyOpen;
   return (
@@ -2032,16 +2113,16 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       )}
 
       {!embedded && (
-        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-50">
+        <header className="bg-white border-b border-slate-200 flex items-center justify-between shrink-0 z-50" style={{ height: shell.headerHeight, paddingLeft: shell.horizontalPadding, paddingRight: shell.horizontalPadding }}>
           <div className="flex items-center gap-4 relative">
-            <div className="bg-blue-600/5 p-1.5 rounded-lg text-blue-600"><Monitor size={18} /></div>
+            <div className="bg-blue-600/5 p-1.5 rounded-lg text-blue-600"><Monitor size={shell.headerIconSize} /></div>
             {classSwitcher}
           </div>
-          <div className="flex items-center gap-4 text-[13px]">
-            <button onClick={onBack} className="flex items-center gap-2 px-4 py-2 bg-[#2563eb] text-white rounded-lg font-bold shadow-sm hover:bg-[#1d4ed8] active:scale-95 transition-all"><ArrowLeft size={16} /><span>返回管理后台</span></button>
+          <div className="flex items-center gap-4" style={{ fontSize: shell.headerFontSize }}>
+            <button onClick={onBack} className="flex items-center gap-2 rounded-lg bg-[#2563eb] px-4 font-bold text-white shadow-sm hover:bg-[#1d4ed8] active:scale-95 transition-all" style={{ height: shell.classSwitcherHeight, fontSize: shell.headerFontSize }}><ArrowLeft size={shell.headerIconSize} /><span>返回管理后台</span></button>
             <div className="h-6 w-px bg-slate-200 mx-1" />
-            <span className="text-slate-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">管理员 [成都七中初中附属小学]</span>
-            <div className="w-8 h-8 bg-[#4c8bf5] rounded-full flex items-center justify-center text-white shrink-0"><User size={16} strokeWidth={3} /></div>
+            <span className="text-slate-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[280px]">管理员 [成都七中初中附属小学]</span>
+            <div className="bg-[#4c8bf5] rounded-full flex items-center justify-center text-white shrink-0" style={{ width: shell.classSwitcherHeight - 8, height: shell.classSwitcherHeight - 8 }}><User size={shell.headerIconSize} strokeWidth={3} /></div>
           </div>
         </header>
       )}
@@ -2064,9 +2145,15 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     </div>
                   </div>
                 )}
-                <div className={`grid ${viewMode === 'group' ? 'grid-cols-[repeat(auto-fill,minmax(152px,1fr))]' : 'grid-cols-[repeat(auto-fill,var(--card-width))]'} ${viewMode === 'student' ? 'justify-center' : 'justify-start'} gap-3 pb-20 relative`} style={{ '--card-width': `${CARD_WIDTH}px` } as any}>
+                <div
+                  className={`${viewMode === 'group' ? 'flex flex-wrap justify-center' : 'grid justify-center'} gap-3 pb-20 relative`}
+                  style={{
+                    ...(viewMode === 'student' ? { gridTemplateColumns: `repeat(auto-fill, ${classroomDisplay.studentCard.width}px)` } : {}),
+                    gap: `${deckGap}px`,
+                  } as React.CSSProperties}
+                >
                   {!embedded && (
-                    <div className="col-span-full relative h-[60px] mb-0">
+                    <div className={`${viewMode === 'group' ? 'basis-full' : 'col-span-full'} relative h-[60px] mb-0`}>
                       <div className="absolute inset-x-0 top-0 h-full">
                         <div className="absolute left-1/2 top-0 -translate-x-1/2 z-10 scale-110">
                           {viewModeSwitcher}
@@ -2087,6 +2174,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                         student={student}
                         performance={getStudentPerformance(student)}
                         displaySettings={studentCardDisplaySettings}
+                        layout={classroomDisplay.studentCard}
                         selected={isRecountSelection ? recountSelectedIds.has(student.id) : selectedIds.includes(student.id)}
                         isSelectable={isRecountSelection || isMultiSelect}
                         isFocused={isFocused}
@@ -2096,38 +2184,41 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                   }) : groups.length > 0 ? (
                     <>
                       {groups.map(group => (
-                        <div key={group.id} className={groupCardSpan === 2 ? 'col-span-2' : 'col-span-1'}>
+                        <div key={group.id} className="min-w-0" style={groupCardFlexItemStyle}>
                           <GroupCard
                             group={group}
                             memberNames={getGroupMemberNames(group)}
                             performance={getGroupPerformance(group.id)}
                             displaySettings={groupCardDisplaySettings}
+                            layout={classroomDisplay.groupCard}
                             selected={isGroupRecountSelection ? recountSelectedIds.has(group.id) : selectedIds.includes(group.id)}
                             isSelectable={isGroupRecountSelection || isMultiSelect}
-                            compact={groupCardSpan === 1}
                             onClick={() => handleGroupCardClick(group)}
                           />
                         </div>
                       ))}
                       {isActiveGroupPlanOwnedByCurrentTeacher && !isMultiSelect && !isRecountSelection && (
-                        <button
-                          type="button"
-                          onClick={startAddGroup}
-                          className={`${groupCardSpan === 2 ? 'col-span-2' : 'col-span-1'} ${groupCardHeightClassName} flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white/70 text-sm font-bold text-blue-600 transition hover:border-blue-400 hover:bg-blue-50`}
-                        >
-                          <UserPlus size={18} />添加小组
-                        </button>
+                        <div className="basis-full flex justify-start">
+                          <button
+                            type="button"
+                            onClick={startAddGroup}
+                            className="flex h-auto items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white/70 font-bold text-blue-600 transition hover:border-blue-400 hover:bg-blue-50"
+                            style={{ ...groupCardFlexItemStyle, height: classroomDisplay.groupCard.fullHeight, fontSize: classroomDisplay.groupCard.titleFontSize - 3 }}
+                          >
+                            <UserPlus size={classroomDisplay.groupCard.titleFontSize + 1} />添加小组
+                          </button>
+                        </div>
                       )}
                     </>
                   ) : (
-                    <div className="col-span-full flex justify-center py-24">
-                      <div className="w-full max-w-[680px] rounded-lg border border-dashed border-slate-200 bg-white/70 px-10 py-14 text-center">
-                        <div className="w-16 h-16 mx-auto rounded-[1.5rem] bg-slate-100 text-slate-300 flex items-center justify-center">
-                          <Users size={28} strokeWidth={2.2} />
+                    <div className={`${viewMode === 'group' ? 'basis-full' : 'col-span-full'} flex justify-center py-24`}>
+                      <div className="w-full max-w-[680px] rounded-lg border border-dashed border-slate-200 bg-white/70 text-center" style={{ padding: `${classroomDisplay.modal.iconSize + 24}px ${classroomDisplay.modal.iconSize + 16}px` }}>
+                        <div className="mx-auto flex items-center justify-center rounded-[1.5rem] bg-slate-100 text-slate-300" style={{ width: classroomDisplay.modal.iconSize + 40, height: classroomDisplay.modal.iconSize + 40 }}>
+                          <Users size={classroomDisplay.modal.iconSize + 4} strokeWidth={2.2} />
                         </div>
-                        <h3 className="mt-5 text-xl font-bold text-slate-700">还没有分组</h3>
+                        <h3 className="mt-5 font-bold text-slate-700" style={{ fontSize: classroomDisplay.modal.titleFontSize }}>还没有分组</h3>
                         {isActiveGroupPlanOwnedByCurrentTeacher && (
-                          <Button type="primary" className="mt-5" icon={<Plus size={15} />} onClick={startAddGroup}>开始分组</Button>
+                          <Button type="primary" className="mt-5" icon={<Plus size={classroomDisplay.modal.buttonFontSize + 1} />} onClick={startAddGroup} style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }}>开始分组</Button>
                         )}
                       </div>
                     </div>
@@ -2141,33 +2232,33 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         <button
           onClick={handleSidebarClose}
           className={`absolute top-1/2 z-[90] h-24 w-8 -translate-y-1/2 rounded-l-2xl border border-r-0 border-slate-100 bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.05)] flex items-center justify-center text-slate-200 transition-[transform,opacity,color] duration-500 hover:text-blue-500 ${isSidebarOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-full opacity-0 pointer-events-none'}`}
-          style={{ ...sidebarTiming, right: `${FILTER_SIDEBAR_WIDTH}px`, willChange: 'transform' }}
+          style={{ ...sidebarTiming, right: `${classroomDisplay.filterSidebar.width}px`, willChange: 'transform' }}
         >
           <ChevronRight size={20} />
         </button>
 
         <div
           className={`relative shrink-0 overflow-hidden transition-[width] duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-100'}`}
-          style={{ ...sidebarTiming, width: isSidebarOpen ? `${FILTER_SIDEBAR_WIDTH}px` : '0px' }}
+          style={{ ...sidebarTiming, width: isSidebarOpen ? `${classroomDisplay.filterSidebar.width}px` : '0px' }}
         >
           <aside
-            className={`absolute inset-y-0 right-0 w-[320px] bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.01)] flex flex-col overflow-hidden border-l border-slate-100 transition-[transform,opacity] duration-500 ${isSidebarOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-full opacity-0 pointer-events-none'}`}
-            style={{ ...sidebarTiming, willChange: 'transform' }}
+            className={`absolute inset-y-0 right-0 bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.01)] flex flex-col overflow-hidden border-l border-slate-100 transition-[transform,opacity] duration-500 ${isSidebarOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-full opacity-0 pointer-events-none'}`}
+            style={{ ...sidebarTiming, width: classroomDisplay.filterSidebar.width, willChange: 'transform' }}
           >
-            <div className="w-[320px] flex-1 overflow-y-auto px-6 pt-10 pb-10 custom-scrollbar shrink-0">
-              <div className="flex flex-col items-center gap-8">
+            <div className="flex-1 overflow-y-auto pt-10 pb-10 custom-scrollbar shrink-0" style={{ width: classroomDisplay.filterSidebar.width, paddingLeft: classroomDisplay.filterSidebar.gap, paddingRight: classroomDisplay.filterSidebar.gap }}>
+              <div className="flex flex-col items-center" style={{ gap: classroomDisplay.filterSidebar.gap }}>
                 <div className="flex gap-4">
-                  <button onClick={() => setFilterGender('all')} className={`w-24 h-14 rounded-full flex items-center justify-center text-[17px] font-bold transition-all ${filterGender === 'all' ? 'bg-[#4c8bf5] text-white shadow-lg' : 'bg-slate-50 text-slate-400 border border-slate-100 hover:border-blue-400'}`}>全部</button>
-                  <button onClick={() => setFilterGender(filterGender === 'male' ? 'all' : 'male')} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${filterGender === 'male' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-blue-500 border border-blue-50 hover:border-blue-200'}`}><Mars size={24} strokeWidth={3} /></button>
-                  <button onClick={() => setFilterGender(filterGender === 'female' ? 'all' : 'female')} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${filterGender === 'female' ? 'bg-pink-600 text-white shadow-lg' : 'bg-white text-pink-500 border border-pink-50 hover:border-pink-200'}`}><Venus size={24} strokeWidth={3} /></button>
+                  <button onClick={() => setFilterGender('all')} className={`rounded-full flex items-center justify-center font-bold transition-all ${filterGender === 'all' ? 'bg-[#4c8bf5] text-white shadow-lg' : 'bg-slate-50 text-slate-400 border border-slate-100 hover:border-blue-400'}`} style={{ width: classroomDisplay.filterSidebar.controlHeight + 40, height: classroomDisplay.filterSidebar.controlHeight, fontSize: classroomDisplay.filterSidebar.titleFontSize }}>全部</button>
+                  <button onClick={() => setFilterGender(filterGender === 'male' ? 'all' : 'male')} className={`rounded-full flex items-center justify-center transition-all ${filterGender === 'male' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-blue-500 border border-blue-50 hover:border-blue-200'}`} style={{ width: classroomDisplay.filterSidebar.controlHeight, height: classroomDisplay.filterSidebar.controlHeight }}><Mars size={classroomDisplay.filterSidebar.iconSize} strokeWidth={3} /></button>
+                  <button onClick={() => setFilterGender(filterGender === 'female' ? 'all' : 'female')} className={`rounded-full flex items-center justify-center transition-all ${filterGender === 'female' ? 'bg-pink-600 text-white shadow-lg' : 'bg-white text-pink-500 border border-pink-50 hover:border-pink-200'}`} style={{ width: classroomDisplay.filterSidebar.controlHeight, height: classroomDisplay.filterSidebar.controlHeight }}><Venus size={classroomDisplay.filterSidebar.iconSize} strokeWidth={3} /></button>
                 </div>
                 <div className="w-full h-px bg-slate-100" />
-                <div className="flex flex-col gap-6 w-full px-2">
+                <div className="flex flex-col w-full px-2" style={{ gap: classroomDisplay.filterSidebar.gap }}>
                   {groupedSurnameIndexes.map(item => (
                     <div key={item.initial} className="flex items-start gap-4">
-                      <button onClick={() => { if (filterType === 'initial' && filterValue === item.initial) { setFilterType('none'); setFilterValue(null); } else { setFilterType('initial'); setFilterValue(item.initial); } }} className={`w-14 h-14 rounded-full flex items-center justify-center text-[17px] font-bold border transition-all shrink-0 ${filterType === 'initial' && filterValue === item.initial ? 'bg-[#4c8bf5] border-blue-500 text-white' : 'bg-[#eef8ff] text-blue-600 border-transparent hover:border-blue-500'}`}>{item.initial}</button>
+                      <button onClick={() => { if (filterType === 'initial' && filterValue === item.initial) { setFilterType('none'); setFilterValue(null); } else { setFilterType('initial'); setFilterValue(item.initial); } }} className={`rounded-full flex items-center justify-center font-bold border transition-all shrink-0 ${filterType === 'initial' && filterValue === item.initial ? 'bg-[#4c8bf5] border-blue-500 text-white' : 'bg-[#eef8ff] text-blue-600 border-transparent hover:border-blue-500'}`} style={{ width: classroomDisplay.filterSidebar.controlHeight, height: classroomDisplay.filterSidebar.controlHeight, fontSize: classroomDisplay.filterSidebar.titleFontSize }}>{item.initial}</button>
                       <div className="flex flex-wrap gap-3">{item.surnames.map(sur => (
-                        <button key={sur} onClick={() => { if (filterType === 'surname' && filterValue === sur) { setFilterType('none'); setFilterValue(null); } else { setFilterType('surname'); setFilterValue(sur); } }} className={`w-14 h-14 rounded-full flex items-center justify-center text-[17px] font-bold border transition-all ${filterType === 'surname' && filterValue === sur ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-500'}`}>{sur}</button>
+                        <button key={sur} onClick={() => { if (filterType === 'surname' && filterValue === sur) { setFilterType('none'); setFilterValue(null); } else { setFilterType('surname'); setFilterValue(sur); } }} className={`rounded-full flex items-center justify-center font-bold border transition-all ${filterType === 'surname' && filterValue === sur ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-500'}`} style={{ width: classroomDisplay.filterSidebar.controlHeight, height: classroomDisplay.filterSidebar.controlHeight, fontSize: classroomDisplay.filterSidebar.titleFontSize }}>{sur}</button>
                       ))}</div>
                     </div>
                   ))}
@@ -2179,37 +2270,37 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
         <div className={`fixed inset-0 z-[100] bg-slate-900/10 backdrop-blur-sm transition-opacity duration-300 ${historyOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setHistoryOpen(false)} />
         <aside
-          className={`fixed right-0 top-0 bottom-0 w-[400px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[101] flex flex-col border-l border-slate-100 transition-transform duration-500 ${historyOpen ? 'translate-x-0' : 'translate-x-full'}`}
-          style={sidebarTiming}
+          className={`fixed right-0 top-0 bottom-0 bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[101] flex flex-col border-l border-slate-100 transition-transform duration-500 ${historyOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          style={{ ...sidebarTiming, width: classroomDisplay.historySidebar.width }}
         >
           <div className="px-6 py-6 flex flex-col gap-1 border-b border-slate-50 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 bg-blue-600/5 rounded-xl flex items-center justify-center text-blue-600"><History size={18} strokeWidth={2.5} /></div>
-                <h3 className="text-lg font-black text-slate-700 tracking-tight">点评记录</h3>
+                <div className="bg-blue-600/5 rounded-xl flex items-center justify-center text-blue-600" style={{ width: classroomDisplay.historySidebar.controlHeight, height: classroomDisplay.historySidebar.controlHeight }}><History size={classroomDisplay.historySidebar.iconSize} strokeWidth={2.5} /></div>
+                <h3 className="font-black text-slate-900 tracking-normal" style={{ fontSize: classroomDisplay.historySidebar.titleFontSize }}>点评记录</h3>
               </div>
-              <button onClick={() => setHistoryOpen(false)} className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-xl text-slate-400 transition-all"><X size={20} /></button>
+              <button onClick={() => setHistoryOpen(false)} className="flex items-center justify-center hover:bg-slate-50 rounded-xl text-slate-400 transition-all" style={{ width: classroomDisplay.historySidebar.controlHeight, height: classroomDisplay.historySidebar.controlHeight }}><X size={classroomDisplay.historySidebar.iconSize + 2} /></button>
             </div>
-            <p className="text-[11px] font-bold text-slate-400 mt-1 px-0.5 leading-relaxed">最近 15 条，展示原始录入与 AI 分析结果。</p>
+            <p className="mt-1 px-0.5 font-semibold leading-relaxed text-slate-600" style={{ fontSize: classroomDisplay.historySidebar.metaFontSize }}>最近 15 条，展示原始录入与 AI 分析结果。</p>
           </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-slate-50/40">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-slate-50/40" style={{ fontSize: classroomDisplay.historySidebar.bodyFontSize }}>
             {evalRecords.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-slate-300 gap-4">
-                <div className="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center"><History size={32} strokeWidth={1.5} /></div>
-                <span className="text-sm font-bold">暂无点评记录</span>
+              <div className="flex h-full flex-col items-center justify-center gap-4 text-slate-500">
+                <div className="rounded-3xl bg-slate-50 flex items-center justify-center" style={{ width: classroomDisplay.historySidebar.controlHeight + 28, height: classroomDisplay.historySidebar.controlHeight + 28 }}><History size={classroomDisplay.historySidebar.iconSize + 14} strokeWidth={1.5} /></div>
+                <span className="font-bold" style={{ fontSize: classroomDisplay.historySidebar.bodyFontSize }}>暂无点评记录</span>
               </div>
             ) : (
               evalRecords.map((record, idx) => {
                 const visibleNames = record.studentNames.slice(0, 4);
                 const hiddenNameCount = Math.max(0, record.studentNames.length - visibleNames.length);
                 return (
-                  <div key={record.id} className="group rounded-2xl border border-slate-100 bg-white p-3 shadow-[0_4px_12px_rgba(0,0,0,0.02)] transition-all hover:border-blue-500 hover:shadow-xl hover:scale-[1.01] animate-in fade-in slide-in-from-bottom-1 duration-300" style={{ animationDelay: `${idx * 32}ms` }}>
+                  <div key={record.id} className="group animate-in rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_4px_12px_rgba(0,0,0,0.02)] transition-all duration-300 fade-in slide-in-from-bottom-1 hover:border-blue-400" style={{ animationDelay: `${idx * 32}ms` }}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2">
-                        <span className={`shrink-0 rounded-lg px-2 py-1 text-[10px] font-black ${record.source === 'voice' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>{record.source === 'voice' ? '语音录入' : '点选录入'}</span>
-                        <span className="truncate text-[11px] font-bold text-slate-300 font-mono tracking-tight">{record.time}</span>
+                        <span className={`shrink-0 rounded-lg px-2 py-1 font-bold ${record.source === 'voice' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`} style={{ fontSize: classroomDisplay.historySidebar.metaFontSize }}>{record.source === 'voice' ? '语音录入' : '点选录入'}</span>
+                        <span className="truncate font-mono font-semibold tracking-normal text-slate-500" style={{ fontSize: classroomDisplay.historySidebar.metaFontSize }}>{record.time}</span>
                       </div>
-                      <button
+                        <button
                         onClick={() => {
                           setEvalRecords(prev => prev.filter(r => r.id !== record.id));
                           updateStudentPerformance(record.studentIds, record.scoreChange, 'revert');
@@ -2217,32 +2308,33 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                           setToastMsg(`已撤销点评「${record.optionLabel}」`);
                           setTimeout(() => setToastMsg(null), 3000);
                         }}
-                        className="shrink-0 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[11px] font-black text-slate-400 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-500 active:scale-95"
+                        className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 font-bold text-slate-600 transition-all hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 active:scale-95"
+                        style={{ minHeight: classroomDisplay.historySidebar.controlHeight, fontSize: classroomDisplay.historySidebar.metaFontSize }}
                       >
                         撤销
                       </button>
                     </div>
 
-                    <div className="mt-2 rounded-xl bg-slate-50 px-3 py-2">
-                      <div className="text-[10px] font-black tracking-widest text-slate-400">原始录入</div>
-                      <p className="mt-1 line-clamp-2 text-[13px] font-bold leading-snug text-slate-700">{record.originalInput}</p>
-                    </div>
-
-                    <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/40 px-3 py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[10px] font-black tracking-widest text-blue-400">AI 分析</div>
-                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-black ${record.type === 'positive' ? 'bg-green-50 text-green-600' : 'bg-rose-50 text-rose-600'}`}>{record.type === 'positive' ? '表扬' : '待改进'}</span>
+                      <div className="mt-2 rounded-xl bg-slate-50 px-3 py-2">
+                        <div className="font-bold tracking-normal text-slate-600" style={{ fontSize: classroomDisplay.historySidebar.metaFontSize - 1 }}>原始录入</div>
+                        <p className="mt-1 line-clamp-2 font-bold leading-snug text-slate-900" style={{ fontSize: classroomDisplay.historySidebar.bodyFontSize }}>{record.originalInput}</p>
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <span className="mr-0.5 text-[11px] font-black text-slate-400">对象</span>
+
+                      <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/40 px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="font-bold tracking-normal text-blue-700" style={{ fontSize: classroomDisplay.historySidebar.metaFontSize - 1 }}>AI 分析</div>
+                          <span className={`rounded-md px-1.5 py-0.5 font-bold ${record.type === 'positive' ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700'}`} style={{ fontSize: classroomDisplay.historySidebar.metaFontSize - 1 }}>{record.type === 'positive' ? '表扬' : '待改进'}</span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <span className="mr-0.5 font-bold text-slate-600" style={{ fontSize: classroomDisplay.historySidebar.metaFontSize }}>对象</span>
                         {visibleNames.map(name => (
-                          <span key={name} className="rounded-full border border-blue-100 bg-white px-2 py-0.5 text-[12px] font-black text-blue-600 shadow-sm">{name}</span>
+                          <span key={name} className="rounded-full border border-blue-200 bg-white px-2 py-0.5 font-bold text-blue-700" style={{ fontSize: classroomDisplay.historySidebar.bodyFontSize }}>{name}</span>
                         ))}
-                        {hiddenNameCount > 0 && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[12px] font-black text-blue-600">等{record.studentNames.length}人</span>}
+                        {hiddenNameCount > 0 && <span className="rounded-full bg-blue-100 px-2 py-0.5 font-bold text-blue-700" style={{ fontSize: classroomDisplay.historySidebar.bodyFontSize }}>等{record.studentNames.length}人</span>}
                       </div>
                       <div className="mt-2 flex items-center justify-between gap-3 rounded-lg bg-white px-2.5 py-1.5 border border-blue-100">
-                        <span className="truncate text-[12px] font-black text-slate-700">详细分数：{record.aiScorePath}</span>
-                        <span className={`shrink-0 rounded-md px-2 py-0.5 text-[12px] font-black ${record.aiScoreValue.startsWith('+') ? 'bg-green-50 text-green-600' : 'bg-rose-50 text-rose-600'}`}>{record.aiScoreValue}</span>
+                        <span className="truncate font-bold text-slate-900" style={{ fontSize: classroomDisplay.historySidebar.bodyFontSize }}>详细分数：{record.aiScorePath}</span>
+                        <span className={`shrink-0 rounded-md px-2 py-0.5 font-black ${record.aiScoreValue.startsWith('+') ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700'}`} style={{ fontSize: classroomDisplay.historySidebar.bodyFontSize }}>{record.aiScoreValue}</span>
                       </div>
                     </div>
                   </div>
@@ -2254,7 +2346,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       </div>
 
       <Drawer
-        width={GROUP_DRAWER_WIDTH}
+        width={groupDrawerWidth}
         zIndex={10010}
         bodyStyle={{ padding: 0 }}
         visible={isMoreActionsOpen}
@@ -2263,17 +2355,17 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         footer={null}
         unmountOnExit
       >
-        <GroupDrawerBody>
+        <GroupDrawerBody layout={classroomDisplay}>
           <div aria-label="课堂大屏更多操作">
             <section>
-              <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-600">
-                <Eye size={15} /> {viewMode === 'group' ? '小组卡片展示' : '学生卡片展示'}
+              <div className="mb-3 flex items-center gap-2 font-bold text-slate-600" style={{ fontSize: classroomDisplay.moreActions.sectionTitleFontSize }}>
+                <Eye size={classroomDisplay.moreActions.iconSize} /> {viewMode === 'group' ? '小组卡片展示' : '学生卡片展示'}
               </div>
               <div className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50/60">
                 {viewMode === 'student' && (
                   <div className="px-4">
-                    <div className="flex min-h-[64px] items-center justify-between gap-4">
-                      <span className="text-sm font-bold text-slate-700">显示学生等级</span>
+                    <div className="flex items-center justify-between gap-4" style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
+                      <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>显示学生等级</span>
                       <Switch
                         checked={studentCardDisplaySettings.showLevel}
                         onChange={showLevel => setStudentCardDisplaySettings(current => ({ ...current, showLevel }))}
@@ -2282,7 +2374,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     </div>
                     {studentCardDisplaySettings.showLevel && (
                       <div className="border-t border-slate-200/70 pb-4 pt-3">
-                        <div className="mb-2 text-xs font-bold text-slate-500">等级展示规则</div>
+                        <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>等级展示规则</div>
                         <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="等级展示规则">
                           {[
                             { value: 'term' as const, label: '仅计算本学期' },
@@ -2293,7 +2385,8 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                               type="button"
                               aria-pressed={levelDisplayMode === item.value}
                               onClick={() => setLevelDisplayMode(item.value)}
-                              className={`h-9 rounded-lg px-3 text-sm font-bold transition-colors ${levelDisplayMode === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              className={`rounded-lg px-3 font-bold transition-colors ${levelDisplayMode === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.moreActions.bodyFontSize }}
                             >
                               {item.label}
                             </button>
@@ -2304,11 +2397,11 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                   </div>
                 )}
                 {[
-                  { key: 'showPraiseCount' as const, label: '显示正向统计', value: viewMode === 'group' ? groupCardDisplaySettings.showPraiseCount : studentCardDisplaySettings.showPraiseCount },
-                  { key: 'showCriticismCount' as const, label: '显示负面统计', value: viewMode === 'group' ? groupCardDisplaySettings.showCriticismCount : studentCardDisplaySettings.showCriticismCount },
+                  { key: 'showPraiseCount' as const, label: '表扬次数', value: viewMode === 'group' ? groupCardDisplaySettings.showPraiseCount : studentCardDisplaySettings.showPraiseCount },
+                  { key: 'showCriticismCount' as const, label: '批评次数', value: viewMode === 'group' ? groupCardDisplaySettings.showCriticismCount : studentCardDisplaySettings.showCriticismCount },
                 ].map(item => (
-                  <div key={item.key} className={`flex min-h-[64px] items-center justify-between gap-4 px-4 ${viewMode === 'student' || item.key === 'showCriticismCount' ? 'border-t border-slate-100' : ''}`}>
-                    <span className="text-sm font-bold text-slate-700">{item.label}</span>
+                  <div key={item.key} className={`flex items-center justify-between gap-4 px-4 ${viewMode === 'student' || item.key === 'showCriticismCount' ? 'border-t border-slate-100' : ''}`} style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
+                    <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>{item.label}</span>
                     <Switch
                       checked={item.value}
                       onChange={checked => viewMode === 'group'
@@ -2322,13 +2415,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
             </section>
 
             {(viewMode === 'student' || isActiveGroupPlanOwnedByCurrentTeacher) && <section className="mt-8">
-              <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-600">
-                <RotateCcw size={15} /> 统计数据
+              <div className="mb-3 flex items-center gap-2 font-bold text-slate-600" style={{ fontSize: classroomDisplay.moreActions.sectionTitleFontSize }}>
+                <RotateCcw size={classroomDisplay.moreActions.iconSize} /> 统计数据
               </div>
-              <button type="button" onClick={() => startRecountSelection(viewMode)} className="flex min-h-[58px] w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 text-left transition hover:border-blue-300 hover:bg-blue-50/40">
+              <button type="button" onClick={() => startRecountSelection(viewMode)} className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 text-left transition hover:border-blue-300 hover:bg-blue-50/40" style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
                 <span>
-                  <span className="block text-sm font-bold text-slate-700">重新计数</span>
-                  <span className="mt-1 block text-xs font-medium text-slate-400">从现在开始统计表扬和待改进次数</span>
+                  <span className="block font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>重新计数</span>
+                  <span className="mt-1 block font-medium text-slate-400" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>从现在开始重新统计表扬次数和批评次数</span>
                 </span>
                 <ChevronRight size={18} className="text-slate-300" />
               </button>
@@ -2340,112 +2433,121 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       {recountConfirmationOpen && (
         <div className="absolute inset-0 z-[10010] flex items-center justify-center px-6">
           <button type="button" aria-label="关闭重新计数确认" className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeRecountConfirmation} />
-          <div role="dialog" aria-modal="true" aria-label="确认重新计数" className="relative w-full max-w-[480px] rounded-3xl bg-white p-7 shadow-[0_30px_90px_rgba(15,23,42,0.24)]">
+          <div role="dialog" aria-modal="true" aria-label="确认重新计数" className="relative w-full rounded-3xl bg-white shadow-[0_30px_90px_rgba(15,23,42,0.24)]" style={{ maxWidth: `min(600px, calc(100vw - 32px))`, padding: classroomDisplay.modal.buttonHeight - 12 }}>
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><RotateCcw size={21} /></div>
+              <div className="flex shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600" style={{ width: classroomDisplay.modal.buttonHeight, height: classroomDisplay.modal.buttonHeight }}><RotateCcw size={classroomDisplay.modal.iconSize} /></div>
               <div>
-                <h3 className="text-lg font-black text-slate-800">确认重新计数</h3>
-                <p className="mt-2 text-sm font-medium leading-6 text-slate-500">已选择 {recountSelectedCount} {recountTarget === 'group' ? '个小组' : '名学生'}。重新计数以后，卡片上的正负向统计将清零。已有的评价记录和积分不受影响。</p>
+                <h3 className="font-black text-slate-800" style={{ fontSize: classroomDisplay.modal.titleFontSize }}>确认重新计数</h3>
+                <p className="mt-2 font-medium leading-6 text-slate-500" style={{ fontSize: classroomDisplay.modal.bodyFontSize }}>已选择 {recountSelectedCount} {recountTarget === 'group' ? '个小组' : '名学生'}。重新计数后，表扬次数和批评次数从 0 开始，已有评价记录和积分不受影响。</p>
               </div>
             </div>
-            <label className="mt-5 flex min-h-12 cursor-pointer select-none items-center gap-3 rounded-xl bg-slate-50 px-3 text-sm font-bold text-slate-700">
-              <input type="checkbox" checked={recountAcknowledged} onChange={event => setRecountAcknowledged(event.target.checked)} className="h-4 w-4 accent-blue-600" />
+            <label className="mt-5 flex cursor-pointer select-none items-center gap-3 rounded-xl bg-slate-50 px-3 font-bold text-slate-700" style={{ minHeight: classroomDisplay.modal.buttonHeight + 4, fontSize: classroomDisplay.modal.bodyFontSize }}>
+              <input type="checkbox" checked={recountAcknowledged} onChange={event => setRecountAcknowledged(event.target.checked)} className="accent-blue-600" style={{ width: classroomDisplay.modal.iconSize - 4, height: classroomDisplay.modal.iconSize - 4 }} />
               <span>重置后不可恢复，我已知晓</span>
             </label>
             <div className="mt-6 flex items-center justify-end gap-3">
-              <button type="button" onClick={closeRecountConfirmation} className="h-11 rounded-xl px-5 text-sm font-bold text-slate-500 hover:bg-slate-50">取消</button>
-              <button type="button" onClick={confirmRecount} disabled={recountCountdown > 0 || !recountAcknowledged} className="h-11 rounded-xl bg-rose-500 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">{recountCountdown > 0 ? `${recountCountdown}秒后可确认` : '确认重新计数'}</button>
+              <button type="button" onClick={closeRecountConfirmation} className="rounded-xl px-5 font-bold text-slate-500 hover:bg-slate-50" style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }}>取消</button>
+              <button type="button" onClick={confirmRecount} disabled={recountCountdown > 0 || !recountAcknowledged} className="rounded-xl bg-rose-500 px-5 font-bold text-white shadow-sm transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400" style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }}>{recountCountdown > 0 ? `${recountCountdown}秒后可确认` : '确认重新计数'}</button>
             </div>
           </div>
         </div>
       )}
 
       <Modal
-        title="新建另一套分组"
+        title={<span style={{ fontSize: classroomDisplay.modal.titleFontSize }}>新建另一套分组</span>}
         visible={createPlanModalOpen}
         onCancel={() => setCreatePlanModalOpen(false)}
         onOk={startCreatePlanMembers}
         okText="选择学生"
         cancelText="取消"
-        okButtonProps={{ disabled: !newPlanName.trim() || !newPlanFirstGroupName.trim() }}
+        okButtonProps={{ disabled: !newPlanName.trim() || !newPlanFirstGroupName.trim(), style: { height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize } }}
+        cancelButtonProps={{ style: { height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize } }}
+        style={{ width: formModalWidth }}
         unmountOnExit
       >
         <div className="space-y-5 py-2">
           <label className="block">
-            <span className="mb-2 block text-sm font-bold text-slate-600">分组方案名称</span>
-            <Input value={newPlanName} onChange={setNewPlanName} maxLength={20} placeholder="例如：数学分组" />
+            <span className="mb-2 block font-bold text-slate-600" style={{ fontSize: classroomDisplay.modal.labelFontSize }}>分组方案名称</span>
+                    <Input value={newPlanName} onChange={setNewPlanName} maxLength={20} placeholder="例如：数学分组" className="classroom-display-input" style={classroomDisplayInputStyle} />
           </label>
           <label className="block">
-            <span className="mb-2 block text-sm font-bold text-slate-600">第一个小组名称</span>
-            <Input value={newPlanFirstGroupName} onChange={setNewPlanFirstGroupName} maxLength={20} placeholder="例如：数学1组" />
+            <span className="mb-2 block font-bold text-slate-600" style={{ fontSize: classroomDisplay.modal.labelFontSize }}>第一个小组名称</span>
+                    <Input value={newPlanFirstGroupName} onChange={setNewPlanFirstGroupName} maxLength={20} placeholder="例如：数学1组" className="classroom-display-input" style={classroomDisplayInputStyle} />
           </label>
         </div>
       </Modal>
 
       <Modal
-        title="重命名分组方案"
+        title={<span style={{ fontSize: classroomDisplay.modal.titleFontSize }}>重命名分组方案</span>}
         visible={Boolean(renamePlanTargetId)}
         onCancel={() => setRenamePlanTargetId(null)}
         onOk={confirmRenamePlan}
         okText="保存"
         cancelText="取消"
-        okButtonProps={{ disabled: !renamePlanName.trim() }}
+        okButtonProps={{ disabled: !renamePlanName.trim(), style: { height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize } }}
+        cancelButtonProps={{ style: { height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize } }}
+        style={{ width: formModalWidth }}
         unmountOnExit
       >
         <label className="block py-2">
-          <span className="mb-2 block text-sm font-bold text-slate-600">方案名称</span>
-          <Input value={renamePlanName} onChange={setRenamePlanName} maxLength={20} />
+          <span className="mb-2 block font-bold text-slate-600" style={{ fontSize: classroomDisplay.modal.labelFontSize }}>方案名称</span>
+          <Input value={renamePlanName} onChange={setRenamePlanName} maxLength={20} className="classroom-display-input" style={classroomDisplayInputStyle} />
         </label>
       </Modal>
 
       <Modal
-        title={`删除“${groupPlans.find(plan => plan.id === deletePlanTargetId)?.planName || ''}”？`}
+        title={<span style={{ fontSize: classroomDisplay.modal.titleFontSize }}>{`删除“${groupPlans.find(plan => plan.id === deletePlanTargetId)?.planName || ''}”？`}</span>}
         visible={Boolean(deletePlanTargetId)}
         onCancel={() => setDeletePlanTargetId(null)}
         onOk={confirmDeletePlan}
         okText="确认删除"
         cancelText="取消"
-        okButtonProps={{ status: 'danger' }}
+        okButtonProps={{ status: 'danger', style: { height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize } }}
+        cancelButtonProps={{ style: { height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize } }}
+        style={{ width: formModalWidth }}
         unmountOnExit
       >
-        <p className="text-sm leading-6 text-slate-500">其中的小组将一起删除，学生信息和评价记录不会受到影响。</p>
+        <p className="leading-6 text-slate-500" style={{ fontSize: classroomDisplay.modal.bodyFontSize }}>其中的小组将一起删除，学生信息和评价记录不会受到影响。</p>
       </Modal>
 
       <Modal
-        title={`解散“${groups.find(group => group.id === dissolveGroupTargetId)?.name || ''}”？`}
+        title={<span style={{ fontSize: classroomDisplay.modal.titleFontSize }}>{`解散“${groups.find(group => group.id === dissolveGroupTargetId)?.name || ''}”？`}</span>}
         visible={Boolean(dissolveGroupTargetId)}
         onCancel={() => setDissolveGroupTargetId(null)}
         onOk={confirmDissolveGroup}
         okText="确认解散"
         cancelText="取消"
-        okButtonProps={{ status: 'danger' }}
+        okButtonProps={{ status: 'danger', style: { height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize } }}
+        cancelButtonProps={{ style: { height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize } }}
+        style={{ width: formModalWidth }}
         unmountOnExit
       >
-        <p className="text-sm leading-6 text-slate-500">组内学生将变为未分组，学生信息和评价记录不会删除。</p>
+        <p className="leading-6 text-slate-500" style={{ fontSize: classroomDisplay.modal.bodyFontSize }}>组内学生将变为未分组，学生信息和评价记录不会删除。</p>
       </Modal>
 
       <Drawer
-        width={GROUP_DRAWER_WIDTH}
+        width={groupDrawerWidth}
         zIndex={10010}
         bodyStyle={{ padding: 0 }}
         visible={Boolean(groupDrawerMode)}
-        title={groupDrawerMode === 'adjust'
+        title={<span style={{ fontSize: classroomDisplay.moreActions.titleFontSize }}>{groupDrawerMode === 'adjust'
           ? '调整学生'
           : groupDrawerMode === 'settings'
             ? '小组设置'
             : groupDrawerMode === 'create-members'
               ? (groupEditorDraft?.mode === 'new-plan' ? '选择第一个小组的学生' : '添加小组')
-              : '小组详情'}
+              : '小组详情'}</span>}
         onCancel={closeGroupDrawer}
         unmountOnExit
         footer={groupDrawerMode === 'view' ? (
           <div className="flex w-full items-center justify-between">
-            <Button onClick={() => setSelectedGroupMemberIds(current => current.length === groupDrawerTarget?.memberIds.length ? [] : [...(groupDrawerTarget?.memberIds || [])])}>
+            <Button style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }} onClick={() => setSelectedGroupMemberIds(current => current.length === groupDrawerTarget?.memberIds.length ? [] : [...(groupDrawerTarget?.memberIds || [])])}>
               {selectedGroupMemberIds.length === groupDrawerTarget?.memberIds.length ? '取消全选' : '全选成员'}
             </Button>
             <Button
               type="primary"
               disabled={selectedGroupMemberIds.length === 0}
+              style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }}
               onClick={() => {
                 const firstStudent = students.find(student => student.id === selectedGroupMemberIds[0]) || null;
                 closeGroupDrawer();
@@ -2461,58 +2563,64 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           </div>
         ) : groupDrawerMode === 'adjust' ? (
           <div className="flex w-full justify-end gap-3">
-            <Button onClick={() => setGroupDrawerMode('view')}>取消</Button>
-            <Button type="primary" onClick={saveAdjustedGroupMembers}>保存（{groupDraftMemberIds.size}人）</Button>
+            <Button style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }} onClick={() => setGroupDrawerMode('view')}>取消</Button>
+            <Button style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }} type="primary" onClick={saveAdjustedGroupMembers}>保存（{groupDraftMemberIds.size}人）</Button>
           </div>
         ) : groupDrawerMode === 'settings' ? (
           <div className="flex w-full justify-end gap-3">
-            <Button onClick={() => setGroupDrawerMode('view')}>取消</Button>
-            <Button type="primary" disabled={!groupDraftName.trim()} onClick={saveGroupSettings}>保存</Button>
+            <Button style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }} onClick={() => setGroupDrawerMode('view')}>取消</Button>
+            <Button style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }} type="primary" disabled={!groupDraftName.trim()} onClick={saveGroupSettings}>保存</Button>
           </div>
         ) : (
           <div className="flex w-full justify-end gap-3">
-            <Button onClick={closeGroupDrawer}>取消</Button>
-            <Button type="primary" disabled={!groupDraftName.trim() || groupDraftMemberIds.size === 0} onClick={finishGroupEditor}>完成（{groupDraftMemberIds.size}人）</Button>
+            <Button style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }} onClick={closeGroupDrawer}>取消</Button>
+            <Button style={{ height: classroomDisplay.modal.buttonHeight, fontSize: classroomDisplay.modal.buttonFontSize }} type="primary" disabled={!groupDraftName.trim() || groupDraftMemberIds.size === 0} onClick={finishGroupEditor}>完成（{groupDraftMemberIds.size}人）</Button>
           </div>
         )}
       >
         {groupDrawerMode === 'view' && groupDrawerTarget && (
-          <GroupDrawerBody>
+          <GroupDrawerBody layout={classroomDisplay}>
           {toastMsg && (
-            <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 shadow-sm" role="status" aria-live="polite">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[11px] font-black text-white">!</span>
+            <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 font-semibold text-amber-800 shadow-sm" style={{ fontSize: classroomDisplay.modal.bodyFontSize }} role="status" aria-live="polite">
+              <span className="flex shrink-0 items-center justify-center rounded-full bg-amber-400 font-black text-white" style={{ width: classroomDisplay.modal.iconSize, height: classroomDisplay.modal.iconSize, fontSize: classroomDisplay.modal.iconSize - 10 }}>!</span>
               <span className="min-w-0 truncate">{toastMsg}</span>
             </div>
           )}
           <div className="space-y-5">
             <div className="flex items-center gap-4 border-b border-slate-100 pb-5">
-              <img src={getStudentGroupAvatarOption(groupDrawerTarget.avatarKey).src} alt="" className="h-16 w-16 rounded-xl object-cover" />
+              <img src={getStudentGroupAvatarOption(groupDrawerTarget.avatarKey).src} alt="" className="rounded-xl object-cover" style={{ width: classroomDisplay.groupCard.avatarSize, height: classroomDisplay.groupCard.avatarSize }} />
               <div className="min-w-0 flex-1">
-                <h3 className="truncate text-lg font-bold text-slate-800">{groupDrawerTarget.name}</h3>
-                <p className="mt-1 text-sm font-medium text-slate-400">{groupDrawerTarget.memberIds.length}名学生</p>
+                <h3 className="truncate font-bold text-slate-800" style={{ fontSize: classroomDisplay.modal.titleFontSize }}>{groupDrawerTarget.name}</h3>
+                <p className="mt-1 font-medium text-slate-400" style={{ fontSize: classroomDisplay.modal.bodyFontSize }}>{groupDrawerTarget.memberIds.length}名学生</p>
               </div>
               <div className="flex items-center gap-2">
                 {isActiveGroupPlanOwnedByCurrentTeacher && (
                   <>
-                    <Button type="text" size="small" onClick={startEditGroupSettings}>
-                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Pencil size={15} />编辑</span>
+                    <Button type="text" onClick={startEditGroupSettings} style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.modal.buttonFontSize }}>
+                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Pencil size={classroomDisplay.modal.iconSize - 6} />编辑</span>
                     </Button>
-                    <Button type="text" size="small" status="danger" onClick={() => setDissolveGroupTargetId(groupDrawerTarget.id)}>
-                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Trash2 size={15} />解散</span>
+                    <Button type="text" status="danger" onClick={() => setDissolveGroupTargetId(groupDrawerTarget.id)} style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.modal.buttonFontSize }}>
+                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Trash2 size={classroomDisplay.modal.iconSize - 6} />解散</span>
                     </Button>
                   </>
                 )}
               </div>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <h4 className="text-sm font-bold text-slate-600">组内学生</h4>
+              <h4 className="font-bold text-slate-600" style={{ fontSize: classroomDisplay.modal.labelFontSize }}>组内学生</h4>
               {isActiveGroupPlanOwnedByCurrentTeacher && (
-                <Button type="text" size="small" onClick={startAdjustGroupMembers}>
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><UserPlus size={15} />调整学生</span>
+                <Button type="text" onClick={startAdjustGroupMembers} style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.modal.buttonFontSize }}>
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><UserPlus size={classroomDisplay.modal.iconSize - 6} />调整学生</span>
                 </Button>
               )}
             </div>
-            <div className="grid grid-cols-[repeat(auto-fill,136px)] justify-start gap-4">
+            <div
+              className="grid justify-start gap-4"
+              style={{
+                gridTemplateColumns: `repeat(auto-fill, ${classroomDisplay.studentCard.width}px)`,
+                gap: `${classroomDisplay.studentCard.gap}px`,
+              }}
+            >
               {groupDrawerTarget.memberIds.map(id => {
                 const student = studentById.get(id);
                 if (!student) return null;
@@ -2522,6 +2630,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     student={student}
                     performance={getStudentPerformance(student)}
                     displaySettings={studentCardDisplaySettings}
+                    layout={classroomDisplay.studentCard}
                     selected={selectedGroupMemberIds.includes(id)}
                     isSelectable
                     onClick={() => setSelectedGroupMemberIds(previous => previous.includes(id) ? previous.filter(item => item !== id) : [...previous, id])}
@@ -2534,41 +2643,43 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         )}
 
         {(groupDrawerMode === 'adjust' || groupDrawerMode === 'create-members') && (
-          <GroupDrawerBody>
+          <GroupDrawerBody layout={classroomDisplay}>
           {groupMoveNotice && (
-            <div className="sticky top-0 z-20 mb-4 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 shadow-sm" role="status" aria-live="polite">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white" aria-hidden="true"><ArrowRightLeft size={12} strokeWidth={2.5} /></span>
+            <div className="sticky top-0 z-20 mb-4 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-sm" style={{ fontSize: classroomDisplay.modal.bodyFontSize }} role="status" aria-live="polite">
+              <span className="mt-0.5 flex shrink-0 items-center justify-center rounded-full bg-blue-600 text-white" style={{ width: classroomDisplay.modal.iconSize, height: classroomDisplay.modal.iconSize }} aria-hidden="true"><ArrowRightLeft size={classroomDisplay.modal.iconSize - 8} strokeWidth={2.5} /></span>
               <div className="min-w-0">
                 <p className="font-semibold leading-5">{groupMoveNotice.headline}</p>
-                <p className="mt-1 truncate text-xs font-medium text-blue-600" title={groupMoveNotice.detail}>{groupMoveNotice.detail}</p>
+                <p className="mt-1 truncate font-medium text-blue-600" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }} title={groupMoveNotice.detail}>{groupMoveNotice.detail}</p>
               </div>
             </div>
           )}
           {toastMsg && (
-            <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 shadow-sm" role="status" aria-live="polite">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[11px] font-black text-white">!</span>
+            <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 font-semibold text-amber-800 shadow-sm" style={{ fontSize: classroomDisplay.modal.bodyFontSize }} role="status" aria-live="polite">
+              <span className="flex shrink-0 items-center justify-center rounded-full bg-amber-400 font-black text-white" style={{ width: classroomDisplay.modal.iconSize, height: classroomDisplay.modal.iconSize, fontSize: classroomDisplay.modal.iconSize - 10 }}>!</span>
               <span className="min-w-0 truncate">{toastMsg}</span>
             </div>
           )}
           <div>
             {groupDrawerMode === 'create-members' && (
               <section className="border-b border-slate-100 pb-5">
-                <h3 className="mb-3 text-sm font-bold text-slate-700">小组名称</h3>
-                <Input value={groupDraftName} onChange={setGroupDraftName} maxLength={20} placeholder="例如：语文1组" />
+                <h3 className="mb-3 font-bold text-slate-700" style={{ fontSize: classroomDisplay.modal.labelFontSize }}>小组名称</h3>
+                <Input value={groupDraftName} onChange={setGroupDraftName} maxLength={20} placeholder="例如：语文1组" className="classroom-display-input" style={classroomDisplayInputStyle} />
               </section>
             )}
             <section className={groupDrawerMode === 'create-members' ? 'pt-5' : ''}>
-              <div className="mb-3 flex min-h-8 items-center justify-between gap-4">
-                <h3 className="text-sm font-bold text-slate-700">选择学生</h3>
-                <span className="text-xs font-medium tabular-nums text-blue-600">已选 {groupDraftMemberIds.size} 人</span>
+                <div className="mb-3 flex items-center justify-between gap-4" style={{ minHeight: classroomDisplay.modal.buttonHeight - 8 }}>
+                <h3 className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.modal.labelFontSize }}>选择学生</h3>
+                <span className="font-medium tabular-nums text-blue-600" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>已选 {groupDraftMemberIds.size} 人</span>
               </div>
-              <Input.Search value={groupMemberSearch} onChange={setGroupMemberSearch} allowClear placeholder="搜索姓名、学号" className="w-full" />
+              <Input.Search value={groupMemberSearch} onChange={setGroupMemberSearch} allowClear placeholder="搜索姓名、学号" className="classroom-display-input w-full" style={classroomDisplayInputStyle} />
               {groupEditorDraft?.mode !== 'new-plan' && (
-                <div className="mt-3 flex min-h-10 items-center justify-between border-b border-slate-100 pb-3 text-sm font-medium text-slate-600">
+                <div className="mt-3 flex items-center justify-between border-b border-slate-100 pb-3 font-medium text-slate-600" style={{ minHeight: classroomDisplay.modal.buttonHeight - 4, fontSize: classroomDisplay.modal.bodyFontSize }}>
                   <span>仅看未分组</span>
                   <span className="flex items-center gap-3">
-                    {showOnlyUngrouped && <span className="text-xs tabular-nums text-slate-400">{ungroupedStudentCount}人</span>}
-                    <Switch aria-label="仅看未分组" checked={showOnlyUngrouped} onChange={setShowOnlyUngrouped} size="small" />
+                    {showOnlyUngrouped && <span className="tabular-nums text-slate-400" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>{ungroupedStudentCount}人</span>}
+                    <span className="flex min-h-11 min-w-11 items-center justify-end">
+                      <Switch aria-label="仅看未分组" checked={showOnlyUngrouped} onChange={setShowOnlyUngrouped} size={classroomDisplay.mode === 'standard' ? 'small' : 'default'} className="classroom-display-switch" style={{ '--classroom-display-switch-scale': classroomDisplay.mode === 'distant' ? 1.15 : 1 } as React.CSSProperties} />
+                    </span>
                   </span>
                 </div>
               )}
@@ -2576,17 +2687,24 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                 {groupEditorStudentSections.map(section => (
                   <section key={section.id} aria-labelledby={section.label ? `group-student-section-${section.id}` : undefined}>
                     {section.label && (
-                      <div className="mb-2 flex h-8 items-center text-sm font-bold text-slate-600">
+                      <div className="mb-2 flex items-center font-bold text-slate-600" style={{ minHeight: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.modal.labelFontSize }}>
                         <h4 id={`group-student-section-${section.id}`} className="truncate">{section.label}</h4>
-                        <span className="ml-auto shrink-0 text-xs font-medium tabular-nums text-slate-400">{section.students.length}人</span>
+                        <span className="ml-auto shrink-0 font-medium tabular-nums text-slate-400" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>{section.students.length}人</span>
                       </div>
                     )}
-                    <div className="grid grid-cols-5 gap-2">
+                    <div
+                      className="grid gap-2"
+                      style={{
+                        gridTemplateColumns: `repeat(auto-fill, minmax(${classroomDisplay.memberSelect.columnMinWidth}px, 1fr))`,
+                        gap: `${classroomDisplay.memberSelect.gap}px`,
+                      }}
+                    >
                       {section.students.map(student => (
                         <GroupMemberSelectCard
                           key={student.id}
                           student={student}
                           selected={groupDraftMemberIds.has(student.id)}
+                          layout={classroomDisplay.memberSelect}
                           onClick={() => toggleGroupDraftMember(student.id)}
                         />
                       ))}
@@ -2608,17 +2726,17 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         )}
 
         {groupDrawerMode === 'settings' && (
-          <GroupDrawerBody>
+          <GroupDrawerBody layout={classroomDisplay}>
           {toastMsg && (
-            <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 shadow-sm" role="status" aria-live="polite">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[11px] font-black text-white">!</span>
+            <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 font-semibold text-amber-800 shadow-sm" style={{ fontSize: classroomDisplay.modal.bodyFontSize }} role="status" aria-live="polite">
+              <span className="flex shrink-0 items-center justify-center rounded-full bg-amber-400 font-black text-white" style={{ width: classroomDisplay.modal.iconSize, height: classroomDisplay.modal.iconSize, fontSize: classroomDisplay.modal.iconSize - 10 }}>!</span>
               <span className="min-w-0 truncate">{toastMsg}</span>
             </div>
           )}
           <div className="space-y-6">
             <section>
-              <h3 className="mb-3 text-sm font-bold text-slate-600">小组头像</h3>
-              <div className="grid grid-cols-6 gap-3">
+              <h3 className="mb-3 font-bold text-slate-600" style={{ fontSize: classroomDisplay.modal.labelFontSize }}>小组头像</h3>
+              <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${classroomDisplay.modal.avatarOptionMinWidth}px, 1fr))` }}>
                 {studentGroupAvatarOptions.map(option => {
                   const selected = option.key === groupDraftAvatarKey;
                   return (
@@ -2631,15 +2749,15 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                       className={`relative aspect-square overflow-hidden rounded-lg border-2 ${selected ? 'border-blue-500 ring-2 ring-blue-100' : 'border-transparent'}`}
                     >
                       <img src={option.src} alt="" className="h-full w-full object-cover" />
-                      {selected && <span className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white"><Check size={12} /></span>}
+                      {selected && <span className="absolute bottom-1 right-1 flex items-center justify-center rounded-full bg-blue-600 text-white" style={{ width: classroomDisplay.modal.iconSize, height: classroomDisplay.modal.iconSize }}><Check size={classroomDisplay.modal.iconSize - 8} /></span>}
                     </button>
                   );
                 })}
               </div>
             </section>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold text-slate-600">小组名称</span>
-              <Input value={groupDraftName} onChange={setGroupDraftName} maxLength={20} />
+              <span className="mb-2 block font-bold text-slate-600" style={{ fontSize: classroomDisplay.modal.labelFontSize }}>小组名称</span>
+              <Input value={groupDraftName} onChange={setGroupDraftName} maxLength={20} className="classroom-display-input" style={classroomDisplayInputStyle} />
             </label>
           </div>
           </GroupDrawerBody>
@@ -2649,87 +2767,94 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
       <div className={`fixed inset-0 z-[120] flex items-center justify-center ${evaluationModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={handleCloseEvaluation} />
         <div
-          className={`w-[840px] bg-white rounded-[2.5rem] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.25)] overflow-hidden border border-white relative transition-all duration-500 ${evaluationModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
-          style={sidebarTiming}
+          className={`relative flex flex-col overflow-hidden rounded-[2.5rem] border border-white bg-white shadow-[0_60px_120px_-20px_rgba(0,0,0,0.25)] transition-all duration-500 ${evaluationModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+          style={{ ...sidebarTiming, width: `min(${classroomDisplay.evaluation.modalWidth}px, calc(100vw - 32px))`, maxHeight: 'calc(100vh - 32px)' }}
           onClick={e => e.stopPropagation()}
         >
-          <div className="px-10 py-[24px] flex items-center justify-between border-b border-slate-100 bg-white min-h-[72px]">
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white" style={{ minHeight: classroomDisplay.evaluation.headerHeight, padding: `0 ${classroomDisplay.evaluation.headerPadding}px` }}>
             <div className="flex items-center gap-3 flex-1">
               {isManagerMode ? (
-                <div className="bg-slate-50 p-2 rounded-xl text-slate-400 border border-slate-100 flex items-center justify-center w-11 h-11"><Settings size={20} strokeWidth={1.5} /></div>
+                <div className="bg-slate-50 p-2 rounded-xl text-slate-400 border border-slate-100 flex items-center justify-center" style={{ width: classroomDisplay.evaluation.avatarSize, height: classroomDisplay.evaluation.avatarSize }}><Settings size={classroomDisplay.evaluation.avatarIconSize} strokeWidth={1.5} /></div>
               ) : (isMultiSelect && selectedIds.length > 1) ? (
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br from-blue-500 to-blue-700">
-                  <Users size={20} strokeWidth={2.5} />
+                <div className="rounded-xl flex items-center justify-center text-white font-black shadow-sm bg-gradient-to-br from-blue-500 to-blue-700" style={{ width: classroomDisplay.evaluation.avatarSize, height: classroomDisplay.evaluation.avatarSize, fontSize: classroomDisplay.evaluation.titleFontSize }}>
+                  <Users size={classroomDisplay.evaluation.avatarIconSize} strokeWidth={2.5} />
                 </div>
               ) : (viewMode === 'student' || evalStudent) && evalStudent ? (
                 <img
                   src={evalStudent.avatar}
                   alt={`${evalStudent.name}头像`}
-                  className="h-11 w-11 shrink-0 rounded-xl object-cover shadow-sm"
+                  className="shrink-0 rounded-xl object-cover shadow-sm"
+                  style={{ width: classroomDisplay.evaluation.avatarSize, height: classroomDisplay.evaluation.avatarSize }}
                 />
               ) : (
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm bg-gradient-to-br from-indigo-500 to-purple-600">
-                  <Users size={20} strokeWidth={2.5} />
+                <div className="rounded-xl flex items-center justify-center text-white font-black shadow-sm bg-gradient-to-br from-indigo-500 to-purple-600" style={{ width: classroomDisplay.evaluation.avatarSize, height: classroomDisplay.evaluation.avatarSize, fontSize: classroomDisplay.evaluation.titleFontSize }}>
+                  <Users size={classroomDisplay.evaluation.avatarIconSize} strokeWidth={2.5} />
                 </div>
               )}
               <div className="flex flex-col justify-center">
                 <div className="flex items-center gap-1.5 translate-y-0.5">
-                  <h2 className="text-lg font-black text-slate-700 tracking-tight leading-none">
+                  <h2 className="font-black text-slate-700 tracking-tight leading-none" style={{ fontSize: classroomDisplay.evaluation.titleFontSize }}>
                     {isManagerMode ? '管理选项' : (isMultiSelect && selectedIds.length > 1 ? `批量点评 (${(viewMode === 'student' || (selectedIds.length > 0 && students.some(s => s.id === selectedIds[0]))) ? '学生' : '小组'})` : (evalStudent ? evalStudent.name : evalGroup?.name))}
                   </h2>
-                  {!isManagerMode && evalStudent && (!isMultiSelect || selectedIds.length <= 1) && (evalStudent?.gender === 'male' ? <Mars size={14} className="text-blue-500" strokeWidth={3} /> : <Venus size={14} className="text-pink-500" strokeWidth={3} />)}
+                  {!isManagerMode && evalStudent && (!isMultiSelect || selectedIds.length <= 1) && (evalStudent?.gender === 'male' ? <Mars size={classroomDisplay.evaluation.managerMetaFontSize + 4} className="text-blue-500" strokeWidth={3} /> : <Venus size={classroomDisplay.evaluation.managerMetaFontSize + 4} className="text-pink-500" strokeWidth={3} />)}
                 </div>
-                {!isManagerMode && evalStudent && (!isMultiSelect || selectedIds.length <= 1) && (<span className="text-[10px] font-bold text-slate-300 font-mono tracking-tighter uppercase mt-1">{evalStudent?.studentNo}</span>)}
-                {!isManagerMode && isMultiSelect && selectedIds.length > 1 && (<span className="text-[12px] font-bold text-blue-500 mt-1">已选择 {selectedIds.length} 位{(viewMode === 'student' || (selectedIds.length > 0 && students.some(s => s.id === selectedIds[0]))) ? '学生' : '小组'}</span>)}
+                {!isManagerMode && evalStudent && (!isMultiSelect || selectedIds.length <= 1) && (<span className="font-bold text-slate-300 font-mono tracking-tighter uppercase mt-1" style={{ fontSize: classroomDisplay.evaluation.studentNoFontSize }}>{evalStudent?.studentNo}</span>)}
+                {!isManagerMode && isMultiSelect && selectedIds.length > 1 && (<span className="font-bold text-blue-500 mt-1" style={{ fontSize: classroomDisplay.evaluation.selectionHintFontSize }}>已选择 {selectedIds.length} 位{(viewMode === 'student' || (selectedIds.length > 0 && students.some(s => s.id === selectedIds[0]))) ? '学生' : '小组'}</span>)}
               </div>
             </div>
-            <div className="flex-1 flex justify-center"><div className="flex bg-slate-100 p-1 rounded-xl gap-0.5 w-[220px]"><button onClick={() => setEvalTab('positive')} className={`flex-1 py-2 rounded-lg font-black text-sm transition-all ${evalTab === 'positive' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}>表扬</button><button onClick={() => setEvalTab('negative')} className={`flex-1 py-2 rounded-lg font-black text-sm transition-all ${evalTab === 'negative' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}>待改进</button></div></div>
-            <div className="flex-1 flex items-center justify-end gap-2 text-slate-400">{isManagerMode ? (<button onClick={() => { setIsManagerMode(false); setNewCategoryName(null); setEditingCategoryName(null); }} className="w-9 h-9 flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90"><ArrowLeft size={20} strokeWidth={2} /></button>) : (<button onClick={() => { setIsManagerMode(true); setManagerSelectedCategory(categories[0]); }} className="w-9 h-9 flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90"><Settings size={20} strokeWidth={2} /></button>)}<button onClick={handleCloseEvaluation} className="w-9 h-9 flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90"><X size={22} strokeWidth={2} /></button></div>
+            <div className="flex flex-1 justify-center"><div className="flex bg-slate-100 p-1 rounded-xl gap-0.5" style={{ width: classroomDisplay.evaluation.avatarSize * 5, height: classroomDisplay.evaluation.optionHeight - 8 }}><button onClick={() => setEvalTab('positive')} className={`flex-1 rounded-lg px-2 font-black transition-all ${evalTab === 'positive' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`} style={{ height: classroomDisplay.evaluation.optionHeight - 16, fontSize: classroomDisplay.evaluation.tabFontSize }}>表扬</button><button onClick={() => setEvalTab('negative')} className={`flex-1 rounded-lg px-2 font-black transition-all ${evalTab === 'negative' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`} style={{ height: classroomDisplay.evaluation.optionHeight - 16, fontSize: classroomDisplay.evaluation.tabFontSize }}>待改进</button></div></div>
+            <div className="flex flex-1 items-center justify-end gap-2 text-slate-400">{isManagerMode ? (<button onClick={() => { setIsManagerMode(false); setNewCategoryName(null); setEditingCategoryName(null); }} className="flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.closeButtonSize, height: classroomDisplay.evaluation.closeButtonSize }}><ArrowLeft size={classroomDisplay.evaluation.closeIconSize} strokeWidth={2} /></button>) : (<button onClick={() => { setIsManagerMode(true); setManagerSelectedCategory(categories[0]); }} className="flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.closeButtonSize, height: classroomDisplay.evaluation.closeButtonSize }}><Settings size={classroomDisplay.evaluation.closeIconSize} strokeWidth={2} /></button>)}<button onClick={handleCloseEvaluation} className="flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.closeButtonSize, height: classroomDisplay.evaluation.closeButtonSize }}><X size={classroomDisplay.evaluation.closeIconSize} strokeWidth={2} /></button></div>
           </div>
-          <div className="overflow-hidden bg-[#f8fafc]">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] custom-scrollbar">
             {!isManagerMode ? (
-              <div className="space-y-8 px-10 py-8">
+              <div className="space-y-8" style={{ padding: `${classroomDisplay.evaluation.contentPadding}px` }}>
                 {categories.map((cat, idx) => {
                   const catOptions = options.filter(o => o.type === evalTab && o.category === cat);
                   if (catOptions.length === 0) return null;
                   const indicatorColors = ['bg-blue-500', 'bg-violet-500', 'bg-orange-500', 'bg-pink-500', 'bg-emerald-500'];
                   return (
-                    <div key={cat} className="space-y-4">
-                      <div className="flex items-center gap-2.5 ml-1"><div className={`w-1.5 h-4 ${indicatorColors[idx % indicatorColors.length]} rounded-full`} /><span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">{cat}</span></div>
-                      <div className="grid grid-cols-5 gap-4 w-full">{catOptions.map(option => (<button key={option.id} onClick={() => handleEvaluationSelect(option)} className={`group h-14 bg-white border-2 border-white rounded-2xl flex items-center justify-center px-3 text-center shadow-[0_4px_12px_rgba(0,0,0,0.02)] transition-all active:scale-95 hover:border-blue-500 hover:shadow-lg hover:scale-[1.03]`}><span className="text-[15px] font-bold text-slate-700 group-hover:text-blue-600 transition-colors leading-tight">{option.label}</span></button>))}</div>
+                    <div key={cat} className="space-y-4" style={{ gap: classroomDisplay.evaluation.categoryGap }}>
+                      <div className="flex items-center gap-2.5 ml-1"><div className={`w-1.5 rounded-full ${indicatorColors[idx % indicatorColors.length]}`} style={{ height: classroomDisplay.evaluation.categoryFontSize + 4 }} /><span className="font-black text-slate-400 uppercase tracking-widest" style={{ fontSize: classroomDisplay.evaluation.categoryFontSize }}>{cat}</span></div>
+                      <div
+                        className="grid w-full"
+                        style={{ gridTemplateColumns: `repeat(${classroomDisplay.evaluation.optionColumns}, minmax(0, 1fr))`, gap: `${classroomDisplay.evaluation.optionGap}px` }}
+                      >{catOptions.map(option => (<button key={option.id} onClick={() => handleEvaluationSelect(option)} className={`group h-14 bg-white border-2 border-white rounded-2xl flex items-center justify-center px-3 text-center shadow-[0_4px_12px_rgba(0,0,0,0.02)] transition-all active:scale-95 hover:border-blue-500 hover:shadow-lg hover:scale-[1.03]`} style={{ height: classroomDisplay.evaluation.optionHeight }}><span className="text-[15px] font-bold text-slate-700 group-hover:text-blue-600 transition-colors leading-tight" style={{ fontSize: classroomDisplay.evaluation.optionFontSize }}>{option.label}</span></button>))}</div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="flex h-[480px]">
-                <div className="w-[200px] border-r border-slate-100 bg-white flex flex-col shrink-0 overflow-x-hidden">
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50"><span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">评价维度</span><button onClick={() => { if (newCategoryName === null) setNewCategoryName(''); }} className="w-6 h-6 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-lg transition-all active:scale-90"><Plus size={14} strokeWidth={3} /></button></div>
+              <div className="flex" style={{ height: classroomDisplay.evaluation.managerHeight }}>
+                <div className="border-r border-slate-100 bg-white flex flex-col shrink-0 overflow-x-hidden" style={{ width: classroomDisplay.evaluation.managerSidebarWidth }}>
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50"><span className="font-black text-slate-400 uppercase tracking-widest" style={{ fontSize: classroomDisplay.evaluation.managerHeaderFontSize }}>评价维度</span><button onClick={() => { if (newCategoryName === null) setNewCategoryName(''); }} className="flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-lg transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.managerControlSize, height: classroomDisplay.evaluation.managerControlSize }}><Plus size={classroomDisplay.evaluation.managerControlSize - 10} strokeWidth={3} /></button></div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar py-2">
                     {categories.map((cat, idx) => {
                       const isActive = managerSelectedCategory === cat;
                       const tabCount = options.filter(o => o.type === evalTab && o.category === cat).length;
                       const indicatorColors = ['bg-blue-500', 'bg-violet-500', 'bg-orange-500', 'bg-pink-500', 'bg-emerald-500'];
                       return (
-                        <div key={cat} onClick={() => setManagerSelectedCategory(cat)} className={`group flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-all relative ${isActive ? 'bg-blue-50/80' : 'hover:bg-slate-50'}`}>{isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-blue-500 rounded-r-full" />}<div className={`w-1.5 h-1.5 rounded-full shrink-0 ${indicatorColors[idx % indicatorColors.length]}`} /><span className={`text-sm font-bold flex-1 truncate transition-colors ${isActive ? 'text-blue-600' : 'text-slate-600'}`}>{cat}</span><span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0 ${isActive ? 'text-blue-500 bg-blue-100' : 'text-slate-300 bg-slate-100'}`}>{tabCount}</span><button onClick={(e) => { e.stopPropagation(); if (categories.length <= 1) return; const catCount = options.filter(o => o.type === evalTab && o.category === cat).length; const tabLabel = evalTab === 'positive' ? '表扬' : '待改进'; if (catCount > 0) { setToastMsg(`「${cat}」的${tabLabel}下还有 ${catCount} 个评价项，请先清空后再删除。`); setTimeout(() => setToastMsg(null), 3000); return; } const otherTab = evalTab === 'positive' ? 'negative' : 'positive'; const otherCount = options.filter(o => o.type === otherTab && o.category === cat).length; const otherLabel = otherTab === 'positive' ? '表扬' : '待改进'; if (otherCount > 0) { setToastMsg(`「${cat}」的${otherLabel}下还有 ${otherCount} 个评价项，请先清空后再删除。`); setTimeout(() => setToastMsg(null), 3000); return; } const newCats = categories.filter(c => c !== cat); setCategories(newCats); if (isActive) setManagerSelectedCategory(newCats[0]); }} className="w-5 h-5 flex items-center justify-center text-slate-200 hover:text-rose-500 rounded transition-all opacity-0 group-hover:opacity-100 shrink-0"><X size={12} strokeWidth={2} /></button></div>
+                        <div key={cat} onClick={() => setManagerSelectedCategory(cat)} className={`group flex items-center gap-3 px-5 cursor-pointer transition-all relative ${isActive ? 'bg-blue-50/80' : 'hover:bg-slate-50'}`} style={{ minHeight: classroomDisplay.evaluation.managerRowHeight }}>{isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] bg-blue-500 rounded-r-full" style={{ height: classroomDisplay.evaluation.managerControlSize }} />}<div className={`w-1.5 h-1.5 rounded-full shrink-0 ${indicatorColors[idx % indicatorColors.length]}`} /><span className={`font-bold flex-1 truncate transition-colors ${isActive ? 'text-blue-600' : 'text-slate-600'}`} style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>{cat}</span><span className={`font-bold px-1.5 py-0.5 rounded-md shrink-0 ${isActive ? 'text-blue-500 bg-blue-100' : 'text-slate-300 bg-slate-100'}`} style={{ fontSize: classroomDisplay.evaluation.managerMetaFontSize }}>{tabCount}</span><button onClick={(e) => { e.stopPropagation(); if (categories.length <= 1) return; const catCount = options.filter(o => o.type === evalTab && o.category === cat).length; const tabLabel = evalTab === 'positive' ? '表扬' : '待改进'; if (catCount > 0) { setToastMsg(`「${cat}」的${tabLabel}下还有 ${catCount} 个评价项，请先清空后再删除。`); setTimeout(() => setToastMsg(null), 3000); return; } const otherTab = evalTab === 'positive' ? 'negative' : 'positive'; const otherCount = options.filter(o => o.type === otherTab && o.category === cat).length; const otherLabel = otherTab === 'positive' ? '表扬' : '待改进'; if (otherCount > 0) { setToastMsg(`「${cat}」的${otherLabel}下还有 ${otherCount} 个评价项，请先清空后再删除。`); setTimeout(() => setToastMsg(null), 3000); return; } const newCats = categories.filter(c => c !== cat); setCategories(newCats); if (isActive) setManagerSelectedCategory(newCats[0]); }} className="flex items-center justify-center text-slate-200 hover:text-rose-500 rounded transition-all opacity-0 group-hover:opacity-100 shrink-0" style={{ width: classroomDisplay.evaluation.managerControlSize, height: classroomDisplay.evaluation.managerControlSize }}><X size={classroomDisplay.evaluation.managerMetaFontSize + 2} strokeWidth={2} /></button></div>
                       );
                     })}
-                    {newCategoryName !== null && (<div className="flex items-center gap-3 px-5 py-3.5 bg-blue-50/50 overflow-hidden"><div className="w-1.5 h-1.5 rounded-full shrink-0 bg-blue-400" /><input autoFocus value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} onBlur={() => { const name = newCategoryName.trim(); if (name && !categories.includes(name)) { setCategories([...categories, name]); setManagerSelectedCategory(name); } setNewCategoryName(null); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setNewCategoryName(null); }} placeholder="输入维度名称" className="min-w-0 w-full text-sm font-bold text-blue-600 bg-transparent border-b border-blue-400 outline-none py-0.5 placeholder:text-blue-300" /></div>)}
+                    {newCategoryName !== null && (<div className="flex items-center gap-3 px-5 py-3.5 bg-blue-50/50 overflow-hidden"><div className="w-1.5 h-1.5 rounded-full shrink-0 bg-blue-400" /><input autoFocus value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} onBlur={() => { const name = newCategoryName.trim(); if (name && !categories.includes(name)) { setCategories([...categories, name]); setManagerSelectedCategory(name); } setNewCategoryName(null); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setNewCategoryName(null); }} placeholder="输入维度名称" className="min-w-0 w-full font-bold text-blue-600 bg-transparent border-b border-blue-400 outline-none py-0.5 placeholder:text-blue-300" style={{ fontSize: classroomDisplay.evaluation.optionFontSize }} /></div>)}
                   </div>
                 </div>
                 <div className="flex-1 flex flex-col overflow-hidden">
-                  <div className="flex items-center justify-between px-8 py-4 border-b border-slate-50 bg-white"><div className="flex items-center gap-2">{editingCategoryName === managerSelectedCategory ? (<input autoFocus value={tempCategoryName} onChange={(e) => setTempCategoryName(e.target.value)} onBlur={() => { if (tempCategoryName.trim() && tempCategoryName !== managerSelectedCategory) { const newName = tempCategoryName.trim(); setCategories(categories.map(c => c === managerSelectedCategory ? newName : c)); setOptions(options.map(o => o.category === managerSelectedCategory ? { ...o, category: newName } : o)); setManagerSelectedCategory(newName); } setEditingCategoryName(null); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} className="text-sm font-black text-slate-700 bg-transparent border-b-2 border-blue-500 outline-none py-0.5 w-[120px]" />) : (<><span className="text-sm font-black text-slate-700">{managerSelectedCategory}</span><button onClick={() => { setEditingCategoryName(managerSelectedCategory); setTempCategoryName(managerSelectedCategory); }} className="w-5 h-5 flex items-center justify-center text-slate-300 hover:text-blue-500 transition-all"><Pencil size={11} /></button></>)}</div><button onClick={() => { setIsAddingOption(true); setNewOptionLabel(''); }} className="text-xs font-black text-blue-600 hover:scale-105 transition-transform flex items-center gap-1 active:scale-95"><Plus size={14} strokeWidth={3} />新增</button></div>
+                    <div className="flex items-center justify-between px-8 border-b border-slate-50 bg-white" style={{ minHeight: classroomDisplay.evaluation.managerRowHeight }}><div className="flex items-center gap-2">{editingCategoryName === managerSelectedCategory ? (<input autoFocus value={tempCategoryName} onChange={(e) => setTempCategoryName(e.target.value)} onBlur={() => { if (tempCategoryName.trim() && tempCategoryName !== managerSelectedCategory) { const newName = tempCategoryName.trim(); setCategories(categories.map(c => c === managerSelectedCategory ? newName : c)); setOptions(options.map(o => o.category === managerSelectedCategory ? { ...o, category: newName } : o)); setManagerSelectedCategory(newName); } setEditingCategoryName(null); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} className="font-black text-slate-700 bg-transparent border-b-2 border-blue-500 outline-none py-0.5 w-[160px]" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }} />) : (<><span className="font-black text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>{managerSelectedCategory}</span><button onClick={() => { setEditingCategoryName(managerSelectedCategory); setTempCategoryName(managerSelectedCategory); }} className="flex items-center justify-center text-slate-300 hover:text-blue-500 transition-all" style={{ width: classroomDisplay.evaluation.managerControlSize, height: classroomDisplay.evaluation.managerControlSize }}><Pencil size={classroomDisplay.evaluation.managerMetaFontSize + 2} /></button></>)}</div><button onClick={() => { setIsAddingOption(true); setNewOptionLabel(''); }} className="font-black text-blue-600 hover:scale-105 transition-transform flex items-center gap-1 active:scale-95" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}><Plus size={classroomDisplay.evaluation.managerMetaFontSize + 4} strokeWidth={3} />新增</button></div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
                     {(options.filter(o => o.type === evalTab && o.category === managerSelectedCategory).length > 0 || isAddingOption) ? (
-                      <div className="grid grid-cols-3 gap-4">
+                      <div
+                        className="grid"
+                        style={{ gridTemplateColumns: `repeat(${classroomDisplay.evaluation.managerColumns}, minmax(0, 1fr))`, gap: `${classroomDisplay.evaluation.optionGap}px` }}
+                      >
                         {options.filter(o => o.type === evalTab && o.category === managerSelectedCategory).map(opt => (
                           <div key={opt.id} className="group relative">
-                            <div className={`h-14 bg-white border-2 ${editingId === opt.id ? 'border-blue-500 shadow-sm' : 'border-white hover:border-slate-200'} rounded-2xl flex items-center justify-center px-4 text-center shadow-[0_4px_12px_rgba(0,0,0,0.02)] transition-all relative`}>{editingId === opt.id ? (<input autoFocus value={tempLabel} onChange={(e) => setTempLabel(e.target.value)} onBlur={() => { if (tempLabel.trim()) setOptions(options.map(o => o.id === editingId ? { ...o, label: tempLabel } : o)); setEditingId(null); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} className="w-full h-full text-center text-[15px] font-bold text-blue-600 bg-transparent outline-none" />) : (<span className="text-[15px] font-bold text-slate-700">{opt.label}</span>)}{editingId !== opt.id && (<div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all"><button onClick={() => { setEditingId(opt.id); setTempLabel(opt.label); }} className="w-6 h-6 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"><Pencil size={11} /></button><button onClick={() => setOptions(options.filter(o => o.id !== opt.id))} className="w-6 h-6 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-300 transition-all shadow-sm"><Trash2 size={11} /></button></div>)}</div>
+                            <div className={`bg-white border-2 ${editingId === opt.id ? 'border-blue-500 shadow-sm' : 'border-white hover:border-slate-200'} rounded-2xl flex items-center justify-center px-4 text-center shadow-[0_4px_12px_rgba(0,0,0,0.02)] transition-all relative`} style={{ height: classroomDisplay.evaluation.managerOptionHeight }}>{editingId === opt.id ? (<input autoFocus value={tempLabel} onChange={(e) => setTempLabel(e.target.value)} onBlur={() => { if (tempLabel.trim()) setOptions(options.map(o => o.id === editingId ? { ...o, label: tempLabel } : o)); setEditingId(null); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} className="w-full h-full text-center font-bold text-blue-600 bg-transparent outline-none" style={{ fontSize: classroomDisplay.evaluation.optionFontSize }} />) : (<span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.evaluation.optionFontSize }}>{opt.label}</span>)}{editingId !== opt.id && (<div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all"><button onClick={() => { setEditingId(opt.id); setTempLabel(opt.label); }} className="bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm" style={{ width: classroomDisplay.evaluation.managerControlSize, height: classroomDisplay.evaluation.managerControlSize }}><Pencil size={classroomDisplay.evaluation.managerMetaFontSize + 2} /></button><button onClick={() => setOptions(options.filter(o => o.id !== opt.id))} className="bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-300 transition-all shadow-sm" style={{ width: classroomDisplay.evaluation.managerControlSize, height: classroomDisplay.evaluation.managerControlSize }}><Trash2 size={classroomDisplay.evaluation.managerMetaFontSize + 2} /></button></div>)}</div>
                           </div>
                         ))}
-                        {isAddingOption && (<div className="group relative"><div className="h-14 bg-white border-2 border-blue-500 shadow-sm rounded-2xl flex items-center justify-center px-4 text-center"><input autoFocus value={newOptionLabel} onChange={(e) => setNewOptionLabel(e.target.value)} onBlur={() => { const label = newOptionLabel.trim(); if (label) { setOptions([...options, { id: Date.now().toString(), label, category: managerSelectedCategory, type: evalTab }]); } setIsAddingOption(false); setNewOptionLabel(''); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') { setIsAddingOption(false); setNewOptionLabel(''); } }} placeholder="输入评价名称" className="w-full h-full text-center text-[15px] font-bold text-blue-600 bg-transparent outline-none placeholder:text-blue-300" /></div></div>)}
+                        {isAddingOption && (<div className="group relative"><div className="bg-white border-2 border-blue-500 shadow-sm rounded-2xl flex items-center justify-center px-4 text-center" style={{ height: classroomDisplay.evaluation.managerOptionHeight }}><input autoFocus value={newOptionLabel} onChange={(e) => setNewOptionLabel(e.target.value)} onBlur={() => { const label = newOptionLabel.trim(); if (label) { setOptions([...options, { id: Date.now().toString(), label, category: managerSelectedCategory, type: evalTab }]); } setIsAddingOption(false); setNewOptionLabel(''); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') { setIsAddingOption(false); setNewOptionLabel(''); } }} placeholder="输入评价名称" className="w-full h-full text-center font-bold text-blue-600 bg-transparent outline-none placeholder:text-blue-300" style={{ fontSize: classroomDisplay.evaluation.optionFontSize }} /></div></div>)}
                       </div>
-                    ) : (<div className="flex flex-col items-center justify-center h-full text-slate-300 gap-3 py-20"><div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center"><Plus size={20} strokeWidth={1.5} /></div><span className="text-xs font-bold">暂无评价项，点击上方新增</span></div>)}
+                    ) : (<div className="flex h-full flex-col items-center justify-center gap-3 text-slate-300" style={{ padding: `${classroomDisplay.evaluation.contentPadding / 2}px 0` }}><div className="flex items-center justify-center rounded-2xl bg-slate-100" style={{ width: classroomDisplay.evaluation.managerControlSize + 24, height: classroomDisplay.evaluation.managerControlSize + 24 }}><Plus size={classroomDisplay.evaluation.managerControlSize - 4} strokeWidth={1.5} /></div><span className="font-bold" style={{ fontSize: classroomDisplay.evaluation.managerMetaFontSize + 2 }}>暂无评价项，点击上方新增</span></div>)}
                   </div>
                 </div>
               </div>
@@ -2745,25 +2870,32 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           isVoiceListening={isVoiceListening}
           voiceLevel={voiceLevel}
           onToggleVoice={toggleVoiceCapture}
+          layout={classroomDisplay.quickActions}
         />
       )}
 
       <div className={`fixed inset-0 z-[150] flex items-center justify-center ${randomModalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl" onClick={() => { if (!isRolling) closeRandomModal(); }} />
         <div
-          className={`w-[840px] min-h-[540px] bg-white rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)] border border-white relative overflow-hidden flex flex-col transition-all duration-500 ${randomModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
-          style={sidebarTiming}
+          className={`bg-white rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)] border border-white relative overflow-hidden flex flex-col transition-all duration-500 ${randomModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+          style={{ ...sidebarTiming, width: `min(${classroomDisplay.randomPicker.modalWidth}px, calc(100vw - 32px))`, height: `min(${classroomDisplay.randomPicker.modalHeight}px, calc(100vh - 32px))` }}
         >
-          <button onClick={() => { if (!isRolling) closeRandomModal(); }} disabled={isRolling} className={`absolute top-7 right-7 w-10 h-10 flex items-center justify-center rounded-xl transition-all z-50 border ${isRolling ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed' : 'bg-white text-slate-400 border-slate-100 hover:text-blue-600 hover:border-blue-200 active:scale-95'}`}><X size={20} strokeWidth={3} /></button>
+          <button onClick={() => { if (!isRolling) closeRandomModal(); }} disabled={isRolling} className={`absolute z-50 flex items-center justify-center rounded-xl transition-all border ${isRolling ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed' : 'bg-white text-slate-400 border-slate-100 hover:text-blue-600 hover:border-blue-200 active:scale-95'}`} style={{ top: classroomDisplay.randomPicker.headerPadding - 12, right: classroomDisplay.randomPicker.headerPadding - 12, width: classroomDisplay.randomPicker.closeButtonSize, height: classroomDisplay.randomPicker.closeButtonSize }}><X size={classroomDisplay.randomPicker.closeIconSize} strokeWidth={3} /></button>
           
-          <div className="px-10 pt-10 pb-4 shrink-0">
+          <div className="shrink-0" style={{ padding: `${classroomDisplay.randomPicker.headerPadding}px ${classroomDisplay.randomPicker.headerPadding}px ${Math.round(classroomDisplay.randomPicker.headerPadding / 2)}px` }}>
             <div className="flex flex-col items-center gap-2 text-center">
-              <h2 className="text-[30px] font-black text-slate-800 tracking-tight">随机点名</h2>
+              <h2 className="font-black text-slate-800 tracking-tight" style={{ fontSize: classroomDisplay.randomPicker.titleFontSize }}>随机点名</h2>
             </div>
           </div>
 
-          <div className="flex-1 overflow-visible px-10 py-10 flex flex-col justify-center">
-            <div className={`grid justify-items-center content-center gap-x-12 gap-y-4 ${randomCount === 1 ? 'grid-cols-1' : randomCount <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+          <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar flex flex-col justify-center" style={{ padding: classroomDisplay.randomPicker.contentPadding }}>
+            <div
+              className="grid justify-items-center content-center"
+              style={{
+                gap: `${classroomDisplay.randomPicker.gap}px`,
+                gridTemplateColumns: `repeat(${randomCount === 1 ? 1 : randomCount <= 4 ? 2 : 3}, minmax(0, 1fr))`,
+              }}
+            >
                 {[...Array(randomCount)].map((_, idx) => {
                   const student = viewMode === 'student' ? randomStudents[idx] : null;
                   const group = viewMode === 'group' ? randomGroups[idx] : null;
@@ -2777,26 +2909,30 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                       className={`relative group transition-all duration-300 ${isSingle ? 'scale-[1.1]' : ''}`}
                     >
                       {/* 槽位标签：直接定位在槽位正上方 */}
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap z-30 pointer-events-none">
-                        <span className={`text-[12px] font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full border shadow-sm transition-all duration-500 ${isFinished ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>第 {idx + 1} {viewMode === 'student' ? '位' : '组'}</span>
+                      <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap z-30 pointer-events-none" style={{ top: -Math.round(classroomDisplay.randomPicker.slotLabelFontSize / 2) }}>
+                        <span className={`font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full border shadow-sm transition-all duration-500 ${isFinished ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`} style={{ fontSize: classroomDisplay.randomPicker.slotLabelFontSize }}>第 {idx + 1} {viewMode === 'student' ? '位' : '组'}</span>
                       </div>
 
                       {/* 槽位容器 (可见虚线框 -> 金色完成框) */}
-                      <div className={`${viewMode === 'student' ? 'w-[180px] h-[195px]' : 'w-[300px] h-[140px]'} rounded-[2rem] flex flex-col items-center justify-center transition-all duration-500 relative`}>
-                        <div className={`absolute inset-0 rounded-[2rem] transition-all duration-500 ${isFinished ? 'border-2 border-amber-400 bg-amber-50/20 animate-gold-finish-burst' : 'border-2 border-dashed border-slate-200 bg-white'}`} />
+                      <div
+                        className="flex flex-col items-center justify-center transition-all duration-500 relative"
+                        style={{ width: viewMode === 'student' ? classroomDisplay.randomPicker.studentSlotWidth : classroomDisplay.randomPicker.groupSlotWidth, height: viewMode === 'student' ? classroomDisplay.randomPicker.studentSlotHeight : classroomDisplay.randomPicker.groupSlotHeight, borderRadius: classroomDisplay.randomPicker.slotRadius }}
+                      >
+                        <div className={`absolute inset-0 transition-all duration-500 ${isFinished ? 'border-2 border-amber-400 bg-amber-50/20 animate-gold-finish-burst' : 'border-2 border-dashed border-slate-200 bg-white'}`} style={{ borderRadius: classroomDisplay.randomPicker.slotRadius }} />
                         {(!student && !group || isItemRolling) && (
-                          <div className="relative z-10 w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-200">
-                            {viewMode === 'student' ? <User size={24} /> : <Users size={24} />}
+                          <div className="relative z-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-200" style={{ width: classroomDisplay.randomPicker.emptyIconContainerSize, height: classroomDisplay.randomPicker.emptyIconContainerSize }}>
+                            {viewMode === 'student' ? <User size={classroomDisplay.randomPicker.emptyIconSize} /> : <Users size={classroomDisplay.randomPicker.emptyIconSize} />}
                           </div>
                         )}
                         
                         {(viewMode === 'student' ? student : group) && (
-                          <div className="absolute inset-0 p-3 flex items-center justify-center animate-in fade-in duration-300 z-10">
+                          <div className="absolute inset-0 flex items-center justify-center animate-in fade-in duration-300 z-10" style={{ padding: classroomDisplay.randomPicker.slotPadding }}>
                             {viewMode === 'student' ? (
                               <StudentCard 
                                 student={student!} 
                                 performance={getStudentPerformance(student!)}
                                 displaySettings={studentCardDisplaySettings}
+                                layout={classroomDisplay.studentCard}
                                 isRolling={false} 
                                 isSelectable={!isRolling}
                                 selected={selectedIds.includes(student!.id)}
@@ -2812,6 +2948,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                                 memberNames={getGroupMemberNames(group!)}
                                 performance={getGroupPerformance(group!.id)}
                                 displaySettings={groupCardDisplaySettings}
+                                layout={classroomDisplay.groupCard}
                                 isRolling={false}
                                 isSelectable={!isRolling}
                                 compact={true}
@@ -2833,7 +2970,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
             </div>
           </div>
 
-          <div className="px-10 py-4 h-[90px] flex items-center justify-center shrink-0 border-t border-slate-100/50 bg-white/50 backdrop-blur-sm">
+          <div className="flex items-center justify-center shrink-0 border-t border-slate-100/50 bg-white/50 backdrop-blur-sm" style={{ minHeight: classroomDisplay.randomPicker.footerHeight, padding: `16px ${classroomDisplay.randomPicker.contentPadding}px` }}>
             {!isRolling && hasRandomResults ? (
               <div className="flex flex-col items-center gap-4 w-full animate-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center bg-slate-100/80 p-1 rounded-2xl gap-1.5 shadow-inner">
@@ -2847,13 +2984,14 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                         setSelectedIds([...otherSelected, ...currentRandomIds]);
                       }
                     }} 
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all focus:outline-none ${allRandomSelected ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:text-blue-600'}`}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black transition-all focus:outline-none ${allRandomSelected ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:text-blue-600'}`}
+                    style={{ minHeight: classroomDisplay.toolbar.height - 8, fontSize: classroomDisplay.toolbar.fontSize }}
                   >
-                    <Check size={14} strokeWidth={3} />
+                    <Check size={classroomDisplay.toolbar.iconSize} strokeWidth={3} />
                     {allRandomSelected ? '取消' : '全选'}
                   </button>
                   
-                  <div className="w-px h-5 bg-slate-200 mx-0.5" />
+                  <div className="mx-0.5 w-px bg-slate-200" style={{ height: Math.max(20, classroomDisplay.toolbar.iconSize + 4) }} />
                   
                   {/* 批量点评 */}
                   <button 
@@ -2883,36 +3021,38 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                       }
                     }} 
                     disabled={selectedRandomCount === 0}
-                    className={`flex items-center gap-2 px-7 py-2.5 rounded-xl font-black text-sm transition-all focus:outline-none ${selectedRandomCount > 0 ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
+                    className={`flex items-center gap-2 px-7 py-2.5 rounded-xl font-black transition-all focus:outline-none ${selectedRandomCount > 0 ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
+                    style={{ minHeight: classroomDisplay.toolbar.height - 8, fontSize: classroomDisplay.toolbar.fontSize }}
                   >
                     批量点评
                     {selectedRandomCount > 0 && viewMode === 'student' && (
-                      <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs ml-0.5">
+                      <span className="bg-white/20 px-2 py-0.5 rounded-lg ml-0.5" style={{ fontSize: classroomDisplay.toolbar.countFontSize }}>
                         {selectedRandomCount}人
                       </span>
                     )}
                     {selectedRandomCount > 0 && viewMode === 'group' && (
-                      <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs ml-0.5">
+                      <span className="bg-white/20 px-2 py-0.5 rounded-lg ml-0.5" style={{ fontSize: classroomDisplay.toolbar.countFontSize }}>
                         {selectedRandomCount}组
                       </span>
                     )}
                   </button>
                   
-                  <div className="w-px h-5 bg-slate-200 mx-0.5" />
+                  <div className="mx-0.5 w-px bg-slate-200" style={{ height: Math.max(20, classroomDisplay.toolbar.iconSize + 4) }} />
                   
                   {/* 重抽一次 */}
                   <button 
                     onClick={() => handleRandomCall(viewMode === 'student' ? randomStudents.length : randomGroups.length)} 
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-500 rounded-xl font-black text-sm border border-slate-100 shadow-sm hover:text-amber-500 active:scale-95 transition-all focus:outline-none"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-500 rounded-xl font-black border border-slate-100 shadow-sm hover:text-amber-500 active:scale-95 transition-all focus:outline-none"
+                    style={{ minHeight: classroomDisplay.toolbar.height - 8, fontSize: classroomDisplay.toolbar.fontSize }}
                   >
-                    <RotateCcw size={14} strokeWidth={3} />
+                    <RotateCcw size={classroomDisplay.toolbar.iconSize} strokeWidth={3} />
                     重抽
                   </button>
                 </div>
               </div>
             ) : (
               <div className="h-full flex items-center justify-center">
-                <div className="flex gap-2 text-slate-300 animate-pulse font-black text-sm tracking-[0.18em]">正在挑选...</div>
+                <div className="flex gap-2 text-slate-300 animate-pulse font-black tracking-[0.18em]" style={{ fontSize: classroomDisplay.randomPicker.statusFontSize }}>正在挑选...</div>
               </div>
             )}
           </div>
@@ -2921,62 +3061,68 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
       {toastMsg && (
         <div className={`fixed left-1/2 z-[10030] toast-slide-down ${groupDrawerMode ? 'pointer-events-none opacity-0' : 'top-8'}`} style={{ transform: 'translateX(-50%)' }}>
-          <div className="px-5 py-3 bg-white rounded-xl shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-slate-100 flex items-center gap-3"><div className="w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shrink-0"><span className="text-[11px] font-black text-white">!</span></div><span className="text-sm font-medium text-slate-700 whitespace-nowrap">{toastMsg}</span></div>
+          <div className="px-5 py-3 bg-white rounded-xl shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-slate-100 flex items-center gap-3" style={{ fontSize: classroomDisplay.modal.bodyFontSize }}><div className="bg-amber-400 rounded-full flex items-center justify-center shrink-0" style={{ width: classroomDisplay.modal.iconSize, height: classroomDisplay.modal.iconSize }}><span className="font-black text-white" style={{ fontSize: classroomDisplay.modal.iconSize - 10 }}>!</span></div><span className="font-medium text-slate-700 whitespace-nowrap">{toastMsg}</span></div>
         </div>
       )}
 
-      <footer className="px-10 py-6 shrink-0 flex items-center justify-between bg-white border-t border-slate-100 z-50">
-        <div className="w-[120px]" />
+      <footer className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 border-t border-slate-100 bg-white px-6 py-4 z-50 lg:px-10">
+        <div className="min-w-0 justify-self-start">
+          {!isMultiSelect && !isRecountSelection && displayModeControl}
+        </div>
         {isRecountSelection ? (
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 items-center justify-self-center gap-4">
             <div className="flex items-center gap-3 rounded-2xl bg-slate-100 p-1.5 shadow-inner">
               <button
                 type="button"
                 onClick={toggleAllRecountItems}
                 disabled={(isGroupRecountSelection ? groups : filteredStudents).length === 0}
-                className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-6 py-3.5 text-sm font-black text-slate-600 shadow-sm transition-all hover:text-blue-600 disabled:cursor-not-allowed disabled:text-slate-300"
+                className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-6 py-3.5 font-black text-slate-600 shadow-sm transition-all hover:text-blue-600 disabled:cursor-not-allowed disabled:text-slate-300"
+                style={{ minHeight: classroomDisplay.toolbar.height, fontSize: classroomDisplay.toolbar.fontSize }}
               >
-                <Check size={16} strokeWidth={3} />
+                <Check size={classroomDisplay.toolbar.iconSize} strokeWidth={3} />
                 {(isGroupRecountSelection ? groups : filteredStudents).length > 0
                   && (isGroupRecountSelection ? groups : filteredStudents).every(item => recountSelectedIds.has(item.id))
                   ? '清空'
                   : '全选'}
               </button>
-              <div className="h-6 w-px bg-slate-200" />
+              <div className="w-px bg-slate-200" style={{ height: Math.max(24, classroomDisplay.toolbar.iconSize + 6) }} />
               <button
                 type="button"
                 onClick={openRecountConfirmation}
                 disabled={recountSelectedCount === 0}
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-sm font-black text-white shadow-lg transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                className="flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 font-black text-white shadow-lg transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                style={{ minHeight: classroomDisplay.toolbar.height, fontSize: classroomDisplay.toolbar.fontSize }}
               >
                 {recountSelectedCount > 0
                   ? `重新计数（${recountSelectedCount}）`
                   : `请选择${isGroupRecountSelection ? '小组' : '学生'}`}
               </button>
-              <div className="h-6 w-px bg-slate-200" />
+              <div className="w-px bg-slate-200" style={{ height: Math.max(24, classroomDisplay.toolbar.iconSize + 6) }} />
               <button
                 type="button"
                 onClick={cancelRecountSelection}
-                className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-6 py-3.5 text-sm font-black text-slate-500 shadow-sm transition-all hover:text-rose-500"
+                className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-6 py-3.5 font-black text-slate-500 shadow-sm transition-all hover:text-rose-500"
+                style={{ minHeight: classroomDisplay.toolbar.height, fontSize: classroomDisplay.toolbar.fontSize }}
               >
-                <X size={16} strokeWidth={2.5} />取消
+                <X size={classroomDisplay.toolbar.iconSize} strokeWidth={2.5} />取消
               </button>
             </div>
           </div>
         ) : isMultiSelect ? (
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 items-center justify-self-center gap-4">
             <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl gap-2 shadow-inner">
-              <button 
+              <button
                 onClick={() => { 
                   const pool = viewMode === 'student' ? filteredStudents : groups;
                   if (selectedIds.length === pool.length) setSelectedIds([]); 
                   else setSelectedIds(pool.map(item => item.id)); 
                 }} 
-                className={`flex items-center gap-2 px-6 py-3.5 rounded-xl font-black text-sm transition-all focus:outline-none ${((viewMode === 'student' && selectedIds.length === filteredStudents.length && filteredStudents.length > 0) || (viewMode === 'group' && selectedIds.length === groups.length && groups.length > 0)) ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:text-blue-600'}`}
+                className={`flex items-center gap-2 px-6 py-3.5 rounded-xl font-black transition-all focus:outline-none ${((viewMode === 'student' && selectedIds.length === filteredStudents.length && filteredStudents.length > 0) || (viewMode === 'group' && selectedIds.length === groups.length && groups.length > 0)) ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:text-blue-600'}`}
+                style={{ minHeight: classroomDisplay.toolbar.height, fontSize: classroomDisplay.toolbar.fontSize }}
               >
-                <Check size={16} strokeWidth={3} />全选
+                <Check size={classroomDisplay.toolbar.iconSize} strokeWidth={3} />全选
               </button>
-              <div className="w-px h-6 bg-slate-200" />
+              <div className="w-px bg-slate-200" style={{ height: Math.max(24, classroomDisplay.toolbar.iconSize + 6) }} />
               <button 
                 onClick={() => { 
                   if (selectedIds.length > 0) { 
@@ -2994,21 +3140,23 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                   } 
                 }} 
                 disabled={selectedIds.length === 0} 
-                className={`flex items-center gap-2 px-8 py-3.5 rounded-xl font-black text-sm transition-all focus:outline-none ${selectedIds.length > 0 ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
+                className={`flex items-center gap-2 px-8 py-3.5 rounded-xl font-black transition-all focus:outline-none ${selectedIds.length > 0 ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
+                style={{ minHeight: classroomDisplay.toolbar.height, fontSize: classroomDisplay.toolbar.fontSize }}
               >
-                点评{selectedIds.length > 0 && <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs ml-1">{selectedIds.length}{(viewMode === 'student' || students.some(s => s.id === selectedIds[0])) ? '人' : '组'}</span>}
+                点评{selectedIds.length > 0 && <span className="ml-1 rounded-lg bg-white/20 px-2 py-0.5" style={{ fontSize: classroomDisplay.toolbar.countFontSize }}>{selectedIds.length}{(viewMode === 'student' || students.some(s => s.id === selectedIds[0])) ? '人' : '组'}</span>}
               </button>
-              <div className="w-px h-6 bg-slate-200" />
-              <button onClick={() => { setIsMultiSelect(false); setSelectedIds([]); }} className="flex items-center gap-2 px-6 py-3.5 bg-white text-slate-500 rounded-xl font-black text-sm border border-slate-100 shadow-sm hover:text-rose-500 active:scale-95 transition-all focus:outline-none"><X size={16} strokeWidth={2.5} />取消</button>
+              <div className="w-px bg-slate-200" style={{ height: Math.max(24, classroomDisplay.toolbar.iconSize + 6) }} />
+              <button onClick={() => { setIsMultiSelect(false); setSelectedIds([]); }} className="flex items-center gap-2 px-6 py-3.5 bg-white text-slate-500 rounded-xl font-black border border-slate-100 shadow-sm hover:text-rose-500 active:scale-95 transition-all focus:outline-none" style={{ minHeight: classroomDisplay.toolbar.height, fontSize: classroomDisplay.toolbar.fontSize }}><X size={classroomDisplay.toolbar.iconSize} strokeWidth={2.5} />取消</button>
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => { setIsMultiSelect(true); setSelectedIds([]); }}
-              className="flex items-center gap-2.5 px-8 py-3.5 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black text-[15px] hover:text-blue-600 hover:border-blue-300 hover:shadow-lg hover:-translate-y-0.5 transition-all active:scale-95"
-            >
-              <CheckSquare size={18} />
+          <div className="flex min-w-0 items-center justify-self-center gap-4">
+              <button
+                onClick={() => { setIsMultiSelect(true); setSelectedIds([]); }}
+                className="flex items-center gap-2.5 px-8 py-3.5 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black hover:text-blue-600 hover:border-blue-300 hover:shadow-lg hover:-translate-y-0.5 transition-all active:scale-95"
+                style={{ minHeight: classroomDisplay.toolbar.height, fontSize: classroomDisplay.toolbar.fontSize }}
+              >
+                <CheckSquare size={classroomDisplay.toolbar.iconSize} />
               批量评价
             </button>
 
@@ -3017,9 +3165,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
               onMouseEnter={() => setIsRandomPickerOpen(true)}
               onMouseLeave={() => setIsRandomPickerOpen(false)}
             >
-              <div className="absolute bottom-full right-0 mb-0 h-4 w-[360px]" />
+              <div className="absolute bottom-full right-0 mb-0 h-4" style={{ width: classroomDisplay.toolbar.groupPlanMenuWidth }} />
               <div
-                className={`absolute bottom-full right-0 mb-3 inline-flex rounded-[1.6rem] border border-amber-100 bg-white/95 backdrop-blur-md px-3 py-3 shadow-[0_18px_40px_rgba(15,23,42,0.12)] transition-all duration-300 ease-out ${isRandomPickerOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}
+                className={`absolute bottom-full right-0 mb-3 inline-flex justify-center rounded-[1.6rem] border border-amber-100 bg-white/95 backdrop-blur-md px-3 py-3 shadow-[0_18px_40px_rgba(15,23,42,0.12)] transition-all duration-300 ease-out ${isRandomPickerOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}
+                style={{ width: classroomDisplay.toolbar.groupPlanMenuWidth }}
               >
                 <div className="flex items-center gap-2">
                   {randomQuickCounts.map(num => {
@@ -3035,7 +3184,8 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                         }}
                         disabled={!isAvailable}
                         aria-pressed={isActive}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black transition-all border active:scale-95 ${isAvailable ? (isActive ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-200/70' : 'bg-white text-slate-500 border-slate-200 hover:text-amber-600 hover:border-amber-300 hover:-translate-y-0.5') : 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'}`}
+                        className={`rounded-xl flex items-center justify-center font-black transition-all border active:scale-95 ${isAvailable ? (isActive ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-200/70' : 'bg-white text-slate-500 border-slate-200 hover:text-amber-600 hover:border-amber-300 hover:-translate-y-0.5') : 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'}`}
+                        style={{ width: classroomDisplay.toolbar.height - 8, height: classroomDisplay.toolbar.height - 8, fontSize: classroomDisplay.toolbar.countFontSize }}
                       >
                         {num}
                       </button>
@@ -3048,11 +3198,12 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                 onClick={() => handleRandomCall(randomCount)}
                 onFocus={() => setIsRandomPickerOpen(true)}
                 disabled={maxRandomSelectableCount === 0}
-                className={`flex items-center gap-2.5 px-8 py-3.5 rounded-2xl font-black text-[15px] border-2 transition-all focus:outline-none ${isRandomPickerOpen ? 'bg-amber-50 border-amber-300 text-amber-600 shadow-xl -translate-y-0.5' : maxRandomSelectableCount > 0 ? 'bg-white border-slate-100 text-slate-600 hover:text-amber-500 hover:border-amber-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95' : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'}`}
+                className={`flex items-center gap-2.5 px-8 py-3.5 rounded-2xl font-black border-2 transition-all focus:outline-none ${isRandomPickerOpen ? 'bg-amber-50 border-amber-300 text-amber-600 shadow-xl -translate-y-0.5' : maxRandomSelectableCount > 0 ? 'bg-white border-slate-100 text-slate-600 hover:text-amber-500 hover:border-amber-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95' : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'}`}
+                style={{ minHeight: classroomDisplay.toolbar.height, fontSize: classroomDisplay.toolbar.fontSize }}
               >
-                <Dices size={18} />
+                <Dices size={classroomDisplay.toolbar.iconSize} />
                 随机点{viewMode === 'student' ? '名' : '组'}
-                <span className={`px-2.5 py-1 rounded-xl text-xs font-black ${maxRandomSelectableCount > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400'}`}>
+                <span className={`px-2.5 py-1 rounded-xl font-black ${maxRandomSelectableCount > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400'}`} style={{ fontSize: classroomDisplay.toolbar.countFontSize }}>
                   {randomCount}{viewMode === 'student' ? '人' : '组'}
                 </span>
               </button>
@@ -3060,22 +3211,37 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           </div>
         )}
 
-        <div className="w-[120px] flex justify-end">
+        <div className="min-w-0 justify-self-end">
           {!isMultiSelect && !isRecountSelection && (
             <button
               onClick={() => setHistoryOpen(true)}
-              className="flex flex-col items-center justify-center gap-1 text-slate-300 hover:text-slate-500 transition-all active:scale-95 group"
+              className="group flex flex-col items-center justify-center gap-1 text-slate-600 transition-all hover:text-blue-700 active:scale-95"
             >
-              <div className="w-10 h-10 bg-slate-50 group-hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors">
-                <History size={16} strokeWidth={2.5} />
+              <div className="flex items-center justify-center rounded-full bg-slate-100 transition-colors group-hover:bg-blue-50" style={{ width: classroomDisplay.toolbar.height - 8, height: classroomDisplay.toolbar.height - 8 }}>
+                <History size={classroomDisplay.toolbar.iconSize} strokeWidth={2.5} />
               </div>
-              <span className="text-[10px] font-bold">点评记录</span>
+              <span className="font-bold" style={{ fontSize: classroomDisplay.toolbar.countFontSize }}>点评记录</span>
             </button>
           )}
         </div>
       </footer>
 
       <style>{`
+        .classroom-display-input .arco-input,
+        .classroom-display-input.arco-input {
+          font-size: var(--classroom-display-input-font-size) !important;
+        }
+        .classroom-display-input .arco-input-search-icon,
+        .classroom-display-input .arco-input-clear-icon {
+          font-size: var(--classroom-display-input-font-size) !important;
+        }
+        .classroom-display-switch {
+          transform: scale(var(--classroom-display-switch-scale, 1));
+          transform-origin: right center;
+        }
+        .classroom-display-action-button.arco-btn {
+          justify-content: flex-start;
+        }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }

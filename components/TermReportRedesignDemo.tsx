@@ -743,7 +743,7 @@ const TermReportRedesignDemo: React.FC = () => {
 
         <section className={`min-h-0 bg-slate-100 ${previewMode === 'mobile' ? 'p-4 max-[720px]:p-2' : 'overflow-auto p-4'}`} aria-label={previewMode === 'mobile' ? '教师手机端报告预览' : 'A4报告预览'}>
           {previewMode === 'mobile' ? (
-            <PhoneMockup showDeviceFrame contentTopInsetMode="status-bar">
+            <PhoneMockup showDeviceFrame contentTopInsetMode="status-bar" screenOverlayRootId="teacher-mobile-overlay-root">
               <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
                 <TermReportView
                   key="mobile-report"
@@ -766,7 +766,6 @@ const TermReportRedesignDemo: React.FC = () => {
                   compactConfiguredMobileSections
                   hideEndMarker
                 />
-                <div id="teacher-mobile-overlay-root" className="pointer-events-none absolute inset-0 z-[1000]" />
               </div>
             </PhoneMockup>
           ) : (
@@ -792,7 +791,6 @@ const TermReportRedesignDemo: React.FC = () => {
                   showLegacyOptionalSections={false}
                   hideEndMarker
                 />
-                <div id="teacher-mobile-overlay-root" className="pointer-events-none absolute inset-0 z-[1000]" />
               </div>
             </div>
           )}

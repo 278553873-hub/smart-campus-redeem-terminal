@@ -11,6 +11,7 @@ import type { ClassInfo, TeacherDepartment, TeacherProfile, TeacherTeachingAssig
 import type { TeacherSpaceOption } from './MeView';
 import { MobileCard } from '../components/ui/MobileCard';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
 import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker';
 import { MobileEditableRow } from '../components/ui/MobileEditableRow';
 import { phoneText } from '../styles/teacherMobileTokens';
@@ -182,8 +183,8 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         });
     };
 
-    const saveGradeLeaderGrades = () => {
-        applyProfileChange(prev => ({ ...prev, gradeLeaderGrades: Array.from(selectedGrades) }));
+    const saveGradeLeaderGrades = (grades = Array.from(selectedGrades)) => {
+        applyProfileChange(prev => ({ ...prev, gradeLeaderGrades: grades }));
         setSelectedGrades(new Set());
         setMode('idle');
     };
@@ -347,47 +348,19 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     };
 
     const renderGradeLeaderSelectorSheet = () => (
-        <MobileBottomSheet
+        <MobileGradePickerSheet
             open
             title="选择分管年级"
             onClose={() => setMode('idle')}
-            footerDivider={false}
-            footer={(
-                <div className="space-y-2">
-                    <button
-                        type="button"
-                        onClick={saveGradeLeaderGrades}
-                        className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] active:scale-[0.98]"
-                    >
-                        完成
-                    </button>
-                    <button
-                        type="button"
-                        onClick={clearGradeLeaderGrades}
-                        className="flex h-11 w-full items-center justify-center text-sm font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]"
-                    >
-                        清空分管年级
-                    </button>
-                </div>
-            )}
-        >
-            <div className="grid grid-cols-2 gap-2 pb-1">
-                {gradeOptions.map(grade => {
-                        const selected = selectedGrades.has(grade);
-                        return (
-                            <button
-                                key={grade}
-                                type="button"
-                                onClick={() => toggleGrade(grade)}
-                                aria-pressed={selected}
-                                className={`flex min-h-11 items-center justify-center rounded-[var(--tm-radius-control)] border px-3 text-sm font-semibold transition-colors ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
-                            >
-                                {grade}
-                            </button>
-                        );
-                })}
-            </div>
-        </MobileBottomSheet>
+            selectionMode="multiple"
+            options={gradeOptions.map(grade => ({ value: grade, label: grade }))}
+            values={Array.from(selectedGrades)}
+            showClearButton
+            onConfirm={saveGradeLeaderGrades}
+            onClear={clearGradeLeaderGrades}
+            clearLabel="清空分管年级"
+            ariaLabel="分管年级选项"
+        />
     );
 
     const renderDepartmentSelectorSheet = () => (

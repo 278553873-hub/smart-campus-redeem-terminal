@@ -27,6 +27,9 @@ requireText(appSource, "name: '大飞'", '个人版教师姓名应为大飞。')
 requireText(appSource, 'avatar: ASSETS.AVATAR.TEACHER_DEFAULT', '所有老师资料应统一继承小鹿默认头像。');
 requireText(source, 'text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]', '我的页面教师姓名字号应保持 22px，并使用品牌中性色 Token。');
 requireText(source, '编辑教师信息', '编辑按钮应保持独立可点击区域。');
+requireText(source, 'onClick={onEditTeacherProfile}', '点击教师姓名应进入编辑教师信息页。');
+requireText(source, 'aria-label="编辑姓名"', '教师姓名入口应具备明确的无障碍标签。');
+requireText(source, 'flex min-h-11 max-w-full items-center text-left active:opacity-70', '教师姓名入口应保留 44 像素触控区域。');
 requireText(appSource, 'return <TeacherMobileScreenBackground variant="me" />', '我的页面屏幕级背景应使用专属背景变体。');
 const screenBackgroundSource = fs.readFileSync(new URL('../components/TeacherMobileScreenBackground.tsx', import.meta.url), 'utf8');
 requireText(screenBackgroundSource, 'bg-[var(--tm-me-gradient-base)]', '我的页面屏幕级背景应使用方案八的专属背景 Token。');

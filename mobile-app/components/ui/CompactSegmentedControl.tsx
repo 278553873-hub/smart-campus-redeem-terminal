@@ -46,7 +46,7 @@ const CompactSegmentedControl = <TValue extends string,>({
     >
       <span
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 ${compact ? 'h-[var(--tm-selection-segment-compact-track-height)] rounded-[var(--tm-selection-segment-compact-track-radius)] bg-[var(--tm-selection-segment-track-bg)]' : 'h-[var(--tm-selection-touch-height)] rounded-[var(--tm-selection-segment-track-radius)] bg-[var(--tm-selection-segment-track-bg)]'}`}
+        className={`pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 ${compact ? 'h-[var(--tm-selection-segment-compact-track-height)] rounded-[var(--tm-radius-control)] bg-[var(--tm-selection-segment-track-bg)]' : 'h-[var(--tm-selection-touch-height)] rounded-[var(--tm-selection-segment-track-radius)] bg-[var(--tm-selection-segment-track-bg)]'}`}
       />
       {motion === 'sliding' && (
         <span

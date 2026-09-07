@@ -1,4 +1,6 @@
 import React, { lazy, Suspense, useState } from 'react';
+import ComponentReuseDemo from './ComponentReuseDemo';
+import PublicComponentsDemo from './PublicComponentsDemo';
 
 const TermReportRedesignDemo = lazy(() => import('./TermReportRedesignDemo'));
 
@@ -81,11 +83,12 @@ const renovationDemos = [
 }>;
 
 type RenovationDemoId = (typeof renovationDemos)[number]['id'];
-type RenovationSectionId = 'showcase' | 'inventory';
+type RenovationSectionId = 'showcase' | 'inventory' | 'public-components';
 
 const renovationSections: ReadonlyArray<{ id: RenovationSectionId; label: string }> = [
   { id: 'showcase', label: '方案展示' },
   { id: 'inventory', label: '盘点报告' },
+  { id: 'public-components', label: '公共组件' },
 ];
 
 const UiRenovationDemo: React.FC = () => {
@@ -143,44 +146,50 @@ const UiRenovationDemo: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex h-12 shrink-0 items-center border-b border-slate-200 bg-white px-4">
-        <nav
-          className="flex h-full max-w-full items-stretch gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          role="tablist"
-          aria-label={`${renovationSections.find(section => section.id === activeSectionId)?.label ?? ''}分类`}
-        >
-          {activeDemos.map((demo, index) => {
-            const isActive = demo.id === activeDemoId;
-            return (
-              <button
-                key={demo.id}
-                id={`renovation-tab-${demo.id}`}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                aria-controls="renovation-demo-panel"
-                tabIndex={isActive ? 0 : -1}
-                onClick={() => setActiveDemoId(demo.id)}
-                onKeyDown={event => handleTabKeyDown(event, index)}
-                className={`relative min-w-24 shrink-0 px-4 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-500 ${
-                  isActive ? 'text-red-600' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                {demo.label}
-                {isActive && <span className="absolute inset-x-4 bottom-0 h-0.5 bg-red-600" aria-hidden="true" />}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+      {activeSectionId !== 'public-components' && (
+        <div className="flex h-12 shrink-0 items-center border-b border-slate-200 bg-white px-4">
+          <nav
+            className="flex h-full max-w-full items-stretch gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            role="tablist"
+            aria-label={`${renovationSections.find(section => section.id === activeSectionId)?.label ?? ''}分类`}
+          >
+            {activeDemos.map((demo, index) => {
+              const isActive = demo.id === activeDemoId;
+              return (
+                <button
+                  key={demo.id}
+                  id={`renovation-tab-${demo.id}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls="renovation-demo-panel"
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setActiveDemoId(demo.id)}
+                  onKeyDown={event => handleTabKeyDown(event, index)}
+                  className={`relative min-w-24 shrink-0 px-4 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-500 ${
+                    isActive ? 'text-red-600' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  {demo.label}
+                  {isActive && <span className="absolute inset-x-4 bottom-0 h-0.5 bg-red-600" aria-hidden="true" />}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      )}
 
       <section
         id="renovation-demo-panel"
         role="tabpanel"
-        aria-labelledby={`renovation-tab-${activeDemo.id}`}
+        aria-labelledby={activeSectionId === 'public-components' ? 'renovation-section-public-components' : `renovation-tab-${activeDemo.id}`}
         className="min-h-0 flex-1"
       >
-        {activeDemo.id === 'term-report' ? (
+        {activeSectionId === 'public-components' ? (
+          <PublicComponentsDemo />
+        ) : activeDemo.id === 'components' ? (
+          <ComponentReuseDemo />
+        ) : activeDemo.id === 'term-report' ? (
           <Suspense fallback={<div className="grid h-full place-items-center text-sm text-slate-500">正在加载报告方案...</div>}>
             <TermReportRedesignDemo />
           </Suspense>

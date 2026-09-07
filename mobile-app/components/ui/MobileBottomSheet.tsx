@@ -21,6 +21,14 @@ interface MobileBottomSheetProps {
   showHandle?: boolean;
 }
 
+const SHEET_EXIT_DURATION = 220;
+
+const getSheetExitDuration = () => (
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ? 0
+    : SHEET_EXIT_DURATION
+);
+
 const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   open,
   title,
@@ -37,7 +45,10 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
 }) => {
   const dialogRef = useRef<HTMLElement>(null);
   const onCloseRef = useRef(onClose);
+  const exitTimerRef = useRef<number | null>(null);
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
+  const [rendered, setRendered] = useState(open);
+  const [visible, setVisible] = useState(false);
   onCloseRef.current = onClose;
 
   useLayoutEffect(() => {
@@ -52,6 +63,51 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
     });
     return () => window.cancelAnimationFrame(resolveFrame);
   }, []);
+
+  useEffect(() => {
+    if (!portalRoot) return undefined;
+
+    if (open) {
+      if (exitTimerRef.current !== null) {
+        window.clearTimeout(exitTimerRef.current);
+        exitTimerRef.current = null;
+      }
+      setRendered(true);
+      if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setVisible(true);
+        return undefined;
+      }
+
+      let firstFrame: number | null = null;
+      let secondFrame: number | null = null;
+      firstFrame = window.requestAnimationFrame(() => {
+        secondFrame = window.requestAnimationFrame(() => setVisible(true));
+      });
+      return () => {
+        if (firstFrame !== null) window.cancelAnimationFrame(firstFrame);
+        if (secondFrame !== null) window.cancelAnimationFrame(secondFrame);
+      };
+    }
+
+    if (!rendered) return undefined;
+    setVisible(false);
+    const exitDuration = getSheetExitDuration();
+    if (exitDuration === 0) {
+      setRendered(false);
+      return undefined;
+    }
+
+    exitTimerRef.current = window.setTimeout(() => {
+      setRendered(false);
+      exitTimerRef.current = null;
+    }, exitDuration);
+    return () => {
+      if (exitTimerRef.current !== null) {
+        window.clearTimeout(exitTimerRef.current);
+        exitTimerRef.current = null;
+      }
+    };
+  }, [open, portalRoot, rendered]);
 
   useEffect(() => {
     if (!open || !portalRoot) return undefined;
@@ -93,10 +149,10 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
     };
   }, [open, portalRoot]);
 
-  if (!open || !portalRoot) return null;
+  if (!rendered || !portalRoot) return null;
 
   return createPortal(
-    <div className="pointer-events-auto absolute inset-0 z-[1000] flex items-end justify-center bg-[var(--tm-mask)] animate-in fade-in [animation-duration:var(--tm-duration-standard)]">
+    <div className={`absolute inset-0 z-[1000] flex items-end justify-center bg-[var(--tm-mask)] transition-opacity [transition-duration:var(--tm-duration-standard)] ease-out motion-reduce:transition-none ${visible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}>
       <button type="button" className="absolute inset-0" onClick={onClose} aria-label={`关闭${title}`} />
       <section
         ref={dialogRef}
@@ -104,7 +160,13 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={`relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)] ${size === 'full' ? 'h-[94%] max-h-[94%]' : size === 'tall' ? 'h-[86%] max-h-[86%]' : 'max-h-[86%]'}`}
+        style={{
+          transitionDuration: visible ? 'var(--tm-duration-sheet-enter)' : 'var(--tm-duration-sheet-exit)',
+          transitionTimingFunction: visible
+            ? 'cubic-bezier(0.22, 1, 0.36, 1)'
+            : 'cubic-bezier(0.4, 0, 1, 1)',
+        }}
+        className={`relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)] will-change-[transform,opacity] transition-[transform,opacity] motion-reduce:transition-none ${visible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'} ${size === 'full' ? 'h-[94%] max-h-[94%]' : size === 'tall' ? 'h-[86%] max-h-[86%]' : 'max-h-[86%]'}`}
       >
         <div className="relative z-20 shrink-0 bg-[var(--tm-bg-surface)]">
           {showHandle && <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />}
@@ -124,7 +186,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
                     </span>
                   </button>
                 )}
-                <button type="button" onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label={`关闭${title}`}>
+                <button type="button" onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)]" aria-label={`关闭${title}`}>
                   <X className="h-5 w-5" />
                 </button>
               </div>
