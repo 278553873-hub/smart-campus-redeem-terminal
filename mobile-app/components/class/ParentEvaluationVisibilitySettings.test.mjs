@@ -13,6 +13,7 @@ assert.ok(settingsSource.includes("{ value: 'hidden', label: '不展示' }"), '�
 assert.ok(settingsSource.includes("{ value: 'summary', label: '仅统计' }"), '应提供仅统计选项。');
 assert.ok(settingsSource.includes("{ value: 'summaryAndDetails', label: '统计和明细' }"), '应提供统计和明细选项。');
 assert.equal((settingsSource.match(/<CompactSegmentedControl/g) ?? []).length, 2, '正负向选项应在同一弹窗直接展示。');
+assert.ok(!settingsSource.includes('classDisplayName'), '弹窗不应显示具体班级名称。');
 assert.ok(!settingsSource.includes('MobileBottomSheet'), '配置内容不应再嵌套弹窗。');
 assert.ok(!settingsSource.includes('已保存'), '配置后不应显示已保存提示。');
 

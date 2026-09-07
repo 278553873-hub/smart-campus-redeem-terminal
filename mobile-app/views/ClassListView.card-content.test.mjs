@@ -20,8 +20,12 @@ assert.ok(classListSource.includes("hasRelationshipTags ? 'min-h-[var(--tm-class
 assert.equal((classListSource.match(/text-sm font-medium text-\[var\(--tm-text-secondary\)\] transition-colors active:bg-\[var\(--tm-bg-surface-soft\)\]/g) ?? []).length, 2, '学生列表和班级报告应统一使用#6D6764次级文字颜色。');
 assert.equal((classListSource.match(/className="h-\[var\(--tm-class-list-action-icon-size\)\] w-\[var\(--tm-class-list-action-icon-size\)\] text-\[var\(--tm-brand-primary\)\] \[stroke-width:2\.2\]"/g) ?? []).length, 2, '两个按钮图标应统一使用明亮的品牌红和略粗线条。');
 assert.equal((classListSource.match(/h-\[var\(--tm-class-list-action-icon-size\)\]/g) ?? []).length, 2, '两个按钮图标应使用统一的文案匹配尺寸。');
-assert.ok(classListSource.includes('className="relative min-w-0 flex-1 pr-10"'), '卡片上方信息区应吸收剩余空间。');
+assert.ok(classListSource.includes('pointer-events-none relative z-[1] min-w-0 flex-1 pr-10'), '卡片上方信息区应吸收剩余空间，并将点击交给卡片主入口。');
 assert.ok(classListSource.includes('h-[var(--tm-class-list-card-action-content-height)]'), '卡片底部操作内容区应按48像素空间收紧。');
+assert.ok(classListSource.includes('className="absolute inset-0 z-0 rounded-[var(--tm-class-list-card-radius)]'), '班级卡片的非按钮区应覆盖可点击主入口。');
+assert.ok(classListSource.includes('aria-label={`查看${displayClassName}学生列表`}'), '卡片主入口应提供明确的读屏名称。');
+assert.ok(classListSource.includes('pointer-events-auto absolute -right-2 -top-2 z-10'), '更多操作应保持独立点击层，不得触发学生列表跳转。');
+assert.equal((classListSource.match(/pointer-events-auto flex min-h-11 items-center justify-center/g) ?? []).length, 2, '学生列表和班级报告按钮应保持独立点击层。');
 assert.ok(!classListSource.includes('onClick={() => copyClassCode(classInfo)}'), '班级卡片不应常驻班级号复制入口。');
 assert.ok(classListSource.includes('copyClassCode(activeActionClass)'), '班级号复制入口应收进更多操作抽屉。');
 
@@ -32,5 +36,6 @@ assert.ok(classListSource.includes('aria-live="polite"'), '复制结果应在不
 
 assert.ok(classListSource.includes('onClick={() => onViewClassReport(classInfo.id)}'), '班级报告应继续在班级卡片外层直接进入。');
 assert.ok(guidelinesSource.includes('学生列表和班级报告均为班级卡片的常用入口'), '教师手机端规范应同步记录卡片操作层级。');
+assert.ok(guidelinesSource.includes('点击卡片内除独立按钮外的任意区域'), '教师手机端规范应记录卡片主体进入学生列表的规则。');
 
 console.log('ClassListView card content and action hierarchy assertions passed');

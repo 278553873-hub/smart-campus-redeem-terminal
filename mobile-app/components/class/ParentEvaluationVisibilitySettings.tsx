@@ -7,7 +7,6 @@ import { getParentEvaluationVisibilitySettings } from '../../domain/parentEvalua
 import CompactSegmentedControl from '../ui/CompactSegmentedControl';
 
 interface ParentEvaluationVisibilitySettingsProps {
-  classDisplayName: string;
   settings?: Partial<VisibilitySettings>;
   onChange: (settings: VisibilitySettings) => void;
 }
@@ -19,7 +18,6 @@ const VISIBILITY_OPTIONS: Array<{ value: ParentEvaluationVisibility; label: stri
 ];
 
 const ParentEvaluationVisibilitySettings: React.FC<ParentEvaluationVisibilitySettingsProps> = ({
-  classDisplayName,
   settings,
   onChange,
 }) => {
@@ -35,10 +33,6 @@ const ParentEvaluationVisibilitySettings: React.FC<ParentEvaluationVisibilitySet
 
   return (
     <div className="space-y-6 pb-2">
-      <p className="text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
-        {classDisplayName}
-      </p>
-
       <fieldset className="m-0 min-w-0 border-0 p-0">
         <legend className="mb-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">正向评价</legend>
         <CompactSegmentedControl

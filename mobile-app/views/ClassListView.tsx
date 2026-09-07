@@ -384,7 +384,13 @@ const ClassListView: React.FC<ClassListViewProps> = ({
 
         return (
             <article key={classInfo.id} className={`relative flex ${hasRelationshipTags ? 'min-h-[var(--tm-class-list-card-min-height)]' : 'min-h-[var(--tm-class-list-card-compact-min-height)]'} flex-col rounded-[var(--tm-class-list-card-radius)] bg-white px-4 pb-1 pt-3 [box-shadow:var(--tm-shadow-card)]`}>
-                <div className="relative min-w-0 flex-1 pr-10">
+                <button
+                    type="button"
+                    onClick={() => onSelectClass(classInfo.id)}
+                    className="absolute inset-0 z-0 rounded-[var(--tm-class-list-card-radius)] transition-colors active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
+                    aria-label={`查看${displayClassName}学生列表`}
+                />
+                <div className="pointer-events-none relative z-[1] min-w-0 flex-1 pr-10">
                     <h3 className="min-w-0 truncate text-lg font-[550] text-[var(--tm-text-primary)]">{displayClassName}</h3>
                     {hasRelationshipTags && (
                         <div className="mt-1.5 flex flex-wrap gap-1">
@@ -409,19 +415,19 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         type="button"
                         aria-label={`${displayClassName}更多操作`}
                         onClick={() => setActiveActionClassId(classInfo.id)}
-                        className="absolute -right-2 -top-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]"
+                        className="pointer-events-auto absolute -right-2 -top-2 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]"
                     >
                         <WechatMoreIcon className="h-5 w-5" />
                     </button>
                 </div>
 
-                <div className="mt-2 pt-1">
+                <div className="pointer-events-none relative z-[1] mt-2 pt-1">
                     <div className="h-[var(--tm-class-list-divider-thickness)] bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
                     <div className="relative grid h-[var(--tm-class-list-card-action-content-height)] grid-cols-2 items-center">
                         <button
                             type="button"
                             onClick={() => onSelectClass(classInfo.id)}
-                            className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                         >
                             <UsersIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                             学生列表
@@ -429,7 +435,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         <button
                             type="button"
                             onClick={() => onViewClassReport(classInfo.id)}
-                            className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                         >
                             <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                             班级报告
@@ -863,7 +869,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             >
                 {parentVisibilityClass && (
                     <ParentEvaluationVisibilitySettings
-                        classDisplayName={getTeacherClassDisplayName(parentVisibilityClass, currentSpace)}
                         settings={parentVisibilityClass.parentEvaluationVisibility}
                         onChange={settings => onUpdateParentEvaluationVisibility(parentVisibilityClass.id, settings)}
                     />
