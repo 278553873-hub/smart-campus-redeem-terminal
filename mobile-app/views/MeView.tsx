@@ -9,6 +9,7 @@ import {
     FileCog,
     ScanLine,
     MessageCircle,
+    MonitorSmartphone,
     Settings,
     UsersRound,
     type LucideIcon,
@@ -41,6 +42,7 @@ interface MeViewProps {
     onViewLeaderReport: () => void;
     onOpenMoralEducationCockpit: () => void;
     onOpenWeeklyDutySchedule: () => void;
+    onOpenParentEvaluationVisibility: () => void;
     onOpenHomeworkBatchImport: () => void;
     onOpenSettings: () => void;
     onOpenSubjectManagement: () => void;
@@ -194,6 +196,7 @@ const MeView: React.FC<MeViewProps> = ({
     onViewLeaderReport,
     onOpenMoralEducationCockpit,
     onOpenWeeklyDutySchedule,
+    onOpenParentEvaluationVisibility,
     onOpenHomeworkBatchImport,
     onOpenSettings,
     onOpenSubjectManagement,
@@ -292,6 +295,12 @@ const MeView: React.FC<MeViewProps> = ({
             title: '值周安排',
             icon: CalendarRange,
             onClick: onOpenWeeklyDutySchedule,
+        },
+        {
+            id: 'parentEvaluationVisibility',
+            title: '家长端展示',
+            icon: MonitorSmartphone,
+            onClick: onOpenParentEvaluationVisibility,
         },
         {
             id: 'archiveDesign',

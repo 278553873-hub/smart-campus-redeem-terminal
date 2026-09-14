@@ -15,6 +15,11 @@ import {
 } from 'lucide-react';
 import { ClassInfo, Student, TeacherProfile, type ParentEvaluationVisibilitySettings as ParentVisibilitySettings, type SchoolStudentTeam } from '../types';
 import {
+    getEffectiveParentEvaluationVisibility,
+    SCHOOL_PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT,
+    PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT,
+} from '../domain/parentEvaluationVisibility';
+import {
     UsersIcon,
     ChartIcon,
     WechatMoreIcon,
@@ -92,6 +97,7 @@ interface ClassActionItem {
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     onClick: () => void;
+    badge?: string;
 }
 
 interface ClassActionGroup {
@@ -164,6 +170,19 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const [studentTeamInviteId, setStudentTeamInviteId] = useState<string | null>(null);
     const [archiveStudentTeamId, setArchiveStudentTeamId] = useState<string | null>(null);
     const [parentVisibilityClassId, setParentVisibilityClassId] = useState<string | null>(null);
+    const [parentVisibilityRevision, setParentVisibilityRevision] = useState(0);
+
+    useEffect(() => {
+        const handleVisibilityUpdate = () => {
+            setParentVisibilityRevision(prev => prev + 1);
+        };
+        window.addEventListener(SCHOOL_PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT, handleVisibilityUpdate);
+        window.addEventListener(PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT, handleVisibilityUpdate);
+        return () => {
+            window.removeEventListener(SCHOOL_PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT, handleVisibilityUpdate);
+            window.removeEventListener(PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT, handleVisibilityUpdate);
+        };
+    }, []);
 
     const teachingClassIds = useMemo(() => (
         new Set(teacherProfile.teachingAssignments.map(assignment => assignment.classId))
@@ -362,6 +381,9 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 }] : []),
                 ...(activeActionPolicy.canConfigureParentEvaluationVisibility ? [{
                     label: '家长端展示',
+                    badge: activeActionClass && !getEffectiveParentEvaluationVisibility(activeActionClass.id, currentSpace.id).allowCustomization
+                        ? '统管'
+                        : undefined,
                     icon: MonitorSmartphone,
                     onClick: openParentEvaluationVisibility,
                 }] : []),
@@ -933,8 +955,13 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                                 onClick={item.onClick}
                                                 className="group flex min-h-[var(--tm-action-grid-item-height)] min-w-0 flex-col items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] px-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]"
                                             >
-                                                <span className={`flex h-[var(--tm-action-grid-icon-bg-size)] w-[var(--tm-action-grid-icon-bg-size)] shrink-0 items-center justify-center rounded-[var(--tm-action-grid-icon-radius)] ${actionGroupIconBackgroundClass[group.tone]}`}>
+                                                <span className={`relative flex h-[var(--tm-action-grid-icon-bg-size)] w-[var(--tm-action-grid-icon-bg-size)] shrink-0 items-center justify-center rounded-[var(--tm-action-grid-icon-radius)] ${actionGroupIconBackgroundClass[group.tone]}`}>
                                                     <Icon className={`h-[var(--tm-action-grid-icon-size)] w-[var(--tm-action-grid-icon-size)] ${actionGroupIconClass[group.tone]}`} />
+                                                    {item.badge && (
+                                                        <span className="absolute -right-1 -top-1 rounded-full bg-[var(--tm-brand-primary)] px-1.5 py-0.5 text-[9px] font-bold leading-none text-white shadow-sm">
+                                                            {item.badge}
+                                                        </span>
+                                                    )}
                                                 </span>
                                                 <span className="h-[var(--tm-action-grid-label-height)] max-w-full truncate whitespace-nowrap text-[length:var(--tm-font-size-meta)] font-medium leading-[18px] text-[var(--tm-text-primary)]">{item.label}</span>
                                             </button>
@@ -953,12 +980,18 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 onClose={() => setParentVisibilityClassId(null)}
                 size="content"
             >
-                {parentVisibilityClass && (
-                    <ParentEvaluationVisibilitySettings
-                        settings={parentVisibilityClass.parentEvaluationVisibility}
-                        onChange={settings => onUpdateParentEvaluationVisibility(parentVisibilityClass.id, settings)}
-                    />
-                )}
+                {parentVisibilityClass && (() => {
+                    const effective = getEffectiveParentEvaluationVisibility(parentVisibilityClass.id, currentSpace.id);
+                    return (
+                        <ParentEvaluationVisibilitySettings
+                            key={`${parentVisibilityClass.id}-${parentVisibilityRevision}`}
+                            settings={effective.settings}
+                            readOnly={effective.isReadOnly}
+                            readOnlyNotice={effective.isReadOnly ? '学校已开启全校统一管控，当前规则由学校统一设置，班主任仅可查看效果。' : undefined}
+                            onChange={settings => onUpdateParentEvaluationVisibility(parentVisibilityClass.id, settings)}
+                        />
+                    );
+                })()}
             </MobileBottomSheet>
 
             <MobileBottomSheet open={showLeftStudentSheet} title="离校学生" onClose={() => setLeftStudentClassId(null)}>

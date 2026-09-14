@@ -125,6 +125,7 @@ export type TeacherMoreToolId =
     | 'coinIssuance'
     | 'questionnaire'
     | 'weeklyDutySchedule'
+    | 'parentEvaluationVisibility'
     | 'archiveDesign'
     | 'subjectManagement'
     | 'departmentManagement'
@@ -168,11 +169,13 @@ const ALL_MORE_TOOLS: TeacherMoreToolId[] = [
     'coinIssuance',
     'questionnaire',
     'weeklyDutySchedule',
+    'parentEvaluationVisibility',
     'archiveDesign',
     'subjectManagement',
     'departmentManagement',
     'suggestionFeedback',
 ];
+
 
 const SPACE_MENU_POLICIES: Record<TeacherSpaceRole, TeacherSpaceMenuPolicy> = {
     owner: {

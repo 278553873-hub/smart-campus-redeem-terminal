@@ -48,6 +48,7 @@ import {
     type SchoolDepartmentItem,
     type SchoolSubjectItem,
 } from './views/MeFeatureViews';
+import ParentEvaluationVisibilityManagementView from './views/ParentEvaluationVisibilityManagementView';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import TeacherMobileScreenBackground from './components/TeacherMobileScreenBackground';
 import TeacherBottomNavigation, { type TeacherBottomTab } from './components/TeacherBottomNavigation';
@@ -118,6 +119,8 @@ import {
 import {
     readParentEvaluationVisibility,
     writeParentEvaluationVisibility,
+    readSchoolParentEvaluationVisibility,
+    writeSchoolParentEvaluationVisibility,
 } from '../shared/parentEvaluationVisibility';
 import {
     CURRENT_WEEKLY_ACTION_ADVICE,
@@ -365,7 +368,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'indicator_catalog' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'medal_issuance' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'indicator_catalog' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'parent_evaluation_visibility' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'medal_issuance' | 'face_update' | 'bank_password' | 'homework_entry';
 
 const PRINCIPAL_REPORT_VIEWS: ViewState[] = [
     'principal_weekly_report',
@@ -409,6 +412,7 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
     'questionnaire',
     'archive_design',
     'weekly_duty_schedule',
+    'parent_evaluation_visibility',
     'moral_education_cockpit',
 ];
 
@@ -437,7 +441,7 @@ const App: React.FC<MobileAppProps> = ({
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'indicator_catalog' || view === 'record_input') return 0;
         if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'student_add' || view === 'class_report' || view === 'student_team_detail' || view === 'student_batch_edit' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'medal_issuance' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
-        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'weekly_duty_schedule' || view === 'homework_batch_import' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
+        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'weekly_duty_schedule' || view === 'parent_evaluation_visibility' || view === 'homework_batch_import' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
         return 0;
     };
     const activeIndex = getActiveTabIndex(currentView);
@@ -1525,6 +1529,7 @@ const App: React.FC<MobileAppProps> = ({
             case 'questionnaire': return '问卷采集';
             case 'archive_design': return '档案设计';
             case 'weekly_duty_schedule': return '值周安排';
+            case 'parent_evaluation_visibility': return '家长端展示';
             case 'homework_batch_import': return '作业录入';
             case 'ai_headteacher_assistant':
             case 'ai_headteacher_assistant_v2': return '班主任助理';
@@ -1614,12 +1619,12 @@ const App: React.FC<MobileAppProps> = ({
     const primaryTabViewKey = currentView === 'class_list' ? 'teacher-primary-tabs' : showTabBar ? 'teacher-primary-tabs' : currentView;
     const pageTransitionClass = showTabBar || isStudentTeamCreateView ? '' : 'animate-page-enter';
     const isHeadteacherAssistantView = currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2';
-    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule'].includes(currentView) || isHeadteacherAssistantView;
+    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView;
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView) || isStudentTeamCreateView;
     const hasStudentDetailBackground = currentView === 'student_detail';
-    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design'].includes(currentView) || isHeadteacherAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
+    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const activeBottomTab: TeacherBottomTab = activeIndex === 1 ? 'class' : activeIndex === 2 ? 'me' : 'record';
 
     const getPhoneScreenBackground = () => {
@@ -2124,6 +2129,7 @@ const App: React.FC<MobileAppProps> = ({
                                     onViewLeaderReport={handleViewLeaderReport}
                                     onOpenMoralEducationCockpit={() => navigateTo('moral_education_cockpit')}
                                     onOpenWeeklyDutySchedule={() => navigateTo('weekly_duty_schedule')}
+                                    onOpenParentEvaluationVisibility={() => navigateTo('parent_evaluation_visibility')}
                                     onOpenHomeworkBatchImport={() => navigateTo('homework_batch_import')}
                                     onOpenSettings={() => navigateTo('mine_settings')}
                                     onOpenSubjectManagement={() => navigateTo('subject_management')}
@@ -2142,6 +2148,29 @@ const App: React.FC<MobileAppProps> = ({
 
                             {currentView === 'weekly_duty_schedule' && (
                                 <WeeklyDutyScheduleView onBack={goBack} />
+                            )}
+
+                            {currentView === 'parent_evaluation_visibility' && (
+                                <ParentEvaluationVisibilityManagementView
+                                    initialConfig={readSchoolParentEvaluationVisibility(activeTeacherSpace.id)}
+                                    onSave={(config, shouldGoBack = false) => {
+                                        writeSchoolParentEvaluationVisibility(activeTeacherSpace.id, config, true);
+                                        setClassOverrides(prev => {
+                                            const next = { ...prev };
+                                            Object.keys(next).forEach(classId => {
+                                                next[classId] = {
+                                                    ...next[classId],
+                                                    parentEvaluationVisibility: config.settings,
+                                                };
+                                            });
+                                            return next;
+                                        });
+                                        if (shouldGoBack) {
+                                            goBack();
+                                        }
+                                    }}
+                                    onBack={goBack}
+                                />
                             )}
 
                             {currentView === 'homework_batch_import' && (

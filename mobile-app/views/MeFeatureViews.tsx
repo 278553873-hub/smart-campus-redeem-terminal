@@ -77,25 +77,25 @@ interface SuggestionFeedbackViewProps {
     onSubmit: () => void;
 }
 
-const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode; contentClassName?: string }> = ({ children, footer, contentClassName = '' }) => (
+export const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode; contentClassName?: string }> = ({ children, footer, contentClassName = '' }) => (
     <div className="relative flex h-full min-h-0 flex-col text-[var(--tm-text-primary)]">
         <div className={`min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : 'pb-8'} ${contentClassName}`}>{children}</div>
         {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 py-4 shadow-[0_-10px_28px_-24px_var(--tm-shadow-neutral-color)] backdrop-blur-xl">{footer}</div>}
     </div>
 );
 
-const FeaturePanel: React.FC<{ children: React.ReactNode; className?: string; allowOverflow?: boolean }> = ({ children, className = '', allowOverflow = false }) => (
+export const FeaturePanel: React.FC<{ children: React.ReactNode; className?: string; allowOverflow?: boolean }> = ({ children, className = '', allowOverflow = false }) => (
     <section className={`${allowOverflow ? 'overflow-visible' : 'overflow-hidden'} rounded-[24px] bg-[var(--tm-bg-surface-glass)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral-color)] backdrop-blur-sm ${className}`}>
         {children}
     </section>
 );
 
-const featurePrimaryButtonClass = 'flex h-12 w-full items-center justify-center gap-2 rounded-[20px] bg-[var(--tm-brand-primary)] text-[14px] font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)]';
-const featureListRowClass = 'flex min-h-[60px] items-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 [box-shadow:var(--tm-shadow-control)]';
-const featureEditButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)]';
-const featureDeleteButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-status-negative)]';
+export const featurePrimaryButtonClass = 'flex h-12 w-full items-center justify-center gap-2 rounded-[20px] bg-[var(--tm-brand-primary)] text-[14px] font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)]';
+export const featureListRowClass = 'flex min-h-[60px] items-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 [box-shadow:var(--tm-shadow-control)]';
+export const featureEditButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)]';
+export const featureDeleteButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-status-negative)]';
 
-const SwitchControl: React.FC<{ checked: boolean; onChange: (checked: boolean) => void; label: string }> = ({ checked, onChange, label }) => (
+export const SwitchControl: React.FC<{ checked: boolean; onChange: (checked: boolean) => void; label: string }> = ({ checked, onChange, label }) => (
     <button
         type="button"
         role="switch"

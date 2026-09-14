@@ -16,6 +16,7 @@ interface CompactSegmentedControlProps<TValue extends string> {
   density?: 'default' | 'compact';
   motion?: 'static' | 'sliding';
   variant?: 'default' | 'settings';
+  disabled?: boolean;
 }
 
 const CompactSegmentedControl = <TValue extends string,>({
@@ -29,6 +30,7 @@ const CompactSegmentedControl = <TValue extends string,>({
   density = 'default',
   motion = 'static',
   variant = 'default',
+  disabled = false,
 }: CompactSegmentedControlProps<TValue>) => {
   const selectedIndex = Math.max(0, items.findIndex(item => item.value === value));
   const settingsVariant = variant === 'settings';
@@ -94,8 +96,9 @@ const CompactSegmentedControl = <TValue extends string,>({
             role={semantics === 'tabs' ? 'tab' : undefined}
             aria-selected={semantics === 'tabs' ? selected : undefined}
             aria-pressed={semantics === 'group' ? selected : undefined}
-            onClick={() => onChange(item.value)}
-            className={`${fullWidth || settingsVariant ? 'min-w-0' : 'min-w-[72px]'} relative z-10 flex min-h-[var(--tm-selection-touch-height)] items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${effectiveMotion === 'sliding' ? motionInsetClass : (compact ? 'px-[var(--tm-selection-segment-compact-inset)] py-0' : 'p-[var(--tm-space-1)]')}`}
+            disabled={disabled}
+            onClick={() => !disabled && onChange(item.value)}
+            className={`${fullWidth || settingsVariant ? 'min-w-0' : 'min-w-[72px]'} relative z-10 flex min-h-[var(--tm-selection-touch-height)] items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${disabled ? 'cursor-not-allowed opacity-75' : ''} ${effectiveMotion === 'sliding' ? motionInsetClass : (compact ? 'px-[var(--tm-selection-segment-compact-inset)] py-0' : 'p-[var(--tm-space-1)]')}`}
           >
             <span className={`relative z-10 flex w-full items-center justify-center ${settingsVariant ? 'whitespace-nowrap px-[var(--tm-space-1)]' : 'px-[var(--tm-space-2)]'} [transition-duration:var(--tm-duration-fast)] motion-reduce:transition-none ${compact ? 'rounded-[var(--tm-selection-segment-compact-active-radius)]' : 'rounded-[var(--tm-radius-control)]'} ${effectiveMotion === 'sliding' ? 'transition-colors' : 'transition-[background-color,color,box-shadow]'} ${activeHeightClass} ${selectedClass}`}>
               {item.label}

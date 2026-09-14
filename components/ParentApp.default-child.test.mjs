@@ -24,7 +24,7 @@ requireText(parentSource, '选择填写孩子', '多个符合范围的孩子必�
 for (const outcome of ['已完成填写', '问卷已结束', '不在填写范围', '邀请已失效']) {
   requireText(parentSource, outcome, `扫码流程缺少结果状态：${outcome}`);
 }
-requireText(appSource, '<ParentApp showPhoneShell={showParentPhoneShell} parentEvaluationVisibility={parentEvaluationVisibility}', 'demo 导航进入家长端时应传入当前班级评价展示配置。');
+requireText(appSource, '<ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} parentEvaluationVisibility={parentEvaluationVisibility}', 'demo 导航进入家长端时应传入当前班级评价展示配置与渐变预览配置。');
 requireText(appSource, "get('questionnaireInvite')", '应用入口必须读取二维码中的问卷邀请凭证。');
 requireText(appSource, 'defaultLoggedIn={false} defaultHasBoundChild={false}', '二维码深链首次进入必须覆盖未登录、未绑定演示路径。');
 

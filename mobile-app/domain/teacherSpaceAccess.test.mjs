@@ -39,7 +39,7 @@ assert.deepEqual(policyFor('collaboration', 'collaborator'), {
 for (const role of ['administrator', 'leader']) {
   assert.deepEqual(policyFor('school', role), {
     managementTools: ['schoolReport', 'moralEducationCockpit', 'termReport', 'headteacherAssistant', 'principalAssistant'],
-    moreTools: ['coinIssuance', 'questionnaire', 'weeklyDutySchedule', 'archiveDesign', 'subjectManagement', 'departmentManagement', 'suggestionFeedback'],
+    moreTools: ['coinIssuance', 'questionnaire', 'weeklyDutySchedule', 'parentEvaluationVisibility', 'archiveDesign', 'subjectManagement', 'departmentManagement', 'suggestionFeedback'],
   });
 }
 

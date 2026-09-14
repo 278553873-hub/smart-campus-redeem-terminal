@@ -1,4 +1,15 @@
 export {
   DEFAULT_PARENT_EVALUATION_VISIBILITY,
+  DEFAULT_SCHOOL_PARENT_EVALUATION_CONFIG,
   getParentEvaluationVisibilitySettings,
+  readSchoolParentEvaluationVisibility,
+  writeSchoolParentEvaluationVisibility,
+  readParentEvaluationVisibility,
+  writeParentEvaluationVisibility,
+  getEffectiveParentEvaluationVisibility,
+  SCHOOL_PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT,
+  PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT,
+  type ParentEvaluationVisibility,
+  type ParentEvaluationVisibilitySettings,
+  type SchoolParentEvaluationVisibilityConfig,
 } from '../../shared/parentEvaluationVisibility.ts';

@@ -1,11 +1,13 @@
 import type {
   ParentEvaluationVisibility,
   ParentEvaluationVisibilitySettings,
+  SchoolParentEvaluationVisibilityConfig,
 } from '../shared/parentEvaluationVisibility';
 
 export type {
   ParentEvaluationVisibility,
   ParentEvaluationVisibilitySettings,
+  SchoolParentEvaluationVisibilityConfig,
 } from '../shared/parentEvaluationVisibility';
 
 export type GuardianRelation = '家长' | '爸爸' | '妈妈' | '爷爷' | '奶奶' | '外公' | '外婆' | '其他';

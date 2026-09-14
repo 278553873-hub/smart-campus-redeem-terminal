@@ -285,7 +285,7 @@ for (const forbiddenTab of ["key: 'bank', label: '银行'"]) {
 }
 
 for (const required of [
-  '<ParentApp showPhoneShell={showParentPhoneShell} parentEvaluationVisibility={parentEvaluationVisibility}',
+  '<ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} parentEvaluationVisibility={parentEvaluationVisibility}',
   "currentApp === 'admin'",
   'const showParentPhoneShell = false;',
   '家长-手机端',
