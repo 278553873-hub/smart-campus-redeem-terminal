@@ -4,6 +4,8 @@ export type TeacherSpaceType = 'personal' | 'collaboration' | 'school';
 
 export type TeacherSchoolType = 'primary' | 'middle' | 'high' | 'nineYear' | 'twelveYear' | 'completeMiddle';
 
+export type TeacherGradeStage = '小学' | '初中' | '高中';
+
 export const TEACHER_SCHOOL_TYPE_LABELS: Record<TeacherSchoolType, string> = {
     primary: '小学',
     middle: '初中',
@@ -44,6 +46,17 @@ export const getTeacherSchoolGradeOptions = (space: TeacherSpaceOption): string[
     if (space.schoolType === 'twelveYear') return [...PRIMARY_GRADE_LABELS, ...MIDDLE_GRADE_LABELS, ...HIGH_GRADE_LABELS];
     return [...MIDDLE_GRADE_LABELS, ...HIGH_GRADE_LABELS];
 };
+
+export const getTeacherGradeStage = (grade: string): TeacherGradeStage => {
+    if (/^高/.test(grade)) return '高中';
+    if (/^[七八九]年级$/.test(grade)) return '初中';
+    return '小学';
+};
+
+export const shouldGroupTeacherGrades = (space: TeacherSpaceOption): boolean => (
+    space.type === 'school'
+    && ['nineYear', 'twelveYear', 'completeMiddle'].includes(space.schoolType ?? '')
+);
 
 export type TeacherSpaceRole =
     | 'owner'

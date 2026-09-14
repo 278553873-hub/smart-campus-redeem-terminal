@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Eye } from 'lucide-react';
 import type { ClassInfo, SchoolStudentTeam, Student, StudentCardDisplaySettings } from '../../types';
-import { BackIcon, FemaleIcon, MaleIcon, MenuIcon, SearchIcon } from '../../components/Icons';
+import { BackIcon, ChartIcon, FemaleIcon, MaleIcon, MenuIcon, SearchIcon } from '../../components/Icons';
 import ClassInviteFlow from '../../components/class/ClassInviteFlow';
 import StudentRosterCard from '../../components/student/StudentRosterCard';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
@@ -9,11 +9,12 @@ import MobileConfirmSheet from '../../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
 import MobileSettingsSwitchRow from '../../components/ui/MobileSettingsSwitchRow';
+import CardEvaluationDisplaySettings from '../../components/student-performance/CardEvaluationDisplaySettings';
 import { ASSETS } from '../../assets/images';
 import { createDemoStudentPerformanceSummary, type StudentPerformanceSummary } from '../../domain/studentPerformance';
 import { getStudentCardDisplaySettings } from '../../domain/studentCardDisplay';
 import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
-import StudentTeamEditorView, { type StudentTeamEditorMode, type StudentTeamEditorValue } from './StudentTeamEditorView';
+import StudentTeamEditorView, { type StudentTeamEditorMode, type StudentTeamEditorValue, type StudentTeamSearchResult } from './StudentTeamEditorView';
 import StudentTeamManagementActions from './StudentTeamManagementActions';
 
 interface StudentTeamDetailViewProps {
@@ -24,8 +25,8 @@ interface StudentTeamDetailViewProps {
   currentSpace: TeacherSpaceOption;
   canManage: boolean;
   classes: ClassInfo[];
-  allStudents: Student[];
   getStudentsForClass: (classId: string) => Student[];
+  searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
   onBack: () => void;
   onSelectStudent: (student: Student) => void;
   onUpdate: (teamId: string, value: StudentTeamEditorValue) => void;
@@ -45,8 +46,8 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
   currentSpace,
   canManage,
   classes,
-  allStudents,
   getStudentsForClass,
+  searchStudentsByExactName,
   onBack,
   onSelectStudent,
   onUpdate,
@@ -81,6 +82,22 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
   const isFemaleQuickSelectionActive = studentsByGender.female.length > 0
     && selectedIds.size === studentsByGender.female.length
     && studentsByGender.female.every(student => selectedIds.has(student.id));
+  const teamOverview = useMemo(() => students.reduce((summary, student) => {
+    const performance = performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student);
+    return {
+      activeMemberCount: summary.activeMemberCount + (performance.praiseCount + performance.criticismCount > 0 ? 1 : 0),
+      evaluationCount: summary.evaluationCount + performance.praiseCount + performance.criticismCount,
+      praiseCount: summary.praiseCount + performance.praiseCount,
+      criticismCount: summary.criticismCount + performance.criticismCount,
+      netScore: summary.netScore + performance.netScore,
+    };
+  }, {
+    activeMemberCount: 0,
+    evaluationCount: 0,
+    praiseCount: 0,
+    criticismCount: 0,
+    netScore: 0,
+  }), [performanceByStudentId, students]);
 
   const toggleStudent = (studentId: string) => {
     const next = new Set(selectedIds);
@@ -124,6 +141,33 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
         <h1 className="pointer-events-none absolute left-1/2 max-w-[52%] -translate-x-1/2 truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{team.name}</h1>
         <div className="h-11 w-11" aria-hidden="true" />
       </header>
+
+      <section className="mx-4 mt-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]" aria-labelledby="student-team-overview-title">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <ChartIcon className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" aria-hidden="true" />
+            <h2 id="student-team-overview-title" className="text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">数据概览</h2>
+          </div>
+          <span className="text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">本学期</span>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {[
+            { label: '成员评价', value: teamOverview.evaluationCount },
+            { label: '活跃成员', value: `${teamOverview.activeMemberCount}/${students.length}` },
+            { label: '表扬', value: teamOverview.praiseCount },
+            { label: '待改进', value: teamOverview.criticismCount },
+          ].map(item => (
+            <div key={item.label} className="rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5">
+              <div className="text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">{item.label}</div>
+              <div className="mt-1 text-[length:var(--tm-font-size-metric)] font-semibold tabular-nums text-[var(--tm-text-primary)]">{item.value}</div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
+          <span>成员累计分值</span>
+          <span className="tabular-nums text-[var(--tm-text-primary)]">{teamOverview.netScore >= 0 ? '+' : ''}{teamOverview.netScore}</span>
+        </div>
+      </section>
 
       <div className="student-action-row sticky top-0 z-10 flex min-h-[52px] shrink-0 items-center gap-1.5 bg-[var(--tm-bg-surface)] px-4 py-1">
         <div className={`relative text-left transition-all duration-300 ease-out ${isSelectionMode ? 'w-11 flex-none opacity-70' : 'min-w-0 flex-1 opacity-100'}`}>
@@ -190,10 +234,19 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
       </MobileBottomSheet>
 
       <MobileBottomSheet open={showCardSettings} title="学生卡片展示" onClose={() => setShowCardSettings(false)}>
-        <div className="space-y-2 pb-2">
-          <MobileSettingsSwitchRow label="显示等级" checked={displaySettings.showLevel} onChange={showLevel => setDisplaySettings(current => ({ ...current, showLevel }))} />
-          <MobileSettingsSwitchRow label="显示加分次数" checked={displaySettings.showPraiseCount} onChange={showPraiseCount => setDisplaySettings(current => ({ ...current, showPraiseCount }))} />
-          <MobileSettingsSwitchRow label="显示扣分次数" checked={displaySettings.showCriticismCount} onChange={showCriticismCount => setDisplaySettings(current => ({ ...current, showCriticismCount }))} />
+        <div className="space-y-[var(--tm-space-4)] pb-2">
+          <div role="group" aria-label="等级展示设置" className="space-y-[var(--tm-space-1)]">
+            <MobileSettingsSwitchRow
+              label="显示等级"
+              checked={displaySettings.showLevel}
+              onChange={showLevel => setDisplaySettings(current => ({ ...current, showLevel }))}
+              surface="plain"
+            />
+          </div>
+          <CardEvaluationDisplaySettings
+            settings={displaySettings}
+            onChange={settings => setDisplaySettings(current => ({ ...current, ...settings }))}
+          />
         </div>
       </MobileBottomSheet>
 
@@ -204,8 +257,8 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
         mode={editorMode ?? 'settings'}
         team={team}
         classes={classes}
-        allStudents={allStudents}
         getStudentsForClass={getStudentsForClass}
+        searchStudentsByExactName={searchStudentsByExactName}
         getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, currentSpace)}
         currentSpace={currentSpace}
         onClose={() => setEditorMode(null)}

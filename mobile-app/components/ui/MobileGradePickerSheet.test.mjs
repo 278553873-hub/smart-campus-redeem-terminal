@@ -40,6 +40,14 @@ for (const required of [
   'disabled={selectedCount === 0}',
   'if (selectedCount === 0) return;',
   'aria-pressed={selected}',
+  'showAllGradesOption?: boolean',
+  'allGradesValue?: string',
+  'allGradesLabel?: React.ReactNode',
+  'const displayOptions = showAllGradesOption',
+  "{ id: 'all-grades', stage: undefined, options: allGradeOptions }",
+  "{ id: 'grades', stage: undefined, options: concreteOptions }",
+  'const allGradesSelected = multipleProps',
+  'value === allGradesValue',
 ]) {
   assert.ok(source.includes(required), `公共年级选择弹窗缺少：${required}`);
 }
@@ -50,6 +58,10 @@ for (const [name, file] of [['班级列表', classList], ['班级排行榜', lea
 
 assert.match(profile, /selectionMode="multiple"/);
 assert.match(profile, /showClearButton/);
+assert.doesNotMatch(profile, /showAllGradesOption/);
+assert.match(classList, /showAllGradesOption/);
+assert.match(leaderboard, /showAllGradesOption/);
+assert.match(publicComponentsDemo, /showAllGradesOption={showAllGradesOption}/);
 assert.match(inventoryDemo, /src="\/demos\/component-reuse-inventory\.html"/);
 assert.doesNotMatch(inventoryDemo, /MobileGradePickerSheet/);
 assert.match(publicComponentsDemo, /MobileGradePickerSheet/);
@@ -63,6 +75,8 @@ assert.match(publicComponentsDemo, /gradePreviewMode/);
 assert.match(publicComponentsDemo, /updateGradePreviewMode/);
 assert.match(publicComponentsDemo, /显示学段分组/);
 assert.match(publicComponentsDemo, /显示清空操作/);
+assert.match(publicComponentsDemo, /显示全部年级/);
+assert.match(publicComponentsDemo, /showAllGradesOption/);
 assert.match(publicComponentsDemo, /<div className="mt-3 flex flex-col gap-1">[\s\S]*显示学段分组[\s\S]*显示清空操作/);
 assert.match(publicComponentsDemo, /selectionMode="single"/);
 assert.match(publicComponentsDemo, /selectionMode="multiple"/);
@@ -83,9 +97,14 @@ assert.doesNotMatch(publicComponentsDemo, /pickerOpen|setPickerOpen|setGrade|Che
 assert.doesNotMatch(source, /<Check|from 'lucide-react'/);
 assert.doesNotMatch(source, /selectedCount > 0 \? `（\$\{selectedCount\}）`/);
 assert.doesNotMatch(source, /showClearButton && selectedCount > 0/);
+assert.match(source, /next\.clear\(\);\s*next\.add\(allGradesValue\);/, '选择全部年级时应只保留全部年级范围值。');
+assert.match(source, /next\.delete\(allGradesValue\);\s*if \(next\.has\(value\)\)/, '切换到具体年级时应退出全部年级范围。');
+assert.match(source, /multipleProps\.onConfirm\(displayOptions\.map\(option => option\.value\)\.filter\(value => draftValues\.has\(value\)\)\)/, '确认时应回传当前选中的展示值。');
 assert.match(inventory, /id="grade-picker"/);
 assert.match(inventory, /MobileGradePickerSheet/);
 assert.match(teacherMobileGuidelines, /MobileGradePickerSheet[\s\S]*固定每行三项/);
+assert.match(teacherMobileGuidelines, /“全部年级”独占首行[\s\S]*一年级至三年级/);
+assert.match(teacherMobileGuidelines, /多选点击后只选中“全部年级”本身，不联动勾选具体年级/);
 assert.match(teacherMobileGuidelines, /胶囊可见高度为 44 像素[\s\S]*使用全圆角与居中文案/);
 assert.match(teacherMobileGuidelines, /选中态[\s\S]*不显示勾选图标/);
 assert.match(teacherMobileGuidelines, /默认按内容自适应高度/);

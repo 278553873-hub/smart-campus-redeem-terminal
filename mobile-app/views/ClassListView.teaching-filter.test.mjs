@@ -19,7 +19,9 @@ requireText(classListSource, 'isSchoolSpace && showTeachingOnly && !assignedClas
 requireText(classListSource, 'className={`flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] whitespace-nowrap rounded-[var(--tm-radius-control)]', '任教班级应保持开放式轻量样式并保留44px触控高度。');
 requireText(classListSource, 'inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)]', '学校版年级筛选触发器应保持96px固定宽度，并提供44px触控高度。');
 requireText(classListSource, 'gap-[var(--tm-space-1)]', '学校版年级筛选的当前值与箭头应紧邻排列。');
-requireText(classListSource, "option === '全部' ? '全部年级' : option", '学校版年级筛选默认文案应明确展示“全部年级”。');
+requireText(classListSource, 'showAllGradesOption', '学校版年级筛选应由公共组件展示“全部年级”。');
+requireText(classListSource, 'allGradesValue="全部"', '学校版年级筛选应兼容既有“全部”筛选值。');
+requireText(classListSource, "gradeFilter !== '全部' ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'", '选择具体年级后，年级触发器文字应切换为主文字色；全部年级保持次级文字色。');
 requireText(classListSource, "showTeachingOnly ? 'bg-[var(--tm-brand-primary)] text-white'", '任教班级选中态应只强化勾选框本体。');
 requireText(classListSource, '共{visibleClasses.length}个班级', '学校版筛选行应以“共x个班级”展示年级与任教条件共同作用后的班级数量。');
 requireText(classListSource, 'aria-live="polite"', '筛选结果数量变化应提供动态读屏反馈。');

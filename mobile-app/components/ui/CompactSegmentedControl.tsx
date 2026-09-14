@@ -15,6 +15,7 @@ interface CompactSegmentedControlProps<TValue extends string> {
   semantics?: 'tabs' | 'group';
   density?: 'default' | 'compact';
   motion?: 'static' | 'sliding';
+  variant?: 'default' | 'settings';
 }
 
 const CompactSegmentedControl = <TValue extends string,>({
@@ -27,9 +28,17 @@ const CompactSegmentedControl = <TValue extends string,>({
   semantics = 'tabs',
   density = 'default',
   motion = 'static',
+  variant = 'default',
 }: CompactSegmentedControlProps<TValue>) => {
   const selectedIndex = Math.max(0, items.findIndex(item => item.value === value));
-  const compact = density === 'compact';
+  const settingsVariant = variant === 'settings';
+  const compact = !settingsVariant && density === 'compact';
+  const effectiveMotion = settingsVariant ? 'sliding' : motion;
+  const settingsWidth = settingsVariant
+    ? items.length > 0
+      ? `calc(var(--tm-selection-segment-settings-item-width) * ${items.length})`
+      : undefined
+    : undefined;
   const activeHeightClass = compact
     ? 'h-[var(--tm-selection-segment-compact-active-height)]'
     : 'h-[var(--tm-selection-segment-visible-height)]';
@@ -40,15 +49,18 @@ const CompactSegmentedControl = <TValue extends string,>({
   return (
     <div
       className={`${fullWidth ? 'grid w-full' : 'inline-grid'} relative h-[var(--tm-selection-touch-height)] items-center ${compact ? 'text-[length:var(--tm-selection-segment-compact-font-size)]' : 'text-[length:var(--tm-font-size-body)]'} ${className}`}
-      style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      style={{
+        gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+        width: settingsWidth,
+      }}
       role={semantics === 'tabs' ? 'tablist' : 'group'}
       aria-label={ariaLabel}
     >
       <span
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 ${compact ? 'h-[var(--tm-selection-segment-compact-track-height)] rounded-[var(--tm-radius-control)] bg-[var(--tm-selection-segment-track-bg)]' : 'h-[var(--tm-selection-touch-height)] rounded-[var(--tm-selection-segment-track-radius)] bg-[var(--tm-selection-segment-track-bg)]'}`}
+        className={`pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 ${compact ? 'h-[var(--tm-selection-segment-compact-track-height)] rounded-[var(--tm-selection-segment-compact-track-radius)] bg-[var(--tm-selection-segment-track-bg)]' : 'h-[var(--tm-selection-touch-height)] rounded-[var(--tm-selection-segment-track-radius)] bg-[var(--tm-selection-segment-track-bg)]'}`}
       />
-      {motion === 'sliding' && (
+      {effectiveMotion === 'sliding' && (
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-1/2 z-[1] -translate-y-1/2"
@@ -62,14 +74,14 @@ const CompactSegmentedControl = <TValue extends string,>({
             }}
           >
             <span
-              className={`block h-full bg-[var(--tm-selection-segment-active-bg)] [box-shadow:var(--tm-selection-segment-active-shadow)] ${compact ? 'mx-[var(--tm-selection-segment-compact-inset)] rounded-[var(--tm-radius-control)]' : 'mx-[var(--tm-space-1)] rounded-[var(--tm-selection-segment-active-radius)]'}`}
+              className={`block h-full bg-[var(--tm-selection-segment-active-bg)] [box-shadow:var(--tm-selection-segment-active-shadow)] ${compact ? 'mx-[var(--tm-selection-segment-compact-inset)] rounded-[var(--tm-selection-segment-compact-active-radius)]' : 'mx-[var(--tm-space-1)] rounded-[var(--tm-selection-segment-active-radius)]'}`}
             />
           </span>
         </span>
       )}
       {items.map(item => {
         const selected = item.value === value;
-        const selectedClass = motion === 'sliding'
+        const selectedClass = effectiveMotion === 'sliding'
           ? (selected ? 'text-[var(--tm-selection-segment-active-text)]' : 'text-[var(--tm-selection-segment-inactive-text)]')
           : (selected
             ? 'bg-[var(--tm-selection-segment-active-bg)] text-[var(--tm-selection-segment-active-text)] [box-shadow:var(--tm-selection-segment-active-shadow)]'
@@ -83,9 +95,9 @@ const CompactSegmentedControl = <TValue extends string,>({
             aria-selected={semantics === 'tabs' ? selected : undefined}
             aria-pressed={semantics === 'group' ? selected : undefined}
             onClick={() => onChange(item.value)}
-            className={`${fullWidth ? 'min-w-0' : 'min-w-[72px]'} relative z-10 flex min-h-[var(--tm-selection-touch-height)] items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${motion === 'sliding' ? motionInsetClass : 'p-[var(--tm-space-1)] transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] motion-reduce:transition-none motion-reduce:active:scale-100'}`}
+            className={`${fullWidth || settingsVariant ? 'min-w-0' : 'min-w-[72px]'} relative z-10 flex min-h-[var(--tm-selection-touch-height)] items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${effectiveMotion === 'sliding' ? motionInsetClass : (compact ? 'px-[var(--tm-selection-segment-compact-inset)] py-0' : 'p-[var(--tm-space-1)]')}`}
           >
-            <span className={`relative z-10 flex w-full items-center justify-center rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] [transition-duration:var(--tm-duration-fast)] motion-reduce:transition-none ${motion === 'sliding' ? 'transition-colors' : 'transition-[background-color,color,box-shadow]'} ${activeHeightClass} ${selectedClass}`}>
+            <span className={`relative z-10 flex w-full items-center justify-center ${settingsVariant ? 'whitespace-nowrap px-[var(--tm-space-1)]' : 'px-[var(--tm-space-2)]'} [transition-duration:var(--tm-duration-fast)] motion-reduce:transition-none ${compact ? 'rounded-[var(--tm-selection-segment-compact-active-radius)]' : 'rounded-[var(--tm-radius-control)]'} ${effectiveMotion === 'sliding' ? 'transition-colors' : 'transition-[background-color,color,box-shadow]'} ${activeHeightClass} ${selectedClass}`}>
               {item.label}
             </span>
           </button>

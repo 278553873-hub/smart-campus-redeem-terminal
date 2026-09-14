@@ -10,10 +10,14 @@ const records = [
 assert.deepEqual(summarizeGroupPerformance(records, 'writing-1'), {
   praiseCount: 1,
   criticismCount: 1,
+  praiseScore: 3,
+  criticismScore: 1,
 });
 assert.deepEqual(summarizeGroupPerformance(records, 'reading-1'), {
   praiseCount: 1,
   criticismCount: 0,
+  praiseScore: 5,
+  criticismScore: 0,
 });
 assert.deepEqual(
   createDemoGroupPerformanceSummary('writing-1'),

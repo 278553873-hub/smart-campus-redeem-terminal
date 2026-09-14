@@ -77,7 +77,7 @@ interface ToolSectionProps {
 
 const secondaryIconClass = 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]';
 
-const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)] transition active:scale-95 active:text-[var(--tm-brand-primary)]';
+const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)]';
 const reportToolImageClass = 'h-14 w-14 max-w-none rounded-[var(--tm-radius-inner)] object-cover';
 const assistantToolImageClass = 'h-12 w-12 rounded-[var(--tm-radius-inner)] object-cover';
 const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-ambient)]';
@@ -103,7 +103,7 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                     type="button"
                     aria-label={item.title}
                     onClick={item.onClick}
-                    className={`${isSecondary ? 'min-h-[72px]' : 'min-h-[82px]'} group flex flex-col items-center justify-start gap-2 rounded-[var(--tm-radius-inner)] py-1 text-center transition duration-200 active:scale-[0.97] active:bg-[var(--tm-brand-primary-soft)]/60`}
+                    className={`${isSecondary ? 'min-h-[72px]' : 'min-h-[82px]'} group flex flex-col items-center justify-start gap-2 rounded-[var(--tm-radius-inner)] py-1 text-center`}
                 >
                     {item.imageSrc ? (
                         <span className="relative flex h-12 w-12 items-center justify-center overflow-visible rounded-[var(--tm-radius-inner)]">
@@ -165,7 +165,7 @@ export const ClassSourceSheet: React.FC<{
                         aria-pressed={isActive}
                         aria-label={`${isActive ? '当前' : '切换至'}${space.title}，${sourceTypeLabel}${schoolTypeLabel ? `，${schoolTypeLabel}` : ''}`}
                         onClick={() => onSelectSpace(space.id)}
-                        className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-inner)] px-4 text-left transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                        className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-inner)] px-4 text-left ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
                     >
                         <span className="flex min-w-0 flex-1 items-center gap-3">
                             <span className={`flex h-10 w-10 shrink-0 items-center justify-center ${isActive ? 'text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}>
@@ -277,7 +277,7 @@ const MeView: React.FC<MeViewProps> = ({
         },
         {
             id: 'coinIssuance',
-            title: '货币发放',
+            title: '校园币发放',
             icon: Coins,
             onClick: onOpenCoinIssuance,
         },
@@ -333,7 +333,7 @@ const MeView: React.FC<MeViewProps> = ({
                         <button
                             type="button"
                             onClick={onEditTeacherProfile}
-                            className="relative shrink-0 overflow-visible rounded-full text-left transition-transform active:scale-95"
+                            className="relative shrink-0 overflow-visible rounded-full text-left"
                             aria-label="编辑教师信息"
                         >
                             <div className="h-20 w-20 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
@@ -354,7 +354,7 @@ const MeView: React.FC<MeViewProps> = ({
                             <button
                                 type="button"
                                 onClick={onEditTeacherProfile}
-                                className="flex min-h-11 max-w-full items-center text-left active:opacity-70"
+                                className="flex min-h-11 max-w-full items-center text-left"
                                 aria-label="编辑姓名"
                             >
                                 <h2 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]">{teacherName}</h2>
@@ -386,7 +386,7 @@ const MeView: React.FC<MeViewProps> = ({
                     <button
                         type="button"
                         onClick={onOpenAssignedCollections}
-                        className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-4 text-left transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)] ${toolCardSurfaceClass}`}
+                        className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-4 text-left ${toolCardSurfaceClass}`}
                     >
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><ClipboardList className="h-4 w-4" /></span>
                         <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">待填写采集</span>

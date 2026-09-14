@@ -1121,13 +1121,13 @@ const pageMeta: Record<PageKey, PageMeta> = {
   minePersonal: {
     title: '我的（仅有个人版）',
     subtitle: '查看教师信息、个人版和常用工具入口。',
-    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '了解学校版', '管理工具', '期末报告', '更多工具', '科目管理', '部门管理', '货币发放管理', '建议反馈', '学校版功能弹窗', '顾问微信二维码'],
+    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '了解学校版', '管理工具', '期末报告', '更多工具', '科目管理', '部门管理', '校园币发放管理', '建议反馈', '学校版功能弹窗', '顾问微信二维码'],
     ctas: [
       { label: '头像', priority: 'P0', position: '教师信息区，点击进入基本信息设置页' },
       { label: '姓名', priority: 'P1', position: '教师信息区，点击进入基本信息设置页' },
       { label: '扫一扫', priority: 'P1', position: '页面右上角 icon' },
       { label: '设置', priority: 'P1', position: '页面右上角 icon，点击进入设置页' },
-      { label: '货币发放管理', priority: 'P1', position: '更多工具卡片，点击进入货币发放管理' },
+      { label: '校园币发放管理', priority: 'P1', position: '更多工具卡片，点击进入校园币发放管理' },
       { label: '建议反馈', priority: 'P1', position: '更多工具卡片，点击进入建议反馈表单' },
       { label: '期末报告', priority: 'P0', position: '管理工具卡片，点击后提示未到学期末并可预览样例' },
       { label: '了解学校版', priority: 'P1', position: '教师卡片下方按钮，点击打开底部弹窗' },
@@ -1143,14 +1143,14 @@ const pageMeta: Record<PageKey, PageMeta> = {
   mineSchool: {
     title: '我的（拥有多个版本）',
     subtitle: '查看教师信息、班级来源和常用工具入口。',
-    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '班级来源入口', '管理工具', '学校报表', '期末报告', '更多工具', '科目管理', '部门管理', '货币发放管理', '建议反馈', '切换班级来源弹窗'],
+    modules: ['教师信息', '头像', '姓名', '扫一扫', '设置', '班级来源入口', '管理工具', '学校报表', '期末报告', '更多工具', '科目管理', '部门管理', '校园币发放管理', '建议反馈', '切换班级来源弹窗'],
     ctas: [
       { label: '头像', priority: 'P0', position: '教师信息区，点击进入基本信息设置页' },
       { label: '姓名', priority: 'P1', position: '教师信息区，点击进入基本信息设置页' },
       { label: '扫一扫', priority: 'P1', position: '页面右上角 icon' },
       { label: '设置', priority: 'P1', position: '页面右上角 icon，点击进入设置页' },
       { label: '切换班级来源', priority: 'P0', position: '教师信息区班级来源胶囊，点击打开底部弹窗' },
-      { label: '货币发放管理', priority: 'P1', position: '更多工具卡片，点击进入货币发放管理' },
+      { label: '校园币发放管理', priority: 'P1', position: '更多工具卡片，点击进入校园币发放管理' },
       { label: '建议反馈', priority: 'P1', position: '更多工具卡片，点击进入建议反馈表单' },
       { label: '学校报表', priority: 'P0', position: '当前切换到学校版时展示在管理工具卡片' },
       { label: '期末报告', priority: 'P0', position: '管理工具卡片，点击后提示未到学期末并可预览样例' },
@@ -1267,15 +1267,15 @@ const pageMeta: Record<PageKey, PageMeta> = {
     },
   },
   coinIssuanceManagement: {
-    title: '货币发放管理',
+    title: '货币发放',
     subtitle: '配置校园币自动发放规则。',
-    modules: ['开启货币发放', '长按提示', '发放周期', '班级总预算', '阳光保底比例', '积分排行比例', '保存按钮'],
+    modules: ['开启校园币发放', '长按提示', '发放条件', '发放周期', '发放门槛', '发放数量', '按人', '按班', '每班/每人预算', '奖励分配', '阳光保底比例', '积分排行比例', '固定底部保存'],
     ctas: [
-      { label: '开启货币发放', priority: 'P0', position: '页面顶部配置项开关' },
-      { label: '保存', priority: 'P0', position: '页面底部主按钮' },
+      { label: '开启校园币发放', priority: 'P0', position: '页面顶部配置项开关' },
+      { label: '保存', priority: 'P0', position: '固定底部操作栏' },
     ],
     states: {
-      normal: '默认关闭，只展示开关；开启后展示发放周期、预算和比例配置。',
+      normal: '默认关闭，只展示开关；开启后按发放条件、发放数量、奖励分配分组展示配置，保存按钮固定在底部。',
       loading: '配置加载中。',
       empty: '未配置时使用默认值。',
       network: '保存失败，保留已编辑内容。',
@@ -1458,8 +1458,8 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '教师信息直接铺开到页面顶部，不使用教师信息卡片。',
       '头像点击进入 15A 基本信息设置（个人版）。',
       '右上角展示扫一扫和设置 icon。',
-      '更多工具在 14A 和 14B 都展示，以卡片承载科目管理、部门管理、货币发放管理和建议反馈。',
-      '点击货币发放管理进入 21 货币发放管理，默认关闭货币发放，开启后展示发放周期、班级总预算、阳光保底比例和积分排行比例。',
+      '更多工具在 14A 和 14B 都展示，以卡片承载科目管理、部门管理、校园币发放管理和建议反馈。',
+      '点击校园币发放管理进入 21 货币发放，默认关闭校园币发放，开启后展示发放周期、发放门槛、发放数量、阳光保底比例和积分排行比例。',
       '点击建议反馈进入 22 建议反馈表单，可填写文本并上传 1-5 张图片；提交后进入运营端建议反馈模块。',
       '点击生成期末报告展示未到学期末提示，并提供期末报告样例预览。',
       '页面展示“了解学校版”按钮。',
@@ -1479,8 +1479,8 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
       '我的页选中态只展示“我创建的班级 / 某某老师的班级 / 学校名称”，不展示个人/协作/学校标签。',
       '只有登录用户拥有多个班级来源时，记录页、班级页和我的页才展示切换入口；单来源用户只在我的页基本信息处展示当前来源。',
       '管理工具随当前切换版本变化：当前为学校版时展示学校数据报表、生成期末报告；当前为个人版时只展示生成期末报告。',
-      '更多工具在 14A 和 14B 都展示，以卡片承载科目管理、部门管理、货币发放管理和建议反馈。',
-      '点击货币发放管理进入 21 货币发放管理，默认关闭货币发放，开启后展示发放周期、班级总预算、阳光保底比例和积分排行比例。',
+      '更多工具在 14A 和 14B 都展示，以卡片承载科目管理、部门管理、校园币发放管理和建议反馈。',
+      '点击校园币发放管理进入 21 货币发放，默认关闭校园币发放，开启后展示发放周期、发放门槛、发放数量、阳光保底比例和积分排行比例。',
       '点击建议反馈进入 22 建议反馈表单，可填写文本并上传 1-5 张图片；提交后进入运营端建议反馈模块。',
       '点击生成期末报告展示未到学期末提示，并提供期末报告样例预览。',
       '14B 不展示“了解学校版”按钮。',
@@ -1938,7 +1938,10 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [showFinalReportSamplePreview, setShowFinalReportSamplePreview] = useState(false);
   const [coinIssuanceEnabled, setCoinIssuanceEnabled] = useState(false);
   const [coinIssuePeriod, setCoinIssuePeriod] = useState<CoinIssuePeriod>('weekly');
+  const [coinMinimumEvaluationCount, setCoinMinimumEvaluationCount] = useState(1);
+  const [coinBudgetMode, setCoinBudgetMode] = useState<'per_class' | 'per_student'>('per_class');
   const [coinClassBudget, setCoinClassBudget] = useState(500);
+  const [coinBudgetDraft, setCoinBudgetDraft] = useState('500');
   const [sunshineRatio, setSunshineRatio] = useState(30);
   const [rankingRatio, setRankingRatio] = useState(70);
   const [showCoinIssueHelpOverlay, setShowCoinIssueHelpOverlay] = useState(false);
@@ -7693,7 +7696,7 @@ const TeacherCMobileLowFi: React.FC = () => {
           icon: item.icon,
           onClick: () => openSchoolBasicInfo(item.key),
         })),
-        { key: 'coinIssuanceManagement', label: '货币发放', icon: Coins, onClick: () => navigate('coinIssuanceManagement') },
+        { key: 'coinIssuanceManagement', label: '校园币发放', icon: Coins, onClick: () => navigate('coinIssuanceManagement') },
         { key: 'suggestionFeedback', label: '建议反馈', icon: MessageCircle, onClick: () => navigate('suggestionFeedback') },
       ];
       return (
@@ -8187,25 +8190,25 @@ const TeacherCMobileLowFi: React.FC = () => {
     }
 
     if (page === 'coinIssuanceManagement') {
-      const budgetSentencePrefix = coinIssuePeriod === 'weekly' ? '每周每个班级发放' : '每月每个班级发放';
-      const sliderClass = 'h-2 w-full accent-gray-900';
+      const sliderClass = 'absolute inset-x-0 top-1/2 h-11 w-full -translate-y-1/2 cursor-pointer appearance-none rounded-full border-0 bg-transparent accent-gray-900 [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:border-0 [&::-moz-range-track]:bg-transparent [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-gray-900 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:-mt-1.5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:bg-gray-900';
       const sunshinePoolAmount = coinClassBudget * sunshineRatio / 100;
       const rankingPoolAmount = coinClassBudget * rankingRatio / 100;
+      const studentBudgetPreview = coinClassBudget * 50;
       return (
         <>
-          <ScreenHeader title="货币发放管理" />
-          <div className="flex h-[calc(100%-64px)] flex-col p-5">
+        <ScreenHeader title="货币发放" />
+          <div className="relative flex h-[calc(100%-64px)] flex-col px-5 pt-5">
             <div className="flex-1 space-y-3 overflow-y-auto pb-24">
               <section className="rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
                 <div className="flex min-h-12 items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className="truncate text-sm font-black">开启货币发放</span>
+                  <div className="flex min-w-0 items-center gap-0">
+                    <span className="truncate text-sm font-black">开启校园币发放</span>
                     <button
                       type="button"
                       onPointerDown={() => setShowCoinIssueHelpOverlay(true)}
                       onContextMenu={(event) => event.preventDefault()}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-500 active:bg-gray-100"
-                      aria-label="长按查看货币发放说明"
+                      className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-500 active:bg-gray-100"
+                      aria-label="长按查看校园币发放说明"
                     >
                       <CircleHelp size={16} />
                     </button>
@@ -8213,57 +8216,140 @@ const TeacherCMobileLowFi: React.FC = () => {
                   <SwitchControl
                     checked={coinIssuanceEnabled}
                     onChange={setCoinIssuanceEnabled}
-                    ariaLabel="开启货币发放"
+                    ariaLabel="开启校园币发放"
                   />
                 </div>
               </section>
 
               {coinIssuanceEnabled && (
                 <section className="space-y-3 rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-                  <label className="block">
-                    <span className="text-sm font-black">发放周期</span>
-                    <select
-                      value={coinIssuePeriod}
-                      onChange={(event) => setCoinIssuePeriod(event.target.value as CoinIssuePeriod)}
-                      className="mt-2 h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 text-sm font-black"
-                    >
-                      <option value="weekly">每周一发放</option>
-                      <option value="monthly">每月一号发放</option>
-                    </select>
-                  </label>
+                  <div className="space-y-3">
+                    <label className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
+                      <span className="text-sm font-medium text-gray-500">发放周期</span>
+                      <select
+                        value={coinIssuePeriod}
+                        onChange={(event) => setCoinIssuePeriod(event.target.value as CoinIssuePeriod)}
+                        className="h-11 w-[172px] max-w-full justify-self-end rounded-xl border border-gray-200 bg-gray-50 px-3 text-center text-sm font-black"
+                      >
+                        <option value="weekly">每周一发放</option>
+                        <option value="monthly">每月一号发放</option>
+                      </select>
+                    </label>
 
-                  <label className="block">
-                    <span className="text-sm font-black">班级总预算</span>
-                    <div className="mt-2 flex min-h-12 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3">
-                      <span className="shrink-0 text-sm font-black text-gray-700">{budgetSentencePrefix}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={coinClassBudget}
-                        onChange={(event) => setCoinClassBudget(Number(event.target.value || 0))}
-                        className="h-9 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-2 text-center text-sm font-black text-gray-950"
-                        aria-label={budgetSentencePrefix}
-                      />
-                      <span className="shrink-0 text-sm font-black text-gray-700">币</span>
+                    <label className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
+                      <span className="text-sm font-medium text-gray-500">发放门槛</span>
+                      <div className="flex w-[172px] max-w-full min-w-0 items-center justify-self-end justify-end gap-2 text-sm font-black text-gray-900">
+                        <span className="shrink-0 whitespace-nowrap">{coinIssuePeriod === 'weekly' ? '本周至少评价' : '本月至少评价'}</span>
+                        <input
+                          type="number"
+                          min={1}
+                          step={1}
+                          inputMode="numeric"
+                          value={coinMinimumEvaluationCount}
+                          onChange={(event) => {
+                            const value = Number(event.target.value);
+                            setCoinMinimumEvaluationCount(Number.isFinite(value) && value > 0 ? Math.max(1, Math.floor(value)) : 1);
+                          }}
+                          className="h-11 w-11 shrink-0 rounded-xl border border-gray-200 bg-white px-2 text-center text-sm font-black text-gray-950 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          aria-label={`${coinIssuePeriod === 'weekly' ? '本周' : '本月'}评价次数`}
+                        />
+                        <span className="shrink-0 whitespace-nowrap">次</span>
+                      </div>
+                    </label>
+                  </div>
+                  <div className="whitespace-nowrap pl-1 text-xs font-medium leading-5 text-gray-500">张老师评价：全班50名同学积极参加锻炼，算作1次评价</div>
+
+                  <div className="block">
+                    <span className="text-sm font-black">发放数量</span>
+                    <div className="mt-2 space-y-3">
+                      <div className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
+                        <span className="text-sm font-medium text-gray-500">预算设置</span>
+                        <div className="flex min-w-0 justify-end">
+                          <div className="flex h-11 w-36 rounded-xl bg-gray-100 p-1" role="group" aria-label="预算设置">
+                            {([
+                              { value: 'per_student' as const, label: '按人' },
+                              { value: 'per_class' as const, label: '按班' },
+                            ]).map((option) => {
+                              const selected = coinBudgetMode === option.value;
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  aria-pressed={selected}
+                                  onClick={() => {
+                                    setCoinBudgetMode(option.value);
+                                    const nextBudget = option.value === 'per_student' ? 10 : 500;
+                                    setCoinClassBudget(nextBudget);
+                                    setCoinBudgetDraft(String(nextBudget));
+                                  }}
+                                  className={cx('h-9 w-1/2 rounded-lg text-xs font-black', selected ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500')}
+                                >
+                                  {option.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <label className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
+                        <span className="text-sm font-medium text-gray-500">{coinBudgetMode === 'per_student' ? '每人预算' : '每班预算'}</span>
+                        <div className="flex min-w-0 justify-end">
+                          <div className="flex w-36 items-center gap-2">
+                            <input
+                              type="number"
+                              min={0.01}
+                              value={coinBudgetDraft}
+                              onChange={(event) => {
+                                const raw = event.target.value;
+                                if (!/^\d*(\.\d{0,2})?$/.test(raw)) return;
+                                setCoinBudgetDraft(raw);
+                                if (raw && raw !== '.') {
+                                  const value = Number(raw);
+                                  if (Number.isFinite(value) && value > 0) setCoinClassBudget(Math.round(value * 100) / 100);
+                                }
+                              }}
+                              onBlur={() => {
+                                const value = Number(coinBudgetDraft);
+                                const normalized = Number.isFinite(value) && value > 0 ? Math.max(0.01, Math.round(value * 100) / 100) : 1;
+                                setCoinBudgetDraft(String(normalized));
+                                setCoinClassBudget(normalized);
+                              }}
+                              className="h-11 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-2 text-center text-sm font-black tabular-nums text-gray-950 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              aria-label={coinBudgetMode === 'per_student' ? '每人预算' : '每班预算'}
+                            />
+                            <span className="shrink-0 text-sm font-black text-gray-700">币</span>
+                          </div>
+                        </div>
+                        {coinBudgetMode === 'per_student' && (
+                          <div className="col-span-2 text-pretty text-xs font-medium leading-5 text-gray-500">一个班50人，则班级预算为 <span className="tabular-nums">{coinClassBudget}</span> × 50 = <span className="tabular-nums">{formatCoinAmount(studentBudgetPreview)}</span> 币</div>
+                        )}
+                      </label>
                     </div>
-                  </label>
+                  </div>
 
+                  <div className="space-y-4">
                   <label className="block rounded-2xl bg-gray-50 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm font-black">阳光保底比例</span>
                       <span className="text-sm font-black">{sunshineRatio}%</span>
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={sunshineRatio}
-                      onChange={(event) => updateSunshineRatio(Number(event.target.value))}
-                      className={sliderClass}
-                    />
-                    <div className="mt-2 space-y-1 text-xs leading-5 text-gray-500">
-                      <div className="font-medium">每位学生无论评价如何，都可以获得的奖励。</div>
+                    <div className="relative mt-1 h-10">
+                      <div className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-gray-200" aria-hidden="true">
+                        <div className="h-full rounded-full bg-gray-900" style={{ width: `${sunshineRatio}%` }} />
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={sunshineRatio}
+                        onChange={(event) => updateSunshineRatio(Number(event.target.value))}
+                        className={sliderClass}
+                        aria-label={`阳光保底比例 ${sunshineRatio}%`}
+                      />
+                    </div>
+                    <div className="mt-1 space-y-2 text-xs leading-5 text-gray-500">
+                      <div className="font-medium">每个学生无论评价如何，都可以获得的成长奖励</div>
                       <div className="font-black text-gray-900">全班平分：{formatCoinAmount(sunshinePoolAmount)}币</div>
                     </div>
                   </label>
@@ -8273,30 +8359,39 @@ const TeacherCMobileLowFi: React.FC = () => {
                       <span className="text-sm font-black">积分排行比例</span>
                       <span className="text-sm font-black">{rankingRatio}%</span>
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={rankingRatio}
-                      onChange={(event) => updateRankingRatio(Number(event.target.value))}
-                      className={sliderClass}
-                    />
-                    <div className="mt-2 space-y-1 text-xs leading-5 text-gray-500">
-                      <div className="font-medium">评分为正的学生，可按比例分配的奖励。</div>
+                    <div className="relative mt-1 h-10">
+                      <div className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-amber-100" aria-hidden="true">
+                        <div className="h-full rounded-full bg-amber-500" style={{ width: `${rankingRatio}%` }} />
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={rankingRatio}
+                        onChange={(event) => updateRankingRatio(Number(event.target.value))}
+                        className={sliderClass}
+                        aria-label={`积分排行比例 ${rankingRatio}%`}
+                      />
+                    </div>
+                    <div className="mt-1 space-y-2 text-xs leading-5 text-gray-500">
+                      <div className="font-medium">评分为正的学生，按比例分配的排名奖励</div>
                       <div className="font-black text-gray-900">奖池金额：{formatCoinAmount(rankingPoolAmount)}币</div>
                     </div>
                   </label>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => showClassActionToast('货币发放配置已保存')}
-                    className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white active:bg-gray-800"
-                  >
-                    保存
-                  </button>
                 </section>
               )}
+            </div>
+            <div className="absolute inset-x-5 bottom-5">
+              <button
+                type="button"
+                onClick={() => showClassActionToast('校园币发放配置已保存')}
+                className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white active:bg-gray-800"
+              >
+                保存
+              </button>
             </div>
           </div>
         </>

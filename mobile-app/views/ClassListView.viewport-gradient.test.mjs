@@ -17,6 +17,7 @@ if (navCss.includes('border: 1px solid rgba(255, 255, 255, 0.68)')) failures.pus
 
 requireText(mobileApp, 'TeacherMobileScreenBackground', '班级页面应使用公共手机壳屏幕背景组件。');
 requireText(background, "variant = 'ambient'", '公共背景组件应默认使用长页面环境背景。');
+requireText(mobileApp, 'variant="class-list" classListMode={classListTab} preview={gradientPreview}', '班级与社团页签应驱动公共背景方向。');
 requireText(mobileApp, 'const hasScreenLevelBackground', '有屏幕级背景的页面，内容容器应保持透明。');
 requireText(classList, 'text-lg font-[550] text-[var(--tm-text-primary)]', '班级卡片标题字号应为 18px，并使用550字重。');
 requireText(classList, 'bg-[var(--tm-brand-secondary-soft)] px-2 py-0.5 text-[11px] tm-font-regular text-[var(--tm-brand-secondary)]', '普通学科标签应使用紧凑的11px浅橙标签样式。');
@@ -33,11 +34,9 @@ if (classList.includes('text-xl font-semibold text-slate-800')) failures.push('�
 if (classList.includes('text-[11px] px-2 py-0.5 bg-slate-100')) failures.push('普通学科标签不应继续使用 11px。');
 if (mobileApp.includes("currentView !== 'home_log' && currentView !== 'report_detail'")) failures.push('班级首页不应继续走默认白色 LocalHeader。');
 
-requireText(rootApp, 'const [showPhoneShell, setShowPhoneShell] = useState(true);', '教师手机端模拟真实手机效果应默认开启。');
-requireText(rootApp, 'const [showParentPhoneShell, setShowParentPhoneShell] = useState(false);', '家长手机端模拟真实手机效果应默认关闭。');
-requireText(rootApp, 'const [showPhoneShellToggle, setShowPhoneShellToggle] = useState(false);', '家长手机端模拟真实手机效果开关应默认隐藏。');
-requireText(rootApp, "currentApp === 'admin' || (showPhoneShellToggle && currentApp === 'parent')", '教师手机端应默认展示模拟真实手机效果开关，家长手机端仍使用隐藏入口。');
-requireText(rootApp, 'environmentTitleClickCountRef.current >= 5', '环境切换文案应点击 5 次后显示或隐藏模拟真实手机效果开关。');
+requireText(rootApp, 'const showPhoneShell = true;', '教师手机端真实手机效果应固定开启。');
+requireText(rootApp, 'const showParentPhoneShell = false;', '家长手机端真实手机效果应固定关闭。');
+if (rootApp.includes('模拟真实手机')) failures.push('演示页不应继续提供模拟真实手机设置。');
 
 if (failures.length) throw new Error(failures.join('\n'));
 console.log('class list viewport gradient and phone shell assertions passed');

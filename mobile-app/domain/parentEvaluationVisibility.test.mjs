@@ -5,13 +5,13 @@ import {
 } from './parentEvaluationVisibility.ts';
 
 assert.deepEqual(DEFAULT_PARENT_EVALUATION_VISIBILITY, {
-  positive: 'summaryAndDetails',
-  negative: 'summaryAndDetails',
+  positive: 'summary',
+  negative: 'hidden',
 });
 
 assert.deepEqual(getParentEvaluationVisibilitySettings(), DEFAULT_PARENT_EVALUATION_VISIBILITY);
 assert.deepEqual(getParentEvaluationVisibilitySettings({ negative: 'hidden' }), {
-  positive: 'summaryAndDetails',
+  positive: 'summary',
   negative: 'hidden',
 });
 

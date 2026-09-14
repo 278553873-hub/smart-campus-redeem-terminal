@@ -7,6 +7,8 @@ export interface StudentPerformanceSummary {
   netScore: number;
   praiseCount: number;
   criticismCount: number;
+  praiseScore: number;
+  criticismScore: number;
 }
 
 export interface StudentPerformanceLevel {
@@ -70,10 +72,14 @@ export const summarizeStudentPerformance = (
   netScore: summary.netScore + record.scoreChange,
   praiseCount: summary.praiseCount + (record.scoreChange > 0 ? 1 : 0),
   criticismCount: summary.criticismCount + (record.scoreChange < 0 ? 1 : 0),
+  praiseScore: summary.praiseScore + (record.scoreChange > 0 ? record.scoreChange : 0),
+  criticismScore: summary.criticismScore + (record.scoreChange < 0 ? Math.abs(record.scoreChange) : 0),
 }), {
   netScore: 0,
   praiseCount: 0,
   criticismCount: 0,
+  praiseScore: 0,
+  criticismScore: 0,
 });
 
 export const getStudentLevelNetScore = (
@@ -99,6 +105,8 @@ export const applyStudentPerformanceEvent = (
   netScore: summary.netScore + scoreChange,
   praiseCount: summary.praiseCount + (scoreChange > 0 ? 1 : 0),
   criticismCount: summary.criticismCount + (scoreChange < 0 ? 1 : 0),
+  praiseScore: summary.praiseScore + (scoreChange > 0 ? scoreChange : 0),
+  criticismScore: summary.criticismScore + (scoreChange < 0 ? Math.abs(scoreChange) : 0),
 });
 
 export const revertStudentPerformanceEvent = (
@@ -108,6 +116,8 @@ export const revertStudentPerformanceEvent = (
   netScore: summary.netScore - scoreChange,
   praiseCount: Math.max(0, summary.praiseCount - (scoreChange > 0 ? 1 : 0)),
   criticismCount: Math.max(0, summary.criticismCount - (scoreChange < 0 ? 1 : 0)),
+  praiseScore: Math.max(0, summary.praiseScore - (scoreChange > 0 ? scoreChange : 0)),
+  criticismScore: Math.max(0, summary.criticismScore - (scoreChange < 0 ? Math.abs(scoreChange) : 0)),
 });
 
 export const createDemoStudentPerformanceSummary = (
@@ -117,7 +127,7 @@ export const createDemoStudentPerformanceSummary = (
   const serialNumber = Math.max(1, Number(numericSuffix) || 1);
 
   if (serialNumber % 20 === 1) {
-    return { netScore: 18, praiseCount: 10, criticismCount: 1 };
+    return { netScore: 18, praiseCount: 10, criticismCount: 1, praiseScore: 21, criticismScore: 3 };
   }
 
   const praiseCount = serialNumber % 17 === 0
@@ -131,6 +141,8 @@ export const createDemoStudentPerformanceSummary = (
     netScore: positiveScore - negativeScore,
     praiseCount,
     criticismCount,
+    praiseScore: positiveScore,
+    criticismScore: negativeScore,
   };
 };
 

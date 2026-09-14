@@ -17,7 +17,8 @@ assert.ok(classListSource.includes('text-[13px] font-[450] text-[var(--tm-text-s
 assert.ok(classListSource.includes('bg-[var(--tm-brand-primary-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--tm-brand-primary)]'), '班主任和副班主任应使用浅品牌红背景及品牌红文字标签。');
 assert.ok(classListSource.includes('bg-[var(--tm-brand-secondary-soft)] px-2 py-0.5 text-[11px] tm-font-regular text-[var(--tm-brand-secondary)]'), '任教科目应使用浅橙背景及橙色文字标签。');
 assert.ok(classListSource.includes("hasRelationshipTags ? 'min-h-[var(--tm-class-list-card-min-height)]' : 'min-h-[var(--tm-class-list-card-compact-min-height)]'"), '无任教关系的班级卡片应使用更紧凑的高度。');
-assert.equal((classListSource.match(/text-sm font-medium text-\[var\(--tm-text-secondary\)\] transition-colors active:bg-\[var\(--tm-bg-surface-soft\)\]/g) ?? []).length, 2, '学生列表和班级报告应统一使用#6D6764次级文字颜色。');
+assert.equal((classListSource.match(/pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-\[var\(--tm-radius-control\)\] px-1 text-sm font-medium text-\[var\(--tm-text-secondary\)\]/g) ?? []).length, 2, '学生列表和班级报告应统一使用#6D6764次级文字颜色。');
+assert.ok(!classListSource.includes('active:bg-'), '班级列表不应显示触摸按压底色。');
 assert.equal((classListSource.match(/className="h-\[var\(--tm-class-list-action-icon-size\)\] w-\[var\(--tm-class-list-action-icon-size\)\] text-\[var\(--tm-brand-primary\)\] \[stroke-width:2\.2\]"/g) ?? []).length, 2, '两个按钮图标应统一使用明亮的品牌红和略粗线条。');
 assert.equal((classListSource.match(/h-\[var\(--tm-class-list-action-icon-size\)\]/g) ?? []).length, 2, '两个按钮图标应使用统一的文案匹配尺寸。');
 assert.ok(classListSource.includes('pointer-events-none relative z-[1] min-w-0 flex-1 pr-10'), '卡片上方信息区应吸收剩余空间，并将点击交给卡片主入口。');

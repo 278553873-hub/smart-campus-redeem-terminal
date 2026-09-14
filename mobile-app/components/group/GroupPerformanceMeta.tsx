@@ -1,13 +1,15 @@
 import React from 'react';
 import type { GroupPerformanceSummary } from '../../domain/groupPerformance';
-import { StudentPerformanceCounts } from '../student-performance/StudentPerformanceMeta';
+import type { EvaluationCardValueMode } from '../../types';
+import { StudentPerformanceValues } from '../student-performance/StudentPerformanceMeta';
 
 interface GroupPerformanceMetaProps {
   summary: GroupPerformanceSummary;
   className?: string;
   orientation?: 'horizontal' | 'vertical';
-  showPraiseCount?: boolean;
-  showCriticismCount?: boolean;
+  showPraise?: boolean;
+  showCriticism?: boolean;
+  valueMode?: EvaluationCardValueMode;
   fontSize?: number;
   itemHeight?: number;
   itemMinWidth?: number;
@@ -18,26 +20,28 @@ const GroupPerformanceMeta: React.FC<GroupPerformanceMetaProps> = ({
   summary,
   className = '',
   orientation = 'horizontal',
-  showPraiseCount = true,
-  showCriticismCount = true,
+  showPraise = true,
+  showCriticism = true,
+  valueMode = 'count',
   fontSize,
   itemHeight,
   itemMinWidth,
   gap,
 }) => {
-  const visibleCountLabel = [
-    showPraiseCount ? `被表扬${summary.praiseCount}次` : '',
-    showCriticismCount ? `被批评${summary.criticismCount}次` : '',
+  const visibleValueLabel = [
+    showPraise ? (valueMode === 'score' ? `累计加分${summary.praiseScore}分` : `被表扬${summary.praiseCount}次`) : '',
+    showCriticism ? (valueMode === 'score' ? `累计扣分${summary.criticismScore}分` : `被批评${summary.criticismCount}次`) : '',
   ].filter(Boolean).join('，');
 
   return (
-    <StudentPerformanceCounts
+    <StudentPerformanceValues
       summary={summary}
-      ariaLabel={`小组${visibleCountLabel}`}
+      ariaLabel={`小组${visibleValueLabel}`}
       className={className}
       orientation={orientation}
-      showPraiseCount={showPraiseCount}
-      showCriticismCount={showCriticismCount}
+      showPraise={showPraise}
+      showCriticism={showCriticism}
+      valueMode={valueMode}
       fontSize={fontSize}
       itemHeight={itemHeight}
       itemMinWidth={itemMinWidth}

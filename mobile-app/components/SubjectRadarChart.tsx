@@ -8,9 +8,10 @@ interface DimensionData {
 
 interface SubjectRadarChartProps {
   dimensions: DimensionData[];
+  scale?: 'score' | 'stars';
 }
 
-const SubjectRadarChart: React.FC<SubjectRadarChartProps> = ({ dimensions }) => {
+const SubjectRadarChart: React.FC<SubjectRadarChartProps> = ({ dimensions, scale = 'score' }) => {
   // 配置
   const size = 280;
   const center = size / 2;
@@ -22,19 +23,21 @@ const SubjectRadarChart: React.FC<SubjectRadarChartProps> = ({ dimensions }) => 
       const rate = dim.fullScore > 0 ? (dim.score / dim.fullScore) * 100 : 0;
 
       // 归一化到1-5刻度，舍去小数
-      const normalizedScore = Math.floor((rate / 100) * 5);
+      const normalizedScore = scale === 'stars'
+        ? Math.round((rate / 100) * 5)
+        : Math.floor((rate / 100) * 5);
       const clampedScore = Math.max(1, Math.min(5, normalizedScore)); // 确保在1-5范围内
 
       let color = '#10B981'; // 默认绿色
       let status = 'excellent'; // excellent, good, warning, weak
 
-      if (rate >= 95) {
+      if (scale === 'stars' ? clampedScore === 5 : rate >= 95) {
         color = '#10B981'; // 绿色: 达到满分
         status = 'excellent';
-      } else if (rate >= 85) {
+      } else if (scale === 'stars' ? clampedScore === 4 : rate >= 85) {
         color = '#3B82F6'; // 蓝色: 表现良好
         status = 'good';
-      } else if (rate >= 70) {
+      } else if (scale === 'stars' ? clampedScore === 3 : rate >= 70) {
         color = '#F59E0B'; // 黄色: 有提升空间
         status = 'warning';
       } else {
@@ -51,7 +54,7 @@ const SubjectRadarChart: React.FC<SubjectRadarChartProps> = ({ dimensions }) => 
         status
       };
     });
-  }, [dimensions]);
+  }, [dimensions, scale]);
 
   // 坐标计算 - 基于1-5刻度
   const getCoordinates = (normalizedScore: number, index: number, total: number) => {
@@ -124,7 +127,7 @@ const SubjectRadarChart: React.FC<SubjectRadarChartProps> = ({ dimensions }) => 
 
         {/* 2. 轴线 */}
         {processedData.map((_, i) => {
-          const end = getCoordinates(100, i, processedData.length);
+          const end = getCoordinates(5, i, processedData.length);
           return (
             <line
               key={i}
@@ -159,9 +162,10 @@ const SubjectRadarChart: React.FC<SubjectRadarChartProps> = ({ dimensions }) => 
         {processedData.map((item, i) => {
           const coords = getCoordinates(item.normalizedScore, i, processedData.length);
 
-          // 计算分值标注位置（在数据点外侧更远的位置，避免遮挡）
+          // 数字放在数据点内侧，和外圈维度名称保持稳定间距。
           const angle = (Math.PI * 2 * i) / processedData.length - Math.PI / 2;
-          const scoreRadius = ((item.normalizedScore / 5) * radius) + 25; // 增加到25px避免遮挡
+          const pointRadius = (item.normalizedScore / 5) * radius;
+          const scoreRadius = Math.max(18, pointRadius - 16);
           const scorePos = {
             x: center + scoreRadius * Math.cos(angle),
             y: center + scoreRadius * Math.sin(angle)

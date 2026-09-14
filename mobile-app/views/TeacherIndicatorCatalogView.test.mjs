@@ -30,6 +30,7 @@ assert.doesNotMatch(viewSource + canvasSource, /type="search"|SearchResults|搜�
 for (const requiredText of ['展开全部', '收起全部', '加分理由', '减分理由', '评价示例', '学校暂未配置']) {
   assert.ok((viewSource + canvasSource).includes(requiredText), `指标查阅页缺少：${requiredText}`);
 }
+assert.match(viewSource, /tone === 'negative'[\s\S]*?text-\[var\(--tm-score-negative\)\]/, '减分理由标题和图标应使用统一扣分业务色。');
 
 assert.match(dataSource, /student: buildStudentCatalog\(\)/, '数据层应提供学生评价指标。');
 assert.match(dataSource, /class: buildClassCatalog\(\)/, '数据层应提供班级评价指标。');

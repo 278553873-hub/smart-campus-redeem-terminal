@@ -296,7 +296,7 @@ const StudentCoverageList = ({
                                 aria-label={`评价${row.evaluationCount}次`}
                                 className={`flex h-[var(--tm-report-coverage-value-height)] items-center justify-center text-[length:var(--tm-font-size-compact)] tabular-nums ${
                                     evaluationMissing
-                                        ? 'font-semibold text-[var(--tm-chart-negative-text)]'
+                                        ? 'font-semibold text-[var(--tm-status-negative-strong)]'
                                         : 'tm-font-regular text-[var(--tm-text-secondary)]'
                                 }`}
                             >
@@ -306,7 +306,7 @@ const StudentCoverageList = ({
                                 aria-label={`${row.teacherCount}位老师评价`}
                                 className={`flex h-[var(--tm-report-coverage-value-height)] items-center justify-center text-[length:var(--tm-font-size-compact)] tabular-nums ${
                                     teacherMissing
-                                        ? 'font-semibold text-[var(--tm-chart-negative-text)]'
+                                        ? 'font-semibold text-[var(--tm-status-negative-strong)]'
                                         : 'tm-font-regular text-[var(--tm-text-secondary)]'
                                 }`}
                             >

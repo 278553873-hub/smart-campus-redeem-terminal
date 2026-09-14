@@ -32,7 +32,7 @@ for (const required of [
   'ASSETS.TEACHER_BOTTOM_NAVIGATION.ME.DEFAULT',
   "? 'text-[var(--tm-brand-primary)]'",
   ": 'text-[var(--tm-nav-item-default)]'",
-  'border-0 bg-white/95 [box-shadow:var(--tm-shadow-navigation)] backdrop-blur-xl',
+  'border-0 bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-navigation)]',
   'src={isActive ? icon.active : icon.default}',
   'relative flex h-[22px] w-[22px] items-center justify-center',
   "group-active:scale-[0.86] motion-reduce:transition-none ${isActive ? 'scale-100' : 'scale-90'}",
@@ -45,12 +45,12 @@ for (const required of [
   }
 }
 
-if (!tokenSource.includes("'--tm-shadow-navigation': '0 -6px 18px -14px rgba(64, 60, 58, 0.06)'")) {
-  throw new Error('教师手机端底部导航应使用短距离、极淡的向上中性阴影。');
+if (bottomNavSource.includes('border-t') || bottomNavSource.includes('backdrop-filter')) {
+  throw new Error('教师手机端底部导航不应使用顶部分隔线或背景模糊。');
 }
 
-if (bottomNavSource.includes('border-t') || bottomNavSource.includes('lucide-react')) {
-  throw new Error('教师手机端底部导航不应保留明显顶部分隔线或通用线性图标。');
+if (bottomNavSource.includes('lucide-react')) {
+  throw new Error('教师手机端底部导航不应使用通用线性图标。');
 }
 
 if (bottomNavSource.includes('active:scale-95') || bottomNavSource.includes("isActive ? 'text-xs font-semibold'")) {

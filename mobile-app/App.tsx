@@ -3,7 +3,7 @@ import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ClassListView from './views/ClassListView';
 import StudentTeamDetailView from './views/student-team/StudentTeamDetailView';
-import type { StudentTeamEditorValue } from './views/student-team/StudentTeamEditorView';
+import type { StudentTeamEditorValue, StudentTeamSearchResult } from './views/student-team/StudentTeamEditorView';
 import ClassInfoView, { type ClassInfoRole } from './views/ClassInfoView';
 import ClassDetailView from './views/ClassDetailView';
 import AddStudentView, { type AddStudentDraft } from './views/AddStudentView';
@@ -85,8 +85,11 @@ import {
     TEACHER_CAMPAIGNS_UPDATED_EVENT,
     type TeacherCampaign,
 } from './data/teacherCampaigns';
+import { preloadCampaignImage } from './utils/preloadCampaignImage';
 
 import './styles/navigation.css';
+
+const TEACHER_CAMPAIGN_MIN_DELAY_MS = 600;
 
 import {
     MOCK_CLASSES,
@@ -112,6 +115,10 @@ import {
     STUDENT_GROWTH_STORE_EVENT,
     ensureStudentGrowthProfile,
 } from '../shared/studentGrowthStore';
+import {
+    readParentEvaluationVisibility,
+    writeParentEvaluationVisibility,
+} from '../shared/parentEvaluationVisibility';
 import {
     CURRENT_WEEKLY_ACTION_ADVICE,
     WEEKLY_ACTION_ADVICE_CURRENT_BY_CLASS,
@@ -408,10 +415,18 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
 interface MobileAppProps {
     showPhoneShell?: boolean;
     gradientPreview?: TeacherGradientPreviewConfig;
+    onGradientPreviewChange?: (config: TeacherGradientPreviewConfig) => void;
+    campaignPreviewEveryEntry?: boolean;
     screenRef?: React.Ref<HTMLDivElement>;
 }
 
-const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview, screenRef }) => {
+const App: React.FC<MobileAppProps> = ({
+    showPhoneShell = true,
+    gradientPreview,
+    onGradientPreviewChange,
+    campaignPreviewEveryEntry = false,
+    screenRef,
+}) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     // Default view is now the Log (Stream)
     const [currentView, setCurrentView] = useState<ViewState>('home_log');
@@ -430,12 +445,21 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     // Selection States
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [classListTab, setClassListTab] = useState<'class' | 'team'>('class');
+    const [isStudentTeamCreateOpen, setIsStudentTeamCreateOpen] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<Student>(MOCK_STUDENTS_CLASS_1[0]);
     const [studentDetailInitialSection, setStudentDetailInitialSection] = useState<'evaluation' | 'report' | 'collection'>('evaluation');
     const [activeStudentCollectionRecord, setActiveStudentCollectionRecord] = useState<StudentCollectionHistoryItem | null>(null);
     const [studentOverrides, setStudentOverrides] = useState<Record<string, Student>>({});
     const [studentAdditionsByClassId, setStudentAdditionsByClassId] = useState<Record<string, Student[]>>({});
-    const [classOverrides, setClassOverrides] = useState<Record<string, ClassInfo>>({});
+    const [classOverrides, setClassOverrides] = useState<Record<string, ClassInfo>>(() => (
+        Object.fromEntries(MOCK_CLASSES.map(classInfo => [
+            classInfo.id,
+            {
+                ...classInfo,
+                parentEvaluationVisibility: readParentEvaluationVisibility(classInfo.id),
+            },
+        ]))
+    ));
     const classes = MOCK_CLASSES.map(classInfo => classOverrides[classInfo.id] ?? classInfo);
     const [homeworkRosterVersions] = useState<HomeworkRosterVersion[]>(() => (
         MOCK_CLASSES.map(classInfo => buildRosterVersion({
@@ -623,6 +647,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         const shouldReturnToStudent = activeLogTab === 'class' && !canTeacherSpaceRecordClass(nextSpace);
         setCurrentTeacherSpaceId(spaceId);
         setClassListTab('class');
+        setIsStudentTeamCreateOpen(false);
         if (shouldReturnToStudent) {
             setActiveLogTab('student');
             if (currentView === 'home_log') {
@@ -666,9 +691,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     }, []);
 
     useEffect(() => {
-        // 切换应用页面后开启新的广告展示机会，按优先级继续寻找未展示的广告。
-        setCampaignOpportunityConsumed(false);
-    }, [currentView]);
+        if (!campaignPreviewEveryEntry) {
+            // 正式投放模式在切换页面后继续寻找尚未达到频控的广告。
+            setCampaignOpportunityConsumed(false);
+        }
+    }, [campaignPreviewEveryEntry, currentView]);
 
     // Keyboard States
     const [showKeyboard, setShowKeyboard] = useState(false);
@@ -679,20 +706,35 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         const eligibleSurface = ['home_log', 'class_list', 'me'].includes(currentView);
         const safeToShow = eligibleSurface && !showKeyboard && !isOverlayActive && !showPlusMenu;
         if (!safeToShow) return undefined;
-        const timer = window.setTimeout(() => {
-            const campaign = getNextTeacherCampaign(teacherCampaigns, activeTeacherId, activeTeacherEdition, undefined, {
-                schoolId: activeTeacherSpace.type === 'school' ? activeTeacherSpace.id : undefined,
-                role: activeTeacherSpace.role,
-                isPaidPersonal: activeTeacherEdition === 'personal' ? false : undefined,
-                page: currentView as 'home_log' | 'class_list' | 'me',
-            });
-            if (!campaign) return;
-            recordTeacherCampaignEvent(campaign, activeTeacherId, 'impression');
+        const campaign = getNextTeacherCampaign(teacherCampaigns, activeTeacherId, activeTeacherEdition, undefined, {
+            schoolId: activeTeacherSpace.type === 'school' ? activeTeacherSpace.id : undefined,
+            role: activeTeacherSpace.role,
+            isPaidPersonal: activeTeacherEdition === 'personal' ? false : undefined,
+            page: currentView as 'home_log' | 'class_list' | 'me',
+        }, {
+            ignoreImpressionHistory: campaignPreviewEveryEntry,
+        });
+        if (!campaign) return undefined;
+
+        let cancelled = false;
+        const minimumDelay = new Promise<void>(resolve => {
+            window.setTimeout(resolve, TEACHER_CAMPAIGN_MIN_DELAY_MS);
+        });
+        void Promise.all([
+            minimumDelay,
+            preloadCampaignImage(campaign.imageUrl),
+        ]).then(([, imageReady]) => {
+            if (cancelled) return;
             setCampaignOpportunityConsumed(true);
+            if (!imageReady) return;
+            recordTeacherCampaignEvent(campaign, activeTeacherId, 'impression');
             setActiveCampaignModal(campaign);
-        }, 900);
-        return () => window.clearTimeout(timer);
-    }, [activeCampaignModal, activeTeacherEdition, activeTeacherId, campaignOpportunityConsumed, currentView, isAuthenticated, isOverlayActive, showKeyboard, showPlusMenu, teacherCampaigns]);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeCampaignModal, activeTeacherEdition, activeTeacherId, campaignOpportunityConsumed, campaignPreviewEveryEntry, currentView, isAuthenticated, isOverlayActive, showKeyboard, showPlusMenu, teacherCampaigns]);
 
     // Close plus menu when clicking outside
     useEffect(() => {
@@ -876,6 +918,29 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     };
 
     const activeSpaceStudents = activeSpaceClasses.flatMap(classInfo => getMergedStudentsForClass(classInfo.id));
+    const searchStudentsByExactName = (query: string): StudentTeamSearchResult[] => {
+        const normalizedQuery = query.trim().replace(/\s+/g, '');
+        if (!normalizedQuery) return [];
+        return activeSpaceStudents
+            .filter(student => (
+                (student.status ?? 'active') === 'active'
+                && student.name.trim().replace(/\s+/g, '') === normalizedQuery
+            ))
+            .map(student => {
+                const classInfo = activeSpaceClasses.find(item => item.name === student.class);
+                return {
+                    id: student.id,
+                    name: student.name,
+                    gender: student.gender,
+                    grade: student.grade,
+                    class: student.class,
+                    avatar: student.avatar,
+                    classLabel: classInfo
+                        ? getTeacherClassDisplayName(classInfo, activeTeacherSpace)
+                        : student.class,
+                };
+            });
+    };
     const activeTeacherClassIds = new Set([
         ...teacherProfile.teachingAssignments.map(item => item.classId),
         ...teacherProfile.homeroomClassIds,
@@ -1129,6 +1194,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         classId: string,
         settings: NonNullable<ClassInfo['parentEvaluationVisibility']>,
     ) => {
+        writeParentEvaluationVisibility(classId, settings);
         setClassOverrides(current => {
             const classInfo = current[classId] ?? MOCK_CLASSES.find(item => item.id === classId);
             if (!classInfo) return current;
@@ -1542,24 +1608,23 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
 
     const showInputBar = ['home_log', 'class_detail', 'student_team_detail'].includes(currentView)
         && !(currentView === 'class_detail' && isClassGroupingEditorOpen);
-    const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView);
-    const primaryTabViewKey = showTabBar ? 'teacher-primary-tabs' : currentView;
-    const pageTransitionClass = showTabBar ? '' : 'animate-page-enter';
+    const isStudentTeamCreateView = currentView === 'class_list' && isStudentTeamCreateOpen;
+    const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView) && !isStudentTeamCreateView;
+    // 新建社团与团队仍由班级列表承载，切换外层导航时不能卸载列表组件，否则会丢失新建表单状态。
+    const primaryTabViewKey = currentView === 'class_list' ? 'teacher-primary-tabs' : showTabBar ? 'teacher-primary-tabs' : currentView;
+    const pageTransitionClass = showTabBar || isStudentTeamCreateView ? '' : 'animate-page-enter';
     const isHeadteacherAssistantView = currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2';
     const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule'].includes(currentView) || isHeadteacherAssistantView;
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
-    const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView);
+    const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView) || isStudentTeamCreateView;
     const hasStudentDetailBackground = currentView === 'student_detail';
     const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design'].includes(currentView) || isHeadteacherAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const activeBottomTab: TeacherBottomTab = activeIndex === 1 ? 'class' : activeIndex === 2 ? 'me' : 'record';
 
     const getPhoneScreenBackground = () => {
         if (currentView === 'home_log') {
-            if (gradientPreview) {
-                return <TeacherMobileScreenBackground variant="preview" preview={gradientPreview} />;
-            }
-            return <TeacherMobileScreenBackground variant="record" recordMode={activeLogTab} />;
+            return <TeacherMobileScreenBackground variant="record" recordMode={activeLogTab} preview={gradientPreview} />;
         }
 
         if (hasStudentDetailBackground) {
@@ -1590,10 +1655,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
         }
 
         if (['class_list'].includes(currentView)) {
-            if (gradientPreview) {
-                return <TeacherMobileScreenBackground variant="preview" preview={gradientPreview} />;
-            }
-            return <TeacherMobileScreenBackground />;
+            return <TeacherMobileScreenBackground variant="class-list" classListMode={classListTab} preview={gradientPreview} />;
         }
 
         return undefined;
@@ -1603,7 +1665,7 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
     const LocalHeader = ({ title, onBack }: { title: string; onBack?: () => void }) => (
         <div className={`h-11 flex items-center justify-between px-4 sticky top-0 z-[45] backdrop-blur-md ${currentView === 'class_leaderboard' || currentView === 'class_evaluation_records' ? 'bg-[var(--tm-page-plain-header-bg)]' : hasScreenLevelBackground ? 'bg-white/38' : 'bg-[var(--tm-bg-page-glass)]'}`}>
             {onBack && (
-                <button onClick={onBack} className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回">
+                <button onClick={onBack} className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)]" aria-label="返回">
                     <ChevronLeftLucide className="w-5 h-5" />
                 </button>
             )}
@@ -1742,11 +1804,12 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     onListTabChange={setClassListTab}
                                     studentTeams={activeSpaceStudentTeams}
                                     studentTeamEditableClasses={studentTeamEditableClasses}
-                                    allStudents={activeSpaceStudents}
+                                    searchStudentsByExactName={searchStudentsByExactName}
                                     currentTeacherId={activeTeacherId}
                                     isSchoolManager={isSchoolManager}
                                     canCreateStudentTeam={activeTeacherSpace.type === 'school'}
                                     onCreateStudentTeam={handleCreateStudentTeam}
+                                    onTeamCreateModeChange={setIsStudentTeamCreateOpen}
                                     onUpdateStudentTeam={handleUpdateStudentTeam}
                                     onArchiveStudentTeam={handleArchiveStudentTeam}
                                     onSelectStudentTeam={handleSelectStudentTeam}
@@ -1833,8 +1896,8 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                     currentSpace={activeTeacherSpace}
                                     canManage={canManageSelectedStudentTeam}
                                     classes={studentTeamEditableClasses}
-                                    allStudents={activeSpaceStudents}
                                     getStudentsForClass={getMergedStudentsForClass}
+                                    searchStudentsByExactName={searchStudentsByExactName}
                                     onBack={goBack}
                                     onSelectStudent={handleSelectStudent}
                                     onUpdate={handleUpdateStudentTeam}
@@ -2121,7 +2184,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                             )}
 
                             {currentView === 'mine_settings' && (
-                                <MineSettingsView onLogout={handleTeacherLogout} />
+                                <MineSettingsView
+                                    onLogout={handleTeacherLogout}
+                                    gradientPreview={gradientPreview ?? { schemeId: 'scheme-6', styleId: 'diffuse' }}
+                                    onGradientPreviewChange={config => onGradientPreviewChange?.(config)}
+                                />
                             )}
 
                             {currentView === 'subject_management' && (
@@ -2150,10 +2217,11 @@ const App: React.FC<MobileAppProps> = ({ showPhoneShell = true, gradientPreview,
                                 <CoinIssuanceView
                                     config={coinIssuanceConfig}
                                     onChange={setCoinIssuanceConfig}
+                                    classStudentCount={selectedClassId ? getMergedStudentsForClass(selectedClassId).length : undefined}
                                     onSave={() => {
                                         setSuccessToastMessage({
                                             title: '配置已保存',
-                                            body: '货币发放规则已在当前演示会话中更新',
+                                            body: '校园币发放规则已在当前演示会话中更新',
                                         });
                                         setShowSuccessToast(true);
                                         setTimeout(() => setShowSuccessToast(false), 1800);

@@ -169,9 +169,13 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
 
               <section
                 className="bg-[var(--tm-brand-reward-soft)] px-[var(--tm-space-4)]"
-                aria-label={settlementEstimate.enabled ? `${estimateTitle}${formatCoinAmount(settlementEstimate.estimatedTotal)}${GROWTH_COIN_TERMS.name}` : '学校暂未开启自动发放'}
+                aria-label={settlementEstimate.enabled
+                  ? (settlementEstimate.eligible
+                    ? `${estimateTitle}${formatCoinAmount(settlementEstimate.estimatedTotal)}${GROWTH_COIN_TERMS.name}`
+                    : `本周期评价次数不足，达到${settlementEstimate.minimumEvaluationCount}次后发放`)
+                  : '学校暂未开启自动发放'}
               >
-                {settlementEstimate.enabled ? (
+                {settlementEstimate.enabled && settlementEstimate.eligible ? (
                   <div className="flex min-h-[var(--tm-size-touch)] items-center justify-between gap-[var(--tm-space-3)]">
                     <div className="flex min-w-0 items-baseline gap-[var(--tm-space-2)]">
                       <span className="shrink-0 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">{estimateTitle}</span>
@@ -184,6 +188,13 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                       <span className="px-[var(--tm-space-1)] text-[var(--tm-brand-reward)]" aria-hidden="true">+</span>
                       排名奖励 <strong className="font-semibold tabular-nums text-[var(--tm-text-secondary)]">{formatCoinAmount(settlementEstimate.rankingReward)}</strong>
                     </p>
+                  </div>
+                ) : settlementEstimate.enabled ? (
+                  <div className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)]">
+                    <Clock className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
+                    <span className="text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)]">
+                      本周期已评价{settlementEstimate.periodEvaluationCount}次，达到{settlementEstimate.minimumEvaluationCount}次后发放
+                    </span>
                   </div>
                 ) : (
                   <div className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)]">

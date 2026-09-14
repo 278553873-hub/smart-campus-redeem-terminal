@@ -42,7 +42,7 @@ requireText(sheetSource, 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-
 requireText(sheetSource, 'bg-[var(--tm-brand-primary-soft)]', '当前来源卡片应使用浅红选中底。');
 requireText(sheetSource, 'ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]', '当前来源卡片应使用品牌红描边与统一卡片阴影。');
 requireText(sheetSource, 'bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-[var(--tm-text-inverse)]', '当前来源胶囊应使用品牌红和统一反色文字。');
-requireText(sheetSource, 'transition-transform [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96]', '抽屉内按钮应使用快速动效令牌和 0.96 按压反馈。');
+requireText(sheetSource, 'flex min-h-[60px] w-full items-center justify-between', '抽屉内来源按钮应保持 60px 紧凑高度与稳定布局。');
 forbidText(sheetSource, 'aria-label="切换学校"', '不应继续使用切换学校语义。');
 forbidText(sheetSource, '<div className="text-[16px] font-bold text-slate-900">切换学校</div>', '不应继续展示切换学校标题。');
 forbidText(sheetSource, "bg-cyan-50/70", '班级来源当前态不应使用浅青底加圆点。');
@@ -60,6 +60,11 @@ forbidText(sheetSource, 'rgba(15,23,42,0.92)', '当前描边不应使用近黑�
 forbidText(sheetSource, '#1E9AAA', '班级来源抽屉不应残留旧青蓝主色。');
 forbidText(sheetSource, 'getClassSourceTag', '来源类型不应继续以重复文字标签展示。');
 forbidText(sheetSource, 'bg-[var(--tm-bg-surface-muted)]', '来源图标不应使用灰色底。');
+
+for (const forbidden of ['active:scale', 'active:bg', 'active:text', 'active:opacity', 'group-active:scale', 'group-active:bg', 'group-active:text']) {
+  forbidText(sheetSource, forbidden, `班级来源抽屉不应显示按压反馈：${forbidden}`);
+  forbidText(sourceTriggerSource, forbidden, `班级来源触发器不应显示按压反馈：${forbidden}`);
+}
 
 requireText(appSource, "{ id: 'personal', title: '我创建的班级', type: 'personal', role: 'owner' }", '我创建的班级应使用个人版创建者身份。');
 requireText(appSource, "{ id: 'collab-li', title: '李明老师的班级', type: 'collaboration', role: 'collaborator' }", '被邀请班级应使用协作老师身份。');

@@ -38,10 +38,10 @@ const ClassSourceTrigger: React.FC<ClassSourceTriggerProps> = ({
 }) => {
     const isCompactSurface = variant === 'surface' && density === 'compact';
     const variantClass = variant === 'quiet'
-        ? 'gap-1.5 rounded-[var(--tm-radius-control)] px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] shadow-none active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]'
+        ? 'gap-1.5 rounded-[var(--tm-radius-control)] px-1 text-[13px] font-medium text-[var(--tm-text-secondary)] shadow-none'
         : isCompactSurface
             ? 'group text-[13px] font-semibold text-[var(--tm-text-primary)]'
-            : 'gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3.5 text-[13px] font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]';
+            : 'gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3.5 text-[13px] font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]';
 
     const content = (
         <>
@@ -55,12 +55,12 @@ const ClassSourceTrigger: React.FC<ClassSourceTriggerProps> = ({
         <button
             type="button"
             onClick={onClick}
-            className={`inline-flex min-h-11 max-w-full items-center text-left transition-[transform,background-color,color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] ${variantClass} ${className}`}
+            className={`inline-flex min-h-11 max-w-full items-center text-left ${variantClass} ${className}`}
             aria-label={`切换班级来源，当前${name}`}
             aria-expanded={expanded}
         >
             {isCompactSurface ? (
-                <span className="inline-flex h-9 max-w-full items-center gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3 [box-shadow:var(--tm-shadow-control)] group-active:bg-[var(--tm-bg-surface-soft)]">
+                <span className="inline-flex h-9 max-w-full items-center gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3 [box-shadow:var(--tm-shadow-control)]">
                     {content}
                 </span>
             ) : content}

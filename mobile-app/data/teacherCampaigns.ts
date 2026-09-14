@@ -193,6 +193,10 @@ export interface TeacherCampaignAudienceContext {
     page?: TeacherCampaignPage;
 }
 
+export interface TeacherCampaignSelectionOptions {
+    ignoreImpressionHistory?: boolean;
+}
+
 const isTeacherCampaignAudienceMatch = (
     campaign: TeacherCampaign,
     edition: TeacherCampaignEdition,
@@ -221,11 +225,12 @@ export const getNextTeacherCampaign = (
     edition: TeacherCampaignEdition,
     now = new Date(),
     audience: TeacherCampaignAudienceContext = {},
+    options: TeacherCampaignSelectionOptions = {},
 ) => (
     sortTeacherCampaigns(campaigns).find(campaign => (
         campaign.placement === 'teacher_global_modal'
         && isTeacherCampaignAudienceMatch(campaign, edition, audience)
         && isTeacherCampaignEligible(campaign, now)
-        && !hasTeacherCampaignImpression(campaign, teacherId)
+        && (options.ignoreImpressionHistory || !hasTeacherCampaignImpression(campaign, teacherId))
     )) ?? null
 );

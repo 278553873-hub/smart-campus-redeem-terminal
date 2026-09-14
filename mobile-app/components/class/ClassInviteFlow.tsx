@@ -18,9 +18,9 @@ interface ClassInviteFlowProps {
   onClose: () => void;
 }
 
-const actionClass = 'flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]';
+const actionClass = 'flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]';
 const iconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]';
-const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
+const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
 
 const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, classInfo, getClassLabel = item => item.name, studentTeam, inviterName, schoolName, onClose }) => {
   const [step, setStep] = useState<InviteStep>('methods');
@@ -87,7 +87,7 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
   return (
     <MobileBottomSheet open={open} title={sheetTitle} onClose={closeFlow}>
       {step !== 'methods' && (
-        <button type="button" onClick={backToMethods} className="mb-[var(--tm-space-2)] flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] pr-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+        <button type="button" onClick={backToMethods} className="mb-[var(--tm-space-2)] flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] pr-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">
           <ChevronLeft className="h-4 w-4" />返回邀请方式
         </button>
       )}

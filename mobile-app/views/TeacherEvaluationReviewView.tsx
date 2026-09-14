@@ -71,7 +71,7 @@ const InsufficientReview: React.FC<{
             <button
                 type="button"
                 onClick={onViewSample}
-                className="mt-2 flex h-11 w-full items-center justify-between px-2 text-left text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)] transition active:text-[var(--tm-assistant-role-text)]"
+                className="mt-2 flex h-11 w-full items-center justify-between px-2 text-left text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)]"
                 aria-label="查看评价复盘示例"
             >
                 <span>查看报告示例</span>

@@ -1,6 +1,9 @@
 import { Student, ScoreItem, SubjectGrade, GrowthReportItem, DetailedReportSection, ClassInfo, CampusCoinDetail, GroupPlan, type CoinIssuanceConfig } from './types';
+import { getClassBudgetTotal, isCoinIssuanceEligible, normalizeMinimumEvaluationCount } from './domain/campusCoinIssuance';
 import { ASSETS } from './assets/images';
 import { getSystemStudentAvatar } from './assets/studentAvatarCatalog';
+import { FIRST_GRADE_CHINESE_GENERATED_REPORT } from './data/firstGradeChineseTermReport';
+import { STUDENT_TEAM_EXACT_SEARCH_DEMO } from './data/studentTeamDemo';
 
 const GENERATE_MOCK_CLASSES = (): ClassInfo[] => {
   const grades = [
@@ -69,7 +72,9 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
   const classNumber = cls.id.split('_')[2] || '1';
 
   return Array.from({ length: count }).map((_, i) => {
-    const nameObj = BASE_REALISTIC_NAMES[(seed + i) % BASE_REALISTIC_NAMES.length];
+    const nameObj = classId === STUDENT_TEAM_EXACT_SEARCH_DEMO.classId && i === STUDENT_TEAM_EXACT_SEARCH_DEMO.studentIndex
+      ? { n: STUDENT_TEAM_EXACT_SEARCH_DEMO.name, g: STUDENT_TEAM_EXACT_SEARCH_DEMO.gender }
+      : BASE_REALISTIC_NAMES[(seed + i) % BASE_REALISTIC_NAMES.length];
     const gender = nameObj.g as Student['gender'];
 
     return {
@@ -105,14 +110,18 @@ export const MOCK_STUDENTS_CLASS_1: Student[] = GET_MOCK_STUDENTS_FOR_CLASS(MOCK
 export const DEFAULT_COIN_ISSUANCE_CONFIG: CoinIssuanceConfig = {
   enabled: true,
   period: 'weekly',
-  classBudget: 500,
+  budgetMode: 'per_class',
+  budgetAmount: 500,
   sunshineRatio: 60,
+  minimumEvaluationCount: 1,
 };
 
 export const GET_MOCK_CAMPUS_COIN_DETAIL = (
   student: Student,
   issuanceConfig: CoinIssuanceConfig = DEFAULT_COIN_ISSUANCE_CONFIG,
   classStudentCount = 60,
+  // 由结算接口按当前班级和周期传入，Mock 默认按 1 次评价演示可发放状态。
+  periodEvaluationCount = 1,
 ): CampusCoinDetail => {
   const seed = student.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const balance = 320 + (seed % 80);
@@ -120,14 +129,27 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (
   const rankingReward = 12 + (seed % 9);
   const classBonus = 8 + (seed % 6);
   const normalizedSunshineRatio = Math.min(100, Math.max(0, issuanceConfig.sunshineRatio));
-  const normalizedClassBudget = Math.max(0, issuanceConfig.classBudget);
-  const sunshinePool = normalizedClassBudget * normalizedSunshineRatio / 100;
-  const rankingPool = normalizedClassBudget - sunshinePool;
+  const normalizedBudgetAmount = Math.max(0, issuanceConfig.budgetAmount);
+  const normalizedClassStudentCount = Math.max(1, Math.floor(classStudentCount));
+  const classBudgetTotal = getClassBudgetTotal({
+    budgetMode: issuanceConfig.budgetMode,
+    budgetAmount: normalizedBudgetAmount,
+    classStudentCount: normalizedClassStudentCount,
+  });
+  const normalizedPeriodEvaluationCount = Math.max(0, Math.floor(periodEvaluationCount));
+  const minimumEvaluationCount = normalizeMinimumEvaluationCount(issuanceConfig.minimumEvaluationCount);
+  const isEligible = isCoinIssuanceEligible({
+    enabled: issuanceConfig.enabled,
+    periodEvaluationCount: normalizedPeriodEvaluationCount,
+    minimumEvaluationCount,
+  });
+  const sunshinePool = classBudgetTotal * normalizedSunshineRatio / 100;
+  const rankingPool = classBudgetTotal - sunshinePool;
   // Demo allocation: the sunshine pool is shared equally; ranking share varies by mock student performance.
   const mockRankingShare = 0.08 + (seed % 5) * 0.005;
   const roundCoin = (value: number) => Math.round(value * 100) / 100;
-  const sunshineReward = issuanceConfig.enabled ? roundCoin(sunshinePool / Math.max(1, classStudentCount)) : 0;
-  const estimatedRankingReward = issuanceConfig.enabled ? roundCoin(rankingPool * mockRankingShare) : 0;
+  const sunshineReward = isEligible ? roundCoin(sunshinePool / normalizedClassStudentCount) : 0;
+  const estimatedRankingReward = isEligible ? roundCoin(rankingPool * mockRankingShare) : 0;
   const isWeeklySettlement = issuanceConfig.period === 'weekly';
   const settlementPeriod = isWeeklySettlement
     ? { type: 'weekly' as const, startDate: '2026-02-16', endDate: '2026-02-22' }
@@ -194,7 +216,11 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (
     ],
     settlementEstimate: {
       enabled: issuanceConfig.enabled,
+      eligible: isEligible,
       period: issuanceConfig.period,
+      periodEvaluationCount: normalizedPeriodEvaluationCount,
+      minimumEvaluationCount,
+      classBudgetTotal: roundCoin(classBudgetTotal),
       sunshineReward,
       rankingReward: estimatedRankingReward,
       estimatedTotal: roundCoin(sunshineReward + estimatedRankingReward),
@@ -250,20 +276,7 @@ export const MOCK_PE_REPORT_DETAILS: DetailedReportSection[] = [
 // 分年级、分学科的报告模板（基于评价标准生成）
 export const MOCK_GRADE_SUBJECT_REPORT_TEMPLATES: Record<string, Record<string, DetailedReportSection[]>> = {
   '一年级': {
-    '语文': [
-      {
-        title: '学科评价',
-        content: '本学期语文学习表现优秀，展现出良好的学习习惯和浓厚的学习兴趣。在拼音、识字、写字等基础板块都打下了扎实的基础，朗读和背诵能力突出，课外阅读习惯正在养成，口语交际中能够大方表达。'
-      },
-      {
-        title: '表现亮点',
-        content: '拼音掌握扎实，能够正确拼读音节。识字量稳步增长，对汉字充满好奇。写字姿势端正，笔画书写规范工整。朗读时声音响亮，能读出句子的语气。背诵古诗和课文流利，国学诵读表现积极。课外阅读兴趣浓厚，能够主动分享阅读感受。'
-      },
-      {
-        title: '提升建议',
-        content: '建议每天坚持亲子阅读，选择适合的绘本和童话故事，在阅读中积累识字量。可以通过识字游戏、组词造句等方式，巩固已学汉字。鼓励多说完整的话，在日常交流中锻炼表达能力。建议坚持练字，养成良好的书写习惯。'
-      }
-    ],
+    '语文': FIRST_GRADE_CHINESE_GENERATED_REPORT,
   },
   '二年级': {
     '语文': [

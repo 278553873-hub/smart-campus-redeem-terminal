@@ -22,6 +22,7 @@ import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileToast from '../components/ui/MobileToast';
 import HomeworkStatusButtonGroup from '../components/homework/HomeworkStatusButtonGroup';
+import StudentRosterNumber from '../components/student/StudentRosterNumber';
 import { ASSETS } from '../assets/images';
 import {
   HOMEWORK_TEMPLATE_CAPACITY,
@@ -77,12 +78,6 @@ const readImagePreview = (file: File) => new Promise<string>(resolve => {
   reader.onerror = () => resolve('');
   reader.readAsDataURL(file);
 });
-
-const getStudentNoSuffix = (studentNo: string) => {
-  const normalized = studentNo.replace(/^学号/, '').trim();
-  const numeric = normalized.match(/\d+/g)?.join('') ?? normalized;
-  return numeric.slice(-2).padStart(2, '0');
-};
 
 const remapDraftToRoster = (
   draft: HomeworkImportDraft,
@@ -509,7 +504,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
                 <div className="flex min-w-0 items-center gap-[var(--tm-space-2)]">
                   <img src={resultItem.avatar || ASSETS.AVATAR.GENERIC_BOY} alt="" className="h-8 w-8 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" />
                   <span className="flex min-w-0 items-center gap-0.5">
-                    <span aria-label={`学号${resultItem.studentNo}`} className="flex h-[14px] w-4 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[9px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]">{getStudentNoSuffix(resultItem.studentNo)}</span>
+                    <StudentRosterNumber studentNo={resultItem.studentNo} ariaLabel={`学号${resultItem.studentNo}`} />
                     <strong className="min-w-0 truncate text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-primary)]">{resultItem.studentName}</strong>
                   </span>
                 </div>

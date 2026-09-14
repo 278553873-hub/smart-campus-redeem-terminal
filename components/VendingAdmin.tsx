@@ -25,7 +25,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({ products, setProducts, onEx
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-900 text-slate-100 animate-in fade-in">
+        <div className="flex flex-col h-full bg-slate-900 text-slate-100">
             <div className="h-16 border-b border-slate-800 px-6 flex items-center justify-between shrink-0 bg-slate-900 z-50">
                 <button
                     onClick={onExit}

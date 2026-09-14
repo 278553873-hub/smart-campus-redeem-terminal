@@ -16,17 +16,21 @@ import AdminApp from './components/AdminApp';
 import MobileApp from './mobile-app/App';
 import CompanionApp from './components/CompanionApp';
 import ParentApp from './components/ParentApp';
+import ParentBankFeaturePreviewControls from './components/ParentBankFeaturePreviewControls';
+import ParentEvaluationVisibilityPreviewControls from './components/ParentEvaluationVisibilityPreviewControls';
+import TerminalLoginMethodPreviewControls, { type StudentLoginPreviewMode } from './components/TerminalLoginMethodPreviewControls';
 import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import RegionalPcAdmin from './components/RegionalPcAdmin';
 import UiRenovationDemo from './components/UiRenovationDemo';
-import TeacherMobileDeveloperNotes from './components/TeacherMobileDeveloperNotes';
+import TeacherMobileDeveloperNotes, { type TeacherMobileDeveloperNotesContext } from './components/TeacherMobileDeveloperNotes';
 import PlatformBrandMark from './components/PlatformBrandMark';
 import Loader from './components/Loader';
 import { DeviceWrapper } from './components/DeviceWrapper';
 import { ASSETS as MOBILE_ASSETS } from './mobile-app/assets/images';
 import {
+  defaultParentGradientPreview,
   defaultTeacherGradientPreview,
   teacherGradientSchemeOptions,
   teacherGradientStyleOptions,
@@ -34,9 +38,21 @@ import {
   type TeacherGradientStyleId,
 } from './mobile-app/styles/teacherGradientPreview';
 import './mobile-app/index.css';
-import { ChevronLeft, ChevronDown, Sparkles, ArrowRight, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X, Camera, Check, LoaderCircle } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Sparkles, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X, Camera, Check, LoaderCircle, ShoppingBag, KeyRound } from 'lucide-react';
 import { playSound } from './utils/sound';
 import { exportElementAsPng } from './utils/exportElementAsPng';
+import { GROWTH_COIN_TERMS } from './shared/growthCoinTerminology';
+import {
+  PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT,
+  readParentEvaluationVisibility,
+  writeParentEvaluationVisibility,
+  type ParentEvaluationVisibilitySettings,
+} from './shared/parentEvaluationVisibility';
+import {
+  PARENT_BANK_FEATURE_UPDATED_EVENT,
+  readParentBankFeatureEnabled,
+  writeParentBankFeatureEnabled,
+} from './shared/parentBankFeature';
 
 // ============================================================
 // 档位配置（与 GrowthView 保持一致）
@@ -51,6 +67,44 @@ const GROWTH_TIER_CONFIG: Record<TierLevel, { label: string; weight: number; col
 interface ScoreConfig { score: number; count: number; }
 interface SimStudent { name: string; score: number; tier: TierLevel; reward: number; }
 interface TeacherProfile { name: string; role: string; school: string; avatar?: string; }
+interface StudentLoginMethods { face: boolean; password: boolean; }
+
+const STUDENT_LOGIN_PREVIEW_OPTIONS: Array<{
+  value: StudentLoginPreviewMode;
+  label: string;
+  methods: StudentLoginMethods;
+}> = [
+  { value: 'face-only', label: '仅人脸', methods: { face: true, password: false } },
+  { value: 'password-only', label: '仅密码', methods: { face: false, password: true } },
+  { value: 'both', label: '两种方式', methods: { face: true, password: true } },
+];
+
+const TERMINAL_ENTRY_BUTTON_BASE = 'h-[72px] w-full rounded-2xl px-6 text-xl font-black flex items-center justify-center gap-3 transition-[background-color,border-color,color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200 active:scale-[0.98]';
+const TERMINAL_ENTRY_BUTTON_PRIMARY = 'border-2 border-blue-600 bg-blue-600 text-white shadow-[0_6px_14px_rgba(37,99,235,0.24)] active:border-blue-700 active:bg-blue-700';
+const TERMINAL_ENTRY_BUTTON_SECONDARY = 'border-2 border-blue-100 bg-blue-50 text-blue-700 active:border-blue-200 active:bg-blue-100';
+const TERMINAL_ENTRY_BUTTON_TERTIARY = 'border-2 border-slate-200 bg-white text-slate-700 shadow-sm active:border-blue-200 active:bg-slate-50';
+const TERMINAL_IDLE_SECONDS = 999;
+
+const HeaderCoinBalance: React.FC<{
+  label: string;
+  value: number;
+  tone: 'available' | 'saved';
+}> = ({ label, value, tone }) => {
+  const isAvailable = tone === 'available';
+  return (
+    <div
+      className={`flex min-w-[92px] items-center gap-1.5 rounded-xl border px-2.5 py-2 shadow-sm ${isAvailable
+        ? 'border-orange-100 bg-orange-50 text-orange-600'
+        : 'border-blue-100 bg-blue-50 text-blue-600'
+        }`}
+      aria-label={`${label}${GROWTH_COIN_TERMS.name}${value}`}
+    >
+      <span className="text-xs font-black leading-none">{label}</span>
+      <img src="/assets/coin.png" className="h-4 w-4 shrink-0" alt="" />
+      <span className="font-[NumberFont] text-xl font-black leading-none">{value}</span>
+    </div>
+  );
+};
 
 const DEMO_TEACHER_PROFILES: TeacherProfile[] = [
   { name: '郭老师', role: '学校管理员', school: '成都七中初中附属小学', avatar: MOBILE_ASSETS.AVATAR.TEACHER_DEFAULT },
@@ -75,6 +129,8 @@ const formatLocalScreenshotTimestamp = (date: Date) => {
   const pad = (value: number) => value.toString().padStart(2, '0');
   return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 };
+
+const DEFAULT_PARENT_PREVIEW_CLASS_ID = 'c_2025_1';
 
 function computeLeaderboard(bonusPool: number, configs: ScoreConfig[]): SimStudent[] {
   const valid = configs.filter(c => c.score > 0 && c.count > 0);
@@ -105,7 +161,7 @@ function computeLeaderboard(bonusPool: number, configs: ScoreConfig[]): SimStude
     }
   }
 
-  // 3. 计算奖励权重分红（仅正分学生参与瓜分）
+  // 3. 计算奖励权重（仅正分学生参与分配）
   const eligibleStudents = students.filter(st => st.score > 0);
   const totalWeight = eligibleStudents.reduce((s, st) => s + (GROWTH_TIER_CONFIG[st.tier].weight || 0), 0);
   
@@ -244,11 +300,11 @@ const GrowthSidePanel: React.FC = () => {
         {rulesOpen && (
           <div className="px-4 pb-4 space-y-2 border-t border-slate-50 pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
             {[
-              { icon: '奖', title: '只奖正分', desc: '净得分 > 0 才参与奖励金瓜分，0分或负分不参与。' },
+              { icon: '奖', title: '只奖正分', desc: '总分 > 0 才参与奖励分配，0分或负分不参与。' },
               { icon: '档', title: '分值定档位', desc: '最高分 → 领航之星（×4）；其余按分值高低依次归入卓越先锋（×2.5）、稳步成长（×1.5）、潜力新星（×1）。' },
               { icon: '同', title: '同分同奖', desc: '分数相同的学生，档位相同，奖励完全一致。' },
               { icon: '算', title: '奖励计算', desc: '每份金额 = 总奖励金 ÷ 全班总份数。每人奖励 = 档位系数 × 每份金额。' },
-              { icon: '隐', title: '保护隐私', desc: '学生只看"领航之星"标杆 + 自己的档位/得分/预估分红。不显示具体名次和他人金额。' },
+              { icon: '隐', title: '保护隐私', desc: '学生只看"领航之星"标杆 + 自己的档位、得分和预计可得。不显示具体名次和他人金额。' },
             ].map((item, i) => (
               <div key={i} className="flex gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                 <span className="text-base shrink-0">{item.icon}</span>
@@ -393,14 +449,14 @@ const GrowthSidePanel: React.FC = () => {
                   <span className="text-base font-black">!</span>
                   <div>
                     <div className="text-xs font-black text-slate-500">不参与奖励分配</div>
-                    <div className="text-[10px] text-slate-400 font-medium">净得分 ≤ 0，根据规则不能获得奖励分红</div>
+                    <div className="text-[10px] text-slate-400 font-medium">总分 ≤ 0，根据规则暂无预计奖励</div>
                   </div>
                 </div>
               )}
 
               {/* 态 3：未输入，显示快捷提示 */}
               {!myTierPreview && (
-                <div className="mt-1.5 text-[11px] text-slate-400 font-medium">输入你的当月净得分，立即查看所属档位</div>
+                <div className="mt-1.5 text-[11px] text-slate-400 font-medium">输入你的当月总分，立即查看所属档位</div>
               )}
             </div>
           </div>
@@ -659,15 +715,23 @@ const INITIAL_BANK: BankAccount = {
   ]
 };
 
-const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolean }> = ({ mode = 'vending', embedded = false }) => {
+const TerminalApp: React.FC<{
+  mode?: 'vending' | 'all-in-one';
+  embedded?: boolean;
+  loginMethods?: StudentLoginMethods;
+  parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;
+  onViewChange?: (view: ViewState) => void;
+}> = ({ mode = 'vending', embedded = false, loginMethods = { face: true, password: true }, parentEvaluationVisibility, onViewChange }) => {
   const isVending = mode === 'vending';
+  const faceLoginEnabled = !isVending || loginMethods.face;
+  const passwordLoginEnabled = !isVending || loginMethods.password;
   const [view, setView] = useState<ViewState>(isVending ? 'welcome' : 'scanning');
   const [loginSubView, setLoginSubView] = useState<'face' | 'password'>(isVending ? 'face' : 'password');
   const [student, setStudent] = useState<Student>(INITIAL_STUDENT);
   const [bank, setBank] = useState<BankAccount>(INITIAL_BANK);
   const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
   const [isLoading, setIsLoading] = useState(false);
-  const [idleSecondsLeft, setIdleSecondsLeft] = useState(5000);
+  const [idleSecondsLeft, setIdleSecondsLeft] = useState(TERMINAL_IDLE_SECONDS);
 
   // admin login state
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -676,7 +740,21 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
   const [loginError, setLoginError] = useState(false);
 
   // student password modal state
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showStudentLoginModal, setShowStudentLoginModal] = useState(false);
+  const [isGuestBrowsing, setIsGuestBrowsing] = useState(false);
+  const [returnToShopAfterLogin, setReturnToShopAfterLogin] = useState(false);
+  const [shopScrollTop, setShopScrollTop] = useState(0);
+  const [pendingPurchaseProductId, setPendingPurchaseProductId] = useState<string | null>(null);
+  const [pageTransitionDirection, setPageTransitionDirection] = useState<'forward' | 'back'>('forward');
+
+  const navigateTo = (nextView: ViewState, direction: 'forward' | 'back' = 'forward') => {
+    setPageTransitionDirection(direction);
+    setView(nextView);
+  };
+
+  React.useEffect(() => {
+    onViewChange?.(view);
+  }, [onViewChange, view]);
 
   // 1. Idle Screensaver & Click Sound Feedback
   React.useEffect(() => {
@@ -686,7 +764,7 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
     const resetTimer = () => {
       clearTimeout(idleTimer);
       clearInterval(intervalTimer);
-      setIdleSecondsLeft(5000);
+      setIdleSecondsLeft(TERMINAL_IDLE_SECONDS);
 
       if (view !== 'welcome' && view !== 'scanning' && view !== 'vending-admin') {
         intervalTimer = setInterval(() => {
@@ -694,11 +772,16 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
         }, 1000);
 
         idleTimer = setTimeout(() => {
-          setView(isVending ? 'welcome' : 'scanning');
+          navigateTo(isVending ? 'welcome' : 'scanning', 'back');
+          setIsGuestBrowsing(false);
+          setReturnToShopAfterLogin(false);
+          setShopScrollTop(0);
+          setShowStudentLoginModal(false);
+          setPendingPurchaseProductId(null);
           setStudent(INITIAL_STUDENT);
           setBank(INITIAL_BANK);
           setIsLoading(false);
-        }, 5000000); // 5000s timeout
+        }, TERMINAL_IDLE_SECONDS * 1000);
       }
     };
 
@@ -747,7 +830,7 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
       if (adminAction === 'restart') {
         window.location.reload();
       } else {
-        setView('vending-admin');
+        navigateTo('vending-admin');
       }
     } else {
       setLoginError(true);
@@ -757,6 +840,17 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
 
   const bankBalance = bank.deposits.reduce((s, d) => s + d.amount, 0);
 
+  const handleStudentLoginSuccess = () => {
+    setShowStudentLoginModal(false);
+    setIsGuestBrowsing(false);
+    if (returnToShopAfterLogin) {
+      setReturnToShopAfterLogin(false);
+      navigateTo('shop');
+      return;
+    }
+    navigateTo('dashboard');
+  };
+
   const handleExchange = (pointsToRedeem: number) => {
     withLoading(() => {
       const coinsGained = Math.floor(pointsToRedeem / EXCHANGE_RATE);
@@ -765,7 +859,7 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
         points: prev.points - pointsToRedeem,
         campusCoins: prev.campusCoins + coinsGained
       }));
-      setView('dashboard');
+      navigateTo('dashboard');
     }, 'coin');
   };
 
@@ -844,7 +938,7 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
     switch (view) {
       case 'welcome':
         return (
-          <div className="flex flex-col items-center justify-center h-full gap-8 text-center px-10 pt-16 pb-12 animate-in fade-in duration-1000">
+          <div className="flex flex-col items-center justify-center h-full gap-8 text-center px-10 pt-16 pb-20">
             <div className="relative group mt-6">
               <div className="absolute -inset-8 bg-blue-400 rounded-full blur-[80px] opacity-20 animate-pulse transition-all"></div>
               <img
@@ -866,90 +960,122 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
               </div>
             </div>
 
-            <div className="pt-8 w-full max-w-sm mt-auto">
-              <button
-                onClick={() => { setView('scanning'); setLoginSubView('face'); }}
-                className="w-full px-10 py-6 bg-blue-600 text-white text-3xl font-black rounded-[2.5rem] flex flex-col items-center justify-center gap-1"
-                style={{
-                  boxShadow: '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)',
-                  transform: 'translateY(0)',
-                  transition: 'all 0.1s'
-                }}
-                onMouseDown={e => { e.currentTarget.style.transform = 'translateY(8px)'; e.currentTarget.style.boxShadow = '0 0px 0 #1e40af, 0 5px 10px rgba(0,0,0,0.1)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)'; }}
-                onTouchStart={e => { e.currentTarget.style.transform = 'translateY(8px)'; e.currentTarget.style.boxShadow = '0 0px 0 #1e40af, 0 5px 10px rgba(0,0,0,0.1)'; }}
-                onTouchEnd={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 0 #1e40af, 0 15px 20px rgba(0,0,0,0.1)'; }}
-              >
-                <div className="flex items-center gap-3">
-                  开始刷脸 <ArrowRight size={28} />
-                </div>
-              </button>
+            <div className="mt-auto flex w-full max-w-sm flex-col gap-4 pt-8">
+              {faceLoginEnabled && (
+                <button
+                  onClick={() => { navigateTo('scanning'); setLoginSubView('face'); }}
+                  className={`${TERMINAL_ENTRY_BUTTON_BASE} ${TERMINAL_ENTRY_BUTTON_PRIMARY}`}
+                >
+                  <Camera size={24} aria-hidden="true" />
+                  <span>刷脸登录</span>
+                </button>
+              )}
 
-              <button
-                onClick={() => {
-                  if (isVending) {
-                    setShowPasswordModal(true);
-                  } else {
-                    setView('scanning');
-                    setLoginSubView('password');
-                  }
-                }}
-                className="mt-6 w-full py-4 text-blue-600 font-bold bg-[#e8f2ff] active:bg-[#dbeafe] rounded-[2rem] transition-colors text-xl shadow-sm border-2 border-white"
-              >
-                账号密码登录
-              </button>
-              <p className="text-slate-300 font-bold mt-8 text-sm uppercase tracking-widest">请靠近终端屏幕</p>
+              {passwordLoginEnabled && (
+                <button
+                  onClick={() => {
+                    if (isVending) {
+                      setLoginSubView('password');
+                      setShowStudentLoginModal(true);
+                    } else {
+                      navigateTo('scanning');
+                      setLoginSubView('password');
+                    }
+                  }}
+                  className={`${TERMINAL_ENTRY_BUTTON_BASE} ${faceLoginEnabled
+                    ? TERMINAL_ENTRY_BUTTON_SECONDARY
+                    : TERMINAL_ENTRY_BUTTON_PRIMARY}`}
+                >
+                  <KeyRound size={24} aria-hidden="true" />
+                  <span>密码登录</span>
+                </button>
+              )}
+
+              {isVending && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!returnToShopAfterLogin) setShopScrollTop(0);
+                    setIsGuestBrowsing(true);
+                    navigateTo('shop');
+                  }}
+                  className={`${TERMINAL_ENTRY_BUTTON_BASE} ${TERMINAL_ENTRY_BUTTON_TERTIARY}`}
+                >
+                  <ShoppingBag size={24} className="text-blue-600" aria-hidden="true" />
+                  <span>查看商品</span>
+                </button>
+              )}
             </div>
-
-            {showPasswordModal && (
-              <div className="absolute inset-0 z-[200] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-                <AccountLogin onSuccess={() => { setView('dashboard'); setShowPasswordModal(false); }} onBack={() => setShowPasswordModal(false)} layout="vertical" />
-              </div>
-            )}
           </div>
         );
       case 'scanning':
         return loginSubView === 'face' ? (
           <FaceScanner 
-            onSuccess={() => { playSound('success'); setView('dashboard'); }} 
-            onSwitch={isVending ? undefined : () => setLoginSubView('password')}
+            onSuccess={() => { playSound('success'); handleStudentLoginSuccess(); }}
+            onSwitch={passwordLoginEnabled ? () => setLoginSubView('password') : undefined}
             isVending={isVending}
           />
         ) : (
           <AccountLogin 
-            onSuccess={() => { setView('dashboard'); }} 
+            onSuccess={handleStudentLoginSuccess}
             onBack={undefined}
-            onFaceLogin={isVending ? undefined : () => setLoginSubView('face')}
+            onFaceLogin={faceLoginEnabled ? () => setLoginSubView('face') : undefined}
             layout={isVending ? 'vertical' : 'horizontal'}
+            demoRelaxedValidation={isVending}
           />
         );
       case 'dashboard':
         return <Dashboard student={student} onNavigate={(v) => { 
           if (v === 'welcome') {
-            setView(isVending ? 'welcome' : 'scanning');
+            navigateTo(isVending ? 'welcome' : 'scanning', 'back');
             setLoginSubView(isVending ? 'face' : 'password');
           } else {
-            setView(v);
+            navigateTo(v);
           }
         }} bankBalance={bankBalance} layout={isVending ? 'mobile' : 'pc'} hideShop={!isVending} />;
       case 'exchange':
-        return <ExchangeView student={student} onExchange={handleExchange} onBack={() => setView('dashboard')} />;
+        return <ExchangeView student={student} onExchange={handleExchange} onBack={() => navigateTo('dashboard', 'back')} />;
       case 'shop':
-        return <ShopView student={student} products={products} onPurchase={handlePurchase} onBack={() => setView('dashboard')} />;
+        return (
+          <ShopView
+            student={student}
+            products={products}
+            onPurchase={handlePurchase}
+            onBack={() => {
+              navigateTo(isGuestBrowsing ? 'welcome' : 'dashboard', 'back');
+              setIsGuestBrowsing(false);
+            }}
+            isGuest={isGuestBrowsing}
+            initialScrollTop={shopScrollTop}
+            pendingPurchaseProductId={pendingPurchaseProductId}
+            onPendingPurchaseHandled={() => setPendingPurchaseProductId(null)}
+            onRequireLogin={(product, scrollTop) => {
+              setShopScrollTop(scrollTop);
+              setReturnToShopAfterLogin(true);
+              setPendingPurchaseProductId(product.id);
+              setLoginSubView(passwordLoginEnabled ? 'password' : 'face');
+              setShowStudentLoginModal(true);
+            }}
+          />
+        );
       case 'bank':
         return <BankView
           student={student}
           bank={bank}
           onDeposit={(amt, days, rate, label, type) => handleCreateDeposit(amt, days, rate, label, type as any)}
           onWithdrawDeposit={handleWithdrawDeposit}
-          onBack={() => setView('dashboard')}
+          onBack={() => navigateTo('dashboard', 'back')}
         />;
       case 'growth':
-        return <GrowthView student={student} onBack={() => setView('dashboard')} />;
+        return <GrowthView
+          student={student}
+          onBack={() => navigateTo('dashboard', 'back')}
+          parentEvaluationVisibility={parentEvaluationVisibility}
+        />;
       case 'transactions':
-        return <TransactionView student={student} onBack={() => setView('dashboard')} />;
+        return <TransactionView student={student} onBack={() => navigateTo('dashboard', 'back')} />;
       case 'vending-admin':
-        return <VendingAdmin products={products} setProducts={setProducts} onExit={() => setView(isVending ? 'welcome' : 'scanning')} />;
+        return <VendingAdmin products={products} setProducts={setProducts} onExit={() => navigateTo(isVending ? 'welcome' : 'scanning', 'back')} />;
       default:
         return <div>错误状态</div>;
     }
@@ -1023,8 +1149,56 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
         </div>
       )}
 
-      {view !== 'welcome' && view !== 'scanning' && view !== 'vending-admin' && (
-        <div className="absolute z-[90] top-10 left-1/2 -translate-x-1/2 bg-slate-900/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 pointer-events-none shadow-sm transition-all duration-300">
+      {showStudentLoginModal && (
+        <div
+          className="absolute inset-0 z-[200] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label="学生登录"
+        >
+          {loginSubView === 'password' && passwordLoginEnabled ? (
+            <AccountLogin
+              onSuccess={handleStudentLoginSuccess}
+              onBack={() => {
+                setShowStudentLoginModal(false);
+                setReturnToShopAfterLogin(false);
+                setPendingPurchaseProductId(null);
+              }}
+              onFaceLogin={faceLoginEnabled ? () => setLoginSubView('face') : undefined}
+              layout="vertical"
+              demoRelaxedValidation={isVending}
+            />
+          ) : (
+            <div className="h-full w-full p-6 flex items-center justify-center">
+              <div className="relative h-[720px] max-h-full w-full max-w-[420px] overflow-hidden rounded-[2.5rem] border-4 border-blue-50 bg-[#f8fbff] shadow-2xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStudentLoginModal(false);
+                    setReturnToShopAfterLogin(false);
+                    setPendingPurchaseProductId(null);
+                  }}
+                  aria-label="关闭登录"
+                  className="absolute left-5 top-5 z-[60] flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-slate-100 bg-white/90 text-slate-500 shadow-lg backdrop-blur-md active:bg-slate-100"
+                >
+                  <ChevronLeft size={30} strokeWidth={2.5} />
+                </button>
+                <FaceScanner
+                  onSuccess={() => {
+                    playSound('success');
+                    handleStudentLoginSuccess();
+                  }}
+                  onSwitch={passwordLoginEnabled ? () => setLoginSubView('password') : undefined}
+                  isVending
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {view !== 'welcome' && view !== 'scanning' && view !== 'vending-admin' && !isGuestBrowsing && (
+        <div className="absolute z-[90] top-8 left-1/2 -translate-x-1/2 bg-slate-900/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 pointer-events-none shadow-sm transition-all duration-300">
           <div className={`w-1.5 h-1.5 rounded-full ${idleSecondsLeft <= 10 ? 'bg-red-500 animate-ping' : 'bg-green-500 animate-pulse'}`}></div>
           <span className="text-slate-700/80 text-[10px] font-bold tracking-widest">{idleSecondsLeft}s 后自动退出</span>
         </div>
@@ -1033,17 +1207,38 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
       {view !== 'welcome' && view !== 'scanning' && view !== 'dashboard' && view !== 'vending-admin' && (
         <div className="h-16 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-50">
           <button
-            onClick={() => setView('dashboard')}
+            onClick={() => {
+              navigateTo(isGuestBrowsing ? 'welcome' : 'dashboard', 'back');
+              setIsGuestBrowsing(false);
+              if (view === 'shop') {
+                setReturnToShopAfterLogin(false);
+                setShopScrollTop(0);
+              }
+            }}
             className="flex items-center space-x-1 text-blue-600 font-bold text-lg active:bg-blue-50 px-3 py-1.5 rounded-xl"
           >
             <ChevronLeft size={24} />
             <span>返回首页</span>
           </button>
+          {((view === 'shop' && !isGuestBrowsing) || view === 'growth' || view === 'bank') && (
+            <div
+              className="flex items-center gap-1.5"
+              aria-label={`${GROWTH_COIN_TERMS.available}${GROWTH_COIN_TERMS.name}${student.campusCoins}，${GROWTH_COIN_TERMS.saved}${GROWTH_COIN_TERMS.name}${bankBalance}`}
+            >
+              <HeaderCoinBalance label={GROWTH_COIN_TERMS.available} value={student.campusCoins} tone="available" />
+              <HeaderCoinBalance label={GROWTH_COIN_TERMS.saved} value={bankBalance} tone="saved" />
+            </div>
+          )}
         </div>
       )}
 
       <main className="flex-1 overflow-hidden relative">
-        {renderView()}
+        <div
+          key={view === 'scanning' ? `${view}-${loginSubView}` : view}
+          className={`h-full w-full animate-in ${pageTransitionDirection === 'back' ? 'slide-in-from-left-12' : 'slide-in-from-right-12'} duration-300 ease-out motion-reduce:animate-none`}
+        >
+          {renderView()}
+        </div>
       </main>
       {/* 全局 Loading 拦截层 */}
       {isLoading && (
@@ -1070,37 +1265,10 @@ const TerminalApp: React.FC<{ mode?: 'vending' | 'all-in-one'; embedded?: boolea
     );
   }
 
-  // Growth 视图：货柜机保持原位居中，右侧面板 absolute 叠加，不影响设备位置
-  if (view === 'growth') {
-    // 设备在 960px 高度时 scale = min(vh/960, 1.2)，渲染宽 = scale * 540
-    // 面板宽度与设备渲染宽度保持一致（用 CSS calc 近似）
-    return (
-      <div className={`${embedded ? 'w-full h-full' : 'w-screen h-[100dvh]'} bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-6 md:p-8 relative`}>
-        {/* 货柜机：与其他页面完全相同的居中布局，位置不变 */}
-        <DeviceWrapper width={540} height={960}>
-          {innerContent}
-        </DeviceWrapper>
-        {/* 右侧面板：absolute 叠加，不参与布局流，不影响设备位置 */}
-        {/* left = 50%（屏幕中心）+ 设备渲染半宽 + 50px 间距 */}
-        {/* 宽度与设备渲染宽度一致 */}
-        <div
-          className="absolute top-6 bottom-6 overflow-hidden flex flex-col"
-          style={{
-            left: 'calc(50% + min(100vh * 270 / 960, 324px) + 50px)',
-            width: 'min(calc(100vh * 540 / 960), 540px)',
-          }}
-        >
-          <GrowthSidePanel />
-        </div>
-      </div>
-    );
-  }
-
-
   return (
-    <div className={`${embedded ? 'w-full h-full' : 'w-screen h-[100dvh]'} bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-6 md:p-8`}>
+    <div className={`${embedded ? 'w-full h-full' : 'w-screen h-[100dvh]'} bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-2`}>
       {/* 21.5寸竖屏货柜机比例 540x960 */}
-      <DeviceWrapper width={540} height={960}>
+      <DeviceWrapper width={540} height={960} padding={8} safetyGap={32} maxScale={1.1} previewAnchor="terminal-device">
         {innerContent}
       </DeviceWrapper>
     </div>
@@ -1272,15 +1440,69 @@ const AppSwitcher: React.FC = () => {
     return 'terminal'; // default
   });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
+  const [studentLoginPreviewMode, setStudentLoginPreviewMode] = useState<StudentLoginPreviewMode>('password-only');
+  const [terminalView, setTerminalView] = useState<ViewState>('welcome');
+  const [terminalPreviewDockLeft, setTerminalPreviewDockLeft] = useState<number | null>(null);
   const [showPhoneShell, setShowPhoneShell] = useState(true);
   const [teacherGradientScheme, setTeacherGradientScheme] = useState<TeacherGradientSchemeId>(defaultTeacherGradientPreview.schemeId);
   const [teacherGradientStyle, setTeacherGradientStyle] = useState<TeacherGradientStyleId>(defaultTeacherGradientPreview.styleId);
+  const [parentGradientScheme, setParentGradientScheme] = useState<TeacherGradientSchemeId>(defaultParentGradientPreview.schemeId);
+  const [parentGradientStyle, setParentGradientStyle] = useState<TeacherGradientStyleId>(defaultParentGradientPreview.styleId);
   const [isTeacherGradientControlsOpen, setIsTeacherGradientControlsOpen] = useState(false);
-  const [showParentPhoneShell, setShowParentPhoneShell] = useState(false);
-  const [showPhoneShellToggle, setShowPhoneShellToggle] = useState(false);
+  const showParentPhoneShell = false;
+  const [parentPreviewClassId, setParentPreviewClassId] = useState(DEFAULT_PARENT_PREVIEW_CLASS_ID);
+  const [parentEvaluationVisibility, setParentEvaluationVisibility] = useState<ParentEvaluationVisibilitySettings>(() => (
+    readParentEvaluationVisibility(DEFAULT_PARENT_PREVIEW_CLASS_ID)
+  ));
+  const [parentBankFeatureEnabled, setParentBankFeatureEnabled] = useState(() => (
+    readParentBankFeatureEnabled(DEFAULT_PARENT_PREVIEW_CLASS_ID)
+  ));
+  const [showAdvancedApps, setShowAdvancedApps] = useState(false);
   const [teacherScreenshotStatus, setTeacherScreenshotStatus] = useState<'idle' | 'capturing' | 'success' | 'error'>('idle');
   const [showTeacherDeveloperNotes, setShowTeacherDeveloperNotes] = useState(false);
-  const [hasTeacherDeveloperNotesContext, setHasTeacherDeveloperNotesContext] = useState(false);
+  const [teacherDeveloperNotesContext, setTeacherDeveloperNotesContext] = useState<TeacherMobileDeveloperNotesContext | null>(null);
+
+  useEffect(() => {
+    if (currentApp !== 'terminal') {
+      setTerminalView('welcome');
+    }
+
+    if (currentApp !== 'terminal') {
+      setTerminalPreviewDockLeft(null);
+      return;
+    }
+
+    let frame = 0;
+    const updateDockPosition = () => {
+      const anchor = document.querySelector<HTMLElement>('[data-preview-anchor="terminal-device"]');
+      if (!anchor) {
+        frame = window.requestAnimationFrame(updateDockPosition);
+        return;
+      }
+
+      const deviceRight = anchor.getBoundingClientRect().right;
+      const controlWidth = 272;
+      const viewportPadding = 16;
+      const gap = 32;
+      const maxLeft = Math.max(viewportPadding, window.innerWidth - controlWidth - viewportPadding);
+      setTerminalPreviewDockLeft(Math.min(deviceRight + gap, maxLeft));
+    };
+
+    updateDockPosition();
+    window.addEventListener('resize', updateDockPosition);
+    const observer = new ResizeObserver(() => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(updateDockPosition);
+    });
+    observer.observe(document.documentElement);
+
+    return () => {
+      window.removeEventListener('resize', updateDockPosition);
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
+  }, [currentApp, studentLoginPreviewMode]);
+  const teacherDeveloperNotesContextRef = useRef<TeacherMobileDeveloperNotesContext | null>(null);
   const [demoPanelPosition, setDemoPanelPosition] = useState<{ left: number; top: number } | null>(null);
   const [demoPanelSide, setDemoPanelSide] = useState<'left' | 'right' | 'top' | 'bottom'>('right');
   const [isDemoPanelSnapped, setIsDemoPanelSnapped] = useState(false);
@@ -1297,6 +1519,40 @@ const AppSwitcher: React.FC = () => {
   } | null>(null);
   const skipDemoToggleRef = useRef(false);
   const environmentTitleClickCountRef = useRef(0);
+
+  useEffect(() => {
+    const refreshParentEvaluationVisibility = () => {
+      setParentEvaluationVisibility(readParentEvaluationVisibility(parentPreviewClassId));
+    };
+    refreshParentEvaluationVisibility();
+    window.addEventListener(PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT, refreshParentEvaluationVisibility);
+    window.addEventListener('storage', refreshParentEvaluationVisibility);
+    return () => {
+      window.removeEventListener(PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT, refreshParentEvaluationVisibility);
+      window.removeEventListener('storage', refreshParentEvaluationVisibility);
+    };
+  }, [parentPreviewClassId]);
+
+  useEffect(() => {
+    const refreshParentBankFeature = () => {
+      setParentBankFeatureEnabled(readParentBankFeatureEnabled(parentPreviewClassId));
+    };
+    refreshParentBankFeature();
+    window.addEventListener(PARENT_BANK_FEATURE_UPDATED_EVENT, refreshParentBankFeature);
+    window.addEventListener('storage', refreshParentBankFeature);
+    return () => {
+      window.removeEventListener(PARENT_BANK_FEATURE_UPDATED_EVENT, refreshParentBankFeature);
+      window.removeEventListener('storage', refreshParentBankFeature);
+    };
+  }, [parentPreviewClassId]);
+
+  const updateParentEvaluationVisibility = (settings: ParentEvaluationVisibilitySettings) => {
+    setParentEvaluationVisibility(writeParentEvaluationVisibility(parentPreviewClassId, settings));
+  };
+
+  const updateParentBankFeature = (enabled: boolean) => {
+    setParentBankFeatureEnabled(writeParentBankFeatureEnabled(parentPreviewClassId, enabled));
+  };
 
   const handleRegionalPcLogout = () => {
     const url = new URL(window.location.href);
@@ -1422,18 +1678,26 @@ const AppSwitcher: React.FC = () => {
 
   const handleEnvironmentTitleClick = () => {
     environmentTitleClickCountRef.current += 1;
-    if (environmentTitleClickCountRef.current >= 5) {
+    if (environmentTitleClickCountRef.current >= 2) {
       environmentTitleClickCountRef.current = 0;
-      setShowPhoneShellToggle(prev => !prev);
+      setShowAdvancedApps(prev => !prev);
     }
   };
 
   useEffect(() => {
     const syncTeacherDeveloperNotesContext = () => {
-      const hasContext = currentApp === 'admin'
-        && Boolean(teacherPhoneScreenRef.current?.querySelector('.student-compact-select-grid'));
-      setHasTeacherDeveloperNotesContext(previous => previous === hasContext ? previous : hasContext);
-      if (!hasContext) setShowTeacherDeveloperNotes(false);
+      const nextContext: TeacherMobileDeveloperNotesContext | null = currentApp !== 'admin'
+        ? null
+        : teacherPhoneScreenRef.current?.querySelector('[data-teacher-demo-context="student-team-other-search"]')
+          ? 'student-team-other-search'
+          : teacherPhoneScreenRef.current?.querySelector('.student-compact-select-grid')
+            ? 'student-picker-grid'
+            : null;
+      if (teacherDeveloperNotesContextRef.current !== nextContext) {
+        teacherDeveloperNotesContextRef.current = nextContext;
+        setShowTeacherDeveloperNotes(false);
+      }
+      setTeacherDeveloperNotesContext(previous => previous === nextContext ? previous : nextContext);
     };
 
     syncTeacherDeveloperNotesContext();
@@ -1530,11 +1794,20 @@ const AppSwitcher: React.FC = () => {
       : teacherScreenshotStatus === 'error'
         ? '截图失败，请重试'
         : '拍照截图';
+  const studentLoginMethods = STUDENT_LOGIN_PREVIEW_OPTIONS.find(option => option.value === studentLoginPreviewMode)?.methods
+    ?? STUDENT_LOGIN_PREVIEW_OPTIONS[2].methods;
 
   return (
     <>
       <div key={currentApp} className="animate-in fade-in duration-300">
-        {currentApp === 'terminal' && <TerminalApp mode="vending" />}
+        {currentApp === 'terminal' && (
+          <TerminalApp
+            mode="vending"
+            loginMethods={studentLoginMethods}
+            parentEvaluationVisibility={parentEvaluationVisibility}
+            onViewChange={setTerminalView}
+          />
+        )}
         {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
         {currentApp === 'pc-workspace' && <PcWorkspace />}
         {currentApp === 'region-pc' && <RegionalPcAdmin onLogout={handleRegionalPcLogout} />}
@@ -1543,117 +1816,180 @@ const AppSwitcher: React.FC = () => {
           <MobileApp
             showPhoneShell={showPhoneShell}
             screenRef={teacherPhoneScreenRef}
+            campaignPreviewEveryEntry
             gradientPreview={{ schemeId: teacherGradientScheme, styleId: teacherGradientStyle }}
+            onGradientPreviewChange={config => {
+              setTeacherGradientScheme(config.schemeId);
+              setTeacherGradientStyle(config.styleId);
+            }}
           />
         )}
         {currentApp === 'ui-renovation' && <UiRenovationDemo />}
         {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && (questionnaireInviteCode
-          ? <ParentApp showPhoneShell={showParentPhoneShell} defaultLoggedIn={false} defaultHasBoundChild={false} initialQuestionnaireInviteCode={questionnaireInviteCode} />
-          : <ParentApp showPhoneShell={showParentPhoneShell} />
+          ? <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} defaultLoggedIn={false} defaultHasBoundChild={false} initialQuestionnaireInviteCode={questionnaireInviteCode} parentEvaluationVisibility={parentEvaluationVisibility} parentBankFeatureEnabled={parentBankFeatureEnabled} onActiveClassIdChange={setParentPreviewClassId} />
+          : <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} parentEvaluationVisibility={parentEvaluationVisibility} parentBankFeatureEnabled={parentBankFeatureEnabled} onActiveClassIdChange={setParentPreviewClassId} />
         )}
       </div>
 
-      {(currentApp === 'admin' || (showPhoneShellToggle && currentApp === 'parent')) && (
-        <div className="fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
-          {(() => {
-            const phoneShellEnabled = currentApp === 'parent' ? showParentPhoneShell : showPhoneShell;
-            const togglePhoneShell = currentApp === 'parent' ? setShowParentPhoneShell : setShowPhoneShell;
-            return (
-              <div className="flex w-[232px] flex-col items-end gap-2 max-[900px]:w-auto">
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => togglePhoneShell(prev => !prev)}
-                    className="flex h-11 items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-colors active:bg-slate-50 max-[900px]:px-2"
-                    aria-pressed={phoneShellEnabled}
-                    aria-label="模拟真实手机"
-                    title="模拟真实手机"
+      {currentApp === 'terminal' && (
+        <div
+          className={`fixed top-1/2 z-[9998] -translate-y-1/2 max-[1050px]:!left-auto max-[1050px]:right-16 ${terminalPreviewDockLeft === null ? 'invisible' : ''}`}
+          style={{ left: terminalPreviewDockLeft ?? '50%' }}
+        >
+          <div className="flex flex-col gap-3">
+            <TerminalLoginMethodPreviewControls
+              value={studentLoginPreviewMode}
+              onChange={setStudentLoginPreviewMode}
+            />
+            {terminalView === 'growth' && (
+              <ParentEvaluationVisibilityPreviewControls
+                settings={parentEvaluationVisibility}
+                onChange={updateParentEvaluationVisibility}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {currentApp === 'parent' && !questionnaireInviteCode && (
+        <div className="fixed left-1/2 top-1/2 z-[9998] ml-[230px] -translate-y-1/2 max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
+          <div className="flex flex-col gap-3">
+            <div className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl" aria-label="家长端渐变预览配置">
+              <label className="flex min-h-11 items-center gap-2">
+                <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">配色方案</span>
+                <span className="relative min-w-0 flex-1">
+                  <select
+                    aria-label="家长端选择渐变配色方案"
+                    value={parentGradientScheme}
+                    onChange={event => setParentGradientScheme(event.target.value as TeacherGradientSchemeId)}
+                    className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
                   >
-                    <Smartphone className="hidden h-4 w-4 text-slate-600 max-[900px]:block" aria-hidden="true" />
-                    <span className="whitespace-nowrap text-[12px] font-semibold text-slate-700 max-[900px]:sr-only">模拟真实手机</span>
-                    <span className={`relative h-[22px] w-10 shrink-0 rounded-full p-0.5 transition-colors ${phoneShellEnabled ? 'bg-slate-800' : 'bg-slate-300'}`}>
-                      <span className={`block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform ${phoneShellEnabled ? 'translate-x-[18px]' : 'translate-x-0'}`}></span>
-                    </span>
-                  </button>
-                  {currentApp === 'admin' && (
-                    <button
-                      type="button"
-                      onClick={handleTeacherScreenshot}
-                      disabled={teacherScreenshotStatus === 'capturing'}
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors active:bg-slate-200/70 disabled:cursor-wait ${teacherScreenshotStatus === 'error' ? 'text-rose-600' : 'text-slate-600'}`}
-                      aria-label={teacherScreenshotLabel}
-                      title={teacherScreenshotLabel}
-                    >
-                      {teacherScreenshotStatus === 'capturing' ? (
-                        <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
-                      ) : teacherScreenshotStatus === 'success' ? (
-                        <Check className="h-4 w-4" aria-hidden="true" />
-                      ) : (
-                        <Camera className="h-4 w-4" aria-hidden="true" />
-                      )}
-                    </button>
-                  )}
-                  {currentApp === 'admin' && (
-                    <button
-                      type="button"
-                      onClick={() => setIsTeacherGradientControlsOpen(prev => !prev)}
-                      className={`hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/90 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-colors max-[900px]:flex ${isTeacherGradientControlsOpen ? 'text-rose-600' : 'text-slate-600'}`}
-                      aria-label={isTeacherGradientControlsOpen ? '收起渐变预览配置' : '展开渐变预览配置'}
-                      aria-expanded={isTeacherGradientControlsOpen}
-                    >
-                      <Palette className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
+                    {teacherGradientSchemeOptions.map(option => (
+                      <option key={option.id} value={option.id}>{option.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                </span>
+              </label>
+              <label className="flex min-h-11 items-center gap-2">
+                <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">渐变样式</span>
+                <span className="relative min-w-0 flex-1">
+                  <select
+                    aria-label="家长端选择渐变样式"
+                    value={parentGradientStyle}
+                    onChange={event => setParentGradientStyle(event.target.value as TeacherGradientStyleId)}
+                    className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
+                  >
+                    {teacherGradientStyleOptions.map(option => (
+                      <option key={option.id} value={option.id}>{option.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                </span>
+              </label>
+            </div>
+            <ParentEvaluationVisibilityPreviewControls
+              settings={parentEvaluationVisibility}
+              onChange={updateParentEvaluationVisibility}
+            />
+            <ParentBankFeaturePreviewControls
+              enabled={parentBankFeatureEnabled}
+              onChange={updateParentBankFeature}
+            />
+          </div>
+        </div>
+      )}
 
-                {currentApp === 'admin' && hasTeacherDeveloperNotesContext && (
-                  <TeacherMobileDeveloperNotes
-                    open={showTeacherDeveloperNotes}
-                    onToggle={() => setShowTeacherDeveloperNotes(prev => !prev)}
-                  />
+      {currentApp === 'admin' && (
+        <div className="fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
+          <div className="flex w-[232px] flex-col items-end gap-2 max-[900px]:w-[172px]">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setShowPhoneShell(previous => !previous)}
+                className="flex h-11 items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-colors active:bg-slate-50 max-[900px]:px-1.5"
+                aria-pressed={showPhoneShell}
+                aria-label="模拟真实手机"
+                title="模拟真实手机"
+              >
+                <Smartphone className="hidden h-4 w-4 text-slate-600 max-[900px]:block" aria-hidden="true" />
+                <span className="whitespace-nowrap text-[12px] font-semibold text-slate-700 max-[900px]:sr-only">模拟真实手机</span>
+                <span className={`relative h-[22px] w-10 shrink-0 rounded-full p-0.5 transition-colors ${showPhoneShell ? 'bg-slate-800' : 'bg-slate-300'}`} aria-hidden="true">
+                  <span className={`block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform ${showPhoneShell ? 'translate-x-[18px]' : 'translate-x-0'}`} />
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleTeacherScreenshot}
+                disabled={teacherScreenshotStatus === 'capturing'}
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors active:bg-slate-200/70 disabled:cursor-wait ${teacherScreenshotStatus === 'error' ? 'text-rose-600' : 'text-slate-600'}`}
+                aria-label={teacherScreenshotLabel}
+                title={teacherScreenshotLabel}
+              >
+                {teacherScreenshotStatus === 'capturing' ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : teacherScreenshotStatus === 'success' ? (
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Camera className="h-4 w-4" aria-hidden="true" />
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsTeacherGradientControlsOpen(prev => !prev)}
+                className={`hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/90 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-colors max-[900px]:flex ${isTeacherGradientControlsOpen ? 'text-rose-600' : 'text-slate-600'}`}
+                aria-label={isTeacherGradientControlsOpen ? '收起渐变预览配置' : '展开渐变预览配置'}
+                aria-expanded={isTeacherGradientControlsOpen}
+              >
+                <Palette className="h-5 w-5" />
+              </button>
+            </div>
 
-                {currentApp === 'admin' && (
-                  <div className={`w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl ${isTeacherGradientControlsOpen ? 'max-[900px]:block' : 'max-[900px]:hidden'}`}>
-                    <label className="flex min-h-11 items-center gap-2">
-                      <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">配色方案</span>
-                      <span className="relative min-w-0 flex-1">
-                        <select
-                          aria-label="选择渐变配色方案"
-                          value={teacherGradientScheme}
-                          onChange={event => setTeacherGradientScheme(event.target.value as TeacherGradientSchemeId)}
-                          className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
-                        >
-                          {teacherGradientSchemeOptions.map(option => (
-                            <option key={option.id} value={option.id}>{option.label}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                      </span>
-                    </label>
-                    <label className="flex min-h-11 items-center gap-2">
-                      <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">渐变样式</span>
-                      <span className="relative min-w-0 flex-1">
-                        <select
-                          aria-label="选择渐变样式"
-                          value={teacherGradientStyle}
-                          onChange={event => setTeacherGradientStyle(event.target.value as TeacherGradientStyleId)}
-                          className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
-                        >
-                          {teacherGradientStyleOptions.map(option => (
-                            <option key={option.id} value={option.id}>{option.label}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                      </span>
-                    </label>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+            {teacherDeveloperNotesContext && (
+              <TeacherMobileDeveloperNotes
+                open={showTeacherDeveloperNotes}
+                onToggle={() => setShowTeacherDeveloperNotes(prev => !prev)}
+                context={teacherDeveloperNotesContext}
+              />
+            )}
+
+            <div className={`w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl ${isTeacherGradientControlsOpen ? 'max-[900px]:block' : 'max-[900px]:hidden'}`}>
+              <label className="flex min-h-11 items-center gap-2">
+                <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">配色方案</span>
+                <span className="relative min-w-0 flex-1">
+                  <select
+                    aria-label="选择渐变配色方案"
+                    value={teacherGradientScheme}
+                    onChange={event => setTeacherGradientScheme(event.target.value as TeacherGradientSchemeId)}
+                    className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
+                  >
+                    {teacherGradientSchemeOptions.map(option => (
+                      <option key={option.id} value={option.id}>{option.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                </span>
+              </label>
+              <label className="flex min-h-11 items-center gap-2">
+                <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">渐变样式</span>
+                <span className="relative min-w-0 flex-1">
+                  <select
+                    aria-label="选择渐变样式"
+                    value={teacherGradientStyle}
+                    onChange={event => setTeacherGradientStyle(event.target.value as TeacherGradientStyleId)}
+                    className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
+                  >
+                    {teacherGradientStyleOptions.map(option => (
+                      <option key={option.id} value={option.id}>{option.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1702,22 +2038,6 @@ const AppSwitcher: React.FC = () => {
               <span className="text-[9px] font-bold">货柜机</span>
             </button>
             <button
-              onClick={() => setCurrentApp('pc-workspace')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'pc-workspace' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="统一SaaS平台 - 学校-PC端"
-            >
-              <Monitor size={22} className="mb-1" />
-              <span className="text-[9px] font-bold leading-tight">学校-PC端</span>
-            </button>
-            <button
-              onClick={() => setCurrentApp('region-pc')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'region-pc' ? 'bg-blue-700 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="区级-PC端 - 区教育局"
-            >
-              <ShieldCheck size={22} className="mb-1" />
-              <span className="text-[9px] font-bold leading-tight">区级-PC端</span>
-            </button>
-            <button
               onClick={() => setCurrentApp('admin')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'admin' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
               title="管理端 - 教师-手机端"
@@ -1726,12 +2046,12 @@ const AppSwitcher: React.FC = () => {
               <span className="text-[9px] font-bold leading-tight">教师-手机端</span>
             </button>
             <button
-              onClick={() => setCurrentApp('teacher-c-mobile')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-c-mobile' ? 'bg-black text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="C端改造 - 低保真原型"
+              onClick={() => setCurrentApp('parent')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'parent' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="家长-手机端 - 微信小程序"
             >
               <Smartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold leading-tight">C端改造</span>
+              <span className="text-[9px] font-bold leading-tight">家长-手机端</span>
             </button>
             <button
               onClick={() => setCurrentApp('ui-renovation')}
@@ -1742,13 +2062,33 @@ const AppSwitcher: React.FC = () => {
               <span className="text-[9px] font-bold leading-tight">UI改造</span>
             </button>
             <button
-              onClick={() => setCurrentApp('parent')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'parent' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="家长-手机端 - 微信小程序"
+              onClick={() => setCurrentApp('pc-workspace')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'pc-workspace' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="统一SaaS平台 - 学校-PC端"
             >
-              <Smartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold leading-tight">家长-手机端</span>
+              <Monitor size={22} className="mb-1" />
+              <span className="text-[9px] font-bold leading-tight">学校-PC端</span>
             </button>
+            {showAdvancedApps && (
+              <>
+                <button
+                  onClick={() => setCurrentApp('region-pc')}
+                  className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'region-pc' ? 'bg-blue-700 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+                  title="区级-PC端 - 区教育局"
+                >
+                  <ShieldCheck size={22} className="mb-1" />
+                  <span className="text-[9px] font-bold leading-tight">区级-PC端</span>
+                </button>
+                <button
+                  onClick={() => setCurrentApp('teacher-c-mobile')}
+                  className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-c-mobile' ? 'bg-black text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+                  title="C端改造 - 低保真原型"
+                >
+                  <Smartphone size={22} className="mb-1" />
+                  <span className="text-[9px] font-bold leading-tight">C端改造</span>
+                </button>
+              </>
+            )}
           </div>
           </div>
         </div>

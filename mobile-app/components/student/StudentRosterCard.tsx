@@ -3,8 +3,9 @@ import { ASSETS } from '../../assets/images';
 import type { Student, StudentCardDisplaySettings } from '../../types';
 import { CheckIcon, CircleIcon, PlusIcon } from '../Icons';
 import StudentPerformanceAvatar from '../student-performance/StudentPerformanceAvatar';
+import StudentRosterNumber from './StudentRosterNumber';
 import {
-  StudentPerformanceCounts,
+  StudentPerformanceValues,
   StudentPerformanceLevelIcons,
 } from '../student-performance/StudentPerformanceMeta';
 import {
@@ -25,12 +26,6 @@ interface StudentRosterCardProps {
   onClick: () => void;
 }
 
-const getClassRosterNumber = (studentNo: string) => {
-  const trailingDigits = studentNo.match(/(\d+)$/)?.[1];
-  if (!trailingDigits) return studentNo.slice(-2);
-  return trailingDigits.slice(-2).padStart(2, '0');
-};
-
 const getAvatarStyle = (index: number) => {
   const avatarTones = [
     ['bg-[var(--tm-tag-jade-soft)]', 'text-[var(--tm-tag-jade-strong)]', 'border-[var(--tm-tag-jade-border)]'],
@@ -42,8 +37,9 @@ const getAvatarStyle = (index: number) => {
 };
 
 const getStudentRosterCardHeightClass = (displaySettings: StudentCardDisplaySettings) => {
-  const showPerformanceCounts = displaySettings.showPraiseCount || displaySettings.showCriticismCount;
-  const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(showPerformanceCounts);
+  const showPerformanceValues = displaySettings.showEvaluation
+    && (displaySettings.showPraise || displaySettings.showCriticism);
+  const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(showPerformanceValues);
   return visiblePerformanceRowCount === 2
     ? 'h-[var(--tm-student-card-height-full)]'
     : visiblePerformanceRowCount === 1
@@ -65,10 +61,11 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
 }) => {
   const [bgClass, textClass, borderClass] = getAvatarStyle(index);
   const studentNo = student.studentNo || student.id;
-  const rosterNumber = getClassRosterNumber(studentNo);
   const level = getStudentPerformanceLevel(levelNetScore ?? performance.netScore);
-  const showPerformanceCounts = displaySettings.showPraiseCount || displaySettings.showCriticismCount;
-  const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(showPerformanceCounts);
+  const showPraise = displaySettings.showEvaluation && displaySettings.showPraise;
+  const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;
+  const showPerformanceValues = showPraise || showCriticism;
+  const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(showPerformanceValues);
   const baseHeightClass = getStudentRosterCardHeightClass(displaySettings);
   const contextHeightClass = visiblePerformanceRowCount === 2
     ? 'h-[calc(var(--tm-student-card-height-full)+18px)]'
@@ -79,8 +76,12 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
     `${student.name}，学号${studentNo}`,
     contextLabel ?? '',
     displaySettings.showLevel ? `等级分值${levelNetScore ?? performance.netScore}分` : '',
-    displaySettings.showPraiseCount ? `被表扬${performance.praiseCount}次` : '',
-    displaySettings.showCriticismCount ? `被批评${performance.criticismCount}次` : '',
+    showPraise
+      ? (displaySettings.valueMode === 'score' ? `累计加分${performance.praiseScore}分` : `被表扬${performance.praiseCount}次`)
+      : '',
+    showCriticism
+      ? (displaySettings.valueMode === 'score' ? `累计扣分${performance.criticismScore}分` : `被批评${performance.criticismCount}次`)
+      : '',
     selectionStatus ?? '',
   ].filter(Boolean).join('，');
 
@@ -90,7 +91,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
       onClick={onClick}
       aria-pressed={showSelection ? selected : undefined}
       aria-label={accessibilityDetails}
-      className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-1 text-center [box-shadow:var(--tm-shadow-card)] transition-[transform,box-shadow] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transition-none ${contextLabel ? contextHeightClass : baseHeightClass}`}
+      className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-1 text-center [box-shadow:var(--tm-shadow-card)] ${contextLabel ? contextHeightClass : baseHeightClass}`}
     >
       {showSelection && (
         <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`}>
@@ -104,8 +105,8 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
           {contextLabel}
         </span>
       )}
-      <span className="flex min-h-0 w-full flex-1 flex-col items-center justify-center">
-        {displaySettings.showLevel && <StudentPerformanceLevelIcons level={level} />}
+      <span className="flex min-h-0 w-full flex-1 -translate-y-0.5 flex-col items-center justify-center gap-0.5">
+        {displaySettings.showLevel && <StudentPerformanceLevelIcons level={level} iconSize="student-card" />}
         <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
           <StudentPerformanceAvatar
             compact
@@ -116,25 +117,21 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
             showLevelProgress={displaySettings.showLevel}
           />
         </span>
-        {showPerformanceCounts && (
-          <StudentPerformanceCounts
+        {showPerformanceValues && (
+          <StudentPerformanceValues
             summary={performance}
             variant="student-card"
-            showPraiseCount={displaySettings.showPraiseCount}
-            showCriticismCount={displaySettings.showCriticismCount}
+            showPraise={showPraise}
+            showCriticism={showCriticism}
+            valueMode={displaySettings.valueMode}
           />
         )}
-      </span>
-      <span className="flex h-[var(--tm-student-card-identity-height)] w-full shrink-0 items-center justify-center px-0.5">
-        <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-0.5">
-          <span
-            aria-label={`学号${studentNo}`}
-            className="flex h-[var(--tm-student-card-roster-height)] w-4 shrink-0 items-center justify-center self-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[length:var(--tm-student-card-roster-font-size)] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]"
-          >
-            {rosterNumber}
-          </span>
-          <span className="block min-w-0 max-w-[52px] truncate text-[length:var(--tm-student-card-name-font-size)] [font-weight:var(--tm-student-card-name-font-weight)] leading-4 text-[var(--tm-text-primary)]">
-            {student.name}
+        <span className="flex h-[var(--tm-student-card-identity-height)] w-full shrink-0 items-center justify-center px-0.5">
+          <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-0.5">
+            <StudentRosterNumber studentNo={studentNo} ariaLabel={`学号${studentNo}`} variant="student-card" className="self-center" />
+            <span className="block min-w-0 max-w-[52px] truncate text-[length:var(--tm-student-card-name-font-size)] [font-weight:var(--tm-student-card-name-font-weight)] leading-4 text-[var(--tm-text-primary)]">
+              {student.name}
+            </span>
           </span>
         </span>
       </span>
@@ -152,7 +149,7 @@ export const StudentRosterAddCard: React.FC<StudentRosterAddCardProps> = ({ disp
     type="button"
     onClick={onClick}
     aria-label="添加学生"
-    className={`flex w-full min-w-0 select-none items-center justify-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] text-center [box-shadow:var(--tm-shadow-card)] transition-[transform,box-shadow] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transition-none ${getStudentRosterCardHeightClass(displaySettings)}`}
+    className={`flex w-full min-w-0 select-none items-center justify-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] text-center [box-shadow:var(--tm-shadow-card)] ${getStudentRosterCardHeightClass(displaySettings)}`}
   >
     <span className="flex flex-col items-center justify-center gap-[var(--tm-space-2)]">
       <PlusIcon className="h-6 w-6 text-[var(--tm-action-icon-brand)]" />

@@ -13,6 +13,7 @@ for (const required of [
   'h-[var(--tm-selection-segment-visible-height)]',
   "density?: 'default' | 'compact'",
   "motion?: 'static' | 'sliding'",
+  "variant?: 'default' | 'settings'",
   'h-[var(--tm-selection-segment-compact-track-height)]',
   'h-[var(--tm-selection-segment-compact-active-height)]',
   'rounded-[var(--tm-selection-segment-track-radius)]',
@@ -22,6 +23,10 @@ for (const required of [
   'mx-[var(--tm-selection-segment-compact-inset)]',
   'px-[var(--tm-space-1)]',
   'rounded-[var(--tm-selection-segment-compact-track-radius)]',
+  "const effectiveMotion = settingsVariant ? 'sliding' : motion",
+  'const settingsWidth = settingsVariant',
+  'calc(var(--tm-selection-segment-settings-item-width) * ${items.length})',
+  "settingsVariant ? 'whitespace-nowrap px-[var(--tm-space-1)]' : 'px-[var(--tm-space-2)]'",
   'data-sliding-indicator',
   'translate3d(${selectedIndex * 100}%, 0, 0)',
   '[transition-duration:var(--tm-selection-segment-slide-duration)]',
@@ -79,6 +84,7 @@ for (const [token, value] of [
   ['--tm-selection-segment-compact-font-size', '15px'],
   ['--tm-selection-segment-compact-inset', '2px'],
   ['--tm-selection-segment-compact-track-radius', 'var(--tm-radius-inner)'],
+  ['--tm-selection-segment-settings-item-width', '72px'],
   ['--tm-selection-segment-slide-duration', '220ms'],
   ['--tm-selection-segment-slide-easing', 'cubic-bezier(0.22, 1, 0.36, 1)'],
   ['--tm-selection-segment-track-bg', 'var(--tm-bg-surface-muted)'],
@@ -99,8 +105,21 @@ for (const [token, value] of [
   ['--tm-selection-pill-inactive-text', 'var(--tm-text-secondary)'],
   ['--tm-selection-pill-pressed-bg', 'var(--tm-brand-primary-pressed)'],
   ['--tm-selection-pill-inactive-pressed-bg', 'var(--tm-bg-surface-soft)'],
+  ['--tm-selection-card-radius', 'var(--tm-radius-inner)'],
+  ['--tm-selection-card-bg', 'teacherSelectionCardSemantic.background'],
+  ['--tm-selection-card-border', 'teacherSelectionCardSemantic.border'],
+  ['--tm-selection-card-selected-bg', 'teacherSelectionCardSemantic.selectedBackground'],
+  ['--tm-selection-card-selected-border', 'teacherSelectionCardSemantic.selectedBorder'],
+  ['--tm-selection-card-title-text', 'teacherSelectionCardSemantic.titleText'],
+  ['--tm-selection-card-description-text', 'teacherSelectionCardSemantic.descriptionText'],
+  ['--tm-selection-card-check-bg', 'teacherSelectionCardSemantic.checkBackground'],
+  ['--tm-selection-card-check-border', 'teacherSelectionCardSemantic.checkBorder'],
+  ['--tm-selection-card-shadow', 'teacherSelectionCardSemantic.shadow'],
 ]) {
-  assert.ok(tokenSource.includes(`'${token}': '${value}'`), `选择控件缺少组件 Token：${token}`);
+  const declaration = value.startsWith('teacher')
+    ? `'${token}': ${value}`
+    : `'${token}': '${value}'`;
+  assert.ok(tokenSource.includes(declaration), `选择控件缺少组件 Token：${token}`);
 }
 
 for (const forbidden of ['--tm-brand-primary-strong', 'h-8', 'min-w-[60px]', 'rounded-[8px]']) {
@@ -117,8 +136,22 @@ for (const required of [
   '问卷采集详情是页面级例外',
   '答卷状态无论为两项还是三项，都必须单行等分',
   '业务页面只选择共享组件及其语义参数',
+  '说明型选择卡片（如可见范围、权限范围、协作方式）统一使用 `--tm-selection-card-*`',
+  '不得使用灰色整卡填充，因为灰底会把可选项误读为禁用态',
 ]) {
   assert.ok(guidelineSource.includes(required), `教师手机端规范缺少选择控件约束：${required}`);
 }
+
+const radioCardSource = fs.readFileSync(new URL('./MobileRadioOptionCard.tsx', import.meta.url), 'utf8');
+for (const required of [
+  'bg-[var(--tm-selection-card-bg)]',
+  'border-[var(--tm-selection-card-selected-border)] bg-[var(--tm-selection-card-selected-bg)]',
+  'border-[var(--tm-selection-card-border)]',
+  'text-[var(--tm-selection-card-title-text)]',
+  'text-[var(--tm-selection-card-description-text)]',
+]) {
+  assert.ok(radioCardSource.includes(required), `说明型选择卡片缺少组件 Token：${required}`);
+}
+assert.equal(radioCardSource.includes("selected ? 'text-[var(--tm-brand-primary)]'"), false, '说明型选择卡片的文字颜色不应因选中状态改变。');
 
 console.log('Selection controls tests passed.');

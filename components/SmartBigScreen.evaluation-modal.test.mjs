@@ -10,7 +10,7 @@ assert.match(
 );
 assert.match(
   screenSource,
-  /flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/,
+  /flex shrink-0 flex-wrap items-center justify-between[\s\S]*border-b border-slate-100 bg-white[\s\S]*min-h-0 flex-1 overflow-y-auto/,
   '评价弹窗标题栏应固定，不随评价内容滚动',
 );
 assert.match(

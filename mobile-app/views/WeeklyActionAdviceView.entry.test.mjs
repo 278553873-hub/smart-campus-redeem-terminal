@@ -80,7 +80,7 @@ requireText(cssSource, '@keyframes waa-fade-up', '应定义报告卡片入场动
 requireText(cssSource, 'prefers-reduced-motion: reduce', '动画应支持减少动态效果。');
 requireText(footerSource, 'document.notice', '真实报告应保留精简的AI参考声明。');
 
-requireText(assistantSource, '本周学生情况洞察与班级跟进建议', '统一班主任助理应以单行内容概括进入本周行动建议。');
+requireText(assistantSource, '本周学生评价洞察与跟进建议', '统一班主任助理应以单行内容概括进入本周行动建议。');
 requireText(promptSource, '上一个完整自然周', '提示词应固定上一个完整自然周。');
 forbidText(promptSource, 'data_window_weeks', '提示词不应继续传递自适应周数。');
 requireText(promptSource, '不发送本周记录或更早历史记录', '提示词应禁止混入本周和更早数据。');

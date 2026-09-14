@@ -311,13 +311,13 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, ca
                                         e.stopPropagation();
                                         handleSwitchMode('camera');
                                     }}
-                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/92 text-[#8A7BFF] shadow-[0_14px_28px_rgba(97,119,163,0.14)] active:scale-95 transition-transform"
+                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/92 text-[#8A7BFF] shadow-[0_14px_28px_rgba(97,119,163,0.14)]"
                                     aria-label="切换到拍照录入"
                                 >
                                     <CameraIcon className="h-7 w-7" />
                                 </button>
 
-                                <div className="teacher-record-voice-pill flex h-16 min-w-0 flex-1 items-center justify-center gap-3 text-white select-none active:scale-[0.99] transition-transform">
+                                <div className="teacher-record-voice-pill flex h-16 min-w-0 flex-1 items-center justify-center gap-3 text-white select-none">
                                     <MicIcon className="h-6 w-6" />
                                     <span className="text-[18px] font-bold tracking-wide">
                                         {cancelThreshold ? '松开 取消' : '按住 说话'}
@@ -331,7 +331,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, ca
                                         e.stopPropagation();
                                         handleSwitchMode('text');
                                     }}
-                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/92 text-[#9B6DFF] shadow-[0_14px_28px_rgba(97,119,163,0.14)] active:scale-95 transition-transform"
+                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/92 text-[#9B6DFF] shadow-[0_14px_28px_rgba(97,119,163,0.14)]"
                                     aria-label="切换到文字录入"
                                 >
                                     <KeyboardIcon className="h-7 w-7" />
@@ -381,7 +381,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, ca
                                         candidateStudentIds,
                                     });
                                 }}
-                                className={`px-8 py-3.5 rounded-2xl font-semibold text-white shadow-md transition-all active:scale-95 flex items-center gap-2
+                                className={`px-8 py-3.5 rounded-2xl font-semibold text-white shadow-md transition-colors flex items-center gap-2
                                ${inputText.trim() ? 'bg-indigo-600 shadow-indigo-200 ' : 'bg-slate-300'}`}
                             >
                                 发送识别
@@ -397,19 +397,19 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, ca
                     <div className="flex items-center justify-between px-6">
                         <button
                             onClick={() => handleSwitchMode('voice')}
-                            className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white active:bg-white/20"
+                            className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white"
                         >
                             <ArrowRightIcon className="w-5 h-5 rotate-180" />
                         </button>
 
                         <button
                             onClick={handleCameraCapture}
-                            className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform"
+                            className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center"
                         >
                             <div className="w-16 h-16 rounded-full bg-white"></div>
                         </button>
 
-                        <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white active:bg-white/20">
+                        <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white">
                             <ImageIconIcon className="w-6 h-6" />
                         </button>
                     </div>

@@ -19,9 +19,9 @@ assert.match(screenshotButton, /h-11 w-11/, '截图入口应使用紧凑的 44 �
 assert.match(screenshotButton, /<Camera /, '截图入口应使用相机图标。');
 assert.doesNotMatch(screenshotButton, /<span/, '截图入口不应显示按钮文案。');
 assert.doesNotMatch(screenshotButton, /border|bg-white|shadow-\[/, '截图图标不应使用边框、白底或独立阴影。');
-assert.match(rootApp, /aria-label="模拟真实手机"/, '手机模拟开关应使用精简名称。');
-assert.match(rootApp, /whitespace-nowrap[^>]*>模拟真实手机<\/span>/, '手机模拟开关文案不应换行。');
-assert.match(rootApp, /h-\[22px\] w-10/, '手机模拟开关应使用紧凑轨道。');
+assert.match(rootApp, /const \[showPhoneShell, setShowPhoneShell\] = useState\(true\)/, '教师手机端应保留模拟真实手机的可控状态。');
+assert.match(rootApp, /aria-label="模拟真实手机"/, '模拟真实手机开关应提供清晰的无障碍名称。');
+assert.match(rootApp, /aria-pressed=\{showPhoneShell\}/, '模拟真实手机开关应暴露当前开关状态。');
 assert.match(mobileApp, /screenRef\?: React\.Ref<HTMLDivElement>/, '教师手机端应透传屏幕引用。');
 assert.equal((mobileApp.match(/screenRef=\{screenRef\}/g) ?? []).length, 2, '登录前后都应绑定同一截图目标。');
 assert.match(phoneMockup, /ref=\{screenRef\}/, '截图引用应落在手机屏幕内容层。');

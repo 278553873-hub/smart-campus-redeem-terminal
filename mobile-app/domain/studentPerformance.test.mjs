@@ -73,6 +73,8 @@ assert.deepEqual(summarizeStudentPerformance([
   netScore: 3,
   praiseCount: 2,
   criticismCount: 1,
+  praiseScore: 6,
+  criticismScore: 3,
 });
 
 const crossTermRecords = [
@@ -107,12 +109,14 @@ assert.ok(
   '模拟等级记录应包含当前学期开始前的历史记录。',
 );
 
-const moonBoundarySummary = { netScore: 10, praiseCount: 6, criticismCount: 1 };
+const moonBoundarySummary = { netScore: 10, praiseCount: 6, criticismCount: 1, praiseScore: 13, criticismScore: 3 };
 const downgradedSummary = applyStudentPerformanceEvent(moonBoundarySummary, -1);
 assert.deepEqual(downgradedSummary, {
   netScore: 9,
   praiseCount: 6,
   criticismCount: 2,
+  praiseScore: 13,
+  criticismScore: 4,
 });
 assert.deepEqual(getStudentPerformanceLevel(downgradedSummary.netScore), {
   tier: 'star',

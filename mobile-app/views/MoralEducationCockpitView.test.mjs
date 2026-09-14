@@ -97,6 +97,7 @@ assert.ok(viewSource.includes('<PillSelectionControl') && viewSource.includes('s
 assert.ok(viewSource.includes('items={filteredRanking.slice(0, 5)}') && viewSource.includes('items={filteredRanking}'), '班级评价报表预览与完整排名应复用统一排名列表。');
 assert.ok(rankingListSource.includes('text-[var(--tm-text-primary)]">{item.score}分'), '普通排名得分应使用中性主文字，不得表达为负向状态。');
 assert.ok(rankingListSource.includes('text-[var(--tm-chart-negative-text)]">扣{item.deduction}分'), '只有扣分信息应使用负向数据色。');
+assert.ok(viewSource.includes('<AlertTriangle className="mx-auto h-7 w-7 text-[var(--tm-status-negative)]"'), '加载失败应使用系统错误色，不得混用扣分业务色。');
 assert.ok(pillSource.includes('border-[var(--tm-selection-pill-active-border)] bg-[var(--tm-selection-pill-active-bg)] text-[var(--tm-selection-pill-active-text)]'), '年级选中项应通过组件 Token 使用主题红边框、红底和白字。');
 assert.ok(pillSource.includes('border-[var(--tm-selection-pill-inactive-border)] bg-[var(--tm-selection-pill-inactive-bg)] text-[var(--tm-selection-pill-inactive-text)]'), '年级未选项应通过组件 Token 使用白底浅边框和次级文字。');
 assert.ok(viewSource.includes("? 'font-bold text-[var(--tm-text-primary)]'"), '问题分布的下级指标选中态应使用透明背景与黑色粗体。');

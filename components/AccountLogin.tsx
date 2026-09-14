@@ -7,9 +7,10 @@ interface AccountLoginProps {
     onBack?: () => void;
     onFaceLogin?: () => void;
     layout?: 'horizontal' | 'vertical';
+    demoRelaxedValidation?: boolean;
 }
 
-const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLogin, layout = 'horizontal' }) => {
+const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLogin, layout = 'horizontal', demoRelaxedValidation = false }) => {
     const [studentId, setStudentId] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -22,7 +23,7 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
             return;
         }
 
-        if (password.length !== 6) {
+        if (!demoRelaxedValidation && password.length !== 6) {
             setError('密码必须是6位数字');
             return;
         }
@@ -32,7 +33,7 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
 
         // 模拟登录请求
         setTimeout(() => {
-            // 演示环境中，只要输入了6位密码就允许登录
+            // 货柜机演示允许任意非空账号和密码，其他终端保留原校验规则。
             setLoading(false);
             playSound('success');
             onSuccess();
@@ -40,9 +41,9 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
     };
 
     return (
-        <div className={`relative flex items-center justify-center h-full w-full animate-in fade-in duration-700 ${layout === 'vertical' ? 'p-2' : 'p-8'}`}>
+        <div className={`relative flex items-center justify-center h-full w-full ${layout === 'vertical' ? 'p-2' : 'p-8'}`}>
             {layout === 'vertical' && onBack && (
-                <button type="button" onClick={onBack} className="absolute top-10 left-6 w-14 h-14 bg-white/90 backdrop-blur-md text-slate-500 rounded-[1.25rem] shadow-xl flex items-center justify-center active:bg-slate-100 transition-colors z-50 border border-slate-100">
+                <button type="button" onClick={onBack} aria-label="关闭登录" className="absolute top-10 left-6 w-14 h-14 bg-white/90 backdrop-blur-md text-slate-500 rounded-[1.25rem] shadow-xl flex items-center justify-center active:bg-slate-100 transition-colors z-50 border border-slate-100">
                     <ChevronLeft size={30} strokeWidth={2.5} />
                 </button>
             )}
@@ -95,7 +96,9 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
                             </div>
                             <h2 className={`font-black text-slate-800 tracking-tight ${layout === 'vertical' ? 'text-3xl' : 'text-4xl'}`}>密码登录</h2>
                         </div>
-                        <p className={`text-slate-400 font-bold ${layout === 'vertical' ? 'mb-8' : 'mb-10'} text-xs leading-relaxed`}>请输入您的学号和密码，如果忘记密码请联系班主任。</p>
+                        <p className={`text-slate-400 font-bold ${layout === 'vertical' ? 'mb-8' : 'mb-10'} text-xs leading-relaxed`}>
+                            {demoRelaxedValidation ? '学号和密码任意填写即可登录。' : '请输入您的学号和密码，如果忘记密码请联系班主任。'}
+                        </p>
 
                         <form onSubmit={handleLogin} className={`w-full ${layout === 'vertical' ? 'space-y-4' : 'space-y-6'}`}>
                             <div className="relative">
@@ -110,7 +113,7 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
                                             setError('');
                                         }}
                                         className={`w-full bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] py-4 pl-14 pr-5 text-slate-800 font-bold focus:border-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner placeholder:font-sans placeholder:text-[17px] placeholder:font-bold placeholder:tracking-normal placeholder:text-slate-400 ${layout === 'vertical' ? 'text-lg py-3.5 pl-12' : 'text-xl tracking-wider'}`}
-                                        placeholder="请输入：20250101"
+                                        placeholder={demoRelaxedValidation ? '任意填写学号' : '请输入：20250101'}
                                         disabled={loading}
                                     />
                                 </div>
@@ -122,12 +125,14 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
                                         type="password"
                                         value={password}
                                         onChange={(e) => {
-                                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                            const val = demoRelaxedValidation
+                                                ? e.target.value
+                                                : e.target.value.replace(/\D/g, '').slice(0, 6);
                                             setPassword(val);
                                             setError('');
                                         }}
                                         className={`w-full bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] py-4 pl-14 pr-5 text-left text-slate-800 font-black tracking-[0.5em] focus:border-blue-500 focus:bg-white focus:outline-none transition-all shadow-inner placeholder:font-sans placeholder:text-[17px] placeholder:font-bold placeholder:tracking-normal placeholder:text-left placeholder:text-slate-400 ${layout === 'vertical' ? 'text-2xl py-3.5 pl-12' : 'text-3xl'}`}
-                                        placeholder="请输入：123456"
+                                        placeholder={demoRelaxedValidation ? '任意填写密码' : '请输入：123456'}
                                         disabled={loading}
                                     />
                                 </div>
@@ -146,7 +151,7 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
                                     </>
                                 ) : (
                                     <>
-                                        登录终端 <ArrowRight size={layout === 'vertical' ? 22 : 26} />
+                                        登录 {layout !== 'vertical' && <ArrowRight size={26} />}
                                     </>
                                 )}
                             </button>
@@ -158,7 +163,7 @@ const AccountLogin: React.FC<AccountLoginProps> = ({ onSuccess, onBack, onFaceLo
                                     className="w-full mt-4 py-3 rounded-xl border-2 border-slate-100 flex items-center justify-center gap-2 text-slate-500 font-bold hover:bg-slate-50 transition-colors"
                                 >
                                     <Camera size={20} />
-                                    <span>切换到人脸识别登录</span>
+                                    <span>切换到刷脸登录</span>
                                 </button>
                             )}
                         </form>

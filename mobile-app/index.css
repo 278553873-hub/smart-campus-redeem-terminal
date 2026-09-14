@@ -8,6 +8,7 @@
 
 .student-compact-select-sections {
   container: student-compact-select / inline-size;
+  padding-inline: var(--tm-space-2);
 }
 
 .student-compact-select-grid {
@@ -185,6 +186,7 @@
   .teacher-record-onboarding-arrow {
     animation: none;
   }
+
 }
 
 .ai-assistant-dialog-card {

@@ -5,6 +5,7 @@ const inputSource = fs.readFileSync(new URL('./RecordInputView.tsx', import.meta
 const classDetailSource = fs.readFileSync(new URL('./ClassDetailView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const keyboardSource = fs.readFileSync(new URL('../components/VirtualKeyboard.tsx', import.meta.url), 'utf8');
+const inputBarSource = fs.readFileSync(new URL('../components/TeacherRecordInputBar.tsx', import.meta.url), 'utf8');
 const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const spaceAccessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const slidingSegmentedSource = fs.readFileSync(new URL('../components/ui/MobileSlidingSegmentedControl.tsx', import.meta.url), 'utf8');
@@ -64,9 +65,9 @@ requireText(spaceAccessSource, "space.type === 'school' && space.classRecordEnab
 requireText(inputSource, "const shouldShowStudentContext = mode !== 'camera'", '拍照页应在无学生时隐藏学生占位文案。');
 forbidText(inputSource, '>{studentNameList || "未选择学生"}</span>', '拍照页不应无条件展示“未选择学生”。');
 
-requireText(appSource, 'role="textbox"', '文字录入态应展示可见的输入区。');
-requireText(appSource, "inputText || '输入记录内容'", '文字录入态应实时展示草稿或占位文案。');
-requireText(appSource, 'rounded-[var(--tm-radius-card)] bg-white px-2.5 [box-shadow:var(--tm-shadow-floating)]', '悬浮录入条应使用独立白色面板和可生效的双层中性阴影。');
+requireText(inputBarSource, 'role="textbox"', '文字录入态应展示可见的输入区。');
+requireText(inputBarSource, "inputText || '输入记录内容'", '文字录入态应实时展示草稿或占位文案。');
+requireText(inputBarSource, 'rounded-[var(--tm-radius-card)] bg-white px-2.5 [box-shadow:var(--tm-shadow-floating)]', '悬浮录入条应使用独立白色面板和可生效的双层中性阴影。');
 requireText(tokenSource, "'--tm-shadow-floating': '0 -10px 24px -12px rgba(64, 60, 58, 0.18), 0 10px 28px -12px rgba(64, 60, 58, 0.18)'", '悬浮录入条阴影变量应同时提供向上分层和向下承托。');
 forbidText(appSource, 'linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.9)_46%,#FFFFFF_100%)', '悬浮录入条不应用大面积白色渐变遮挡记录内容。');
 forbidText(appSource, 'mainBottomReserveClass', '悬浮录入条不应永久压缩页面主内容区。');
@@ -74,10 +75,22 @@ requireText(recordSource, 'pb-44', '记录列表应通过尾部滚动留白保�
 requireText(classDetailSource, 'pb-40', '班级详情列表应通过尾部滚动留白保证末行可完整阅读。');
 requireText(keyboardSource, 'z-[80]', '模拟键盘应高于遮罩和底部导航。');
 requireText(appSource, 'if (!inputText.trim()) return;', '空文本不应触发解析。');
-requireText(appSource, 'onPointerDown={(event) => beginVoiceRecording(event, targetIds)}', '语音主按钮应在当前页通过按住手势开始录音。');
-requireText(appSource, "voicePressState === 'canceling' ? '松开取消' : '松开发送'", '语音主按钮应原位反馈松开发送和上移取消状态。');
+requireText(inputBarSource, 'onPointerDown={onVoicePointerDown}', '语音主按钮应在录入条内响应按住手势。');
+requireText(appSource, 'onVoicePointerDown={event => beginVoiceRecording(event, targetIds)}', '记录页应向录入条注入当前对象的录音逻辑。');
+requireText(inputBarSource, "voicePressState === 'canceling' ? '松开取消' : '松开发送'", '语音主按钮应原位反馈松开发送和上移取消状态。');
 requireText(appSource, "handleAnalysisComplete({\n                type: 'voice'", '松开语音主按钮后应直接提交分析，不经过独立录音页。');
 forbidText(appSource, "handleStartRecord(targetIds, 'voice')", '教师记录页的语音主按钮不得再跳转到全屏录音页。');
+
+for (const [targetSource, label] of [
+  [recordSource, '记录首页及卡片操作'],
+  [inputBarSource, '悬浮录入条'],
+  [inputSource, '全屏录入流程'],
+  [keyboardSource, '演示键盘'],
+]) {
+  for (const forbidden of ['active:scale', 'active:bg', 'active:text', 'active:opacity', 'group-active:scale', 'group-active:bg', 'group-active:text']) {
+    forbidText(targetSource, forbidden, `${label}不应显示按压缩放、底色、变色或透明度反馈：${forbidden}`);
+  }
+}
 
 requireText(appSource, 'requestId:', '每次录入应生成唯一任务标识。');
 requireText(recordSource, 'processedRecordIdsRef.current.has(recordRequestId)', '记录页应对已处理的录入任务去重。');

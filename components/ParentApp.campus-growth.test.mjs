@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 
 const parentSource = readFileSync(new URL('./ParentApp.tsx', import.meta.url), 'utf8');
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
-const fluidNavSource = readFileSync(new URL('./parent-app/ParentFluidGlassNav.tsx', import.meta.url), 'utf8');
 const growthCoinTerminologySource = readFileSync(new URL('../shared/growthCoinTerminology.ts', import.meta.url), 'utf8');
 
 const failures = [];
@@ -67,7 +66,7 @@ for (const required of [
   'aria-label="返回待办"',
   '单选',
   '多选',
-  'text-[18px] font-black leading-[1.4]',
+  'text-[length:var(--pm-font-size-section-title)] font-bold leading-[1.4]',
   '全部记录',
   'ChevronRight',
   'GrowthRecords',
@@ -80,7 +79,7 @@ for (const required of [
   'GrowthMonthSummary',
   'GrowthTermSummary',
   '<ParentCard as="section" className="mx-5 mt-3 p-4">',
-  'className={`flex h-[58px] flex-col items-center justify-center rounded-[18px] px-3 text-[15px] font-bold',
+  'className={`flex h-[58px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold',
   '<span className="mt-1 flex h-2 items-center justify-center gap-1">',
   'const PARENT_RANGE_SHORTCUT_CLASS',
   'const PARENT_PRESSABLE_CLASS',
@@ -100,9 +99,9 @@ for (const required of [
   "['week', '周']",
   "['month', '月']",
   "['term', '学期']",
-  "growthRangeMode === mode ? 'bg-emerald-600 text-white shadow-[0_12px_24px_-18px_rgba(5,150,105,0.9)]'",
-  "selected ? 'bg-emerald-600 text-white'",
-  "selected ? 'bg-emerald-600 text-white shadow-[0_14px_28px_-20px_rgba(5,150,105,0.9)]'",
+  "growthRangeMode === mode ? 'bg-[var(--pm-bg-surface)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]'",
+  "selected ? 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary)]",
+  "selected ? 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]'",
   '本周',
   'getGrowthMonthWeekRanges',
   'formatWeekRange',
@@ -119,18 +118,18 @@ for (const required of [
   '上个月',
   '下个月',
   '当天统计',
-  '{selectedPraiseCount}<span className="ml-0.5 text-[11px]">次</span>',
-  '{selectedImproveCount}<span className="ml-0.5 text-[11px]">次</span>',
-  '本月净得分',
+  '{selectedPraiseCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span>',
+  '{selectedImproveCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span>',
+  '本月总分',
   '预计可得',
-  '成长奖励',
-  '得分奖励',
   'indicatorPath',
   'createdAt',
   "['崇德', '仪容仪表', '举止得体']",
 ]) {
   requireText(parentSource, required, `家长端成长/切换孩子功能边界被破坏：${required}`);
 }
+
+forbidText(parentSource, 'statisticDate', '成长数据页的时间范围已由上方选择区表达，统计标题右侧不应重复显示时间。');
 
 for (const required of [
   '学生档案',
@@ -184,8 +183,6 @@ for (const required of [
   '课堂专注 / (上课/集会)',
   '典型事例描述',
   '家长问卷',
-  'title="档案"',
-  'aria-label={`查看${activeChild.name}档案`}',
   "setScreen('archiveList')",
   "setScreen('archiveDetail')",
   "setScreen('questionnaireDetail')",
@@ -250,7 +247,7 @@ for (const required of [
   'withdrawTarget &&',
   'withdrawDeposit',
   "onClick={() => setScreen('bank')}",
-  'aria-label="进入积分银行"',
+  'aria-label={`进入积分银行，可用${formatCoin(activeChild.availableCoins)}，已存${formatCoin(activeChild.bankBalance)}`}',
   'Header title="积分银行" showBack backLabel="返回成长页"',
   "const bankTopSpacing = 'mt-3'",
   'hasParentOverlay',
@@ -267,13 +264,6 @@ forbidText(parentSource, '>存款<', '家长端余额展示不应继续使用“
 
 for (const tab of ["key: 'growth', label: '成长'", "key: 'reports', label: '报告'", "key: 'mine', label: '我的'"]) {
   requireText(parentSource, tab, `底部菜单缺少固定入口：${tab}`);
-}
-
-for (const required of [
-  "const labels = ['成长', '报告', '我的']",
-  "['表扬 +3', '报告', '家长', '我的']",
-]) {
-  requireText(fluidNavSource, required, `家长端底栏应保持成长/报告/我的：${required}`);
 }
 
 for (const required of [
@@ -295,9 +285,9 @@ for (const forbiddenTab of ["key: 'bank', label: '银行'"]) {
 }
 
 for (const required of [
-  '<ParentApp showPhoneShell={showParentPhoneShell} />',
+  '<ParentApp showPhoneShell={showParentPhoneShell} parentEvaluationVisibility={parentEvaluationVisibility}',
   "currentApp === 'admin'",
-  "showPhoneShellToggle && currentApp === 'parent'",
+  'const showParentPhoneShell = false;',
   '家长-手机端',
 ]) {
   requireText(appSource, required, `AppSwitcher 家长端入口边界被破坏：${required}`);
@@ -332,13 +322,6 @@ for (const forbiddenBusiness of ['兑换奖励', '兑换商品', '货柜兑换',
 
 for (const forbiddenConcept of ['高光时刻', '智能生成状态', '成长画像', 'AI成长洞察', '收益预估入口', '查看成长报告', "key: 'questionnaire'", "key: 'archive', label: '档案'"]) {
   forbidText(parentSource, forbiddenConcept, `样式统一不得新增真实方案外入口或概念文案：${forbiddenConcept}`);
-}
-
-for (const forbiddenNav of [
-  "const labels = ['成长', '档案', '银行']",
-  "['表扬 +3', '档案', '920', '银行']",
-]) {
-  forbidText(fluidNavSource, forbiddenNav, `家长端底栏残留了旧档案一级入口：${forbiddenNav}`);
 }
 
 for (const oldMessageCopy of ['title="消息"', 'aria-label={`消息，${messageCount}条待处理`}']) {

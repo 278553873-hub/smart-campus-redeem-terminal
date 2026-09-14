@@ -1,45 +1,142 @@
+import { teacherBrandCssVariables } from '../../mobile-app/styles/teacherMobileTokens';
+
+/**
+ * 家长端 Token（设计令牌）
+ *
+ * 家长端现在直接采用教师手机端的 Token（设计令牌）值和节奏，保留 pm 前缀只是为了隔离业务代码：
+ * - 所有颜色、字号、圆角、阴影、间距和动效均映射到教师端 --tm-*；
+ * - 教师端品牌红与家长端保持一致，形成同一产品套件的统一识别；
+ * - 业务页面仍只消费家长端语义名，后续可在不改页面结构的情况下做角色级调整。
+ */
+export const parentMobileCssVariables = {
+  ...teacherBrandCssVariables,
+  '--pm-brand-primary': 'var(--tm-brand-primary)',
+  '--pm-brand-primary-strong': 'var(--tm-brand-primary-strong)',
+  '--pm-brand-primary-hover': 'var(--tm-brand-primary-hover)',
+  '--pm-brand-primary-pressed': 'var(--tm-brand-primary-pressed)',
+  '--pm-brand-primary-soft': 'var(--tm-brand-primary-soft)',
+  '--pm-brand-primary-soft-strong': 'var(--tm-brand-primary-soft-strong)',
+  '--pm-brand-secondary': 'var(--tm-brand-secondary)',
+  '--pm-brand-secondary-strong': 'var(--tm-brand-secondary-strong)',
+  '--pm-brand-secondary-soft': 'var(--tm-brand-secondary-soft)',
+  '--pm-brand-reward': 'var(--tm-brand-reward)',
+  '--pm-brand-reward-strong': 'var(--tm-brand-reward-strong)',
+  '--pm-brand-reward-soft': 'var(--tm-brand-reward-soft)',
+  '--pm-status-positive': 'var(--tm-status-positive)',
+  '--pm-status-positive-strong': 'var(--tm-status-positive-strong)',
+  '--pm-status-positive-soft': 'var(--tm-status-positive-soft)',
+  '--pm-status-negative': 'var(--tm-status-negative)',
+  '--pm-status-negative-strong': 'var(--tm-status-negative-strong)',
+  '--pm-status-negative-soft': 'var(--tm-status-negative-soft)',
+  '--pm-status-attention': 'var(--tm-brand-secondary)',
+  '--pm-status-attention-soft': 'var(--tm-brand-secondary-soft)',
+  '--pm-bg-page': 'var(--tm-bg-page)',
+  '--pm-bg-page-low': 'var(--tm-bg-page-low)',
+  '--pm-page-gradient': 'linear-gradient(180deg, var(--tm-bg-page) 0%, var(--tm-bg-page-mid) 58%, var(--tm-bg-page-low) 100%)',
+  '--pm-bg-surface': 'var(--tm-bg-surface)',
+  '--pm-bg-surface-soft': 'var(--tm-bg-surface-soft)',
+  '--pm-bg-surface-muted': 'var(--tm-bg-surface-muted)',
+  '--pm-text-primary': 'var(--tm-text-primary)',
+  '--pm-text-secondary': 'var(--tm-text-secondary)',
+  '--pm-text-tertiary': 'var(--tm-text-tertiary)',
+  '--pm-text-disabled': 'var(--tm-text-disabled)',
+  '--pm-text-inverse': 'var(--tm-text-inverse)',
+  '--pm-nav-item-default': 'var(--tm-nav-item-default)',
+  '--pm-border-subtle': 'var(--tm-border-subtle)',
+  '--pm-border-control': 'var(--tm-border-control)',
+  '--pm-focus-ring': 'var(--tm-focus-ring)',
+  '--pm-mask': 'var(--tm-mask)',
+  '--pm-icon-blue-gradient': 'var(--tm-brand-primary)',
+  '--pm-icon-green-gradient': 'var(--tm-status-positive)',
+  '--pm-icon-orange-gradient': 'var(--tm-brand-secondary)',
+  '--pm-icon-soft-blue-gradient': 'var(--tm-brand-primary-soft)',
+  '--pm-radius-control': 'var(--tm-radius-control)',
+  '--pm-radius-inner': 'var(--tm-radius-inner)',
+  '--pm-radius-card': 'var(--tm-radius-card)',
+  '--pm-radius-sheet': 'var(--tm-radius-sheet)',
+  '--pm-size-touch': 'var(--tm-size-touch)',
+  '--pm-font-size-page-title': 'var(--tm-font-size-page-title)',
+  '--pm-font-size-section-title': 'var(--tm-font-size-section-title)',
+  '--pm-font-size-card-title': 'var(--tm-font-size-card-title)',
+  '--pm-font-size-body': 'var(--tm-font-size-body)',
+  '--pm-font-size-compact': 'var(--tm-font-size-compact)',
+  '--pm-font-size-meta': 'var(--tm-font-size-meta)',
+  '--pm-font-size-metric': 'var(--tm-font-size-metric)',
+  '--pm-font-size-display': 'var(--tm-font-size-document-title)',
+  '--pm-font-size-value': 'var(--tm-font-size-group-title)',
+  '--pm-font-weight-regular': 'var(--tm-font-weight-regular)',
+  '--pm-font-weight-semibold': 'var(--tm-font-weight-semibold)',
+  '--pm-font-weight-bold': 'var(--tm-font-weight-bold)',
+  '--pm-space-1': 'var(--tm-space-1)',
+  '--pm-space-2': 'var(--tm-space-2)',
+  '--pm-space-3': 'var(--tm-space-3)',
+  '--pm-space-4': 'var(--tm-space-4)',
+  '--pm-space-5': 'var(--tm-space-5)',
+  '--pm-space-6': 'var(--tm-space-6)',
+  '--pm-space-8': 'var(--tm-space-8)',
+  '--pm-shadow-card': 'var(--tm-shadow-card)',
+  '--pm-shadow-avatar': 'var(--tm-shadow-avatar)',
+  '--pm-shadow-control': 'var(--tm-shadow-control)',
+  '--pm-shadow-floating': 'var(--tm-shadow-floating)',
+  '--pm-shadow-sheet': 'var(--tm-shadow-sheet)',
+  '--pm-shadow-navigation': 'var(--tm-shadow-navigation)',
+  '--pm-duration-fast': 'var(--tm-duration-fast)',
+  '--pm-duration-standard': 'var(--tm-duration-standard)',
+} as const;
+
 export const parentSurface = {
-  background: 'bg-[linear-gradient(135deg,#fff6fb_0%,#f4fbff_44%,#f8fffb_100%)]',
-  card: 'border border-white/90 bg-white/95',
-  subtle: 'border border-slate-100 bg-slate-50/80',
+  background: 'bg-[var(--pm-page-gradient)]',
+  card: 'bg-[var(--pm-bg-surface)]',
+  subtle: 'border border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)]',
 } as const;
 
 export const parentText = {
-  title: 'text-slate-950',
-  body: 'text-slate-700',
-  muted: 'text-slate-500',
-  weak: 'text-slate-400',
-  success: 'text-emerald-600',
-  attention: 'text-orange-500',
+  title: 'text-[var(--pm-text-primary)]',
+  body: 'text-[var(--pm-text-secondary)]',
+  muted: 'text-[var(--pm-text-tertiary)]',
+  weak: 'text-[var(--pm-text-disabled)]',
+  success: 'text-[var(--pm-status-positive-strong)]',
+  attention: 'text-[var(--pm-status-attention)]',
+} as const;
+
+export const parentTypography = {
+  pageTitle: 'text-[length:var(--pm-font-size-page-title)] font-[var(--pm-font-weight-bold)] leading-tight',
+  sectionTitle: 'text-[length:var(--pm-font-size-section-title)] font-[var(--pm-font-weight-semibold)] leading-snug',
+  cardTitle: 'text-[length:var(--pm-font-size-card-title)] font-[var(--pm-font-weight-semibold)] leading-snug',
+  body: 'text-[length:var(--pm-font-size-body)] font-[var(--pm-font-weight-regular)] leading-relaxed',
+  compact: 'text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-regular)] leading-snug',
+  meta: 'text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-regular)] leading-snug',
+  metric: 'text-[length:var(--pm-font-size-metric)] font-[var(--pm-font-weight-bold)] leading-none',
 } as const;
 
 export const parentIconTone = {
-  blue: 'bg-gradient-to-br from-[#0DB4F1] to-[#22D3C5] text-white shadow-[0_12px_22px_-16px_rgba(13,180,241,0.7)]',
-  green: 'bg-gradient-to-br from-[#18C978] to-[#82DF46] text-white shadow-[0_12px_22px_-16px_rgba(24,201,120,0.62)]',
-  orange: 'bg-gradient-to-br from-[#FFB36C] to-[#FF7E6B] text-white shadow-[0_12px_22px_-16px_rgba(255,126,107,0.62)]',
-  softBlue: 'bg-gradient-to-br from-[#8FD7FF] to-[#BCEFFF] text-white shadow-[0_12px_22px_-16px_rgba(13,180,241,0.42)]',
+  blue: 'bg-[var(--pm-icon-blue-gradient)] text-[var(--pm-text-inverse)] [box-shadow:var(--pm-shadow-control)]',
+  green: 'bg-[var(--pm-icon-green-gradient)] text-[var(--pm-text-inverse)] [box-shadow:var(--pm-shadow-control)]',
+  orange: 'bg-[var(--pm-icon-orange-gradient)] text-[var(--pm-text-inverse)] [box-shadow:var(--pm-shadow-control)]',
+  negative: 'bg-[var(--evaluation-score-negative)] text-[var(--pm-text-inverse)] [box-shadow:var(--pm-shadow-control)]',
+  softBlue: 'bg-[var(--pm-icon-soft-blue-gradient)] text-[var(--pm-brand-primary-strong)] [box-shadow:var(--pm-shadow-control)]',
 } as const;
 
 export const parentButtonTone = {
-  primary: 'bg-gradient-to-br from-[#0DB4F1] to-[#18D0A8] text-white shadow-[0_18px_34px_-24px_rgba(17,184,240,0.68)]',
-  secondary: 'border border-[#D8EEF0] bg-white text-emerald-700 shadow-none',
-  neutral: 'bg-slate-100 text-slate-600 shadow-none',
-  attention: 'bg-gradient-to-br from-[#FFB36C] to-[#FF7E6B] text-white shadow-[0_18px_34px_-24px_rgba(255,126,107,0.58)]',
-  attentionSoft: 'border border-orange-200 bg-orange-50 text-orange-600 shadow-none',
+  primary: 'bg-[var(--pm-brand-primary)] text-[var(--pm-text-inverse)] [box-shadow:var(--pm-shadow-control)] active:bg-[var(--pm-brand-primary-pressed)]',
+  secondary: 'border border-[var(--pm-border-control)] bg-[var(--pm-bg-surface)] text-[var(--pm-brand-primary-strong)] shadow-none active:bg-[var(--pm-brand-primary-soft)]',
+  neutral: 'bg-[var(--pm-bg-surface-muted)] text-[var(--pm-text-secondary)] shadow-none active:bg-[var(--pm-border-subtle)]',
+  attention: 'bg-[var(--pm-status-attention)] text-[var(--pm-text-inverse)] [box-shadow:var(--pm-shadow-control)]',
+  attentionSoft: 'border border-[var(--pm-status-attention)]/30 bg-[var(--pm-status-attention-soft)] text-[var(--pm-status-attention)] shadow-none',
 } as const;
 
 export const parentRadius = {
-  icon: 'rounded-[15px]',
-  iconSmall: 'rounded-[10px]',
-  card: 'rounded-[20px]',
-  cardLarge: 'rounded-[22px]',
-  input: 'rounded-[14px]',
-  button: 'rounded-[16px]',
-  sheet: 'rounded-t-[22px]',
+  icon: 'rounded-[var(--pm-radius-inner)]',
+  iconSmall: 'rounded-[var(--pm-radius-control)]',
+  card: 'rounded-[var(--pm-radius-card)]',
+  cardLarge: 'rounded-[var(--pm-radius-card)]',
+  input: 'rounded-[var(--pm-radius-control)]',
+  button: 'rounded-[var(--pm-radius-control)]',
+  sheet: 'rounded-t-[var(--pm-radius-sheet)]',
 } as const;
 
 export const parentShadow = {
-  card: 'shadow-[0_18px_42px_-38px_rgba(28,42,58,0.42)]',
-  floating: 'shadow-[0_22px_50px_-40px_rgba(28,42,58,0.5)]',
-  sheet: 'shadow-[0_-22px_60px_-42px_rgba(28,42,58,0.72)]',
+  card: '[box-shadow:var(--pm-shadow-card)]',
+  floating: '[box-shadow:var(--pm-shadow-floating)]',
+  sheet: '[box-shadow:var(--pm-shadow-sheet)]',
 } as const;

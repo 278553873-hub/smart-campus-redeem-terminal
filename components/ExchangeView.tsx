@@ -23,7 +23,7 @@ const ExchangeView: React.FC<ExchangeViewProps> = ({ student, onExchange }) => {
   const coinsGained = amount / EXCHANGE_RATE;
 
   return (
-    <div className="p-8 max-w-2xl mx-auto h-full flex flex-col items-center animate-in zoom-in duration-300">
+    <div className="p-8 max-w-2xl mx-auto h-full flex flex-col items-center">
       <h2 className="text-3xl font-bold text-blue-900 mb-2">积分兑换中心</h2>
       <p className="text-blue-600 mb-8 italic text-sm">每 {EXCHANGE_RATE} 积分可兑换 1 {GROWTH_COIN_TERMS.name}</p>
 

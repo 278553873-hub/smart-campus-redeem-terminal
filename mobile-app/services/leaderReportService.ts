@@ -213,6 +213,54 @@ const demoGradeCoverages: LeaderReportGradeCoverage[] = [
       { id: 'g6c3', evaluationRecords: 57, name: demoClassName(5, 3), covered: 38, total: 42 },
     ],
   },
+  {
+    id: 'g7', evaluationRecords: 146, name: '七年级', shortName: '七', covered: 112, total: 132,
+    classes: [
+      { id: 'g7c1', evaluationRecords: 47, name: demoClassName(6, 1), covered: 36, total: 44 },
+      { id: 'g7c2', evaluationRecords: 52, name: demoClassName(6, 2), covered: 39, total: 44 },
+      { id: 'g7c3', evaluationRecords: 47, name: demoClassName(6, 3), covered: 37, total: 44 },
+    ],
+  },
+  {
+    id: 'g8', evaluationRecords: 139, name: '八年级', shortName: '八', covered: 107, total: 130,
+    classes: [
+      { id: 'g8c1', evaluationRecords: 45, name: demoClassName(7, 1), covered: 35, total: 43 },
+      { id: 'g8c2', evaluationRecords: 48, name: demoClassName(7, 2), covered: 36, total: 44 },
+      { id: 'g8c3', evaluationRecords: 46, name: demoClassName(7, 3), covered: 36, total: 43 },
+    ],
+  },
+  {
+    id: 'g9', evaluationRecords: 157, name: '九年级', shortName: '九', covered: 119, total: 135,
+    classes: [
+      { id: 'g9c1', evaluationRecords: 51, name: demoClassName(8, 1), covered: 39, total: 45 },
+      { id: 'g9c2', evaluationRecords: 55, name: demoClassName(8, 2), covered: 42, total: 45 },
+      { id: 'g9c3', evaluationRecords: 51, name: demoClassName(8, 3), covered: 38, total: 45 },
+    ],
+  },
+  {
+    id: 'g10', evaluationRecords: 143, name: '高一', shortName: '高一', covered: 105, total: 132,
+    classes: [
+      { id: 'g10c1', evaluationRecords: 46, name: demoClassName(9, 1), covered: 34, total: 44 },
+      { id: 'g10c2', evaluationRecords: 50, name: demoClassName(9, 2), covered: 37, total: 44 },
+      { id: 'g10c3', evaluationRecords: 47, name: demoClassName(9, 3), covered: 34, total: 44 },
+    ],
+  },
+  {
+    id: 'g11', evaluationRecords: 136, name: '高二', shortName: '高二', covered: 101, total: 130,
+    classes: [
+      { id: 'g11c1', evaluationRecords: 44, name: demoClassName(10, 1), covered: 32, total: 43 },
+      { id: 'g11c2', evaluationRecords: 48, name: demoClassName(10, 2), covered: 36, total: 44 },
+      { id: 'g11c3', evaluationRecords: 44, name: demoClassName(10, 3), covered: 33, total: 43 },
+    ],
+  },
+  {
+    id: 'g12', evaluationRecords: 149, name: '高三', shortName: '高三', covered: 113, total: 131,
+    classes: [
+      { id: 'g12c1', evaluationRecords: 49, name: demoClassName(11, 1), covered: 37, total: 44 },
+      { id: 'g12c2', evaluationRecords: 52, name: demoClassName(11, 2), covered: 40, total: 44 },
+      { id: 'g12c3', evaluationRecords: 48, name: demoClassName(11, 3), covered: 36, total: 43 },
+    ],
+  },
 ];
 
 const demoInputSources: LeaderReportInputSource[] = [

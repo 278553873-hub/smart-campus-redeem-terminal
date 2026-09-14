@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Check, Minus } from 'lucide-react';
+import { inferEducationStage } from '../../domain/classInfo';
 import type { ClassInfo } from '../../types';
 
 export interface MobileClassCascadeGroup {
@@ -14,6 +15,7 @@ interface MobileClassCascadePickerBaseProps {
   onActiveGradeChange: (grade: string) => void;
   getClassMeta?: (classInfo: ClassInfo) => React.ReactNode;
   getClassLabel?: (classInfo: ClassInfo) => string;
+  showEducationStagePrefix?: boolean;
   ariaLabel?: string;
   hideGradeRailWhenSingleGroup?: boolean;
 }
@@ -23,19 +25,27 @@ interface MobileClassCascadeMultipleProps extends MobileClassCascadePickerBasePr
   selectedClassIds: ReadonlySet<string>;
   onToggleClass: (classId: string) => void;
   onToggleGrade?: (classIds: string[]) => void;
+  showAllClassesOption?: boolean;
+  allClassesLabel?: string;
+  allClassesSelected?: boolean;
+  allClassesMixed?: boolean;
+  onToggleAllClasses?: () => void;
 }
 
 interface MobileClassCascadeSingleProps extends MobileClassCascadePickerBaseProps {
   selectionMode: 'single';
   selectedClassId: string;
   onSelectClass: (classId: string) => void;
-  showAllClassesOption?: boolean;
-  allClassesLabel?: string;
 }
 
 export type MobileClassCascadePickerProps = MobileClassCascadeMultipleProps | MobileClassCascadeSingleProps;
 
 const optionFocusClass = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]';
+const educationStagePrefix: Record<ReturnType<typeof inferEducationStage>, string> = {
+  primary: '小',
+  middle: '初',
+  high: '高',
+};
 const classSelectionOptionClass = (selected: boolean) => selected
   ? 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] font-semibold text-[var(--tm-brand-primary)]'
   : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] font-medium text-[var(--tm-text-primary)]';
@@ -47,12 +57,14 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
     onActiveGradeChange,
     getClassMeta,
     getClassLabel = classInfo => classInfo.name,
+    showEducationStagePrefix = false,
     ariaLabel = '班级级联选择',
     hideGradeRailWhenSingleGroup = true,
   } = props;
   const singleSelection = props.selectionMode === 'single';
+  const multipleProps = props.selectionMode === 'single' ? null : props;
   const selectedClassIds = singleSelection
-    ? new Set(props.selectedClassId === 'all' ? [] : [props.selectedClassId])
+    ? new Set([props.selectedClassId])
     : props.selectedClassIds;
   const activeGroup = useMemo(
     () => groups.find(group => group.gradeLabel === activeGrade) ?? groups[0],
@@ -63,6 +75,12 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
   const allActiveClassesSelected = activeClasses.length > 0 && activeSelectedCount === activeClasses.length;
   const hasActiveClassSelected = activeSelectedCount > 0;
   const showGradeRail = groups.length > 1 || !hideGradeRailWhenSingleGroup;
+  const getDisplayClassLabel = (classInfo: ClassInfo) => {
+    const label = getClassLabel(classInfo);
+    if (!showEducationStagePrefix) return label;
+    const prefix = educationStagePrefix[inferEducationStage(classInfo)];
+    return label.startsWith(prefix) ? label : `${prefix}${label}`;
+  };
 
   const renderSelectionMark = (selected: boolean, mixed = false) => singleSelection ? (
     <span
@@ -130,22 +148,23 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
         )}
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar">
-          {singleSelection && props.showAllClassesOption !== false && (
+          {multipleProps?.showAllClassesOption && (
             <button
               type="button"
-              onClick={() => props.onSelectClass('all')}
-              aria-pressed={props.selectedClassId === 'all'}
-              className={`flex min-h-[52px] w-full items-center gap-3 border-b text-left text-[length:var(--tm-font-size-body)] ${optionFocusClass} ${classSelectionOptionClass(props.selectedClassId === 'all')}`}
+              role="checkbox"
+              aria-checked={multipleProps.allClassesSelected ? true : multipleProps.allClassesMixed ? 'mixed' : false}
+              onClick={multipleProps.onToggleAllClasses}
+              className={`flex min-h-[52px] w-full items-center gap-3 border-b text-left text-[length:var(--tm-font-size-body)] ${optionFocusClass} ${classSelectionOptionClass(Boolean(multipleProps.allClassesSelected))}`}
             >
-              {renderSelectionMark(props.selectedClassId === 'all')}
-              <span className="min-w-0 flex-1 truncate">{props.allClassesLabel ?? '全部班级'}</span>
+              {renderSelectionMark(Boolean(multipleProps.allClassesSelected), Boolean(multipleProps.allClassesMixed))}
+              <span className="min-w-0 flex-1 truncate">{multipleProps.allClassesLabel ?? '全部班级'}</span>
             </button>
           )}
 
           {activeClasses.map(classInfo => {
             const selected = selectedClassIds.has(classInfo.id);
             const meta = getClassMeta?.(classInfo);
-            const classLabel = getClassLabel(classInfo);
+            const classLabel = getDisplayClassLabel(classInfo);
             return (
               <button
                 key={classInfo.id}

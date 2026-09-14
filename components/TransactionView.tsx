@@ -129,7 +129,7 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
   const formatCoin = (val: number) => Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
 
   return (
-    <div className="h-full flex flex-col bg-[#f8fbff] animate-in slide-in-from-right-12 fade-in duration-300 ease-out overflow-hidden relative">
+    <div className="h-full flex flex-col bg-[#f8fbff] overflow-hidden relative">
       <div className="px-6 py-4 shrink-0 z-10 bg-[#f8fbff]/90 backdrop-blur-md shadow-sm">
         {/* Top Row: Year Selector & Main filter tabs */}
         <div className="flex items-center justify-between gap-4 mb-3">

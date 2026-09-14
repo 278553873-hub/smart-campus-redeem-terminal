@@ -4,9 +4,25 @@ interface DeviceWrapperProps {
     children: React.ReactNode;
     width: number;
     height: number;
+    /** Preview padding. Vending screens use a tighter value to improve visibility. */
+    padding?: number;
+    /** Safe gap between the rendered device and the container edge. */
+    safetyGap?: number;
+    /** Maximum preview scale. Defaults to the design's original size. */
+    maxScale?: number;
+    /** Optional marker for external preview controls that need the rendered device bounds. */
+    previewAnchor?: string;
 }
 
-export const DeviceWrapper: React.FC<DeviceWrapperProps> = ({ children, width, height }) => {
+export const DeviceWrapper: React.FC<DeviceWrapperProps> = ({
+    children,
+    width,
+    height,
+    padding = 32,
+    safetyGap = 40,
+    maxScale = 1,
+    previewAnchor,
+}) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(1);
 
@@ -14,10 +30,10 @@ export const DeviceWrapper: React.FC<DeviceWrapperProps> = ({ children, width, h
         const observer = new ResizeObserver((entries) => {
             for (let entry of entries) {
                 const { width: wrapperWidth, height: wrapperHeight } = entry.contentRect;
-                // Add a buffer for the physical phone bezels and shadows (approx 40px total)
-                const scaleX = (wrapperWidth - 40) / width;
-                const scaleY = (wrapperHeight - 40) / height;
-                setScale(Math.min(scaleX, scaleY, 1));
+                // Keep a small edge buffer for the physical bezel and shadow while using the available viewport.
+                const scaleX = (wrapperWidth - safetyGap) / width;
+                const scaleY = (wrapperHeight - safetyGap) / height;
+                setScale(Math.min(scaleX, scaleY, maxScale));
             }
         });
 
@@ -25,14 +41,16 @@ export const DeviceWrapper: React.FC<DeviceWrapperProps> = ({ children, width, h
             observer.observe(containerRef.current);
         }
         return () => observer.disconnect();
-    }, [width, height]);
+    }, [width, height, safetyGap, maxScale]);
 
     return (
         <div
             ref={containerRef}
-            className="w-full h-full flex items-center justify-center overflow-hidden p-8"
+            className="w-full h-full flex items-center justify-center overflow-hidden"
+            style={{ padding }}
         >
             <div
+                data-preview-anchor={previewAnchor}
                 style={{
                     width: `${width}px`,
                     height: `${height}px`,

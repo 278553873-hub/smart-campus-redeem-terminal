@@ -4,6 +4,7 @@ import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileToast from '../components/ui/MobileToast';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
 import HomeworkStatusButtonGroup from '../components/homework/HomeworkStatusButtonGroup';
+import StudentRosterNumber from '../components/student/StudentRosterNumber';
 import { ASSETS } from '../assets/images';
 import {
   buildHomeworkResults,
@@ -68,12 +69,6 @@ const getMonthDays = (monthDate: Date) => {
 };
 
 const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
-
-const getStudentNoSuffix = (studentNo: string) => {
-  const normalized = studentNo.replace(/^学号/, '').trim();
-  const numeric = normalized.match(/\d+/g)?.join('') ?? normalized;
-  return numeric.slice(-2).padStart(2, '0');
-};
 
 type EditorMode = 'create' | 'edit' | null;
 
@@ -353,7 +348,7 @@ const HomeworkEntryView: React.FC<HomeworkEntryViewProps> = ({
                     <div className="flex min-w-0 items-center gap-[var(--tm-space-2)]">
                       <img src={result.avatar || ASSETS.AVATAR.GENERIC_BOY} alt="" className="h-8 w-8 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" />
                       <span className="flex min-w-0 items-center gap-0.5">
-                        <span aria-label={`学号${result.studentNo}`} className="flex h-[14px] w-4 shrink-0 items-center justify-center rounded-[4px] bg-[var(--tm-bg-surface-muted)] font-mono text-[9px] font-semibold leading-none tabular-nums text-[var(--tm-text-tertiary)]">{getStudentNoSuffix(result.studentNo)}</span>
+                        <StudentRosterNumber studentNo={result.studentNo} ariaLabel={`学号${result.studentNo}`} />
                         <strong className="min-w-0 truncate text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-primary)]">{result.studentName}</strong>
                       </span>
                     </div>

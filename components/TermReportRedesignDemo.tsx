@@ -321,9 +321,9 @@ const demoStudent: Student = {
   id: 'school-demo-li-yiyang',
   name: '李亦洋',
   gender: 'female',
-  grade: '五年级',
-  class: '2021级二班',
-  studentNo: '20210200324',
+  grade: '一年级',
+  class: '2025级1班',
+  studentNo: '20250101018',
 };
 
 const profileItems = [

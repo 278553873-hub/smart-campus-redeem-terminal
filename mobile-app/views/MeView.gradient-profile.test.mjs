@@ -29,7 +29,7 @@ requireText(source, 'text-[22px] font-extrabold leading-tight tracking-tight tex
 requireText(source, '编辑教师信息', '编辑按钮应保持独立可点击区域。');
 requireText(source, 'onClick={onEditTeacherProfile}', '点击教师姓名应进入编辑教师信息页。');
 requireText(source, 'aria-label="编辑姓名"', '教师姓名入口应具备明确的无障碍标签。');
-requireText(source, 'flex min-h-11 max-w-full items-center text-left active:opacity-70', '教师姓名入口应保留 44 像素触控区域。');
+requireText(source, 'flex min-h-11 max-w-full items-center text-left', '教师姓名入口应保留 44 像素触控区域。');
 requireText(appSource, 'return <TeacherMobileScreenBackground variant="me" />', '我的页面屏幕级背景应使用专属背景变体。');
 const screenBackgroundSource = fs.readFileSync(new URL('../components/TeacherMobileScreenBackground.tsx', import.meta.url), 'utf8');
 requireText(screenBackgroundSource, 'bg-[var(--tm-me-gradient-base)]', '我的页面屏幕级背景应使用方案八的专属背景 Token。');
@@ -38,7 +38,7 @@ requireText(screenBackgroundSource, 'linear-gradient(180deg, transparent 52%, va
 requireText(source, 'flex min-h-[132px] items-center', '教师信息区应保留适度高度，并将内容垂直居中。');
 requireText(source, 'Camera', '教师头像右下角应使用相机图标。');
 requireText(source, 'border border-white bg-white text-[var(--tm-brand-primary)]', '我的页头像相机图标应使用白色实底和品牌红图标。');
-requireText(source, "const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)] transition active:scale-95 active:text-[var(--tm-brand-primary)]';", '设置图标应无底色，右侧与卡片对齐，并与教师姓名首行视觉居中。');
+requireText(source, "const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)]';", '设置图标应无底色，右侧与卡片对齐，并与教师姓名首行视觉居中。');
 requireText(source, 'aria-label="设置"', '我的页应保留设置入口的无障碍名称。');
 requireText(source, 'Settings className="h-[22px] w-[22px]"', '设置图标应在原 20px 基础上放大 10%。');
 requireText(source, '成都市未来实验小学', '教师信息区应保留学校/来源切换入口。');
@@ -75,14 +75,14 @@ requireText(source, 'overflow-visible rounded-[var(--tm-radius-inner)]', '图片
 requireText(source, 'absolute -bottom-1 -right-2 h-6 w-6', 'AI 角标应定位在图标右下角，并与文字保持 4px 间距。');
 requireText(source, '科目管理', '更多工具应包含科目管理。');
 requireText(source, '部门管理', '更多工具应包含部门管理。');
-requireText(source, '货币发放', '更多工具应包含货币发放。');
+requireText(source, '校园币发放', '更多工具应包含校园币发放。');
 requireText(source, '建议反馈', '更多工具应包含建议反馈。');
 requireText(source, "const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-ambient)]';", '“我的”页工具卡应使用不透明白色表面和克制的氛围背景卡片阴影 Token。');
 requireText(source, 'rounded-[var(--tm-radius-card)] p-4 ${toolCardSurfaceClass}', '管理工具、更多工具卡片应共享紧凑内边距、统一圆角和卡片表面。');
 requireText(source, 'className="relative overflow-hidden bg-transparent font-sans', '我的页不应重复增加底部安全留白。');
 requireText(source, 'min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)]', '待填写采集应收紧为 48px 紧凑待办卡。');
 requireText(source, 'h-8 w-8 shrink-0 items-center justify-center', '待办卡图标底座应与紧凑高度匹配。');
-requireText(source, 'active:bg-[var(--tm-brand-primary-soft)] ${toolCardSurfaceClass}', '待填写采集卡片应共享无显性描边的卡片表面。');
+requireText(source, 'px-4 text-left ${toolCardSurfaceClass}', '待填写采集卡片应共享无显性描边的卡片表面。');
 requireText(source, 'onClick={onEditTeacherProfile}', '头像和编辑按钮应进入编辑教师信息页。');
 
 if (source.includes('我的文件')) {
@@ -172,6 +172,12 @@ if (source.includes('pointer-events-none absolute -left-24 -right-28 top-0')) {
 
 if (source.includes('bg-[#F4FCFF]')) {
   throw new Error('我的页根容器不应使用纯色底覆盖手机壳背景。');
+}
+
+for (const forbidden of ['active:scale', 'active:bg', 'active:text', 'active:opacity', 'group-active:scale', 'group-active:bg', 'group-active:text']) {
+  if (source.includes(forbidden)) {
+    throw new Error(`我的页点击控件不应显示按压缩放、底色、变色或透明度反馈：${forbidden}`);
+  }
 }
 
 if (source.includes("const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface-glass)]") || source.includes("[box-shadow:var(--tm-shadow-card)] backdrop-blur-sm")) {

@@ -1,13 +1,12 @@
 import React, { useState, useRef } from 'react';
 import {
-  Landmark, PiggyBank,
-  Wallet, FileText, BadgeCheck, ArrowRight, Clock,
-  Calendar, Layers, AlertTriangle, CheckCircle2, X, TrendingUp, Sparkles,
-  Zap, Lock, Timer, Star, Coins, Info, FileEdit, LayoutGrid
+  PiggyBank,
+  FileText, BadgeCheck, ArrowRight, Clock,
+  Calendar, Layers, AlertTriangle, CheckCircle2, X,
+  Zap, Timer, Star, Coins, Info, FileEdit, LayoutGrid
 } from 'lucide-react';
 import { Student, BankAccount, Deposit } from '../types';
 import { BANK_CONFIG } from '../constants';
-import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 
 interface BankViewProps {
   student: Student;
@@ -19,20 +18,17 @@ interface BankViewProps {
 
 const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdrawDeposit }) => {
   const formatCoin = (val: number) => Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
-  const bankBalance = bank.deposits.reduce((acc, dep) => acc + dep.amount, 0);
   // 按照要求：进入校园存单中心，默认选中“签署新存单”
   const [activeTab, setActiveTab] = useState<'deposit' | 'list'>('deposit');
   const [selectedScheme, setSelectedScheme] = useState<any>(null);
   const [depositAmount, setDepositAmount] = useState(10);
   const [withdrawConfirmTarget, setWithdrawConfirmTarget] = useState<Deposit | null>(null);
   const [showDepositConfirm, setShowDepositConfirm] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const stepTwoRef = useRef<HTMLDivElement>(null);
 
   const switchTab = (tab: 'deposit' | 'list') => {
     setActiveTab(tab);
-    setIsScrolled(false);
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
     }
@@ -97,85 +93,29 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
   }, [selectedScheme, activeTab]);
 
   return (
-    <div className="flex flex-col h-full bg-[#f8fafc] p-6 !pb-0 animate-in slide-in-from-right-12 fade-in duration-300 ease-out overflow-hidden relative">
-      {/* 顶部简明与数据区 */}
-      <div className={`shrink-0 flex items-center justify-between bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.02)] border-2 border-slate-50 z-30 relative transition-all duration-500 origin-top overflow-hidden
-        ${isScrolled ? 'mb-0 max-h-0 opacity-0 py-0 px-5 scale-y-90 border-none blur-md' : 'mb-4 max-h-[200px] p-5 opacity-100 scale-y-100 blur-0'}
-      `}>
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-indigo-50 rounded-[1.2rem] flex items-center justify-center shadow-inner shrink-0">
-            <Landmark className="text-blue-500" size={28} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-              储蓄银行 <Sparkles className="text-blue-400" size={20} />
-            </h2>
-            <p className="text-slate-400 font-bold text-[11px] mt-0.5 whitespace-nowrap">聪明理财，财富复利</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-[11px] font-black text-slate-500">{GROWTH_COIN_TERMS.name}</span>
-          <div className="bg-gradient-to-b from-orange-50 to-orange-100/50 px-4 py-2 rounded-2xl border border-orange-200/50 flex flex-col items-end shadow-sm">
-            <span className="text-orange-500/80 font-black text-[9px] mb-0.5">{GROWTH_COIN_TERMS.available}</span>
-            <div className="text-orange-600 font-[NumberFont] font-black text-xl leading-none flex items-center gap-1">
-              <img src="/assets/coin.png" className="w-[1em] h-[1em] drop-shadow-sm -translate-y-0.5" alt="coin" />
-              {formatCoin(student.campusCoins)}
-            </div>
-          </div>
-          <div className="bg-gradient-to-b from-blue-50 to-blue-100/50 px-4 py-2 rounded-2xl border border-blue-200/50 flex flex-col items-end shadow-sm">
-            <span className="text-blue-500/80 font-black text-[9px] mb-0.5">{GROWTH_COIN_TERMS.saved}</span>
-            <div className="text-blue-600 font-[NumberFont] font-black text-xl leading-none flex items-center gap-1">
-              <img src="/assets/coin.png" className="w-[1em] h-[1em] drop-shadow-sm -translate-y-0.5" alt="coin" />
-              {formatCoin(bankBalance)}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 粘性筛选分类栏 (现改为固定在上方) */}
-      <div className={`shrink-0 z-20 bg-[#f8fafc]/90 backdrop-blur-md transition-all duration-300 flex items-center mb-3 ${isScrolled ? 'pt-0 pb-2 gap-3' : 'pt-2 pb-2'}`}>
-
-        {/* 滑动后简易版头部（淡入淡出，堆叠更紧凑展示避免挤压） */}
-        <div className={`flex items-center justify-center bg-white shadow-sm border border-slate-100 rounded-2xl transition-all duration-500 overflow-hidden whitespace-nowrap
-          ${isScrolled ? 'opacity-100 w-[136px] px-3 py-1.5 translate-x-0' : 'opacity-0 w-0 px-0 py-1.5 -translate-x-10 border-none'}`}>
-          <div className="flex flex-col w-full gap-1">
-            <span className="text-[9px] font-black text-slate-500">{GROWTH_COIN_TERMS.name}</span>
-            <div className="flex justify-between items-center">
-              <span className="text-[9px] text-orange-400 font-black">{GROWTH_COIN_TERMS.available}</span>
-              <div className="flex items-center gap-0.5 text-orange-600 font-black font-[NumberFont] text-[13px] leading-none">
-                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {formatCoin(student.campusCoins)}
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[9px] text-blue-400 font-black">{GROWTH_COIN_TERMS.saved}</span>
-              <div className="flex items-center gap-0.5 text-blue-600 font-black font-[NumberFont] text-[13px] leading-none">
-                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> {formatCoin(bankBalance)}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className={`flex bg-slate-200/50 p-1.5 rounded-2xl backdrop-blur-md border border-slate-200/50 relative w-full transition-all duration-300 flex-1 overflow-hidden`}>
+    <div className="relative flex h-full flex-col overflow-hidden bg-[#f8fafc] px-6 pt-1 pb-0">
+      {/* 分类栏固定在标题栏下方，余额统一展示在 App 标题栏中 */}
+      <div className="sticky top-0 z-20 mb-2 flex shrink-0 items-center bg-[#f8fafc]/95 py-0.5 backdrop-blur-md">
+        <div className="flex w-full flex-1 overflow-hidden rounded-2xl border border-slate-200/70 bg-slate-100/80 p-1.5 backdrop-blur-md">
           <button
             onClick={() => switchTab('deposit')}
-            className={`flex-1 mx-0.5 rounded-[1rem] font-black transition-all active:scale-95 flex items-center justify-center border whitespace-nowrap overflow-hidden ${isScrolled ? 'py-2.5 text-xs' : 'py-3 text-sm'} ${activeTab === 'deposit' ? 'bg-white text-blue-600 shadow-sm border-blue-50' : 'text-slate-500 border-transparent'}`}
+            className={`mx-0.5 flex-1 overflow-hidden rounded-[1.2rem] border px-3 py-2.5 text-base font-black whitespace-nowrap transition-colors active:scale-[0.99] ${activeTab === 'deposit' ? 'border-slate-200/80 bg-white text-blue-600 shadow-[0_1px_2px_rgba(15,23,42,0.05)]' : 'border-transparent text-slate-500'}`}
           >
-            <div className={`transition-all duration-300 flex items-center justify-center ${isScrolled ? 'w-0 opacity-0 mr-0 scale-50' : 'w-4 opacity-100 mr-1.5 scale-100'}`}>
-              <PiggyBank size={16} />
+            <div className="mr-1.5 inline-flex w-5 items-center justify-center align-middle">
+              <PiggyBank size={19} />
             </div>
             签署新存单
           </button>
           <button
             onClick={() => switchTab('list')}
-            className={`flex-1 mx-0.5 rounded-[1rem] font-black transition-all active:scale-95 flex items-center justify-center border whitespace-nowrap overflow-hidden ${isScrolled ? 'py-2.5 text-xs' : 'py-3 text-sm'} ${activeTab === 'list' ? 'bg-white text-indigo-600 shadow-sm border-indigo-50' : 'text-slate-500 border-transparent'}`}
+            className={`mx-0.5 flex-1 overflow-hidden rounded-[1.2rem] border px-3 py-2.5 text-base font-black whitespace-nowrap transition-colors active:scale-[0.99] ${activeTab === 'list' ? 'border-slate-200/80 bg-white text-indigo-600 shadow-[0_1px_2px_rgba(15,23,42,0.05)]' : 'border-transparent text-slate-500'}`}
           >
-            <div className={`transition-all duration-300 flex items-center justify-center ${isScrolled ? 'w-0 opacity-0 mr-0 scale-50' : 'w-4 opacity-100 mr-1.5 scale-100'}`}>
-              <FileText size={16} />
+            <div className="mr-1.5 inline-flex w-5 items-center justify-center align-middle">
+              <FileText size={19} />
             </div>
             我的存单
             {bank.deposits.length > 0 && (
-              <span className={`transition-all duration-300 rounded-full text-[9px] text-white flex items-center justify-center ${isScrolled ? 'ml-1 px-1 py-0.5 scale-90' : 'ml-1.5 px-1.5 py-0.5 scale-100'} ${activeTab === 'list' ? 'bg-indigo-500' : 'bg-slate-400'}`}>
+              <span className="ml-1.5 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-slate-400 px-1.5 align-middle text-xs text-white">
                 {bank.deposits.length}
               </span>
             )}
@@ -187,21 +127,8 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto pb-12 custom-scrollbar relative max-w-5xl mx-auto w-full"
-        onScroll={(e) => {
-          const target = e.target as HTMLDivElement;
-          const st = target.scrollTop;
-          setIsScrolled(prev => {
-            if (!prev) {
-              const availableScroll = target.scrollHeight - target.clientHeight;
-              if (st > 30 && availableScroll > 200) return true;
-            } else {
-              if (st <= 5) return false;
-            }
-            return prev;
-          });
-        }}
       >
-        <div key={activeTab} className="animate-in fade-in zoom-in-[0.98] duration-500 ease-out fill-mode-both">
+        <div key={activeTab} className="animate-in fade-in duration-300 ease-out fill-mode-both">
           {activeTab === 'deposit' ? (
             <div className="flex flex-col gap-4">
               {/* 第一步：选择区域 */}

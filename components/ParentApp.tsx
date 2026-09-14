@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -9,9 +9,10 @@ import {
   ChevronRight,
   ClipboardList,
   Clock,
+  Eye,
+  EyeOff,
   Files,
   FileText,
-  Landmark,
   KeyRound,
   LogOut,
   PiggyBank,
@@ -33,10 +34,12 @@ import {
   ParentPrimaryButton,
   ParentSecondaryButton,
 } from './parent-app/ParentUI';
-import TeacherFluidGlassNav from '../mobile-app/components/TeacherFluidGlassNav';
 import AssignedQuestionnaireView from './parent-app/AssignedQuestionnaireView';
-import { parentSurface } from './parent-app/ParentStyleTokens';
-import '../mobile-app/styles/navigation.css';
+import {
+  parentMobileCssVariables,
+  parentSurface,
+  parentTypography,
+} from './parent-app/ParentStyleTokens';
 import { BANK_CONFIG } from '../constants';
 import { ASSETS } from '../mobile-app/assets/images';
 import {
@@ -49,12 +52,34 @@ import {
   type QuestionnaireRecord,
 } from '../shared/questionnaireStore';
 import { formatQuestionnaireCompletionTime } from '../shared/questionnaireTime';
+import { evaluationScoreSemantic } from '../shared/evaluationScoreTokens';
+import TeacherMobileScreenBackground from '../mobile-app/components/TeacherMobileScreenBackground';
+import {
+  defaultParentGradientPreview,
+  type TeacherGradientPreviewConfig,
+} from '../mobile-app/styles/teacherGradientPreview';
+import {
+  EXCHANGE_PASSWORD_LENGTH,
+  isValidExchangePassword,
+  maskExchangePassword,
+  sanitizeExchangePassword,
+} from '../shared/exchangePassword';
+import {
+  canShowParentEvaluationDetails,
+  canShowParentEvaluationSummary,
+  getParentEvaluationVisibilitySettings,
+  type ParentEvaluationVisibilitySettings,
+} from '../shared/parentEvaluationVisibility';
 
 interface ParentAppProps {
   showPhoneShell?: boolean;
+  gradientPreview?: TeacherGradientPreviewConfig;
   defaultHasBoundChild?: boolean;
   defaultLoggedIn?: boolean;
   initialQuestionnaireInviteCode?: string;
+  parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;
+  parentBankFeatureEnabled?: boolean;
+  onActiveClassIdChange?: (classId: string) => void;
 }
 
 type Screen = 'binding' | 'growth' | 'reports' | 'archiveList' | 'archiveDetail' | 'questionnaireForm' | 'questionnaireDetail' | 'reportDetail' | 'bank' | 'growthRecords' | 'todo' | 'mine';
@@ -76,6 +101,12 @@ interface EvaluationRecord {
   score: number;
   content: string;
 }
+
+const formatEvaluationTeacherName = (teacher: string) => {
+  const normalizedTeacher = teacher.trim();
+  if (!normalizedTeacher) return '老师';
+  return normalizedTeacher.endsWith('老师') ? normalizedTeacher : `${normalizedTeacher}老师`;
+};
 
 interface BankRecord {
   id: string;
@@ -171,6 +202,7 @@ type QuestionnaireAnswerDraft = Record<string, string[]>;
 
 interface ChildProfile {
   id: string;
+  classId: string;
   name: string;
   gender: 'male' | 'female';
   schoolCode: string;
@@ -181,6 +213,7 @@ interface ChildProfile {
   avatarTone: string;
   availableCoins: number;
   bankBalance: number;
+  exchangePassword: string;
   fiveScores: Record<'德' | '智' | '体' | '美' | '劳', number>;
   records: EvaluationRecord[];
   bankRecords: BankRecord[];
@@ -209,6 +242,7 @@ const createDemoChild = (name: string, schoolCode: string, studentNo: string, in
   const dayAgo = (days: number) => now - days * 86400000;
   return {
     id: `child-${Date.now()}-${index}`,
+    classId: `c_${2025 - index}_${index + 1}`,
     name: safeName,
     gender,
     schoolCode: safeSchoolCode,
@@ -219,6 +253,7 @@ const createDemoChild = (name: string, schoolCode: string, studentNo: string, in
     avatarTone: index % 2 === 0 ? 'from-emerald-400 to-cyan-500' : 'from-rose-400 to-orange-400',
     availableCoins: 368 + index * 42,
     bankBalance: 920 + index * 160,
+    exchangePassword: index % 2 === 0 ? '246810' : '135790',
     fiveScores: { 德: 91 + scoreOffset, 智: 86 + scoreOffset, 体: 78 + scoreOffset, 美: 84 + scoreOffset, 劳: 93 + scoreOffset },
     records: [
       { id: `record-${index}-1`, title: '主动整理班级图书角', dimension: '德育', indicatorPath: ['崇德', '仪容仪表', '举止得体'], teacher: '张林老师', time: '今天 10:20', createdAt: dayAgo(0), score: 3, content: '你坐姿端正，展现了良好的形象。' },
@@ -589,10 +624,10 @@ const createDemoChild = (name: string, schoolCode: string, studentNo: string, in
 
 
 const PARENT_SCREEN_CLASS = 'relative flex-1 overflow-y-auto no-scrollbar bg-transparent';
-const BINDING_INPUT_CLASS = 'w-full h-[52px] rounded-[16px] border border-[#D8EEF0] bg-white/95 px-4 text-[16px] font-bold text-slate-800 placeholder:text-slate-300 outline-none transition-colors focus:border-[#0DB4F1] focus:ring-4 focus:ring-cyan-100/70';
-const PARENT_ICON_BUTTON_CLASS = 'flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.96] active:bg-slate-50';
-const PARENT_RANGE_SHORTCUT_CLASS = 'ml-2 h-10 rounded-full border border-emerald-200 px-4 text-[16px] font-bold text-emerald-600 transition-[transform,background-color] duration-150 ease-out active:scale-[0.96] active:bg-emerald-50';
-const PARENT_PRESSABLE_CLASS = 'transition-[transform,background-color,box-shadow,border-color] duration-150 ease-out active:scale-[0.96]';
+const BINDING_INPUT_CLASS = 'w-full h-[52px] rounded-[var(--pm-radius-control)] border border-[var(--pm-border-control)] bg-[var(--pm-bg-surface)] px-4 text-[length:var(--pm-font-size-body)] font-[var(--pm-font-weight-regular)] text-[var(--pm-text-primary)] placeholder:text-[var(--pm-text-disabled)] outline-none transition-[border-color,box-shadow] [transition-duration:var(--pm-duration-fast)] focus:border-[var(--pm-brand-primary)] focus:ring-4 focus:ring-[var(--pm-focus-ring)]';
+const PARENT_ICON_BUTTON_CLASS = 'flex h-10 w-10 items-center justify-center rounded-full text-[var(--pm-text-tertiary)] transition-[transform,background-color,color] [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98] active:bg-[var(--pm-bg-surface-soft)]';
+const PARENT_RANGE_SHORTCUT_CLASS = 'ml-2 h-10 rounded-[var(--pm-radius-control)] border border-[var(--pm-brand-primary-soft-strong)] px-4 text-[length:var(--pm-font-size-body)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)] transition-[transform,background-color] [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98] active:bg-[var(--pm-brand-primary-soft)]';
+const PARENT_PRESSABLE_CLASS = 'transition-[transform,background-color,box-shadow,border-color] [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98]';
 type ParentBankScheme = {
   type: 'current' | 'fixed';
   days: number;
@@ -627,15 +662,23 @@ const PARENT_PROFILE = {
 };
 const formatDailyRate = (rate: number) => `${Number((rate * 100).toFixed(2))}%`;
 
-const ParentDiffuseBackdrop = () => (
-  <div aria-hidden="true" className={`${parentSurface.background} pointer-events-none absolute inset-0 overflow-hidden`} />
+const ParentDiffuseBackdrop: React.FC<{ preview?: TeacherGradientPreviewConfig }> = ({ preview }) => (
+  preview ? (
+    <TeacherMobileScreenBackground variant="preview" preview={preview} />
+  ) : (
+    <div aria-hidden="true" className={`${parentSurface.background} pointer-events-none absolute inset-0 overflow-hidden`} />
+  )
 );
 
 const ParentApp: React.FC<ParentAppProps> = ({
   showPhoneShell = true,
+  gradientPreview = defaultParentGradientPreview,
   defaultHasBoundChild = true,
   defaultLoggedIn = true,
   initialQuestionnaireInviteCode = '',
+  parentEvaluationVisibility: parentEvaluationVisibilityInput,
+  parentBankFeatureEnabled = true,
+  onActiveClassIdChange,
 }) => {
   const [screen, setScreen] = useState<Screen>(() => defaultHasBoundChild ? 'growth' : 'binding');
   const [childrenList, setChildrenList] = useState<ChildProfile[]>(() => (
@@ -676,16 +719,35 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const [selectedGrowthDate, setSelectedGrowthDate] = useState(() => new Date());
   const [growthRangeMode, setGrowthRangeMode] = useState<GrowthRangeMode>('day');
   const [mineSheet, setMineSheet] = useState<MineSheet>(null);
+  const [exchangePasswordChildId, setExchangePasswordChildId] = useState('');
+  const [exchangePasswordDraft, setExchangePasswordDraft] = useState('');
+  const [exchangePasswordVisible, setExchangePasswordVisible] = useState(false);
+  const [exchangePasswordEditing, setExchangePasswordEditing] = useState(false);
+  const [exchangePasswordError, setExchangePasswordError] = useState('');
   const [parentNavActiveIndex, setParentNavActiveIndex] = useState(0);
-  const [, setParentNavSlideDirection] = useState<'left' | 'right' | 'none'>('none');
-  const [parentNavJellyToggle, setParentNavJellyToggle] = useState<'a' | 'b' | 'none'>('none');
-  const parentTabbarRef = useRef<HTMLDivElement>(null);
-  const [parentTabbarWidth, setParentTabbarWidth] = useState(320);
 
   const activeChild = useMemo(
     () => childrenList.find(child => child.id === activeChildId) ?? childrenList[0] ?? null,
     [activeChildId, childrenList]
   );
+  const exchangePasswordChild = useMemo(
+    () => childrenList.find(child => child.id === exchangePasswordChildId) ?? null,
+    [childrenList, exchangePasswordChildId],
+  );
+  const parentEvaluationVisibility = getParentEvaluationVisibilitySettings(parentEvaluationVisibilityInput);
+  const showPositiveSummary = canShowParentEvaluationSummary(parentEvaluationVisibility.positive);
+  const showNegativeSummary = canShowParentEvaluationSummary(parentEvaluationVisibility.negative);
+  const showPositiveDetails = canShowParentEvaluationDetails(parentEvaluationVisibility.positive);
+  const showNegativeDetails = canShowParentEvaluationDetails(parentEvaluationVisibility.negative);
+  const showAnyEvaluationSummary = showPositiveSummary || showNegativeSummary;
+  const showAnyEvaluationDetails = showPositiveDetails || showNegativeDetails;
+  const isRecordDetailVisible = (record: EvaluationRecord) => (
+    record.score > 0 ? showPositiveDetails : showNegativeDetails
+  );
+
+  useEffect(() => {
+    if (activeChild) onActiveClassIdChange?.(activeChild.classId);
+  }, [activeChild?.classId, onActiveClassIdChange]);
 
   const activeInviteRecord = pendingInviteCode
     ? getQuestionnaireByInviteCode(pendingInviteCode, sharedQuestionnaires)
@@ -885,8 +947,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
     () => getGrowthRangeRecords(selectedGrowthDate, growthRangeMode),
     [activeChild, selectedGrowthDate, growthRangeMode]
   );
-  const selectedPraiseCount = selectedGrowthRangeRecords.filter(record => record.score > 0).length;
-  const selectedImproveCount = selectedGrowthRangeRecords.filter(record => record.score < 0).length;
+  const selectedPraiseCount = showPositiveSummary
+    ? selectedGrowthRangeRecords.filter(record => record.score > 0).length
+    : 0;
+  const selectedImproveCount = showNegativeSummary
+    ? selectedGrowthRangeRecords.filter(record => record.score < 0).length
+    : 0;
 
   const getParentActiveTabIndex = (nextScreen: Screen) => {
     if (nextScreen === 'reports' || nextScreen === 'reportDetail') return 1;
@@ -894,45 +960,10 @@ const ParentApp: React.FC<ParentAppProps> = ({
     return 0;
   };
 
-  useLayoutEffect(() => {
-    if (parentTabbarRef.current) {
-      setParentTabbarWidth(parentTabbarRef.current.offsetWidth);
-    }
-    const handleResize = () => {
-      if (parentTabbarRef.current) {
-        setParentTabbarWidth(parentTabbarRef.current.offsetWidth);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    const timer = setTimeout(() => {
-      if (parentTabbarRef.current) {
-        setParentTabbarWidth(parentTabbarRef.current.offsetWidth);
-      }
-    }, 50);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(timer);
-    };
-  }, [screen]);
-
   useEffect(() => {
     const nextIndex = getParentActiveTabIndex(screen);
     if (nextIndex === parentNavActiveIndex) return;
-    if (nextIndex > parentNavActiveIndex) {
-      setParentNavSlideDirection('right');
-    } else if (nextIndex < parentNavActiveIndex) {
-      setParentNavSlideDirection('left');
-    }
     setParentNavActiveIndex(nextIndex);
-    setParentNavJellyToggle(prev => {
-      if (prev === 'none') return 'a';
-      return prev === 'a' ? 'b' : 'a';
-    });
-
-    const timer = setTimeout(() => {
-      setParentNavSlideDirection('none');
-    }, 350);
-    return () => clearTimeout(timer);
   }, [screen, parentNavActiveIndex]);
 
   useEffect(() => {
@@ -1146,15 +1177,55 @@ const ParentApp: React.FC<ParentAppProps> = ({
     setSubmitSuccessMessage('已退出登录');
   };
 
+  const openExchangePasswordSheet = (child: ChildProfile | null = activeChild) => {
+    if (!child) return;
+    setExchangePasswordChildId(child.id);
+    setExchangePasswordDraft(child.exchangePassword);
+    setExchangePasswordVisible(false);
+    setExchangePasswordEditing(false);
+    setExchangePasswordError('');
+  };
+
+  const closeExchangePasswordSheet = () => {
+    setExchangePasswordChildId('');
+    setExchangePasswordDraft('');
+    setExchangePasswordVisible(false);
+    setExchangePasswordEditing(false);
+    setExchangePasswordError('');
+  };
+
+  const saveExchangePassword = () => {
+    if (!exchangePasswordChild) return;
+    const nextPassword = exchangePasswordDraft.trim();
+    if (!isValidExchangePassword(nextPassword)) {
+      setExchangePasswordError('请输入6位数字密码');
+      return;
+    }
+    setChildrenList(prev => prev.map(child => child.id === exchangePasswordChild.id
+      ? { ...child, exchangePassword: nextPassword }
+      : child));
+    setExchangePasswordDraft(nextPassword);
+    setExchangePasswordEditing(false);
+    setExchangePasswordError('');
+    setExchangePasswordVisible(false);
+    setSubmitSuccessMessage('兑换密码已更新');
+  };
+
+  useEffect(() => {
+    if (parentBankFeatureEnabled) return;
+    if (screen === 'bank') setScreen('growth');
+    if (exchangePasswordChildId) closeExchangePasswordSheet();
+  }, [parentBankFeatureEnabled, screen, exchangePasswordChildId]);
+
   const Header = ({ title, subtitle, showBack = false, backLabel = '返回成长页', onBack }: { title: string; subtitle?: string; showBack?: boolean; backLabel?: string; onBack?: () => void }) => (
-    <div className="sticky top-0 z-40 flex h-[44px] shrink-0 items-center justify-between border-b border-white/40 bg-white/20 px-4 py-2 backdrop-blur-xl">
+    <div className="sticky top-0 z-40 flex h-[44px] shrink-0 items-center justify-between border-b border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface)]/90 px-4 py-2 backdrop-blur-xl">
       <div className="relative flex h-full w-full items-center justify-center">
         {showBack && (
-          <button type="button" onClick={onBack ?? (() => setScreen('growth'))} className="absolute left-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm transition-transform duration-150 ease-out active:scale-[0.96]" aria-label={backLabel}>
+          <button type="button" onClick={onBack ?? (() => setScreen('growth'))} className="absolute left-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--pm-bg-surface)] text-[var(--pm-text-primary)] [box-shadow:var(--pm-shadow-control)] transition-transform [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98]" aria-label={backLabel}>
             <ArrowLeft size={18} />
           </button>
         )}
-        {title && <h1 className="max-w-[220px] truncate text-center text-[17px] font-bold leading-tight text-balance text-slate-900">{title}</h1>}
+        {title && <h1 className={`${parentTypography.sectionTitle} max-w-[220px] truncate text-center text-balance text-[var(--pm-text-primary)]`}>{title}</h1>}
       </div>
     </div>
   );
@@ -1169,13 +1240,13 @@ const ParentApp: React.FC<ParentAppProps> = ({
             <div className="mb-5 flex items-center gap-3">
               <ParentGradientIcon tone="green" size="lg"><UserRound size={23} /></ParentGradientIcon>
               <div className="min-w-0">
-                <h1 className="text-[19px] font-black text-slate-950">登录家长端</h1>
-                {pendingInviteCode && <p className="mt-1 text-[13px] font-bold text-slate-500">登录后继续填写问卷</p>}
+                <h1 className={parentTypography.pageTitle}>登录家长端</h1>
+                {pendingInviteCode && <p className="mt-1 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">登录后继续填写问卷</p>}
               </div>
             </div>
             <div className="space-y-4">
               <label className="block">
-                <span className="mb-2 flex items-center gap-2 text-[13px] font-bold text-slate-500"><UserRound size={15} /> 手机号</span>
+                <span className="mb-2 flex items-center gap-2 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]"><UserRound size={15} /> 手机号</span>
                 <input
                   value={loginForm.phone}
                   onChange={event => setLoginForm(previous => ({ ...previous, phone: event.target.value }))}
@@ -1186,7 +1257,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 />
               </label>
               <label className="block">
-                <span className="mb-2 flex items-center gap-2 text-[13px] font-bold text-slate-500"><KeyRound size={15} /> 验证码</span>
+                <span className="mb-2 flex items-center gap-2 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]"><KeyRound size={15} /> 验证码</span>
                 <input
                   value={loginForm.code}
                   onChange={event => setLoginForm(previous => ({ ...previous, code: event.target.value }))}
@@ -1222,8 +1293,8 @@ const ParentApp: React.FC<ParentAppProps> = ({
             <ParentGradientIcon tone={resultCopy.tone} size="lg" className="mx-auto">
               {inviteOutcome === 'submitted' ? <CheckCircle2 size={24} /> : <ClipboardList size={24} />}
             </ParentGradientIcon>
-            <h1 className="mt-4 text-[19px] font-black text-slate-950">{resultCopy.title}</h1>
-            <p className="mt-2 text-[14px] font-bold leading-6 text-slate-500">{resultCopy.detail}</p>
+            <h1 className="mt-4 text-[length:var(--pm-font-size-page-title)] font-bold text-[var(--pm-text-primary)]">{resultCopy.title}</h1>
+            <p className="mt-2 text-[length:var(--pm-font-size-body)] font-bold leading-6 text-[var(--pm-text-tertiary)]">{resultCopy.detail}</p>
             {inviteOutcome === 'out_of_scope' && (
               <ParentPrimaryButton type="button" onClick={() => openBinding()} fullWidth className="mt-6 h-[52px] text-[16px]">
                 绑定其他孩子
@@ -1244,16 +1315,16 @@ const ParentApp: React.FC<ParentAppProps> = ({
       <ParentPageShell className="pb-12">
         <Header title="选择填写孩子" />
         <section className="mx-5 mt-5 space-y-2">
-          {activeInviteRecord && <h1 className="px-1 pb-2 text-[17px] font-black text-slate-950">{activeInviteRecord.title}</h1>}
+          {activeInviteRecord && <h1 className="px-1 pb-2 text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-text-primary)]">{activeInviteRecord.title}</h1>}
           {candidates.map(child => (
             <ParentCard key={child.id} as="article" className="overflow-hidden p-0">
               <button type="button" onClick={() => resumeQuestionnaireInvite(childrenList, child.id)} className={`flex min-h-[76px] w-full items-center gap-3 px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS}`}>
-                <ParentChildAvatar name={child.name} src={child.avatar} alt={`${child.name}头像`} className="h-12 w-12 rounded-[15px]" />
+                <ParentChildAvatar name={child.name} src={child.avatar} alt={`${child.name}头像`} className="h-12 w-12 rounded-[var(--pm-radius-inner)]" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[16px] font-black text-slate-950">{child.name}</span>
-                  <span className="mt-1 block truncate text-[13px] font-bold text-slate-500">{child.className}</span>
+                  <span className="block truncate text-[16px] font-bold text-[var(--pm-text-primary)]">{child.name}</span>
+                  <span className="mt-1 block truncate text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">{child.className}</span>
                 </span>
-                <ChevronRight size={18} className="shrink-0 text-slate-300" />
+                <ChevronRight size={18} className="shrink-0 text-[var(--pm-text-disabled)]" />
               </button>
             </ParentCard>
           ))}
@@ -1264,7 +1335,6 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
   const GrowthChildProfileCard = () => {
     if (!activeChild) return null;
-    const canViewArchive = activeChild.canViewArchive && activeChild.archives.length > 0;
     return (
       <ParentCard as="section" className="mx-5 mt-4 p-4">
         <div className="flex min-h-[68px] items-center gap-3.5">
@@ -1273,17 +1343,17 @@ const ParentApp: React.FC<ParentAppProps> = ({
               name={activeChild.name}
               src={activeChild.avatar}
               alt={`${activeChild.name}头像`}
-              className="h-[68px] w-[68px] rounded-[22px] border-2 border-white bg-slate-50 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.55)]"
+              className="h-[68px] w-[68px] rounded-[var(--pm-radius-card)] border-2 border-white bg-[var(--pm-bg-surface-soft)] [box-shadow:var(--pm-shadow-avatar)]"
             />
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-[18px] font-black leading-tight text-slate-950">{activeChild.name}</h2>
-              <p className="mt-1 truncate text-[13px] font-bold leading-snug text-slate-500">
+              <h2 className="truncate text-[length:var(--pm-font-size-section-title)] font-bold leading-tight text-[var(--pm-text-primary)]">{activeChild.name}</h2>
+              <p className="mt-1 truncate text-[length:var(--pm-font-size-compact)] font-bold leading-snug text-[var(--pm-text-tertiary)]">
                 {activeChild.className}
               </p>
               <button
                 type="button"
                 onClick={() => setShowChildSwitcher(true)}
-                className={`mt-1 inline-flex h-7 max-w-full items-center justify-center gap-0.5 rounded-full border border-slate-100 bg-slate-50/90 px-2 text-[12px] font-black leading-none text-slate-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)] ${PARENT_PRESSABLE_CLASS}`}
+                className={`mt-1 inline-flex h-7 max-w-full items-center justify-center gap-0.5 rounded-full border border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)] px-2 text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] leading-none text-[var(--pm-text-secondary)] ${PARENT_PRESSABLE_CLASS}`}
                 aria-label="切换孩子"
               >
                 <span className="truncate">切换孩子</span>
@@ -1292,21 +1362,23 @@ const ParentApp: React.FC<ParentAppProps> = ({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {canViewArchive && (
-              <button
-                type="button"
-                onClick={() => setScreen('archiveList')}
-                className={`flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] bg-sky-50/80 px-2.5 text-[13px] font-black text-sky-700 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.14)] ${PARENT_PRESSABLE_CLASS}`}
-                aria-label={`查看${activeChild.name}档案`}
-                title="档案"
-              >
-                <Files size={17} strokeWidth={2.45} />
-                <span>档案</span>
-              </button>
-            )}
             <MessageBellEntry />
           </div>
         </div>
+        {parentBankFeatureEnabled && <div className="mt-3 border-t border-[var(--pm-border-subtle)] pt-1">
+          <button
+            type="button"
+            onClick={() => openExchangePasswordSheet(activeChild)}
+            className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--pm-radius-control)] px-1 py-2 text-left ${PARENT_PRESSABLE_CLASS}`}
+            aria-label={`${activeChild.name}的兑换密码，查看或修改`}
+          >
+            <KeyRound size={17} strokeWidth={2.45} className="shrink-0 text-[var(--pm-brand-primary)]" aria-hidden="true" />
+            <span className="min-w-0 flex-1 text-[length:var(--pm-font-size-card-title)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-text-primary)]">兑换密码</span>
+            <span className="shrink-0 tabular-nums text-[length:var(--pm-font-size-card-title)] font-[var(--pm-font-weight-semibold)] tracking-[0.18em] text-[var(--pm-text-secondary)]">••••••</span>
+            <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)]">查看 / 修改</span>
+            <ChevronRight size={16} strokeWidth={2.7} className="shrink-0 text-[var(--pm-text-disabled)]" aria-hidden="true" />
+          </button>
+        </div>}
       </ParentCard>
     );
   };
@@ -1329,12 +1401,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
       <button
         type="button"
         onClick={() => setScreen('todo')}
-        className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-orange-100 bg-orange-50/78 text-orange-500 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.74)] ${PARENT_PRESSABLE_CLASS}`}
+        className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] border border-[var(--pm-status-attention)]/30 bg-[var(--pm-status-attention-soft)] text-[var(--pm-status-attention)] ${PARENT_PRESSABLE_CLASS}`}
         aria-label={`待办，${messageCount}项待处理`}
         title="待办"
       >
         <Bell size={18} strokeWidth={2.45} />
-        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#FFB36C] to-[#FF7E6B] px-1 text-[11px] font-black leading-none text-white shadow-[0_8px_18px_-10px_rgba(255,126,107,0.82)]">
+        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--pm-status-attention)] px-1 text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-bold)] leading-none text-white [box-shadow:var(--pm-shadow-control)]">
           {messageCount}
         </span>
       </button>
@@ -1344,108 +1416,111 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const GrowthSummaryCards = () => {
     const positiveCount = 13;
     const improveCount = 1;
-    const netScore = 45;
+    const totalScore = 45;
     const growthReward = 70.5;
     const scoreReward = 20.38;
     const totalReward = growthReward + scoreReward;
+    const summaryGridClass = showPositiveSummary && showNegativeSummary ? 'grid-cols-2' : 'grid-cols-1';
 
     return (
       <section className="mx-5 mt-4 flex flex-col gap-3">
-        <ParentCard as="article" className="min-h-[154px] p-4">
+        <ParentCard as="article" className="p-4">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[13px] font-black text-slate-400">本月净得分</span>
-            <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[12px] font-black text-emerald-600">稳步成长</span>
+            <span className="text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-text-tertiary)]">本月总分</span>
+            <span className="rounded-full border border-[var(--pm-status-positive)]/20 bg-[var(--pm-status-positive-soft)] px-2.5 py-1 text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-status-positive-strong)]">稳步成长</span>
           </div>
           <div className="mt-4 flex items-baseline justify-center">
-            <span className="tabular-nums text-[52px] font-black leading-none text-blue-600">{netScore}</span>
-            <span className="ml-2 text-[18px] font-black text-slate-300">分</span>
+            <span className="tabular-nums text-[length:var(--pm-font-size-display)] font-[var(--pm-font-weight-bold)] leading-none text-[var(--pm-brand-primary)]">{totalScore}</span>
+            <span className="ml-2 text-[length:var(--pm-font-size-section-title)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-text-disabled)]">分</span>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <div className="flex items-center justify-center gap-2 rounded-[18px] border border-emerald-100 bg-emerald-50/80 px-2 py-2">
-              <ParentGradientIcon tone="green" size="sm">
-                <CheckCircle2 size={16} />
-              </ParentGradientIcon>
-              <div className="text-left">
-                <div className="text-[11px] font-black text-emerald-500">表扬</div>
-                <div className="mt-0.5 tabular-nums text-[17px] font-black text-emerald-600">{positiveCount}<span className="ml-0.5 text-[11px]">次</span></div>
-              </div>
+          {showAnyEvaluationSummary && (
+            <div className={`mt-4 grid ${summaryGridClass} gap-2`}>
+              {showPositiveSummary && (
+                <div className="flex items-center justify-center gap-2 rounded-[var(--pm-radius-inner)] border border-[var(--pm-status-positive)]/20 bg-[var(--pm-status-positive-soft)] px-2 py-2">
+                  <ParentGradientIcon tone="green" size="sm">
+                    <CheckCircle2 size={16} />
+                  </ParentGradientIcon>
+                  <div className="text-left">
+                    <div className="text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-status-positive)]">表扬</div>
+                    <div className="mt-0.5 tabular-nums text-[length:var(--pm-font-size-section-title)] font-[var(--pm-font-weight-bold)] text-[var(--pm-status-positive-strong)]">{positiveCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
+                  </div>
+                </div>
+              )}
+              {showNegativeSummary && (
+                <div className="flex items-center justify-center gap-2 rounded-[var(--pm-radius-inner)] border border-[var(--pm-status-negative)]/20 bg-[var(--pm-status-negative-soft)] px-2 py-2">
+                  <ParentGradientIcon tone="negative" size="sm">
+                    <Clock size={16} />
+                  </ParentGradientIcon>
+                  <div className="text-left">
+                    <div className="text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] text-[var(--evaluation-score-negative)]">待改进</div>
+                    <div className="mt-0.5 tabular-nums text-[length:var(--pm-font-size-section-title)] font-[var(--pm-font-weight-bold)] text-[var(--evaluation-score-negative)]">{improveCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex items-center justify-center gap-2 rounded-[18px] border border-orange-100 bg-orange-50/75 px-2 py-2">
-              <ParentGradientIcon tone="orange" size="sm">
-                <Clock size={16} />
-              </ParentGradientIcon>
-              <div className="text-left">
-                <div className="text-[11px] font-black text-orange-500">待改进</div>
-                <div className="mt-0.5 tabular-nums text-[17px] font-black text-orange-500">{improveCount}<span className="ml-0.5 text-[11px]">次</span></div>
-              </div>
-            </div>
-          </div>
+          )}
           <button
             type="button"
             onClick={() => setScreen('growthRecords')}
-            className="mx-auto mt-3 flex min-h-8 items-center justify-center rounded-full px-3 text-[13px] font-black text-emerald-700 transition-colors active:bg-emerald-50"
+            className="mx-auto mt-3 flex min-h-10 items-center justify-center rounded-full px-3 text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)] transition-colors [transition-duration:var(--pm-duration-fast)] active:bg-[var(--pm-brand-primary-soft)]"
           >
-            <span>全部记录</span>
+            <span>{showAnyEvaluationDetails ? '全部记录' : '查看统计'}</span>
             <ChevronRight size={14} strokeWidth={3} aria-hidden="true" />
           </button>
         </ParentCard>
 
-        <ParentCard as="article" className="min-h-[154px] p-4 shadow-[0_18px_46px_-36px_rgba(249,115,22,0.55)]">
-          <div className="text-[13px] font-black text-orange-500">预计可得</div>
+        {parentBankFeatureEnabled && <ParentCard as="article" className="min-h-[154px] p-4">
+          <div className="text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-reward-strong)]">预计可得</div>
           <div className="mt-5 flex items-center justify-center gap-2">
             <img src="/assets/coin.png" alt="" className="h-9 w-9 shrink-0" />
-            <span className="tabular-nums text-[42px] font-black leading-none text-orange-500">{totalReward.toFixed(2)}</span>
+            <span className="tabular-nums text-[length:var(--pm-font-size-display)] font-[var(--pm-font-weight-bold)] leading-none text-[var(--pm-brand-reward-strong)]">{totalReward.toFixed(2)}</span>
           </div>
           <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <div className="rounded-[18px] border border-orange-100 bg-white/76 px-2 py-2 text-center">
-              <div className="text-[11px] font-black text-orange-500/80">成长奖励</div>
-              <div className="mt-1 flex items-center justify-center gap-1 text-[16px] font-black text-orange-500">
+            <div className="rounded-[var(--pm-radius-inner)] border border-[var(--pm-brand-reward)]/20 bg-[var(--pm-bg-surface)]/76 px-2 py-2 text-center">
+              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-reward-strong)]/80">成长奖励</div>
+              <div className="mt-1 flex items-center justify-center gap-1 text-[16px] font-bold text-[var(--pm-brand-reward-strong)]">
                 <img src="/assets/coin.png" alt="" className="h-4 w-4" /><span className="tabular-nums">{growthReward}</span>
               </div>
             </div>
-            <div className="text-[18px] font-black text-orange-300">+</div>
-            <div className="rounded-[18px] border border-orange-100 bg-white/76 px-2 py-2 text-center">
-              <div className="text-[11px] font-black text-orange-500/80">得分奖励</div>
-              <div className="mt-1 flex items-center justify-center gap-1 text-[16px] font-black text-orange-500">
+            <div className="text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-brand-reward)]">+</div>
+            <div className="rounded-[var(--pm-radius-inner)] border border-[var(--pm-brand-reward)]/20 bg-[var(--pm-bg-surface)]/76 px-2 py-2 text-center">
+              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-reward-strong)]/80">得分奖励</div>
+              <div className="mt-1 flex items-center justify-center gap-1 text-[16px] font-bold text-[var(--pm-brand-reward-strong)]">
                 <img src="/assets/coin.png" alt="" className="h-4 w-4" /><span className="tabular-nums">{scoreReward}</span>
               </div>
             </div>
           </div>
-        </ParentCard>
+        </ParentCard>}
       </section>
     );
   };
 
   const GrowthBankEntry = () => {
-    if (!activeChild) return null;
+    if (!activeChild || !parentBankFeatureEnabled) return null;
     return (
       <ParentCard as="section" className="mx-5 mt-3 overflow-hidden p-0">
-        <button type="button" onClick={() => setScreen('bank')} className={`flex w-full items-center gap-3 px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS}`} aria-label="进入积分银行">
-          <ParentGradientIcon tone="blue" size="md">
-            <Landmark size={21} strokeWidth={2.45} />
-          </ParentGradientIcon>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-[16px] font-black leading-tight text-slate-950">{GROWTH_COIN_TERMS.name}</h2>
-              <ChevronRight size={16} className="shrink-0 text-slate-300" />
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="rounded-[14px] bg-orange-50/80 px-3 py-2">
-                <div className="text-[11px] font-black text-orange-500/80">{GROWTH_COIN_TERMS.available}</div>
-                <div className="mt-1 flex items-center gap-1 tabular-nums text-[16px] font-black text-orange-500">
-                  <img src="/assets/coin.png" alt="" className="h-4 w-4" />
-                  {formatCoin(activeChild.availableCoins)}
-                </div>
-              </div>
-              <div className="rounded-[14px] bg-sky-50/85 px-3 py-2">
-                <div className="text-[11px] font-black text-sky-500/80">{GROWTH_COIN_TERMS.saved}</div>
-                <div className="mt-1 flex items-center gap-1 tabular-nums text-[16px] font-black text-sky-600">
-                  <img src="/assets/coin.png" alt="" className="h-4 w-4" />
-                  {formatCoin(activeChild.bankBalance)}
-                </div>
-              </div>
-            </div>
+        <button
+          type="button"
+          onClick={() => setScreen('bank')}
+          className={`flex min-h-[60px] w-full items-center gap-3 px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS}`}
+          aria-label={`进入积分银行，可用${formatCoin(activeChild.availableCoins)}，已存${formatCoin(activeChild.bankBalance)}`}
+        >
+          <h2 className="shrink-0 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">{GROWTH_COIN_TERMS.name}</h2>
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-2.5 whitespace-nowrap">
+            <span className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
+              {GROWTH_COIN_TERMS.available}
+              <strong className="ml-1 tabular-nums text-[16px] text-[var(--pm-brand-reward-strong)]">{formatCoin(activeChild.availableCoins)}</strong>
+            </span>
+            <span className="h-5 w-px shrink-0 bg-[var(--pm-bg-surface-muted)]" aria-hidden="true" />
+            <span className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
+              {GROWTH_COIN_TERMS.saved}
+              <strong className="ml-1 tabular-nums text-[16px] text-[var(--pm-brand-primary-strong)]">{formatCoin(activeChild.bankBalance)}</strong>
+            </span>
           </div>
+          <span className="inline-flex min-h-10 shrink-0 items-center gap-0.5 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)]">
+            进入银行
+            <ChevronRight size={15} strokeWidth={2.8} aria-hidden="true" />
+          </span>
         </button>
       </ParentCard>
     );
@@ -1472,7 +1547,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
           <button type="button" onClick={() => changeMonth(-1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="上个月">
             <ArrowLeft size={18} />
           </button>
-          <div className="text-[20px] font-medium tracking-tight text-slate-900">{year}年 {month + 1}月</div>
+          <div className="text-[length:var(--pm-font-size-section-title)] font-semibold tracking-tight text-[var(--pm-text-primary)]">{year}年 {month + 1}月</div>
           <button type="button" onClick={() => changeMonth(1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="下个月">
             <ArrowRight size={18} />
           </button>
@@ -1480,16 +1555,16 @@ const ParentApp: React.FC<ParentAppProps> = ({
             今天
           </button>
         </div>
-        <div className="grid grid-cols-7 gap-y-2 text-center text-[15px] font-bold">
+        <div className="grid grid-cols-7 gap-y-2 text-center text-[length:var(--pm-font-size-card-title)] font-bold">
           {['一', '二', '三', '四', '五', '六', '日'].map(week => (
-            <div key={week} className="pb-2 text-slate-400">{week}</div>
+            <div key={week} className="pb-2 text-[var(--pm-text-tertiary)]">{week}</div>
           ))}
           {calendarCells.map(cell => {
             if (!cell.day) return <div key={cell.key} className="h-[48px]" aria-hidden="true" />;
             const date = new Date(year, month, cell.day);
             const dayRecords = getGrowthDayRecords(date);
-            const hasPraise = dayRecords.some(record => record.score > 0);
-            const hasImprove = dayRecords.some(record => record.score < 0);
+            const hasPraise = showPositiveSummary && dayRecords.some(record => record.score > 0);
+            const hasImprove = showNegativeSummary && dayRecords.some(record => record.score < 0);
             const selected = date.getFullYear() === selectedGrowthDate.getFullYear()
               && date.getMonth() === selectedGrowthDate.getMonth()
               && date.getDate() === selectedGrowthDate.getDate();
@@ -1502,15 +1577,15 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 key={cell.key}
                 type="button"
                 onClick={() => setSelectedGrowthDate(date)}
-                className={`flex h-[48px] flex-col items-center justify-start rounded-[16px] pt-1 text-[15px] font-bold tabular-nums text-slate-900 ${PARENT_PRESSABLE_CLASS}`}
+                className={`flex h-[48px] flex-col items-center justify-start rounded-[var(--pm-radius-inner)] pt-1 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums text-[var(--pm-text-primary)] ${PARENT_PRESSABLE_CLASS}`}
                 aria-label={`${month + 1}月${cell.day}日`}
               >
-                <span className={`flex h-9 w-9 items-center justify-center rounded-full ${selected ? 'bg-emerald-600 text-white' : isToday ? 'bg-emerald-50 text-emerald-700' : ''}`}>
+                <span className={`flex h-9 w-9 items-center justify-center rounded-full ${selected ? 'bg-[var(--pm-brand-primary)] text-white' : isToday ? 'bg-[var(--pm-status-positive-soft)] text-[var(--pm-brand-primary-strong)]' : ''}`}>
                   {cell.day}
                 </span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
-                  {hasPraise && <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />}
-                  {hasImprove && <span className="h-2 w-2 rounded-full bg-orange-400" aria-hidden="true" />}
+                  {hasPraise && <span className="h-2 w-2 rounded-full bg-[var(--pm-status-positive)]" aria-hidden="true" />}
+                  {hasImprove && <span className="h-2 w-2 rounded-full bg-[var(--evaluation-score-negative)]" aria-hidden="true" />}
                 </span>
               </button>
             );
@@ -1521,13 +1596,13 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   const GrowthRangeTabs = () => (
-    <div className="mx-5 mt-4 grid grid-cols-4 rounded-[18px] border border-white/70 bg-white/75 p-1 shadow-[0_18px_38px_-30px_rgba(37,99,235,0.45)]">
+    <div className="mx-5 mt-4 grid grid-cols-4 rounded-[var(--pm-radius-inner)] bg-[var(--pm-bg-surface-muted)] p-1 [box-shadow:var(--pm-shadow-control)]">
       {GROWTH_RANGE_TABS.map(([mode, label]) => (
         <button
           key={mode}
           type="button"
           onClick={() => setGrowthRangeMode(mode)}
-          className={`h-10 rounded-[14px] text-[15px] font-black ${PARENT_PRESSABLE_CLASS} ${growthRangeMode === mode ? 'bg-emerald-600 text-white shadow-[0_12px_24px_-18px_rgba(5,150,105,0.9)]' : 'text-slate-500 active:bg-slate-50'}`}
+          className={`h-10 rounded-[var(--pm-radius-control)] text-[length:var(--pm-font-size-card-title)] font-bold ${PARENT_PRESSABLE_CLASS} ${growthRangeMode === mode ? 'bg-[var(--pm-bg-surface)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]' : 'text-[var(--pm-text-tertiary)] active:bg-[var(--pm-bg-surface-soft)]'}`}
         >
           {label}
         </button>
@@ -1549,7 +1624,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
           <button type="button" onClick={() => changeMonth(-1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="上个月">
             <ArrowLeft size={18} />
           </button>
-          <div className="text-[20px] font-medium tracking-tight text-slate-900">{year}年 {month + 1}月</div>
+          <div className="text-[length:var(--pm-font-size-section-title)] font-semibold tracking-tight text-[var(--pm-text-primary)]">{year}年 {month + 1}月</div>
           <button type="button" onClick={() => changeMonth(1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="下个月">
             <ArrowRight size={18} />
           </button>
@@ -1563,8 +1638,8 @@ const ParentApp: React.FC<ParentAppProps> = ({
             const selectedWeekStart = getWeekStartDate(selectedGrowthDate);
             const selected = start.getTime() === selectedWeekStart.getTime();
             const weekRecords = activeChild?.records.filter(record => record.createdAt >= start.getTime() && record.createdAt <= end.getTime() + 86400000 - 1) ?? [];
-            const hasPraise = weekRecords.some(record => record.score > 0);
-            const hasImprove = weekRecords.some(record => record.score < 0);
+            const hasPraise = showPositiveSummary && weekRecords.some(record => record.score > 0);
+            const hasImprove = showNegativeSummary && weekRecords.some(record => record.score < 0);
             const representativeDate = start < monthStart ? monthStart : start;
 
             return (
@@ -1572,13 +1647,13 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 key={start.getTime()}
                 type="button"
                 onClick={() => setSelectedGrowthDate(representativeDate)}
-                className={`flex h-[58px] flex-col items-center justify-center rounded-[18px] px-3 text-[15px] font-bold tabular-nums ${PARENT_PRESSABLE_CLASS} ${selected ? 'bg-emerald-600 text-white shadow-[0_14px_28px_-20px_rgba(5,150,105,0.9)]' : 'bg-slate-50 text-slate-700'}`}
+                className={`flex h-[58px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums ${PARENT_PRESSABLE_CLASS} ${selected ? 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]' : 'bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-secondary)]'}`}
                 aria-label={formatWeekRange(start, end)}
               >
                 <span>{formatWeekRange(start, end)}</span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
-                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-emerald-500'}`} aria-hidden="true" />}
-                  {hasImprove && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-orange-200' : 'bg-orange-400'}`} aria-hidden="true" />}
+                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-[var(--pm-status-positive)]'}`} aria-hidden="true" />}
+                  {hasImprove && <span className="h-2 w-2 rounded-full bg-[var(--evaluation-score-negative)]" aria-hidden="true" />}
                 </span>
               </button>
             );
@@ -1601,7 +1676,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
           <button type="button" onClick={() => changeYear(-1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="上一年">
             <ArrowLeft size={18} />
           </button>
-          <div className="text-[20px] font-medium tracking-tight text-slate-900">{year}年</div>
+          <div className="text-[length:var(--pm-font-size-section-title)] font-semibold tracking-tight text-[var(--pm-text-primary)]">{year}年</div>
           <button type="button" onClick={() => changeYear(1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="下一年">
             <ArrowRight size={18} />
           </button>
@@ -1615,21 +1690,21 @@ const ParentApp: React.FC<ParentAppProps> = ({
             const monthStart = new Date(year, monthIndex, 1).getTime();
             const monthEnd = new Date(year, monthIndex + 1, 1).getTime() - 1;
             const monthRecords = activeChild?.records.filter(record => record.createdAt >= monthStart && record.createdAt <= monthEnd) ?? [];
-            const hasPraise = monthRecords.some(record => record.score > 0);
-            const hasImprove = monthRecords.some(record => record.score < 0);
+            const hasPraise = showPositiveSummary && monthRecords.some(record => record.score > 0);
+            const hasImprove = showNegativeSummary && monthRecords.some(record => record.score < 0);
 
             return (
               <button
                 key={monthIndex}
                 type="button"
                 onClick={() => setSelectedGrowthDate(new Date(year, monthIndex, 1))}
-                className={`flex h-[58px] flex-col items-center justify-center rounded-[18px] px-3 text-[15px] font-bold tabular-nums ${PARENT_PRESSABLE_CLASS} ${selected ? 'bg-emerald-600 text-white shadow-[0_14px_28px_-20px_rgba(5,150,105,0.9)]' : 'bg-slate-50 text-slate-700'}`}
+                className={`flex h-[58px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums ${PARENT_PRESSABLE_CLASS} ${selected ? 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]' : 'bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-secondary)]'}`}
                 aria-label={`${monthIndex + 1}月`}
               >
                 <span>{monthIndex + 1}月</span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
-                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-emerald-500'}`} aria-hidden="true" />}
-                  {hasImprove && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-orange-200' : 'bg-orange-400'}`} aria-hidden="true" />}
+                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-[var(--pm-status-positive)]'}`} aria-hidden="true" />}
+                  {hasImprove && <span className="h-2 w-2 rounded-full bg-[var(--evaluation-score-negative)]" aria-hidden="true" />}
                 </span>
               </button>
             );
@@ -1654,7 +1729,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
           <button type="button" onClick={() => changeSchoolYear(-1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="上一学年">
             <ArrowLeft size={18} />
           </button>
-          <div className="text-[20px] font-medium tracking-tight text-slate-900">{termInfo.label}</div>
+          <div className="text-[length:var(--pm-font-size-section-title)] font-semibold tracking-tight text-[var(--pm-text-primary)]">{termInfo.label}</div>
           <button type="button" onClick={() => changeSchoolYear(1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="下一学年">
             <ArrowRight size={18} />
           </button>
@@ -1666,21 +1741,21 @@ const ParentApp: React.FC<ParentAppProps> = ({
           {termRanges.map(range => {
             const selected = range.key === termInfo.term;
             const termRecords = activeChild?.records.filter(record => record.createdAt >= range.start && record.createdAt <= range.end) ?? [];
-            const hasPraise = termRecords.some(record => record.score > 0);
-            const hasImprove = termRecords.some(record => record.score < 0);
+            const hasPraise = showPositiveSummary && termRecords.some(record => record.score > 0);
+            const hasImprove = showNegativeSummary && termRecords.some(record => record.score < 0);
 
             return (
               <button
                 key={range.key}
                 type="button"
                 onClick={() => setSelectedGrowthDate(new Date(range.start))}
-                className={`flex h-[72px] flex-col items-center justify-center rounded-[18px] px-3 text-[16px] font-bold ${PARENT_PRESSABLE_CLASS} ${selected ? 'bg-emerald-600 text-white shadow-[0_14px_28px_-20px_rgba(5,150,105,0.9)]' : 'bg-slate-50 text-slate-700'}`}
+                className={`flex h-[72px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold ${PARENT_PRESSABLE_CLASS} ${selected ? 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]' : 'bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-secondary)]'}`}
                 aria-label={range.label}
               >
                 <span>{range.label}</span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
-                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-emerald-500'}`} aria-hidden="true" />}
-                  {hasImprove && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-orange-200' : 'bg-orange-400'}`} aria-hidden="true" />}
+                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-[var(--pm-status-positive)]'}`} aria-hidden="true" />}
+                  {hasImprove && <span className="h-2 w-2 rounded-full bg-[var(--evaluation-score-negative)]" aria-hidden="true" />}
                 </span>
               </button>
             );
@@ -1692,17 +1767,15 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
   const GrowthRecords = () => {
     if (!activeChild) return <Binding />;
-    const selectedNetScore = selectedGrowthRangeRecords.reduce((sum, record) => sum + record.score, 0);
-    const selectedTermInfo = getGrowthTermInfo(selectedGrowthDate);
-    const selectedTermLabel = getGrowthTermRanges(selectedTermInfo.schoolYearStart).find(range => range.key === selectedTermInfo.term)?.label ?? '上学期';
+    const visibleDetailRecords = selectedGrowthRangeRecords.filter(isRecordDetailVisible);
+    const selectedTotalScore = selectedGrowthRangeRecords.reduce((sum, record) => sum + record.score, 0);
+    const statisticColumnCount = 1 + Number(showPositiveSummary) + Number(showNegativeSummary);
+    const statisticGridClass = statisticColumnCount === 3
+      ? 'grid-cols-3'
+      : statisticColumnCount === 2
+        ? 'grid-cols-2'
+        : 'grid-cols-1';
     const statisticTitle = growthRangeMode === 'day' ? '当天统计' : growthRangeMode === 'week' ? '本周统计' : growthRangeMode === 'month' ? '本月统计' : '本学期统计';
-    const statisticDate = growthRangeMode === 'day'
-      ? formatDate(selectedGrowthDate.getTime())
-      : growthRangeMode === 'week'
-        ? `${formatDate(getWeekStartDate(selectedGrowthDate).getTime())} - ${formatDate(getWeekStartDate(selectedGrowthDate).getTime() + 86400000 * 6)}`
-        : growthRangeMode === 'month'
-          ? `${selectedGrowthDate.getFullYear()}年${selectedGrowthDate.getMonth() + 1}月`
-          : `${selectedTermInfo.label} ${selectedTermLabel}`;
     return (
       <ParentPageShell className="pb-8">
         <Header title="成长数据" showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />
@@ -1712,25 +1785,61 @@ const ParentApp: React.FC<ParentAppProps> = ({
         {growthRangeMode === 'month' && <GrowthMonthSummary />}
         {growthRangeMode === 'term' && <GrowthTermSummary />}
         <ParentCard as="section" className="mx-5 mt-3 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[17px] font-black text-slate-900">{statisticTitle}</h2>
-            <span className="tabular-nums text-[12px] font-bold text-slate-400">{statisticDate}</span>
+          <div className="mb-3">
+            <h2 className="text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-text-primary)]">{statisticTitle}</h2>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-[18px] bg-blue-50 px-3 py-3 text-center">
-              <div className="text-[11px] font-black text-blue-500">净得分</div>
-              <div className="mt-1 tabular-nums text-[22px] font-black text-blue-600">{selectedNetScore}</div>
+          <div className={`grid ${statisticGridClass} gap-2`}>
+            <div className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-brand-primary-soft)] px-3 py-3 text-center">
+              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-primary-strong)]">总分</div>
+              <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-metric)] font-bold text-[var(--pm-brand-primary)]">{selectedTotalScore}</div>
             </div>
-            <div className="rounded-[18px] bg-emerald-50 px-3 py-3 text-center">
-              <div className="text-[11px] font-black text-emerald-500">表扬</div>
-              <div className="mt-1 tabular-nums text-[22px] font-black text-emerald-600">{selectedPraiseCount}<span className="ml-0.5 text-[11px]">次</span></div>
-            </div>
-            <div className="rounded-[18px] bg-orange-50 px-3 py-3 text-center">
-              <div className="text-[11px] font-black text-orange-500">待改进</div>
-              <div className="mt-1 tabular-nums text-[22px] font-black text-orange-500">{selectedImproveCount}<span className="ml-0.5 text-[11px]">次</span></div>
-            </div>
+            {showPositiveSummary && (
+              <div className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-status-positive-soft)] px-3 py-3 text-center">
+                <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-status-positive)]">表扬</div>
+                <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-metric)] font-bold text-[var(--pm-status-positive-strong)]">{selectedPraiseCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
+              </div>
+            )}
+            {showNegativeSummary && (
+              <div className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-status-negative-soft)] px-3 py-3 text-center">
+                <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--evaluation-score-negative)]">待改进</div>
+                <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-metric)] font-bold text-[var(--evaluation-score-negative)]">{selectedImproveCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
+              </div>
+            )}
           </div>
         </ParentCard>
+        {showAnyEvaluationDetails && (
+          <section className="mx-5 mt-4" aria-labelledby="parent-evaluation-details-title">
+            <h2 id="parent-evaluation-details-title" className="px-1 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">评价明细</h2>
+            {visibleDetailRecords.length > 0 ? (
+              <div className="mt-2 space-y-2">
+                {visibleDetailRecords.map(record => {
+                  const positive = record.score > 0;
+                  return (
+                    <ParentCard key={record.id} as="article" className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[length:var(--pm-font-size-card-title)] font-bold leading-relaxed text-[var(--pm-text-primary)]">{record.content}</p>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
+                            <span>{record.time}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{formatEvaluationTeacherName(record.teacher)}</span>
+                          </div>
+                        </div>
+                        <span className={`shrink-0 tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold ${positive ? 'text-[var(--pm-status-positive-strong)]' : 'text-[var(--evaluation-score-negative)]'}`}>
+                          {record.score > 0 ? `+${record.score}` : record.score}
+                        </span>
+                      </div>
+                    </ParentCard>
+                  );
+                })}
+              </div>
+            ) : (
+              <ParentCard className="mt-2 px-4 py-8 text-center text-[length:var(--pm-font-size-body)] font-bold text-[var(--pm-text-tertiary)]">
+                该时段暂无评价记录
+              </ParentCard>
+            )}
+          </section>
+        )}
       </ParentPageShell>
     );
   };
@@ -1742,7 +1851,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
         <ParentCard className="p-5" as="section">
           <div className="space-y-4">
             <label className="block">
-              <span className="mb-2 flex items-center gap-2 text-[13px] font-bold text-slate-500"><ShieldCheck size={15} /> 学校编号</span>
+              <span className="mb-2 flex items-center gap-2 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]"><ShieldCheck size={15} /> 学校编号</span>
               <input
                 value={bindForm.schoolCode}
                 onChange={event => updateBindForm('schoolCode', event.target.value)}
@@ -1757,7 +1866,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
               const Icon = item.icon;
               return (
                 <label key={item.field} className="block">
-                  <span className="mb-2 flex items-center gap-2 text-[13px] font-bold text-slate-500"><Icon size={15} /> {item.label}</span>
+                  <span className="mb-2 flex items-center gap-2 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]"><Icon size={15} /> {item.label}</span>
                   <input value={bindForm[item.field]} onChange={event => updateBindForm(item.field, event.target.value)} placeholder={item.placeholder} className={BINDING_INPUT_CLASS} />
                 </label>
               );
@@ -1776,8 +1885,8 @@ const ParentApp: React.FC<ParentAppProps> = ({
     return (
       <ParentPageShell className="pb-28">
         <GrowthChildProfileCard />
-        <GrowthSummaryCards />
         <GrowthBankEntry />
+        <GrowthSummaryCards />
       </ParentPageShell>
     );
   };
@@ -1796,10 +1905,10 @@ const ParentApp: React.FC<ParentAppProps> = ({
                   </ParentGradientIcon>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
-                      <h2 className="text-[16px] font-black text-balance text-slate-900">{report.title}</h2>
-                      <ArrowRight size={16} className="shrink-0 text-slate-300" />
+                      <h2 className="text-[16px] font-bold text-balance text-[var(--pm-text-primary)]">{report.title}</h2>
+                      <ArrowRight size={16} className="shrink-0 text-[var(--pm-text-disabled)]" />
                     </div>
-                    <p className="mt-1 text-[12px] font-bold text-emerald-600">{report.period}</p>
+                    <p className="mt-1 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-status-positive-strong)]">{report.period}</p>
                   </div>
                 </div>
               </button>
@@ -1819,17 +1928,17 @@ const ParentApp: React.FC<ParentAppProps> = ({
           {activeChild.archives.map(archive => (
             <ParentCard key={archive.id} as="article" className="overflow-hidden p-0">
               <button type="button" onClick={() => { setActiveArchiveId(archive.id); setScreen('archiveDetail'); }} className={`flex w-full min-h-[112px] items-center gap-3 p-4 text-left ${PARENT_PRESSABLE_CLASS}`}>
-                <ParentGradientIcon tone="green" size="lg" className="rounded-[16px]">
+                <ParentGradientIcon tone="green" size="lg" className="rounded-[var(--pm-radius-inner)]">
                   <Files size={23} />
                 </ParentGradientIcon>
                 <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-[18px] font-black leading-tight text-slate-950">{archive.title}</h2>
-                  <p className="mt-1 text-[13px] font-bold leading-tight text-emerald-600">{archive.stage}</p>
-                  <div className="mt-3 inline-flex rounded-full bg-slate-50 px-3 py-1.5 text-[12px] font-black leading-tight text-slate-500">
+                  <h2 className="truncate text-[length:var(--pm-font-size-section-title)] font-bold leading-tight text-[var(--pm-text-primary)]">{archive.title}</h2>
+                  <p className="mt-1 text-[length:var(--pm-font-size-compact)] font-bold leading-tight text-[var(--pm-status-positive-strong)]">{archive.stage}</p>
+                  <div className="mt-3 inline-flex rounded-full bg-[var(--pm-bg-surface-soft)] px-3 py-1.5 text-[length:var(--pm-font-size-meta)] font-bold leading-tight text-[var(--pm-text-tertiary)]">
                     建档日期：{archive.createdAt}
                   </div>
                 </div>
-                <ArrowRight size={17} className="shrink-0 text-slate-300" />
+                <ArrowRight size={17} className="shrink-0 text-[var(--pm-text-disabled)]" />
               </button>
             </ParentCard>
           ))}
@@ -1862,17 +1971,17 @@ const ParentApp: React.FC<ParentAppProps> = ({
       <ParentPageShell className="pb-36">
         <div className="sticky top-0 z-40 border-b border-white/60 bg-white/76 px-4 py-3 backdrop-blur-xl">
           <div className="flex min-h-10 items-center gap-3">
-            <button type="button" onClick={() => setScreen('todo')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm transition-transform duration-150 ease-out active:scale-[0.96]" aria-label="返回待办">
+            <button type="button" onClick={() => setScreen('todo')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[var(--pm-text-secondary)] shadow-sm transition-transform duration-150 ease-out active:scale-[0.96]" aria-label="返回待办">
               <ArrowLeft size={18} />
             </button>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-3">
-                <span className="min-w-0 flex-1 truncate text-[15px] font-black text-slate-900">{questionnaireDisplayTitle}</span>
-                {!showLegacyQuestionnaireIntro && <span className="shrink-0 tabular-nums text-[13px] font-black text-emerald-600">{currentStepNumber}/{questionTotal}</span>}
+                <span className="min-w-0 flex-1 truncate text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">{questionnaireDisplayTitle}</span>
+                {!showLegacyQuestionnaireIntro && <span className="shrink-0 tabular-nums text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-status-positive-strong)]">{currentStepNumber}/{questionTotal}</span>}
               </div>
               {!showLegacyQuestionnaireIntro && (
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100}>
-                  <div className="h-full rounded-full bg-gradient-to-r from-[#0DB4F1] to-[#18D0A8] transition-[width] duration-300 ease-out" style={{ width: `${progressPercent}%` }} />
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--pm-bg-surface-muted)]" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full rounded-full bg-gradient-to-r from-[var(--pm-brand-primary)] to-[var(--pm-brand-secondary)] transition-[width] duration-300 ease-out" style={{ width: `${progressPercent}%` }} />
                 </div>
               )}
             </div>
@@ -1881,16 +1990,16 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
         {showLegacyQuestionnaireIntro ? (
           <section className="mx-5 mt-6 px-1">
-            <h1 className="break-words text-[23px] font-black leading-8 text-slate-950">{questionnaireDisplayTitle}</h1>
-            <p className="mt-3 whitespace-pre-wrap break-words text-[15px] font-bold leading-6 text-slate-600">{activePendingQuestionnaire.description}</p>
+              <h1 className="break-words text-[length:var(--pm-font-size-page-title)] font-bold leading-tight text-[var(--pm-text-primary)]">{questionnaireDisplayTitle}</h1>
+            <p className="mt-3 whitespace-pre-wrap break-words text-[length:var(--pm-font-size-card-title)] font-bold leading-6 text-[var(--pm-text-secondary)]">{activePendingQuestionnaire.description}</p>
           </section>
         ) : <section className="mx-5 mt-4">
           <ParentCard as="section" className="p-5">
-            <div className="mb-3 inline-flex rounded-full bg-sky-50 px-3 py-1.5 text-[12px] font-black text-sky-600">
+            <div className="mb-3 inline-flex rounded-full bg-[var(--pm-brand-primary-soft)] px-3 py-1.5 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-primary-strong)]">
               {questionTypeLabel}
             </div>
-            <h2 className="break-words text-[18px] font-black leading-[1.4] text-slate-950">
-              {questionPrompt}{isQuestionRequired && <span className="ml-1 text-rose-500" aria-label="必填">*</span>}
+            <h2 className="break-words text-[length:var(--pm-font-size-section-title)] font-bold leading-[1.4] text-[var(--pm-text-primary)]">
+              {questionPrompt}{isQuestionRequired && <span className="ml-1 text-[var(--pm-status-negative)]" aria-label="必填">*</span>}
             </h2>
 
             <div className="mt-5 space-y-2.5">
@@ -1901,17 +2010,17 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 const needsText = selected && optionNeedsTextInput(option);
                 const showTextError = needsText && !textAnswerValue.trim();
                 return (
-                  <div key={option} className={`rounded-[16px] border ${selected ? 'border-[#18D0A8] bg-emerald-50/55' : 'border-slate-100 bg-white'}`}>
+                  <div key={option} className={`rounded-[var(--pm-radius-inner)] border ${selected ? 'border-[var(--pm-brand-secondary)] bg-[var(--pm-status-positive-soft)]' : 'border-[var(--pm-border-subtle)] bg-white'}`}>
                     <button
                       type="button"
                       onClick={() => updateQuestionnaireAnswer(currentQuestion, option)}
                       className={`flex min-h-[54px] w-full items-start gap-3 px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS}`}
                       aria-pressed={selected}
                     >
-                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[#18D0A8] bg-white' : 'border-slate-300 bg-white'}`}>
-                        {selected && <span className="h-2.5 w-2.5 rounded-full bg-[#18D0A8]" aria-hidden="true" />}
+                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--pm-brand-secondary)] bg-white' : 'border-[var(--pm-border-control)] bg-white'}`}>
+                        {selected && <span className="h-2.5 w-2.5 rounded-full bg-[var(--pm-brand-secondary)]" aria-hidden="true" />}
                       </span>
-                      <span className={`text-[15px] font-bold leading-snug ${selected ? 'text-slate-950' : 'text-slate-700'}`}>{option.replace(/[_＿]+/g, '').trim()}</span>
+                      <span className={`text-[length:var(--pm-font-size-card-title)] font-bold leading-snug ${selected ? 'text-[var(--pm-text-primary)]' : 'text-[var(--pm-text-secondary)]'}`}>{option.replace(/[_＿]+/g, '').trim()}</span>
                     </button>
                     {needsText && (
                       <div className="px-4 pb-4">
@@ -1921,10 +2030,10 @@ const ParentApp: React.FC<ParentAppProps> = ({
                           placeholder="请填写具体内容"
                           aria-invalid={showTextError}
                           rows={3}
-                          className={`min-h-[96px] w-full resize-none rounded-[14px] border bg-white px-3.5 py-3 text-[15px] font-bold leading-relaxed text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#0DB4F1] focus:ring-4 focus:ring-cyan-100/70 ${showTextError ? 'border-orange-200' : 'border-emerald-100'}`}
+                          className={`min-h-[96px] w-full resize-none rounded-[var(--pm-radius-control)] border bg-white px-3.5 py-3 text-[length:var(--pm-font-size-card-title)] font-bold leading-relaxed text-[var(--pm-text-primary)] outline-none transition-colors placeholder:text-[var(--pm-text-tertiary)] focus:border-[var(--pm-brand-primary)] focus:ring-4 focus:ring-[var(--pm-focus-ring)] ${showTextError ? 'border-[var(--pm-status-attention)]/40' : 'border-[var(--pm-status-positive)]/20'}`}
                         />
                         {showTextError && (
-                          <div className="mt-1.5 text-[12px] font-bold text-orange-500">请补充内容</div>
+                          <div className="mt-1.5 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-reward-strong)]">请补充内容</div>
                         )}
                       </div>
                     )}
@@ -1932,7 +2041,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 );
               })}
               {questionOptions.length === 0 && (
-                <div className="rounded-[18px] bg-slate-50 px-4 py-4 text-[15px] font-bold leading-snug text-slate-700">
+                <div className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-bg-surface-soft)] px-4 py-4 text-[length:var(--pm-font-size-card-title)] font-bold leading-snug text-[var(--pm-text-secondary)]">
                   {currentQuestion.answer}
                 </div>
               )}
@@ -1975,9 +2084,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
         {showQuestionnaireSubmitConfirm && (
           <ParentBottomSheet title="确认提交" onClose={() => setShowQuestionnaireSubmitConfirm(false)} className="pb-8">
-            <div className="rounded-[20px] bg-slate-50/90 p-4">
-              <div className="text-[16px] font-black leading-tight text-slate-900">{activePendingQuestionnaire.title}</div>
-              <div className="mt-2 text-[13px] font-bold leading-relaxed text-slate-500">提交后将完成本次问卷。</div>
+            <div className="rounded-[var(--pm-radius-card)] bg-[var(--pm-bg-surface-soft)] p-4">
+              <div className="text-[16px] font-bold leading-tight text-[var(--pm-text-primary)]">{activePendingQuestionnaire.title}</div>
+              <div className="mt-2 text-[length:var(--pm-font-size-compact)] font-bold leading-relaxed text-[var(--pm-text-tertiary)]">提交后将完成本次问卷。</div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <ParentSecondaryButton type="button" onClick={() => setShowQuestionnaireSubmitConfirm(false)} className="h-[52px] text-[16px]">
@@ -2000,23 +2109,23 @@ const ParentApp: React.FC<ParentAppProps> = ({
         <Header title="档案明细" showBack backLabel="返回学生档案" onBack={() => setScreen('archiveList')} />
         <ParentCard className="mx-5 mt-4 p-5" as="section">
           <div className="flex items-start gap-3">
-            <ParentGradientIcon tone="green" size="lg" className="rounded-[16px]">
+            <ParentGradientIcon tone="green" size="lg" className="rounded-[var(--pm-radius-inner)]">
               <Files size={24} />
             </ParentGradientIcon>
             <div className="min-w-0 flex-1">
-              <h2 className="text-[23px] font-black leading-tight text-balance text-slate-950">{activeArchive.title}</h2>
-              <p className="mt-2 text-[13px] font-bold leading-tight text-emerald-600">{activeArchive.stage} · {activeArchive.createdAt}</p>
+              <h2 className="text-[length:var(--pm-font-size-page-title)] font-bold leading-tight text-balance text-[var(--pm-text-primary)]">{activeArchive.title}</h2>
+              <p className="mt-2 text-[length:var(--pm-font-size-compact)] font-bold leading-tight text-[var(--pm-status-positive-strong)]">{activeArchive.stage} · {activeArchive.createdAt}</p>
             </div>
           </div>
         </ParentCard>
 
         <ParentCard as="section" className="mx-5 mt-3 p-4">
-          <h2 className="text-[16px] font-black text-slate-900">档案摘要</h2>
+          <h2 className="text-[16px] font-bold text-[var(--pm-text-primary)]">档案摘要</h2>
           <div className="mt-3 space-y-2">
             {activeArchive.summary.map(item => (
-              <div key={item.label} className="rounded-[16px] border border-emerald-100/72 bg-emerald-50/45 px-3 py-3">
-                <div className="text-[12px] font-black text-emerald-600">{item.label}</div>
-                <div className="mt-1 text-[14px] font-bold leading-relaxed text-slate-700">{item.value}</div>
+              <div key={item.label} className="rounded-[var(--pm-radius-inner)] border border-[var(--pm-status-positive)]/20 bg-[var(--pm-status-positive-soft)]/45 px-3 py-3">
+                <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-status-positive-strong)]">{item.label}</div>
+                <div className="mt-1 text-[length:var(--pm-font-size-body)] font-bold leading-relaxed text-[var(--pm-text-secondary)]">{item.value}</div>
               </div>
             ))}
           </div>
@@ -2024,24 +2133,24 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
         <section className="mx-5 mt-3 space-y-2">
           <ParentCard as="section" className="p-4">
-            <h2 className="text-[16px] font-black text-slate-900">健康信息</h2>
+            <h2 className="text-[16px] font-bold text-[var(--pm-text-primary)]">健康信息</h2>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {activeArchive.healthInfo.map(item => (
-                <div key={item.label} className="rounded-[16px] bg-emerald-50/70 px-3 py-3">
-                  <div className="text-[12px] font-black text-emerald-600">{item.label}</div>
-                  <div className="mt-1 text-[15px] font-black text-slate-900">{item.value}</div>
+                <div key={item.label} className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-status-positive-soft)] px-3 py-3">
+                  <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-status-positive-strong)]">{item.label}</div>
+                  <div className="mt-1 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">{item.value}</div>
                 </div>
               ))}
             </div>
           </ParentCard>
 
           <ParentCard as="section" className="p-4">
-            <h2 className="text-[16px] font-black text-slate-900">基础信息</h2>
+            <h2 className="text-[16px] font-bold text-[var(--pm-text-primary)]">基础信息</h2>
             <div className="mt-3 divide-y divide-slate-100">
               {activeArchive.basicInfo.map(item => (
                 <div key={item.label} className="flex min-h-11 items-center justify-between gap-4 py-2">
-                  <span className="shrink-0 text-[13px] font-bold text-slate-400">{item.label}</span>
-                  <span className="min-w-0 truncate text-right text-[14px] font-black text-slate-900">{item.value}</span>
+                  <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">{item.label}</span>
+                  <span className="min-w-0 truncate text-right text-[length:var(--pm-font-size-body)] font-bold text-[var(--pm-text-primary)]">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -2049,25 +2158,25 @@ const ParentApp: React.FC<ParentAppProps> = ({
         </section>
 
         <section className="mx-5 mt-3 space-y-2">
-          <h2 className="px-1 text-[15px] font-black text-slate-900">档案内容</h2>
+          <h2 className="px-1 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">档案内容</h2>
           {activeArchive.contentGroups.map(group => (
-            <ParentCard key={group.title} as="section" className="border-slate-100/90 p-4 shadow-[0_18px_44px_-40px_rgba(28,42,58,0.48)]">
+            <ParentCard key={group.title} as="section" className="p-4">
               <div className="flex items-center gap-2">
-                <span className="h-5 w-1 rounded-full bg-emerald-500" aria-hidden="true" />
-                <h3 className="text-[17px] font-black leading-tight text-slate-950">{group.title}</h3>
+                <span className="h-5 w-1 rounded-full bg-[var(--pm-status-positive)]" aria-hidden="true" />
+                <h3 className="text-[length:var(--pm-font-size-section-title)] font-bold leading-tight text-[var(--pm-text-primary)]">{group.title}</h3>
               </div>
               <div className="mt-4 space-y-4">
                 {group.sections.map(section => (
-                  <div key={section.title} className="rounded-[16px] border border-slate-100 bg-slate-50/65 p-3">
-                    <h4 className="text-[14px] font-black leading-tight text-emerald-700">{section.title}</h4>
-                    <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-[12px] border border-slate-100 bg-white">
+                  <div key={section.title} className="rounded-[var(--pm-radius-inner)] border border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)] p-3">
+                    <h4 className="text-[length:var(--pm-font-size-body)] font-bold leading-tight text-[var(--pm-brand-primary-strong)]">{section.title}</h4>
+                    <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-[var(--pm-radius-control)] border border-[var(--pm-border-subtle)] bg-white">
                       {section.items.map(item => {
                         const [label, ...valueParts] = item.split('：');
                         const value = valueParts.join('：') || item;
                         return (
                           <div key={item} className="flex min-h-11 items-center justify-between gap-3 px-3 py-2.5">
-                            <span className="shrink-0 text-[13px] font-bold text-slate-500">{valueParts.length > 0 ? label : '内容'}</span>
-                            <span className="min-w-0 text-right text-[14px] font-black leading-snug text-slate-900">{value}</span>
+                            <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">{valueParts.length > 0 ? label : '内容'}</span>
+                            <span className="min-w-0 text-right text-[length:var(--pm-font-size-body)] font-bold leading-snug text-[var(--pm-text-primary)]">{value}</span>
                           </div>
                         );
                       })}
@@ -2080,15 +2189,15 @@ const ParentApp: React.FC<ParentAppProps> = ({
         </section>
 
         <section className="mx-5 mt-3 space-y-2">
-          <h2 className="px-1 text-[15px] font-black text-slate-900">建档来源</h2>
-          <div className="overflow-hidden rounded-[18px] border border-slate-100 bg-white/70">
+          <h2 className="px-1 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">建档来源</h2>
+          <div className="overflow-hidden rounded-[var(--pm-radius-inner)] border border-[var(--pm-border-subtle)] bg-white/70">
             {activeArchive.sourceRecords.map(record => (
-              <button key={record.id} type="button" onClick={() => { setActiveSourceId(record.id); setScreen('questionnaireDetail'); }} className={`flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 text-left last:border-b-0 ${PARENT_PRESSABLE_CLASS}`}>
+              <button key={record.id} type="button" onClick={() => { setActiveSourceId(record.id); setScreen('questionnaireDetail'); }} className={`flex w-full items-center justify-between gap-3 border-b border-[var(--pm-border-subtle)] px-4 py-3 text-left last:border-b-0 ${PARENT_PRESSABLE_CLASS}`}>
                 <div className="min-w-0">
-                  <h3 className="truncate text-[14px] font-black leading-tight text-slate-800">{record.title}</h3>
-                  <p className="mt-1 truncate text-[12px] font-bold leading-tight text-slate-400">{record.source} · {record.time}</p>
+                  <h3 className="truncate text-[length:var(--pm-font-size-body)] font-bold leading-tight text-[var(--pm-text-primary)]">{record.title}</h3>
+                  <p className="mt-1 truncate text-[length:var(--pm-font-size-meta)] font-bold leading-tight text-[var(--pm-text-tertiary)]">{record.source} · {record.time}</p>
                 </div>
-                <ArrowRight size={15} className="shrink-0 text-slate-300" />
+                <ArrowRight size={15} className="shrink-0 text-[var(--pm-text-disabled)]" />
               </button>
             ))}
           </div>
@@ -2106,15 +2215,15 @@ const ParentApp: React.FC<ParentAppProps> = ({
           <ParentGradientIcon tone={activeSourceRecord.source === '家长问卷' ? 'blue' : 'green'} size="lg" className="mb-4">
             <ClipboardList size={24} />
           </ParentGradientIcon>
-          <h2 className="text-[23px] font-black leading-tight text-balance text-slate-950">{activeSourceRecord.title}</h2>
-          <p className="mt-2 text-[13px] font-bold text-emerald-600">{activeSourceRecord.source} · {activeSourceRecord.time}</p>
-          <div className="mt-5 divide-y divide-slate-100 rounded-[16px] border border-slate-100 bg-slate-50/70 px-3">
+          <h2 className="text-[length:var(--pm-font-size-page-title)] font-bold leading-tight text-balance text-[var(--pm-text-primary)]">{activeSourceRecord.title}</h2>
+          <p className="mt-2 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-status-positive-strong)]">{activeSourceRecord.source} · {activeSourceRecord.time}</p>
+          <div className="mt-5 divide-y divide-slate-100 rounded-[var(--pm-radius-inner)] border border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)] px-3">
             {activeSourceRecord.formIntro.map(item => {
               const isLongIntroLabel = item.label.length > 14;
               return (
                 <div key={item.label} className={`${isLongIntroLabel ? 'py-3' : 'flex min-h-10 items-center justify-between gap-3 py-2'}`}>
-                  <span className={`${isLongIntroLabel ? 'block text-[12px] leading-snug' : 'shrink-0 text-[12px]'} font-bold text-slate-400`}>{item.label}</span>
-                  <span className={`${isLongIntroLabel ? 'mt-2 block text-left leading-snug' : 'min-w-0 text-right'} text-[14px] font-black text-slate-900`}>{item.value}</span>
+                  <span className={`${isLongIntroLabel ? 'block text-[length:var(--pm-font-size-meta)] leading-snug' : 'shrink-0 text-[length:var(--pm-font-size-meta)]'} font-bold text-[var(--pm-text-tertiary)]`}>{item.label}</span>
+                  <span className={`${isLongIntroLabel ? 'mt-2 block text-left leading-snug' : 'min-w-0 text-right'} text-[length:var(--pm-font-size-body)] font-bold text-[var(--pm-text-primary)]`}>{item.value}</span>
                 </div>
               );
             })}
@@ -2124,37 +2233,37 @@ const ParentApp: React.FC<ParentAppProps> = ({
         <section className="mx-5 mt-3 space-y-2">
           {activeSourceRecord.formSections.map(section => (
             <ParentCard key={section.title} as="section" className="p-4">
-              <h3 className="text-[16px] font-black text-slate-900">{section.title}</h3>
+              <h3 className="text-[16px] font-bold text-[var(--pm-text-primary)]">{section.title}</h3>
               <div className="mt-3 space-y-3">
                 {section.questions.map(question => {
                   const questionTypeLabel = getQuestionTypeLabel(question);
                   return (
-                    <div key={question.id} className="rounded-[16px] border border-slate-100 bg-slate-50/65 p-3">
-                      <div className="mb-2 inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-black text-sky-600">
+                    <div key={question.id} className="rounded-[var(--pm-radius-inner)] border border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)] p-3">
+                      <div className="mb-2 inline-flex rounded-full bg-[var(--pm-brand-primary-soft)] px-2.5 py-1 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-primary-strong)]">
                         {questionTypeLabel}
                       </div>
                       {question.prompt && (
-                        <div className="text-[14px] font-black leading-snug text-slate-900">{question.prompt}</div>
+                        <div className="text-[length:var(--pm-font-size-body)] font-bold leading-snug text-[var(--pm-text-primary)]">{question.prompt}</div>
                       )}
                     <div className="mt-3 space-y-2">
                       {splitArchiveOptions(question.options).length > 0 ? splitArchiveOptions(question.options).map(option => {
                         const selected = isArchiveOptionSelected(option, splitArchiveAnswers(question.answer));
                         return (
-                          <div key={option} className={`flex items-start gap-2 rounded-[12px] border px-3 py-2 ${selected ? 'border-[#18D0A8] bg-white text-slate-900' : 'border-slate-100 bg-white/54 text-slate-400'}`}>
-                            <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[#18D0A8] bg-white' : 'border-slate-200 bg-white'}`}>
-                              {selected && <span className="h-2 w-2 rounded-full bg-[#18D0A8]" aria-hidden="true" />}
+                          <div key={option} className={`flex items-start gap-2 rounded-[var(--pm-radius-control)] border px-3 py-2 ${selected ? 'border-[var(--pm-brand-secondary)] bg-white text-[var(--pm-text-primary)]' : 'border-[var(--pm-border-subtle)] bg-white/54 text-[var(--pm-text-tertiary)]'}`}>
+                            <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--pm-brand-secondary)] bg-white' : 'border-[var(--pm-border-control)] bg-white'}`}>
+                              {selected && <span className="h-2 w-2 rounded-full bg-[var(--pm-brand-secondary)]" aria-hidden="true" />}
                             </span>
-                            <span className={`text-[13px] font-bold leading-snug ${selected ? 'text-slate-900' : 'text-slate-400'}`}>{option}</span>
+                            <span className={`text-[length:var(--pm-font-size-compact)] font-bold leading-snug ${selected ? 'text-[var(--pm-text-primary)]' : 'text-[var(--pm-text-tertiary)]'}`}>{option}</span>
                           </div>
                         );
                       }) : (
-                        <div className="rounded-[12px] bg-white px-3 py-2 text-[14px] font-black leading-snug text-slate-900 shadow-[inset_0_0_0_1px_rgba(226,232,240,0.82)]">
+                        <div className="rounded-[var(--pm-radius-control)] bg-[var(--pm-bg-surface)] px-3 py-2 text-[length:var(--pm-font-size-body)] font-bold leading-snug text-[var(--pm-text-primary)] [box-shadow:var(--pm-shadow-control)]">
                           {question.answer}
                         </div>
                       )}
                     </div>
                     {question.note && (
-                      <div className="mt-2 rounded-[12px] bg-white/78 px-3 py-2 text-[13px] font-bold leading-snug text-slate-600">
+                      <div className="mt-2 rounded-[var(--pm-radius-control)] bg-white/78 px-3 py-2 text-[length:var(--pm-font-size-compact)] font-bold leading-snug text-[var(--pm-text-secondary)]">
                         {activeSourceRecord.source === '教师观察' ? `典型事例描述：${question.note}` : question.note}
                       </div>
                     )}
@@ -2178,36 +2287,36 @@ const ParentApp: React.FC<ParentAppProps> = ({
           <ParentGradientIcon tone={activeReport.type === 'month' ? 'blue' : 'green'} size="lg" className="mb-5">
             {activeReport.type === 'month' ? <CalendarDays size={24} /> : <BookOpenCheck size={24} />}
           </ParentGradientIcon>
-          <h2 className="text-[24px] font-black text-balance text-slate-950">{activeReport.title}</h2>
-          <p className="mt-1 text-[13px] font-bold text-emerald-600">{activeChild.name} · {activeReport.period}</p>
+          <h2 className="text-[length:var(--pm-font-size-page-title)] font-bold text-balance text-[var(--pm-text-primary)]">{activeReport.title}</h2>
+          <p className="mt-1 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-status-positive-strong)]">{activeChild.name} · {activeReport.period}</p>
         </ParentCard>
 
         <section className="mx-5 mt-3 space-y-2">
           <ParentCard as="section" className="p-4">
-            <h3 className="text-[16px] font-black text-slate-900">总览</h3>
-            <p className="mt-2 text-[15px] font-bold leading-relaxed text-pretty text-slate-600">{activeReport.summary}</p>
+            <h3 className="text-[16px] font-bold text-[var(--pm-text-primary)]">总览</h3>
+            <p className="mt-2 text-[length:var(--pm-font-size-card-title)] font-bold leading-relaxed text-pretty text-[var(--pm-text-secondary)]">{activeReport.summary}</p>
           </ParentCard>
 
           <ParentCard as="section" className="p-4">
-            <h3 className="text-[16px] font-black text-slate-900">亮点</h3>
+            <h3 className="text-[16px] font-bold text-[var(--pm-text-primary)]">亮点</h3>
             <div className="mt-3 space-y-2">
               {activeReport.highlights.map(item => (
-                <div key={item} className="flex items-start gap-2 rounded-[16px] bg-emerald-50/70 p-3">
-                  <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-emerald-600" />
-                  <span className="text-[13px] font-medium leading-relaxed text-slate-600">{item}</span>
+                <div key={item} className="flex items-start gap-2 rounded-[var(--pm-radius-inner)] bg-[var(--pm-status-positive-soft)] p-3">
+                  <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-[var(--pm-status-positive-strong)]" />
+                  <span className="text-[length:var(--pm-font-size-compact)] font-medium leading-relaxed text-[var(--pm-text-secondary)]">{item}</span>
                 </div>
               ))}
             </div>
           </ParentCard>
 
           <ParentCard as="section" className="p-4">
-            <h3 className="text-[16px] font-black text-slate-900">关注</h3>
-            <p className="mt-2 text-[14px] font-bold leading-relaxed text-slate-600">{activeReport.focus}</p>
+            <h3 className="text-[16px] font-bold text-[var(--pm-text-primary)]">关注</h3>
+            <p className="mt-2 text-[length:var(--pm-font-size-body)] font-bold leading-relaxed text-[var(--pm-text-secondary)]">{activeReport.focus}</p>
           </ParentCard>
 
           <ParentCard as="section" className="p-4">
-            <h3 className="text-[16px] font-black text-slate-900">建议</h3>
-            <p className="mt-2 text-[14px] font-bold leading-relaxed text-slate-600">{activeReport.suggestion}</p>
+            <h3 className="text-[16px] font-bold text-[var(--pm-text-primary)]">建议</h3>
+            <p className="mt-2 text-[length:var(--pm-font-size-body)] font-bold leading-relaxed text-[var(--pm-text-secondary)]">{activeReport.suggestion}</p>
           </ParentCard>
         </section>
       </ParentPageShell>
@@ -2216,6 +2325,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
   const Bank = () => {
     if (!activeChild) return <Binding />;
+    if (!parentBankFeatureEnabled) return <Growth />;
     const amount = Math.max(1, Math.min(Number(depositAmount) || 1, activeChild.availableCoins));
     const projectedInterest = calculateProjectedInterest(amount, selectedBankScheme);
     const bankTopSpacing = 'mt-3';
@@ -2226,18 +2336,18 @@ const ParentApp: React.FC<ParentAppProps> = ({
       <ParentPageShell className="pb-28">
         <Header title="积分银行" showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />
         <ParentCard as="section" className={`parent-bank-balance-strip sticky top-[44px] z-30 mx-5 px-4 py-2 backdrop-blur-xl ${bankTopSpacing}`}>
-          <div className="flex min-h-10 items-center text-slate-600">
-            <span className="shrink-0 pr-3 text-[13px] font-black text-slate-900">{GROWTH_COIN_TERMS.name}</span>
+          <div className="flex min-h-10 items-center text-[var(--pm-text-secondary)]">
+            <span className="shrink-0 pr-3 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-primary)]">{GROWTH_COIN_TERMS.name}</span>
             <div className="flex flex-1 items-center justify-center gap-1.5">
-              <span className="text-[14px] font-black">{GROWTH_COIN_TERMS.available}</span>
+              <span className="text-[length:var(--pm-font-size-body)] font-bold">{GROWTH_COIN_TERMS.available}</span>
               <img src="/assets/coin.png" alt="" className="h-4 w-4 shrink-0" />
-              <span className="tabular-nums text-[16px] font-black leading-none">{formatCoin(activeChild.availableCoins)}</span>
+              <span className="tabular-nums text-[16px] font-bold leading-none">{formatCoin(activeChild.availableCoins)}</span>
             </div>
-            <div className="h-5 w-px bg-slate-200" aria-hidden="true" />
+            <div className="h-5 w-px bg-[var(--pm-border-subtle)]" aria-hidden="true" />
             <div className="flex flex-1 items-center justify-center gap-1.5">
-              <span className="text-[14px] font-black">{GROWTH_COIN_TERMS.saved}</span>
+              <span className="text-[length:var(--pm-font-size-body)] font-bold">{GROWTH_COIN_TERMS.saved}</span>
               <img src="/assets/coin.png" alt="" className="h-4 w-4 shrink-0" />
-              <span className="tabular-nums text-[16px] font-black leading-none">{formatCoin(activeChild.bankBalance)}</span>
+              <span className="tabular-nums text-[16px] font-bold leading-none">{formatCoin(activeChild.bankBalance)}</span>
             </div>
           </div>
         </ParentCard>
@@ -2251,11 +2361,11 @@ const ParentApp: React.FC<ParentAppProps> = ({
             const active = activeBankTab === item.key;
             const TabButton = active ? ParentPrimaryButton : ParentSecondaryButton;
             return (
-              <TabButton key={item.key} type="button" onClick={() => setActiveBankTab(item.key)} className="h-12 rounded-full text-[14px]">
+              <TabButton key={item.key} type="button" onClick={() => setActiveBankTab(item.key)} className="h-12 rounded-full text-[length:var(--pm-font-size-body)]">
                 <Icon size={16} />
                 <span>{item.label}</span>
                 {item.key === 'list' && (
-                  <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 tabular-nums text-[11px] font-black ${active ? 'bg-white/22 text-white' : 'bg-emerald-50 text-emerald-700'}`}>
+                  <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 tabular-nums text-[length:var(--pm-font-size-meta)] font-bold ${active ? 'bg-white/22 text-white' : 'bg-[var(--pm-status-positive-soft)] text-[var(--pm-brand-primary-strong)]'}`}>
                     {activeChild.deposits.length}
                   </span>
                 )}
@@ -2267,21 +2377,21 @@ const ParentApp: React.FC<ParentAppProps> = ({
         {activeBankTab === 'deposit' ? (
           <section className="mx-5 mt-4 space-y-4">
             <ParentCard as="section" className="p-4">
-              <h2 className="mb-3 text-[17px] font-black text-slate-900">存钱计划</h2>
+              <h2 className="mb-3 text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-text-primary)]">存钱计划</h2>
               <div className="space-y-2">
                 {PARENT_BANK_TERMS.map(scheme => {
                   const active = selectedBankScheme?.label === scheme.label;
                   const isCurrent = scheme.type === 'current';
                   return (
-                    <button key={scheme.label} type="button" onClick={() => { setSelectedBankScheme(scheme); setShowDepositConfirm(true); }} className={`flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS} ${active ? (isCurrent ? 'border-emerald-300 bg-emerald-50/90' : 'border-sky-300 bg-sky-50/90') : 'border-slate-100 bg-slate-50/80'}`}>
+                    <button key={scheme.label} type="button" onClick={() => { setSelectedBankScheme(scheme); setShowDepositConfirm(true); }} className={`flex w-full items-center justify-between rounded-[var(--pm-radius-inner)] border px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS} ${active ? (isCurrent ? 'border-[var(--pm-status-positive)]/60 bg-[var(--pm-status-positive-soft)]' : 'border-[var(--pm-brand-primary)]/60 bg-[var(--pm-brand-primary-soft)]/90') : 'border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)]'}`}>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[15px] font-black text-slate-900">{scheme.productName}</div>
-                        <div className="mt-2 grid grid-cols-2 gap-2 text-[12px] font-bold">
-                          <span className={`rounded-full bg-white/80 px-2.5 py-1 ${isCurrent ? 'text-emerald-600' : 'text-slate-500'}`}>存期 {scheme.termLabel}</span>
-                          <span className={`rounded-full px-2.5 py-1 ${isCurrent ? 'bg-emerald-100/80 text-emerald-600' : 'bg-sky-100/80 text-sky-600'}`}>日利率 {formatDailyRate(scheme.dailyRate)}</span>
+                        <div className="truncate text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">{scheme.productName}</div>
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-[length:var(--pm-font-size-meta)] font-bold">
+                          <span className={`rounded-full bg-white/80 px-2.5 py-1 ${isCurrent ? 'text-[var(--pm-status-positive-strong)]' : 'text-[var(--pm-text-tertiary)]'}`}>存期 {scheme.termLabel}</span>
+                          <span className={`rounded-full px-2.5 py-1 ${isCurrent ? 'bg-[var(--pm-status-positive-soft)] text-[var(--pm-status-positive-strong)]' : 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary-strong)]'}`}>日利率 {formatDailyRate(scheme.dailyRate)}</span>
                         </div>
                       </div>
-                      <div className={`h-5 w-5 rounded-full border-2 ${active ? (isCurrent ? 'border-emerald-500 bg-emerald-500' : 'border-sky-500 bg-sky-500') : 'border-slate-200 bg-white'} shadow-[inset_0_0_0_4px_white]`} aria-hidden="true" />
+                      <div className={`h-5 w-5 rounded-full border-2 ${active ? (isCurrent ? 'border-[var(--pm-status-positive)] bg-[var(--pm-status-positive-soft)]' : 'border-[var(--pm-brand-primary)] bg-[var(--pm-brand-primary-soft)]') : 'border-[var(--pm-border-control)] bg-[var(--pm-bg-surface)]'} [box-shadow:inset_0_0_0_4px_var(--pm-bg-surface)]`} aria-hidden="true" />
                     </button>
                   );
                 })}
@@ -2295,7 +2405,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 <ParentGradientIcon tone="softBlue" size="lg" className="mx-auto mb-3">
                   <Clock size={24} />
                 </ParentGradientIcon>
-                <div className="text-[17px] font-black text-slate-700">还没有存单</div>
+                <div className="text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-text-secondary)]">还没有存单</div>
                 <ParentPrimaryButton type="button" onClick={() => setActiveBankTab('deposit')} className="mt-5 h-12 px-6">
                   签署新存单
                 </ParentPrimaryButton>
@@ -2305,65 +2415,65 @@ const ParentApp: React.FC<ParentAppProps> = ({
               const isCurrentDeposit = deposit.type === 'current';
               const isEarlyFixedDeposit = !isCurrentDeposit && !details.matured;
               const cardToneClass = isCurrentDeposit
-                ? 'border-emerald-100 bg-[linear-gradient(135deg,#ffffff_0%,#ffffff_46%,#ECFDF5_100%)] shadow-[0_22px_54px_-42px_rgba(16,185,129,0.72)]'
+                ? 'bg-[var(--pm-status-positive-soft)]'
                 : details.matured
-                  ? 'border-cyan-100 bg-[linear-gradient(135deg,#ffffff_0%,#ffffff_42%,#ECFEFF_100%)] shadow-[0_22px_54px_-42px_rgba(6,182,212,0.72)]'
-                  : 'border-sky-100 bg-[linear-gradient(135deg,#ffffff_0%,#ffffff_42%,#EFF6FF_100%)] shadow-[0_22px_54px_-42px_rgba(14,165,233,0.7)]';
+                  ? 'bg-[var(--pm-brand-primary-soft)]'
+                  : 'bg-[var(--pm-bg-surface)]';
               const railClass = isCurrentDeposit
-                ? 'from-emerald-400 to-teal-400'
+                ? 'bg-[var(--pm-status-positive)]'
                 : details.matured
-                  ? 'from-cyan-400 to-emerald-400'
-                  : 'from-sky-400 to-blue-500';
+                  ? 'bg-[var(--pm-brand-primary)]'
+                  : 'bg-[var(--pm-brand-secondary)]';
               const stampClass = isCurrentDeposit
-                ? 'border-emerald-100 bg-emerald-50 text-emerald-700'
+                ? 'border-[var(--pm-status-positive)]/20 bg-[var(--pm-status-positive-soft)] text-[var(--pm-brand-primary-strong)]'
                 : details.matured
-                  ? 'border-cyan-100 bg-cyan-50 text-cyan-700'
-                  : 'border-sky-100 bg-sky-50 text-sky-700';
+                  ? 'border-[var(--pm-brand-primary)]/30 bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary-strong)]'
+                  : 'border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-secondary)]';
               const valueClass = isCurrentDeposit
-                ? 'text-emerald-600'
+                ? 'text-[var(--pm-status-positive-strong)]'
                 : details.matured
-                  ? 'text-cyan-600'
-                  : 'text-sky-600';
+                  ? 'text-[var(--pm-brand-primary)]'
+                  : 'text-[var(--pm-brand-primary-strong)]';
               const depositStatusLabel = isCurrentDeposit ? '随存随取' : details.matured ? '可取出' : '未到期';
               const returnLabel = isCurrentDeposit ? '当前可得' : '到期可得';
               const returnValue = isCurrentDeposit ? details.interest : details.maturityTotal;
               const actionTone = isCurrentDeposit || details.matured ? 'primary' : 'attentionSoft';
               return (
                 <ParentCard key={deposit.id} as="article" className={`relative overflow-hidden p-0 ${cardToneClass}`}>
-                  <div className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${railClass}`} aria-hidden="true" />
+                  <div className={`absolute inset-y-0 left-0 w-1 ${railClass}`} aria-hidden="true" />
                   <div className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full border border-white/70 bg-white/32" aria-hidden="true" />
                   <div className="py-3 pl-4 pr-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1 pt-0.5">
                         <div className="flex items-center gap-2">
-                          <span className={`inline-flex h-6 shrink-0 items-center rounded-full border px-2.5 text-[11px] font-black ${stampClass}`}>
+                          <span className={`inline-flex h-6 shrink-0 items-center rounded-full border px-2.5 text-[length:var(--pm-font-size-meta)] font-bold ${stampClass}`}>
                             {depositStatusLabel}
                           </span>
-                          <h3 className="min-w-0 truncate text-[16px] font-black leading-tight text-slate-950">{deposit.label}</h3>
+                          <h3 className="min-w-0 truncate text-[16px] font-bold leading-tight text-[var(--pm-text-primary)]">{deposit.label}</h3>
                         </div>
                       </div>
-                      <ParentPrimaryButton type="button" tone={actionTone} onClick={() => setWithdrawTarget(deposit)} className="h-10 min-w-[76px] shrink-0 rounded-[14px] px-3 text-[14px]">
+                      <ParentPrimaryButton type="button" tone={actionTone} onClick={() => setWithdrawTarget(deposit)} className="h-10 min-w-[76px] shrink-0 rounded-[var(--pm-radius-control)] px-3 text-[length:var(--pm-font-size-body)]">
                         {isEarlyFixedDeposit ? '提前取出' : '取出'}
                       </ParentPrimaryButton>
                     </div>
 
                     <div className="mt-2.5 grid grid-cols-2 gap-2">
-                      <div className="min-h-[56px] rounded-[12px] border border-white/86 bg-white/70 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">
-                        <div className="text-[11px] font-bold leading-none text-slate-400">本金</div>
-                        <div className="mt-1 flex items-center gap-1 tabular-nums text-[20px] font-black leading-none text-slate-950">
+                      <div className="min-h-[56px] rounded-[var(--pm-radius-control)] bg-[var(--pm-bg-surface)] px-3 py-2 [box-shadow:var(--pm-shadow-control)]">
+                        <div className="text-[length:var(--pm-font-size-meta)] font-bold leading-none text-[var(--pm-text-tertiary)]">本金</div>
+                        <div className="mt-1 flex items-center gap-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold leading-none text-[var(--pm-text-primary)]">
                           <img src="/assets/coin.png" alt="" className="h-4 w-4 shrink-0" />
                           <span>{formatCoin(deposit.amount)}</span>
                         </div>
                       </div>
-                      <div className="min-h-[56px] rounded-[12px] border border-white/86 bg-white/62 px-3 py-2">
-                        <div className="text-[11px] font-bold leading-none text-slate-400">{returnLabel}</div>
-                        <div className={`mt-1 tabular-nums text-[21px] font-black leading-none ${valueClass}`}>{isCurrentDeposit ? '+' : ''}{formatCoin(returnValue)}</div>
+                      <div className="min-h-[56px] rounded-[var(--pm-radius-control)] border border-white/86 bg-white/62 px-3 py-2">
+                        <div className="text-[length:var(--pm-font-size-meta)] font-bold leading-none text-[var(--pm-text-tertiary)]">{returnLabel}</div>
+                        <div className={`mt-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold leading-none ${valueClass}`}>{isCurrentDeposit ? '+' : ''}{formatCoin(returnValue)}</div>
                       </div>
                     </div>
                     {!isCurrentDeposit && (
-                      <div className="mt-2 flex min-h-[34px] items-center justify-between gap-2 rounded-[12px] bg-white/38 px-3 py-1.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.62)]">
-                        <span className="text-[11px] font-black leading-tight text-slate-400">定期到期日</span>
-                        <span className="truncate tabular-nums text-[13px] font-black leading-tight text-slate-900">{details.availableAt ? formatDate(details.availableAt) : '-'}</span>
+                      <div className="mt-2 flex min-h-[34px] items-center justify-between gap-2 rounded-[var(--pm-radius-control)] bg-[var(--pm-bg-surface)] px-3 py-1.5">
+                        <span className="text-[length:var(--pm-font-size-meta)] font-bold leading-tight text-[var(--pm-text-tertiary)]">定期到期日</span>
+                        <span className="truncate tabular-nums text-[length:var(--pm-font-size-compact)] font-bold leading-tight text-[var(--pm-text-primary)]">{details.availableAt ? formatDate(details.availableAt) : '-'}</span>
                       </div>
                     )}
                   </div>
@@ -2375,11 +2485,11 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
         {showDepositConfirm && selectedBankScheme && (
           <ParentBottomSheet title="存入金额" onClose={() => { setShowDepositConfirm(false); setShowDepositReview(false); }} className="pb-8">
-            <p className="mb-4 text-[12px] font-bold text-slate-400">{selectedBankScheme.productName} · 存期 {selectedBankScheme.termLabel} · 日利率 {formatDailyRate(selectedBankScheme.dailyRate)}</p>
-            <div className="rounded-[20px] bg-slate-50/90 p-4">
+            <p className="mb-4 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">{selectedBankScheme.productName} · 存期 {selectedBankScheme.termLabel} · 日利率 {formatDailyRate(selectedBankScheme.dailyRate)}</p>
+            <div className="rounded-[var(--pm-radius-card)] bg-[var(--pm-bg-surface-soft)] p-4">
               <div className="mb-3 flex items-end justify-between">
-                <span className="text-[12px] font-bold text-slate-500">存入金额</span>
-                <span className="tabular-nums text-[30px] font-black leading-none text-slate-900">{amount}</span>
+                <span className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">存入金额</span>
+                <span className="tabular-nums text-[length:var(--pm-font-size-metric)] font-bold leading-none text-[var(--pm-text-primary)]">{amount}</span>
               </div>
               <input
                 type="range"
@@ -2388,31 +2498,31 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 step="1"
                 value={amount}
                 onChange={event => setDepositAmount(event.target.value)}
-                className="h-3 w-full rounded-full accent-[#0DB4F1]"
+                className="h-3 w-full rounded-full accent-[var(--pm-brand-primary)]"
               />
-              <div className="mt-2 flex justify-between text-[11px] font-bold text-slate-400">
+              <div className="mt-2 flex justify-between text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
                 <span>1</span>
                 <span className="tabular-nums">最多 {Math.max(1, Math.floor(activeChild.availableCoins))}</span>
               </div>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <div className="rounded-[18px] bg-sky-50 p-3">
-                <div className="text-[11px] font-bold text-sky-500/80">{selectedBankScheme.type === 'current' ? '单日利息' : '到期利息'}</div>
-                <div className="mt-1 tabular-nums text-[20px] font-black text-sky-600">+{projectedInterest}</div>
+              <div className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-brand-primary-soft)] p-3">
+                      <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-primary-strong)]">{selectedBankScheme.type === 'current' ? '单日利息' : '到期利息'}</div>
+                <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold text-[var(--pm-brand-primary-strong)]">+{projectedInterest}</div>
               </div>
-              <div className="rounded-[18px] bg-slate-50 p-3">
-                <div className="text-[11px] font-bold text-slate-400">到期时间</div>
-                <div className="mt-1 text-[15px] font-black text-slate-700">{selectedBankScheme.type === 'current' ? '随时取出' : formatDate(Date.now() + selectedBankScheme.days * 86400000)}</div>
+              <div className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-bg-surface-soft)] p-3">
+                <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">到期时间</div>
+                <div className="mt-1 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-secondary)]">{selectedBankScheme.type === 'current' ? '随时取出' : formatDate(Date.now() + selectedBankScheme.days * 86400000)}</div>
               </div>
             </div>
             {selectedBankScheme.type === 'current' && (
-              <div className="mt-3 rounded-[20px] bg-emerald-50 p-3">
-                <div className="text-[12px] font-black text-emerald-700">活期收益预估</div>
+              <div className="mt-3 rounded-[var(--pm-radius-card)] bg-[var(--pm-status-positive-soft)] p-3">
+                <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-primary-strong)]">活期收益预估</div>
                 <div className="mt-3 grid grid-cols-4 gap-2">
                   {CURRENT_DEPOSIT_PROJECTION_DAYS.map(days => (
-                    <div key={days} className="rounded-[14px] bg-white/80 px-2 py-2 text-center">
-                      <div className="text-[11px] font-bold text-slate-400">{days}天后</div>
-                      <div className="mt-1 tabular-nums text-[13px] font-black text-emerald-600">+{(amount * BANK_CONFIG.DAILY_RATE * days).toFixed(2)}</div>
+                    <div key={days} className="rounded-[var(--pm-radius-control)] bg-white/80 px-2 py-2 text-center">
+                      <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">{days}天后</div>
+                      <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-status-positive-strong)]">+{(amount * BANK_CONFIG.DAILY_RATE * days).toFixed(2)}</div>
                     </div>
                   ))}
                 </div>
@@ -2425,31 +2535,31 @@ const ParentApp: React.FC<ParentAppProps> = ({
         )}
 
         {showDepositReview && selectedBankScheme && (
-          <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-950/55 px-6 backdrop-blur-md" onClick={() => setShowDepositReview(false)}>
-            <div className="w-full rounded-[30px] bg-white p-6 shadow-[0_28px_90px_-42px_rgba(15,23,42,0.85)]" onClick={event => event.stopPropagation()}>
+            <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[var(--pm-mask)] px-6 backdrop-blur-md" onClick={() => setShowDepositReview(false)}>
+            <div className="w-full rounded-[var(--pm-radius-sheet)] bg-[var(--pm-bg-surface)] p-6 [box-shadow:var(--pm-shadow-sheet)]" onClick={event => event.stopPropagation()}>
               <div className="flex items-start justify-between gap-4">
-                <ParentGradientIcon tone={selectedBankScheme.type === 'current' ? 'green' : 'blue'} size="lg" className="h-16 w-16 rounded-[22px]">
+                <ParentGradientIcon tone={selectedBankScheme.type === 'current' ? 'green' : 'blue'} size="lg" className="h-16 w-16 rounded-[var(--pm-radius-card)]">
                   <FileText size={30} strokeWidth={2.4} />
                 </ParentGradientIcon>
-                <button type="button" onClick={() => setShowDepositReview(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-[transform,background-color] duration-150 ease-out active:scale-[0.96]">
+                <button type="button" onClick={() => setShowDepositReview(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-tertiary)] transition-[transform,background-color] duration-150 ease-out active:scale-[0.96]">
                   <X size={20} />
                 </button>
               </div>
-              <h2 className="mt-5 text-[28px] font-black leading-tight text-balance text-slate-950">确认签署这份存单?</h2>
-              <div className="mt-5 rounded-[26px] bg-slate-50 p-4">
-                <div className="flex items-center justify-between gap-3 py-2 text-[14px] font-bold">
-                  <span className="text-slate-400">签署计划</span>
-                  <span className={`rounded-full px-3 py-1 text-[14px] font-black ${selectedBankScheme.type === 'current' ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-600'}`}>{selectedBankScheme.label}</span>
+              <h2 className="mt-5 text-[length:var(--pm-font-size-page-title)] font-bold leading-tight text-balance text-[var(--pm-text-primary)]">确认签署这份存单?</h2>
+              <div className="mt-5 rounded-[var(--pm-radius-card)] bg-[var(--pm-bg-surface-soft)] p-4">
+                <div className="flex items-center justify-between gap-3 py-2 text-[length:var(--pm-font-size-body)] font-bold">
+                  <span className="text-[var(--pm-text-tertiary)]">签署计划</span>
+                  <span className={`rounded-full px-3 py-1 text-[length:var(--pm-font-size-body)] font-bold ${selectedBankScheme.type === 'current' ? 'bg-[var(--pm-status-positive-soft)] text-[var(--pm-status-positive-strong)]' : 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary-strong)]'}`}>{selectedBankScheme.label}</span>
                 </div>
-                <div className="flex items-center justify-between gap-3 py-2 text-[14px] font-bold">
-                  <span className="text-slate-400">投入本金</span>
-                  <span className="flex items-center gap-1 tabular-nums text-[20px] font-black text-slate-950"><img src="/assets/coin.png" alt="" className="h-5 w-5" />{amount}</span>
+                <div className="flex items-center justify-between gap-3 py-2 text-[length:var(--pm-font-size-body)] font-bold">
+                  <span className="text-[var(--pm-text-tertiary)]">投入本金</span>
+                  <span className="flex items-center gap-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold text-[var(--pm-text-primary)]"><img src="/assets/coin.png" alt="" className="h-5 w-5" />{amount}</span>
                 </div>
-                <div className="flex items-center justify-between gap-3 py-2 text-[14px] font-bold">
-                  <span className="text-slate-400">预期利息</span>
-                  <span className="flex items-center gap-1 tabular-nums text-[20px] font-black text-sky-600"><img src="/assets/coin.png" alt="" className="h-5 w-5" />+{projectedInterest}</span>
+                <div className="flex items-center justify-between gap-3 py-2 text-[length:var(--pm-font-size-body)] font-bold">
+                  <span className="text-[var(--pm-text-tertiary)]">预期利息</span>
+                  <span className="flex items-center gap-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold text-[var(--pm-brand-primary-strong)]"><img src="/assets/coin.png" alt="" className="h-5 w-5" />+{projectedInterest}</span>
                 </div>
-                <div className="mt-2 border-t border-dashed border-slate-200 pt-3 text-[13px] font-black text-sky-600">
+                <div className="mt-2 border-t border-dashed border-[var(--pm-border-control)] pt-3 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)]">
                   到期时间：{selectedBankScheme.type === 'current' ? '随时取出' : formatDate(Date.now() + selectedBankScheme.days * 86400000)}
                 </div>
               </div>
@@ -2468,19 +2578,19 @@ const ParentApp: React.FC<ParentAppProps> = ({
         {withdrawTarget && (
           <ParentBottomSheet title="确认取出" onClose={() => setWithdrawTarget(null)} className="pb-8">
             {withdrawIsEarlyFixed && (
-              <div className="mb-3 rounded-[18px] bg-orange-50 px-3 py-3 text-[13px] font-black text-orange-600">
+              <div className="mb-3 rounded-[var(--pm-radius-inner)] bg-[var(--pm-status-attention-soft)] px-3 py-3 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-status-attention)]">
                 未到期取出将按活期利息计算
               </div>
             )}
-            <div className="space-y-3 rounded-[20px] bg-slate-50/90 p-4">
-              <div className="flex justify-between text-[14px] font-bold"><span className="text-slate-500">本金</span><span className="tabular-nums text-slate-900">{formatCoin(withdrawTarget.amount)}</span></div>
-              <div className="flex justify-between text-[14px] font-bold">
-                <span className="text-slate-500">{withdrawIsEarlyFixed ? '活期利息' : '利息'}</span>
-                <span className="tabular-nums text-emerald-600">+{formatCoin(withdrawDetails?.interest ?? 0)}</span>
+            <div className="space-y-3 rounded-[var(--pm-radius-card)] bg-[var(--pm-bg-surface-soft)] p-4">
+              <div className="flex justify-between text-[length:var(--pm-font-size-body)] font-bold"><span className="text-[var(--pm-text-tertiary)]">本金</span><span className="tabular-nums text-[var(--pm-text-primary)]">{formatCoin(withdrawTarget.amount)}</span></div>
+              <div className="flex justify-between text-[length:var(--pm-font-size-body)] font-bold">
+                <span className="text-[var(--pm-text-tertiary)]">{withdrawIsEarlyFixed ? '活期利息' : '利息'}</span>
+                <span className="tabular-nums text-[var(--pm-status-positive-strong)]">+{formatCoin(withdrawDetails?.interest ?? 0)}</span>
               </div>
-              <div className="border-t border-dashed border-slate-200 pt-3 flex justify-between text-[15px] font-black">
-                <span className="text-slate-600">到账金额</span>
-                <span className="flex items-center gap-1 tabular-nums text-slate-950"><img src="/assets/coin.png" alt="" className="h-4 w-4" />{formatCoin(withdrawDetails?.withdrawalTotal ?? 0)}</span>
+              <div className="border-t border-dashed border-[var(--pm-border-control)] pt-3 flex justify-between text-[length:var(--pm-font-size-card-title)] font-bold">
+                <span className="text-[var(--pm-text-secondary)]">到账金额</span>
+                <span className="flex items-center gap-1 tabular-nums text-[var(--pm-text-primary)]"><img src="/assets/coin.png" alt="" className="h-4 w-4" />{formatCoin(withdrawDetails?.withdrawalTotal ?? 0)}</span>
               </div>
             </div>
             <ParentPrimaryButton type="button" onClick={() => withdrawDeposit(withdrawTarget)} fullWidth className="mt-4 h-[52px] text-[16px]">
@@ -2503,10 +2613,10 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 <UserRound size={24} strokeWidth={2.45} />
               </ParentGradientIcon>
               <div className="min-w-0 flex-1">
-                <h1 className="truncate text-[20px] font-black leading-tight text-slate-950">{PARENT_PROFILE.name}</h1>
-                <p className="mt-1 truncate text-[13px] font-bold text-slate-500">{PARENT_PROFILE.relation} · {PARENT_PROFILE.phone}</p>
+                <h1 className="truncate text-[length:var(--pm-font-size-section-title)] font-bold leading-tight text-[var(--pm-text-primary)]">{PARENT_PROFILE.name}</h1>
+                <p className="mt-1 truncate text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">{PARENT_PROFILE.relation} · {PARENT_PROFILE.phone}</p>
               </div>
-              <button type="button" onClick={() => setMineSheet('profile')} className={`flex h-10 shrink-0 items-center justify-center rounded-[14px] bg-slate-50 px-3 text-[13px] font-black text-slate-600 ${PARENT_PRESSABLE_CLASS}`} aria-label="查看家长信息">
+              <button type="button" onClick={() => setMineSheet('profile')} className={`flex h-10 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] bg-[var(--pm-bg-surface-soft)] px-3 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-secondary)] ${PARENT_PRESSABLE_CLASS}`} aria-label="查看家长信息">
                 详情
               </button>
             </div>
@@ -2520,19 +2630,19 @@ const ParentApp: React.FC<ParentAppProps> = ({
             ].map(item => {
               const Icon = item.icon;
               return (
-                <button key={item.label} type="button" onClick={item.action} className={`flex min-h-[58px] w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left last:border-b-0 ${PARENT_PRESSABLE_CLASS}`}>
+                <button key={item.label} type="button" onClick={item.action} className={`flex min-h-[58px] w-full items-center gap-3 border-b border-[var(--pm-border-subtle)] px-4 py-3 text-left last:border-b-0 ${PARENT_PRESSABLE_CLASS}`}>
                   <ParentGradientIcon tone={item.label === '隐私协议' ? 'blue' : 'softBlue'} size="sm">
                     <Icon size={16} strokeWidth={2.6} />
                   </ParentGradientIcon>
-                  <span className="min-w-0 flex-1 truncate text-[15px] font-black text-slate-900">{item.label}</span>
-                  <span className="max-w-[120px] truncate text-[13px] font-bold text-slate-400">{item.meta}</span>
-                  <ChevronRight size={15} className="shrink-0 text-slate-300" />
+                  <span className="min-w-0 flex-1 truncate text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">{item.label}</span>
+                  <span className="max-w-[120px] truncate text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">{item.meta}</span>
+                  <ChevronRight size={15} className="shrink-0 text-[var(--pm-text-disabled)]" />
                 </button>
               );
             })}
           </ParentCard>
 
-          <ParentSecondaryButton type="button" onClick={() => setMineSheet('logout')} tone="attentionSoft" fullWidth className="h-12 text-[15px]">
+          <ParentSecondaryButton type="button" onClick={() => setMineSheet('logout')} tone="attentionSoft" fullWidth className="h-12 text-[length:var(--pm-font-size-card-title)]">
             <LogOut size={17} strokeWidth={2.5} />
             退出登录
           </ParentSecondaryButton>
@@ -2547,9 +2657,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 ['手机号', PARENT_PROFILE.phone],
                 ['绑定孩子', activeChild ? `${activeChild.name} · ${activeChild.className}` : '暂无'],
               ].map(([label, value]) => (
-                <div key={label} className="flex min-h-[48px] items-center justify-between gap-4 rounded-[16px] bg-slate-50 px-4 py-3">
-                  <span className="text-[13px] font-bold text-slate-400">{label}</span>
-                  <span className="min-w-0 truncate text-right text-[15px] font-black text-slate-800">{value}</span>
+                <div key={label} className="flex min-h-[48px] items-center justify-between gap-4 rounded-[var(--pm-radius-inner)] bg-[var(--pm-bg-surface-soft)] px-4 py-3">
+                  <span className="text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">{label}</span>
+                  <span className="min-w-0 truncate text-right text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">{value}</span>
                 </div>
               ))}
             </div>
@@ -2558,7 +2668,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
         {mineSheet === 'privacy' && (
           <ParentBottomSheet title="隐私协议" onClose={() => setMineSheet(null)} className="pb-8">
-            <div className="space-y-3 text-[14px] font-bold leading-relaxed text-slate-600">
+            <div className="space-y-3 text-[length:var(--pm-font-size-body)] font-bold leading-relaxed text-[var(--pm-text-secondary)]">
               <p>我们仅收集登录、绑定学生、查看成长记录所必需的信息，用于展示孩子在校评价、成长报告和积分账户。</p>
               <p>未经授权，不会向无关第三方共享家长手机号、学生身份信息和成长记录。</p>
               <p>如需注销或更正信息，可联系学校管理员处理。</p>
@@ -2568,7 +2678,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
         {mineSheet === 'logout' && (
           <ParentBottomSheet title="退出登录" onClose={() => setMineSheet(null)} className="pb-8">
-            <p className="text-[15px] font-bold leading-relaxed text-slate-600">退出后需要重新完成登录或绑定流程。</p>
+            <p className="text-[length:var(--pm-font-size-card-title)] font-bold leading-relaxed text-[var(--pm-text-secondary)]">退出后需要重新完成登录或绑定流程。</p>
             <div className="mt-5 grid grid-cols-2 gap-3">
               <ParentSecondaryButton type="button" onClick={() => setMineSheet(null)} className="h-[52px] text-[16px]">
                 取消
@@ -2594,24 +2704,24 @@ const ParentApp: React.FC<ParentAppProps> = ({
               <ParentCard
                 key={child.id}
                 as="article"
-                className={`student-switcher-card relative w-full overflow-hidden !p-0 ${isCurrentChild ? 'border-emerald-200 bg-emerald-50/55 shadow-[0_16px_34px_-30px_rgba(16,185,129,0.58)]' : 'border-slate-100 bg-slate-50/80 shadow-none'}`}
+                className={`student-switcher-card relative w-full overflow-hidden !p-0 ${isCurrentChild ? 'bg-[var(--pm-status-positive-soft)] [box-shadow:var(--pm-shadow-card)]' : 'bg-[var(--pm-bg-surface-soft)] shadow-none'}`}
               >
-                {isCurrentChild && <div className="absolute inset-y-0 left-0 w-1 bg-emerald-400" aria-hidden="true" />}
+                {isCurrentChild && <div className="absolute inset-y-0 left-0 w-1 bg-[var(--pm-status-positive)]" aria-hidden="true" />}
                 <div className="flex min-h-[72px] items-center gap-3 px-4 py-2">
-                  <ParentChildAvatar name={child.name} src={child.avatar} alt={`${child.name}头像`} className="h-12 w-12 rounded-[15px]" />
+                  <ParentChildAvatar name={child.name} src={child.avatar} alt={`${child.name}头像`} className="h-12 w-12 rounded-[var(--pm-radius-inner)]" />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[17px] font-black leading-tight text-slate-950">{child.name}</div>
-                    <div className="mt-1.5 truncate text-[14px] font-bold leading-snug text-slate-500">{child.className}</div>
+                    <div className="truncate text-[length:var(--pm-font-size-section-title)] font-bold leading-tight text-[var(--pm-text-primary)]">{child.name}</div>
+                    <div className="mt-1.5 truncate text-[length:var(--pm-font-size-body)] font-bold leading-snug text-[var(--pm-text-tertiary)]">{child.className}</div>
                   </div>
                   {isCurrentChild ? (
-                    <span className="inline-flex h-9 min-w-[58px] shrink-0 items-center justify-center rounded-[14px] bg-white/82 px-3 text-[13px] font-black text-emerald-700 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.2)]">
+                  <span className="inline-flex h-9 min-w-[58px] shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] bg-[var(--pm-bg-surface)] px-3 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)] [box-shadow:var(--pm-shadow-control)]">
                       当前
                     </span>
                   ) : (
                     <ParentSecondaryButton
                       type="button"
                       onClick={() => { setActiveChildId(child.id); setShowChildSwitcher(false); }}
-                      className="h-9 min-h-9 min-w-[58px] shrink-0 px-3 text-[13px]"
+                      className="h-9 min-h-9 min-w-[58px] shrink-0 px-3 text-[length:var(--pm-font-size-compact)]"
                     >
                       切换
                     </ParentSecondaryButton>
@@ -2621,9 +2731,70 @@ const ParentApp: React.FC<ParentAppProps> = ({
             );
           })}
         </div>
-        <ParentSecondaryButton type="button" onClick={() => openBinding('switcher')} fullWidth tone="neutral" className="mt-3 h-11 min-h-11 text-[15px]">
+        <ParentSecondaryButton type="button" onClick={() => openBinding('switcher')} fullWidth tone="neutral" className="mt-3 h-11 min-h-11 text-[length:var(--pm-font-size-card-title)]">
           <Plus size={17} /> 绑定其他孩子
         </ParentSecondaryButton>
+      </ParentBottomSheet>
+    );
+  };
+
+  const ExchangePasswordSheet = () => {
+    if (!exchangePasswordChild) return null;
+    const password = exchangePasswordEditing ? exchangePasswordDraft : exchangePasswordChild.exchangePassword;
+    const maskedPassword = maskExchangePassword(password);
+
+    return (
+      <ParentBottomSheet title={`兑换密码 · ${exchangePasswordChild.name}`} onClose={closeExchangePasswordSheet} className="pb-8">
+        <div className="rounded-[var(--pm-radius-card)] bg-[var(--pm-bg-surface-soft)] p-4 [box-shadow:var(--pm-shadow-card)]">
+          {exchangePasswordEditing ? (
+            <div>
+              <label className="block">
+                <span className="mb-2 block text-[length:var(--pm-font-size-body)] font-bold text-[var(--pm-text-secondary)]">新的6位密码</span>
+                <input
+                  value={exchangePasswordDraft}
+                  onChange={event => {
+                    setExchangePasswordDraft(sanitizeExchangePassword(event.target.value));
+                    setExchangePasswordError('');
+                  }}
+                  inputMode="numeric"
+                  maxLength={EXCHANGE_PASSWORD_LENGTH}
+                  placeholder="请输入6位数字"
+                  aria-invalid={Boolean(exchangePasswordError)}
+                  className="h-[52px] w-full rounded-[var(--pm-radius-inner)] border border-[var(--pm-border-control)] bg-[var(--pm-bg-surface)] px-4 text-[length:var(--pm-font-size-page-title)] font-bold tracking-[0.28em] text-[var(--pm-text-primary)] outline-none transition-colors placeholder:text-[length:var(--pm-font-size-body)] placeholder:tracking-normal placeholder:text-[var(--pm-text-disabled)] focus:border-[var(--pm-brand-primary)] focus:ring-4 focus:ring-[var(--pm-focus-ring)]"
+                />
+              </label>
+              <div className="mt-2 min-h-5 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-status-negative)]" role="alert">{exchangePasswordError}</div>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <ParentSecondaryButton type="button" onClick={() => { setExchangePasswordEditing(false); setExchangePasswordDraft(exchangePasswordChild.exchangePassword); setExchangePasswordError(''); }} className="h-[52px] text-[16px]">
+                  取消
+                </ParentSecondaryButton>
+                <ParentPrimaryButton type="button" onClick={saveExchangePassword} className="h-[52px] text-[16px]">
+                  保存密码
+                </ParentPrimaryButton>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-2 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">当前密码</div>
+              <div className="flex min-h-[64px] items-center justify-between gap-3 rounded-[var(--pm-radius-inner)] bg-white/85 px-4">
+                <span className="tabular-nums text-[28px] font-bold tracking-[0.22em] text-[var(--pm-text-primary)]" aria-live="polite">
+                  {exchangePasswordVisible ? (password || '未设置') : maskedPassword}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setExchangePasswordVisible(value => !value)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-tertiary)] transition-[transform,background-color] duration-150 ease-out active:scale-[0.96]"
+                  aria-label={exchangePasswordVisible ? '隐藏兑换密码' : '查看兑换密码'}
+                >
+                  {exchangePasswordVisible ? <EyeOff size={19} strokeWidth={2.5} /> : <Eye size={19} strokeWidth={2.5} />}
+                </button>
+              </div>
+              <ParentPrimaryButton type="button" onClick={() => { setExchangePasswordEditing(true); setExchangePasswordDraft(exchangePasswordChild.exchangePassword); setExchangePasswordError(''); }} fullWidth className="mt-4 h-[52px] text-[16px]">
+                修改密码
+              </ParentPrimaryButton>
+            </>
+          )}
+        </div>
       </ParentBottomSheet>
     );
   };
@@ -2649,14 +2820,14 @@ const ParentApp: React.FC<ParentAppProps> = ({
                   <ClipboardList size={16} strokeWidth={2.6} />
                 </ParentGradientIcon>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-black leading-5 text-slate-950">{questionnaire.title}</span>
-                  <span className={`mt-1 block truncate text-[12px] font-bold ${isQuestionnaireOverdue(questionnaire) ? 'text-amber-600' : 'text-slate-400'}`}>
+                  <span className="block truncate text-[length:var(--pm-font-size-card-title)] font-bold leading-5 text-[var(--pm-text-primary)]">{questionnaire.title}</span>
+                  <span className={`mt-1 block truncate text-[length:var(--pm-font-size-meta)] font-bold ${isQuestionnaireOverdue(questionnaire) ? 'text-amber-600' : 'text-[var(--pm-text-tertiary)]'}`}>
                     {questionnaire.creatorName}{questionnaire.suggestedDeadline
                       ? ` · ${formatQuestionnaireCompletionTime(questionnaire.suggestedDeadline)}`
                       : ''}
                   </span>
                 </span>
-                <span className="flex h-10 min-w-[62px] shrink-0 items-center justify-center rounded-[14px] border border-[#BFEAED] bg-white px-3 text-[15px] font-black text-[#0797A8] shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">{questionnaire.submissions.some(submission => submission.studentNo === activeChild.studentNo && submission.reviewStatus === 'returned') ? '修改' : '填写'}</span>
+                <span className="flex h-10 min-w-[62px] shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] border border-[var(--pm-brand-primary)]/30 bg-[var(--pm-bg-surface)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-brand-primary-strong)] [box-shadow:var(--pm-shadow-control)]">{questionnaire.submissions.some(submission => submission.studentNo === activeChild.studentNo && submission.reviewStatus === 'returned') ? '修改' : '填写'}</span>
               </button>
             </ParentCard>
           ))}
@@ -2670,8 +2841,8 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 <ParentGradientIcon tone={questionnaire.tone} size="sm">
                   <ClipboardList size={16} strokeWidth={2.6} />
                 </ParentGradientIcon>
-                <span className="min-w-0 flex-1 truncate text-[16px] font-extrabold leading-5 text-slate-950">{questionnaire.label}</span>
-                <span className="flex h-10 min-w-[62px] shrink-0 items-center justify-center rounded-[14px] border border-[#BFEAED] bg-white px-3 text-[15px] font-black text-[#0797A8] shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">
+                <span className="min-w-0 flex-1 truncate text-[16px] font-bold leading-5 text-[var(--pm-text-primary)]">{questionnaire.label}</span>
+                <span className="flex h-10 min-w-[62px] shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] border border-[var(--pm-brand-primary)]/30 bg-[var(--pm-bg-surface)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-brand-primary-strong)] [box-shadow:var(--pm-shadow-control)]">
                   填写
                 </span>
               </button>
@@ -2681,7 +2852,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
               <ParentGradientIcon tone="softBlue" size="lg" className="mx-auto mb-3">
                 <CheckCircle2 size={24} />
               </ParentGradientIcon>
-              <div className="text-[17px] font-black text-slate-700">暂无待办</div>
+              <div className="text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-text-secondary)]">暂无待办</div>
             </ParentCard>
           ) : null}
         </section>
@@ -2732,13 +2903,13 @@ const ParentApp: React.FC<ParentAppProps> = ({
     { key: 'mine', label: '我的', icon: UserRound },
   ];
 
-  const hasParentOverlay = showChildSwitcher || showDepositConfirm || showDepositReview || showQuestionnaireSubmitConfirm || Boolean(withdrawTarget) || Boolean(mineSheet);
+  const hasParentOverlay = showChildSwitcher || showDepositConfirm || showDepositReview || showQuestionnaireSubmitConfirm || Boolean(withdrawTarget) || Boolean(mineSheet) || Boolean(exchangePasswordChildId);
   const hasInviteStandalonePage = !isLoggedIn || Boolean(inviteOutcome) || inviteCandidateIds.length > 1;
   const showTabs = activeChild && (screen === 'growth' || screen === 'reports' || screen === 'mine') && !hasParentOverlay && !hasInviteStandalonePage;
   const SubmitSuccessToast = () => {
     if (!submitSuccessMessage) return null;
     return (
-      <div className="pointer-events-none absolute bottom-24 left-1/2 z-[120] -translate-x-1/2 rounded-full bg-slate-950/88 px-4 py-2 text-[14px] font-black text-white shadow-[0_18px_44px_-28px_rgba(15,23,42,0.9)]" role="status" aria-live="polite">
+      <div className="pointer-events-none absolute bottom-24 left-1/2 z-[120] -translate-x-1/2 rounded-full bg-[var(--pm-text-primary)] px-4 py-2 text-[length:var(--pm-font-size-body)] font-bold text-[var(--pm-text-inverse)] [box-shadow:var(--pm-shadow-sheet)]" role="status" aria-live="polite">
         {submitSuccessMessage}
       </div>
     );
@@ -2751,45 +2922,47 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
     return (
       <nav
-        ref={parentTabbarRef}
-        className="ai-tabbar-container"
+        className="absolute bottom-0 left-0 right-0 z-50 h-16 border-0 bg-[var(--pm-bg-surface)] [box-shadow:var(--pm-shadow-navigation)]"
         aria-label="家长端底部导航"
       >
-        <TeacherFluidGlassNav activeIndex={parentNavActiveIndex} itemCount={tabItems.length} jellyToggle={parentNavJellyToggle} tabbarWidth={parentTabbarWidth} />
-        {tabItems.map(item => {
-          const Icon = item.icon;
-          const nextIndex = tabItems.findIndex(tab => tab.key === item.key);
-          const active = parentNavActiveIndex === nextIndex;
+        <div className="grid h-full grid-cols-3 items-center text-center">
+          {tabItems.map(item => {
+            const Icon = item.icon;
+            const nextIndex = tabItems.findIndex(tab => tab.key === item.key);
+            const active = parentNavActiveIndex === nextIndex;
 
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => goTab(item, nextIndex)}
-              aria-current={active ? 'page' : undefined}
-              className="tabbar-item-btn"
-            >
-              <div className={`flex flex-col items-center justify-center gap-1 transition-[transform,opacity,color] duration-300 ease-out active:scale-[0.96] ${active ? 'text-emerald-600 font-bold scale-105 opacity-100' : 'text-slate-400 font-medium scale-100 opacity-70'}`}>
-                <div className="tabbar-icon-wrap">
-                  <Icon className="w-5 h-5" strokeWidth={active ? 2.65 : 2.25} />
-                </div>
-                <span className="tabbar-item-label">{item.label}</span>
-              </div>
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => goTab(item, nextIndex)}
+                aria-current={active ? 'page' : undefined}
+                className={`group flex h-full min-w-0 flex-col items-center justify-center gap-1 transition-colors [transition-duration:var(--pm-duration-fast)] ${active ? 'text-[var(--pm-brand-primary)]' : 'text-[var(--pm-nav-item-default)]'}`}
+              >
+                <span className="relative flex h-[22px] w-[22px] items-center justify-center">
+                  <Icon className={`h-[22px] w-[22px] object-contain transition-transform [transition-duration:var(--pm-duration-fast)] ease-out group-active:scale-[0.86] motion-reduce:transition-none ${active ? 'scale-100' : 'scale-90'}`} strokeWidth={active ? 2.65 : 2.25} />
+                </span>
+                <span className="text-xs font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
     );
   };
 
   return (
-    <div className="w-screen h-[100dvh] bg-[#EEF2F6] flex items-center justify-center p-4">
-      <PhoneMockup showDeviceFrame={showPhoneShell} contentTopInsetMode="status-bar" screenBackground={<ParentDiffuseBackdrop />}>
-        <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent font-sans">
+    <div
+      className="flex h-[100dvh] w-screen items-center justify-center bg-[var(--pm-bg-page)] p-4 font-sans"
+      style={{ ...parentMobileCssVariables, '--evaluation-score-negative': evaluationScoreSemantic.negative } as React.CSSProperties}
+    >
+      <PhoneMockup showDeviceFrame={showPhoneShell} contentTopInsetMode="status-bar" screenBackground={<ParentDiffuseBackdrop preview={gradientPreview} />}>
+        <div className="relative flex flex-1 flex-col overflow-hidden bg-transparent text-[var(--pm-text-primary)]">
           {renderScreen()}
           {showTabs && renderParentBottomNav()}
           <SubmitSuccessToast />
           <ChildSwitcherSheet />
+          <ExchangePasswordSheet />
         </div>
       </PhoneMockup>
     </div>

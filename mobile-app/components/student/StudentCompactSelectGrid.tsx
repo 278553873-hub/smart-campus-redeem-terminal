@@ -12,6 +12,8 @@ interface StudentCompactSelectGridProps {
   sections: StudentCompactSelectSection[];
   isSelected: (studentId: string) => boolean;
   getSelectionDescription?: (student: Student) => string | undefined;
+  getSecondaryLabel?: (student: Student) => string | undefined;
+  showRosterNumber?: boolean;
   onToggle: (studentId: string) => void;
   className?: string;
 }
@@ -20,6 +22,8 @@ const StudentCompactSelectGrid: React.FC<StudentCompactSelectGridProps> = ({
   sections,
   isSelected,
   getSelectionDescription,
+  getSecondaryLabel,
+  showRosterNumber,
   onToggle,
   className = '',
 }) => (
@@ -39,6 +43,8 @@ const StudentCompactSelectGrid: React.FC<StudentCompactSelectGridProps> = ({
               student={student}
               selected={isSelected(student.id)}
               selectionDescription={getSelectionDescription?.(student)}
+              secondaryLabel={getSecondaryLabel?.(student)}
+              showRosterNumber={showRosterNumber}
               onClick={() => onToggle(student.id)}
             />
           ))}

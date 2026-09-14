@@ -1,13 +1,14 @@
 import type { GroupCardDisplaySettings } from '../types';
+import {
+  DEFAULT_EVALUATION_CARD_DISPLAY_SETTINGS,
+  getEvaluationCardDisplaySettings,
+  type LegacyEvaluationCardDisplaySettings,
+} from './evaluationCardDisplay';
 
 export const DEFAULT_GROUP_CARD_DISPLAY_SETTINGS: GroupCardDisplaySettings = {
-  showPraiseCount: true,
-  showCriticismCount: true,
+  ...DEFAULT_EVALUATION_CARD_DISPLAY_SETTINGS,
 };
 
 export const getGroupCardDisplaySettings = (
-  settings?: Partial<GroupCardDisplaySettings>,
-): GroupCardDisplaySettings => ({
-  ...DEFAULT_GROUP_CARD_DISPLAY_SETTINGS,
-  ...settings,
-});
+  settings?: Partial<GroupCardDisplaySettings> & LegacyEvaluationCardDisplaySettings,
+): GroupCardDisplaySettings => getEvaluationCardDisplaySettings(settings);

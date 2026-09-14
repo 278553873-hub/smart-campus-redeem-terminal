@@ -105,7 +105,7 @@ const DetailSection = ({
   const toneClass = tone === 'positive'
     ? 'text-[var(--tm-status-positive-strong)]'
     : tone === 'negative'
-      ? 'text-[var(--tm-status-negative-strong)]'
+      ? 'text-[var(--tm-score-negative)]'
       : 'text-[var(--tm-text-secondary)]';
   return (
     <section className={`p-[var(--tm-space-4)] ${last ? '' : 'border-b border-[var(--tm-border-subtle)]'}`}>

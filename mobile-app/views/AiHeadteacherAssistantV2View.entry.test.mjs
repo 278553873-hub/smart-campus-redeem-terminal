@@ -47,7 +47,7 @@ requireText(viewSource, 'centerContent={(activeReport || isGenerating || history
 assert.ok(!viewSource.includes('AssistantSubpageHeader title='), 'V2 标题栏不应继续显示页面名称。');
 requireText(viewSource, '<HomeroomClassPickerSheet', 'V2 应复用带班班级选择组件。');
 assert.ok(!viewSource.includes('<MobileBottomSheet'), '班主任助理 V2 不应提供依据明细抽屉。');
-for (const label of ['本周学生情况洞察与班级跟进建议', '上月评价记录复盘与改进建议']) {
+for (const label of ['本周学生评价洞察与跟进建议', '我的上月学生评价复盘与改进']) {
   requireText(viewSource, label, `统一页面应提供学生评价单行能力：${label}`);
 }
 requireText(viewSource, 'aria-label="报告快捷入口"', '两项报告应作为独立高层级快捷入口。');
@@ -86,6 +86,8 @@ assert.ok(!viewSource.includes('Plus'), '对话输入栏不应提供添加入口
 requireText(viewSource, '数据概览', '完整周报应先展示确定性数据统计。');
 requireText(viewSource, '本周整体表现', '完整周报应包含整体表现分析。');
 requireText(viewSource, '主要扣分问题', '完整周报应包含扣分问题分析。');
+assert.equal((viewSource.match(/--tm-score-negative/g) ?? []).length, 5, '班主任助理中的扣分指标、拆分和明细应统一使用扣分业务色。');
+assert.ok(!viewSource.includes('--tm-status-negative'), '班主任助理不得将扣分数据误用为系统危险状态。');
 requireText(viewSource, '下周关注重点', '完整周报应包含下周指导建议。');
 requireText(viewSource, '<Sparkles', '人工智能分析应使用清晰、统一的图标。');
 assert.ok(!viewSource.includes('查看依据'), '班主任助理 V2 不应提供查看依据入口。');
@@ -110,12 +112,12 @@ requireText(appSource, 'headteacher-agent-gradient-page absolute inset-0', 'V2 �
 requireText(appSource, '|| isHeadteacherAssistantView || hasPrincipalReportBackground', '统一助理内容承载层必须透明，不能用白底覆盖整屏渐变。');
 requireText(viewSource, 'bg-transparent', 'V2 内容层应保持透明，避免渐变在安全区后重新开始。');
 requireText(viewSource, 'headteacher-agent-glass', '本周数据卡片应使用拟态玻璃效果。');
-requireText(viewSource, '本周数据', '首屏应展示本周数据面板。');
+requireText(viewSource, '>班级评比</h2>', '首屏数据面板应明确属于班级评比。');
 requireText(viewSource, '本周总分', '收起态应展示本周总分。');
 requireText(viewSource, '年级排名', '收起态应明确展示年级排名。');
 requireText(viewSource, '学校排名', '收起态应明确展示学校排名。');
 requireText(viewSource, 'grid grid-cols-[1.18fr_0.82fr]', '本周数据应突出总分，并将两个排名收为次级信息。');
-requireText(viewSource, 'style={{ width: `${Math.min(Math.max(snapshot.finalScore, 0), 100)}%` }}', '总分应通过紧凑进度线提供视觉表达。');
+assert.ok(!viewSource.includes('style={{ width: `${Math.min(Math.max(snapshot.finalScore, 0), 100)}%` }}'), '本周总分下方不应展示进度条。');
 assert.ok(!viewSource.includes('{week.summary}'), '本周数据卡不应为了装饰增加额外结论文案。');
 assert.ok(!viewSource.includes('当前排名'), '总分排名不应继续使用含义模糊的当前排名文案。');
 assert.ok(!viewSource.includes('班级排名'), '周数据子页不应继续使用含义模糊的班级排名文案。');
@@ -130,8 +132,8 @@ requireText(viewSource, '打开周数据页面', '日期切换入口应打开独
 requireText(viewSource, "'\u6253\u5f00\u5468\u6570\u636e\u9875\u9762\uff0c\u5f53\u524d' + week.label", '首页本周日期应展示完整自然周。');
 requireText(viewSource, 'OVERVIEW_RECOMMENDED_QUESTIONS', '首页应提供紧凑的推荐问题。');
 assert.ok(!viewSource.includes('可以这样问'), '快捷问题上方不应增加说明文案。');
-for (const question of ['班级评价主要扣在哪？', '班级评价较上周哪项变化最大？', '根据班级评价，下周优先关注什么？']) {
-  requireText(viewSource, question, `班级评价快捷问题应使用明确且自然的文案：${question}`);
+for (const question of ['班级评比主要扣在哪？', '班级评比较上周哪项变化最大？', '根据班级评比，下周优先关注什么？']) {
+  requireText(viewSource, question, `班级评比快捷问题应使用明确且自然的文案：${question}`);
 }
 requireText(viewSource, 'suggestedQuestions={messages.length > 0 ? followUpQuestions : OVERVIEW_RECOMMENDED_QUESTIONS}', '输入区应根据对话状态展示首轮建议或连续追问。');
 assert.ok(
@@ -152,7 +154,7 @@ assert.ok(!viewSource.includes(') : conversationOpen ? ('), '推荐问题不应�
 assert.ok(!viewSource.includes('AgentMessageIdentity'), 'Agent 回复不应展示额外头像。');
 assert.ok(!viewSource.includes('>班主任助理</div>'), 'Agent 回复不应重复展示身份名称。');
 requireText(viewSource, 'headteacher-agent-glass min-w-0 flex-1', 'Agent 回复应直接使用左侧浅色内容气泡。');
-requireText(viewSource, '正在分析班级评价数据', 'Agent 回复前应展示分析中的对话反馈。');
+requireText(viewSource, '正在分析班级评比数据', 'Agent 回复前应展示分析中的对话反馈。');
 const conversationAnswerSource = viewSource.slice(
   viewSource.indexOf('const ConversationAnswerContent'),
   viewSource.indexOf('const ConversationThread'),
@@ -170,14 +172,14 @@ requireText(viewSource, 'getFollowUpQuestions', '回答后应提供不重复当�
 requireText(viewSource, 'askClassEvaluationQuestion', '自由问题应进入班级评价问答领域逻辑。');
 assert.ok(!viewSource.includes('getRecordsFromAnswer'), '对话回答不应再按证据编号打开逐笔记录。');
 requireText(viewSource, 'rankings.map', '展开态应展示五项一级指标的得分和排名。');
-requireText(viewSource, '<span>分类数据</span>', '收起态入口应命名为分类数据。');
+requireText(viewSource, '<span>评价分类</span>', '收起态入口应明确展示评价分类。');
 requireText(viewSource, 'items-center justify-end bg-[var(--tm-bg-surface-glass)] px-3', '数据卡底部只应保留右侧分类入口。');
-requireText(viewSource, "aria-label={expanded ? '收起分类数据' : '展开分类数据'}", '分类数据按钮应按展开状态提供准确的无障碍名称。');
+requireText(viewSource, "aria-label={expanded ? '收起评价分类' : '展开评价分类'}", '评价分类按钮应按展开状态提供准确的无障碍名称。');
 requireText(viewSource, 'h-[var(--tm-assistant-secondary-pill-height)] w-[92px]', '分类数据入口应使用更紧凑的92×30像素可见胶囊。');
 requireText(viewSource, 'h-[var(--tm-assistant-icon-control-visual-size)] w-[var(--tm-assistant-icon-control-visual-size)]', '收起箭头应使用36像素可见圆形按钮。');
 requireText(viewSource, 'after:-inset-y-[7px]', '分类数据入口应在30像素外观之外保留44像素触控高度。');
 requireText(viewSource, 'after:-inset-1', '收起箭头应在36像素外观之外保留44像素触控区域。');
-requireText(viewSource, 'transition-[width,height,scale,background-color,box-shadow]', '分类数据展开与收起应使用可中断的精确属性过渡。');
+requireText(viewSource, 'transition-[width,height,background-color,box-shadow]', '分类数据展开与收起应使用可中断且不含按压缩放的精确属性过渡。');
 requireText(viewSource, "expanded ? 'rotate-180' : 'rotate-0'", '分类数据箭头应连续旋转表达展开状态。');
 requireText(viewSource, '<DimensionRankingTable', '展开态应使用四列分类数据表。');
 requireText(viewSource, 'formatCompactScore(item.score)', '分类数据表的整数分值不应重复显示无效小数位。');
@@ -192,10 +194,10 @@ assert.ok(!viewSource.includes('>评比大项</h3>'), '分类数据展开后不�
 assert.ok(!viewSource.includes('<TeacherReportScoreProgressChart'), '分类数据应使用稳定四列布局，不再展示进度图。');
 assert.ok(!viewSource.includes('grid grid-cols-2 divide-x divide-[var(--tm-border-subtle)] border-y'), '本周核心数据不应继续依赖重复分隔线建立层级。');
 assert.ok(!viewSource.includes(' transition '), 'V2 页面交互不得使用会监听所有属性的笼统过渡。');
-requireText(viewSource, '展示明细', '分类数据下方应提供居中的展示明细入口。');
-requireText(viewSource, 'find(item => item.recordCount > 0)?.dimension', '展示明细应默认打开本周期第一项有扣分的指标。');
+requireText(viewSource, '查看评价明细', '评价分类下方应提供居中的查看评价明细入口。');
+requireText(viewSource, 'find(item => item.recordCount > 0)?.dimension', '查看评价明细应默认打开本周期第一项有扣分的指标。');
 requireText(viewSource, 'initialDimension={detailInitialDimension ?? undefined}', '分类明细应在子页定位到当前一级指标。');
-requireText(viewSource, 'setWeekDetailOpen(true)', '点击分类行或展示明细应进入周数据子页。');
+requireText(viewSource, 'setWeekDetailOpen(true)', '点击分类行或查看评价明细应进入周数据子页。');
 assert.ok(!viewSource.includes('DimensionDetailSheetHeader'), '分类明细不应再使用底部弹窗。');
 requireText(viewSource, 'role="tablist" aria-label="一级指标"', '周数据子页应提供一级指标切换。');
 assert.ok(!viewSource.includes('expandedDimension'), '分类数据不应继续在主卡片内展开扣分记录。');
@@ -222,7 +224,7 @@ requireText(viewSource, 'saveClassEvaluationReport', '首次生成完整周报�
 requireText(viewSource, 'CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION', '缓存身份应包含整份周报的提示词版本。');
 requireText(viewSource, 'dataSnapshotId: snapshot.id', '缓存身份应包含当前数据快照。');
 requireText(viewSource, 'REPORT_GENERATION_STEPS', '首次生成应展示 Agent 分析过程。');
-for (const step of ['正在汇总本周班级评价数据', '正在分析得分与扣分情况', '正在对比指标表现与周变化', '正在生成本周分析与指导建议']) {
+for (const step of ['正在汇总本周班级评比数据', '正在分析得分与扣分情况', '正在对比指标表现与周变化', '正在生成本周分析与指导建议']) {
   requireText(viewSource, step, `Agent 生成过程缺少阶段：${step}`);
 }
 assert.ok(!viewSource.includes('activeReport.evidenceRecords'), '历史报告也不应提供查看依据入口。');

@@ -14,6 +14,7 @@ import {
     MOCK_TERM_REPORT_AI_DATA_FEMALE
 } from '../constants';
 import { ASSETS } from '../assets/images';
+import { FIRST_GRADE_CHINESE_RUBRIC_DIMENSIONS } from '../data/firstGradeChineseTermReport';
 import SubjectRadarChart from '../components/SubjectRadarChart';
 import SubjectGradesChart from '../components/SubjectGradesChart';
 import FiveEducationRadarSimple from '../components/FiveEducationRadarSimple';
@@ -1184,6 +1185,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
 
 // 5. Subject Detail (Enhanced with Radar Chart)
 const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }: { subject: string, grade: string, details: typeof MOCK_PE_REPORT_DETAILS, student: Student, mode?: 'a4' | 'mobile', id?: string, key?: any }) => {
+    const usesFirstGradeChineseRubric = subject === '语文' && student.grade === '一年级';
     const getIcon = (name: string) => {
         const map: any = { '语文': BookOpen, '数学': Calculator, '英语': Languages, '科学': FlaskConical, '体育': Dumbbell, '美术': Palette };
         return map[name] || Award;
@@ -1205,7 +1207,9 @@ const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }
 
     // 解析学科维度数据 - 与ReportDetailView保持一致
     const parsedDimensions = useMemo(() => {
-        if (subject === '语文') {
+        if (usesFirstGradeChineseRubric) {
+            return FIRST_GRADE_CHINESE_RUBRIC_DIMENSIONS;
+        } else if (subject === '语文') {
             return [
                 { label: '认字写字', score: 4, fullScore: 4 },
                 { label: '背诵默写', score: 6, fullScore: 6 },
@@ -1284,11 +1288,16 @@ const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }
             { label: '作业完成', score: 27, fullScore: 30 },
             { label: '期末检测', score: 43, fullScore: 50 },
         ];
-    }, [subject]);
+    }, [subject, usesFirstGradeChineseRubric]);
 
     // 计算综合等级
     const calculatedGrade = useMemo(() => {
         if (parsedDimensions.length === 0) return '优';
+
+        if (usesFirstGradeChineseRubric) {
+            const averageStars = parsedDimensions.reduce((sum, dim) => sum + dim.score, 0) / parsedDimensions.length;
+            return `${Math.round(averageStars)}星`;
+        }
 
         const totalScore = parsedDimensions.reduce((sum, dim) => sum + dim.score, 0);
         const totalFullScore = parsedDimensions.reduce((sum, dim) => sum + dim.fullScore, 0);
@@ -1298,7 +1307,7 @@ const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }
         else if (scoreRate >= 70) return '良';
         else if (scoreRate >= 60) return '合格';
         else return '待提升';
-    }, [parsedDimensions]);
+    }, [parsedDimensions, usesFirstGradeChineseRubric]);
 
     return (
         <ReportPageContainer mode={mode} id={id}>
@@ -1306,11 +1315,11 @@ const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }
 
             <div className="flex justify-between items-end mb-6 px-2">
                 <div>
-                    <div className="text-[10px] text-slate-400 font-bold mb-1">学期等级</div>
+                    <div className="text-[10px] text-slate-400 font-bold mb-1">{usesFirstGradeChineseRubric ? '期末总评' : '学期等级'}</div>
                     <div className="text-4xl font-black text-slate-900 tracking-tight">{calculatedGrade}</div>
                 </div>
                 <div className="flex gap-2">
-                    <ReportTag color="blue">2025-2026上</ReportTag>
+                    <ReportTag color="blue">2025-2026下</ReportTag>
                     <ReportTag color="green">期末综合</ReportTag>
                 </div>
             </div>
@@ -1318,7 +1327,7 @@ const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }
             {/* 雷达图区域 */}
             {parsedDimensions.length > 0 && (
                 <ReportCard className="mb-4 bg-gradient-to-br from-slate-50 to-white">
-                    <SubjectRadarChart dimensions={parsedDimensions} />
+                    <SubjectRadarChart dimensions={parsedDimensions} scale={usesFirstGradeChineseRubric ? 'stars' : 'score'} />
 
                     {/* 图例 */}
                     <div className="mt-4 px-2">
@@ -1397,6 +1406,7 @@ const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }
 // 6. Subject Reports with Tab Switcher (学科报告-Tab切换版本)
 const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }: { student: Student, mode?: 'a4' | 'mobile', id?: string, initialSubject?: string }) => {
     const [activeSubject, setActiveSubject] = useState(initialSubject || MOCK_SUBJECTS[0].subject);
+    const usesFirstGradeChineseRubric = activeSubject === '语文' && student.grade === '一年级';
 
     const getIcon = (name: string) => {
         const map: any = {
@@ -1422,7 +1432,9 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }
 
     // 解析维度数据
     const parsedDimensions = useMemo(() => {
-        if (activeSubject === '语文') {
+        if (usesFirstGradeChineseRubric) {
+            return FIRST_GRADE_CHINESE_RUBRIC_DIMENSIONS;
+        } else if (activeSubject === '语文') {
             return [
                 { label: '认字写字', score: 4, fullScore: 4 },
                 { label: '背诵默写', score: 6, fullScore: 6 },
@@ -1500,11 +1512,15 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }
             { label: '作业完成', score: 27, fullScore: 30 },
             { label: '期末检测', score: 43, fullScore: 50 },
         ];
-    }, [activeSubject]);
+    }, [activeSubject, usesFirstGradeChineseRubric]);
 
     // 计算等级
     const calculatedGrade = useMemo(() => {
         if (parsedDimensions.length === 0) return '优';
+        if (usesFirstGradeChineseRubric) {
+            const averageStars = parsedDimensions.reduce((sum, dim) => sum + dim.score, 0) / parsedDimensions.length;
+            return `${Math.round(averageStars)}星`;
+        }
         const totalScore = parsedDimensions.reduce((sum, dim) => sum + dim.score, 0);
         const totalFullScore = parsedDimensions.reduce((sum, dim) => sum + dim.fullScore, 0);
         const scoreRate = totalFullScore > 0 ? (totalScore / totalFullScore) * 100 : 0;
@@ -1512,14 +1528,14 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }
         else if (scoreRate >= 70) return '良';
         else if (scoreRate >= 60) return '合格';
         else return '待提升';
-    }, [parsedDimensions]);
+    }, [parsedDimensions, usesFirstGradeChineseRubric]);
 
     return (
         <ReportPageContainer mode={mode} id={id}>
 
             {/* Tab导航 */}
             <div className="mb-4 -mx-5 px-5 overflow-x-auto no-scrollbar">
-                <div className="flex gap-2 min-w-max pb-2">
+                <div className="flex gap-2 min-w-max pb-2" role="tablist" aria-label="切换学科报告">
                     {MOCK_SUBJECTS.map((sub) => {
                         const Icon = getIcon(sub.subject);
                         const isActive = activeSubject === sub.subject;
@@ -1527,8 +1543,10 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }
                             <button
                                 key={sub.subject}
                                 onClick={() => setActiveSubject(sub.subject)}
+                                role="tab"
+                                aria-selected={isActive}
                                 className={`
-                                    flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all
+                                    flex min-h-[var(--tm-size-touch)] items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-[background-color,color,box-shadow,transform]
                                     ${isActive
                                         ? 'bg-blue-600 text-white shadow-md'
                                         : 'bg-slate-100 text-slate-600 active:scale-95'
@@ -1548,11 +1566,11 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }
                 {/* 等级显示 */}
                 <div className="flex justify-between items-end mb-6 px-2">
                     <div>
-                        <div className="text-[10px] text-slate-400 font-bold mb-1">学期等级</div>
+                        <div className="text-[10px] text-slate-400 font-bold mb-1">{usesFirstGradeChineseRubric ? '期末总评' : '学期等级'}</div>
                         <div className="text-4xl font-black text-slate-900 tracking-tight">{calculatedGrade}</div>
                     </div>
                     <div className="flex gap-2">
-                        <ReportTag color="blue">2025-2026上</ReportTag>
+                        <ReportTag color="blue">2025-2026下</ReportTag>
                         <ReportTag color="green">期末综合</ReportTag>
                     </div>
                 </div>
@@ -1560,7 +1578,7 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }
                 {/* 雷达图 */}
                 {parsedDimensions.length > 0 && (
                     <ReportCard className="mb-4 bg-gradient-to-br from-slate-50 to-white">
-                        <SubjectRadarChart dimensions={parsedDimensions} />
+                        <SubjectRadarChart dimensions={parsedDimensions} scale={usesFirstGradeChineseRubric ? 'stars' : 'score'} />
                         <div className="mt-4 px-2">
                             <div className="flex justify-center items-center gap-4 text-xs flex-wrap">
                                 <div className="flex items-center gap-1.5">
@@ -2658,7 +2676,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
 
                 {/* 学科报告页叠加层 */}
                 {showSubjectSubPage ? (
-                    <div className="w-full h-full bg-white z-[60] flex flex-col sticky top-0 animate-in slide-in-from-right duration-300">
+                    <div className="flex min-h-full w-full flex-col bg-white animate-in slide-in-from-right duration-300">
                         <PageSubjectReportsWithTabs
                             student={student}
                             mode="mobile"

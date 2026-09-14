@@ -239,7 +239,7 @@ assert.match(termReportRedesign, /initialViewMode="mobile"/);
 assert.match(termReportRedesign, /initialViewMode="a4"/);
 assert.match(termReportRedesign, /showViewModeToggle=\{false\}/);
 assert.match(termReportRedesign, /李亦洋/);
-assert.match(termReportRedesign, /20210200324/);
+assert.match(termReportRedesign, /20250101018/);
 assert.match(termReportRedesign, /gender: 'female'/);
 assert.match(termReportRedesign, /future-potential', label: '未来潜力', defaultEnabled: false/);
 assert.match(termReportRedesign, /school-achievement', label: '专题成果', defaultEnabled: false/);

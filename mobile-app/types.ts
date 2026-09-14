@@ -1,3 +1,13 @@
+import type {
+  ParentEvaluationVisibility,
+  ParentEvaluationVisibilitySettings,
+} from '../shared/parentEvaluationVisibility';
+
+export type {
+  ParentEvaluationVisibility,
+  ParentEvaluationVisibilitySettings,
+} from '../shared/parentEvaluationVisibility';
+
 export type GuardianRelation = '家长' | '爸爸' | '妈妈' | '爷爷' | '奶奶' | '外公' | '外婆' | '其他';
 
 export interface GuardianContact {
@@ -95,17 +105,25 @@ export interface CampusCoinConsumeRecord {
 }
 
 export type CampusCoinSettlementPeriod = 'weekly' | 'monthly';
+export type CampusCoinBudgetMode = 'per_class' | 'per_student';
 
 export interface CoinIssuanceConfig {
   enabled: boolean;
   period: CampusCoinSettlementPeriod;
-  classBudget: number;
+  budgetMode: CampusCoinBudgetMode;
+  budgetAmount: number;
   sunshineRatio: number;
+  /** 本结算周期内班级至少需要发起的评价次数。 */
+  minimumEvaluationCount: number;
 }
 
 export interface CampusCoinSettlementEstimate {
   enabled: boolean;
+  eligible: boolean;
   period: CampusCoinSettlementPeriod;
+  periodEvaluationCount: number;
+  minimumEvaluationCount: number;
+  classBudgetTotal: number;
   sunshineReward: number;
   rankingReward: number;
   estimatedTotal: number;
@@ -123,23 +141,20 @@ export interface CampusCoinDetail {
 
 export type StudentLevelDisplayMode = 'term' | 'cumulative';
 
-export interface StudentCardDisplaySettings {
+export type EvaluationCardValueMode = 'count' | 'score';
+
+export interface EvaluationCardDisplaySettings {
+  showEvaluation: boolean;
+  showPraise: boolean;
+  showCriticism: boolean;
+  valueMode: EvaluationCardValueMode;
+}
+
+export interface StudentCardDisplaySettings extends EvaluationCardDisplaySettings {
   showLevel: boolean;
-  showPraiseCount: boolean;
-  showCriticismCount: boolean;
 }
 
-export interface GroupCardDisplaySettings {
-  showPraiseCount: boolean;
-  showCriticismCount: boolean;
-}
-
-export type ParentEvaluationVisibility = 'hidden' | 'summary' | 'summaryAndDetails';
-
-export interface ParentEvaluationVisibilitySettings {
-  positive: ParentEvaluationVisibility;
-  negative: ParentEvaluationVisibility;
-}
+export interface GroupCardDisplaySettings extends EvaluationCardDisplaySettings {}
 
 export interface ClassInfo {
   id: string;

@@ -121,7 +121,7 @@ assert.ok(!viewSource.includes('grid-cols-[28px_minmax(0,1fr)_84px_84px]') && vi
 assert.ok(viewSource.includes('<span role="columnheader" className="pl-[var(--tm-report-coverage-name-inset)] text-[var(--tm-text-primary)]">学生姓名</span>'), '学生姓名应使用一致的表头语义与令牌化左侧缓冲。');
 assert.ok(viewSource.includes('text-[length:var(--tm-font-size-compact)] font-semibold') && viewSource.includes('px-1 font-semibold'), '学生覆盖表头应统一使用13像素半粗字重，并为排序标题保留横向留白。');
 assert.ok(viewSource.includes('const evaluationMissing = row.evaluationCount === 0') && viewSource.includes('const teacherMissing = row.teacherCount === 0'), '评价次数和评价老师数应分别判断零值。');
-assert.ok(viewSource.includes("teacherMissing\n                                        ? 'font-semibold text-[var(--tm-chart-negative-text)]'"), '两个指标的零值应使用一致的负向文字样式。');
+assert.ok(viewSource.includes("teacherMissing\n                                        ? 'font-semibold text-[var(--tm-status-negative-strong)]'"), '两个覆盖指标的零值应使用系统关注色，不得混用扣分业务色。');
 assert.ok(!viewSource.includes("const evaluationSelected = sortKey === 'evaluationCount'") && !viewSource.includes("const teacherSelected = sortKey === 'teacherCount'"), '排序状态只应由表头表达，不应给整列数据重复增加视觉背景。');
 assert.ok(viewSource.includes('h-[var(--tm-report-coverage-value-height)]') && !viewSource.includes('mx-auto flex h-7 w-16'), '学生覆盖数值应使用更扁的令牌化区域，避免胶囊控件感。');
 assert.ok(viewSource.includes('>\n                                {row.evaluationCount}\n                            </span>') && viewSource.includes('>\n                                {row.teacherCount}\n                            </span>'), '学生覆盖数据单元应只展示数字，不重复表头已有的单位。');

@@ -7,6 +7,7 @@ import {
   parentShadow,
   parentSurface,
   parentText,
+  parentTypography,
 } from './ParentStyleTokens';
 
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ');
@@ -17,7 +18,7 @@ interface ParentPageShellProps {
 }
 
 export const ParentPageShell: React.FC<ParentPageShellProps> = ({ children, className = '' }) => (
-  <div className={cx('relative flex-1 overflow-y-auto no-scrollbar bg-transparent text-slate-800 antialiased', className)}>
+  <div className={cx('relative flex-1 overflow-y-auto no-scrollbar bg-transparent text-[var(--pm-text-primary)] antialiased', parentTypography.body, className)}>
     {children}
   </div>
 );
@@ -42,7 +43,7 @@ interface ParentGradientIconProps {
 }
 
 const parentGradientIconSize = {
-  sm: 'h-[30px] w-[30px] rounded-[10px]',
+  sm: 'h-[30px] w-[30px]',
   md: 'h-[42px] w-[42px]',
   lg: 'h-[50px] w-[50px]',
 } as const;
@@ -88,9 +89,9 @@ export const ParentChildAvatar: React.FC<ParentChildAvatarProps> = ({
   return (
     <span
       className={cx(
-        'inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px]',
-        'bg-gradient-to-br from-[#8FD7FF] to-[#BCEFFF] text-[18px] font-black text-white',
-        'shadow-[0_14px_26px_-20px_rgba(13,180,241,0.66)]',
+        'inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--pm-radius-inner)]',
+        'bg-[var(--pm-icon-soft-blue-gradient)] text-[18px] font-[var(--pm-font-weight-bold)] text-[var(--pm-brand-primary-strong)]',
+        '[box-shadow:var(--pm-shadow-control)]',
         className,
       )}
       aria-label={imageAlt}
@@ -114,7 +115,7 @@ type ParentButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const parentButtonBase =
-  'inline-flex min-h-11 items-center justify-center gap-2 px-4 text-[14px] font-black transition-[transform,background-color,box-shadow,opacity] duration-150 ease-out active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100';
+  'inline-flex min-h-[var(--pm-size-touch)] items-center justify-center gap-2 px-4 text-[length:var(--pm-font-size-body)] font-[var(--pm-font-weight-semibold)] transition-[transform,background-color,box-shadow,opacity] [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100';
 
 export const ParentPrimaryButton: React.FC<ParentButtonProps> = ({
   children,
@@ -163,23 +164,23 @@ export const ParentBottomSheet: React.FC<ParentBottomSheetProps> = ({
   children,
   className = '',
 }) => (
-  <div className="absolute inset-0 z-50 flex items-end bg-slate-900/18 backdrop-blur-[2px]" onClick={onClose}>
+  <div className="absolute inset-0 z-50 flex items-end bg-[var(--pm-mask)] backdrop-blur-[2px]" onClick={onClose}>
     <section
-      className={cx('w-full border border-white/90 bg-white px-5 pb-6 pt-4', parentRadius.sheet, parentShadow.sheet, className)}
+      className={cx('w-full bg-[var(--pm-bg-surface)] px-5 pb-6 pt-4', parentRadius.sheet, parentShadow.sheet, className)}
       role="dialog"
       onClick={event => event.stopPropagation()}
       aria-modal="true"
       aria-labelledby="parent-bottom-sheet-title"
     >
-      <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-slate-200" aria-hidden="true" />
+      <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[var(--pm-border-control)]" aria-hidden="true" />
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 id="parent-bottom-sheet-title" className={cx('text-[17px] font-black text-balance', parentText.title)}>
+        <h2 id="parent-bottom-sheet-title" className={cx(parentTypography.sectionTitle, 'text-balance', parentText.title)}>
           {title}
         </h2>
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-[transform,background-color] duration-150 ease-out active:scale-[0.96]"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--pm-bg-surface-muted)] text-[var(--pm-text-secondary)] transition-[transform,background-color] [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98]"
           aria-label="关闭"
         >
           <X size={18} strokeWidth={2.6} />

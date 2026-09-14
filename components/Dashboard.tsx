@@ -19,7 +19,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
   const formatCoin = (val: number) => Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
   
   return (
-    <div className={`h-full flex flex-col animate-in fade-in slide-in-from-left-8 duration-300 ease-out bg-[#f8fbff] tracking-tight ${layout === 'pc' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+    <div className={`h-full flex flex-col bg-[#f8fbff] tracking-tight ${layout === 'pc' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
 
       {/* 顶部：用户信息与退出按钮 */}
       <div className={`w-full bg-white p-6 border-b-2 border-blue-50 shrink-0 ${layout === 'pc' ? 'shadow-sm z-10' : ''}`}>
@@ -36,11 +36,13 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
             </div>
           </div>
           <button
+            type="button"
             onClick={() => onNavigate('welcome')}
-            className={`${layout === 'pc' ? 'w-16 h-16 rounded-3xl' : 'w-12 h-12 rounded-2xl'} flex items-center justify-center bg-red-50 text-red-500 active:scale-90 transition-all`}
+            className={`${layout === 'pc' ? 'h-16 rounded-3xl px-5' : 'h-12 rounded-2xl px-3'} flex shrink-0 items-center justify-center gap-1.5 bg-red-50 text-red-500 transition-all active:scale-95`}
             title="退出系统"
           >
             <LogOut size={layout === 'pc' ? 32 : 24} />
+            <span className={`${layout === 'pc' ? 'text-base' : 'text-sm'} font-black`}>退出</span>
           </button>
         </div>
 
@@ -96,12 +98,12 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
               <h3 className="text-xl font-black text-slate-900 tracking-tighter">稳步成长</h3>
               <div className="flex items-center gap-4 mt-2 pt-2 border-t border-slate-100 opacity-90">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-tight">本月净得分</span>
+                  <span className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-tight">本月总分</span>
                   <span className="text-lg font-black text-blue-500 leading-none">45<span className="text-[10px] font-bold ml-1 text-slate-400">分</span></span>
                 </div>
                 <div className="w-px h-6 bg-slate-200 shrink-0"></div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-tight">预估月度分红</span>
+                  <span className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-tight">预计可得</span>
                   <span className="text-lg font-black text-orange-500 inline-flex items-center leading-none"><img src="/assets/coin.png" className="w-[1em] h-[1em] mr-1 -mt-[2px]" alt="coin" /> 90.88</span>
                 </div>
               </div>

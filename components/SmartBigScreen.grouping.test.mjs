@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('./SmartBigScreen.tsx', import.meta.url), 'utf8');
-const performanceSource = readFileSync(new URL('../mobile-app/components/student-performance/StudentPerformanceMeta.tsx', import.meta.url), 'utf8');
+const performanceSource = readFileSync(new URL('./classroom/ClassroomPerformanceValues.tsx', import.meta.url), 'utf8');
 
 const requireText = (text, message) => assert.ok(source.includes(text), message);
 
@@ -27,7 +27,7 @@ requireText('updateGroupPerformance(targetGroupIds, scoreChange)', '小组评价
 requireText("updateGroupPerformance(record.groupIds ?? [], record.scoreChange, 'revert')", '撤销小组评价时应同步恢复小组统计');
 requireText('groupIds: [matchedGroup.id]', '语音识别到小组时应保留小组目标');
 requireText('updateGroupPerformance(targets.groupIds ?? [], scoreChange)', '语音小组评价应更新小组统计');
-requireText("[nextGroup.id]: { praiseCount: 0, criticismCount: 0 }", '新建小组统计必须从零开始');
+requireText("[nextGroup.id]: { praiseCount: 0, criticismCount: 0, praiseScore: 0, criticismScore: 0 }", '新建小组统计必须从零开始');
 requireText('getClassroomDisplayConfig', '小组相关侧栏应读取统一课堂展示配置');
 requireText('const groupDrawerWidth = `min(${classroomDisplay.groupDrawerWidth}px, calc(100vw - 32px))`', '小组抽屉必须根据展示档位适配窄视口');
 requireText('width={groupDrawerWidth}', '小组抽屉必须使用统一侧栏宽度');
@@ -41,25 +41,28 @@ requireText('bodyStyle={{ padding: 0 }}', '所有小组抽屉模式必须复用�
 requireText('const GroupDrawerBody', '小组详情、新增、调整与设置应复用统一抽屉内容容器');
 requireText('groupEditorStudentSections', '关闭仅看未分组后，学生选择结果必须按现有小组组织');
 requireText('GroupMemberSelectCard', '添加小组应使用统一的头像、学号与姓名选择卡片');
+requireText('<ClassroomRosterBadge studentNo={student.studentNo} fontSize={layout.studentNoFontSize} lineHeight={16} variant="select" ariaHidden />', '分组选人卡片应复用统一两位编号组件');
 requireText('gridTemplateColumns: `repeat(auto-fill, minmax(${classroomDisplay.memberSelect.columnMinWidth}px, 1fr))`', 'PC抽屉内学生卡片应根据档位保持稳定列宽');
-requireText('block min-w-0 truncate font-bold leading-4 text-slate-500', '小组卡片成员姓名应沿用手机端的单行省略展示');
+requireText('line-clamp-2 min-w-0 font-bold leading-5 text-slate-500', '小组卡片成员姓名应使用两行摘要，提升成员可见数量');
 requireText('layout.memberFontSize', '小组卡片成员字号应随课堂展示档位调整');
-requireText('const visibleNameCount = 3', '小组卡片应沿用手机端最多展示三个成员姓名的规则');
-requireText('GroupPerformanceMeta', '小组评价统计应复用手机端的带底色统计组件');
-requireText('orientation="vertical"', '小组评价统计应保持正负向纵向底色块布局');
-requireText("${viewMode === 'group' ? 'flex flex-wrap justify-center' : 'grid justify-center'}", 'PC小组卡片应使用成熟的 Flex 换行布局并让每一行独立居中');
-requireText('groupCardFlexItemStyle', 'PC小组卡片应共享统一的 Flex 单元宽度规则');
-requireText('basis-full flex justify-start', '添加小组入口应使用独立操作行并贴左排列，不参与小组卡片居中');
+requireText('const visibleNameCount = 4', 'PC小组卡片应最多展示四个成员姓名');
+requireText('ClassroomPerformanceValues', '小组评价统计应复用PC课堂大屏公共组件');
+requireText('ariaLabelPrefix="小组"', '小组评价统计应保留明确的读屏语义');
+requireText('orientation="vertical"', '小组评价统计应在卡片右侧纵向排列，释放成员信息宽度');
+requireText("${viewMode === 'group' ? 'grid justify-start' : 'grid justify-center'} gap-3 pb-20 relative", '小组卡片应使用左对齐网格，从左到右、从上到下排列，学生卡片保留原有居中策略');
+requireText('gridTemplateColumns: `repeat(auto-fill, ${viewMode === \'group\' ? classroomDisplay.groupCard.width : classroomDisplay.studentCard.width}px)`', '课堂卡片网格应使用当前展示档位的固定列宽');
+requireText('groupCardFlexItemStyle', 'PC小组卡片应共享统一的卡片宽度规则');
+assert.doesNotMatch(source, /basis-full flex justify-start/, '添加小组入口不应另起一行，应作为最后一个网格项');
 requireText('fontSize: classroomDisplay.toolbar.fontSize', '小组方案筛选的主文案应随课堂展示档位调整字号');
 requireText('classroomDisplay.toolbar.groupPlanMetaFontSize', '小组方案筛选的辅助文案应随课堂展示档位调整字号');
 assert.doesNotMatch(source, /groupCardSpan|col-span-2/, '小组卡片不应继续通过跨两列制造宽卡片');
-requireText('等${group.memberCount}名学生', '超过三个成员时应沿用手机端的等人数文案');
-requireText('，共${group.memberCount}名学生', '不超过三个成员时应沿用手机端的共人数文案');
+requireText('等${group.memberCount}名学生', '超过四个成员时应使用等人数文案');
+requireText('，共${group.memberCount}名学生', '不超过四个成员时应使用共人数文案');
 requireText('const groupMoveNotice = useMemo', '跨组选择提醒应由当前选择状态实时汇总');
 requireText('已选：${nameSummary}', '跨组选择提醒应展示已选学生摘要');
 assert.doesNotMatch(source, /const toggleGroupDraftMember[\s\S]{0,500}setToastMsg/, '跨组选择提醒不应使用短时全局 toast 定时消失');
-assert.ok(performanceSource.includes('var(--tm-student-praise-soft,#ecfdf5)'), 'PC页面缺少手机端统计组件主题变量时应使用正向统计底色兜底');
-assert.ok(performanceSource.includes('var(--tm-student-criticism-soft,#fff1f2)'), 'PC页面缺少手机端统计组件主题变量时应使用负向统计底色兜底');
+assert.ok(performanceSource.includes('bg-emerald-50') && performanceSource.includes('text-emerald-700'), 'PC公共组件应统一加分色块与高对比度文字');
+assert.ok(performanceSource.includes('bg-rose-50') && performanceSource.includes('text-rose-700'), 'PC公共组件应统一扣分色块与高对比度文字');
 requireText('z-[10030]', '全局提示必须高于抽屉和弹窗层级');
 requireText('role="status" aria-live="polite"', '抽屉内学生移动提示应使用可感知的状态语义');
 requireText('MobileEmptyState', '学生选择为空时应复用现有缺省状态组件');

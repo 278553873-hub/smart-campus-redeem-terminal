@@ -802,6 +802,25 @@ const setBarChartOptionWithReplay = (
     afterAnimationStart?.();
 };
 
+const observeReportChartSize = (chart: EChartsType, element: HTMLElement) => {
+    let resizeFrame: number | null = null;
+    const requestResize = () => {
+        if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
+        resizeFrame = requestAnimationFrame(() => {
+            resizeFrame = null;
+            if (!chart.isDisposed()) chart.resize();
+        });
+    };
+    const resizeObserver = new ResizeObserver(requestResize);
+    resizeObserver.observe(element);
+    requestResize();
+
+    return () => {
+        resizeObserver.disconnect();
+        if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
+    };
+};
+
 const FiveEducationBarChart = ({
     title,
     yAxisName,
@@ -1347,6 +1366,46 @@ const IndicatorUsageSheet = ({
     );
 };
 
+const GRADE_CHART_VISIBLE_ITEM_COUNT = 5;
+const GRADE_CHART_ITEM_WIDTH = 60;
+const GRADE_CHART_AXIS_WIDTH = 48;
+
+const GradeChartViewport = ({
+    chartRef,
+    gradeCount,
+    chartReady,
+    label,
+}: {
+    chartRef: React.RefObject<HTMLDivElement | null>;
+    gradeCount: number;
+    chartReady: boolean;
+    label: string;
+}) => {
+    const scrollable = gradeCount > GRADE_CHART_VISIBLE_ITEM_COUNT;
+
+    return (
+        <div className="rounded-3xl pb-2 pt-3">
+            <div
+                role="region"
+                aria-label={scrollable ? `${label}，可左右滑动查看全部年级` : label}
+                tabIndex={scrollable ? 0 : undefined}
+                className="overflow-x-auto overscroll-x-contain no-scrollbar"
+            >
+                <div
+                    ref={chartRef}
+                    className="h-56 min-w-full"
+                    style={{
+                        width: scrollable ? `${GRADE_CHART_AXIS_WIDTH + gradeCount * GRADE_CHART_ITEM_WIDTH}px` : '100%',
+                    }}
+                />
+            </div>
+            {!chartReady && (
+                <div className="pointer-events-none -mt-56 flex h-56 items-center justify-center text-xs text-[var(--tm-text-secondary)]">图表加载中...</div>
+            )}
+        </div>
+    );
+};
+
 const GradeCoverageChart = ({
     grades,
     selectedGradeId,
@@ -1370,7 +1429,7 @@ const GradeCoverageChart = ({
         if (!chartRef.current) return;
 
         let disposed = false;
-        let resizeObserver: ResizeObserver | null = null;
+        let stopObservingResize: (() => void) | null = null;
 
         const loadChart = async () => {
             const echartsCore = await loadReportChartsRuntime();
@@ -1382,20 +1441,15 @@ const GradeCoverageChart = ({
             chartInstanceRef.current = chart;
             setChartReady(true);
 
-            const handleResize = () => chart.resize();
-            resizeObserver = new ResizeObserver(handleResize);
-            resizeObserver.observe(chartRef.current);
-            window.addEventListener('resize', handleResize);
-            requestAnimationFrame(handleResize);
+            stopObservingResize = observeReportChartSize(chart, chartRef.current);
 
-            chartInstanceRef.current?.on('finished', handleResize);
         };
 
         loadChart();
 
         return () => {
             disposed = true;
-            resizeObserver?.disconnect();
+            stopObservingResize?.();
             chartInstanceRef.current?.dispose();
             chartInstanceRef.current = null;
             chartCoreRef.current = null;
@@ -1523,12 +1577,12 @@ const GradeCoverageChart = ({
     }, [animationKey, chartReady, grades, onSelect, selectedGradeId, tooltipEnabled]);
 
     return (
-        <div className="rounded-3xl px-2 pb-2 pt-3">
-            <div ref={chartRef} className="h-56 w-full" />
-            {!chartReady && (
-                <div className="-mt-56 flex h-56 items-center justify-center text-xs text-[var(--tm-text-secondary)]">图表加载中...</div>
-            )}
-        </div>
+        <GradeChartViewport
+            chartRef={chartRef}
+            gradeCount={grades.length}
+            chartReady={chartReady}
+            label="年级覆盖率图表"
+        />
     );
 };
 
@@ -1575,7 +1629,7 @@ const GradeEvaluationRecordsChart = ({
         if (!chartRef.current) return;
 
         let disposed = false;
-        let resizeObserver: ResizeObserver | null = null;
+        let stopObservingResize: (() => void) | null = null;
 
         const loadChart = async () => {
             const echartsCore = await loadReportChartsRuntime();
@@ -1587,20 +1641,15 @@ const GradeEvaluationRecordsChart = ({
             chartInstanceRef.current = chart;
             setChartReady(true);
 
-            const handleResize = () => chart.resize();
-            resizeObserver = new ResizeObserver(handleResize);
-            resizeObserver.observe(chartRef.current);
-            window.addEventListener('resize', handleResize);
-            requestAnimationFrame(handleResize);
+            stopObservingResize = observeReportChartSize(chart, chartRef.current);
 
-            chartInstanceRef.current?.on('finished', handleResize);
         };
 
         loadChart();
 
         return () => {
             disposed = true;
-            resizeObserver?.disconnect();
+            stopObservingResize?.();
             chartInstanceRef.current?.dispose();
             chartInstanceRef.current = null;
             chartCoreRef.current = null;
@@ -1722,12 +1771,12 @@ const GradeEvaluationRecordsChart = ({
     }, [animationKey, chartReady, grades, onSelect, selectedGradeId, tooltipEnabled]);
 
     return (
-        <div className="rounded-3xl px-2 pb-2 pt-3">
-            <div ref={chartRef} className="h-56 w-full" />
-            {!chartReady && (
-                <div className="-mt-56 flex h-56 items-center justify-center text-xs text-[var(--tm-text-secondary)]">图表加载中...</div>
-            )}
-        </div>
+        <GradeChartViewport
+            chartRef={chartRef}
+            gradeCount={grades.length}
+            chartReady={chartReady}
+            label="年级评价数图表"
+        />
     );
 };
 

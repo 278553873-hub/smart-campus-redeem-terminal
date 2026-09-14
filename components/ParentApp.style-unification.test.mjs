@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 const parentSource = readFileSync(new URL('./ParentApp.tsx', import.meta.url), 'utf8');
 const tokenSource = readFileSync(new URL('./parent-app/ParentStyleTokens.tsx', import.meta.url), 'utf8');
 const uiSource = readFileSync(new URL('./parent-app/ParentUI.tsx', import.meta.url), 'utf8');
-const fluidNavSource = readFileSync(new URL('./parent-app/ParentFluidGlassNav.tsx', import.meta.url), 'utf8');
+const teacherTokenSource = readFileSync(new URL('../mobile-app/styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const failures = [];
 
 const requireText = (source, text, message) => {
@@ -46,8 +46,6 @@ for (const required of [
   'pendingQuestionnaires',
   '家长问卷',
   '一年级学生问卷',
-  'canViewArchive',
-  'activeChild.canViewArchive && activeChild.archives.length > 0',
   'questionnaireStepIndex',
   'questionnaireAnswers',
   'showQuestionnaireSubmitConfirm',
@@ -67,7 +65,7 @@ for (const required of [
   '下一题',
   '单选',
   '多选',
-  'text-[18px] font-black leading-[1.4]',
+  'text-[length:var(--pm-font-size-section-title)] font-bold leading-[1.4]',
   'absolute bottom-0 left-0 right-0 z-30',
   'sticky top-0 z-40',
   'aria-label="返回待办"',
@@ -80,8 +78,6 @@ for (const required of [
   "setScreen('questionnaireForm')",
   '学生档案',
   '档案明细',
-  'title="档案"',
-  'aria-label={`查看${activeChild.name}档案`}',
   'archives',
   'templateName',
   'healthInfo',
@@ -207,20 +203,13 @@ for (const forbidden of [
   forbidText(parentSource, forbidden, `样式统一不得新增真实方案外入口或概念文案：${forbidden}`);
 }
 
-for (const forbidden of [
-  "const labels = ['成长', '档案', '银行']",
-  "['表扬 +3', '档案', '920', '银行']",
-  "const labels = ['成长', '报告', '银行']",
-  "['表扬 +3', '报告', '920', '银行']",
-]) {
-  forbidText(fluidNavSource, forbidden, `家长端底栏残留了旧一级入口：${forbidden}`);
-}
-
 for (const required of [
-  "const labels = ['成长', '报告', '我的']",
-  "['表扬 +3', '报告', '家长', '我的']",
+  "{ key: 'growth', label: '成长', icon: Star }",
+  "{ key: 'reports', label: '报告', icon: FileText }",
+  "{ key: 'mine', label: '我的', icon: UserRound }",
+  "h-16 border-0 bg-[var(--pm-bg-surface)] [box-shadow:var(--pm-shadow-navigation)]",
 ]) {
-  requireText(fluidNavSource, required, `家长端底栏应保持成长/报告/我的：${required}`);
+  requireText(parentSource, required, `家长端底栏应复用教师端形态并保持成长/报告/我的：${required}`);
 }
 
 for (const forbiddenStyle of [
@@ -229,7 +218,19 @@ for (const forbiddenStyle of [
   'bg-[#FFC210] text-[#653C16]',
   'parent-teacher-token-primary-button',
 ]) {
-  forbidText(parentSource, forbiddenStyle, `家长端新视觉不应继续使用旧冲突按钮/教师端 token：${forbiddenStyle}`);
+  forbidText(parentSource, forbiddenStyle, `家长端不应继续使用旧冲突按钮：${forbiddenStyle}`);
+}
+
+for (const required of [
+  "import { teacherBrandCssVariables } from '../../mobile-app/styles/teacherMobileTokens';",
+  "'--pm-brand-primary': 'var(--tm-brand-primary)'",
+  "'--pm-radius-card': 'var(--tm-radius-card)'",
+  "'--pm-shadow-card': 'var(--tm-shadow-card)'",
+]) {
+  requireText(tokenSource, required, `家长端应复制并映射教师端 Token：${required}`);
+}
+for (const required of ['--tm-brand-primary', '--tm-radius-card', '--tm-shadow-navigation']) {
+  requireText(teacherTokenSource, required, `教师端 Token 源缺少家长端复用所需变量：${required}`);
 }
 
 for (const requiredStyle of [

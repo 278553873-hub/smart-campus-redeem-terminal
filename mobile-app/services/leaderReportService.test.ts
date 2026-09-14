@@ -1,4 +1,4 @@
-import { createLeaderReportSnapshot } from './leaderReportService';
+import { createLeaderReportSnapshot } from './leaderReportService.ts';
 
 const snapshot = createLeaderReportSnapshot({
   period: 'week',

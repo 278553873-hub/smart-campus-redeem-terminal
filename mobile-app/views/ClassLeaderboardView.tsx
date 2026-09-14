@@ -6,7 +6,7 @@ import ClassRankingList from '../components/ui/ClassRankingList';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
-import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type ClassLeaderboardSettlementCycle, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
+import { getTeacherClassDisplayName, getTeacherGradeStage, getTeacherSchoolGradeOptions, shouldGroupTeacherGrades, type ClassLeaderboardSettlementCycle, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 import type { ClassInfo } from '../types';
 
 interface ClassLeaderboardViewProps {
@@ -155,7 +155,12 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
         : selectedPeriod?.label ?? '';
     const periodUnitLabel = settlementCycle === 'week' ? '周' : '月';
     const periodPickerTitle = settlementCycle === 'week' ? '选择周' : '选择月份';
-    const gradeOptions = ['全部年级', ...(getTeacherSchoolGradeOptions(currentSpace) ?? Array.from(new Set(classes.map(classInfo => classInfo.gradeLevel))))];
+    const gradeOptions = getTeacherSchoolGradeOptions(currentSpace) ?? Array.from(new Set(classes.map(classInfo => classInfo.gradeLevel)));
+    const gradePickerOptions = gradeOptions.map(grade => ({
+        value: grade,
+        label: grade,
+        stage: getTeacherGradeStage(grade),
+    }));
     const displayRecentRecords = recentRecords.map(record => ({
         ...record,
         className: classes.find(classInfo => classInfo.id === record.classId)
@@ -312,7 +317,11 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
                     open={isGradeSheetOpen}
                     selectionMode="single"
                     value={activeGrade}
-                    options={gradeOptions.map(grade => ({ value: grade, label: grade }))}
+                    title="选择年级"
+                    options={gradePickerOptions}
+                    showAllGradesOption
+                    allGradesValue="全部年级"
+                    showStageName={shouldGroupTeacherGrades(currentSpace)}
                     onChange={setActiveGrade}
                     onClose={() => setIsGradeSheetOpen(false)}
                     ariaLabel="班级排行榜年级选项"

@@ -60,11 +60,11 @@ const MobileStudentPickerSheet: React.FC<MobileStudentPickerSheetProps> = ({
       onClose={onClose}
       header={onBack ? (
         <header className="grid h-14 shrink-0 grid-cols-[44px_1fr_44px] items-center px-2">
-          <button type="button" onClick={onBack} aria-label="返回上一步" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+          <button type="button" onClick={onBack} aria-label="返回上一步" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)]">
             <BackIcon className="h-5 w-5" />
           </button>
           <h2 className="truncate text-center text-[17px] font-semibold text-[var(--tm-text-primary)]">{title}</h2>
-          <button type="button" onClick={onClose} aria-label={`关闭${title}`} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+          <button type="button" onClick={onClose} aria-label={`关闭${title}`} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)]">
             <CloseIcon className="h-5 w-5" />
           </button>
         </header>
@@ -93,7 +93,7 @@ const MobileStudentPickerSheet: React.FC<MobileStudentPickerSheetProps> = ({
                 onClick={selectAllAction.onToggle}
                 disabled={selectAllAction.disabled}
                 aria-pressed={selectAllAction.allSelected}
-                className="student-compact-select-last-column flex min-h-11 items-center justify-end text-right text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] active:text-[var(--tm-brand-primary-pressed)] disabled:text-[var(--tm-text-disabled)]"
+                className="student-compact-select-last-column flex min-h-11 items-center justify-end text-right text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] disabled:text-[var(--tm-text-disabled)]"
               >
                 {selectAllAction.allSelected ? '取消全选' : '全选'}
               </button>

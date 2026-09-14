@@ -41,14 +41,15 @@ import {
 } from '../mobile-app/assets/groupAvatarCatalog';
 import {
   applyStudentPerformanceEvent,
+  createDemoStudentLevelEvaluationRecords,
   createDemoStudentPerformanceSummary,
+  getStudentLevelNetScore,
   getStudentPerformanceLevel,
   revertStudentPerformanceEvent,
   type StudentPerformanceSummary,
 } from '../mobile-app/domain/studentPerformance';
 import { getStudentCardDisplaySettings } from '../mobile-app/domain/studentCardDisplay';
 import { getGroupCardDisplaySettings } from '../mobile-app/domain/groupCardDisplay';
-import GroupPerformanceMeta from '../mobile-app/components/group/GroupPerformanceMeta';
 import {
   createDemoGroupPerformanceSummary,
   type GroupPerformanceSummary,
@@ -66,10 +67,11 @@ import type {
 } from '../mobile-app/types';
 import {
   ClassroomStudentAvatar,
-  ClassroomStudentCounts,
   ClassroomStudentLevelIcons,
 } from './student-performance/ClassroomStudentPerformance';
+import ClassroomPerformanceValues from './classroom/ClassroomPerformanceValues';
 import ClassroomQuickActionDock from './classroom/ClassroomQuickActionDock';
+import ClassroomRosterBadge, { ClassroomFullStudentNumber } from './classroom/ClassroomRosterBadge';
 import { resolveStudentsBySpokenNumbers } from './classroom/classroomVoiceTargets.mjs';
 import {
   CLASSROOM_DISPLAY_MODE_OPTIONS,
@@ -161,11 +163,9 @@ const CLASSES = ['2025级1班', '2025级2班', '2025级3班'];
 const CLASSROOM_ASSISTANT_ICON = '/assets/classroom/quick-action-giraffe.png';
 const CLASSROOM_SECONDARY_ICON = '/assets/classroom/open-app-icon.png';
 const CURRENT_TEACHER_NAME = '郭老师';
-
-const getStudentRosterNumber = (studentNo: string) => {
-  const trailingDigits = studentNo.match(/(\d+)$/)?.[1];
-  if (!trailingDigits) return studentNo.slice(-2);
-  return trailingDigits.slice(-2).padStart(2, '0');
+const CURRENT_CLASSROOM_TERM = {
+  startDate: '2026-09-01',
+  endDate: '2027-01-31',
 };
 
 const INITIALS_MAP: Record<string, string> = {
@@ -364,7 +364,7 @@ const GroupCard: React.FC<{
   compact = false,
   layout,
 }) => {
-  const visibleNameCount = 3;
+  const visibleNameCount = 4;
   const visibleNames = memberNames.slice(0, visibleNameCount);
   const avatar = getStudentGroupAvatarOption(group.avatarKey);
   const memberSummary = visibleNames.length > 0
@@ -375,7 +375,7 @@ const GroupCard: React.FC<{
 
   const baseClassName = compact
     ? 'h-auto w-full rounded-lg px-5 gap-3'
-    : 'h-auto w-full rounded-lg px-6 gap-4';
+    : 'h-auto w-full rounded-lg px-5 gap-4';
 
   const checkClassName = compact ? 'top-3 right-3' : 'top-4 right-4';
 
@@ -391,27 +391,28 @@ const GroupCard: React.FC<{
         </div>
       )}
       <img src={avatar.src} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover shadow-sm" style={{ width: layout.avatarSize, height: layout.avatarSize }} decoding="async" />
-      <div className="flex flex-col gap-2 overflow-hidden min-w-0 flex-1">
-        <div className="min-w-0 pr-2">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 overflow-hidden pr-1">
+        <div className="min-w-0">
           <h3 className="truncate font-bold leading-none text-slate-800" style={{ fontSize: layout.titleFontSize }}>
             {group.name}
           </h3>
         </div>
-        <span className="block min-w-0 truncate font-bold leading-4 text-slate-500" style={{ fontSize: layout.memberFontSize }} title={memberNames.join('、')}>
+        <span className="line-clamp-2 min-w-0 font-bold leading-5 text-slate-500" style={{ fontSize: layout.memberFontSize }} title={memberNames.join('、')}>
             {memberSummary}
         </span>
       </div>
-      {(displaySettings.showPraiseCount || displaySettings.showCriticismCount) && (
-        <GroupPerformanceMeta
+      {displaySettings.showEvaluation && (displaySettings.showPraise || displaySettings.showCriticism) && (
+        <ClassroomPerformanceValues
           summary={performance}
-          orientation="vertical"
-          showPraiseCount={displaySettings.showPraiseCount}
-          showCriticismCount={displaySettings.showCriticismCount}
+          ariaLabelPrefix="小组"
+          showPraise={displaySettings.showPraise}
+          showCriticism={displaySettings.showCriticism}
+          valueMode={displaySettings.valueMode}
           fontSize={layout.countFontSize}
           itemHeight={layout.countItemHeight}
           itemMinWidth={layout.countItemMinWidth}
           gap={layout.countGap}
-          className="shrink-0"
+          orientation="vertical"
         />
       )}
     </div>
@@ -440,10 +441,8 @@ const GroupMemberSelectCard: React.FC<{
       <Check size={Math.max(12, Math.round(layout.nameFontSize * 0.9))} strokeWidth={3} />
     </span>
     <img src={student.avatar} alt="" className="h-12 w-12 shrink-0 rounded-full bg-slate-100 object-cover" style={{ width: layout.avatarSize, height: layout.avatarSize }} decoding="async" />
-    <span className="flex h-4 w-full min-w-0 items-center justify-center gap-1">
-      <span className="flex shrink-0 items-center justify-center rounded bg-slate-100 px-1 font-mono font-semibold leading-none tabular-nums text-slate-400" style={{ minWidth: Math.max(16, Math.round(layout.nameFontSize * 1.35)), height: Math.max(16, Math.round(layout.nameFontSize * 1.35)), fontSize: Math.max(10, Math.round(layout.nameFontSize * 0.75)) }} aria-hidden="true">
-        {getStudentRosterNumber(student.studentNo)}
-      </span>
+    <span className="flex w-full min-w-0 items-center justify-center gap-1" style={{ minHeight: Math.max(20, layout.studentNoFontSize + 4) }}>
+      <ClassroomRosterBadge studentNo={student.studentNo} fontSize={layout.studentNoFontSize} lineHeight={16} variant="select" ariaHidden />
       <span className="min-w-0 truncate text-xs font-semibold leading-4 text-slate-700" style={{ fontSize: layout.nameFontSize }}>{student.name}</span>
     </span>
   </button>
@@ -452,6 +451,7 @@ const GroupMemberSelectCard: React.FC<{
 const StudentCard: React.FC<{
   student: StudentData;
   performance: StudentPerformanceSummary;
+  levelNetScore?: number;
   displaySettings?: StudentCardDisplaySettings;
   selected?: boolean;
   isSelectable?: boolean;
@@ -462,6 +462,7 @@ const StudentCard: React.FC<{
 }> = ({
   student,
   performance,
+  levelNetScore,
   displaySettings = getStudentCardDisplaySettings(),
   selected = false,
   isSelectable = false,
@@ -470,20 +471,28 @@ const StudentCard: React.FC<{
   onClick,
   layout = getClassroomDisplayConfig('standard').studentCard,
 }) => {
-  const level = getStudentPerformanceLevel(performance.netScore);
-  const visibleCountLabels = [
-    displaySettings.showPraiseCount ? `被表扬${performance.praiseCount}次` : '',
-    displaySettings.showCriticismCount ? `被批评${performance.criticismCount}次` : '',
+  const resolvedLevelNetScore = levelNetScore ?? performance.netScore;
+  const level = getStudentPerformanceLevel(resolvedLevelNetScore);
+  const showPraise = displaySettings.showEvaluation && displaySettings.showPraise;
+  const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;
+  const visiblePerformanceLabels = [
+    showPraise
+      ? (displaySettings.valueMode === 'score' ? `累计加分${performance.praiseScore}分` : `被表扬${performance.praiseCount}次`)
+      : '',
+    showCriticism
+      ? (displaySettings.valueMode === 'score' ? `累计扣分${performance.criticismScore}分` : `被批评${performance.criticismCount}次`)
+      : '',
   ].filter(Boolean);
   const ariaLabel = [
     `${student.name}，学号${student.studentNo}`,
-    displaySettings.showLevel ? `净得分${performance.netScore}分` : '',
-    ...visibleCountLabels,
+    displaySettings.showLevel ? `等级分值${resolvedLevelNetScore}分` : '',
+    ...visiblePerformanceLabels,
   ].filter(Boolean).join('，');
-  const hasVisibleCounts = displaySettings.showPraiseCount || displaySettings.showCriticismCount;
-  const cardHeight = displaySettings.showLevel
+  const hasVisibleValues = showPraise || showCriticism;
+  const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(hasVisibleValues);
+  const cardHeight = visiblePerformanceRowCount === 2
     ? layout.fullHeight
-    : hasVisibleCounts
+    : visiblePerformanceRowCount === 1
       ? layout.countsHeight
       : layout.identityOnlyHeight;
 
@@ -491,7 +500,7 @@ const StudentCard: React.FC<{
     <div
       onClick={onClick}
       aria-label={ariaLabel}
-      className={`relative flex h-auto w-auto flex-col items-center justify-center rounded-lg border-2 bg-white px-1 pb-2 pt-1 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+      className={`relative flex h-auto w-auto flex-col items-center justify-center rounded-lg border-2 bg-white px-1 pb-1 pt-0.5 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
       style={{ width: layout.width, height: cardHeight }}
     >
       {isSelectable && (
@@ -500,28 +509,29 @@ const StudentCard: React.FC<{
         </div>
       )}
       {displaySettings.showLevel && (
-        <div className="flex h-5 w-full items-center justify-center" style={{ height: layout.levelHeight }}>
+        <div className="flex h-5 w-full shrink-0 items-center justify-center" style={{ height: layout.levelHeight }}>
           <div className="flex items-center justify-center">
             <ClassroomStudentLevelIcons level={level} compact iconSize={layout.levelIconSize} />
           </div>
         </div>
       )}
-      <div className="mt-px flex w-full items-center justify-center" style={{ height: layout.avatarSize }}>
+      <div className="flex w-full shrink-0 items-center justify-center" style={{ height: layout.avatarSize, marginTop: displaySettings.showLevel ? layout.levelAvatarGap : 0 }}>
         <ClassroomStudentAvatar
           name={student.name}
           avatar={student.avatar}
           level={level}
           compact
           size={layout.avatarSize}
+          showLevelProgress={displaySettings.showLevel}
         />
       </div>
-      {hasVisibleCounts && (
-        <div className="mt-px flex h-[18px] w-full items-center justify-center" style={{ height: layout.countHeight }}>
-          <ClassroomStudentCounts
+      {hasVisibleValues && (
+        <div className="flex h-[18px] w-full shrink-0 items-center justify-center" style={{ height: layout.countHeight, marginTop: layout.avatarCountGap }}>
+          <ClassroomPerformanceValues
             summary={performance}
-            compact
-            showPraiseCount={displaySettings.showPraiseCount}
-            showCriticismCount={displaySettings.showCriticismCount}
+            showPraise={showPraise}
+            showCriticism={showCriticism}
+            valueMode={displaySettings.valueMode}
             fontSize={layout.countFontSize}
             itemHeight={layout.countItemHeight}
             itemMinWidth={layout.countItemMinWidth}
@@ -529,12 +539,10 @@ const StudentCard: React.FC<{
           />
         </div>
       )}
-      <div className="mt-1.5 flex h-[18px] w-full shrink-0 items-center justify-center text-center" style={{ height: layout.identityHeight }}>
+      <div className="flex h-[18px] w-full shrink-0 items-center justify-center text-center" style={{ height: layout.identityHeight, marginTop: layout.countIdentityGap }}>
         <div className="inline-flex min-w-0 items-center justify-center gap-1" style={{ maxWidth: layout.width - 8 }}>
-          <span className="flex shrink-0 items-center justify-center rounded-md bg-slate-100 px-0.5 font-mono font-black tabular-nums text-slate-600" style={{ width: Math.max(22, Math.round(layout.rosterFontSize * 2)), height: Math.max(18, Math.round(layout.rosterFontSize * 1.65)), fontSize: layout.rosterFontSize }}>
-            {student.studentNo.slice(-2)}
-          </span>
-          <h3 className={`min-w-0 truncate font-semibold tracking-normal text-slate-800 ${isRolling ? 'opacity-80' : ''}`} style={{ maxWidth: layout.width - 8 - Math.max(22, Math.round(layout.rosterFontSize * 2)) - 4, fontSize: layout.nameFontSize, lineHeight: `${layout.nameLineHeight}px` }}>{student.name}</h3>
+          <ClassroomRosterBadge studentNo={student.studentNo} fontSize={layout.rosterFontSize} width={layout.rosterWidth} height={layout.rosterHeight} />
+          <h3 className={`min-w-0 truncate font-semibold tracking-normal text-slate-800 ${isRolling ? 'opacity-80' : ''}`} style={{ maxWidth: layout.width - 8 - layout.rosterWidth - 4, fontSize: layout.nameFontSize, lineHeight: `${layout.nameLineHeight}px` }}>{student.name}</h3>
         </div>
       </div>
     </div>
@@ -552,6 +560,19 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [classroomDisplayMode, setClassroomDisplayMode] = useState<ClassroomDisplayMode>('auto');
   const [studentCardDisplaySettings, setStudentCardDisplaySettings] = useState<StudentCardDisplaySettings>(() => getStudentCardDisplaySettings());
   const [groupCardDisplaySettings, setGroupCardDisplaySettings] = useState<GroupCardDisplaySettings>(() => getGroupCardDisplaySettings());
+  const activeCardDisplaySettings = viewMode === 'group' ? groupCardDisplaySettings : studentCardDisplaySettings;
+  const activeCardContentMode = activeCardDisplaySettings.showPraise && activeCardDisplaySettings.showCriticism
+    ? 'all'
+    : activeCardDisplaySettings.showPraise
+      ? 'praise'
+      : 'criticism';
+  const updateActiveCardDisplaySettings = (updates: Partial<GroupCardDisplaySettings>) => {
+    if (viewMode === 'group') {
+      setGroupCardDisplaySettings(current => ({ ...current, ...updates }));
+      return;
+    }
+    setStudentCardDisplaySettings(current => ({ ...current, ...updates }));
+  };
   const [levelDisplayMode, setLevelDisplayMode] = useState<StudentLevelDisplayMode>('term');
   const [studentCountCheckpoints, setStudentCountCheckpoints] = useState<Record<string, EvaluationCountCheckpoint>>({});
   const [groupCountCheckpoints, setGroupCountCheckpoints] = useState<Record<string, EvaluationCountCheckpoint>>({});
@@ -666,6 +687,17 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     studentCountCheckpoints[student.id],
   );
 
+  const getStudentLevelScore = (
+    student: StudentData,
+    performance: StudentPerformanceSummary,
+  ) => {
+    const demoRecords = createDemoStudentLevelEvaluationRecords(student, CURRENT_CLASSROOM_TERM);
+    const initialTermScore = createDemoStudentPerformanceSummary(student).netScore;
+    const liveTermDelta = performance.netScore - initialTermScore;
+
+    return getStudentLevelNetScore(demoRecords, levelDisplayMode, CURRENT_CLASSROOM_TERM) + liveTermDelta;
+  };
+
   const getBaseGroupPerformance = (groupId: string) => performanceByGroupId[groupId]
     ?? createDemoGroupPerformanceSummary(groupId);
 
@@ -710,9 +742,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         const current = next[groupId] ?? createDemoGroupPerformanceSummary(groupId);
         const praiseDelta = scoreChange > 0 ? 1 : 0;
         const criticismDelta = scoreChange < 0 ? 1 : 0;
+        const praiseScoreDelta = scoreChange > 0 ? scoreChange : 0;
+        const criticismScoreDelta = scoreChange < 0 ? Math.abs(scoreChange) : 0;
         next[groupId] = {
           praiseCount: Math.max(0, current.praiseCount + (mode === 'apply' ? praiseDelta : -praiseDelta)),
           criticismCount: Math.max(0, current.criticismCount + (mode === 'apply' ? criticismDelta : -criticismDelta)),
+          praiseScore: Math.max(0, current.praiseScore + (mode === 'apply' ? praiseScoreDelta : -praiseScoreDelta)),
+          criticismScore: Math.max(0, current.criticismScore + (mode === 'apply' ? criticismScoreDelta : -criticismScoreDelta)),
         };
       });
       return next;
@@ -1242,7 +1278,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     };
     setPerformanceByGroupId(previous => ({
       ...previous,
-      [nextGroup.id]: { praiseCount: 0, criticismCount: 0 },
+      [nextGroup.id]: { praiseCount: 0, criticismCount: 0, praiseScore: 0, criticismScore: 0 },
     }));
 
     if (groupEditorDraft.mode === 'new-plan') {
@@ -1844,7 +1880,6 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const deckShellStyle = sharedDeckWidth > 0 ? { width: `${sharedDeckWidth}px`, maxWidth: '100%' } : { width: '100%', maxWidth: '100%' };
   const groupCardFlexItemStyle: React.CSSProperties | undefined = viewMode === 'group'
     ? {
-        flex: `0 0 min(100%, ${classroomDisplay.groupCard.width}px)`,
         width: `min(100%, ${classroomDisplay.groupCard.width}px)`,
         maxWidth: '100%',
       }
@@ -2146,14 +2181,14 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                   </div>
                 )}
                 <div
-                  className={`${viewMode === 'group' ? 'flex flex-wrap justify-center' : 'grid justify-center'} gap-3 pb-20 relative`}
+                  className={`${viewMode === 'group' ? 'grid justify-start' : 'grid justify-center'} gap-3 pb-20 relative`}
                   style={{
-                    ...(viewMode === 'student' ? { gridTemplateColumns: `repeat(auto-fill, ${classroomDisplay.studentCard.width}px)` } : {}),
+                    gridTemplateColumns: `repeat(auto-fill, ${viewMode === 'group' ? classroomDisplay.groupCard.width : classroomDisplay.studentCard.width}px)`,
                     gap: `${deckGap}px`,
                   } as React.CSSProperties}
                 >
                   {!embedded && (
-                    <div className={`${viewMode === 'group' ? 'basis-full' : 'col-span-full'} relative h-[60px] mb-0`}>
+                    <div className="col-span-full relative h-[60px] mb-0">
                       <div className="absolute inset-x-0 top-0 h-full">
                         <div className="absolute left-1/2 top-0 -translate-x-1/2 z-10 scale-110">
                           {viewModeSwitcher}
@@ -2168,11 +2203,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
                   {viewMode === 'student' ? filteredStudents.map(student => {
                     const isFocused = feedbackEffect?.id === student.id && feedbackEffect.type === 'negative';
+                    const performance = getStudentPerformance(student);
                     return (
                       <StudentCard
                         key={student.id}
                         student={student}
-                        performance={getStudentPerformance(student)}
+                        performance={performance}
+                        levelNetScore={getStudentLevelScore(student, performance)}
                         displaySettings={studentCardDisplaySettings}
                         layout={classroomDisplay.studentCard}
                         selected={isRecountSelection ? recountSelectedIds.has(student.id) : selectedIds.includes(student.id)}
@@ -2198,7 +2235,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                         </div>
                       ))}
                       {isActiveGroupPlanOwnedByCurrentTeacher && !isMultiSelect && !isRecountSelection && (
-                        <div className="basis-full flex justify-start">
+                        <div>
                           <button
                             type="button"
                             onClick={startAddGroup}
@@ -2211,7 +2248,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                       )}
                     </>
                   ) : (
-                    <div className={`${viewMode === 'group' ? 'basis-full' : 'col-span-full'} flex justify-center py-24`}>
+                    <div className="col-span-full flex justify-center py-24">
                       <div className="w-full max-w-[680px] rounded-lg border border-dashed border-slate-200 bg-white/70 text-center" style={{ padding: `${classroomDisplay.modal.iconSize + 24}px ${classroomDisplay.modal.iconSize + 16}px` }}>
                         <div className="mx-auto flex items-center justify-center rounded-[1.5rem] bg-slate-100 text-slate-300" style={{ width: classroomDisplay.modal.iconSize + 40, height: classroomDisplay.modal.iconSize + 40 }}>
                           <Users size={classroomDisplay.modal.iconSize + 4} strokeWidth={2.2} />
@@ -2361,11 +2398,11 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
               <div className="mb-3 flex items-center gap-2 font-bold text-slate-600" style={{ fontSize: classroomDisplay.moreActions.sectionTitleFontSize }}>
                 <Eye size={classroomDisplay.moreActions.iconSize} /> {viewMode === 'group' ? '小组卡片展示' : '学生卡片展示'}
               </div>
-              <div className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50/60">
+              <div className="space-y-5">
                 {viewMode === 'student' && (
-                  <div className="px-4">
+                  <div className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50/60 px-4">
                     <div className="flex items-center justify-between gap-4" style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
-                      <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>显示学生等级</span>
+                      <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>显示等级</span>
                       <Switch
                         checked={studentCardDisplaySettings.showLevel}
                         onChange={showLevel => setStudentCardDisplaySettings(current => ({ ...current, showLevel }))}
@@ -2374,11 +2411,11 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     </div>
                     {studentCardDisplaySettings.showLevel && (
                       <div className="border-t border-slate-200/70 pb-4 pt-3">
-                        <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>等级展示规则</div>
-                        <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="等级展示规则">
+                        <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>统计范围</div>
+                        <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="等级统计范围">
                           {[
-                            { value: 'term' as const, label: '仅计算本学期' },
-                            { value: 'cumulative' as const, label: '累计所有学期' },
+                            { value: 'term' as const, label: '本学期' },
+                            { value: 'cumulative' as const, label: '历史累计' },
                           ].map(item => (
                             <button
                               key={item.value}
@@ -2396,21 +2433,62 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     )}
                   </div>
                 )}
-                {[
-                  { key: 'showPraiseCount' as const, label: '表扬次数', value: viewMode === 'group' ? groupCardDisplaySettings.showPraiseCount : studentCardDisplaySettings.showPraiseCount },
-                  { key: 'showCriticismCount' as const, label: '批评次数', value: viewMode === 'group' ? groupCardDisplaySettings.showCriticismCount : studentCardDisplaySettings.showCriticismCount },
-                ].map(item => (
-                  <div key={item.key} className={`flex items-center justify-between gap-4 px-4 ${viewMode === 'student' || item.key === 'showCriticismCount' ? 'border-t border-slate-100' : ''}`} style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
-                    <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>{item.label}</span>
+                <div className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50/60 px-4">
+                  <div className="flex items-center justify-between gap-4" style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
+                    <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>显示加扣分</span>
                     <Switch
-                      checked={item.value}
-                      onChange={checked => viewMode === 'group'
-                        ? setGroupCardDisplaySettings(current => ({ ...current, [item.key]: checked }))
-                        : setStudentCardDisplaySettings(current => ({ ...current, [item.key]: checked }))}
-                      aria-label={item.label}
+                      checked={activeCardDisplaySettings.showEvaluation}
+                      onChange={showEvaluation => updateActiveCardDisplaySettings({ showEvaluation })}
+                      aria-label={viewMode === 'group' ? '显示小组加扣分' : '显示学生加扣分'}
                     />
                   </div>
-                ))}
+                  {activeCardDisplaySettings.showEvaluation && (
+                    <div className="border-t border-slate-200/70 pb-4 pt-3">
+                      <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>显示内容</div>
+                      <div className="grid grid-cols-3 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="加扣分显示内容">
+                        {[
+                          { value: 'all' as const, label: '全部' },
+                          { value: 'praise' as const, label: '加分' },
+                          { value: 'criticism' as const, label: '扣分' },
+                        ].map(item => (
+                          <button
+                            key={item.value}
+                            type="button"
+                            aria-pressed={activeCardContentMode === item.value}
+                            onClick={() => updateActiveCardDisplaySettings({
+                              showPraise: item.value === 'all' || item.value === 'praise',
+                              showCriticism: item.value === 'all' || item.value === 'criticism',
+                            })}
+                            className={`rounded-lg px-3 font-bold transition-colors ${activeCardContentMode === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.moreActions.bodyFontSize }}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-4 border-t border-slate-200/70 pt-3">
+                        <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>数值形式</div>
+                        <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="加扣分显示方式">
+                          {[
+                            { value: 'count' as const, label: '次数' },
+                            { value: 'score' as const, label: '分值' },
+                          ].map(item => (
+                            <button
+                              key={item.value}
+                              type="button"
+                              aria-pressed={activeCardDisplaySettings.valueMode === item.value}
+                              onClick={() => updateActiveCardDisplaySettings({ valueMode: item.value })}
+                              className={`rounded-lg px-3 font-bold transition-colors ${activeCardDisplaySettings.valueMode === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.moreActions.bodyFontSize }}
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
 
@@ -2624,11 +2702,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
               {groupDrawerTarget.memberIds.map(id => {
                 const student = studentById.get(id);
                 if (!student) return null;
+                const performance = getStudentPerformance(student);
                 return (
                   <StudentCard
                     key={id}
                     student={student}
-                    performance={getStudentPerformance(student)}
+                    performance={performance}
+                    levelNetScore={getStudentLevelScore(student, performance)}
                     displaySettings={studentCardDisplaySettings}
                     layout={classroomDisplay.studentCard}
                     selected={selectedGroupMemberIds.includes(id)}
@@ -2771,8 +2851,8 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           style={{ ...sidebarTiming, width: `min(${classroomDisplay.evaluation.modalWidth}px, calc(100vw - 32px))`, maxHeight: 'calc(100vh - 32px)' }}
           onClick={e => e.stopPropagation()}
         >
-          <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white" style={{ minHeight: classroomDisplay.evaluation.headerHeight, padding: `0 ${classroomDisplay.evaluation.headerPadding}px` }}>
-            <div className="flex items-center gap-3 flex-1">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-y-2 border-b border-slate-100 bg-white py-3 md:flex-nowrap md:gap-y-0 md:py-0" style={{ minHeight: classroomDisplay.evaluation.headerHeight, paddingLeft: classroomDisplay.evaluation.headerPadding, paddingRight: classroomDisplay.evaluation.headerPadding }}>
+            <div className="order-1 flex min-w-0 flex-[1_1_0%] items-center gap-3">
               {isManagerMode ? (
                 <div className="bg-slate-50 p-2 rounded-xl text-slate-400 border border-slate-100 flex items-center justify-center" style={{ width: classroomDisplay.evaluation.avatarSize, height: classroomDisplay.evaluation.avatarSize }}><Settings size={classroomDisplay.evaluation.avatarIconSize} strokeWidth={1.5} /></div>
               ) : (isMultiSelect && selectedIds.length > 1) ? (
@@ -2793,17 +2873,22 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
               )}
               <div className="flex flex-col justify-center">
                 <div className="flex items-center gap-1.5 translate-y-0.5">
-                  <h2 className="font-black text-slate-700 tracking-tight leading-none" style={{ fontSize: classroomDisplay.evaluation.titleFontSize }}>
+                  <h2 className="whitespace-nowrap font-black leading-none tracking-tight text-slate-700" style={{ fontSize: classroomDisplay.evaluation.titleFontSize }}>
                     {isManagerMode ? '管理选项' : (isMultiSelect && selectedIds.length > 1 ? `批量点评 (${(viewMode === 'student' || (selectedIds.length > 0 && students.some(s => s.id === selectedIds[0]))) ? '学生' : '小组'})` : (evalStudent ? evalStudent.name : evalGroup?.name))}
                   </h2>
                   {!isManagerMode && evalStudent && (!isMultiSelect || selectedIds.length <= 1) && (evalStudent?.gender === 'male' ? <Mars size={classroomDisplay.evaluation.managerMetaFontSize + 4} className="text-blue-500" strokeWidth={3} /> : <Venus size={classroomDisplay.evaluation.managerMetaFontSize + 4} className="text-pink-500" strokeWidth={3} />)}
                 </div>
-                {!isManagerMode && evalStudent && (!isMultiSelect || selectedIds.length <= 1) && (<span className="font-bold text-slate-300 font-mono tracking-tighter uppercase mt-1" style={{ fontSize: classroomDisplay.evaluation.studentNoFontSize }}>{evalStudent?.studentNo}</span>)}
+                {!isManagerMode && evalStudent && (!isMultiSelect || selectedIds.length <= 1) && (
+                  <ClassroomFullStudentNumber
+                    studentNo={evalStudent.studentNo}
+                    fontSize={classroomDisplay.evaluation.studentNoFontSize}
+                  />
+                )}
                 {!isManagerMode && isMultiSelect && selectedIds.length > 1 && (<span className="font-bold text-blue-500 mt-1" style={{ fontSize: classroomDisplay.evaluation.selectionHintFontSize }}>已选择 {selectedIds.length} 位{(viewMode === 'student' || (selectedIds.length > 0 && students.some(s => s.id === selectedIds[0]))) ? '学生' : '小组'}</span>)}
               </div>
             </div>
-            <div className="flex flex-1 justify-center"><div className="flex bg-slate-100 p-1 rounded-xl gap-0.5" style={{ width: classroomDisplay.evaluation.avatarSize * 5, height: classroomDisplay.evaluation.optionHeight - 8 }}><button onClick={() => setEvalTab('positive')} className={`flex-1 rounded-lg px-2 font-black transition-all ${evalTab === 'positive' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`} style={{ height: classroomDisplay.evaluation.optionHeight - 16, fontSize: classroomDisplay.evaluation.tabFontSize }}>表扬</button><button onClick={() => setEvalTab('negative')} className={`flex-1 rounded-lg px-2 font-black transition-all ${evalTab === 'negative' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`} style={{ height: classroomDisplay.evaluation.optionHeight - 16, fontSize: classroomDisplay.evaluation.tabFontSize }}>待改进</button></div></div>
-            <div className="flex flex-1 items-center justify-end gap-2 text-slate-400">{isManagerMode ? (<button onClick={() => { setIsManagerMode(false); setNewCategoryName(null); setEditingCategoryName(null); }} className="flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.closeButtonSize, height: classroomDisplay.evaluation.closeButtonSize }}><ArrowLeft size={classroomDisplay.evaluation.closeIconSize} strokeWidth={2} /></button>) : (<button onClick={() => { setIsManagerMode(true); setManagerSelectedCategory(categories[0]); }} className="flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.closeButtonSize, height: classroomDisplay.evaluation.closeButtonSize }}><Settings size={classroomDisplay.evaluation.closeIconSize} strokeWidth={2} /></button>)}<button onClick={handleCloseEvaluation} className="flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.closeButtonSize, height: classroomDisplay.evaluation.closeButtonSize }}><X size={classroomDisplay.evaluation.closeIconSize} strokeWidth={2} /></button></div>
+            <div className="order-3 flex basis-full justify-center md:order-2 md:basis-auto md:flex-1"><div className="flex bg-slate-100 p-1 rounded-xl gap-0.5" style={{ width: classroomDisplay.evaluation.avatarSize * 5, height: classroomDisplay.evaluation.optionHeight - 8 }}><button onClick={() => setEvalTab('positive')} className={`flex-1 rounded-lg px-2 font-black transition-all ${evalTab === 'positive' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`} style={{ height: classroomDisplay.evaluation.optionHeight - 16, fontSize: classroomDisplay.evaluation.tabFontSize }}>表扬</button><button onClick={() => setEvalTab('negative')} className={`flex-1 rounded-lg px-2 font-black transition-all ${evalTab === 'negative' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`} style={{ height: classroomDisplay.evaluation.optionHeight - 16, fontSize: classroomDisplay.evaluation.tabFontSize }}>待改进</button></div></div>
+            <div className="order-2 flex flex-none items-center justify-end gap-2 text-slate-400 md:order-3 md:flex-1">{isManagerMode ? (<button onClick={() => { setIsManagerMode(false); setNewCategoryName(null); setEditingCategoryName(null); }} className="flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.closeButtonSize, height: classroomDisplay.evaluation.closeButtonSize }}><ArrowLeft size={classroomDisplay.evaluation.closeIconSize} strokeWidth={2} /></button>) : (<button onClick={() => { setIsManagerMode(true); setManagerSelectedCategory(categories[0]); }} className="flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.closeButtonSize, height: classroomDisplay.evaluation.closeButtonSize }}><Settings size={classroomDisplay.evaluation.closeIconSize} strokeWidth={2} /></button>)}<button onClick={handleCloseEvaluation} className="flex items-center justify-center hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all active:scale-90" style={{ width: classroomDisplay.evaluation.closeButtonSize, height: classroomDisplay.evaluation.closeButtonSize }}><X size={classroomDisplay.evaluation.closeIconSize} strokeWidth={2} /></button></div>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] custom-scrollbar">
             {!isManagerMode ? (
@@ -2931,6 +3016,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                               <StudentCard 
                                 student={student!} 
                                 performance={getStudentPerformance(student!)}
+                                levelNetScore={getStudentLevelScore(student!, getStudentPerformance(student!))}
                                 displaySettings={studentCardDisplaySettings}
                                 layout={classroomDisplay.studentCard}
                                 isRolling={false} 

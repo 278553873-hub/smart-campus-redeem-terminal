@@ -75,6 +75,7 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
                 title="往期复盘"
                 onBack={onBack}
                 backLabel="返回我的评价复盘"
+                surface="transparent"
             />
 
             <main className="relative z-10 px-5 pb-10 pt-1">
@@ -83,7 +84,7 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
                         <button
                             type="button"
                             onClick={() => setShowClassPicker(true)}
-                            className="mb-3 flex h-11 items-center gap-1 text-[14px] font-semibold text-slate-700 active:text-[#1E9AAA]"
+                            className="mb-3 flex h-11 items-center gap-1 text-[14px] font-semibold text-slate-700"
                             aria-label={`切换班级，当前${getClassLabel(activeClass)}`}
                         >
                             {getClassLabel(activeClass)}
@@ -109,7 +110,7 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
                                         key={report.id}
                                         type="button"
                                         onClick={() => setSelectedReport(report)}
-                                        className="waa-card-enter relative flex min-h-[72px] w-full items-center gap-3 rounded-[20px] border border-white/90 bg-white/94 px-4 py-3 text-left shadow-[0_18px_42px_-34px_rgba(35,96,145,0.30)] ring-1 ring-slate-100/70 transition active:scale-[0.985] active:bg-cyan-50/35"
+                                        className="waa-card-enter relative flex min-h-[72px] w-full items-center gap-3 rounded-[20px] border border-white/90 bg-white/94 px-4 py-3 text-left shadow-[0_18px_42px_-34px_rgba(35,96,145,0.30)] ring-1 ring-slate-100/70"
                                         aria-label={`${formatReviewMonth(report.reviewMonth)}评价复盘，基于你在${report.dataRange}的评价记录`}
                                     >
                                         <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-white bg-cyan-300 shadow-[0_0_0_1px_rgba(30,154,170,0.18)]" aria-hidden="true" />

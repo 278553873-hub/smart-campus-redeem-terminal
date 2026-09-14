@@ -5,8 +5,12 @@ const taskSource = fs.readFileSync(new URL('../hooks/useReportGenerationTask.ts'
 const pickerSource = fs.readFileSync(new URL('../components/HomeroomClassPickerSheet.tsx', import.meta.url), 'utf8');
 const headerSource = fs.readFileSync(new URL('../components/AssistantSubpageHeader.tsx', import.meta.url), 'utf8');
 const historyLinkSource = fs.readFileSync(new URL('../components/AssistantHistoryLink.tsx', import.meta.url), 'utf8');
+const classSwitchSource = fs.readFileSync(new URL('../components/AssistantClassSwitchButton.tsx', import.meta.url), 'utf8');
 const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
+const assistantSource = fs.readFileSync(new URL('./AiHeadteacherAssistantV2View.tsx', import.meta.url), 'utf8');
+const weeklyReportSource = fs.readFileSync(new URL('./WeeklyActionAdviceView.tsx', import.meta.url), 'utf8');
 const weeklyHistorySource = fs.readFileSync(new URL('./WeeklyActionAdviceHistoryView.tsx', import.meta.url), 'utf8');
+const reviewReportSource = fs.readFileSync(new URL('./TeacherEvaluationReviewView.tsx', import.meta.url), 'utf8');
 const reviewHistorySource = fs.readFileSync(new URL('./TeacherEvaluationReviewHistoryView.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
@@ -28,6 +32,23 @@ for (const required of [
 forbidText(appSource, 'simulateLoading={false}', '当前班主任助理报告必须展示虚拟生成进度。');
 requireText(weeklyHistorySource, 'simulateLoading={false}', '往期行动建议详情应直接展示，不重复模拟生成。');
 requireText(reviewHistorySource, 'simulateLoading={false}', '往期评价复盘详情应直接展示，不重复模拟生成。');
+requireText(weeklyHistorySource, 'surface="transparent"', '往期建议标题栏必须保持透明。');
+requireText(reviewHistorySource, 'surface="transparent"', '往期复盘标题栏必须保持透明。');
+
+for (const [name, source] of [
+  ['班主任助理', assistantSource],
+  ['本周行动建议', weeklyReportSource],
+  ['往期建议', weeklyHistorySource],
+  ['评价复盘', reviewReportSource],
+  ['往期复盘', reviewHistorySource],
+  ['助理标题栏', headerSource],
+  ['助理历史入口', historyLinkSource],
+  ['助理班级切换', classSwitchSource],
+  ['班主任班级选择', pickerSource],
+]) {
+  forbidText(source, 'active:', `${name}不应增加触摸按压样式。`);
+  forbidText(source, 'hover:', `${name}不应增加网页悬停样式。`);
+}
 
 for (const required of [
   "'principal_weekly_report'",

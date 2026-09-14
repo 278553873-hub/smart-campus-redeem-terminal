@@ -6,10 +6,17 @@ import {
     AlertCircle, ArrowLeft, Medal, Info
 } from 'lucide-react';
 import { Student, GrowthStatus, TierLevel } from '../types';
+import {
+    canShowParentEvaluationDetails,
+    canShowParentEvaluationSummary,
+    getParentEvaluationVisibilitySettings,
+    type ParentEvaluationVisibilitySettings,
+} from '../shared/parentEvaluationVisibility';
 
 interface GrowthViewProps {
     student: Student;
     onBack: () => void;
+    parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;
 }
 
 const MOCK_GROWTH: GrowthStatus = {
@@ -143,10 +150,18 @@ const TIER_CONFIG: Record<TierLevel, { label: string, bg: string, requirement: s
 
 type DemoScenario = 'normal' | 'allZero' | 'rank5';
 
-const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
+const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluationVisibility: parentEvaluationVisibilityInput }) => {
     const [activeTab, setActiveTab] = useState<'records' | 'leaderboard'>('records');
     const [demoScenario, setDemoScenario] = useState<DemoScenario>('normal');
     const [showClassRewardModal, setShowClassRewardModal] = useState(false);
+
+    const parentEvaluationVisibility = getParentEvaluationVisibilitySettings(parentEvaluationVisibilityInput);
+    const showPositiveSummary = canShowParentEvaluationSummary(parentEvaluationVisibility.positive);
+    const showNegativeSummary = canShowParentEvaluationSummary(parentEvaluationVisibility.negative);
+    const showPositiveDetails = canShowParentEvaluationDetails(parentEvaluationVisibility.positive);
+    const showNegativeDetails = canShowParentEvaluationDetails(parentEvaluationVisibility.negative);
+    const showAnyEvaluationSummary = showPositiveSummary || showNegativeSummary;
+    const showAnyEvaluationDetails = showPositiveDetails || showNegativeDetails;
 
     const formatFixedCoin = (num: number) => {
         return Number.isInteger(num) ? num.toString() : parseFloat(num.toFixed(2)).toString();
@@ -256,10 +271,17 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
         }
     }, [demoScenario]);
 
+    const visibleBehaviorRecords = uiState.records.filter(record => (
+        record.type === 'positive' ? showPositiveDetails : showNegativeDetails
+    ));
+    const visibleActiveTab = !showAnyEvaluationDetails && activeTab === 'records'
+        ? 'leaderboard'
+        : activeTab;
+
     const currentConfig = TIER_CONFIG[uiState.currentTier];
 
     return (
-        <div className="h-full flex flex-col bg-[#f8fbff] animate-in slide-in-from-right-12 fade-in duration-300 ease-out overflow-hidden relative">
+        <div className="h-full flex flex-col bg-[#f8fbff] overflow-hidden relative">
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 max-w-5xl mx-auto w-full">
 
@@ -268,7 +290,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                     {/* 左半部分：得分与档位 */}
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border-2 border-slate-50 flex flex-col relative overflow-hidden">
                         <div className="flex justify-between items-start w-full shrink-0 h-[28px]">
-                            <span className="text-slate-400 font-extrabold text-xs uppercase tracking-widest pl-1">本月净得分</span>
+                            <span className="text-slate-400 font-extrabold text-xs uppercase tracking-widest pl-1">本月总分</span>
                             <div className={`px-3 py-1.5 rounded-xl font-black text-xs border-[2px] border-white ring-1 ${currentConfig.ring} ${currentConfig.bg} ${currentConfig.textColor} shadow-sm flex items-center gap-1.5`}>
                                 {currentConfig.label}
                             </div>
@@ -280,23 +302,29 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                             </h3>
                         </div>
 
-                        <div className="flex justify-between items-center gap-3 w-full shrink-0 h-[52px]">
-                            <div className="flex-1 h-full flex items-center justify-center flex-col bg-green-50/80 rounded-2xl py-1 px-2 border border-green-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-transform hover:scale-105">
-                                <span className="text-[10px] text-green-600/80 font-bold mb-0.5 flex items-center gap-1">表扬</span>
-                                <div className="text-green-600 font-black text-sm font-[NumberFont] flex items-baseline justify-center gap-0.5">
-                                    {uiState.records.filter(r => r.type === 'positive').length} <span className="text-[10px] font-bold font-sans opacity-80">次</span>
-                                </div>
+                        {showAnyEvaluationSummary && (
+                            <div className={`grid ${showPositiveSummary && showNegativeSummary ? 'grid-cols-2' : 'grid-cols-1'} gap-3 w-full shrink-0 h-[52px]`}>
+                                {showPositiveSummary && (
+                                    <div className="flex h-full items-center justify-center flex-col bg-green-50/80 rounded-2xl py-1 px-2 border border-green-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                        <span className="text-[10px] text-green-600/80 font-bold mb-0.5 flex items-center gap-1">表扬</span>
+                                        <div className="text-green-600 font-black text-sm font-[NumberFont] flex items-baseline justify-center gap-0.5">
+                                            {uiState.records.filter(r => r.type === 'positive').length} <span className="text-[10px] font-bold font-sans opacity-80">次</span>
+                                        </div>
+                                    </div>
+                                )}
+                                {showNegativeSummary && (
+                                    <div className="flex h-full items-center justify-center flex-col bg-red-50/80 rounded-2xl py-1 px-2 border border-red-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                        <span className="text-[10px] text-red-500/80 font-bold mb-0.5 flex items-center gap-1">待改进</span>
+                                        <div className="text-red-500 font-black text-sm font-[NumberFont] flex items-baseline justify-center gap-0.5">
+                                            {uiState.records.filter(r => r.type === 'negative').length} <span className="text-[10px] font-bold font-sans opacity-80">次</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex-1 h-full flex items-center justify-center flex-col bg-red-50/80 rounded-2xl py-1 px-2 border border-red-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-transform hover:scale-105">
-                                <span className="text-[10px] text-red-500/80 font-bold mb-0.5 flex items-center gap-1">待改进</span>
-                                <div className="text-red-500 font-black text-sm font-[NumberFont] flex items-baseline justify-center gap-0.5">
-                                    {uiState.records.filter(r => r.type === 'negative').length} <span className="text-[10px] font-bold font-sans opacity-80">次</span>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
-                    {/* 右半部分：预计分红账单 */}
+                    {/* 右半部分：预计奖励 */}
                     <div className="bg-gradient-to-b from-orange-50/80 to-amber-50/50 rounded-[2rem] p-6 border-2 border-orange-100/50 flex flex-col relative overflow-hidden">
                         <div className="flex justify-start items-start w-full shrink-0 h-[28px]">
                             <span className="text-orange-600/80 font-extrabold text-xs uppercase tracking-widest pl-1">
@@ -336,16 +364,18 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                 {/* 粘性吸顶 Tab 切换栏 */}
                 <div className="sticky top-0 z-40 bg-[#f8fbff]/90 backdrop-blur-md pt-2 pb-2">
                     <div className="flex p-1 bg-slate-200/60 rounded-xl">
-                        <button
-                            onClick={() => setActiveTab('records')}
-                            className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-1.5 ${activeTab === 'records' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            <Clock size={16} /> 行为记录
-                        </button>
+                        {showAnyEvaluationDetails && (
+                            <button
+                                onClick={() => setActiveTab('records')}
+                                className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-1.5 ${visibleActiveTab === 'records' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <Clock size={16} /> 行为记录
+                            </button>
+                        )}
                         {MOCK_SHOW_LEADERBOARD && (
                             <button
                                 onClick={() => setActiveTab('leaderboard')}
-                                className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-1.5 ${activeTab === 'leaderboard' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-1.5 ${visibleActiveTab === 'leaderboard' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                             >
                                 <Medal size={16} /> 班级标杆
                             </button>
@@ -354,8 +384,8 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                 </div>
 
                 {/* Tab 内容区 */}
-                {activeTab === 'leaderboard' && MOCK_SHOW_LEADERBOARD && (
-                    <div className="bg-white rounded-[1.5rem] p-5 shadow-sm border-2 border-slate-50 relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {visibleActiveTab === 'leaderboard' && MOCK_SHOW_LEADERBOARD && (
+                    <div className="bg-white rounded-[1.5rem] p-5 shadow-sm border-2 border-slate-50 relative overflow-hidden animate-in fade-in duration-300">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="font-black text-slate-800 flex items-center gap-1.5 text-sm">
                                 <Medal size={18} className="text-yellow-500" /> 班级标杆
@@ -496,21 +526,21 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack }) => {
                     </div>
                 )}
 
-                {activeTab === 'records' && (
-                    <div className="space-y-3 pb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {visibleActiveTab === 'records' && showAnyEvaluationDetails && (
+                    <div className="space-y-3 pb-6 animate-in fade-in duration-300">
                         <div className="flex items-center justify-between px-2 pb-1">
                             <h4 className="text-sm font-black text-slate-700 flex items-center gap-2">
                                 <Clock size={16} className="text-blue-400" /> 本月行为明细
                             </h4>
-                            <div className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-widest">{uiState.records.length} 条记录</div>
+                        <div className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-widest">{visibleBehaviorRecords.length} 条记录</div>
                         </div>
 
-                        {uiState.records.length === 0 ? (
+                        {visibleBehaviorRecords.length === 0 ? (
                             <div className="py-8 flex flex-col items-center justify-center text-center opacity-60">
                                 <Clock size={32} className="text-slate-300 mb-2" />
                                 <p className="text-sm text-slate-400 font-bold">暂无行为明细记录</p>
                             </div>
-                        ) : uiState.records.map(record => (
+                        ) : visibleBehaviorRecords.map(record => (
                             <div key={record.id} className="bg-white p-5 rounded-[1.5rem] border-2 border-slate-50 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col gap-3 group relative overflow-hidden w-full">
 
                                 {/* 头部：事件得分与人员 */}

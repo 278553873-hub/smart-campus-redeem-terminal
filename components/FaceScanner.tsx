@@ -13,8 +13,15 @@ const FaceScanner: React.FC<FaceScannerProps> = ({ onSuccess, onSwitch, isVendin
   const [scanning, setScanning] = useState(true);
   const [identified, setIdentified] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
+  const onSuccessRef = useRef(onSuccess);
 
   useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
+
+  useEffect(() => {
+    let successTimer: ReturnType<typeof setTimeout> | undefined;
+
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -41,23 +48,24 @@ const FaceScanner: React.FC<FaceScannerProps> = ({ onSuccess, onSwitch, isVendin
       }
 
       // 延迟跳转，让学生看到“欢迎回来”的提示
-      setTimeout(() => {
-        onSuccess();
+      successTimer = setTimeout(() => {
+        onSuccessRef.current();
       }, 2000);
     }, 3500);
 
     return () => {
       clearTimeout(timer);
+      if (successTimer) clearTimeout(successTimer);
       // 组件卸载时的安全清理
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
       }
     };
-  }, [onSuccess]);
+  }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full space-y-8 animate-in fade-in duration-700">
+    <div className="flex flex-col items-center justify-center h-full w-full space-y-8">
       {/* 彻底根治锯齿方案：内层常规溢出隐藏，外层覆盖一层匹配环境底色的抗锯齿修边圆环 */}
       <div className="relative w-80 h-80 flex items-center justify-center isolate z-10 scale-[1.05]">
 
@@ -116,7 +124,7 @@ const FaceScanner: React.FC<FaceScannerProps> = ({ onSuccess, onSwitch, isVendin
                 onClick={onSwitch}
                 className="text-blue-600 font-bold hover:underline py-2 px-4 transition-all active:scale-95"
               >
-                切换到账号密码登录
+                切换到密码登录
               </button>
             )}
           </>

@@ -428,7 +428,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
 
                     {loadError && !isLoading && (
                         <section className={`${reportCardClassName} text-center`}>
-                            <AlertTriangle className="mx-auto h-7 w-7 text-[var(--tm-chart-negative-text)]" />
+                            <AlertTriangle className="mx-auto h-7 w-7 text-[var(--tm-status-negative)]" />
                             <p className="mt-3 text-[14px] font-medium text-[var(--tm-text-primary)]">{loadError}</p>
                             <button
                                 type="button"

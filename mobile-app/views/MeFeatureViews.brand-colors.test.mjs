@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('./MeFeatureViews.tsx', import.meta.url), 'utf8');
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+const classSourceTriggerSource = readFileSync(new URL('../components/ClassSourceTrigger.tsx', import.meta.url), 'utf8');
+const compactRemoveButtonSource = readFileSync(new URL('../components/ui/CompactRemoveButton.tsx', import.meta.url), 'utf8');
 const featureStart = source.indexOf('export const SubjectManagementView');
 const sheetStart = source.indexOf('interface EditSheetProps');
 
@@ -41,6 +43,18 @@ const settingsSource = source.slice(source.indexOf('export const MineSettingsVie
 requireText(settingsSource, '<FeaturePageBody>', '设置页应使用统一管理页面骨架。');
 requireText(settingsSource, '<section className="space-y-2">', '设置页应使用与科目、部门管理一致的独立紧凑条目。');
 requireText(settingsSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)]', '设置页条目应使用纯色白色表面。');
+const styleOptionsSource = source.slice(
+  source.indexOf('const TEACHER_DIFFUSE_STYLE_OPTIONS'),
+  source.indexOf('const StaticRow'),
+);
+requireText(styleOptionsSource, "schemeId: 'scheme-exclusive'", '页面风格应保留小班化专属。');
+requireText(styleOptionsSource, "{ schemeId: 'scheme-6', label: '清新校园' }", '页面风格应以面向老师的名称展示通用风格。');
+if (styleOptionsSource.includes("schemeId: 'scheme-2'") || styleOptionsSource.includes('蓝金晨光')) {
+  throw new Error('页面风格不应继续提供蓝金晨光选项。');
+}
+if (settingsSource.includes("?? '红青平衡'")) {
+  throw new Error('设置页不应继续向老师展示技术配色名称。');
+}
 if (settingsSource.includes('<FeaturePanel>') || settingsSource.includes('bg-[var(--tm-bg-surface-glass)]') || settingsSource.includes('backdrop-blur')) {
   throw new Error('设置页不应继续使用大圆角玻璃面板。');
 }
@@ -72,11 +86,12 @@ for (const required of [
   'export const CoinIssuanceView',
   'onPointerDown={() => setShowIssuanceHelp(true)}',
   'role="tooltip"',
-  '开启后，系统将按设置的周期和预算自动向班级发放货币。',
+  '开启后，系统将按设置的周期和预算自动向班级发放校园币。',
   'appearance-none border-0 bg-transparent',
   '[&::-webkit-slider-runnable-track]:border-0',
   '[&::-moz-range-track]:border-0',
-  'backgroundSize: \'100% 8px\'',
+  'overflow-hidden rounded-full bg-[var(--tm-brand-primary-soft-strong)]',
+  'overflow-hidden rounded-full bg-[var(--tm-brand-reward-soft)]',
   'bg-[var(--tm-brand-reward)]',
   'text-[var(--tm-brand-reward-strong)]',
   'export const SuggestionFeedbackView',
@@ -171,6 +186,23 @@ if (!featurePanelClass || featurePanelClass.includes(' ring-') || featurePanelCl
 
 if ((featureSource.match(/<FeaturePageBody/g) ?? []).length !== 4) {
   throw new Error('科目、部门、货币、建议四页应全部使用统一品牌页面骨架。');
+}
+
+for (const [targetSource, label] of [
+  [source, '我的管理子页面'],
+  [classSourceTriggerSource, '班级来源触发器'],
+  [compactRemoveButtonSource, '紧凑删除按钮'],
+]) {
+  for (const forbidden of ['active:scale', 'active:bg', 'active:text', 'active:opacity', 'group-active:scale', 'group-active:bg', 'group-active:text']) {
+    if (targetSource.includes(forbidden)) {
+      throw new Error(`${label}不应显示按压缩放、底色、变色或透明度反馈：${forbidden}`);
+    }
+  }
+}
+
+const localHeaderSource = appSource.slice(appSource.indexOf('const LocalHeader'), appSource.indexOf('if (!isAuthenticated)'));
+if (localHeaderSource.includes('active:bg') || localHeaderSource.includes('active:scale') || localHeaderSource.includes('active:text') || localHeaderSource.includes('active:opacity')) {
+  throw new Error('我的二级页共享返回按钮不应显示按压反馈。');
 }
 
 for (const required of [

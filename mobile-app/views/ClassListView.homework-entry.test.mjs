@@ -4,6 +4,7 @@ import fs from 'node:fs';
 const classListSource = fs.readFileSync(new URL('./ClassListView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const homeworkSource = fs.readFileSync(new URL('./HomeworkEntryView.tsx', import.meta.url), 'utf8');
+const rosterNumberSource = fs.readFileSync(new URL('../components/student/StudentRosterNumber.tsx', import.meta.url), 'utf8');
 const statusGroupSource = fs.readFileSync(new URL('../components/homework/HomeworkStatusButtonGroup.tsx', import.meta.url), 'utf8');
 
 assert.match(classListSource, /onViewHomeworkEntry: \(classId: string\) => void;/, '班级列表应暴露作业录入回调。');
@@ -54,7 +55,8 @@ assert.match(homeworkSource, /ariaLabel=\{`设置\$\{result\.studentName\}作业
 assert.match(homeworkSource, /showAllTones/, '批量与逐人登记都应直观展示五档语义颜色。');
 assert.match(homeworkSource, /placeholder="输入作业主题"/, '作业弹窗应支持输入和编辑长主题。');
 assert.match(homeworkSource, /批量设置[\s\S]*draftAssignment\.results\.map/, '作业弹窗应同时包含全班批量设置和连续学生名单。');
-assert.match(homeworkSource, /result\.avatar \|\| ASSETS\.AVATAR\.GENERIC_BOY[\s\S]*getStudentNoSuffix\(result\.studentNo\)[\s\S]*result\.studentName/, '学生行应紧凑展示头像、学号后两位和姓名。');
+assert.match(homeworkSource, /result\.avatar \|\| ASSETS\.AVATAR\.GENERIC_BOY[\s\S]*<StudentRosterNumber studentNo=\{result\.studentNo\} ariaLabel=\{`学号\$\{result\.studentNo\}`\} \/>[\s\S]*result\.studentName/, '学生行应紧凑展示头像、学号后两位和姓名。');
+assert.match(rosterNumberSource, /getStudentRosterNumber[\s\S]*StudentRosterNumber/, '作业学生行应复用统一的两位学号标识组件。');
 assert.doesNotMatch(homeworkSource, /isCreating|draftTitle|createAssignment/, '主页面不应保留行内新建状态。');
 assert.doesNotMatch(homeworkSource, /已录入 \{getAssignmentCompletionCount/, '页面顶部不应展示当前作业完成统计。');
 assert.match(homeworkSource, /results: buildHomeworkResults\(students\)/, '新建作业应生成完整班级结果。');

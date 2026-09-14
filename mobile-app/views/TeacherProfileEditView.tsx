@@ -15,7 +15,7 @@ import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
 import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker';
 import { MobileEditableRow } from '../components/ui/MobileEditableRow';
 import { phoneText } from '../styles/teacherMobileTokens';
-import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions } from '../domain/teacherSpaceAccess';
+import { getTeacherClassDisplayName, getTeacherGradeStage, getTeacherSchoolGradeOptions, shouldGroupTeacherGrades } from '../domain/teacherSpaceAccess';
 
 interface TeacherProfileEditViewProps {
     profile: TeacherProfile;
@@ -353,8 +353,9 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
             title="选择分管年级"
             onClose={() => setMode('idle')}
             selectionMode="multiple"
-            options={gradeOptions.map(grade => ({ value: grade, label: grade }))}
+            options={gradeOptions.map(grade => ({ value: grade, label: grade, stage: getTeacherGradeStage(grade) }))}
             values={Array.from(selectedGrades)}
+            showStageName={shouldGroupTeacherGrades(currentSpace)}
             showClearButton
             onConfirm={saveGradeLeaderGrades}
             onClear={clearGradeLeaderGrades}

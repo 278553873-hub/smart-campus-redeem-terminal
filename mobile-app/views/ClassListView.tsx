@@ -4,12 +4,13 @@ import {
     ChevronDown,
     ChevronRight,
     Copy,
+    Globe2,
+    LockKeyhole,
     LogIn,
     MessageCircle,
     MonitorSmartphone,
     Plus,
     SlidersHorizontal,
-    UsersRound,
     X,
 } from 'lucide-react';
 import { ClassInfo, Student, TeacherProfile, type ParentEvaluationVisibilitySettings as ParentVisibilitySettings, type SchoolStudentTeam } from '../types';
@@ -31,7 +32,8 @@ import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSlidingSegmentedControl from '../components/ui/MobileSlidingSegmentedControl';
-import StudentTeamEditorView, { type StudentTeamEditorMode, type StudentTeamEditorValue } from './student-team/StudentTeamEditorView';
+import StudentTeamEditorView, { type StudentTeamEditorMode, type StudentTeamEditorValue, type StudentTeamSearchResult } from './student-team/StudentTeamEditorView';
+import StudentTeamCreateView from './student-team/StudentTeamCreateView';
 import StudentTeamManagementActions from './student-team/StudentTeamManagementActions';
 import { ASSETS } from '../assets/images';
 import {
@@ -39,7 +41,9 @@ import {
     canViewClassLeaderboard,
     getTeacherClassActionPolicy,
     getTeacherClassDisplayName,
+    getTeacherGradeStage,
     getTeacherSchoolGradeOptions,
+    shouldGroupTeacherGrades,
     type TeacherClassMembership,
     type TeacherSpaceOption,
 } from '../domain/teacherSpaceAccess';
@@ -71,11 +75,12 @@ interface ClassListViewProps {
     onListTabChange: (tab: 'class' | 'team') => void;
     studentTeams: SchoolStudentTeam[];
     studentTeamEditableClasses: ClassInfo[];
-    allStudents: Student[];
+    searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
     currentTeacherId: string;
     isSchoolManager: boolean;
     canCreateStudentTeam: boolean;
     onCreateStudentTeam: (value: StudentTeamEditorValue) => void;
+    onTeamCreateModeChange?: (open: boolean) => void;
     onUpdateStudentTeam: (teamId: string, value: StudentTeamEditorValue) => void;
     onArchiveStudentTeam: (teamId: string) => void;
     onSelectStudentTeam: (teamId: string) => void;
@@ -132,11 +137,12 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onListTabChange,
     studentTeams,
     studentTeamEditableClasses,
-    allStudents,
+    searchStudentsByExactName,
     currentTeacherId,
     isSchoolManager,
     canCreateStudentTeam,
     onCreateStudentTeam,
+    onTeamCreateModeChange,
     onUpdateStudentTeam,
     onArchiveStudentTeam,
     onSelectStudentTeam,
@@ -154,6 +160,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const [inviteContext, setInviteContext] = useState<{ audience: ClassInviteAudience; classInfo: ClassInfo } | null>(null);
     const [activeActionTeamId, setActiveActionTeamId] = useState<string | null>(null);
     const [teamEditor, setTeamEditor] = useState<{ mode: StudentTeamEditorMode; teamId?: string } | null>(null);
+    const [teamCreateOpen, setTeamCreateOpen] = useState(false);
     const [studentTeamInviteId, setStudentTeamInviteId] = useState<string | null>(null);
     const [archiveStudentTeamId, setArchiveStudentTeamId] = useState<string | null>(null);
     const [parentVisibilityClassId, setParentVisibilityClassId] = useState<string | null>(null);
@@ -174,7 +181,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const showLeaderboard = canViewClassLeaderboard(currentSpace);
 
     const gradeOptions = useMemo(() => (
-        ['全部', ...(getTeacherSchoolGradeOptions(currentSpace) ?? Array.from(new Set(classes.map(classInfo => classInfo.gradeLevel))))]
+        getTeacherSchoolGradeOptions(currentSpace) ?? Array.from(new Set(classes.map(classInfo => classInfo.gradeLevel)))
     ), [classes, currentSpace]);
 
     const visibleClasses = useMemo(() => classes.filter(classInfo => {
@@ -211,11 +218,17 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         setShowTeachingOnly(false);
         setShowParticipatingTeamsOnly(false);
         setActiveActionTeamId(null);
+        setTeamCreateOpen(false);
         setTeamEditor(null);
         setStudentTeamInviteId(null);
         setArchiveStudentTeamId(null);
         setParentVisibilityClassId(null);
     }, [currentSpace.id]);
+
+    useEffect(() => {
+        onTeamCreateModeChange?.(teamCreateOpen);
+        return () => onTeamCreateModeChange?.(false);
+    }, [onTeamCreateModeChange, teamCreateOpen]);
 
     useEffect(() => {
         if (!copyFeedback) return;
@@ -241,6 +254,10 @@ const ClassListView: React.FC<ClassListViewProps> = ({
 
     const openTeamEditor = (mode: StudentTeamEditorMode, teamId?: string) => {
         closeTeamActionSheet();
+        if (mode === 'create') {
+            setTeamCreateOpen(true);
+            return;
+        }
         setTeamEditor({ mode, teamId });
     };
 
@@ -387,7 +404,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 <button
                     type="button"
                     onClick={() => onSelectClass(classInfo.id)}
-                    className="absolute inset-0 z-0 rounded-[var(--tm-class-list-card-radius)] transition-colors active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
+                    className="absolute inset-0 z-0 rounded-[var(--tm-class-list-card-radius)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
                     aria-label={`查看${displayClassName}学生列表`}
                 />
                 <div className="pointer-events-none relative z-[1] min-w-0 flex-1 pr-10">
@@ -415,7 +432,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         type="button"
                         aria-label={`${displayClassName}更多操作`}
                         onClick={() => setActiveActionClassId(classInfo.id)}
-                        className="pointer-events-auto absolute -right-2 -top-2 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]"
+                        className="pointer-events-auto absolute -right-2 -top-2 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)]"
                     >
                         <WechatMoreIcon className="h-5 w-5" />
                     </button>
@@ -427,7 +444,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         <button
                             type="button"
                             onClick={() => onSelectClass(classInfo.id)}
-                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
                         >
                             <UsersIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                             学生列表
@@ -435,7 +452,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         <button
                             type="button"
                             onClick={() => onViewClassReport(classInfo.id)}
-                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
                         >
                             <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                             班级报告
@@ -447,29 +464,77 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         );
     };
 
-    const renderStudentTeamCard = (team: SchoolStudentTeam) => (
-        <article key={team.id} className="flex min-h-[92px] items-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-2 py-3 [box-shadow:var(--tm-shadow-card)]">
+    const renderStudentTeamCard = (team: SchoolStudentTeam) => {
+        const isPublicTeam = team.visibility === 'management';
+        const VisibilityIcon = isPublicTeam ? Globe2 : LockKeyhole;
+        return (
+        <article key={team.id} className="relative flex min-h-[var(--tm-class-list-card-compact-min-height)] flex-col rounded-[var(--tm-class-list-card-radius)] bg-[var(--tm-bg-surface)] px-4 pb-1 pt-3 [box-shadow:var(--tm-shadow-card)]">
             <button
                 type="button"
                 onClick={() => onSelectStudentTeam(team.id)}
-                className="flex min-h-[68px] min-w-0 flex-1 items-center gap-3 rounded-[var(--tm-radius-inner)] px-2 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+                className="flex min-h-[74px] min-w-0 flex-1 items-center gap-3 rounded-[var(--tm-class-list-card-radius)] px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                 aria-label={`${team.name}，${team.ownerName}负责，${team.memberIds.length}人`}
             >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]">
-                    <UsersRound className="h-5 w-5" aria-hidden="true" />
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${isPublicTeam ? 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]'}`}>
+                    <VisibilityIcon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{team.name}</span>
-                    <span className="mt-1 block truncate text-[13px] text-[var(--tm-text-secondary)]">{team.ownerName}负责 · {team.memberIds.length}人</span>
+                    <span className="block truncate text-lg font-[550] text-[var(--tm-text-primary)]">{team.name}</span>
+                    <span className="mt-1 flex min-w-0 items-center gap-1.5">
+                        <span className="truncate text-[13px] font-[450] text-[var(--tm-text-secondary)]">{team.ownerName}负责 · {team.memberIds.length}人</span>
+                        <span className={`inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-[11px] font-semibold ${isPublicTeam ? 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]'}`}>
+                            {isPublicTeam ? '公开' : '私密'}
+                        </span>
+                    </span>
                 </span>
             </button>
             {team.ownerId === currentTeacherId && (
-                <button type="button" aria-label={`${team.name}更多操作`} onClick={() => setActiveActionTeamId(team.id)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)]">
+                <button type="button" aria-label={`${team.name}更多操作`} onClick={() => setActiveActionTeamId(team.id)} className="absolute right-1 top-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
                     <WechatMoreIcon className="h-5 w-5" />
                 </button>
             )}
+            <div className="relative mt-2 pt-1">
+                <div className="h-[var(--tm-class-list-divider-thickness)] bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
+                <div className="relative grid h-[var(--tm-class-list-card-action-content-height)] grid-cols-2 items-center">
+                    <button
+                        type="button"
+                        onClick={() => onSelectStudentTeam(team.id)}
+                        className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
+                    >
+                        <UsersIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
+                        成员列表
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onSelectStudentTeam(team.id)}
+                        className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
+                    >
+                        <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
+                        数据概览
+                    </button>
+                    <span className="pointer-events-none absolute left-1/2 top-1/2 h-[var(--tm-class-list-divider-vertical-height)] w-[var(--tm-class-list-divider-thickness)] -translate-x-1/2 -translate-y-1/2 bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
+                </div>
+            </div>
         </article>
-    );
+        );
+    };
+
+    if (teamCreateOpen) {
+        return (
+            <StudentTeamCreateView
+                classes={studentTeamEditableClasses}
+                getStudentsForClass={getStudentsForClass}
+                searchStudentsByExactName={searchStudentsByExactName}
+                getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, currentSpace)}
+                currentSpace={currentSpace}
+                onBack={() => setTeamCreateOpen(false)}
+                onSave={value => {
+                    onCreateStudentTeam(value);
+                    setTeamCreateOpen(false);
+                }}
+            />
+        );
+    }
 
     return (
         <div className="relative h-full overflow-hidden">
@@ -482,7 +547,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     {copyFeedback.message}
                 </div>
             )}
-            <div className={`relative z-10 h-full ${isSchoolSpace && activeListTab === 'class' ? 'space-y-[var(--tm-class-list-toolbar-card-gap)]' : 'space-y-3'} overflow-y-auto px-4 pb-[calc(var(--teacher-tabbar-height,66px)+var(--teacher-tabbar-bottom,16px)+var(--tm-space-3))] no-scrollbar ${addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'}`}>
+            <div className={`relative z-10 h-full overflow-y-auto px-4 pb-[calc(var(--teacher-tabbar-height,66px)+var(--teacher-tabbar-bottom,16px)+var(--tm-space-3))] no-scrollbar ${addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'}`}>
                 <section className="space-y-0 px-1">
                     <div className="flex h-[var(--mini-program-title-bar-height,44px)] items-center [padding-right:var(--mini-program-capsule-right-inset,0px)]">
                         {isSchoolSpace ? (
@@ -492,14 +557,14 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                     {
                                         value: 'class',
                                         label: '班级',
-                                        indicatorClassName: 'bg-[var(--tm-record-student-soft)]',
-                                        activeTextClassName: 'text-[var(--tm-record-student-text)]',
+                                        indicatorClassName: 'bg-[var(--tm-class-list-class-soft)]',
+                                        activeTextClassName: 'text-[var(--tm-class-list-class-text)]',
                                     },
                                     {
                                         value: 'team',
                                         label: '社团与团队',
-                                        indicatorClassName: 'bg-[var(--tm-record-class-soft)]',
-                                        activeTextClassName: 'text-[var(--tm-record-class-text)]',
+                                        indicatorClassName: 'bg-[var(--tm-class-list-team-soft)]',
+                                        activeTextClassName: 'text-[var(--tm-class-list-team-text)]',
                                     },
                                 ]}
                                 onChange={onListTabChange}
@@ -510,6 +575,10 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             <h1 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">班级</h1>
                         )}
                     </div>
+                </section>
+
+                <div className={isSchoolSpace ? 'space-y-[var(--tm-class-list-toolbar-card-gap)]' : 'space-y-3'}>
+                    <section className="space-y-0 px-1">
 
                     {activeListTab === 'class' && canManagePersonal && classes.length > 0 && (
                         <div className="flex min-h-11 items-center justify-between gap-3">
@@ -521,7 +590,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setShowClassManagement(true)}
-                                className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
+                                className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary)]"
                             >
                                 <SlidersHorizontal className="h-4 w-4" />
                                 班级管理
@@ -540,7 +609,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         aria-haspopup="dialog"
                                         aria-expanded={showGradeFilter}
                                         onClick={() => setShowGradeFilter(true)}
-                                        className="inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                        className={`inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${gradeFilter !== '全部' ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                                     >
                                         <span>{gradeFilter === '全部' ? '全部年级' : gradeFilter}</span>
                                         <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
@@ -562,7 +631,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         type="button"
                                         aria-label="查看班级排行榜"
                                         onClick={onViewLeaderboard}
-                                        className="inline-flex h-[var(--tm-class-list-leaderboard-touch-height)] w-[var(--tm-class-list-leaderboard-touch-width)] shrink-0 items-center justify-self-end justify-center rounded-none transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
+                                        className="inline-flex h-[var(--tm-class-list-leaderboard-touch-height)] w-[var(--tm-class-list-leaderboard-touch-width)] shrink-0 items-center justify-self-end justify-center rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
                                     >
                                         <img
                                             src={ASSETS.CLASS.LEADERBOARD_ENTRY}
@@ -585,33 +654,39 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     )}
 
                     {activeListTab === 'team' && (
-                        <div className="grid min-h-11 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
-                            {isSchoolManager ? (
-                                <button
-                                    type="button"
-                                    aria-pressed={showParticipatingTeamsOnly}
-                                    onClick={() => setShowParticipatingTeamsOnly(current => !current)}
-                                    className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-transparent px-2.5 text-[13px] font-medium transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] focus-visible:bg-[var(--tm-bg-surface-soft)] ${showParticipatingTeamsOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
-                                >
-                                    <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showParticipatingTeamsOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
-                                        {showParticipatingTeamsOnly && <Check className="h-3 w-3" strokeWidth={3} />}
-                                    </span>
-                                    我参与的
-                                </button>
-                            ) : <span />}
-                            <span className="justify-self-end whitespace-nowrap text-[12px] font-medium text-[var(--tm-text-tertiary)]" aria-live="polite" aria-atomic="true">
-                                {visibleStudentTeams.length}个社团或团队
+                        <div className="space-y-0">
+                            <div className="flex min-h-11 items-center justify-between gap-2">
+                                {isSchoolManager ? (
+                                    <button
+                                        type="button"
+                                        aria-pressed={showParticipatingTeamsOnly}
+                                        onClick={() => setShowParticipatingTeamsOnly(current => !current)}
+                                        className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-transparent px-2.5 text-[13px] font-medium focus-visible:bg-[var(--tm-bg-surface-soft)] ${showParticipatingTeamsOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                    >
+                                        <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showParticipatingTeamsOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
+                                            {showParticipatingTeamsOnly && <Check className="h-3 w-3" strokeWidth={3} />}
+                                        </span>
+                                        我参与的
+                                    </button>
+                                ) : <span />}
+                                {canCreateStudentTeam && (
+                                    <button
+                                        type="button"
+                                        onClick={() => openTeamEditor('create')}
+                                        className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary)]"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        新建
+                                    </button>
+                                )}
+                            </div>
+                            <span
+                                className="block h-[18px] whitespace-nowrap pl-3 text-[12px] font-medium leading-[18px] tabular-nums text-[var(--tm-text-secondary)]"
+                                aria-live="polite"
+                                aria-atomic="true"
+                            >
+                                共{visibleStudentTeams.length}个社团或团队
                             </span>
-                            {canCreateStudentTeam && (
-                                <button
-                                    type="button"
-                                    onClick={() => openTeamEditor('create')}
-                                    className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    新建
-                                </button>
-                            )}
                         </div>
                     )}
                 </section>
@@ -622,7 +697,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     </div>
                 )}
 
-                {activeListTab === 'team' && visibleStudentTeams.map(renderStudentTeamCard)}
+                {activeListTab === 'team' && (
+                    <div className="space-y-[var(--tm-space-3)]">
+                        {visibleStudentTeams.map(renderStudentTeamCard)}
+                    </div>
+                )}
 
                 {activeListTab === 'class' && (
                     <>
@@ -646,11 +725,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                     </button>
                                 ) : classes.length === 0 ? (
                                     <div className="mt-3 grid gap-1.5">
-                                        <button type="button" onClick={onCreateClass} className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-3 text-sm font-semibold text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft-strong)]">
+                                        <button type="button" onClick={onCreateClass} className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-3 text-sm font-semibold text-[var(--tm-brand-primary)]">
                                             <Plus className="h-4 w-4" aria-hidden="true" />
                                             创建班级
                                         </button>
-                                        <button type="button" onClick={onJoinClass} className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-3 text-sm font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+                                        <button type="button" onClick={onJoinClass} className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-3 text-sm font-semibold text-[var(--tm-text-secondary)]">
                                             <LogIn className="h-4 w-4" aria-hidden="true" />
                                             加入已有班级
                                         </button>
@@ -677,16 +756,22 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         )}
                     </section>
                 )}
+                </div>
             </div>
 
             <MobileGradePickerSheet
                 open={showGradeFilter}
                 selectionMode="single"
                 value={gradeFilter}
+                title="选择年级"
                 options={gradeOptions.map(option => ({
                     value: option,
-                    label: option === '全部' ? '全部年级' : option,
+                    label: option,
+                    stage: getTeacherGradeStage(option),
                 }))}
+                showAllGradesOption
+                allGradesValue="全部"
+                showStageName={shouldGroupTeacherGrades(currentSpace)}
                 onChange={setGradeFilter}
                 onClose={() => setShowGradeFilter(false)}
                 ariaLabel="班级列表年级筛选"
@@ -708,8 +793,8 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 mode={teamEditor?.mode ?? 'create'}
                 team={editingStudentTeam}
                 classes={studentTeamEditableClasses}
-                allStudents={allStudents}
                 getStudentsForClass={getStudentsForClass}
+                searchStudentsByExactName={searchStudentsByExactName}
                 getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, currentSpace)}
                 onClose={() => setTeamEditor(null)}
                 onSave={value => {
@@ -752,7 +837,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                     setShowClassManagement(false);
                                     item.onClick();
                                 }}
-                                className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-left active:bg-[var(--tm-bg-surface-muted)]"
+                                className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-left"
                             >
                                 <span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]"><Icon className="h-[18px] w-[18px]" /></span>
                                 <span className="flex-1 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{item.label}</span>
@@ -772,7 +857,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 key={classInfo.id}
                                 type="button"
                                 onClick={() => toggleClassVisibility(classInfo.id)}
-                                className="flex min-h-[56px] w-full items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left active:bg-[var(--tm-bg-surface-muted)]"
+                                className="flex min-h-[56px] w-full items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left"
                                 aria-pressed={visible}
                             >
                                 <span className="min-w-0 truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{getTeacherClassDisplayName(classInfo, currentSpace)}</span>
@@ -797,7 +882,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => runClassAction(onEditClassInfo)}
-                                    className="flex min-h-[var(--tm-size-touch)] min-w-0 flex-1 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] text-left active:bg-[var(--tm-bg-surface-soft)]"
+                                    className="flex min-h-[var(--tm-size-touch)] min-w-0 flex-1 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] text-left"
                                     aria-label={`查看${getTeacherClassDisplayName(activeActionClass, currentSpace)}班级详情`}
                                 >
                                     <span className="flex min-w-0 items-baseline gap-[var(--tm-space-2)]">
@@ -811,7 +896,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 <button
                                     type="button"
                                     onClick={closeActionSheet}
-                                    className="-mr-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                                    className="-mr-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)]"
                                     aria-label="关闭班级更多操作"
                                 >
                                     <X className="h-5 w-5" />
@@ -820,7 +905,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             <button
                                 type="button"
                                 onClick={() => copyClassCode(activeActionClass)}
-                                className="inline-flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-brand-primary)]"
+                                className="inline-flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]"
                                 aria-label={`复制${getTeacherClassDisplayName(activeActionClass, currentSpace)}班级号${activeActionClass.classCode}`}
                             >
                                 <span>班级号</span>
@@ -846,7 +931,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                                 key={item.label}
                                                 type="button"
                                                 onClick={item.onClick}
-                                                className="group flex min-h-[var(--tm-action-grid-item-height)] min-w-0 flex-col items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] px-1 text-center transition-colors active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none"
+                                                className="group flex min-h-[var(--tm-action-grid-item-height)] min-w-0 flex-col items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] px-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]"
                                             >
                                                 <span className={`flex h-[var(--tm-action-grid-icon-bg-size)] w-[var(--tm-action-grid-icon-bg-size)] shrink-0 items-center justify-center rounded-[var(--tm-action-grid-icon-radius)] ${actionGroupIconBackgroundClass[group.tone]}`}>
                                                     <Icon className={`h-[var(--tm-action-grid-icon-size)] w-[var(--tm-action-grid-icon-size)] ${actionGroupIconClass[group.tone]}`} />
@@ -866,6 +951,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 open={Boolean(parentVisibilityClass)}
                 title="家长端评价展示"
                 onClose={() => setParentVisibilityClassId(null)}
+                size="content"
             >
                 {parentVisibilityClass && (
                     <ParentEvaluationVisibilitySettings
@@ -889,7 +975,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 <div className="text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{student.name}</div>
                                 <div className="mt-[var(--tm-space-1)] truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{student.studentNo || student.id} · {leftStudentClass ? getTeacherClassDisplayName(leftStudentClass, currentSpace) : student.class}</div>
                             </div>
-                            <button type="button" onClick={() => onRestoreStudentStatus(student)} className="min-h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-positive-strong)] active:scale-95">
+                            <button type="button" onClick={() => onRestoreStudentStatus(student)} className="min-h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-positive-strong)]">
                                 恢复
                             </button>
                         </div>

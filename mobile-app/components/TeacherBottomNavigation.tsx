@@ -49,7 +49,7 @@ export default function TeacherBottomNavigation({
 }: TeacherBottomNavigationProps) {
     return (
         <nav
-            className="absolute bottom-0 left-0 right-0 z-50 h-16 border-0 bg-white/95 [box-shadow:var(--tm-shadow-navigation)] backdrop-blur-xl"
+            className="absolute bottom-0 left-0 right-0 z-50 h-16 border-0 bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-navigation)]"
             aria-label="教师端主要导航"
         >
             <div className="grid h-full grid-cols-3 items-center text-center">

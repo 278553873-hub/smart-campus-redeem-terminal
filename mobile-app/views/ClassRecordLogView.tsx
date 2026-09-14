@@ -284,7 +284,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                     e.stopPropagation();
                     setActiveCardMenu(activeCardMenu === id ? null : id);
                 }}
-                className={`flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-tertiary)] transition-colors active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-secondary)] ${activeCardMenu === id ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : ''}`}
+                className={`flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-tertiary)] ${activeCardMenu === id ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : ''}`}
                 aria-label="更多操作"
             >
                 <WechatMoreIcon className="w-4.5 h-4.5" />
@@ -292,11 +292,11 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
             {activeCardMenu === id && (
                 <div className="absolute right-0 top-11 z-30 w-32 origin-top-right animate-in rounded-[var(--tm-radius-control)] bg-white p-1 [box-shadow:var(--tm-shadow-floating)] ring-1 ring-[var(--tm-border-subtle)] fade-in zoom-in duration-200">
-                    <button className="flex min-h-11 w-full items-center gap-2 rounded-[8px] px-2 text-left text-xs font-medium text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]" onClick={() => setActiveCardMenu(null)}>
+                    <button className="flex min-h-11 w-full items-center gap-2 rounded-[8px] px-2 text-left text-xs font-medium text-[var(--tm-text-primary)]" onClick={() => setActiveCardMenu(null)}>
                         <RetryIcon className="w-3.5 h-3.5" /> 重新识别
                     </button>
                     <div className="mx-2 h-px bg-[var(--tm-bg-surface-muted)]"></div>
-                    <button className="flex min-h-11 w-full items-center gap-2 rounded-[8px] px-2 text-left text-xs font-medium text-[var(--tm-status-negative)] active:bg-[var(--tm-status-negative-soft)]" onClick={() => { setLogs(l => l.filter(i => i.id !== id)); setActiveCardMenu(null); }}>
+                    <button className="flex min-h-11 w-full items-center gap-2 rounded-[8px] px-2 text-left text-xs font-medium text-[var(--tm-status-negative)]" onClick={() => { setLogs(l => l.filter(i => i.id !== id)); setActiveCardMenu(null); }}>
                         <DeleteIcon className="w-3.5 h-3.5" /> 删除记录
                     </button>
                 </div>
@@ -308,7 +308,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     const VoicePlayback = ({ active, duration }: { active: 'student' | 'class'; duration?: string }) => (
         <button
             type="button"
-            className={`mb-3 inline-flex min-h-11 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold transition active:scale-95 ${active === 'class' ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]' : 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]'}`}
+            className={`mb-3 inline-flex min-h-11 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold ${active === 'class' ? 'bg-[var(--tm-record-class-soft)] text-[var(--tm-record-class-text)]' : 'bg-[var(--tm-record-student-soft)] text-[var(--tm-record-student-text)]'}`}
             aria-label="播放原始语音"
         >
             <span className="h-0 w-0 border-y-[5px] border-y-transparent border-l-[7px] border-l-current" aria-hidden="true" />
@@ -392,10 +392,10 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             ? 'border-[var(--tm-record-negative-border)] bg-[var(--tm-record-negative-bg)]'
             : 'border-[var(--tm-record-positive-border)] bg-[var(--tm-record-positive-bg)]';
         const resultAccentClass = isNegative
-            ? 'bg-[var(--tm-status-negative)]'
+            ? 'bg-[var(--tm-score-negative)]'
             : 'bg-[var(--tm-status-positive)]';
         const totalClass = scoreTone === 'negative'
-            ? 'border border-[var(--tm-record-negative-border)] bg-white/90 text-[var(--tm-status-negative)]'
+            ? 'border border-[var(--tm-record-negative-border)] bg-white/90 text-[var(--tm-score-negative)]'
             : 'border border-[var(--tm-record-positive-border)] bg-white/90 text-[var(--tm-status-positive)]';
 
         return (
@@ -411,7 +411,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                 <button
                     type="button"
                     onClick={() => { setEditingLog(log); setShowScoreEdit(true); }}
-                    className={`block w-full rounded-[var(--tm-radius-inner)] border p-3.5 text-left transition active:scale-[0.995] ${resultSurfaceClass}`}
+                    className={`block w-full rounded-[var(--tm-radius-inner)] border p-3.5 text-left ${resultSurfaceClass}`}
                     aria-label="编辑 AI 智能解读结果"
                 >
                     <div className="mb-3 grid grid-cols-[26px_auto_1fr_auto] items-center gap-2">
@@ -481,7 +481,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                     {/* Left: Back (if needed) */}
                     {!isMainView && (
                         <div className="mb-2 w-10 shrink-0">
-                            <button onClick={onBack} className="p-2 -ml-2 rounded-full active:bg-black/5 text-slate-700 transition-colors">
+                            <button onClick={onBack} className="p-2 -ml-2 rounded-full text-slate-700">
                                 <BackIcon className="w-5 h-5" />
                             </button>
                         </div>
@@ -517,7 +517,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             <button
                                 type="button"
                                 onClick={onViewIndicators}
-                                className="relative z-10 flex h-[var(--tm-size-touch)] shrink-0 items-center gap-0.5 rounded-[var(--tm-radius-control)] px-1 text-[14px] font-semibold text-[var(--tm-text-secondary)] transition-[background-color,color,transform] duration-200 active:scale-[0.96] active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
+                                className="relative z-10 flex h-[var(--tm-size-touch)] shrink-0 items-center gap-0.5 rounded-[var(--tm-radius-control)] px-1 text-[14px] font-semibold text-[var(--tm-text-secondary)]"
                                 aria-label={`查看${activeTab === 'student' ? '学生' : '班级'}指标`}
                             >
                                 <span>指标</span>
@@ -533,7 +533,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             </div>
 
             {/* List Content */}
-            <div className="relative z-10 flex-1 min-h-0 overflow-y-auto px-5 pb-44 pt-0 no-scrollbar">
+            <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-5 pb-44 pt-0 no-scrollbar">
                 {!showFirstRecordGuide && visibleLogs.length > 0 ? (
                     <div className="space-y-3.5">
                         {visibleLogs.map(log => renderLogItem(log))}
@@ -710,7 +710,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                         <button
                                             key={v}
                                             onClick={() => handleUpdateLogScore(editingLog.id, editingLog.score?.label || '', v)}
-                                            className={`flex h-12 flex-1 items-center justify-center rounded-xl font-mono font-semibold transition-all ${editingLog.score?.value === v ? `${v < 0 ? 'bg-[var(--tm-status-negative)]' : 'bg-[var(--tm-status-positive)]'} scale-105 text-white` : `${v < 0 ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-status-positive)]'} bg-white`}`}
+                                            className={`flex h-12 flex-1 items-center justify-center rounded-xl font-mono font-semibold transition-all ${editingLog.score?.value === v ? `${v < 0 ? 'bg-[var(--tm-score-negative)]' : 'bg-[var(--tm-status-positive)]'} scale-105 text-white` : `${v < 0 ? 'text-[var(--tm-score-negative)]' : 'text-[var(--tm-status-positive)]'} bg-white`}`}
                                         >
                                             {v > 0 ? `+${v}` : v}
                                         </button>
@@ -719,7 +719,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             </div>
                         </div>
                         <div className="p-4 safe-area-bottom">
-                            <button onClick={() => setShowScoreEdit(false)} className={`w-full rounded-2xl py-4 font-semibold transition-all active:scale-95 ${modeSolidTone}`}>确认修改</button>
+                            <button onClick={() => setShowScoreEdit(false)} className={`w-full rounded-2xl py-4 font-semibold ${modeSolidTone}`}>确认修改</button>
                         </div>
                     </div>
                 </div>
@@ -730,7 +730,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                     <div className={`${recordSheetSurfaceClass} h-[85vh]`} onClick={(e) => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-50 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-slate-800">涉及学生</h3>
-                            <button onClick={() => setShowStudentListModal(false)} className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-disabled)] transition-colors active:bg-[var(--tm-bg-surface-muted)]"><CloseIcon className="w-6 h-6" /></button>
+                            <button onClick={() => setShowStudentListModal(false)} className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-disabled)]"><CloseIcon className="w-6 h-6" /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-3">
                             {MOCK_STUDENTS_CLASS_1.slice(0, 15).map((student, idx) => (
@@ -742,12 +742,12 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                             <div className="text-[11px] text-slate-400 font-medium">{student.id}</div>
                                         </div>
                                     </div>
-                                    <button className="min-h-11 rounded-xl bg-[var(--tm-record-student-soft)] px-4 text-xs font-semibold text-[var(--tm-record-student-text)] transition-all active:scale-95">替换</button>
+                                    <button className="min-h-11 rounded-xl bg-[var(--tm-record-student-soft)] px-4 text-xs font-semibold text-[var(--tm-record-student-text)]">替换</button>
                                 </div>
                             ))}
                         </div>
                         <div className="p-4 safe-area-bottom bg-white border-t border-slate-50">
-                            <button onClick={() => setShowStudentListModal(false)} className="w-full rounded-2xl bg-[var(--tm-record-student-primary)] py-4 text-base font-semibold text-white transition-all active:scale-[0.98]">
+                            <button onClick={() => setShowStudentListModal(false)} className="w-full rounded-2xl bg-[var(--tm-record-student-primary)] py-4 text-base font-semibold text-white">
                                 确认列表
                             </button>
                         </div>

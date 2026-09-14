@@ -47,6 +47,22 @@
   color: #165dff !important;
 }
 
+/* 商品库主操作：Arco 按钮包含图标时仍保持图标与文案同一行。仅作用于货柜商品库。 */
+.shop-product-create-button.arco-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 112px;
+  white-space: nowrap;
+}
+
+.shop-product-create-button.arco-btn > svg {
+  display: block;
+  flex: 0 0 auto;
+  margin-right: 8px;
+}
+
 /* 配置表单中的可编辑控件使用白底，与真实禁用态明确区分。 */
 .pc-form .arco-input-inner-wrapper,
 .pc-form .arco-select-view,

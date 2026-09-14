@@ -1,4 +1,5 @@
 import { questionnaireThemePalette } from '../../shared/questionnaireThemeTokens';
+import { evaluationScoreSemantic } from '../../shared/evaluationScoreTokens';
 
 export const teacherBrandPalette = {
   red: {
@@ -125,10 +126,26 @@ export const teacherBrandSemantic = {
   chartHover: 'rgba(224, 39, 39, 0.06)',
 } as const;
 
+// 扣分与负向评价数据统一使用单一业务色，不与删除、错误等危险状态共用语义。
+export const teacherEvaluationScoreSemantic = evaluationScoreSemantic;
+
 export const teacherActionSemantic = {
   iconNeutral: teacherBrandSemantic.textSecondary,
   iconBrand: teacherBrandSemantic.primary,
   iconDanger: teacherBrandSemantic.negative,
+} as const;
+
+// 需要说明和互斥选择的卡片使用白色表面建立默认态，选中只增加品牌边框和勾选，避免灰底被误解为禁用。
+export const teacherSelectionCardSemantic = {
+  background: teacherBrandSemantic.surface,
+  border: teacherBrandSemantic.border,
+  selectedBackground: teacherBrandSemantic.surface,
+  selectedBorder: teacherBrandSemantic.primary,
+  titleText: teacherBrandSemantic.textPrimary,
+  descriptionText: teacherBrandSemantic.textSecondary,
+  checkBackground: teacherBrandSemantic.primary,
+  checkBorder: teacherBrandSemantic.borderControl,
+  shadow: 'var(--tm-shadow-control)',
 } as const;
 
 // 班级更多操作按业务分组稳定着色；颜色只帮助识别分类，不表达优先级或状态。
@@ -188,8 +205,8 @@ export const teacherReportChartSemantic = {
   warning: teacherReportChartPalette.orange.fill,
   warningText: teacherReportChartPalette.orange.text,
   warningSoft: teacherReportChartPalette.orange.soft,
-  negative: teacherReportChartPalette.coral.fill,
-  negativeText: teacherReportChartPalette.coral.text,
+  negative: teacherEvaluationScoreSemantic.negative,
+  negativeText: teacherEvaluationScoreSemantic.negative,
   negativeSoft: teacherReportChartPalette.coral.soft,
   peer: teacherReportChartPalette.blueGray.peer,
   total: teacherReportChartPalette.blueGray.total,
@@ -282,7 +299,7 @@ export const teacherStudentLevelSemantic = {
   track: teacherBrandPalette.neutral[100],
   praise: teacherBrandPalette.green[700],
   praiseSoft: teacherBrandPalette.green[50],
-  criticism: teacherBrandPalette.red[700],
+  criticism: teacherEvaluationScoreSemantic.negative,
   criticismSoft: teacherBrandPalette.red[50],
 } as const;
 
@@ -429,6 +446,7 @@ export const teacherBrandCssVariables = {
   '--tm-status-negative': teacherBrandSemantic.negative,
   '--tm-status-negative-strong': teacherBrandSemantic.negativeStrong,
   '--tm-status-negative-soft': teacherBrandSemantic.negativeSoft,
+  '--tm-score-negative': teacherEvaluationScoreSemantic.negative,
   '--tm-record-student-primary': teacherBrandSemantic.primary,
   '--tm-record-student-text': teacherBrandSemantic.primaryStrong,
   '--tm-record-student-soft': teacherBrandSemantic.primarySoft,
@@ -437,12 +455,16 @@ export const teacherBrandCssVariables = {
   '--tm-record-class-text': teacherBrandSemantic.secondaryStrong,
   '--tm-record-class-soft': teacherBrandSemantic.secondarySoft,
   '--tm-record-scope-visual-height': '36px',
+  '--tm-class-list-class-text': teacherBrandSemantic.primaryStrong,
+  '--tm-class-list-class-soft': teacherBrandSemantic.primarySoft,
+  '--tm-class-list-team-text': teacherBrandSemantic.secondaryStrong,
+  '--tm-class-list-team-soft': teacherBrandSemantic.secondarySoft,
   '--tm-record-positive-bg': teacherBrandSemantic.positiveSoft,
   '--tm-record-positive-border': teacherBrandPalette.green[100],
   '--tm-record-positive-text': teacherBrandSemantic.positiveStrong,
   '--tm-record-negative-bg': teacherBrandSemantic.negativeSoft,
   '--tm-record-negative-border': teacherBrandPalette.red[100],
-  '--tm-record-negative-text': teacherBrandSemantic.negativeStrong,
+  '--tm-record-negative-text': teacherEvaluationScoreSemantic.negative,
   '--tm-edu-virtue': teacherFiveEducationSemantic.virtue,
   '--tm-edu-wisdom': teacherFiveEducationSemantic.wisdom,
   '--tm-edu-fitness': teacherFiveEducationSemantic.fitness,
@@ -479,12 +501,20 @@ export const teacherBrandCssVariables = {
   '--tm-student-card-height-compact': '104px',
   '--tm-student-card-height-minimal': '88px',
   '--tm-student-card-name-font-size': 'var(--tm-font-size-meta)',
-  '--tm-student-card-name-font-weight': '550',
+  '--tm-student-card-name-font-weight': '500',
   '--tm-student-card-roster-font-size': '9px',
+  '--tm-student-card-roster-font-size-strong': '11px',
+  '--tm-student-card-roster-font-weight-strong': '800',
+  '--tm-student-roster-number-bg': teacherBrandSemantic.surfaceMuted,
+  '--tm-student-roster-number-text': teacherBrandSemantic.textPrimary,
   '--tm-student-card-count-font-size': '10px',
   '--tm-student-card-identity-height': '16px',
   '--tm-student-card-roster-height': '14px',
-  '--tm-student-card-count-height': '16px',
+  '--tm-student-card-roster-height-strong': '14px',
+  '--tm-student-card-roster-width-strong': '16px',
+  '--tm-student-card-count-height': '14px',
+  '--tm-student-card-level-icon-size': '16px',
+  '--tm-student-card-level-icon-row-height': '16px',
   '--tm-archive-theme-clean-bg': teacherArchiveAppearanceSemantic.clean.background,
   '--tm-archive-theme-clean-swatch': teacherArchiveAppearanceSemantic.clean.swatch,
   '--tm-archive-theme-clean-accent': teacherArchiveAppearanceSemantic.clean.accent,
@@ -661,12 +691,14 @@ export const teacherBrandCssVariables = {
   '--tm-shadow-floating': '0 -10px 24px -12px rgba(64, 60, 58, 0.18), 0 10px 28px -12px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-floating-raised': '0 14px 32px -12px var(--tm-shadow-brand-color), 0 8px 20px -10px var(--tm-shadow-neutral-color)',
   '--tm-floating-image-button-shadow': '0 3px 10px rgba(64, 60, 58, 0.20), 0 14px 26px -8px rgba(28, 128, 118, 0.28)',
-  '--tm-shadow-navigation': '0 -6px 18px -14px rgba(64, 60, 58, 0.06)',
+  '--tm-shadow-navigation': '0 -10px 24px -14px rgba(64, 60, 58, 0.16)',
   '--tm-shadow-sheet': '0 -20px 52px -34px rgba(64, 60, 58, 0.18)',
   '--tm-glow-primary': 'rgba(224, 39, 39, 0.13)',
   '--tm-glow-secondary': 'rgba(247, 92, 3, 0.11)',
   '--tm-glow-primary-subtle': 'rgba(224, 39, 39, 0.055)',
   '--tm-glow-secondary-subtle': 'rgba(247, 92, 3, 0.05)',
+  '--tm-class-list-class-glow': 'rgba(224, 39, 39, 0.13)',
+  '--tm-class-list-team-glow': 'rgba(247, 92, 3, 0.11)',
   '--tm-student-detail-profile-bg': 'radial-gradient(circle at 92% 0%, var(--tm-glow-primary-subtle), transparent 46%), radial-gradient(circle at 8% 100%, var(--tm-glow-secondary-subtle), transparent 42%), linear-gradient(var(--tm-bg-surface-glass), var(--tm-bg-surface-glass))',
   '--tm-student-detail-asset-bg': 'rgba(255, 255, 255, 0.24)',
   '--tm-student-detail-asset-border': 'rgba(64, 60, 58, 0.08)',
@@ -815,6 +847,8 @@ export const teacherBrandCssVariables = {
   '--tm-selection-segment-compact-font-size': '15px',
   '--tm-selection-segment-compact-inset': '2px',
   '--tm-selection-segment-compact-track-radius': 'var(--tm-radius-inner)',
+  '--tm-selection-segment-compact-active-radius': 'calc(var(--tm-radius-inner) - var(--tm-selection-segment-compact-inset))',
+  '--tm-selection-segment-settings-item-width': '72px',
   '--tm-selection-segment-slide-duration': '220ms',
   '--tm-selection-segment-slide-easing': 'cubic-bezier(0.22, 1, 0.36, 1)',
   '--tm-selection-segment-track-bg': 'var(--tm-bg-surface-muted)',
@@ -846,6 +880,17 @@ export const teacherBrandCssVariables = {
   '--tm-choice-pill-selected-border': 'var(--tm-brand-primary)',
   '--tm-choice-pill-selected-text': 'var(--tm-brand-primary)',
   '--tm-choice-pill-selected-pressed-bg': 'var(--tm-choice-pill-selected-bg)',
+  // 说明型单选卡片：默认态与选中态都保持白色表面，只通过边框和勾选表达状态。
+  '--tm-selection-card-radius': 'var(--tm-radius-inner)',
+  '--tm-selection-card-bg': teacherSelectionCardSemantic.background,
+  '--tm-selection-card-border': teacherSelectionCardSemantic.border,
+  '--tm-selection-card-selected-bg': teacherSelectionCardSemantic.selectedBackground,
+  '--tm-selection-card-selected-border': teacherSelectionCardSemantic.selectedBorder,
+  '--tm-selection-card-title-text': teacherSelectionCardSemantic.titleText,
+  '--tm-selection-card-description-text': teacherSelectionCardSemantic.descriptionText,
+  '--tm-selection-card-check-bg': teacherSelectionCardSemantic.checkBackground,
+  '--tm-selection-card-check-border': teacherSelectionCardSemantic.checkBorder,
+  '--tm-selection-card-shadow': teacherSelectionCardSemantic.shadow,
   '--tm-report-page-inline': 'var(--tm-space-5)',
   '--tm-report-card-gap': 'var(--tm-space-6)',
   '--tm-report-card-padding': 'var(--tm-space-4)',
@@ -909,6 +954,7 @@ export const teacherBrandCssVariables = {
   '--tm-duration-fast': '150ms',
   '--tm-duration-standard': '200ms',
   '--tm-duration-panel': '300ms',
+  '--tm-context-switch-duration': '320ms',
   '--tm-duration-sheet-enter': '350ms',
   '--tm-duration-sheet-exit': '220ms',
 } satisfies Record<`--${string}`, string>;

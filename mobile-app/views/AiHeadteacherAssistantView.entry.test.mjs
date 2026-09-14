@@ -33,7 +33,7 @@ const qingheProfileSource = appSource.slice(
 );
 requireText(qingheProfileSource, "homeroomClassIds: ['c_2025_3']", '仅学生评价学校必须绑定有效班主任班级，确保学生问题带入班级上下文。');
 
-for (const label of ['本周学生情况洞察与班级跟进建议', '上月评价记录复盘与改进建议']) {
+for (const label of ['本周学生评价洞察与跟进建议', '我的上月学生评价复盘与改进']) {
   requireText(viewSource, label, `统一页面应展示单行学生评价能力：${label}`);
 }
 requireText(viewSource, 'onOpenWeeklyActionAdvice(resolvedClassId)', '第一个学生问题应携带当前班级进入本周行动建议。');

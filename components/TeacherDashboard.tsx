@@ -1731,11 +1731,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     // 货柜商品管理状态
     const [shopActiveTab, setShopActiveTab] = useState<'products' | 'channels'>('channels');
     const [shopProducts, setShopProducts] = useState([
-        { id: 1, name: '校庆限量徽章', price: 5, icon: '/assets/shop/shop_badge.png' },
-        { id: 2, name: '星光书包', price: 150, icon: '/assets/shop/shop_backpack.png' },
-        { id: 3, name: '定制刻字钢笔', price: 120, icon: '/assets/shop/shop_pen.png' },
-        { id: 4, name: '智能成长笔记本', price: 15, icon: '/assets/shop/shop_notebook.png' },
+        { id: 1, name: '校庆限量徽章', price: 5, icon: '/assets/shop/shop_badge.png', active: true },
+        { id: 2, name: '星光书包', price: 150, icon: '/assets/shop/shop_backpack.png', active: true },
+        { id: 3, name: '定制刻字钢笔', price: 120, icon: '/assets/shop/shop_pen.png', active: true },
+        { id: 4, name: '智能成长笔记本', price: 15, icon: '/assets/shop/shop_notebook.png', active: true },
     ]);
+    const [shopProductStatusFilter, setShopProductStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [channels, setChannels] = useState(
         Array.from({ length: 50 }, (_, i) => ({
             id: i + 1,
@@ -1749,6 +1750,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [editingShopProduct, setEditingShopProduct] = useState<any>(null);
     const [editingChannel, setEditingChannel] = useState<any>(null);
     const [modalIcon, setModalIcon] = useState<string>('');
+    const [shopPriceInput, setShopPriceInput] = useState('10.00');
 
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [modalDays, setModalDays] = useState(7);
@@ -2000,6 +2002,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const handleOpenShopModal = (product: any = null) => {
         setEditingShopProduct(product);
         setModalIcon(product?.icon || '/assets/c4d_shop.png');
+        setShopPriceInput(product ? Number(product.price).toFixed(2) : '10.00');
         setIsShopModalOpen(true);
     };
 
@@ -2012,7 +2015,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         if (editingShopProduct) {
             setShopProducts(shopProducts.map(p => p.id === productData.id ? productData : p));
         } else {
-            setShopProducts([{ ...productData, id: Date.now() }, ...shopProducts]);
+            setShopProducts([{ ...productData, id: Date.now(), active: true }, ...shopProducts]);
         }
         setIsShopModalOpen(false);
         setEditingShopProduct(null);
@@ -2028,6 +2031,40 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setShopProducts(shopProducts.filter(p => p.id !== id));
         // clear from channels
         setChannels(channels.map(c => c.productId === id ? { ...c, productId: null, stock: 0 } : c));
+    };
+
+    const handleToggleShopProductStatus = (id: number) => {
+        setShopProducts(shopProducts.map(product => product.id === id ? { ...product, active: !product.active } : product));
+    };
+
+    const filteredShopProducts = shopProducts.filter(product => (
+        shopProductStatusFilter === 'all'
+        || (shopProductStatusFilter === 'active' && product.active)
+        || (shopProductStatusFilter === 'inactive' && !product.active)
+    ));
+
+    const renderChannelPreviewSlot = (channel: typeof channels[number], compact = false) => {
+        const product = shopProducts.find(item => item.id === channel.productId);
+        return (
+            <button
+                key={channel.id}
+                type="button"
+                onClick={() => handleOpenChannelModal(channel)}
+                className={`group relative flex min-h-[42px] min-w-0 flex-col items-center justify-center overflow-hidden rounded border text-center transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#165DFF] ${compact ? 'px-1 py-1' : 'px-1.5 py-1.5'} ${product ? 'border-[#BEDAFF] bg-[#F2F7FF] hover:border-[#165DFF] hover:bg-white' : 'border-[#D9E2EC] bg-white hover:border-[#165DFF] hover:bg-[#F7FBFF]'}`}
+                aria-label={`货道 ${channel.id}${product ? `，${product.name}，库存 ${channel.stock}` : '，未配置'}`}
+            >
+                <span className={`absolute left-1 top-0.5 text-[10px] font-semibold leading-none ${product ? 'text-[#165DFF]' : 'text-[#86909C]'}`}>{channel.id}</span>
+                {product ? (
+                    <>
+                        <img src={product.icon} alt="" className={`${compact ? 'h-5 w-5' : 'h-6 w-6'} object-contain`} />
+                        <span className="mt-0.5 max-w-full truncate text-[10px] text-[#1D2129]">{product.name}</span>
+                        <span className={`text-[9px] leading-none ${channel.stock < 5 ? 'text-[#F53F3F]' : 'text-[#00B42A]'}`}>{channel.stock}/10</span>
+                    </>
+                ) : (
+                    <span className="mt-2 text-[10px] text-[#C9CDD4] group-hover:text-[#86909C]">空闲</span>
+                )}
+            </button>
+        );
     };
 
     return (
@@ -2106,7 +2143,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                     {/* 页面主标题 */}
                     {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '成长数据设置' && activeMenu !== '成长数据导入' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
-                    <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
+                    <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : activeMenu === '货柜超市管理' ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
                         <div>
                             {activeMenu === '考试数据' ? (
                                 <div className="mb-2 flex items-center gap-2 font-['PingFang_SC'] text-[14px] font-normal leading-none">
@@ -2130,7 +2167,31 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             <h2 className={activeMenu === '考试数据' ? "font-['PingFang_SC'] text-[18px] font-semibold leading-none text-[#333333]" : `${embedded ? 'text-[20px]' : 'text-2xl'} font-[900] text-slate-800 tracking-tight`}>
                                 {activeMenu === '考试数据' && gradePageMode === 'create' ? '新建考试' : activeMenu}
                             </h2>
-                            {activeMenu !== '考试数据' && <div className="h-1 w-12 bg-blue-600 rounded-full mt-1.5"></div>}
+                            {activeMenu !== '考试数据' && activeMenu !== '货柜超市管理' && <div className="h-1 w-12 bg-blue-600 rounded-full mt-1.5"></div>}
+                            {activeMenu === '货柜超市管理' && (
+                                <div className="mt-4 flex items-end gap-8 border-b border-[#E5E6EB]" role="tablist" aria-label="货柜超市管理视图">
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={shopActiveTab === 'channels'}
+                                        onClick={() => setShopActiveTab('channels')}
+                                        className={`relative h-11 text-sm ${shopActiveTab === 'channels' ? 'font-medium text-[#165DFF]' : 'text-[#4E5969] hover:text-[#1D2129]'}`}
+                                    >
+                                        货道配置 <span className="text-[13px] text-[#86909C]">（50）</span>
+                                        {shopActiveTab === 'channels' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#165DFF]" />}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={shopActiveTab === 'products'}
+                                        onClick={() => setShopActiveTab('products')}
+                                        className={`relative h-11 text-sm ${shopActiveTab === 'products' ? 'font-medium text-[#165DFF]' : 'text-[#4E5969] hover:text-[#1D2129]'}`}
+                                    >
+                                        基础商品库
+                                        {shopActiveTab === 'products' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#165DFF]" />}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                     )}
@@ -2496,158 +2557,151 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                     {/* 货柜超市管理 */}
                     {activeMenu === '货柜超市管理' && (
-                        <div className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden transform animate-in fade-in slide-in-from-bottom-6 duration-700 flex flex-col min-h-[600px]">
-                            <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-white shrink-0">
-                                <div>
-                                    <div className="flex bg-slate-100 rounded-xl p-1">
-                                        <button onClick={() => setShopActiveTab('channels')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${shopActiveTab === 'channels' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>货道配置 (50)</button>
-                                        <button onClick={() => setShopActiveTab('products')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${shopActiveTab === 'products' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>基础商品库</button>
-                                    </div>
-                                </div>
-                                {shopActiveTab === 'products' && (
-                                    <div className="flex gap-4 self-start">
-                                        <button onClick={() => handleOpenShopModal()} className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all active:scale-95 flex items-center gap-2">
-                                            <Plus size={20} /> 新建商品
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
+                        <div className="overflow-hidden rounded border border-[#E5E6EB] bg-white animate-in fade-in duration-300">
                             {shopActiveTab === 'products' && (
-                                <div className="p-2 overflow-y-auto custom-scrollbar flex-1">
-                                    <table className="w-full text-left border-separate border-spacing-0">
-                                        <thead>
-                                            <tr className="text-slate-400 text-[11px] font-[900] uppercase tracking-[0.15em]">
-                                                <th className="py-6 px-10">商品名/SKU</th>
-                                                <th className="py-6 px-6">售价 (校园币)</th>
-                                                <th className="py-6 px-10 text-right">管理操作</th>
+                                <>
+                                    <div className="pc-filter-bar flex items-center justify-between gap-3 border-b border-[#F2F3F5] px-6 py-4" aria-label="商品列表工具栏">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm text-[#4E5969]">商品状态</span>
+                                            <ArcoSelect
+                                                allowClear
+                                                placeholder="全部状态"
+                                                value={shopProductStatusFilter === 'all' ? undefined : shopProductStatusFilter}
+                                                options={[{ label: '上架', value: 'active' }, { label: '下架', value: 'inactive' }]}
+                                                onChange={(value) => setShopProductStatusFilter(value ? String(value) as 'active' | 'inactive' : 'all')}
+                                                style={{ width: 160 }}
+                                                aria-label="商品上架状态筛选"
+                                            />
+                                        </div>
+                                        <Button type="primary" className="shop-product-create-button" icon={<Plus size={14} />} onClick={() => handleOpenShopModal()}>
+                                            新建商品
+                                        </Button>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[900px] text-left text-sm">
+                                        <thead className="bg-[#F7F8FA] text-xs font-semibold text-[#4E5969]">
+                                            <tr>
+                                                <th className="px-6 py-3">商品</th>
+                                                <th className="px-4 py-3">售价（校园币）</th>
+                                                <th className="px-4 py-3 text-center">上架状态</th>
+                                                <th className="px-6 py-3 text-right">操作</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {shopProducts.map((item, index) => (
-                                                <tr key={item.id} className="active:bg-slate-50 transition-all cursor-pointer border-b border-slate-50 last:border-0">
-                                                    <td className="py-6 px-10">
-                                                        <div className="flex items-center gap-5">
-                                                            <div className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-3xl shadow-sm transition-transform overflow-hidden">
+                                        <tbody className="divide-y divide-[#F2F3F5]">
+                                            {filteredShopProducts.map((item) => (
+                                                <tr key={item.id} className="transition-colors hover:bg-[#F7F8FA]">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border border-[#E5E6EB] bg-white">
                                                                 {item.icon.includes('http') || item.icon.includes('/') || item.icon.startsWith('data:') ? <img src={item.icon} className="w-full h-full object-cover" alt={item.name} /> : item.icon}
                                                             </div>
                                                             <div>
-                                                                <span className="font-black text-slate-800 text-lg block">{item.name}</span>
+                                                                <span className="block font-medium text-[#1D2129]">{item.name}</span>
+                                                                <span className="mt-0.5 block text-xs text-[#86909C]">商品编号：{item.id}</span>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="py-6 px-6">
-                                                        <div className="flex items-center gap-2 font-black text-orange-500 text-xl">
-                                                            <Coins size={22} className="text-orange-400" />
-                                                            {item.price}
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-1.5 font-medium tabular-nums text-[#1D2129]">
+                                                            <Coins size={16} className="text-[#FF7D00]" />
+                                                            {Number(item.price).toFixed(2)}
                                                         </div>
                                                     </td>
-                                                    <td className="py-6 px-10 text-right">
-                                                        <div className="flex justify-end gap-3 transition-all">
-                                                            <button onClick={(e) => { e.stopPropagation(); handleOpenShopModal(item); }} className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 active:text-blue-600 active:border-blue-200 active:bg-blue-50 shadow-sm transition-colors"><PenTool size={18} /></button>
-                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteShopProduct(item.id); }} className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 active:text-red-500 active:border-red-200 active:bg-red-50 shadow-sm transition-colors"><Plus size={18} className="transform rotate-45" /></button>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <Switch
+                                                            size="small"
+                                                            checked={item.active}
+                                                            checkedText="上架"
+                                                            uncheckedText="下架"
+                                                            aria-label={`${item.active ? '下架' : '上架'}${item.name}`}
+                                                            onChange={() => handleToggleShopProductStatus(item.id)}
+                                                        />
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            <Button type="text" size="small" className="!px-0" onClick={() => handleOpenShopModal(item)}>编辑</Button>
+                                                            <Popconfirm title="确认删除商品？" content="删除后，已配置该商品的货道也会被置空。" onOk={() => handleDeleteShopProduct(item.id)}>
+                                                                <Button type="text" size="small" className="!px-0" status="danger">删除</Button>
+                                                            </Popconfirm>
                                                         </div>
                                                     </td>
                                                 </tr>
                                             ))}
                                             {shopProducts.length === 0 && (
                                                 <tr>
-                                                    <td colSpan={3} className="py-20 text-center text-slate-400 font-bold">商品库为空，请先新建商品</td>
+                                                    <td colSpan={4} className="py-12 text-center text-[#86909C]">暂无商品，请先新建商品</td>
+                                                </tr>
+                                            )}
+                                            {shopProducts.length > 0 && filteredShopProducts.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={4} className="py-12 text-center text-[#86909C]">暂无符合条件的商品</td>
                                                 </tr>
                                             )}
                                         </tbody>
                                     </table>
-                                </div>
+                                    </div>
+                                </>
                             )}
 
                             {shopActiveTab === 'channels' && (
-                                <div className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50">
-                                    <p className="text-slate-500 font-bold mb-6 text-sm flex items-center gap-2"><Info size={16} /> 点击对应编号的货道为其配置商品。每个货道最大容量为 10 件。</p>
-
-                                    {[
-                                        { title: '挂钩货道', count: 10, offset: 0 },
-                                        { title: '弹簧货道', count: 10, offset: 10 },
-                                        { title: '推杆货道', count: 30, offset: 20 }
-                                    ].map(group => (
-                                        <div key={group.title} className="mb-8 last:mb-0 bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
-                                            <h4 className="text-lg font-black text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                                                        <span className="text-sm border-2 border-current rounded-full w-5 h-5 flex items-center justify-center">{group.title[0]}</span>
+                                <div className="p-6 overflow-y-auto custom-scrollbar bg-[#F7F8FA]">
+                                    <div className="mb-4 flex items-center justify-between">
+                                        <div>
+                                            <h3 className="m-0 text-sm font-semibold text-[#1D2129]">货柜平面预览</h3>
+                                            <p className="mt-1 text-xs text-[#86909C]">点击格口即可配置商品</p>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-xs text-[#86909C]" aria-label="货道状态图例">
+                                            <span className="flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#165DFF]" />已配置</span>
+                                            <span className="flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#C9CDD4]" />空闲</span>
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-4 xl:grid-cols-[minmax(320px,0.9fr)_minmax(520px,1.1fr)]">
+                                        <div className="rounded border border-[#E5E6EB] bg-white p-4">
+                                            <div className="mb-3 text-center text-xs font-medium text-[#4E5969]">货柜实物映射</div>
+                                            <div className="grid grid-cols-[minmax(0,1fr)_64px_minmax(0,0.72fr)] items-stretch gap-2 rounded-lg bg-[#F7F8FA] p-3">
+                                                <div className="rounded border border-[#D9E2EC] bg-[#EDF2F7] p-2">
+                                                    <div className="mb-2 flex items-center justify-between text-[10px] text-[#4E5969]"><span>左柜</span><span>21–50</span></div>
+                                                    <div className="grid grid-cols-5 gap-1">
+                                                        {channels.slice(20, 50).map(channel => renderChannelPreviewSlot(channel, true))}
                                                     </div>
-                                                    {group.title} <span className="text-sm text-slate-400 font-bold">({group.offset + 1}-{group.offset + group.count})</span>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setChannels(channels.map((c, idx) => {
-                                                            if (idx >= group.offset && idx < group.offset + group.count && c.productId !== null) {
-                                                                return { ...c, stock: 10 };
-                                                            }
-                                                            return c;
-                                                        }));
-                                                    }}
-                                                    className="px-3 py-1.5 flex items-center gap-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 active:scale-95 transition-all outline-none text-xs font-bold"
-                                                >
-                                                    <Database size={12} /> 一键补满本区
-                                                </button>
-                                            </h4>
-                                            <div className="grid grid-cols-5 gap-4">
-                                                {channels.slice(group.offset, group.offset + group.count).map((channel) => {
-                                                    const product = shopProducts.find(p => p.id === channel.productId);
-                                                    return (
-                                                        <div
-                                                            key={channel.id}
-                                                            onClick={() => handleOpenChannelModal(channel)}
-                                                            className={`bg-white rounded-2xl p-4 border-2 transition-all cursor-pointer shadow-sm active:scale-95 group ${product ? 'border-blue-100 hover:border-blue-300' : 'border-dashed border-slate-200 hover:border-slate-300'
-                                                                }`}
-                                                        >
-                                                            <div className="flex justify-between items-start mb-3">
-                                                                <div className="flex items-center gap-1">
-                                                                    <span className="text-lg font-black text-slate-800">{channel.id}</span>
-                                                                </div>
-                                                                {product && (
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${channel.stock < 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                                                                            存: {channel.stock}/10
-                                                                        </span>
-                                                                        {channel.stock < 10 && (
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    setChannels(channels.map(c => c.id === channel.id ? { ...c, stock: 10 } : c));
-                                                                                }}
-                                                                                className="h-5 px-1.5 flex items-center gap-1 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 active:scale-95 transition-all outline-none text-[10px] font-bold"
-                                                                                title="一键补满"
-                                                                            >
-                                                                                <Database size={10} /> 补满
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            {product ? (
-                                                                <div className="flex items-center gap-3">
-                                                                    <img src={product.icon} alt="" className="w-10 h-10 object-contain drop-shadow-sm" />
-                                                                    <div className="min-w-0">
-                                                                        <div className="text-sm font-black text-slate-800 truncate">{product.name}</div>
-                                                                        <div className="text-orange-500 font-bold text-xs font-[NumberFont] flex items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em]" alt="coin" /> {product.price}</div>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="h-10 flex items-center justify-center text-slate-300 font-bold text-xs group-active:text-slate-400">
-                                                                    + 空闲货道
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="flex min-h-[180px] flex-1 items-center justify-center rounded border border-[#C9CDD4] bg-[#F2F3F5] text-center text-[10px] text-[#86909C]">主机<br />屏幕</div>
+                                                    <div className="flex h-12 items-center justify-center rounded border border-[#C9CDD4] bg-white text-[10px] text-[#86909C]">取货口</div>
+                                                </div>
+                                                <div className="flex flex-col gap-2 rounded border border-[#D9E2EC] bg-[#EDF2F7] p-2">
+                                                    <div className="flex items-center justify-between text-[10px] text-[#4E5969]"><span>右柜</span><span>1–20</span></div>
+                                                    <div className="rounded border border-[#D9E2EC] bg-white p-1.5">
+                                                        <div className="mb-1 text-[9px] text-[#86909C]">挂钩货道 · 1–10</div>
+                                                        <div className="grid grid-cols-2 gap-1">{channels.slice(0, 10).map(channel => renderChannelPreviewSlot(channel, true))}</div>
+                                                    </div>
+                                                    <div className="rounded border border-[#D9E2EC] bg-white p-1.5">
+                                                        <div className="mb-1 text-[9px] text-[#86909C]">弹簧货道 · 11–20</div>
+                                                        <div className="grid grid-cols-2 gap-1">{channels.slice(10, 20).map(channel => renderChannelPreviewSlot(channel, true))}</div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    ))}
+                                        <div className="rounded border border-[#E5E6EB] bg-white p-4">
+                                            <div className="mb-3 flex items-center justify-between">
+                                                <div className="text-sm font-semibold text-[#1D2129]">按货道类型补货</div>
+                                                <span className="text-xs text-[#86909C]">已配置 {channels.filter(channel => channel.productId !== null).length}/50</span>
+                                            </div>
+                                            <div className="divide-y divide-[#F2F3F5] rounded border border-[#E5E6EB]">
+                                                {[
+                                                    { title: '挂钩货道', count: 10, offset: 0 },
+                                                    { title: '弹簧货道', count: 10, offset: 10 },
+                                                    { title: '推杆货道', count: 30, offset: 20 }
+                                                ].map(group => (
+                                                    <div key={group.title} className="flex items-center justify-between gap-3 px-4 py-3">
+                                                        <div className="min-w-0"><div className="text-sm font-medium text-[#1D2129]">{group.title}</div><div className="mt-0.5 text-xs text-[#86909C]">货道 {group.offset + 1}–{group.offset + group.count} · 已配置 {channels.slice(group.offset, group.offset + group.count).filter(channel => channel.productId !== null).length}/{group.count}</div></div>
+                                                        <Button size="small" className="shrink-0 inline-flex items-center" icon={<Database size={13} />} onClick={() => setChannels(channels.map((channel, index) => index >= group.offset && index < group.offset + group.count && channel.productId !== null ? { ...channel, stock: 10 } : channel))}>补满已配置</Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="mt-4 text-xs leading-5 text-[#86909C]">配置顺序建议：先点击右侧或左侧格口，选择商品并设置库存；完成后可按类型批量补满。</div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -2665,7 +2719,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 </div>
                                 <div className="flex items-center justify-between gap-4 border-b border-[#F2F3F5] px-6 py-4">
                                     <span className="text-sm text-[#86909C]">{campaignPlacementLabels[campaignPlacementTab]}</span>
-                                    <Button type="primary" icon={<Plus size={14} className="inline-block align-[-2px]" />} onClick={() => openCampaignModal()}>新建广告</Button>
+                                    <Button type="primary" className="inline-flex items-center" icon={<Plus size={14} />} onClick={() => openCampaignModal()}>新建广告</Button>
                                 </div>
                                 <div className="pc-filter-bar flex flex-wrap items-center gap-3 border-b border-[#F2F3F5] px-6 py-4" aria-label="广告列表筛选">
                                     <Input
@@ -4912,41 +4966,76 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             {/* Shop Product Modal */}
             {
                 isShopModalOpen && (
-                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-200">
-                        <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                            <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
-                                <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1D2129]/45 p-4 animate-in fade-in duration-200">
+                        <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded border border-[#E5E6EB] bg-white shadow-xl animate-in zoom-in-95 duration-200">
+                            <div className="flex shrink-0 items-center justify-between border-b border-[#E5E6EB] px-6 py-4">
+                                <h3 className="flex items-center gap-2 text-base font-semibold text-[#1D2129]">
                                     <Package size={20} className="text-blue-600" />
                                     {editingShopProduct ? '编辑商品' : '新增商品'}
                                 </h3>
-                                <button onClick={() => setIsShopModalOpen(false)} className="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors">
+                                <button type="button" aria-label="关闭弹窗" onClick={() => setIsShopModalOpen(false)} className="flex h-8 w-8 items-center justify-center rounded text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]">
                                     <Plus size={20} className="rotate-45" />
                                 </button>
                             </div>
-                            <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                            <div className="space-y-6 overflow-y-auto p-6 custom-scrollbar">
                                 <form id="shop-product-form" onSubmit={(e) => {
                                     e.preventDefault();
                                     const formData = new FormData(e.currentTarget);
+                                    const priceInput = e.currentTarget.elements.namedItem('price') as HTMLInputElement | null;
+                                    const price = Number(shopPriceInput);
+                                    if (!Number.isFinite(price) || price <= 0) {
+                                        priceInput?.setCustomValidity('售价必须大于 0');
+                                        priceInput?.reportValidity();
+                                        return;
+                                    }
+                                    priceInput?.setCustomValidity('');
                                     const newProduct = {
                                         id: editingShopProduct?.id || Date.now(),
                                         name: formData.get('name') as string,
-                                        price: Number(formData.get('price')),
-                                        icon: modalIcon
+                                        price: Number(price.toFixed(2)),
+                                        icon: modalIcon,
+                                        active: editingShopProduct?.active ?? true
                                     };
                                     handleSaveShopProduct(newProduct);
                                 }}>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">商品名称</label>
-                                            <input name="name" defaultValue={editingShopProduct?.name || ''} required className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-700" placeholder="例如：校庆限量徽章" />
+                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]">商品名称</label>
+                                            <input name="name" defaultValue={editingShopProduct?.name || ''} required className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors placeholder:text-[#86909C] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10" placeholder="例如：校庆限量徽章" />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">售价 (校园币)</label>
-                                            <input type="number" name="price" defaultValue={editingShopProduct?.price || 10} required min="0" className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-black text-orange-600" />
+                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]">售价（校园币）</label>
+                                            <input
+                                                type="text"
+                                                name="price"
+                                                value={shopPriceInput}
+                                                required
+                                                inputMode="decimal"
+                                                pattern="^(?=.*\\d)(?:\\d+(?:\\.\\d{1,2})?|\\.\\d{1,2})$"
+                                                aria-describedby="shop-price-hint"
+                                                onChange={(event) => {
+                                                    event.currentTarget.setCustomValidity('');
+                                                    const rawValue = event.currentTarget.value.replace(/[^0-9.]/g, '');
+                                                    const [integerPart, ...decimalParts] = rawValue.split('.');
+                                                    const decimalPart = decimalParts.join('').slice(0, 2);
+                                                    setShopPriceInput(decimalParts.length > 0
+                                                        ? `${integerPart || '0'}.${decimalPart}`
+                                                        : integerPart);
+                                                }}
+                                                onKeyDown={(event) => {
+                                                    if (['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();
+                                                }}
+                                                onBlur={() => {
+                                                    const value = Number(shopPriceInput);
+                                                    if (Number.isFinite(value) && value > 0) setShopPriceInput(value.toFixed(2));
+                                                }}
+                                                className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors placeholder:text-[#86909C] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10"
+                                            />
+                                            <span id="shop-price-hint" className="mt-1 block text-xs text-[#86909C]">请输入大于 0 的数字，最多 2 位小数</span>
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-4">商品图片设置 (支持默认或上传)</label>
+                                        <label className="mb-3 block text-sm font-medium text-[#4E5969]">商品图片</label>
                                         <div className="flex flex-wrap gap-4">
                                             {[
                                                 { id: '1', url: '/assets/c4d_shop.png', name: '默认商品图' }
@@ -4955,9 +5044,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     key={icon.id}
                                                     type="button"
                                                     onClick={() => setModalIcon(icon.url)}
-                                                    className={`relative p-3 rounded-2xl border-2 transition-all active:scale-95 group w-24 ${modalIcon === icon.url ? 'border-blue-500 bg-blue-50 ring-4 ring-blue-100' : 'border-slate-100 bg-slate-50'}`}
+                                                    className={`relative w-24 rounded border p-3 transition-colors group ${modalIcon === icon.url ? 'border-[#165DFF] bg-[#F2F7FF]' : 'border-[#E5E6EB] bg-white hover:border-[#C9CDD4]'}`}
                                                 >
-                                                    <div className="w-full h-12 rounded-xl flex items-center justify-center bg-white shadow-sm mb-2 p-1.5 relative overflow-hidden">
+                                                    <div className="relative mb-2 flex h-12 w-full items-center justify-center overflow-hidden rounded border border-[#F2F3F5] bg-white p-1.5">
                                                         <img src={icon.url} alt={icon.name} className={`w-full h-full object-contain transition-transform z-10 ${modalIcon === icon.url ? 'drop-shadow-sm scale-110' : ''}`} />
                                                     </div>
                                                     <span className={`text-[11px] font-bold block text-center ${modalIcon === icon.url ? 'text-blue-700' : 'text-slate-500'}`}>{icon.name}</span>
@@ -4970,7 +5059,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             ))}
 
                                             {/* 自定义上传 */}
-                                            <div className="relative w-24 p-3 rounded-2xl border-2 border-dashed border-slate-200 active:border-blue-300 active:bg-blue-50 transition-all group flex flex-col items-center justify-center">
+                                            <div className="group relative flex w-24 flex-col items-center justify-center rounded border border-dashed border-[#C9CDD4] p-3 transition-colors hover:border-[#165DFF] hover:bg-[#F2F7FF]">
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -4988,26 +5077,26 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                         }
                                                     }}
                                                 />
-                                                <div className="w-full h-12 rounded-xl flex flex-col items-center justify-center bg-white shadow-sm mb-2 p-1.5 text-slate-400 group-active:text-blue-500">
+                                                <div className="mb-2 flex h-12 w-full flex-col items-center justify-center rounded border border-[#F2F3F5] bg-white p-1.5 text-[#86909C] group-hover:text-[#165DFF]">
                                                     <Upload size={20} className="mb-0.5" />
                                                 </div>
                                                 <span className="text-[11px] font-bold block text-center text-slate-500 group-active:text-blue-600">自定义图片</span>
                                             </div>
                                         </div>
                                         {modalIcon && !modalIcon.startsWith('/assets/') && (
-                                            <div className="mt-4 p-3 border border-blue-100 bg-blue-50 rounded-xl flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-lg bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                                            <div className="mt-4 flex items-center gap-3 rounded border border-[#BEDAFF] bg-[#F2F7FF] p-3">
+                                                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-[#E5E6EB] bg-white">
                                                     <img src={modalIcon} className="w-full h-full object-cover" alt="已上传图片" />
                                                 </div>
-                                                <div className="text-sm font-bold text-blue-700 flex-1">已成功应用自定义图片</div>
+                                                <div className="flex-1 text-sm text-[#165DFF]">已应用自定义图片</div>
                                             </div>
                                         )}
                                     </div>
                                 </form>
                             </div>
-                            <div className="px-8 py-5 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 shrink-0">
-                                <button onClick={() => setIsShopModalOpen(false)} className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-colors">取消</button>
-                                <button type="submit" form="shop-product-form" className="px-8 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200 transition-all active:scale-95">保存</button>
+                            <div className="flex shrink-0 justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
+                                <Button onClick={() => setIsShopModalOpen(false)}>取消</Button>
+                                <Button type="primary" htmlType="submit" form="shop-product-form">保存商品</Button>
                             </div>
                         </div>
                     </div>
@@ -5017,18 +5106,18 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             {/* Channel Configuration Modal */}
             {
                 isChannelModalOpen && editingChannel && (
-                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-200">
-                        <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                            <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
-                                <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1D2129]/45 p-4 animate-in fade-in duration-200">
+                        <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded border border-[#E5E6EB] bg-white shadow-xl animate-in zoom-in-95 duration-200">
+                            <div className="flex shrink-0 items-center justify-between border-b border-[#E5E6EB] px-6 py-4">
+                                <h3 className="flex items-center gap-2 text-base font-semibold text-[#1D2129]">
                                     <Monitor size={20} className="text-blue-600" />
                                     货道 {editingChannel.id} 配置 ({editingChannel.type})
                                 </h3>
-                                <button onClick={() => setIsChannelModalOpen(false)} className="text-slate-400 active:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors">
+                                <button type="button" aria-label="关闭弹窗" onClick={() => setIsChannelModalOpen(false)} className="flex h-8 w-8 items-center justify-center rounded text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]">
                                     <Plus size={20} className="rotate-45" />
                                 </button>
                             </div>
-                            <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                            <div className="space-y-6 overflow-y-auto p-6 custom-scrollbar">
                                 <form id="channel-form" onSubmit={(e) => {
                                     e.preventDefault();
                                     const formData = new FormData(e.currentTarget);
@@ -5039,28 +5128,28 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         stock: productId ? Number(formData.get('stock')) : 0
                                     };
                                     handleSaveChannel(newChannel);
-                                }}>
+                                    }}>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">选择商品放入货道</label>
-                                        <select name="productId" defaultValue={editingChannel.productId || ''} className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-bold">
+                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]">选择商品放入货道</label>
+                                        <select name="productId" defaultValue={editingChannel.productId || ''} className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10">
                                             <option value="">-- 置空货道 --</option>
                                             {shopProducts.map(p => (
-                                                <option key={p.id} value={p.id}>{p.name} (售价: {p.price})</option>
+                                                <option key={p.id} value={p.id}>{p.name} (售价: {Number(p.price).toFixed(2)})</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">当前库存 (上限10件)</label>
+                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]">当前库存（上限 10 件）</label>
                                         <div className="relative">
-                                            <input id="stock-input" type="number" name="stock" defaultValue={editingChannel.stock || 0} min="0" max="10" className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-black text-slate-700 pr-12" />
-                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">/ 10</span>
+                                            <input id="stock-input" type="number" name="stock" defaultValue={editingChannel.stock || 0} min="0" max="10" className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 pr-12 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10" />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#86909C]">/ 10</span>
                                         </div>
                                     </div>
                                 </form>
                             </div>
-                            <div className="px-8 py-5 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 shrink-0">
-                                <button onClick={() => setIsChannelModalOpen(false)} className="px-6 py-2.5 rounded-xl font-bold text-slate-600 active:bg-slate-200 transition-colors border border-slate-200">取消</button>
-                                <button type="submit" form="channel-form" className="px-8 py-2.5 rounded-xl font-bold text-white bg-blue-600 active:bg-blue-700 shadow-md shadow-blue-200 transition-all active:scale-95">放置商品</button>
+                            <div className="flex shrink-0 justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
+                                <Button onClick={() => setIsChannelModalOpen(false)}>取消</Button>
+                                <Button type="primary" htmlType="submit" form="channel-form">保存货道配置</Button>
                             </div>
                         </div>
                     </div>

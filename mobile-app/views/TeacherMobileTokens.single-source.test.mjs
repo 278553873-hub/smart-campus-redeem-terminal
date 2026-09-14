@@ -3,6 +3,7 @@ import fs from 'node:fs';
 
 const canonicalPath = 'mobile-app/styles/teacherMobileTokens.ts';
 const canonical = fs.readFileSync(canonicalPath, 'utf8');
+const evaluationScoreTokens = fs.readFileSync('shared/evaluationScoreTokens.ts', 'utf8');
 const app = fs.readFileSync('mobile-app/App.tsx', 'utf8');
 const css = fs.readFileSync('mobile-app/index.css', 'utf8');
 const parent = fs.readFileSync('components/ParentApp.tsx', 'utf8');
@@ -25,6 +26,7 @@ assert.equal(fs.existsSync('design-system/teacher-mobile/design-token.md'), fals
 for (const required of [
   "'--tm-brand-primary'",
   "'--tm-brand-primary-strong'",
+  "'--tm-score-negative'",
   "'--tm-record-student-text'",
   "'--tm-record-class-text'",
   "'--tm-nav-item-default'",
@@ -158,6 +160,14 @@ assert.match(canonical, /metric: 'text-\[24px\]/);
 assert.match(canonical, /negative: teacherBrandPalette\.red\[500\]/);
 assert.match(canonical, /negativeStrong: teacherBrandPalette\.red\[700\]/);
 assert.match(canonical, /negativeSoft: teacherBrandPalette\.red\[50\]/);
+assert.match(evaluationScoreTokens, /negative: '#D10F3C'/);
+assert.equal((evaluationScoreTokens.match(/#D10F3C/g) ?? []).length, 1, '扣分业务色必须只维护一个共享色值源。');
+assert.equal((canonical.match(/#D10F3C/g) ?? []).length, 0, '教师端不得重复写死共享扣分业务色。');
+assert.match(canonical, /export const teacherEvaluationScoreSemantic = evaluationScoreSemantic/);
+assert.match(canonical, /negative: teacherEvaluationScoreSemantic\.negative,\s*negativeText: teacherEvaluationScoreSemantic\.negative,/);
+assert.match(canonical, /criticism: teacherEvaluationScoreSemantic\.negative/);
+assert.match(canonical, /'--tm-score-negative': teacherEvaluationScoreSemantic\.negative/);
+assert.match(canonical, /'--tm-record-negative-text': teacherEvaluationScoreSemantic\.negative/);
 assert.match(canonical, /'--tm-record-negative-border': teacherBrandPalette\.red\[100\]/);
 assert.doesNotMatch(canonical, /teacherBrandPalette\.rose|\brose:\s*\{/);
 assert.match(guidelines, /不得维护或引入独立暗红色板/);
@@ -168,7 +178,7 @@ assert.match(canonical, /'--tm-shadow-card': '0 12px 28px -20px rgba\([^']+\)'/)
 assert.match(canonical, /'--tm-shadow-card-raised': '0 14px 32px -20px rgba\([^']+\)'/);
 assert.match(canonical, /'--tm-shadow-card-on-white': '0 1px 4px rgba\([^']+\), 0 12px 28px -14px rgba\([^']+\)'/);
 assert.match(canonical, /'--tm-shadow-card-ambient': '0 1px 3px rgba\([^']+\), 0 8px 20px -14px rgba\([^']+\)'/);
-assert.match(canonical, /'--tm-shadow-navigation': '0 -6px 18px -14px rgba\([^']+\)'/);
+assert.match(canonical, /'--tm-shadow-navigation': '0 -10px 24px -14px rgba\([^']+\)'/);
 
 const invalidFullShadowConsumer = /shadow-\[var\(--tm-shadow-(?:card|card-raised|card-on-white|card-ambient|control|icon|avatar|floating|navigation|sheet)\)\]/;
 for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
@@ -189,6 +199,9 @@ const contrast = (foreground, background) => {
 };
 
 assert.ok(contrast('#BA352E', '#FFF1F1') >= 4.5, '学生模式浅底文字对比度不足');
+assert.ok(contrast('#D10F3C', '#FFFFFF') >= 4.5, '扣分业务色在白底上的小字对比度不足');
+assert.ok(contrast('#D10F3C', '#FFF7F4') >= 4.5, '扣分业务色在报表浅红底上的小字对比度不足');
+assert.ok(contrast('#D10F3C', '#FFF1F1') >= 4.5, '扣分业务色在记录浅红底上的小字对比度不足');
 assert.ok(contrast('#FFFFFF', '#E02727') >= 4.5, '品牌主色上的白色小字对比度不足');
 assert.ok(contrast('#FFFFFF', '#BA352E') >= 4.5, '品牌深色上的白色小字对比度不足');
 assert.ok(contrast('#B83F00', '#FFF5EC') >= 4.5, '班级模式浅底文字对比度不足');

@@ -39,7 +39,7 @@ const StudentPerformanceAvatar: React.FC<StudentPerformanceAvatarProps> = ({
             r={RADIUS}
             fill="none"
             stroke="var(--tm-student-level-track)"
-            strokeWidth="3"
+            strokeWidth="2"
           />
           <circle
             cx="29"
@@ -50,7 +50,7 @@ const StudentPerformanceAvatar: React.FC<StudentPerformanceAvatarProps> = ({
             strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={dashOffset}
             strokeLinecap="round"
-            strokeWidth="3"
+            strokeWidth="2"
             className="transition-[stroke-dashoffset] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:transition-none"
           />
         </svg>

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const source = fs.readFileSync(new URL('./HomeworkBatchImportView.tsx', import.meta.url), 'utf8');
+const rosterNumberSource = fs.readFileSync(new URL('../components/student/StudentRosterNumber.tsx', import.meta.url), 'utf8');
 const recognitionSource = fs.readFileSync(new URL('../services/homeworkRecognitionService.ts', import.meta.url), 'utf8');
 const statusGroupSource = fs.readFileSync(new URL('../components/homework/HomeworkStatusButtonGroup.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
@@ -47,7 +48,8 @@ assert.match(source, /setActiveAssignmentDetailId\(assignment\.id\)/, '批次中
 assert.match(source, /renderHeader\('作业结果',[\s\S]*setActiveAssignmentDetailId\(null\)/, '作业结果子页面应可返回当前图片详情。');
 assert.doesNotMatch(source, /expandedAssignmentId|setExpandedAssignmentId/, '批次详情不应继续内嵌展开长名单。');
 assert.match(source, /aria-label="作业日期"[\s\S]*aria-label="作业主题"[\s\S]*aria-label="学生作业结果"/, '作业结果子页面应允许修改日期、主题和学生等级。');
-assert.match(source, /grid-cols-\[104px_minmax\(0,1fr\)\][\s\S]*resultItem\.avatar[\s\S]*getStudentNoSuffix\(resultItem\.studentNo\)[\s\S]*resultItem\.studentName[\s\S]*HomeworkStatusButtonGroup/, '学生头像、短学号、姓名和作业等级应紧凑展示在同一行。');
+assert.match(source, /grid-cols-\[104px_minmax\(0,1fr\)\][\s\S]*resultItem\.avatar[\s\S]*<StudentRosterNumber studentNo=\{resultItem\.studentNo\} ariaLabel=\{`学号\$\{resultItem\.studentNo\}`\} \/>[\s\S]*resultItem\.studentName[\s\S]*HomeworkStatusButtonGroup/, '学生头像、短学号、姓名和作业等级应紧凑展示在同一行。');
+assert.match(rosterNumberSource, /getStudentRosterNumber[\s\S]*StudentRosterNumber/, '批量识别学生行应复用统一的两位学号标识组件。');
 assert.match(source, /<HomeworkStatusButtonGroup/, '识别核对与完整结果应使用共享五档等级控件。');
 assert.match(statusGroupSource, /tm-chart-positive[\s\S]*tm-chart-data-default[\s\S]*tm-chart-warning[\s\S]*tm-brand-primary[\s\S]*tm-text-secondary/, '五档等级应依次使用报告绿、报告蓝、报告警示色、品牌红和中性灰。');
 assert.equal((statusGroupSource.match(/selected: 'border-0[^']*text-\[var\(--tm-text-inverse\)\]'/g) ?? []).length, 5, '五档选中态都应为无边框实色白字。');
