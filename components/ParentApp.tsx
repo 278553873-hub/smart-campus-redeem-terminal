@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Bell,
@@ -37,6 +38,8 @@ import {
 import AssignedQuestionnaireView from './parent-app/AssignedQuestionnaireView';
 import {
   parentMobileCssVariables,
+  parentSegmentTone,
+  parentSelectCardTone,
   parentSurface,
   parentTypography,
 } from './parent-app/ParentStyleTokens';
@@ -1337,46 +1340,54 @@ const ParentApp: React.FC<ParentAppProps> = ({
     if (!activeChild) return null;
     return (
       <ParentCard as="section" className="mx-5 mt-4 p-4">
-        <div className="flex min-h-[68px] items-center gap-3.5">
+        <div className="flex min-h-[64px] items-center gap-3.5">
           <div className="flex min-w-0 flex-1 items-center gap-3.5">
             <ParentChildAvatar
               name={activeChild.name}
               src={activeChild.avatar}
               alt={`${activeChild.name}头像`}
-              className="h-[68px] w-[68px] rounded-[var(--pm-radius-card)] border-2 border-white bg-[var(--pm-bg-surface-soft)] [box-shadow:var(--pm-shadow-avatar)]"
+              className="h-[64px] w-[64px] rounded-[var(--pm-radius-card)] border-2 border-white bg-[var(--pm-bg-surface-soft)] [box-shadow:var(--pm-shadow-avatar)]"
             />
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-[length:var(--pm-font-size-section-title)] font-bold leading-tight text-[var(--pm-text-primary)]">{activeChild.name}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="truncate text-[length:var(--pm-font-size-section-title)] font-bold leading-tight text-[var(--pm-text-primary)]">{activeChild.name}</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowChildSwitcher(true)}
+                  className={`inline-flex h-6 items-center gap-0.5 rounded-full border border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)] px-2 text-[11px] font-[var(--pm-font-weight-semibold)] leading-none text-[var(--pm-text-secondary)] ${PARENT_PRESSABLE_CLASS}`}
+                  aria-label="切换孩子"
+                  title="切换孩子"
+                >
+                  <span>切换</span>
+                  <ChevronRight size={11} strokeWidth={2.6} />
+                </button>
+              </div>
               <p className="mt-1 truncate text-[length:var(--pm-font-size-compact)] font-bold leading-snug text-[var(--pm-text-tertiary)]">
                 {activeChild.className}
               </p>
-              <button
-                type="button"
-                onClick={() => setShowChildSwitcher(true)}
-                className={`mt-1 inline-flex h-7 max-w-full items-center justify-center gap-0.5 rounded-full border border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)] px-2 text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] leading-none text-[var(--pm-text-secondary)] ${PARENT_PRESSABLE_CLASS}`}
-                aria-label="切换孩子"
-              >
-                <span className="truncate">切换孩子</span>
-                <ChevronRight size={12} strokeWidth={2.6} />
-              </button>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <MessageBellEntry />
           </div>
         </div>
-        {parentBankFeatureEnabled && <div className="mt-3 border-t border-[var(--pm-border-subtle)] pt-1">
+
+        {parentBankFeatureEnabled && <div className="mt-3 border-t border-[var(--pm-border-subtle)] pt-2.5">
           <button
             type="button"
             onClick={() => openExchangePasswordSheet(activeChild)}
-            className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--pm-radius-control)] px-1 py-2 text-left ${PARENT_PRESSABLE_CLASS}`}
+            className={`flex min-h-8 w-full items-center justify-between text-left text-[length:var(--pm-font-size-compact)] ${PARENT_PRESSABLE_CLASS}`}
             aria-label={`${activeChild.name}的兑换密码，查看或修改`}
           >
-            <KeyRound size={17} strokeWidth={2.45} className="shrink-0 text-[var(--pm-brand-primary)]" aria-hidden="true" />
-            <span className="min-w-0 flex-1 text-[length:var(--pm-font-size-card-title)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-text-primary)]">兑换密码</span>
-            <span className="shrink-0 tabular-nums text-[length:var(--pm-font-size-card-title)] font-[var(--pm-font-weight-semibold)] tracking-[0.18em] text-[var(--pm-text-secondary)]">••••••</span>
-            <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)]">查看 / 修改</span>
-            <ChevronRight size={16} strokeWidth={2.7} className="shrink-0 text-[var(--pm-text-disabled)]" aria-hidden="true" />
+            <div className="flex items-center gap-2">
+              <KeyRound size={15} strokeWidth={2.4} className="shrink-0 text-[var(--pm-brand-primary)]" aria-hidden="true" />
+              <span className="font-bold text-[var(--pm-text-primary)]">货柜机兑换密码</span>
+              <span className="tabular-nums font-bold tracking-widest text-[var(--pm-text-secondary)]">••••••</span>
+            </div>
+            <span className="inline-flex items-center gap-0.5 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-primary-strong)]">
+              查看/修改
+              <ChevronRight size={13} strokeWidth={2.6} aria-hidden="true" />
+            </span>
           </button>
         </div>}
       </ParentCard>
@@ -1413,25 +1424,95 @@ const ParentApp: React.FC<ParentAppProps> = ({
     );
   };
 
+  const GrowthBankEntry = () => {
+    if (!activeChild || !parentBankFeatureEnabled) return null;
+    const growthReward = 70.5;
+    const scoreReward = 20.38;
+    const totalReward = growthReward + scoreReward;
+
+    return (
+      <ParentCard as="section" className="mx-5 mt-3 overflow-hidden p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ParentGradientIcon tone="orange" size="sm">
+              <PiggyBank size={16} />
+            </ParentGradientIcon>
+            <h2 className="text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">{GROWTH_COIN_TERMS.name}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => setScreen('bank')}
+            className={`inline-flex min-h-8 items-center gap-0.5 rounded-full px-2.5 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)] transition-colors active:bg-[var(--pm-brand-primary-soft)] ${PARENT_PRESSABLE_CLASS}`}
+            aria-label={`进入积分银行，可用${formatCoin(activeChild.availableCoins)}，已存${formatCoin(activeChild.bankBalance)}`}
+          >
+            <span>进入银行</span>
+            <ChevronRight size={15} strokeWidth={2.8} aria-hidden="true" />
+          </button>
+        </div>
+
+        {/* 上层：实实在在的真资产 */}
+        <div className="mt-3 grid grid-cols-2 gap-2.5 rounded-[var(--pm-radius-inner)] bg-[var(--pm-bg-surface-soft)] p-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--pm-brand-reward-soft)]">
+              <img src="/assets/coin.png" alt="" className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">{GROWTH_COIN_TERMS.available}</div>
+              <div className="truncate tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-brand-reward-strong)]">
+                {formatCoin(activeChild.availableCoins)}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 border-l border-[var(--pm-border-subtle)] pl-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--pm-brand-primary-soft)]">
+              <PiggyBank size={17} className="text-[var(--pm-brand-primary)]" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">{GROWTH_COIN_TERMS.saved}</div>
+              <div className="truncate tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-brand-primary-strong)]">
+                {formatCoin(activeChild.bankBalance)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 下层：在途预估收益条（轻金淡底分层，通透去灰） */}
+        <div className="mt-3 rounded-[var(--pm-radius-inner)] border border-[var(--pm-brand-reward)]/25 bg-[var(--pm-brand-reward-soft)]/60 px-3.5 py-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-reward-strong)]">
+              本期预计可得
+            </span>
+            <span className="tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-brand-reward-strong)]">
+              {totalReward.toFixed(2)}<span className="ml-1 text-[length:var(--pm-font-size-meta)] font-semibold">币</span>
+            </span>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-[length:var(--pm-font-size-meta)] font-medium text-[var(--pm-text-tertiary)]">
+            <span>成长奖励 {growthReward}</span>
+            <span className="text-[var(--pm-border-control)]">+</span>
+            <span>得分奖励 {scoreReward}</span>
+          </div>
+        </div>
+      </ParentCard>
+    );
+  };
+
   const GrowthSummaryCards = () => {
     const positiveCount = 13;
     const improveCount = 1;
     const totalScore = 45;
-    const growthReward = 70.5;
-    const scoreReward = 20.38;
-    const totalReward = growthReward + scoreReward;
     const summaryGridClass = showPositiveSummary && showNegativeSummary ? 'grid-cols-2' : 'grid-cols-1';
+    const recentRecords = activeChild?.records?.slice(0, 2) ?? [];
 
     return (
-      <section className="mx-5 mt-4 flex flex-col gap-3">
+      <section className="mx-5 mt-3 flex flex-col gap-3">
         <ParentCard as="article" className="p-4">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-text-tertiary)]">本月总分</span>
+            <span className="text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">本月总分</span>
             <span className="rounded-full border border-[var(--pm-status-positive)]/20 bg-[var(--pm-status-positive-soft)] px-2.5 py-1 text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-status-positive-strong)]">稳步成长</span>
           </div>
-          <div className="mt-4 flex items-baseline justify-center">
+          <div className="mt-3.5 flex items-baseline justify-center">
             <span className="tabular-nums text-[length:var(--pm-font-size-display)] font-[var(--pm-font-weight-bold)] leading-none text-[var(--pm-brand-primary)]">{totalScore}</span>
-            <span className="ml-2 text-[length:var(--pm-font-size-section-title)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-text-disabled)]">分</span>
+            <span className="ml-2 text-[length:var(--pm-font-size-section-title)] font-[var(--pm-font-weight-bold)] text-[var(--pm-text-secondary)]">分</span>
           </div>
           {showAnyEvaluationSummary && (
             <div className={`mt-4 grid ${summaryGridClass} gap-2`}>
@@ -1449,7 +1530,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
               {showNegativeSummary && (
                 <div className="flex items-center justify-center gap-2 rounded-[var(--pm-radius-inner)] border border-[var(--pm-status-negative)]/20 bg-[var(--pm-status-negative-soft)] px-2 py-2">
                   <ParentGradientIcon tone="negative" size="sm">
-                    <Clock size={16} />
+                    <AlertCircle size={16} />
                   </ParentGradientIcon>
                   <div className="text-left">
                     <div className="text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] text-[var(--evaluation-score-negative)]">待改进</div>
@@ -1459,70 +1540,46 @@ const ParentApp: React.FC<ParentAppProps> = ({
               )}
             </div>
           )}
+
+          {showAnyEvaluationDetails && recentRecords.length > 0 && (
+            <div className="mt-3.5 border-t border-[var(--pm-border-subtle)] pt-3">
+              <div className="mb-2 flex items-center justify-between text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
+                <span>最新在校表现</span>
+                <span className="text-[11px] font-normal text-[var(--pm-text-disabled)]">近期记录</span>
+              </div>
+              <div className="space-y-2">
+                {recentRecords.map(record => {
+                  const positive = record.score > 0;
+                  return (
+                    <div key={record.id} className="flex items-center justify-between gap-2 rounded-[var(--pm-radius-inner)] bg-[var(--pm-bg-surface-soft)] px-3 py-2 text-left">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-primary)]">{record.content}</p>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-[length:var(--pm-font-size-meta)] text-[var(--pm-text-tertiary)]">
+                          <span>{record.time}</span>
+                          <span aria-hidden="true">·</span>
+                          <span>{formatEvaluationTeacherName(record.teacher)}</span>
+                        </div>
+                      </div>
+                      <span className={`shrink-0 tabular-nums text-[length:var(--pm-font-size-card-title)] font-bold ${positive ? 'text-[var(--pm-status-positive-strong)]' : 'text-[var(--evaluation-score-negative)]'}`}>
+                        {positive ? `+${record.score}` : record.score}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => setScreen('growthRecords')}
-            className="mx-auto mt-3 flex min-h-10 items-center justify-center rounded-full px-3 text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)] transition-colors [transition-duration:var(--pm-duration-fast)] active:bg-[var(--pm-brand-primary-soft)]"
+            className="mx-auto mt-3.5 flex min-h-[44px] items-center justify-center gap-0.5 rounded-full bg-[var(--pm-brand-primary-soft)] px-4 text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)] transition-all [transition-duration:var(--pm-duration-fast)] active:scale-[0.98] active:bg-[var(--pm-brand-primary-soft-strong)]"
           >
             <span>{showAnyEvaluationDetails ? '全部记录' : '查看统计'}</span>
-            <ChevronRight size={14} strokeWidth={3} aria-hidden="true" />
+            <ChevronRight size={15} strokeWidth={2.8} aria-hidden="true" />
           </button>
         </ParentCard>
-
-        {parentBankFeatureEnabled && <ParentCard as="article" className="min-h-[154px] p-4">
-          <div className="text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-reward-strong)]">预计可得</div>
-          <div className="mt-5 flex items-center justify-center gap-2">
-            <img src="/assets/coin.png" alt="" className="h-9 w-9 shrink-0" />
-            <span className="tabular-nums text-[length:var(--pm-font-size-display)] font-[var(--pm-font-weight-bold)] leading-none text-[var(--pm-brand-reward-strong)]">{totalReward.toFixed(2)}</span>
-          </div>
-          <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <div className="rounded-[var(--pm-radius-inner)] border border-[var(--pm-brand-reward)]/20 bg-[var(--pm-bg-surface)]/76 px-2 py-2 text-center">
-              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-reward-strong)]/80">成长奖励</div>
-              <div className="mt-1 flex items-center justify-center gap-1 text-[16px] font-bold text-[var(--pm-brand-reward-strong)]">
-                <img src="/assets/coin.png" alt="" className="h-4 w-4" /><span className="tabular-nums">{growthReward}</span>
-              </div>
-            </div>
-            <div className="text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-brand-reward)]">+</div>
-            <div className="rounded-[var(--pm-radius-inner)] border border-[var(--pm-brand-reward)]/20 bg-[var(--pm-bg-surface)]/76 px-2 py-2 text-center">
-              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-reward-strong)]/80">得分奖励</div>
-              <div className="mt-1 flex items-center justify-center gap-1 text-[16px] font-bold text-[var(--pm-brand-reward-strong)]">
-                <img src="/assets/coin.png" alt="" className="h-4 w-4" /><span className="tabular-nums">{scoreReward}</span>
-              </div>
-            </div>
-          </div>
-        </ParentCard>}
       </section>
-    );
-  };
-
-  const GrowthBankEntry = () => {
-    if (!activeChild || !parentBankFeatureEnabled) return null;
-    return (
-      <ParentCard as="section" className="mx-5 mt-3 overflow-hidden p-0">
-        <button
-          type="button"
-          onClick={() => setScreen('bank')}
-          className={`flex min-h-[60px] w-full items-center gap-3 px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS}`}
-          aria-label={`进入积分银行，可用${formatCoin(activeChild.availableCoins)}，已存${formatCoin(activeChild.bankBalance)}`}
-        >
-          <h2 className="shrink-0 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">{GROWTH_COIN_TERMS.name}</h2>
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-2.5 whitespace-nowrap">
-            <span className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
-              {GROWTH_COIN_TERMS.available}
-              <strong className="ml-1 tabular-nums text-[16px] text-[var(--pm-brand-reward-strong)]">{formatCoin(activeChild.availableCoins)}</strong>
-            </span>
-            <span className="h-5 w-px shrink-0 bg-[var(--pm-bg-surface-muted)]" aria-hidden="true" />
-            <span className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
-              {GROWTH_COIN_TERMS.saved}
-              <strong className="ml-1 tabular-nums text-[16px] text-[var(--pm-brand-primary-strong)]">{formatCoin(activeChild.bankBalance)}</strong>
-            </span>
-          </div>
-          <span className="inline-flex min-h-10 shrink-0 items-center gap-0.5 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)]">
-            进入银行
-            <ChevronRight size={15} strokeWidth={2.8} aria-hidden="true" />
-          </span>
-        </button>
-      </ParentCard>
     );
   };
 
@@ -1596,13 +1653,13 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   const GrowthRangeTabs = () => (
-    <div className="mx-5 mt-4 grid grid-cols-4 rounded-[var(--pm-radius-inner)] bg-[var(--pm-bg-surface-muted)] p-1 [box-shadow:var(--pm-shadow-control)]">
+    <div className={`mx-5 mt-4 grid grid-cols-4 ${parentSegmentTone.track}`}>
       {GROWTH_RANGE_TABS.map(([mode, label]) => (
         <button
           key={mode}
           type="button"
           onClick={() => setGrowthRangeMode(mode)}
-          className={`h-10 rounded-[var(--pm-radius-control)] text-[length:var(--pm-font-size-card-title)] font-bold ${PARENT_PRESSABLE_CLASS} ${growthRangeMode === mode ? 'bg-[var(--pm-bg-surface)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]' : 'text-[var(--pm-text-tertiary)] active:bg-[var(--pm-bg-surface-soft)]'}`}
+          className={`h-9 rounded-[var(--pm-radius-control)] text-[length:var(--pm-font-size-compact)] transition-all ${PARENT_PRESSABLE_CLASS} ${growthRangeMode === mode ? parentSegmentTone.active : parentSegmentTone.inactive}`}
         >
           {label}
         </button>
@@ -1647,12 +1704,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 key={start.getTime()}
                 type="button"
                 onClick={() => setSelectedGrowthDate(representativeDate)}
-                className={`flex h-[58px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums ${PARENT_PRESSABLE_CLASS} ${selected ? 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]' : 'bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-secondary)]'}`}
+                className={`flex h-[58px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums transition-all ${PARENT_PRESSABLE_CLASS} ${selected ? parentSelectCardTone.active : parentSelectCardTone.inactive}`}
                 aria-label={formatWeekRange(start, end)}
               >
                 <span>{formatWeekRange(start, end)}</span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
-                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-[var(--pm-status-positive)]'}`} aria-hidden="true" />}
+                  {hasPraise && <span className="h-2 w-2 rounded-full bg-[var(--pm-status-positive)]" aria-hidden="true" />}
                   {hasImprove && <span className="h-2 w-2 rounded-full bg-[var(--evaluation-score-negative)]" aria-hidden="true" />}
                 </span>
               </button>
@@ -1698,12 +1755,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 key={monthIndex}
                 type="button"
                 onClick={() => setSelectedGrowthDate(new Date(year, monthIndex, 1))}
-                className={`flex h-[58px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums ${PARENT_PRESSABLE_CLASS} ${selected ? 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]' : 'bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-secondary)]'}`}
+                className={`flex h-[58px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums transition-all ${PARENT_PRESSABLE_CLASS} ${selected ? parentSelectCardTone.active : parentSelectCardTone.inactive}`}
                 aria-label={`${monthIndex + 1}月`}
               >
                 <span>{monthIndex + 1}月</span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
-                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-[var(--pm-status-positive)]'}`} aria-hidden="true" />}
+                  {hasPraise && <span className="h-2 w-2 rounded-full bg-[var(--pm-status-positive)]" aria-hidden="true" />}
                   {hasImprove && <span className="h-2 w-2 rounded-full bg-[var(--evaluation-score-negative)]" aria-hidden="true" />}
                 </span>
               </button>
@@ -1749,12 +1806,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 key={range.key}
                 type="button"
                 onClick={() => setSelectedGrowthDate(new Date(range.start))}
-                className={`flex h-[72px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold ${PARENT_PRESSABLE_CLASS} ${selected ? 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary)] [box-shadow:var(--pm-shadow-control)]' : 'bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-secondary)]'}`}
+                className={`flex h-[72px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold transition-all ${PARENT_PRESSABLE_CLASS} ${selected ? parentSelectCardTone.active : parentSelectCardTone.inactive}`}
                 aria-label={range.label}
               >
                 <span>{range.label}</span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
-                  {hasPraise && <span className={`h-2 w-2 rounded-full ${selected ? 'bg-white' : 'bg-[var(--pm-status-positive)]'}`} aria-hidden="true" />}
+                  {hasPraise && <span className="h-2 w-2 rounded-full bg-[var(--pm-status-positive)]" aria-hidden="true" />}
                   {hasImprove && <span className="h-2 w-2 rounded-full bg-[var(--evaluation-score-negative)]" aria-hidden="true" />}
                 </span>
               </button>

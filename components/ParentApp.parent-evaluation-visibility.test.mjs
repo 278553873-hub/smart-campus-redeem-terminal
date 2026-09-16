@@ -29,7 +29,7 @@ assert.ok(parentSource.includes('>总分</div>'), '家长端分时段统计应�
 assert.ok(!parentSource.includes('净得分'), '家长端不应继续展示“净得分”文案。');
 assert.ok(evaluationScoreTokens.includes("negative: '#D10F3C'"), '家长端与教师端应共享鲜莓红扣分业务色。');
 assert.ok(parentSource.includes("'--evaluation-score-negative': evaluationScoreSemantic.negative"), '家长端应从共享色源注入扣分业务变量。');
-assert.equal((parentSource.match(/text-\[var\(--evaluation-score-negative\)\]/g) ?? []).length, 5, '家长端待改进统计与负分明细应统一使用扣分业务色。');
+assert.equal((parentSource.match(/text-\[var\(--evaluation-score-negative\)\]/g) ?? []).length, 6, '家长端待改进统计与负分明细应统一使用扣分业务色。');
 assert.equal((parentSource.match(/bg-\[var\(--evaluation-score-negative\)\]/g) ?? []).length, 4, '家长端日、周、月、学期标记应统一使用扣分业务色。');
 
 const detailStart = parentSource.indexOf('id="parent-evaluation-details-title"');

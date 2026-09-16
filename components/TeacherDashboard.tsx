@@ -11,6 +11,8 @@ import {
 import HealthDataImportView from './HealthDataImportView';
 import GrowthDataSettingsView from './GrowthDataSettingsView';
 import TeacherCampaignPreview from '../mobile-app/components/TeacherCampaignPreview';
+import CoinIssuanceSettings from './CoinIssuanceSettings';
+import type { CoinIssuanceConfig } from '../mobile-app/types';
 import {
     readTeacherCampaigns,
     writeTeacherCampaigns,
@@ -194,11 +196,15 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     ];
     const activeMenuGroup = menus.find(menu => menu.children.includes(activeMenu))?.title || '货柜机配置中心';
 
-    // 发币模型配置状态
-    const [budgetPool, setBudgetPool] = useState(10000);
-    const [issueCycle, setIssueCycle] = useState<'monthly' | 'weekly'>('monthly');
-    const [guaranteedRate, setGuaranteedRate] = useState(30);
-    const [competitiveRate, setCompetitiveRate] = useState(70);
+    // 学校自动发放规则，与教师手机端共用同一份配置语义。
+    const [coinIssuanceConfig, setCoinIssuanceConfig] = useState<CoinIssuanceConfig>({
+        enabled: false,
+        period: 'weekly',
+        budgetMode: 'per_class',
+        budgetAmount: 500,
+        sunshineRatio: 60,
+        minimumEvaluationCount: 1,
+    });
 
     // 发币配置页面内部 Tab
     const [issuanceTab, setIssuanceTab] = useState<'auto' | 'manual'>('auto');
@@ -1737,14 +1743,193 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         { id: 4, name: '智能成长笔记本', price: 15, icon: '/assets/shop/shop_notebook.png', active: true },
     ]);
     const [shopProductStatusFilter, setShopProductStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-    const [channels, setChannels] = useState(
-        Array.from({ length: 50 }, (_, i) => ({
-            id: i + 1,
-            type: i < 10 ? '挂钩货道' : i < 20 ? '弹簧货道' : '推杆货道',
-            productId: [0, 4, 15, 30].includes(i) ? (i === 0 ? 1 : i === 4 ? 2 : i === 15 ? 3 : 4) : null,
-            stock: [0, 4, 15, 30].includes(i) ? (i === 0 ? 3 : i === 15 ? 8 : 10) : 0
-        }))
-    );
+    const generateRealisticChannels = () => {
+        const list: Array<{
+            id: number;
+            cabinet: 'left' | 'right';
+            cabinetName: string;
+            row: number;
+            col: number;
+            type: string;
+            subTypeLabel: string;
+            productId: number | null;
+            stock: number;
+            maxStock?: number;
+        }> = [];
+
+        // 左机（出货主机 1200mm，共 30 个自动货道）
+        // 第1排: 5个挂钩货道 (id: 1..5)
+        for (let c = 1; c <= 5; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'left',
+                cabinetName: '左机·出货主机',
+                row: 1,
+                col: c,
+                type: '挂钩货道',
+                subTypeLabel: '第1排·挂钩',
+                productId: id === 1 ? 3 : null,
+                stock: id === 1 ? 6 : 0
+            });
+        }
+        // 第2排: 7个弹簧货道 (id: 6..12)
+        for (let c = 1; c <= 7; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'left',
+                cabinetName: '左机·出货主机',
+                row: 2,
+                col: c,
+                type: '弹簧货道',
+                subTypeLabel: '第2排·弹簧',
+                productId: id === 8 ? 4 : null,
+                stock: id === 8 ? 8 : 0
+            });
+        }
+        // 第3排: 5个推杆货道 (id: 13..17)
+        for (let c = 1; c <= 5; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'left',
+                cabinetName: '左机·出货主机',
+                row: 3,
+                col: c,
+                type: '推杆货道',
+                subTypeLabel: '第3排·推杆',
+                productId: id === 14 ? 1 : null,
+                stock: id === 14 ? 5 : 0
+            });
+        }
+        // 第4排: 5个推杆货道 (id: 18..22)
+        for (let c = 1; c <= 5; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'left',
+                cabinetName: '左机·出货主机',
+                row: 4,
+                col: c,
+                type: '推杆货道',
+                subTypeLabel: '第4排·推杆',
+                productId: null,
+                stock: 0
+            });
+        }
+        // 第5排: 4个推杆货道 (id: 23..26)
+        for (let c = 1; c <= 4; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'left',
+                cabinetName: '左机·出货主机',
+                row: 5,
+                col: c,
+                type: '推杆货道',
+                subTypeLabel: '第5排·推杆',
+                productId: null,
+                stock: 0
+            });
+        }
+        // 第6排: 4个推杆货道 (id: 27..30)
+        for (let c = 1; c <= 4; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'left',
+                cabinetName: '左机·出货主机',
+                row: 6,
+                col: c,
+                type: '推杆货道',
+                subTypeLabel: '第6排·推杆',
+                productId: null,
+                stock: 0
+            });
+        }
+
+        // 右机（智能副柜 800mm，共 19 个电子锁储物柜）
+        // 第1排: 2个电子锁大格 (id: 31..32)
+        for (let c = 1; c <= 2; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'right',
+                cabinetName: '右机·智能副柜',
+                row: 1,
+                col: c,
+                type: '电子锁货柜',
+                subTypeLabel: '第1排·大格',
+                productId: id === 31 ? 2 : null,
+                stock: id === 31 ? 2 : 0
+            });
+        }
+        // 第2排: 2个电子锁大格 (id: 33..34)
+        for (let c = 1; c <= 2; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'right',
+                cabinetName: '右机·智能副柜',
+                row: 2,
+                col: c,
+                type: '电子锁货柜',
+                subTypeLabel: '第2排·大格',
+                productId: null,
+                stock: 0
+            });
+        }
+        // 第3排: 2个电子锁大格 (id: 35..36)
+        for (let c = 1; c <= 2; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'right',
+                cabinetName: '右机·智能副柜',
+                row: 3,
+                col: c,
+                type: '电子锁货柜',
+                subTypeLabel: '第3排·大格',
+                productId: null,
+                stock: 0
+            });
+        }
+        // 第4排: 10个电子锁立式窄格 (id: 37..46)
+        for (let c = 1; c <= 10; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'right',
+                cabinetName: '右机·智能副柜',
+                row: 4,
+                col: c,
+                type: '电子锁货柜',
+                subTypeLabel: '第4排·窄格',
+                productId: id === 39 ? 3 : null,
+                stock: id === 39 ? 4 : 0
+            });
+        }
+        // 第5排: 3个电子锁中格 (id: 47..49)
+        for (let c = 1; c <= 3; c++) {
+            const id = list.length + 1;
+            list.push({
+                id,
+                cabinet: 'right',
+                cabinetName: '右机·智能副柜',
+                row: 5,
+                col: c,
+                type: '电子锁货柜',
+                subTypeLabel: '第5排·中格',
+                productId: id === 48 ? 4 : null,
+                stock: id === 48 ? 3 : 0
+            });
+        }
+
+        return list.map(channel => ({ ...channel, maxStock: 10 }));
+    };
+
+    const [channels, setChannels] = useState(generateRealisticChannels);
     const [isShopModalOpen, setIsShopModalOpen] = useState(false);
     const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
     const [editingShopProduct, setEditingShopProduct] = useState<any>(null);
@@ -2027,6 +2212,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setEditingChannel(null);
     };
 
+    const handleFillChannelRow = (offset: number, count: number) => {
+        setChannels(currentChannels => currentChannels.map((channel, index) => (
+            index >= offset && index < offset + count && channel.productId !== null
+                ? { ...channel, stock: channel.maxStock || 10 }
+                : channel
+        )));
+    };
+
     const handleDeleteShopProduct = (id: number) => {
         setShopProducts(shopProducts.filter(p => p.id !== id));
         // clear from channels
@@ -2043,27 +2236,175 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         || (shopProductStatusFilter === 'inactive' && !product.active)
     ));
 
-    const renderChannelPreviewSlot = (channel: typeof channels[number], compact = false) => {
+    const renderChannelPreviewSlot = (channel: typeof channels[number], compact = false, stretchHeight = false) => {
         const product = shopProducts.find(item => item.id === channel.productId);
+        const isNarrowLocker = channel.subTypeLabel === '第4排·窄格';
+        const isLargeLocker = channel.subTypeLabel?.includes('大格');
+        const maxStock = channel.maxStock || 10;
+        const stockStatus = !product ? 'empty' : channel.stock === 0 ? 'empty' : channel.stock < 5 ? 'warning' : 'healthy';
+        const slotSizeClass = isNarrowLocker
+            ? compact
+                ? 'min-h-[96px] px-1 py-1'
+                : 'min-h-[132px] px-1.5 py-2 self-start'
+            : isLargeLocker
+            ? compact
+                ? 'min-h-0 p-1.5'
+                : 'min-h-[104px] p-3 self-start'
+            : compact
+                ? 'min-h-[58px] px-1.5 py-1.5'
+                : 'min-h-[116px] px-3 py-3';
+        const slotRatioStyle = stretchHeight
+            ? { aspectRatio: 'auto', height: '100%' }
+            : isNarrowLocker
+            ? { aspectRatio: '0.48' }
+            : isLargeLocker
+            ? { aspectRatio: '1' }
+            : channel.subTypeLabel?.includes('中格')
+            ? { aspectRatio: '0.78' }
+            : undefined;
+        const productImageClass = isNarrowLocker
+            ? compact
+                ? 'h-4 w-4 mt-1'
+                : 'h-8 w-8 mt-2'
+            : isLargeLocker
+            ? compact
+                ? 'h-5 w-5 mt-1'
+                : 'h-12 w-12 mt-2'
+            : compact
+            ? 'h-5 w-5 mt-1'
+            : 'h-10 w-10 mt-2';
+
         return (
             <button
                 key={channel.id}
                 type="button"
                 onClick={() => handleOpenChannelModal(channel)}
-                className={`group relative flex min-h-[42px] min-w-0 flex-col items-center justify-center overflow-hidden rounded border text-center transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#165DFF] ${compact ? 'px-1 py-1' : 'px-1.5 py-1.5'} ${product ? 'border-[#BEDAFF] bg-[#F2F7FF] hover:border-[#165DFF] hover:bg-white' : 'border-[#D9E2EC] bg-white hover:border-[#165DFF] hover:bg-[#F7FBFF]'}`}
-                aria-label={`货道 ${channel.id}${product ? `，${product.name}，库存 ${channel.stock}` : '，未配置'}`}
+                className={`group relative flex min-w-0 flex-col items-center justify-center overflow-hidden rounded border text-center transition-all focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#165DFF] ${slotSizeClass} ${
+                    product
+                        ? 'border-[#9DBCFB] bg-white shadow-[0_1px_2px_rgba(29,33,41,0.05)] hover:border-[#165DFF] hover:shadow-[0_2px_6px_rgba(22,93,255,0.12)]'
+                        : 'border-[#DDE3EA] bg-[#F8FAFC] hover:border-[#A9B4C2] hover:bg-white'
+                }`}
+                style={slotRatioStyle}
+                aria-label={`${channel.cabinetName || ''} ${channel.subTypeLabel || channel.type} 第${channel.row}排第${channel.col}格（货道 ${channel.id}）${product ? `，${product.name}，库存 ${channel.stock}/${maxStock}` : '，空闲'}`}
+                title={`配置第${channel.row}排第${channel.col}格（货道 ${channel.id}）`}
             >
-                <span className={`absolute left-1 top-0.5 text-[10px] font-semibold leading-none ${product ? 'text-[#165DFF]' : 'text-[#86909C]'}`}>{channel.id}</span>
+                <span className={`absolute left-1.5 top-1 text-[10px] font-bold leading-none ${product ? 'text-[#165DFF]' : 'text-[#86909C]'}`}>
+                    {channel.col}
+                </span>
+                {product && (
+                    <span className={`absolute inset-x-0 top-0 h-0.5 ${stockStatus === 'warning' ? 'bg-[#F53F3F]' : 'bg-[#165DFF]'}`} />
+                )}
+
                 {product ? (
                     <>
-                        <img src={product.icon} alt="" className={`${compact ? 'h-5 w-5' : 'h-6 w-6'} object-contain`} />
-                        <span className="mt-0.5 max-w-full truncate text-[10px] text-[#1D2129]">{product.name}</span>
-                        <span className={`text-[9px] leading-none ${channel.stock < 5 ? 'text-[#F53F3F]' : 'text-[#00B42A]'}`}>{channel.stock}/10</span>
+                        <img
+                            src={product.icon}
+                            alt={`${product.name}商品图`}
+                            className={`${productImageClass} object-contain transition-transform group-hover:scale-105`}
+                        />
+                        <span className={`${compact ? 'text-[10px]' : 'text-xs'} mt-1 max-w-full font-medium leading-tight text-[#1D2129] ${
+                            isNarrowLocker
+                                ? '[writing-mode:vertical-rl] [text-orientation:mixed] max-h-[42px] overflow-hidden text-ellipsis'
+                                : 'truncate'
+                        }`}>
+                            {product.name}
+                        </span>
+                        <span className={`${compact ? 'mt-0.5 text-[10px]' : 'mt-1 text-xs'} font-semibold leading-none ${stockStatus === 'warning' ? 'text-[#F53F3F]' : stockStatus === 'healthy' ? 'text-[#00B42A]' : 'text-[#86909C]'}`}>
+                            {channel.stock}/{maxStock}
+                        </span>
                     </>
                 ) : (
-                    <span className="mt-2 text-[10px] text-[#C9CDD4] group-hover:text-[#86909C]">空闲</span>
+                    <span className={`${compact ? 'mt-3 text-[10px]' : 'mt-5 text-[11px]'} text-[#86909C] group-hover:text-[#4E5969]`}>
+                        空闲
+                    </span>
                 )}
             </button>
+        );
+    };
+
+    const renderChannelMap = (expanded = false) => {
+        const leftRows = [
+            { label: '第1排 · 挂钩', offset: 0, count: 5, columns: 5 },
+            { label: '第2排 · 弹簧', offset: 5, count: 7, columns: 7 },
+            { label: '第3排 · 推杆', offset: 12, count: 5, columns: 5 },
+            { label: '第4排 · 推杆', offset: 17, count: 5, columns: 5 },
+            { label: '第5排 · 推杆', offset: 22, count: 4, columns: 4 },
+            { label: '第6排 · 推杆', offset: 26, count: 4, columns: 4 },
+        ];
+        const rightRows = [
+            { label: '第1排 · 大格', offset: 30, count: 2, columns: 2 },
+            { label: '第2排 · 大格', offset: 32, count: 2, columns: 2 },
+            { label: '第3排 · 大格', offset: 34, count: 2, columns: 2 },
+            { label: '第4排 · 窄格', offset: 36, count: 10, columns: 10 },
+            { label: '第5排 · 中格', offset: 46, count: 3, columns: 3 },
+        ];
+        const renderRows = (rows: typeof leftRows, compact: boolean, stretchHeight = false) => rows.map(row => (
+            <div key={row.label} className="grid min-h-0 grid-cols-[56px_minmax(0,1fr)] items-stretch gap-1 border-t border-[#DDE6F0] py-2 first:border-t-0 first:pt-0 last:pb-0">
+                <div className="flex min-w-0 items-start gap-1 pt-2">
+                    <span className="w-8 shrink-0 text-[11px] font-semibold leading-none text-[#596A80]">
+                        <span className="block">{row.label.split(' · ')[0].replace('第', '')}</span>
+                        <span className="mt-1 block text-[10px] font-normal leading-none text-[#86909C]">{row.label.split(' · ')[1]}</span>
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => handleFillChannelRow(row.offset, row.count)}
+                        className="[writing-mode:vertical-rl] inline-flex h-[52px] w-5 shrink-0 items-center justify-center rounded border border-[#B7CDF5] bg-[#F5F8FF] px-0 text-[10px] font-medium leading-none text-[#165DFF] transition-colors hover:border-[#165DFF] hover:bg-[#E8F1FF] focus:outline-none focus:ring-2 focus:ring-[#B7CDF5] focus:ring-offset-1 active:bg-[#DCEAFF]"
+                        title="补满本排已配置商品"
+                        aria-label={`${row.label}，补满本排已配置商品`}
+                    >
+                        补满本排
+                    </button>
+                </div>
+                <div className={`grid min-h-0 min-w-0 overflow-x-auto pb-1 ${expanded ? 'gap-3' : 'gap-2'}`} style={{ gridTemplateColumns: `repeat(${row.columns}, minmax(${row.minColumnWidth || '0px'}, 1fr))` }}>
+                    {channels.slice(row.offset, row.offset + row.count).map(channel => renderChannelPreviewSlot(channel, compact, stretchHeight))}
+                </div>
+            </div>
+        ));
+
+        return (
+            <div className={`rounded-lg border border-[#E5E6EB] bg-white ${expanded ? 'p-5' : 'p-3'}`}>
+                <div className={`${expanded ? 'grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_112px_minmax(0,0.64fr)]' : 'grid gap-3 xl:grid-cols-[minmax(0,1.5fr)_76px_minmax(0,0.64fr)]'}`}>
+                    <section className="flex min-w-0 flex-col rounded border border-[#D8E3EE] bg-[#EEF6FB] p-3">
+                        <div className="mb-3 flex items-center justify-between border-b border-[#DDE6F0] pb-3">
+                            <div>
+                                <h3 className="text-sm font-semibold text-[#344054]">左柜 · 出货货道</h3>
+                            </div>
+                        </div>
+                        <div>{renderRows(leftRows, !expanded)}</div>
+                        <div
+                            role="img"
+                            aria-label="左柜下方取货口示意"
+                            className={`${expanded ? 'mt-5 h-24' : 'mt-4 h-16'} flex shrink-0 items-center justify-center rounded border border-[#B8C3CF] bg-[#F2F3F5] text-sm font-medium text-[#6B7280]`}
+                        >
+                            取货口
+                        </div>
+                    </section>
+
+                    <div className="flex min-w-0 items-center justify-center">
+                        <div
+                            role="img"
+                            aria-label="主机屏幕示意"
+                            className={`${expanded ? 'min-h-[560px]' : 'h-full min-h-[360px]'} flex w-full items-center justify-center rounded border border-[#C9CDD4] bg-[#F2F3F5] text-sm font-medium text-[#6B7280]`}
+                        >
+                            主机屏幕
+                        </div>
+                    </div>
+
+                    <section className="w-full max-w-full min-w-0 rounded border border-[#D8E3EE] bg-[#EEF6FB] p-3">
+                        <div className="mb-3 flex items-center justify-between border-b border-[#DDE6F0] pb-3">
+                            <div>
+                                <h3 className="text-sm font-semibold text-[#344054]">右柜 · 储物格</h3>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="grid h-[370px] min-h-0 grid-rows-3">
+                                {renderRows(rightRows.slice(0, 3), true, true)}
+                            </div>
+                            {renderRows(rightRows.slice(3), true)}
+                        </div>
+                    </section>
+                </div>
+            </div>
         );
     };
 
@@ -2177,7 +2518,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         onClick={() => setShopActiveTab('channels')}
                                         className={`relative h-11 text-sm ${shopActiveTab === 'channels' ? 'font-medium text-[#165DFF]' : 'text-[#4E5969] hover:text-[#1D2129]'}`}
                                     >
-                                        货道配置 <span className="text-[13px] text-[#86909C]">（50）</span>
+                                        货道配置 <span className="text-[13px] text-[#86909C]">（{channels.length}）</span>
                                         {shopActiveTab === 'channels' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#165DFF]" />}
                                     </button>
                                     <button
@@ -2198,206 +2539,38 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                     {/* 货币发放管理 - 增加标签页切换以分离自动模型和手动发币 */}
                     {activeMenu === '货币发放管理' && (
-                        <div className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden transform animate-in fade-in slide-in-from-bottom-6 duration-700 flex flex-col min-h-[600px]">
-                            <div className="p-8 border-b border-slate-50 flex flex-col gap-6 bg-white shrink-0">
+                        <div className="w-full overflow-hidden rounded border border-[#E5E6EB] bg-white transform animate-in fade-in slide-in-from-bottom-6 duration-700">
+                            <div className="border-b border-[#E5E6EB] bg-white px-6 py-4">
                                 {/* 内部 Tab 切换器 */}
-                                <div className="flex bg-slate-100 rounded-xl p-1 self-start inline-flex">
-                                    <button onClick={() => setIssuanceTab('auto')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${issuanceTab === 'auto' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>自动发放规则</button>
-                                    <button onClick={() => setIssuanceTab('manual')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${issuanceTab === 'manual' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>手动发放</button>
+                                <div className="flex" role="tablist" aria-label="校园币发放方式">
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={issuanceTab === 'auto'}
+                                        onClick={() => setIssuanceTab('auto')}
+                                        className={`border-b-2 px-1 pb-3 text-sm ${issuanceTab === 'auto' ? 'border-[#165DFF] font-medium text-[#165DFF]' : 'border-transparent text-[#4E5969] hover:text-[#1D2129]'}`}
+                                    >
+                                        自动发放
+                                    </button>
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={issuanceTab === 'manual'}
+                                        onClick={() => setIssuanceTab('manual')}
+                                        className={`ml-6 border-b-2 px-1 pb-3 text-sm ${issuanceTab === 'manual' ? 'border-[#165DFF] font-medium text-[#165DFF]' : 'border-transparent text-[#4E5969] hover:text-[#1D2129]'}`}
+                                    >
+                                        手动发放
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50">
+                            <div>
                                 {/* 自动发币模型配置区域 */}
                                 {issuanceTab === 'auto' && (
-                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden max-w-4xl">
-                                        {/* 头部标题区域 */}
-                                        <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-                                                    <Coins size={24} />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-xl font-bold text-slate-800">自动发放规则配置</h3>
-                                                    <p className="text-slate-500 text-sm mt-1">设置并自动计算各发放池的额度，采用「保底+竞争」双池模型预防通胀</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* 表单内容区 */}
-                                        <div className="p-8 space-y-10">
-                                            {/* 核心设置区段 */}
-                                            <div className="space-y-8">
-
-                                                {/* 预算与发币周期设置 */}
-                                                <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl relative">
-                                                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l-xl"></div>
-                                                    <div className="flex flex-col gap-5">
-
-                                                        {/* 发币周期选择 */}
-                                                        <div className="flex items-center gap-4">
-                                                            <label className="text-sm font-semibold text-slate-700 w-24">发币周期</label>
-                                                            <div className="flex bg-slate-200/50 p-1 rounded-lg">
-                                                                <button
-                                                                    onClick={() => setIssueCycle('monthly')}
-                                                                    className={`px-6 py-1.5 text-sm font-bold rounded-md transition-all ${issueCycle === 'monthly' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                                                >
-                                                                    按月度发放
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setIssueCycle('weekly')}
-                                                                    className={`px-6 py-1.5 text-sm font-bold rounded-md transition-all ${issueCycle === 'weekly' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                                                >
-                                                                    按周度发放
-                                                                </button>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="h-px w-full bg-slate-200"></div>
-
-                                                        {/* 预算输入 */}
-                                                        <div className="flex flex-col gap-2 mt-1">
-                                                            <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                                                                班级总预算 <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">Base Pool</span>
-                                                            </label>
-                                                            <div className="flex items-end gap-3 mt-1">
-                                                                <div className="relative w-64">
-                                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
-                                                                        <Coins size={20} />
-                                                                    </span>
-                                                                    <input
-                                                                        type="number"
-                                                                        value={budgetPool}
-                                                                        onChange={(e) => setBudgetPool(Math.max(0, Number(e.target.value)))}
-                                                                        className="w-full bg-white border border-slate-300 rounded-lg pl-12 pr-4 py-3 text-2xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                                                                    />
-                                                                </div>
-                                                                <span className="text-slate-500 font-medium mb-3">校园币 / 班级 / {issueCycle === 'monthly' ? '月' : '周'}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* 比例分配与自动计算结果 */}
-                                                <div className="grid grid-cols-2 gap-6">
-                                                    {/* 保底池 */}
-                                                    <div className="p-6 border border-slate-200 rounded-xl bg-white hover:border-blue-300 transition-colors">
-                                                        <div className="flex justify-between items-center mb-6">
-                                                            <div>
-                                                                <h4 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full bg-green-500"></div> 阳光保底池
-                                                                </h4>
-                                                                <p className="text-xs text-slate-500 mt-1">保障每位学生的基准参与感</p>
-                                                            </div>
-                                                            <span className="bg-green-50 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-200">
-                                                                人均发放
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="space-y-4">
-                                                            <div>
-                                                                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">分配比例设置</label>
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="relative w-32">
-                                                                        <input
-                                                                            type="number"
-                                                                            value={guaranteedRate}
-                                                                            onChange={(e) => {
-                                                                                let val = Number(e.target.value);
-                                                                                val = Math.max(0, Math.min(100, val));
-                                                                                setGuaranteedRate(val);
-                                                                                setCompetitiveRate(100 - val);
-                                                                            }}
-                                                                            className="w-full bg-slate-50 border border-slate-300 rounded-md pr-8 pl-4 py-2 text-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                                        />
-                                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
-                                                                    </div>
-                                                                    <input
-                                                                        type="range"
-                                                                        min="0" max="100"
-                                                                        value={guaranteedRate}
-                                                                        onChange={(e) => {
-                                                                            const val = Number(e.target.value);
-                                                                            setGuaranteedRate(val);
-                                                                            setCompetitiveRate(100 - val);
-                                                                        }}
-                                                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-500"
-                                                                    />
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="pt-4 border-t border-slate-100 flex justify-between items-end">
-                                                                <span className="text-sm font-medium text-slate-500">本池具体额度:</span>
-                                                                <div className="text-right">
-                                                                    <span className="text-3xl font-black text-green-600">
-                                                                        {Math.floor(budgetPool * (guaranteedRate / 100)).toLocaleString()}
-                                                                    </span>
-                                                                    <span className="text-sm font-bold text-slate-400 ml-1">币</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* 竞争池 */}
-                                                    <div className="p-6 border border-slate-200 rounded-xl bg-slate-50/50">
-                                                        <div className="flex justify-between items-center mb-6">
-                                                            <div>
-                                                                <h4 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full bg-orange-500"></div> 荣誉竞争池
-                                                                </h4>
-                                                                <p className="text-xs text-slate-500 mt-1">用于高分奖励，激发向上动力</p>
-                                                            </div>
-                                                            <span className="bg-orange-50 text-orange-700 text-xs font-bold px-3 py-1 rounded-full border border-orange-200">
-                                                                排名发放
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="space-y-4">
-                                                            <div>
-                                                                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">剩余比例 (系统自动计算)</label>
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="relative w-32 opacity-70 cursor-not-allowed">
-                                                                        <input
-                                                                            type="text"
-                                                                            value={competitiveRate}
-                                                                            disabled
-                                                                            className="w-full bg-slate-100 border border-slate-300 rounded-md pr-8 pl-4 py-2 text-lg font-bold text-slate-600"
-                                                                        />
-                                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
-                                                                    </div>
-                                                                    <div className="w-full h-2 bg-slate-200 rounded-lg overflow-hidden flex">
-                                                                        <div className="bg-green-500 h-full transition-all" style={{ width: `${guaranteedRate}%` }}></div>
-                                                                        <div className="bg-orange-500 h-full transition-all" style={{ width: `${competitiveRate}%` }}></div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="pt-4 border-t border-slate-200 flex justify-between items-end">
-                                                                <span className="text-sm font-medium text-slate-500">本池具体额度:</span>
-                                                                <div className="text-right">
-                                                                    <span className="text-3xl font-black text-orange-500">
-                                                                        {Math.floor(budgetPool * (competitiveRate / 100)).toLocaleString()}
-                                                                    </span>
-                                                                    <span className="text-sm font-bold text-slate-400 ml-1">币</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                            </div>
-
-                                            {/* 底部操作栏 */}
-                                            <div className="pt-6 border-t border-slate-200 flex justify-end gap-4">
-                                                <button className="px-6 py-2.5 border border-slate-300 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors">
-                                                    重置为默认
-                                                </button>
-                                                <button className="px-8 py-2.5 bg-blue-600 text-white rounded-lg font-medium shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2">
-                                                    保存自动发放规则配置
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <CoinIssuanceSettings
+                                        value={coinIssuanceConfig}
+                                        onChange={setCoinIssuanceConfig}
+                                    />
                                 )}
 
                                 {/* 手动定向发放区段 */}
@@ -2645,63 +2818,33 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                             {shopActiveTab === 'channels' && (
                                 <div className="p-6 overflow-y-auto custom-scrollbar bg-[#F7F8FA]">
-                                    <div className="mb-4 flex items-center justify-between">
+                                    {/* 顶部标题与概览 */}
+                                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                                         <div>
-                                            <h3 className="m-0 text-sm font-semibold text-[#1D2129]">货柜平面预览</h3>
-                                            <p className="mt-1 text-xs text-[#86909C]">点击格口即可配置商品</p>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-xs text-[#86909C]" aria-label="货道状态图例">
-                                            <span className="flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#165DFF]" />已配置</span>
-                                            <span className="flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#C9CDD4]" />空闲</span>
-                                        </div>
-                                    </div>
-                                    <div className="grid gap-4 xl:grid-cols-[minmax(320px,0.9fr)_minmax(520px,1.1fr)]">
-                                        <div className="rounded border border-[#E5E6EB] bg-white p-4">
-                                            <div className="mb-3 text-center text-xs font-medium text-[#4E5969]">货柜实物映射</div>
-                                            <div className="grid grid-cols-[minmax(0,1fr)_64px_minmax(0,0.72fr)] items-stretch gap-2 rounded-lg bg-[#F7F8FA] p-3">
-                                                <div className="rounded border border-[#D9E2EC] bg-[#EDF2F7] p-2">
-                                                    <div className="mb-2 flex items-center justify-between text-[10px] text-[#4E5969]"><span>左柜</span><span>21–50</span></div>
-                                                    <div className="grid grid-cols-5 gap-1">
-                                                        {channels.slice(20, 50).map(channel => renderChannelPreviewSlot(channel, true))}
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col gap-2">
-                                                    <div className="flex min-h-[180px] flex-1 items-center justify-center rounded border border-[#C9CDD4] bg-[#F2F3F5] text-center text-[10px] text-[#86909C]">主机<br />屏幕</div>
-                                                    <div className="flex h-12 items-center justify-center rounded border border-[#C9CDD4] bg-white text-[10px] text-[#86909C]">取货口</div>
-                                                </div>
-                                                <div className="flex flex-col gap-2 rounded border border-[#D9E2EC] bg-[#EDF2F7] p-2">
-                                                    <div className="flex items-center justify-between text-[10px] text-[#4E5969]"><span>右柜</span><span>1–20</span></div>
-                                                    <div className="rounded border border-[#D9E2EC] bg-white p-1.5">
-                                                        <div className="mb-1 text-[9px] text-[#86909C]">挂钩货道 · 1–10</div>
-                                                        <div className="grid grid-cols-2 gap-1">{channels.slice(0, 10).map(channel => renderChannelPreviewSlot(channel, true))}</div>
-                                                    </div>
-                                                    <div className="rounded border border-[#D9E2EC] bg-white p-1.5">
-                                                        <div className="mb-1 text-[9px] text-[#86909C]">弹簧货道 · 11–20</div>
-                                                        <div className="grid grid-cols-2 gap-1">{channels.slice(10, 20).map(channel => renderChannelPreviewSlot(channel, true))}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="rounded border border-[#E5E6EB] bg-white p-4">
-                                            <div className="mb-3 flex items-center justify-between">
-                                                <div className="text-sm font-semibold text-[#1D2129]">按货道类型补货</div>
-                                                <span className="text-xs text-[#86909C]">已配置 {channels.filter(channel => channel.productId !== null).length}/50</span>
-                                            </div>
-                                            <div className="divide-y divide-[#F2F3F5] rounded border border-[#E5E6EB]">
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                                <h3 className="m-0 text-sm font-semibold text-[#1D2129]">货道配置</h3>
                                                 {[
-                                                    { title: '挂钩货道', count: 10, offset: 0 },
-                                                    { title: '弹簧货道', count: 10, offset: 10 },
-                                                    { title: '推杆货道', count: 30, offset: 20 }
-                                                ].map(group => (
-                                                    <div key={group.title} className="flex items-center justify-between gap-3 px-4 py-3">
-                                                        <div className="min-w-0"><div className="text-sm font-medium text-[#1D2129]">{group.title}</div><div className="mt-0.5 text-xs text-[#86909C]">货道 {group.offset + 1}–{group.offset + group.count} · 已配置 {channels.slice(group.offset, group.offset + group.count).filter(channel => channel.productId !== null).length}/{group.count}</div></div>
-                                                        <Button size="small" className="shrink-0 inline-flex items-center" icon={<Database size={13} />} onClick={() => setChannels(channels.map((channel, index) => index >= group.offset && index < group.offset + group.count && channel.productId !== null ? { ...channel, stock: 10 } : channel))}>补满已配置</Button>
-                                                    </div>
+                                                    { label: '已配置', value: channels.filter(channel => channel.productId !== null).length, tone: 'text-[#165DFF]' },
+                                                    { label: '库存告急', value: channels.filter(channel => channel.productId !== null && channel.stock < 5).length, tone: 'text-[#F53F3F]' },
+                                                    { label: '空闲', value: channels.filter(channel => channel.productId === null).length, tone: 'text-[#86909C]' },
+                                                ].map(item => (
+                                                    <span key={item.label} className="text-xs text-[#4E5969]">
+                                                        {item.label} <b className={`text-sm tabular-nums ${item.tone}`}>{item.value}</b>
+                                                    </span>
                                                 ))}
                                             </div>
-                                            <div className="mt-4 text-xs leading-5 text-[#86909C]">配置顺序建议：先点击右侧或左侧格口，选择商品并设置库存；完成后可按类型批量补满。</div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex flex-wrap items-center gap-3 text-xs text-[#86909C]" aria-label="货道状态图例">
+                                                <span className="flex items-center gap-1.5"><i className="relative h-3 w-3 overflow-hidden rounded-sm border border-[#9DBCFB] bg-white before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-[#165DFF]" />已配置</span>
+                                                <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm border border-[#DDE3EA] bg-[#F8FAFC]" />空闲</span>
+                                                <span className="font-medium text-[#F53F3F]">红字为库存告急</span>
+                                            </div>
                                         </div>
                                     </div>
+
+                                    {renderChannelMap(false)}
+
                                 </div>
                             )}
                         </div>
@@ -5111,13 +5254,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             <div className="flex shrink-0 items-center justify-between border-b border-[#E5E6EB] px-6 py-4">
                                 <h3 className="flex items-center gap-2 text-base font-semibold text-[#1D2129]">
                                     <Monitor size={20} className="text-blue-600" />
-                                    货道 {editingChannel.id} 配置 ({editingChannel.type})
+                                    {editingChannel.cabinetName || (editingChannel.id <= 30 ? '左机·出货主机' : '右机·智能副柜')} · 第{editingChannel.row}排第{editingChannel.col}格 (货道 {editingChannel.id})
                                 </h3>
                                 <button type="button" aria-label="关闭弹窗" onClick={() => setIsChannelModalOpen(false)} className="flex h-8 w-8 items-center justify-center rounded text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]">
                                     <Plus size={20} className="rotate-45" />
                                 </button>
                             </div>
-                            <div className="space-y-6 overflow-y-auto p-6 custom-scrollbar">
+                            <div className="space-y-5 overflow-y-auto p-6 custom-scrollbar">
                                 <form id="channel-form" onSubmit={(e) => {
                                     e.preventDefault();
                                     const formData = new FormData(e.currentTarget);
@@ -5128,34 +5271,49 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         stock: productId ? Number(formData.get('stock')) : 0
                                     };
                                     handleSaveChannel(newChannel);
-                                    }}>
+                                }}>
+                                    <div className="rounded border border-[#E5E6EB] bg-[#F7F8FA] p-3 text-xs text-[#4E5969] space-y-1.5 mb-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[#86909C]">所属设备：</span>
+                                            <span className="font-medium text-[#1D2129]">{editingChannel.cabinetName || (editingChannel.id <= 30 ? '左机·出货主机 (1200mm)' : '右机·智能副柜 (800mm)')}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[#86909C]">物理规格：</span>
+                                            <span className="font-medium text-[#1D2129]">{editingChannel.subTypeLabel || editingChannel.type}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[#86909C]">出货方式：</span>
+                                            <span className="text-[#165DFF] font-medium">{editingChannel.id <= 30 ? '自动出货 (掉落至下方取货口)' : '电控开门 (刷脸/扫码后弹开对应柜门)'}</span>
+                                        </div>
+                                    </div>
                                     <div>
-                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]">选择商品放入货道</label>
+                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]">选择商品放入{editingChannel.id <= 30 ? '货道' : '储物柜'}</label>
                                         <select name="productId" defaultValue={editingChannel.productId || ''} className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10">
-                                            <option value="">-- 置空货道 --</option>
+                                            <option value="">-- 置空仓位 --</option>
                                             {shopProducts.map(p => (
                                                 <option key={p.id} value={p.id}>{p.name} (售价: {Number(p.price).toFixed(2)})</option>
                                             ))}
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]">当前库存（上限 10 件）</label>
+                                    <div className="mt-4">
+                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]">当前库存（上限 {editingChannel.maxStock || 10} 件）</label>
                                         <div className="relative">
-                                            <input id="stock-input" type="number" name="stock" defaultValue={editingChannel.stock || 0} min="0" max="10" className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 pr-12 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10" />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#86909C]">/ 10</span>
+                                            <input id="stock-input" type="number" name="stock" defaultValue={editingChannel.stock || 0} min="0" max={editingChannel.maxStock || 10} className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 pr-12 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10" />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#86909C]">/ {editingChannel.maxStock || 10}</span>
                                         </div>
                                     </div>
                                 </form>
                             </div>
                             <div className="flex shrink-0 justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
                                 <Button onClick={() => setIsChannelModalOpen(false)}>取消</Button>
-                                <Button type="primary" htmlType="submit" form="channel-form">保存货道配置</Button>
+                                <Button type="primary" htmlType="submit" form="channel-form">保存配置</Button>
                             </div>
                         </div>
                     </div>
                 )
             }
 
+            {/* Channel Preview Modal */}
             {/* 储蓄银行产品配置 Modal */}
             {
                 isProductModalOpen && (

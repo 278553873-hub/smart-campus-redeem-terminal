@@ -86,40 +86,40 @@ const ShopView: React.FC<ShopViewProps> = ({
                   onClick={() => handleOpenConfirm(product)}
                   disabled={!canBuy}
                   aria-label={inStock ? `${product.name}，${product.price} ${GROWTH_COIN_TERMS.name}，兑换` : `${product.name}，已售罄`}
-                  className={`p-4 rounded-[2rem] shadow-[0_4px_15px_rgb(0,0,0,0.02)] border-2 flex flex-col gap-4 transition-all text-left ${canBuy
+                  className={`rounded-2xl overflow-hidden shadow-[0_4px_16px_rgb(0,0,0,0.03)] border-2 flex flex-col transition-all text-left bg-white ${canBuy
                     ? 'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200'
                     : 'cursor-not-allowed opacity-60'
-                    } ${isSpecial ? 'bg-indigo-50/20 border-indigo-100' : 'bg-orange-50/20 border-orange-100/80'}`}
+                    } ${isSpecial ? 'border-indigo-100' : 'border-slate-100'}`}
                 >
-                  {/* 商品图区域 */}
-                  <div className={`aspect-square rounded-[1.5rem] flex items-center justify-center p-4 relative ${isSpecial ? 'bg-indigo-50/50' : 'bg-orange-50/50'}`}>
+                  {/* 商品图区域：顶天立地铺满卡片上方，融入卡片 */}
+                  <div className={`w-full aspect-square relative overflow-hidden flex items-center justify-center p-3.5 ${isSpecial ? 'bg-gradient-to-b from-indigo-50/60 to-slate-50/40' : 'bg-gradient-to-b from-orange-50/40 to-slate-50/40'}`}>
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-contain drop-shadow-md mix-blend-multiply"
+                      className="w-full h-full object-contain drop-shadow-sm mix-blend-multiply"
                     />
                   </div>
 
-                  {/* 信息区域 */}
-                  <div className="flex flex-col gap-3 mt-auto">
-                    <h3 className="text-base font-black text-slate-800 line-clamp-2 min-h-[2.5rem] leading-tight text-center">
+                  {/* 信息区域：放大商品名称、金额与货币icon */}
+                  <div className="p-4 pt-3 flex flex-col flex-1 justify-between gap-3 w-full">
+                    <h3 className="text-[18px] font-black text-slate-800 line-clamp-2 min-h-[2.8rem] leading-snug text-center">
                       {product.name}
                     </h3>
 
                     <div
-                      className={`w-full py-4 rounded-[1.2rem] flex items-center justify-center transition-all border shadow-sm ${canBuy
+                      className={`w-full h-14 rounded-xl flex items-center justify-center transition-all border shadow-sm ${canBuy
                         ? 'bg-blue-600 border-blue-500 text-white shadow-[0_4px_12px_rgba(37,99,235,0.2)]'
-                        : 'bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed shadow-none'
+                        : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                         }`}
                     >
-                      <div className={`font-[NumberFont] font-black text-[22px] leading-none flex items-center gap-1.5`}>
+                      <div className="font-[NumberFont] font-black text-[26px] leading-none flex items-center gap-2">
                         {inStock ? (
                           <>
-                            <img src="/assets/coin.png" className={`w-[0.9em] h-[0.9em] -translate-y-[1px] ${canBuy ? '' : 'opacity-40 grayscale'}`} alt="" />
-                            {product.price}
+                            <img src="/assets/coin.png" className={`w-6 h-6 shrink-0 -translate-y-[1px] ${canBuy ? '' : 'opacity-40 grayscale'}`} alt="" />
+                            <span>{product.price}</span>
                           </>
                         ) : (
-                          <span className="text-base tracking-widest px-2">已售罄</span>
+                          <span className="text-[17px] font-bold tracking-wider px-2 text-slate-400">已售罄</span>
                         )}
                       </div>
                     </div>
@@ -138,20 +138,21 @@ const ShopView: React.FC<ShopViewProps> = ({
               }`}>
               {confirmingProduct.type === 'special' ? <Gift size={64} /> : <ShoppingBag size={64} />}
             </div>
-            <h2 className="text-4xl font-black text-slate-900 mb-10 tracking-tight">确认兑换？</h2>
+            <h2 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">确认兑换？</h2>
+            <p className="text-[17px] font-bold text-slate-500 mb-8 max-w-[280px] line-clamp-1">{confirmingProduct.name}</p>
 
             <div className="w-full space-y-4 mb-10">
               <div className="flex justify-between items-center bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                <span className="text-slate-500 font-bold">{GROWTH_COIN_TERMS.name} · {GROWTH_COIN_TERMS.available}</span>
+                <span className="text-slate-500 font-bold">当前{GROWTH_COIN_TERMS.available}</span>
                 <span className="text-xl font-black text-slate-800"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {student.campusCoins}</span>
               </div>
               <div className={`flex justify-between items-center p-5 rounded-2xl border ${confirmingProduct.type === 'special' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' : 'bg-pink-50 border-pink-100 text-pink-700'
                 }`}>
-                <span className="font-bold">本次支出金额</span>
-                <span className="text-2xl font-black"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> -{confirmingProduct.price}</span>
+                <span className="font-bold">本次消耗</span>
+                <span className="text-2xl font-black"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {confirmingProduct.price}</span>
               </div>
               <div className="flex justify-between items-center bg-green-50 p-5 rounded-2xl border border-green-100">
-                <span className="text-green-600 font-bold">支付后剩余</span>
+                <span className="text-green-600 font-bold">兑换后剩余</span>
                 <span className="text-2xl font-black text-green-700"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {student.campusCoins - confirmingProduct.price}</span>
               </div>
             </div>
@@ -170,7 +171,7 @@ const ShopView: React.FC<ShopViewProps> = ({
                   : 'bg-pink-500 shadow-pink-200'
                   }`}
               >
-                确认支付
+                确认兑换
               </button>
             </div>
           </div>

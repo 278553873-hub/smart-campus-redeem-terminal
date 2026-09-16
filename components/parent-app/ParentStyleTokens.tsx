@@ -14,7 +14,7 @@ export const parentMobileCssVariables = {
   '--pm-brand-primary-strong': 'var(--tm-brand-primary-strong)',
   '--pm-brand-primary-hover': 'var(--tm-brand-primary-hover)',
   '--pm-brand-primary-pressed': 'var(--tm-brand-primary-pressed)',
-  '--pm-brand-primary-soft': 'var(--tm-brand-primary-soft)',
+  '--pm-brand-primary-soft': '#FEF2F2',
   '--pm-brand-primary-soft-strong': 'var(--tm-brand-primary-soft-strong)',
   '--pm-brand-secondary': 'var(--tm-brand-secondary)',
   '--pm-brand-secondary-strong': 'var(--tm-brand-secondary-strong)',
@@ -30,20 +30,34 @@ export const parentMobileCssVariables = {
   '--pm-status-negative-soft': 'var(--tm-status-negative-soft)',
   '--pm-status-attention': 'var(--tm-brand-secondary)',
   '--pm-status-attention-soft': 'var(--tm-brand-secondary-soft)',
-  '--pm-bg-page': 'var(--tm-bg-page)',
-  '--pm-bg-page-low': 'var(--tm-bg-page-low)',
-  '--pm-page-gradient': 'linear-gradient(180deg, var(--tm-bg-page) 0%, var(--tm-bg-page-mid) 58%, var(--tm-bg-page-low) 100%)',
-  '--pm-bg-surface': 'var(--tm-bg-surface)',
-  '--pm-bg-surface-soft': 'var(--tm-bg-surface-soft)',
-  '--pm-bg-surface-muted': 'var(--tm-bg-surface-muted)',
+  // 家长端专属底色：解绑教师端办公低饱和暖灰(#F8F6F5)，升级为清透亮白渐变，彻底告别沉闷发灰
+  '--pm-bg-page': '#F8FAFC',
+  '--pm-bg-page-low': '#F1F5F9',
+  '--pm-page-gradient': 'linear-gradient(180deg, #FAFCFE 0%, #F5F7FA 52%, #EFF3F8 100%)',
+  '--pm-bg-surface': '#FFFFFF',
+  // 容器次级浅底：升级为轻盈通透的纯净微冷浅底，去除生硬死灰块
+  '--pm-bg-surface-soft': '#F4F7FA',
+  '--pm-bg-surface-muted': 'rgba(15, 23, 42, 0.05)',
   '--pm-text-primary': 'var(--tm-text-primary)',
-  '--pm-text-secondary': 'var(--tm-text-secondary)',
-  '--pm-text-tertiary': 'var(--tm-text-tertiary)',
+  '--pm-text-secondary': '#334155',
+  '--pm-text-tertiary': '#64748B',
   '--pm-text-disabled': 'var(--tm-text-disabled)',
   '--pm-text-inverse': 'var(--tm-text-inverse)',
   '--pm-nav-item-default': 'var(--tm-nav-item-default)',
-  '--pm-border-subtle': 'var(--tm-border-subtle)',
-  '--pm-border-control': 'var(--tm-border-control)',
+  // 细边框描边：从生硬的泥灰线条细化为通透微羽化轻描边
+  '--pm-border-subtle': 'rgba(226, 232, 240, 0.75)',
+  '--pm-border-control': 'rgba(203, 213, 225, 0.8)',
+  // 分段选择与Tab切换专属令牌：告别水泥灰槽，升级为正常的一体化纯白底轨 + 品牌红高质感滑块
+  '--pm-segment-track-bg': '#FFFFFF',
+  '--pm-segment-active-bg': 'var(--pm-brand-primary)',
+  '--pm-segment-active-shadow': '0 1px 3px rgba(224, 39, 39, 0.25)',
+  '--pm-segment-active-text': '#FFFFFF',
+  '--pm-segment-inactive-text': 'var(--pm-text-secondary)',
+  // 选项卡片专属令牌：纯白底 + 1px 精细品牌描边（告别厚重粗边框与廉价淡粉红），配柔和微光晕
+  '--pm-select-card-active-bg': '#FFFFFF',
+  '--pm-select-card-active-border': 'var(--pm-brand-primary)',
+  '--pm-select-card-active-text': 'var(--pm-brand-primary-strong)',
+  '--pm-select-card-active-shadow': '0 2px 8px -1px rgba(224, 39, 39, 0.08)',
   '--pm-focus-ring': 'var(--tm-focus-ring)',
   '--pm-mask': 'var(--tm-mask)',
   '--pm-icon-blue-gradient': 'var(--tm-brand-primary)',
@@ -76,7 +90,7 @@ export const parentMobileCssVariables = {
   '--pm-space-8': 'var(--tm-space-8)',
   '--pm-shadow-card': 'var(--tm-shadow-card)',
   '--pm-shadow-avatar': 'var(--tm-shadow-avatar)',
-  '--pm-shadow-control': 'var(--tm-shadow-control)',
+  '--pm-shadow-control': '0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04)',
   '--pm-shadow-floating': 'var(--tm-shadow-floating)',
   '--pm-shadow-sheet': 'var(--tm-shadow-sheet)',
   '--pm-shadow-navigation': 'var(--tm-shadow-navigation)',
@@ -139,4 +153,15 @@ export const parentShadow = {
   card: '[box-shadow:var(--pm-shadow-card)]',
   floating: '[box-shadow:var(--pm-shadow-floating)]',
   sheet: '[box-shadow:var(--pm-shadow-sheet)]',
+} as const;
+
+export const parentSegmentTone = {
+  track: 'bg-[var(--pm-bg-surface)] border border-[var(--pm-border-subtle)] p-1 rounded-[var(--pm-radius-inner)] shadow-sm',
+  active: 'bg-[var(--pm-brand-primary)] text-white font-bold rounded-[var(--pm-radius-control)] [box-shadow:0_1px_3px_rgba(224,39,39,0.25)]',
+  inactive: 'text-[var(--pm-text-secondary)] font-medium active:bg-slate-50',
+} as const;
+
+export const parentSelectCardTone = {
+  active: 'border border-[var(--pm-select-card-active-border)] bg-[var(--pm-select-card-active-bg)] text-[var(--pm-select-card-active-text)] [box-shadow:var(--pm-select-card-active-shadow)] font-bold',
+  inactive: 'border border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface)] text-[var(--pm-text-secondary)] active:bg-[var(--pm-bg-surface-soft)]',
 } as const;

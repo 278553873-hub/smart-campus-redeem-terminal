@@ -289,34 +289,34 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                     {/* 左半部分：得分与档位 */}
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border-2 border-slate-50 flex flex-col relative overflow-hidden">
-                        <div className="flex justify-between items-start w-full shrink-0 h-[28px]">
-                            <span className="text-slate-400 font-extrabold text-xs uppercase tracking-widest pl-1">本月总分</span>
-                            <div className={`px-3 py-1.5 rounded-xl font-black text-xs border-[2px] border-white ring-1 ${currentConfig.ring} ${currentConfig.bg} ${currentConfig.textColor} shadow-sm flex items-center gap-1.5`}>
+                        <div className="flex justify-between items-start w-full shrink-0 h-[30px]">
+                            <span className="text-slate-500 font-extrabold text-[13px] uppercase tracking-wider pl-1">本月总分</span>
+                            <div className={`px-3 py-1 rounded-xl font-black text-[13px] border-[2px] border-white ring-1 ${currentConfig.ring} ${currentConfig.bg} ${currentConfig.textColor} shadow-sm flex items-center gap-1.5`}>
                                 {currentConfig.label}
                             </div>
                         </div>
 
                         <div className="flex flex-col items-center justify-center flex-1 py-4">
                             <h3 className="text-[3.5rem] leading-none font-black text-blue-600 tracking-tighter flex items-baseline">
-                                {uiState.currentScore} <span className="text-xl text-slate-400 ml-2 opacity-70 font-bold">分</span>
+                                {uiState.currentScore} <span className="text-xl text-slate-400 ml-2 font-bold">分</span>
                             </h3>
                         </div>
 
                         {showAnyEvaluationSummary && (
-                            <div className={`grid ${showPositiveSummary && showNegativeSummary ? 'grid-cols-2' : 'grid-cols-1'} gap-3 w-full shrink-0 h-[52px]`}>
+                            <div className={`grid ${showPositiveSummary && showNegativeSummary ? 'grid-cols-2' : 'grid-cols-1'} gap-3 w-full shrink-0 min-h-[58px]`}>
                                 {showPositiveSummary && (
-                                    <div className="flex h-full items-center justify-center flex-col bg-green-50/80 rounded-2xl py-1 px-2 border border-green-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                                        <span className="text-[10px] text-green-600/80 font-bold mb-0.5 flex items-center gap-1">表扬</span>
-                                        <div className="text-green-600 font-black text-sm font-[NumberFont] flex items-baseline justify-center gap-0.5">
-                                            {uiState.records.filter(r => r.type === 'positive').length} <span className="text-[10px] font-bold font-sans opacity-80">次</span>
+                                    <div className="flex h-full items-center justify-center flex-col bg-green-50/90 rounded-2xl py-1.5 px-3 border border-green-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                        <span className="text-[12px] text-green-700 font-bold mb-0.5 flex items-center gap-1">表扬</span>
+                                        <div className="text-green-600 font-black text-[16px] font-[NumberFont] flex items-baseline justify-center gap-1">
+                                            {uiState.records.filter(r => r.type === 'positive').length} <span className="text-[11px] font-bold font-sans text-green-600/80">次</span>
                                         </div>
                                     </div>
                                 )}
                                 {showNegativeSummary && (
-                                    <div className="flex h-full items-center justify-center flex-col bg-red-50/80 rounded-2xl py-1 px-2 border border-red-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                                        <span className="text-[10px] text-red-500/80 font-bold mb-0.5 flex items-center gap-1">待改进</span>
-                                        <div className="text-red-500 font-black text-sm font-[NumberFont] flex items-baseline justify-center gap-0.5">
-                                            {uiState.records.filter(r => r.type === 'negative').length} <span className="text-[10px] font-bold font-sans opacity-80">次</span>
+                                    <div className="flex h-full items-center justify-center flex-col bg-red-50/90 rounded-2xl py-1.5 px-3 border border-red-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                        <span className="text-[12px] text-red-600 font-bold mb-0.5 flex items-center gap-1">待改进</span>
+                                        <div className="text-red-500 font-black text-[16px] font-[NumberFont] flex items-baseline justify-center gap-1">
+                                            {uiState.records.filter(r => r.type === 'negative').length} <span className="text-[11px] font-bold font-sans text-red-500/80">次</span>
                                         </div>
                                     </div>
                                 )}
@@ -326,8 +326,8 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
 
                     {/* 右半部分：预计奖励 */}
                     <div className="bg-gradient-to-b from-orange-50/80 to-amber-50/50 rounded-[2rem] p-6 border-2 border-orange-100/50 flex flex-col relative overflow-hidden">
-                        <div className="flex justify-start items-start w-full shrink-0 h-[28px]">
-                            <span className="text-orange-600/80 font-extrabold text-xs uppercase tracking-widest pl-1">
+                        <div className="flex justify-start items-start w-full shrink-0 h-[30px]">
+                            <span className="text-orange-700 font-extrabold text-[13px] uppercase tracking-wider pl-1">
                                 预计可得
                             </span>
                         </div>
@@ -339,19 +339,19 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                             </h3>
                         </div>
 
-                        <div className="flex justify-between items-center gap-3 w-full shrink-0 h-[52px]">
-                            <div className="flex-1 h-full flex items-center justify-center flex-col bg-white/70 rounded-2xl py-1 px-2 border border-orange-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-transform hover:scale-105">
-                                <span className="text-[10px] text-orange-600/70 font-bold mb-0.5">成长奖励</span>
-                                <div className="text-orange-500 font-black text-sm font-[NumberFont] flex items-center justify-center gap-1">
-                                    <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -translate-y-[1px]" alt="coin" />
+                        <div className="flex justify-between items-center gap-3 w-full shrink-0 min-h-[58px]">
+                            <div className="flex-1 h-full flex items-center justify-center flex-col bg-white/80 rounded-2xl py-1.5 px-3 border border-orange-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                <span className="text-[12px] text-orange-700 font-bold mb-0.5">成长奖励</span>
+                                <div className="text-orange-500 font-black text-[16px] font-[NumberFont] flex items-center justify-center gap-1">
+                                    <img src="/assets/coin.png" className="w-[1.05em] h-[1.05em] -translate-y-[1px]" alt="coin" />
                                     <span>{formatFixedCoin(uiState.coinsBase)}</span>
                                 </div>
                             </div>
-                            <div className="text-orange-300 font-black text-sm leading-none">+</div>
-                            <div className="flex-1 h-full flex items-center justify-center flex-col bg-white/70 rounded-2xl py-1 px-2 border border-orange-100/50 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-transform hover:scale-105">
-                                <span className="text-[10px] text-orange-600/70 font-bold mb-0.5">得分奖励</span>
-                                <div className="text-orange-500 font-black text-sm font-[NumberFont] flex items-center justify-center gap-1">
-                                    <img src="/assets/coin.png" className="w-[1.1em] h-[1.1em] -translate-y-[1px]" alt="coin" />
+                            <div className="text-orange-400 font-black text-base leading-none">+</div>
+                            <div className="flex-1 h-full flex items-center justify-center flex-col bg-white/80 rounded-2xl py-1.5 px-3 border border-orange-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                <span className="text-[12px] text-orange-700 font-bold mb-0.5">得分奖励</span>
+                                <div className="text-orange-500 font-black text-[16px] font-[NumberFont] flex items-center justify-center gap-1">
+                                    <img src="/assets/coin.png" className="w-[1.05em] h-[1.05em] -translate-y-[1px]" alt="coin" />
                                     <span>{formatFixedCoin(uiState.coinsBonus)}</span>
                                 </div>
                             </div>
@@ -363,21 +363,21 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
 
                 {/* 粘性吸顶 Tab 切换栏 */}
                 <div className="sticky top-0 z-40 bg-[#f8fbff]/90 backdrop-blur-md pt-2 pb-2">
-                    <div className="flex p-1 bg-slate-200/60 rounded-xl">
+                    <div className="flex p-1.5 bg-slate-200/70 rounded-2xl">
                         {showAnyEvaluationDetails && (
                             <button
                                 onClick={() => setActiveTab('records')}
-                                className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-1.5 ${visibleActiveTab === 'records' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex-1 py-2.5 rounded-xl font-black text-[15px] transition-all flex items-center justify-center gap-2 ${visibleActiveTab === 'records' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
-                                <Clock size={16} /> 行为记录
+                                <Clock size={18} /> 行为记录
                             </button>
                         )}
                         {MOCK_SHOW_LEADERBOARD && (
                             <button
                                 onClick={() => setActiveTab('leaderboard')}
-                                className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-1.5 ${visibleActiveTab === 'leaderboard' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex-1 py-2.5 rounded-xl font-black text-[15px] transition-all flex items-center justify-center gap-2 ${visibleActiveTab === 'leaderboard' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
-                                <Medal size={16} /> 班级标杆
+                                <Medal size={18} /> 班级标杆
                             </button>
                         )}
                     </div>
@@ -386,13 +386,11 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                 {/* Tab 内容区 */}
                 {visibleActiveTab === 'leaderboard' && MOCK_SHOW_LEADERBOARD && (
                     <div className="bg-white rounded-[1.5rem] p-5 shadow-sm border-2 border-slate-50 relative overflow-hidden animate-in fade-in duration-300">
-                        <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-black text-slate-800 flex items-center gap-1.5 text-sm">
-                                <Medal size={18} className="text-yellow-500" /> 班级标杆
+                        <div className="flex items-center justify-between mb-3.5">
+                            <h4 className="font-black text-slate-800 flex items-center gap-2 text-[16px]">
+                                <Medal size={20} className="text-yellow-500" /> 班级标杆
                             </h4>
                         </div>
-
-
 
                         <div className="space-y-2 relative z-10">
                             {uiState.leaderboard.length === 0 ? (
@@ -400,8 +398,8 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                                     <div className="w-16 h-16 bg-blue-50 text-blue-400 rounded-full flex items-center justify-center mb-3">
                                         <TrendingUp size={32} />
                                     </div>
-                                    <h5 className="font-black text-slate-700 mb-1">大家都在同一起跑线</h5>
-                                    <p className="text-xs text-slate-400 font-bold px-4">本班目前还没有同学得分，谁会成为本月榜一大哥？快去争取第一分吧！</p>
+                                    <h5 className="font-black text-slate-700 text-base mb-1">大家都在同一起跑线</h5>
+                                    <p className="text-sm text-slate-400 font-bold px-4">本班目前还没有同学得分，谁会成为本月榜一大哥？快去争取第一分吧！</p>
                                 </div>
                             ) : (() => {
                                 // 计算分数分组
@@ -425,47 +423,47 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                                     <>
                                         {/* 班级标杆：只要有参与者就展示 */}
                                         {benchmarkGroups.length > 0 && (
-                                            <div>
-                                                <div className="space-y-1.5">
+                                             <div>
+                                                <div className="space-y-2">
                                                     {benchmarkGroups.map(([score, students], groupIdx) => {
                                                         const isTop = groupIdx === 0;
                                                         return (
-                                                            <div key={score} className="space-y-1">
+                                                            <div key={score} className="space-y-1.5">
                                                                 {students.map((item, idx) => (
-                                                                    <div key={idx} className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${item.isSelf ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
+                                                                    <div key={idx} className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${item.isSelf ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
                                                                             : isTop ? 'bg-amber-50 border-amber-100'
                                                                                 : 'bg-slate-50 border-slate-100'
                                                                         }`}>
-                                                                        <div className="flex items-center gap-2.5">
-                                                                            <div className={`w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 ${item.isSelf ? 'border-blue-300' : isTop ? 'border-amber-300' : 'border-slate-200'}`}>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className={`w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 ${item.isSelf ? 'border-blue-300' : isTop ? 'border-amber-300' : 'border-slate-200'}`}>
                                                                                 <img src={`https://i.pravatar.cc/150?u=${item.name}`} className="w-full h-full object-cover" alt="" />
                                                                             </div>
                                                                             <div className="flex flex-col">
                                                                                 <div className="flex items-center gap-1.5">
-                                                                                    <span className={`font-bold text-sm ${item.isSelf ? 'text-blue-700' : 'text-slate-700'}`}>
+                                                                                    <span className={`font-black text-[15px] ${item.isSelf ? 'text-blue-700' : 'text-slate-800'}`}>
                                                                                         {item.name}
                                                                                     </span>
-                                                                                    {item.isSelf && <span className="text-[10px] bg-blue-100 text-blue-600 px-1 py-0.5 rounded font-bold">我</span>}
+                                                                                    {item.isSelf && <span className="text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-black">我</span>}
                                                                                 </div>
-                                                                                <div className={`mt-0.5 text-[10px] font-black uppercase tracking-wider ${TIER_CONFIG[item.tier].textColor}`}>
+                                                                                <div className={`mt-0.5 text-[12px] font-black uppercase tracking-wider ${TIER_CONFIG[item.tier].textColor}`}>
                                                                                     {TIER_CONFIG[item.tier].label}
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                            <div className="text-right shrink-0">
-                                                                                <div className={`font-black text-sm tabular-nums ${item.isSelf ? 'text-blue-600' : isTop ? 'text-amber-600' : 'text-slate-500'}`}>
-                                                                                    {item.score} <small className="text-slate-300 font-sans">分</small>
-                                                                                </div>
-                                                                                {item.coins > 0 ? (
-                                                                                    <div className="text-orange-500 font-bold text-xs flex items-center gap-0.5 justify-end">
-                                                                                        <span className="text-[10px] font-sans text-slate-400">预估</span>
-                                                                                        <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[1px]" alt="coin" />
-                                                                                        {formatFixedCoin(item.coins || 0)}
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    <div className="text-[10px] text-slate-400 font-bold pt-0.5">无奖励</div>
-                                                                                )}
+                                                                        <div className="text-right shrink-0">
+                                                                            <div className={`font-black text-[16px] tabular-nums ${item.isSelf ? 'text-blue-600' : isTop ? 'text-amber-600' : 'text-slate-600'}`}>
+                                                                                {item.score} <small className="text-slate-400 font-bold font-sans text-[12px]">分</small>
                                                                             </div>
+                                                                            {item.coins > 0 ? (
+                                                                                <div className="text-orange-500 font-black text-[14px] flex items-center gap-1 justify-end">
+                                                                                    <span className="text-[11px] font-bold font-sans text-slate-400">预估</span>
+                                                                                    <img src="/assets/coin.png" className="w-[0.95em] h-[0.95em] -translate-y-[1px]" alt="coin" />
+                                                                                    {formatFixedCoin(item.coins || 0)}
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="text-[12px] text-slate-400 font-bold pt-0.5">无奖励</div>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -477,43 +475,42 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
 
                                         {/* 分割线 */}
                                         {!allSame && selfItem && !selfInBenchmark && (
-                                            <div className="flex items-center gap-2 py-1">
+                                            <div className="flex items-center gap-2.5 py-1.5">
                                                 <div className="h-px flex-1 border-t border-dashed border-slate-200" />
-                                                <span className="text-[10px] font-black text-slate-400 shrink-0">我的得分</span>
+                                                <span className="text-[12px] font-black text-slate-500 shrink-0">我的得分</span>
                                                 <div className="h-px flex-1 border-t border-dashed border-slate-200" />
                                             </div>
                                         )}
 
                                         {/* 自己（不在标杆层时单独展示） */}
                                         {selfItem && !selfInBenchmark && (
-                                            <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50 border border-blue-200 ring-1 ring-blue-200">
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-blue-300">
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-blue-50 border border-blue-200 ring-1 ring-blue-200">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-blue-300">
                                                         <img src={`https://i.pravatar.cc/150?u=${selfItem.name}`} className="w-full h-full object-cover" alt="" />
                                                     </div>
                                                     <div className="flex flex-col">
                                                         <div className="flex items-center gap-1.5">
-                                                            <span className="font-bold text-sm text-blue-700">
+                                                            <span className="font-black text-[15px] text-blue-700">
                                                                 {selfItem.name}
                                                             </span>
-                                                            <span className="text-[10px] bg-blue-100 text-blue-600 px-1 py-0.5 rounded font-bold">我</span>
+                                                            <span className="text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-black">我</span>
                                                         </div>
-                                                        {/* 等级标签：纯文字演示，更好对齐 */}
-                                                        <div className={`mt-0.5 text-[10px] font-black uppercase tracking-wider ${TIER_CONFIG[selfItem.tier].textColor}`}>
+                                                        <div className={`mt-0.5 text-[12px] font-black uppercase tracking-wider ${TIER_CONFIG[selfItem.tier].textColor}`}>
                                                             {TIER_CONFIG[selfItem.tier].label}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="text-right shrink-0">
-                                                    <div className="font-black text-blue-600 text-sm tabular-nums">{selfItem.score} <small className="text-blue-300 font-sans">分</small></div>
+                                                    <div className="font-black text-blue-600 text-[16px] tabular-nums">{selfItem.score} <small className="text-blue-400 font-bold font-sans text-[12px]">分</small></div>
                                                     {selfItem.coins > 0 ? (
-                                                        <div className="text-orange-500 font-bold text-xs flex items-center gap-0.5 justify-end">
-                                                            <span className="text-[10px] font-sans text-slate-400">预估</span>
-                                                            <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[1px]" alt="coin" />
+                                                        <div className="text-orange-500 font-black text-[14px] flex items-center gap-1 justify-end">
+                                                            <span className="text-[11px] font-bold font-sans text-slate-400">预估</span>
+                                                            <img src="/assets/coin.png" className="w-[0.95em] h-[0.95em] -translate-y-[1px]" alt="coin" />
                                                             {formatFixedCoin(selfItem.coins || 0)}
                                                         </div>
                                                     ) : (
-                                                        <div className="text-[10px] text-slate-400 font-bold pt-0.5 text-right">无奖励</div>
+                                                        <div className="text-[12px] text-slate-400 font-bold pt-0.5 text-right">无奖励</div>
                                                     )}
                                                 </div>
                                             </div>
@@ -527,45 +524,45 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                 )}
 
                 {visibleActiveTab === 'records' && showAnyEvaluationDetails && (
-                    <div className="space-y-3 pb-6 animate-in fade-in duration-300">
+                    <div className="space-y-3.5 pb-6 animate-in fade-in duration-300">
                         <div className="flex items-center justify-between px-2 pb-1">
-                            <h4 className="text-sm font-black text-slate-700 flex items-center gap-2">
-                                <Clock size={16} className="text-blue-400" /> 本月行为明细
+                            <h4 className="text-[16px] font-black text-slate-800 flex items-center gap-2">
+                                <Clock size={18} className="text-blue-500" /> 本月行为明细
                             </h4>
-                        <div className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-widest">{visibleBehaviorRecords.length} 条记录</div>
+                            <div className="text-[12px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg uppercase tracking-wider">{visibleBehaviorRecords.length} 条记录</div>
                         </div>
 
                         {visibleBehaviorRecords.length === 0 ? (
                             <div className="py-8 flex flex-col items-center justify-center text-center opacity-60">
                                 <Clock size={32} className="text-slate-300 mb-2" />
-                                <p className="text-sm text-slate-400 font-bold">暂无行为明细记录</p>
+                                <p className="text-base text-slate-400 font-bold">暂无行为明细记录</p>
                             </div>
                         ) : visibleBehaviorRecords.map(record => (
                             <div key={record.id} className="bg-white p-5 rounded-[1.5rem] border-2 border-slate-50 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col gap-3 group relative overflow-hidden w-full">
 
                                 {/* 头部：事件得分与人员 */}
                                 <div className="flex justify-between items-start gap-4">
-                                    <p className="font-bold text-slate-700 text-sm leading-relaxed flex-1 pt-1 opacity-90">
+                                    <p className="font-bold text-slate-800 text-[16px] leading-relaxed flex-1 pt-0.5">
                                         {record.description}
                                     </p>
-                                    <div className={`flex flex-col items-center justify-center shrink-0 w-16 h-16 rounded-2xl border-4 border-white shadow-sm -mt-2 -mr-2 ${record.type === 'positive' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                    <div className={`flex flex-col items-center justify-center shrink-0 w-[68px] h-[68px] rounded-2xl border-4 border-white shadow-sm -mt-1 -mr-1 ${record.type === 'positive' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                                         <span className="font-black text-2xl leading-none font-[NumberFont]">{record.score > 0 ? '+' : ''}{record.score}</span>
-                                        <span className="text-[10px] font-black opacity-60 uppercase mt-0.5">分</span>
+                                        <span className="text-[12px] font-black opacity-70 uppercase mt-0.5">分</span>
                                     </div>
                                 </div>
 
                                 {/* 底部：时间脚标 */}
-                                <div className="flex items-center gap-3 pt-3 border-t border-dashed border-slate-100 opacity-60 pt-2">
-                                    <div className="text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                        <UserCheck size={10} /> {record.teacher}
+                                <div className="flex items-center gap-3 pt-3 border-t border-dashed border-slate-100">
+                                    <div className="text-[12px] font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                                        <UserCheck size={13} /> {record.teacher}
                                     </div>
-                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <div className="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">
                                         {record.time}
                                     </div>
                                 </div>
 
                                 {/* 左侧颜色线指示 */}
-                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${record.type === 'positive' ? 'bg-green-400' : 'bg-red-400'} opacity-80`} />
+                                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${record.type === 'positive' ? 'bg-green-400' : 'bg-red-400'} opacity-80`} />
                             </div>
                         ))}
                     </div>

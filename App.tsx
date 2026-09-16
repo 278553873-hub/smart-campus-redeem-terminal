@@ -93,14 +93,14 @@ const HeaderCoinBalance: React.FC<{
   const isAvailable = tone === 'available';
   return (
     <div
-      className={`flex min-w-[92px] items-center gap-1.5 rounded-xl border px-2.5 py-2 shadow-sm ${isAvailable
+      className={`flex items-center gap-1 rounded-xl border px-2 py-1 shadow-sm shrink-0 ${isAvailable
         ? 'border-orange-100 bg-orange-50 text-orange-600'
         : 'border-blue-100 bg-blue-50 text-blue-600'
         }`}
       aria-label={`${label}${GROWTH_COIN_TERMS.name}${value}`}
     >
       <span className="text-xs font-black leading-none">{label}</span>
-      <img src="/assets/coin.png" className="h-4 w-4 shrink-0" alt="" />
+      <img src="/assets/coin.png" className="h-3.5 w-3.5 shrink-0" alt="" />
       <span className="font-[NumberFont] text-xl font-black leading-none">{value}</span>
     </div>
   );
@@ -721,7 +721,13 @@ const TerminalApp: React.FC<{
   loginMethods?: StudentLoginMethods;
   parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;
   onViewChange?: (view: ViewState) => void;
-}> = ({ mode = 'vending', embedded = false, loginMethods = { face: true, password: true }, parentEvaluationVisibility, onViewChange }) => {
+}> = ({
+  mode = 'vending',
+  embedded = false,
+  loginMethods = { face: true, password: true },
+  parentEvaluationVisibility,
+  onViewChange,
+}) => {
   const isVending = mode === 'vending';
   const faceLoginEnabled = !isVending || loginMethods.face;
   const passwordLoginEnabled = !isVending || loginMethods.password;
@@ -937,6 +943,81 @@ const TerminalApp: React.FC<{
   const renderView = () => {
     switch (view) {
       case 'welcome':
+        if (isVending) {
+          return (
+            <div className="flex flex-col items-center justify-between h-full text-center px-8 pt-8 pb-12 select-none">
+              {/* 上半部分：品牌形象与主副标题（自然上移至学生最佳平视区，舒展饱满） */}
+              <div className="flex flex-col items-center w-full max-w-[420px] pt-4">
+                {/* Logo 带柔和外发光与质感边框 */}
+                <div className="relative group mb-6">
+                  <div className="absolute -inset-6 bg-blue-400/25 rounded-full blur-[60px] animate-pulse pointer-events-none"></div>
+                  <img
+                    src="/assets/school_cover.png"
+                    alt="校园星光"
+                    className="relative w-56 h-56 rounded-[2.75rem] shadow-[0_20px_40px_-12px_rgba(37,99,235,0.22)] mx-auto border-[6px] border-white object-cover"
+                  />
+                </div>
+
+                {/* 标题区：大字号、紧凑行距 */}
+                <div className="space-y-3">
+                  <h1 className="text-[52px] font-black text-blue-900 tracking-tight leading-[1.08]">
+                    校园星光<br />
+                    <span className="text-blue-600 mt-2 block">货柜机</span>
+                  </h1>
+                  <div className="text-xl text-slate-400 font-bold flex items-center justify-center gap-3 pt-3">
+                    <div className="h-px w-8 bg-slate-200"></div>
+                    <span>点滴进步，成就未来</span>
+                    <div className="h-px w-8 bg-slate-200"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 下半部分：入口按钮区（处于抬手最顺手的黄金触控区，高度严格统一 80px，字号统一 22px，图标统一 28px） */}
+              <div className="flex w-full max-w-[420px] flex-col gap-4 shrink-0 mb-2">
+                {faceLoginEnabled && (
+                  <button
+                    onClick={() => { navigateTo('scanning'); setLoginSubView('face'); }}
+                    className="h-[80px] w-full rounded-2xl px-6 text-[22px] font-black flex items-center justify-center gap-3 transition-all duration-150 border-2 border-blue-600 bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.28)] active:scale-[0.98] active:bg-blue-700 active:border-blue-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
+                  >
+                    <Camera size={28} aria-hidden="true" />
+                    <span>刷脸登录</span>
+                  </button>
+                )}
+
+                {passwordLoginEnabled && (
+                  <button
+                    onClick={() => {
+                      setLoginSubView('password');
+                      setShowStudentLoginModal(true);
+                    }}
+                    className={`h-[80px] w-full rounded-2xl px-6 text-[22px] font-black flex items-center justify-center gap-3 transition-all duration-150 border-2 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200 ${
+                      faceLoginEnabled
+                        ? 'border-blue-100 bg-blue-50 text-blue-700 active:bg-blue-100 active:border-blue-200'
+                        : 'border-blue-600 bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.28)] active:bg-blue-700 active:border-blue-700'
+                    }`}
+                  >
+                    <KeyRound size={28} aria-hidden="true" />
+                    <span>密码登录</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!returnToShopAfterLogin) setShopScrollTop(0);
+                    setIsGuestBrowsing(true);
+                    navigateTo('shop');
+                  }}
+                  className="h-[80px] w-full rounded-2xl px-6 text-[22px] font-black flex items-center justify-center gap-3 transition-all duration-150 border-2 border-slate-200/90 bg-white text-slate-700 shadow-sm hover:border-slate-300 active:scale-[0.98] active:border-blue-300 active:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
+                >
+                  <ShoppingBag size={28} className="text-blue-600" aria-hidden="true" />
+                  <span>查看商品</span>
+                </button>
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 text-center px-10 pt-16 pb-20">
             <div className="relative group mt-6">
@@ -951,7 +1032,7 @@ const TerminalApp: React.FC<{
             <div className="space-y-4">
               <h1 className="text-6xl font-black text-blue-900 tracking-tighter leading-none">
                 校园星光<br />
-                <span className="text-blue-600 mt-2 block">{isVending ? '货柜机' : '班级一体机'}</span>
+                <span className="text-blue-600 mt-2 block">班级一体机</span>
               </h1>
               <div className="text-xl text-slate-400 mt-5 font-bold flex items-center justify-center gap-3">
                 <div className="h-px w-6 bg-slate-200"></div>
@@ -974,13 +1055,8 @@ const TerminalApp: React.FC<{
               {passwordLoginEnabled && (
                 <button
                   onClick={() => {
-                    if (isVending) {
-                      setLoginSubView('password');
-                      setShowStudentLoginModal(true);
-                    } else {
-                      navigateTo('scanning');
-                      setLoginSubView('password');
-                    }
+                    navigateTo('scanning');
+                    setLoginSubView('password');
                   }}
                   className={`${TERMINAL_ENTRY_BUTTON_BASE} ${faceLoginEnabled
                     ? TERMINAL_ENTRY_BUTTON_SECONDARY
@@ -988,21 +1064,6 @@ const TerminalApp: React.FC<{
                 >
                   <KeyRound size={24} aria-hidden="true" />
                   <span>密码登录</span>
-                </button>
-              )}
-
-              {isVending && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!returnToShopAfterLogin) setShopScrollTop(0);
-                    setIsGuestBrowsing(true);
-                    navigateTo('shop');
-                  }}
-                  className={`${TERMINAL_ENTRY_BUTTON_BASE} ${TERMINAL_ENTRY_BUTTON_TERTIARY}`}
-                >
-                  <ShoppingBag size={24} className="text-blue-600" aria-hidden="true" />
-                  <span>查看商品</span>
                 </button>
               )}
             </div>
@@ -1083,22 +1144,12 @@ const TerminalApp: React.FC<{
 
   const innerContent = (
     <div
-      className={`glass-panel overflow-hidden flex flex-col relative w-full h-full ${isVending ? 'pt-8' : ''}`}
+      className="glass-panel overflow-hidden flex flex-col relative w-full h-full"
       style={{
-        borderRadius: isVending ? '3rem' : '0',
-        boxShadow: isVending ? '0 50px 100px -20px rgba(0,0,0,0.15)' : 'none'
+        borderRadius: '0',
+        boxShadow: isVending ? '0 20px 50px -12px rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.08)' : 'none'
       }}
     >
-      {/* 顶部硬件模拟 (摄像头区域) */}
-      {isVending && (
-        <div className="absolute top-0 left-0 w-full h-8 bg-black/5 z-[100] flex justify-center items-center pointer-events-none">
-          <div className="w-24 h-4 bg-black/80 rounded-b-xl flex items-center justify-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-900/50"></div>
-            <div className="w-1 h-1 rounded-full bg-green-400"></div>
-          </div>
-        </div>
-      )}
-
       {/* 登录页管理员入口 */}
       {view === 'welcome' && isVending && (
         <div className="absolute top-6 right-6 z-[110] flex gap-3">
@@ -1198,14 +1249,14 @@ const TerminalApp: React.FC<{
       )}
 
       {view !== 'welcome' && view !== 'scanning' && view !== 'vending-admin' && !isGuestBrowsing && (
-        <div className="absolute z-[90] top-8 left-1/2 -translate-x-1/2 bg-slate-900/10 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 pointer-events-none shadow-sm transition-all duration-300">
+        <div className="absolute z-[90] top-8 -translate-y-6 left-1/2 -translate-x-1/2 bg-slate-900/10 backdrop-blur-md px-3.5 py-1 rounded-full flex items-center gap-2 pointer-events-none shadow-sm transition-all duration-300">
           <div className={`w-1.5 h-1.5 rounded-full ${idleSecondsLeft <= 10 ? 'bg-red-500 animate-ping' : 'bg-green-500 animate-pulse'}`}></div>
-          <span className="text-slate-700/80 text-[10px] font-bold tracking-widest">{idleSecondsLeft}s 后自动退出</span>
+          <span className="text-slate-700 font-bold text-[11px] tracking-wider">{idleSecondsLeft}s 后自动退出</span>
         </div>
       )}
 
       {view !== 'welcome' && view !== 'scanning' && view !== 'dashboard' && view !== 'vending-admin' && (
-        <div className="h-16 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-50">
+        <div className="h-16 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md px-4 flex items-center justify-between shrink-0 z-50">
           <button
             onClick={() => {
               navigateTo(isGuestBrowsing ? 'welcome' : 'dashboard', 'back');
@@ -1215,14 +1266,14 @@ const TerminalApp: React.FC<{
                 setShopScrollTop(0);
               }
             }}
-            className="flex items-center space-x-1 text-blue-600 font-bold text-lg active:bg-blue-50 px-3 py-1.5 rounded-xl"
+            className="flex items-center space-x-1 text-blue-600 font-bold text-base active:bg-blue-50 px-2.5 py-1.5 rounded-xl shrink-0"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={22} />
             <span>返回首页</span>
           </button>
           {((view === 'shop' && !isGuestBrowsing) || view === 'growth' || view === 'bank') && (
             <div
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 shrink-0"
               aria-label={`${GROWTH_COIN_TERMS.available}${GROWTH_COIN_TERMS.name}${student.campusCoins}，${GROWTH_COIN_TERMS.saved}${GROWTH_COIN_TERMS.name}${bankBalance}`}
             >
               <HeaderCoinBalance label={GROWTH_COIN_TERMS.available} value={student.campusCoins} tone="available" />
@@ -1267,8 +1318,13 @@ const TerminalApp: React.FC<{
 
   return (
     <div className={`${embedded ? 'w-full h-full' : 'w-screen h-[100dvh]'} bg-[#f0f9ff] flex items-center justify-center overflow-hidden p-2`}>
-      {/* 21.5寸竖屏货柜机比例 540x960 */}
-      <DeviceWrapper width={540} height={960} padding={8} safetyGap={32} maxScale={1.1} previewAnchor="terminal-device">
+      {/* 21.5寸竖屏货柜机比例 540x960，保持固定参数确保scale不发生改变，切换开关零跳动 */}
+      <DeviceWrapper
+        width={540}
+        height={960}
+        padding={8} safetyGap={32} maxScale={1.1}
+        previewAnchor="terminal-device"
+      >
         {innerContent}
       </DeviceWrapper>
     </div>
@@ -1839,10 +1895,12 @@ const AppSwitcher: React.FC = () => {
           style={{ left: terminalPreviewDockLeft ?? '50%' }}
         >
           <div className="flex flex-col gap-3">
-            <TerminalLoginMethodPreviewControls
-              value={studentLoginPreviewMode}
-              onChange={setStudentLoginPreviewMode}
-            />
+            {terminalView === 'welcome' && (
+              <TerminalLoginMethodPreviewControls
+                value={studentLoginPreviewMode}
+                onChange={setStudentLoginPreviewMode}
+              />
+            )}
             {terminalView === 'growth' && (
               <ParentEvaluationVisibilityPreviewControls
                 settings={parentEvaluationVisibility}

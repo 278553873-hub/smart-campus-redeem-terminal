@@ -15,7 +15,7 @@ requireText(source, 'aria-pressed={selected}', '开放状态切换应提供可�
 requireText(appSource, '<ParentBankFeaturePreviewControls', '家长端演示区必须挂载积分银行开放配置卡。');
 requireText(appSource, 'parentBankFeatureEnabled={parentBankFeatureEnabled}', '积分银行开放状态必须传入家长端。');
 requireText(parentSource, '{parentBankFeatureEnabled && <div', '未开放时必须隐藏货柜机兑换凭证。');
-requireText(parentSource, "{parentBankFeatureEnabled && <ParentCard as=\"article\" className=\"min-h-[154px]", '未开放时预计可得卡片应整体隐藏。');
+requireText(parentSource, 'if (!activeChild || !parentBankFeatureEnabled) return null;', '未开放时成长币与预计可得一体卡应整体隐藏。');
 requireText(parentSource, 'const GrowthBankEntry = () => {', '成长币入口应作为学生卡片下方的独立板块。');
 requireText(parentSource, 'if (!activeChild || !parentBankFeatureEnabled) return null;', '未开放时必须隐藏成长币与积分银行入口。');
 requireText(parentSource, '<GrowthChildProfileCard />\n        <GrowthBankEntry />\n        <GrowthSummaryCards />', '开放时成长币应位于学生卡片下方、总分卡片上方。');
