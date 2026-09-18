@@ -35,6 +35,7 @@ import {
     type LeaderReportTeacherUsage,
 } from '../services/leaderReportService';
 import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
+import TeacherUsageRankingSheet from '../components/report/TeacherUsageRankingSheet';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
@@ -267,7 +268,10 @@ const OverviewCard = ({ snapshot, animationKey }: { snapshot: LeaderReportSnapsh
                 <MetricUnit label="使用教师" percent={snapshot?.summary.teacherPercent ?? 0} fraction={`${snapshot?.summary.activeTeachers ?? 0} / ${snapshot?.summary.totalTeachers ?? 0}`} icon={UserCheck} tone="brand" animationKey={`${animationKey}-teacher`} />
                 <MetricUnit label="覆盖学生" percent={snapshot?.summary.studentPercent ?? 0} fraction={`${snapshot?.summary.totalCoveredStudents ?? 0} / ${snapshot?.summary.totalStudents ?? 0}`} icon={Users} tone="secondary" animationKey={`${animationKey}-student`} />
             </div>
-            <MetricUnit label="评价次数" value={`${snapshot?.summary.totalRecords ?? 0}`} icon={ClipboardList} tone="reward" animationKey={`${animationKey}-records`} />
+            <div className="grid grid-cols-2 gap-3">
+                <MetricUnit label="评价次数" value={`${snapshot?.summary.totalRecords ?? 0}`} icon={ClipboardList} tone="reward" animationKey={`${animationKey}-records`} />
+                <MetricUnit label="评价条数" value={`${snapshot?.summary.totalEvaluationCount ?? 0}`} icon={ClipboardList} tone="secondary" animationKey={`${animationKey}-evaluation-count`} />
+            </div>
         </div>
     </section>
 );
@@ -278,10 +282,10 @@ interface TeacherRowProps {
     showAward?: boolean;
 }
 
-const teacherUsageHeaderColumns = ['老师', '评价次数', '覆盖学生'] as const;
+const teacherUsageHeaderColumns = ['老师', '个评率', '评价次数', '评价条数'] as const;
 
 const TeacherUsageRankingHeader = () => (
-    <div className="mb-2 grid grid-cols-[minmax(0,1.15fr)_56px_64px] gap-2 px-3 text-[11px] font-semibold text-[var(--tm-text-secondary)]">
+    <div className="mb-2 grid grid-cols-[minmax(0,1fr)_48px_52px_56px] gap-2 px-3 text-[11px] font-semibold text-[var(--tm-text-secondary)]">
         {teacherUsageHeaderColumns.map((label, index) => (
             <span key={label} className={index === 0 ? undefined : 'text-right'}>{label}</span>
         ))}
@@ -310,25 +314,14 @@ const TeacherRow: React.FC<TeacherRowProps> = ({
     rank,
     showAward,
 }) => (
-    <div className="grid min-h-[48px] grid-cols-[minmax(0,1.15fr)_56px_64px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
+    <div className="grid min-h-[48px] grid-cols-[minmax(0,1fr)_48px_52px_56px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
         <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{teacher.name}</span>
             {showAward && <TeacherRankBadge rank={rank} />}
         </div>
+        <div className="text-right font-semibold text-[var(--tm-text-secondary)]">{teacher.individualEvaluationRate ?? 0}%</div>
         <div className="text-right font-semibold text-[var(--tm-text-secondary)]">{teacher.records}</div>
-        <div className="text-right font-semibold text-[var(--tm-text-secondary)]">{teacher.coveredStudents}</div>
-    </div>
-);
-
-const FullTeacherRow: React.FC<TeacherRowProps> = ({ teacher, rank, showAward }) => (
-    <div className="grid min-h-[48px] grid-cols-[minmax(0,1.15fr)_56px_64px_72px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
-        <div className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{teacher.name}</span>
-            {showAward && <TeacherRankBadge rank={rank} />}
-        </div>
-        <div className="text-right font-semibold text-[var(--tm-text-secondary)]">{teacher.records}</div>
-        <div className="text-right font-semibold text-[var(--tm-text-secondary)]">{teacher.coveredStudents}</div>
-        <div className="truncate text-right text-[var(--tm-text-secondary)]">{teacher.lastUsedAt}</div>
+        <div className="text-right font-semibold text-[var(--tm-text-secondary)]">{teacher.evaluationCount}</div>
     </div>
 );
 
@@ -2605,48 +2598,12 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
             )}
 
             {fullRankingType && (
-                <div className="absolute inset-0 z-[120] flex items-end bg-[var(--tm-mask)] backdrop-blur-sm" onClick={() => setFullRankingType(null)}>
-                    <div className="max-h-[82%] w-full rounded-t-[32px] bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                        <div className="flex items-center justify-between border-b border-[var(--tm-border-subtle)] px-5 py-4">
-                            <div>
-                                <h3 className="text-lg font-semibold text-[var(--tm-text-primary)]">教师使用完整榜单</h3>
-                                <p className="mt-0.5 text-xs text-[var(--tm-text-secondary)]">同一份教师使用数据，可切换不同排序视角</p>
-                            </div>
-                            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]" onClick={() => setFullRankingType(null)}>
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-                        <div className="border-b border-[var(--tm-border-subtle)] px-5 py-3">
-                            <div className="mb-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-[var(--tm-bg-surface-muted)] p-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setFullRankingType('active')}
-                                    className={`min-h-[36px] rounded-xl text-sm font-semibold transition-all ${fullRankingType === 'active' ? 'bg-white text-[var(--tm-brand-primary)] shadow-sm' : 'text-[var(--tm-text-secondary)]'}`}
-                                >
-                                    积极使用
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFullRankingType('low')}
-                                    className={`min-h-[36px] rounded-xl text-sm font-semibold transition-all ${fullRankingType === 'low' ? 'bg-white text-[var(--tm-brand-secondary-strong)] shadow-sm' : 'text-[var(--tm-text-secondary)]'}`}
-                                >
-                                    使用较少
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-[minmax(0,1.15fr)_56px_64px_72px] gap-2 px-3 text-[11px] font-semibold text-[var(--tm-text-secondary)]">
-                                <span>老师</span>
-                                <span className="text-right">评价次数</span>
-                                <span className="text-right">覆盖学生</span>
-                                <span className="text-right">最近评价</span>
-                            </div>
-                        </div>
-                        <div className="max-h-[58vh] space-y-2.5 overflow-y-auto p-4 pb-8">
-                            {fullRanking.map((teacher, index) => (
-                                <FullTeacherRow key={teacher.id} teacher={teacher} rank={fullRankingType === 'active' ? index + 1 : undefined} showAward={fullRankingType === 'active'} />
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                <TeacherUsageRankingSheet
+                    rankingType={fullRankingType}
+                    teachers={fullRanking}
+                    onRankingTypeChange={setFullRankingType}
+                    onClose={() => setFullRankingType(null)}
+                />
             )}
         </div>
     );

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Popconfirm } from '@arco-design/web-react';
+import { Alert, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Checkbox, Popconfirm } from '@arco-design/web-react';
 import {
     LayoutDashboard, FileText, ClipboardList, PenTool,
     Settings, Users, BookOpen, Database, Download,
     Menu, User, ChevronDown, ChevronRight, Package,
     Landmark, ArrowLeftRight, ArrowUpDown, Coins, Monitor, AlertCircle,
     Info, Search, Plus, Sparkles,
-    Check, Upload, KeyRound, Eye, Move, Megaphone, Pause, Play, CircleHelp
+    Check, Upload, KeyRound, Eye, Move, Megaphone, Pause, Play, CircleHelp,
+    ArrowLeft, Copy, MapPin, CheckCircle2, RotateCcw, Boxes
 } from 'lucide-react';
 import HealthDataImportView from './HealthDataImportView';
 import GrowthDataSettingsView from './GrowthDataSettingsView';
@@ -158,7 +159,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         '运营中心': true,
     });
 
-    const [activeMenu, setActiveMenu] = useState('货币发放管理');
+    const [activeMenu, setActiveMenu] = useState('货柜超市');
 
     const toggleMenu = (title: string) => {
         setExpandedMenus(prev => ({ ...prev, [title]: !prev[title] }));
@@ -167,7 +168,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const menus = [
         {
             title: '货柜机配置中心', icon: <Package size={18} />,
-            children: ['货币发放管理', '货柜超市管理', '历次发币记录', '储蓄银行配置', '设备基础配置']
+            children: ['货柜超市', '货币发放', '发币记录', '储蓄银行', '终端设备']
         },
         {
             title: '报表中心', icon: <FileText size={18} />,
@@ -1743,7 +1744,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         { id: 4, name: '智能成长笔记本', price: 15, icon: '/assets/shop/shop_notebook.png', active: true },
     ]);
     const [shopProductStatusFilter, setShopProductStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-    const generateRealisticChannels = () => {
+
+    // 生成单套标准 49 格拟真货道模板
+    const createRealisticChannelsForDevice = (preset: '1F' | '2F' | '3F' = '1F') => {
         const list: Array<{
             id: number;
             cabinet: 'left' | 'right';
@@ -1761,6 +1764,16 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         // 第1排: 5个挂钩货道 (id: 1..5)
         for (let c = 1; c <= 5; c++) {
             const id = list.length + 1;
+            let pId: number | null = null;
+            let st = 0;
+            if (preset === '1F') {
+                if (id === 1) { pId = 3; st = 6; }
+                if (id === 2) { pId = 1; st = 3; } // 库存告急
+            } else if (preset === '2F') {
+                if (id === 1) { pId = 1; st = 8; }
+            } else if (preset === '3F') {
+                if (id === 2) { pId = 3; st = 9; }
+            }
             list.push({
                 id,
                 cabinet: 'left',
@@ -1769,13 +1782,23 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 col: c,
                 type: '挂钩货道',
                 subTypeLabel: '第1排·挂钩',
-                productId: id === 1 ? 3 : null,
-                stock: id === 1 ? 6 : 0
+                productId: pId,
+                stock: st
             });
         }
         // 第2排: 7个弹簧货道 (id: 6..12)
         for (let c = 1; c <= 7; c++) {
             const id = list.length + 1;
+            let pId: number | null = null;
+            let st = 0;
+            if (preset === '1F') {
+                if (id === 8) { pId = 4; st = 8; }
+            } else if (preset === '2F') {
+                if (id === 7) { pId = 4; st = 3; } // 库存告急
+                if (id === 8) { pId = 4; st = 9; }
+            } else if (preset === '3F') {
+                if (id === 9) { pId = 1; st = 7; }
+            }
             list.push({
                 id,
                 cabinet: 'left',
@@ -1784,13 +1807,22 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 col: c,
                 type: '弹簧货道',
                 subTypeLabel: '第2排·弹簧',
-                productId: id === 8 ? 4 : null,
-                stock: id === 8 ? 8 : 0
+                productId: pId,
+                stock: st
             });
         }
         // 第3排: 5个推杆货道 (id: 13..17)
         for (let c = 1; c <= 5; c++) {
             const id = list.length + 1;
+            let pId: number | null = null;
+            let st = 0;
+            if (preset === '1F') {
+                if (id === 14) { pId = 1; st = 5; }
+            } else if (preset === '2F') {
+                if (id === 13) { pId = 3; st = 6; }
+            } else if (preset === '3F') {
+                if (id === 15) { pId = 4; st = 10; }
+            }
             list.push({
                 id,
                 cabinet: 'left',
@@ -1799,8 +1831,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 col: c,
                 type: '推杆货道',
                 subTypeLabel: '第3排·推杆',
-                productId: id === 14 ? 1 : null,
-                stock: id === 14 ? 5 : 0
+                productId: pId,
+                stock: st
             });
         }
         // 第4排: 5个推杆货道 (id: 18..22)
@@ -1853,6 +1885,16 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         // 第1排: 2个电子锁大格 (id: 31..32)
         for (let c = 1; c <= 2; c++) {
             const id = list.length + 1;
+            let pId: number | null = null;
+            let st = 0;
+            if (preset === '1F') {
+                if (id === 31) { pId = 2; st = 2; } // 库存告急
+            } else if (preset === '2F') {
+                if (id === 31) { pId = 2; st = 4; } // 库存告急
+            } else if (preset === '3F') {
+                if (id === 31) { pId = 2; st = 1; } // 库存告急
+                if (id === 32) { pId = 2; st = 3; } // 库存告急
+            }
             list.push({
                 id,
                 cabinet: 'right',
@@ -1861,8 +1903,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 col: c,
                 type: '电子锁货柜',
                 subTypeLabel: '第1排·大格',
-                productId: id === 31 ? 2 : null,
-                stock: id === 31 ? 2 : 0
+                productId: pId,
+                stock: st
             });
         }
         // 第2排: 2个电子锁大格 (id: 33..34)
@@ -1898,6 +1940,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         // 第4排: 10个电子锁立式窄格 (id: 37..46)
         for (let c = 1; c <= 10; c++) {
             const id = list.length + 1;
+            let pId: number | null = null;
+            let st = 0;
+            if (preset === '1F') {
+                if (id === 39) { pId = 3; st = 4; } // 库存告急
+            } else if (preset === '3F') {
+                if (id === 40) { pId = 3; st = 6; }
+            }
             list.push({
                 id,
                 cabinet: 'right',
@@ -1906,13 +1955,20 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 col: c,
                 type: '电子锁货柜',
                 subTypeLabel: '第4排·窄格',
-                productId: id === 39 ? 3 : null,
-                stock: id === 39 ? 4 : 0
+                productId: pId,
+                stock: st
             });
         }
         // 第5排: 3个电子锁中格 (id: 47..49)
         for (let c = 1; c <= 3; c++) {
             const id = list.length + 1;
+            let pId: number | null = null;
+            let st = 0;
+            if (preset === '1F') {
+                if (id === 48) { pId = 4; st = 7; }
+            } else if (preset === '2F') {
+                if (id === 47) { pId = 3; st = 5; }
+            }
             list.push({
                 id,
                 cabinet: 'right',
@@ -1921,15 +1977,255 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 col: c,
                 type: '电子锁货柜',
                 subTypeLabel: '第5排·中格',
-                productId: id === 48 ? 4 : null,
-                stock: id === 48 ? 3 : 0
+                productId: pId,
+                stock: st
             });
         }
 
         return list.map(channel => ({ ...channel, maxStock: 10 }));
     };
 
-    const [channels, setChannels] = useState(generateRealisticChannels);
+    // 设备机型模板库定义
+    type VendingModelType = 'MODEL_DUAL_49' | 'MODEL_SINGLE_36' | 'MODEL_LOCKER_24';
+
+    interface DeviceModelTemplate {
+        type: VendingModelType;
+        name: string;
+        description: string;
+        totalSlots: number;
+        cabinetsDesc: string;
+        badge: string;
+    }
+
+    const DEVICE_MODEL_CATALOG: DeviceModelTemplate[] = [
+        {
+            type: 'MODEL_DUAL_49',
+            name: '经典双机柜（49 格）',
+            description: '左出货柜（30道推杆/弹簧/挂钩 + 取货口） + 中屏幕 + 右储物柜（19格多尺寸电门）',
+            totalSlots: 49,
+            cabinetsDesc: '30 出货道 + 19 储物格',
+            badge: '旗舰标配'
+        },
+        {
+            type: 'MODEL_SINGLE_36',
+            name: '单体出货柜（36 格）',
+            description: '单机 6 排 36 道弹簧/推杆出货货道 + 底部通长取货口 + 嵌入屏',
+            totalSlots: 36,
+            cabinetsDesc: '36 出货道（单柜体）',
+            badge: '紧凑出货款'
+        },
+        {
+            type: 'MODEL_LOCKER_24',
+            name: '多门储物柜（24 格）',
+            description: '左右双侧纯储物格（各 12 格独立电磁门，共 24 格） + 中控屏',
+            totalSlots: 24,
+            cabinetsDesc: '24 独立储物格',
+            badge: '大件储物款'
+        }
+    ];
+
+    const generateActivationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+    // 设备与多楼层货柜管理状态
+    interface VendingDevice {
+        id: string;
+        name: string;
+        modelType: VendingModelType;
+        floor?: string;
+        location: string;
+        status: 'online' | 'offline';
+        lastHeartbeat: string;
+        activationCode: string; // 6位激活码
+        adminPassword: string; // 终端运维密码
+        port: string; // 串口路径如 /dev/ttyS1
+        baudRate: number; // 波特率如 9600
+        protocol: string; // 通信协议
+        channels: ReturnType<typeof createRealisticChannelsForDevice>;
+    }
+
+    const [vendingDevices, setVendingDevices] = useState<VendingDevice[]>([
+        {
+            id: 'dev-1',
+            name: '教学楼 1 楼终端',
+            modelType: 'MODEL_DUAL_49',
+            floor: '教学楼 1F',
+            location: '教学楼 1F 连廊东侧',
+            status: 'online',
+            lastHeartbeat: '刚刚',
+            activationCode: '849201',
+            adminPassword: 'Admin@888',
+            port: '/dev/ttyS1',
+            baudRate: 9600,
+            protocol: 'MDB售货机协议',
+            channels: createRealisticChannelsForDevice('1F')
+        },
+        {
+            id: 'dev-2',
+            name: '教学楼 2 楼终端',
+            modelType: 'MODEL_DUAL_49',
+            floor: '教学楼 2F',
+            location: '教学楼 2F 中厅活动角',
+            status: 'online',
+            lastHeartbeat: '1分钟前',
+            activationCode: '620158',
+            adminPassword: 'Admin@666',
+            port: '/dev/ttyS1',
+            baudRate: 9600,
+            protocol: 'MDB售货机协议',
+            channels: createRealisticChannelsForDevice('2F')
+        },
+        {
+            id: 'dev-3',
+            name: '综合楼 1 楼终端',
+            modelType: 'MODEL_SINGLE_36',
+            floor: '综合楼 1F',
+            location: '综合楼 1F 艺术展厅旁',
+            status: 'online',
+            lastHeartbeat: '刚刚',
+            activationCode: '913402',
+            adminPassword: 'Admin@999',
+            port: '/dev/ttyS0',
+            baudRate: 115200,
+            protocol: '双向推杆协议',
+            channels: createRealisticChannelsForDevice('3F')
+        }
+    ]);
+    const [selectedDeviceId, setSelectedDeviceId] = useState<string>('dev-1');
+    const [channelViewMode, setChannelViewMode] = useState<'overview' | 'detail'>('overview');
+    const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+    const [isCopyConfigModalOpen, setIsCopyConfigModalOpen] = useState(false);
+    const [copyTargetDeviceIds, setCopyTargetDeviceIds] = useState<string[]>([]);
+    const [copyMode, setCopyMode] = useState<'with_stock' | 'binding_only'>('with_stock');
+
+    // 终端设备管理状态
+    const [deviceActiveTab, setDeviceActiveTab] = useState<'devices' | 'screen'>('devices');
+    const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
+    const [deviceModalMode, setDeviceModalMode] = useState<'create' | 'edit'>('create');
+    const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
+    const [showPasswordDeviceId, setShowPasswordDeviceId] = useState<string | null>(null);
+    const [deviceFormData, setDeviceFormData] = useState({
+        name: '',
+        modelType: 'MODEL_DUAL_49' as VendingModelType,
+        location: '',
+        adminPassword: 'Admin@888',
+        templateDevId: 'dev-1'
+    });
+
+    const handleOpenCreateDevice = () => {
+        setDeviceModalMode('create');
+        setEditingDeviceId(null);
+        setDeviceFormData({
+            name: `终端 ${vendingDevices.length + 1} 号机`,
+            modelType: 'MODEL_DUAL_49',
+            location: '教学楼 3F 连廊东侧',
+            adminPassword: `Admin@${Math.floor(100 + Math.random() * 900)}`,
+            templateDevId: vendingDevices[0]?.id || 'dev-1'
+        });
+        setIsDeviceModalOpen(true);
+    };
+
+    const handleOpenEditDevice = (device: VendingDevice) => {
+        setDeviceModalMode('edit');
+        setEditingDeviceId(device.id);
+        setDeviceFormData({
+            name: device.name,
+            modelType: device.modelType || 'MODEL_DUAL_49',
+            location: device.location,
+            adminPassword: device.adminPassword || 'Admin@888',
+            templateDevId: 'blank'
+        });
+        setIsDeviceModalOpen(true);
+    };
+
+    const handleSaveDevice = () => {
+        if (!deviceFormData.name.trim()) {
+            Message.warning('请输入终端设备名称');
+            return;
+        }
+        if (!deviceFormData.location.trim()) {
+            Message.warning('请输入摆放位置');
+            return;
+        }
+
+        if (deviceModalMode === 'create') {
+            const newId = `dev-${Date.now().toString().slice(-4)}`;
+            let newChannels;
+            if (deviceFormData.templateDevId === 'blank') {
+                newChannels = createRealisticChannelsForDevice('1F').map(c => ({
+                    ...c,
+                    productId: null,
+                    stock: 0
+                }));
+            } else {
+                const tmpl = vendingDevices.find(d => d.id === deviceFormData.templateDevId) || vendingDevices[0];
+                newChannels = (tmpl?.channels || createRealisticChannelsForDevice('1F')).map(c => ({
+                    ...c,
+                    stock: c.productId ? 10 : 0
+                }));
+            }
+
+            const newDev: VendingDevice = {
+                id: newId,
+                name: deviceFormData.name.trim(),
+                modelType: deviceFormData.modelType,
+                location: deviceFormData.location.trim(),
+                status: 'online',
+                lastHeartbeat: '刚刚',
+                activationCode: generateActivationCode(),
+                adminPassword: deviceFormData.adminPassword.trim() || 'Admin@888',
+                port: '/dev/ttyS1',
+                baudRate: 9600,
+                protocol: 'MDB售货机协议',
+                channels: newChannels
+            };
+
+            setVendingDevices(prev => [...prev, newDev]);
+            Message.success(`终端【${newDev.name}】已成功建档上线，激活码为 ${newDev.activationCode}`);
+            setIsDeviceModalOpen(false);
+        } else if (deviceModalMode === 'edit' && editingDeviceId) {
+            setVendingDevices(prev => prev.map(d => {
+                if (d.id === editingDeviceId) {
+                    return {
+                        ...d,
+                        name: deviceFormData.name.trim(),
+                        modelType: deviceFormData.modelType,
+                        location: deviceFormData.location.trim(),
+                        adminPassword: deviceFormData.adminPassword.trim() || d.adminPassword
+                    };
+                }
+                return d;
+            }));
+            Message.success('终端信息修改成功');
+            setIsDeviceModalOpen(false);
+        }
+    };
+
+    const handleDeleteDevice = (id: string, name: string) => {
+        if (vendingDevices.length <= 1) {
+            Message.warning('系统中至少需要保留 1 台终端设备，不可删除');
+            return;
+        }
+        setVendingDevices(prev => {
+            const next = prev.filter(d => d.id !== id);
+            if (selectedDeviceId === id) {
+                setSelectedDeviceId(next[0]?.id || 'dev-1');
+            }
+            return next;
+        });
+        Message.success(`终端【${name}】已成功移除`);
+    };
+
+    const handleGoToVendingStock = (devId: string) => {
+        setSelectedDeviceId(devId);
+        setChannelViewMode('detail');
+        setActiveMenu('货柜超市');
+        const target = vendingDevices.find(d => d.id === devId);
+        Message.info(`已切换至【${target?.name || '终端'}】货道平面图`);
+    };
+
+    // 当前选中的设备与对应货道数据
+    const currentDevice = vendingDevices.find(d => d.id === selectedDeviceId) || vendingDevices[0];
+    const channels = currentDevice?.channels || [];
     const [isShopModalOpen, setIsShopModalOpen] = useState(false);
     const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
     const [editingShopProduct, setEditingShopProduct] = useState<any>(null);
@@ -2207,24 +2503,98 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     };
 
     const handleSaveChannel = (channelData: any) => {
-        setChannels(channels.map(c => c.id === channelData.id ? channelData : c));
+        setVendingDevices(prev => prev.map(dev => dev.id === currentDevice.id ? {
+            ...dev,
+            channels: dev.channels.map(c => c.id === channelData.id ? channelData : c)
+        } : dev));
         setIsChannelModalOpen(false);
         setEditingChannel(null);
     };
 
     const handleFillChannelRow = (offset: number, count: number) => {
-        setChannels(currentChannels => currentChannels.map((channel, index) => (
-            index >= offset && index < offset + count && channel.productId !== null
-                ? { ...channel, stock: channel.maxStock || 10 }
-                : channel
-        )));
+        setVendingDevices(prev => prev.map(dev => dev.id === currentDevice.id ? {
+            ...dev,
+            channels: dev.channels.map((channel, index) => (
+                index >= offset && index < offset + count && channel.productId !== null
+                    ? { ...channel, stock: channel.maxStock || 10 }
+                    : channel
+            ))
+        } : dev));
+        Message.success('已补满本排已配置商品！');
+    };
+
+    const handleFillEntireDevice = (deviceId: string) => {
+        const targetDev = vendingDevices.find(d => d.id === deviceId);
+        setVendingDevices(prev => prev.map(dev => dev.id === deviceId ? {
+            ...dev,
+            channels: dev.channels.map(c => c.productId !== null ? { ...c, stock: c.maxStock || 10 } : c)
+        } : dev));
+        Message.success(`已成功补满【${targetDev?.name || '当前设备'}】的所有货道！`);
+    };
+
+    const handleFillAllDevices = () => {
+        setVendingDevices(prev => prev.map(dev => ({
+            ...dev,
+            channels: dev.channels.map(c => c.productId !== null ? { ...c, stock: c.maxStock || 10 } : c)
+        })));
+        Message.success('已补满全校 3 台货柜的所有货道！');
     };
 
     const handleDeleteShopProduct = (id: number) => {
         setShopProducts(shopProducts.filter(p => p.id !== id));
-        // clear from channels
-        setChannels(channels.map(c => c.productId === id ? { ...c, productId: null, stock: 0 } : c));
+        // clear from all devices' channels
+        setVendingDevices(prev => prev.map(dev => ({
+            ...dev,
+            channels: dev.channels.map(c => c.productId === id ? { ...c, productId: null, stock: 0 } : c)
+        })));
     };
+
+    const handleConfirmCopyConfig = () => {
+        if (copyTargetDeviceIds.length === 0) {
+            Message.warning('请选择至少一个目标设备');
+            return;
+        }
+        const sourceChannels = currentDevice.channels;
+        setVendingDevices(prev => prev.map(dev => {
+            if (!copyTargetDeviceIds.includes(dev.id)) return dev;
+            const newChannels = dev.channels.map((ch, idx) => {
+                const src = sourceChannels[idx];
+                if (!src) return ch;
+                return {
+                    ...ch,
+                    productId: src.productId,
+                    stock: copyMode === 'with_stock'
+                        ? (src.productId ? (src.maxStock || 10) : 0)
+                        : (src.productId ? Math.min(ch.stock, src.maxStock || 10) : 0)
+                };
+            });
+            return { ...dev, channels: newChannels };
+        }));
+        setIsCopyConfigModalOpen(false);
+        setCopyTargetDeviceIds([]);
+        Message.success(`已成功同步配置至选中的 ${copyTargetDeviceIds.length} 台设备！`);
+    };
+
+    // 全校补货汇总清单数据
+    const restockSummaryList = shopProducts.map(product => {
+        const devDetails = vendingDevices.map(device => {
+            const productChannels = device.channels.filter(c => c.productId === product.id);
+            const capacity = productChannels.reduce((sum, c) => sum + (c.maxStock || 10), 0);
+            const currentStock = productChannels.reduce((sum, c) => sum + c.stock, 0);
+            const shortage = Math.max(0, capacity - currentStock);
+            return { deviceId: device.id, deviceName: device.name, capacity, currentStock, shortage };
+        });
+        const totalShortage = devDetails.reduce((sum, d) => sum + d.shortage, 0);
+        const totalCapacity = devDetails.reduce((sum, d) => sum + d.capacity, 0);
+        const totalStock = devDetails.reduce((sum, d) => sum + d.currentStock, 0);
+        return {
+            product,
+            devDetails,
+            totalShortage,
+            totalCapacity,
+            totalStock
+        };
+    }).filter(item => item.totalCapacity > 0);
 
     const handleToggleShopProductStatus = (id: number) => {
         setShopProducts(shopProducts.map(product => product.id === id ? { ...product, active: !product.active } : product));
@@ -2256,7 +2626,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         const slotRatioStyle = stretchHeight
             ? { aspectRatio: 'auto', height: '100%' }
             : isNarrowLocker
-            ? { aspectRatio: '0.48' }
+            ? undefined
             : isLargeLocker
             ? { aspectRatio: '1' }
             : channel.subTypeLabel?.includes('中格')
@@ -2288,9 +2658,15 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 aria-label={`${channel.cabinetName || ''} ${channel.subTypeLabel || channel.type} 第${channel.row}排第${channel.col}格（货道 ${channel.id}）${product ? `，${product.name}，库存 ${channel.stock}/${maxStock}` : '，空闲'}`}
                 title={`配置第${channel.row}排第${channel.col}格（货道 ${channel.id}）`}
             >
-                <span className={`absolute left-1.5 top-1 text-[10px] font-bold leading-none ${product ? 'text-[#165DFF]' : 'text-[#86909C]'}`}>
-                    {channel.col}
-                </span>
+                {isNarrowLocker ? (
+                    <span className={`mb-1 text-[10px] font-bold leading-none ${product ? 'text-[#165DFF]' : 'text-[#86909C]'}`}>
+                        {channel.col}
+                    </span>
+                ) : (
+                    <span className={`absolute left-1.5 top-1 text-[10px] font-bold leading-none ${product ? 'text-[#165DFF]' : 'text-[#86909C]'}`}>
+                        {channel.col}
+                    </span>
+                )}
                 {product && (
                     <span className={`absolute inset-x-0 top-0 h-0.5 ${stockStatus === 'warning' ? 'bg-[#F53F3F]' : 'bg-[#165DFF]'}`} />
                 )}
@@ -2335,7 +2711,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             { label: '第1排 · 大格', offset: 30, count: 2, columns: 2 },
             { label: '第2排 · 大格', offset: 32, count: 2, columns: 2 },
             { label: '第3排 · 大格', offset: 34, count: 2, columns: 2 },
-            { label: '第4排 · 窄格', offset: 36, count: 10, columns: 10 },
+            { label: '第4排 · 窄格', offset: 36, count: 10, columns: 10, minColumnWidth: '20px', gapClass: 'gap-0.5' },
             { label: '第5排 · 中格', offset: 46, count: 3, columns: 3 },
         ];
         const renderRows = (rows: typeof leftRows, compact: boolean, stretchHeight = false) => rows.map(row => (
@@ -2355,7 +2731,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         补满本排
                     </button>
                 </div>
-                <div className={`grid min-h-0 min-w-0 overflow-x-auto pb-1 ${expanded ? 'gap-3' : 'gap-2'}`} style={{ gridTemplateColumns: `repeat(${row.columns}, minmax(${row.minColumnWidth || '0px'}, 1fr))` }}>
+                <div className={`grid min-h-0 min-w-0 overflow-x-auto pb-1 ${row.gapClass || (expanded ? 'gap-3' : 'gap-2')}`} style={{ gridTemplateColumns: `repeat(${row.columns}, minmax(${row.minColumnWidth || '0px'}, 1fr))` }}>
                     {channels.slice(row.offset, row.offset + row.count).map(channel => renderChannelPreviewSlot(channel, compact, stretchHeight))}
                 </div>
             </div>
@@ -2363,7 +2739,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
         return (
             <div className={`rounded-lg border border-[#E5E6EB] bg-white ${expanded ? 'p-5' : 'p-3'}`}>
-                <div className={`${expanded ? 'grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_112px_minmax(0,0.64fr)]' : 'grid gap-3 xl:grid-cols-[minmax(0,1.5fr)_76px_minmax(0,0.64fr)]'}`}>
+                <div className={`${expanded ? 'grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(112px,0.32fr)_minmax(0,1fr)]' : 'grid gap-3 xl:grid-cols-[minmax(0,1.5fr)_minmax(72px,0.32fr)_minmax(0,1fr)]'}`}>
                     <section className="flex min-w-0 flex-col rounded border border-[#D8E3EE] bg-[#EEF6FB] p-3">
                         <div className="mb-3 flex items-center justify-between border-b border-[#DDE6F0] pb-3">
                             <div>
@@ -2436,7 +2812,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         <div
                                             key={cIdx}
                                             onClick={() => setActiveMenu(child)}
-                                            className={`pl-12 pr-6 py-2 text-[13px] cursor-pointer transition-colors ${activeMenu === child
+                                            className={`pl-12 pr-6 py-2 text-[13px] cursor-pointer transition-colors ${(activeMenu === child ||
+                                                (child === '终端设备' && (activeMenu === '终端设备管理' || activeMenu === '设备基础配置')) ||
+                                                (child === '货柜超市' && activeMenu === '货柜超市管理') ||
+                                                (child === '货币发放' && activeMenu === '货币发放管理') ||
+                                                (child === '发币记录' && activeMenu === '历次发币记录') ||
+                                                (child === '储蓄银行' && activeMenu === '储蓄银行配置'))
                                                 ? 'bg-blue-50 text-blue-600 font-bold border-r-4 border-blue-600'
                                                 : 'text-slate-500 hover:text-blue-500'
                                                 }`}
@@ -2480,11 +2861,11 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 )}
 
                 {/* 内容区 - 采用精致的高端设计 */}
-                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '成长数据设置' || activeMenu === '成长数据导入' || activeMenu === '设备基础配置' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' || activeMenu === '学生得分明细表' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
+                <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '设备基础配置' || activeMenu === '终端设备管理' || activeMenu === '终端设备' || activeMenu === '成长数据设置' || activeMenu === '成长数据导入' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' || activeMenu === '学生得分明细表' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
 
                     {/* 页面主标题 */}
-                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '成长数据设置' && activeMenu !== '成长数据导入' && activeMenu !== '设备基础配置' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
-                    <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : activeMenu === '货柜超市管理' ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
+                    {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && activeMenu !== '终端设备管理' && activeMenu !== '终端设备' && activeMenu !== '成长数据设置' && activeMenu !== '成长数据导入' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
+                    <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : (activeMenu === '货柜超市' || activeMenu === '货柜超市管理') ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
                         <div>
                             {activeMenu === '考试数据' ? (
                                 <div className="mb-2 flex items-center gap-2 font-['PingFang_SC'] text-[14px] font-normal leading-none">
@@ -2508,9 +2889,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             <h2 className={activeMenu === '考试数据' ? "font-['PingFang_SC'] text-[18px] font-semibold leading-none text-[#333333]" : `${embedded ? 'text-[20px]' : 'text-2xl'} font-[900] text-slate-800 tracking-tight`}>
                                 {activeMenu === '考试数据' && gradePageMode === 'create' ? '新建考试' : activeMenu}
                             </h2>
-                            {activeMenu !== '考试数据' && activeMenu !== '货柜超市管理' && <div className="h-1 w-12 bg-blue-600 rounded-full mt-1.5"></div>}
-                            {activeMenu === '货柜超市管理' && (
-                                <div className="mt-4 flex items-end gap-8 border-b border-[#E5E6EB]" role="tablist" aria-label="货柜超市管理视图">
+                            {activeMenu !== '考试数据' && activeMenu !== '货柜超市' && activeMenu !== '货柜超市管理' && <div className="h-1 w-12 bg-blue-600 rounded-full mt-1.5"></div>}
+                            {(activeMenu === '货柜超市' || activeMenu === '货柜超市管理') && (
+                                <div className="mt-4 flex items-end gap-8 border-b border-[#E5E6EB]" role="tablist" aria-label="货柜超市视图">
                                     <button
                                         type="button"
                                         role="tab"
@@ -2518,7 +2899,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         onClick={() => setShopActiveTab('channels')}
                                         className={`relative h-11 text-sm ${shopActiveTab === 'channels' ? 'font-medium text-[#165DFF]' : 'text-[#4E5969] hover:text-[#1D2129]'}`}
                                     >
-                                        货道配置 <span className="text-[13px] text-[#86909C]">（{channels.length}）</span>
+                                        货道配置 <span className="text-[13px] text-[#86909C]">（{vendingDevices.length}台设备）</span>
                                         {shopActiveTab === 'channels' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#165DFF]" />}
                                     </button>
                                     <button
@@ -2538,7 +2919,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     )}
 
                     {/* 货币发放管理 - 增加标签页切换以分离自动模型和手动发币 */}
-                    {activeMenu === '货币发放管理' && (
+                    {(activeMenu === '货币发放' || activeMenu === '货币发放管理') && (
                         <div className="w-full overflow-hidden rounded border border-[#E5E6EB] bg-white transform animate-in fade-in slide-in-from-bottom-6 duration-700">
                             <div className="border-b border-[#E5E6EB] bg-white px-6 py-4">
                                 {/* 内部 Tab 切换器 */}
@@ -2729,7 +3110,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     )}
 
                     {/* 货柜超市管理 */}
-                    {activeMenu === '货柜超市管理' && (
+                    {(activeMenu === '货柜超市' || activeMenu === '货柜超市管理') && (
                         <div className="overflow-hidden rounded border border-[#E5E6EB] bg-white animate-in fade-in duration-300">
                             {shopActiveTab === 'products' && (
                                 <>
@@ -2818,33 +3199,268 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                             {shopActiveTab === 'channels' && (
                                 <div className="p-6 overflow-y-auto custom-scrollbar bg-[#F7F8FA]">
-                                    {/* 顶部标题与概览 */}
-                                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                    {/* 一级：设备总览看板 */}
+                                    {channelViewMode === 'overview' && (
+                                        <div className="space-y-6">
+                                            {/* 顶部全校状态与工具栏 */}
+                                            <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[#E5E6EB] bg-white p-4">
+                                                <div className="flex flex-wrap items-center gap-6">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-[#165DFF]">
+                                                            <Monitor size={18} />
+                                                        </span>
+                                                        <div>
+                                                            <span className="block text-xs text-[#86909C]">全校设备总数</span>
+                                                            <span className="text-base font-bold text-[#1D2129]">{vendingDevices.length} <span className="text-xs font-normal text-[#86909C]">台</span></span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="h-8 w-px bg-[#F2F3F5]" />
+                                                    <div>
+                                                        <span className="block text-xs text-[#86909C]">正常运行设备</span>
+                                                        <span className="text-base font-bold text-[#00B42A]">{vendingDevices.filter(d => d.status === 'online').length} <span className="text-xs font-normal text-[#86909C]">台</span></span>
+                                                    </div>
+                                                    <div className="h-8 w-px bg-[#F2F3F5]" />
+                                                    <div>
+                                                        <span className="block text-xs text-[#86909C]">货道仓位总数</span>
+                                                        <span className="text-base font-bold text-[#1D2129]">{vendingDevices.length * 49} <span className="text-xs font-normal text-[#86909C]">格</span></span>
+                                                    </div>
+                                                    <div className="h-8 w-px bg-[#F2F3F5]" />
+                                                    <div>
+                                                        <span className="block text-xs text-[#86909C]">全校库存告急货道</span>
+                                                        {(() => {
+                                                            const totalWarning = vendingDevices.reduce((sum, d) => sum + d.channels.filter(c => c.productId !== null && c.stock < 5).length, 0);
+                                                            return (
+                                                                <span className={`text-base font-bold ${totalWarning > 0 ? 'text-[#F53F3F]' : 'text-[#86909C]'}`}>
+                                                                    {totalWarning} <span className="text-xs font-normal text-[#86909C]">格</span>
+                                                                </span>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-3">
+                                                    <Button
+                                                        type="outline"
+                                                        icon={<Settings size={14} />}
+                                                        onClick={() => setActiveMenu('终端设备')}
+                                                    >
+                                                        管理终端设备
+                                                    </Button>
+                                                    <Button
+                                                        type="outline"
+                                                        icon={<FileText size={14} />}
+                                                        onClick={() => setIsRestockModalOpen(true)}
+                                                    >
+                                                        全校补货清单
+                                                    </Button>
+                                                    <Button
+                                                        type="primary"
+                                                        icon={<Sparkles size={14} />}
+                                                        onClick={() => handleFillAllDevices()}
+                                                    >
+                                                        一键补满全校
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            {/* 3台设备卡片网格 */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                                                {vendingDevices.map(device => {
+                                                    const configuredCount = device.channels.filter(c => c.productId !== null).length;
+                                                    const warningCount = device.channels.filter(c => c.productId !== null && c.stock < 5).length;
+                                                    const totalStock = device.channels.reduce((sum, c) => sum + c.stock, 0);
+                                                    const totalCapacity = device.channels.reduce((sum, c) => sum + (c.productId ? (c.maxStock || 10) : 0), 0);
+
+                                                    return (
+                                                        <div
+                                                            key={device.id}
+                                                            className="flex flex-col justify-between rounded-xl border border-[#E5E6EB] bg-white p-5 shadow-sm transition-all hover:border-[#9DBCFB] hover:shadow-md"
+                                                        >
+                                                            <div>
+                                                                {/* 卡片头部 */}
+                                                                <div className="flex items-start justify-between gap-3 border-b border-[#F2F3F5] pb-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#F2F7FF] text-[#165DFF]">
+                                                                            <Monitor size={22} />
+                                                                        </div>
+                                                                        <div>
+                                                                            <h4 className="m-0 text-base font-semibold text-[#1D2129] leading-tight">{device.name}</h4>
+                                                                            <span className="mt-1 inline-flex items-center gap-1 text-xs text-[#86909C]">
+                                                                                <MapPin size={12} className="text-[#86909C]" />
+                                                                                {device.location}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8FFEA] px-2.5 py-0.5 text-xs font-medium text-[#00B42A]">
+                                                                        <span className="h-1.5 w-1.5 rounded-full bg-[#00B42A]" />
+                                                                        正常运行
+                                                                    </span>
+                                                                </div>
+
+                                                                {/* 卡片指标区 */}
+                                                                <div className="my-4 grid grid-cols-3 gap-2 rounded-lg bg-[#F7F8FA] p-3 text-center">
+                                                                    <div>
+                                                                        <span className="block text-[11px] text-[#86909C]">已配货道</span>
+                                                                        <span className="mt-0.5 block text-sm font-semibold text-[#1D2129]">
+                                                                            {configuredCount} <span className="text-[11px] font-normal text-[#86909C]">/ 49</span>
+                                                                        </span>
+                                                                    </div>
+                                                                    <div>
+                                                                        <span className="block text-[11px] text-[#86909C]">实物现存</span>
+                                                                        <span className="mt-0.5 block text-sm font-semibold text-[#165DFF]">
+                                                                            {totalStock} <span className="text-[11px] font-normal text-[#86909C]">件</span>
+                                                                        </span>
+                                                                    </div>
+                                                                    <div>
+                                                                        <span className="block text-[11px] text-[#86909C]">告急预警</span>
+                                                                        <span className={`mt-0.5 block text-sm font-semibold ${warningCount > 0 ? 'text-[#F53F3F]' : 'text-[#00B42A]'}`}>
+                                                                            {warningCount > 0 ? `${warningCount} 格` : '无告急'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* 满仓率进度条 */}
+                                                                <div className="mb-2">
+                                                                    <div className="flex items-center justify-between text-xs text-[#86909C] mb-1">
+                                                                        <span>货柜仓位满载率</span>
+                                                                        <span className="font-medium text-[#1D2129] tabular-nums">
+                                                                            {totalCapacity > 0 ? Math.round((totalStock / totalCapacity) * 100) : 0}%
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="h-2 w-full overflow-hidden rounded-full bg-[#E5E6EB]">
+                                                                        <div
+                                                                            className={`h-full transition-all duration-300 ${warningCount > 0 ? 'bg-[#FF7D00]' : 'bg-[#165DFF]'}`}
+                                                                            style={{ width: `${totalCapacity > 0 ? Math.min(100, Math.round((totalStock / totalCapacity) * 100)) : 0}%` }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* 卡片底部操作按钮 */}
+                                                            <div className="mt-4 flex items-center justify-between border-t border-[#F2F3F5] pt-3">
+                                                                <Button
+                                                                    type="text"
+                                                                    size="small"
+                                                                    icon={<RotateCcw size={13} />}
+                                                                    className="!text-[#4E5969] hover:!text-[#165DFF]"
+                                                                    onClick={() => handleFillEntireDevice(device.id)}
+                                                                >
+                                                                    补满此柜
+                                                                </Button>
+                                                                <Button
+                                                                    type="primary"
+                                                                    size="small"
+                                                                    icon={<ChevronRight size={13} />}
+                                                                    onClick={() => {
+                                                                        setSelectedDeviceId(device.id);
+                                                                        setChannelViewMode('detail');
+                                                                    }}
+                                                                >
+                                                                    货道配置
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 二级：单机拟真平面配置 */}
+                                    {channelViewMode === 'detail' && (
                                         <div>
-                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                                                <h3 className="m-0 text-sm font-semibold text-[#1D2129]">货道配置</h3>
-                                                {[
-                                                    { label: '已配置', value: channels.filter(channel => channel.productId !== null).length, tone: 'text-[#165DFF]' },
-                                                    { label: '库存告急', value: channels.filter(channel => channel.productId !== null && channel.stock < 5).length, tone: 'text-[#F53F3F]' },
-                                                    { label: '空闲', value: channels.filter(channel => channel.productId === null).length, tone: 'text-[#86909C]' },
-                                                ].map(item => (
-                                                    <span key={item.label} className="text-xs text-[#4E5969]">
-                                                        {item.label} <b className={`text-sm tabular-nums ${item.tone}`}>{item.value}</b>
+                                            {/* 二级顶部导航与设备切换器 */}
+                                            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#E5E6EB] bg-white px-4 py-3">
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <Button
+                                                        type="text"
+                                                        size="small"
+                                                        icon={<ArrowLeft size={14} />}
+                                                        onClick={() => setChannelViewMode('overview')}
+                                                        className="!text-[#4E5969] hover:!text-[#165DFF]"
+                                                    >
+                                                        返回设备总览
+                                                    </Button>
+                                                    <div className="h-4 w-px bg-[#E5E6EB]" />
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-medium text-[#4E5969]">当前设备：</span>
+                                                        <ArcoSelect
+                                                            value={selectedDeviceId}
+                                                            onChange={(val) => setSelectedDeviceId(String(val))}
+                                                            style={{ width: 220 }}
+                                                            options={vendingDevices.map(d => ({
+                                                                label: `${d.name} (${d.location})`,
+                                                                value: d.id
+                                                            }))}
+                                                        />
+                                                    </div>
+                                                    <span className="inline-flex items-center gap-1 rounded bg-[#F2F3F5] px-2 py-1 text-xs text-[#86909C]">
+                                                        <MapPin size={12} />
+                                                        {currentDevice.location}
                                                     </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex flex-wrap items-center gap-3 text-xs text-[#86909C]" aria-label="货道状态图例">
-                                                <span className="flex items-center gap-1.5"><i className="relative h-3 w-3 overflow-hidden rounded-sm border border-[#9DBCFB] bg-white before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-[#165DFF]" />已配置</span>
-                                                <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm border border-[#DDE3EA] bg-[#F8FAFC]" />空闲</span>
-                                                <span className="font-medium text-[#F53F3F]">红字为库存告急</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                                    <Button
+                                                        type="text"
+                                                        size="small"
+                                                        icon={<Settings size={13} />}
+                                                        onClick={() => setActiveMenu('终端设备')}
+                                                        className="!text-[#165DFF]"
+                                                    >
+                                                        管理终端设备
+                                                    </Button>
+                                                </div>
 
-                                    {renderChannelMap(false)}
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        type="outline"
+                                                        icon={<Copy size={14} />}
+                                                        onClick={() => {
+                                                            setCopyTargetDeviceIds([]);
+                                                            setIsCopyConfigModalOpen(true);
+                                                        }}
+                                                    >
+                                                        同步配置到其他设备
+                                                    </Button>
+                                                    <Button
+                                                        type="outline"
+                                                        icon={<RotateCcw size={14} />}
+                                                        onClick={() => handleFillEntireDevice(currentDevice.id)}
+                                                    >
+                                                        补满当前柜
+                                                    </Button>
+                                                </div>
+                                            </div>
 
+                                            {/* 货道统计与图例 */}
+                                            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                                <div>
+                                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                                        <h3 className="m-0 text-sm font-semibold text-[#1D2129]">
+                                                            {currentDevice.name} · 49格实物货道
+                                                        </h3>
+                                                        {[
+                                                            { label: '已配置', value: channels.filter(channel => channel.productId !== null).length, tone: 'text-[#165DFF]' },
+                                                            { label: '库存告急', value: channels.filter(channel => channel.productId !== null && channel.stock < 5).length, tone: 'text-[#F53F3F]' },
+                                                            { label: '空闲', value: channels.filter(channel => channel.productId === null).length, tone: 'text-[#86909C]' },
+                                                        ].map(item => (
+                                                            <span key={item.label} className="text-xs text-[#4E5969]">
+                                                                {item.label} <b className={`text-sm tabular-nums ${item.tone}`}>{item.value}</b>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#86909C]" aria-label="货道状态图例">
+                                                        <span className="flex items-center gap-1.5"><i className="relative h-3 w-3 overflow-hidden rounded-sm border border-[#9DBCFB] bg-white before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-[#165DFF]" />已配置</span>
+                                                        <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm border border-[#DDE3EA] bg-[#F8FAFC]" />空闲</span>
+                                                        <span className="font-medium text-[#F53F3F]">红字为库存告急</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* 拟真双机柜平面图 */}
+                                            {renderChannelMap(false)}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -2917,7 +3533,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     )}
 
                     {/* 历次发币记录 - 任务历史 */}
-                    {activeMenu === '历次发币记录' && (
+                    {(activeMenu === '发币记录' || activeMenu === '历次发币记录') && (
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* 头部标题区域 */}
                             <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -3026,7 +3642,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     )}
 
                     {/* 储蓄银行配置 */}
-                    {activeMenu === '储蓄银行配置' && (
+                    {(activeMenu === '储蓄银行' || activeMenu === '储蓄银行配置') && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
                             {/* 活期存款配置卡片 */}
                             <div className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] border border-slate-100 p-10 relative overflow-hidden">
@@ -3184,127 +3800,314 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     )}
 
                     {/* 设备基础配置 */}
-                    {activeMenu === '设备基础配置' && (
+                    {(activeMenu === '终端设备' || activeMenu === '终端设备管理' || activeMenu === '设备基础配置') && (
                         <div className="w-full font-sans text-sm text-[#4E5969] px-6 py-5 flex flex-col gap-4">
                             <div className="flex h-5 items-center text-[13px] leading-[20px] text-[#86909C] mb-1">
                                 <span className="hover:text-[#1D2129] cursor-pointer">货柜机配置中心</span>
                                 <span className="mx-2 text-[#C9CDD4]">/</span>
-                                <span className="text-[#1D2129]">设备基础配置</span>
+                                <span className="text-[#1D2129]">终端设备</span>
                             </div>
 
-                            <div className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-6 shadow-[0_4px_10px_rgba(0,0,0,0.02)] flex flex-col">
-                                <h2 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129] mb-5">设备基础配置</h2>
+                            {/* 顶栏 Tab 切换 */}
+                            <div className="flex items-center gap-8 border-b border-[#E5E6EB] text-sm font-medium">
+                                <button
+                                    type="button"
+                                    onClick={() => setDeviceActiveTab('devices')}
+                                    className={`pb-3 relative transition-colors ${deviceActiveTab === 'devices' ? 'text-[#165DFF] font-semibold' : 'text-[#4E5969] hover:text-[#1D2129]'}`}
+                                >
+                                    终端设备列表
+                                    <span className="ml-1 text-xs text-[#86909C]">({vendingDevices.length})</span>
+                                    {deviceActiveTab === 'devices' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#165DFF]" />}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDeviceActiveTab('screen')}
+                                    className={`pb-3 relative transition-colors ${deviceActiveTab === 'screen' ? 'text-[#165DFF] font-semibold' : 'text-[#4E5969] hover:text-[#1D2129]'}`}
+                                >
+                                    屏幕界面配置
+                                    {deviceActiveTab === 'screen' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#165DFF]" />}
+                                </button>
+                            </div>
 
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="h-[18px] w-[5px] rounded-sm bg-[#165DFF]"></span>
-                                    <h3 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">品牌及欢迎语</h3>
-                                </div>
-                                <div className="grid grid-cols-[96px_1fr_96px_1fr] items-center gap-x-4 gap-y-4 mb-6">
-                                    <label className="text-sm font-normal leading-[22px] text-[#1D2129]">主标题前缀</label>
-                                    <input
-                                        value={terminalConfig.mainTitle}
-                                        onChange={(e) => setTerminalConfig({ ...terminalConfig, mainTitle: e.target.value })}
-                                        className="h-8 rounded border border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
-                                    />
-                                    <label className="text-sm font-normal leading-[22px] text-[#1D2129]">主标题后缀</label>
-                                    <input
-                                        value={terminalConfig.subTitle}
-                                        onChange={(e) => setTerminalConfig({ ...terminalConfig, subTitle: e.target.value })}
-                                        className="h-8 rounded border border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
-                                    />
-                                    <label className="self-start pt-[5px] text-sm font-normal leading-[22px] text-[#1D2129]">副标题</label>
-                                    <textarea
-                                        value={terminalConfig.slogan}
-                                        onChange={(e) => setTerminalConfig({ ...terminalConfig, slogan: e.target.value })}
-                                        rows={3}
-                                        className="col-span-3 min-h-[72px] resize-none rounded border border-[#E5E6EB] bg-white px-3 py-[5px] text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
-                                    />
-                                </div>
-
-                                <div className="border-t border-[#F2F3F5] mb-5 w-full"></div>
-
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="h-[18px] w-[5px] rounded-sm bg-[#165DFF]"></span>
-                                    <h3 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">模块入口文案</h3>
-                                </div>
-                                <div className="overflow-x-auto border border-[#E5E6EB] rounded mb-6">
-                                    <table className="w-full border-collapse text-left text-sm font-normal text-[#4E5969]">
-                                        <thead>
-                                            <tr className="bg-[#F7F8FA] text-[#1D2129]">
-                                                <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[160px]">模块</th>
-                                                <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[240px]">模块名称</th>
-                                                <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[360px]">描述文案</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {[
-                                                { key: 'growth', name: '成长足迹', labelKey: 'growthLabel', descKey: 'growthDesc' },
-                                                { key: 'shop', name: '文创超市', labelKey: 'shopLabel', descKey: 'shopDesc' },
-                                                { key: 'bank', name: '储蓄银行', labelKey: 'bankLabel', descKey: 'bankDesc' }
-                                            ].map((item) => (
-                                                <tr key={item.key} className="border-b border-[#F2F3F5] last:border-b-0 hover:bg-[#F2F3F5] transition-colors">
-                                                    <td className="h-12 px-4 text-[#1D2129]">{item.name}</td>
-                                                    <td className="h-12 px-4">
-                                                        <input
-                                                            value={terminalConfig[item.labelKey as keyof typeof terminalConfig]}
-                                                            onChange={(e) => setTerminalConfig({ ...terminalConfig, [item.labelKey]: e.target.value })}
-                                                            className="h-8 w-full rounded border border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
-                                                        />
-                                                    </td>
-                                                    <td className="h-12 px-4">
-                                                        <input
-                                                            value={terminalConfig[item.descKey as keyof typeof terminalConfig]}
-                                                            onChange={(e) => setTerminalConfig({ ...terminalConfig, [item.descKey]: e.target.value })}
-                                                            className="h-8 w-full rounded border border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <div className="border-t border-[#F2F3F5] mb-5 w-full"></div>
-
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="h-[18px] w-[5px] rounded-sm bg-[#165DFF]"></span>
-                                    <h3 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">校园币图标</h3>
-                                </div>
-                                <div className="grid grid-cols-[96px_1fr] items-start gap-x-4 mb-6">
-                                    <div className="pt-[5px] text-sm font-normal leading-[22px] text-[#1D2129]">当前图标</div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {[
-                                            { id: '1', url: '/assets/coin.png', name: '经典铜钱' },
-                                            { id: '2', url: '/assets/c4d_growth.png', name: '成长勋章' },
-                                            { id: '3', url: '/assets/c4d_shop.png', name: '星光钻' },
-                                            { id: '4', url: '/assets/c4d_bank.png', name: '博学水晶' }
-                                        ].map(icon => (
+                            {/* Tab 1: 终端设备列表 */}
+                            {deviceActiveTab === 'devices' && (
+                                <div className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-6 shadow-[0_4px_10px_rgba(0,0,0,0.02)] flex flex-col gap-4">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div className="flex items-center gap-4 text-sm text-[#4E5969]">
+                                            <span>
+                                                已部署终端：<span className="font-semibold text-[#1D2129]">{vendingDevices.length}</span> 台
+                                            </span>
+                                            <span className="text-[#C9CDD4]">|</span>
+                                            <span>
+                                                正常在线：<span className="font-semibold text-[#00B42A]">{vendingDevices.filter(d => d.status === 'online').length}</span> 台
+                                            </span>
+                                            {vendingDevices.some(d => d.status === 'offline') && (
+                                                <>
+                                                    <span className="text-[#C9CDD4]">|</span>
+                                                    <span>
+                                                        离线故障：<span className="font-semibold text-[#F53F3F]">{vendingDevices.filter(d => d.status === 'offline').length}</span> 台
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-3">
                                             <button
-                                                key={icon.id}
-                                                onClick={() => setTerminalConfig({ ...terminalConfig, coinIconUrl: icon.url })}
-                                                className={`h-8 rounded border px-3 text-sm font-normal leading-[22px] transition-all flex items-center gap-2 ${terminalConfig.coinIconUrl === icon.url ? 'border-[#165DFF] bg-[#E8F3FF] text-[#165DFF]' : 'border-[#E5E6EB] bg-white text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF]'}`}
+                                                type="button"
+                                                onClick={handleOpenCreateDevice}
+                                                className="h-8 rounded border-0 bg-[#165DFF] px-4 text-sm font-normal text-white hover:bg-[#4080FF] active:bg-[#0E42D2] transition-colors focus:outline-none flex items-center gap-1.5"
                                             >
-                                                <img src={icon.url} alt="" className="h-4 w-4 object-contain" />
-                                                {icon.name}
-                                                {terminalConfig.coinIconUrl === icon.url && <Check size={14} />}
+                                                <Plus size={14} />
+                                                <span>新增终端设备</span>
                                             </button>
-                                        ))}
-                                        <button className="h-8 rounded border border-dashed border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-all flex items-center gap-2">
-                                            <Upload size={14} />
-                                            上传新图标
+                                        </div>
+                                    </div>
+
+                                    <div className="overflow-x-auto border border-[#E5E6EB] rounded">
+                                        <table className="w-full border-collapse text-left text-sm font-normal text-[#4E5969]">
+                                            <thead>
+                                                <tr className="bg-[#F7F8FA] text-[#1D2129]">
+                                                    <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[200px]">终端名称与机型</th>
+                                                    <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[180px]">摆放位置</th>
+                                                    <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[180px]">激活码 / 运维密码</th>
+                                                    <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[140px]">运行与通信</th>
+                                                    <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[160px]">货道配货与库存</th>
+                                                    <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[160px] text-right">操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {vendingDevices.map((device) => {
+                                                    const assignedCount = device.channels.filter(c => c.productId !== null).length;
+                                                    const totalStock = device.channels.reduce((sum, c) => sum + (c.productId ? c.stock : 0), 0);
+                                                    const warningCount = device.channels.filter(c => c.productId !== null && c.stock < 5).length;
+                                                    const modelMeta = DEVICE_MODEL_CATALOG.find(m => m.type === device.modelType) || DEVICE_MODEL_CATALOG[0];
+                                                    const isPwdShown = showPasswordDeviceId === device.id;
+                                                    return (
+                                                        <tr key={device.id} className="border-b border-[#F2F3F5] last:border-b-0 hover:bg-[#F7F8FA] transition-colors">
+                                                            <td className="h-12 px-4 py-3">
+                                                                <div className="font-medium text-[#1D2129] flex items-center gap-2">
+                                                                    <span>{device.name}</span>
+                                                                    <span className="px-1.5 py-0.5 rounded text-[11px] font-normal bg-[#E8F3FF] text-[#165DFF]">
+                                                                        {modelMeta.badge}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="text-xs text-[#86909C] mt-0.5 flex items-center gap-2">
+                                                                    <span>{modelMeta.name}</span>
+                                                                    <span>•</span>
+                                                                    <span>ID: {device.id}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="h-12 px-4 text-[#1D2129]">{device.location}</td>
+                                                            <td className="h-12 px-4">
+                                                                <div className="flex flex-col gap-1">
+                                                                    <div className="flex items-center gap-1.5 text-xs text-[#1D2129]">
+                                                                        <span className="text-[#86909C]">激活码:</span>
+                                                                        <span className="font-mono font-bold tracking-wider text-[#165DFF] bg-[#F2F3F5] px-1.5 py-0.5 rounded">
+                                                                            {device.activationCode || '849201'}
+                                                                        </span>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                navigator.clipboard?.writeText?.(device.activationCode || '849201');
+                                                                                Message.success(`激活码 ${device.activationCode || '849201'} 已复制`);
+                                                                            }}
+                                                                            className="text-xs text-[#86909C] hover:text-[#165DFF] transition-colors"
+                                                                            title="复制激活码"
+                                                                        >
+                                                                            复制
+                                                                        </button>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1.5 text-xs text-[#1D2129]">
+                                                                        <span className="text-[#86909C]">密码:</span>
+                                                                        <span className="font-mono text-[#4E5969]">
+                                                                            {isPwdShown ? (device.adminPassword || 'Admin@888') : '••••••••'}
+                                                                        </span>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setShowPasswordDeviceId(isPwdShown ? null : device.id)}
+                                                                            className="text-xs text-[#86909C] hover:text-[#165DFF] transition-colors"
+                                                                        >
+                                                                            {isPwdShown ? '隐藏' : '查看'}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="h-12 px-4">
+                                                                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs ${device.status === 'online' ? 'bg-[#E8FFEA] text-[#00B42A]' : 'bg-[#F2F3F5] text-[#86909C]'}`}>
+                                                                    <span className={`h-1.5 w-1.5 rounded-full ${device.status === 'online' ? 'bg-[#00B42A]' : 'bg-[#86909C]'}`} />
+                                                                    {device.status === 'online' ? '正常在线' : '设备离线'}
+                                                                </span>
+                                                                <div className="text-[11px] text-[#86909C] mt-1">
+                                                                    {device.port ? `${device.port} (${device.baudRate})` : '串口联机正常'}
+                                                                </div>
+                                                            </td>
+                                                            <td className="h-12 px-4">
+                                                                <div className="text-xs text-[#1D2129]">
+                                                                    已配货: <span className="font-semibold">{assignedCount}/{device.channels.length}</span> 格
+                                                                    <span className="mx-1 text-[#C9CDD4]">|</span>
+                                                                    总库存: <span className="font-semibold">{totalStock}</span> 件
+                                                                </div>
+                                                                {warningCount > 0 ? (
+                                                                    <div className="text-[11px] text-[#F53F3F] mt-0.5">
+                                                                        {warningCount} 格库存告急
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="text-[11px] text-[#00B42A] mt-0.5">
+                                                                        库存健康
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                            <td className="h-12 px-4 text-right">
+                                                                <div className="flex items-center justify-end gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleGoToVendingStock(device.id)}
+                                                                        className="h-7 px-2.5 rounded bg-[#E8F3FF] text-xs font-medium text-[#165DFF] hover:bg-[#D9ECFF] transition-colors focus:outline-none"
+                                                                    >
+                                                                        前往配货
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleOpenEditDevice(device)}
+                                                                        className="h-7 px-2 rounded border border-[#E5E6EB] bg-white text-xs font-normal text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-colors focus:outline-none"
+                                                                    >
+                                                                        编辑
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={vendingDevices.length <= 1}
+                                                                        onClick={() => handleDeleteDevice(device.id, device.name)}
+                                                                        className={`h-7 px-2 rounded border text-xs font-normal transition-colors focus:outline-none ${vendingDevices.length <= 1 ? 'border-[#E5E6EB] text-[#C9CDD4] cursor-not-allowed' : 'border-[#FEECE8] bg-white text-[#F53F3F] hover:bg-[#FEECE8]'}`}
+                                                                        title={vendingDevices.length <= 1 ? '至少保留一台终端设备' : '删除终端设备'}
+                                                                    >
+                                                                        删除
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tab 2: 屏幕界面配置 */}
+                            {deviceActiveTab === 'screen' && (
+                                <div className="bg-[#FFFFFF] rounded border border-[#E5E6EB] p-6 shadow-[0_4px_10px_rgba(0,0,0,0.02)] flex flex-col">
+                                    <h2 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129] mb-5">设备基础配置</h2>
+
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="h-[18px] w-[5px] rounded-sm bg-[#165DFF]"></span>
+                                        <h3 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">品牌及欢迎语</h3>
+                                    </div>
+                                    <div className="grid grid-cols-[96px_1fr_96px_1fr] items-center gap-x-4 gap-y-4 mb-6">
+                                        <label className="text-sm font-normal leading-[22px] text-[#1D2129]">主标题前缀</label>
+                                        <input
+                                            value={terminalConfig.mainTitle}
+                                            onChange={(e) => setTerminalConfig({ ...terminalConfig, mainTitle: e.target.value })}
+                                            className="h-8 rounded border border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                        />
+                                        <label className="text-sm font-normal leading-[22px] text-[#1D2129]">主标题后缀</label>
+                                        <input
+                                            value={terminalConfig.subTitle}
+                                            onChange={(e) => setTerminalConfig({ ...terminalConfig, subTitle: e.target.value })}
+                                            className="h-8 rounded border border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                        />
+                                        <label className="self-start pt-[5px] text-sm font-normal leading-[22px] text-[#1D2129]">副标题</label>
+                                        <textarea
+                                            value={terminalConfig.slogan}
+                                            onChange={(e) => setTerminalConfig({ ...terminalConfig, slogan: e.target.value })}
+                                            rows={3}
+                                            className="col-span-3 min-h-[72px] resize-none rounded border border-[#E5E6EB] bg-white px-3 py-[5px] text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="border-t border-[#F2F3F5] mb-5 w-full"></div>
+
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="h-[18px] w-[5px] rounded-sm bg-[#165DFF]"></span>
+                                        <h3 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">模块入口文案</h3>
+                                    </div>
+                                    <div className="overflow-x-auto border border-[#E5E6EB] rounded mb-6">
+                                        <table className="w-full border-collapse text-left text-sm font-normal text-[#4E5969]">
+                                            <thead>
+                                                <tr className="bg-[#F7F8FA] text-[#1D2129]">
+                                                    <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[160px]">模块</th>
+                                                    <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[240px]">模块名称</th>
+                                                    <th className="h-12 px-4 border-b border-[#E5E6EB] font-semibold min-w-[360px]">描述文案</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {[
+                                                    { key: 'growth', name: '成长足迹', labelKey: 'growthLabel', descKey: 'growthDesc' },
+                                                    { key: 'shop', name: '文创超市', labelKey: 'shopLabel', descKey: 'shopDesc' },
+                                                    { key: 'bank', name: '储蓄银行', labelKey: 'bankLabel', descKey: 'bankDesc' }
+                                                ].map((item) => (
+                                                    <tr key={item.key} className="border-b border-[#F2F3F5] last:border-b-0 hover:bg-[#F2F3F5] transition-colors">
+                                                        <td className="h-12 px-4 text-[#1D2129]">{item.name}</td>
+                                                        <td className="h-12 px-4">
+                                                            <input
+                                                                value={terminalConfig[item.labelKey as keyof typeof terminalConfig]}
+                                                                onChange={(e) => setTerminalConfig({ ...terminalConfig, [item.labelKey]: e.target.value })}
+                                                                className="h-8 w-full rounded border border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                                            />
+                                                        </td>
+                                                        <td className="h-12 px-4">
+                                                            <input
+                                                                value={terminalConfig[item.descKey as keyof typeof terminalConfig]}
+                                                                onChange={(e) => setTerminalConfig({ ...terminalConfig, [item.descKey]: e.target.value })}
+                                                                className="h-8 w-full rounded border border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#1D2129] outline-none hover:border-[#165DFF] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/20 transition-all"
+                                                            />
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div className="border-t border-[#F2F3F5] mb-5 w-full"></div>
+
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="h-[18px] w-[5px] rounded-sm bg-[#165DFF]"></span>
+                                        <h3 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">校园币图标</h3>
+                                    </div>
+                                    <div className="grid grid-cols-[96px_1fr] items-start gap-x-4 mb-6">
+                                        <div className="pt-[5px] text-sm font-normal leading-[22px] text-[#1D2129]">当前图标</div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {[
+                                                { id: '1', url: '/assets/coin.png', name: '经典铜钱' },
+                                                { id: '2', url: '/assets/c4d_growth.png', name: '成长勋章' },
+                                                { id: '3', url: '/assets/c4d_shop.png', name: '星光钻' },
+                                                { id: '4', url: '/assets/c4d_bank.png', name: '博学水晶' }
+                                            ].map(icon => (
+                                                <button
+                                                    key={icon.id}
+                                                    onClick={() => setTerminalConfig({ ...terminalConfig, coinIconUrl: icon.url })}
+                                                    className={`h-8 rounded border px-3 text-sm font-normal leading-[22px] transition-all flex items-center gap-2 ${terminalConfig.coinIconUrl === icon.url ? 'border-[#165DFF] bg-[#E8F3FF] text-[#165DFF]' : 'border-[#E5E6EB] bg-white text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF]'}`}
+                                                >
+                                                    <img src={icon.url} alt="" className="h-4 w-4 object-contain" />
+                                                    {icon.name}
+                                                    {terminalConfig.coinIconUrl === icon.url && <Check size={14} />}
+                                                </button>
+                                            ))}
+                                            <button className="h-8 rounded border border-dashed border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-all flex items-center gap-2">
+                                                <Upload size={14} />
+                                                上传新图标
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t border-[#F2F3F5] pt-5 flex justify-end gap-2">
+                                        <button className="h-8 rounded border border-[#E5E6EB] bg-white px-4 text-sm font-normal text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-all focus:outline-none">
+                                            重置为默认
+                                        </button>
+                                        <button className="ml-3 h-8 rounded border-0 bg-[#165DFF] px-4 text-sm font-normal text-white hover:bg-[#4080FF] active:bg-[#0E42D2] transition-colors focus:outline-none">
+                                            保存配置发布到设备
                                         </button>
                                     </div>
                                 </div>
-
-                                <div className="border-t border-[#F2F3F5] pt-5 flex justify-end gap-2">
-                                    <button className="h-8 rounded border border-[#E5E6EB] bg-white px-4 text-sm font-normal text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-all focus:outline-none">
-                                        重置为默认
-                                    </button>
-                                    <button className="ml-3 h-8 rounded border-0 bg-[#165DFF] px-4 text-sm font-normal text-white hover:bg-[#4080FF] active:bg-[#0E42D2] transition-colors focus:outline-none">
-                                        保存配置发布到设备
-                                    </button>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     )}
 
@@ -5275,7 +6078,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     <div className="rounded border border-[#E5E6EB] bg-[#F7F8FA] p-3 text-xs text-[#4E5969] space-y-1.5 mb-4">
                                         <div className="flex items-center justify-between">
                                             <span className="text-[#86909C]">所属设备：</span>
-                                            <span className="font-medium text-[#1D2129]">{editingChannel.cabinetName || (editingChannel.id <= 30 ? '左机·出货主机 (1200mm)' : '右机·智能副柜 (800mm)')}</span>
+                                            <span className="font-semibold text-[#165DFF]">{currentDevice.name}（{currentDevice.location}）· {editingChannel.cabinetName || (editingChannel.id <= 30 ? '左机·出货主机 (1200mm)' : '右机·智能副柜 (800mm)')}</span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-[#86909C]">物理规格：</span>
@@ -5312,6 +6115,181 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     </div>
                 )
             }
+
+            {/* 全校货柜补货汇总清单 Modal */}
+            {isRestockModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1D2129]/45 p-4 animate-in fade-in duration-200">
+                    <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-[#E5E6EB] bg-white shadow-xl animate-in zoom-in-95 duration-200">
+                        <div className="flex shrink-0 items-center justify-between border-b border-[#E5E6EB] px-6 py-4">
+                            <div>
+                                <h3 className="flex items-center gap-2 text-base font-semibold text-[#1D2129]">
+                                    <FileText size={20} className="text-blue-600" />
+                                    全校货柜补货汇总清单
+                                </h3>
+                                <p className="mt-0.5 text-xs text-[#86909C]">根据全校 3 台货柜设备的实时缺货与库存告急情况自动计算，用于库房集中拣货与出库</p>
+                            </div>
+                            <button type="button" aria-label="关闭弹窗" onClick={() => setIsRestockModalOpen(false)} className="flex h-8 w-8 items-center justify-center rounded text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]">
+                                <Plus size={20} className="rotate-45" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                            <div className="mb-4 flex items-center justify-between rounded-lg bg-[#F7F8FA] p-3 text-xs text-[#4E5969]">
+                                <span>汇总设备：共 <b>{vendingDevices.length}</b> 台（教学楼 1F、教学楼 2F、综合楼 1F）</span>
+                                <span>全校总缺货件数：<b className="text-base text-[#F53F3F] tabular-nums">{restockSummaryList.reduce((sum, item) => sum + item.totalShortage, 0)}</b> 件</span>
+                            </div>
+
+                            <div className="overflow-x-auto rounded border border-[#E5E6EB]">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-[#F7F8FA] text-xs font-semibold text-[#4E5969]">
+                                        <tr>
+                                            <th className="px-4 py-3">商品</th>
+                                            <th className="px-3 py-3 text-center">教学楼 1F</th>
+                                            <th className="px-3 py-3 text-center">教学楼 2F</th>
+                                            <th className="px-3 py-3 text-center">综合楼 1F</th>
+                                            <th className="px-4 py-3 text-right">全校需补总件数</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#F2F3F5]">
+                                        {restockSummaryList.map(item => (
+                                            <tr key={item.product.id} className="hover:bg-[#F7F8FA] transition-colors">
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded border border-[#E5E6EB] bg-white">
+                                                            {item.product.icon.includes('http') || item.product.icon.includes('/') || item.product.icon.startsWith('data:')
+                                                                ? <img src={item.product.icon} className="h-full w-full object-cover" alt="" />
+                                                                : item.product.icon}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-medium text-[#1D2129]">{item.product.name}</div>
+                                                            <div className="text-xs text-[#86909C]">售价: {Number(item.product.price).toFixed(2)} 币</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                {item.devDetails.map(dev => (
+                                                    <td key={dev.deviceId} className="px-3 py-3 text-center">
+                                                        {dev.capacity === 0 ? (
+                                                            <span className="text-xs text-[#C9CDD4]">未配置</span>
+                                                        ) : dev.shortage === 0 ? (
+                                                            <span className="text-xs font-medium text-[#00B42A]">满仓</span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 rounded bg-[#FFF0F0] px-2 py-0.5 text-xs font-semibold text-[#F53F3F]">
+                                                                缺 {dev.shortage} 件
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                ))}
+                                                <td className="px-4 py-3 text-right">
+                                                    <span className={`text-base font-bold tabular-nums ${item.totalShortage > 0 ? 'text-[#F53F3F]' : 'text-[#00B42A]'}`}>
+                                                        {item.totalShortage > 0 ? `+${item.totalShortage} 件` : '无需补货'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {restockSummaryList.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="py-10 text-center text-sm text-[#86909C]">当前各设备暂未配置商品或无需补货</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div className="flex shrink-0 items-center justify-between border-t border-[#E5E6EB] px-6 py-4 bg-[#F7F8FA]">
+                            <span className="text-xs text-[#86909C]">提示：出库完成后可在现场一键补满或针对单柜补满</span>
+                            <div className="flex gap-3">
+                                <Button onClick={() => setIsRestockModalOpen(false)}>关闭</Button>
+                                <Button type="primary" icon={<Sparkles size={14} />} onClick={() => {
+                                    handleFillAllDevices();
+                                    setIsRestockModalOpen(false);
+                                }}>
+                                    标记全校已补齐
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 跨设备同步货道配置 Modal */}
+            {isCopyConfigModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1D2129]/45 p-4 animate-in fade-in duration-200">
+                    <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[#E5E6EB] bg-white shadow-xl animate-in zoom-in-95 duration-200">
+                        <div className="flex shrink-0 items-center justify-between border-b border-[#E5E6EB] px-6 py-4">
+                            <div>
+                                <h3 className="flex items-center gap-2 text-base font-semibold text-[#1D2129]">
+                                    <Copy size={20} className="text-blue-600" />
+                                    同步配置到其他设备
+                                </h3>
+                                <p className="mt-0.5 text-xs text-[#86909C]">将当前设备的 49 个货道商品绑定关系一键复制到其他设备，免去重复配置</p>
+                            </div>
+                            <button type="button" aria-label="关闭弹窗" onClick={() => setIsCopyConfigModalOpen(false)} className="flex h-8 w-8 items-center justify-center rounded text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]">
+                                <Plus size={20} className="rotate-45" />
+                            </button>
+                        </div>
+                        <div className="space-y-5 p-6 overflow-y-auto custom-scrollbar">
+                            <div className="rounded-lg border border-[#BEDAFF] bg-[#F2F7FF] p-3 text-xs text-[#165DFF]">
+                                <b>源配置设备：</b> {currentDevice.name}（{currentDevice.location}）· 当前已配 {currentDevice.channels.filter(c => c.productId !== null).length} / 49 货道
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-[#4E5969]">选择要覆盖的目标设备（可多选）</label>
+                                <div className="space-y-2">
+                                    {vendingDevices.filter(d => d.id !== currentDevice.id).map(dev => (
+                                        <label
+                                            key={dev.id}
+                                            className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${copyTargetDeviceIds.includes(dev.id) ? 'border-[#165DFF] bg-blue-50/40' : 'border-[#E5E6EB] bg-white hover:border-[#C9CDD4]'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={copyTargetDeviceIds.includes(dev.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setCopyTargetDeviceIds(prev => [...prev, dev.id]);
+                                                        } else {
+                                                            setCopyTargetDeviceIds(prev => prev.filter(id => id !== dev.id));
+                                                        }
+                                                    }}
+                                                    className="h-4 w-4 rounded border-[#C9CDD4] text-[#165DFF] focus:ring-[#165DFF]"
+                                                />
+                                                <div>
+                                                    <span className="block text-sm font-semibold text-[#1D2129]">{dev.name}</span>
+                                                    <span className="text-xs text-[#86909C]">{dev.location}</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs text-[#86909C]">现有配置: {dev.channels.filter(c => c.productId !== null).length} 格</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-[#4E5969]">库存同步方式</label>
+                                <Radio.Group value={copyMode} onChange={setCopyMode} direction="vertical" className="w-full space-y-2">
+                                    <Radio value="with_stock">
+                                        <div className="text-xs">
+                                            <span className="font-semibold text-[#1D2129]">覆盖货道并直接置满库存（推荐）</span>
+                                            <p className="text-[#86909C] m-0">复制后目标设备的对应货道库存直接补满到最大容积（10件）</p>
+                                        </div>
+                                    </Radio>
+                                    <Radio value="binding_only">
+                                        <div className="text-xs">
+                                            <span className="font-semibold text-[#1D2129]">仅覆盖货道商品类型，保持现有库存数</span>
+                                            <p className="text-[#86909C] m-0">仅同步格子摆放哪种商品，保留目标设备原有库存件数</p>
+                                        </div>
+                                    </Radio>
+                                </Radio.Group>
+                            </div>
+                        </div>
+                        <div className="flex shrink-0 justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4 bg-[#F7F8FA]">
+                            <Button onClick={() => setIsCopyConfigModalOpen(false)}>取消</Button>
+                            <Button type="primary" onClick={handleConfirmCopyConfig}>
+                                确认同步并覆盖
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Channel Preview Modal */}
             {/* 储蓄银行产品配置 Modal */}
@@ -5399,6 +6377,126 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     </div>
                 )
             }
+
+            {/* 终端设备 新增 / 编辑 弹窗 */}
+            {isDeviceModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-lg overflow-hidden rounded border border-[#E5E6EB] bg-white shadow-xl flex flex-col">
+                        <div className="flex items-center justify-between border-b border-[#E5E6EB] px-6 py-4">
+                            <h3 className="m-0 text-base font-semibold text-[#1D2129]">
+                                {deviceModalMode === 'create' ? '新增终端设备' : '编辑终端设备'}
+                            </h3>
+                            <button
+                                type="button"
+                                aria-label="关闭弹窗"
+                                onClick={() => setIsDeviceModalOpen(false)}
+                                className="flex h-8 w-8 items-center justify-center rounded text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]"
+                            >
+                                <Plus size={18} className="rotate-45" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4 text-sm text-[#4E5969]">
+                            <div>
+                                <label className="block text-sm font-medium text-[#1D2129] mb-1.5">
+                                    终端设备名称 <span className="text-red-500">*</span>
+                                </label>
+                                <Input
+                                    value={deviceFormData.name}
+                                    onChange={(val) => setDeviceFormData({ ...deviceFormData, name: val })}
+                                    placeholder="例如：教学楼 3 楼终端"
+                                    className="w-full"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-[#1D2129] mb-1.5">
+                                    采购机柜机型 <span className="text-red-500">*</span>
+                                </label>
+                                <div className="grid grid-cols-1 gap-2">
+                                    {DEVICE_MODEL_CATALOG.map(model => (
+                                        <div
+                                            key={model.type}
+                                            onClick={() => setDeviceFormData({ ...deviceFormData, modelType: model.type })}
+                                            className={`p-3 rounded border cursor-pointer transition-all flex items-start justify-between ${deviceFormData.modelType === model.type ? 'border-[#165DFF] bg-[#E8F3FF]/40 ring-1 ring-[#165DFF]' : 'border-[#E5E6EB] hover:border-[#C9CDD4] bg-white'}`}
+                                        >
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-semibold text-sm text-[#1D2129]">{model.name}</span>
+                                                    <span className="px-1.5 py-0.5 rounded text-[11px] bg-[#E8F3FF] text-[#165DFF]">{model.badge}</span>
+                                                </div>
+                                                <div className="text-xs text-[#86909C] mt-1">{model.description}</div>
+                                            </div>
+                                            <span className="text-xs font-medium text-[#4E5969] shrink-0 ml-2">{model.cabinetsDesc}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-[#1D2129] mb-1.5">
+                                    摆放位置 <span className="text-red-500">*</span>
+                                </label>
+                                <Input
+                                    value={deviceFormData.location}
+                                    onChange={(val) => setDeviceFormData({ ...deviceFormData, location: val })}
+                                    placeholder="例如：教学楼 1F 连廊东侧、综合楼 1F 展厅旁"
+                                    className="w-full"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-[#1D2129] mb-1.5">
+                                    终端运维管理密码 <span className="text-red-500">*</span>
+                                </label>
+                                <Input
+                                    value={deviceFormData.adminPassword}
+                                    onChange={(val) => setDeviceFormData({ ...deviceFormData, adminPassword: val })}
+                                    placeholder="用于现场工程师或维护人员在货柜大屏登录"
+                                    className="w-full"
+                                />
+                                <p className="mt-1 text-xs text-[#86909C]">
+                                    现场开箱或日常维护时，在货柜机屏幕输入此密码方可进入底层硬件调试与补货控制台。
+                                </p>
+                            </div>
+
+                            {deviceModalMode === 'create' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-[#1D2129] mb-1.5">
+                                        初始货道配置模板
+                                    </label>
+                                    <ArcoSelect
+                                        value={deviceFormData.templateDevId}
+                                        onChange={(val) => setDeviceFormData({ ...deviceFormData, templateDevId: String(val) })}
+                                        className="w-full"
+                                    >
+                                        {vendingDevices.map(dev => (
+                                            <ArcoSelect.Option key={dev.id} value={dev.id}>
+                                                复制【{dev.name}】货道配置（已配 {dev.channels.filter(c => c.productId !== null).length}/{dev.channels.length} 格）
+                                            </ArcoSelect.Option>
+                                        ))}
+                                        <ArcoSelect.Option value="blank">
+                                            创建全空白货道（全新部署，稍后配货）
+                                        </ArcoSelect.Option>
+                                    </ArcoSelect>
+                                    <p className="mt-1.5 text-xs text-[#86909C]">
+                                        {deviceFormData.templateDevId === 'blank'
+                                            ? '新增后货道将处于全空置状态，可在货柜超市管理页面逐格绑定商品。'
+                                            : '将直接克隆所选设备的货道商品配置并自动备好初始库存，极速完成新机上线。'}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-end gap-3 border-t border-[#E5E6EB] px-6 py-3 bg-[#F7F8FA]">
+                            <Button onClick={() => setIsDeviceModalOpen(false)}>
+                                取消
+                            </Button>
+                            <Button type="primary" onClick={handleSaveDevice}>
+                                {deviceModalMode === 'create' ? '确认建档上线' : '保存修改'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

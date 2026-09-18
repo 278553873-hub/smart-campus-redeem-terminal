@@ -67,7 +67,7 @@ for (const required of [
   '单选',
   '多选',
   'text-[length:var(--pm-font-size-section-title)] font-bold leading-[1.4]',
-  '全部记录',
+  '查看明细',
   'ChevronRight',
   'GrowthRecords',
   'GrowthCalendar',

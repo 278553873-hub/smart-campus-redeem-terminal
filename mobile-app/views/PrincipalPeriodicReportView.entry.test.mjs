@@ -46,7 +46,8 @@ for (const required of [
   'resolveAssistantReportDocument(',
   "status === 'empty'",
   "status === 'failed'",
-  'principal-report-page',
+  'surface="transparent"',
+  'min-h-0 flex-1 overflow-y-auto',
 ]) {
   requireText(viewSource, required, `校长周月报告页缺少状态、内容或无障碍能力：${required}`);
 }
@@ -60,6 +61,7 @@ requireText(cardsSource, '<MobileBottomSheet', '校长报告证据应通过公�
 requireText(feedbackSource, '重新生成', '报告生成失败后应提供明确的重试操作。');
 requireText(headerSource, "backLabel = '返回'", '校长报告共享标题栏应提供明确返回入口。');
 requireText(headerSource, 'focus-visible:ring-2', '校长报告共享标题栏应保留键盘焦点。');
+requireText(appSource, 'hasPrincipalReportBackground', '校长报告页应由子页面自己持有正文滚动容器，标题栏承接屏幕级角色背景。');
 requireText(viewSource, '<AssistantHistoryLink', '校长周月报告应使用图标加文字的历史入口。');
 requireText(cssSource, '.principal-report-screen-background', '校长报告应使用屏幕级统一渐变背景。');
 requireText(cssSource, 'var(--tm-role-principal-accent-soft)', '校长报告渐变应引用管理金角色令牌。');

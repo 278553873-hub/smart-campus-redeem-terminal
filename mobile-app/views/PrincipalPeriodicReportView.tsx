@@ -55,79 +55,82 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
   ), [report, reportPayload, schoolName]);
 
   return (
-    <div className="ai-assistant-theme-principal principal-report-page min-h-full bg-transparent font-sans text-[var(--tm-text-primary)]">
+    <div className="ai-assistant-theme-principal relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
       <AssistantSubpageHeader
         title={report.pageTitle}
         onBack={onBack}
+        surface="transparent"
       />
 
-      {status === 'empty' ? (
-        <AssistantReportFeedback
-          status="empty"
-          title={emptyTitle}
-          message={emptyMessage}
-        />
-      ) : status === 'failed' ? (
-        <AssistantReportFeedback
-          status="failed"
-          title="报告生成失败"
-          message="本次报告没有生成成功，请检查网络后重试；已冻结的数据快照不会重复计入。"
-          onRetry={onRetry}
-        />
-      ) : loading ? (
-        <main className="flex min-h-[620px] flex-col items-center px-7 pt-24">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--tm-role-principal-soft)] text-[var(--tm-role-principal-strong)]">
-            <Sparkles className="h-6 w-6" strokeWidth={2} />
-          </span>
-          <h2 className="mt-6 text-[20px] font-semibold">{report.loadingTitle}</h2>
-          <div className="mt-7 w-full max-w-[280px] space-y-4" role="status" aria-label={report.loadingTitle}>
-            {report.analysisSteps.slice(0, visibleStepCount).map((step, index) => {
-              const active = index === visibleStepCount - 1;
-              return (
-                <div key={step} className="flex items-center gap-3 text-[13px] text-[var(--tm-text-secondary)]">
-                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? 'animate-pulse bg-[var(--tm-role-principal-primary)]' : 'bg-[var(--tm-border-subtle)]'}`} aria-hidden="true" />
-                  <span className={active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-tertiary)]'}>{step}</span>
-                </div>
-              );
-            })}
-          </div>
-        </main>
-      ) : (
-        <main>
-          <section className="border-b border-[var(--tm-border-subtle)] px-5 pb-6 pt-5">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tm-role-principal-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--tm-role-principal-strong)]">
-              <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
-              {report.eyebrow}
+      <main className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
+        {status === 'empty' ? (
+          <AssistantReportFeedback
+            status="empty"
+            title={emptyTitle}
+            message={emptyMessage}
+          />
+        ) : status === 'failed' ? (
+          <AssistantReportFeedback
+            status="failed"
+            title="报告生成失败"
+            message="本次报告没有生成成功，请检查网络后重试；已冻结的数据快照不会重复计入。"
+            onRetry={onRetry}
+          />
+        ) : loading ? (
+          <section className="flex min-h-[620px] flex-col items-center px-7 pt-24">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--tm-role-principal-soft)] text-[var(--tm-role-principal-strong)]">
+              <Sparkles className="h-6 w-6" strokeWidth={2} />
             </span>
-            <div className="mt-2 flex min-h-11 items-center justify-between gap-3">
-              <p className="min-w-0 truncate text-[13px] text-[var(--tm-text-secondary)]">{schoolName}</p>
-              {onOpenHistory && (
-                <AssistantHistoryLink
-                  label={kind === 'weekly' ? '往期建议' : '往期复盘'}
-                  onClick={onOpenHistory}
-                />
-              )}
-            </div>
-            <h2 className="mt-1.5 text-[24px] font-bold leading-8">{report.reportTitle}</h2>
-            <div className="mt-3 flex items-start gap-2 text-[12px] leading-5 text-[var(--tm-text-tertiary)]">
-              <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
-              <span>{report.periodLabel}<br />{report.periodDetail}</span>
+            <h2 className="mt-6 text-[20px] font-semibold">{report.loadingTitle}</h2>
+            <div className="mt-7 w-full max-w-[280px] space-y-4" role="status" aria-label={report.loadingTitle}>
+              {report.analysisSteps.slice(0, visibleStepCount).map((step, index) => {
+                const active = index === visibleStepCount - 1;
+                return (
+                  <div key={step} className="flex items-center gap-3 text-[13px] text-[var(--tm-text-secondary)]">
+                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? 'animate-pulse bg-[var(--tm-role-principal-primary)]' : 'bg-[var(--tm-border-subtle)]'}`} aria-hidden="true" />
+                    <span className={active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-tertiary)]'}>{step}</span>
+                  </div>
+                );
+              })}
             </div>
           </section>
+        ) : (
+          <>
+            <section className="border-b border-[var(--tm-border-subtle)] px-5 pb-6 pt-5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tm-role-principal-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--tm-role-principal-strong)]">
+                <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
+                {report.eyebrow}
+              </span>
+              <div className="mt-2 flex min-h-11 items-center justify-between gap-3">
+                <p className="min-w-0 truncate text-[13px] text-[var(--tm-text-secondary)]">{schoolName}</p>
+                {onOpenHistory && (
+                  <AssistantHistoryLink
+                    label={kind === 'weekly' ? '往期建议' : '往期复盘'}
+                    onClick={onOpenHistory}
+                  />
+                )}
+              </div>
+              <h2 className="mt-1.5 text-[24px] font-bold leading-8">{report.reportTitle}</h2>
+              <div className="mt-3 flex items-start gap-2 text-[12px] leading-5 text-[var(--tm-text-tertiary)]">
+                <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>{report.periodLabel}<br />{report.periodDetail}</span>
+              </div>
+            </section>
 
-          {reportResolution.document ? (
-            <>
-              <AssistantReportCards
-                document={reportResolution.document}
-                className="px-[var(--tm-report-page-inline)] py-[var(--tm-report-card-gap)]"
-              />
-              <AssistantReportFooter document={reportResolution.document} />
-            </>
-          ) : (
-            <AssistantReportContractError onRetry={onRetry} />
-          )}
-        </main>
-      )}
+            {reportResolution.document ? (
+              <>
+                <AssistantReportCards
+                  document={reportResolution.document}
+                  className="px-[var(--tm-report-page-inline)] py-[var(--tm-report-card-gap)]"
+                />
+                <AssistantReportFooter document={reportResolution.document} />
+              </>
+            ) : (
+              <AssistantReportContractError onRetry={onRetry} />
+            )}
+          </>
+        )}
+      </main>
     </div>
   );
 };

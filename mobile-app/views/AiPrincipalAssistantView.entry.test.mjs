@@ -48,7 +48,10 @@ forbidText(viewSource, 'maskImage', 'AI 校长助理形象不应再用前端遮�
 requireText(viewSource, 'ai-assistant-dialog-card', 'AI 校长助理开场白应使用共享对话卡片。');
 requireText(viewSource, 'ai-assistant-dialog-tail', 'AI 校长助理对话卡尾巴应与边框风格一致。');
 requireText(viewSource, 'ai-assistant-typewriter-shine', 'AI 校长助理开场白应使用共享文字效果。');
-requireText(viewSource, 'ai-assistant-theme-principal teacher-assistant-page', '校长助理页面应注入深红与管理金角色主题。');
+requireText(viewSource, 'ai-assistant-theme-principal relative min-h-full overflow-hidden bg-transparent', '校长助理页面应注入深红与管理金角色主题，并保持内容层透明。');
+requireText(appSource, 'principal-agent-gradient-page absolute inset-0', '校长助理渐变应铺满手机屏幕并覆盖状态栏安全区。');
+requireText(cssSource, '.principal-agent-gradient-page', '应存在校长助理整屏角色渐变样式。');
+forbidText(viewSource, 'teacher-assistant-page', '校长助理不应再把渐变绘制在随内容拉伸的页面根节点上。');
 requireText(viewSource, 'tm-role-principal-primary', '校长助理交互状态应引用角色主色。');
 requireText(viewSource, 'text-[15px]', '紧凑面板中的开场白应使用卡片标题字号。');
 requireText(viewSource, '-mt-1 min-h-[96px] w-full rounded-[var(--tm-radius-card)]', '对话卡片应使用教师端统一圆角并容纳完整开场白。');

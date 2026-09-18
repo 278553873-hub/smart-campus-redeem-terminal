@@ -1501,7 +1501,6 @@ const ParentApp: React.FC<ParentAppProps> = ({
     const improveCount = 1;
     const totalScore = 45;
     const summaryGridClass = showPositiveSummary && showNegativeSummary ? 'grid-cols-2' : 'grid-cols-1';
-    const recentRecords = activeChild?.records?.slice(0, 2) ?? [];
 
     return (
       <section className="mx-5 mt-3 flex flex-col gap-3">
@@ -1541,41 +1540,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
             </div>
           )}
 
-          {showAnyEvaluationDetails && recentRecords.length > 0 && (
-            <div className="mt-3.5 border-t border-[var(--pm-border-subtle)] pt-3">
-              <div className="mb-2 flex items-center justify-between text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
-                <span>最新在校表现</span>
-                <span className="text-[11px] font-normal text-[var(--pm-text-disabled)]">近期记录</span>
-              </div>
-              <div className="space-y-2">
-                {recentRecords.map(record => {
-                  const positive = record.score > 0;
-                  return (
-                    <div key={record.id} className="flex items-center justify-between gap-2 rounded-[var(--pm-radius-inner)] bg-[var(--pm-bg-surface-soft)] px-3 py-2 text-left">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-primary)]">{record.content}</p>
-                        <div className="mt-0.5 flex items-center gap-1.5 text-[length:var(--pm-font-size-meta)] text-[var(--pm-text-tertiary)]">
-                          <span>{record.time}</span>
-                          <span aria-hidden="true">·</span>
-                          <span>{formatEvaluationTeacherName(record.teacher)}</span>
-                        </div>
-                      </div>
-                      <span className={`shrink-0 tabular-nums text-[length:var(--pm-font-size-card-title)] font-bold ${positive ? 'text-[var(--pm-status-positive-strong)]' : 'text-[var(--evaluation-score-negative)]'}`}>
-                        {positive ? `+${record.score}` : record.score}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           <button
             type="button"
             onClick={() => setScreen('growthRecords')}
-            className="mx-auto mt-3.5 flex min-h-[44px] items-center justify-center gap-0.5 rounded-full bg-[var(--pm-brand-primary-soft)] px-4 text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)] transition-all [transition-duration:var(--pm-duration-fast)] active:scale-[0.98] active:bg-[var(--pm-brand-primary-soft-strong)]"
+            className={`mx-auto mt-3.5 flex min-h-[44px] items-center justify-center gap-0.5 rounded-full px-4 text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)] transition-colors active:bg-[var(--pm-brand-primary-soft)] ${PARENT_PRESSABLE_CLASS}`}
           >
-            <span>{showAnyEvaluationDetails ? '全部记录' : '查看统计'}</span>
+            <span>{showAnyEvaluationDetails ? '查看明细' : '查看统计'}</span>
             <ChevronRight size={15} strokeWidth={2.8} aria-hidden="true" />
           </button>
         </ParentCard>

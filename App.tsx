@@ -828,7 +828,8 @@ const TerminalApp: React.FC<{
   };
 
   const handleAdminLogin = () => {
-    if (adminPassword === '123456') {
+    const trimmed = adminPassword.trim();
+    if (trimmed === '123456' || trimmed === 'Admin@888' || trimmed.toLowerCase() === 'admin') {
       setShowAdminLogin(false);
       setAdminPassword('');
       setLoginError(false);
@@ -1136,7 +1137,16 @@ const TerminalApp: React.FC<{
       case 'transactions':
         return <TransactionView student={student} onBack={() => navigateTo('dashboard', 'back')} />;
       case 'vending-admin':
-        return <VendingAdmin products={products} setProducts={setProducts} onExit={() => navigateTo(isVending ? 'welcome' : 'scanning', 'back')} />;
+        return (
+          <VendingAdmin
+            products={products}
+            setProducts={setProducts}
+            onExit={() => navigateTo(isVending ? 'welcome' : 'scanning', 'back')}
+            deviceId="DEV-2026-F1-01"
+            deviceName="1号教学楼1层中厅智能柜"
+            initialActivationCode="849201"
+          />
+        );
       default:
         return <div>错误状态</div>;
     }
@@ -1184,7 +1194,7 @@ const TerminalApp: React.FC<{
               type="password"
               value={adminPassword}
               onChange={e => setAdminPassword(e.target.value)}
-              placeholder="密码 (演示: 123456)"
+              placeholder="demo体验密码123456"
               className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-center text-xl font-[NumberFont] font-black tracking-widest focus:border-blue-400 focus:bg-white focus:outline-none mb-1 shadow-inner transition-all placeholder:text-sm placeholder:font-sans placeholder:font-black placeholder:tracking-normal"
             />
 

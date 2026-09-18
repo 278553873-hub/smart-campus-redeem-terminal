@@ -13,8 +13,12 @@ export interface LeaderReportTeacherUsage {
   id: string;
   name: string;
   records: number;
+  /** 评价后生成的学生明细条数；一次评价多人时按学生人数累加。 */
+  evaluationCount?: number;
   coveredStudents: number;
   lastUsedAt: string;
+  /** 仅选择 1 名学生进行评价的次数占全部评价次数的比例。 */
+  individualEvaluationRate?: number;
 }
 
 export interface LeaderReportClassCoverage {
@@ -94,7 +98,8 @@ export interface LeaderReportSnapshot {
   summary: {
     activeTeachers: number;
     totalTeachers: number;
-    totalRecords: number;
+  totalRecords: number;
+    totalEvaluationCount: number;
     totalCoveredStudents: number;
     totalStudents: number;
     teacherPercent: number;
@@ -128,8 +133,8 @@ export const rate = (value: number, total: number) => {
 };
 
 const demoTeacherUsageBase: LeaderReportTeacherUsage[] = [
-  { id: 't1', name: '周老师', records: 38, coveredStudents: 94, lastUsedAt: '今天 09:40' },
-  { id: 't2', name: '林老师', records: 31, coveredStudents: 86, lastUsedAt: '昨天 16:20' },
+  { id: 't1', name: '周老师', records: 38, evaluationCount: 382, individualEvaluationRate: 82, coveredStudents: 94, lastUsedAt: '今天 09:40' },
+  { id: 't2', name: '林老师', records: 31, evaluationCount: 318, individualEvaluationRate: 74, coveredStudents: 86, lastUsedAt: '昨天 16:20' },
   { id: 't3', name: '陈老师', records: 26, coveredStudents: 79, lastUsedAt: '昨天 14:10' },
   { id: 't4', name: '赵老师', records: 24, coveredStudents: 73, lastUsedAt: '今天 08:55' },
   { id: 't5', name: '刘老师', records: 21, coveredStudents: 68, lastUsedAt: '昨天 17:05' },
@@ -407,10 +412,12 @@ const scaleDemoGradeCoverage = (grade: LeaderReportGradeCoverage, scale: number)
 const scaleDemoTeacher = (teacher: LeaderReportTeacherUsage, scale: number): LeaderReportTeacherUsage => {
   if (scale === 1) return teacher;
   const records = Math.max(teacher.records === 0 ? 0 : 1, Math.round(teacher.records * scale));
+  const evaluationCount = Math.max((teacher.evaluationCount ?? 0) === 0 ? 0 : 1, Math.round((teacher.evaluationCount ?? 0) * scale));
   const coveredStudents = Math.min(620, Math.round(teacher.coveredStudents * Math.sqrt(scale)));
   return {
     ...teacher,
     records,
+    evaluationCount,
     coveredStudents,
     lastUsedAt: scale < 0.3 && teacher.records < 10 ? '今日未使用' : teacher.lastUsedAt,
   };
@@ -491,7 +498,9 @@ export const createLeaderReportSnapshot = ({
   const normalizedTeachers = teachers.map(teacher => ({
     ...teacher,
     records: toSafeCount(teacher.records),
+    evaluationCount: toSafeCount(teacher.evaluationCount ?? teacher.records),
     coveredStudents: toSafeCount(teacher.coveredStudents),
+    individualEvaluationRate: rate(teacher.individualEvaluationRate ?? 0, 100),
   }));
   const normalizedGrades = gradeCoverages.map(grade => ({
     ...grade,
@@ -537,6 +546,7 @@ export const createLeaderReportSnapshot = ({
   const activeTeachers = normalizedTeachers.filter(teacher => teacher.records > 0).length;
   const totalTeachers = normalizedTeachers.length;
   const totalRecords = normalizedTeachers.reduce((sum, teacher) => sum + teacher.records, 0);
+  const totalEvaluationCount = normalizedTeachers.reduce((sum, teacher) => sum + teacher.evaluationCount, 0);
   const totalCoveredStudents = normalizedGrades.reduce((sum, grade) => sum + grade.covered, 0);
   const totalStudents = normalizedGrades.reduce((sum, grade) => sum + grade.total, 0);
 
@@ -554,6 +564,7 @@ export const createLeaderReportSnapshot = ({
       activeTeachers,
       totalTeachers,
       totalRecords,
+      totalEvaluationCount,
       totalCoveredStudents,
       totalStudents,
       teacherPercent: rate(activeTeachers, totalTeachers),

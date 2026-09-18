@@ -40,7 +40,8 @@ for (const source of [headteacher, principal]) {
 assert.match(headteacher, /tm-role-headteacher-glass-surface/);
 assert.match(principal, /tm-role-principal-primary/);
 assert.match(headteacher, /ai-assistant-theme-headteacher/);
-assert.match(principal, /ai-assistant-theme-principal teacher-assistant-page/);
+assert.match(principal, /ai-assistant-theme-principal relative min-h-full overflow-hidden bg-transparent/);
+assert.match(css, /\.principal-agent-gradient-page/);
 
 assert.match(guidelines, /班主任助理使用鲜活翡翠青角色 Token/);
 assert.match(guidelines, /校长助理使用品牌红与奖励金角色 Token/);

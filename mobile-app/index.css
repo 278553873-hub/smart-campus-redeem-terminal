@@ -124,11 +124,14 @@
   --tm-assistant-role-shadow: var(--tm-role-principal-shadow);
 }
 
-.teacher-assistant-page {
-  background:
-    radial-gradient(circle at 14% 0%, var(--tm-assistant-page-glow-primary), transparent 32%),
-    radial-gradient(circle at 88% 2%, var(--tm-assistant-page-glow-secondary), transparent 30%),
-    linear-gradient(180deg, var(--tm-assistant-role-soft) 0%, var(--tm-bg-surface) 72%);
+/* 校长助理统一页面与班主任助理共用同一结构：角色渐变固定在屏幕层，滚动内容根容器保持透明。 */
+.principal-agent-gradient-page {
+  background: linear-gradient(
+    155deg,
+    var(--tm-role-principal-page-gradient-start) 0%,
+    var(--tm-role-principal-page-gradient-middle) 48%,
+    var(--tm-role-principal-page-gradient-end) 100%
+  );
 }
 
 .principal-report-screen-background {

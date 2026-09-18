@@ -401,6 +401,11 @@ export const teacherAssistantRoleSemantic = {
     glowPrimary: 'rgba(224, 39, 39, 0.13)',
     glowSecondary: 'rgba(250, 156, 0, 0.11)',
     shadow: 'rgba(146, 34, 31, 0.18)',
+    // 校长助理统一页面使用覆盖状态栏、标题栏、内容区与底部安全区的连续整屏渐变，
+    // 走向与班主任助理一致（角色主色 → 中性过渡 → 辅助色），保证两类助理视觉结构同源。
+    pageGradientStart: '#FDECEA',
+    pageGradientMiddle: '#FFF6EF',
+    pageGradientEnd: teacherBrandPalette.gold[50],
   },
 } as const;
 
@@ -738,6 +743,9 @@ export const teacherBrandCssVariables = {
   '--tm-role-principal-glow-primary': teacherAssistantRoleSemantic.principal.glowPrimary,
   '--tm-role-principal-glow-secondary': teacherAssistantRoleSemantic.principal.glowSecondary,
   '--tm-role-principal-shadow': teacherAssistantRoleSemantic.principal.shadow,
+  '--tm-role-principal-page-gradient-start': teacherAssistantRoleSemantic.principal.pageGradientStart,
+  '--tm-role-principal-page-gradient-middle': teacherAssistantRoleSemantic.principal.pageGradientMiddle,
+  '--tm-role-principal-page-gradient-end': teacherAssistantRoleSemantic.principal.pageGradientEnd,
   '--tm-audience-guardian-primary': teacherAudienceSemantic.guardian.primary,
   '--tm-audience-guardian-strong': teacherAudienceSemantic.guardian.strong,
   '--tm-audience-guardian-soft': teacherAudienceSemantic.guardian.soft,

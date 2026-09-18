@@ -131,7 +131,7 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
     };
 
     return (
-        <div className="ai-assistant-theme-principal teacher-assistant-page relative min-h-full overflow-hidden font-sans text-[var(--tm-text-primary)]">
+        <div className="ai-assistant-theme-principal relative min-h-full overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
 
             <button
                 type="button"

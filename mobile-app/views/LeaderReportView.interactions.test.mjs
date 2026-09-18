@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('./LeaderReportView.tsx', import.meta.url), 'utf8');
+const teacherRankingSheet = readFileSync(new URL('../components/report/TeacherUsageRankingSheet.tsx', import.meta.url), 'utf8');
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const reportDateTabsSource = readFileSync(new URL('../components/report/ReportDateRangeTabs.tsx', import.meta.url), 'utf8');
 const compactSegmentedSource = readFileSync(new URL('../components/ui/CompactSegmentedControl.tsx', import.meta.url), 'utf8');
@@ -230,10 +231,13 @@ if (fullScoreSheet.includes('累计加分') || fullScoreSheet.includes('累计�
 for (const required of [
   'TeacherRankBadge',
   'showAward={rankingTab === \'active\'}',
-  'showAward={fullRankingType === \'active\'}',
+  '<TeacherUsageRankingSheet',
 ]) {
   if (!source.includes(required)) throw new Error(`教师使用排行榜需要弱化排名并用前三图形标识，缺少：${required}`);
 }
 if (teacherRows.includes('>{rank}</span>') || fullTeacherSheet.includes('>{rank}</span>')) {
   throw new Error('教师使用排行榜积极使用 tab 不应显示排名数字');
+}
+if (!teacherRankingSheet.includes("rankingType === 'active' && index < 3") || !teacherRankingSheet.includes('<Trophy')) {
+  throw new Error('完整榜单应仅为积极使用的前三名展示奖杯');
 }

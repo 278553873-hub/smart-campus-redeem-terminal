@@ -80,14 +80,15 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
   }
 
   return (
-    <div className="ai-assistant-theme-principal principal-report-page min-h-full bg-transparent font-sans text-[var(--tm-text-primary)]">
+    <div className="ai-assistant-theme-principal relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
       <AssistantSubpageHeader
         title={historyTitle[kind]}
         onBack={onBack}
         backLabel="返回当前报告"
+        surface="transparent"
       />
 
-      <main className="px-5 pb-10 pt-4">
+      <main className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-5 pb-10 pt-4">
         <p className="mb-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">{schoolName}</p>
         <section className="space-y-6" aria-label={historyListLabel[kind]}>
           {groups.map((group) => (

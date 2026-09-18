@@ -47,20 +47,32 @@
   color: #165dff !important;
 }
 
-/* 商品库主操作：Arco 按钮包含图标时仍保持图标与文案同一行。仅作用于货柜商品库。 */
-.shop-product-create-button.arco-btn {
+/* PC 后台通用规范：统一所有 Arco 按钮与内部图标横向居中排列，彻底杜绝 Tailwind preflight 将 svg 转为 block 导致的图文上下折行与溢出 */
+.arco-btn {
   display: inline-flex !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: center !important;
-  min-width: 112px;
-  white-space: nowrap;
+  vertical-align: middle;
 }
 
-.shop-product-create-button.arco-btn > svg {
-  display: block;
+.arco-btn > svg {
+  display: inline-block !important;
   flex: 0 0 auto;
-  margin-right: 8px;
+}
+
+/* 当按钮内同时存在图标与文字时，自动提供 6px 水平间距 */
+.arco-btn > svg + span,
+.arco-btn > svg + div,
+.arco-btn > svg + font,
+.arco-btn > span + svg,
+.arco-btn > div + svg {
+  margin-left: 6px;
+}
+
+/* 兼容原有专有类名，保留商品库新建按钮最小宽度 */
+.shop-product-create-button.arco-btn {
+  min-width: 112px;
 }
 
 /* 配置表单中的可编辑控件使用白底，与真实禁用态明确区分。 */

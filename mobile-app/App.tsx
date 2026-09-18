@@ -1619,12 +1619,15 @@ const App: React.FC<MobileAppProps> = ({
     const primaryTabViewKey = currentView === 'class_list' ? 'teacher-primary-tabs' : showTabBar ? 'teacher-primary-tabs' : currentView;
     const pageTransitionClass = showTabBar || isStudentTeamCreateView ? '' : 'animate-page-enter';
     const isHeadteacherAssistantView = currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2';
-    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView;
+    const isPrincipalAssistantView = currentView === 'ai_principal_assistant';
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
+    // 助理报告页的标题栏必须承接屏幕级角色背景，所以由子页面自己持有正文滚动容器，
+    // 避免透明标题栏吸顶后与正文互相压盖。
+    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || hasPrincipalReportBackground;
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView) || isStudentTeamCreateView;
     const hasStudentDetailBackground = currentView === 'student_detail';
-    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
+    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const activeBottomTab: TeacherBottomTab = activeIndex === 1 ? 'class' : activeIndex === 2 ? 'me' : 'record';
 
     const getPhoneScreenBackground = () => {
@@ -1646,6 +1649,10 @@ const App: React.FC<MobileAppProps> = ({
 
         if (isHeadteacherAssistantView) {
             return <div className="ai-assistant-theme-headteacher headteacher-agent-gradient-page absolute inset-0 overflow-hidden" aria-hidden="true" />;
+        }
+
+        if (isPrincipalAssistantView) {
+            return <div className="ai-assistant-theme-principal principal-agent-gradient-page absolute inset-0 overflow-hidden" aria-hidden="true" />;
         }
 
         if (hasPlainBackground) {
