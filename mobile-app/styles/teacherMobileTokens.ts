@@ -301,6 +301,9 @@ export const teacherStudentLevelSemantic = {
   praiseSoft: teacherBrandPalette.green[50],
   criticism: teacherEvaluationScoreSemantic.negative,
   criticismSoft: teacherBrandPalette.red[50],
+  // 等级总分使用浅蓝底配深蓝文字的圆角色片，与奖励金、正向绿、负向红区分，并满足12像素粗体的对比度要求。
+  score: teacherBrandPalette.blue[700],
+  scoreSoft: teacherBrandPalette.blue[50],
 } as const;
 
 export const teacherIndicatorCanvasMetrics = {
@@ -498,6 +501,8 @@ export const teacherBrandCssVariables = {
   '--tm-student-level-reward': teacherStudentLevelSemantic.reward,
   '--tm-student-level-progress': teacherStudentLevelSemantic.progress,
   '--tm-student-level-track': teacherStudentLevelSemantic.track,
+  '--tm-student-level-score': teacherStudentLevelSemantic.score,
+  '--tm-student-level-score-soft': teacherStudentLevelSemantic.scoreSoft,
   '--tm-student-praise': teacherStudentLevelSemantic.praise,
   '--tm-student-praise-soft': teacherStudentLevelSemantic.praiseSoft,
   '--tm-student-criticism': teacherStudentLevelSemantic.criticism,
@@ -519,7 +524,8 @@ export const teacherBrandCssVariables = {
   '--tm-student-card-roster-width-strong': '16px',
   '--tm-student-card-count-height': '14px',
   '--tm-student-card-level-icon-size': '16px',
-  '--tm-student-card-level-icon-row-height': '16px',
+  '--tm-student-card-level-row-height': '16px',
+  '--tm-student-card-level-score-font-size': '12px',
   '--tm-archive-theme-clean-bg': teacherArchiveAppearanceSemantic.clean.background,
   '--tm-archive-theme-clean-swatch': teacherArchiveAppearanceSemantic.clean.swatch,
   '--tm-archive-theme-clean-accent': teacherArchiveAppearanceSemantic.clean.accent,

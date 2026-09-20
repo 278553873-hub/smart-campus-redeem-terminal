@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { ViewState, Student, Product, BankAccount, Deposit, TierLevel } from './types';
+import { ViewState, Student, Product, BankAccount, Deposit } from './types';
 import { EXCHANGE_RATE, BANK_CONFIG, MOCK_PRODUCTS } from './constants';
 import FaceScanner from './components/FaceScanner';
 import AccountLogin from './components/AccountLogin';
@@ -19,6 +19,7 @@ import ParentApp from './components/ParentApp';
 import ParentBankFeaturePreviewControls from './components/ParentBankFeaturePreviewControls';
 import ParentEvaluationVisibilityPreviewControls from './components/ParentEvaluationVisibilityPreviewControls';
 import TerminalLoginMethodPreviewControls, { type StudentLoginPreviewMode } from './components/TerminalLoginMethodPreviewControls';
+import TerminalShopLayoutPreviewControls from './components/TerminalShopLayoutPreviewControls';
 import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
@@ -30,6 +31,11 @@ import Loader from './components/Loader';
 import { DeviceWrapper } from './components/DeviceWrapper';
 import { ASSETS as MOBILE_ASSETS } from './mobile-app/assets/images';
 import {
+  readTerminalShopLayoutPresetId,
+  writeTerminalShopLayoutPresetId,
+} from './shared/terminalShopLayoutPreview';
+import type { TerminalShopLayoutPresetId } from './shared/terminalShopLayout';
+import {
   defaultParentGradientPreview,
   defaultTeacherGradientPreview,
   teacherGradientSchemeOptions,
@@ -38,10 +44,11 @@ import {
   type TeacherGradientStyleId,
 } from './mobile-app/styles/teacherGradientPreview';
 import './mobile-app/index.css';
-import { ChevronLeft, ChevronDown, Sparkles, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Power, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X, Camera, Check, LoaderCircle, ShoppingBag, KeyRound } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Sparkles, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X, Camera, Check, LoaderCircle, ShoppingBag, KeyRound } from 'lucide-react';
 import { playSound } from './utils/sound';
 import { exportElementAsPng } from './utils/exportElementAsPng';
 import { GROWTH_COIN_TERMS } from './shared/growthCoinTerminology';
+import { getRankingReward, sumPositiveScores } from './mobile-app/domain/campusCoinIssuance';
 import {
   PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT,
   readParentEvaluationVisibility,
@@ -54,18 +61,9 @@ import {
   writeParentBankFeatureEnabled,
 } from './shared/parentBankFeature';
 
-// ============================================================
-// 档位配置（与 GrowthView 保持一致）
-// ============================================================
-const GROWTH_TIER_CONFIG: Record<TierLevel, { label: string; weight: number; color: string; bg: string }> = {
-  star:    { label: '领航之星', weight: 4.0,  color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200' },
-  active:  { label: '卓越先锋', weight: 2.5,  color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-200'   },
-  stable:  { label: '稳步成长', weight: 1.5,  color: 'text-green-600',  bg: 'bg-green-50 border-green-200'  },
-  improve: { label: '潜力新星', weight: 1.0,  color: 'text-slate-500',  bg: 'bg-slate-50 border-slate-200'  },
-};
 
 interface ScoreConfig { score: number; count: number; }
-interface SimStudent { name: string; score: number; tier: TierLevel; reward: number; }
+interface SimStudent { name: string; score: number; reward: number; }
 interface TeacherProfile { name: string; role: string; school: string; avatar?: string; }
 interface StudentLoginMethods { face: boolean; password: boolean; }
 
@@ -135,20 +133,14 @@ const DEFAULT_PARENT_PREVIEW_CLASS_ID = 'c_2025_1';
 function computeLeaderboard(bonusPool: number, configs: ScoreConfig[]): SimStudent[] {
   const valid = configs.filter(c => c.score > 0 && c.count > 0);
   
-  // 建立分数-档位映射
-  const uniqueScores = [...new Set(valid.map(c => c.score))].sort((a, b) => b - a);
-  const tiers: TierLevel[] = ['star', 'active', 'stable', 'improve'];
-  const scoreToTier = new Map<number, TierLevel>();
-  uniqueScores.forEach((score, i) => scoreToTier.set(score, tiers[Math.min(i, tiers.length - 1)]));
   
   let serial = 1;
   const students: SimStudent[] = [];
   
   // 1. 添加有分数的同学
   valid.forEach(config => {
-    const tier = scoreToTier.get(config.score)!;
     for (let i = 0; i < config.count; i++) {
-      students.push({ name: `学生${serial++}`, score: config.score, tier, reward: 0 });
+      students.push({ name: `学生${serial++}`, score: config.score, reward: 0 });
     }
   });
 
@@ -157,27 +149,16 @@ function computeLeaderboard(bonusPool: number, configs: ScoreConfig[]): SimStude
   if (students.length < CLASS_SIZE) {
     const remaining = CLASS_SIZE - students.length;
     for (let i = 0; i < remaining; i++) {
-      students.push({ name: `学生${serial++}`, score: 0, tier: 'improve', reward: 0 });
+      students.push({ name: `学生${serial++}`, score: 0, reward: 0 });
     }
   }
 
-  // 3. 计算奖励权重（仅正分学生参与分配）
-  const eligibleStudents = students.filter(st => st.score > 0);
-  const totalWeight = eligibleStudents.reduce((s, st) => s + (GROWTH_TIER_CONFIG[st.tier].weight || 0), 0);
-  
-  if (totalWeight > 0) {
-    const unitValue = bonusPool / totalWeight;
-    students.forEach(st => {
-      if (st.score > 0) {
-        st.reward = Math.round(GROWTH_TIER_CONFIG[st.tier].weight * unitValue * 100) / 100;
-      } else {
-        st.reward = 0;
-      }
-    });
-  } else {
-    students.forEach(st => { st.reward = 0; });
-  }
-  
+  // 3. 得分奖励按分数占比分配：得分奖励 = 积分排行池 × 个人总分 ÷ 全班正分总和
+  const totalPositiveScore = sumPositiveScores(students.map(st => st.score));
+  students.forEach(st => {
+    st.reward = getRankingReward({ rankingPool: bonusPool, score: st.score, totalPositiveScore });
+  });
+
   students.sort((a, b) => b.score - a.score);
   return students;
 }
@@ -186,9 +167,9 @@ function computeLeaderboard(bonusPool: number, configs: ScoreConfig[]): SimStude
 // 成长页右侧面板：规则说明 + 试算
 // ============================================================
 const GrowthSidePanel: React.FC = () => {
-  const [bonusPool, setBonusPool] = useState('300');
+  const [bonusPool, setBonusPool] = useState('200');
   const [classSize, setClassSize] = useState('40');
-  const [myScore, setMyScore] = useState(''); // 我的得分，用于预览所属档位
+  const [myScore, setMyScore] = useState(''); // 我的得分，用于预览预计可得
   // 分数段：字符串存储，避免输入时前置零问题；默认只有一行
   const [configs, setConfigs] = useState<{ score: string; count: string }[]>([
     { score: '10', count: '1' },
@@ -209,10 +190,8 @@ const GrowthSidePanel: React.FC = () => {
     [generated, numericBonus, JSON.stringify(numericConfigs)]
   );
 
-  const tierGroups: Partial<Record<TierLevel, SimStudent[]>> = {};
-  leaderboard.forEach(s => { if (!tierGroups[s.tier]) tierGroups[s.tier] = []; tierGroups[s.tier]!.push(s); });
 
-  // 学生端标杆：取前 3 个分数层，櫳论参与者内部是否同分，只要有人参与就展示标杆
+  // 学生端标杆：取积分前 3 个分数层，展示该层全部学生
   const benchmarkGroups = useMemo(() => {
     if (!generated || leaderboard.length === 0) return [];
     // 按分数降序建立层组
@@ -229,30 +208,22 @@ const GrowthSidePanel: React.FC = () => {
 
   const selfStudent = leaderboard[0] ?? null;
 
-  // 实时预览：根据 我的得分 计算所属档位
-  // 返回类型：null = 未输入/无法计算；{ eligible: false } = ≤0 不参与；{ eligible: true, tier, myReward } = 正分参与
-  const myTierPreview = useMemo(() => {
+  // 实时预览：根据 我的得分 计算预计可得
+  // 返回类型：null = 未输入/无法计算；{ eligible: false } = ≤0 不参与；{ eligible: true, myReward } = 正分参与
+  const myRewardPreview = useMemo(() => {
     const trimmed = myScore.trim();
     if (!trimmed || trimmed === '-') return null; // 空或仅输入负号
     const numScore = Number(trimmed);
     if (!Number.isFinite(numScore)) return null;
     // 得分 ≤ 0：不参与分配
     if (numScore <= 0) return { eligible: false as const };
-    // 得分 > 0：计算档位
-    const validScores = [...new Set(numericConfigs.map(c => c.score).filter(s => s > 0))].sort((a, b) => b - a);
-    if (validScores.length === 0) return { eligible: false as const };
-    const higherCount = validScores.filter(s => s > numScore).length;
-    const tiers: TierLevel[] = ['star', 'active', 'stable', 'improve'];
-    const tier = tiers[Math.min(higherCount, tiers.length - 1)];
-    const totalWeight = numericConfigs.reduce((sum, c) => {
-      if (c.score <= 0 || c.count <= 0) return sum;
-      const higher = validScores.filter(s => s > c.score).length;
-      const t = tiers[Math.min(higher, tiers.length - 1)];
-      return sum + GROWTH_TIER_CONFIG[t].weight * c.count;
-    }, 0);
-    const perUnit = totalWeight > 0 ? numericBonus / totalWeight : 0;
-    const myReward = perUnit * GROWTH_TIER_CONFIG[tier].weight;
-    return { eligible: true as const, tier, myReward };
+    // 得分 > 0：按分数占全班正分的比例计算得分奖励
+    const totalPositiveScore = numericConfigs.reduce((sum, c) => (
+      c.score > 0 && c.count > 0 ? sum + c.score * c.count : sum
+    ), 0);
+    if (totalPositiveScore <= 0) return { eligible: false as const };
+    const myReward = getRankingReward({ rankingPool: numericBonus, score: numScore, totalPositiveScore });
+    return { eligible: true as const, myReward };
   }, [myScore, JSON.stringify(numericConfigs), numericBonus]);
 
   // 配置输入清洗：仅保留正整数·去前导零（允许中间状态 "0"）
@@ -301,10 +272,10 @@ const GrowthSidePanel: React.FC = () => {
           <div className="px-4 pb-4 space-y-2 border-t border-slate-50 pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
             {[
               { icon: '奖', title: '只奖正分', desc: '总分 > 0 才参与奖励分配，0分或负分不参与。' },
-              { icon: '档', title: '分值定档位', desc: '最高分 → 领航之星（×4）；其余按分值高低依次归入卓越先锋（×2.5）、稳步成长（×1.5）、潜力新星（×1）。' },
-              { icon: '同', title: '同分同奖', desc: '分数相同的学生，档位相同，奖励完全一致。' },
-              { icon: '算', title: '奖励计算', desc: '每份金额 = 总奖励金 ÷ 全班总份数。每人奖励 = 档位系数 × 每份金额。' },
-              { icon: '隐', title: '保护隐私', desc: '学生只看"领航之星"标杆 + 自己的档位、得分和预计可得。不显示具体名次和他人金额。' },
+              { icon: '比', title: '按分比例分', desc: '得分奖励 = 积分排行池 × 个人总分 ÷ 全班正分总和，分数越高分到越多。' },
+              { icon: '同', title: '同分同奖', desc: '分数相同的学生，分到的得分奖励完全一致。' },
+              { icon: '算', title: '奖励计算', desc: '积分排行池 = 班级预算 × 积分排行比例，余下预算由阳光保底全班平分。' },
+              { icon: '隐', title: '保护隐私', desc: '学生只看班级标杆（前 3 个分数层）+ 自己的得分和预计可得。不显示具体名次和他人金额。' },
             ].map((item, i) => (
               <div key={i} className="flex gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                 <span className="text-base shrink-0">{item.icon}</span>
@@ -331,7 +302,7 @@ const GrowthSidePanel: React.FC = () => {
           {/* ── 第一行：奖励金额 + 班级人数（并排） ── */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block pl-1">本月排名奖励 (元)</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block pl-1">积分排行池 (校园币)</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -415,36 +386,18 @@ const GrowthSidePanel: React.FC = () => {
               </div>
 
               {/* 三态显示 */}
-              {/* 态 1：正分，展示档位 + 预估奖励 */}
-              {myTierPreview && myTierPreview.eligible && (
-                <div className={`mt-2 flex items-center justify-between px-3 py-2 rounded-xl border ${
-                  myTierPreview.tier === 'star'    ? 'bg-yellow-50 border-yellow-100' :
-                  myTierPreview.tier === 'active'  ? 'bg-purple-50 border-purple-100' :
-                  myTierPreview.tier === 'stable'  ? 'bg-green-50 border-green-100' :
-                  'bg-blue-50 border-blue-100'
-                }`}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">
-                      {GROWTH_TIER_CONFIG[myTierPreview.tier].label.slice(0, 1)}
-                    </span>
-                    <div>
-                      <div className={`text-xs font-black ${GROWTH_TIER_CONFIG[myTierPreview.tier].color}`}>
-                        {GROWTH_TIER_CONFIG[myTierPreview.tier].label}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-medium">系数 ×{GROWTH_TIER_CONFIG[myTierPreview.tier].weight}</div>
-                    </div>
-                  </div>
+              {/* 态 1：正分，展示预估得分奖励 */}
+              {myRewardPreview && myRewardPreview.eligible && (
+                <div className="mt-2 flex items-center justify-between px-3 py-2 rounded-xl border bg-blue-50 border-blue-100">
+                  <div className="text-xs font-black text-blue-600">我的得分奖励</div>
                   {numericBonus > 0 && (
-                    <div className="text-right">
-                      <div className="text-xs font-black text-orange-500 tabular-nums">≈ {myTierPreview.myReward.toFixed(2)}<small className="text-orange-300 ml-0.5">元</small></div>
-                      <div className="text-[10px] text-slate-400">预估奖励</div>
-                    </div>
+                    <div className="text-xs font-black text-orange-500 tabular-nums">≈ {myRewardPreview.myReward.toFixed(2)}<small className="text-orange-300 ml-0.5">校园币</small></div>
                   )}
                 </div>
               )}
 
               {/* 态 2：得分 ≤ 0，显示不参与提示 */}
-              {myTierPreview && !myTierPreview.eligible && (
+              {myRewardPreview && !myRewardPreview.eligible && (
                 <div className="mt-2 flex items-center gap-2 px-3 py-2.5 bg-slate-100 rounded-xl border border-slate-200">
                   <span className="text-base font-black">!</span>
                   <div>
@@ -455,8 +408,8 @@ const GrowthSidePanel: React.FC = () => {
               )}
 
               {/* 态 3：未输入，显示快捷提示 */}
-              {!myTierPreview && (
-                <div className="mt-1.5 text-[11px] text-slate-400 font-medium">输入你的当月总分，立即查看所属档位</div>
+              {!myRewardPreview && (
+                <div className="mt-1.5 text-[11px] text-slate-400 font-medium">输入你的当月总分，立即查看预计可得</div>
               )}
             </div>
           </div>
@@ -509,35 +462,21 @@ const GrowthSidePanel: React.FC = () => {
             {/* Tab 内容：完整排行榜（教师视角） */}
             {activeTab === 'full' && (
               <div className="space-y-3">
-                {(Object.keys(GROWTH_TIER_CONFIG) as TierLevel[]).map(tier => {
-                  const group = tierGroups[tier];
-                  if (!group || group.length === 0) return null;
-                  const cfg = GROWTH_TIER_CONFIG[tier];
-                  return (
-                    <div key={tier}>
-                      <div className={`inline-flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1 rounded-lg border mb-2 ${cfg.color} ${cfg.bg}`}>
-                        {cfg.label}
-                        <span className="opacity-40">|</span>
-                        <span>系数 ×{cfg.weight}</span>
-                      </div>
-                      <div className="space-y-1">
-                        {group.map((s, idx) => (
-                          <div key={idx} className="flex items-center justify-between px-3 py-2.5 bg-white rounded-xl border border-slate-100">
-                            <span className="text-sm font-bold text-slate-700">{s.name}</span>
-                            <div className="text-right">
-                              <div className="text-xs font-black text-slate-500">{s.score}<small className="text-slate-300 font-sans ml-0.5">分</small></div>
-                              {s.reward > 0 ? (
-                                <div className="text-[11px] font-black text-orange-500">预估 {s.reward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5">元</small></div>
-                              ) : (
-                                <div className="text-[10px] text-slate-400 font-bold pt-0.5">无奖励</div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                <div className="space-y-1">
+                  {leaderboard.map((s, idx) => (
+                    <div key={idx} className="flex items-center justify-between px-3 py-2.5 bg-white rounded-xl border border-slate-100">
+                      <span className="text-sm font-bold text-slate-700">{s.name}</span>
+                      <div className="text-right">
+                        <div className="text-xs font-black text-slate-500">{s.score}<small className="text-slate-300 font-sans ml-0.5">分</small></div>
+                        {s.reward > 0 ? (
+                          <div className="text-[11px] font-black text-orange-500">预估 {s.reward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5">校园币</small></div>
+                        ) : (
+                          <div className="text-[10px] text-slate-400 font-bold pt-0.5">无得分奖励</div>
+                        )}
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             )}
 
@@ -579,10 +518,10 @@ const GrowthSidePanel: React.FC = () => {
                                   </div>
                                   {s.reward > 0 ? (
                                     <div className="font-black text-orange-500 text-[11px] tabular-nums">
-                                      预估 {s.reward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5">元</small>
+                                      预估 {s.reward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5">校园币</small>
                                     </div>
                                   ) : (
-                                    <div className="text-[10px] text-slate-400 font-bold pt-0.5">无奖励</div>
+                                    <div className="text-[10px] text-slate-400 font-bold pt-0.5">无得分奖励</div>
                                   )}
                                 </div>
                               </div>
@@ -595,18 +534,14 @@ const GrowthSidePanel: React.FC = () => {
                 )}
 
                 {/* 我的得分：三种状态统一用相同行布局，与截图完全一致 */}
-                {(myTierPreview || selfStudent) && (() => {
+                {(myRewardPreview || selfStudent) && (() => {
                   // 确定显示内容
-                  const isEligible = myTierPreview?.eligible === true;
-                  const isIneligible = myTierPreview?.eligible === false;
-                  const hasTier = isEligible && myTierPreview?.tier;
-                  const displayScore = myTierPreview ? myScore : (selfStudent?.score?.toString() ?? '—');
-                  const displayTier = isEligible && myTierPreview?.tier
-                    ? myTierPreview.tier
-                    : (!myTierPreview && selfStudent ? selfStudent.tier : null);
-                  const displayReward = isEligible && myTierPreview?.myReward !== undefined
-                    ? myTierPreview.myReward
-                    : (!myTierPreview && selfStudent ? selfStudent.reward : null);
+                  const isEligible = myRewardPreview?.eligible === true;
+                  const isIneligible = myRewardPreview?.eligible === false;
+                  const displayScore = myRewardPreview ? myScore : (selfStudent?.score?.toString() ?? '—');
+                  const displayReward = isEligible && myRewardPreview?.myReward !== undefined
+                    ? myRewardPreview.myReward
+                    : (!myRewardPreview && selfStudent ? selfStudent.reward : null);
 
                   return (
                     <div>
@@ -614,7 +549,7 @@ const GrowthSidePanel: React.FC = () => {
                       <div className={`flex items-center justify-between px-3 py-3 rounded-xl border ${
                         isIneligible ? 'bg-slate-50 border-slate-200' : 'bg-blue-50 border-blue-100'
                       }`}>
-                        {/* 左侧：头像 + 名字 + 档位 */}
+                        {/* 左侧：头像 + 名字 */}
                         <div className="flex items-center gap-2.5">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-[11px] shrink-0 shadow-sm ${
                             isIneligible
@@ -628,11 +563,6 @@ const GrowthSidePanel: React.FC = () => {
                               学生1
                               <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-bold">我</span>
                             </div>
-                            {displayTier && (
-                              <div className={`text-[10px] font-black mt-0.5 ${GROWTH_TIER_CONFIG[displayTier].color}`}>
-                                {GROWTH_TIER_CONFIG[displayTier].label}
-                              </div>
-                            )}
                             {isIneligible && (
                               <div className="text-[10px] font-black mt-0.5 text-slate-400">不参与奖励分配</div>
                             )}
@@ -646,11 +576,11 @@ const GrowthSidePanel: React.FC = () => {
                           {displayReward !== null && (
                             <div className="font-black text-orange-500 text-xs tabular-nums flex items-center gap-1 justify-end">
                               <span className="text-slate-400 font-medium text-[10px]">预估</span>
-                              {displayReward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5">元</small>
+                              {displayReward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5">校园币</small>
                             </div>
                           )}
                           {isIneligible && (
-                            <div className="text-[10px] text-slate-400 font-medium">无奖励</div>
+                            <div className="text-[10px] text-slate-400 font-medium">无得分奖励</div>
                           )}
                         </div>
                       </div>
@@ -741,7 +671,6 @@ const TerminalApp: React.FC<{
 
   // admin login state
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [adminAction, setAdminAction] = useState<'restock' | 'restart' | null>(null);
   const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
 
@@ -833,12 +762,7 @@ const TerminalApp: React.FC<{
       setShowAdminLogin(false);
       setAdminPassword('');
       setLoginError(false);
-
-      if (adminAction === 'restart') {
-        window.location.reload();
-      } else {
-        navigateTo('vending-admin');
-      }
+      navigateTo('vending-admin');
     } else {
       setLoginError(true);
       setTimeout(() => setLoginError(false), 2000);
@@ -1162,20 +1086,13 @@ const TerminalApp: React.FC<{
     >
       {/* 登录页管理员入口 */}
       {view === 'welcome' && isVending && (
-        <div className="absolute top-6 right-6 z-[110] flex gap-3">
+        <div className="absolute top-6 right-6 z-[110]">
           <button
-            onClick={() => { setAdminAction('restock'); setShowAdminLogin(true); }}
+            onClick={() => { setShowAdminLogin(true); }}
             className="bg-white/50 backdrop-blur-md p-3 rounded-2xl flex items-center justify-center text-slate-400 active:scale-95 transition-all outline-none border border-white/60 shadow-sm"
             title="设备维护"
           >
             <Settings size={24} className="text-slate-600 drop-shadow-sm" />
-          </button>
-          <button
-            onClick={() => { setAdminAction('restart'); setShowAdminLogin(true); }}
-            className="bg-white/50 backdrop-blur-md p-3 rounded-2xl flex items-center justify-center text-red-400 active:scale-95 transition-all outline-none border border-white/60 shadow-sm"
-            title="重启设备"
-          >
-            <Power size={24} className="text-red-600 drop-shadow-sm" />
           </button>
         </div>
       )}
@@ -1188,7 +1105,7 @@ const TerminalApp: React.FC<{
               <ShieldCheck size={40} />
             </div>
             <h2 className="text-2xl font-black text-slate-800 tracking-tight">管理员验证</h2>
-            <p className="text-slate-400 font-bold mb-6 text-xs mt-1 tracking-widest">{adminAction === 'restart' ? '重启设备需要密码授权' : '设备维护需要密码授权'}</p>
+            <p className="text-slate-400 font-bold mb-6 text-xs mt-1 tracking-widest">设备维护需要密码授权</p>
 
             <input
               type="password"
@@ -1203,7 +1120,7 @@ const TerminalApp: React.FC<{
             </div>
 
             <div className="flex w-full gap-3">
-              <button onClick={() => { setShowAdminLogin(false); setAdminPassword(''); setLoginError(false); setAdminAction(null); }} className="flex-1 py-3.5 bg-slate-100 text-slate-500 rounded-xl font-black active:bg-slate-200 transition-colors">取消</button>
+              <button onClick={() => { setShowAdminLogin(false); setAdminPassword(''); setLoginError(false); }} className="flex-1 py-3.5 bg-slate-100 text-slate-500 rounded-xl font-black active:bg-slate-200 transition-colors">取消</button>
               <button onClick={handleAdminLogin} className="flex-1 py-3.5 bg-blue-600 text-white rounded-xl font-black shadow-lg shadow-blue-600/20 active:bg-blue-700 transition-colors">验证登录</button>
             </div>
           </div>
@@ -1304,14 +1221,13 @@ const TerminalApp: React.FC<{
       {/* 全局 Loading 拦截层 */}
       {isLoading && (
         <div
-          className="absolute inset-0 z-[100] bg-white/45 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
+          className="absolute inset-0 z-[100] bg-slate-900/20 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-200"
           role="status"
           aria-live="polite"
           aria-label="处理中"
         >
-          <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center">
-            <Loader />
-            <div className="-mt-2 text-lg font-black text-orange-950">处理中...</div>
+          <div className="bg-white/95 backdrop-blur-md px-8 py-6 rounded-3xl shadow-2xl border border-slate-100 flex flex-col items-center justify-center min-w-[130px]">
+            <Loader text="处理中..." size={40} />
           </div>
         </div>
       )}
@@ -1509,6 +1425,9 @@ const AppSwitcher: React.FC = () => {
   const [studentLoginPreviewMode, setStudentLoginPreviewMode] = useState<StudentLoginPreviewMode>('password-only');
   const [terminalView, setTerminalView] = useState<ViewState>('welcome');
   const [terminalPreviewDockLeft, setTerminalPreviewDockLeft] = useState<number | null>(null);
+  const [shopLayoutPresetId, setShopLayoutPresetId] = useState<TerminalShopLayoutPresetId>(() => (
+    readTerminalShopLayoutPresetId()
+  ));
   const [showPhoneShell, setShowPhoneShell] = useState(true);
   const [teacherGradientScheme, setTeacherGradientScheme] = useState<TeacherGradientSchemeId>(defaultTeacherGradientPreview.schemeId);
   const [teacherGradientStyle, setTeacherGradientStyle] = useState<TeacherGradientStyleId>(defaultTeacherGradientPreview.styleId);
@@ -1611,6 +1530,10 @@ const AppSwitcher: React.FC = () => {
       window.removeEventListener('storage', refreshParentBankFeature);
     };
   }, [parentPreviewClassId]);
+
+  const updateShopLayoutPresetId = (presetId: TerminalShopLayoutPresetId) => {
+    setShopLayoutPresetId(writeTerminalShopLayoutPresetId(presetId));
+  };
 
   const updateParentEvaluationVisibility = (settings: ParentEvaluationVisibilitySettings) => {
     setParentEvaluationVisibility(writeParentEvaluationVisibility(parentPreviewClassId, settings));
@@ -1915,6 +1838,12 @@ const AppSwitcher: React.FC = () => {
               <ParentEvaluationVisibilityPreviewControls
                 settings={parentEvaluationVisibility}
                 onChange={updateParentEvaluationVisibility}
+              />
+            )}
+            {terminalView === 'shop' && (
+              <TerminalShopLayoutPreviewControls
+                value={shopLayoutPresetId}
+                onChange={updateShopLayoutPresetId}
               />
             )}
           </div>

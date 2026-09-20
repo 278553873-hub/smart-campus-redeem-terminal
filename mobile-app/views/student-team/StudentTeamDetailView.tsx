@@ -8,7 +8,7 @@ import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import MobileConfirmSheet from '../../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
-import MobileSettingsSwitchRow from '../../components/ui/MobileSettingsSwitchRow';
+import CardLevelDisplaySettings from '../../components/student-performance/CardLevelDisplaySettings';
 import CardEvaluationDisplaySettings from '../../components/student-performance/CardEvaluationDisplaySettings';
 import { ASSETS } from '../../assets/images';
 import { createDemoStudentPerformanceSummary, type StudentPerformanceSummary } from '../../domain/studentPerformance';
@@ -172,7 +172,7 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
       <div className="student-action-row sticky top-0 z-10 flex min-h-[52px] shrink-0 items-center gap-1.5 bg-[var(--tm-bg-surface)] px-4 py-1">
         <div className={`relative text-left transition-all duration-300 ease-out ${isSelectionMode ? 'w-11 flex-none opacity-70' : 'min-w-0 flex-1 opacity-100'}`}>
           {isSelectionMode ? (
-            <button type="button" onClick={onToggleSelectionMode} aria-label="恢复搜索" className="flex h-11 w-11 items-center justify-center rounded-full transition active:scale-95">
+            <button type="button" onClick={onToggleSelectionMode} aria-label="恢复搜索" className="flex h-11 w-11 items-center justify-center rounded-full">
               <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--tm-border-subtle)] bg-white [box-shadow:var(--tm-shadow-control)]"><SearchIcon className="h-4 w-4 text-[var(--tm-text-disabled)]" /></span>
             </button>
           ) : (
@@ -183,13 +183,13 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
         <div className="selection-tools-next-to-cancel ml-auto flex shrink-0 items-center gap-1">
           {isSelectionMode && (
             <>
-              <button type="button" onClick={isAllVisibleSelected ? clearVisible : selectAllVisible} className="flex min-h-11 shrink-0 items-center justify-center p-0 text-[13px] font-semibold text-[var(--tm-text-secondary)] transition active:scale-95"><span className="inline-flex h-8 items-center justify-center rounded-full border border-[var(--tm-border-subtle)] bg-white px-3 [box-shadow:var(--tm-shadow-control)]">{isAllVisibleSelected ? '取消全选' : '全选'}</span></button>
-              <button type="button" onClick={invertVisible} className="flex min-h-11 shrink-0 items-center justify-center p-0 text-[13px] font-semibold text-[var(--tm-text-secondary)] transition active:scale-95"><span className="inline-flex h-8 items-center justify-center rounded-full border border-[var(--tm-border-subtle)] bg-white px-3 [box-shadow:var(--tm-shadow-control)]">反选</span></button>
-              <button type="button" onClick={() => toggleGender('male')} aria-label={isMaleQuickSelectionActive ? '取消全选男生' : '全选男生'} aria-pressed={isMaleQuickSelectionActive} className="flex h-11 w-11 shrink-0 items-center justify-center transition active:scale-95"><span className={`flex h-8 w-10 items-center justify-center rounded-full border transition-colors [transition-duration:var(--tm-duration-standard)] [box-shadow:var(--tm-shadow-control)] ${isMaleQuickSelectionActive ? 'border-[var(--tm-gender-male-selection-bg)] bg-[var(--tm-gender-male-selection-bg)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-gender-male)]'}`}><MaleIcon className="h-4 w-4" /></span></button>
-              <button type="button" onClick={() => toggleGender('female')} aria-label={isFemaleQuickSelectionActive ? '取消全选女生' : '全选女生'} aria-pressed={isFemaleQuickSelectionActive} className="flex h-11 w-11 shrink-0 items-center justify-center transition active:scale-95"><span className={`flex h-8 w-10 items-center justify-center rounded-full border transition-colors [transition-duration:var(--tm-duration-standard)] [box-shadow:var(--tm-shadow-control)] ${isFemaleQuickSelectionActive ? 'border-[var(--tm-gender-female-selection-bg)] bg-[var(--tm-gender-female-selection-bg)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-gender-female)]'}`}><FemaleIcon className="h-4 w-4" /></span></button>
+              <button type="button" onClick={isAllVisibleSelected ? clearVisible : selectAllVisible} className="flex min-h-11 shrink-0 items-center justify-center p-0 text-[13px] font-semibold text-[var(--tm-text-secondary)]"><span className="inline-flex h-8 items-center justify-center rounded-full border border-[var(--tm-border-subtle)] bg-white px-3 [box-shadow:var(--tm-shadow-control)]">{isAllVisibleSelected ? '取消全选' : '全选'}</span></button>
+              <button type="button" onClick={invertVisible} className="flex min-h-11 shrink-0 items-center justify-center p-0 text-[13px] font-semibold text-[var(--tm-text-secondary)]"><span className="inline-flex h-8 items-center justify-center rounded-full border border-[var(--tm-border-subtle)] bg-white px-3 [box-shadow:var(--tm-shadow-control)]">反选</span></button>
+              <button type="button" onClick={() => toggleGender('male')} aria-label={isMaleQuickSelectionActive ? '取消全选男生' : '全选男生'} aria-pressed={isMaleQuickSelectionActive} className="flex h-11 w-11 shrink-0 items-center justify-center"><span className={`flex h-8 w-10 items-center justify-center rounded-full border transition-colors [transition-duration:var(--tm-duration-standard)] [box-shadow:var(--tm-shadow-control)] ${isMaleQuickSelectionActive ? 'border-[var(--tm-gender-male-selection-bg)] bg-[var(--tm-gender-male-selection-bg)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-gender-male)]'}`}><MaleIcon className="h-4 w-4" /></span></button>
+              <button type="button" onClick={() => toggleGender('female')} aria-label={isFemaleQuickSelectionActive ? '取消全选女生' : '全选女生'} aria-pressed={isFemaleQuickSelectionActive} className="flex h-11 w-11 shrink-0 items-center justify-center"><span className={`flex h-8 w-10 items-center justify-center rounded-full border transition-colors [transition-duration:var(--tm-duration-standard)] [box-shadow:var(--tm-shadow-control)] ${isFemaleQuickSelectionActive ? 'border-[var(--tm-gender-female-selection-bg)] bg-[var(--tm-gender-female-selection-bg)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-gender-female)]'}`}><FemaleIcon className="h-4 w-4" /></span></button>
             </>
           )}
-          <button type="button" onClick={() => { if (!isSelectionMode) setQuery(''); onToggleSelectionMode(); }} className={`min-h-11 shrink-0 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold transition active:scale-95 ${isSelectionMode ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-primary)]'}`}>{isSelectionMode ? '取消' : '多选'}</button>
+          <button type="button" onClick={() => { if (!isSelectionMode) setQuery(''); onToggleSelectionMode(); }} className={`min-h-11 shrink-0 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold ${isSelectionMode ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-primary)]'}`}>{isSelectionMode ? '取消' : '多选'}</button>
           {!isSelectionMode && (students.length > 0 || canManage) && (
             <button type="button" onClick={() => setShowMore(true)} aria-label="学生更多操作" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-primary)]">
               <MenuIcon className="h-5 w-5" />
@@ -235,14 +235,11 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
 
       <MobileBottomSheet open={showCardSettings} title="学生卡片展示" onClose={() => setShowCardSettings(false)}>
         <div className="space-y-[var(--tm-space-4)] pb-2">
-          <div role="group" aria-label="等级展示设置" className="space-y-[var(--tm-space-1)]">
-            <MobileSettingsSwitchRow
-              label="显示等级"
-              checked={displaySettings.showLevel}
-              onChange={showLevel => setDisplaySettings(current => ({ ...current, showLevel }))}
-              surface="plain"
-            />
-          </div>
+          <CardLevelDisplaySettings
+            showLevel={displaySettings.showLevel}
+            levelForm={displaySettings.levelForm}
+            onChange={({ showLevel, levelForm }) => setDisplaySettings(current => ({ ...current, showLevel, levelForm }))}
+          />
           <CardEvaluationDisplaySettings
             settings={displaySettings}
             onChange={settings => setDisplaySettings(current => ({ ...current, ...settings }))}

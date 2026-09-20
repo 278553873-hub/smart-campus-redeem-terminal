@@ -95,7 +95,8 @@ export type CampusCoinIssueRecord = CampusCoinIssueRecordBase & (
   | { category: 'class_reward' | 'bank_interest'; detail: string }
 );
 
-export type CampusCoinExpenseCategory = 'vending_exchange' | 'class_exchange';
+// manual_clear = 手动清空可用成长币；bank_clear = 手动清空已存（银行）成长币；两者都计入支出流水，便于学生和家长追溯。
+export type CampusCoinExpenseCategory = 'vending_exchange' | 'class_exchange' | 'manual_clear' | 'bank_clear';
 
 export interface CampusCoinConsumeRecord {
   id: string;
@@ -145,6 +146,8 @@ export type StudentLevelDisplayMode = 'term' | 'cumulative';
 
 export type EvaluationCardValueMode = 'count' | 'score';
 
+export type StudentLevelForm = 'icon' | 'score';
+
 export interface EvaluationCardDisplaySettings {
   showEvaluation: boolean;
   showPraise: boolean;
@@ -154,6 +157,7 @@ export interface EvaluationCardDisplaySettings {
 
 export interface StudentCardDisplaySettings extends EvaluationCardDisplaySettings {
   showLevel: boolean;
+  levelForm: StudentLevelForm;
 }
 
 export interface GroupCardDisplaySettings extends EvaluationCardDisplaySettings {}
@@ -168,7 +172,6 @@ export interface ClassInfo {
   educationStage?: EducationStage;
   admissionYear?: number;
   classNumber?: number;
-  studentLevelDisplayMode?: StudentLevelDisplayMode;
   studentCardDisplaySettings?: StudentCardDisplaySettings;
   groupCardDisplaySettings?: GroupCardDisplaySettings;
   parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;

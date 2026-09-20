@@ -28,6 +28,27 @@ import {
     type TeacherCampaignPage,
     type TeacherCampaignPublishStatus,
 } from '../mobile-app/data/teacherCampaigns';
+import {
+    clampChannelStock,
+    getChannelCapacity,
+    isChannelStockWarning,
+    isSingleItemChannel,
+} from '../shared/vendingChannelCapacity';
+import { DEFAULT_PRODUCT_IMAGE, getProductImageUrlScale } from '../shared/productImage';
+import { MOCK_PRODUCTS } from '../constants';
+import {
+    ALL_CATEGORY_ID,
+    canDeleteShopCategory,
+    countShopCategoryProducts,
+    getShopCategoryName,
+    getShopCategoryPickerOptions,
+    getShopProductCategoryId,
+    SHOP_CATEGORY_NAME_MAX_LENGTH,
+    validateShopCategoryName,
+    type ShopCategory,
+} from '../shared/productCategory';
+import { runShopCatalogAction } from '../shared/shopCatalogStore';
+import { useShopCatalog } from './useShopCatalog';
 
 interface TeacherDashboardProps {
     onNavigateBigScreen?: () => void;
@@ -35,6 +56,13 @@ interface TeacherDashboardProps {
 }
 
 const TEACHER_CAMPAIGN_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,image/apng';
+
+/**
+ * 商品 id 统一按字符串比较。
+ * 商品管理的商品 id 是 constants.tsx 里的字符串（如 's3'、'7'），
+ * 货道里历史演示数据存的是数字，直接 === 会让「已配置商品」的货道看起来是空的。
+ */
+const isSameProductId = (a: unknown, b: unknown): boolean => String(a ?? '') === String(b ?? '');
 
 interface GradeExamRow {
     id: number;
@@ -1736,16 +1764,32 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     };
 
     // 货柜商品管理状态
-    const [shopActiveTab, setShopActiveTab] = useState<'products' | 'channels'>('channels');
-    const [shopProducts, setShopProducts] = useState([
-        { id: 1, name: '校庆限量徽章', price: 5, icon: '/assets/shop/shop_badge.png', active: true },
-        { id: 2, name: '星光书包', price: 150, icon: '/assets/shop/shop_backpack.png', active: true },
-        { id: 3, name: '定制刻字钢笔', price: 120, icon: '/assets/shop/shop_pen.png', active: true },
-        { id: 4, name: '智能成长笔记本', price: 15, icon: '/assets/shop/shop_notebook.png', active: true },
-    ]);
+    const [shopActiveTab, setShopActiveTab] = useState<'products' | 'categories' | 'channels'>('channels');
+    // 分类表与商品归属由 shared/shopCatalogStore 维护，后台改完终端标签行立刻生效
+    const shopCatalog = useShopCatalog();
+    const shopCategories = shopCatalog.categories;
+    const shopProductCategories = shopCatalog.productCategories;
+    const [shopCategoryFilter, setShopCategoryFilter] = useState<string>(ALL_CATEGORY_ID);
+    const [draggedShopCategoryId, setDraggedShopCategoryId] = useState<string | null>(null);
+    const [isShopCategoryModalOpen, setIsShopCategoryModalOpen] = useState(false);
+    const [editingShopCategory, setEditingShopCategory] = useState<ShopCategory | null>(null);
+    const [shopCategoryNameInput, setShopCategoryNameInput] = useState('');
+    const [shopCategoryNameError, setShopCategoryNameError] = useState('');
+    const [shopCategoryInput, setShopCategoryInput] = useState<string>('');
+    // 商品管理与终端是同一份数据：直接取 constants.tsx 里学校实际在售的商品，后台配完终端就对得上
+    const [shopProducts, setShopProducts] = useState(() => MOCK_PRODUCTS
+        .filter(product => product.type === 'standard')
+        .map(product => ({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            icon: product.image?.trim() || DEFAULT_PRODUCT_IMAGE,
+            active: true,
+            category: product.category ?? '',
+        })));
     const [shopProductStatusFilter, setShopProductStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
-    // 生成单套标准 49 格拟真货道模板
+    // 生成单套标准 49 格拟真货道模板（演示货道里的商品 id 取自商品管理，保证货道上显示的就是商品库里的商品）
     const createRealisticChannelsForDevice = (preset: '1F' | '2F' | '3F' = '1F') => {
         const list: Array<{
             id: number;
@@ -1755,7 +1799,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             col: number;
             type: string;
             subTypeLabel: string;
-            productId: number | null;
+            productId: string | null;
             stock: number;
             maxStock?: number;
         }> = [];
@@ -1764,15 +1808,15 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         // 第1排: 5个挂钩货道 (id: 1..5)
         for (let c = 1; c <= 5; c++) {
             const id = list.length + 1;
-            let pId: number | null = null;
+            let pId: string | null = null;
             let st = 0;
             if (preset === '1F') {
-                if (id === 1) { pId = 3; st = 6; }
-                if (id === 2) { pId = 1; st = 3; } // 库存告急
+                if (id === 1) { pId = "6"; st = 6; }
+                if (id === 2) { pId = "1"; st = 3; } // 库存告急
             } else if (preset === '2F') {
-                if (id === 1) { pId = 1; st = 8; }
+                if (id === 1) { pId = "1"; st = 8; }
             } else if (preset === '3F') {
-                if (id === 2) { pId = 3; st = 9; }
+                if (id === 2) { pId = "6"; st = 9; }
             }
             list.push({
                 id,
@@ -1789,15 +1833,15 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         // 第2排: 7个弹簧货道 (id: 6..12)
         for (let c = 1; c <= 7; c++) {
             const id = list.length + 1;
-            let pId: number | null = null;
+            let pId: string | null = null;
             let st = 0;
             if (preset === '1F') {
-                if (id === 8) { pId = 4; st = 8; }
+                if (id === 8) { pId = "5"; st = 8; }
             } else if (preset === '2F') {
-                if (id === 7) { pId = 4; st = 3; } // 库存告急
-                if (id === 8) { pId = 4; st = 9; }
+                if (id === 7) { pId = "5"; st = 3; } // 库存告急
+                if (id === 8) { pId = "5"; st = 9; }
             } else if (preset === '3F') {
-                if (id === 9) { pId = 1; st = 7; }
+                if (id === 9) { pId = "1"; st = 7; }
             }
             list.push({
                 id,
@@ -1814,14 +1858,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         // 第3排: 5个推杆货道 (id: 13..17)
         for (let c = 1; c <= 5; c++) {
             const id = list.length + 1;
-            let pId: number | null = null;
+            let pId: string | null = null;
             let st = 0;
             if (preset === '1F') {
-                if (id === 14) { pId = 1; st = 5; }
+                if (id === 14) { pId = "1"; st = 5; }
             } else if (preset === '2F') {
-                if (id === 13) { pId = 3; st = 6; }
+                if (id === 13) { pId = "6"; st = 6; }
             } else if (preset === '3F') {
-                if (id === 15) { pId = 4; st = 10; }
+                if (id === 15) { pId = "5"; st = 10; }
             }
             list.push({
                 id,
@@ -1882,18 +1926,19 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         }
 
         // 右机（智能副柜 800mm，共 19 个电子锁储物柜）
+        // 右柜为电子锁单件格口，每格最多放 1 件，演示数据只使用 0（缺货告急）与 1（满格）
         // 第1排: 2个电子锁大格 (id: 31..32)
         for (let c = 1; c <= 2; c++) {
             const id = list.length + 1;
-            let pId: number | null = null;
+            let pId: string | null = null;
             let st = 0;
             if (preset === '1F') {
-                if (id === 31) { pId = 2; st = 2; } // 库存告急
+                if (id === 31) { pId = "s2"; st = 0; } // 缺货告急
             } else if (preset === '2F') {
-                if (id === 31) { pId = 2; st = 4; } // 库存告急
+                if (id === 31) { pId = "s2"; st = 0; } // 缺货告急
             } else if (preset === '3F') {
-                if (id === 31) { pId = 2; st = 1; } // 库存告急
-                if (id === 32) { pId = 2; st = 3; } // 库存告急
+                if (id === 31) { pId = "s2"; st = 0; } // 缺货告急
+                if (id === 32) { pId = "s2"; st = 1; }
             }
             list.push({
                 id,
@@ -1940,12 +1985,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         // 第4排: 10个电子锁立式窄格 (id: 37..46)
         for (let c = 1; c <= 10; c++) {
             const id = list.length + 1;
-            let pId: number | null = null;
+            let pId: string | null = null;
             let st = 0;
             if (preset === '1F') {
-                if (id === 39) { pId = 3; st = 4; } // 库存告急
+                if (id === 39) { pId = "6"; st = 0; } // 缺货告急
             } else if (preset === '3F') {
-                if (id === 40) { pId = 3; st = 6; }
+                if (id === 40) { pId = "6"; st = 1; }
             }
             list.push({
                 id,
@@ -1962,12 +2007,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         // 第5排: 3个电子锁中格 (id: 47..49)
         for (let c = 1; c <= 3; c++) {
             const id = list.length + 1;
-            let pId: number | null = null;
+            let pId: string | null = null;
             let st = 0;
             if (preset === '1F') {
-                if (id === 48) { pId = 4; st = 7; }
+                if (id === 48) { pId = "5"; st = 1; }
             } else if (preset === '2F') {
-                if (id === 47) { pId = 3; st = 5; }
+                if (id === 47) { pId = "6"; st = 1; }
             }
             list.push({
                 id,
@@ -1982,7 +2027,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             });
         }
 
-        return list.map(channel => ({ ...channel, maxStock: 10 }));
+        // 容量按柜体推导：左柜出货货道 10 件，右柜电子锁储物格 1 件
+        return list.map(channel => ({ ...channel, maxStock: getChannelCapacity(channel) }));
     };
 
     // 设备机型模板库定义
@@ -2160,7 +2206,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 const tmpl = vendingDevices.find(d => d.id === deviceFormData.templateDevId) || vendingDevices[0];
                 newChannels = (tmpl?.channels || createRealisticChannelsForDevice('1F')).map(c => ({
                     ...c,
-                    stock: c.productId ? 10 : 0
+                    stock: c.productId ? getChannelCapacity(c) : 0
                 }));
             }
 
@@ -2482,8 +2528,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
     const handleOpenShopModal = (product: any = null) => {
         setEditingShopProduct(product);
-        setModalIcon(product?.icon || '/assets/c4d_shop.png');
+        setModalIcon(product?.icon || DEFAULT_PRODUCT_IMAGE);
         setShopPriceInput(product ? Number(product.price).toFixed(2) : '10.00');
+        setShopCategoryInput(product ? getShopProductCategoryId(product, shopProductCategories) : (shopCategories[0]?.id ?? ''));
         setIsShopModalOpen(true);
     };
 
@@ -2493,13 +2540,68 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     };
 
     const handleSaveShopProduct = (productData: any) => {
+        const productId = String(productData.id ?? Date.now());
         if (editingShopProduct) {
-            setShopProducts(shopProducts.map(p => p.id === productData.id ? productData : p));
+            setShopProducts(shopProducts.map(p => (isSameProductId(p.id, productId) ? { ...productData, id: productId, active: p.active } : p)));
         } else {
-            setShopProducts([{ ...productData, id: Date.now(), active: true }, ...shopProducts]);
+            setShopProducts([{ ...productData, id: productId, active: true }, ...shopProducts]);
+        }
+        // 分类归属落在共享数据里：货柜机的分类标签行立刻跟着变
+        if (productData.category) {
+            runShopCatalogAction({ type: 'assignProductCategory', productId, categoryId: productData.category });
         }
         setIsShopModalOpen(false);
         setEditingShopProduct(null);
+    };
+
+
+    const handleOpenShopCategoryModal = (category: ShopCategory | null = null) => {
+        setEditingShopCategory(category);
+        setShopCategoryNameInput(category?.name ?? '');
+        setShopCategoryNameError('');
+        setIsShopCategoryModalOpen(true);
+    };
+
+    const handleSaveShopCategory = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const error = validateShopCategoryName(shopCategoryNameInput, shopCategories, editingShopCategory?.id);
+        if (error) {
+            setShopCategoryNameError(error);
+            return;
+        }
+        runShopCatalogAction(editingShopCategory
+            ? { type: 'renameCategory', categoryId: editingShopCategory.id, name: shopCategoryNameInput }
+            : { type: 'createCategory', name: shopCategoryNameInput });
+        setIsShopCategoryModalOpen(false);
+        setEditingShopCategory(null);
+    };
+
+    // 拖动排序：把分类挪到落下那一行的位置，松手即落盘并同步给货柜机
+    const handleReorderShopCategory = (categoryId: string, toIndex: number) => {
+        if (!categoryId) return;
+        runShopCatalogAction({ type: 'reorderCategory', categoryId, toIndex });
+    };
+
+    const handleDropShopCategory = (toIndex: number) => {
+        if (!draggedShopCategoryId) return;
+        handleReorderShopCategory(draggedShopCategoryId, toIndex);
+        setDraggedShopCategoryId(null);
+    };
+
+    const handleToggleShopCategoryEnabled = (categoryId: string, enabled: boolean) => {
+        runShopCatalogAction({ type: 'setCategoryEnabled', categoryId, enabled });
+    };
+
+    // 分类下有商品时不能删：先让老师把商品挪走，避免商品变成没有归属的孤儿数据
+    const handleDeleteShopCategory = (categoryId: string) => {
+        const deleteCheck = canDeleteShopCategory(categoryId, shopProducts, shopCategories, shopProductCategories);
+        if (!deleteCheck.allowed) {
+            Message.warning(deleteCheck.reason);
+            return;
+        }
+        runShopCatalogAction({ type: 'removeCategory', categoryId });
+        if (shopCategoryFilter === categoryId) setShopCategoryFilter(ALL_CATEGORY_ID);
+        Message.success('分类已删除');
     };
 
     const handleSaveChannel = (channelData: any) => {
@@ -2516,7 +2618,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             ...dev,
             channels: dev.channels.map((channel, index) => (
                 index >= offset && index < offset + count && channel.productId !== null
-                    ? { ...channel, stock: channel.maxStock || 10 }
+                    ? { ...channel, stock: getChannelCapacity(channel) }
                     : channel
             ))
         } : dev));
@@ -2527,7 +2629,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         const targetDev = vendingDevices.find(d => d.id === deviceId);
         setVendingDevices(prev => prev.map(dev => dev.id === deviceId ? {
             ...dev,
-            channels: dev.channels.map(c => c.productId !== null ? { ...c, stock: c.maxStock || 10 } : c)
+            channels: dev.channels.map(c => c.productId !== null ? { ...c, stock: getChannelCapacity(c) } : c)
         } : dev));
         Message.success(`已成功补满【${targetDev?.name || '当前设备'}】的所有货道！`);
     };
@@ -2535,17 +2637,17 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const handleFillAllDevices = () => {
         setVendingDevices(prev => prev.map(dev => ({
             ...dev,
-            channels: dev.channels.map(c => c.productId !== null ? { ...c, stock: c.maxStock || 10 } : c)
+            channels: dev.channels.map(c => c.productId !== null ? { ...c, stock: getChannelCapacity(c) } : c)
         })));
         Message.success('已补满全校 3 台货柜的所有货道！');
     };
 
-    const handleDeleteShopProduct = (id: number) => {
-        setShopProducts(shopProducts.filter(p => p.id !== id));
+    const handleDeleteShopProduct = (id: string) => {
+        setShopProducts(shopProducts.filter(p => !isSameProductId(p.id, id)));
         // clear from all devices' channels
         setVendingDevices(prev => prev.map(dev => ({
             ...dev,
-            channels: dev.channels.map(c => c.productId === id ? { ...c, productId: null, stock: 0 } : c)
+            channels: dev.channels.map(c => (isSameProductId(c.productId, id) ? { ...c, productId: null, stock: 0 } : c))
         })));
     };
 
@@ -2564,8 +2666,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     ...ch,
                     productId: src.productId,
                     stock: copyMode === 'with_stock'
-                        ? (src.productId ? (src.maxStock || 10) : 0)
-                        : (src.productId ? Math.min(ch.stock, src.maxStock || 10) : 0)
+                        ? (src.productId ? getChannelCapacity(ch) : 0)
+                        : (src.productId ? Math.min(ch.stock, getChannelCapacity(ch)) : 0)
                 };
             });
             return { ...dev, channels: newChannels };
@@ -2578,8 +2680,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     // 全校补货汇总清单数据
     const restockSummaryList = shopProducts.map(product => {
         const devDetails = vendingDevices.map(device => {
-            const productChannels = device.channels.filter(c => c.productId === product.id);
-            const capacity = productChannels.reduce((sum, c) => sum + (c.maxStock || 10), 0);
+            const productChannels = device.channels.filter(c => isSameProductId(c.productId, product.id));
+            const capacity = productChannels.reduce((sum, c) => sum + getChannelCapacity(c), 0);
             const currentStock = productChannels.reduce((sum, c) => sum + c.stock, 0);
             const shortage = Math.max(0, capacity - currentStock);
             return { deviceId: device.id, deviceName: device.name, capacity, currentStock, shortage };
@@ -2596,22 +2698,25 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         };
     }).filter(item => item.totalCapacity > 0);
 
-    const handleToggleShopProductStatus = (id: number) => {
-        setShopProducts(shopProducts.map(product => product.id === id ? { ...product, active: !product.active } : product));
+    const handleToggleShopProductStatus = (id: string) => {
+        setShopProducts(shopProducts.map(product => (isSameProductId(product.id, id) ? { ...product, active: !product.active } : product)));
     };
 
-    const filteredShopProducts = shopProducts.filter(product => (
-        shopProductStatusFilter === 'all'
-        || (shopProductStatusFilter === 'active' && product.active)
-        || (shopProductStatusFilter === 'inactive' && !product.active)
-    ));
+    const filteredShopProducts = shopProducts.filter(product => {
+        const matchesStatus = shopProductStatusFilter === 'all'
+            || (shopProductStatusFilter === 'active' && product.active)
+            || (shopProductStatusFilter === 'inactive' && !product.active);
+        if (!matchesStatus) return false;
+        if (shopCategoryFilter === ALL_CATEGORY_ID) return true;
+        return getShopProductCategoryId(product, shopProductCategories) === shopCategoryFilter;
+    });
 
     const renderChannelPreviewSlot = (channel: typeof channels[number], compact = false, stretchHeight = false) => {
-        const product = shopProducts.find(item => item.id === channel.productId);
+        const product = shopProducts.find(item => isSameProductId(item.id, channel.productId));
         const isNarrowLocker = channel.subTypeLabel === '第4排·窄格';
         const isLargeLocker = channel.subTypeLabel?.includes('大格');
-        const maxStock = channel.maxStock || 10;
-        const stockStatus = !product ? 'empty' : channel.stock === 0 ? 'empty' : channel.stock < 5 ? 'warning' : 'healthy';
+        const maxStock = getChannelCapacity(channel);
+        const stockStatus = !product ? 'empty' : channel.stock === 0 ? 'empty' : isChannelStockWarning(channel) ? 'warning' : 'healthy';
         const slotSizeClass = isNarrowLocker
             ? compact
                 ? 'min-h-[96px] px-1 py-1'
@@ -2674,6 +2779,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 {product ? (
                     <>
                         <img
+                            style={{ scale: getProductImageUrlScale(product.icon) }}
                             src={product.icon}
                             alt={`${product.name}商品图`}
                             className={`${productImageClass} object-contain transition-transform group-hover:scale-105`}
@@ -2909,8 +3015,18 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         onClick={() => setShopActiveTab('products')}
                                         className={`relative h-11 text-sm ${shopActiveTab === 'products' ? 'font-medium text-[#165DFF]' : 'text-[#4E5969] hover:text-[#1D2129]'}`}
                                     >
-                                        基础商品库
+                                        商品管理
                                         {shopActiveTab === 'products' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#165DFF]" />}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={shopActiveTab === 'categories'}
+                                        onClick={() => setShopActiveTab('categories')}
+                                        className={`relative h-11 text-sm ${shopActiveTab === 'categories' ? 'font-medium text-[#165DFF]' : 'text-[#4E5969] hover:text-[#1D2129]'}`}
+                                    >
+                                        分类管理
+                                        {shopActiveTab === 'categories' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#165DFF]" />}
                                     </button>
                                 </div>
                             )}
@@ -3126,6 +3242,17 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 style={{ width: 160 }}
                                                 aria-label="商品上架状态筛选"
                                             />
+                                            <span className="text-sm text-[#4E5969]">商品分类</span>
+                                            <ArcoSelect
+                                                allowClear
+                                                showSearch
+                                                placeholder="全部分类"
+                                                value={shopCategoryFilter === ALL_CATEGORY_ID ? undefined : shopCategoryFilter}
+                                                options={shopCategories.map(category => ({ label: category.name, value: category.id }))}
+                                                onChange={(value) => setShopCategoryFilter(value ? String(value) : ALL_CATEGORY_ID)}
+                                                style={{ width: 200 }}
+                                                aria-label="商品分类筛选"
+                                            />
                                         </div>
                                         <Button type="primary" className="shop-product-create-button" icon={<Plus size={14} />} onClick={() => handleOpenShopModal()}>
                                             新建商品
@@ -3136,6 +3263,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         <thead className="bg-[#F7F8FA] text-xs font-semibold text-[#4E5969]">
                                             <tr>
                                                 <th className="px-6 py-3">商品</th>
+                                                <th className="px-4 py-3">分类</th>
                                                 <th className="px-4 py-3">售价（校园币）</th>
                                                 <th className="px-4 py-3 text-center">上架状态</th>
                                                 <th className="px-6 py-3 text-right">操作</th>
@@ -3149,11 +3277,11 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border border-[#E5E6EB] bg-white">
                                                                 {item.icon.includes('http') || item.icon.includes('/') || item.icon.startsWith('data:') ? <img src={item.icon} className="w-full h-full object-cover" alt={item.name} /> : item.icon}
                                                             </div>
-                                                            <div>
-                                                                <span className="block font-medium text-[#1D2129]">{item.name}</span>
-                                                                <span className="mt-0.5 block text-xs text-[#86909C]">商品编号：{item.id}</span>
-                                                            </div>
+                                                            <span className="font-medium text-[#1D2129]">{item.name}</span>
                                                         </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-[#4E5969]">
+                                                        {getShopCategoryName(shopCategories, getShopProductCategoryId(item, shopProductCategories)) || '未分类'}
                                                     </td>
                                                     <td className="px-4 py-4">
                                                         <div className="flex items-center gap-1.5 font-medium tabular-nums text-[#1D2129]">
@@ -3183,16 +3311,108 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             ))}
                                             {shopProducts.length === 0 && (
                                                 <tr>
-                                                    <td colSpan={4} className="py-12 text-center text-[#86909C]">暂无商品，请先新建商品</td>
+                                                    <td colSpan={5} className="py-12 text-center text-[#86909C]">暂无商品，请先新建商品</td>
                                                 </tr>
                                             )}
                                             {shopProducts.length > 0 && filteredShopProducts.length === 0 && (
                                                 <tr>
-                                                    <td colSpan={4} className="py-12 text-center text-[#86909C]">暂无符合条件的商品</td>
+                                                    <td colSpan={5} className="py-12 text-center text-[#86909C]">暂无符合条件的商品</td>
                                                 </tr>
                                             )}
                                         </tbody>
                                     </table>
+                                    </div>
+                                </>
+                            )}
+
+                            {shopActiveTab === 'categories' && (
+                                <>
+                                    <div className="pc-filter-bar flex flex-wrap items-center justify-between gap-3 border-b border-[#F2F3F5] px-6 py-4" aria-label="分类列表工具栏">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm text-[#4E5969]">共 {shopCategories.length} 个分类</span>
+                                            <span className="text-xs text-[#86909C]">拖动排序手柄可调整分类顺序</span>
+                                        </div>
+                                        <Button type="primary" icon={<Plus size={14} />} onClick={() => handleOpenShopCategoryModal()}>
+                                            新建分类
+                                        </Button>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full min-w-[760px] text-left text-sm">
+                                            <thead className="bg-[#F7F8FA] text-xs font-semibold text-[#4E5969]">
+                                                <tr>
+                                                    <th scope="col" className="w-12 px-2 py-3 text-center"><span className="sr-only">拖动排序</span></th>
+                                                    <th className="px-4 py-3">分类名称</th>
+                                                    <th className="px-4 py-3">商品数</th>
+                                                    <th className="px-4 py-3 text-center">启用状态</th>
+                                                    <th className="px-6 py-3 text-right">操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-[#F2F3F5]">
+                                                {shopCategories.map((category, index) => {
+                                                    const categoryProductCount = countShopCategoryProducts(shopProducts, shopCategories, shopProductCategories, category.id);
+                                                    const deleteCheck = canDeleteShopCategory(category.id, shopProducts, shopCategories, shopProductCategories);
+                                                    return (
+                                                        <tr
+                                                            key={category.id}
+                                                            draggable
+                                                            onDragStart={() => setDraggedShopCategoryId(category.id)}
+                                                            onDragOver={(event) => event.preventDefault()}
+                                                            onDrop={() => handleDropShopCategory(index)}
+                                                            onDragEnd={() => setDraggedShopCategoryId(null)}
+                                                            className={'transition-colors ' + (draggedShopCategoryId === category.id ? 'bg-[#E8F3FF]' : 'hover:bg-[#F7F8FA]')}
+                                                        >
+                                                            <td className="w-12 px-2 py-4 text-center">
+                                                                <button
+                                                                    type="button"
+                                                                    className="flex h-8 w-8 cursor-move items-center justify-center rounded text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#165DFF] focus:bg-[#F2F3F5] focus:text-[#165DFF] focus:outline-none"
+                                                                    aria-label={`拖动排序手柄调整「${category.name}」的顺序，当前第 ${index + 1} 位，也可用上下方向键调整`}
+                                                                    onKeyDown={(event) => {
+                                                                        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+                                                                        event.preventDefault();
+                                                                        handleReorderShopCategory(category.id, index + (event.key === 'ArrowUp' ? -1 : 1));
+                                                                    }}
+                                                                >
+                                                                    <Move size={15} aria-hidden="true" />
+                                                                </button>
+                                                            </td>
+                                                            <td className="px-4 py-4 font-medium text-[#1D2129]">{category.name}</td>
+                                                            <td className="px-4 py-4 tabular-nums text-[#4E5969]">{categoryProductCount}</td>
+                                                            <td className="px-4 py-4 text-center">
+                                                                <Switch
+                                                                    size="small"
+                                                                    checked={category.enabled}
+                                                                    checkedText="启用"
+                                                                    uncheckedText="停用"
+                                                                    aria-label={`${category.enabled ? '停用' : '启用'}${category.name}`}
+                                                                    onChange={(checked) => handleToggleShopCategoryEnabled(category.id, checked)}
+                                                                />
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <div className="flex justify-end gap-2">
+                                                                    <Button type="text" size="small" className="!px-0" onClick={() => handleOpenShopCategoryModal(category)}>编辑</Button>
+                                                                    {deleteCheck.allowed ? (
+                                                                        <Popconfirm title="确认删除该分类？" content="删除后不可恢复。" onOk={() => handleDeleteShopCategory(category.id)}>
+                                                                            <Button type="text" size="small" className="!px-0" status="danger">删除</Button>
+                                                                        </Popconfirm>
+                                                                    ) : (
+                                                                        <Popover content={deleteCheck.reason} position="left">
+                                                                            <span className="inline-flex cursor-not-allowed">
+                                                                                <Button type="text" size="small" className="!px-0" status="danger" disabled aria-label={`${category.name}暂不能删除`}>删除</Button>
+                                                                            </span>
+                                                                        </Popover>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                                {shopCategories.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan={5} className="py-12 text-center text-[#86909C]">暂无分类，请先新建分类</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </>
                             )}
@@ -3228,7 +3448,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     <div>
                                                         <span className="block text-xs text-[#86909C]">全校库存告急货道</span>
                                                         {(() => {
-                                                            const totalWarning = vendingDevices.reduce((sum, d) => sum + d.channels.filter(c => c.productId !== null && c.stock < 5).length, 0);
+                                                            const totalWarning = vendingDevices.reduce((sum, d) => sum + d.channels.filter(c => c.productId !== null && isChannelStockWarning(c)).length, 0);
                                                             return (
                                                                 <span className={`text-base font-bold ${totalWarning > 0 ? 'text-[#F53F3F]' : 'text-[#86909C]'}`}>
                                                                     {totalWarning} <span className="text-xs font-normal text-[#86909C]">格</span>
@@ -3267,9 +3487,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                                                 {vendingDevices.map(device => {
                                                     const configuredCount = device.channels.filter(c => c.productId !== null).length;
-                                                    const warningCount = device.channels.filter(c => c.productId !== null && c.stock < 5).length;
+                                                    const warningCount = device.channels.filter(c => c.productId !== null && isChannelStockWarning(c)).length;
                                                     const totalStock = device.channels.reduce((sum, c) => sum + c.stock, 0);
-                                                    const totalCapacity = device.channels.reduce((sum, c) => sum + (c.productId ? (c.maxStock || 10) : 0), 0);
+                                                    const totalCapacity = device.channels.reduce((sum, c) => sum + (c.productId ? getChannelCapacity(c) : 0), 0);
 
                                                     return (
                                                         <div
@@ -3439,7 +3659,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                         </h3>
                                                         {[
                                                             { label: '已配置', value: channels.filter(channel => channel.productId !== null).length, tone: 'text-[#165DFF]' },
-                                                            { label: '库存告急', value: channels.filter(channel => channel.productId !== null && channel.stock < 5).length, tone: 'text-[#F53F3F]' },
+                                                            { label: '库存告急', value: channels.filter(channel => channel.productId !== null && isChannelStockWarning(channel)).length, tone: 'text-[#F53F3F]' },
                                                             { label: '空闲', value: channels.filter(channel => channel.productId === null).length, tone: 'text-[#86909C]' },
                                                         ].map(item => (
                                                             <span key={item.label} className="text-xs text-[#4E5969]">
@@ -3878,7 +4098,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 {vendingDevices.map((device) => {
                                                     const assignedCount = device.channels.filter(c => c.productId !== null).length;
                                                     const totalStock = device.channels.reduce((sum, c) => sum + (c.productId ? c.stock : 0), 0);
-                                                    const warningCount = device.channels.filter(c => c.productId !== null && c.stock < 5).length;
+                                                    const warningCount = device.channels.filter(c => c.productId !== null && isChannelStockWarning(c)).length;
                                                     const modelMeta = DEVICE_MODEL_CATALOG.find(m => m.type === device.modelType) || DEVICE_MODEL_CATALOG[0];
                                                     const isPwdShown = showPasswordDeviceId === device.id;
                                                     return (
@@ -5924,7 +6144,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 </button>
                             </div>
                             <div className="space-y-6 overflow-y-auto p-6 custom-scrollbar">
-                                <form id="shop-product-form" onSubmit={(e) => {
+                                <form id="shop-product-form" className="pc-form" onSubmit={(e) => {
                                     e.preventDefault();
                                     const formData = new FormData(e.currentTarget);
                                     const priceInput = e.currentTarget.elements.namedItem('price') as HTMLInputElement | null;
@@ -5935,12 +6155,17 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         return;
                                     }
                                     priceInput?.setCustomValidity('');
+                                    if (!shopCategoryInput) {
+                                        Message.warning('请先选择商品分类；还没有分类时，请到「分类管理」新建一个。');
+                                        return;
+                                    }
                                     const newProduct = {
-                                        id: editingShopProduct?.id || Date.now(),
+                                        id: String(editingShopProduct?.id ?? Date.now()),
                                         name: formData.get('name') as string,
                                         price: Number(price.toFixed(2)),
                                         icon: modalIcon,
-                                        active: editingShopProduct?.active ?? true
+                                        active: editingShopProduct?.active ?? true,
+                                        category: shopCategoryInput
                                     };
                                     handleSaveShopProduct(newProduct);
                                 }}>
@@ -5979,12 +6204,28 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             />
                                             <span id="shop-price-hint" className="mt-1 block text-xs text-[#86909C]">请输入大于 0 的数字，最多 2 位小数</span>
                                         </div>
+                                        <div>
+                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]">商品分类</label>
+                                            <ArcoSelect
+                                                value={shopCategoryInput || undefined}
+                                                placeholder="请选择分类"
+                                                options={getShopCategoryPickerOptions(shopCategories).map(option => ({
+                                                    label: option.disabled ? `${option.name}（已停用）` : option.name,
+                                                    value: option.id,
+                                                    disabled: option.disabled,
+                                                }))}
+                                                onChange={(value) => setShopCategoryInput(String(value ?? ''))}
+                                                style={{ width: '100%' }}
+                                                aria-label="商品分类"
+                                            />
+                                            <span className="mt-1 block text-xs text-[#86909C]">决定商品在货柜机上归到哪个分类标签</span>
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="mb-3 block text-sm font-medium text-[#4E5969]">商品图片</label>
                                         <div className="flex flex-wrap gap-4">
                                             {[
-                                                { id: '1', url: '/assets/c4d_shop.png', name: '默认商品图' }
+                                                { id: '1', url: DEFAULT_PRODUCT_IMAGE, name: '默认商品图' }
                                             ].map(icon => (
                                                 <button
                                                     key={icon.id}
@@ -6049,6 +6290,55 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 )
             }
 
+            {/* Shop Category Modal */}
+            {
+                isShopCategoryModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1D2129]/45 p-4 animate-in fade-in duration-200">
+                        <div className="flex w-full max-w-md flex-col overflow-hidden rounded border border-[#E5E6EB] bg-white shadow-xl animate-in zoom-in-95 duration-200">
+                            <div className="flex shrink-0 items-center justify-between border-b border-[#E5E6EB] px-6 py-4">
+                                <h3 className="flex items-center gap-2 text-base font-semibold text-[#1D2129]">
+                                    <Boxes size={20} className="text-blue-600" />
+                                    {editingShopCategory ? '编辑分类' : '新建分类'}
+                                </h3>
+                                <button type="button" aria-label="关闭弹窗" onClick={() => setIsShopCategoryModalOpen(false)} className="flex h-8 w-8 items-center justify-center rounded text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]">
+                                    <Plus size={20} className="rotate-45" />
+                                </button>
+                            </div>
+                            <form id="shop-category-form" onSubmit={handleSaveShopCategory}>
+                                <div className="p-6">
+                                    <label htmlFor="shop-category-name" className="mb-2 block text-sm font-medium text-[#4E5969]">分类名称</label>
+                                    <input
+                                        id="shop-category-name"
+                                        name="name"
+                                        autoFocus
+                                        value={shopCategoryNameInput}
+                                        maxLength={SHOP_CATEGORY_NAME_MAX_LENGTH}
+                                        placeholder="例如：文具"
+                                        aria-invalid={shopCategoryNameError ? true : undefined}
+                                        aria-describedby={shopCategoryNameError ? 'shop-category-name-error' : 'shop-category-name-hint'}
+                                        onChange={(event) => {
+                                            setShopCategoryNameInput(event.currentTarget.value);
+                                            setShopCategoryNameError('');
+                                        }}
+                                        onBlur={() => setShopCategoryNameError(validateShopCategoryName(shopCategoryNameInput, shopCategories, editingShopCategory?.id) ?? '')}
+                                        className={`w-full rounded border bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors placeholder:text-[#86909C] focus:ring-2 ${shopCategoryNameError ? 'border-[#F53F3F] focus:border-[#F53F3F] focus:ring-[#F53F3F]/10' : 'border-[#E5E6EB] focus:border-[#165DFF] focus:ring-[#165DFF]/10'}`}
+                                    />
+                                    {shopCategoryNameError ? (
+                                        <span id="shop-category-name-error" role="alert" className="mt-1 block text-xs text-[#F53F3F]">{shopCategoryNameError}</span>
+                                    ) : (
+                                        <span id="shop-category-name-hint" className="mt-1 block text-xs text-[#86909C]">2~10 个字，不能与已有分类重名</span>
+                                    )}
+                                </div>
+                            </form>
+                            <div className="flex shrink-0 justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
+                                <Button onClick={() => setIsShopCategoryModalOpen(false)}>取消</Button>
+                                <Button type="primary" htmlType="submit" form="shop-category-form">保存分类</Button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
             {/* Channel Configuration Modal */}
             {
                 isChannelModalOpen && editingChannel && (
@@ -6067,11 +6357,15 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 <form id="channel-form" onSubmit={(e) => {
                                     e.preventDefault();
                                     const formData = new FormData(e.currentTarget);
-                                    const productId = formData.get('productId') ? Number(formData.get('productId')) : null;
+                                    const productId = formData.get('productId') ? String(formData.get('productId')) : null;
+                                    const capacity = getChannelCapacity(editingChannel);
+                                    const stockInput = formData.get('stock');
+                                    // 右柜电子锁储物格为单件格口：放入商品即记 1 件；左柜出货货道按格口容量收敛
+                                    const requestedStock = stockInput === null ? capacity : Number(stockInput);
                                     const newChannel = {
                                         ...editingChannel,
                                         productId: productId,
-                                        stock: productId ? Number(formData.get('stock')) : 0
+                                        stock: productId ? clampChannelStock(editingChannel, requestedStock) : 0
                                     };
                                     handleSaveChannel(newChannel);
                                 }}>
@@ -6099,11 +6393,19 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         </select>
                                     </div>
                                     <div className="mt-4">
-                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]">当前库存（上限 {editingChannel.maxStock || 10} 件）</label>
-                                        <div className="relative">
-                                            <input id="stock-input" type="number" name="stock" defaultValue={editingChannel.stock || 0} min="0" max={editingChannel.maxStock || 10} className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 pr-12 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10" />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#86909C]">/ {editingChannel.maxStock || 10}</span>
-                                        </div>
+                                        {isSingleItemChannel(editingChannel) ? (
+                                            <div className="rounded border border-[#E5E6EB] bg-[#F7F8FA] px-3 py-2.5 text-xs leading-5 text-[#4E5969]">
+                                                该格为电子锁储物格（单件格口），放入商品后自动记为 1 件，无需手工填写库存。
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <label className="mb-2 block text-sm font-medium text-[#4E5969]">当前库存（上限 {getChannelCapacity(editingChannel)} 件）</label>
+                                                <div className="relative">
+                                                    <input id="stock-input" type="number" name="stock" defaultValue={editingChannel.stock || 0} min="0" max={getChannelCapacity(editingChannel)} className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 pr-12 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10" />
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#86909C]">/ {getChannelCapacity(editingChannel)}</span>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </form>
                             </div>
@@ -6269,7 +6571,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     <Radio value="with_stock">
                                         <div className="text-xs">
                                             <span className="font-semibold text-[#1D2129]">覆盖货道并直接置满库存（推荐）</span>
-                                            <p className="text-[#86909C] m-0">复制后目标设备的对应货道库存直接补满到最大容积（10件）</p>
+                                            <p className="text-[#86909C] m-0">复制后目标设备的对应货道按格口容量补满：左柜出货货道 10 件，右柜电子锁储物格 1 件</p>
                                         </div>
                                     </Radio>
                                     <Radio value="binding_only">

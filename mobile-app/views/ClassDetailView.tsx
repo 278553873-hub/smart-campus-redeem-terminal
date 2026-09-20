@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Student, ClassInfo, GroupPlan, StudentGroup, type GroupCardDisplaySettings, type StudentCardDisplaySettings, type StudentGroupAvatarKey, type StudentLevelDisplayMode } from '../types';
+import { Student, ClassInfo, GroupPlan, StudentGroup, type GroupCardDisplaySettings, type StudentCardDisplaySettings, type StudentGroupAvatarKey } from '../types';
 import { GET_MOCK_GROUP_PLANS_FOR_CLASS } from '../constants';
 import { BackIcon, MaleIcon, FemaleIcon, CheckIcon, CheckCircleIcon, CircleIcon, SearchIcon, ChevronDownIcon, PlusIcon, MenuIcon, EditIcon, DeleteIcon, CloseIcon, EyeIcon, RetryIcon } from '../components/Icons';
 import { ASSETS } from '../assets/images';
@@ -12,9 +12,8 @@ import {
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSearchInput from '../components/ui/MobileSearchInput';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
-import MobileSettingsSwitchRow from '../components/ui/MobileSettingsSwitchRow';
-import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import CardEvaluationDisplaySettings from '../components/student-performance/CardEvaluationDisplaySettings';
+import CardLevelDisplaySettings from '../components/student-performance/CardLevelDisplaySettings';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileToast from '../components/ui/MobileToast';
 import GroupPerformanceMeta from '../components/group/GroupPerformanceMeta';
@@ -39,11 +38,6 @@ import { getGroupCardDisplaySettings } from '../domain/groupCardDisplay';
 
 type EvaluationRecountTarget = 'student' | 'group';
 
-const LEVEL_DISPLAY_OPTIONS: Array<{ value: StudentLevelDisplayMode; label: string }> = [
-    { value: 'term', label: '本学期' },
-    { value: 'cumulative', label: '历史累计' },
-];
-
 interface ClassDetailViewProps {
     classInfo: ClassInfo;
     students: Student[];
@@ -64,11 +58,9 @@ interface ClassDetailViewProps {
     levelNetScoreByStudentId?: Record<string, number>;
     canResetStudentEvaluationCounts: boolean;
     canConfigureCardDisplay: boolean;
-    canConfigureLevelDisplay: boolean;
     canAddStudent: boolean;
     onAddStudent: () => void;
     onUpdateStudentCardDisplaySettings: (settings: StudentCardDisplaySettings) => void;
-    onUpdateStudentLevelDisplayMode: (mode: StudentLevelDisplayMode) => void;
     onUpdateGroupCardDisplaySettings: (settings: GroupCardDisplaySettings) => void;
 }
 
@@ -183,11 +175,9 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     levelNetScoreByStudentId = {},
     canResetStudentEvaluationCounts,
     canConfigureCardDisplay,
-    canConfigureLevelDisplay,
     canAddStudent,
     onAddStudent,
     onUpdateStudentCardDisplaySettings,
-    onUpdateStudentLevelDisplayMode,
     onUpdateGroupCardDisplaySettings,
 }) => {
     const studentCardDisplaySettings = getStudentCardDisplaySettings(classInfo.studentCardDisplaySettings);
@@ -1404,29 +1394,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 <div className="space-y-[var(--tm-space-4)] pb-2">
                     {cardDisplayTarget === 'student' ? (
                         <>
-                            <div role="group" aria-label="等级展示设置" className="space-y-[var(--tm-space-1)]">
-                                <MobileSettingsSwitchRow
-                                    label="显示等级"
-                                    checked={studentCardDisplaySettings.showLevel}
-                                    onChange={showLevel => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, showLevel })}
-                                    surface="plain"
-                                />
-                                {studentCardDisplaySettings.showLevel && canConfigureLevelDisplay && (
-                                    <div className="grid min-h-[var(--tm-size-touch)] grid-cols-[minmax(72px,1fr)_auto] items-center gap-[var(--tm-space-3)] px-[var(--tm-space-1)]">
-                                        <div className="text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
-                                            统计范围
-                                        </div>
-                                        <CompactSegmentedControl
-                                            value={classInfo.studentLevelDisplayMode ?? 'term'}
-                                            items={LEVEL_DISPLAY_OPTIONS}
-                                            onChange={onUpdateStudentLevelDisplayMode}
-                                            ariaLabel="等级统计范围"
-                                            semantics="group"
-                                            variant="settings"
-                                        />
-                                    </div>
-                                )}
-                            </div>
+                            <CardLevelDisplaySettings
+                                showLevel={studentCardDisplaySettings.showLevel}
+                                levelForm={studentCardDisplaySettings.levelForm}
+                                onChange={({ showLevel, levelForm }) => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, showLevel, levelForm })}
+                            />
                             <CardEvaluationDisplaySettings
                                 settings={studentCardDisplaySettings}
                                 onChange={settings => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, ...settings })}

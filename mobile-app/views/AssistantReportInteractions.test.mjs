@@ -75,6 +75,7 @@ for (const required of [
 }
 
 requireText(cssSource, '.principal-report-screen-background', '校长报告缺少屏幕级红金渐变背景。');
+requireText(appSource, "document.querySelector<HTMLElement>('[data-view-scroll-root]')", '助理报告页自持滚动容器时，滚动记忆与恢复必须兼容页面内滚动容器。');
 requireText(cssSource, '.headteacher-report-screen-background', '班主任助理报告缺少铺满屏幕的背景。');
 requireText(cssSource, '-webkit-font-smoothing: antialiased;', '班主任助理页面应在 macOS 使用抗锯齿字体渲染。');
 requireText(cssSource, '.headteacher-agent-glass {\n  border: 0;', '班主任助理玻璃表面应使用阴影建立层级，不使用实体边框。');

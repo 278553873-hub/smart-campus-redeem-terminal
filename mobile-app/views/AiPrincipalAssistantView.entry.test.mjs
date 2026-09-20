@@ -38,7 +38,9 @@ requireText(viewSource, 'typedMessage', '校长助理开场白应按打字机效
 requireText(viewSource, 'getTypeDelay', '校长助理打字机效果应复用变速节奏。');
 requireText(viewSource, 'return 56;', '普通字符打字速度应接近班主任助理页面。');
 requireText(viewSource, 'return 280;', '换行处应保留短停顿。');
-requireText(viewSource, 'aria-label="返回"', 'AI 校长助理页面应在页面内保留返回按钮。');
+requireText(viewSource, 'AssistantSubpageHeader onBack={onBack} surface="transparent"', '校长助理入口页应复用公共子页标题栏，并以透明表面承接屏幕级角色背景。');
+requireText(viewSource, 'data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto', '校长助理入口页应由页面自己持有滚动容器，标题栏不随内容滚动。');
+forbidText(viewSource, 'rounded-full bg-[var(--tm-bg-surface-glass)]', '校长助理入口页返回入口不应再自绘圆形玻璃底按钮。');
 requireText(viewSource, 'min-h-[365px]', '增加第三个入口后应压缩主视觉高度，保留更多有效信息。');
 requireText(viewSource, 'h-[250px] w-[250px]', 'AI 校长助理形象应保持稳定尺寸。');
 requireText(viewSource, 'h-[250px] w-[250px] scale-[1.04] object-contain drop-shadow', 'AI 校长助理形象应保持原色直接渲染。');
@@ -48,7 +50,7 @@ forbidText(viewSource, 'maskImage', 'AI 校长助理形象不应再用前端遮�
 requireText(viewSource, 'ai-assistant-dialog-card', 'AI 校长助理开场白应使用共享对话卡片。');
 requireText(viewSource, 'ai-assistant-dialog-tail', 'AI 校长助理对话卡尾巴应与边框风格一致。');
 requireText(viewSource, 'ai-assistant-typewriter-shine', 'AI 校长助理开场白应使用共享文字效果。');
-requireText(viewSource, 'ai-assistant-theme-principal relative min-h-full overflow-hidden bg-transparent', '校长助理页面应注入深红与管理金角色主题，并保持内容层透明。');
+requireText(viewSource, 'ai-assistant-theme-principal relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent', '校长助理页面应注入深红与管理金角色主题，由页面自己持有滚动容器并保持内容层透明。');
 requireText(appSource, 'principal-agent-gradient-page absolute inset-0', '校长助理渐变应铺满手机屏幕并覆盖状态栏安全区。');
 requireText(cssSource, '.principal-agent-gradient-page', '应存在校长助理整屏角色渐变样式。');
 forbidText(viewSource, 'teacher-assistant-page', '校长助理不应再把渐变绘制在随内容拉伸的页面根节点上。');

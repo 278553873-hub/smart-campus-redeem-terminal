@@ -88,7 +88,7 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
         surface="transparent"
       />
 
-      <main className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-5 pb-10 pt-4">
+      <main data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-5 pb-10 pt-4">
         <p className="mb-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">{schoolName}</p>
         <section className="space-y-6" aria-label={historyListLabel[kind]}>
           {groups.map((group) => (

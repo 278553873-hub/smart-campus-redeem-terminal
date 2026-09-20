@@ -59,14 +59,14 @@ requireText('StudentPerformanceAvatar', '学生卡片应展示头像等级进度
 requireText('StudentPerformanceLevelIcons', '学生卡片应单独展示居中的等级图标。');
 requireText('StudentPerformanceValues', '学生卡片应单独展示加扣分数据。');
 requireText('variant="student-card"', '学生卡片应使用独立的紧凑奖惩次数规格，避免影响小组卡片。');
-const levelIndex = source.indexOf('displaySettings.showLevel && <StudentPerformanceLevelIcons level={level} />');
+const levelIndex = source.indexOf('showLevelIcons && <StudentPerformanceLevelIcons level={level} iconSize="student-card" />');
 const avatarIndex = source.indexOf('<StudentPerformanceAvatar', levelIndex);
 const valuesIndex = source.indexOf('<StudentPerformanceValues', avatarIndex);
 const rosterIndex = source.indexOf('StudentRosterNumber studentNo={studentNo}', valuesIndex);
 if (!(levelIndex < avatarIndex && avatarIndex < valuesIndex && valuesIndex < rosterIndex)) {
   throw new Error('学生卡片应按等级、头像、加扣分数据、学号与姓名的顺序展示。');
 }
-requireText('showLevelProgress={displaySettings.showLevel}', '隐藏等级时应同步隐藏头像等级进度环。');
+requireText('showLevelProgress={showLevelIcons}', '只有等级图标形式才展示头像等级进度环。');
 requireText('const showPraise = displaySettings.showEvaluation && displaySettings.showPraise;', '加分应同时受总开关和显示内容控制。');
 requireText('const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;', '扣分应同时受总开关和显示内容控制。');
 requireText('showPraise={showPraise}', '学生卡片应使用总开关处理后的加分状态。');
@@ -104,7 +104,7 @@ if (!metaSource.includes("variant === 'student-card'")
 }
 if (!metaSource.includes("iconSize === 'student-card'")
   || !metaSource.includes('tm-student-card-level-icon-size')
-  || !metaSource.includes('tm-student-card-level-icon-row-height')) {
+  || !metaSource.includes('tm-student-card-level-row-height')) {
   throw new Error('手机花名册等级图标应使用独立的16像素尺寸和16像素图标行。');
 }
 if (!tokenSource.includes("'--tm-student-card-level-icon-size': '16px'")) {

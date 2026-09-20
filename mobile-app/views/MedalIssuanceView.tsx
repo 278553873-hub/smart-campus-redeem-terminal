@@ -192,7 +192,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
                   {group.medals.map(medal => {
                   const selected = selectedMedalIds.has(medal.id);
                   const medalCardClassName = [
-                    'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)] transition active:scale-[0.98]',
+                    'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)]',
                   ].join(' ');
                   return (
                     <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
@@ -216,7 +216,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
           {medals.map(medal => {
             const selected = selectedMedalIds.has(medal.id);
             const medalCardClassName = [
-              'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)] transition active:scale-[0.98]',
+              'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)]',
             ].filter(Boolean).join(' ');
             return (
               <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
@@ -227,7 +227,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
             );
           })}
           {scope === 'class' && (
-            <button type="button" onClick={() => setShowCreateMedal(true)} className="relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center px-0 py-[var(--tm-space-2)] text-center text-[var(--tm-text-secondary)] [gap:var(--tm-space-1)] transition active:scale-[0.98] active:text-[var(--tm-text-primary)]">
+            <button type="button" onClick={() => setShowCreateMedal(true)} className="relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center px-0 py-[var(--tm-space-2)] text-center text-[var(--tm-text-secondary)] [gap:var(--tm-space-1)] transition active:text-[var(--tm-text-primary)]">
               <span className="flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><Plus className="h-7 w-7" /></span>
               <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold">新增奖章</span>
             </button>
@@ -235,7 +235,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
         </div>}
       </div>
 
-      <footer className="absolute inset-x-0 bottom-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-4)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)] backdrop-blur-xl">
+      <footer className="absolute inset-x-0 bottom-0 z-30 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-4)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)] backdrop-blur-xl">
         {selectedMedals.length > 0 && (
           <div aria-live="polite" className="mb-[var(--tm-space-2)] flex min-h-6 items-center gap-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold">
             <span className="shrink-0 text-[var(--tm-brand-primary)]">已选 {selectedMedals.length} 枚</span>

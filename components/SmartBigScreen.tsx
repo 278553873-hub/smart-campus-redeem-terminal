@@ -63,11 +63,11 @@ import type {
   GroupCardDisplaySettings,
   StudentCardDisplaySettings,
   StudentGroupAvatarKey,
-  StudentLevelDisplayMode,
 } from '../mobile-app/types';
 import {
   ClassroomStudentAvatar,
   ClassroomStudentLevelIcons,
+  ClassroomStudentLevelScore,
 } from './student-performance/ClassroomStudentPerformance';
 import ClassroomPerformanceValues from './classroom/ClassroomPerformanceValues';
 import ClassroomQuickActionDock from './classroom/ClassroomQuickActionDock';
@@ -475,6 +475,8 @@ const StudentCard: React.FC<{
   const level = getStudentPerformanceLevel(resolvedLevelNetScore);
   const showPraise = displaySettings.showEvaluation && displaySettings.showPraise;
   const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;
+  const showLevelIcons = displaySettings.showLevel && displaySettings.levelForm === 'icon';
+  const showLevelScore = displaySettings.showLevel && displaySettings.levelForm === 'score';
   const visiblePerformanceLabels = [
     showPraise
       ? (displaySettings.valueMode === 'score' ? `累计加分${performance.praiseScore}分` : `被表扬${performance.praiseCount}次`)
@@ -509,10 +511,11 @@ const StudentCard: React.FC<{
         </div>
       )}
       {displaySettings.showLevel && (
-        <div className="flex h-5 w-full shrink-0 items-center justify-center" style={{ height: layout.levelHeight }}>
-          <div className="flex items-center justify-center">
-            <ClassroomStudentLevelIcons level={level} compact iconSize={layout.levelIconSize} />
-          </div>
+        <div className="flex w-full shrink-0 items-center justify-center" style={{ height: layout.levelHeight }}>
+          {showLevelIcons && <ClassroomStudentLevelIcons level={level} compact iconSize={layout.levelIconSize} />}
+          {showLevelScore && (
+            <ClassroomStudentLevelScore netScore={resolvedLevelNetScore} fontSize={layout.levelScoreFontSize} height={layout.levelHeight} />
+          )}
         </div>
       )}
       <div className="flex w-full shrink-0 items-center justify-center" style={{ height: layout.avatarSize, marginTop: displaySettings.showLevel ? layout.levelAvatarGap : 0 }}>
@@ -522,7 +525,7 @@ const StudentCard: React.FC<{
           level={level}
           compact
           size={layout.avatarSize}
-          showLevelProgress={displaySettings.showLevel}
+          showLevelProgress={showLevelIcons}
         />
       </div>
       {hasVisibleValues && (
@@ -573,7 +576,6 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     }
     setStudentCardDisplaySettings(current => ({ ...current, ...updates }));
   };
-  const [levelDisplayMode, setLevelDisplayMode] = useState<StudentLevelDisplayMode>('term');
   const [studentCountCheckpoints, setStudentCountCheckpoints] = useState<Record<string, EvaluationCountCheckpoint>>({});
   const [groupCountCheckpoints, setGroupCountCheckpoints] = useState<Record<string, EvaluationCountCheckpoint>>({});
   const [recountTarget, setRecountTarget] = useState<'student' | 'group' | null>(null);
@@ -695,7 +697,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     const initialTermScore = createDemoStudentPerformanceSummary(student).netScore;
     const liveTermDelta = performance.netScore - initialTermScore;
 
-    return getStudentLevelNetScore(demoRecords, levelDisplayMode, CURRENT_CLASSROOM_TERM) + liveTermDelta;
+    return getStudentLevelNetScore(demoRecords, 'term', CURRENT_CLASSROOM_TERM) + liveTermDelta;
   };
 
   const getBaseGroupPerformance = (groupId: string) => performanceByGroupId[groupId]
@@ -2411,18 +2413,18 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     </div>
                     {studentCardDisplaySettings.showLevel && (
                       <div className="border-t border-slate-200/70 pb-4 pt-3">
-                        <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>统计范围</div>
-                        <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="等级统计范围">
+                        <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>等级形式</div>
+                        <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="等级展示形式">
                           {[
-                            { value: 'term' as const, label: '本学期' },
-                            { value: 'cumulative' as const, label: '历史累计' },
+                            { value: 'icon' as const, label: '图标' },
+                            { value: 'score' as const, label: '分值' },
                           ].map(item => (
                             <button
                               key={item.value}
                               type="button"
-                              aria-pressed={levelDisplayMode === item.value}
-                              onClick={() => setLevelDisplayMode(item.value)}
-                              className={`rounded-lg px-3 font-bold transition-colors ${levelDisplayMode === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              aria-pressed={studentCardDisplaySettings.levelForm === item.value}
+                              onClick={() => setStudentCardDisplaySettings(current => ({ ...current, levelForm: item.value }))}
+                              className={`rounded-lg px-3 font-bold transition-colors ${studentCardDisplaySettings.levelForm === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                               style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.moreActions.bodyFontSize }}
                             >
                               {item.label}

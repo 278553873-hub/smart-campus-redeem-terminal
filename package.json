@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "audit:render": "node scripts/audit-teacher-mobile-render.mjs"
   },
   "dependencies": {
     "@arco-design/web-react": "^2.66.15",

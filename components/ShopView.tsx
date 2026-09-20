@@ -2,6 +2,37 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ShoppingBag, Gift, CheckCircle2 } from 'lucide-react';
 import { Student, Product } from '../types';
 import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
+import {
+  ALL_CATEGORY_ID,
+  getShopCategoryName,
+  getShopProductCategoryId,
+  getShopVisibleCategoryIds,
+  shouldShowShopCategoryRow,
+} from '../shared/productCategory';
+import { useShopCatalog } from './useShopCatalog';
+import { sortShopProductsForShelf } from '../shared/shopProductOrder';
+import {
+  TERMINAL_SHOP_LAYOUT_PREVIEW_UPDATED_EVENT,
+  readTerminalShopLayoutPresetId,
+} from '../shared/terminalShopLayoutPreview';
+import { getProductImage, getProductImageScale } from '../shared/productImage';
+import {
+  TERMINAL_SHOP_CATEGORY_CHIP_HEIGHT,
+  TERMINAL_SHOP_CATEGORY_FONT_SIZE,
+  TERMINAL_SHOP_CATEGORY_ROW_HEIGHT,
+  TERMINAL_SHOP_GRID_PADDING_X,
+  TERMINAL_SHOP_GRID_GAP,
+  TERMINAL_SHOP_IMAGE_PADDING,
+  TERMINAL_SHOP_NAME_ROW_HEIGHT,
+  TERMINAL_SHOP_NAME_TO_PRICE_GAP,
+  TERMINAL_SHOP_PRICE_BAR_HEIGHT,
+  TERMINAL_SHOP_CARD_PADDING_BOTTOM,
+  TERMINAL_SHOP_NAME_FONT_SIZE,
+  TERMINAL_SHOP_PRICE_FONT_SIZE,
+  getTerminalShopCardHeight,
+  getTerminalShopImageAreaHeight,
+  getTerminalShopLayoutPreset,
+} from '../shared/terminalShopLayout';
 
 interface ShopViewProps {
   student: Student;
@@ -15,6 +46,7 @@ interface ShopViewProps {
   onRequireLogin?: (product: Product, scrollTop: number) => void;
 }
 
+// 版式尺寸全部由 shared/terminalShopLayout 推导，卡片大小随演示控件选择的版式变化
 const ShopView: React.FC<ShopViewProps> = ({
   student,
   products,
@@ -27,14 +59,48 @@ const ShopView: React.FC<ShopViewProps> = ({
 }) => {
   const [confirmingProduct, setConfirmingProduct] = useState<Product | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [activeCategoryId, setActiveCategoryId] = useState<string>(ALL_CATEGORY_ID);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [shopLayout, setShopLayout] = useState(() => getTerminalShopLayoutPreset(readTerminalShopLayoutPresetId()));
+  const shopCardHeight = getTerminalShopCardHeight(shopLayout.rows);
+  const shopImageHeight = getTerminalShopImageAreaHeight(shopLayout.rows);
 
-  const filteredProducts = products.filter(p => p.type === 'standard');
+  // 分类数据由 PC 后台维护（shared/shopCatalogStore），终端只读同一份
+  const shopCatalog = useShopCatalog();
+  const shopCategories = shopCatalog.categories;
+  const shopProductCategories = shopCatalog.productCategories;
+  const standardProducts = products.filter(p => p.type === 'standard');
+  const shopCategoryIds = getShopVisibleCategoryIds(standardProducts, shopCategories, shopProductCategories);
+  // 只有 1 个分类时不展示分类行，避免一排只有一个无效标签
+  const showCategoryRow = shouldShowShopCategoryRow(standardProducts, shopCategories, shopProductCategories);
+  const currentCategoryId = !showCategoryRow || activeCategoryId === ALL_CATEGORY_ID || !shopCategoryIds.some(id => id === activeCategoryId)
+    ? ALL_CATEGORY_ID
+    : activeCategoryId;
+  // 可购买的在前且越贵越靠下，售罄的一律沉到最后
+  const visibleProducts = sortShopProductsForShelf(
+    currentCategoryId === ALL_CATEGORY_ID
+      ? standardProducts
+      : standardProducts.filter(product => getShopProductCategoryId(product, shopProductCategories) === currentCategoryId),
+  );
+  const categoryOptions = [
+    { id: ALL_CATEGORY_ID, label: '全部' },
+    ...shopCategoryIds.map(id => ({ id, label: getShopCategoryName(shopCategories, id) })),
+  ];
 
   useLayoutEffect(() => {
     if (!scrollRef.current) return;
     scrollRef.current.scrollTop = initialScrollTop;
   }, [initialScrollTop, isGuest]);
+
+  // 演示控件切换「一屏几个商品」时跟着重排，并回到列表顶部，避免停在上一版式的滚动位置
+  useEffect(() => {
+    const handleLayoutPreviewUpdate = () => {
+      setShopLayout(getTerminalShopLayoutPreset(readTerminalShopLayoutPresetId()));
+      scrollRef.current?.scrollTo({ top: 0 });
+    };
+    window.addEventListener(TERMINAL_SHOP_LAYOUT_PREVIEW_UPDATED_EVENT, handleLayoutPreviewUpdate);
+    return () => window.removeEventListener(TERMINAL_SHOP_LAYOUT_PREVIEW_UPDATED_EVENT, handleLayoutPreviewUpdate);
+  }, []);
 
   useEffect(() => {
     if (isGuest || !pendingPurchaseProductId) return;
@@ -49,6 +115,11 @@ const ShopView: React.FC<ShopViewProps> = ({
       return;
     }
     setConfirmingProduct(product);
+  };
+
+  const handleSelectCategory = (categoryId: string) => {
+    setActiveCategoryId(categoryId);
+    scrollRef.current?.scrollTo({ top: 0 });
   };
 
   const handleConfirmPurchase = async () => {
@@ -67,14 +138,53 @@ const ShopView: React.FC<ShopViewProps> = ({
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-[#fcfdfe]">
+      {/* 分类标签：固定在返回栏下方，只切换商品列表，不随商品滚动；只有 1 个分类时整行不出现 */}
+      {showCategoryRow && (
+        <div
+          role="group"
+          aria-label="商品分类"
+          className="shrink-0 flex items-center gap-2 overflow-x-auto"
+          style={{
+            height: TERMINAL_SHOP_CATEGORY_ROW_HEIGHT,
+            paddingLeft: TERMINAL_SHOP_GRID_PADDING_X,
+            paddingRight: TERMINAL_SHOP_GRID_PADDING_X,
+          }}
+        >
+          {categoryOptions.map(option => {
+            const selected = option.id === currentCategoryId;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => handleSelectCategory(option.id)}
+                aria-pressed={selected}
+                style={{ height: TERMINAL_SHOP_CATEGORY_CHIP_HEIGHT, fontSize: TERMINAL_SHOP_CATEGORY_FONT_SIZE }}
+                className={`shrink-0 px-3.5 rounded-full font-black transition-colors ${selected
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/20'
+                  : 'bg-white text-slate-500 border border-slate-200 active:bg-slate-50'
+                  }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto custom-scrollbar relative px-8"
+        className="flex-1 overflow-y-auto custom-scrollbar relative"
+        style={{ paddingLeft: TERMINAL_SHOP_GRID_PADDING_X, paddingRight: TERMINAL_SHOP_GRID_PADDING_X }}
       >
-        <div className="flex-1 flex flex-col pt-4 pb-12">
-          <div className="grid grid-cols-2 gap-4">
-            {filteredProducts.map(product => {
-              const isSpecial = product.type === 'special';
+        <div>
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: `repeat(${shopLayout.columns}, minmax(0, 1fr))`,
+              gap: TERMINAL_SHOP_GRID_GAP,
+            }}
+          >
+            {visibleProducts.map(product => {
               const inStock = product.stock > 0;
               const canAfford = student.campusCoins >= product.price;
               const canBuy = isGuest ? inStock : canAfford && inStock;
@@ -86,48 +196,67 @@ const ShopView: React.FC<ShopViewProps> = ({
                   onClick={() => handleOpenConfirm(product)}
                   disabled={!canBuy}
                   aria-label={inStock ? `${product.name}，${product.price} ${GROWTH_COIN_TERMS.name}，兑换` : `${product.name}，已售罄`}
-                  className={`rounded-2xl overflow-hidden shadow-[0_4px_16px_rgb(0,0,0,0.03)] border-2 flex flex-col transition-all text-left bg-white ${canBuy
+                  style={{ height: shopCardHeight }}
+                  className={`rounded-2xl overflow-hidden border-2 border-slate-100 bg-white shadow-[0_4px_16px_rgb(0,0,0,0.03)] flex flex-col text-left transition-all ${canBuy
                     ? 'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200'
                     : 'cursor-not-allowed opacity-60'
-                    } ${isSpecial ? 'border-indigo-100' : 'border-slate-100'}`}
+                    }`}
                 >
-                  {/* 商品图区域：顶天立地铺满卡片上方，融入卡片 */}
-                  <div className={`w-full aspect-square relative overflow-hidden flex items-center justify-center p-3.5 ${isSpecial ? 'bg-gradient-to-b from-indigo-50/60 to-slate-50/40' : 'bg-gradient-to-b from-orange-50/40 to-slate-50/40'}`}>
+                  {/* 商品图区：定高铺满卡片宽度，售罄时覆盖状态层 */}
+                  <div
+                    style={{ height: shopImageHeight, padding: TERMINAL_SHOP_IMAGE_PADDING }}
+                    className="w-full relative overflow-hidden flex items-center justify-center bg-gradient-to-b from-orange-50/40 to-slate-50/40"
+                  >
                     <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-contain drop-shadow-sm mix-blend-multiply"
+                      src={getProductImage(product)}
+                      alt=""
+                      style={{ scale: getProductImageScale(product) }}
+                      className="max-h-full max-w-full w-auto h-auto object-contain drop-shadow-sm mix-blend-multiply"
                     />
+                    {!inStock && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-slate-900/45 text-white text-[17px] font-black tracking-[0.2em]">
+                        已售罄
+                      </span>
+                    )}
                   </div>
 
-                  {/* 信息区域：放大商品名称、金额与货币icon */}
-                  <div className="p-4 pt-3 flex flex-col flex-1 justify-between gap-3 w-full">
-                    <h3 className="text-[18px] font-black text-slate-800 line-clamp-2 min-h-[2.8rem] leading-snug text-center">
+                  {/* 商品名：独立一行，居中显示 */}
+                  <div
+                    style={{ height: TERMINAL_SHOP_NAME_ROW_HEIGHT }}
+                    className="w-full shrink-0 px-2 flex items-center justify-center"
+                  >
+                    <span className="w-full truncate text-center font-black leading-none text-slate-800" style={{ fontSize: TERMINAL_SHOP_NAME_FONT_SIZE }}>
                       {product.name}
-                    </h3>
+                    </span>
+                  </div>
 
+                  {/* 商品名与金额条之间的间距：与「图片底边 → 商品名」的间距相等，商品名视觉居中 */}
+                  <div className="w-full shrink-0" style={{ height: TERMINAL_SHOP_NAME_TO_PRICE_GAP }} aria-hidden="true" />
+
+                  {/* 金额：独立一条蓝底横条，作为卡片视觉重点 */}
+                  <div
+                    className="w-full shrink-0 px-2"
+                    style={{ height: TERMINAL_SHOP_PRICE_BAR_HEIGHT + TERMINAL_SHOP_CARD_PADDING_BOTTOM, paddingBottom: TERMINAL_SHOP_CARD_PADDING_BOTTOM }}
+                  >
                     <div
-                      className={`w-full h-14 rounded-xl flex items-center justify-center transition-all border shadow-sm ${canBuy
+                      style={{ fontSize: TERMINAL_SHOP_PRICE_FONT_SIZE }}
+                      className={`w-full h-full rounded-xl border flex items-center justify-center gap-1.5 font-black transition-colors ${canBuy
                         ? 'bg-blue-600 border-blue-500 text-white shadow-[0_4px_12px_rgba(37,99,235,0.2)]'
-                        : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                        : 'bg-slate-100 border-slate-200 text-slate-400'
                         }`}
                     >
-                      <div className="font-[NumberFont] font-black text-[26px] leading-none flex items-center gap-2">
-                        {inStock ? (
-                          <>
-                            <img src="/assets/coin.png" className={`w-6 h-6 shrink-0 -translate-y-[1px] ${canBuy ? '' : 'opacity-40 grayscale'}`} alt="" />
-                            <span>{product.price}</span>
-                          </>
-                        ) : (
-                          <span className="text-[17px] font-bold tracking-wider px-2 text-slate-400">已售罄</span>
-                        )}
-                      </div>
+                      <img src="/assets/coin.png" alt="" className="h-[0.95em] w-[0.95em] object-contain" />
+                      {product.price}
                     </div>
                   </div>
                 </button>
               );
             })}
           </div>
+
+          {visibleProducts.length === 0 && (
+            <p className="pt-16 text-center text-[15px] font-bold text-slate-400">这个分类还没有商品</p>
+          )}
         </div>
       </div>
 
@@ -180,11 +309,11 @@ const ShopView: React.FC<ShopViewProps> = ({
 
       {showSuccess && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none success-toast">
-          <div className="text-white px-5 py-3 rounded-[1.4rem] shadow-[0_14px_30px_rgba(34,197,94,0.28)] flex items-center gap-2.5 border-2 border-white/90 bg-green-500">
-            <div className="bg-white/20 p-1.5 rounded-full">
-              <CheckCircle2 size={22} strokeWidth={3} />
+          <div className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl shadow-[0_12px_30px_-6px_rgba(0,0,0,0.12),0_4px_10px_-2px_rgba(0,0,0,0.05)] border border-slate-100/90 flex items-center gap-3">
+            <div className="bg-emerald-50 p-1.5 rounded-full flex items-center justify-center">
+              <CheckCircle2 size={20} className="text-emerald-500" strokeWidth={2.5} />
             </div>
-            <div className="font-black text-lg tracking-tight leading-none">
+            <div className="font-bold text-[16px] text-slate-800 tracking-tight leading-none">
               兑换成功
             </div>
           </div>
@@ -229,3 +358,4 @@ const ShopView: React.FC<ShopViewProps> = ({
 };
 
 export default ShopView;
+

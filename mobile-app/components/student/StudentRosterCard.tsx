@@ -7,6 +7,7 @@ import StudentRosterNumber from './StudentRosterNumber';
 import {
   StudentPerformanceValues,
   StudentPerformanceLevelIcons,
+  StudentPerformanceLevelScore,
 } from '../student-performance/StudentPerformanceMeta';
 import {
   getStudentPerformanceLevel,
@@ -61,7 +62,10 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
 }) => {
   const [bgClass, textClass, borderClass] = getAvatarStyle(index);
   const studentNo = student.studentNo || student.id;
-  const level = getStudentPerformanceLevel(levelNetScore ?? performance.netScore);
+  const shownLevelNetScore = levelNetScore ?? performance.netScore;
+  const level = getStudentPerformanceLevel(shownLevelNetScore);
+  const showLevelIcons = displaySettings.showLevel && displaySettings.levelForm === 'icon';
+  const showLevelScore = displaySettings.showLevel && displaySettings.levelForm === 'score';
   const showPraise = displaySettings.showEvaluation && displaySettings.showPraise;
   const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;
   const showPerformanceValues = showPraise || showCriticism;
@@ -75,7 +79,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
   const accessibilityDetails = [
     `${student.name}，学号${studentNo}`,
     contextLabel ?? '',
-    displaySettings.showLevel ? `等级分值${levelNetScore ?? performance.netScore}分` : '',
+    displaySettings.showLevel ? `等级分值${shownLevelNetScore}分` : '',
     showPraise
       ? (displaySettings.valueMode === 'score' ? `累计加分${performance.praiseScore}分` : `被表扬${performance.praiseCount}次`)
       : '',
@@ -106,7 +110,8 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
         </span>
       )}
       <span className="flex min-h-0 w-full flex-1 -translate-y-0.5 flex-col items-center justify-center gap-0.5">
-        {displaySettings.showLevel && <StudentPerformanceLevelIcons level={level} iconSize="student-card" />}
+        {showLevelIcons && <StudentPerformanceLevelIcons level={level} iconSize="student-card" />}
+        {showLevelScore && <StudentPerformanceLevelScore netScore={shownLevelNetScore} />}
         <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
           <StudentPerformanceAvatar
             compact
@@ -114,7 +119,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
             fallbackText={student.name.slice(-1)}
             fallbackClassName={`${bgClass} ${textClass} border ${borderClass}`}
             level={level}
-            showLevelProgress={displaySettings.showLevel}
+            showLevelProgress={showLevelIcons}
           />
         </span>
         {showPerformanceValues && (

@@ -9,7 +9,7 @@ import moonLevelIcon from '../../mobile-app/assets/resources/student-level-icons
 import sproutLevelIcon from '../../mobile-app/assets/resources/student-level-icons/sprout.png';
 import starLevelIcon from '../../mobile-app/assets/resources/student-level-icons/star.png';
 import sunLevelIcon from '../../mobile-app/assets/resources/student-level-icons/sun.png';
-import ClassroomPerformanceValues from '../classroom/ClassroomPerformanceValues';
+import ClassroomPerformanceValues, { formatScore } from '../classroom/ClassroomPerformanceValues';
 
 interface ClassroomStudentAvatarProps {
   name: string;
@@ -38,6 +38,12 @@ interface ClassroomStudentLevelIconsProps {
   level: StudentPerformanceLevel;
   compact?: boolean;
   iconSize?: number;
+}
+
+interface ClassroomStudentLevelScoreProps {
+  netScore: number;
+  fontSize?: number;
+  height?: number;
 }
 
 const TIER_META: Record<StudentPerformanceTier, { label: string; iconSrc: string }> = {
@@ -133,6 +139,21 @@ export const ClassroomStudentLevelIcons: React.FC<ClassroomStudentLevelIconsProp
           style={{ width: iconSize, height: iconSize }}
         />
       ))}
+    </div>
+  );
+};
+
+export const ClassroomStudentLevelScore: React.FC<ClassroomStudentLevelScoreProps> = ({ netScore, fontSize = 20, height = 24 }) => {
+  const normalizedScore = Number.isFinite(netScore) ? netScore : 0;
+  const isNegative = normalizedScore < 0;
+
+  return (
+    <div
+      aria-hidden="true"
+      className={`flex min-w-[24px] items-center justify-center rounded-md px-1 font-bold tabular-nums ${isNegative ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700'}`}
+      style={{ height, fontSize, lineHeight: 1 }}
+    >
+      {formatScore(normalizedScore)}
     </div>
   );
 };

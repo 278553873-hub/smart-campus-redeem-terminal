@@ -6,7 +6,8 @@ interface MobileRadioOptionCardProps {
   tag?: string;
   tagTone?: 'neutral' | 'red' | 'orange' | 'jade' | 'gold';
   title: string;
-  description: string;
+  /** 说明支持带图标的富文本，例如金额前挂金币或银行图标。 */
+  description: React.ReactNode;
   selected: boolean;
   onSelect: () => void;
 }

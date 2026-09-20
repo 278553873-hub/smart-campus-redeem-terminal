@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, Clock, Landmark, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Clock, Eraser, Landmark, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
@@ -17,7 +17,7 @@ interface StudentCoinDetailViewProps {
 }
 
 type FlowFilter = 'income' | 'expense';
-type FlowCategory = 'all' | 'growth_award' | 'class_reward' | 'bank_interest' | 'vending_exchange' | 'class_exchange';
+type FlowCategory = 'all' | 'growth_award' | 'class_reward' | 'bank_interest' | 'vending_exchange' | 'class_exchange' | 'manual_clear' | 'bank_clear';
 
 interface CoinFlowItem {
   id: string;
@@ -36,6 +36,8 @@ const categoryLabels: Record<FlowCategory, string> = {
   bank_interest: '银行利息',
   vending_exchange: '货柜兑换',
   class_exchange: '班级兑换',
+  manual_clear: '清空可用',
+  bank_clear: '清空已存',
 };
 
 const flowFilterOptions: Array<{ value: FlowFilter; label: string }> = [
@@ -45,7 +47,7 @@ const flowFilterOptions: Array<{ value: FlowFilter; label: string }> = [
 
 const categoryOptionsByFilter: Record<FlowFilter, FlowCategory[]> = {
   income: ['all', 'growth_award', 'class_reward', 'bank_interest'],
-  expense: ['all', 'vending_exchange', 'class_exchange'],
+  expense: ['all', 'vending_exchange', 'class_exchange', 'manual_clear', 'bank_clear'],
 };
 
 const getFlowIcon = (category: FlowCategory, type: FlowFilter) => {
@@ -54,6 +56,10 @@ const getFlowIcon = (category: FlowCategory, type: FlowFilter) => {
     case 'vending_exchange':
     case 'class_exchange':
       return <ShoppingBag className={`h-[18px] w-[18px] ${toneClass}`} />;
+    case 'manual_clear':
+      return <Eraser className={`h-[18px] w-[18px] ${toneClass}`} />;
+    case 'bank_clear':
+      return <Landmark className={`h-[18px] w-[18px] ${toneClass}`} />;
     case 'growth_award':
       return <TrendingUp className={`h-[18px] w-[18px] ${toneClass}`} />;
     case 'class_reward':
@@ -89,7 +95,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
     const expenseItems = consumeRecords.map(record => ({
       id: record.id,
       categoryLabel: categoryLabels[record.category],
-      detail: `${record.productName} ×${record.quantity}`,
+      detail: record.category === 'manual_clear' || record.category === 'bank_clear' ? record.productName : `${record.productName} ×${record.quantity}`,
       amount: record.amount,
       time: record.time,
       type: 'expense' as const,

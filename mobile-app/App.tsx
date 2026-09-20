@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useRef, useEffect } from 'react';
+import React, { lazy, Suspense, useMemo, useState, useRef, useEffect } from 'react';
 import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ClassListView from './views/ClassListView';
@@ -16,6 +16,7 @@ import ClassLeaderboardView from './views/ClassLeaderboardView';
 import EvaluationRecordsLogView from './views/EvaluationRecordsLogView';
 import MoralEducationCockpitView from './views/MoralEducationCockpitView';
 import RewardVerificationView from './views/reward-verification/RewardVerificationView';
+import ClassExchangeRecordView from './views/ClassExchangeRecordView';
 import MedalIssuanceView from './views/MedalIssuanceView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
 import { BankPasswordView } from './views/bank-password/BankPasswordView';
@@ -87,6 +88,19 @@ import {
     type TeacherCampaign,
 } from './data/teacherCampaigns';
 import { preloadCampaignImage } from './utils/preloadCampaignImage';
+import {
+    applyCoinLedgerPatch,
+    createCoinLedgerEntry,
+    EMPTY_COIN_LEDGER_PATCH,
+    expandCoinLedgerForStudent,
+    formatCoinLedgerTimeValue,
+    recordCoinLedgerEntry,
+    revokeCoinLedgerEntry,
+    type CampusCoinLedgerEntry,
+    type CampusCoinLedgerPatch,
+    type CampusCoinLedgerShare,
+} from './domain/campusCoinLedger';
+import { createDemoCoinLedger } from './data/campusCoinLedger';
 
 import './styles/navigation.css';
 
@@ -368,7 +382,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'indicator_catalog' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'parent_evaluation_visibility' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'medal_issuance' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'indicator_catalog' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'parent_evaluation_visibility' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'class_exchange_records' | 'medal_issuance' | 'face_update' | 'bank_password' | 'homework_entry';
 
 const PRINCIPAL_REPORT_VIEWS: ViewState[] = [
     'principal_weekly_report',
@@ -396,6 +410,7 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
     'class_evaluation_records',
     'student_batch_edit',
     'reward_verification',
+    'class_exchange_records',
     'medal_issuance',
     'face_update',
     'bank_password',
@@ -440,7 +455,7 @@ const App: React.FC<MobileAppProps> = ({
 
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'indicator_catalog' || view === 'record_input') return 0;
-        if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'student_add' || view === 'class_report' || view === 'student_team_detail' || view === 'student_batch_edit' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'medal_issuance' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
+        if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'student_add' || view === 'class_report' || view === 'student_team_detail' || view === 'student_batch_edit' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'class_exchange_records' || view === 'medal_issuance' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
         if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'weekly_duty_schedule' || view === 'parent_evaluation_visibility' || view === 'homework_batch_import' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
         return 0;
     };
@@ -509,6 +524,8 @@ const App: React.FC<MobileAppProps> = ({
     const [evaluationRecordsByStudentId, setEvaluationRecordsByStudentId] = useState<Record<string, StudentEvaluationRecord[]>>({});
     const activeStudent = studentOverrides[selectedStudent.id] ?? selectedStudent;
     const [coinIssuanceConfig, setCoinIssuanceConfig] = useState<CoinIssuanceConfig>(DEFAULT_COIN_ISSUANCE_CONFIG);
+    // 成长币记录（兑换 / 清空）按班级存放运行期间的变更，历史流水由演示数据生成。
+    const [coinLedgerPatchByClassId, setCoinLedgerPatchByClassId] = useState<Record<string, CampusCoinLedgerPatch>>({});
     const [growthProfile, setGrowthProfile] = useState(() => ensureStudentGrowthProfile(activeStudent.id));
     const activeStudentEvaluationRecords = evaluationRecordsByStudentId[activeStudent.id] ?? createInitialStudentEvaluationRecords();
     const [selectedSubject, setSelectedSubject] = useState<string>('');
@@ -751,20 +768,27 @@ const App: React.FC<MobileAppProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // 助理子页面（含入口页与报告页）由页面自己持有滚动容器（标题栏需承接屏幕级角色背景），
+    // 滚动记忆与恢复必须同时兼容这类页面内的滚动容器。
+    const getScrollContainer = () => (
+        document.querySelector<HTMLElement>('[data-view-scroll-root]')
+        ?? document.getElementById('main-scroll-container')
+    );
+
     useEffect(() => {
         if (pendingScrollTopRef.current === null) return;
         const targetScrollTop = pendingScrollTopRef.current;
         pendingScrollTopRef.current = null;
         const frame = window.requestAnimationFrame(() => {
-            const mainContainer = document.getElementById('main-scroll-container');
-            if (mainContainer) mainContainer.scrollTop = targetScrollTop;
+            const container = getScrollContainer();
+            if (container) container.scrollTop = targetScrollTop;
         });
         return () => window.cancelAnimationFrame(frame);
     }, [currentView]);
 
     const rememberCurrentScroll = () => {
-        const mainContainer = document.getElementById('main-scroll-container');
-        if (mainContainer) scrollPositionsRef.current[currentView] = mainContainer.scrollTop;
+        const container = getScrollContainer();
+        if (container) scrollPositionsRef.current[currentView] = container.scrollTop;
     };
 
     // Helper to change view and push to history
@@ -920,6 +944,72 @@ const App: React.FC<MobileAppProps> = ({
             };
         });
     };
+
+    const coinLedgerToday = useMemo(() => new Date(), []);
+
+    const getActiveRoster = (classId: string) => getMergedStudentsForClass(classId)
+        .filter(student => (student.status ?? 'active') === 'active');
+
+    const getCoinLedgerForClass = (classId: string): CampusCoinLedgerEntry[] => {
+        if (!classId) return [];
+        const base = createDemoCoinLedger({
+            classId,
+            students: getActiveRoster(classId),
+            operator: teacherProfile.name,
+            today: coinLedgerToday,
+        });
+        return applyCoinLedgerPatch(base, coinLedgerPatchByClassId[classId] ?? EMPTY_COIN_LEDGER_PATCH);
+    };
+
+    const handleRecordCoinRedeem = (classId: string, productName: string, shares: CampusCoinLedgerShare[]) => {
+        if (!classId || shares.length === 0) return;
+        const entry = createCoinLedgerEntry({
+            classId,
+            type: 'redeem',
+            time: formatCoinLedgerTimeValue(new Date()),
+            operator: teacherProfile.name,
+            productName,
+            shares,
+        });
+        setCoinLedgerPatchByClassId(current => ({
+            ...current,
+            [classId]: recordCoinLedgerEntry(current[classId] ?? EMPTY_COIN_LEDGER_PATCH, entry),
+        }));
+    };
+
+    const handleRecordCoinClear = (classId: string, shares: CampusCoinLedgerShare[]) => {
+        if (!classId || shares.length === 0) return;
+        const entry = createCoinLedgerEntry({
+            classId,
+            type: 'clear',
+            time: formatCoinLedgerTimeValue(new Date()),
+            operator: teacherProfile.name,
+            shares,
+        });
+        setCoinLedgerPatchByClassId(current => ({
+            ...current,
+            [classId]: recordCoinLedgerEntry(current[classId] ?? EMPTY_COIN_LEDGER_PATCH, entry),
+        }));
+    };
+
+    const handleRevokeCoinLedgerEntry = (classId: string, entryId: string) => {
+        if (!classId) return;
+        setCoinLedgerPatchByClassId(current => ({
+            ...current,
+            [classId]: revokeCoinLedgerEntry(
+                current[classId] ?? EMPTY_COIN_LEDGER_PATCH,
+                entryId,
+                formatCoinLedgerTimeValue(new Date()),
+            ),
+        }));
+    };
+
+    // 学生侧成长币明细：把班级兑换与清空按学生各自的份额展开，撤回后自动消失。
+    const activeStudentCampusCoinDetail = (() => {
+        const exchanged = expandCoinLedgerForStudent(getCoinLedgerForClass(activeStudentClassId), activeStudent.id);
+        if (exchanged.length === 0) return activeCampusCoinDetail;
+        return { ...activeCampusCoinDetail, consumeRecords: [...activeCampusCoinDetail.consumeRecords, ...exchanged] };
+    })();
 
     const activeSpaceStudents = activeSpaceClasses.flatMap(classInfo => getMergedStudentsForClass(classInfo.id));
     const searchStudentsByExactName = (query: string): StudentTeamSearchResult[] => {
@@ -1168,17 +1258,6 @@ const App: React.FC<MobileAppProps> = ({
             return {
                 ...current,
                 [classId]: { ...classInfo, studentCardDisplaySettings: settings },
-            };
-        });
-    };
-
-    const handleUpdateStudentLevelDisplayMode = (classId: string, mode: ClassInfo['studentLevelDisplayMode']) => {
-        setClassOverrides(current => {
-            const classInfo = current[classId] ?? MOCK_CLASSES.find(item => item.id === classId);
-            if (!classInfo || !mode) return current;
-            return {
-                ...current,
-                [classId]: { ...classInfo, studentLevelDisplayMode: mode },
             };
         });
     };
@@ -1549,6 +1628,7 @@ const App: React.FC<MobileAppProps> = ({
             case 'leader_report': return '学生评价报表';
             case 'moral_education_cockpit': return '班级评价报表';
             case 'reward_verification': return '班级奖励兑换';
+            case 'class_exchange_records': return '成长币记录';
             case 'medal_issuance': return '颁发奖章';
             case 'face_update': return '更新人脸数据';
             case 'bank_password': return '设置兑换密码';
@@ -1622,10 +1702,11 @@ const App: React.FC<MobileAppProps> = ({
     const isPrincipalAssistantView = currentView === 'ai_principal_assistant';
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
-    // 助理报告页的标题栏必须承接屏幕级角色背景，所以由子页面自己持有正文滚动容器，
-    // 避免透明标题栏吸顶后与正文互相压盖。
-    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || hasPrincipalReportBackground;
+    // 助理各页面（含入口页与报告页）的标题栏必须承接屏幕级角色背景，所以由子页面自己持有滚动容器，
+    // 避免透明标题栏与滚动正文互相压盖；滚动记忆与恢复通过 [data-view-scroll-root] 识别该容器。
+    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'class_exchange_records', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground;
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView) || isStudentTeamCreateView;
+    const hasPlainPageOwnHeader = currentView === 'class_exchange_records';
     const hasStudentDetailBackground = currentView === 'student_detail';
     const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const activeBottomTab: TeacherBottomTab = activeIndex === 1 ? 'class' : activeIndex === 2 ? 'me' : 'record';
@@ -1733,11 +1814,11 @@ const App: React.FC<MobileAppProps> = ({
             >
 
                     <div className={`flex-1 flex flex-col relative overflow-hidden ${hasStudentDetailBackground ? 'bg-transparent' : hasPlainBackground ? 'bg-[var(--tm-page-plain-content-bg)]' : hasScreenLevelBackground ? 'bg-transparent' : 'bg-white'}`}>
-                        {hasPlainBackground && !hasStudentDetailBackground && (
+                        {hasPlainBackground && !hasStudentDetailBackground && !hasPlainPageOwnHeader && (
                             <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-11 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />
                         )}
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'indicator_catalog' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_add' && currentView !== 'student_team_detail' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'medal_issuance' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'indicator_catalog' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_add' && currentView !== 'student_team_detail' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'medal_issuance' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && !hasPlainPageOwnHeader && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -1874,7 +1955,7 @@ const App: React.FC<MobileAppProps> = ({
                                                 student.id,
                                                 getStudentLevelNetScore(
                                                     levelRecords,
-                                                    classes.find(classInfo => classInfo.id === selectedClassId)?.studentLevelDisplayMode ?? 'term',
+                                                    'term',
                                                     CURRENT_PRINCIPAL_TERM,
                                                 ),
                                             ];
@@ -1882,11 +1963,9 @@ const App: React.FC<MobileAppProps> = ({
                                     )}
                                     canResetStudentEvaluationCounts={selectedClassRole === 'headTeacher' || selectedClassRole === 'deputyHeadTeacher'}
                                     canConfigureCardDisplay={selectedClassRole === 'headTeacher' || selectedClassRole === 'deputyHeadTeacher'}
-                                    canConfigureLevelDisplay={selectedClassRole === 'headTeacher'}
                                     canAddStudent={selectedClassRole === 'headTeacher' || selectedClassRole === 'deputyHeadTeacher'}
                                     onAddStudent={() => navigateTo('student_add')}
                                     onUpdateStudentCardDisplaySettings={settings => handleUpdateStudentCardDisplaySettings(selectedClassId, settings)}
-                                    onUpdateStudentLevelDisplayMode={mode => handleUpdateStudentLevelDisplayMode(selectedClassId, mode)}
                                     onUpdateGroupCardDisplaySettings={settings => handleUpdateGroupCardDisplaySettings(selectedClassId, settings)}
                                 />
                             )}
@@ -1981,6 +2060,18 @@ const App: React.FC<MobileAppProps> = ({
                                     classInfo={selectedClassInfo}
                                     currentSpace={activeTeacherSpace}
                                     students={getMergedStudentsForClass(selectedClassInfo.id).filter(student => (student.status ?? 'active') === 'active')}
+                                    onBack={goBack}
+                                    onViewExchangeRecords={() => navigateTo('class_exchange_records')}
+                                    onRecordCoinRedeem={(productName, shares) => handleRecordCoinRedeem(selectedClassInfo.id, productName, shares)}
+                                    onRecordCoinClear={shares => handleRecordCoinClear(selectedClassInfo.id, shares)}
+                                />
+                            )}
+
+                            {currentView === 'class_exchange_records' && selectedClassInfo && (
+                                <ClassExchangeRecordView
+                                    students={getActiveRoster(selectedClassInfo.id)}
+                                    entries={getCoinLedgerForClass(selectedClassInfo.id)}
+                                    onRevokeEntry={entryId => handleRevokeCoinLedgerEntry(selectedClassInfo.id, entryId)}
                                     onBack={goBack}
                                 />
                             )}
@@ -2108,7 +2199,7 @@ const App: React.FC<MobileAppProps> = ({
                             {currentView === 'student_coin_detail' && (
                                 <StudentCoinDetailView
                                     student={activeStudent}
-                                    coinDetail={activeCampusCoinDetail}
+                                    coinDetail={activeStudentCampusCoinDetail}
                                     onBack={goBack}
                                 />
                             )}

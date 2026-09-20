@@ -62,7 +62,7 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
         surface="transparent"
       />
 
-      <main className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
+      <main data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
         {status === 'empty' ? (
           <AssistantReportFeedback
             status="empty"

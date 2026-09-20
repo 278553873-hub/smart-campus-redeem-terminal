@@ -55,7 +55,7 @@ export const StudentPerformanceLevelIcons: React.FC<StudentPerformanceLevelIcons
     ? 'h-[var(--tm-student-card-level-icon-size)] w-[var(--tm-student-card-level-icon-size)]'
     : 'h-[18px] w-[18px]';
   const rowHeightClass = iconSize === 'student-card'
-    ? 'h-[var(--tm-student-card-level-icon-row-height)]'
+    ? 'h-[var(--tm-student-card-level-row-height)]'
     : 'h-[18px]';
   const levelLabel = level.iconCount > 0
     ? `${level.iconCount}个${currentTier.label}`
@@ -88,6 +88,28 @@ export const StudentPerformanceLevelIcons: React.FC<StudentPerformanceLevelIcons
           className={`${iconSizeClass} shrink-0 select-none object-contain`}
         />
       ))}
+    </span>
+  );
+};
+
+interface StudentPerformanceLevelScoreProps {
+  netScore: number;
+  className?: string;
+}
+
+export const StudentPerformanceLevelScore: React.FC<StudentPerformanceLevelScoreProps> = ({
+  netScore,
+  className = '',
+}) => {
+  const normalizedScore = Number.isFinite(netScore) ? netScore : 0;
+  const isNegative = normalizedScore < 0;
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex h-[var(--tm-student-card-level-row-height)] min-w-[24px] items-center justify-center rounded-[5px] px-1 tabular-nums text-[length:var(--tm-student-card-level-score-font-size)] font-bold ${isNegative ? 'bg-[var(--tm-student-criticism-soft)] text-[var(--tm-student-criticism)]' : 'bg-[var(--tm-student-level-score-soft)] text-[var(--tm-student-level-score)]'} ${className}`}
+    >
+      {formatScore(normalizedScore)}
     </span>
   );
 };

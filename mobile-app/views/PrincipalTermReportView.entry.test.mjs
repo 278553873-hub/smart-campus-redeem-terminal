@@ -50,7 +50,7 @@ requireText(headerSource, 'focus-visible:ring-2', '学期报告交互控件应�
 requireText(viewSource, "status === 'empty'", '学期报告应处理无有效数据状态。');
 requireText(viewSource, "status === 'failed'", '学期报告应处理生成失败状态。');
 requireText(viewSource, 'surface="transparent"', '学期报告标题栏应透明，承接屏幕级校长助理渐变。');
-requireText(viewSource, 'min-h-0 flex-1 overflow-y-auto', '学期报告正文应使用独立滚动容器，避免遮挡透明标题栏。');
+requireText(viewSource, 'data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto', '学期报告正文应使用独立滚动容器，并让应用层滚动记忆能够识别，避免遮挡透明标题栏。');
 requireText(cssSource, '.principal-report-screen-background', '学期报告应复用屏幕级校长助理渐变背景。');
 forbidText(viewSource, 'bg-[var(--tm-bg-surface)] px-5 pb-6 pt-5', '学期报告首屏不应使用整块白底截断屏幕渐变。');
 forbidText(viewSource, '<textarea', '当前学期报告页不应开放对话输入。');

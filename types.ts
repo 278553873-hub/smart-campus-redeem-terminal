@@ -1,4 +1,5 @@
 
+
 export interface Student {
   id: string;
   name: string;
@@ -15,6 +16,7 @@ export interface Product {
   image: string;
   stock: number;
   type: 'standard' | 'special'; // standard: 商品奖励, special: 特殊奖励
+  category?: string; // 商品分类 id，取值来自 shared/shopCatalogStore 的分类表（学校可在后台自定义）
 }
 
 export interface BankAccount {
@@ -40,15 +42,6 @@ export interface BehaviorRecord {
   time: string;
   type: 'positive' | 'negative';
   score: number;
-}
-
-export type TierLevel = 'star' | 'active' | 'stable' | 'improve';
-
-export interface GrowthStatus {
-  currentTier: TierLevel;
-  currentScore: number;
-  nextTierScoreNeeded: number;
-  records: BehaviorRecord[];
 }
 
 export type ViewState = 'welcome' | 'scanning' | 'password_login' | 'dashboard' | 'exchange' | 'shop' | 'bank' | 'growth' | 'success' | 'vending-admin' | 'transactions';

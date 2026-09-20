@@ -47,7 +47,7 @@ for (const required of [
   "status === 'empty'",
   "status === 'failed'",
   'surface="transparent"',
-  'min-h-0 flex-1 overflow-y-auto',
+  'data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto',
 ]) {
   requireText(viewSource, required, `校长周月报告页缺少状态、内容或无障碍能力：${required}`);
 }

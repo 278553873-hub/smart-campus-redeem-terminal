@@ -7,6 +7,7 @@ export interface ClassroomStudentCardLayout {
   avatarSize: number;
   levelIconSize: number;
   levelHeight: number;
+  levelScoreFontSize: number;
   levelAvatarGap: number;
   countHeight: number;
   countFontSize: number;
@@ -210,6 +211,7 @@ const DISPLAY_CONFIGS: Record<ResolvedClassroomDisplayMode, ClassroomDisplayConf
       avatarSize: 68,
       levelIconSize: 20,
       levelHeight: 20,
+      levelScoreFontSize: 18,
       levelAvatarGap: 3,
       countHeight: 18,
       ...PERFORMANCE_VALUE_LAYOUTS.standard,
@@ -248,6 +250,7 @@ const DISPLAY_CONFIGS: Record<ResolvedClassroomDisplayMode, ClassroomDisplayConf
       avatarSize: 80,
       levelIconSize: 24,
       levelHeight: 24,
+      levelScoreFontSize: 22,
       levelAvatarGap: 4,
       countHeight: 22,
       ...PERFORMANCE_VALUE_LAYOUTS.classroom,
@@ -286,6 +289,7 @@ const DISPLAY_CONFIGS: Record<ResolvedClassroomDisplayMode, ClassroomDisplayConf
       avatarSize: 92,
       levelIconSize: 28,
       levelHeight: 28,
+      levelScoreFontSize: 26,
       levelAvatarGap: 4,
       countHeight: 24,
       ...PERFORMANCE_VALUE_LAYOUTS.distant,

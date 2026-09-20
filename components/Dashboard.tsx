@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Student } from '../types';
 import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
+import { DEMO_SELF_SCORE, DEMO_SELF_TOTAL_REWARD } from '../shared/demoRewardScenario';
 
 interface DashboardProps {
   student: Student;
@@ -99,23 +100,23 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
             </div>
           </div>
 
-          {/* 右侧成长阶段卡片 */}
+          {/* 右侧成长数据卡片 */}
           <div
             className={`${layout === 'pc' ? 'col-span-1' : 'col-span-5'} bg-white rounded-3xl p-4 sm:p-5 border-2 border-slate-100 shadow-sm relative overflow-hidden flex flex-col justify-between items-start text-left`}
           >
-            <div className="relative z-10 w-full mb-1">
-              <p className="text-slate-400 font-bold text-[12px] uppercase tracking-wider mb-1 whitespace-nowrap">当前成长阶段</p>
-              <h3 className="text-[22px] font-black text-slate-900 tracking-tight leading-tight whitespace-nowrap">稳步成长</h3>
-              <div className="flex items-center justify-between mt-2 pt-2.5 border-t border-slate-100 w-full">
-                <div className="flex flex-col shrink-0">
-                  <span className="text-[12px] font-semibold text-slate-500 mb-0.5 tracking-tight whitespace-nowrap">本月总分</span>
-                  <span className="text-[18px] font-black text-blue-600 leading-none whitespace-nowrap">45<span className="text-[12px] font-bold ml-1 text-slate-400">分</span></span>
-                </div>
-                <div className="w-px h-6 bg-slate-200 shrink-0 mx-1"></div>
-                <div className="flex flex-col shrink-0">
-                  <span className="text-[12px] font-semibold text-slate-500 mb-0.5 tracking-tight whitespace-nowrap">预计可得</span>
-                  <span className="text-[18px] font-black text-orange-500 inline-flex items-center leading-none whitespace-nowrap"><img src="/assets/coin.png" className="w-[0.95em] h-[0.95em] mr-1 -mt-[2px]" alt="coin" /> 90.88</span>
-                </div>
+            <div className="relative z-10 w-full h-full flex flex-col">
+              <p className="text-slate-400 font-bold text-[12px] uppercase tracking-wider whitespace-nowrap">预计可得</p>
+
+              <div className="flex-1 flex items-center min-h-0 py-1">
+                <h3 className="text-[26px] sm:text-[32px] font-black text-orange-500 tracking-tighter leading-none flex items-center whitespace-nowrap">
+                  <img src="/assets/coin.png" className="inline-block w-[0.9em] h-[0.9em] mr-1 shrink-0" alt="coin" />
+                  {DEMO_SELF_TOTAL_REWARD.toFixed(2)}
+                </h3>
+              </div>
+
+              <div className="flex items-center justify-between w-full shrink-0 bg-slate-50 rounded-2xl px-3 py-1.5 border border-slate-100 text-[12px] whitespace-nowrap">
+                <span className="font-semibold text-slate-500 tracking-tight">本月总分</span>
+                <span className="font-black text-blue-600 text-[13px] tracking-tight">{DEMO_SELF_SCORE}<span className="text-[11px] font-bold ml-1 text-slate-400">分</span></span>
               </div>
             </div>
             <Sparkles size={80} className="absolute -bottom-6 -right-6 text-slate-50 pointer-events-none" />
@@ -128,7 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
         <div className={`flex flex-col gap-3.5 sm:gap-4 ${layout === 'pc' ? 'grid grid-cols-2 max-w-4xl mx-auto gap-5' : 'w-full'}`}>
           <ActionCard
             imageSrc="/assets/c4d_growth.png"
-            label="成长足迹中心"
+            label="成长中心"
             desc="记录点滴进步，每月结算奖励"
             theme="orange"
             layout={layout}
@@ -138,7 +139,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
           {!hideShop && (
             <ActionCard
               imageSrc="/assets/c4d_shop.png"
-              label="文创星光超市"
+              label="文创超市"
               desc="把努力变成奖励，海量商品兑换"
               theme="pink"
               layout={layout}
@@ -148,7 +149,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
 
           <ActionCard
             imageSrc="/assets/c4d_bank.png"
-            label="博学储蓄银行"
+            label="储蓄银行"
             desc="将资产存入银行，赚取高额利息"
             theme="blue"
             layout={layout}
@@ -204,8 +205,8 @@ const ActionCard: React.FC<{
       <div className={`absolute -right-8 -top-8 w-36 h-36 ${ctx.lightBg} rounded-full mix-blend-multiply opacity-50 transition-transform duration-500 group-active:scale-110 pointer-events-none`}></div>
       <div className={`absolute right-12 -bottom-10 w-24 h-24 ${ctx.blob} rounded-full mix-blend-multiply opacity-40 transition-transform duration-500 group-active:-translate-x-4 pointer-events-none`}></div>
 
-      {/* 左侧高定立体光影Icon区 */}
-      <div className={`relative z-10 ${layout === 'pc' ? 'w-32 h-32 mb-4' : 'w-[74px] h-[74px]'} rounded-2xl ${ctx.lightBg} ${ctx.text} flex items-center justify-center shadow-inner shrink-0 transition-transform duration-300 group-active:scale-95 ring-4 ring-white overflow-hidden`}>
+      {/* 左侧图标区 */}
+      <div className={`relative z-10 ${layout === 'pc' ? 'w-32 h-32 mb-4' : 'w-[74px] h-[74px]'} rounded-2xl ${ctx.lightBg} ${ctx.text} flex items-center justify-center shrink-0 transition-transform duration-300 group-active:scale-95 overflow-hidden`}>
         <img src={imageSrc} className={`${layout === 'pc' ? 'w-24 h-24' : 'w-[60px] h-[60px]'} object-contain drop-shadow-sm transition-transform duration-500 group-active:scale-110`} alt="" />
       </div>
 

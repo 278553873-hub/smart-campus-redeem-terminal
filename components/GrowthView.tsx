@@ -5,13 +5,20 @@ import {
     ChevronRight, Sparkles, UserCheck, Clock, CheckCircle2,
     AlertCircle, ArrowLeft, Medal, Info
 } from 'lucide-react';
-import { Student, GrowthStatus, TierLevel } from '../types';
+import { Student, BehaviorRecord } from '../types';
 import {
     canShowParentEvaluationDetails,
     canShowParentEvaluationSummary,
     getParentEvaluationVisibilitySettings,
     type ParentEvaluationVisibilitySettings,
 } from '../shared/parentEvaluationVisibility';
+import {
+    DEMO_LEADERBOARD,
+    DEMO_SELF_SCORE,
+    DEMO_SELF_SCORE_REWARD,
+    DEMO_SUNSHINE_REWARD,
+    withDemoRankingRewards,
+} from '../shared/demoRewardScenario';
 
 interface GrowthViewProps {
     student: Student;
@@ -19,10 +26,7 @@ interface GrowthViewProps {
     parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;
 }
 
-const MOCK_GROWTH: GrowthStatus = {
-    currentTier: 'stable',
-    currentScore: 45,
-    nextTierScoreNeeded: 15,
+const MOCK_GROWTH: { records: BehaviorRecord[] } = {
     records: [
         {
             id: '1',
@@ -139,14 +143,44 @@ const MOCK_GROWTH: GrowthStatus = {
     ]
 };
 
+// 演示场景（并列前五）：用于展示高分段与中位段的奖励差异
+const RANK5_LEADERBOARD = withDemoRankingRewards([
+    { rank: 1, name: '张小宇', score: 95, isSelf: false, isTarget: false },
+    { rank: 2, name: '李佳怡', score: 92, isSelf: false, isTarget: false },
+    { rank: 3, name: '赵梓涵', score: 88, isSelf: false, isTarget: false },
+    { rank: 4, name: '王小明', score: 85, isSelf: false, isTarget: true },
+    { rank: 5, name: '郑小磊', score: 82, isSelf: true, isTarget: false },
+    { rank: 6, name: '陈子轩', score: 80, isSelf: false, isTarget: false },
+    { rank: 7, name: '林浩然', score: 78, isSelf: false, isTarget: false },
+    { rank: 8, name: '郭星辰', score: 75, isSelf: false, isTarget: false },
+    { rank: 9, name: '周雨桐', score: 73, isSelf: false, isTarget: false },
+    { rank: 10, name: '吴佳琪', score: 72, isSelf: false, isTarget: false },
+    { rank: 11, name: '徐博文', score: 70, isSelf: false, isTarget: false },
+    { rank: 12, name: '刘诗语', score: 65, isSelf: false, isTarget: false },
+    { rank: 13, name: '陈冠宇', score: 62, isSelf: false, isTarget: false },
+    { rank: 14, name: '黄心怡', score: 60, isSelf: false, isTarget: false },
+    { rank: 15, name: '张子豪', score: 58, isSelf: false, isTarget: false },
+    { rank: 16, name: '林嘉欣', score: 55, isSelf: false, isTarget: false },
+    { rank: 17, name: '周芷若', score: 52, isSelf: false, isTarget: false },
+    { rank: 18, name: '王志祥', score: 50, isSelf: false, isTarget: false },
+    { rank: 19, name: '杨超越', score: 48, isSelf: false, isTarget: false },
+    { rank: 20, name: '赵俊杰', score: 45, isSelf: false, isTarget: false },
+    { rank: 21, name: '钱多多', score: 42, isSelf: false, isTarget: false },
+    { rank: 22, name: '孙悟空', score: 40, isSelf: false, isTarget: false },
+    { rank: 23, name: '李白', score: 38, isSelf: false, isTarget: false },
+    { rank: 24, name: '杜甫', score: 35, isSelf: false, isTarget: false },
+    { rank: 25, name: '白居易', score: 30, isSelf: false, isTarget: false },
+    { rank: 26, name: '辛弃疾', score: 25, isSelf: false, isTarget: false },
+    { rank: 27, name: '李清照', score: 20, isSelf: false, isTarget: false },
+    { rank: 28, name: '陆游', score: 15, isSelf: false, isTarget: false },
+    { rank: 29, name: '司马迁', score: 10, isSelf: false, isTarget: false },
+    { rank: 30, name: '苏轼', score: 5, isSelf: false, isTarget: false },
+    ...Array.from({ length: 10 }).map((_, i) => ({ rank: 31 + i, name: `学生 ${31 + i}`, score: 0, isSelf: false, isTarget: false }))
+]);
+const RANK5_SELF = RANK5_LEADERBOARD.find(row => row.isSelf) ?? RANK5_LEADERBOARD[0];
+
 const MOCK_SHOW_LEADERBOARD = true;
 
-const TIER_CONFIG: Record<TierLevel, { label: string, bg: string, requirement: string, textColor: string, ring: string, emoji: string }> = {
-    star: { label: '领航之星', bg: 'bg-yellow-50', requirement: '', textColor: 'text-yellow-700', ring: 'ring-yellow-100', emoji: '' },
-    active: { label: '卓越先锋', bg: 'bg-blue-50', requirement: '', textColor: 'text-blue-700', ring: 'ring-blue-100', emoji: '' },
-    stable: { label: '稳步成长', bg: 'bg-green-50', requirement: '', textColor: 'text-green-700', ring: 'ring-green-100', emoji: '' },
-    improve: { label: '潜力新星', bg: 'bg-emerald-50/50', requirement: '', textColor: 'text-emerald-700', ring: 'ring-emerald-100', emoji: '' }
-};
 
 type DemoScenario = 'normal' | 'allZero' | 'rank5';
 
@@ -170,103 +204,27 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
     const uiState = React.useMemo(() => {
         if (demoScenario === 'allZero') {
             return {
-                currentTier: 'stable' as TierLevel,
                 currentScore: 0,
-                nextTierScoreNeeded: 1,
-                coinsBase: 100,
+                coinsBase: DEMO_SUNSHINE_REWARD,
                 coinsBonus: 0,
-                coinsFlag: 10,
-                totalCoins: 110,
                 records: [],
                 leaderboard: []
             };
         } else if (demoScenario === 'rank5') {
             return {
-                currentTier: 'active' as TierLevel,
                 currentScore: 82,
-                nextTierScoreNeeded: 3,
-                coinsBase: 10,
-                coinsBonus: 180,
-                coinsFlag: 10,
-                totalCoins: 200,
+                coinsBase: DEMO_SUNSHINE_REWARD,
+                coinsBonus: RANK5_SELF.coins,
                 records: MOCK_GROWTH.records,
-                leaderboard: [
-                    { rank: 1, name: '张小宇', score: 95, coins: 50.55, isSelf: false, isTarget: false, tier: 'star' as TierLevel },
-                    { rank: 2, name: '李佳怡', score: 92, coins: 50.55, isSelf: false, isTarget: false, tier: 'star' as TierLevel },
-                    { rank: 3, name: '赵梓涵', score: 88, coins: 50.55, isSelf: false, isTarget: false, tier: 'star' as TierLevel },
-                    { rank: 4, name: '王小明', score: 85, coins: 250, isSelf: false, isTarget: true, tier: 'star' as TierLevel },
-                    { rank: 5, name: '郑小磊', score: 82, coins: 180, isSelf: true, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 6, name: '陈子轩', score: 80, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 7, name: '林浩然', score: 78, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 8, name: '郭星辰', score: 75, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 9, name: '周雨桐', score: 73, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 10, name: '吴佳琪', score: 72, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 11, name: '徐博文', score: 70, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 12, name: '刘诗语', score: 65, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 13, name: '陈冠宇', score: 62, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 14, name: '黄心怡', score: 60, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 15, name: '张子豪', score: 58, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 16, name: '林嘉欣', score: 55, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 17, name: '周芷若', score: 52, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 18, name: '王志祥', score: 50, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 19, name: '杨超越', score: 48, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 20, name: '赵俊杰', score: 45, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 21, name: '钱多多', score: 42, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 22, name: '孙悟空', score: 40, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 23, name: '李白', score: 38, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 24, name: '杜甫', score: 35, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 25, name: '白居易', score: 30, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 26, name: '辛弃疾', score: 25, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    { rank: 27, name: '李清照', score: 20, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    { rank: 28, name: '陆游', score: 15, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    { rank: 29, name: '司马迁', score: 10, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    { rank: 30, name: '苏轼', score: 5, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    ...Array.from({ length: 10 }).map((_, i) => ({ rank: 31 + i, name: `学生 ${31 + i}`, score: 0, coins: 0, isSelf: false, isTarget: false, tier: 'improve' as TierLevel }))
-                ]
+                leaderboard: RANK5_LEADERBOARD,
             };
         } else {
             return {
-                currentTier: 'stable' as TierLevel,
-                currentScore: 45,
-                nextTierScoreNeeded: 15,
-                coinsBase: 70.5,
-                coinsBonus: 20.38,
-                coinsFlag: 10,
-                totalCoins: 90.88,
+                currentScore: DEMO_SELF_SCORE,
+                coinsBase: DEMO_SUNSHINE_REWARD,
+                coinsBonus: DEMO_SELF_SCORE_REWARD,
                 records: MOCK_GROWTH.records,
-                leaderboard: [
-                    { rank: 1, name: '张小宇', score: 85, coins: 50.55, isSelf: false, isTarget: false, tier: 'star' as TierLevel },
-                    { rank: 2, name: '李佳怡', score: 78, coins: 50.55, isSelf: false, isTarget: false, tier: 'star' as TierLevel },
-                    { rank: 3, name: '赵梓涵', score: 72, coins: 50.55, isSelf: false, isTarget: false, tier: 'star' as TierLevel },
-                    { rank: 4, name: '孙雨菲', score: 68, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 5, name: '陈子轩', score: 65, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 6, name: '林浩然', score: 64, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 7, name: '郭星辰', score: 63, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 8, name: '周雨桐', score: 63, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 9, name: '吴佳琪', score: 62, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 10, name: '徐博文', score: 61, coins: 180, isSelf: false, isTarget: false, tier: 'active' as TierLevel },
-                    { rank: 11, name: '王小明', score: 60, coins: 180, isSelf: false, isTarget: true, tier: 'active' as TierLevel },
-                    { rank: 12, name: '郑小磊', score: 45, coins: 20.38, isSelf: true, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 13, name: '刘诗语', score: 42, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 14, name: '陈冠宇', score: 41, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 15, name: '黄心怡', score: 40, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 16, name: '张子豪', score: 38, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 17, name: '林嘉欣', score: 38, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 18, name: '周芷若', score: 35, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 19, name: '王志祥', score: 34, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 20, name: '杨超越', score: 33, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 21, name: '赵俊杰', score: 30, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 22, name: '钱多多', score: 28, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 23, name: '孙悟空', score: 25, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 24, name: '李白', score: 22, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 25, name: '杜甫', score: 20, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 26, name: '白居易', score: 18, coins: 125, isSelf: false, isTarget: false, tier: 'stable' as TierLevel },
-                    { rank: 27, name: '辛弃疾', score: 12, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    { rank: 28, name: '李清照', score: 10, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    { rank: 29, name: '陆游', score: 8, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    { rank: 30, name: '苏轼', score: 5, coins: 110, isSelf: false, isTarget: false, tier: 'improve' as TierLevel },
-                    ...Array.from({ length: 10 }).map((_, i) => ({ rank: 31 + i, name: `学生 ${31 + i}`, score: 0, coins: 0, isSelf: false, isTarget: false, tier: 'improve' as TierLevel }))
-                ]
+                leaderboard: DEMO_LEADERBOARD
             };
         }
     }, [demoScenario]);
@@ -278,8 +236,6 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
         ? 'leaderboard'
         : activeTab;
 
-    const currentConfig = TIER_CONFIG[uiState.currentTier];
-
     return (
         <div className="h-full flex flex-col bg-[#f8fbff] overflow-hidden relative">
 
@@ -287,13 +243,10 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
 
                 {/* 顶部总得分卡片（强化层级分离） */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                    {/* 左半部分：得分与档位 */}
+                    {/* 左半部分：本月总分 */}
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border-2 border-slate-50 flex flex-col relative overflow-hidden">
                         <div className="flex justify-between items-start w-full shrink-0 h-[30px]">
                             <span className="text-slate-500 font-extrabold text-[13px] uppercase tracking-wider pl-1">本月总分</span>
-                            <div className={`px-3 py-1 rounded-xl font-black text-[13px] border-[2px] border-white ring-1 ${currentConfig.ring} ${currentConfig.bg} ${currentConfig.textColor} shadow-sm flex items-center gap-1.5`}>
-                                {currentConfig.label}
-                            </div>
                         </div>
 
                         <div className="flex flex-col items-center justify-center flex-1 py-4">
@@ -445,9 +398,6 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                                                                                     </span>
                                                                                     {item.isSelf && <span className="text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-black">我</span>}
                                                                                 </div>
-                                                                                <div className={`mt-0.5 text-[12px] font-black uppercase tracking-wider ${TIER_CONFIG[item.tier].textColor}`}>
-                                                                                    {TIER_CONFIG[item.tier].label}
-                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                         <div className="text-right shrink-0">
@@ -495,9 +445,6 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                                                                 {selfItem.name}
                                                             </span>
                                                             <span className="text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-black">我</span>
-                                                        </div>
-                                                        <div className={`mt-0.5 text-[12px] font-black uppercase tracking-wider ${TIER_CONFIG[selfItem.tier].textColor}`}>
-                                                            {TIER_CONFIG[selfItem.tier].label}
                                                         </div>
                                                     </div>
                                                 </div>

@@ -24,7 +24,7 @@ interface ClassroomPerformanceValuesProps {
 
 const formatCount = (count: number) => count > 99 ? '99+' : String(count);
 const formatSignedCount = (count: number, sign: '+' | '-') => count === 0 ? '0' : `${sign}${formatCount(count)}`;
-const formatScore = (score: number) => Number.isInteger(score) ? String(score) : score.toFixed(2).replace(/\.?0+$/, '');
+export const formatScore = (score: number) => Number.isInteger(score) ? String(score) : score.toFixed(2).replace(/\.?0+$/, '');
 const formatSignedScore = (score: number, sign: '+' | '-') => score === 0 ? '0' : `${sign}${formatScore(score)}`;
 
 const ClassroomPerformanceValues: React.FC<ClassroomPerformanceValuesProps> = ({

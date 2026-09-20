@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Building2, CalendarRange, ChevronLeft, ChevronRight, ScanSearch } from 'lucide-react';
+import { Building2, CalendarRange, ChevronRight, ScanSearch } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import MobileNoticeSheet from '../components/ui/MobileNoticeSheet';
 import {
     getPrincipalTermReportAvailability,
@@ -131,19 +132,11 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
     };
 
     return (
-        <div className="ai-assistant-theme-principal relative min-h-full overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
+        <div className="ai-assistant-theme-principal relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
+            <AssistantSubpageHeader onBack={onBack} surface="transparent" />
 
-            <button
-                type="button"
-                onClick={onBack}
-                className="absolute left-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-bg-surface-glass)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] backdrop-blur-md transition active:scale-95 active:bg-[var(--tm-bg-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
-                aria-label="返回"
-            >
-                <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
-            </button>
-
-            <main className="relative z-10 px-5 pb-8 pt-4">
-                <section className="relative min-h-[365px] overflow-visible pt-10 text-center">
+            <main data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-5 pb-8 pt-4">
+                <section className="relative min-h-[365px] overflow-visible text-center">
                     <div className="relative mx-auto flex h-[250px] w-[250px] items-center justify-center">
                         <img
                             src={ASSETS.MANAGEMENT.AI_PRINCIPAL_ASSISTANT_CHARACTER}

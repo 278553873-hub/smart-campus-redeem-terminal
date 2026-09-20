@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Product } from '../types';
+import { clampChannelStock, getChannelCapacity, isSingleItemChannel } from '../shared/vendingChannelCapacity';
 import { 
     ChevronLeft, RefreshCw, Package,
     Cpu, KeyRound, CheckCircle2, Play, Unlock, Lock, DoorOpen, Check,
@@ -196,16 +197,15 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
     const handleOpenAssignModal = (channel: ChannelItem) => {
         setSelectedChannelForAssign(channel);
         const hasExistingItem = Boolean(channel.productId);
-        const isRightCabinet = channel.cabinet === 'right';
 
         if (hasExistingItem) {
             // 已有商品：自动选中当前商品，带入当前库存数量
             setAssignProductId(channel.productId);
             setAssignInitialStock(channel.stock);
         } else {
-            // 空闲格：不预选商品，默认装填满仓容量
+            // 空闲格：不预选商品，默认装填满仓容量（右柜电子锁单件格口固定 1 件）
             setAssignProductId(null);
-            setAssignInitialStock(isRightCabinet ? 1 : (channel.maxStock || 10));
+            setAssignInitialStock(getChannelCapacity(channel));
         }
         setProductSearchKeyword('');
     };
@@ -224,7 +224,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                 return {
                     ...c,
                     productId: assignProductId,
-                    stock: assignInitialStock
+                    stock: clampChannelStock(c, assignInitialStock)
                 };
             }
             return c;
@@ -271,7 +271,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
             handleOpenAssignModal(target);
             return;
         }
-        const fullCapacity = target.cabinet === 'right' ? 1 : (target.maxStock || 10);
+        const fullCapacity = getChannelCapacity(target);
         if (target.stock >= fullCapacity) {
             handleOpenAssignModal(target);
             return;
@@ -296,7 +296,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
         }
         const nextChannels = channels.map(c => {
             if (c.cabinet === cabinet && c.row === row && c.productId !== null) {
-                return { ...c, stock: c.cabinet === 'right' ? 1 : (c.maxStock || 10) };
+                return { ...c, stock: getChannelCapacity(c) };
             }
             return c;
         });
@@ -333,7 +333,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
         }
         const nextChannels = channels.map(c => {
             if (c.cabinet === activeCabinet && c.productId !== null) {
-                return { ...c, stock: c.maxStock || 10 };
+                return { ...c, stock: getChannelCapacity(c) };
             }
             return c;
         });
@@ -626,10 +626,9 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                                         {rowChannels.map(ch => {
                                             const product = getProduct(ch.productId);
                                             const hasItem = Boolean(ch.productId && product);
-                                            const isRight = ch.cabinet === 'right';
-                                            const maxCapacity = ch.maxStock ?? (isRight ? 1 : 10);
+                                            const maxCapacity = getChannelCapacity(ch);
                                             const isFull = hasItem && ch.stock >= maxCapacity;
-                                            const isWarning = hasItem && (isRight ? ch.stock === 0 : ch.stock < 3);
+                                            const isWarning = hasItem && (isSingleItemChannel(ch) ? ch.stock === 0 : ch.stock < 3);
                                             const colNumber = ch.col;
                                             const is10Narrow = rowChannels.length === 10;
                                             const is2Big = rowChannels.length === 2;
@@ -714,7 +713,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
             {selectedChannelForAssign && (() => {
                 const isExisting = Boolean(selectedChannelForAssign.productId);
                 const isRightCabinet = selectedChannelForAssign.cabinet === 'right';
-                const maxCap = selectedChannelForAssign.maxStock || (isRightCabinet ? 1 : 10);
+                const maxCap = getChannelCapacity(selectedChannelForAssign);
                 const filteredProducts = products.filter(p => 
                     !productSearchKeyword.trim() || p.name.toLowerCase().includes(productSearchKeyword.trim().toLowerCase())
                 );

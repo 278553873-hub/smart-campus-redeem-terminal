@@ -153,5 +153,6 @@ for (const required of [
   assert.ok(radioCardSource.includes(required), `说明型选择卡片缺少组件 Token：${required}`);
 }
 assert.equal(radioCardSource.includes("selected ? 'text-[var(--tm-brand-primary)]'"), false, '说明型选择卡片的文字颜色不应因选中状态改变。');
+assert.ok(radioCardSource.includes('description: React.ReactNode;'), '说明型选择卡片应支持带图标的说明文本。');
 
 console.log('Selection controls tests passed.');

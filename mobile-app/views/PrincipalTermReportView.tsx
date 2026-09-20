@@ -61,7 +61,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
     <div className="ai-assistant-theme-principal relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent text-[var(--tm-text-primary)]">
       <AssistantSubpageHeader title="学期学校报告" onBack={onBack} surface="transparent" />
 
-      <main className="min-h-0 flex-1 overflow-y-auto no-scrollbar pb-[calc(32px+env(safe-area-inset-bottom))]">
+      <main data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto no-scrollbar pb-[calc(32px+env(safe-area-inset-bottom))]">
         {status === 'empty' ? (
           <AssistantReportFeedback
             status="empty"

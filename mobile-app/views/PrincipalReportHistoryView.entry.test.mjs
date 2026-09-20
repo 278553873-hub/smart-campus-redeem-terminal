@@ -38,6 +38,8 @@ for (const required of [
   'reportData={selectedReport.report}',
   'generated',
   'backLabel="返回当前报告"',
+  'surface="transparent"',
+  'data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto',
   'focus-visible:ring-2',
   '生成于{report.generatedDate}',
 ]) {

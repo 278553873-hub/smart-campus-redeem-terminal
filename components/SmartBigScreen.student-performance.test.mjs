@@ -13,8 +13,11 @@ const studentCardSource = screenSource.slice(
 
 assert.match(studentCardSource, /getStudentPerformanceLevel\(resolvedLevelNetScore\)/, '卡片等级应由所选统计范围内的净得分实时派生');
 assert.match(screenSource, /createDemoStudentLevelEvaluationRecords\(student, CURRENT_CLASSROOM_TERM\)/, '课堂大屏演示数据应提供本学期与历史评价记录');
-assert.match(screenSource, /getStudentLevelNetScore\(demoRecords, levelDisplayMode, CURRENT_CLASSROOM_TERM\) \+ liveTermDelta/, '等级统计范围切换应真正改变卡片等级分值，并保留本学期实时评价变化');
+assert.match(screenSource, /getStudentLevelNetScore\(demoRecords, 'term', CURRENT_CLASSROOM_TERM\) \+ liveTermDelta/, '等级始终按本学期统计，并保留本学期实时评价变化');
 assert.match(screenSource, /levelNetScore=\{getStudentLevelScore\(student, performance\)\}/, '学生列表应把所选统计范围的等级分值传入卡片');
+assert.match(studentCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'icon'/, '图标形式才展示星级图标并保留头像进度环');
+assert.match(studentCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'score'/, '分值形式才在等级行展示净得分');
+assert.match(studentCardSource, /showLevelProgress=\{showLevelIcons\}/, '分值形式下不应展示头像进度环');
 assert.match(studentCardSource, /layout\.fullHeight[\s\S]*layout\.countsHeight[\s\S]*layout\.identityOnlyHeight/, '学生卡片应根据可见信息使用三档高度');
 assert.match(studentCardSource, /displaySettings\.showEvaluation && displaySettings\.showPraise/, '关闭加扣分总开关后学生卡片不应继续展示加分');
 assert.match(studentCardSource, /displaySettings\.showEvaluation && displaySettings\.showCriticism/, '关闭加扣分总开关后学生卡片不应继续展示扣分');
@@ -57,6 +60,7 @@ assert.doesNotMatch(displaySource, /ThumbsUp|ThumbsDown/, '奖惩次数不应增
 assert.match(displaySource, /Array\.from\(\{ length: level\.iconCount \}/, '课堂大屏应按实际等级数量逐个展示等级图标');
 assert.match(displaySource, /level\.iconCount === 0[\s\S]*?src=\{sproutLevelIcon\}/, '课堂大屏未点亮等级图标时应展示一株小豆苗');
 assert.match(displaySource, /style=\{\{ width: iconSize, height: iconSize \}\}/, '紧凑等级图标应随展示档位动态放大');
+assert.match(displaySource, /bg-blue-50 text-blue-700/, '等级总分应使用浅蓝底色与深蓝文字');
 assert.match(displaySource, /compact \? 'h-5 min-w-20 gap-0'/, '四枚紧凑等级图标应保持居中并与学号留出间隙');
 assert.doesNotMatch(displaySource, /×\{level\.iconCount\}/, '等级图标不应使用乘号加数量的缩写方式');
 assert.match(rosterBadgeSource, /trailingDigits\.slice\(-2\)\.padStart\(2, '0'\)/, '课堂大屏编号组件应只展示学号后两位');
@@ -72,7 +76,7 @@ assert.match(screenSource, /whitespace-nowrap font-black leading-none tracking-t
 assert.match(screenSource, /inline-flex min-w-0 items-center justify-center gap-1[\s\S]*?layout\.rosterFontSize[\s\S]*?layout\.rosterWidth[\s\S]*?layout\.nameFontSize[\s\S]*?>\{student\.name\}<\/h3>/, '两位学号与姓名应组成稳定宽度的居中身份组，并随档位调整字号');
 assert.match(studentCardSource, /font-semibold[\s\S]*?layout\.nameFontSize[\s\S]*?>\{student\.name\}<\/h3>/, '课堂大屏姓名应使用统一配置字号，保持远距离可读且不过重');
 assert.match(screenSource, /resolveStudentsBySpokenNumbers\(normalized, students\)/, '语音评价应使用通用学号解析模块映射当前班级学生');
-assert.match(studentCardSource, /flex h-5 w-full shrink-0 items-center justify-center[\s\S]*?<ClassroomStudentLevelIcons level=\{level\} compact iconSize=\{layout\.levelIconSize\} \/>/, '等级图标应独占顶部并相对整张卡片居中');
+assert.match(studentCardSource, /displaySettings\.showLevel && \([\s\S]*?flex w-full shrink-0 items-center justify-center[\s\S]*?\{showLevelIcons && <ClassroomStudentLevelIcons level=\{level\} compact iconSize=\{layout\.levelIconSize\} \/>\}/, '图标形式的等级图标应独占顶部并相对整张卡片居中');
 assert.match(studentCardSource, /relative flex h-auto w-auto flex-col items-center justify-center/, '学生卡片的可选信息区域应在卡片内垂直居中');
 assert.match(studentCardSource, /marginTop: layout\.countIdentityGap[\s\S]*?inline-flex min-w-0 items-center justify-center gap-1[\s\S]*?>\{student\.name\}<\/h3>/, '学号与姓名应作为一个完整身份组，并通过档位间距与加扣分分层');
 assert.doesNotMatch(studentCardSource, /right-\[calc\(100%\+4px\)\]/, '学号不应再使用绝对定位，避免四字姓名时越出卡片');

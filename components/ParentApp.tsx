@@ -25,6 +25,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
+import {
+  DEMO_SELF_SCORE,
+  DEMO_SELF_SCORE_REWARD,
+  DEMO_SUNSHINE_REWARD,
+} from '../shared/demoRewardScenario';
 import PhoneMockup from './PhoneMockup';
 import {
   ParentBottomSheet,
@@ -1372,24 +1377,23 @@ const ParentApp: React.FC<ParentAppProps> = ({
           </div>
         </div>
 
-        {parentBankFeatureEnabled && <div className="mt-3 border-t border-[var(--pm-border-subtle)] pt-2.5">
-          <button
-            type="button"
-            onClick={() => openExchangePasswordSheet(activeChild)}
-            className={`flex min-h-8 w-full items-center justify-between text-left text-[length:var(--pm-font-size-compact)] ${PARENT_PRESSABLE_CLASS}`}
-            aria-label={`${activeChild.name}的兑换密码，查看或修改`}
-          >
-            <div className="flex items-center gap-2">
-              <KeyRound size={15} strokeWidth={2.4} className="shrink-0 text-[var(--pm-brand-primary)]" aria-hidden="true" />
-              <span className="font-bold text-[var(--pm-text-primary)]">货柜机兑换密码</span>
-              <span className="tabular-nums font-bold tracking-widest text-[var(--pm-text-secondary)]">••••••</span>
-            </div>
-            <span className="inline-flex items-center gap-0.5 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-primary-strong)]">
-              查看/修改
-              <ChevronRight size={13} strokeWidth={2.6} aria-hidden="true" />
-            </span>
-          </button>
-        </div>}
+        {parentBankFeatureEnabled && (
+          <div className="mt-3 border-t border-[var(--pm-border-subtle)] pt-2.5">
+            <button
+              type="button"
+              onClick={() => openExchangePasswordSheet(activeChild)}
+              className={`flex min-h-8 w-full items-center justify-between text-left text-[length:var(--pm-font-size-compact)] ${PARENT_PRESSABLE_CLASS}`}
+              aria-label={`${activeChild.name}的兑换密码`}
+            >
+              <div className="flex items-center gap-2">
+                <KeyRound size={15} strokeWidth={2.4} className="shrink-0 text-[var(--pm-brand-primary)]" aria-hidden="true" />
+                <span className="font-bold text-[var(--pm-text-primary)]">兑换密码</span>
+                <span className="tabular-nums font-bold tracking-widest text-[var(--pm-text-secondary)]">••••••</span>
+              </div>
+              <ChevronRight size={15} strokeWidth={2.4} className="shrink-0 text-[var(--pm-text-disabled)]" aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </ParentCard>
     );
   };
@@ -1426,72 +1430,61 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
   const GrowthBankEntry = () => {
     if (!activeChild || !parentBankFeatureEnabled) return null;
-    const growthReward = 70.5;
-    const scoreReward = 20.38;
+    const growthReward = DEMO_SUNSHINE_REWARD;
+    const scoreReward = DEMO_SELF_SCORE_REWARD;
     const totalReward = growthReward + scoreReward;
 
     return (
-      <ParentCard as="section" className="mx-5 mt-3 overflow-hidden p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ParentGradientIcon tone="orange" size="sm">
-              <PiggyBank size={16} />
-            </ParentGradientIcon>
-            <h2 className="text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">{GROWTH_COIN_TERMS.name}</h2>
-          </div>
+      <ParentCard as="section" className="mx-5 mt-3 overflow-hidden p-0">
+        <div className="flex items-center justify-between px-4 pt-3 pb-1">
+          <h2 className="text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">
+            {GROWTH_COIN_TERMS.name}
+          </h2>
           <button
             type="button"
             onClick={() => setScreen('bank')}
-            className={`inline-flex min-h-8 items-center gap-0.5 rounded-full px-2.5 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)] transition-colors active:bg-[var(--pm-brand-primary-soft)] ${PARENT_PRESSABLE_CLASS}`}
+            className={`inline-flex items-center gap-0.5 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)] ${PARENT_PRESSABLE_CLASS}`}
             aria-label={`进入积分银行，可用${formatCoin(activeChild.availableCoins)}，已存${formatCoin(activeChild.bankBalance)}`}
           >
             <span>进入银行</span>
-            <ChevronRight size={15} strokeWidth={2.8} aria-hidden="true" />
+            <ChevronRight size={14} strokeWidth={2.6} aria-hidden="true" />
           </button>
         </div>
 
-        {/* 上层：实实在在的真资产 */}
-        <div className="mt-3 grid grid-cols-2 gap-2.5 rounded-[var(--pm-radius-inner)] bg-[var(--pm-bg-surface-soft)] p-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--pm-brand-reward-soft)]">
-              <img src="/assets/coin.png" alt="" className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">{GROWTH_COIN_TERMS.available}</div>
-              <div className="truncate tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-brand-reward-strong)]">
+        <section className="flex min-h-10 items-center gap-2.5 px-4 pb-3 pt-1" aria-label={`${GROWTH_COIN_TERMS.name}资产`}>
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] bg-[var(--pm-brand-reward-soft)]">
+            <img src="/assets/coin.png" className="h-4 w-4" alt="" />
+          </span>
+          <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center gap-2">
+            <div className="flex min-w-0 items-baseline gap-1.5">
+              <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-medium text-[var(--pm-text-secondary)]">{GROWTH_COIN_TERMS.available}</span>
+              <span className="min-w-0 truncate text-[length:var(--pm-font-size-section-title)] font-bold tabular-nums text-[var(--pm-text-primary)]">
                 {formatCoin(activeChild.availableCoins)}
-              </div>
+              </span>
             </div>
-          </div>
-          <div className="flex items-center gap-2.5 border-l border-[var(--pm-border-subtle)] pl-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--pm-brand-primary-soft)]">
-              <PiggyBank size={17} className="text-[var(--pm-brand-primary)]" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">{GROWTH_COIN_TERMS.saved}</div>
-              <div className="truncate tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-brand-primary-strong)]">
+            <span className="h-3 w-px bg-[var(--pm-border-subtle)]" aria-hidden="true" />
+            <div className="flex min-w-0 items-baseline gap-1.5 pl-1">
+              <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-medium text-[var(--pm-text-secondary)]">{GROWTH_COIN_TERMS.saved}</span>
+              <span className="min-w-0 truncate text-[length:var(--pm-font-size-section-title)] font-bold tabular-nums text-[var(--pm-text-primary)]">
                 {formatCoin(activeChild.bankBalance)}
-              </div>
+              </span>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* 下层：在途预估收益条（轻金淡底分层，通透去灰） */}
-        <div className="mt-3 rounded-[var(--pm-radius-inner)] border border-[var(--pm-brand-reward)]/25 bg-[var(--pm-brand-reward-soft)]/60 px-3.5 py-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-reward-strong)]">
-              本期预计可得
-            </span>
-            <span className="tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-brand-reward-strong)]">
-              {totalReward.toFixed(2)}<span className="ml-1 text-[length:var(--pm-font-size-meta)] font-semibold">币</span>
+        <section className="flex min-h-9 items-center justify-between gap-2 bg-[var(--pm-brand-reward-soft)] px-4 py-2" aria-label="本期预计可得">
+          <div className="flex min-w-0 items-baseline gap-1.5">
+            <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-medium text-[var(--pm-text-secondary)]">本期预计可得</span>
+            <span className="truncate text-[length:var(--pm-font-size-body)] font-bold tabular-nums text-[var(--pm-text-primary)]">
+              {totalReward.toFixed(2)}
             </span>
           </div>
-          <div className="mt-1.5 flex items-center justify-between text-[length:var(--pm-font-size-meta)] font-medium text-[var(--pm-text-tertiary)]">
-            <span>成长奖励 {growthReward}</span>
-            <span className="text-[var(--pm-border-control)]">+</span>
-            <span>得分奖励 {scoreReward}</span>
-          </div>
-        </div>
+          <p className="shrink-0 text-right text-[length:var(--pm-font-size-meta)] font-medium text-[var(--pm-text-secondary)]">
+            成长奖励 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{growthReward}</strong>
+            <span className="px-1 font-bold text-[var(--pm-brand-reward-strong)]" aria-hidden="true">+</span>
+            得分奖励 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{scoreReward}</strong>
+          </p>
+        </section>
       </ParentCard>
     );
   };
@@ -1499,7 +1492,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const GrowthSummaryCards = () => {
     const positiveCount = 13;
     const improveCount = 1;
-    const totalScore = 45;
+    const totalScore = DEMO_SELF_SCORE;
     const summaryGridClass = showPositiveSummary && showNegativeSummary ? 'grid-cols-2' : 'grid-cols-1';
 
     return (
@@ -1507,7 +1500,6 @@ const ParentApp: React.FC<ParentAppProps> = ({
         <ParentCard as="article" className="p-4">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">本月总分</span>
-            <span className="rounded-full border border-[var(--pm-status-positive)]/20 bg-[var(--pm-status-positive-soft)] px-2.5 py-1 text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-status-positive-strong)]">稳步成长</span>
           </div>
           <div className="mt-3.5 flex items-baseline justify-center">
             <span className="tabular-nums text-[length:var(--pm-font-size-display)] font-[var(--pm-font-weight-bold)] leading-none text-[var(--pm-brand-primary)]">{totalScore}</span>
