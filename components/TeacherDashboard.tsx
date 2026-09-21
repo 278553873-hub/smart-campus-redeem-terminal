@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Checkbox, Popconfirm } from '@arco-design/web-react';
+import { Alert, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Checkbox, Popconfirm, Upload as ArcoUpload } from '@arco-design/web-react';
 import {
     LayoutDashboard, FileText, ClipboardList, PenTool,
     Settings, Users, BookOpen, Database, Download,
@@ -36,6 +36,8 @@ import {
     isSingleItemChannel,
 } from '../shared/vendingChannelCapacity';
 import { DEFAULT_PRODUCT_IMAGE, getProductImageUrlScale } from '../shared/productImage';
+import { IMAGE_UPLOAD_ACCEPT, IMAGE_UPLOAD_MAX_SIZE_TEXT, validateImageUpload } from '../shared/imageUpload';
+import { SHOP_PRODUCT_PRICE_HINT, SHOP_PRODUCT_PRICE_INVALID_MESSAGE, parseShopPrice, sanitizeShopPriceInput } from '../shared/shopProductForm';
 import { MOCK_PRODUCTS } from '../constants';
 import {
     ALL_CATEGORY_ID,
@@ -58,6 +60,9 @@ interface TeacherDashboardProps {
 }
 
 const TEACHER_CAMPAIGN_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,image/apng';
+
+/** 商品图上传说明：素材是 1:1 方图，没上传时前台与终端用默认商品图兜底 */
+const SHOP_PRODUCT_IMAGE_HINT = '建议 1:1 正方形，640×640 以上；PNG / JPG / WebP，不超过 ' + IMAGE_UPLOAD_MAX_SIZE_TEXT + '；不上传时显示默认商品图';
 
 /**
  * 商品 id 统一按字符串比较。
@@ -2283,6 +2288,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [editingChannel, setEditingChannel] = useState<any>(null);
     const [modalIcon, setModalIcon] = useState<string>('');
     const [shopPriceInput, setShopPriceInput] = useState('10.00');
+    // 商品弹窗图片列表：Arco Upload 按 fileList 渲染已上传的图，没上传时为空，前台与终端回退默认商品图
+    const shopProductImageFiles = modalIcon && modalIcon !== DEFAULT_PRODUCT_IMAGE
+        ? [{ uid: 'shop-product-image', name: editingShopProduct?.name || '商品图片', url: modalIcon }]
+        : [];
 
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [modalDays, setModalDays] = useState(7);
@@ -2529,6 +2538,27 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
     const handleToggleProductStatus = (id: number) => {
         setBankProducts(bankProducts.map(p => p.id === id ? { ...p, active: !p.active } : p));
+    };
+
+    // 上传前按共享规则校验格式与大小，不合格直接拦下并说明原因
+    const handleShopProductImageBeforeUpload = (file: File) => {
+        const uploadError = validateImageUpload(file);
+        if (uploadError) {
+            Message.warning(uploadError);
+            return false;
+        }
+        return true;
+    };
+
+    // 演示态图片不入后端：读成图片地址存进商品，后台列表与货柜机展示同一张
+    const handleShopProductImageChange = (_fileList: unknown, file: { originFile?: File }) => {
+        const originFile = file?.originFile;
+        if (!originFile) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === 'string') setModalIcon(reader.result);
+        };
+        reader.readAsDataURL(originFile);
     };
 
     const handleOpenShopModal = (product: any = null) => {
@@ -6181,9 +6211,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     e.preventDefault();
                                     const formData = new FormData(e.currentTarget);
                                     const priceInput = e.currentTarget.elements.namedItem('price') as HTMLInputElement | null;
-                                    const price = Number(shopPriceInput);
-                                    if (!Number.isFinite(price) || price <= 0) {
-                                        priceInput?.setCustomValidity('售价必须大于 0');
+                                    const price = parseShopPrice(shopPriceInput);
+                                    if (price === null) {
+                                        priceInput?.setCustomValidity(SHOP_PRODUCT_PRICE_INVALID_MESSAGE);
                                         priceInput?.reportValidity();
                                         return;
                                     }
@@ -6195,7 +6225,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     const newProduct = {
                                         id: String(editingShopProduct?.id ?? Date.now()),
                                         name: formData.get('name') as string,
-                                        price: Number(price.toFixed(2)),
+                                        price,
                                         icon: modalIcon,
                                         active: editingShopProduct?.active ?? true,
                                         category: shopCategoryInput
@@ -6204,46 +6234,41 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 }}>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]">商品名称</label>
-                                            <input name="name" defaultValue={editingShopProduct?.name || ''} required className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors placeholder:text-[#86909C] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10" placeholder="例如：校庆限量徽章" />
+                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]" htmlFor="shop-product-name"><span className="mr-1 text-[#F53F3F]" aria-hidden="true">*</span>商品名称</label>
+                                            <input id="shop-product-name" name="name" defaultValue={editingShopProduct?.name || ''} required className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors placeholder:text-[#86909C] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10" placeholder="例如：校庆限量徽章" />
                                         </div>
                                         <div>
-                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]">售价（校园币）</label>
+                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]" htmlFor="shop-product-price"><span className="mr-1 text-[#F53F3F]" aria-hidden="true">*</span>售价（校园币）</label>
                                             <input
+                                                id="shop-product-price"
                                                 type="text"
                                                 name="price"
                                                 value={shopPriceInput}
                                                 required
                                                 inputMode="decimal"
-                                                pattern="^(?=.*\\d)(?:\\d+(?:\\.\\d{1,2})?|\\.\\d{1,2})$"
                                                 aria-describedby="shop-price-hint"
                                                 onChange={(event) => {
                                                     event.currentTarget.setCustomValidity('');
-                                                    const rawValue = event.currentTarget.value.replace(/[^0-9.]/g, '');
-                                                    const [integerPart, ...decimalParts] = rawValue.split('.');
-                                                    const decimalPart = decimalParts.join('').slice(0, 2);
-                                                    setShopPriceInput(decimalParts.length > 0
-                                                        ? `${integerPart || '0'}.${decimalPart}`
-                                                        : integerPart);
+                                                    setShopPriceInput(sanitizeShopPriceInput(event.currentTarget.value));
                                                 }}
                                                 onKeyDown={(event) => {
                                                     if (['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();
                                                 }}
                                                 onBlur={() => {
-                                                    const value = Number(shopPriceInput);
-                                                    if (Number.isFinite(value) && value > 0) setShopPriceInput(value.toFixed(2));
+                                                    const normalized = parseShopPrice(shopPriceInput);
+                                                    if (normalized !== null) setShopPriceInput(normalized.toFixed(2));
                                                 }}
                                                 className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors placeholder:text-[#86909C] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10"
                                             />
-                                            <span id="shop-price-hint" className="mt-1 block text-xs text-[#86909C]">请输入大于 0 的数字，最多 2 位小数</span>
+                                            <span id="shop-price-hint" className="mt-1 block text-xs text-[#86909C]">{SHOP_PRODUCT_PRICE_HINT}</span>
                                         </div>
                                         <div>
-                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]">商品分类</label>
+                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]"><span className="mr-1 text-[#F53F3F]" aria-hidden="true">*</span>商品分类</label>
                                             <ArcoSelect
                                                 value={shopCategoryInput || undefined}
                                                 placeholder="请选择分类"
                                                 options={getShopCategoryPickerOptions(shopCategories).map(option => ({
-                                                    label: option.disabled ? `${option.name}（已停用）` : option.name,
+                                                    label: option.disabled ? option.name + '（已停用）' : option.name,
                                                     value: option.id,
                                                     disabled: option.disabled,
                                                 }))}
@@ -6251,66 +6276,26 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 style={{ width: '100%' }}
                                                 aria-label="商品分类"
                                             />
-                                            <span className="mt-1 block text-xs text-[#86909C]">决定商品在货柜机上归到哪个分类标签</span>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="mb-3 block text-sm font-medium text-[#4E5969]">商品图片</label>
-                                        <div className="flex flex-wrap gap-4">
-                                            {[
-                                                { id: '1', url: DEFAULT_PRODUCT_IMAGE, name: '默认商品图' }
-                                            ].map(icon => (
-                                                <button
-                                                    key={icon.id}
-                                                    type="button"
-                                                    onClick={() => setModalIcon(icon.url)}
-                                                    className={`relative w-24 rounded border p-3 transition-colors group ${modalIcon === icon.url ? 'border-[#165DFF] bg-[#F2F7FF]' : 'border-[#E5E6EB] bg-white hover:border-[#C9CDD4]'}`}
-                                                >
-                                                    <div className="relative mb-2 flex h-12 w-full items-center justify-center overflow-hidden rounded border border-[#F2F3F5] bg-white p-1.5">
-                                                        <img src={icon.url} alt={icon.name} className={`w-full h-full object-contain transition-transform z-10 ${modalIcon === icon.url ? 'drop-shadow-sm scale-110' : ''}`} />
-                                                    </div>
-                                                    <span className={`text-[11px] font-bold block text-center ${modalIcon === icon.url ? 'text-blue-700' : 'text-slate-500'}`}>{icon.name}</span>
-                                                    {modalIcon === icon.url && (
-                                                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-sm">
-                                                            <Check size={12} />
-                                                        </div>
-                                                    )}
-                                                </button>
-                                            ))}
-
-                                            {/* 自定义上传 */}
-                                            <div className="group relative flex w-24 flex-col items-center justify-center rounded border border-dashed border-[#C9CDD4] p-3 transition-colors hover:border-[#165DFF] hover:bg-[#F2F7FF]">
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files?.[0];
-                                                        if (file) {
-                                                            const reader = new FileReader();
-                                                            reader.onload = (event) => {
-                                                                if (event.target?.result) {
-                                                                    setModalIcon(event.target.result as string);
-                                                                }
-                                                            };
-                                                            reader.readAsDataURL(file);
-                                                        }
-                                                    }}
-                                                />
-                                                <div className="mb-2 flex h-12 w-full flex-col items-center justify-center rounded border border-[#F2F3F5] bg-white p-1.5 text-[#86909C] group-hover:text-[#165DFF]">
-                                                    <Upload size={20} className="mb-0.5" />
-                                                </div>
-                                                <span className="text-[11px] font-bold block text-center text-slate-500 group-active:text-blue-600">自定义图片</span>
-                                            </div>
+                                        <div className="col-span-2">
+                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]">商品图片</label>
+                                            <ArcoUpload
+                                                listType="picture-card"
+                                                accept={IMAGE_UPLOAD_ACCEPT}
+                                                limit={1}
+                                                autoUpload={false}
+                                                imagePreview
+                                                fileList={shopProductImageFiles}
+                                                beforeUpload={handleShopProductImageBeforeUpload}
+                                                onChange={handleShopProductImageChange}
+                                                aria-describedby="shop-product-image-hint"
+                                                onRemove={() => {
+                                                    setModalIcon(DEFAULT_PRODUCT_IMAGE);
+                                                    return true;
+                                                }}
+                                            />
+                                            <span id="shop-product-image-hint" className="mt-1 block text-xs text-[#86909C]">{SHOP_PRODUCT_IMAGE_HINT}</span>
                                         </div>
-                                        {modalIcon && !modalIcon.startsWith('/assets/') && (
-                                            <div className="mt-4 flex items-center gap-3 rounded border border-[#BEDAFF] bg-[#F2F7FF] p-3">
-                                                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-[#E5E6EB] bg-white">
-                                                    <img src={modalIcon} className="w-full h-full object-cover" alt="已上传图片" />
-                                                </div>
-                                                <div className="flex-1 text-sm text-[#165DFF]">已应用自定义图片</div>
-                                            </div>
-                                        )}
                                     </div>
                                 </form>
                             </div>

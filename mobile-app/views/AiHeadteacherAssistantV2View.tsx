@@ -36,10 +36,27 @@ import {
     askClassEvaluationQuestion,
     generateClassEvaluationWeeklyReport,
     type ClassEvaluationAssistantAnswer,
+    type ClassEvaluationConversationContext,
     type ClassEvaluationRecord,
     type ClassEvaluationSnapshot,
     type ClassEvaluationWeeklyReport,
 } from '../domain/classEvaluationAssistantV2';
+import {
+    HEADTEACHER_ASSISTANT_REPLYING_LABELS,
+    buildCapabilityNoticeAnswer,
+    buildUnknownQuestionAnswer,
+    getFollowUpQuestions,
+    getInitialSuggestedQuestions,
+    resolveQuestionRoute,
+    type HeadteacherAssistantCapability,
+    type HeadteacherAssistantQuestionRoute,
+} from '../domain/headteacherAssistantConversation';
+import {
+    askStudentEvaluationQuestion,
+    type StudentEvaluationAssistantAnswer,
+} from '../domain/studentEvaluationAssistant';
+import { getStudentEvaluationSnapshot } from '../data/studentEvaluationAssistant';
+import type { AssistantAnswerPresentation } from '../domain/assistantAnswerShape';
 import {
     findSavedClassEvaluationReport,
     listSavedClassEvaluationReports,
@@ -60,12 +77,24 @@ interface AiHeadteacherAssistantV2ViewProps {
     getClassLabel?: (classInfo: ClassInfo) => string;
 }
 
+type ChatMessageAnswer =
+    | ClassEvaluationAssistantAnswer
+    | StudentEvaluationAssistantAnswer
+    | AssistantAnswerPresentation;
+
 interface ChatMessage {
     id: string;
     role: 'user' | 'assistant';
     content?: string;
-    answer?: ClassEvaluationAssistantAnswer;
+    answer?: ChatMessageAnswer;
 }
+
+/** 只有班级评价回答携带班级数据上下文，学生评价与能力提示不参与班级追问。 */
+const getClassEvaluationContext = (
+    answer?: ChatMessageAnswer,
+): ClassEvaluationConversationContext | undefined => (
+    answer && 'context' in answer && 'recordIds' in answer.context ? answer.context : undefined
+);
 
 const formatScore = (score: number) => score.toFixed(1);
 const formatCompactScore = (score: number) => Number.isInteger(score) ? String(score) : score.toFixed(1);
@@ -94,12 +123,6 @@ const REPORT_GENERATION_STEPS = [
     '正在生成本周分析与指导建议',
 ] as const;
 
-const OVERVIEW_RECOMMENDED_QUESTIONS = [
-    '班级评比主要扣在哪？',
-    '班级评比较上周哪项变化最大？',
-    '根据班级评比，下周优先关注什么？',
-] as const;
-
 const STUDENT_EVALUATION_QUESTIONS = [
     {
         label: '本周学生评价洞察与跟进建议',
@@ -112,19 +135,6 @@ const STUDENT_EVALUATION_QUESTIONS = [
         icon: ScanSearch,
     },
 ] as const;
-
-const getFollowUpQuestions = (answerType: ClassEvaluationAssistantAnswer['answerType']) => {
-    if (answerType === 'weekly_performance') {
-        return OVERVIEW_RECOMMENDED_QUESTIONS.slice(0, 2);
-    }
-    if (answerType === 'deduction_patterns') {
-        return ['哪一笔扣分影响最大？', OVERVIEW_RECOMMENDED_QUESTIONS[2]];
-    }
-    if (answerType === 'next_week_focus') {
-        return ['这些建议对应哪些扣分记录？', '本周表现最稳定的是哪些项目？'];
-    }
-    return OVERVIEW_RECOMMENDED_QUESTIONS.slice(0, 2);
-};
 
 const ReportInsightList: React.FC<{
     insights: ClassEvaluationWeeklyReport['performanceInsights'];
@@ -226,7 +236,7 @@ const WeeklyReportContent: React.FC<{
 );
 
 const ConversationAnswerContent: React.FC<{
-    answer: ClassEvaluationAssistantAnswer;
+    answer: ChatMessageAnswer;
 }> = ({ answer }) => (
     <div className="space-y-3 text-pretty text-[14px] tm-font-regular leading-6 text-[var(--tm-text-primary)]">
         <p className="whitespace-pre-line">{answer.message}</p>
@@ -252,13 +262,17 @@ const ConversationAnswerContent: React.FC<{
 const ConversationThread: React.FC<{
     messages: ChatMessage[];
     replying: boolean;
+    replyingCapability: HeadteacherAssistantCapability | 'unknown';
+    ariaLabel: string;
     latestAssistantRef: React.RefObject<HTMLDivElement | null>;
 }> = ({
     messages,
     replying,
+    replyingCapability,
+    ariaLabel,
     latestAssistantRef,
 }) => (
-    <section className="mx-4 mt-5 space-y-4" aria-label="班级评比对话" aria-live="polite">
+    <section className="mx-4 mt-5 space-y-4" aria-label={ariaLabel} aria-live="polite">
         {messages.map((message, index) => (
             <div
                 key={message.id}
@@ -280,7 +294,7 @@ const ConversationThread: React.FC<{
         {replying && (
             <div className="headteacher-agent-glass flex h-11 w-fit items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]" role="status">
                 <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
-                正在分析班级评比数据
+                {HEADTEACHER_ASSISTANT_REPLYING_LABELS[replyingCapability]}
             </div>
         )}
 
@@ -340,9 +354,10 @@ const QuestionComposer: React.FC<{
     draft: string;
     replying: boolean;
     suggestedQuestions: readonly string[];
+    placeholder: string;
     onDraftChange: (value: string) => void;
     onSubmit: (question: string) => void;
-}> = ({ draft, replying, suggestedQuestions, onDraftChange, onSubmit }) => {
+}> = ({ draft, replying, suggestedQuestions, placeholder, onDraftChange, onSubmit }) => {
     const [mode, setMode] = useState<ComposerMode>('voice');
     const [voiceState, setVoiceState] = useState<VoiceState>('idle');
     const [voiceFallback, setVoiceFallback] = useState(false);
@@ -482,8 +497,8 @@ const QuestionComposer: React.FC<{
                         }}
                         minHeight={44}
                         maxHeight={88}
-                        placeholder={voiceFallback ? '当前环境暂不支持语音，请输入文字' : '输入班级评比问题'}
-                        aria-label="输入班级评比问题"
+                        placeholder={voiceFallback ? '当前环境暂不支持语音，请输入文字' : placeholder}
+                        aria-label={placeholder}
                         className="w-full resize-none bg-transparent px-2.5 py-2.5 text-[14px] font-medium leading-6 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-disabled)]"
                     />
                     <button
@@ -1018,6 +1033,13 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
             dimensionRankings: week.dimensionRankings,
         };
     }, [resolvedClassId]);
+    const studentSnapshot = useMemo(() => getStudentEvaluationSnapshot(resolvedClassId), [resolvedClassId]);
+    const capabilities = useMemo(() => ({
+        showClassEvaluation,
+        showStudentEvaluation,
+    }), [showClassEvaluation, showStudentEvaluation]);
+    /** 新会话的固定建议问题：都开通时先给班级评比问题，仅学生评价时给更短的学生评价问题。 */
+    const OVERVIEW_RECOMMENDED_QUESTIONS = getInitialSuggestedQuestions(capabilities);
     const assistantIntro = useMemo(getAssistantIntro, []);
     const [typedIntro, setTypedIntro] = useState('');
     const [savedReports, setSavedReports] = useState<SavedClassEvaluationReport[]>(() => listSavedClassEvaluationReports());
@@ -1029,6 +1051,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [draft, setDraft] = useState('');
     const [isReplying, setIsReplying] = useState(false);
+    const [replyingCapability, setReplyingCapability] = useState<HeadteacherAssistantCapability | 'unknown'>('class');
     const [overviewExpanded, setOverviewExpanded] = useState(false);
     const [detailInitialDimension, setDetailInitialDimension] = useState<string | null>(null);
     const [weekDetailOpen, setWeekDetailOpen] = useState(false);
@@ -1195,13 +1218,34 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         setActiveReport(report);
     };
 
+    const buildAnswer = (
+        route: HeadteacherAssistantQuestionRoute,
+        question: string,
+    ): ChatMessageAnswer => {
+        if (route.capability === 'student') {
+            return route.enabled
+                ? askStudentEvaluationQuestion({ question, snapshot: studentSnapshot })
+                : buildCapabilityNoticeAnswer('student', capabilities);
+        }
+        if (route.capability === 'class') {
+            if (!route.enabled) return buildCapabilityNoticeAnswer('class', capabilities);
+            return askClassEvaluationQuestion({
+                question,
+                snapshot,
+                records,
+                gradeRank: currentWeek.gradeRank,
+                rankings: currentWeek.dimensionRankings,
+                previousWeek,
+                previousContext: latestClassContext,
+            });
+        }
+        return buildUnknownQuestionAnswer(capabilities);
+    };
+
     const submitQuestion = (rawQuestion: string) => {
         const question = rawQuestion.trim();
         if (!question || isReplying) return;
 
-        const previousContext = [...messages]
-            .reverse()
-            .find(message => message.role === 'assistant' && message.answer)?.answer?.context;
         setMessages(current => [...current, {
             id: 'user-' + Date.now(),
             role: 'user',
@@ -1209,21 +1253,14 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         }]);
         setDraft('');
         setIsReplying(true);
+        const route = resolveQuestionRoute(question, capabilities);
+        setReplyingCapability(route.enabled ? route.capability : 'unknown');
 
         replyTimerRef.current = window.setTimeout(() => {
-            const answer = askClassEvaluationQuestion({
-                question,
-                snapshot,
-                records,
-                gradeRank: currentWeek.gradeRank,
-                rankings: currentWeek.dimensionRankings,
-                previousWeek,
-                previousContext,
-            });
             setMessages(current => [...current, {
                 id: 'assistant-' + Date.now(),
                 role: 'assistant',
-                answer,
+                answer: buildAnswer(route, question),
             }]);
             setIsReplying(false);
             replyTimerRef.current = null;
@@ -1242,15 +1279,28 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         onBack();
     };
 
+    const latestClassContext = getClassEvaluationContext([...messages]
+        .reverse()
+        .find(message => message.role === 'assistant' && message.answer)?.answer);
     const latestAnswer = [...messages]
         .reverse()
         .find(message => message.role === 'assistant' && message.answer)?.answer;
     const askedQuestions = new Set(messages
         .filter(message => message.role === 'user' && message.content)
-        .map(message => message.content));
+        .map(message => message.content as string));
     const followUpQuestions = latestAnswer
-        ? getFollowUpQuestions(latestAnswer.answerType).filter(question => !askedQuestions.has(question))
+        ? getFollowUpQuestions({ answerType: latestAnswer.answerType, capabilities, askedQuestions })
         : [];
+    const conversationLabel = showClassEvaluation && showStudentEvaluation
+        ? '班主任助理对话'
+        : showStudentEvaluation
+            ? '学生评价对话'
+            : '班级评比对话';
+    const composerPlaceholder = showClassEvaluation && showStudentEvaluation
+        ? '输入问题'
+        : showStudentEvaluation
+            ? '输入学生评价问题'
+            : '输入班级评比问题';
 
     const handleClassSelect = (classId: string) => {
         onClassChange(classId);
@@ -1398,6 +1448,8 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                         <ConversationThread
                             messages={messages}
                             replying={isReplying}
+                            replyingCapability={replyingCapability}
+                            ariaLabel={conversationLabel}
                             latestAssistantRef={latestAssistantRef}
                         />
                     )}
@@ -1405,11 +1457,12 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
             )}
 
             <footer className="relative z-30 shrink-0 bg-transparent">
-                {showClassEvaluation && !activeReport && !isGenerating && !historyOpen && (
+                {(showClassEvaluation || showStudentEvaluation) && !activeReport && !isGenerating && !historyOpen && (
                     <QuestionComposer
                         draft={draft}
                         replying={isReplying}
                         suggestedQuestions={messages.length > 0 ? followUpQuestions : OVERVIEW_RECOMMENDED_QUESTIONS}
+                        placeholder={composerPlaceholder}
                         onDraftChange={setDraft}
                         onSubmit={submitQuestion}
                     />

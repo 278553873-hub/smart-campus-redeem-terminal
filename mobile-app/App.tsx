@@ -145,7 +145,11 @@ import {
     TEACHER_EVALUATION_REVIEW_CURRENT_BY_CLASS,
 } from './data/teacherEvaluationReview';
 import { CURRENT_PRINCIPAL_TERM } from './data/principalTermReport';
-import { canManagePersonalClasses, canTeacherSpaceRecordClass, getHeadteacherAssistantScopes, getTeacherClassDisplayName, getTeacherSchoolGradeOptions } from './domain/teacherSpaceAccess';
+import { canManagePersonalClasses, canTeacherSpaceRecordClass, getHeadteacherAssistantScopes, getTeacherClassDisplayName, getTeacherSchoolGradeOptions, resolveHeadteacherAssistantScopes } from './domain/teacherSpaceAccess';
+import {
+    getHeadteacherAssistantScopePreviewMode,
+    type HeadteacherAssistantScopePreviewMode,
+} from '../shared/headteacherAssistantScopePreview';
 import { useReportGenerationTask } from './hooks/useReportGenerationTask';
 import {
     createDemoStudentLevelEvaluationRecords,
@@ -433,6 +437,12 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
 
 interface MobileAppProps {
     showPhoneShell?: boolean;
+    /** 预览档位：只覆盖班主任助理的板块组合，不改变学校真实权限；未点选时为空 */
+    headteacherAssistantScopePreview?: HeadteacherAssistantScopePreviewMode | null;
+    /** 把学校配置对应的默认档位回传给预览浮层，作为滑块的选中项 */
+    onHeadteacherAssistantScopePreviewDefaultChange?: (mode: HeadteacherAssistantScopePreviewMode | null) => void;
+    /** 预览浮层点选档位，或传空值表示回到学校配置档 */
+    onHeadteacherAssistantScopePreviewChange?: (mode: HeadteacherAssistantScopePreviewMode | null) => void;
     gradientPreview?: TeacherGradientPreviewConfig;
     onGradientPreviewChange?: (config: TeacherGradientPreviewConfig) => void;
     campaignPreviewEveryEntry?: boolean;
@@ -441,6 +451,9 @@ interface MobileAppProps {
 
 const App: React.FC<MobileAppProps> = ({
     showPhoneShell = true,
+    headteacherAssistantScopePreview = null,
+    onHeadteacherAssistantScopePreviewDefaultChange,
+    onHeadteacherAssistantScopePreviewChange,
     gradientPreview,
     onGradientPreviewChange,
     campaignPreviewEveryEntry = false,
@@ -539,7 +552,15 @@ const App: React.FC<MobileAppProps> = ({
     const [currentTeacherSpaceId, setCurrentTeacherSpaceId] = useState(DEFAULT_TEACHER_SPACE_ID);
     const activeTeacherSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === currentTeacherSpaceId) ?? TEACHER_SPACE_OPTIONS[0];
     const gradeScopeOptions = ['全年级', ...(getTeacherSchoolGradeOptions(activeTeacherSpace) ?? GRADE_SCOPES.slice(1))];
-    const headteacherAssistantScopes = getHeadteacherAssistantScopes(activeTeacherSpace);
+    const spaceHeadteacherAssistantScopes = getHeadteacherAssistantScopes(activeTeacherSpace);
+    const defaultHeadteacherAssistantScopePreview = getHeadteacherAssistantScopePreviewMode(spaceHeadteacherAssistantScopes);
+    const headteacherAssistantScopes = resolveHeadteacherAssistantScopes(
+        spaceHeadteacherAssistantScopes,
+        headteacherAssistantScopePreview,
+    );
+    useEffect(() => {
+        onHeadteacherAssistantScopePreviewDefaultChange?.(defaultHeadteacherAssistantScopePreview);
+    }, [defaultHeadteacherAssistantScopePreview, onHeadteacherAssistantScopePreviewDefaultChange]);
     const canRecordClassForActiveSpace = canTeacherSpaceRecordClass(activeTeacherSpace);
     const teacherProfile = teacherProfilesBySpace[activeTeacherSpace.id] ?? DEFAULT_TEACHER_PROFILE;
     const activeTeacherId = teacherProfile.id;
@@ -664,6 +685,9 @@ const App: React.FC<MobileAppProps> = ({
     const handleSelectTeacherSpace = (spaceId: string) => {
         const nextSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === spaceId);
         if (!nextSpace) return;
+
+        // 学校换了，预览滑块回到新学校配置对应的默认档位。
+        onHeadteacherAssistantScopePreviewChange?.(null);
 
         const shouldReturnToStudent = activeLogTab === 'class' && !canTeacherSpaceRecordClass(nextSpace);
         setCurrentTeacherSpaceId(spaceId);
@@ -793,6 +817,10 @@ const App: React.FC<MobileAppProps> = ({
 
     // Helper to change view and push to history
     const navigateTo = (view: ViewState) => {
+        // 每次进入班主任助理都从学校配置档开始预览，避免上一次的预览被误当成线上配置。
+        if (view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2') {
+            onHeadteacherAssistantScopePreviewChange?.(null);
+        }
         rememberCurrentScroll();
         pendingScrollTopRef.current = 0;
         setHistory(prev => [...prev, currentView]);

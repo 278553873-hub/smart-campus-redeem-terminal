@@ -188,5 +188,43 @@ await renderPage('教师手机端登录页', () => import('../mobile-app/views/T
   onLogin: noop,
 });
 
+// 班主任助理三种能力组合都要能打开：少挂一个能力分支就会出现打开即白屏。
+const assistantClasses = [
+  { id: 'c_2025_4', name: '2025级四班', gradeLevel: '四年级', educationStage: 'primary' },
+  { id: 'c_2025_1', name: '2025级一班', gradeLevel: '四年级', educationStage: 'primary' },
+];
+
+for (const combination of [
+  { name: '仅班级评价', showClassEvaluation: true, showStudentEvaluation: false },
+  { name: '仅学生评价', showClassEvaluation: false, showStudentEvaluation: true },
+  { name: '学生评价和班级评价', showClassEvaluation: true, showStudentEvaluation: true },
+]) {
+  await renderPage(
+    `班主任助理页（${combination.name}）`,
+    () => import('../mobile-app/views/AiHeadteacherAssistantV2View'),
+    {
+      onBack: noop,
+      homeroomClasses: assistantClasses,
+      activeClassId: 'c_2025_4',
+      onClassChange: noop,
+      showStudentEvaluation: combination.showStudentEvaluation,
+      showClassEvaluation: combination.showClassEvaluation,
+      onOpenWeeklyActionAdvice: noop,
+      onOpenEvaluationReview: noop,
+    },
+    html => {
+      if (!html.includes('按住说话')) {
+        throw new Error('班主任助理底部语音输入控件缺失');
+      }
+      if (combination.showStudentEvaluation && !combination.showClassEvaluation && !html.includes('本周覆盖了哪些学生？')) {
+        throw new Error('仅开通学生评价时应给出学生评价建议问题');
+      }
+      if (combination.showClassEvaluation && !html.includes('班级评比主要扣在哪？')) {
+        throw new Error('开通班级评价时应给出班级评比建议问题');
+      }
+    },
+  );
+}
+
 // 渲染结束后主动退出：个别模块会留下常驻定时器，让进程一直挂着不返回。
 process.exit(0);

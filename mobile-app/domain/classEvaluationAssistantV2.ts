@@ -1,3 +1,9 @@
+import type {
+    AssistantAiInsight,
+    AssistantAnswerBreakdown,
+    AssistantAnswerMetric,
+} from './assistantAnswerShape.ts';
+
 export interface ClassEvaluationRecord {
     id: string;
     classId: string;
@@ -38,6 +44,34 @@ export const CLASS_EVALUATION_FIXED_QUESTIONS = [
 export type ClassEvaluationFixedQuestion = typeof CLASS_EVALUATION_FIXED_QUESTIONS[number];
 export type ClassEvaluationFixedQuestionId = ClassEvaluationFixedQuestion['id'];
 
+/** 输入控件上方的首选问题：明确数据对象是班级评比，避免双开状态下与学生评价混淆。 */
+export const CLASS_EVALUATION_SUGGESTED_QUESTIONS = [
+    '班级评比主要扣在哪？',
+    '班级评比较上周哪项变化最大？',
+    '根据班级评比，下周优先关注什么？',
+] as const;
+
+/** 回答后的连续追问：每个意图都给 3 条，保证剔除已问问题后仍能凑满 3 条。 */
+export const CLASS_EVALUATION_FOLLOW_UP_QUESTIONS: Record<ClassEvaluationAnswerType, readonly string[]> = {
+    weekly_performance: [
+        '本周扣分主要来自哪些指标？',
+        '和上周相比哪项变化最大？',
+        '这些扣分下一周怎么改善？',
+    ],
+    deduction_patterns: [
+        '哪一笔扣分影响最大？',
+        '和上周相比哪项变化最大？',
+        '下周班级评比优先关注什么？',
+    ],
+    next_week_focus: [
+        '这些建议对应哪些扣分记录？',
+        '本周表现最稳定的是哪些项目？',
+        '本周班级评比整体表现怎么样？',
+    ],
+    clarification: CLASS_EVALUATION_SUGGESTED_QUESTIONS,
+    unavailable: CLASS_EVALUATION_SUGGESTED_QUESTIONS,
+};
+
 export const CLASS_EVALUATION_CHAT_PROMPT_VERSION = 'headteacher-class-evaluation-chat-v2';
 export const CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION = 'headteacher-class-evaluation-weekly-report-v1';
 
@@ -57,23 +91,10 @@ export interface ClassEvaluationComparisonWeek {
     dimensionRankings: readonly ClassEvaluationDimensionMetric[];
 }
 
-export interface ClassEvaluationAnswerMetric {
-    label: string;
-    value: string;
-    tone?: 'default' | 'negative';
-}
-
-export interface ClassEvaluationAnswerBreakdown {
-    label: string;
-    value: string;
-    detail: string;
-    tone?: 'default' | 'negative';
-}
-
-export interface ClassEvaluationAiInsight {
-    title: string;
-    body: string;
-}
+/** 气泡展示字段与班主任助理公共回答结构保持一致，避免两套能力各写一份渲染结构。 */
+export type ClassEvaluationAnswerMetric = AssistantAnswerMetric;
+export type ClassEvaluationAnswerBreakdown = AssistantAnswerBreakdown;
+export type ClassEvaluationAiInsight = AssistantAiInsight;
 
 export interface ClassEvaluationConversationContext {
     classId: string;

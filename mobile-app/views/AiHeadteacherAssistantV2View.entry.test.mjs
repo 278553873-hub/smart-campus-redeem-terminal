@@ -6,6 +6,8 @@ const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const unifiedPrdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理.md', import.meta.url), 'utf8');
+const classAssistantDomainSource = fs.readFileSync(new URL('../domain/classEvaluationAssistantV2.ts', import.meta.url), 'utf8');
+const conversationDomainSource = fs.readFileSync(new URL('../domain/headteacherAssistantConversation.ts', import.meta.url), 'utf8');
 
 const requireText = (source, text, message) => {
   assert.ok(source.includes(text), message);
@@ -30,7 +32,7 @@ requireText(appSource, "import AiHeadteacherAssistantV2View from './views/AiHead
 requireText(appSource, "onOpenAiHeadteacherAssistant={() => navigateTo('ai_headteacher_assistant')}", '统一入口应进入班主任助理页面。');
 requireText(appSource, "currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2'", '旧 V2 路由应仅作为统一页面兼容别名。');
 requireText(appSource, 'const isHeadteacherAssistantView =', '统一助理的新旧兼容路由应共用页面能力判定。');
-requireText(appSource, "'archive_design'].includes(currentView) || isHeadteacherAssistantView", '统一助理应接管页面滚动并占满剩余屏幕。');
+requireText(appSource, "'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground", '统一助理应接管页面滚动并占满剩余屏幕。');
 requireText(appSource, "showStudentEvaluation={headteacherAssistantScopes.includes('student')}", '统一页面应按学生评价能力组合内容。');
 requireText(appSource, "showClassEvaluation={headteacherAssistantScopes.includes('class')}", '统一页面应按班级评价能力组合内容。');
 assert.ok(!appSource.includes('onOpenAiHeadteacherAssistantV2={()'), 'App 不应再生成独立 V2 菜单导航。');
@@ -109,7 +111,7 @@ requireText(viewSource, 'whitespace-pre-line text-pretty', '打字机文案容�
 requireText(viewSource, 'ai-assistant-typewriter-shine', '动态问候应复用 V1 的渐变光效文字。');
 requireText(appSource, "currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2'", '统一助理及旧兼容路由应使用同一整屏背景。');
 requireText(appSource, 'headteacher-agent-gradient-page absolute inset-0', 'V2 渐变应铺满手机屏幕并覆盖状态栏安全区。');
-requireText(appSource, '|| isHeadteacherAssistantView || hasPrincipalReportBackground', '统一助理内容承载层必须透明，不能用白底覆盖整屏渐变。');
+requireText(appSource, '|| isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground', '统一助理内容承载层必须透明，不能用白底覆盖整屏渐变。');
 requireText(viewSource, 'bg-transparent', 'V2 内容层应保持透明，避免渐变在安全区后重新开始。');
 requireText(viewSource, 'headteacher-agent-glass', '本周数据卡片应使用拟态玻璃效果。');
 requireText(viewSource, '>班级评比</h2>', '首屏数据面板应明确属于班级评比。');
@@ -132,9 +134,11 @@ requireText(viewSource, '打开周数据页面', '日期切换入口应打开独
 requireText(viewSource, "'\u6253\u5f00\u5468\u6570\u636e\u9875\u9762\uff0c\u5f53\u524d' + week.label", '首页本周日期应展示完整自然周。');
 requireText(viewSource, 'OVERVIEW_RECOMMENDED_QUESTIONS', '首页应提供紧凑的推荐问题。');
 assert.ok(!viewSource.includes('可以这样问'), '快捷问题上方不应增加说明文案。');
+// 班级评比快捷问题属于班级评价领域文案，统一收敛在领域层，页面只负责渲染。
 for (const question of ['班级评比主要扣在哪？', '班级评比较上周哪项变化最大？', '根据班级评比，下周优先关注什么？']) {
-  requireText(viewSource, question, `班级评比快捷问题应使用明确且自然的文案：${question}`);
+  requireText(classAssistantDomainSource, question, `班级评比快捷问题应使用明确且自然的文案：${question}`);
 }
+requireText(viewSource, 'getInitialSuggestedQuestions', '页面应按学校开通能力取新会话建议问题。');
 requireText(viewSource, 'suggestedQuestions={messages.length > 0 ? followUpQuestions : OVERVIEW_RECOMMENDED_QUESTIONS}', '输入区应根据对话状态展示首轮建议或连续追问。');
 assert.ok(
   viewSource.indexOf('<SuggestedQuestionList') < viewSource.indexOf("{mode === 'voice' ? ("),
@@ -154,7 +158,7 @@ assert.ok(!viewSource.includes(') : conversationOpen ? ('), '推荐问题不应�
 assert.ok(!viewSource.includes('AgentMessageIdentity'), 'Agent 回复不应展示额外头像。');
 assert.ok(!viewSource.includes('>班主任助理</div>'), 'Agent 回复不应重复展示身份名称。');
 requireText(viewSource, 'headteacher-agent-glass min-w-0 flex-1', 'Agent 回复应直接使用左侧浅色内容气泡。');
-requireText(viewSource, '正在分析班级评比数据', 'Agent 回复前应展示分析中的对话反馈。');
+requireText(conversationDomainSource, '正在分析班级评比数据', 'Agent 回复前应展示分析中的对话反馈。');
 const conversationAnswerSource = viewSource.slice(
   viewSource.indexOf('const ConversationAnswerContent'),
   viewSource.indexOf('const ConversationThread'),

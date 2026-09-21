@@ -1,4 +1,5 @@
 import type { ClassInfo } from '../types';
+import type { HeadteacherAssistantScopePreviewMode } from '../../shared/headteacherAssistantScopePreview.ts';
 
 export type TeacherSpaceType = 'personal' | 'collaboration' | 'school';
 
@@ -253,6 +254,24 @@ export const getHeadteacherAssistantScopes = (
     if (configuredManagementTools.includes('headteacherAssistantV2')) scopes.push('class');
     return scopes;
 };
+
+/** 预览页的评价能力组合：只覆盖页面板块组合，不改变真实权限与菜单入口。 */
+const HEADTEACHER_ASSISTANT_PREVIEW_SCOPES: Record<
+    HeadteacherAssistantScopePreviewMode,
+    HeadteacherAssistantScope[]
+> = {
+    'student-only': ['student'],
+    'class-only': ['class'],
+    both: ['student', 'class'],
+};
+
+/** 不带预览档位时直接使用学校配置，只有预览滑块被点选后才覆盖板块组合。 */
+export const resolveHeadteacherAssistantScopes = (
+    spaceScopes: HeadteacherAssistantScope[],
+    previewMode?: HeadteacherAssistantScopePreviewMode | null,
+): HeadteacherAssistantScope[] => (
+    previewMode ? HEADTEACHER_ASSISTANT_PREVIEW_SCOPES[previewMode] : spaceScopes
+);
 
 export const canTeacherSpaceRecordClass = (space: TeacherSpaceOption): boolean => (
     space.type === 'school' && space.classRecordEnabled === true
