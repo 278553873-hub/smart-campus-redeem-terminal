@@ -13,7 +13,8 @@ const forbidText = (text, message) => {
 
 // 1. 必填字段要能一眼看出是必填
 const requiredMarker = '<span className="mr-1 text-[#F53F3F]" aria-hidden="true">*</span>';
-assert.equal(source.split(requiredMarker).length - 1, 3, '商品名称 / 售价 / 商品分类三个必填项各标一个 *');
+const shopProductFormBlock = source.slice(source.indexOf('id="shop-product-form"'), source.indexOf('id="shop-category-form"'));
+assert.equal(shopProductFormBlock.split(requiredMarker).length - 1, 3, '商品名称 / 售价 / 商品分类三个必填项各标一个 *');
 
 // 2. 字段间距走同一套 8px 节奏：字段之间 16px，标签到控件 8px，控件到说明 4px
 requireText('<div className="grid grid-cols-2 gap-4">', '字段之间的间距要统一由一处栅格控制');

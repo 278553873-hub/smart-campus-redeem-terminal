@@ -55,11 +55,18 @@ export const validateChannelStockInput = (channel: ChannelCapacityLike, raw: unk
   const capacity = getChannelCapacity(channel);
   const text = String(raw ?? '').trim();
   if (!text) return '请填写装填件数';
-  if (!/^[0-9]+$/.test(text)) return '装填件数只能是 1 ~ ' + capacity + ' 之间的整数';
+  if (!/^[0-9]+$/.test(text)) return '装填件数只能填整数';
   const requested = Number(text);
-  if (requested < CHANNEL_STOCK_MIN) return '装填件数要大于 0；货道卖光后库存会自动变成 0，不用手工填';
-  if (requested > capacity) return '装填件数不能超过 ' + capacity + ' 件';
+  if (requested < CHANNEL_STOCK_MIN) return '最少要装 ' + CHANNEL_STOCK_MIN + ' 件';
+  if (requested > capacity) return '这一格最多装 ' + capacity + ' 件';
   return null;
+};
+
+/** 输入框清空时显示的提示文案：可填范围要在这里说清楚，而不是等输入后才报错 */
+export const getChannelStockPlaceholder = (channel: ChannelCapacityLike): string => {
+  const capacity = getChannelCapacity(channel);
+  if (capacity === CHANNEL_STOCK_MIN) return '可填 ' + capacity + ' 件';
+  return '可填 ' + CHANNEL_STOCK_MIN + ' ~ ' + capacity + ' 件';
 };
 
 /** 打开货道配置时的默认装填件数：正常带入当前库存，已卖光（0）时默认补满 */

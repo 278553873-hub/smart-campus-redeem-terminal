@@ -5,6 +5,7 @@ import {
   CHANNEL_STOCK_MIN,
   getDefaultChannelStockInput,
   validateChannelStockInput,
+  getChannelStockPlaceholder,
   clampChannelStock,
   getChannelCapacity,
   isChannelStockWarning,
@@ -46,6 +47,10 @@ assert.ok(validateChannelStockInput({ cabinet: 'left', maxStock: 10 }, ''), '空
 assert.ok(validateChannelStockInput({ cabinet: 'right' }, '2'), '右柜单件格口最多 1 件');
 assert.equal(validateChannelStockInput({ cabinet: 'right' }, '1'), null);
 assert.equal(CHANNEL_STOCK_MIN, 1);
+assert.equal(getChannelStockPlaceholder({ cabinet: 'left', maxStock: 10 }), '可填 1 ~ 10 件');
+assert.equal(getChannelStockPlaceholder({ cabinet: 'right' }), '可填 1 件');
+assert.equal(validateChannelStockInput({ cabinet: 'right' }, '0'), '最少要装 1 件', '右柜装 0 件时要给读得通的提示');
+assert.equal(validateChannelStockInput({ cabinet: 'right' }, '2'), '这一格最多装 1 件', '右柜上限 1 件，提示不能写成「1 ~ 1」');
 
 // 6. 默认装填件数：卖光（0）时默认补满，PC 与柜机共用
 assert.equal(getDefaultChannelStockInput({ cabinet: 'left', maxStock: 10, stock: 0 }), 10);

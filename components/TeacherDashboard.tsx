@@ -33,8 +33,8 @@ import {
     clampChannelStock,
     getChannelCapacity,
     isChannelStockWarning,
-    isSingleItemChannel,
     validateChannelStockInput,
+    getChannelStockPlaceholder,
     getDefaultChannelStockInput,
 } from '../shared/vendingChannelCapacity';
 import { DEFAULT_PRODUCT_IMAGE, getProductImageUrlScale } from '../shared/productImage';
@@ -65,6 +65,9 @@ const TEACHER_CAMPAIGN_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif
 
 /** 商品图上传说明：素材是 1:1 方图，没上传时前台与终端用默认商品图兜底 */
 const SHOP_PRODUCT_IMAGE_HINT = '建议 1:1 正方形，640×640 以上；PNG / JPG / WebP，不超过 ' + IMAGE_UPLOAD_MAX_SIZE_TEXT + '；不上传时显示默认商品图';
+
+/** 货道绑定商品弹窗里「置空仓位」这个显式选项的值：空值留给「请选择商品」的占位项 */
+const CHANNEL_CLEAR_PRODUCT_VALUE = '__clear__';
 
 /**
  * 商品 id 统一按字符串比较。
@@ -6379,7 +6382,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 <form id="channel-form" onSubmit={(e) => {
                                     e.preventDefault();
                                     const formData = new FormData(e.currentTarget);
-                                    const productId = formData.get('productId') ? String(formData.get('productId')) : null;
+                                    const rawProductValue = formData.get('productId') ? String(formData.get('productId')) : '';
+                                    // 商品是必填项：既没选商品也没选「置空仓位」，说明这笔配置还没做完
+                                    if (!rawProductValue) {
+                                        Message.warning('请选择要绑定的商品');
+                                        (e.currentTarget.elements.namedItem('productId') as HTMLSelectElement | null)?.focus();
+                                        return;
+                                    }
+                                    const productId = rawProductValue === CHANNEL_CLEAR_PRODUCT_VALUE ? null : rawProductValue;
                                     const capacity = getChannelCapacity(editingChannel);
                                     const stockInput = formData.get('stock');
                                     // 装填件数必须大于 0：库存变 0 只由售卖产生，要清空格子请选「置空仓位」
@@ -6416,9 +6426,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]">选择商品放入{editingChannel.id <= 30 ? '货道' : '储物柜'}</label>
-                                        <select name="productId" defaultValue={editingChannel.productId || ''} className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10">
-                                            <option value="">-- 置空仓位 --</option>
+                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]" htmlFor="channel-product-id"><span className="mr-1 text-[#F53F3F]" aria-hidden="true">*</span>选择商品放入{editingChannel.id <= 30 ? '货道' : '储物柜'}</label>
+                                        <select id="channel-product-id" name="productId" aria-required="true" defaultValue={editingChannel.productId || ''} className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10">
+                                            <option value="">请选择商品</option>
+                                            {editingChannel.productId && <option value={CHANNEL_CLEAR_PRODUCT_VALUE}>置空仓位（清空该格商品）</option>}
                                             {shopProducts.filter(p => isSameProductId(p.id, editingChannel.productId) && (!p.active || isShopProductDeleted(p))).map(p => (
                                                 <option key={p.id} value={p.id} disabled>{p.name}{isShopProductDeleted(p) ? '（已删除）' : '（已下架）'}</option>
                                             ))}
@@ -6428,34 +6439,27 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         </select>
                                     </div>
                                     <div className="mt-4">
-                                        {isSingleItemChannel(editingChannel) ? (
-                                            <div className="rounded border border-[#E5E6EB] bg-[#F7F8FA] px-3 py-2.5 text-xs leading-5 text-[#4E5969]">
-                                                该格为电子锁储物格（单件格口），放入商品后自动记为 1 件，无需手工填写库存。
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <label className="mb-2 block text-sm font-medium text-[#4E5969]" htmlFor="stock-input">装填库存（上限 {getChannelCapacity(editingChannel)} 件）</label>
-                                                <div className="relative">
-                                                    <input
-                                                        id="stock-input"
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        name="stock"
-                                                        defaultValue={getDefaultChannelStockInput(editingChannel)}
-                                                        aria-describedby="channel-stock-hint"
-                                                        aria-invalid={channelStockError ? true : undefined}
-                                                        onChange={(event) => {
-                                                            const digits = event.currentTarget.value.replace(/[^0-9]/g, '');
-                                                            event.currentTarget.value = digits;
-                                                            setChannelStockError(validateChannelStockInput(editingChannel, digits) || '');
-                                                        }}
-                                                        className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 pr-12 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10"
-                                                    />
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#86909C]">/ {getChannelCapacity(editingChannel)}</span>
-                                                </div>
-                                                <span id="channel-stock-hint" className={channelStockError ? "mt-1 block text-xs text-[#F53F3F]" : "mt-1 block text-xs text-[#86909C]"}>{channelStockError || '装 1 件起；货道卖光后库存会自动变成 0，不用手工填'}</span>
-                                            </>
-                                        )}
+                                        <label className="mb-2 block text-sm font-medium text-[#4E5969]" htmlFor="stock-input"><span className="mr-1 text-[#F53F3F]" aria-hidden="true">*</span>装填库存</label>
+                                        <div className="relative">
+                                            <input
+                                                id="stock-input"
+                                                type="text"
+                                                inputMode="numeric"
+                                                aria-required="true"
+                                                name="stock"
+                                                placeholder={getChannelStockPlaceholder(editingChannel)}
+                                                defaultValue={getDefaultChannelStockInput(editingChannel)}
+                                                aria-describedby="channel-stock-hint"
+                                                aria-invalid={channelStockError ? true : undefined}
+                                                onChange={(event) => {
+                                                    const digits = event.currentTarget.value.replace(/[^0-9]/g, '');
+                                                    event.currentTarget.value = digits;
+                                                    setChannelStockError(validateChannelStockInput(editingChannel, digits) || '');
+                                                }}
+                                                className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10 placeholder:text-[#86909C]"
+                                            />
+                                        </div>
+                                        <span id="channel-stock-hint" aria-live="polite" className="mt-1 block min-h-[18px] text-xs text-[#F53F3F]">{channelStockError}</span>
                                     </div>
                                 </form>
                             </div>
