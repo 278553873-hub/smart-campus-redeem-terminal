@@ -6277,7 +6277,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 aria-label="商品分类"
                                             />
                                         </div>
-                                        <div className="col-span-2">
+                                        <div className="col-span-2 shop-product-image-upload">
                                             <label className="mb-2 block text-sm font-medium text-[#4E5969]">商品图片</label>
                                             <ArcoUpload
                                                 listType="picture-card"

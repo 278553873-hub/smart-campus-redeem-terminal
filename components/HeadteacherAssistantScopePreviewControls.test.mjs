@@ -64,4 +64,26 @@ assert.ok(
   '页面能力判定仍应读取解析后的能力范围',
 );
 
+// 5. 只有当前手机页面是班主任助理相关页面时才展示这张卡片
+assert.ok(
+  appSource.includes('{isHeadteacherAssistantViewActive && ('),
+  '预览卡片应只在班主任助理页面出现，其它页面不展示',
+);
+assert.ok(
+  appSource.includes('onHeadteacherAssistantViewChange={setIsHeadteacherAssistantViewActive}'),
+  '手机端应把“当前是否为班主任助理页面”回传给预览浮层',
+);
+assert.ok(
+  mobileAppSource.includes("const isHeadteacherAssistantView = currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2';"),
+  '手机端应按新旧兼容路由判定班主任助理页面',
+);
+assert.ok(
+  mobileAppSource.includes('onHeadteacherAssistantViewChange?.(isHeadteacherAssistantView)'),
+  '页面切换应上报给预览浮层',
+);
+assert.ok(
+  mobileAppSource.includes('return () => onHeadteacherAssistantViewChange?.(false);'),
+  '手机端切走时应收回预览卡片',
+);
+
 console.log('✅ 班主任助理评价能力预览控件断言通过（三档滑块、独立卡片、默认档位跟随学校配置）');

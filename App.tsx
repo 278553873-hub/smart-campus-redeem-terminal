@@ -1438,6 +1438,7 @@ const AppSwitcher: React.FC = () => {
   const [isTeacherGradientControlsOpen, setIsTeacherGradientControlsOpen] = useState(false);
   const [headteacherAssistantScopePreview, setHeadteacherAssistantScopePreview] = useState<HeadteacherAssistantScopePreviewMode | null>(null);
   const [headteacherAssistantScopePreviewDefault, setHeadteacherAssistantScopePreviewDefault] = useState<HeadteacherAssistantScopePreviewMode | null>(null);
+  const [isHeadteacherAssistantViewActive, setIsHeadteacherAssistantViewActive] = useState(false);
   const headteacherAssistantScopePreviewMode = headteacherAssistantScopePreview ?? headteacherAssistantScopePreviewDefault;
   const showParentPhoneShell = false;
   const [parentPreviewClassId, setParentPreviewClassId] = useState(DEFAULT_PARENT_PREVIEW_CLASS_ID);
@@ -1814,6 +1815,7 @@ const AppSwitcher: React.FC = () => {
             headteacherAssistantScopePreview={headteacherAssistantScopePreviewMode ?? undefined}
             onHeadteacherAssistantScopePreviewDefaultChange={setHeadteacherAssistantScopePreviewDefault}
             onHeadteacherAssistantScopePreviewChange={setHeadteacherAssistantScopePreview}
+            onHeadteacherAssistantViewChange={setIsHeadteacherAssistantViewActive}
             gradientPreview={{ schemeId: teacherGradientScheme, styleId: teacherGradientStyle }}
             onGradientPreviewChange={config => {
               setTeacherGradientScheme(config.schemeId);
@@ -1994,13 +1996,15 @@ const AppSwitcher: React.FC = () => {
                 </span>
               </label>
             </div>
-            <div className={`w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl ${isTeacherGradientControlsOpen ? 'max-[900px]:block' : 'max-[900px]:hidden'}`}>
-              <span className="mb-1 block pl-1 text-[11px] font-bold text-slate-500">班主任助理</span>
-              <HeadteacherAssistantScopePreviewControls
-                value={headteacherAssistantScopePreviewMode}
-                onChange={setHeadteacherAssistantScopePreview}
-              />
-            </div>
+            {isHeadteacherAssistantViewActive && (
+              <div className={`w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl ${isTeacherGradientControlsOpen ? 'max-[900px]:block' : 'max-[900px]:hidden'}`}>
+                <span className="mb-1 block pl-1 text-[11px] font-bold text-slate-500">班主任助理</span>
+                <HeadteacherAssistantScopePreviewControls
+                  value={headteacherAssistantScopePreviewMode}
+                  onChange={setHeadteacherAssistantScopePreview}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

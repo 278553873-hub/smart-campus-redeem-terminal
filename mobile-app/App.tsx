@@ -443,6 +443,8 @@ interface MobileAppProps {
     onHeadteacherAssistantScopePreviewDefaultChange?: (mode: HeadteacherAssistantScopePreviewMode | null) => void;
     /** 预览浮层点选档位，或传空值表示回到学校配置档 */
     onHeadteacherAssistantScopePreviewChange?: (mode: HeadteacherAssistantScopePreviewMode | null) => void;
+    /** 当前页面是否为班主任助理相关页面，预览浮层据此决定是否展示能力切换卡片 */
+    onHeadteacherAssistantViewChange?: (active: boolean) => void;
     gradientPreview?: TeacherGradientPreviewConfig;
     onGradientPreviewChange?: (config: TeacherGradientPreviewConfig) => void;
     campaignPreviewEveryEntry?: boolean;
@@ -454,6 +456,7 @@ const App: React.FC<MobileAppProps> = ({
     headteacherAssistantScopePreview = null,
     onHeadteacherAssistantScopePreviewDefaultChange,
     onHeadteacherAssistantScopePreviewChange,
+    onHeadteacherAssistantViewChange,
     gradientPreview,
     onGradientPreviewChange,
     campaignPreviewEveryEntry = false,
@@ -561,6 +564,12 @@ const App: React.FC<MobileAppProps> = ({
     useEffect(() => {
         onHeadteacherAssistantScopePreviewDefaultChange?.(defaultHeadteacherAssistantScopePreview);
     }, [defaultHeadteacherAssistantScopePreview, onHeadteacherAssistantScopePreviewDefaultChange]);
+    const isHeadteacherAssistantView = currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2';
+    useEffect(() => {
+        onHeadteacherAssistantViewChange?.(isHeadteacherAssistantView);
+        // 手机端切走时同步收回预览卡片，避免下一个应用沿用上一次的显示状态。
+        return () => onHeadteacherAssistantViewChange?.(false);
+    }, [isHeadteacherAssistantView, onHeadteacherAssistantViewChange]);
     const canRecordClassForActiveSpace = canTeacherSpaceRecordClass(activeTeacherSpace);
     const teacherProfile = teacherProfilesBySpace[activeTeacherSpace.id] ?? DEFAULT_TEACHER_PROFILE;
     const activeTeacherId = teacherProfile.id;
@@ -1726,7 +1735,6 @@ const App: React.FC<MobileAppProps> = ({
     // 新建社团与团队仍由班级列表承载，切换外层导航时不能卸载列表组件，否则会丢失新建表单状态。
     const primaryTabViewKey = currentView === 'class_list' ? 'teacher-primary-tabs' : showTabBar ? 'teacher-primary-tabs' : currentView;
     const pageTransitionClass = showTabBar || isStudentTeamCreateView ? '' : 'animate-page-enter';
-    const isHeadteacherAssistantView = currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2';
     const isPrincipalAssistantView = currentView === 'ai_principal_assistant';
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);

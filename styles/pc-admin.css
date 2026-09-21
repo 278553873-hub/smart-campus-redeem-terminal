@@ -186,3 +186,14 @@
   border: 2px solid rgba(3, 11, 31, 0.9);
   border-radius: 999px;
 }
+
+/* 商品图是固定尺寸的单图位：空态与有图态必须占同一个盒子，删除 / 上传都就地切换。
+   两处默认行为都会破坏这个盒子：
+   1) Arco 给图片卡片加了 8px 下外边距（80px 卡片实际占 88px），空态「+」框只有 80px，
+      一增一减就会把下面的说明文案和弹窗按钮顶上去 / 放下来；
+   2) Arco 还会播 400ms 退场动效（100ms 淡出 + 300ms 把宽度收成 0），图片列表是 inline 排布，
+      收拢时会把「+」框拽着左滑；补位动效只有多图列表才需要。 */
+.shop-product-image-upload .arco-upload-list .arco-upload-list-item {
+  margin: 0;
+  transition: none;
+}

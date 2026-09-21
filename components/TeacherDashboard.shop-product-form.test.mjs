@@ -18,7 +18,7 @@ assert.equal(source.split(requiredMarker).length - 1, 3, '商品名称 / 售价 
 // 2. 字段间距走同一套 8px 节奏：字段之间 16px，标签到控件 8px，控件到说明 4px
 requireText('<div className="grid grid-cols-2 gap-4">', '字段之间的间距要统一由一处栅格控制');
 requireText('<form id="shop-product-form" className="pc-form"', '表单保持 pc-form（可编辑态样式），栅格放在内层容器');
-requireText('<div className="col-span-2">', '图片是整行控件，独占一行');
+requireText('<div className="col-span-2 shop-product-image-upload">', '图片是整行控件，独占一行，并带单图位作用域类');
 assert.ok(source.split('text-[#4E5969]">').length > 3, '标签样式保持一致');
 forbidText('mb-3 block text-sm font-medium text-[#4E5969]', '标签到控件统一 8px，不许再出现 12px');
 

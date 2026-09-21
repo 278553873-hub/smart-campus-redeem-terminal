@@ -36,7 +36,24 @@ requireText('const uploadError = validateImageUpload(file);', '上传校验要�
 requireText('Message.warning(uploadError);', '校验不通过要明确告诉老师原因。');
 requireText('{SHOP_PRODUCT_IMAGE_HINT}', '上传入口要写清尺寸、格式与大小要求。');
 
-// 4. 校验规则本身的行为：合格的放行、不合格的给理由
+// 4. 单图位删除后就地回到空态，不做多图列表的补位动效
+requireText('className="col-span-2 shop-product-image-upload"', '商品图区域要有作用域类，动效覆盖只作用在这一处。');
+const pcAdminCss = readFileSync(new URL('../styles/pc-admin.css', import.meta.url), 'utf8');
+const motionRule = '.shop-product-image-upload .arco-upload-list .arco-upload-list-item';
+const motionIndex = pcAdminCss.indexOf(motionRule);
+if (motionIndex === -1) {
+  failures.push('商品图单图位要在 pc-admin.css 里覆盖 Arco 的图片卡片动效。');
+} else {
+  const ruleBody = pcAdminCss.slice(motionIndex, motionIndex + 200);
+  if (!ruleBody.includes('transition: none;')) {
+    failures.push('单图位删除后就地回到空态，不要再播宽度收拢动效。');
+  }
+  if (!ruleBody.includes('margin: 0;')) {
+    failures.push('空态与有图态必须占同一个盒子：图片卡片默认多出 8px 下外边距，会让下方文案和按钮上下跳一下。');
+  }
+}
+
+// 5. 校验规则本身的行为：合格的放行、不合格的给理由
 assert.equal(validateImageUpload({ type: 'image/png', size: 600 * 1024 }), null);
 assert.ok(validateImageUpload({ type: 'image/png', size: IMAGE_UPLOAD_MAX_BYTES + 1 }), '超过上限要拦下');
 assert.ok(validateImageUpload({ type: 'image/tiff', size: 1024 }), '不支持的格式要拦下');
@@ -46,4 +63,4 @@ if (failures.length > 0) {
   throw new Error('货柜超市「商品图片」检查未通过');
 }
 
-console.log('✅ 货柜超市「商品图片」检查通过（单图上传：空态上传框 / 有图可预览可删除 / 删掉回默认图）');
+console.log('✅ 货柜超市「商品图片」检查通过（单图上传：空态上传框 / 有图可预览可删除 / 删掉回默认图且无补位动效）');
