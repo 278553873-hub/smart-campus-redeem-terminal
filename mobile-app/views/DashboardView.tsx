@@ -119,16 +119,19 @@ const FiveEducationRadar = ({
     const activeData = useMemo(() => {
         return ORDER.map(cat => {
             const item = scores.find(s => s.category === cat);
-            return item ? { ...item, value: Math.max(item.score, 20) } : null;
+            return item ? { ...item, value: item.score } : null;
         }).filter(Boolean) as (ScoreItem & { value: number })[];
     }, [scores]);
 
     const classAvgData = useMemo(() => {
         return activeData.map(item => {
             const val = { moral: 78, intellectual: 76, physical: 66, aesthetic: 72, labor: 70 }[item.category] || 70;
-            return { ...item, score: val, value: Math.max(val, 20) };
+            return { ...item, score: val, value: val };
         });
     }, [activeData]);
+
+    const scaleMin = Math.min(0, ...activeData.map(item => item.value), ...classAvgData.map(item => item.value));
+    const scaleMax = Math.max(1, ...activeData.map(item => item.value), ...classAvgData.map(item => item.value));
 
     const getCoordinates = (value: number, index: number, total: number) => {
         const angle = (Math.PI * 2 * index) / total - Math.PI / 2;
@@ -139,8 +142,11 @@ const FiveEducationRadar = ({
         };
     };
 
+    const getScoreCoordinates = (value: number, index: number, total: number) =>
+        getCoordinates(((value - scaleMin) / (scaleMax - scaleMin)) * 100, index, total);
+
     const generatePoints = (data: { value: number }[]) => data.map((s, i) => {
-        const coords = getCoordinates(s.value, i, data.length);
+        const coords = getScoreCoordinates(s.value, i, data.length);
         return `${coords.x},${coords.y}`;
     }).join(' ');
 
@@ -190,7 +196,7 @@ const FiveEducationRadar = ({
                                 strokeWidth="1.8"
                             />
                             {classAvgData.map((s, i) => {
-                                const coords = getCoordinates(s.value, i, classAvgData.length);
+                                const coords = getScoreCoordinates(s.value, i, classAvgData.length);
                                 const valueY = coords.y + 18;
                                 return (
                                     <g key={`class-${s.category}`}>
@@ -220,7 +226,7 @@ const FiveEducationRadar = ({
                                 strokeWidth="2.4"
                             />
                             {activeData.map((s, i) => {
-                                const coords = getCoordinates(s.value, i, activeData.length);
+                                const coords = getScoreCoordinates(s.value, i, activeData.length);
                                 const valueY = coords.y - 17;
                                 const tone = getFiveEducationTone(s.category);
 
@@ -228,9 +234,9 @@ const FiveEducationRadar = ({
                                     <g key={i}>
                                         <circle cx={coords.x} cy={coords.y} r="5" fill="white" stroke={tone.main} strokeWidth="2.5" />
                                         <rect
-                                            x={coords.x - 14}
+                                            x={coords.x - Math.max(28, String(s.score).length * 8 + 12) / 2}
                                             y={valueY - 14}
-                                            width="28"
+                                            width={Math.max(28, String(s.score).length * 8 + 12)}
                                             height="21"
                                             rx="10.5"
                                             fill={tone.soft}
@@ -252,6 +258,9 @@ const FiveEducationRadar = ({
                 </svg>
             </div>
 
+            <p className="text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">
+                刻度：中心 {scaleMin} 分 · 外圈 {scaleMax} 分
+            </p>
             <div className="mt-1 flex items-center gap-2">
                 <button
                     type="button"
@@ -344,8 +353,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         const recordDeltas = evaluationScoreDeltas[selectedTermOption.value] ?? {};
         return scores
             .filter(score => score.category !== 'creativity')
-            .map(score => ({ ...score, score: Math.max(0, Math.min(100, score.score + (offsets[score.category] ?? 0) + (recordDeltas[score.category] ?? 0))) }));
+            .map(score => ({ ...score, score: score.score + (offsets[score.category] ?? 0) + (recordDeltas[score.category] ?? 0) }));
     }, [evaluationScoreDeltas, scores, selectedTermOption.value]);
+    const totalScore = currentScores.reduce((total, item) => total + item.score, 0);
     const studentStatusLabel = student.status === 'left' ? '离校' : '在校';
     const formatCompactClassName = (className: string) => {
         const match = className.match(/^(\d{4}级)(.+)$/);
@@ -377,20 +387,25 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
             {/* C. Compact Selected-Term Five-Education Summary */}
             <section className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
-                <button
-                    type="button"
-                    onClick={() => setShowAbilityModel(current => !current)}
-                    aria-expanded={showAbilityModel}
-                    className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-3 px-4 text-left active:bg-[var(--tm-bg-surface-soft)]"
-                >
-                    <h3 className="flex items-center gap-2 text-[var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
-                        {selectedTermOption.isCurrent ? '本学期' : '该学期'}五育积分
-                    </h3>
-                    <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">
+                <h3 className="px-4 pt-4 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
+                    {selectedTermOption.isCurrent ? '本学期' : '该学期'}五育积分
+                </h3>
+                <div className="flex items-center justify-between gap-3 px-4 py-2">
+                    <p className="flex min-w-0 flex-wrap items-baseline gap-2 text-[var(--tm-text-primary)]">
+                        <span className="text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)]">总分</span>
+                        <span className="break-all text-[length:var(--tm-font-size-metric)] font-semibold tabular-nums">{totalScore}</span>
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setShowAbilityModel(current => !current)}
+                        aria-expanded={showAbilityModel}
+                        aria-controls="student-five-education-model"
+                        className="flex min-h-[var(--tm-size-touch)] shrink-0 items-center gap-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]"
+                    >
                         {showAbilityModel ? '收起' : '能力模型'}
-                        <ChevronDown className={`h-4 w-4 transition-transform ${showAbilityModel ? 'rotate-180' : ''}`} />
-                    </span>
-                </button>
+                        <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform motion-reduce:transition-none ${showAbilityModel ? 'rotate-180' : ''}`} />
+                    </button>
+                </div>
 
                 <div className="grid grid-cols-5 px-2 pb-3">
                     {currentScores.map(score => {
@@ -398,14 +413,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         return (
                             <div key={score.category} className="flex min-w-0 flex-col items-center px-1">
                                 <span className="text-[11px] font-medium text-[var(--tm-text-secondary)]">{score.label}</span>
-                                <span className="mt-1 text-lg font-bold leading-none tabular-nums" style={{ color: tone.strong }}>{score.score}</span>
+                                <span className="mt-1 max-w-full break-all text-lg font-bold leading-none tabular-nums" style={{ color: tone.strong }}>{score.score}</span>
                             </div>
                         );
                     })}
                 </div>
 
                 {showAbilityModel && (
-                    <div className="border-t border-[var(--tm-border-subtle)] px-2 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div id="student-five-education-model" className="border-t border-[var(--tm-border-subtle)] px-2 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
                         <FiveEducationRadar scores={currentScores} showCurrent={showCurrent} showClassAvg={showClassAvg} onToggleCurrent={() => setShowCurrent(prev => !prev)} onToggleClassAvg={() => setShowClassAvg(prev => !prev)} />
                     </div>
                 )}

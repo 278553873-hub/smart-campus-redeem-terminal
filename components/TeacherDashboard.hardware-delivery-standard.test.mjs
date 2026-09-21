@@ -35,8 +35,15 @@ assert(
     '货柜机顶栏应去除 540*960、在线、待补看板等多余废话'
 );
 assert(
-    vendingAdminSource.includes('handleBatchUnlockDoors') && !vendingAdminSource.includes('补满整柜'),
-    '顶栏快捷操作应去除补满整柜，并保留右柜全开储物门'
+    !vendingAdminSource.includes('handleBatchUnlockDoors') &&
+    !vendingAdminSource.includes('全开门') &&
+    !vendingAdminSource.includes('全开测试') &&
+    !vendingAdminSource.includes('补满整柜'),
+    '右柜电磁锁不支持一键全开：上架页与调试模式都不应保留任何「全开」入口，也不应残留补满整柜'
+);
+assert(
+    vendingAdminSource.includes('handleUnlockDoorPulse(ch.id)') && vendingAdminSource.includes('<span>开门</span>'),
+    '右柜应改为逐格开门：每格下方一个独立开门按钮，与调试模式共用同一个开门脉冲动作'
 );
 assert(
     vendingAdminSource.includes('补满本排') && vendingAdminSource.includes('grid-cols-10'),

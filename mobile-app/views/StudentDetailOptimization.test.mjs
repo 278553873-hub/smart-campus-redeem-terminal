@@ -267,7 +267,7 @@ requireText(dashboardSource, '班级平均', '五育能力模型应展示班级�
 requireText(dashboardSource, 'classAvgData.map', '五育能力模型应在图像上展示班级平均具体数值。');
 requireText(dashboardSource, 'text-[12px] font-medium', '五育雷达图数值应使用 12px 常规字重。');
 requireText(dashboardSource, 'fill={teacherBrandSemantic.textTertiary}', '五育雷达图班级平均分值应使用弱化的中性 Token。');
-requireText(dashboardSource, 'width="28"', '当前分值应增加底色标签以提升可读性。');
+requireText(dashboardSource, 'width={Math.max(28, String(s.score).length * 8 + 12)}', '当前分值底色标签应适应负分与多位积分。');
 requireText(dashboardSource, 'showCurrent', '五育能力模型当前标签应可点击隐藏/显示当前分值。');
 requireText(dashboardSource, 'onToggleCurrent', '五育能力模型当前图例标签应承担开关功能。');
 requireText(dashboardSource, 'onToggleClassAvg', '五育能力模型班级平均图例标签应承担开关功能。');

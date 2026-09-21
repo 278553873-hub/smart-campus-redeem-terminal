@@ -22,15 +22,15 @@ import {
   TERMINAL_SHOP_CATEGORY_ROW_HEIGHT,
   TERMINAL_SHOP_GRID_PADDING_X,
   TERMINAL_SHOP_GRID_GAP,
-  TERMINAL_SHOP_IMAGE_PADDING,
-  TERMINAL_SHOP_NAME_ROW_HEIGHT,
-  TERMINAL_SHOP_NAME_TO_PRICE_GAP,
-  TERMINAL_SHOP_PRICE_BAR_HEIGHT,
-  TERMINAL_SHOP_CARD_PADDING_BOTTOM,
+  TERMINAL_SHOP_CARD_PADDING,
+  TERMINAL_SHOP_CARD_RADIUS,
+  TERMINAL_SHOP_CARD_RING,
+  TERMINAL_SHOP_INNER_RADIUS,
   TERMINAL_SHOP_NAME_FONT_SIZE,
   TERMINAL_SHOP_PRICE_FONT_SIZE,
   getTerminalShopCardHeight,
-  getTerminalShopImageAreaHeight,
+  getTerminalShopCardSpec,
+  getTerminalShopImageTileHeight,
   getTerminalShopLayoutPreset,
 } from '../shared/terminalShopLayout';
 
@@ -62,8 +62,10 @@ const ShopView: React.FC<ShopViewProps> = ({
   const [activeCategoryId, setActiveCategoryId] = useState<string>(ALL_CATEGORY_ID);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [shopLayout, setShopLayout] = useState(() => getTerminalShopLayoutPreset(readTerminalShopLayoutPresetId()));
+  // 卡片内距按行数取档：2 × 4 用紧凑档，把高度让给商品图
+  const shopCardSpec = getTerminalShopCardSpec(shopLayout.rows);
   const shopCardHeight = getTerminalShopCardHeight(shopLayout.rows);
-  const shopImageHeight = getTerminalShopImageAreaHeight(shopLayout.rows);
+  const shopImageHeight = getTerminalShopImageTileHeight(shopLayout.rows);
 
   // 分类数据由 PC 后台维护（shared/shopCatalogStore），终端只读同一份
   const shopCatalog = useShopCatalog();
@@ -196,16 +198,22 @@ const ShopView: React.FC<ShopViewProps> = ({
                   onClick={() => handleOpenConfirm(product)}
                   disabled={!canBuy}
                   aria-label={inStock ? `${product.name}，${product.price} ${GROWTH_COIN_TERMS.name}，兑换` : `${product.name}，已售罄`}
-                  style={{ height: shopCardHeight }}
-                  className={`rounded-2xl overflow-hidden border-2 border-slate-100 bg-white shadow-[0_4px_16px_rgb(0,0,0,0.03)] flex flex-col text-left transition-all ${canBuy
+                  style={{
+                    height: shopCardHeight,
+                    // 商品图底板与金额条统一内缩 CARD_PADDING；描边走 1px 阴影环，不占布局高度
+                    padding: TERMINAL_SHOP_CARD_PADDING,
+                    borderRadius: TERMINAL_SHOP_CARD_RADIUS,
+                    boxShadow: '0 0 0 ' + TERMINAL_SHOP_CARD_RING + 'px #E9EDF3, 0 2px 6px rgba(15,23,42,0.04)',
+                  }}
+                  className={`overflow-hidden bg-white flex flex-col text-left transition-transform duration-150 ${canBuy
                     ? 'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200'
                     : 'cursor-not-allowed opacity-60'
                     }`}
                 >
-                  {/* 商品图区：定高铺满卡片宽度，售罄时覆盖状态层 */}
+                  {/* 商品图底板：整块浅色圆角底，商品图铺在底板上，四周不画线 */}
                   <div
-                    style={{ height: shopImageHeight, padding: TERMINAL_SHOP_IMAGE_PADDING }}
-                    className="w-full relative overflow-hidden flex items-center justify-center bg-gradient-to-b from-orange-50/40 to-slate-50/40"
+                    style={{ height: shopImageHeight, borderRadius: TERMINAL_SHOP_INNER_RADIUS }}
+                    className="w-full shrink-0 relative overflow-hidden flex items-center justify-center bg-slate-100"
                   >
                     <img
                       src={getProductImage(product)}
@@ -220,29 +228,30 @@ const ShopView: React.FC<ShopViewProps> = ({
                     )}
                   </div>
 
-                  {/* 商品名：独立一行，居中显示 */}
+                  {/* 商品名：上下间距都取 nameGap，居中由结构保证，不靠手算半个行高 */}
                   <div
-                    style={{ height: TERMINAL_SHOP_NAME_ROW_HEIGHT }}
-                    className="w-full shrink-0 px-2 flex items-center justify-center"
+                    style={{
+                      height: shopCardSpec.nameRowHeight,
+                      marginTop: shopCardSpec.nameGap,
+                      marginBottom: shopCardSpec.nameGap,
+                    }}
+                    className="w-full shrink-0 flex items-center justify-center"
                   >
                     <span className="w-full truncate text-center font-black leading-none text-slate-800" style={{ fontSize: TERMINAL_SHOP_NAME_FONT_SIZE }}>
                       {product.name}
                     </span>
                   </div>
 
-                  {/* 商品名与金额条之间的间距：与「图片底边 → 商品名」的间距相等，商品名视觉居中 */}
-                  <div className="w-full shrink-0" style={{ height: TERMINAL_SHOP_NAME_TO_PRICE_GAP }} aria-hidden="true" />
-
                   {/* 金额：独立一条蓝底横条，作为卡片视觉重点 */}
                   <div
-                    className="w-full shrink-0 px-2"
-                    style={{ height: TERMINAL_SHOP_PRICE_BAR_HEIGHT + TERMINAL_SHOP_CARD_PADDING_BOTTOM, paddingBottom: TERMINAL_SHOP_CARD_PADDING_BOTTOM }}
+                    className="w-full shrink-0"
+                    style={{ height: shopCardSpec.priceBarHeight }}
                   >
                     <div
-                      style={{ fontSize: TERMINAL_SHOP_PRICE_FONT_SIZE }}
-                      className={`w-full h-full rounded-xl border flex items-center justify-center gap-1.5 font-black transition-colors ${canBuy
-                        ? 'bg-blue-600 border-blue-500 text-white shadow-[0_4px_12px_rgba(37,99,235,0.2)]'
-                        : 'bg-slate-100 border-slate-200 text-slate-400'
+                      style={{ fontSize: TERMINAL_SHOP_PRICE_FONT_SIZE, borderRadius: TERMINAL_SHOP_INNER_RADIUS }}
+                      className={`w-full h-full flex items-center justify-center gap-1.5 font-black transition-colors ${canBuy
+                        ? 'bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.2)]'
+                        : 'bg-slate-200 text-slate-400'
                         }`}
                     >
                       <img src="/assets/coin.png" alt="" className="h-[0.95em] w-[0.95em] object-contain" />

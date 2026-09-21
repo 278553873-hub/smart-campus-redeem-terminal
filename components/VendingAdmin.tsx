@@ -305,24 +305,15 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
         showToast(`第 ${row} 排已补满`);
     };
 
-    // 调试模式：单道电磁锁开门脉冲测试（无硬件状态回执，单向触发，不展示虚假标签与遮挡Toast）
-    const handleDiagnosticsUnlockDoor = (channelId: number) => {
+    // 右柜电磁锁开门：单格脉冲指令（无硬件状态回执，单向触发，不展示虚假标签与遮挡Toast）
+    // 上架页每格下方的「开门」按钮与调试模式共用这一个动作
+    const handleUnlockDoorPulse = (channelId: number) => {
         setDoorPulsingIds(prev => ({ ...prev, [channelId]: true }));
         setTimeout(() => {
             setDoorPulsingIds(prev => ({ ...prev, [channelId]: false }));
         }, 400);
     };
 
-    // 调试模式：一键全开右柜储物门测试（批量触发脉冲）
-    const handleBatchUnlockDoors = () => {
-        const pulseMap: Record<number, boolean> = {};
-        channels.filter(c => c.cabinet === 'right').forEach(c => { pulseMap[c.id] = true; });
-        setDoorPulsingIds(pulseMap);
-        setTimeout(() => {
-            setDoorPulsingIds({});
-        }, 500);
-        showToast('已向 19 扇储物门下发开门测试指令');
-    };
 
     // 一键补满当前机柜全部货道
     const handleBatchRestockFull = () => {
@@ -375,8 +366,8 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                     <div className="w-20 shrink-0" />
                 </div>
 
-                {/* 调试控制栏：左柜/右柜居中切换 + 右柜全开测试 */}
-                <div className="shrink-0 relative flex items-center justify-center px-4 py-2 min-h-[52px]">
+                {/* 调试控制栏：左柜/右柜居中切换（右柜硬件无一键全开，只能逐格开门） */}
+                <div className="shrink-0 flex items-center justify-center px-4 py-2 min-h-[52px]">
                     <div className="w-56 h-11 bg-slate-200/70 p-1 rounded-2xl flex gap-1 border border-slate-200/50 shadow-inner">
                         <button
                             onClick={() => setActiveCabinet('left')}
@@ -391,16 +382,6 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                             右柜
                         </button>
                     </div>
-
-                    {activeCabinet === 'right' && (
-                        <button
-                            onClick={handleBatchUnlockDoors}
-                            className="absolute right-4 h-10 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-sm font-bold active:scale-95 transition-all shadow-sm shadow-amber-500/20 flex items-center gap-1.5 shrink-0"
-                        >
-                            <Unlock size={16} />
-                            <span>全开测试</span>
-                        </button>
-                    )}
                 </div>
 
                 {/* 轻量 Toast 提示：天然 Flexbox 居中，纯透明度淡入，彻底杜绝左右漂移 */}
@@ -483,7 +464,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                                                 return (
                                                     <div
                                                         key={ch.id}
-                                                        onClick={() => handleDiagnosticsUnlockDoor(ch.id)}
+                                                        onClick={() => handleUnlockDoorPulse(ch.id)}
                                                         className={`rounded-lg border text-center transition-all flex flex-col justify-between select-none cursor-pointer active:scale-95 ${
                                                             is10Narrow ? 'p-0.5' : 'p-1'
                                                         } ${
@@ -546,8 +527,8 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                 </button>
             </div>
 
-            {/* 顶栏下方控制栏：左柜/右柜居中切换 + 右柜全开门操作 */}
-            <div className="shrink-0 relative flex items-center justify-center px-4 py-2 min-h-[52px]">
+            {/* 顶栏下方控制栏：左柜/右柜居中切换（右柜开门按钮在每格下方，逐格操作） */}
+            <div className="shrink-0 flex items-center justify-center px-4 py-2 min-h-[52px]">
                 <div className="w-56 h-11 bg-slate-200/70 p-1 rounded-2xl flex gap-1 border border-slate-200/50 shadow-inner">
                     <button
                         onClick={() => setActiveCabinet('left')}
@@ -562,16 +543,6 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                         右柜
                     </button>
                 </div>
-
-                {activeCabinet === 'right' && (
-                    <button
-                        onClick={handleBatchUnlockDoors}
-                        className="absolute right-4 h-10 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-sm font-bold active:scale-95 transition-all shadow-sm shadow-amber-500/20 flex items-center gap-1.5 shrink-0"
-                    >
-                        <Unlock size={16} />
-                        <span>全开门</span>
-                    </button>
-                )}
             </div>
 
             {/* 轻量 Toast 提示：天然 Flexbox 居中，纯透明度淡入，彻底杜绝左右漂移 */}
@@ -632,72 +603,88 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                                             const colNumber = ch.col;
                                             const is10Narrow = rowChannels.length === 10;
                                             const is2Big = rowChannels.length === 2;
+                                            const isPulsing = Boolean(doorPulsingIds[ch.id]);
                                             return (
-                                                <div
-                                                    key={ch.id}
-                                                    onClick={() => handleOpenAssignModal(ch)}
-                                                    className={`rounded-lg border text-center transition-all flex flex-col justify-between select-none cursor-pointer active:scale-95 ${
-                                                        is10Narrow ? 'p-0.5' : 'p-1'
-                                                    } ${
-                                                        !hasItem 
-                                                            ? 'bg-slate-50/50 border-dashed border-slate-200 text-slate-400 hover:border-slate-300 hover:bg-slate-50' 
-                                                            : ch.doorOpen
-                                                            ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/40'
-                                                            : isFull
-                                                            ? 'bg-emerald-50/50 border-emerald-300 text-emerald-800 hover:brightness-95'
-                                                            : isWarning
-                                                            ? 'bg-rose-50 border-rose-300 text-rose-800 hover:brightness-95'
-                                                            : 'bg-white border-blue-200 text-slate-700 hover:border-blue-400'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center justify-between text-xs font-mono leading-none">
-                                                        <span className="text-slate-400 font-bold">{colNumber}</span>
-                                                        {hasItem && (
-                                                            <span className={`px-1.5 py-0.5 rounded font-bold ${is10Narrow ? 'text-[9px]' : 'text-[11px]'} ${
-                                                                ch.doorOpen ? 'bg-amber-200 text-amber-900' :
-                                                                isFull ? 'bg-emerald-100 text-emerald-700' :
-                                                                isWarning ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'
-                                                            }`}>
-                                                                {ch.doorOpen ? '门已开' : `${ch.stock}/${maxCapacity}`}
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="py-0.5 min-h-0 flex-1 flex flex-col items-center justify-between overflow-hidden">
-                                                        {hasItem && product ? (
-                                                            <>
+                                                <div key={ch.id} className="min-h-0 flex flex-col gap-1">
+                                                    <div
+                                                        onClick={() => handleOpenAssignModal(ch)}
+                                                        className={`flex-1 min-h-0 rounded-lg border text-center transition-all flex flex-col justify-between select-none cursor-pointer active:scale-95 ${
+                                                            is10Narrow ? 'p-0.5' : 'p-1'
+                                                        } ${
+                                                            !hasItem 
+                                                                ? 'bg-slate-50/50 border-dashed border-slate-200 text-slate-400 hover:border-slate-300 hover:bg-slate-50' 
+                                                                : ch.doorOpen
+                                                                ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/40'
+                                                                : isFull
+                                                                ? 'bg-emerald-50/50 border-emerald-300 text-emerald-800 hover:brightness-95'
+                                                                : isWarning
+                                                                ? 'bg-rose-50 border-rose-300 text-rose-800 hover:brightness-95'
+                                                                : 'bg-white border-blue-200 text-slate-700 hover:border-blue-400'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-between text-xs font-mono leading-none">
+                                                            <span className="text-slate-400 font-bold">{colNumber}</span>
+                                                            {hasItem && (
+                                                                <span className={`px-1.5 py-0.5 rounded font-bold ${is10Narrow ? 'text-[9px]' : 'text-[11px]'} ${
+                                                                    ch.doorOpen ? 'bg-amber-200 text-amber-900' :
+                                                                    isFull ? 'bg-emerald-100 text-emerald-700' :
+                                                                    isWarning ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'
+                                                                }`}>
+                                                                    {ch.doorOpen ? '门已开' : `${ch.stock}/${maxCapacity}`}
+                                                                </span>
+                                                            )}
+                                                        </div>
+    
+                                                        <div className="py-0.5 min-h-0 flex-1 flex flex-col items-center justify-between overflow-hidden">
+                                                            {hasItem && product ? (
+                                                                <>
+                                                                    <div className="flex-1 min-h-0 flex items-center justify-center">
+                                                                        <div className={`${
+                                                                            is10Narrow ? 'w-5 h-5' : 
+                                                                            is2Big ? 'w-9 h-9' : 
+                                                                            rowChannels.length === 7 ? 'w-6 h-6' : 'w-7 h-7'
+                                                                        } rounded bg-slate-50 overflow-hidden flex items-center justify-center border border-slate-200/60 shrink-0`}>
+                                                                            {product.image ? (
+                                                                                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <Package size={is10Narrow ? 10 : is2Big ? 18 : 13} className="text-slate-400" />
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className={`w-full px-0.5 shrink-0 text-center font-bold text-slate-800 truncate leading-tight ${
+                                                                        is10Narrow ? 'text-[8px]' : 
+                                                                        is2Big ? 'text-xs' : 
+                                                                        rowChannels.length === 7 ? 'text-[10px]' : 'text-[11px]'
+                                                                    }`}>
+                                                                        {product.name}
+                                                                    </div>
+                                                                </>
+                                                            ) : (
                                                                 <div className="flex-1 min-h-0 flex items-center justify-center">
-                                                                    <div className={`${
-                                                                        is10Narrow ? 'w-5 h-5' : 
-                                                                        is2Big ? 'w-9 h-9' : 
-                                                                        rowChannels.length === 7 ? 'w-6 h-6' : 'w-7 h-7'
-                                                                    } rounded bg-slate-50 overflow-hidden flex items-center justify-center border border-slate-200/60 shrink-0`}>
-                                                                        {product.image ? (
-                                                                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                                                                        ) : (
-                                                                            <Package size={is10Narrow ? 10 : is2Big ? 18 : 13} className="text-slate-400" />
-                                                                        )}
+                                                                    <div className={`font-medium text-slate-400 flex items-center justify-center gap-0.5 opacity-80 ${
+                                                                        is10Narrow ? 'text-[8px]' : 'text-[11px]'
+                                                                    }`}>
+                                                                        <Plus size={is10Narrow ? 8 : 11} className="text-slate-400" />
+                                                                        <span>空闲</span>
                                                                     </div>
                                                                 </div>
-                                                                <div className={`w-full px-0.5 shrink-0 text-center font-bold text-slate-800 truncate leading-tight ${
-                                                                    is10Narrow ? 'text-[8px]' : 
-                                                                    is2Big ? 'text-xs' : 
-                                                                    rowChannels.length === 7 ? 'text-[10px]' : 'text-[11px]'
-                                                                }`}>
-                                                                    {product.name}
-                                                                </div>
-                                                            </>
-                                                        ) : (
-                                                            <div className="flex-1 min-h-0 flex items-center justify-center">
-                                                                <div className={`font-medium text-slate-400 flex items-center justify-center gap-0.5 opacity-80 ${
-                                                                    is10Narrow ? 'text-[8px]' : 'text-[11px]'
-                                                                }`}>
-                                                                    <Plus size={is10Narrow ? 8 : 11} className="text-slate-400" />
-                                                                    <span>空闲</span>
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                            )}
+                                                        </div>
                                                     </div>
+
+                                                    {/* 右柜开门是机械动作：按钮放在格子外侧下方，点格子仍然只做「选品上架」一件事 */}
+                                                    {activeCabinet === 'right' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleUnlockDoorPulse(ch.id)}
+                                                            disabled={isPulsing}
+                                                            aria-label={'打开 ' + ch.row + ' 排 ' + ch.col + ' 号储物格门'}
+                                                            className={`shrink-0 rounded-md border font-bold flex items-center justify-center gap-1 transition-colors active:scale-95 ${is10Narrow ? 'h-6 text-[10px]' : 'h-7 text-[11px]'} ${isPulsing ? 'bg-amber-500 border-amber-500 text-white' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300'}`}
+                                                        >
+                                                            <Unlock size={is10Narrow ? 10 : 12} className={isPulsing ? 'animate-pulse' : ''} />
+                                                            <span>开门</span>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             );
                                         })}

@@ -35,8 +35,30 @@ interface ClassGood {
   id: string;
   name: string;
   price: number;
-  icon: string;
+  icon: RewardIconKey;
 }
+
+type RewardIconKey = 'food' | 'stationery' | 'toy' | 'experience' | 'honor';
+
+const REWARD_ICON_OPTIONS: ReadonlyArray<{ key: RewardIconKey; label: string; src: string }> = [
+  { key: 'food', label: '食物饮料', src: '/assets/teacher-mobile/reward-icons/food.jpg' },
+  { key: 'stationery', label: '文具', src: '/assets/teacher-mobile/reward-icons/stationery.jpg' },
+  { key: 'toy', label: '玩具', src: '/assets/teacher-mobile/reward-icons/toy.jpg' },
+  { key: 'experience', label: '体验', src: '/assets/teacher-mobile/reward-icons/experience.jpg' },
+  { key: 'honor', label: '荣誉', src: '/assets/teacher-mobile/reward-icons/honor.jpg' },
+];
+
+const getRewardIcon = (key: RewardIconKey) => REWARD_ICON_OPTIONS.find(option => option.key === key) ?? REWARD_ICON_OPTIONS[0];
+
+const RewardIconAvatar: React.FC<{ icon: RewardIconKey; size?: 'sm' | 'md' }> = ({ icon, size = 'md' }) => {
+  const option = getRewardIcon(icon);
+  const sizeClass = size === 'sm' ? 'h-9 w-9' : 'h-10 w-10';
+  return (
+    <span className={`shrink-0 overflow-hidden rounded-[var(--tm-radius-control)] ${sizeClass}`}>
+      <img src={option.src} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+    </span>
+  );
+};
 
 interface RewardStudent extends Student {
   /** 可用成长币：兑换奖励与“只清可用”时扣减这一项。 */
@@ -47,13 +69,12 @@ interface RewardStudent extends Student {
 
 type SheetMode = 'redeem' | 'manage' | 'edit' | null;
 
-const DEFAULT_ICONS = ['包', '笔', '点', '券', '章', '书', '球', '画', '座', '扫', '餐'];
 const INITIAL_GOODS: ClassGood[] = [
-  { id: 'g1', name: '免写一次语文作业', price: 100, icon: '券' },
-  { id: 'g2', name: '做一天班长体验券', price: 300, icon: '章' },
-  { id: 'g3', name: '与校长共进午餐1次', price: 500, icon: '餐' },
-  { id: 'g4', name: '精美笔记本一本', price: 150, icon: '书' },
-  { id: 'g5', name: '黑色中性笔一支', price: 50, icon: '笔' },
+  { id: 'g1', name: '免写一次语文作业', price: 100, icon: 'experience' },
+  { id: 'g2', name: '做一天班长体验券', price: 300, icon: 'experience' },
+  { id: 'g3', name: '与校长共进午餐1次', price: 500, icon: 'food' },
+  { id: 'g4', name: '精美笔记本一本', price: 150, icon: 'stationery' },
+  { id: 'g5', name: '黑色中性笔一支', price: 50, icon: 'stationery' },
 ];
 
 const inputClass = 'h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
@@ -326,7 +347,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
   };
 
   const addDraft = () => {
-    setDraftGoods(current => [{ id: `g-${Date.now()}`, name: '', price: 50, icon: DEFAULT_ICONS[0] }, ...current]);
+    setDraftGoods(current => [{ id: `g-${Date.now()}`, name: '', price: 50, icon: 'food' }, ...current]);
   };
 
   const sheetTitle = sheetMode === 'redeem' ? '选择兑换奖励' : sheetMode === 'edit' ? '批量编辑奖品' : '设置班级奖励';
@@ -535,7 +556,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
               const canAfford = selectedStudents.every(student => student.campusCoins >= good.price);
               return (
                 <div key={good.id} className="flex min-h-[68px] items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-lg [box-shadow:var(--tm-shadow-control)]">{good.icon}</span>
+                  <RewardIconAvatar icon={good.icon} />
                   <span className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{good.name}</strong><small className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(good.price)} {GROWTH_COIN_TERMS.name} / 人</small></span>
                   <button type="button" disabled={!canAfford} onClick={() => redeemGood(good)} className="min-h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">{canAfford ? '兑换' : '余额不足'}</button>
                 </div>
@@ -547,7 +568,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
         {sheetMode === 'manage' && (
           <div>
             <div className="space-y-[var(--tm-space-2)]">
-              {goods.map(good => <div key={good.id} className="flex items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]"><span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-lg">{good.icon}</span><span className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{good.name}</strong><small className="font-semibold text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(good.price)} {GROWTH_COIN_TERMS.name}</small></span></div>)}
+              {goods.map(good => <div key={good.id} className="flex items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]"><RewardIconAvatar icon={good.icon} /><span className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{good.name}</strong><small className="font-semibold text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(good.price)} {GROWTH_COIN_TERMS.name}</small></span></div>)}
             </div>
             <button type="button" onClick={startEditing} className="mt-[var(--tm-space-4)] flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary)]"><Pencil className="h-[18px] w-[18px]" />批量编辑奖品</button>
           </div>
@@ -559,10 +580,28 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
             <div className="space-y-[var(--tm-space-3)]">
               {draftGoods.map(good => (
                 <div key={good.id} className="rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]">
-                  <div className="grid grid-cols-[56px_minmax(0,1fr)_44px] gap-[var(--tm-space-2)]">
-                    <select value={good.icon} onChange={event => updateDraft(good.id, { icon: event.target.value })} className={`${inputClass} px-0 text-center text-lg`} aria-label={`${good.name || '新奖品'}图标`}>{DEFAULT_ICONS.map(icon => <option key={icon}>{icon}</option>)}</select>
+                  <div className="grid grid-cols-[minmax(0,1fr)_44px] gap-[var(--tm-space-2)]">
                     <input value={good.name} onChange={event => updateDraft(good.id, { name: event.target.value })} className={inputClass} placeholder="奖品名称" aria-label="奖品名称" />
                     <button type="button" onClick={() => setDraftGoods(current => current.filter(item => item.id !== good.id))} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-status-negative)] active:bg-[var(--tm-status-negative-soft)]" aria-label={`删除${good.name || '奖品'}`}><Trash2 className="h-[18px] w-[18px]" /></button>
+                  </div>
+                  <div className="mt-[var(--tm-space-2)] flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label={`${good.name || '新奖品'}图标`}>
+                    {REWARD_ICON_OPTIONS.map(option => {
+                      const selected = good.icon === option.key;
+                      return (
+                        <button
+                          key={option.key}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          aria-label={option.label}
+                          onClick={() => updateDraft(good.id, { icon: option.key })}
+                          className={`relative h-11 w-11 shrink-0 overflow-hidden rounded-[var(--tm-radius-control)] ${selected ? 'ring-2 ring-inset ring-[var(--tm-brand-primary)]' : 'opacity-65 active:opacity-100'}`}
+                        >
+                          <img src={option.src} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+                          {selected && <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] text-[10px] text-[var(--tm-text-inverse)]"><Check className="h-3 w-3" /></span>}
+                        </button>
+                      );
+                    })}
                   </div>
                   <label className="mt-[var(--tm-space-2)] grid grid-cols-[44px_minmax(0,1fr)] items-center gap-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]"><span>售价</span><input type="number" min="1" value={good.price} onChange={event => updateDraft(good.id, { price: Number(event.target.value) })} className={inputClass} /></label>
                 </div>

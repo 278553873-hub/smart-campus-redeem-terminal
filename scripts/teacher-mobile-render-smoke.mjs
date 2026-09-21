@@ -70,13 +70,14 @@ const writeResults = () => {
   fs.writeFileSync(resultPath, JSON.stringify(results));
 };
 
-const renderPage = async (name, load, props) => {
+const renderPage = async (name, load, props, verify) => {
   try {
     const module = await load();
     const Component = module.default;
     if (!Component) throw new Error('页面模块没有默认导出组件');
     const html = renderToString(React.createElement(Component, props));
     if (!html || html.length < 400) throw new Error('页面渲染结果为空');
+    verify?.(html);
     results.push({ name, ok: true, htmlLength: html.length });
   } catch (error) {
     results.push({
@@ -138,6 +139,37 @@ await renderPage('学生成长币明细页', () => import('../mobile-app/views/S
     settlementEstimate: { period: 'weekly', amount: 0 },
   },
   onBack: noop,
+});
+
+const { MOCK_BEHAVIOR_RECORDS } = await import('../mobile-app/constants');
+await renderPage('学生详情（实际积分）', () => import('../mobile-app/views/DashboardView'), {
+  student: demoStudents[0],
+  currentSpace: { id: 'render-smoke-space', name: '示范学校' },
+  scores: [
+    { category: 'moral', label: '德育', score: 1250 },
+    { category: 'intellectual', label: '智育', score: -25 },
+    { category: 'physical', label: '体育', score: 0 },
+    { category: 'aesthetic', label: '美育', score: 10 },
+    { category: 'labor', label: '劳育', score: 15 },
+  ],
+  growthReports: [],
+  collectionHistory: [],
+  evaluationRecords: MOCK_BEHAVIOR_RECORDS,
+  currentTeacherId: 'render-smoke-teacher',
+  currentTeacherName: '演示老师',
+  canEditOtherTeachersEvaluationRecords: false,
+  campusCoinDetail: { balance: 0, issueRecords: [], consumeRecords: [], settlementEstimate: { period: 'weekly', amount: 0 } },
+  onBack: noop,
+}, html => {
+  const plainHtml = html.replace(/<!--.*?-->/g, '');
+  const start = plainHtml.indexOf('本学期五育积分');
+  const summary = plainHtml.slice(start, plainHtml.indexOf('</section>', start));
+  for (const score of ['1250', '-25', '0', '10', '15']) {
+    if (!summary.includes('>' + score + '</span>')) throw new Error('学生详情实际积分未正确展示：' + score);
+  }
+  if (!summary.includes('总分')) throw new Error('学生详情缺少总分摘要');
+  const total = summary.match(/总分<\/span><span[^>]*>([^<]+)<\/span>/)?.[1];
+  if (total !== '1250') throw new Error('学生详情总分应为实际分项之和，实际为：' + total);
 });
 
 // 渲染结束后主动退出：个别模块会留下常驻定时器，让进程一直挂着不返回。
