@@ -8,20 +8,18 @@ import {
     ClipboardList,
     FileText,
     History,
-    Keyboard,
     ListChecks,
-    LoaderCircle,
-    Mic,
-    Send,
     ScanSearch,
     Sparkles,
     Telescope,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import { getAssistantGreeting, useAssistantTypewriter } from '../hooks/useAssistantTypewriter';
 import AssistantClassSwitchButton from '../components/AssistantClassSwitchButton';
+import AssistantComposer from '../components/assistant-chat/AssistantComposer';
+import AssistantConversationThread, { type AssistantChatMessage } from '../components/assistant-chat/AssistantConversationThread';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
-import AutoResizeTextarea from '../components/ui/AutoResizeTextarea';
 import {
     CLASS_EVALUATION_WEEKS,
     DEFAULT_CLASS_EVALUATION_WEEK_ID,
@@ -82,10 +80,8 @@ type ChatMessageAnswer =
     | StudentEvaluationAssistantAnswer
     | AssistantAnswerPresentation;
 
-interface ChatMessage {
-    id: string;
-    role: 'user' | 'assistant';
-    content?: string;
+/** 对话消息的渲染沿用公共对话组件，回答类型收窄为本页三类数据来源。 */
+interface ChatMessage extends AssistantChatMessage {
     answer?: ChatMessageAnswer;
 }
 
@@ -104,17 +100,7 @@ const formatRecordDate = (date: string) => {
     return `${Number(month)}月${Number(day)}日`;
 };
 
-const getAssistantIntro = () => {
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? '上午好' : hour < 18 ? '下午好' : '晚上好';
-    return `${greeting}，\n我将为您提供数据分析和指导建议。`;
-};
-
-const getTypeDelay = (char: string) => {
-    if (char === '，') return 150;
-    if (char === '。') return 220;
-    return 56;
-};
+const getAssistantIntro = () => `${getAssistantGreeting()}，\n我将为您提供数据分析和指导建议。`;
 
 const REPORT_GENERATION_STEPS = [
     '正在汇总本周班级评比数据',
@@ -235,99 +221,6 @@ const WeeklyReportContent: React.FC<{
     </div>
 );
 
-const ConversationAnswerContent: React.FC<{
-    answer: ChatMessageAnswer;
-}> = ({ answer }) => (
-    <div className="space-y-3 text-pretty text-[14px] tm-font-regular leading-6 text-[var(--tm-text-primary)]">
-        <p className="whitespace-pre-line">{answer.message}</p>
-
-        {answer.breakdown.length > 0 && (
-            <p>
-                具体来看，{answer.breakdown.map(item => (
-                    `${item.label}${item.detail ? `（${item.detail}）` : ''}${item.value ? `：${item.value}` : ''}`
-                )).join('；')}。
-            </p>
-        )}
-
-        {answer.analysis.length > 0 && (
-            <p>从分析结果看，{answer.analysis.map(item => item.body).join('')}</p>
-        )}
-
-        {answer.suggestions.length > 0 && (
-            <p>接下来，{answer.suggestions.map(item => item.body).join('')}</p>
-        )}
-    </div>
-);
-
-const ConversationThread: React.FC<{
-    messages: ChatMessage[];
-    replying: boolean;
-    replyingCapability: HeadteacherAssistantCapability | 'unknown';
-    ariaLabel: string;
-    latestAssistantRef: React.RefObject<HTMLDivElement | null>;
-}> = ({
-    messages,
-    replying,
-    replyingCapability,
-    ariaLabel,
-    latestAssistantRef,
-}) => (
-    <section className="mx-4 mt-5 space-y-4" aria-label={ariaLabel} aria-live="polite">
-        {messages.map((message, index) => (
-            <div
-                key={message.id}
-                ref={message.role === 'assistant' && index === messages.length - 1 ? latestAssistantRef : undefined}
-                className={'flex scroll-mt-2 ' + (message.role === 'user' ? 'justify-end' : 'items-start')}
-            >
-                {message.role === 'user' ? (
-                    <div className="max-w-[82%] rounded-[18px] rounded-br-[6px] bg-[var(--tm-assistant-role-primary)] px-4 py-2.5 text-[15px] font-medium leading-6 text-white [box-shadow:var(--tm-shadow-control)]">
-                        {message.content}
-                    </div>
-                ) : message.answer ? (
-                    <div className="headteacher-agent-glass min-w-0 flex-1 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 py-3.5">
-                        <ConversationAnswerContent answer={message.answer} />
-                    </div>
-                ) : null}
-            </div>
-        ))}
-
-        {replying && (
-            <div className="headteacher-agent-glass flex h-11 w-fit items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]" role="status">
-                <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
-                {HEADTEACHER_ASSISTANT_REPLYING_LABELS[replyingCapability]}
-            </div>
-        )}
-
-    </section>
-);
-
-type ComposerMode = 'voice' | 'text';
-type VoiceState = 'idle' | 'listening' | 'error';
-
-const SuggestedQuestionList: React.FC<{
-    questions: readonly string[];
-    disabled: boolean;
-    onSelect: (question: string) => void;
-}> = ({ questions, disabled, onSelect }) => (
-    <div
-        className="-mx-3 mb-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 pb-1 pr-12 no-scrollbar"
-        aria-label={`共${questions.length}个快捷问题`}
-    >
-        {questions.map((question, index) => (
-            <button
-                key={question}
-                type="button"
-                disabled={disabled}
-                onClick={() => onSelect(question)}
-                className="min-h-[var(--tm-size-touch)] shrink-0 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-glass)] px-3 text-[12px] font-semibold text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                aria-label={`快捷问题 ${index + 1}/${questions.length}：${question}`}
-            >
-                {question}
-            </button>
-        ))}
-    </div>
-);
-
 const StudentQuestionList: React.FC<{
     onSelect: (action: typeof STUDENT_EVALUATION_QUESTIONS[number]['action']) => void;
     className?: string;
@@ -349,171 +242,6 @@ const StudentQuestionList: React.FC<{
         ))}
     </section>
 );
-
-const QuestionComposer: React.FC<{
-    draft: string;
-    replying: boolean;
-    suggestedQuestions: readonly string[];
-    placeholder: string;
-    onDraftChange: (value: string) => void;
-    onSubmit: (question: string) => void;
-}> = ({ draft, replying, suggestedQuestions, placeholder, onDraftChange, onSubmit }) => {
-    const [mode, setMode] = useState<ComposerMode>('voice');
-    const [voiceState, setVoiceState] = useState<VoiceState>('idle');
-    const [voiceFallback, setVoiceFallback] = useState(false);
-    const recognitionRef = useRef<any>(null);
-
-    const stopVoiceInput = () => {
-        try {
-            recognitionRef.current?.stop?.();
-        } catch {
-            recognitionRef.current = null;
-            setVoiceState('idle');
-        }
-    };
-
-    const startVoiceInput = () => {
-        if (replying || voiceState === 'listening') return;
-
-        const SpeechRecognitionConstructor = (window as any).SpeechRecognition
-            ?? (window as any).webkitSpeechRecognition;
-        if (!SpeechRecognitionConstructor) {
-            setVoiceFallback(true);
-            setVoiceState('error');
-            setMode('text');
-            return;
-        }
-
-        const recognition = new SpeechRecognitionConstructor();
-        recognition.lang = 'zh-CN';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        recognition.onresult = (event: any) => {
-            let transcript = '';
-            for (let index = event.resultIndex; index < event.results.length; index += 1) {
-                transcript += event.results[index][0]?.transcript ?? '';
-            }
-            const question = transcript.trim();
-            if (!question) return;
-            onDraftChange(question);
-            onSubmit(question);
-        };
-        recognition.onerror = () => {
-            setVoiceFallback(true);
-            setVoiceState('error');
-            setMode('text');
-        };
-        recognition.onend = () => {
-            recognitionRef.current = null;
-            setVoiceState(current => current === 'error' ? current : 'idle');
-        };
-        recognitionRef.current = recognition;
-        setVoiceFallback(false);
-        setVoiceState('listening');
-        try {
-            recognition.start();
-        } catch {
-            recognitionRef.current = null;
-            setVoiceFallback(true);
-            setVoiceState('error');
-            setMode('text');
-        }
-    };
-
-    useEffect(() => () => recognitionRef.current?.abort?.(), []);
-
-    return (
-        <form
-            className="shrink-0 bg-transparent px-3 pt-1"
-            onSubmit={(event) => {
-                event.preventDefault();
-                onSubmit(draft);
-            }}
-        >
-            {suggestedQuestions.length > 0 && (
-                <SuggestedQuestionList
-                    questions={suggestedQuestions}
-                    disabled={replying}
-                    onSelect={onSubmit}
-                />
-            )}
-            {mode === 'voice' ? (
-                <div className="headteacher-agent-glass relative h-[52px] overflow-hidden rounded-full p-1">
-                    <button
-                        type="button"
-                        onClick={() => setMode('text')}
-                        className="absolute left-1 top-1 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-bg-surface-glass)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                        aria-label="切换到文字输入"
-                    >
-                        <Keyboard className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
-                    </button>
-                    <button
-                        type="button"
-                        disabled={replying}
-                        onPointerDown={startVoiceInput}
-                        onPointerUp={stopVoiceInput}
-                        onPointerCancel={stopVoiceInput}
-                        onPointerLeave={stopVoiceInput}
-                        onKeyDown={(event) => {
-                            if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) {
-                                event.preventDefault();
-                                startVoiceInput();
-                            }
-                        }}
-                        onKeyUp={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                                event.preventDefault();
-                                stopVoiceInput();
-                            }
-                        }}
-                        className={'absolute inset-1 flex select-none items-center justify-center rounded-full px-14 text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-assistant-role-primary)] ' + (voiceState === 'listening' ? 'bg-[var(--tm-assistant-role-primary)] text-white' : 'text-[var(--tm-text-primary)]')}
-                        aria-label={voiceState === 'listening' ? '正在聆听，松开发送' : '按住说话'}
-                    >
-                        {voiceState === 'listening' ? '正在聆听，松开发送' : '按住说话'}
-                    </button>
-                </div>
-            ) : (
-                <div className="headteacher-agent-glass grid min-h-[52px] grid-cols-[44px_minmax(0,1fr)_44px] items-end overflow-hidden rounded-[26px] p-1">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setVoiceState('idle');
-                            setMode('voice');
-                        }}
-                        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-assistant-role-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                        aria-label="切换到语音输入"
-                    >
-                        <Mic className="h-5 w-5" strokeWidth={2.3} aria-hidden="true" />
-                    </button>
-                    <AutoResizeTextarea
-                        value={draft}
-                        onChange={event => onDraftChange(event.target.value)}
-                        onKeyDown={event => {
-                            if (event.key === 'Enter' && !event.shiftKey) {
-                                event.preventDefault();
-                                onSubmit(draft);
-                            }
-                        }}
-                        minHeight={44}
-                        maxHeight={88}
-                        placeholder={voiceFallback ? '当前环境暂不支持语音，请输入文字' : placeholder}
-                        aria-label={placeholder}
-                        className="w-full resize-none bg-transparent px-2.5 py-2.5 text-[14px] font-medium leading-6 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-disabled)]"
-                    />
-                    <button
-                        type="submit"
-                        disabled={!draft.trim() || replying}
-                        className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--tm-assistant-role-primary)] text-white disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)] focus-visible:ring-offset-2"
-                        aria-label="发送问题"
-                    >
-                        <Send className="h-5 w-5" strokeWidth={2.3} aria-hidden="true" />
-                    </button>
-                </div>
-            )}
-        </form>
-    );
-};
 
 const formatGeneratedAt = (date: string) => {
     const value = new Date(date);
@@ -592,7 +320,7 @@ const ClassEvaluationHistoryPage: React.FC<{
                                         key={report.id}
                                         type="button"
                                         onClick={() => onOpenReport(report)}
-                                        className="headteacher-agent-glass relative flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                                        className="assistant-agent-glass relative flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
                                     >
                                         <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-[var(--tm-bg-surface)] bg-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
                                         <span className="min-w-0 flex-1">
@@ -850,7 +578,7 @@ const ClassContextPanel: React.FC<{
     onStudentQuestionSelect,
     getClassLabel,
 }) => (
-    <section className="headteacher-agent-glass headteacher-context-card relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)] p-2" aria-label="当前班级数据与分析功能">
+    <section className="assistant-agent-glass assistant-context-card relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)] p-2" aria-label="当前班级数据与分析功能">
         {canSwitchClass && (
             <div className="mb-1 flex min-h-10 items-center px-3">
                 <AssistantClassSwitchButton
@@ -949,7 +677,7 @@ const WeekDataDetailPage: React.FC<{
                     </div>
                 </section>
 
-                <section className="headteacher-agent-glass mt-4 rounded-[var(--tm-radius-card)] px-4 py-4" aria-label="周数据概览">
+                <section className="assistant-agent-glass mt-4 rounded-[var(--tm-radius-card)] px-4 py-4" aria-label="周数据概览">
                     <dl className="grid grid-cols-3 gap-3">
                         <div>
                             <dt className="text-[11px] text-[var(--tm-text-tertiary)]">本周总分</dt>
@@ -970,7 +698,7 @@ const WeekDataDetailPage: React.FC<{
                     <div className="mb-2 px-1">
                         <h2 id="week-dimensions-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">分类数据</h2>
                     </div>
-                    <div className="headteacher-agent-glass rounded-[var(--tm-radius-card)] pt-3">
+                    <div className="assistant-agent-glass rounded-[var(--tm-radius-card)] pt-3">
                         <DimensionRankingTable
                             rankings={week.dimensionRankings}
                             selectedDimension={selectedRanking?.dimension}
@@ -983,7 +711,7 @@ const WeekDataDetailPage: React.FC<{
                     <div className="mb-2 px-1">
                         <h2 id="week-records-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">扣分明细</h2>
                     </div>
-                    <div className="headteacher-agent-glass overflow-hidden rounded-[var(--tm-radius-card)]">
+                    <div className="assistant-agent-glass overflow-hidden rounded-[var(--tm-radius-card)]">
                         <DimensionTabs
                             rankings={week.dimensionRankings}
                             selectedDimension={selectedRanking?.dimension ?? ''}
@@ -1041,7 +769,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     /** 新会话的固定建议问题：都开通时先给班级评比问题，仅学生评价时给更短的学生评价问题。 */
     const OVERVIEW_RECOMMENDED_QUESTIONS = getInitialSuggestedQuestions(capabilities);
     const assistantIntro = useMemo(getAssistantIntro, []);
-    const [typedIntro, setTypedIntro] = useState('');
+    const typedIntro = useAssistantTypewriter(assistantIntro);
     const [savedReports, setSavedReports] = useState<SavedClassEvaluationReport[]>(() => listSavedClassEvaluationReports());
     const [activeReport, setActiveReport] = useState<SavedClassEvaluationReport | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -1082,27 +810,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         setDraft('');
         setIsReplying(false);
     };
-
-    useEffect(() => {
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reduceMotion) {
-            setTypedIntro(assistantIntro);
-            return undefined;
-        }
-
-        let index = 0;
-        let timer: number | undefined;
-        const typeNext = () => {
-            index += 1;
-            setTypedIntro(assistantIntro.slice(0, index));
-            if (index >= assistantIntro.length) return;
-            timer = window.setTimeout(typeNext, getTypeDelay(assistantIntro[index - 1]));
-        };
-        timer = window.setTimeout(typeNext, 240);
-        return () => {
-            if (timer) window.clearTimeout(timer);
-        };
-    }, [assistantIntro]);
 
     useEffect(() => {
         if (previousClassIdRef.current === resolvedClassId) return;
@@ -1375,7 +1082,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     {isGenerating ? (
                         <AgentGenerationProgress visibleStepCount={generationStepCount} />
                     ) : activeReport ? (
-                        <div className="headteacher-agent-glass mt-4 rounded-[var(--tm-radius-card)] px-4 py-4">
+                        <div className="assistant-agent-glass mt-4 rounded-[var(--tm-radius-card)] px-4 py-4">
                             <WeeklyReportContent report={activeReport.report} />
                         </div>
                     ) : null}
@@ -1445,10 +1152,10 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     )}
 
                     {messages.length > 0 && (
-                        <ConversationThread
+                        <AssistantConversationThread
                             messages={messages}
                             replying={isReplying}
-                            replyingCapability={replyingCapability}
+                            replyingLabel={HEADTEACHER_ASSISTANT_REPLYING_LABELS[replyingCapability]}
                             ariaLabel={conversationLabel}
                             latestAssistantRef={latestAssistantRef}
                         />
@@ -1458,7 +1165,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
 
             <footer className="relative z-30 shrink-0 bg-transparent">
                 {(showClassEvaluation || showStudentEvaluation) && !activeReport && !isGenerating && !historyOpen && (
-                    <QuestionComposer
+                    <AssistantComposer
                         draft={draft}
                         replying={isReplying}
                         suggestedQuestions={messages.length > 0 ? followUpQuestions : OVERVIEW_RECOMMENDED_QUESTIONS}

@@ -10,6 +10,10 @@ const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
 };
 
+const forbidText = (source, needle, message) => {
+  if (source.includes(needle)) throw new Error(message);
+};
+
 requireText(appSource, "import WeeklyActionAdviceHistoryView from './views/WeeklyActionAdviceHistoryView';", 'App 应导入往期建议页面。');
 requireText(appSource, "'weekly_action_history'", 'App 页面状态应包含往期建议。');
 requireText(appSource, "{currentView === 'weekly_action_history' && (", 'App 应渲染往期建议页面。');
@@ -22,13 +26,14 @@ requireText(historySource, 'WEEKLY_ACTION_ADVICE_HISTORY_BY_CLASS', '历史页�
 requireText(historySource, 'setSelectedReport(report)', '点击历史项应进入详情。');
 requireText(historySource, 'simulateLoading={false}', '历史详情应直接展示，不重复模拟生成。');
 requireText(historySource, "document.getElementById('main-scroll-container')", '历史列表与详情切换时应回到页面顶部。');
-requireText(historySource, "title.replace(/行动建议$/, '')", '历史卡片应只展示精确日期，不重复页面名称。');
+requireText(historySource, 'getHistoryItemTitle', '历史卡片标题应收敛为本周建议加日期范围。');
+requireText(historySource, '本周建议（', '历史卡片标题应使用本周建议加日期范围。');
 requireText(historySource, 'groupReportsByMonth', '历史建议应按月分组。');
 requireText(historySource, 'second.actionWeekStart.localeCompare(first.actionWeekStart)', '历史建议应按建议开始时间倒序排列。');
 requireText(historySource, 'getHistoryMonthGroup(report.actionWeekStart)', '月份分组不应依赖实际生成时间。');
 requireText(historySource, '`${year}年${normalizedMonth}月`', '月份节点应同时展示年份，支持跨年查找。');
 requireText(historySource, '-top-5 bottom-9 left-[5px] w-px bg-slate-200', '历史分组应使用克制的细时间线。');
-requireText(historySource, '基于{report.dataRange}评价记录', '历史卡片应只补充精简的评价记录来源。');
+forbidText(historySource, 'dataRange', '历史卡片不应展示数据周期副文本，避免与标题重复。');
 requireText(historySource, 'min-h-[72px]', '历史卡片应保持紧凑稳定高度。');
 requireText(historySource, 'classes.length > 1', '多个带班班级时历史页应提供班级切换。');
 requireText(historySource, 'setActiveClassId(classId)', '历史页切换班级后应直接刷新列表。');

@@ -38,7 +38,7 @@ for (const source of [headteacher, principal]) {
 }
 
 assert.match(headteacher, /tm-role-headteacher-glass-surface/);
-assert.match(principal, /tm-role-principal-primary/);
+assert.match(principal, /var\(--tm-assistant-role-primary\)/);
 assert.match(headteacher, /ai-assistant-theme-headteacher/);
 assert.match(principal, /ai-assistant-theme-principal relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent/);
 assert.match(css, /\.principal-agent-gradient-page/);

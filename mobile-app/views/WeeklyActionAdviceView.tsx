@@ -6,7 +6,6 @@ import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
 import AssistantReportCards from '../components/assistant-report/AssistantReportCards';
 import AssistantReportContractError from '../components/assistant-report/AssistantReportContractError';
-import AssistantReportFooter from '../components/assistant-report/AssistantReportFooter';
 import {
     adaptWeeklyActionAdviceReport,
     resolveAssistantReportDocument,
@@ -302,10 +301,6 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
                         data={pageData as WeeklyActionAdviceInsufficient}
                         onViewSample={() => setViewingExample(true)}
                     />
-                )}
-
-                {!loading && activeReport && reportResolution.document && (
-                    <AssistantReportFooter document={reportResolution.document} example={viewingExample} className="mx-0" />
                 )}
             </main>
 

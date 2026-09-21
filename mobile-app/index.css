@@ -82,6 +82,13 @@
   --tm-assistant-page-glow-primary: var(--tm-role-headteacher-glow-primary);
   --tm-assistant-page-glow-secondary: var(--tm-role-headteacher-glow-secondary);
   --tm-assistant-role-shadow: var(--tm-role-headteacher-shadow);
+  --tm-assistant-glass-surface: var(--tm-role-headteacher-glass-surface);
+  --tm-assistant-glass-surface-strong: var(--tm-role-headteacher-glass-surface-strong);
+  --tm-assistant-glass-shadow: var(--tm-role-headteacher-glass-shadow);
+  --tm-assistant-context-surface: var(--tm-role-headteacher-context-surface);
+  --tm-assistant-context-shadow: var(--tm-role-headteacher-context-shadow);
+  --tm-assistant-data-surface: var(--tm-role-headteacher-data-surface);
+  --tm-assistant-data-shadow: var(--tm-role-headteacher-data-shadow);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -95,20 +102,20 @@
   );
 }
 
-.headteacher-agent-glass {
+.assistant-agent-glass {
   border: 0;
-  background: var(--tm-role-headteacher-glass-surface);
+  background: var(--tm-assistant-glass-surface);
   box-shadow:
-    0 1px 2px -1px var(--tm-role-headteacher-glass-shadow),
-    0 18px 42px -28px var(--tm-role-headteacher-glass-shadow),
-    inset 0 1px 0 var(--tm-role-headteacher-glass-surface-strong);
+    0 1px 2px -1px var(--tm-assistant-glass-shadow),
+    0 18px 42px -28px var(--tm-assistant-glass-shadow),
+    inset 0 1px 0 var(--tm-assistant-glass-surface-strong);
   -webkit-backdrop-filter: blur(24px) saturate(145%);
   backdrop-filter: blur(24px) saturate(145%);
 }
 
-.headteacher-context-card {
-  background: var(--tm-role-headteacher-context-surface);
-  box-shadow: var(--tm-role-headteacher-context-shadow);
+.assistant-context-card {
+  background: var(--tm-assistant-context-surface);
+  box-shadow: var(--tm-assistant-context-shadow);
 }
 
 .ai-assistant-theme-principal {
@@ -122,6 +129,13 @@
   --tm-assistant-page-glow-primary: var(--tm-role-principal-glow-primary);
   --tm-assistant-page-glow-secondary: var(--tm-role-principal-glow-secondary);
   --tm-assistant-role-shadow: var(--tm-role-principal-shadow);
+  --tm-assistant-glass-surface: var(--tm-role-principal-glass-surface);
+  --tm-assistant-glass-surface-strong: var(--tm-role-principal-glass-surface-strong);
+  --tm-assistant-glass-shadow: var(--tm-role-principal-glass-shadow);
+  --tm-assistant-context-surface: var(--tm-role-principal-context-surface);
+  --tm-assistant-context-shadow: var(--tm-role-principal-context-shadow);
+  --tm-assistant-data-surface: var(--tm-role-principal-data-surface);
+  --tm-assistant-data-shadow: var(--tm-role-principal-data-shadow);
 }
 
 /* 校长助理统一页面与班主任助理共用同一结构：角色渐变固定在屏幕层，滚动内容根容器保持透明。 */
@@ -190,45 +204,6 @@
     animation: none;
   }
 
-}
-
-.ai-assistant-dialog-card {
-  position: relative;
-  isolation: isolate;
-  border: 2px solid transparent;
-  background:
-    linear-gradient(145deg, var(--tm-bg-surface-glass) 0%, var(--tm-assistant-role-soft) 54%, var(--tm-bg-surface) 100%) padding-box,
-    linear-gradient(135deg, var(--tm-bg-surface) 0%, var(--tm-assistant-role-soft-strong) 18%, var(--tm-assistant-role-border) 52%, var(--tm-assistant-role-accent-border) 80%, var(--tm-bg-surface) 100%) border-box;
-  box-shadow:
-    0 20px 38px -30px var(--tm-assistant-role-shadow),
-    inset 0 1px 0 var(--tm-bg-surface-glass);
-}
-
-.ai-assistant-dialog-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(145deg, var(--tm-assistant-page-glow-primary), transparent 58%, var(--tm-assistant-page-glow-secondary));
-  pointer-events: none;
-}
-
-.ai-assistant-dialog-card::after {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(135deg, var(--tm-bg-surface-glass), var(--tm-assistant-role-soft));
-  pointer-events: none;
-}
-
-.ai-assistant-dialog-tail {
-  background:
-    linear-gradient(145deg, var(--tm-bg-surface), var(--tm-assistant-role-soft)) padding-box,
-    linear-gradient(135deg, var(--tm-bg-surface), var(--tm-assistant-role-border), var(--tm-assistant-role-accent-border)) border-box;
-  border-color: transparent;
 }
 
 /* --- App Simulation Wrappers --- */

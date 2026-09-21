@@ -22,10 +22,7 @@ interface ReviewYearGroup {
     reports: TeacherEvaluationReviewReport[];
 }
 
-const formatReviewMonth = (reviewMonth: string) => {
-    const [year, month] = reviewMonth.split('-');
-    return `${year}年${Number(month)}月`;
-};
+const formatReviewMonthLabel = (reviewMonth: string) => `${Number(reviewMonth.split('-')[1])}月复盘`;
 
 const groupReviewsByYear = (reports: TeacherEvaluationReviewReport[]) => [...reports]
     .sort((first, second) => second.reviewMonth.localeCompare(first.reviewMonth))
@@ -111,12 +108,11 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
                                         type="button"
                                         onClick={() => setSelectedReport(report)}
                                         className="waa-card-enter relative flex min-h-[72px] w-full items-center gap-3 rounded-[20px] border border-white/90 bg-white/94 px-4 py-3 text-left shadow-[0_18px_42px_-34px_rgba(35,96,145,0.30)] ring-1 ring-slate-100/70"
-                                        aria-label={`${formatReviewMonth(report.reviewMonth)}评价复盘，基于你在${report.dataRange}的评价记录`}
+                                        aria-label={`${group.year}年${formatReviewMonthLabel(report.reviewMonth)}`}
                                     >
                                         <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-white bg-cyan-300 shadow-[0_0_0_1px_rgba(30,154,170,0.18)]" aria-hidden="true" />
                                         <span className="min-w-0 flex-1">
-                                            <span className="block text-[15px] font-bold text-slate-900">{formatReviewMonth(report.reviewMonth)}</span>
-                                            <span className="mt-1 block text-[12px] text-slate-500">基于你在{report.dataRange}的评价记录</span>
+                                            <span className="block text-[15px] font-bold text-slate-900">{formatReviewMonthLabel(report.reviewMonth)}</span>
                                         </span>
                                         <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" strokeWidth={2.1} />
                                     </button>

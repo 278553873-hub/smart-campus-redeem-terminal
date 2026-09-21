@@ -63,6 +63,8 @@ requireText(headerSource, "backLabel = '返回'", '校长报告共享标题栏�
 requireText(headerSource, 'focus-visible:ring-2', '校长报告共享标题栏应保留键盘焦点。');
 requireText(appSource, 'hasPrincipalReportBackground', '校长报告页应由子页面自己持有正文滚动容器，标题栏承接屏幕级角色背景。');
 requireText(viewSource, '<AssistantHistoryLink', '校长周月报告应使用图标加文字的历史入口。');
+forbidText(viewSource, 'AssistantReportFooter', '周月报告底部不应展示AI说明和生成时间。');
+forbidText(viewSource, 'report.eyebrow', '周月报告不应重复展示AI能力标签。');
 requireText(cssSource, '.principal-report-screen-background', '校长报告应使用屏幕级统一渐变背景。');
 requireText(cssSource, 'var(--tm-role-principal-accent-soft)', '校长报告渐变应引用管理金角色令牌。');
 

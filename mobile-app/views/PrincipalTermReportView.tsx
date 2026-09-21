@@ -10,7 +10,6 @@ import AssistantHistoryLink from '../components/AssistantHistoryLink';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import AssistantReportCards from '../components/assistant-report/AssistantReportCards';
 import AssistantReportContractError from '../components/assistant-report/AssistantReportContractError';
-import AssistantReportFooter from '../components/assistant-report/AssistantReportFooter';
 import {
   adaptPrincipalTermReport,
   resolveAssistantReportDocument,
@@ -98,11 +97,7 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
         ) : (
           <>
             <section className="border-b border-[var(--tm-border-subtle)] px-[var(--tm-report-page-inline)] pb-6 pt-5">
-              <span className="inline-flex min-h-7 items-center gap-1.5 rounded-full bg-[var(--tm-role-principal-soft)] px-3 text-[12px] font-semibold text-[var(--tm-role-principal-strong)]">
-                <Sparkles className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                AI学期综合分析
-              </span>
-              <div className="mt-3 flex min-h-11 items-center justify-between gap-3">
+              <div className="flex min-h-11 items-center justify-between gap-3">
                 <p className="min-w-0 truncate text-[13px] font-medium text-[var(--tm-text-secondary)]">{schoolName}</p>
                 {onOpenHistory && <AssistantHistoryLink label="往期报告" onClick={onOpenHistory} />}
               </div>
@@ -119,7 +114,6 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
                   document={reportResolution.document}
                   className="px-[var(--tm-report-page-inline)] py-[var(--tm-report-card-gap)]"
                 />
-                <AssistantReportFooter document={reportResolution.document} />
               </>
             ) : (
               <AssistantReportContractError onRetry={onRetry} />

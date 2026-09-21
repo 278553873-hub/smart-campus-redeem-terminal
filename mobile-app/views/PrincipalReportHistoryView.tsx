@@ -106,7 +106,6 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
                     type="button"
                     onClick={() => setSelectedReport(report)}
                     className="relative flex min-h-[82px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985] active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
-                    aria-label={`${report.title}，${report.periodLabel}，生成于${report.generatedDate}`}
                   >
                     <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-[var(--tm-bg-page)] bg-[var(--tm-role-principal-soft-strong)]" aria-hidden="true" />
                     <span className="min-w-0 flex-1">
@@ -115,7 +114,6 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
                         <CalendarDays className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                         {report.periodLabel}
                       </span>
-                      <span className="mt-0.5 block text-[11px] text-[var(--tm-text-tertiary)]">生成于{report.generatedDate}</span>
                     </span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" strokeWidth={2.1} />
                   </button>

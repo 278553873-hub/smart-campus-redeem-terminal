@@ -1,11 +1,17 @@
 import fs from 'node:fs';
 
 const viewSource = fs.readFileSync(new URL('./AiPrincipalAssistantView.tsx', import.meta.url), 'utf8');
+const typewriterSource = fs.readFileSync(new URL('../hooks/useAssistantTypewriter.ts', import.meta.url), 'utf8');
 const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const assetsSource = fs.readFileSync(new URL('../assets/images.ts', import.meta.url), 'utf8');
 const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-校长助理周月学期报告.md', import.meta.url), 'utf8');
+const composerSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantComposer.tsx', import.meta.url), 'utf8');
+const threadSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantConversationThread.tsx', import.meta.url), 'utf8');
+const suggestedSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantSuggestedQuestions.tsx', import.meta.url), 'utf8');
+const conversationSource = fs.readFileSync(new URL('../domain/principalAssistantConversation.ts', import.meta.url), 'utf8');
+const principalData = fs.readFileSync(new URL('../data/principalAssistant.ts', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -33,31 +39,35 @@ requireText(appSource, 'principalTermReportTask.start();', 'AI 校长助理应�
 requireText(appSource, "currentView !== 'ai_principal_assistant'", 'AI 校长助理页面不应继续显示通用顶部标题栏。');
 
 requireText(viewSource, 'AI校长助理形象', '子页面顶部应展示 AI 校长助理形象。');
-requireText(viewSource, '我会按周提供管理建议，按月复盘学校运行，并在期末生成学期报告。', '开场白应说明周、月、学期三类固定能力。');
+requireText(viewSource, '我将为您提供学校数据分析和管理建议。', '开场白应说明校长助理的分析与管理建议能力。');
 requireText(viewSource, 'typedMessage', '校长助理开场白应按打字机效果逐步显示。');
-requireText(viewSource, 'getTypeDelay', '校长助理打字机效果应复用变速节奏。');
-requireText(viewSource, 'return 56;', '普通字符打字速度应接近班主任助理页面。');
-requireText(viewSource, 'return 280;', '换行处应保留短停顿。');
+requireText(viewSource, 'const typedMessage = useAssistantTypewriter(assistantMessage);', '开场白应复用共享打字机能力。');
+requireText(viewSource, 'getAssistantGreeting', '开场白应按时段给出问候语，与班主任助理一致。');
+forbidText(viewSource, '你好，我是校长助理', '开场白不应重复自我介绍。');
+requireText(typewriterSource, 'export const useAssistantTypewriter', '应存在助理共用打字机 Hook。');
+requireText(typewriterSource, 'export const getAssistantGreeting', '共用 Hook 应提供统一问候语。');
+requireText(typewriterSource, 'return 56;', '普通字符打字速度应与班主任助理一致。');
+requireText(typewriterSource, 'return 280;', '换行处应保留短停顿。');
+if ('我将为您提供学校数据分析和管理建议。'.length > 20) throw new Error('开场白第二行应控制在20字以内，保证整体不超过三行。');
 requireText(viewSource, 'AssistantSubpageHeader onBack={onBack} surface="transparent"', '校长助理入口页应复用公共子页标题栏，并以透明表面承接屏幕级角色背景。');
 requireText(viewSource, 'data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto', '校长助理入口页应由页面自己持有滚动容器，标题栏不随内容滚动。');
 forbidText(viewSource, 'rounded-full bg-[var(--tm-bg-surface-glass)]', '校长助理入口页返回入口不应再自绘圆形玻璃底按钮。');
-requireText(viewSource, 'min-h-[365px]', '增加第三个入口后应压缩主视觉高度，保留更多有效信息。');
-requireText(viewSource, 'h-[250px] w-[250px]', 'AI 校长助理形象应保持稳定尺寸。');
-requireText(viewSource, 'h-[250px] w-[250px] scale-[1.04] object-contain drop-shadow', 'AI 校长助理形象应保持原色直接渲染。');
+requireText(viewSource, 'h-[148px] overflow-hidden px-5', '主视觉应收窄成一条横幅，把首屏高度让给报告入口和对话。');
+requireText(viewSource, 'h-[154px] w-[154px]', 'AI 校长助理形象应与班主任助理保持同一档尺寸。');
+requireText(viewSource, 'h-[154px] w-[154px] select-none object-contain object-bottom drop-shadow', 'AI 校长助理形象应保持原色直接渲染。');
 forbidText(viewSource, 'mix-blend-multiply', 'AI 校长助理形象不应使用正片叠底。');
 forbidText(viewSource, 'WebkitMaskImage', 'AI 校长助理形象不应再用前端遮罩伪融合。');
 forbidText(viewSource, 'maskImage', 'AI 校长助理形象不应再用前端遮罩伪融合。');
-requireText(viewSource, 'ai-assistant-dialog-card', 'AI 校长助理开场白应使用共享对话卡片。');
-requireText(viewSource, 'ai-assistant-dialog-tail', 'AI 校长助理对话卡尾巴应与边框风格一致。');
 requireText(viewSource, 'ai-assistant-typewriter-shine', 'AI 校长助理开场白应使用共享文字效果。');
 requireText(viewSource, 'ai-assistant-theme-principal relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent', '校长助理页面应注入深红与管理金角色主题，由页面自己持有滚动容器并保持内容层透明。');
 requireText(appSource, 'principal-agent-gradient-page absolute inset-0', '校长助理渐变应铺满手机屏幕并覆盖状态栏安全区。');
 requireText(cssSource, '.principal-agent-gradient-page', '应存在校长助理整屏角色渐变样式。');
 forbidText(viewSource, 'teacher-assistant-page', '校长助理不应再把渐变绘制在随内容拉伸的页面根节点上。');
-requireText(viewSource, 'tm-role-principal-primary', '校长助理交互状态应引用角色主色。');
-requireText(viewSource, 'text-[15px]', '紧凑面板中的开场白应使用卡片标题字号。');
-requireText(viewSource, '-mt-1 min-h-[96px] w-full rounded-[var(--tm-radius-card)]', '对话卡片应使用教师端统一圆角并容纳完整开场白。');
-requireText(cssSource, 'ai-assistant-dialog-card', '应存在共享的助理对话卡片样式。');
+requireText(viewSource, 'var(--tm-assistant-role-primary)', '校长助理交互状态应引用由校长助理主题注入的角色主色。');
+requireText(viewSource, 'text-[17px] font-bold', '开场白应使用与班主任助理一致的标题字号。');
+requireText(viewSource, 'assistant-agent-glass assistant-context-card', '三个报告入口应放进与班主任助理同一套玻璃卡容器。');
+requireText(viewSource, 'mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)] p-2', '报告入口卡应与班主任助理的能力卡片同尺寸、同叠压方式。');
+requireText(viewSource, 'min-h-14 w-full items-center gap-2.5 rounded-[var(--tm-radius-control)]', '三个报告入口应改为单行紧凑入口，不再写第二行说明。');
 requireText(assetsSource, 'ai-principal-assistant-character.png', '应接入女性 AI 校长助理形象资源。');
 requireText(assetsSource, 'ai-principal-assistant-icon.png', '应接入校长助理入口图标资源。');
 requireText(viewSource, 'ASSETS.MANAGEMENT.AI_PRINCIPAL_ASSISTANT_CHARACTER', '子页面顶部应使用校长助理形象。');
@@ -77,17 +87,33 @@ forbidText(viewSource, 'from-blue-', '校长助理不应继续使用蓝色作为
 forbidText(viewSource, 'from-violet-', '校长助理不应继续使用紫色作为教师端AI主色。');
 forbidText(viewSource, 'tm-ai-assistant-', '校长助理不应继续绑定固定人工智能颜色。');
 
-forbidText(viewSource, '<textarea', '当前版本不应开放自主输入内容。');
-forbidText(viewSource, '<input', '当前版本不应开放自主输入内容。');
-forbidText(viewSource, '按住', '当前版本不应开放语音对话入口。');
-forbidText(viewSource, '发消息', '当前版本不应展示自由对话输入提示。');
+requireText(viewSource, '<AssistantComposer', '校长助理底部应提供语音与文字输入控件。');
+requireText(viewSource, '<AssistantConversationThread', '校长助理应展示当前会话内容。');
+requireText(viewSource, 'PRINCIPAL_ASSISTANT_REPLYING_LABEL', '校长助理回复中应说明正在分析学校数据。');
+requireText(viewSource, 'askPrincipalAssistantQuestion', '自由提问应交给学校口径的问答逻辑。');
+requireText(viewSource, 'getPrincipalAssistantSnapshot', '回答应基于学校数据快照。');
+requireText(viewSource, 'PRINCIPAL_ASSISTANT_FOLLOW_UP_QUESTIONS', '回答后应按回答口径更新三条建议问题。');
+requireText(viewSource, 'PRINCIPAL_ASSISTANT_SUGGESTED_QUESTIONS', '新会话应给出固定的建议问题。');
+requireText(viewSource, 'space-y-2 pb-2', '三个报告入口应按班主任助理的间距成组排布。');
+requireText(composerSource, '按住说话', '语音输入应支持按住说话。');
+requireText(composerSource, 'AutoResizeTextarea', '文字输入应支持自动增高。');
+requireText(composerSource, 'AssistantSuggestedQuestions', '输入控件上方应展示建议问题。');
+requireText(suggestedSource, 'touch-pan-x', '建议问题应支持横向滑动。');
+requireText(threadSource, 'assistant-agent-glass', '对话内容应使用助理主题的玻璃气泡。');
+requireText(threadSource, '具体来看', '回答应把数据点展开成具体来看一段。');
+requireText(conversationSource, '哪些班级需要重点关注？', '建议问题应包含班级关注问题。');
+requireText(principalData, '五年级5班', '班级关注回答应点名到具体班级，而不是只给统计。');
 
 for (const required of [
   '学期结束日期所在月份的前一个月',
   '学期结束日期所在月份',
   '结束月份前一个月的1日',
   '同一学校、同一报告周期只保留一份正式结果',
-  '当前不开放对话',
+  '入口页自由对话',
+  '本周学校需要重点关注什么？',
+  '哪些班级需要重点关注？',
+  '每次回答后按该回答的口径重新给出三条建议问题',
+  '要点名到具体班级，而不是只给统计',
   '三个入口均可点击进入生成或报告阅读页',
   '每天更新学校数据快照、统计指标和异常候选，但不每天调用大模型生成报告',
 ]) {

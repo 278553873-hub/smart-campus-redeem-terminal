@@ -43,6 +43,8 @@ for (const required of [
 
 requireText(headerSource, "backLabel = '返回'", '学期报告页应通过共享标题栏提供明确返回入口。');
 requireText(viewSource, 'label="往期报告"', '学期报告页应提供带文字的往期报告入口。');
+forbidText(viewSource, 'AssistantReportFooter', '学期报告底部不应展示AI说明和生成时间。');
+forbidText(viewSource, 'AI学期综合分析', '学期报告不应重复展示AI能力标签。');
 requireText(viewSource, '<AssistantHistoryLink', '学期报告应复用图标加文字的历史入口。');
 requireText(viewSource, 'reportData?: PrincipalTermReportContent;', '学期报告页应支持复用历史报告内容。');
 requireText(viewSource, 'reportPayload?: unknown;', '学期报告页应承接接口返回的结构化报告。');

@@ -70,6 +70,9 @@ const writeResults = () => {
   fs.writeFileSync(resultPath, JSON.stringify(results));
 };
 
+// 服务端渲染会在动态文本之间插入 <!-- --> 占位注释，比对可见文案前先去掉。
+const plainText = html => html.split('<!-- -->').join('');
+
 const renderPage = async (name, load, props, verify) => {
   try {
     const module = await load();
@@ -225,6 +228,132 @@ for (const combination of [
     },
   );
 }
+
+// 校长助理：三个报告入口和自由对话都在同一页，缺一块就会出现打开即白屏。
+await renderPage('校长助理页', () => import('../mobile-app/views/AiPrincipalAssistantView'), {
+  onBack: noop,
+  termConfig: { id: 'render-smoke-term', name: '2026学年第一学期', startDate: '2026-03-01', endDate: '2026-07-10' },
+  hasTermReportTask: false,
+  onOpenWeeklyReport: noop,
+  onOpenMonthlyReport: noop,
+  onOpenTermReport: noop,
+}, html => {
+  if (!html.includes('按住说话')) {
+    throw new Error('校长助理底部语音输入控件缺失');
+  }
+  for (const question of ['本周学校需要重点关注什么？', '上月复盘发现了哪些持续问题？', '哪些班级需要重点关注？']) {
+    if (!html.includes(question)) throw new Error('校长助理缺少建议问题：' + question);
+  }
+  if (!html.includes('ai-assistant-typewriter-shine')) {
+    throw new Error('校长助理开场白应保留打字机光效容器');
+  }
+  if (html.includes('你好，我是校长助理')) {
+    throw new Error('校长助理不应再展示旧版自我介绍开场白');
+  }
+  if (!html.includes('assistant-context-card')) {
+    throw new Error('校长助理三个报告入口应放在助理玻璃卡里');
+  }
+  for (const entry of ['本周管理建议', '上月学校复盘', '学期学校报告']) {
+    if (!html.includes(entry)) throw new Error('校长助理缺少报告入口：' + entry);
+  }
+});
+
+// 班主任助理报告页：底部说明与往期列表标题收敛后，页面仍要能正常渲染。
+await renderPage('本周行动建议页', () => import('../mobile-app/views/WeeklyActionAdviceView'), {
+  onBack: noop,
+  onOpenHistory: noop,
+  homeroomClasses: assistantClasses,
+  activeClassId: 'c_2025_4',
+  onClassChange: noop,
+  simulateLoading: false,
+}, html => {
+  if (plainText(html).includes('内容由AI基于已授权的评价数据生成')) throw new Error('报告底部不应出现AI来源声明');
+  if (plainText(html).includes('生成时间')) throw new Error('报告底部不应出现生成时间');
+  if (!plainText(html).includes('根据7月7日-13日评价记录生成')) throw new Error('报告应保留数据来源');
+});
+
+await renderPage('往期建议页', () => import('../mobile-app/views/WeeklyActionAdviceHistoryView'), {
+  onBack: noop,
+  classes: assistantClasses,
+  initialClassId: 'c_2025_4',
+  onClassChange: noop,
+}, html => {
+  if (!plainText(html).includes('本周建议（7月7日-13日）')) throw new Error('往期建议标题应为本周建议加建议日期范围');
+  if (plainText(html).includes('评价记录')) throw new Error('往期建议不应展示数据周期副文本');
+});
+
+await renderPage('我的评价复盘页', () => import('../mobile-app/views/TeacherEvaluationReviewView'), {
+  onBack: noop,
+  onOpenHistory: noop,
+  homeroomClasses: assistantClasses,
+  activeClassId: 'c_2025_4',
+  onClassChange: noop,
+  simulateLoading: false,
+}, html => {
+  if (plainText(html).includes('生成时间')) throw new Error('复盘底部不应出现生成时间');
+  if (!plainText(html).includes('根据你在6月的评价记录生成')) throw new Error('复盘数据来源应按自然月表述');
+});
+
+await renderPage('往期复盘页', () => import('../mobile-app/views/TeacherEvaluationReviewHistoryView'), {
+  onBack: noop,
+  classes: assistantClasses,
+  initialClassId: 'c_2025_4',
+  onClassChange: noop,
+}, html => {
+  if (!plainText(html).includes('4月复盘')) throw new Error('往期复盘标题应为x月复盘');
+  if (plainText(html).includes('评价记录')) throw new Error('往期复盘不应展示数据周期副文本');
+});
+
+
+// 校长报告页：去掉页脚声明与徽章后，正文和数据来源仍要能正常渲染。
+await renderPage('本周管理建议页', () => import('../mobile-app/views/PrincipalPeriodicReportView'), {
+  kind: 'weekly',
+  schoolName: '示范小学',
+  generated: true,
+  onBack: noop,
+  onOpenHistory: noop,
+}, html => {
+  const text = plainText(html);
+  if (text.includes('生成时间')) throw new Error('校长报告底部不应出现生成时间');
+  if (text.includes('仅供教育管理与工作复盘参考')) throw new Error('校长报告底部不应出现AI声明');
+  if (text.includes('AI周度管理分析')) throw new Error('校长报告页不应展示AI来源徽章');
+  if (!text.includes('本周学校管理建议')) throw new Error('校长报告页应保留报告标题');
+});
+
+await renderPage('上月学校复盘页', () => import('../mobile-app/views/PrincipalPeriodicReportView'), {
+  kind: 'monthly',
+  schoolName: '示范小学',
+  generated: true,
+  onBack: noop,
+  onOpenHistory: noop,
+}, html => {
+  const text = plainText(html);
+  if (text.includes('生成时间')) throw new Error('校长月度复盘不应出现生成时间');
+  if (text.includes('AI月度运营复盘')) throw new Error('校长月度复盘不应展示AI来源徽章');
+});
+
+await renderPage('学期学校报告页', () => import('../mobile-app/views/PrincipalTermReportView'), {
+  schoolName: '示范小学',
+  term: { id: 'render-smoke-term', name: '2025-2026学年上学期', startDate: '2025-09-01', endDate: '2026-01-20' },
+  generated: true,
+  onBack: noop,
+  onOpenHistory: noop,
+}, html => {
+  const text = plainText(html);
+  if (text.includes('生成时间')) throw new Error('学期报告不应出现生成时间');
+  if (text.includes('AI学期综合分析')) throw new Error('学期报告不应展示AI来源徽章');
+});
+
+await renderPage('往期学校报告页', () => import('../mobile-app/views/PrincipalReportHistoryView'), {
+  kind: 'weekly',
+  schoolName: '示范小学',
+  onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (text.includes('生成于')) throw new Error('往期学校报告不应展示生成日期');
+  if (!text.includes('往期管理建议')) throw new Error('往期学校报告页应保留列表标题');
+});
+
 
 // 渲染结束后主动退出：个别模块会留下常驻定时器，让进程一直挂着不返回。
 process.exit(0);

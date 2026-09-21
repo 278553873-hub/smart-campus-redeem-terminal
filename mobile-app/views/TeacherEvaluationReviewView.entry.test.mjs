@@ -8,7 +8,6 @@ const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_我的�
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
 const contractSource = fs.readFileSync(new URL('../domain/assistantReport.ts', import.meta.url), 'utf8');
-const footerSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportFooter.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -35,7 +34,7 @@ for (const required of ["key: 'actions'", "key: 'review_summary'", "key: 'attent
 }
 requireText(contractSource, "cardOrder: ['actions', 'review_summary', 'attention_insights', 'perspective_insights', 'indicator_insights']", '评价复盘应优先展示下月记录建议。');
 requireText(viewSource, '<AssistantReportCards', '评价复盘应使用共享报告卡片。');
-requireText(footerSource, 'document.notice', '月度复盘应明确由AI生成并保留参考声明。');
+forbidText(viewSource, 'AssistantReportFooter', '评价复盘底部不应展示AI说明和生成时间。');
 requireText(viewSource, '<AssistantHistoryLink', '当前复盘应复用带文字的历史入口组件。');
 requireText(viewSource, 'label="往期复盘"', '当前复盘历史入口应显示明确文案。');
 requireText(viewSource, '<AssistantClassSwitchButton', '当前评价复盘标题栏应提供班级切换。');
@@ -44,12 +43,15 @@ requireText(viewSource, 'setViewingExample(false);', '切班时应退出评价�
 requireText(viewSource, 'surface="transparent"', '当前评价复盘标题栏应保持透明。');
 requireText(viewSource, '上月记录不足', '数据不足时应明确上月记录不足。');
 requireText(viewSource, '查看报告示例', '数据不足时应允许查看有意义的报告示例。');
-requireText(viewSource, '!loading && activeReport', '只有真实或示例报告生成后才能显示数据来源。');
+requireText(viewSource, '!loading && activeReport && (', '只有真实或示例报告生成后才能显示数据来源。');
+requireText(viewSource, '根据你在{formatReviewMonthLabel(activeReport.reviewMonth)}的评价记录生成', '数据来源应按自然月表述为根据你在6月的评价记录生成。');
 forbidText(viewSource, '正向占比', '复盘正文不应退化为现有统计报表。');
 forbidText(viewSource, '负向占比', '复盘正文不应退化为现有统计报表。');
 
 requireText(historySource, 'title="往期复盘"', '历史页标题应为往期复盘。');
-requireText(historySource, 'formatReviewMonth', '历史列表应按自然月展示。');
+requireText(historySource, 'formatReviewMonthLabel', '历史列表应按自然月展示。');
+requireText(historySource, '月复盘`', '历史卡片标题应使用x月复盘。');
+forbidText(historySource, 'dataRange', '历史卡片不应展示数据周期副文本，避免与标题重复。');
 requireText(historySource, 'TeacherEvaluationReviewView', '历史记录应能进入只读详情。');
 requireText(historySource, '<HomeroomClassPickerSheet', '历史页应支持切换带班班级。');
 

@@ -20,7 +20,7 @@ interface HistoryMonthGroup {
     reports: WeeklyActionAdviceReport[];
 }
 
-const getActionPeriodLabel = (title: string) => title.replace(/行动建议$/, '');
+const getHistoryItemTitle = (title: string) => `本周建议（${title.replace(/行动建议$/, '')}）`;
 
 const getHistoryMonthGroup = (actionWeekStart: string) => {
     const [year, month] = actionWeekStart.split('-');
@@ -114,12 +114,10 @@ const WeeklyActionAdviceHistoryView: React.FC<WeeklyActionAdviceHistoryViewProps
                                         type="button"
                                         onClick={() => setSelectedReport(report)}
                                         className="waa-card-enter relative flex min-h-[72px] w-full items-center gap-3 rounded-[20px] border border-white/90 bg-white/94 px-4 py-3 text-left shadow-[0_18px_42px_-34px_rgba(35,96,145,0.34)] ring-1 ring-slate-100/70"
-                                        aria-label={`${getActionPeriodLabel(report.title)}行动建议，基于${report.dataRange}评价记录`}
                                     >
                                         <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-white bg-cyan-300 shadow-[0_0_0_1px_rgba(30,154,170,0.18)]" aria-hidden="true" />
                                         <span className="min-w-0 flex-1">
-                                            <span className="block text-[15px] font-bold text-slate-900">{getActionPeriodLabel(report.title)}</span>
-                                            <span className="mt-1 block text-[12px] text-slate-500">基于{report.dataRange}评价记录</span>
+                                            <span className="block text-[15px] font-bold text-slate-900">{getHistoryItemTitle(report.title)}</span>
                                         </span>
                                         <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" strokeWidth={2.1} />
                                     </button>

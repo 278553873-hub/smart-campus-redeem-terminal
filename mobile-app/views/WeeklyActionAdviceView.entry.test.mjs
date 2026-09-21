@@ -8,7 +8,6 @@ const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf
 const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_本周行动建议_内容生成提示词.md', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const cardsSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportCards.tsx', import.meta.url), 'utf8');
-const footerSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportFooter.tsx', import.meta.url), 'utf8');
 const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
@@ -55,7 +54,7 @@ forbidText(viewSource, '准备下周建议', '页面不应替老师预设准备�
 requireText(dataSource, 'Math.ceil(normalizedClassSize * 0.6)', '记录目标应按班级人数60%动态计算。');
 requireText(dataSource, 'Math.ceil(normalizedClassSize * 0.5)', '覆盖目标应按班级人数50%动态计算。');
 forbidText(dataSource, 'target: { records: 36, covered: 30 }', 'Mock 不应把60人班级目标写死。');
-requireText(footerSource, '示例内容，仅用于展示报告结构。', '报告示例应与真实报告明确区分。');
+requireText(viewSource, '示例内容 · ', '报告示例应与真实报告明确区分。');
 forbidText(viewSource, '下周将为你生成', '页面不能暗示下周自动生成。');
 forbidText(viewSource, '即可生成本周建议', '页面不能暗示本周补录后可补生成。');
 
@@ -78,7 +77,7 @@ requireText(cardsSource, 'rounded-[var(--tm-radius-card)]', '报告与进度面�
 requireText(cardsSource, 'waa-card-enter', '报告卡片应保留语义入场动画。');
 requireText(cssSource, '@keyframes waa-fade-up', '应定义报告卡片入场动画。');
 requireText(cssSource, 'prefers-reduced-motion: reduce', '动画应支持减少动态效果。');
-requireText(footerSource, 'document.notice', '真实报告应保留精简的AI参考声明。');
+forbidText(viewSource, 'AssistantReportFooter', '本周行动建议底部不应展示AI说明和生成时间。');
 
 requireText(assistantSource, '本周学生评价洞察与跟进建议', '统一班主任助理应以单行内容概括进入本周行动建议。');
 requireText(promptSource, '上一个完整自然周', '提示词应固定上一个完整自然周。');

@@ -10,7 +10,6 @@ import AssistantHistoryLink from '../components/AssistantHistoryLink';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import AssistantReportCards from '../components/assistant-report/AssistantReportCards';
 import AssistantReportContractError from '../components/assistant-report/AssistantReportContractError';
-import AssistantReportFooter from '../components/assistant-report/AssistantReportFooter';
 import {
   adaptPrincipalPeriodicReport,
   resolveAssistantReportDocument,
@@ -97,11 +96,7 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
         ) : (
           <>
             <section className="border-b border-[var(--tm-border-subtle)] px-5 pb-6 pt-5">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tm-role-principal-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--tm-role-principal-strong)]">
-                <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
-                {report.eyebrow}
-              </span>
-              <div className="mt-2 flex min-h-11 items-center justify-between gap-3">
+              <div className="flex min-h-11 items-center justify-between gap-3">
                 <p className="min-w-0 truncate text-[13px] text-[var(--tm-text-secondary)]">{schoolName}</p>
                 {onOpenHistory && (
                   <AssistantHistoryLink
@@ -123,7 +118,6 @@ const PrincipalPeriodicReportView: React.FC<PrincipalPeriodicReportViewProps> = 
                   document={reportResolution.document}
                   className="px-[var(--tm-report-page-inline)] py-[var(--tm-report-card-gap)]"
                 />
-                <AssistantReportFooter document={reportResolution.document} />
               </>
             ) : (
               <AssistantReportContractError onRetry={onRetry} />

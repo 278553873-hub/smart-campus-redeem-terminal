@@ -6,7 +6,6 @@ import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
 import HomeroomClassPickerSheet from '../components/HomeroomClassPickerSheet';
 import AssistantReportCards from '../components/assistant-report/AssistantReportCards';
 import AssistantReportContractError from '../components/assistant-report/AssistantReportContractError';
-import AssistantReportFooter from '../components/assistant-report/AssistantReportFooter';
 import {
     adaptTeacherEvaluationReview,
     resolveAssistantReportDocument,
@@ -26,6 +25,8 @@ const REVIEW_ANALYSIS_STEPS = [
     '正在核对指标与表达',
     '正在生成评价复盘',
 ];
+
+const formatReviewMonthLabel = (reviewMonth: string) => `${Number(reviewMonth.split('-')[1])}月`;
 
 const ReviewAnalysisProgress: React.FC<{ visibleStepCount: number }> = ({ visibleStepCount }) => (
     <div className="mx-auto mt-8 min-h-[190px] max-w-[280px]" role="status" aria-live="polite" aria-label="正在生成我的评价复盘">
@@ -160,7 +161,6 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
 
     const title = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.title : pageData.title;
     const className = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.className : activeClass ? getClassLabel(activeClass) : pageData.className;
-    const dataRange = viewingExample ? TEACHER_EVALUATION_REVIEW_SAMPLE.dataRange : pageData.dataRange;
     const showHeaderTitle = title !== '我的评价复盘';
 
     return (
@@ -195,7 +195,7 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
                     </div>
                     {!loading && activeReport && (
                         <p className="mt-1 text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">
-                            {viewingExample ? '示例内容 · ' : ''}根据你在{dataRange}的评价记录生成
+                            {viewingExample ? '示例内容 · ' : ''}根据你在{formatReviewMonthLabel(activeReport.reviewMonth)}的评价记录生成
                         </p>
                     )}
                 </section>
@@ -215,9 +215,6 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
                     />
                 )}
 
-                {!loading && activeReport && reportResolution.document && (
-                    <AssistantReportFooter document={reportResolution.document} example={viewingExample} className="mx-0" />
-                )}
             </main>
 
             {showClassPicker && onClassChange && (

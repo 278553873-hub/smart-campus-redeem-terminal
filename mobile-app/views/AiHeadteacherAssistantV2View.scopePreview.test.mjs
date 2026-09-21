@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const viewSource = fs.readFileSync(new URL('./AiHeadteacherAssistantV2View.tsx', import.meta.url), 'utf8');
+const composerSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantComposer.tsx', import.meta.url), 'utf8');
+
+// 输入控件已抽到公共组件，语音与文字输入的细节断言指向组件源码。
+const requireComposerText = (text, message) => {
+    assert.ok(composerSource.includes(text), message);
+};
 
 const requireText = (text, message) => {
     assert.ok(viewSource.includes(text), message);
@@ -16,13 +22,13 @@ assert.ok(
     !viewSource.includes('{showClassEvaluation && !activeReport && !isGenerating && !historyOpen && ('),
     '输入控件不应再被班级评价单独拦住。',
 );
-requireText("'按住说话'", '语音输入应保留在常驻输入控件里。');
+requireComposerText('按住说话', '语音输入应保留在常驻输入控件里。');
 
 // 2. 输入提示随能力组合变化
 requireText("showStudentEvaluation\n            ? '输入学生评价问题'", '仅学生评价时应提示学生评价口径。');
 requireText(": '输入班级评比问题';", '仅班级评价时应提示班级评比口径。');
 requireText("? '输入问题'", '两类能力都开通时应使用中性提示。');
-requireText('aria-label={placeholder}', '输入框的可读名称应与提示保持一致。');
+requireComposerText('aria-label={placeholder}', '输入框的可读名称应与提示保持一致。');
 
 // 3. 建议问题按能力组合取，并且回答后固定 3 条追问
 requireText(

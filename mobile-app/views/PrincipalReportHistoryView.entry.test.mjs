@@ -41,7 +41,6 @@ for (const required of [
   'surface="transparent"',
   'data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto',
   'focus-visible:ring-2',
-  '生成于{report.generatedDate}',
 ]) {
   requireText(historyViewSource, required, `校长报告历史页缺少列表、详情或返回能力：${required}`);
 }
@@ -79,6 +78,7 @@ for (const required of [
   requireText(prdSource, required, `校长助理PRD缺少历史规则：${required}`);
 }
 
+forbidText(historyViewSource, '生成于', '校长报告历史列表不应展示生成日期。');
 forbidText(historyViewSource, '重新生成', '历史报告页不应提供重新生成。');
 forbidText(historyViewSource, '报告摘要', '历史列表不应展示报告摘要。');
 

@@ -8,6 +8,10 @@ const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', 
 const unifiedPrdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理.md', import.meta.url), 'utf8');
 const classAssistantDomainSource = fs.readFileSync(new URL('../domain/classEvaluationAssistantV2.ts', import.meta.url), 'utf8');
 const conversationDomainSource = fs.readFileSync(new URL('../domain/headteacherAssistantConversation.ts', import.meta.url), 'utf8');
+// 对话气泡、输入控件与建议问题已收敛为公共组件，班主任助理与校长助理共用同一套实现。
+const chatComposerSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantComposer.tsx', import.meta.url), 'utf8');
+const chatThreadSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantConversationThread.tsx', import.meta.url), 'utf8');
+const chatSuggestedSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantSuggestedQuestions.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, text, message) => {
   assert.ok(source.includes(text), message);
@@ -55,7 +59,7 @@ for (const label of ['本周学生评价洞察与跟进建议', '我的上月学
 requireText(viewSource, 'aria-label="报告快捷入口"', '两项报告应作为独立高层级快捷入口。');
 requireText(viewSource, 'min-h-14 w-full items-center', '学生评价能力块应保持紧凑且满足触控高度。');
 requireText(viewSource, 'whitespace-nowrap text-[length:var(--tm-font-size-body)] font-medium leading-5', '学生评价能力应使用舒展的正文级单行文字层级。');
-requireText(viewSource, 'headteacher-agent-glass headteacher-context-card', '班级上下文总卡应使用独立表面层级。');
+requireText(viewSource, 'assistant-agent-glass assistant-context-card', '班级上下文总卡应使用独立表面层级。');
 requireText(viewSource, 'bg-[var(--tm-role-headteacher-data-surface)] [box-shadow:var(--tm-role-headteacher-data-shadow)]', '本周数据应通过浅色表面和环境阴影与总卡建立清晰边界。');
 requireText(viewSource, 'rounded-[var(--tm-radius-card)] p-2', '总卡与内部内容应使用同心圆角和八像素间距。');
 requireText(viewSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-data-surface)]', '本周数据内卡应使用十二像素圆角。');
@@ -74,15 +78,16 @@ assert.ok(
   '双开时应先展示班级数据面板，再展示学生评价问题。',
 );
 assert.ok(
-  viewSource.indexOf('<StudentQuestionList') < viewSource.indexOf('<ConversationThread'),
+  viewSource.indexOf('<StudentQuestionList') < viewSource.indexOf('<AssistantConversationThread'),
   '学生评价问题应位于会话内容之前。',
 );
-requireText(viewSource, '<AutoResizeTextarea', '自由对话应使用自动增高文字输入框。');
-requireText(viewSource, 'SpeechRecognitionConstructor', '自由对话应支持浏览器语音识别能力。');
-requireText(viewSource, "'按住说话'", '底部输入区应提供语音输入。');
-requireText(viewSource, 'aria-label="切换到文字输入"', '语音模式应能切换到文字输入。');
-requireText(viewSource, 'aria-label="切换到语音输入"', '文字模式应能切换回语音输入。');
-requireText(viewSource, 'aria-label="发送问题"', '文字模式应提供明确的发送入口。');
+requireText(viewSource, '<AssistantComposer', '底部应使用公共对话输入控件。');
+requireText(chatComposerSource, '<AutoResizeTextarea', '自由对话应使用自动增高文字输入框。');
+requireText(chatComposerSource, 'SpeechRecognitionConstructor', '自由对话应支持浏览器语音识别能力。');
+requireText(chatComposerSource, "'按住说话'", '底部输入区应提供语音输入。');
+requireText(chatComposerSource, 'aria-label="切换到文字输入"', '语音模式应能切换到文字输入。');
+requireText(chatComposerSource, 'aria-label="切换到语音输入"', '文字模式应能切换回语音输入。');
+requireText(chatComposerSource, 'aria-label="发送问题"', '文字模式应提供明确的发送入口。');
 assert.ok(!viewSource.includes('Camera'), '班主任 Agent 对话不应提供拍照入口。');
 assert.ok(!viewSource.includes('Plus'), '对话输入栏不应提供添加入口。');
 requireText(viewSource, '数据概览', '完整周报应先展示确定性数据统计。');
@@ -96,24 +101,25 @@ assert.ok(!viewSource.includes('查看依据'), '班主任助理 V2 不应提供
 requireText(viewSource, '内容由AI生成仅供参考。', '页面应在输入栏下方披露人工智能内容。');
 requireText(viewSource, '<footer className="relative z-30 shrink-0 bg-transparent">', '快捷问题和输入控件应收拢在不随正文滚动的底部栏。');
 assert.ok(
-  viewSource.indexOf('<QuestionComposer') < viewSource.indexOf('内容由AI生成仅供参考。'),
+  viewSource.indexOf('<AssistantComposer') < viewSource.indexOf('内容由AI生成仅供参考。'),
   '人工智能内容提示应放在对话输入控件下方。',
 );
-requireText(viewSource, 'className="shrink-0 bg-transparent px-3 pt-1"', '输入控件不应再单独占用底部安全区。');
+requireText(chatComposerSource, 'className="shrink-0 bg-transparent px-3 pt-1"', '输入控件不应再单独占用底部安全区。');
 for (const unrelatedCopy of ['责任拆分', '整改状态', '教师组织责任']) {
   assert.ok(!viewSource.includes(unrelatedCopy), `页面不应展示系统不存在的“${unrelatedCopy}”。`);
 }
 requireText(viewSource, 'ASSETS.MANAGEMENT.AI_HEADTEACHER_ASSISTANT_CHARACTER', 'Agent 首屏应复用班主任助理虚拟形象。');
 requireText(viewSource, 'alt="AI班主任助理形象"', '虚拟形象应提供明确替代文本。');
 requireText(viewSource, '我将为您提供数据分析和指导建议', '首屏应使用精简的动态问候文案。');
-requireText(viewSource, '`${greeting}，\\n我将为您提供数据分析和指导建议。`', '时段问候后应固定换行展示说明文案。');
+requireText(viewSource, '`${getAssistantGreeting()}，\\n我将为您提供数据分析和指导建议。`', '时段问候后应固定换行展示说明文案。');
 requireText(viewSource, 'whitespace-pre-line text-pretty', '打字机文案容器应保留问候后的换行。');
 requireText(viewSource, 'ai-assistant-typewriter-shine', '动态问候应复用 V1 的渐变光效文字。');
+requireText(viewSource, 'useAssistantTypewriter(assistantIntro)', '班主任助理应复用共享打字机能力。');
 requireText(appSource, "currentView === 'ai_headteacher_assistant' || currentView === 'ai_headteacher_assistant_v2'", '统一助理及旧兼容路由应使用同一整屏背景。');
 requireText(appSource, 'headteacher-agent-gradient-page absolute inset-0', 'V2 渐变应铺满手机屏幕并覆盖状态栏安全区。');
 requireText(appSource, '|| isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground', '统一助理内容承载层必须透明，不能用白底覆盖整屏渐变。');
 requireText(viewSource, 'bg-transparent', 'V2 内容层应保持透明，避免渐变在安全区后重新开始。');
-requireText(viewSource, 'headteacher-agent-glass', '本周数据卡片应使用拟态玻璃效果。');
+requireText(viewSource, 'assistant-agent-glass', '本周数据卡片应使用拟态玻璃效果。');
 requireText(viewSource, '>班级评比</h2>', '首屏数据面板应明确属于班级评比。');
 requireText(viewSource, '本周总分', '收起态应展示本周总分。');
 requireText(viewSource, '年级排名', '收起态应明确展示年级排名。');
@@ -141,28 +147,25 @@ for (const question of ['班级评比主要扣在哪？', '班级评比较上周
 requireText(viewSource, 'getInitialSuggestedQuestions', '页面应按学校开通能力取新会话建议问题。');
 requireText(viewSource, 'suggestedQuestions={messages.length > 0 ? followUpQuestions : OVERVIEW_RECOMMENDED_QUESTIONS}', '输入区应根据对话状态展示首轮建议或连续追问。');
 assert.ok(
-  viewSource.indexOf('<SuggestedQuestionList') < viewSource.indexOf("{mode === 'voice' ? ("),
+  chatComposerSource.indexOf('<AssistantSuggestedQuestions') < chatComposerSource.indexOf("{mode === 'voice' ? ("),
   '建议问题应位于语音或文字输入控件上方。',
 );
-requireText(viewSource, 'touch-pan-x gap-2 overflow-x-auto overscroll-x-contain', '建议问题应支持单行左右滑动。');
-requireText(viewSource, 'shrink-0 whitespace-nowrap', '快捷问题按内容自然定宽，不应填充多余空间。');
-requireText(viewSource, '共${questions.length}个快捷问题', '快捷问题应对辅助技术明确总数。');
+requireText(chatSuggestedSource, 'touch-pan-x gap-2 overflow-x-auto overscroll-x-contain', '建议问题应支持单行左右滑动。');
+requireText(chatSuggestedSource, 'shrink-0 whitespace-nowrap', '快捷问题按内容自然定宽，不应填充多余空间。');
+requireText(chatSuggestedSource, '共${questions.length}个快捷问题', '快捷问题应对辅助技术明确总数。');
 assert.ok(!viewSource.includes('activeIndex'), '紧凑快捷问题不应增加轮播指示状态。');
 assert.ok(!viewSource.includes('w-[calc(100%-48px)]'), '快捷问题不应使用制造空白的固定卡片宽度。');
-requireText(viewSource, 'min-h-[var(--tm-size-touch)] shrink-0', '建议问题应保持44像素触控高度。');
+requireText(chatSuggestedSource, 'min-h-[var(--tm-size-touch)] shrink-0', '建议问题应保持44像素触控高度。');
 assert.ok(!viewSource.includes('recommendedQuestions: readonly string[];'), '本周数据卡不应再承载建议问题。');
-requireText(viewSource, '<ConversationThread', '发起提问后应在概览页内追加对话消息。');
+requireText(viewSource, '<AssistantConversationThread', '发起提问后应在概览页内追加对话消息。');
 requireText(viewSource, 'latestAssistant.offsetTop - 8', 'Agent 回复后应只滚动中部内容区并保留顶部间距。');
 assert.ok(!viewSource.includes('latestAssistantRef.current?.scrollIntoView'), 'Agent 回复不得通过全局滚动带动固定底部栏。');
 assert.ok(!viewSource.includes(') : conversationOpen ? ('), '推荐问题不应跳转到独立对话页面。');
 assert.ok(!viewSource.includes('AgentMessageIdentity'), 'Agent 回复不应展示额外头像。');
 assert.ok(!viewSource.includes('>班主任助理</div>'), 'Agent 回复不应重复展示身份名称。');
-requireText(viewSource, 'headteacher-agent-glass min-w-0 flex-1', 'Agent 回复应直接使用左侧浅色内容气泡。');
+requireText(chatThreadSource, 'assistant-agent-glass min-w-0 flex-1', 'Agent 回复应直接使用左侧浅色内容气泡。');
 requireText(conversationDomainSource, '正在分析班级评比数据', 'Agent 回复前应展示分析中的对话反馈。');
-const conversationAnswerSource = viewSource.slice(
-  viewSource.indexOf('const ConversationAnswerContent'),
-  viewSource.indexOf('const ConversationThread'),
-);
+const conversationAnswerSource = chatThreadSource;
 requireText(conversationAnswerSource, 'space-y-3 text-pretty text-[14px] tm-font-regular leading-6 text-[var(--tm-text-primary)]', '快捷问题回答应使用统一的普通正文样式。');
 requireText(conversationAnswerSource, '具体来看，{answer.breakdown.map', '分类数据应转换为自然文本段落。');
 requireText(conversationAnswerSource, "<p>从分析结果看，{answer.analysis.map(item => item.body).join('')}</p>", '分析内容应通过承接语合并为一个自然段。');

@@ -6456,8 +6456,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     event.currentTarget.value = digits;
                                                     setChannelStockError(validateChannelStockInput(editingChannel, digits) || '');
                                                 }}
-                                                className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10 placeholder:text-[#86909C]"
+                                                className="w-full rounded border border-[#E5E6EB] bg-white py-2.5 pl-3 pr-20 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10 placeholder:text-[#86909C] tabular-nums"
                                             />
+                                            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-[#86909C] tabular-nums">/ {getChannelCapacity(editingChannel)} 件</span>
                                         </div>
                                         <span id="channel-stock-hint" aria-live="polite" className="mt-1 block min-h-[18px] text-xs text-[#F53F3F]">{channelStockError}</span>
                                     </div>
