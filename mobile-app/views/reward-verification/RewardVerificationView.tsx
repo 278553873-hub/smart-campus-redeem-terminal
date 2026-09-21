@@ -41,11 +41,11 @@ interface ClassGood {
 type RewardIconKey = 'food' | 'stationery' | 'toy' | 'experience' | 'honor';
 
 const REWARD_ICON_OPTIONS: ReadonlyArray<{ key: RewardIconKey; label: string; src: string }> = [
-  { key: 'food', label: '食物饮料', src: '/assets/teacher-mobile/reward-icons/food.jpg' },
-  { key: 'stationery', label: '文具', src: '/assets/teacher-mobile/reward-icons/stationery.jpg' },
-  { key: 'toy', label: '玩具', src: '/assets/teacher-mobile/reward-icons/toy.jpg' },
-  { key: 'experience', label: '体验', src: '/assets/teacher-mobile/reward-icons/experience.jpg' },
-  { key: 'honor', label: '荣誉', src: '/assets/teacher-mobile/reward-icons/honor.jpg' },
+  { key: 'food', label: '食物饮料', src: '/assets/teacher-mobile/reward-icons/food.webp' },
+  { key: 'stationery', label: '文具', src: '/assets/teacher-mobile/reward-icons/stationery.webp' },
+  { key: 'toy', label: '玩具', src: '/assets/teacher-mobile/reward-icons/toy.webp' },
+  { key: 'experience', label: '体验', src: '/assets/teacher-mobile/reward-icons/experience.webp' },
+  { key: 'honor', label: '荣誉', src: '/assets/teacher-mobile/reward-icons/honor.webp' },
 ];
 
 const getRewardIcon = (key: RewardIconKey) => REWARD_ICON_OPTIONS.find(option => option.key === key) ?? REWARD_ICON_OPTIONS[0];

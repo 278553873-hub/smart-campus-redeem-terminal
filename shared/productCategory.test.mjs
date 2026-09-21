@@ -48,24 +48,27 @@ assert.equal(getShopProductCategoryId({ id: 'p1', category: 'toy' }, { p1: 'cult
 assert.equal(getShopProductCategoryId({ id: 'p1' }, {}), '');
 assert.equal(getShopProductCategoryId({ id: 'p1', category: '   ' }, {}), '');
 
-// 4. 终端标签行：只展示「当前有商品」的分类，顺序保持后台排好的顺序
-//    停用只影响商品表单可选性，货柜机上的分类与商品照常展示
+// 4. 终端标签行：只展示「当前有未售罄商品」的分类，顺序保持后台排好的顺序
+//    停用只影响商品表单可选性，货柜机上的分类与商品照常展示；商品全部售罄的分类标签收起
 const products = [
-  { id: 'a', category: 'toy' },
-  { id: 'b', category: 'stationery' },
-  { id: 'c', category: 'stationery' },
-  { id: 'd' },
+  { id: 'a', category: 'toy', stock: 3 },
+  { id: 'b', category: 'stationery', stock: 5 },
+  { id: 'c', category: 'stationery', stock: 1 },
+  { id: 'd', stock: 2 },
 ];
 assert.deepEqual(
   getShopVisibleCategoryIds(products, categories),
   ['stationery', 'toy'],
   '玩具分类虽然已停用，货柜机上仍有商品，标签行要照常展示',
 );
-assert.deepEqual(getShopVisibleCategoryIds([{ id: 'a', category: 'cultural' }, { id: 'b', category: 'stationery' }], categories), ['stationery', 'cultural'], '顺序以后台分类顺序为准');
+assert.deepEqual(getShopVisibleCategoryIds([{ id: 'a', category: 'cultural', stock: 4 }, { id: 'b', category: 'stationery', stock: 2 }], categories), ['stationery', 'cultural'], '顺序以后台分类顺序为准');
+assert.deepEqual(getShopVisibleCategoryIds([{ id: 'a', category: 'toy', stock: 0 }, { id: 'b', category: 'stationery', stock: 2 }], categories), ['stationery'], '分类下商品全部售罄后，标签行不再展示该分类');
+assert.deepEqual(getShopVisibleCategoryIds([{ id: 'a', category: 'toy', stock: 0 }], categories), [], '售罄分类不留空标签');
 assert.deepEqual(getShopVisibleCategoryIds(products, categories, { d: 'cultural' }), ['stationery', 'cultural', 'toy']);
 assert.equal(shouldShowShopCategoryRow(products, categories), true, '有 2 个及以上分类时标签行出现');
-assert.equal(shouldShowShopCategoryRow([{ id: 'a', category: 'stationery' }], categories), false, '只剩 1 个分类时整行不出现');
-assert.equal(shouldShowShopCategoryRow([{ id: 'a', category: 'stationery' }, { id: 'b', category: 'cultural' }], categories), true);
+assert.equal(shouldShowShopCategoryRow([{ id: 'a', category: 'stationery', stock: 1 }], categories), false, '只剩 1 个分类时整行不出现');
+assert.equal(shouldShowShopCategoryRow([{ id: 'a', category: 'stationery', stock: 1 }, { id: 'b', category: 'cultural', stock: 1 }], categories), true);
+assert.equal(shouldShowShopCategoryRow([{ id: 'a', category: 'stationery', stock: 0 }, { id: 'b', category: 'cultural', stock: 0 }], categories), false, '有分类但没有可购买商品时标签行不出现');
 
 // 5. 停用只作用于商品表单：停用分类仍留在选项里（老商品看得见），但不能再被选上
 const pickerOptions = getShopCategoryPickerOptions(categories);
@@ -93,4 +96,4 @@ assert.ok(canDeleteShopCategory('stationery', products, categories).reason.inclu
 assert.equal(canDeleteShopCategory('cultural', products, categories).allowed, true);
 assert.equal(canDeleteShopCategory('cultural', products, categories).reason, '');
 
-console.log('✅ 商品分类规则（可自定义分类 + 名称 2~10 字 + 启停只影响表单可选性 + 有商品不许删）断言测试通过！');
+console.log('✅ 商品分类规则（可自定义分类 + 名称 2~10 字 + 启停只影响表单可选性 + 标签行只认未售罄商品 + 有商品不许删）断言测试通过！');

@@ -4,7 +4,8 @@
  * 分类不再写死：学校在 PC 后台「货柜超市 → 分类管理」里自己维护，可新建、改名、上下移、启用禁用。
  * 分类数据与商品归属存在 shared/shopCatalogStore.ts，这里只放规则：
  * - 名称 2~10 个字，不能与已有分类重名
- * - 终端标签行只展示「当前有商品」的分类，顺序就是后台排好的顺序
+ * - 终端标签行只展示「当前有未售罄商品」的分类，顺序就是后台排好的顺序
+ *   分类下商品全部售罄后标签收起，商品仍留在「全部」里以已售罄状态展示
  * - 只剩 1 个分类时整行不出现，此时分类标签只是噪音
  * - 商品可以没有分类，未分类商品只在「全部」里出现
  * - 停用只影响商品表单：停用的分类不能在新建 / 编辑商品时选用；
@@ -24,6 +25,8 @@ export type ShopProductCategoryMap = Record<string, string>;
 interface CategorizedProduct {
   id: string;
   category?: string | null;
+  /** 货柜机上的可售库存：为 0 即售罄，售罄商品不再撑起分类标签 */
+  stock?: number;
 }
 
 /** 「全部」标签不是真实分类，只是不过滤 */
@@ -66,7 +69,7 @@ export const getShopProductCategoryId = (
 ): string => productCategories[product?.id]?.trim() || product?.category?.trim() || '';
 
 /**
- * 终端标签行要展示的分类：当前有商品，顺序与后台分类列表一致（停用不影响终端展示）。
+ * 终端标签行要展示的分类：当前有未售罄商品，顺序与后台分类列表一致（停用不影响终端展示）。
  * 分类已不存在时（历史数据）该商品按未分类处理，不会因此消失。
  */
 export const getShopVisibleCategoryIds = (
@@ -75,7 +78,10 @@ export const getShopVisibleCategoryIds = (
   productCategories: ShopProductCategoryMap = {},
 ): string[] => {
   const usedCategoryIds = new Set(
-    products.map(product => getShopProductCategoryId(product, productCategories)).filter(Boolean),
+    products
+      .filter(product => Number(product.stock ?? 0) > 0)
+      .map(product => getShopProductCategoryId(product, productCategories))
+      .filter(Boolean),
   );
   return categories.filter(category => usedCategoryIds.has(category.id)).map(category => category.id);
 };

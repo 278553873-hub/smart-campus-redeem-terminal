@@ -35,7 +35,7 @@ if (!shopSource.includes('useShopCatalog')) {
   failures.push('分类数据应来自 PC 后台维护的共享分类表。');
 }
 if (!shopSource.includes('getShopVisibleCategoryIds(standardProducts, shopCategories, shopProductCategories)')) {
-  failures.push('分类标签应只展示当前有商品的分类，且保持后台排好的顺序。');
+  failures.push('分类标签应只展示当前有未售罄商品的分类，且保持后台排好的顺序。');
 }
 if (!shopSource.includes('ALL_CATEGORY_ID')) {
   failures.push('分类标签行应包含「全部」入口。');
@@ -45,6 +45,9 @@ if (shopSource.includes('isShopProductVisibleOnTerminal')) {
 }
 if (!shopSource.includes("products.filter(p => p.type === 'standard')")) {
   failures.push('终端商品只展示标准商品，应显式按商品类型过滤。');
+}
+if (!categorySource.includes('Number(product.stock ?? 0) > 0')) {
+  failures.push('分类标签行只统计还有可售库存的商品，商品全部售罄的分类不应再占一个标签。');
 }
 if (!categorySource.includes('SHOP_CATEGORY_NAME_MAX_LENGTH')) {
   failures.push('分类规则应约束分类名称字数上限。');

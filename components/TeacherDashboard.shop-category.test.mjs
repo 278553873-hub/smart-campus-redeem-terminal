@@ -71,7 +71,7 @@ if (categoriesPanel.includes('padStart')) {
 }
 forbidText('这里的顺序就是货柜机上分类标签的顺序', '分类管理页不应展示面向实现说明的提示文案。');
 forbidText('停用的分类和分类下的商品不会出现在货柜机上', '停用只影响商品表单可选性，页面不应保留旧的说明文案。');
-requireText('countShopCategoryProducts(shopProducts, shopCategories, shopProductCategories, category.id)', '分类的商品数应由共享规则统计。');
+requireText('countShopCategoryProducts(liveShopProducts, shopCategories, shopProductCategories, category.id)', '分类的商品数应由共享规则统计，且只统计在用商品。');
 requireText('onChange={(checked) => handleToggleShopCategoryEnabled(category.id, checked)}', '分类应支持启用 / 停用。');
 requireText('onDragStart={() => setDraggedShopCategoryId(category.id)}', '分类排序应支持拖动：拖动行时要记住被拖的是哪个分类。');
 requireText('onDrop={() => handleDropShopCategory(index)}', '分类排序应支持拖动：落到目标行要按目标位置重排。');
@@ -97,7 +97,7 @@ for (const rule of ['SHOP_CATEGORY_NAME_MIN_LENGTH = 2', 'SHOP_CATEGORY_NAME_MAX
 }
 
 // 5. 分类下有商品不允许删除，且要说明原因
-requireText('canDeleteShopCategory(categoryId, shopProducts, shopCategories, shopProductCategories)', '删除分类应走共享的删除校验。');
+requireText('canDeleteShopCategory(categoryId, liveShopProducts, shopCategories, shopProductCategories)', '删除分类应走共享的删除校验，且只算在用商品。');
 requireText('if (!deleteCheck.allowed)', '删除校验不通过时必须中断删除。');
 requireText('Message.warning(deleteCheck.reason)', '不允许删除时要说明原因。');
 requireText('deleteCheck.allowed ? (', '删除按钮应区分「可删除 / 不可删除」两种状态。');
@@ -121,6 +121,20 @@ requireText('<form id="shop-product-form" className="pc-form"', '商品弹窗表
 requireText('options={getShopCategoryPickerOptions(shopCategories)', '商品弹窗的分类选项应走共享规则（停用分类不可选）。');
 requireText('disabled: option.disabled', '停用的分类在商品弹窗里应标记为不可选。');
 requireText('（已停用）', '停用的分类要有可读的「（已停用）」标记。');
+
+// 8. 商品删除与货道可选性：货道上有库存才二次确认；下架商品不再铺到新货道
+requireText('const channelUsage = getShopProductChannelUsage(item.id);', '删除商品前要先算它在货柜机上的占用（货道数与库存）。');
+requireText('channelUsage.stock > 0 ? (', '只有货道上还有库存时才需要二次确认。');
+requireText('条货道上售卖，库存共 ', '删除确认要写清影响面：几条货道、多少件库存。');
+requireText('onClick={() => handleDeleteShopProduct(item.id)}', '货道上没有库存的商品应直接删除，不再每次都弹确认。');
+requireText('shopCategories.find(category => category.enabled)?.id', '新建商品默认选中第一个启用分类，避免默认落进停用分类。');
+requireText('liveShopProducts.filter(p => p.active).map(p => (', '货道配置只能选在用的上架商品。');
+requireText('（已下架）', '已绑定了下架商品的货道要保留当前商品并标注（已下架），避免保存时被误清空。');
+requireText('activeProductIds.has(String(src.productId))', '跨设备同步货道时不应把下架商品铺到新货道。');
+requireText('markShopProductDeleted(p, deletedAt)', '删除商品要走软删：只打标记，数据保留给历史记录取名字。');
+forbidText('setShopProducts(shopProducts.filter(p => !isSameProductId(p.id, id)))', '删除商品不能把数据从商品库里移除，否则历史兑换记录取不到商品名。');
+requireText('const liveShopProducts = getLiveShopProducts(shopProducts);', '页面要区分「全部商品」与「在用商品」，已删除商品只保留数据不参与展示。');
+requireText('（已删除）', '货道上残留的已删除商品要标注「（已删除）」，避免保存时被误清空。');
 
 console.log('分类规则来源：shared/productCategory.ts + shared/shopCatalogStore.ts（页面不重复实现）');
 

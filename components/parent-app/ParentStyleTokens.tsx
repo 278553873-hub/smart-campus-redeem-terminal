@@ -64,6 +64,8 @@ export const parentMobileCssVariables = {
   '--pm-icon-green-gradient': 'var(--tm-status-positive)',
   '--pm-icon-orange-gradient': 'var(--tm-brand-secondary)',
   '--pm-icon-soft-blue-gradient': 'var(--tm-brand-primary-soft)',
+  // 短数字输入/展示框专属令牌：8px 圆角配 52px 高度，表单更紧致，不显松散
+  '--pm-radius-field': '8px',
   '--pm-radius-control': 'var(--tm-radius-control)',
   '--pm-radius-inner': 'var(--tm-radius-inner)',
   '--pm-radius-card': 'var(--tm-radius-card)',
@@ -145,6 +147,7 @@ export const parentRadius = {
   card: 'rounded-[var(--pm-radius-card)]',
   cardLarge: 'rounded-[var(--pm-radius-card)]',
   input: 'rounded-[var(--pm-radius-control)]',
+  field: 'rounded-[var(--pm-radius-field)]',
   button: 'rounded-[var(--pm-radius-control)]',
   sheet: 'rounded-t-[var(--pm-radius-sheet)]',
 } as const;

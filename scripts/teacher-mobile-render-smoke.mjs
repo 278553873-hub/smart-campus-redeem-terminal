@@ -172,5 +172,21 @@ await renderPage('学生详情（实际积分）', () => import('../mobile-app/v
   if (total !== '1250') throw new Error('学生详情总分应为实际分项之和，实际为：' + total);
 });
 
+await renderPage('设置兑换密码页', () => import('../mobile-app/views/bank-password/BankPasswordView'), {
+  classInfo: { id: 'render-smoke-class', name: '三年级1班', gradeLevel: '三年级' },
+  currentSpace: { id: 'render-smoke-space', name: '示范学校' },
+  students: demoStudents,
+  onBack: noop,
+}, html => {
+  if (!html.includes('••••••')) throw new Error('兑换密码默认应以掩码展示。');
+  const doubleQuote = String.fromCharCode(34);
+  const revealLabel = 'aria-label=' + doubleQuote + '查看演示学生1兑换密码' + doubleQuote;
+  if (!html.includes(revealLabel)) throw new Error('密码掩码时显隐按钮的无障碍名称应为查看加学生姓名加兑换密码。');
+});
+
+await renderPage('教师手机端登录页', () => import('../mobile-app/views/TeacherLoginView'), {
+  onLogin: noop,
+});
+
 // 渲染结束后主动退出：个别模块会留下常驻定时器，让进程一直挂着不返回。
 process.exit(0);

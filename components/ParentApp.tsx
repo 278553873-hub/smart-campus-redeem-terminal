@@ -10,8 +10,6 @@ import {
   ChevronRight,
   ClipboardList,
   Clock,
-  Eye,
-  EyeOff,
   Files,
   FileText,
   KeyRound,
@@ -41,6 +39,7 @@ import {
   ParentSecondaryButton,
 } from './parent-app/ParentUI';
 import AssignedQuestionnaireView from './parent-app/AssignedQuestionnaireView';
+import { ParentExchangePasswordSheet } from './parent-app/ParentExchangePasswordSheet';
 import {
   parentMobileCssVariables,
   parentSegmentTone,
@@ -66,12 +65,7 @@ import {
   defaultParentGradientPreview,
   type TeacherGradientPreviewConfig,
 } from '../mobile-app/styles/teacherGradientPreview';
-import {
-  EXCHANGE_PASSWORD_LENGTH,
-  isValidExchangePassword,
-  maskExchangePassword,
-  sanitizeExchangePassword,
-} from '../shared/exchangePassword';
+import { isValidExchangePassword } from '../shared/exchangePassword';
 import {
   canShowParentEvaluationDetails,
   canShowParentEvaluationSummary,
@@ -728,10 +722,6 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const [growthRangeMode, setGrowthRangeMode] = useState<GrowthRangeMode>('day');
   const [mineSheet, setMineSheet] = useState<MineSheet>(null);
   const [exchangePasswordChildId, setExchangePasswordChildId] = useState('');
-  const [exchangePasswordDraft, setExchangePasswordDraft] = useState('');
-  const [exchangePasswordVisible, setExchangePasswordVisible] = useState(false);
-  const [exchangePasswordEditing, setExchangePasswordEditing] = useState(false);
-  const [exchangePasswordError, setExchangePasswordError] = useState('');
   const [parentNavActiveIndex, setParentNavActiveIndex] = useState(0);
 
   const activeChild = useMemo(
@@ -1188,34 +1178,17 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const openExchangePasswordSheet = (child: ChildProfile | null = activeChild) => {
     if (!child) return;
     setExchangePasswordChildId(child.id);
-    setExchangePasswordDraft(child.exchangePassword);
-    setExchangePasswordVisible(false);
-    setExchangePasswordEditing(false);
-    setExchangePasswordError('');
   };
 
   const closeExchangePasswordSheet = () => {
     setExchangePasswordChildId('');
-    setExchangePasswordDraft('');
-    setExchangePasswordVisible(false);
-    setExchangePasswordEditing(false);
-    setExchangePasswordError('');
   };
 
-  const saveExchangePassword = () => {
-    if (!exchangePasswordChild) return;
-    const nextPassword = exchangePasswordDraft.trim();
-    if (!isValidExchangePassword(nextPassword)) {
-      setExchangePasswordError('请输入6位数字密码');
-      return;
-    }
+  const saveExchangePassword = (nextPassword: string) => {
+    if (!exchangePasswordChild || !isValidExchangePassword(nextPassword)) return;
     setChildrenList(prev => prev.map(child => child.id === exchangePasswordChild.id
       ? { ...child, exchangePassword: nextPassword }
       : child));
-    setExchangePasswordDraft(nextPassword);
-    setExchangePasswordEditing(false);
-    setExchangePasswordError('');
-    setExchangePasswordVisible(false);
     setSubmitSuccessMessage('兑换密码已更新');
   };
 
@@ -2759,62 +2732,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
   const ExchangePasswordSheet = () => {
     if (!exchangePasswordChild) return null;
-    const password = exchangePasswordEditing ? exchangePasswordDraft : exchangePasswordChild.exchangePassword;
-    const maskedPassword = maskExchangePassword(password);
-
     return (
-      <ParentBottomSheet title={`兑换密码 · ${exchangePasswordChild.name}`} onClose={closeExchangePasswordSheet} className="pb-8">
-        <div className="rounded-[var(--pm-radius-card)] bg-[var(--pm-bg-surface-soft)] p-4 [box-shadow:var(--pm-shadow-card)]">
-          {exchangePasswordEditing ? (
-            <div>
-              <label className="block">
-                <span className="mb-2 block text-[length:var(--pm-font-size-body)] font-bold text-[var(--pm-text-secondary)]">新的6位密码</span>
-                <input
-                  value={exchangePasswordDraft}
-                  onChange={event => {
-                    setExchangePasswordDraft(sanitizeExchangePassword(event.target.value));
-                    setExchangePasswordError('');
-                  }}
-                  inputMode="numeric"
-                  maxLength={EXCHANGE_PASSWORD_LENGTH}
-                  placeholder="请输入6位数字"
-                  aria-invalid={Boolean(exchangePasswordError)}
-                  className="h-[52px] w-full rounded-[var(--pm-radius-inner)] border border-[var(--pm-border-control)] bg-[var(--pm-bg-surface)] px-4 text-[length:var(--pm-font-size-page-title)] font-bold tracking-[0.28em] text-[var(--pm-text-primary)] outline-none transition-colors placeholder:text-[length:var(--pm-font-size-body)] placeholder:tracking-normal placeholder:text-[var(--pm-text-disabled)] focus:border-[var(--pm-brand-primary)] focus:ring-4 focus:ring-[var(--pm-focus-ring)]"
-                />
-              </label>
-              <div className="mt-2 min-h-5 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-status-negative)]" role="alert">{exchangePasswordError}</div>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <ParentSecondaryButton type="button" onClick={() => { setExchangePasswordEditing(false); setExchangePasswordDraft(exchangePasswordChild.exchangePassword); setExchangePasswordError(''); }} className="h-[52px] text-[16px]">
-                  取消
-                </ParentSecondaryButton>
-                <ParentPrimaryButton type="button" onClick={saveExchangePassword} className="h-[52px] text-[16px]">
-                  保存密码
-                </ParentPrimaryButton>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="mb-2 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">当前密码</div>
-              <div className="flex min-h-[64px] items-center justify-between gap-3 rounded-[var(--pm-radius-inner)] bg-white/85 px-4">
-                <span className="tabular-nums text-[28px] font-bold tracking-[0.22em] text-[var(--pm-text-primary)]" aria-live="polite">
-                  {exchangePasswordVisible ? (password || '未设置') : maskedPassword}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setExchangePasswordVisible(value => !value)}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] bg-[var(--pm-bg-surface-soft)] text-[var(--pm-text-tertiary)] transition-[transform,background-color] duration-150 ease-out active:scale-[0.96]"
-                  aria-label={exchangePasswordVisible ? '隐藏兑换密码' : '查看兑换密码'}
-                >
-                  {exchangePasswordVisible ? <EyeOff size={19} strokeWidth={2.5} /> : <Eye size={19} strokeWidth={2.5} />}
-                </button>
-              </div>
-              <ParentPrimaryButton type="button" onClick={() => { setExchangePasswordEditing(true); setExchangePasswordDraft(exchangePasswordChild.exchangePassword); setExchangePasswordError(''); }} fullWidth className="mt-4 h-[52px] text-[16px]">
-                修改密码
-              </ParentPrimaryButton>
-            </>
-          )}
-        </div>
-      </ParentBottomSheet>
+      <ParentExchangePasswordSheet
+        password={exchangePasswordChild.exchangePassword}
+        onSave={saveExchangePassword}
+        onClose={closeExchangePasswordSheet}
+      />
     );
   };
 

@@ -6,12 +6,13 @@ import {
     Menu, User, ChevronDown, ChevronRight, Package,
     Landmark, ArrowLeftRight, ArrowUpDown, Coins, Monitor, AlertCircle,
     Info, Search, Plus, Sparkles,
-    Check, Upload, KeyRound, Eye, Move, Megaphone, Pause, Play, CircleHelp,
+    Check, Upload, KeyRound, Move, Megaphone, Pause, Play, CircleHelp,
     ArrowLeft, Copy, MapPin, CheckCircle2, RotateCcw, Boxes
 } from 'lucide-react';
 import HealthDataImportView from './HealthDataImportView';
 import GrowthDataSettingsView from './GrowthDataSettingsView';
 import TeacherCampaignPreview from '../mobile-app/components/TeacherCampaignPreview';
+import { PasswordRevealButton } from '../mobile-app/components/ui/PasswordRevealButton';
 import CoinIssuanceSettings from './CoinIssuanceSettings';
 import type { CoinIssuanceConfig } from '../mobile-app/types';
 import {
@@ -48,6 +49,7 @@ import {
     type ShopCategory,
 } from '../shared/productCategory';
 import { runShopCatalogAction } from '../shared/shopCatalogStore';
+import { getLiveShopProducts, isShopProductDeleted, markShopProductDeleted } from '../shared/shopProductLifecycle';
 import { useShopCatalog } from './useShopCatalog';
 
 interface TeacherDashboardProps {
@@ -1786,7 +1788,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             icon: product.image?.trim() || DEFAULT_PRODUCT_IMAGE,
             active: true,
             category: product.category ?? '',
+            deletedAt: null as string | null,
         })));
+    // 删除是软删：shopProducts 保留全部商品（含已删除），页面只展示和只统计在用的
+    const liveShopProducts = getLiveShopProducts(shopProducts);
     const [shopProductStatusFilter, setShopProductStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
     // 生成单套标准 49 格拟真货道模板（演示货道里的商品 id 取自商品管理，保证货道上显示的就是商品库里的商品）
@@ -2530,7 +2535,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setEditingShopProduct(product);
         setModalIcon(product?.icon || DEFAULT_PRODUCT_IMAGE);
         setShopPriceInput(product ? Number(product.price).toFixed(2) : '10.00');
-        setShopCategoryInput(product ? getShopProductCategoryId(product, shopProductCategories) : (shopCategories[0]?.id ?? ''));
+        setShopCategoryInput(product ? getShopProductCategoryId(product, shopProductCategories) : (shopCategories.find(category => category.enabled)?.id ?? ''));
         setIsShopModalOpen(true);
     };
 
@@ -2542,7 +2547,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const handleSaveShopProduct = (productData: any) => {
         const productId = String(productData.id ?? Date.now());
         if (editingShopProduct) {
-            setShopProducts(shopProducts.map(p => (isSameProductId(p.id, productId) ? { ...productData, id: productId, active: p.active } : p)));
+            setShopProducts(shopProducts.map(p => (isSameProductId(p.id, productId) ? { ...productData, id: productId, active: p.active, deletedAt: p.deletedAt } : p)));
         } else {
             setShopProducts([{ ...productData, id: productId, active: true }, ...shopProducts]);
         }
@@ -2594,7 +2599,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
     // 分类下有商品时不能删：先让老师把商品挪走，避免商品变成没有归属的孤儿数据
     const handleDeleteShopCategory = (categoryId: string) => {
-        const deleteCheck = canDeleteShopCategory(categoryId, shopProducts, shopCategories, shopProductCategories);
+        const deleteCheck = canDeleteShopCategory(categoryId, liveShopProducts, shopCategories, shopProductCategories);
         if (!deleteCheck.allowed) {
             Message.warning(deleteCheck.reason);
             return;
@@ -2642,9 +2647,22 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         Message.success('已补满全校 3 台货柜的所有货道！');
     };
 
+    // 商品在货柜机上的占用：绑定了几条货道、共多少件库存，删除时用来判断是否需要二次确认
+    const getShopProductChannelUsage = (productId: string) => {
+        let channelCount = 0;
+        let stock = 0;
+        vendingDevices.forEach(device => device.channels.forEach(channel => {
+            if (!isSameProductId(channel.productId, productId)) return;
+            channelCount += 1;
+            stock += Number(channel.stock) || 0;
+        }));
+        return { channelCount, stock };
+    };
+
+    // 软删：只打标记不从商品库移除，历史兑换记录与报表仍查得到商品名；同时清空绑定了该商品的货道
     const handleDeleteShopProduct = (id: string) => {
-        setShopProducts(shopProducts.filter(p => !isSameProductId(p.id, id)));
-        // clear from all devices' channels
+        const deletedAt = new Date().toISOString();
+        setShopProducts(shopProducts.map(p => (isSameProductId(p.id, id) ? markShopProductDeleted(p, deletedAt) : p)));
         setVendingDevices(prev => prev.map(dev => ({
             ...dev,
             channels: dev.channels.map(c => (isSameProductId(c.productId, id) ? { ...c, productId: null, stock: 0 } : c))
@@ -2657,11 +2675,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             return;
         }
         const sourceChannels = currentDevice.channels;
+        // 下架商品不再铺到新货道：同步配置时跳过它们，目标货道保持原样
+        const activeProductIds = new Set(liveShopProducts.filter(product => product.active).map(product => String(product.id)));
         setVendingDevices(prev => prev.map(dev => {
             if (!copyTargetDeviceIds.includes(dev.id)) return dev;
             const newChannels = dev.channels.map((ch, idx) => {
                 const src = sourceChannels[idx];
                 if (!src) return ch;
+                if (src.productId !== null && !activeProductIds.has(String(src.productId))) return ch;
                 return {
                     ...ch,
                     productId: src.productId,
@@ -2678,7 +2699,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     };
 
     // 全校补货汇总清单数据
-    const restockSummaryList = shopProducts.map(product => {
+    const restockSummaryList = liveShopProducts.map(product => {
         const devDetails = vendingDevices.map(device => {
             const productChannels = device.channels.filter(c => isSameProductId(c.productId, product.id));
             const capacity = productChannels.reduce((sum, c) => sum + getChannelCapacity(c), 0);
@@ -2702,7 +2723,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         setShopProducts(shopProducts.map(product => (isSameProductId(product.id, id) ? { ...product, active: !product.active } : product)));
     };
 
-    const filteredShopProducts = shopProducts.filter(product => {
+    const filteredShopProducts = liveShopProducts.filter(product => {
         const matchesStatus = shopProductStatusFilter === 'all'
             || (shopProductStatusFilter === 'active' && product.active)
             || (shopProductStatusFilter === 'inactive' && !product.active);
@@ -3270,7 +3291,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#F2F3F5]">
-                                            {filteredShopProducts.map((item) => (
+                                            {filteredShopProducts.map((item) => {
+                                                const channelUsage = getShopProductChannelUsage(item.id);
+                                                return (
                                                 <tr key={item.id} className="transition-colors hover:bg-[#F7F8FA]">
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
@@ -3302,19 +3325,28 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex justify-end gap-2">
                                                             <Button type="text" size="small" className="!px-0" onClick={() => handleOpenShopModal(item)}>编辑</Button>
-                                                            <Popconfirm title="确认删除商品？" content="删除后，已配置该商品的货道也会被置空。" onOk={() => handleDeleteShopProduct(item.id)}>
-                                                                <Button type="text" size="small" className="!px-0" status="danger">删除</Button>
-                                                            </Popconfirm>
+                                                            {channelUsage.stock > 0 ? (
+                                                                <Popconfirm
+                                                                    title={'确认删除「' + item.name + '」？'}
+                                                                    content={'该商品正在 ' + channelUsage.channelCount + ' 条货道上售卖，库存共 ' + channelUsage.stock + ' 件。删除后货道会被置空、库存清零，学生无法再购买，货道内的实物需人工取出。'}
+                                                                    onOk={() => handleDeleteShopProduct(item.id)}
+                                                                >
+                                                                    <Button type="text" size="small" className="!px-0" status="danger">删除</Button>
+                                                                </Popconfirm>
+                                                            ) : (
+                                                                <Button type="text" size="small" className="!px-0" status="danger" onClick={() => handleDeleteShopProduct(item.id)}>删除</Button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            ))}
-                                            {shopProducts.length === 0 && (
+                                                );
+                                            })}
+                                            {liveShopProducts.length === 0 && (
                                                 <tr>
                                                     <td colSpan={5} className="py-12 text-center text-[#86909C]">暂无商品，请先新建商品</td>
                                                 </tr>
                                             )}
-                                            {shopProducts.length > 0 && filteredShopProducts.length === 0 && (
+                                            {liveShopProducts.length > 0 && filteredShopProducts.length === 0 && (
                                                 <tr>
                                                     <td colSpan={5} className="py-12 text-center text-[#86909C]">暂无符合条件的商品</td>
                                                 </tr>
@@ -3349,8 +3381,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             </thead>
                                             <tbody className="divide-y divide-[#F2F3F5]">
                                                 {shopCategories.map((category, index) => {
-                                                    const categoryProductCount = countShopCategoryProducts(shopProducts, shopCategories, shopProductCategories, category.id);
-                                                    const deleteCheck = canDeleteShopCategory(category.id, shopProducts, shopCategories, shopProductCategories);
+                                                    const categoryProductCount = countShopCategoryProducts(liveShopProducts, shopCategories, shopProductCategories, category.id);
+                                                    const deleteCheck = canDeleteShopCategory(category.id, liveShopProducts, shopCategories, shopProductCategories);
                                                     return (
                                                         <tr
                                                             key={category.id}
@@ -4141,13 +4173,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                                         <span className="font-mono text-[#4E5969]">
                                                                             {isPwdShown ? (device.adminPassword || 'Admin@888') : '••••••••'}
                                                                         </span>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setShowPasswordDeviceId(isPwdShown ? null : device.id)}
-                                                                            className="text-xs text-[#86909C] hover:text-[#165DFF] transition-colors"
-                                                                        >
-                                                                            {isPwdShown ? '隐藏' : '查看'}
-                                                                        </button>
+                                                                        <PasswordRevealButton
+                                                                            visible={isPwdShown}
+                                                                            onToggle={() => setShowPasswordDeviceId(isPwdShown ? null : device.id)}
+                                                                            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#86909C] transition hover:bg-[#F2F3F5] hover:text-[#165DFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#165DFF]"
+                                                                            size={16}
+                                                                            hideLabel="隐藏设备密码"
+                                                                            revealLabel="查看设备密码"
+                                                                        />
                                                                     </div>
                                                                 </div>
                                                             </td>
@@ -6156,7 +6189,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     }
                                     priceInput?.setCustomValidity('');
                                     if (!shopCategoryInput) {
-                                        Message.warning('请先选择商品分类；还没有分类时，请到「分类管理」新建一个。');
+                                        Message.warning('请先选择商品分类；没有可用分类时，请到「分类管理」新建或启用分类。');
                                         return;
                                     }
                                     const newProduct = {
@@ -6387,7 +6420,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         <label className="mb-2 block text-sm font-medium text-[#4E5969]">选择商品放入{editingChannel.id <= 30 ? '货道' : '储物柜'}</label>
                                         <select name="productId" defaultValue={editingChannel.productId || ''} className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10">
                                             <option value="">-- 置空仓位 --</option>
-                                            {shopProducts.map(p => (
+                                            {shopProducts.filter(p => isSameProductId(p.id, editingChannel.productId) && (!p.active || isShopProductDeleted(p))).map(p => (
+                                                <option key={p.id} value={p.id} disabled>{p.name}{isShopProductDeleted(p) ? '（已删除）' : '（已下架）'}</option>
+                                            ))}
+                                            {liveShopProducts.filter(p => p.active).map(p => (
                                                 <option key={p.id} value={p.id}>{p.name} (售价: {Number(p.price).toFixed(2)})</option>
                                             ))}
                                         </select>

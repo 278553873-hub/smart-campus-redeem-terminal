@@ -1,11 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Eye,
-  EyeOff,
   Info,
   X,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import { PasswordRevealButton } from '../components/ui/PasswordRevealButton';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileToast from '../components/ui/MobileToast';
 
@@ -310,14 +309,12 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
                     placeholder="请输入密码"
                     className={`${fieldClass} pr-12`}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(value => !value)}
+                  <PasswordRevealButton
+                    visible={showPassword}
+                    onToggle={() => setShowPassword(value => !value)}
                     className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
-                    aria-label={showPassword ? '隐藏密码' : '显示密码'}
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
+                    size={20}
+                  />
                 </span>
               </div>
             )}

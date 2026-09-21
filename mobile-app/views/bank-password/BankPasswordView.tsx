@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Check, ChevronLeft, Edit3, Eye, EyeOff } from 'lucide-react';
+import { Check, ChevronLeft, Edit3 } from 'lucide-react';
+import { PasswordRevealButton } from '../../components/ui/PasswordRevealButton';
 import type { ClassInfo, Student } from '../../types';
 import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
@@ -89,7 +90,14 @@ const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classInfo, currentS
                 ) : (
                   <div className="flex items-center gap-[var(--tm-space-1)]">
                     <span className="min-w-[58px] text-center text-[length:var(--tm-font-size-body)] font-semibold tabular-nums text-[var(--tm-text-primary)]">{student.showPassword ? student.password : '••••••'}</span>
-                    <button type="button" onClick={() => setStudents(current => current.map(item => item.id === student.id ? { ...item, showPassword: !item.showPassword } : item))} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label={`${student.showPassword ? '隐藏' : '查看'}${student.name}兑换密码`}>{student.showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}</button>
+                    <PasswordRevealButton
+                      visible={student.showPassword}
+                      onToggle={() => setStudents(current => current.map(item => item.id === student.id ? { ...item, showPassword: !item.showPassword } : item))}
+                      className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                      size={18}
+                      hideLabel={`隐藏${student.name}兑换密码`}
+                      revealLabel={`查看${student.name}兑换密码`}
+                    />
                     <button type="button" onClick={() => startEditing(student)} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft-strong)]" aria-label={`修改${student.name}兑换密码`}><Edit3 className="h-[18px] w-[18px]" /></button>
                   </div>
                 )}

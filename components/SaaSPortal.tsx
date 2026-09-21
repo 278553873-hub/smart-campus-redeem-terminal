@@ -6,8 +6,6 @@ import {
   Monitor,
   MonitorSmartphone,
   ShieldCheck,
-  Eye,
-  EyeOff,
   BookOpen,
   LayoutGrid,
   PhoneCall,
@@ -21,6 +19,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import PlatformBrandMark from './PlatformBrandMark';
+import { PasswordRevealButton } from '../mobile-app/components/ui/PasswordRevealButton';
 
 export type PcPortalApp = 'teacher' | 'all-in-one' | 'smart-big-screen';
 
@@ -305,14 +304,14 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
                     placeholder="请输入密码（演示环境任意输入）"
                     className="w-full h-[42px] pl-9 pr-10 py-2.5 bg-white border border-slate-200 rounded text-sm font-medium text-slate-800 focus:outline-none focus:border-[#2a68ff] focus:ring-1 focus:ring-[#2a68ff] transition-all"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
+                  <PasswordRevealButton
+                    visible={showPassword}
+                    onToggle={() => setShowPassword((prev) => !prev)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                    aria-label={showPassword ? '点击隐藏密码' : '点击显示密码'}
-                  >
-                    {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
-                  </button>
+                    size={16}
+                    hideLabel="点击隐藏密码"
+                    revealLabel="点击显示密码"
+                  />
                 </div>
               </div>
             ) : (

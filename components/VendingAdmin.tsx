@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Product } from '../types';
 import { clampChannelStock, getChannelCapacity, isSingleItemChannel } from '../shared/vendingChannelCapacity';
+import { getLiveShopProducts } from '../shared/shopProductLifecycle';
 import { 
     ChevronLeft, RefreshCw, Package,
     Cpu, KeyRound, CheckCircle2, Play, Unlock, Lock, DoorOpen, Check,
@@ -708,7 +709,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                 const isExisting = Boolean(selectedChannelForAssign.productId);
                 const isRightCabinet = selectedChannelForAssign.cabinet === 'right';
                 const maxCap = getChannelCapacity(selectedChannelForAssign);
-                const filteredProducts = products.filter(p => 
+                const filteredProducts = getLiveShopProducts(products).filter(p => 
                     !productSearchKeyword.trim() || p.name.toLowerCase().includes(productSearchKeyword.trim().toLowerCase())
                 );
 
