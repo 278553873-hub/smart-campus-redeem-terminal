@@ -21,7 +21,7 @@ assert.deepEqual(getInitialSuggestedQuestions(classOnly), [...CLASS_EVALUATION_S
 assert.deepEqual(getInitialSuggestedQuestions(both), [...CLASS_EVALUATION_SUGGESTED_QUESTIONS]);
 assert.deepEqual(getInitialSuggestedQuestions(studentOnly), [...STUDENT_EVALUATION_SUGGESTED_QUESTIONS]);
 assert.deepEqual(getInitialSuggestedQuestions(none), []);
-assert.equal(STUDENT_EVALUATION_SUGGESTED_QUESTIONS.every(question => question.length <= 11), true, '学生评价建议问题应保持短句');
+assert.equal(STUDENT_EVALUATION_SUGGESTED_QUESTIONS.every(question => question.length <= 14), true, '学生评价建议问题应保持短句，且单行不折行');
 
 // 2. 预设问题按能力归属，跨能力提问要能识别出未开通
 assert.deepEqual(resolveQuestionRoute(CLASS_EVALUATION_SUGGESTED_QUESTIONS[0], both), { capability: 'class', enabled: true });
@@ -43,10 +43,10 @@ for (const answerType of [...classAnswerTypes, ...studentAnswerTypes, 'capabilit
     assert.equal(questions.length, HEADTEACHER_ASSISTANT_FOLLOW_UP_COUNT, `${answerType} 应固定给出 3 条追问`);
     assert.equal(new Set(questions).size, 3, `${answerType} 的 3 条追问不应重复`);
 }
-const asked = new Set(['本周覆盖了哪些学生？']);
+const asked = new Set([STUDENT_EVALUATION_SUGGESTED_QUESTIONS[0]]);
 const followUps = getFollowUpQuestions({ answerType: 'student_coverage', capabilities: studentOnly, askedQuestions: asked });
 assert.equal(followUps.length, 3);
-assert.ok(!followUps.includes('本周覆盖了哪些学生？'), '追问不应重复已经问过的问题');
+assert.ok(!followUps.includes(STUDENT_EVALUATION_SUGGESTED_QUESTIONS[0]), '追问不应重复已经问过的问题');
 assert.equal(
     getFollowUpQuestions({ answerType: 'student_coverage', capabilities: both, askedQuestions: new Set() })
         .every(question => resolveQuestionRoute(question, both).capability === 'student'),

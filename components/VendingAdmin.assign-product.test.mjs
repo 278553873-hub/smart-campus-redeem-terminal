@@ -51,6 +51,11 @@ assert(!vendingAdminSource.includes('✔ 正常'), '调试模式左柜不应回�
 assert(!vendingAdminSource.includes('手动关门复位'), '右柜无门磁回执，不应出现手动关门复位按钮');
 assert(!vendingAdminSource.includes('点按单格出货') && !vendingAdminSource.includes('点按模拟开柜'), '层板不应出现引导废话文案');
 
+// 6. 装填库存与 PC 后台同源：最小 1 件，卖光（0）时默认补满
+assert(vendingAdminSource.includes('CHANNEL_STOCK_MIN'), '柜机步进器的最小件数要来自共享规则，不能各写一个 1');
+assert(vendingAdminSource.includes('getDefaultChannelStockInput(channel)'), '打开抽屉时的默认装填件数要走共享规则：卖光的格子默认补满');
+assert(!vendingAdminSource.includes('setAssignInitialStock(channel.stock)'), '不能直接把 0 带进装填框，否则一保存就把 0 当成装填件数');
+
 console.log('✅ 货柜机现场选品上架/换绑/下架（方案 A）与右柜开门硬件调试端到端验证通过！');
 
 

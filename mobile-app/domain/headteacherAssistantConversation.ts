@@ -53,7 +53,7 @@ const STUDENT_EVALUATION_KNOWN_QUESTIONS = new Set<string>([
 
 /** 未命中预设问题时按关键词兜底：班级评比优先，避免“扣分”被当成学生记录。 */
 const CLASS_EVALUATION_KEYWORDS = ['班级评比', '评比', '班评', '扣', '失分', '得分', '分数', '排名', '满分', '周数据'];
-const STUDENT_EVALUATION_KEYWORDS = ['学生', '覆盖', '复盘', '进步', '记录', '表现', '指标'];
+const STUDENT_EVALUATION_KEYWORDS = ['学生', '覆盖', '复盘', '进步', '记录', '表现', '指标', '表扬', '待改进', '集中'];
 
 const includesAny = (question: string, keywords: readonly string[]) => (
     keywords.some(keyword => question.includes(keyword))

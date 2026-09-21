@@ -46,3 +46,27 @@ export const isChannelStockWarning = (channel: ChannelStockLike): boolean => {
   const stock = Number(channel.stock);
   return (Number.isFinite(stock) ? stock : 0) < getChannelCapacity(channel) / 2;
 };
+
+/** 装填库存的最小件数：装 0 件等于没装；库存变 0 只由售卖产生，不需要人工填 */
+export const CHANNEL_STOCK_MIN = 1;
+
+/** 校验「装填库存」输入：不合法时返回给老师看的中文原因，合法返回 null */
+export const validateChannelStockInput = (channel: ChannelCapacityLike, raw: unknown): string | null => {
+  const capacity = getChannelCapacity(channel);
+  const text = String(raw ?? '').trim();
+  if (!text) return '请填写装填件数';
+  if (!/^[0-9]+$/.test(text)) return '装填件数只能是 1 ~ ' + capacity + ' 之间的整数';
+  const requested = Number(text);
+  if (requested < CHANNEL_STOCK_MIN) return '装填件数要大于 0；货道卖光后库存会自动变成 0，不用手工填';
+  if (requested > capacity) return '装填件数不能超过 ' + capacity + ' 件';
+  return null;
+};
+
+/** 打开货道配置时的默认装填件数：正常带入当前库存，已卖光（0）时默认补满 */
+export const getDefaultChannelStockInput = (channel: ChannelStockLike): number => {
+  const capacity = getChannelCapacity(channel);
+  const stock = Number(channel?.stock);
+  if (!Number.isFinite(stock) || stock < CHANNEL_STOCK_MIN) return capacity;
+  return Math.min(Math.trunc(stock), capacity);
+};
+

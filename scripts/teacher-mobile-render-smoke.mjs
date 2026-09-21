@@ -216,7 +216,7 @@ for (const combination of [
       if (!html.includes('按住说话')) {
         throw new Error('班主任助理底部语音输入控件缺失');
       }
-      if (combination.showStudentEvaluation && !combination.showClassEvaluation && !html.includes('本周覆盖了哪些学生？')) {
+      if (combination.showStudentEvaluation && !combination.showClassEvaluation && !html.includes('哪些学生需要我重点关注？')) {
         throw new Error('仅开通学生评价时应给出学生评价建议问题');
       }
       if (combination.showClassEvaluation && !html.includes('班级评比主要扣在哪？')) {

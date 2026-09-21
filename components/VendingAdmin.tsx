@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Product } from '../types';
-import { clampChannelStock, getChannelCapacity, isSingleItemChannel } from '../shared/vendingChannelCapacity';
+import { CHANNEL_STOCK_MIN, clampChannelStock, getChannelCapacity, getDefaultChannelStockInput, isSingleItemChannel } from '../shared/vendingChannelCapacity';
 import { getLiveShopProducts } from '../shared/shopProductLifecycle';
 import { 
     ChevronLeft, RefreshCw, Package,
@@ -202,7 +202,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
         if (hasExistingItem) {
             // 已有商品：自动选中当前商品，带入当前库存数量
             setAssignProductId(channel.productId);
-            setAssignInitialStock(channel.stock);
+            setAssignInitialStock(getDefaultChannelStockInput(channel));
         } else {
             // 空闲格：不预选商品，默认装填满仓容量（右柜电子锁单件格口固定 1 件）
             setAssignProductId(null);
@@ -825,7 +825,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                                         <span className="text-xs font-bold text-slate-600 pl-2">装填库存</span>
                                         <div className="flex items-center gap-3 pr-2">
                                             <button
-                                                onClick={() => setAssignInitialStock(prev => Math.max(1, prev - 1))}
+                                                onClick={() => setAssignInitialStock(prev => Math.max(CHANNEL_STOCK_MIN, prev - 1))}
                                                 className="w-8 h-8 rounded-xl bg-white border border-slate-200 shadow-xs text-slate-700 flex items-center justify-center font-bold active:scale-90"
                                             >
                                                 <Minus size={14} />
