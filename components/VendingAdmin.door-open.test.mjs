@@ -23,15 +23,32 @@ assert(!between.includes('handleOpenAssignModal'), '开门按钮不应再挂选�
 assert(src.includes('<div key={ch.id} className="min-h-0 flex flex-col gap-1">'), '每格应是「格子 + 外侧开门按钮」的纵向容器');
 
 // 4. 开门按钮的无障碍与防重复触发
-assert(src.includes('disabled={isPulsing}'), '开门指令下发期间按钮应禁用，避免重复触发');
+assert(src.includes('disabled={isUnlocking}'), '开门指令下发期间按钮应禁用，避免重复触发');
 assert(src.includes('号储物格门'), '开门按钮应有可读的无障碍说明（第几排第几格）');
 assert(src.includes('<span>开门</span>'), '开门按钮文案应为「开门」');
 
-// 5. 颜色语义：蓝色=可执行动作（与页面内其他操作同一套语言），琥珀色只留给「指令下发中」
+// 5. 机械指令的反馈语言全项目统一：右柜开门必须与左柜出货同一套（蓝色高亮 + 转动图标）
+const leftStart = src.indexOf("if (activeCabinet === 'left') {");
+assert(leftStart > 0, '未找到调试模式左柜出货分支');
+const leftCell = src.slice(leftStart, src.indexOf('} else {', leftStart));
+const rightStart = src.indexOf('// 右柜电锁开门调试');
+assert(rightStart > 0, '未找到调试模式右柜开门分支');
+const rightCell = src.slice(rightStart, src.indexOf('})}', rightStart));
+
+const ACTIVE_HIGHLIGHT = "? 'bg-blue-50 border-blue-400 ring-2 ring-blue-400/40'";
+const SPIN_ICON = '<RefreshCw size={13} className="animate-spin text-blue-600" />';
+assert(leftCell.includes(ACTIVE_HIGHLIGHT) && rightCell.includes(ACTIVE_HIGHLIGHT), '左柜出货与右柜开门的「指令下发中」必须是同一套蓝色高亮');
+assert(leftCell.includes(SPIN_ICON) && rightCell.includes(SPIN_ICON), '左柜出货与右柜开门的「指令下发中」必须是同一个转动图标');
+assert(!rightCell.includes('amber'), '调试模式右柜开门不应再出现琥珀色（琥珀只留给「门已开」等状态）');
+assert(!src.includes('text-amber-600 animate-pulse'), '开门动作不应再用琥珀色脉冲反馈');
+assert(!src.includes('isPulsing'), '不应残留旧命名 isPulsing（统称 isUnlocking）');
+
+// 6. 商品上架页的开门按钮：常态蓝色动作色，下发中同为蓝色 + 转动图标
 const doorBtnStart = src.indexOf('号储物格门');
 const doorBtn = src.slice(doorBtnStart, src.indexOf('</button>', doorBtnStart));
 assert(doorBtn.includes('bg-blue-50 border-blue-200 text-blue-700'), '开门按钮常态应为蓝色动作色');
-assert(!doorBtn.includes('bg-amber-50 border-amber-300 text-amber-700'), '开门按钮常态不应使用琥珀色，避免抢「门已开 / 库存预警」的状态色');
-assert(doorBtn.includes("isPulsing ? 'bg-amber-500"), '仅「指令下发中」用琥珀色实心反馈');
+assert(doorBtn.includes("isUnlocking ? 'bg-blue-100 border-blue-400 text-blue-700'"), '开门按钮下发中应是加深的蓝色');
+assert(doorBtn.includes('<RefreshCw size={is10Narrow ? 10 : 12} className="animate-spin shrink-0" />'), '开门按钮下发中也应显示转动图标');
+assert(!doorBtn.includes('amber'), '上架页开门按钮不应出现琥珀色');
 
-console.log('✅ 货柜机右柜逐格开门检查通过（无一键全开入口、开门按钮在格子外侧下方、点格子仍是选品上架、常态为蓝色动作色）');
+console.log('✅ 货柜机右柜逐格开门检查通过（无一键全开入口、按钮在格子外侧下方、机械指令反馈与左柜出货统一为蓝色 + 转动图标）');

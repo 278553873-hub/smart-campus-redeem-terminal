@@ -160,7 +160,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
     const [isDiagnosticsMode, setIsDiagnosticsMode] = useState<boolean>(false);
     // 瞬时触发动效状态（左柜推杆出货脉冲 + 右柜电磁锁开门脉冲）
     const [motorTestingIds, setMotorTestingIds] = useState<Record<number, boolean>>({});
-    const [doorPulsingIds, setDoorPulsingIds] = useState<Record<number, boolean>>({});
+    const [doorUnlockingIds, setDoorUnlockingIds] = useState<Record<number, boolean>>({});
 
     // 同步货道库存至全局商品库，实现真实数据闭环
     const syncProductsStock = (updatedChannels: ChannelItem[]) => {
@@ -308,9 +308,9 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
     // 右柜电磁锁开门：单格脉冲指令（无硬件状态回执，单向触发，不展示虚假标签与遮挡Toast）
     // 上架页每格下方的「开门」按钮与调试模式共用这一个动作
     const handleUnlockDoorPulse = (channelId: number) => {
-        setDoorPulsingIds(prev => ({ ...prev, [channelId]: true }));
+        setDoorUnlockingIds(prev => ({ ...prev, [channelId]: true }));
         setTimeout(() => {
-            setDoorPulsingIds(prev => ({ ...prev, [channelId]: false }));
+            setDoorUnlockingIds(prev => ({ ...prev, [channelId]: false }));
         }, 400);
     };
 
@@ -460,7 +460,8 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                                                 );
                                             } else {
                                                 // 右柜电锁开门调试（无硬件状态回执，固定展示开门动作，无已锁/已开虚假标签）
-                                                const isPulsing = Boolean(doorPulsingIds[ch.id]);
+                                                // 指令下发中的反馈与左柜出货统一：蓝色高亮 + 转动图标，琥珀色只留给「门已开」等状态
+                                                const isUnlocking = Boolean(doorUnlockingIds[ch.id]);
                                                 return (
                                                     <div
                                                         key={ch.id}
@@ -468,8 +469,8 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                                                         className={`rounded-lg border text-center transition-all flex flex-col justify-between select-none cursor-pointer active:scale-95 ${
                                                             is10Narrow ? 'p-0.5' : 'p-1'
                                                         } ${
-                                                            isPulsing
-                                                                ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/40 text-amber-900'
+                                                            isUnlocking
+                                                                ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-400/40'
                                                                 : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300'
                                                         }`}
                                                     >
@@ -478,11 +479,13 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                                                         </div>
 
                                                         <div className="py-0.5 min-h-0 flex-1 flex flex-col items-center justify-center">
-                                                            <div className={`text-xs font-bold flex items-center justify-center gap-0.5 whitespace-nowrap ${
-                                                                isPulsing ? 'text-amber-600' : 'text-blue-600'
-                                                            }`}>
-                                                                <Unlock size={is10Narrow ? 11 : 13} className={isPulsing ? 'text-amber-600 animate-pulse' : 'text-blue-500 shrink-0'} />
-                                                                <span className={is10Narrow ? 'text-[9px]' : 'text-xs'}>开门</span>
+                                                            <div className="text-xs font-bold text-blue-600 flex items-center justify-center gap-1">
+                                                                {isUnlocking ? (
+                                                                    <RefreshCw size={13} className="animate-spin text-blue-600" />
+                                                                ) : (
+                                                                    <Unlock size={is10Narrow ? 11 : 13} className="text-blue-500 shrink-0" />
+                                                                )}
+                                                                <span className={is10Narrow ? 'text-[10px]' : 'text-xs'}>开门</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -603,7 +606,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                                             const colNumber = ch.col;
                                             const is10Narrow = rowChannels.length === 10;
                                             const is2Big = rowChannels.length === 2;
-                                            const isPulsing = Boolean(doorPulsingIds[ch.id]);
+                                            const isUnlocking = Boolean(doorUnlockingIds[ch.id]);
                                             return (
                                                 <div key={ch.id} className="min-h-0 flex flex-col gap-1">
                                                     <div
@@ -677,11 +680,15 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                                                         <button
                                                             type="button"
                                                             onClick={() => handleUnlockDoorPulse(ch.id)}
-                                                            disabled={isPulsing}
+                                                            disabled={isUnlocking}
                                                             aria-label={'打开 ' + ch.row + ' 排 ' + ch.col + ' 号储物格门'}
-                                                            className={`shrink-0 rounded-md border font-bold flex items-center justify-center gap-1 transition-colors active:scale-95 ${is10Narrow ? 'h-6 text-[10px]' : 'h-7 text-[11px]'} ${isPulsing ? 'bg-amber-500 border-amber-500 text-white' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300'}`}
+                                                            className={`shrink-0 rounded-md border font-bold flex items-center justify-center gap-1 transition-colors active:scale-95 ${is10Narrow ? 'h-6 text-[10px]' : 'h-7 text-[11px]'} ${isUnlocking ? 'bg-blue-100 border-blue-400 text-blue-700' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300'}`}
                                                         >
-                                                            <Unlock size={is10Narrow ? 10 : 12} className={isPulsing ? 'animate-pulse' : ''} />
+                                                            {isUnlocking ? (
+                                                                <RefreshCw size={is10Narrow ? 10 : 12} className="animate-spin shrink-0" />
+                                                            ) : (
+                                                                <Unlock size={is10Narrow ? 10 : 12} className="shrink-0" />
+                                                            )}
                                                             <span>开门</span>
                                                         </button>
                                                     )}
