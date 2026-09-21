@@ -1445,17 +1445,17 @@ const ParentApp: React.FC<ParentAppProps> = ({
           </div>
         </section>
 
-        <section className="flex min-h-9 items-center justify-between gap-2 bg-[var(--pm-brand-reward-soft)] px-4 py-2" aria-label="本期预计可得">
+        <section className="flex min-h-9 items-center justify-between gap-1.5 bg-[var(--pm-brand-reward-soft)] px-4 py-2" aria-label="本期预计可得">
           <div className="flex min-w-0 items-baseline gap-1.5">
-            <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-medium text-[var(--pm-text-secondary)]">本期预计可得</span>
-            <span className="truncate text-[length:var(--pm-font-size-body)] font-bold tabular-nums text-[var(--pm-text-primary)]">
-              {totalReward.toFixed(2)}
+            <span className="min-w-0 truncate text-[length:var(--pm-font-size-compact)] font-medium text-[var(--pm-text-secondary)]">本期预计可得</span>
+            <span className="shrink-0 text-[length:var(--pm-font-size-body)] font-bold tabular-nums text-[var(--pm-text-primary)]">
+              {formatCoin(totalReward)}
             </span>
           </div>
           <p className="shrink-0 text-right text-[length:var(--pm-font-size-meta)] font-medium text-[var(--pm-text-secondary)]">
-            成长奖励 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{growthReward}</strong>
-            <span className="px-1 font-bold text-[var(--pm-brand-reward-strong)]" aria-hidden="true">+</span>
-            得分奖励 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{scoreReward}</strong>
+            成长 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{formatCoin(growthReward)}</strong>
+            <span className="px-0.5 font-bold text-[var(--pm-brand-reward-strong)]" aria-hidden="true">+</span>
+            得分 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{formatCoin(scoreReward)}</strong>
           </p>
         </section>
       </ParentCard>

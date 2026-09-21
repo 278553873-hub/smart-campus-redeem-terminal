@@ -130,6 +130,27 @@ for (const required of [
 
 forbidText(parentSource, 'statisticDate', '成长数据页的时间范围已由上方选择区表达，统计标题右侧不应重复显示时间。');
 
+// 预计可得摘要行：金额必须完整展示，宽度不足时先收缩左侧标签；明细文案保持紧凑的单行结构。
+for (const required of [
+  'aria-label="本期预计可得"',
+  '>本期预计可得</span>',
+  '{formatCoin(totalReward)}',
+  '{formatCoin(growthReward)}',
+  '{formatCoin(scoreReward)}',
+  '成长 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">',
+  '得分 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">',
+]) {
+  requireText(parentSource, required, `预计可得摘要行被破坏：${required}`);
+}
+forbidText(parentSource, '{totalReward.toFixed(2)}', '预计可得金额必须走统一格式化，不应写死两位小数。');
+forbidText(parentSource, '成长奖励 <strong', '预计可得明细应保持紧凑，不再重复「奖励」二字。');
+forbidText(parentSource, '得分奖励 <strong', '预计可得明细应保持紧凑，不再重复「奖励」二字。');
+forbidText(
+  parentSource,
+  'truncate text-[length:var(--pm-font-size-body)] font-bold tabular-nums',
+  '预计可得金额不允许省略号截断，宽度不足时应先让左侧标签收缩。',
+);
+
 for (const required of [
   '学生档案',
   '档案明细',
