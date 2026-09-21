@@ -196,12 +196,13 @@ const buildFocusAnswer = (
     };
 };
 
-/** 覆盖缺口：说清还有多少人没有被评价到，以及为什么会被漏掉。 */
+/** 覆盖缺口：说清还有多少人没有被评价到、具体是谁，以及为什么会被漏掉。 */
 const buildCoverageAnswer = (
     snapshot: StudentEvaluationSnapshot,
 ): StudentEvaluationAssistantAnswer => {
     const week = snapshot.week!;
     const uncovered = Math.max(0, week.total - week.covered);
+    const uncoveredNames = week.uncoveredStudents;
 
     return {
         answerType: 'student_coverage',
@@ -211,7 +212,9 @@ const buildCoverageAnswer = (
             { label: '覆盖学生', value: `${week.covered}人` },
             { label: '未被评价', value: `${uncovered}人`, tone: 'negative' },
         ],
-        breakdown: [],
+        breakdown: uncoveredNames.length > 0
+            ? [createBreakdown('没有被评价到的学生', uncoveredNames.join('、'), `共${uncoveredNames.length}人`)]
+            : [],
         analysis: [
             createInsight(
                 '为什么会被漏掉',
@@ -221,8 +224,8 @@ const buildCoverageAnswer = (
         suggestions: [
             createInsight('先扩大覆盖', '每周主动观察5位本周没有被评价到的同学，优先记录一个具体行为或变化。'),
         ],
-        context: createContext(snapshot, []),
-        evidenceRefs: [],
+        context: createContext(snapshot, uncoveredNames),
+        evidenceRefs: uncoveredNames,
         promptVersion: STUDENT_EVALUATION_CHAT_PROMPT_VERSION,
         dataSnapshotId: snapshot.id,
     };

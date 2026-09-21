@@ -23,6 +23,7 @@ assert.equal(snapshot.month.positive, 25);
 assert.equal(snapshot.month.negative, 34);
 assert.equal(snapshot.month.indicatorsUsed, 9);
 assert.equal(snapshot.week.focusStudents.length, 3, '本周重点学生应与报告中的学生洞察一致');
+assert.equal(snapshot.week.uncoveredStudents.length, 19, '未被评价名单应与「覆盖 41/60」的缺口人数一致');
 
 // 2. 默认三条问题只看学生和记录本身，不涉及老师自己的复盘
 assert.deepEqual([...STUDENT_EVALUATION_SUGGESTED_QUESTIONS], [
@@ -55,6 +56,24 @@ assert.equal(coverage.metrics[2].value, '19人');
 assert.equal(coverage.metrics[2].tone, 'negative', '没有被评价到的学生属于待改进项');
 assert.ok(coverage.analysis[0].body.includes('19位'), '分析应说明还有多少学生没有被评价到');
 
+// 4b. 覆盖缺口要能点到具体学生，而不是只给一个人数
+assert.equal(coverage.breakdown.length, 1, '覆盖回答应给出未被评价到的学生名单');
+const uncoveredNames = coverage.breakdown[0].value.split('、');
+assert.equal(uncoveredNames.length, 19, '名单人数应与未被评价人数一致');
+assert.equal(new Set(uncoveredNames).size, 19, '名单里不应出现重复姓名');
+assert.equal(coverage.breakdown[0].detail, '共19人');
+const focusNames = snapshot.week.focusStudents.flatMap(student => student.name.split('、'));
+assert.equal(
+    uncoveredNames.some(name => focusNames.includes(name)),
+    false,
+    '重点学生本周有记录，不应出现在未被评价名单里',
+);
+assert.equal(
+    uncoveredNames.every(name => snapshot.week.uncoveredStudents.includes(name)),
+    true,
+    '回答里的名单应与快照里的名单一致',
+);
+
 // 5. 记录倾向：表扬与待改进分别有多少、集中在哪
 const orientation = ask(2);
 assert.equal(orientation.answerType, 'student_orientation');
@@ -81,6 +100,7 @@ for (const [answerType, questions] of Object.entries(STUDENT_EVALUATION_FOLLOW_U
 // 8. 没有记录明细的班级只给汇总结论，不编造原因
 const insufficientSnapshot = getStudentEvaluationSnapshot('c_2025_1');
 assert.equal(insufficientSnapshot.week.hasRecordDetails, false);
+assert.deepEqual(insufficientSnapshot.week.uncoveredStudents, [], '没有记录明细的班级不编造学生名单');
 assert.equal(
     askStudentEvaluationQuestion({ question: STUDENT_EVALUATION_SUGGESTED_QUESTIONS[0], snapshot: insufficientSnapshot }).answerType,
     'unavailable',

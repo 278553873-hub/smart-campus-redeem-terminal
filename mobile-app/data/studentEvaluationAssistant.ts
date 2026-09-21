@@ -14,6 +14,7 @@ import {
     WEEKLY_ACTION_ADVICE_CURRENT_BY_CLASS,
     type WeeklyActionAdvicePageData,
 } from './weeklyActionAdvice.ts';
+import { getMockStudentNamesForClass } from './studentNamePool.ts';
 
 export interface StudentEvaluationFocusStudent {
     name: string;
@@ -30,6 +31,8 @@ export interface StudentEvaluationWeekSummary {
     total: number;
     evaluators: number;
     focusStudents: StudentEvaluationFocusStudent[];
+    /** 本周没有被评价到的学生姓名，用于把「还差多少人」说到具体是谁。 */
+    uncoveredStudents: string[];
     hasRecordDetails: boolean;
 }
 
@@ -70,24 +73,33 @@ const pickReview = (classId: string): TeacherEvaluationReviewPageData => (
     TEACHER_EVALUATION_REVIEW_CURRENT_BY_CLASS[classId] ?? CURRENT_TEACHER_EVALUATION_REVIEW
 );
 
-const buildWeekSummary = (weekAdvice: WeeklyActionAdvicePageData): StudentEvaluationWeekSummary => (
-    weekAdvice.status === 'generated'
-        ? {
-            label: '本周',
-            dataRange: weekAdvice.dataRange,
-            records: weekAdvice.overview.records,
-            covered: weekAdvice.overview.covered,
-            total: weekAdvice.overview.total,
-            evaluators: weekAdvice.overview.evaluators,
-            focusStudents: weekAdvice.content.studentInsights.map(insight => ({
-                name: insight.studentNames.join('、'),
-                finding: insight.finding,
-                evidence: insight.evidence,
-                verificationFocus: insight.verificationFocus,
-            })),
-            hasRecordDetails: true,
-        }
-        : {
+/**
+ * 演示数据只有汇总口径，没有逐条记录明细，
+ * 因此按班级花名册稳定取一批「本周没有被评价到」的学生，保证助理解答能点到具体的人。
+ */
+const buildUncoveredStudents = (
+    classId: string,
+    classSize: number,
+    uncoveredCount: number,
+    focusStudents: StudentEvaluationFocusStudent[],
+): string[] => {
+    if (uncoveredCount <= 0) return [];
+
+    const focusedNames = new Set(
+        focusStudents.flatMap(student => student.name.split('、').filter(Boolean)),
+    );
+
+    return getMockStudentNamesForClass(classId, classSize)
+        .filter(name => !focusedNames.has(name))
+        .slice(0, uncoveredCount);
+};
+
+const buildWeekSummary = (
+    classId: string,
+    weekAdvice: WeeklyActionAdvicePageData,
+): StudentEvaluationWeekSummary => {
+    if (weekAdvice.status !== 'generated') {
+        return {
             label: '本周',
             dataRange: weekAdvice.currentWeekRange,
             records: weekAdvice.currentWeek.records,
@@ -95,9 +107,36 @@ const buildWeekSummary = (weekAdvice: WeeklyActionAdvicePageData): StudentEvalua
             total: weekAdvice.currentWeek.total,
             evaluators: weekAdvice.currentWeek.evaluators,
             focusStudents: [],
+            uncoveredStudents: [],
             hasRecordDetails: false,
-        }
-);
+        };
+    }
+
+    const focusStudents: StudentEvaluationFocusStudent[] = weekAdvice.content.studentInsights.map(insight => ({
+        name: insight.studentNames.join('、'),
+        finding: insight.finding,
+        evidence: insight.evidence,
+        verificationFocus: insight.verificationFocus,
+    }));
+    const { records, covered, total, evaluators } = weekAdvice.overview;
+
+    return {
+        label: '本周',
+        dataRange: weekAdvice.dataRange,
+        records,
+        covered,
+        total,
+        evaluators,
+        focusStudents,
+        uncoveredStudents: buildUncoveredStudents(
+            classId,
+            total,
+            Math.max(0, total - covered),
+            focusStudents,
+        ),
+        hasRecordDetails: true,
+    };
+};
 
 const buildMonthSummary = (review: TeacherEvaluationReviewPageData): StudentEvaluationMonthSummary => (
     review.status === 'generated'
@@ -142,7 +181,7 @@ export const getStudentEvaluationSnapshot = (classId: string): StudentEvaluation
     return {
         id: ['student-evaluation', classId, weekAdvice.id, review.id].join('-'),
         classId,
-        week: buildWeekSummary(weekAdvice),
+        week: buildWeekSummary(classId, weekAdvice),
         month: buildMonthSummary(review),
     };
 };

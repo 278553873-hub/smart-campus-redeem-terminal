@@ -4,6 +4,7 @@ import { ASSETS } from './assets/images';
 import { getSystemStudentAvatar } from './assets/studentAvatarCatalog';
 import { FIRST_GRADE_CHINESE_GENERATED_REPORT } from './data/firstGradeChineseTermReport';
 import { STUDENT_TEAM_EXACT_SEARCH_DEMO } from './data/studentTeamDemo';
+import { getMockClassSeed, getMockStudentNameAt } from './data/studentNamePool';
 
 const GENERATE_MOCK_CLASSES = (): ClassInfo[] => {
   const grades = [
@@ -38,43 +39,19 @@ const GENERATE_MOCK_CLASSES = (): ClassInfo[] => {
 
 export const MOCK_CLASSES: ClassInfo[] = GENERATE_MOCK_CLASSES();
 
-const REALISTIC_NAMES = [
-  { n: '刘新宇', g: 'male' },
-  { n: '张子轩', g: 'male' }, { n: '王梓涵', g: 'female' }, { n: '李欣怡', g: 'female' }, { n: '刘浩宇', g: 'male' },
-  { n: '陈思睿', g: 'male' }, { n: '杨一诺', g: 'female' }, { n: '赵宇轩', g: 'male' }, { n: '黄子墨', g: 'male' },
-  { n: '周雨桐', g: 'female' }, { n: '吴佳泽', g: 'male' }, { n: '徐心怡', g: 'female' }, { n: '孙浩然', g: 'male' },
-  { n: '胡梓萱', g: 'female' }, { n: '朱宇航', g: 'male' }, { n: '高俊杰', g: 'male' }, { n: '林诗涵', g: 'female' },
-  { n: '何子涵', g: 'female' }, { n: '郭博文', g: 'male' }, { n: '马铭泽', g: 'male' }, { n: '罗依诺', g: 'female' },
-  { n: '梁皓轩', g: 'male' }, { n: '宋雨泽', g: 'male' }, { n: '郑若曦', g: 'female' }, { n: '谢子萱', g: 'female' },
-  { n: '韩宇辰', g: 'male' }, { n: '唐欣妍', g: 'female' }, { n: '冯子墨', g: 'male' }, { n: '于思涵', g: 'female' },
-  { n: '董浩宇', g: 'male' }, { n: '萧萧', g: 'female' }, { n: '程子睿', g: 'male' }, { n: '曹梦瑶', g: 'female' },
-  { n: '袁致远', g: 'male' }, { n: '邓诗琪', g: 'female' }, { n: '许皓', g: 'male' }, { n: '傅语嫣', g: 'female' },
-  { n: '沈煜祺', g: 'male' }, { n: '曾子瑶', g: 'female' }, { n: '彭云天', g: 'male' }, { n: '欧阳慕晴', g: 'female' }
-];
-
-// 基础姓名池用于生成学生
-const BASE_REALISTIC_NAMES = [
-  ...REALISTIC_NAMES,
-  { n: '李明', g: 'male' }, { n: '张伟', g: 'male' }, { n: '王刚', g: 'male' }, { n: '李丽', g: 'female' },
-  { n: '陈晨', g: 'female' }, { n: '刘方', g: 'male' }, { n: '赵敏', g: 'female' }, { n: '孙权', g: 'male' },
-  { n: '周瑜', g: 'male' }, { n: '诸葛亮', g: 'male' }, { n: '黄蓉', g: 'female' }, { n: '郭靖', g: 'male' },
-  { n: '杨过', g: 'male' }, { n: '小龙女', g: 'female' }, { n: '张无忌', g: 'male' }, { n: '韦小宝', g: 'male' },
-];
-
 export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
   const cls = MOCK_CLASSES.find(c => c.id === classId);
   if (!cls) return [];
 
   const count = cls.studentCount;
-  // Use a simple hash of classId to pick names consistently
-  const seed = classId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
   const classNumber = cls.id.split('_')[2] || '1';
+  const seed = getMockClassSeed(classId);
 
   return Array.from({ length: count }).map((_, i) => {
     const nameObj = classId === STUDENT_TEAM_EXACT_SEARCH_DEMO.classId && i === STUDENT_TEAM_EXACT_SEARCH_DEMO.studentIndex
       ? { n: STUDENT_TEAM_EXACT_SEARCH_DEMO.name, g: STUDENT_TEAM_EXACT_SEARCH_DEMO.gender }
-      : BASE_REALISTIC_NAMES[(seed + i) % BASE_REALISTIC_NAMES.length];
+      : getMockStudentNameAt(classId, i);
     const gender = nameObj.g as Student['gender'];
 
     return {

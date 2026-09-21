@@ -404,6 +404,16 @@ export const teacherAssistantRoleSemantic = {
     glowPrimary: 'rgba(224, 39, 39, 0.13)',
     glowSecondary: 'rgba(250, 156, 0, 0.11)',
     shadow: 'rgba(146, 34, 31, 0.18)',
+    // 玻璃卡表面与班主任助理同源（同一层级结构换角色色），
+    // 保证两个助理页共用一套对话气泡、输入控件和分组卡片样式。
+    glassSurface: 'rgba(255, 255, 255, 0.58)',
+    glassSurfaceStrong: 'rgba(255, 255, 255, 0.76)',
+    glassBorder: 'rgba(255, 255, 255, 0.88)',
+    glassShadow: 'rgba(92, 54, 40, 0.22)',
+    contextSurface: 'rgba(255, 255, 255, 0.72)',
+    dataSurface: 'rgba(255, 246, 239, 0.92)',
+    contextShadow: '0 2px 4px -2px rgba(92, 54, 40, 0.16), 0 20px 46px -28px rgba(92, 54, 40, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.82)',
+    dataShadow: '0 1px 3px rgba(146, 34, 31, 0.08), 0 12px 26px -18px rgba(146, 34, 31, 0.16)',
     // 校长助理统一页面使用覆盖状态栏、标题栏、内容区与底部安全区的连续整屏渐变，
     // 走向与班主任助理一致（角色主色 → 中性过渡 → 辅助色），保证两类助理视觉结构同源。
     pageGradientStart: '#FDECEA',
@@ -752,6 +762,14 @@ export const teacherBrandCssVariables = {
   '--tm-role-principal-page-gradient-start': teacherAssistantRoleSemantic.principal.pageGradientStart,
   '--tm-role-principal-page-gradient-middle': teacherAssistantRoleSemantic.principal.pageGradientMiddle,
   '--tm-role-principal-page-gradient-end': teacherAssistantRoleSemantic.principal.pageGradientEnd,
+  '--tm-role-principal-glass-surface': teacherAssistantRoleSemantic.principal.glassSurface,
+  '--tm-role-principal-glass-surface-strong': teacherAssistantRoleSemantic.principal.glassSurfaceStrong,
+  '--tm-role-principal-glass-border': teacherAssistantRoleSemantic.principal.glassBorder,
+  '--tm-role-principal-glass-shadow': teacherAssistantRoleSemantic.principal.glassShadow,
+  '--tm-role-principal-context-surface': teacherAssistantRoleSemantic.principal.contextSurface,
+  '--tm-role-principal-data-surface': teacherAssistantRoleSemantic.principal.dataSurface,
+  '--tm-role-principal-context-shadow': teacherAssistantRoleSemantic.principal.contextShadow,
+  '--tm-role-principal-data-shadow': teacherAssistantRoleSemantic.principal.dataShadow,
   '--tm-audience-guardian-primary': teacherAudienceSemantic.guardian.primary,
   '--tm-audience-guardian-strong': teacherAudienceSemantic.guardian.strong,
   '--tm-audience-guardian-soft': teacherAudienceSemantic.guardian.soft,
