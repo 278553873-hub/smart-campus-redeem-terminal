@@ -372,6 +372,8 @@ const GroupCard: React.FC<{
       ? `${visibleNames.join('、')}等${group.memberCount}名学生`
       : `${visibleNames.join('、')}，共${group.memberCount}名学生`
     : '暂无学生';
+  const level = getStudentPerformanceLevel(performance.netScore);
+  const showLevel = displaySettings.showLevel;
 
   const baseClassName = compact
     ? 'h-auto w-full rounded-lg px-5 gap-3'
@@ -392,10 +394,20 @@ const GroupCard: React.FC<{
       )}
       <img src={avatar.src} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover shadow-sm" style={{ width: layout.avatarSize, height: layout.avatarSize }} decoding="async" />
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 overflow-hidden pr-1">
-        <div className="min-w-0">
-          <h3 className="truncate font-bold leading-none text-slate-800" style={{ fontSize: layout.titleFontSize }}>
+        <div className="flex min-w-0 items-center gap-1">
+          <h3 className="min-w-0 truncate font-bold leading-none text-slate-800" style={{ fontSize: layout.titleFontSize }}>
             {group.name}
           </h3>
+          {showLevel && displaySettings.levelForm === 'icon' && (
+            <ClassroomStudentLevelIcons level={level} iconSize={layout.titleFontSize} />
+          )}
+          {showLevel && displaySettings.levelForm === 'score' && (
+            <ClassroomStudentLevelScore
+              netScore={performance.netScore}
+              fontSize={Math.round(layout.titleFontSize * 0.8)}
+              height={Math.round(layout.titleFontSize * 1.4)}
+            />
+          )}
         </div>
         <span className="line-clamp-2 min-w-0 font-bold leading-5 text-slate-500" style={{ fontSize: layout.memberFontSize }} title={memberNames.join('、')}>
             {memberSummary}
@@ -407,7 +419,6 @@ const GroupCard: React.FC<{
           ariaLabelPrefix="小组"
           showPraise={displaySettings.showPraise}
           showCriticism={displaySettings.showCriticism}
-          valueMode={displaySettings.valueMode}
           fontSize={layout.countFontSize}
           itemHeight={layout.countItemHeight}
           itemMinWidth={layout.countItemMinWidth}
@@ -479,10 +490,10 @@ const StudentCard: React.FC<{
   const showLevelScore = displaySettings.showLevel && displaySettings.levelForm === 'score';
   const visiblePerformanceLabels = [
     showPraise
-      ? (displaySettings.valueMode === 'score' ? `累计加分${performance.praiseScore}分` : `被表扬${performance.praiseCount}次`)
+      ? `累计表扬${performance.praiseScore}分`
       : '',
     showCriticism
-      ? (displaySettings.valueMode === 'score' ? `累计扣分${performance.criticismScore}分` : `被批评${performance.criticismCount}次`)
+      ? `累计待改进${performance.criticismScore}分`
       : '',
   ].filter(Boolean);
   const ariaLabel = [
@@ -534,7 +545,6 @@ const StudentCard: React.FC<{
             summary={performance}
             showPraise={showPraise}
             showCriticism={showCriticism}
-            valueMode={displaySettings.valueMode}
             fontSize={layout.countFontSize}
             itemHeight={layout.countItemHeight}
             itemMinWidth={layout.countItemMinWidth}
@@ -747,6 +757,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         const praiseScoreDelta = scoreChange > 0 ? scoreChange : 0;
         const criticismScoreDelta = scoreChange < 0 ? Math.abs(scoreChange) : 0;
         next[groupId] = {
+          netScore: current.netScore + (mode === 'apply' ? scoreChange : -scoreChange),
           praiseCount: Math.max(0, current.praiseCount + (mode === 'apply' ? praiseDelta : -praiseDelta)),
           criticismCount: Math.max(0, current.criticismCount + (mode === 'apply' ? criticismDelta : -criticismDelta)),
           praiseScore: Math.max(0, current.praiseScore + (mode === 'apply' ? praiseScoreDelta : -praiseScoreDelta)),
@@ -1280,7 +1291,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     };
     setPerformanceByGroupId(previous => ({
       ...previous,
-      [nextGroup.id]: { praiseCount: 0, criticismCount: 0, praiseScore: 0, criticismScore: 0 },
+      [nextGroup.id]: { netScore: 0, praiseCount: 0, criticismCount: 0, praiseScore: 0, criticismScore: 0 },
     }));
 
     if (groupEditorDraft.mode === 'new-plan') {
@@ -2401,57 +2412,55 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                 <Eye size={classroomDisplay.moreActions.iconSize} /> {viewMode === 'group' ? '小组卡片展示' : '学生卡片展示'}
               </div>
               <div className="space-y-5">
-                {viewMode === 'student' && (
-                  <div className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50/60 px-4">
-                    <div className="flex items-center justify-between gap-4" style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
-                      <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>显示等级</span>
-                      <Switch
-                        checked={studentCardDisplaySettings.showLevel}
-                        onChange={showLevel => setStudentCardDisplaySettings(current => ({ ...current, showLevel }))}
-                        aria-label="显示学生等级"
-                      />
-                    </div>
-                    {studentCardDisplaySettings.showLevel && (
-                      <div className="border-t border-slate-200/70 pb-4 pt-3">
-                        <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>等级形式</div>
-                        <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="等级展示形式">
-                          {[
-                            { value: 'icon' as const, label: '图标' },
-                            { value: 'score' as const, label: '分值' },
-                          ].map(item => (
-                            <button
-                              key={item.value}
-                              type="button"
-                              aria-pressed={studentCardDisplaySettings.levelForm === item.value}
-                              onClick={() => setStudentCardDisplaySettings(current => ({ ...current, levelForm: item.value }))}
-                              className={`rounded-lg px-3 font-bold transition-colors ${studentCardDisplaySettings.levelForm === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                              style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.moreActions.bodyFontSize }}
-                            >
-                              {item.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
                 <div className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50/60 px-4">
                   <div className="flex items-center justify-between gap-4" style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
-                    <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>显示加扣分</span>
+                    <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>显示等级</span>
+                    <Switch
+                      checked={activeCardDisplaySettings.showLevel}
+                      onChange={showLevel => updateActiveCardDisplaySettings({ showLevel })}
+                      aria-label={viewMode === 'group' ? '显示小组等级' : '显示学生等级'}
+                    />
+                  </div>
+                  {activeCardDisplaySettings.showLevel && (
+                    <div className="border-t border-slate-200/70 pb-4 pt-3">
+                      <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>等级形式</div>
+                      <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="等级展示形式">
+                        {[
+                          { value: 'icon' as const, label: '图标' },
+                          { value: 'score' as const, label: '分值' },
+                        ].map(item => (
+                          <button
+                            key={item.value}
+                            type="button"
+                            aria-pressed={activeCardDisplaySettings.levelForm === item.value}
+                            onClick={() => updateActiveCardDisplaySettings({ levelForm: item.value })}
+                            className={`rounded-lg px-3 font-bold transition-colors ${activeCardDisplaySettings.levelForm === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.moreActions.bodyFontSize }}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50/60 px-4">
+                  <div className="flex items-center justify-between gap-4" style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
+                    <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>显示表扬/待改进</span>
                     <Switch
                       checked={activeCardDisplaySettings.showEvaluation}
                       onChange={showEvaluation => updateActiveCardDisplaySettings({ showEvaluation })}
-                      aria-label={viewMode === 'group' ? '显示小组加扣分' : '显示学生加扣分'}
+                      aria-label={viewMode === 'group' ? '显示小组表扬/待改进' : '显示学生表扬/待改进'}
                     />
                   </div>
                   {activeCardDisplaySettings.showEvaluation && (
                     <div className="border-t border-slate-200/70 pb-4 pt-3">
                       <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>显示内容</div>
-                      <div className="grid grid-cols-3 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="加扣分显示内容">
+                      <div className="grid grid-cols-3 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="表扬/待改进显示内容">
                         {[
                           { value: 'all' as const, label: '全部' },
-                          { value: 'praise' as const, label: '加分' },
-                          { value: 'criticism' as const, label: '扣分' },
+                          { value: 'praise' as const, label: '表扬' },
+                          { value: 'criticism' as const, label: '待改进' },
                         ].map(item => (
                           <button
                             key={item.value}
@@ -2468,26 +2477,6 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                           </button>
                         ))}
                       </div>
-                      <div className="mt-4 border-t border-slate-200/70 pt-3">
-                        <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>数值形式</div>
-                        <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="加扣分显示方式">
-                          {[
-                            { value: 'count' as const, label: '次数' },
-                            { value: 'score' as const, label: '分值' },
-                          ].map(item => (
-                            <button
-                              key={item.value}
-                              type="button"
-                              aria-pressed={activeCardDisplaySettings.valueMode === item.value}
-                              onClick={() => updateActiveCardDisplaySettings({ valueMode: item.value })}
-                              className={`rounded-lg px-3 font-bold transition-colors ${activeCardDisplaySettings.valueMode === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                              style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.moreActions.bodyFontSize }}
-                            >
-                              {item.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -2501,7 +2490,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
               <button type="button" onClick={() => startRecountSelection(viewMode)} className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 text-left transition hover:border-blue-300 hover:bg-blue-50/40" style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
                 <span>
                   <span className="block font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>重新计数</span>
-                  <span className="mt-1 block font-medium text-slate-400" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>从现在开始重新统计表扬次数和批评次数</span>
+                  <span className="mt-1 block font-medium text-slate-400" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>从现在开始重新统计表扬次数和待改进次数</span>
                 </span>
                 <ChevronRight size={18} className="text-slate-300" />
               </button>
@@ -2518,7 +2507,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
               <div className="flex shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600" style={{ width: classroomDisplay.modal.buttonHeight, height: classroomDisplay.modal.buttonHeight }}><RotateCcw size={classroomDisplay.modal.iconSize} /></div>
               <div>
                 <h3 className="font-black text-slate-800" style={{ fontSize: classroomDisplay.modal.titleFontSize }}>确认重新计数</h3>
-                <p className="mt-2 font-medium leading-6 text-slate-500" style={{ fontSize: classroomDisplay.modal.bodyFontSize }}>已选择 {recountSelectedCount} {recountTarget === 'group' ? '个小组' : '名学生'}。重新计数后，表扬次数和批评次数从 0 开始，已有评价记录和积分不受影响。</p>
+                <p className="mt-2 font-medium leading-6 text-slate-500" style={{ fontSize: classroomDisplay.modal.bodyFontSize }}>已选择 {recountSelectedCount} {recountTarget === 'group' ? '个小组' : '名学生'}。重新计数后，表扬次数和待改进次数从 0 开始，已有评价记录和积分不受影响。</p>
               </div>
             </div>
             <label className="mt-5 flex cursor-pointer select-none items-center gap-3 rounded-xl bg-slate-50 px-3 font-bold text-slate-700" style={{ minHeight: classroomDisplay.modal.buttonHeight + 4, fontSize: classroomDisplay.modal.bodyFontSize }}>
@@ -2894,13 +2883,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] custom-scrollbar">
             {!isManagerMode ? (
-              <div className="space-y-8" style={{ padding: `${classroomDisplay.evaluation.contentPadding}px` }}>
+              <div className="flex flex-col" style={{ gap: `${classroomDisplay.evaluation.categoryGap}px`, padding: `${classroomDisplay.evaluation.contentPadding}px` }}>
                 {categories.map((cat, idx) => {
                   const catOptions = options.filter(o => o.type === evalTab && o.category === cat);
                   if (catOptions.length === 0) return null;
                   const indicatorColors = ['bg-blue-500', 'bg-violet-500', 'bg-orange-500', 'bg-pink-500', 'bg-emerald-500'];
                   return (
-                    <div key={cat} className="space-y-4" style={{ gap: classroomDisplay.evaluation.categoryGap }}>
+                    <div key={cat} className="flex flex-col" style={{ gap: `${classroomDisplay.evaluation.categoryHeaderGap}px` }}>
                       <div className="flex items-center gap-2.5 ml-1"><div className={`w-1.5 rounded-full ${indicatorColors[idx % indicatorColors.length]}`} style={{ height: classroomDisplay.evaluation.categoryFontSize + 4 }} /><span className="font-black text-slate-400 uppercase tracking-widest" style={{ fontSize: classroomDisplay.evaluation.categoryFontSize }}>{cat}</span></div>
                       <div
                         className="grid w-full"
@@ -2967,20 +2956,18 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
           className={`bg-white rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)] border border-white relative overflow-hidden flex flex-col transition-all duration-500 ${randomModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
           style={{ ...sidebarTiming, width: `min(${classroomDisplay.randomPicker.modalWidth}px, calc(100vw - 32px))`, height: `min(${classroomDisplay.randomPicker.modalHeight}px, calc(100vh - 32px))` }}
         >
-          <button onClick={() => { if (!isRolling) closeRandomModal(); }} disabled={isRolling} className={`absolute z-50 flex items-center justify-center rounded-xl transition-all border ${isRolling ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed' : 'bg-white text-slate-400 border-slate-100 hover:text-blue-600 hover:border-blue-200 active:scale-95'}`} style={{ top: classroomDisplay.randomPicker.headerPadding - 12, right: classroomDisplay.randomPicker.headerPadding - 12, width: classroomDisplay.randomPicker.closeButtonSize, height: classroomDisplay.randomPicker.closeButtonSize }}><X size={classroomDisplay.randomPicker.closeIconSize} strokeWidth={3} /></button>
+          <button onClick={() => { if (!isRolling) closeRandomModal(); }} disabled={isRolling} className={`absolute z-50 flex items-center justify-center rounded-xl transition-all border ${isRolling ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed' : 'bg-white text-slate-400 border-slate-100 hover:text-blue-600 hover:border-blue-200 active:scale-95'}`} style={{ top: (classroomDisplay.randomPicker.headerHeight - classroomDisplay.randomPicker.closeButtonSize) / 2, right: classroomDisplay.randomPicker.headerPadding - 12, width: classroomDisplay.randomPicker.closeButtonSize, height: classroomDisplay.randomPicker.closeButtonSize }}><X size={classroomDisplay.randomPicker.closeIconSize} strokeWidth={3} /></button>
           
-          <div className="shrink-0" style={{ padding: `${classroomDisplay.randomPicker.headerPadding}px ${classroomDisplay.randomPicker.headerPadding}px ${Math.round(classroomDisplay.randomPicker.headerPadding / 2)}px` }}>
-            <div className="flex flex-col items-center gap-2 text-center">
-              <h2 className="font-black text-slate-800 tracking-tight" style={{ fontSize: classroomDisplay.randomPicker.titleFontSize }}>随机点名</h2>
-            </div>
+          <div className="shrink-0 flex items-center justify-center" style={{ height: classroomDisplay.randomPicker.headerHeight, padding: `0 ${classroomDisplay.randomPicker.headerPadding}px` }}>
+            <h2 className="font-black text-slate-800 tracking-tight" style={{ fontSize: classroomDisplay.randomPicker.titleFontSize }}>随机点名</h2>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar flex flex-col justify-center" style={{ padding: classroomDisplay.randomPicker.contentPadding }}>
+          <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar flex flex-col" style={{ padding: classroomDisplay.randomPicker.contentPadding }}>
             <div
-              className="grid justify-items-center content-center"
+              className="grid justify-items-center my-auto"
               style={{
                 gap: `${classroomDisplay.randomPicker.gap}px`,
-                gridTemplateColumns: `repeat(${randomCount === 1 ? 1 : randomCount <= 4 ? 2 : 3}, minmax(0, 1fr))`,
+                gridTemplateColumns: `repeat(${randomCount === 1 ? 1 : viewMode === 'group' || randomCount <= 4 ? 2 : 3}, minmax(0, 1fr))`,
               }}
             >
                 {[...Array(randomCount)].map((_, idx) => {
@@ -3058,7 +3045,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
             </div>
           </div>
 
-          <div className="flex items-center justify-center shrink-0 border-t border-slate-100/50 bg-white/50 backdrop-blur-sm" style={{ minHeight: classroomDisplay.randomPicker.footerHeight, padding: `16px ${classroomDisplay.randomPicker.contentPadding}px` }}>
+          <div className="flex items-center justify-center shrink-0 border-t border-slate-100/50 bg-white/50 backdrop-blur-sm" style={{ minHeight: classroomDisplay.randomPicker.footerHeight, padding: `12px ${classroomDisplay.randomPicker.contentPadding}px` }}>
             {!isRolling && hasRandomResults ? (
               <div className="flex flex-col items-center gap-4 w-full animate-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center bg-slate-100/80 p-1 rounded-2xl gap-1.5 shadow-inner">

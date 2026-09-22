@@ -27,7 +27,7 @@ requireText('updateGroupPerformance(targetGroupIds, scoreChange)', '小组评价
 requireText("updateGroupPerformance(record.groupIds ?? [], record.scoreChange, 'revert')", '撤销小组评价时应同步恢复小组统计');
 requireText('groupIds: [matchedGroup.id]', '语音识别到小组时应保留小组目标');
 requireText('updateGroupPerformance(targets.groupIds ?? [], scoreChange)', '语音小组评价应更新小组统计');
-requireText("[nextGroup.id]: { praiseCount: 0, criticismCount: 0, praiseScore: 0, criticismScore: 0 }", '新建小组统计必须从零开始');
+requireText("[nextGroup.id]: { netScore: 0, praiseCount: 0, criticismCount: 0, praiseScore: 0, criticismScore: 0 }", '新建小组统计必须从零开始');
 requireText('getClassroomDisplayConfig', '小组相关侧栏应读取统一课堂展示配置');
 requireText('const groupDrawerWidth = `min(${classroomDisplay.groupDrawerWidth}px, calc(100vw - 32px))`', '小组抽屉必须根据展示档位适配窄视口');
 requireText('width={groupDrawerWidth}', '小组抽屉必须使用统一侧栏宽度');

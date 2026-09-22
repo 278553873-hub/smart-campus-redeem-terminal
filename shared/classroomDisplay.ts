@@ -133,6 +133,7 @@ export interface ClassroomDisplayConfig {
     closeIconSize: number;
     contentPadding: number;
     categoryGap: number;
+    categoryHeaderGap: number;
   };
   toolbar: {
     height: number;
@@ -167,6 +168,7 @@ export interface ClassroomDisplayConfig {
     closeButtonSize: number;
     closeIconSize: number;
     headerPadding: number;
+    headerHeight: number;
     contentPadding: number;
     footerHeight: number;
     statusFontSize: number;
@@ -234,9 +236,9 @@ const DISPLAY_CONFIGS: Record<ResolvedClassroomDisplayMode, ClassroomDisplayConf
     historySidebar: { width: 400, titleFontSize: 20, bodyFontSize: 15, metaFontSize: 13, controlHeight: 36, iconSize: 18 },
     moreActions: { titleFontSize: 16, sectionTitleFontSize: 14, rowHeight: 64, bodyFontSize: 14, descriptionFontSize: 12, iconSize: 15 },
     modal: { titleFontSize: 18, bodyFontSize: 14, labelFontSize: 14, buttonHeight: 44, buttonFontSize: 14, inputHeight: 36, iconSize: 21, avatarOptionMinWidth: 72 },
-    evaluation: { modalWidth: 840, optionColumns: 5, optionGap: 16, optionHeight: 56, optionFontSize: 15, titleFontSize: 18, tabFontSize: 14, categoryFontSize: 13, managerColumns: 3, managerOptionHeight: 56, headerHeight: 72, headerPadding: 24, avatarSize: 44, avatarIconSize: 20, studentNoFontSize: 14, selectionHintFontSize: 12, managerHeight: 480, managerSidebarWidth: 200, managerHeaderFontSize: 11, managerRowHeight: 52, managerMetaFontSize: 10, managerControlSize: 24, closeButtonSize: 36, closeIconSize: 20, contentPadding: 32, categoryGap: 16 },
+    evaluation: { modalWidth: 840, optionColumns: 5, optionGap: 16, optionHeight: 56, optionFontSize: 15, titleFontSize: 18, tabFontSize: 14, categoryFontSize: 13, managerColumns: 3, managerOptionHeight: 56, headerHeight: 72, headerPadding: 24, avatarSize: 44, avatarIconSize: 20, studentNoFontSize: 14, selectionHintFontSize: 12, managerHeight: 480, managerSidebarWidth: 200, managerHeaderFontSize: 11, managerRowHeight: 52, managerMetaFontSize: 10, managerControlSize: 24, closeButtonSize: 36, closeIconSize: 20, contentPadding: 32, categoryGap: 16, categoryHeaderGap: 8 },
     toolbar: { height: 48, fontSize: 14, iconSize: 18, countFontSize: 12, groupPlanMetaFontSize: 12, utilityMinWidth: 220, groupPlanMinWidth: 240, groupPlanMenuWidth: 360, menuButtonSize: 40, groupPlanActionMenuWidth: 144, groupPlanActionItemHeight: 32, groupPlanActionFontSize: 14, groupPlanActionIconSize: 14, groupPlanCreateIconSize: 15 },
-    randomPicker: { modalWidth: 840, modalHeight: 540, studentSlotWidth: 180, studentSlotHeight: 195, groupSlotWidth: 300, groupSlotHeight: 140, gap: 48, titleFontSize: 30, slotLabelFontSize: 12, slotRadius: 32, slotPadding: 12, emptyIconContainerSize: 40, emptyIconSize: 24, closeButtonSize: 40, closeIconSize: 20, headerPadding: 40, contentPadding: 40, footerHeight: 90, statusFontSize: 14 },
+    randomPicker: { modalWidth: 840, modalHeight: 540, studentSlotWidth: 180, studentSlotHeight: 195, groupSlotWidth: 300, groupSlotHeight: 140, gap: 48, titleFontSize: 30, slotLabelFontSize: 12, slotRadius: 32, slotPadding: 12, emptyIconContainerSize: 40, emptyIconSize: 24, closeButtonSize: 40, closeIconSize: 20, headerPadding: 40, headerHeight: 56, contentPadding: 40, footerHeight: 64, statusFontSize: 14 },
     quickActions: { dockSize: 64, actionSize: 48, iconSize: 32, fanOffsetX: 21, fanOffsetY: 77, assistantOffsetX: 69, assistantOffsetY: 40, statusTitleFontSize: 12, statusBodyFontSize: 16, statusOffset: 76, statusWidth: 320 },
     groupDrawerWidth: 560,
     formModalWidth: 520,
@@ -273,9 +275,9 @@ const DISPLAY_CONFIGS: Record<ResolvedClassroomDisplayMode, ClassroomDisplayConf
     historySidebar: { width: 480, titleFontSize: 24, bodyFontSize: 17, metaFontSize: 15, controlHeight: 44, iconSize: 22 },
     moreActions: { titleFontSize: 18, sectionTitleFontSize: 16, rowHeight: 76, bodyFontSize: 16, descriptionFontSize: 14, iconSize: 18 },
     modal: { titleFontSize: 21, bodyFontSize: 16, labelFontSize: 16, buttonHeight: 52, buttonFontSize: 16, inputHeight: 44, iconSize: 24, avatarOptionMinWidth: 88 },
-    evaluation: { modalWidth: 960, optionColumns: 4, optionGap: 16, optionHeight: 68, optionFontSize: 17, titleFontSize: 20, tabFontSize: 16, categoryFontSize: 15, managerColumns: 3, managerOptionHeight: 64, headerHeight: 88, headerPadding: 32, avatarSize: 52, avatarIconSize: 24, studentNoFontSize: 16, selectionHintFontSize: 14, managerHeight: 540, managerSidebarWidth: 240, managerHeaderFontSize: 13, managerRowHeight: 64, managerMetaFontSize: 12, managerControlSize: 32, closeButtonSize: 44, closeIconSize: 24, contentPadding: 40, categoryGap: 20 },
+    evaluation: { modalWidth: 960, optionColumns: 4, optionGap: 16, optionHeight: 68, optionFontSize: 17, titleFontSize: 20, tabFontSize: 16, categoryFontSize: 15, managerColumns: 3, managerOptionHeight: 64, headerHeight: 88, headerPadding: 32, avatarSize: 52, avatarIconSize: 24, studentNoFontSize: 16, selectionHintFontSize: 14, managerHeight: 540, managerSidebarWidth: 240, managerHeaderFontSize: 13, managerRowHeight: 64, managerMetaFontSize: 12, managerControlSize: 32, closeButtonSize: 44, closeIconSize: 24, contentPadding: 40, categoryGap: 20, categoryHeaderGap: 10 },
     toolbar: { height: 56, fontSize: 16, iconSize: 20, countFontSize: 14, groupPlanMetaFontSize: 14, utilityMinWidth: 248, groupPlanMinWidth: 280, groupPlanMenuWidth: 420, menuButtonSize: 48, groupPlanActionMenuWidth: 160, groupPlanActionItemHeight: 40, groupPlanActionFontSize: 16, groupPlanActionIconSize: 16, groupPlanCreateIconSize: 17 },
-    randomPicker: { modalWidth: 1000, modalHeight: 620, studentSlotWidth: 220, studentSlotHeight: 235, groupSlotWidth: 360, groupSlotHeight: 160, gap: 56, titleFontSize: 34, slotLabelFontSize: 14, slotRadius: 28, slotPadding: 16, emptyIconContainerSize: 48, emptyIconSize: 28, closeButtonSize: 48, closeIconSize: 24, headerPadding: 48, contentPadding: 48, footerHeight: 108, statusFontSize: 16 },
+    randomPicker: { modalWidth: 1000, modalHeight: 620, studentSlotWidth: 220, studentSlotHeight: 235, groupSlotWidth: 360, groupSlotHeight: 160, gap: 56, titleFontSize: 34, slotLabelFontSize: 14, slotRadius: 28, slotPadding: 16, emptyIconContainerSize: 48, emptyIconSize: 28, closeButtonSize: 48, closeIconSize: 24, headerPadding: 48, headerHeight: 64, contentPadding: 48, footerHeight: 72, statusFontSize: 16 },
     quickActions: { dockSize: 76, actionSize: 58, iconSize: 38, fanOffsetX: 25, fanOffsetY: 90, assistantOffsetX: 82, assistantOffsetY: 47, statusTitleFontSize: 14, statusBodyFontSize: 19, statusOffset: 90, statusWidth: 360 },
     groupDrawerWidth: 640,
     formModalWidth: 560,
@@ -312,9 +314,9 @@ const DISPLAY_CONFIGS: Record<ResolvedClassroomDisplayMode, ClassroomDisplayConf
     historySidebar: { width: 560, titleFontSize: 28, bodyFontSize: 19, metaFontSize: 17, controlHeight: 52, iconSize: 26 },
     moreActions: { titleFontSize: 20, sectionTitleFontSize: 18, rowHeight: 88, bodyFontSize: 18, descriptionFontSize: 16, iconSize: 22 },
     modal: { titleFontSize: 24, bodyFontSize: 18, labelFontSize: 18, buttonHeight: 60, buttonFontSize: 18, inputHeight: 52, iconSize: 28, avatarOptionMinWidth: 104 },
-    evaluation: { modalWidth: 1120, optionColumns: 4, optionGap: 20, optionHeight: 78, optionFontSize: 19, titleFontSize: 22, tabFontSize: 18, categoryFontSize: 17, managerColumns: 3, managerOptionHeight: 72, headerHeight: 104, headerPadding: 40, avatarSize: 60, avatarIconSize: 28, studentNoFontSize: 18, selectionHintFontSize: 16, managerHeight: 600, managerSidebarWidth: 280, managerHeaderFontSize: 15, managerRowHeight: 76, managerMetaFontSize: 14, managerControlSize: 40, closeButtonSize: 52, closeIconSize: 28, contentPadding: 48, categoryGap: 24 },
+    evaluation: { modalWidth: 1120, optionColumns: 4, optionGap: 20, optionHeight: 78, optionFontSize: 19, titleFontSize: 22, tabFontSize: 18, categoryFontSize: 17, managerColumns: 3, managerOptionHeight: 72, headerHeight: 104, headerPadding: 40, avatarSize: 60, avatarIconSize: 28, studentNoFontSize: 18, selectionHintFontSize: 16, managerHeight: 600, managerSidebarWidth: 280, managerHeaderFontSize: 15, managerRowHeight: 76, managerMetaFontSize: 14, managerControlSize: 40, closeButtonSize: 52, closeIconSize: 28, contentPadding: 48, categoryGap: 24, categoryHeaderGap: 12 },
     toolbar: { height: 64, fontSize: 18, iconSize: 22, countFontSize: 16, groupPlanMetaFontSize: 16, utilityMinWidth: 280, groupPlanMinWidth: 320, groupPlanMenuWidth: 480, menuButtonSize: 56, groupPlanActionMenuWidth: 176, groupPlanActionItemHeight: 48, groupPlanActionFontSize: 18, groupPlanActionIconSize: 18, groupPlanCreateIconSize: 19 },
-    randomPicker: { modalWidth: 1160, modalHeight: 700, studentSlotWidth: 250, studentSlotHeight: 270, groupSlotWidth: 420, groupSlotHeight: 180, gap: 64, titleFontSize: 38, slotLabelFontSize: 16, slotRadius: 28, slotPadding: 20, emptyIconContainerSize: 56, emptyIconSize: 32, closeButtonSize: 56, closeIconSize: 28, headerPadding: 56, contentPadding: 56, footerHeight: 124, statusFontSize: 18 },
+    randomPicker: { modalWidth: 1160, modalHeight: 700, studentSlotWidth: 250, studentSlotHeight: 270, groupSlotWidth: 420, groupSlotHeight: 180, gap: 64, titleFontSize: 38, slotLabelFontSize: 16, slotRadius: 28, slotPadding: 20, emptyIconContainerSize: 56, emptyIconSize: 32, closeButtonSize: 56, closeIconSize: 28, headerPadding: 56, headerHeight: 72, contentPadding: 56, footerHeight: 80, statusFontSize: 18 },
     quickActions: { dockSize: 88, actionSize: 68, iconSize: 44, fanOffsetX: 29, fanOffsetY: 104, assistantOffsetX: 95, assistantOffsetY: 54, statusTitleFontSize: 16, statusBodyFontSize: 22, statusOffset: 104, statusWidth: 420 },
     groupDrawerWidth: 720,
     formModalWidth: 620,

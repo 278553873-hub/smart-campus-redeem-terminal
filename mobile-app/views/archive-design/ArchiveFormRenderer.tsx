@@ -1,8 +1,9 @@
 import React from 'react';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Star } from 'lucide-react';
 import {
   getArchiveSelectedOptions,
   formatArchiveAnswer,
+  getArchiveMultiFillValues,
   isArchiveAnswerFilled,
   isArchiveChoiceAnswer,
   type ArchiveAnswer,
@@ -62,11 +63,36 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
           </div>
         );
       }
+      if (field.type === 'rating') {
+        const min = settings.ratingMin ?? 1;
+        const max = settings.ratingMax ?? 5;
+        return (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {Array.from({ length: max - min + 1 }, (_, index) => min + index).map(value => (
+              <span key={value} className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-tertiary)]">
+                <Star className="h-4 w-4" />
+              </span>
+            ))}
+          </div>
+        );
+      }
+      if (field.type === 'multi_fill') {
+        return (
+          <div className="space-y-2">
+            {(field.subFields ?? []).map((subField, subFieldIndex) => (
+              <div key={subField.id} className="flex min-h-12 items-center justify-between gap-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">
+                <span className="min-w-0 flex-1">{subField.label || `填空项${subFieldIndex + 1}`}</span>
+                <span className="shrink-0 text-[var(--tm-input-placeholder)]">请输入</span>
+              </div>
+            ))}
+          </div>
+        );
+      }
       return (
         <div className="space-y-2">
           {field.options.map((option, optionIndex) => (
             <div key={`${field.id}-${optionIndex}`} className="flex min-h-12 items-center gap-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
-              <span className={`h-5 w-5 shrink-0 border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] ${field.type === 'single-select' ? 'rounded-full' : 'rounded-[5px]'}`} aria-hidden="true" />
+              <span className={`h-5 w-5 shrink-0 border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] ${field.type === 'single' ? 'rounded-full' : 'rounded-[5px]'}`} aria-hidden="true" />
               <span className="min-w-0 flex-1">{option}</span>
               {field.customAnswerOptions?.includes(option) && (
                 <span className="shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] px-2 py-0.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-tertiary)]">可填写</span>
@@ -81,7 +107,51 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
     if (readonlyMode) {
       return (
         <div className={`${readonlyFieldClass} min-h-12 py-3 leading-6 ${isArchiveAnswerFilled(answer) ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-input-readonly-text)]'}`}>
-          {isArchiveAnswerFilled(answer) ? formatArchiveAnswer(answer) : '未填写'}
+          {isArchiveAnswerFilled(answer) ? formatArchiveAnswer(answer, field) : '未填写'}
+        </div>
+      );
+    }
+    if (field.type === 'rating') {
+      const min = settings.ratingMin ?? 1;
+      const max = settings.ratingMax ?? 5;
+      const selectedValue = Number(answer) || 0;
+      return (
+        <div className="grid grid-cols-5 gap-2">
+          {Array.from({ length: max - min + 1 }, (_, index) => min + index).map(value => {
+            const selected = value <= selectedValue;
+            return (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={selected}
+                aria-label={`${value}分`}
+                onClick={() => updateAnswers({ ...answers, [field.semanticKey]: String(value) })}
+                className={`flex min-h-12 items-center justify-center gap-1 rounded-[var(--tm-radius-control)] border transition ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
+              >
+                <Star className={`h-4 w-4 ${selected ? 'fill-current' : ''}`} />
+                <span className="text-[length:var(--tm-font-size-badge)] font-semibold">{value}</span>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+    if (field.type === 'multi_fill') {
+      const fillValues = getArchiveMultiFillValues(answer);
+      return (
+        <div className="space-y-2">
+          {(field.subFields ?? []).map(subField => (
+            <label key={subField.id} className="block">
+              <span className="mb-1 block text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">{subField.label}{subField.required && <span className="ml-0.5 text-[var(--tm-status-negative-strong)]">*</span>}</span>
+              <input
+                value={fillValues[subField.id] ?? ''}
+                onChange={event => updateAnswers({ ...answers, [field.semanticKey]: { fillValues: { ...fillValues, [subField.id]: event.target.value } } })}
+                maxLength={120}
+                placeholder="请输入"
+                className={`${inputClass} h-12`}
+              />
+            </label>
+          ))}
         </div>
       );
     }
@@ -99,7 +169,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
     const selectedOptions = getArchiveSelectedOptions(answer);
     const customText = isArchiveChoiceAnswer(answer) ? answer.customText : {};
     const toggleOption = (option: string) => {
-      const nextSelected = field.type === 'multiple-select'
+      const nextSelected = field.type === 'multiple'
         ? selectedOptions.includes(option)
           ? selectedOptions.filter(item => item !== option)
           : selectedOptions.length >= (settings.maxSelections ?? field.options.length)
@@ -127,12 +197,12 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
         {field.options.map((option, optionIndex) => {
           const selected = selectedOptions.includes(option);
           const showCustomInput = selected && field.customAnswerOptions?.includes(option);
-          const maxReached = field.type === 'multiple-select' && !selected && selectedOptions.length >= (settings.maxSelections ?? field.options.length);
+          const maxReached = field.type === 'multiple' && !selected && selectedOptions.length >= (settings.maxSelections ?? field.options.length);
           return (
             <div key={`${field.id}-${optionIndex}`} className={`overflow-hidden rounded-[var(--tm-radius-control)] border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
-              <button type="button" role={field.type === 'single-select' ? 'radio' : 'checkbox'} aria-checked={selected} disabled={maxReached} onClick={() => toggleOption(option)} className={`flex min-h-12 w-full items-center gap-2.5 px-3 text-left text-[length:var(--tm-font-size-compact)] font-medium disabled:opacity-45 ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}>
-                <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${field.type === 'single-select' ? 'rounded-full' : 'rounded-[5px]'} ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-transparent'}`} aria-hidden="true">
-                  {field.type === 'single-select' ? <span className="h-2 w-2 rounded-full bg-current" /> : <Check className="h-3.5 w-3.5" />}
+              <button type="button" role={field.type === 'single' ? 'radio' : 'checkbox'} aria-checked={selected} disabled={maxReached} onClick={() => toggleOption(option)} className={`flex min-h-12 w-full items-center gap-2.5 px-3 text-left text-[length:var(--tm-font-size-compact)] font-medium disabled:opacity-45 ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}>
+                <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${field.type === 'single' ? 'rounded-full' : 'rounded-[5px]'} ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-transparent'}`} aria-hidden="true">
+                  {field.type === 'single' ? <span className="h-2 w-2 rounded-full bg-current" /> : <Check className="h-3.5 w-3.5" />}
                 </span>
                 <span className="min-w-0 flex-1">{option}</span>
               </button>

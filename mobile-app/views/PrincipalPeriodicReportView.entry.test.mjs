@@ -88,7 +88,14 @@ for (const required of [
   requireText(dataSource, required, `校长周月报告示例数据缺少关键内容：${required}`);
 }
 
-forbidText(viewSource, '<textarea', '校长周月报告页不应开放对话输入。');
+
+requireText(viewSource, 'formatPrincipalReportDataRange(report.periodLabel)', '报告数据周期应统一由格式化能力生成。');
+requireText(viewSource, '根据{dataRange}评价记录生成', '报告页只保留一句数据来源，与班主任助理口径一致。');
+forbidText(dataSource, '本周学校管理建议', '示例数据不应再保留固定的报告标题文案。');
+forbidText(dataSource, '2026年6月学校运行复盘', '示例数据不应再保留固定的报告标题文案。');
+forbidText(viewSource, '{report.periodLabel}', '报告页不应再展示数据周期和说明文案。');
+forbidText(viewSource, 'Sparkles', '模拟生成过程不应展示装饰图标。');
+forbidText(viewSource, '<h2', '模拟生成与报告页都不应再出现大标题文案。');forbidText(viewSource, '<textarea', '校长周月报告页不应开放对话输入。');
 forbidText(viewSource, '发消息', '校长周月报告页不应出现聊天入口。');
 
 console.log('PrincipalPeriodicReportView entry assertions passed');

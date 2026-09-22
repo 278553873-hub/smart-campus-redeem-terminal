@@ -94,7 +94,7 @@ assert.ok(viewSource.includes("row.progress >= 0 ? '+' : ''") && viewSource.incl
 assert.ok(viewSource.includes('<FocusStudentList rows={focusRows.positive}') && viewSource.includes('<FocusStudentList rows={focusRows.negative}'), '需要关注应在主卡双栏直接展示完整前10名。');
 assert.ok(viewSource.includes('<FocusStudentList rows={focusRows.positive} tone="positive" onSelectStudent={onSelectStudent}') && viewSource.includes('aria-label={`查看${row.student.name}学生详情`}'), '需要关注中的学生姓名应能直接进入学生详情。');
 assert.ok(!viewSource.includes('showFocusDetails') && !viewSource.includes('focusListMode') && !viewSource.includes('查看完整榜单'), '需要关注不应再通过按钮和底部抽屉二次展开前10名。');
-assert.ok(viewSource.includes('加分TOP10') && viewSource.includes('扣分TOP10'), '需要关注双栏应使用约定的加分TOP10与扣分TOP10榜单名。');
+assert.ok(viewSource.includes('表扬TOP10') && viewSource.includes('待改进TOP10'), '需要关注双栏应使用约定的表扬TOP10与待改进TOP10榜单名。');
 assert.ok(!viewSource.includes('加分前10名') && !viewSource.includes('扣分前10名'), '需要关注不应保留旧榜单名称。');
 assert.ok(viewSource.includes('表现突出') && viewSource.includes('需关注'), '需要关注应将教师判断作为榜单依据后的次级结论。');
 assert.ok(viewSource.includes('text-[length:var(--tm-font-size-body)] font-bold') && viewSource.includes('text-[length:var(--tm-font-size-badge)] font-medium'), '榜单标题与辅助判断应通过字号和字重拉开层级。');
@@ -236,7 +236,7 @@ assert.ok(chartSource.includes("chart.on('click', handleItemSelect)") && chartSo
 assert.ok(chartSource.includes("if (!chart.isDisposed()) chart.off('click', handleItemSelect)"), '图表卸载时不应对已释放实例重复解绑事件。');
 assert.ok(chartSource.includes("params.componentType === 'xAxis'") && chartSource.includes('triggerEvent: Boolean(onCategorySelect)'), '可下钻柱状图应同时支持点击柱组和横轴指标名称。');
 assert.ok(chartSource.includes("formatter: onCategorySelect ? (value: string) => `{label|${value}} {arrow|›}`") && chartSource.includes('label: { color: theme.textPrimary') && chartSource.includes('arrow: { color: theme.textSecondary'), '可下钻柱状图的指标名应使用主文字黑色，箭头使用次级灰色。');
-assert.ok(indicatorDrilldownSource.includes('TeacherReportBarChart') && indicatorDrilldownSource.includes("{ name: '加分'") && indicatorDrilldownSource.includes("{ name: '扣分'") && indicatorDrilldownSource.includes("{ name: '总分'"), '得分一级、二级、三级应保持三系列柱状图语义一致。');
+assert.ok(indicatorDrilldownSource.includes('TeacherReportBarChart') && indicatorDrilldownSource.includes("{ name: '表扬'") && indicatorDrilldownSource.includes("{ name: '待改进'") && indicatorDrilldownSource.includes("{ name: '总分'"), '得分一级、二级、三级应保持三系列柱状图语义一致。');
 assert.ok(indicatorDrilldownSource.includes('<ScoreLegend />') && indicatorDrilldownSource.includes('showLegend={false}'), '得分下钻横向滚动时图例应固定在滚动区上方。');
 assert.ok(indicatorDrilldownSource.includes('TeacherReportDonutChart') && indicatorDrilldownSource.includes("optionKey={`indicator-event-${path.join('-')}`}") && indicatorDrilldownSource.includes('value: node.metrics.eventCount'), '事件一级、二级、三级应保持环形图语义一致。');
 assert.ok(indicatorDrilldownSource.includes('aria-label="一级指标切换"') && indicatorDrilldownSource.includes('pathNodes.length > 1'), '下钻抽屉应使用一级指标切换栏，并只在三级显示返回路径。');

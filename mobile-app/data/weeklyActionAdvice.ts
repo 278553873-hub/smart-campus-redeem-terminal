@@ -142,7 +142,7 @@ const FULL_REPORT_CONTENT: WeeklyAdviceContent = {
             teacherNames: ['李老师'],
             insightType: 'orientation',
             finding: '本周评价呈现明显的鼓励和正面引导倾向',
-            evidence: '12次评价中10次为鼓励加分，2次纠偏也均指向具体行为',
+            evidence: '12次评价中10次为鼓励表扬，2次纠偏也均指向具体行为',
             implication: '其记录不仅提供正向结果，也保留了学生因何获得肯定或需要调整的行为依据',
         },
         {

@@ -34,7 +34,6 @@ for (const required of [
   '正在分析班级与教师使用情况',
   '正在提炼典型成果与重点问题',
   '正在生成学校学期报告',
-  '学生综合素质评价系统学期运营报告',
   '<AssistantReportCards',
   'resolveAssistantReportDocument(',
 ]) {
@@ -42,6 +41,12 @@ for (const required of [
 }
 
 requireText(headerSource, "backLabel = '返回'", '学期报告页应通过共享标题栏提供明确返回入口。');
+
+requireText(viewSource, '根据{term.name}评价记录生成', '学期报告页只保留一句数据来源，与班主任助理口径一致。');
+forbidText(viewSource, '学生综合素质评价系统学期运营报告', '学期报告页不应再展示固定的报告标题文案。');
+forbidText(viewSource, '<h1', '学期报告页不应再展示大标题文案。');
+forbidText(viewSource, 'Sparkles', '模拟生成过程不应展示装饰图标。');
+forbidText(viewSource, 'period.label', '学期报告页不应再展示数据周期和说明文案。');
 requireText(viewSource, 'label="往期报告"', '学期报告页应提供带文字的往期报告入口。');
 forbidText(viewSource, 'AssistantReportFooter', '学期报告底部不应展示AI说明和生成时间。');
 forbidText(viewSource, 'AI学期综合分析', '学期报告不应重复展示AI能力标签。');

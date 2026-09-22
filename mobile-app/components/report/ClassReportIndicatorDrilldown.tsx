@@ -34,11 +34,11 @@ const ScoreLegend = () => (
   <div aria-label="得分图例" className="flex h-8 items-center justify-end gap-3 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-secondary)]">
     <span className="flex items-center gap-1.5">
       <span aria-hidden="true" className="h-2.5 w-2.5 rounded-[3px] bg-[var(--tm-chart-positive)]" />
-      加分
+      表扬
     </span>
     <span className="flex items-center gap-1.5">
       <span aria-hidden="true" className="h-2.5 w-2.5 rounded-[3px] bg-[var(--tm-chart-negative)]" />
-      扣分
+      待改进
     </span>
     <span className="flex items-center gap-1.5">
       <span aria-hidden="true" className="h-2.5 w-2.5 rounded-[3px] bg-[var(--tm-chart-data-default)]" />
@@ -69,8 +69,8 @@ const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps
   const currentNode = getClassReportIndicatorNode(roots, path);
   const visibleNodes = currentNode?.children ?? [];
   const scoreSeries = useMemo<TeacherReportBarSeries[]>(() => [
-    { name: '加分', values: visibleNodes.map(node => node.metrics.addScore), color: 'positive' },
-    { name: '扣分', values: visibleNodes.map(node => node.metrics.deductScore), color: 'negative' },
+    { name: '表扬', values: visibleNodes.map(node => node.metrics.addScore), color: 'positive' },
+    { name: '待改进', values: visibleNodes.map(node => node.metrics.deductScore), color: 'negative' },
     { name: '总分', values: visibleNodes.map(node => node.metrics.netScore), color: 'data' },
   ], [visibleNodes]);
   const eventData = useMemo(() => visibleNodes.map((node, index) => ({
@@ -143,7 +143,7 @@ const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps
               >
                 <TeacherReportBarChart
                   ariaLabel={visibleNodes.map(node => (
-                    `${node.label}加分${node.metrics.addScore}、扣分${node.metrics.deductScore}、总分${node.metrics.netScore}`
+                    `${node.label}表扬${node.metrics.addScore}、待改进${node.metrics.deductScore}、总分${node.metrics.netScore}`
                   )).join('；')}
                   categories={visibleNodes.map(node => node.label)}
                   series={scoreSeries}

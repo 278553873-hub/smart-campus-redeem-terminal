@@ -459,8 +459,8 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     }), [reportData.negativeRecords, reportData.positiveRecords]);
 
     const educationScoreSeries = useMemo<TeacherReportBarSeries[]>(() => [
-        { name: '加分', values: reportData.addScores, color: 'positive' },
-        { name: '扣分', values: reportData.deductScores, color: 'negative' },
+        { name: '表扬', values: reportData.addScores, color: 'positive' },
+        { name: '待改进', values: reportData.deductScores, color: 'negative' },
         { name: '总分', values: reportData.netScores, color: 'data' },
     ], [reportData]);
 
@@ -803,7 +803,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     )}
                 >
                     <TeacherReportBarChart
-                        ariaLabel={`${reportData.indicatorTree.map(item => item.label).join('、')}的加分、扣分与总分对比`}
+                        ariaLabel={`${reportData.indicatorTree.map(item => item.label).join('、')}的表扬、待改进与总分对比`}
                         categories={reportData.indicatorTree.map(item => item.label)}
                         series={educationScoreSeries}
                         optionKey={`scores-${reportKey}`}
@@ -906,7 +906,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                             <div className="min-w-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-chart-positive-soft)] px-[var(--tm-space-1)] py-[var(--tm-space-2)]">
                                 <div className="flex h-10 items-center justify-between gap-0.5 border-b border-[var(--tm-border-subtle)] text-[var(--tm-chart-positive-text)]">
                                     <span className="min-w-0 whitespace-nowrap">
-                                        <span className="text-[length:var(--tm-font-size-body)] font-bold">加分TOP10</span>
+                                        <span className="text-[length:var(--tm-font-size-body)] font-bold">表扬TOP10</span>
                                     </span>
                                     <span className="shrink-0 whitespace-nowrap text-[length:var(--tm-font-size-badge)] font-medium">表现突出</span>
                                 </div>
@@ -915,7 +915,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                             <div className="min-w-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-chart-negative-soft)] px-[var(--tm-space-1)] py-[var(--tm-space-2)]">
                                 <div className="flex h-10 items-center justify-between gap-0.5 border-b border-[var(--tm-border-subtle)] text-[var(--tm-chart-negative-text)]">
                                     <span className="min-w-0 whitespace-nowrap">
-                                        <span className="text-[length:var(--tm-font-size-body)] font-bold">扣分TOP10</span>
+                                        <span className="text-[length:var(--tm-font-size-body)] font-bold">待改进TOP10</span>
                                     </span>
                                     <span className="shrink-0 whitespace-nowrap text-[length:var(--tm-font-size-badge)] font-medium">需关注</span>
                                 </div>

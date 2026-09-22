@@ -58,6 +58,13 @@ const assistantOptions: AssistantOption[] = [
     },
 ];
 
+/** 期末报告暂不对老师开放，只隐藏入口；报告页、历史与数据保留，开放时改回 true 即可。 */
+const TERM_REPORT_ENTRY_ENABLED = false;
+
+const visibleAssistantOptions = TERM_REPORT_ENTRY_ENABLED
+    ? assistantOptions
+    : assistantOptions.filter(item => item.action !== 'termReport');
+
 const getAssistantMessage = () => `${getAssistantGreeting()}，\n我将为您提供学校数据分析和管理建议。`;
 
 const optionToneClass: Record<AssistantOption['tone'], string> = {
@@ -190,7 +197,7 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
 
                 <section className="assistant-agent-glass assistant-context-card relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)] p-2" aria-label="校长助理分析能力">
                     <div className="mx-3 space-y-2 pb-2">
-                        {assistantOptions.map(item => (
+                        {visibleAssistantOptions.map(item => (
                             <button
                                 key={item.title}
                                 type="button"

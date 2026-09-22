@@ -1,5 +1,5 @@
 import type { ClassInfo, Student } from '../mobile-app/types';
-import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode, type FormSection } from './formDefinition';
+import { createFormSubFieldId, normalizeFormFieldSettings, type FormFieldSettings, type FormFieldType, type FormLayoutMode, type FormSection, type FormSubField } from './formDefinition';
 import { readStudentGrowthProfile } from './studentGrowthStore';
 import {
   PLATFORM_GROWTH_FIELD_CATALOG,
@@ -13,7 +13,7 @@ import {
 } from './studentGrowthFieldCatalog';
 
 export type ArchiveTemplateStatus = 'recommended' | 'draft' | 'ready' | 'published' | 'disabled';
-export type ArchiveFieldType = 'text' | 'single-select' | 'multiple-select' | 'date' | 'number';
+export type ArchiveFieldType = Exclude<FormFieldType, 'short_text'>;
 export type ArchiveDataRangeMode = 'semester' | 'school_year' | 'custom';
 export type ArchiveGenerationMode = 'once' | 'semester' | 'school_year' | 'continuous';
 export type ArchiveThemeId = 'clean' | 'sky' | 'leaf' | 'sunny';
@@ -137,6 +137,7 @@ export interface ArchiveField {
   required: boolean;
   options: string[];
   customAnswerOptions?: string[];
+  subFields?: FormSubField[];
   settings?: FormFieldSettings;
 }
 
@@ -145,7 +146,11 @@ export interface ArchiveChoiceAnswer {
   customText: Record<string, string>;
 }
 
-export type ArchiveAnswer = string | ArchiveChoiceAnswer;
+export interface ArchiveMultiFillAnswer {
+  fillValues: Record<string, string>;
+}
+
+export type ArchiveAnswer = string | ArchiveChoiceAnswer | ArchiveMultiFillAnswer;
 
 export interface ArchiveGrowthModuleConfig {
   key: ArchiveGrowthModuleKey;
@@ -369,27 +374,27 @@ const section = (id: string, label: string): ArchiveSection => ({ id, label });
 const summarySection = section('summary', '教师交接摘要');
 
 const entryFields: ArchiveField[] = [
-  field('foundation-cognition', '基础认知', 'single-select', 'academic', true, ['零基础', '启蒙阶段', '有基础']),
-  field('focus-habit', '专注习惯', 'single-select', 'academic', true, ['少于10分钟', '10-20分钟', '20分钟以上']),
-  field('question-task', '提问与任务', 'single-select', 'academic', true, ['主动提问并独立完成', '有时需要鼓励', '较少提问且依赖帮助']),
-  field('interest-tendency', '兴趣倾向', 'multiple-select', 'interest', true, ['阅读', '艺术', '运动', '探究', '社交']),
-  field('hands-on-creativity', '动手创意', 'single-select', 'interest', true, ['很喜欢', '一般', '不太喜欢']),
-  field('learning-style', '学习方式', 'multiple-select', 'cognition', true, ['听讲型', '动手型', '讨论型', '视觉型']),
-  field('problem-solving', '问题解决', 'single-select', 'cognition', true, ['自己尝试', '主动求助', '容易放弃']),
-  field('help-sharing', '帮助分享', 'single-select', 'social', true, ['经常主动', '有时', '较少']),
-  field('rules-manners', '规则礼貌', 'single-select', 'social', true, ['自觉', '需要提醒', '较弱']),
-  field('conflict-handling', '冲突处理', 'single-select', 'social', true, ['能够商量', '哭闹或退缩', '容易争抢']),
-  field('emotion-stability', '情绪稳定性', 'single-select', 'personality-family', true, ['快速平复', '需要安慰', '持续较久']),
-  field('exercise-vitality', '运动活力', 'single-select', 'personality-family', true, ['热爱', '一般', '不爱运动']),
-  field('primary-caregiver', '主要照顾人', 'single-select', 'personality-family', true, ['父母', '祖辈', '其他']),
-  field('family-time', '家庭陪伴时间', 'single-select', 'personality-family', true, ['少于30分钟', '30分钟-1小时', '1-2小时', '2小时以上']),
-  field('guardian-goal', '家长期望', 'multiple-select', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
-  field('student-goal', '学生自选', 'multiple-select', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
-  field('teacher-goal', '教师建议', 'multiple-select', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
-  field('inner-drive-signal', '当前突出内驱力信号', 'single-select', 'inner-drive', true, ['兴趣激发', '胜任感', '归属感', '尚不明确']),
-  field('initial-light', '初始光芒定位', 'multiple-select', 'inner-drive', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
-  field('next-drive-focus', '下一阶段优先关注方向', 'multiple-select', 'inner-drive', true, ['继续观察兴趣火花', '积累“我能行”的成功体验', '建立信任的师生/同伴关系']),
-  field('guardian-confirmation', '家长确认', 'single-select', 'confirmation', false, ['已确认', '待确认', '无需确认']),
+  field('foundation-cognition', '基础认知', 'single', 'academic', true, ['零基础', '启蒙阶段', '有基础']),
+  field('focus-habit', '专注习惯', 'single', 'academic', true, ['少于10分钟', '10-20分钟', '20分钟以上']),
+  field('question-task', '提问与任务', 'single', 'academic', true, ['主动提问并独立完成', '有时需要鼓励', '较少提问且依赖帮助']),
+  field('interest-tendency', '兴趣倾向', 'multiple', 'interest', true, ['阅读', '艺术', '运动', '探究', '社交']),
+  field('hands-on-creativity', '动手创意', 'single', 'interest', true, ['很喜欢', '一般', '不太喜欢']),
+  field('learning-style', '学习方式', 'multiple', 'cognition', true, ['听讲型', '动手型', '讨论型', '视觉型']),
+  field('problem-solving', '问题解决', 'single', 'cognition', true, ['自己尝试', '主动求助', '容易放弃']),
+  field('help-sharing', '帮助分享', 'single', 'social', true, ['经常主动', '有时', '较少']),
+  field('rules-manners', '规则礼貌', 'single', 'social', true, ['自觉', '需要提醒', '较弱']),
+  field('conflict-handling', '冲突处理', 'single', 'social', true, ['能够商量', '哭闹或退缩', '容易争抢']),
+  field('emotion-stability', '情绪稳定性', 'single', 'personality-family', true, ['快速平复', '需要安慰', '持续较久']),
+  field('exercise-vitality', '运动活力', 'single', 'personality-family', true, ['热爱', '一般', '不爱运动']),
+  field('primary-caregiver', '主要照顾人', 'single', 'personality-family', true, ['父母', '祖辈', '其他']),
+  field('family-time', '家庭陪伴时间', 'single', 'personality-family', true, ['少于30分钟', '30分钟-1小时', '1-2小时', '2小时以上']),
+  field('guardian-goal', '家长期望', 'multiple', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
+  field('student-goal', '学生自选', 'multiple', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
+  field('teacher-goal', '教师建议', 'multiple', 'development-goals', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
+  field('inner-drive-signal', '当前突出内驱力信号', 'single', 'inner-drive', true, ['兴趣激发', '胜任感', '归属感', '尚不明确']),
+  field('initial-light', '初始光芒定位', 'multiple', 'inner-drive', true, ['求真', '从善', '尚美', '学活', '乐健', '悦群']),
+  field('next-drive-focus', '下一阶段优先关注方向', 'multiple', 'inner-drive', true, ['继续观察兴趣火花', '积累“我能行”的成功体验', '建立信任的师生/同伴关系']),
+  field('guardian-confirmation', '家长确认', 'single', 'confirmation', false, ['已确认', '待确认', '无需确认']),
   field('strengths', '优势特点', 'text', 'summary'),
   field('current-focus', '当前关注', 'text', 'summary'),
   field('support-strategy', '有效支持方式', 'text', 'summary'),
@@ -397,27 +402,43 @@ const entryFields: ArchiveField[] = [
 ];
 
 const studentProfileFields: ArchiveField[] = [
-  profileField('personality-traits', '性格特点', 'multiple-select', 'personality-social', true, ['开朗健谈', '安静细致', '活泼好动', '独立自主', '慢热谨慎', '好奇主动', '责任感强', '待继续观察', '其他']),
-  profileField('emotion-expression', '情绪表达方式', 'multiple-select', 'personality-social', true, ['愿意主动表达', '需要耐心引导', '更习惯通过行动表达', '情绪变化较明显', '通常较为平稳', '待继续观察', '其他']),
-  profileField('peer-interaction', '同伴相处特点', 'multiple-select', 'personality-social', true, ['主动结交同伴', '更喜欢固定伙伴', '擅长合作', '乐于帮助同伴', '需要支持融入集体', '待继续观察', '其他']),
-  profileField('teacher-communication', '与老师沟通偏好', 'multiple-select', 'personality-social', true, ['当面直接交流', '一对一交流', '先给予准备时间', '通过具体问题引导', '通过书面或作品表达', '待继续观察', '其他']),
-  profileField('personal-interests', '兴趣爱好', 'multiple-select', 'interests-strengths', true, ['阅读表达', '科学探究', '艺术创作', '音乐表演', '体育运动', '劳动实践', '编程科技', '自然观察', '同伴交往', '其他']),
-  profileField('strong-areas', '擅长领域', 'multiple-select', 'interests-strengths', true, ['语言表达', '逻辑思考', '动手实践', '艺术表现', '体育运动', '组织协作', '观察发现', '待继续观察', '其他']),
+  profileField('personality-traits', '性格特点', 'multiple', 'personality-social', true, ['开朗健谈', '安静细致', '活泼好动', '独立自主', '慢热谨慎', '好奇主动', '责任感强', '待继续观察', '其他']),
+  profileField('emotion-expression', '情绪表达方式', 'multiple', 'personality-social', true, ['愿意主动表达', '需要耐心引导', '更习惯通过行动表达', '情绪变化较明显', '通常较为平稳', '待继续观察', '其他']),
+  profileField('peer-interaction', '同伴相处特点', 'multiple', 'personality-social', true, ['主动结交同伴', '更喜欢固定伙伴', '擅长合作', '乐于帮助同伴', '需要支持融入集体', '待继续观察', '其他']),
+  profileField('teacher-communication', '与老师沟通偏好', 'multiple', 'personality-social', true, ['当面直接交流', '一对一交流', '先给予准备时间', '通过具体问题引导', '通过书面或作品表达', '待继续观察', '其他']),
+  profileField('personal-interests', '兴趣爱好', 'multiple', 'interests-strengths', true, ['阅读表达', '科学探究', '艺术创作', '音乐表演', '体育运动', '劳动实践', '编程科技', '自然观察', '同伴交往', '其他']),
+  profileField('strong-areas', '擅长领域', 'multiple', 'interests-strengths', true, ['语言表达', '逻辑思考', '动手实践', '艺术表现', '体育运动', '组织协作', '观察发现', '待继续观察', '其他']),
   profileField('representative-strength', '代表性特长', 'text', 'interests-strengths', false),
-  profileField('preferred-activities', '喜欢参与的活动', 'multiple-select', 'interests-strengths', true, ['独立任务', '同伴合作', '公开展示', '竞赛挑战', '实践体验', '户外活动', '公益服务', '其他']),
-  profileField('class-participation', '课堂参与特点', 'multiple-select', 'learning-support', true, ['主动发言', '小组讨论', '动手实践', '独立思考', '倾听观察', '需要邀请后参与', '待继续观察', '其他']),
-  profileField('preferred-learning-style', '适合的学习方式', 'multiple-select', 'learning-support', true, ['讲解示范', '图像观察', '动手实践', '讨论合作', '自主探索', '反复练习', '其他']),
-  profileField('difficulty-response', '遇到困难时的表现', 'multiple-select', 'learning-support', true, ['先自行尝试', '主动寻求帮助', '观察同伴做法', '容易暂时停下', '需要情绪支持', '待继续观察', '其他']),
-  profileField('effective-motivation', '有效激励方式', 'multiple-select', 'learning-support', true, ['具体表扬', '阶段目标', '展示机会', '责任任务', '同伴合作', '私下鼓励', '自主选择', '其他']),
+  profileField('preferred-activities', '喜欢参与的活动', 'multiple', 'interests-strengths', true, ['独立任务', '同伴合作', '公开展示', '竞赛挑战', '实践体验', '户外活动', '公益服务', '其他']),
+  profileField('class-participation', '课堂参与特点', 'multiple', 'learning-support', true, ['主动发言', '小组讨论', '动手实践', '独立思考', '倾听观察', '需要邀请后参与', '待继续观察', '其他']),
+  profileField('preferred-learning-style', '适合的学习方式', 'multiple', 'learning-support', true, ['讲解示范', '图像观察', '动手实践', '讨论合作', '自主探索', '反复练习', '其他']),
+  profileField('difficulty-response', '遇到困难时的表现', 'multiple', 'learning-support', true, ['先自行尝试', '主动寻求帮助', '观察同伴做法', '容易暂时停下', '需要情绪支持', '待继续观察', '其他']),
+  profileField('effective-motivation', '有效激励方式', 'multiple', 'learning-support', true, ['具体表扬', '阶段目标', '展示机会', '责任任务', '同伴合作', '私下鼓励', '自主选择', '其他']),
   profileField('teacher-attention', '需要老师留意的情况', 'text', 'learning-support', false),
 ];
 
-const cloneFields = (items: ArchiveField[]) => items.map(item => ({
-  ...item,
-  options: [...item.options],
+const normalizeLegacyArchiveFieldType = (type: string): ArchiveFieldType => {
+  if (type === 'short-text' || type === 'long-text') return 'text';
+  if (type === 'single-select') return 'single';
+  if (type === 'multiple-select') return 'multiple';
+  return type as ArchiveFieldType;
+};
+
+const normalizeArchiveField = (item: LegacyField): ArchiveField => ({
+  id: item.id,
+  semanticKey: item.semanticKey,
+  label: item.label,
+  type: normalizeLegacyArchiveFieldType(item.type),
+  sectionId: item.sectionId,
+  order: item.order,
+  required: item.required,
+  options: [...(item.options ?? [])],
   customAnswerOptions: [...(item.customAnswerOptions ?? [])],
-  settings: normalizeFormFieldSettings(item.type, item.settings, item.options),
-}));
+  subFields: (item.subFields ?? []).map(subField => ({ ...subField })),
+  settings: normalizeFormFieldSettings(normalizeLegacyArchiveFieldType(item.type), item.settings, item.options ?? []),
+});
+
+const cloneFields = (items: ArchiveField[]) => items.map(item => normalizeArchiveField(item));
 const cloneSections = (items: ArchiveSection[]) => items.map(item => ({ ...item }));
 const cloneGrowthModules = (items: ArchiveGrowthModuleConfig[]) => items.map(item => ({ ...item }));
 const cloneGrowthFields = (items: ArchiveGrowthFieldConfig[]) => items.map(item => {
@@ -665,23 +686,51 @@ export const getArchiveSelectedOptions = (answer: ArchiveAnswer | undefined): st
   return answer.split('、').filter(Boolean);
 };
 
-export const isArchiveAnswerFilled = (answer: ArchiveAnswer | undefined) => (
-  isArchiveChoiceAnswer(answer) ? answer.selectedOptions.length > 0 : Boolean(answer?.trim())
+export const isArchiveMultiFillAnswer = (answer: ArchiveAnswer | undefined): answer is ArchiveMultiFillAnswer => (
+  Boolean(answer)
+  && typeof answer === 'object'
+  && typeof (answer as ArchiveMultiFillAnswer).fillValues === 'object'
 );
 
+export const getArchiveMultiFillValues = (answer: ArchiveAnswer | undefined): Record<string, string> => (
+  isArchiveMultiFillAnswer(answer) ? answer.fillValues : {}
+);
+
+export const isArchiveAnswerFilled = (answer: ArchiveAnswer | undefined) => {
+  if (isArchiveChoiceAnswer(answer)) return answer.selectedOptions.length > 0;
+  if (isArchiveMultiFillAnswer(answer)) return Object.values(answer.fillValues).some(value => Boolean(value.trim()));
+  return Boolean(answer?.trim());
+};
+
 export const getArchiveAnswerValidationError = (field: ArchiveField, answer: ArchiveAnswer | undefined): string => {
+  if (field.type === 'multi_fill') {
+    const subFields = field.subFields ?? [];
+    const fillValues = getArchiveMultiFillValues(answer);
+    const missingRequired = subFields.find(subField => subField.required && !fillValues[subField.id]?.trim());
+    if (missingRequired) return `请填写“${field.label}”中的“${missingRequired.label}”`;
+    const hasAnswer = subFields.some(subField => Boolean(fillValues[subField.id]?.trim()));
+    if (field.required && !hasAnswer) return `请填写“${field.label}”`;
+    const tooLong = subFields.find(subField => (fillValues[subField.id] ?? '').length > 120);
+    if (tooLong) return `“${tooLong.label}”最多填写120个字符`;
+    return '';
+  }
   if (field.required && !isArchiveAnswerFilled(answer)) return `请先填写“${field.label}”`;
   if (!isArchiveAnswerFilled(answer)) return '';
-  if (field.type === 'multiple-select') {
+  if (field.type === 'multiple') {
     const selectedOptions = getArchiveSelectedOptions(answer);
     const settings = normalizeFormFieldSettings(field.type, field.settings, field.options);
     const min = settings.minSelections ?? 1;
     const max = settings.maxSelections ?? field.options.length;
     if (selectedOptions.length < min || selectedOptions.length > max) return `“${field.label}”请选择${min}至${max}项`;
   }
-  if (field.type === 'single-select' || field.type === 'multiple-select') {
+  if (field.type === 'single' || field.type === 'multiple') {
     const customText = isArchiveChoiceAnswer(answer) ? answer.customText : {};
     if (getArchiveSelectedOptions(answer).some(option => field.customAnswerOptions?.includes(option) && !customText[option]?.trim())) return `请补充“${field.label}”中的填写内容`;
+  }
+  if (field.type === 'rating') {
+    const settings = normalizeFormFieldSettings(field.type, field.settings, field.options);
+    const value = Number(answer);
+    if (!Number.isFinite(value) || value < (settings.ratingMin ?? 1) || value > (settings.ratingMax ?? 5)) return `“${field.label}”评分超出范围`;
   }
   if (field.type === 'date') {
     const format = normalizeFormFieldSettings(field.type, field.settings, field.options).dateFormat ?? 'ymd';
@@ -699,7 +748,12 @@ export const getArchiveAnswerValidationError = (field: ArchiveField, answer: Arc
   return '';
 };
 
-export const formatArchiveAnswer = (answer: ArchiveAnswer | undefined) => {
+export const formatArchiveAnswer = (answer: ArchiveAnswer | undefined, field?: ArchiveField) => {
+  if (isArchiveMultiFillAnswer(answer)) {
+    const subFields = field?.subFields ?? Object.keys(answer.fillValues).map(id => ({ id, label: id, required: false }));
+    if (subFields.length === 0) return '未填写';
+    return subFields.map(subField => `${subField.label}：${answer.fillValues[subField.id]?.trim() || '未填写'}`).join('；');
+  }
   if (!isArchiveChoiceAnswer(answer)) return answer ?? '';
   return answer.selectedOptions.map(option => {
     const customText = answer.customText[option]?.trim();
@@ -708,10 +762,14 @@ export const formatArchiveAnswer = (answer: ArchiveAnswer | undefined) => {
 };
 
 const cloneArchiveAnswers = (answers: Record<string, ArchiveAnswer>): Record<string, ArchiveAnswer> => Object.fromEntries(
-  Object.entries(answers).map(([key, answer]) => [key, isArchiveChoiceAnswer(answer) ? {
-    selectedOptions: [...answer.selectedOptions],
-    customText: { ...answer.customText },
-  } : answer]),
+  Object.entries(answers).map(([key, answer]) => {
+    if (isArchiveChoiceAnswer(answer)) return [key, {
+      selectedOptions: [...answer.selectedOptions],
+      customText: { ...answer.customText },
+    }];
+    if (isArchiveMultiFillAnswer(answer)) return [key, { fillValues: { ...answer.fillValues } }];
+    return [key, answer];
+  }),
 );
 
 export const getArchiveSystemValues = (student: Student): Partial<Record<ArchiveSystemFieldKey, string>> => ({
@@ -920,17 +978,7 @@ const normalizeTemplate = (template: ArchiveTemplate, fallbackDraftOwnerKey?: st
     sections,
     appearance: cloneArchiveAppearance(template.appearance),
     draftOwnerKey: template.status === 'draft' ? template.draftOwnerKey ?? fallbackDraftOwnerKey : undefined,
-    fields: ((template.fields ?? []) as LegacyField[]).map(item => ({
-      id: item.id,
-      semanticKey: item.semanticKey,
-      label: item.label,
-      type: item.type === 'short-text' || item.type === 'long-text' ? 'text' : item.type,
-      sectionId: item.sectionId,
-      required: item.required,
-      options: [...item.options],
-      customAnswerOptions: [...(item.customAnswerOptions ?? [])],
-      settings: normalizeFormFieldSettings(item.type, item.settings, item.options),
-    })),
+    fields: ((template.fields ?? []) as LegacyField[]).map(normalizeArchiveField),
   };
 };
 
@@ -1611,20 +1659,32 @@ export const getPendingArchiveTasksForTeacher = (
 
 const archiveFieldDefaultLabels: Record<ArchiveFieldType, string> = {
   text: '文字',
-  'single-select': '单选',
-  'multiple-select': '多选',
+  single: '单选',
+  multiple: '多选',
+  rating: '评分',
+  multi_fill: '多项填空',
   date: '日期',
   number: '数字',
 };
 
-export const createArchiveField = (type: ArchiveFieldType = 'text', sectionId = ''): ArchiveField => ({
-  id: `field-custom-${Date.now()}`,
-  semanticKey: `custom-${Date.now()}`,
-  label: archiveFieldDefaultLabels[type],
-  type,
-  sectionId,
-  required: false,
-  options: type === 'single-select' || type === 'multiple-select' ? ['选项1', '选项2'] : [],
-  customAnswerOptions: [],
-  settings: {},
-});
+export const createArchiveField = (type: ArchiveFieldType = 'text', sectionId = ''): ArchiveField => {
+  const options = type === 'single' || type === 'multiple'
+    ? ['选项1', '选项2']
+    : type === 'rating'
+      ? Array.from({ length: 5 }, (_, index) => String(index + 1))
+      : [];
+  return {
+    id: `field-custom-${Date.now()}`,
+    semanticKey: `custom-${Date.now()}`,
+    label: archiveFieldDefaultLabels[type],
+    type,
+    sectionId,
+    required: false,
+    options,
+    customAnswerOptions: [],
+    subFields: type === 'multi_fill'
+      ? Array.from({ length: 2 }, () => ({ id: createFormSubFieldId(), label: '', required: true }))
+      : undefined,
+    settings: normalizeFormFieldSettings(type, undefined, options),
+  };
+};

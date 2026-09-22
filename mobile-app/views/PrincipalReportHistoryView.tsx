@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import {
   PRINCIPAL_REPORT_HISTORY,
   type PrincipalReportHistoryItem,
@@ -89,7 +89,6 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
       />
 
       <main data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-5 pb-10 pt-4">
-        <p className="mb-4 text-[13px] font-medium text-[var(--tm-text-secondary)]">{schoolName}</p>
         <section className="space-y-6" aria-label={historyListLabel[kind]}>
           {groups.map((group) => (
             <section key={group.key} aria-labelledby={`principal-history-${kind}-${group.key}`}>
@@ -105,15 +104,11 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
                     key={report.id}
                     type="button"
                     onClick={() => setSelectedReport(report)}
-                    className="relative flex min-h-[82px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985] active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
+                    className="relative flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985] active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
                   >
                     <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-[var(--tm-bg-page)] bg-[var(--tm-role-principal-soft-strong)]" aria-hidden="true" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[15px] font-semibold leading-5">{report.title}</span>
-                      <span className="mt-1.5 flex items-center gap-1.5 text-[12px] leading-5 text-[var(--tm-text-secondary)]">
-                        <CalendarDays className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-                        {report.periodLabel}
-                      </span>
                     </span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" strokeWidth={2.1} />
                   </button>

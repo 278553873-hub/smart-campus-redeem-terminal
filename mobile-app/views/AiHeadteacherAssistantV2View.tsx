@@ -104,7 +104,7 @@ const getAssistantIntro = () => `${getAssistantGreeting()}，\n我将为您提�
 
 const REPORT_GENERATION_STEPS = [
     '正在汇总本周班级评比数据',
-    '正在分析得分与扣分情况',
+    '正在分析得分与待改进情况',
     '正在对比指标表现与周变化',
     '正在生成本周分析与指导建议',
 ] as const;
@@ -186,7 +186,7 @@ const WeeklyReportContent: React.FC<{
             <section className="mt-5" aria-labelledby="weekly-report-deductions">
                 <h2 id="weekly-report-deductions" className="flex items-center gap-2 text-[13px] font-bold text-[var(--tm-text-primary)]">
                     <ClipboardList className="h-4 w-4 text-[var(--tm-score-negative)]" strokeWidth={2.1} aria-hidden="true" />
-                    主要扣分问题
+                    主要待改进问题
                 </h2>
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
                     {report.deductionBreakdown.slice(0, 4).map(item => (
@@ -412,7 +412,7 @@ const DimensionRankingTable: React.FC<{
                     type="button"
                     onClick={() => onSelect(item.dimension)}
                     className={'grid min-h-12 w-full grid-cols-[minmax(0,1fr)_88px_60px_60px] items-center rounded-[var(--tm-radius-control)] px-2 text-left focus-visible:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none ' + (selectedDimension === item.dimension ? 'bg-[var(--tm-role-headteacher-glass-surface-strong)]' : '')}
-                    aria-label={`${item.dimension}，${formatCompactScore(item.score)}/${formatCompactScore(item.maxScore)}分，年级第${item.gradeRank}名，全校第${item.schoolRank}名，查看扣分情况`}
+                    aria-label={`${item.dimension}，${formatCompactScore(item.score)}/${formatCompactScore(item.maxScore)}分，年级第${item.gradeRank}名，全校第${item.schoolRank}名，查看待改进情况`}
                     aria-pressed={selectedDimension === item.dimension || undefined}
                 >
                     <span className="min-w-0 truncate pr-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">{item.dimension}</span>
@@ -709,7 +709,7 @@ const WeekDataDetailPage: React.FC<{
 
                 <section className="mt-4" aria-labelledby="week-records-title">
                     <div className="mb-2 px-1">
-                        <h2 id="week-records-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">扣分明细</h2>
+                        <h2 id="week-records-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">待改进明细</h2>
                     </div>
                     <div className="assistant-agent-glass overflow-hidden rounded-[var(--tm-radius-card)]">
                         <DimensionTabs
@@ -722,7 +722,7 @@ const WeekDataDetailPage: React.FC<{
                             {selectedRecords.length > 0 ? (
                                 <RecordDetailList records={selectedRecords} />
                             ) : (
-                                <p className="py-12 text-center text-[13px] text-[var(--tm-text-tertiary)]">该周此指标暂无扣分</p>
+                                <p className="py-12 text-center text-[13px] text-[var(--tm-text-tertiary)]">该周此指标暂无待改进</p>
                             )}
                         </div>
                     </div>

@@ -1,6 +1,5 @@
 import React from 'react';
 import type { StudentPerformanceLevel, StudentPerformanceSummary, StudentPerformanceTier } from '../../domain/studentPerformance';
-import type { EvaluationCardValueMode } from '../../types';
 import crownLevelIcon from '../../assets/resources/student-level-icons/crown.png';
 import moonLevelIcon from '../../assets/resources/student-level-icons/moon.png';
 import sproutLevelIcon from '../../assets/resources/student-level-icons/sprout.png';
@@ -15,18 +14,17 @@ interface StudentPerformanceMetaProps {
 interface StudentPerformanceLevelIconsProps {
   level: StudentPerformanceLevel;
   className?: string;
-  iconSize?: 'default' | 'student-card';
+  iconSize?: 'default' | 'student-card' | 'group-card';
 }
 
 interface StudentPerformanceValuesProps {
-  summary: Pick<StudentPerformanceSummary, 'praiseCount' | 'criticismCount' | 'praiseScore' | 'criticismScore'>;
+  summary: Pick<StudentPerformanceSummary, 'praiseScore' | 'criticismScore'>;
   className?: string;
   ariaLabel?: string;
   orientation?: 'horizontal' | 'vertical';
   variant?: 'default' | 'student-card';
   showPraise?: boolean;
   showCriticism?: boolean;
-  valueMode?: EvaluationCardValueMode;
   fontSize?: number;
   itemHeight?: number;
   itemMinWidth?: number;
@@ -40,8 +38,6 @@ const TIER_META: Record<StudentPerformanceTier, { label: string; iconSrc: string
   crown: { label: '皇冠', iconSrc: crownLevelIcon },
 };
 
-const formatCount = (count: number) => count > 99 ? '99+' : String(count);
-const formatSignedCount = (count: number, sign: '+' | '-') => count === 0 ? '0' : `${sign}${formatCount(count)}`;
 const formatScore = (score: number) => Number.isInteger(score) ? String(score) : score.toFixed(2).replace(/\.?0+$/, '');
 const formatSignedScore = (score: number, sign: '+' | '-') => score === 0 ? '0' : `${sign}${formatScore(score)}`;
 
@@ -53,10 +49,14 @@ export const StudentPerformanceLevelIcons: React.FC<StudentPerformanceLevelIcons
   const currentTier = TIER_META[level.tier];
   const iconSizeClass = iconSize === 'student-card'
     ? 'h-[var(--tm-student-card-level-icon-size)] w-[var(--tm-student-card-level-icon-size)]'
-    : 'h-[18px] w-[18px]';
+    : iconSize === 'group-card'
+      ? 'h-4 w-4'
+      : 'h-[18px] w-[18px]';
   const rowHeightClass = iconSize === 'student-card'
     ? 'h-[var(--tm-student-card-level-row-height)]'
-    : 'h-[18px]';
+    : iconSize === 'group-card'
+      ? 'h-4'
+      : 'h-[18px]';
   const levelLabel = level.iconCount > 0
     ? `${level.iconCount}个${currentTier.label}`
     : '尚未点亮星星';
@@ -122,7 +122,6 @@ export const StudentPerformanceValues: React.FC<StudentPerformanceValuesProps> =
   variant = 'default',
   showPraise = true,
   showCriticism = true,
-  valueMode = 'count',
   fontSize,
   itemHeight,
   itemMinWidth,
@@ -142,8 +141,8 @@ export const StudentPerformanceValues: React.FC<StudentPerformanceValuesProps> =
   const chipHeightClass = isStudentCard ? 'h-[var(--tm-student-card-count-height)]' : 'h-[18px]';
 
   const visibleValueLabel = [
-    showPraise ? (valueMode === 'score' ? `累计加分${summary.praiseScore}分` : `被表扬${summary.praiseCount}次`) : '',
-    showCriticism ? (valueMode === 'score' ? `累计扣分${summary.criticismScore}分` : `被批评${summary.criticismCount}次`) : '',
+    showPraise ? `累计表扬${summary.praiseScore}分` : '',
+    showCriticism ? `累计待改进${summary.criticismScore}分` : '',
   ].filter(Boolean).join('，');
 
   return (
@@ -157,12 +156,12 @@ export const StudentPerformanceValues: React.FC<StudentPerformanceValuesProps> =
     >
       {showPraise && (
         <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-praise-soft,#ecfdf5)] px-1 text-[var(--tm-student-praise,#059669)] ${chipHeightClass}`} style={{ height: itemHeight, minWidth: itemMinWidth }}>
-          {valueMode === 'score' ? formatSignedScore(summary.praiseScore, '+') : formatSignedCount(summary.praiseCount, '+')}
+          {formatSignedScore(summary.praiseScore, '+')}
         </span>
       )}
       {showCriticism && (
         <span aria-hidden="true" className={`flex min-w-[24px] items-center justify-center rounded-[5px] bg-[var(--tm-student-criticism-soft)] px-1 text-[var(--tm-student-criticism)] ${chipHeightClass}`} style={{ height: itemHeight, minWidth: itemMinWidth }}>
-          {valueMode === 'score' ? formatSignedScore(summary.criticismScore, '-') : formatSignedCount(summary.criticismCount, '-')}
+          {formatSignedScore(summary.criticismScore, '-')}
         </span>
       )}
     </span>

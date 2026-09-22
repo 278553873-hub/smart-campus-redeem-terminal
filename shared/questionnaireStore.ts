@@ -1,4 +1,4 @@
-import { normalizeFormFieldSettings, type FormFieldSettings, type FormLayoutMode, type FormSection, type FormSubField } from './formDefinition';
+import { normalizeFormFieldSettings, type FormFieldSettings, type FormFieldType, type FormLayoutMode, type FormSection, type FormSubField } from './formDefinition';
 import type { GrowthInputFieldKey } from './studentGrowthFieldCatalog';
 import type { ArchiveTemplateSnapshot } from './studentArchiveStore';
 import type { QuestionnaireHeaderImageId, QuestionnaireThemeId } from './questionnaireThemeTokens';
@@ -12,7 +12,7 @@ export type QuestionnaireCollectionMode = 'guardian_questionnaire' | 'student_in
 export type QuestionnaireContentType = 'ordinary' | 'growth' | 'mixed';
 export type QuestionnaireRespondentRole = 'teacher' | 'guardian';
 export type GrowthRecordDateMode = 'respondent' | 'fixed';
-export type QuestionnaireQuestionType = 'single' | 'multiple' | 'rating' | 'text' | 'short_text' | 'multi_fill' | 'number' | 'date';
+export type QuestionnaireQuestionType = FormFieldType;
 export type QuestionnaireTargetMode = 'all' | 'classes' | 'students';
 export type QuestionnaireTargetSyncPolicy = 'fixed' | 'follow_classes';
 export type QuestionnaireTargetScopeStatus = 'active' | 'exited';

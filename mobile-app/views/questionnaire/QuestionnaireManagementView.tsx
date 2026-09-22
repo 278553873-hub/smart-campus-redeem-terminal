@@ -676,25 +676,18 @@ const emptyQuestion = (type: QuestionnaireQuestionType, sectionId?: string): Que
   settings: normalizeFormFieldSettings(type, undefined, type === 'single' || type === 'multiple' ? ['选项1', '选项2'] : type === 'rating' ? createRatingOptions(5) : []),
 });
 
-const archiveQuestionTypeByFieldType: Record<ArchiveField['type'], QuestionnaireQuestionType> = {
-  text: 'text',
-  'single-select': 'single',
-  'multiple-select': 'multiple',
-  date: 'date',
-  number: 'number',
-};
-
 const createArchiveQuestion = (
   templateId: string,
   field: ArchiveField,
   sectionId?: string,
 ): QuestionnaireQuestion => ({
   id: `archive-${templateId}-${field.id}`,
-  type: archiveQuestionTypeByFieldType[field.type],
+  type: field.type,
   title: field.label,
   required: field.required,
   options: [...field.options],
   customAnswerOptions: [...(field.customAnswerOptions ?? [])],
+  subFields: field.subFields ? field.subFields.map(subField => ({ ...subField })) : undefined,
   settings: field.settings,
   sectionId,
   archiveTemplateId: templateId,

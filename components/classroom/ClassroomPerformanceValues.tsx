@@ -1,5 +1,4 @@
 import React from 'react';
-import type { EvaluationCardValueMode } from '../../mobile-app/types';
 
 interface ClassroomPerformanceSummary {
   praiseCount: number;
@@ -13,7 +12,6 @@ interface ClassroomPerformanceValuesProps {
   ariaLabelPrefix?: string;
   showPraise?: boolean;
   showCriticism?: boolean;
-  valueMode?: EvaluationCardValueMode;
   fontSize?: number;
   itemHeight?: number;
   itemMinWidth?: number;
@@ -22,8 +20,6 @@ interface ClassroomPerformanceValuesProps {
   className?: string;
 }
 
-const formatCount = (count: number) => count > 99 ? '99+' : String(count);
-const formatSignedCount = (count: number, sign: '+' | '-') => count === 0 ? '0' : `${sign}${formatCount(count)}`;
 export const formatScore = (score: number) => Number.isInteger(score) ? String(score) : score.toFixed(2).replace(/\.?0+$/, '');
 const formatSignedScore = (score: number, sign: '+' | '-') => score === 0 ? '0' : `${sign}${formatScore(score)}`;
 
@@ -32,7 +28,6 @@ const ClassroomPerformanceValues: React.FC<ClassroomPerformanceValuesProps> = ({
   ariaLabelPrefix = '',
   showPraise = true,
   showCriticism = true,
-  valueMode = 'count',
   fontSize = 11,
   itemHeight = 18,
   itemMinWidth = 24,
@@ -41,8 +36,8 @@ const ClassroomPerformanceValues: React.FC<ClassroomPerformanceValuesProps> = ({
   className = '',
 }) => {
   const visibleValueLabels = [
-    showPraise ? (valueMode === 'score' ? `累计加分${summary.praiseScore}分` : `被表扬${summary.praiseCount}次`) : '',
-    showCriticism ? (valueMode === 'score' ? `累计扣分${summary.criticismScore}分` : `被批评${summary.criticismCount}次`) : '',
+    showPraise ? `累计表扬${summary.praiseScore}分` : '',
+    showCriticism ? `累计待改进${summary.criticismScore}分` : '',
   ].filter(Boolean);
 
   if (visibleValueLabels.length === 0) return null;
@@ -65,7 +60,7 @@ const ClassroomPerformanceValues: React.FC<ClassroomPerformanceValuesProps> = ({
           className="flex items-center justify-center rounded-md bg-emerald-50 px-1 text-emerald-700"
           style={{ height: itemHeight, minWidth: itemMinWidth }}
         >
-          {valueMode === 'score' ? formatSignedScore(summary.praiseScore, '+') : formatSignedCount(summary.praiseCount, '+')}
+          {formatSignedScore(summary.praiseScore, '+')}
         </span>
       )}
       {showCriticism && (
@@ -74,7 +69,7 @@ const ClassroomPerformanceValues: React.FC<ClassroomPerformanceValuesProps> = ({
           className="flex items-center justify-center rounded-md bg-rose-50 px-1 text-rose-700"
           style={{ height: itemHeight, minWidth: itemMinWidth }}
         >
-          {valueMode === 'score' ? formatSignedScore(summary.criticismScore, '-') : formatSignedCount(summary.criticismCount, '-')}
+          {formatSignedScore(summary.criticismScore, '-')}
         </span>
       )}
     </div>

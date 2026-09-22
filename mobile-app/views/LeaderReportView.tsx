@@ -326,14 +326,14 @@ const TeacherRow: React.FC<TeacherRowProps> = ({
 );
 
 const scoreSortTabs: { key: ScoreRankingSort; label: string }[] = [
-    { key: 'plus', label: '加分' },
-    { key: 'minus', label: '减分' },
+    { key: 'plus', label: '表扬' },
+    { key: 'minus', label: '待改进' },
     { key: 'net', label: '总分' },
 ];
 
 const fiveEducationScoreTabs: { key: ScoreRankingSort; label: string }[] = [
-    { key: 'plus', label: '加分' },
-    { key: 'minus', label: '减分' },
+    { key: 'plus', label: '表扬' },
+    { key: 'minus', label: '待改进' },
     { key: 'net', label: '总分' },
 ];
 
@@ -374,8 +374,8 @@ const fiveEducationScoreValueKeyMap: Record<ScoreRankingSort, FiveEducationChart
 };
 
 const fiveEducationScoreYAxisNameMap: Record<ScoreRankingSort, string> = {
-    plus: '加分',
-    minus: '减分',
+    plus: '表扬',
+    minus: '待改进',
     net: '总分',
 };
 
@@ -646,8 +646,8 @@ const TeacherScoreRankingCard = ({
             </div>
             <div className="mb-2 grid grid-cols-[minmax(0,1.1fr)_56px_56px_64px] gap-2 px-3 text-[11px] font-semibold text-[var(--tm-text-secondary)]">
                 <span>老师</span>
-                <span className="text-right">加分</span>
-                <span className="text-right">减分</span>
+                <span className="text-right">表扬</span>
+                <span className="text-right">待改进</span>
                 <span className="text-right">总分</span>
             </div>
             <div className="space-y-2.5">
@@ -2561,7 +2561,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
                         <div className="flex items-center justify-between border-b border-[var(--tm-border-subtle)] px-5 py-4">
                             <div>
                                 <h3 className="text-lg font-semibold text-[var(--tm-text-primary)]">教师赋分完整榜单</h3>
-                                <p className="mt-0.5 text-xs text-[var(--tm-text-secondary)]">可按加分、减分、总分排序</p>
+                                <p className="mt-0.5 text-xs text-[var(--tm-text-secondary)]">可按表扬、待改进、总分排序</p>
                             </div>
                             <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]" onClick={() => setShowFullScoreRanking(false)}>
                                 <X className="h-5 w-5" />
@@ -2573,8 +2573,8 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
                             </div>
                             <div className="grid grid-cols-[minmax(0,1.1fr)_56px_56px_64px] gap-2 px-3 text-[11px] font-semibold text-[var(--tm-text-secondary)]">
                                 <span>老师</span>
-                                <span className="text-right">加分</span>
-                                <span className="text-right">减分</span>
+                                <span className="text-right">表扬</span>
+                                <span className="text-right">待改进</span>
                                 <span className="text-right">总分</span>
                             </div>
                         </div>

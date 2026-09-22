@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { CalendarDays, Sparkles } from 'lucide-react';
 import type { SchoolTermConfig } from '../domain/principalTermReport';
 import {
   PRINCIPAL_TERM_REPORT_SAMPLE,
@@ -75,37 +74,28 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
             onRetry={onRetry}
           />
         ) : loading ? (
-          <section className="px-6 pb-12 pt-16" aria-live="polite">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-role-principal-soft)] text-[var(--tm-role-principal-strong)] [box-shadow:var(--tm-shadow-card-raised)]">
-              <Sparkles className="h-7 w-7 animate-pulse" strokeWidth={1.9} aria-hidden="true" />
+          <div className="px-5" role="status" aria-live="polite" aria-label="正在生成学校学期报告">
+            <div className="mx-auto mt-8 min-h-[190px] max-w-[280px] space-y-4">
+              {ANALYSIS_STEPS.slice(0, visibleStepCount).map((step, index) => {
+                const active = index === visibleStepCount - 1;
+                return (
+                  <div key={step} className="animate-in fade-in slide-in-from-bottom-1 flex items-start gap-3 duration-300">
+                    <span className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${active ? 'animate-pulse bg-[var(--tm-role-principal-primary)]' : 'bg-[var(--tm-border-subtle)]'}`} aria-hidden="true" />
+                    <p className={`text-[length:var(--tm-font-size-meta)] tm-font-regular leading-5 ${active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-tertiary)]'}`}>{step}</p>
+                  </div>
+                );
+              })}
             </div>
-            <h1 className="mt-6 text-center text-[20px] font-semibold">正在生成学期报告</h1>
-            <div className="mx-auto mt-9 min-h-[190px] max-w-[280px]" role="status" aria-label="正在生成学校学期报告">
-              <div className="space-y-4">
-                {ANALYSIS_STEPS.slice(0, visibleStepCount).map((step, index) => {
-                  const active = index === visibleStepCount - 1;
-                  return (
-                    <div key={step} className="animate-in fade-in slide-in-from-bottom-1 flex items-start gap-3 duration-300">
-                      <span className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${active ? 'animate-pulse bg-[var(--tm-role-principal-primary)]' : 'bg-[var(--tm-border-subtle)]'}`} aria-hidden="true" />
-                      <p className={`text-[13px] leading-5 ${active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-tertiary)]'}`}>{step}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
+          </div>
         ) : (
           <>
-            <section className="border-b border-[var(--tm-border-subtle)] px-[var(--tm-report-page-inline)] pb-6 pt-5">
-              <div className="flex min-h-11 items-center justify-between gap-3">
-                <p className="min-w-0 truncate text-[13px] font-medium text-[var(--tm-text-secondary)]">{schoolName}</p>
-                {onOpenHistory && <AssistantHistoryLink label="往期报告" onClick={onOpenHistory} />}
+            <section className="relative px-[var(--tm-report-page-inline)] pb-1 pt-2 text-center">
+              <div className="relative flex min-h-11 items-center justify-center">
+                {onOpenHistory && <AssistantHistoryLink label="往期报告" onClick={onOpenHistory} className="absolute right-0 top-0" />}
               </div>
-              <h1 className="mt-1.5 text-[24px] font-bold leading-8">学生综合素质评价系统学期运营报告</h1>
-              <div className="mt-4 flex items-start gap-2 text-[12px] leading-5 text-[var(--tm-text-secondary)]">
-                <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-                <span>{reportResolution.document?.period.label}<br />{reportResolution.document?.period.detail}</span>
-              </div>
+              <p className="mt-1 text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">
+                根据{term.name}评价记录生成
+              </p>
             </section>
 
             {reportResolution.document ? (

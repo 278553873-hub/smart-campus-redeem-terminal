@@ -7,8 +7,8 @@ for (const required of [
   'MobileBottomSheet',
   "ClassReportIndicatorDrilldownMode = 'score' | 'event'",
   'getClassReportIndicatorNode',
-  '加分',
-  '扣分',
+  '表扬',
+  '待改进',
   '总分',
   'aria-label="一级指标切换"',
   'aria-label="指标层级"',
@@ -33,7 +33,7 @@ assert.ok(source.includes('node.children.length > 0'), '只有存在子级的指
 assert.ok(source.includes('currentNode?.children ?? []'), '下钻抽屉应从选中的一级指标开始逐层披露，不重复一级概览。');
 assert.ok(source.includes('roots.map(root =>') && source.includes('setPath([root.id])'), '抽屉顶部应支持直接切换一级指标。');
 assert.ok(source.includes('pathNodes.length > 1') && source.includes('setPath(path.slice(0, 1))'), '只有进入三级时才应展示可返回二级的指标路径。');
-assert.ok(source.includes("{ name: '加分'") && source.includes("{ name: '扣分'") && source.includes("{ name: '总分'"), '得分下钻应与一级概览保持相同的三系列柱状图。');
+assert.ok(source.includes("{ name: '表扬'") && source.includes("{ name: '待改进'") && source.includes("{ name: '总分'"), '得分下钻应与一级概览保持相同的三系列柱状图。');
 assert.ok(source.includes("visibleNodes.find(item => item.label === label)") && source.includes('selectNode(node)'), '点击得分柱组或指标名称应继续进入下一层。');
 assert.ok(source.includes('value: node.metrics.eventCount') && source.includes('TeacherReportDonutChart'), '事件下钻应与一级概览保持环形图语义一致。');
 assert.ok(!source.includes('ScoreHeader') && !source.includes('EventHeader'), '下钻主体不应继续使用表格表头。');

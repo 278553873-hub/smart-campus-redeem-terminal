@@ -83,7 +83,7 @@ for (const required of [
   '>指标名称</span>',
   "{ value: 'all', label: '全校' }",
   '<ReportSegmentTabs',
-  '扣分笔数',
+  '待改进笔数',
 ]) {
   assert.ok(viewSource.includes(required), `班级评价报表应提供固定周口径、排名和图表展示，缺少：${required}`);
 }

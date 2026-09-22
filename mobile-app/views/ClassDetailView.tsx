@@ -17,11 +17,13 @@ import CardLevelDisplaySettings from '../components/student-performance/CardLeve
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileToast from '../components/ui/MobileToast';
 import GroupPerformanceMeta from '../components/group/GroupPerformanceMeta';
+import { StudentPerformanceLevelIcons, StudentPerformanceLevelScore } from '../components/student-performance/StudentPerformanceMeta';
 import StudentCompactSelectGrid, { type StudentCompactSelectSection } from '../components/student/StudentCompactSelectGrid';
 import MobileStudentPickerSheet from '../components/student/MobileStudentPickerSheet';
 import StudentRosterCard, { StudentRosterAddCard } from '../components/student/StudentRosterCard';
 import {
     createDemoStudentPerformanceSummary,
+    getStudentPerformanceLevel,
     type StudentPerformanceSummary,
 } from '../domain/studentPerformance';
 import {
@@ -1229,6 +1231,9 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             const isSelected = isGroupRecountSelection ? recountSelectedIds.has(group.id) : groupSelectionIds.has(group.id);
                             const members = group.memberIds.map(id => studentById.get(id)).filter(Boolean) as Student[];
                             const groupPerformance = getDisplayedGroupPerformance(group.id);
+                            const groupLevel = getStudentPerformanceLevel(groupPerformance.netScore);
+                            const hasGroupLevel = groupCardDisplaySettings.showLevel;
+                            const hasGroupEvaluation = groupCardDisplaySettings.showEvaluation && (groupCardDisplaySettings.showPraise || groupCardDisplaySettings.showCriticism);
                             return (
                                 <button
                                     type="button"
@@ -1246,16 +1251,23 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                 >
                                     <GroupAvatar avatarKey={group.avatarKey} index={index} />
                                     <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{group.name}</span>
+                                        <span className="flex min-w-0 items-center gap-1">
+                                            <span className="min-w-0 truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{group.name}</span>
+                                            {hasGroupLevel && groupCardDisplaySettings.levelForm === 'icon' && (
+                                                <StudentPerformanceLevelIcons level={groupLevel} iconSize="group-card" />
+                                            )}
+                                            {hasGroupLevel && groupCardDisplaySettings.levelForm === 'score' && (
+                                                <StudentPerformanceLevelScore netScore={groupPerformance.netScore} />
+                                            )}
+                                        </span>
                                         <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{getGroupMemberSummary(members)}</span>
                                     </span>
-                                    {!isGroupSelectionActive && groupCardDisplaySettings.showEvaluation && (groupCardDisplaySettings.showPraise || groupCardDisplaySettings.showCriticism) && (
+                                    {!isGroupSelectionActive && hasGroupEvaluation && (
                                         <GroupPerformanceMeta
                                             summary={groupPerformance}
                                             orientation="vertical"
                                             showPraise={groupCardDisplaySettings.showEvaluation && groupCardDisplaySettings.showPraise}
                                             showCriticism={groupCardDisplaySettings.showEvaluation && groupCardDisplaySettings.showCriticism}
-                                            valueMode={groupCardDisplaySettings.valueMode}
                                             className="w-6 shrink-0"
                                         />
                                     )}
@@ -1405,10 +1417,17 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             />
                         </>
                     ) : cardDisplayTarget === 'group' ? (
-                        <CardEvaluationDisplaySettings
-                            settings={groupCardDisplaySettings}
-                            onChange={onUpdateGroupCardDisplaySettings}
-                        />
+                        <>
+                            <CardLevelDisplaySettings
+                                showLevel={groupCardDisplaySettings.showLevel}
+                                levelForm={groupCardDisplaySettings.levelForm}
+                                onChange={({ showLevel, levelForm }) => onUpdateGroupCardDisplaySettings({ ...groupCardDisplaySettings, showLevel, levelForm })}
+                            />
+                            <CardEvaluationDisplaySettings
+                                settings={groupCardDisplaySettings}
+                                onChange={onUpdateGroupCardDisplaySettings}
+                            />
+                        </>
                     ) : null}
                 </div>
             </MobileBottomSheet>

@@ -349,7 +349,7 @@ export const getEducationScoreAnalysis = (
     const highestDeduction = getExtremeItems(items, item => item.deductScore, 'max');
     const lowestDeduction = getExtremeItems(items, item => item.deductScore, 'min');
     if (highestDeduction.value === 0) {
-        return { summary, supplement: '各维度暂无扣分记录' };
+        return { summary, supplement: '各维度暂无待改进记录' };
     }
 
     const deductionTolerance = getScoreTolerance(highestDeduction.value, scoreUnit);
@@ -357,8 +357,8 @@ export const getEducationScoreAnalysis = (
     return {
         summary,
         supplement: deductionRange <= deductionTolerance
-            ? '各维度累计扣分接近'
-            : `${formatLabels(highestDeduction.items.map(item => item.label))}累计扣分最多，可查看对应评价事件`,
+            ? '各维度累计待改进接近'
+            : `${formatLabels(highestDeduction.items.map(item => item.label))}累计待改进最多，可查看对应评价事件`,
     };
 };
 

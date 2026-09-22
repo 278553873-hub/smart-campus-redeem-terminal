@@ -13,8 +13,6 @@ import {
 interface PrincipalReportHistoryBase {
   id: string;
   title: string;
-  periodLabel: string;
-  generatedDate: string;
   groupKey: string;
   groupLabel: string;
 }
@@ -38,8 +36,6 @@ const weeklyHistory: PrincipalPeriodicReportHistoryItem[] = [
     id: 'principal-weekly-2026-07-13',
     kind: 'weekly',
     title: '7月13日-7月19日管理建议',
-    periodLabel: '基于7月6日-7月12日学校数据',
-    generatedDate: '2026年7月13日',
     groupKey: '2026-07',
     groupLabel: '2026年7月',
     report: {
@@ -60,8 +56,6 @@ const weeklyHistory: PrincipalPeriodicReportHistoryItem[] = [
     id: 'principal-weekly-2026-07-06',
     kind: 'weekly',
     title: '7月6日-7月12日管理建议',
-    periodLabel: '基于6月29日-7月5日学校数据',
-    generatedDate: '2026年7月6日',
     groupKey: '2026-07',
     groupLabel: '2026年7月',
     report: {
@@ -84,14 +78,11 @@ const monthlyHistory: PrincipalPeriodicReportHistoryItem[] = [
   {
     id: 'principal-monthly-2026-05',
     kind: 'monthly',
-    title: '2026年5月学校复盘',
-    periodLabel: '2026.05.01 - 2026.05.31',
-    generatedDate: '2026年6月1日',
+    title: '5月学校复盘',
     groupKey: '2026',
     groupLabel: '2026年',
     report: {
       ...PRINCIPAL_MONTHLY_REPORT_SAMPLE,
-      reportTitle: '2026年5月学校运行复盘',
       periodLabel: '2026.05.01 - 2026.05.31',
       generatedDate: '2026年6月1日',
       metrics: [
@@ -106,14 +97,11 @@ const monthlyHistory: PrincipalPeriodicReportHistoryItem[] = [
   {
     id: 'principal-monthly-2026-04',
     kind: 'monthly',
-    title: '2026年4月学校复盘',
-    periodLabel: '2026.04.01 - 2026.04.30',
-    generatedDate: '2026年5月1日',
+    title: '4月学校复盘',
     groupKey: '2026',
     groupLabel: '2026年',
     report: {
       ...PRINCIPAL_MONTHLY_REPORT_SAMPLE,
-      reportTitle: '2026年4月学校运行复盘',
       periodLabel: '2026.04.01 - 2026.04.30',
       generatedDate: '2026年5月1日',
       metrics: [
@@ -205,9 +193,7 @@ const termHistory: PrincipalTermReportHistoryItem[] = [
   {
     id: 'principal-term-2025-2026-1',
     kind: 'term',
-    title: '2025-2026学年上学期报告',
-    periodLabel: '2025.09.01 - 2026.01.20',
-    generatedDate: '2026年1月25日',
+    title: '上学期报告',
     groupKey: '2025-2026',
     groupLabel: '2025-2026学年',
     term: {
@@ -227,9 +213,7 @@ const termHistory: PrincipalTermReportHistoryItem[] = [
   {
     id: 'principal-term-2024-2025-2',
     kind: 'term',
-    title: '2024-2025学年下学期报告',
-    periodLabel: '2025.02.17 - 2025.07.10',
-    generatedDate: '2025年7月15日',
+    title: '下学期报告',
     groupKey: '2024-2025',
     groupLabel: '2024-2025学年',
     term: {

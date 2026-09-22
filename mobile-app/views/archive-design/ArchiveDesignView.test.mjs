@@ -157,7 +157,7 @@ forbidText(viewSource, '自动带入', '档案设计不应让老师配置学生�
 forbidText(viewSource, 'showSystemFieldPicker', '档案设计不应保留学生身份字段选择浮层。');
 
 requireText(storeSource, 'label: archiveFieldDefaultLabels[type]', '新增档案字段必须使用题型名称作为真实默认值。');
-requireText(storeSource, "? ['选项1', '选项2'] : []", '新增单选和多选字段必须默认生成两个可用选项。');
+requireText(storeSource, "? ['选项1', '选项2']", '新增单选和多选字段必须默认生成两个可用选项。');
 requireText(formBuilderSource, 'smartDefaultContent?: boolean', '共享表单构建器必须将智能默认值收敛为可选能力。');
 requireText(viewSource, 'smartDefaultContent', '档案设计必须启用字段智能默认值。');
 requireText(formBuilderSource, "placeholder={smartDefaultContent ? '请输入选项内容' : '请输入选项名称'}", '默认选项进入焦点后必须显示选项内容提示。');
@@ -554,10 +554,13 @@ const archiveVisualSources = [viewSource, studentViewSource, archiveFormRenderer
 for (const rawStyle of ['text-white', 'bg-white/38', 'shadow-sm', 'shadow-[', 'backdrop-blur-[2px]']) {
   forbidText(archiveVisualSources, rawStyle, `档案页面不得残留未收敛到设计令牌的样式：${rawStyle}`);
 }
-requireText(archiveFormRendererSource, "role={field.type === 'single-select' ? 'radio' : 'checkbox'}", '档案选项必须使用可识别的单选或多选语义。');
-requireText(archiveFormRendererSource, "field.type === 'single-select' ? 'rounded-full'", '单选项必须使用圆形选择符号。');
+requireText(archiveFormRendererSource, "role={field.type === 'single' ? 'radio' : 'checkbox'}", '档案选项必须使用可识别的单选或多选语义。');
+requireText(archiveFormRendererSource, "field.type === 'single' ? 'rounded-full'", '单选项必须使用圆形选择符号。');
 forbidText(storeSource, "group: 'core' | 'stage'", '字段模型不应保留成长对比分组。');
-requireText(storeSource, "export type ArchiveFieldType = 'text' | 'single-select' | 'multiple-select' | 'date' | 'number'", '字段类型应支持文字、单选、多选、日期、数字。');
+requireText(storeSource, "export type ArchiveFieldType = Exclude<FormFieldType, 'short_text'>", '字段类型应支持文字、单选、多选、评分、多项填空、日期、数字。');
+requireText(viewSource, "{ value: 'rating', label: '评分', icon: Star, rating: true }", '档案手动字段应支持评分。');
+requireText(viewSource, "{ value: 'multi_fill', label: '多项填空', icon: ListPlus, subFields: true }", '档案手动字段应支持多项填空。');
+requireText(archiveFormRendererSource, "field.type === 'multi_fill'", '档案填写与预览必须渲染多项填空控件。');
 forbidText(storeSource, 'export type ArchiveSource', '档案数据层不应保留参与来源模型。');
 forbidText(storeSource, 'archiveStageMeta', '档案数据层不应保留档案阶段模型。');
 forbidText(storeSource, 'StudentBaseArchive', '档案数据层不应保留学生底档模型。');

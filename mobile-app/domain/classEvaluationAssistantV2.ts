@@ -37,7 +37,7 @@ export type ClassEvaluationAnswerType =
 
 export const CLASS_EVALUATION_FIXED_QUESTIONS = [
     { id: 'weekly_performance', label: '本周班级评比表现怎么样？' },
-    { id: 'deduction_patterns', label: '本周扣分反映出哪些主要问题？' },
+    { id: 'deduction_patterns', label: '本周待改进主要集中在哪些方面？' },
     { id: 'next_week_focus', label: '下周应该重点关注什么？' },
 ] as const;
 
@@ -46,7 +46,7 @@ export type ClassEvaluationFixedQuestionId = ClassEvaluationFixedQuestion['id'];
 
 /** 输入控件上方的首选问题：明确数据对象是班级评比，避免双开状态下与学生评价混淆。 */
 export const CLASS_EVALUATION_SUGGESTED_QUESTIONS = [
-    '班级评比主要扣在哪？',
+    '班级评比主要在哪些方面待改进？',
     '班级评比较上周哪项变化最大？',
     '根据班级评比，下周优先关注什么？',
 ] as const;
@@ -54,17 +54,17 @@ export const CLASS_EVALUATION_SUGGESTED_QUESTIONS = [
 /** 回答后的连续追问：每个意图都给 3 条，保证剔除已问问题后仍能凑满 3 条。 */
 export const CLASS_EVALUATION_FOLLOW_UP_QUESTIONS: Record<ClassEvaluationAnswerType, readonly string[]> = {
     weekly_performance: [
-        '本周扣分主要来自哪些指标？',
+        '本周待改进主要来自哪些指标？',
         '和上周相比哪项变化最大？',
-        '这些扣分下一周怎么改善？',
+        '这些待改进下一周怎么改善？',
     ],
     deduction_patterns: [
-        '哪一笔扣分影响最大？',
+        '哪一项待改进影响最大？',
         '和上周相比哪项变化最大？',
         '下周班级评比优先关注什么？',
     ],
     next_week_focus: [
-        '这些建议对应哪些扣分记录？',
+        '这些建议对应哪些待改进记录？',
         '本周表现最稳定的是哪些项目？',
         '本周班级评比整体表现怎么样？',
     ],
@@ -293,7 +293,7 @@ const resolveQuestionIntent = (
     if (includesAny(question, ['上周', '相比', '变化', '趋势', '下周', '建议', '关注', '改善', '怎么做', '如何做'])) {
         return 'next_week_focus';
     }
-    if (includesAny(question, ['扣分', '失分', '原因', '问题', '记录', '明细', '规则', '依据', '具体扣', '扣在哪'])) {
+    if (includesAny(question, ['扣分', '待改进', '改进', '失分', '原因', '问题', '记录', '明细', '规则', '依据', '具体扣', '扣在哪'])) {
         return 'deduction_patterns';
     }
     if (includesAny(question, ['得分', '分数', '排名', '整体', '总体', '表现', '情况', '满分', '优势'])) {
@@ -330,7 +330,7 @@ const scopeRecordsForQuestion = (
 
 const unavailableAnswer = (
     snapshot: ClassEvaluationSnapshot,
-    message = `当前只同步了本周期最终得分${formatScore(snapshot.finalScore)}分，没有对应扣分明细，因此暂时无法确认具体原因。`,
+    message = `当前只同步了本周期最终得分${formatScore(snapshot.finalScore)}分，没有对应待改进明细，因此暂时无法确认具体原因。`,
 ): ClassEvaluationAssistantAnswer => ({
     answerType: 'unavailable',
     message,
@@ -366,7 +366,7 @@ export const askClassEvaluationQuestion = ({
     if (!questionIntent) {
         return {
             answerType: 'clarification',
-            message: '我可以基于当前班级的本周评价台账，回答得分、年级排名、扣分记录、扣分依据、周变化和下周建议。请换一种问法。',
+            message: '我可以基于当前班级的本周评价台账，回答得分、年级排名、待改进记录、待改进依据、周变化和下周建议。请换一种问法。',
             metrics: [],
             breakdown: [],
             analysis: [],
@@ -401,7 +401,7 @@ export const askClassEvaluationQuestion = ({
             metrics: [
                 { label: '本周得分', value: `${formatScore(snapshot.finalScore)}分` },
                 { label: '年级排名', value: `第${gradeRank}名` },
-                { label: '累计扣分', value: `-${formatScore(snapshot.deduction)}分`, tone: 'negative' },
+                { label: '累计待改进', value: `-${formatScore(snapshot.deduction)}分`, tone: 'negative' },
             ],
             breakdown: summarizeDimensionScores(rankings),
             analysis: [
@@ -416,12 +416,12 @@ export const askClassEvaluationQuestion = ({
                     `${weakestDimension.dimension}${formatScore(weakestDimension.score)}/${formatScore(weakestDimension.maxScore)}分，年级第${weakestDimension.gradeRank}，是当前得分最低的分类。`,
                 ),
                 createInsight(
-                    '扣分集中度',
-                    `前两项扣分合计${formatScore(topTwoDeduction)}分，占本周全部扣分的${concentration}%。`,
+                    '待改进集中度',
+                    `前两项待改进合计${formatScore(topTwoDeduction)}分，占本周全部待改进的${concentration}%。`,
                 ),
             ],
             suggestions: [
-                createInsight('保持优势项', `${fullScoreDimensions.map(item => item.dimension).join('、') || '当前高分项目'}继续按现有节奏观察，避免出现新增扣分。`),
+                createInsight('保持优势项', `${fullScoreDimensions.map(item => item.dimension).join('、') || '当前高分项目'}继续按现有节奏观察，避免出现新增待改进。`),
                 createInsight('优先补齐短板', `下周先关注${weakestDimension.dimension}，并结合本周${mostDeducted.dimension}的逐笔记录定位高频场景。`),
             ],
             context: createContext(snapshot, periodRecords),
@@ -450,18 +450,18 @@ export const askClassEvaluationQuestion = ({
 
         return {
             answerType: 'deduction_patterns',
-            message: `${scopeLabel}共${scopedRecords.length}笔扣分，合计扣${formatScore(scopedDeduction)}分，主要涉及${topTwo.map(item => item.dimension).join('和')}。`,
+            message: `${scopeLabel}共${scopedRecords.length}笔待改进，合计扣${formatScore(scopedDeduction)}分，主要涉及${topTwo.map(item => item.dimension).join('和')}。`,
             metrics: [
-                { label: hasSpecificScope ? '相关扣分' : '累计扣分', value: `-${formatScore(scopedDeduction)}分`, tone: 'negative' },
-                { label: hasSpecificScope ? '相关记录' : '扣分记录', value: `${scopedRecords.length}笔` },
+                { label: hasSpecificScope ? '相关待改进' : '累计待改进', value: `-${formatScore(scopedDeduction)}分`, tone: 'negative' },
+                { label: hasSpecificScope ? '相关记录' : '待改进记录', value: `${scopedRecords.length}笔` },
                 { label: '主要分类', value: scopedDimensionDeductions[0].dimension },
             ],
             breakdown: summarizeByDimension(scopedRecords),
             analysis: [
-                createInsight('问题较集中', `${topTwo.map(item => item.dimension).join('、')}合计扣${formatScore(topTwoDeduction)}分，占全部扣分的${concentration}%。`),
-                createInsight('高影响事件', `${largestRecord.indicator}单次扣${formatScore(largestRecord.deduction)}分，占相关扣分的${highImpactShare}%。`),
+                createInsight('问题较集中', `${topTwo.map(item => item.dimension).join('、')}合计扣${formatScore(topTwoDeduction)}分，占全部待改进的${concentration}%。`),
+                createInsight('高影响事件', `${largestRecord.indicator}单次扣${formatScore(largestRecord.deduction)}分，占相关待改进的${highImpactShare}%。`),
                 asksForRule
-                    ? createInsight('扣分依据', largestRecord.rule)
+                    ? createInsight('待改进依据', largestRecord.rule)
                     : createInsight(
                         '重复发生',
                         repeatedDimensions.length > 0
@@ -470,7 +470,7 @@ export const askClassEvaluationQuestion = ({
                     ),
             ],
             suggestions: [
-                createInsight('先看高影响扣分', `优先复盘${largestRecord.indicator}，单次减少此类问题对周总分改善最直接。`),
+                createInsight('先看高影响待改进', `优先复盘${largestRecord.indicator}，单次减少此类问题对周总分改善最直接。`),
                 createInsight('持续观察高频项', `重点观察${scopedDimensionDeductions[0].dimension}，对照逐笔记录判断同类场景是否继续出现。`),
             ],
             context: createContext(snapshot, scopedPrioritizedRecords),
@@ -527,12 +527,12 @@ export const askClassEvaluationQuestion = ({
                 '稳定或改善',
                 stableOrImproved.length > 0
                     ? `${stableOrImproved.map(item => item.dimension).join('、')}与上周持平或有所改善。`
-                    : '五项得分均低于上周，需要优先控制新增扣分。',
+                    : '五项得分均低于上周，需要优先控制新增待改进。',
             ),
         ],
         suggestions: [
             createInsight('第一关注', `先看${biggestDecline.dimension}本周记录，关注造成环比下降的具体场景。`),
-            createInsight('第二关注', `${mostDeducted.dimension}是本周累计扣分最多的分类，下一周期持续观察同类记录是否减少。`),
+            createInsight('第二关注', `${mostDeducted.dimension}是本周累计待改进最多的分类，下一周期持续观察同类记录是否减少。`),
         ],
         context: createContext(snapshot, focusRecords),
         evidenceRefs: focusRecords.map(record => record.id),

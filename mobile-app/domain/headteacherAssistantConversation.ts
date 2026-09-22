@@ -154,9 +154,9 @@ export const buildUnknownQuestionAnswer = (
     capabilities: HeadteacherAssistantCapabilities,
 ): AssistantAnswerPresentation => {
     const scopeCopy = capabilities.showClassEvaluation && capabilities.showStudentEvaluation
-        ? '班级评比的得分排名、扣分记录，以及学生评价的记录覆盖、记录倾向和复盘改进'
+        ? '班级评比的得分排名、待改进记录，以及学生评价的记录覆盖、记录倾向和复盘改进'
         : capabilities.showClassEvaluation
-            ? '班级评比的得分排名、扣分记录和下周建议'
+            ? '班级评比的得分排名、待改进记录和下周建议'
             : '学生评价的记录覆盖、记录倾向和复盘改进';
 
     return {

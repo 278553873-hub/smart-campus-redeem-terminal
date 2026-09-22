@@ -24,7 +24,6 @@ export interface PrincipalReportAction {
 export interface PrincipalPeriodicReportContent {
   kind: PrincipalPeriodicReportKind;
   pageTitle: string;
-  reportTitle: string;
   periodLabel: string;
   periodDetail: string;
   generatedDate: string;
@@ -46,7 +45,6 @@ export interface PrincipalPeriodicReportContent {
 export const PRINCIPAL_WEEKLY_REPORT_SAMPLE: PrincipalPeriodicReportContent = {
   kind: 'weekly',
   pageTitle: '本周管理建议',
-  reportTitle: '本周学校管理建议',
   periodLabel: '2026.07.13 - 2026.07.19',
   periodDetail: '用于指导 07.20 - 07.26 管理动作',
   generatedDate: '2026年7月20日',
@@ -115,7 +113,6 @@ export const PRINCIPAL_WEEKLY_REPORT_SAMPLE: PrincipalPeriodicReportContent = {
 export const PRINCIPAL_MONTHLY_REPORT_SAMPLE: PrincipalPeriodicReportContent = {
   kind: 'monthly',
   pageTitle: '上月学校复盘',
-  reportTitle: '2026年6月学校运行复盘',
   periodLabel: '2026.06.01 - 2026.06.30',
   periodDetail: '完整自然月数据',
   generatedDate: '2026年7月20日',

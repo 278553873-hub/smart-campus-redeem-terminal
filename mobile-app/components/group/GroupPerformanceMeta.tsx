@@ -1,6 +1,5 @@
 import React from 'react';
 import type { GroupPerformanceSummary } from '../../domain/groupPerformance';
-import type { EvaluationCardValueMode } from '../../types';
 import { StudentPerformanceValues } from '../student-performance/StudentPerformanceMeta';
 
 interface GroupPerformanceMetaProps {
@@ -9,7 +8,6 @@ interface GroupPerformanceMetaProps {
   orientation?: 'horizontal' | 'vertical';
   showPraise?: boolean;
   showCriticism?: boolean;
-  valueMode?: EvaluationCardValueMode;
   fontSize?: number;
   itemHeight?: number;
   itemMinWidth?: number;
@@ -22,15 +20,14 @@ const GroupPerformanceMeta: React.FC<GroupPerformanceMetaProps> = ({
   orientation = 'horizontal',
   showPraise = true,
   showCriticism = true,
-  valueMode = 'count',
   fontSize,
   itemHeight,
   itemMinWidth,
   gap,
 }) => {
   const visibleValueLabel = [
-    showPraise ? (valueMode === 'score' ? `累计加分${summary.praiseScore}分` : `被表扬${summary.praiseCount}次`) : '',
-    showCriticism ? (valueMode === 'score' ? `累计扣分${summary.criticismScore}分` : `被批评${summary.criticismCount}次`) : '',
+    showPraise ? `累计表扬${summary.praiseScore}分` : '',
+    showCriticism ? `累计待改进${summary.criticismScore}分` : '',
   ].filter(Boolean).join('，');
 
   return (
@@ -41,7 +38,6 @@ const GroupPerformanceMeta: React.FC<GroupPerformanceMetaProps> = ({
       orientation={orientation}
       showPraise={showPraise}
       showCriticism={showCriticism}
-      valueMode={valueMode}
       fontSize={fontSize}
       itemHeight={itemHeight}
       itemMinWidth={itemMinWidth}

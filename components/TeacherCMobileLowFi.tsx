@@ -783,7 +783,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
   aiResult: {
     title: 'AI识别结果',
     subtitle: '识别完成即入库，编辑立即生效。',
-    modules: ['原始语音/文字/图片', '语音转文字', '事件时间', '识别对象', '五育指标', '加分/减分', 'AI评语', '入库状态'],
+    modules: ['原始语音/文字/图片', '语音转文字', '事件时间', '识别对象', '五育指标', '表扬/待改进', 'AI评语', '入库状态'],
     ctas: [
       { label: '继续记录', priority: 'P0', position: '底部主按钮' },
       { label: '编辑该条', priority: 'P1', position: '结果卡整体点击' },
@@ -800,7 +800,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
   editResult: {
     title: '编辑识别结果',
     subtitle: '字段修改后立即生效。',
-    modules: ['事件时间', '识别对象', '五育指标', '加分/减分', 'AI评语', '同步状态'],
+    modules: ['事件时间', '识别对象', '五育指标', '表扬/待改进', 'AI评语', '同步状态'],
     ctas: [
       { label: '保存修改', priority: 'P0', position: '底部主按钮' },
     ],
@@ -1090,7 +1090,7 @@ const pageMeta: Record<PageKey, PageMeta> = {
   classReport: {
     title: '班级统计报告',
     subtitle: '有任何记录即可展示统计，不需要 AI 分析。',
-    modules: ['记录总数', '覆盖学生数', '加分记录', '减分记录', '五育指标分布'],
+    modules: ['记录总数', '覆盖学生数', '表扬记录', '待改进记录', '五育指标分布'],
     ctas: [
       { label: '生成月度/期末AI报告', priority: 'P0', position: '页面底部主按钮' },
     ],
@@ -1737,7 +1737,7 @@ const pagePrdDetails: Partial<Record<PageKey, PrdBlock[]>> = {
     { type: 'list', items: [
       'AI 识别完成后直接入库，不设置草稿。',
       '一段话提到多个学生时可拆成多条记录。',
-      '结果页展示事件时间、对象、五育指标、加减分。',
+      '结果页展示事件时间、对象、五育指标、表扬/待改进。',
       '老师发现不准时点击结果进入编辑，保存后立即生效。',
     ] },
   ],
@@ -4036,7 +4036,7 @@ const TeacherCMobileLowFi: React.FC = () => {
         <div><b>时间</b>：今天 10:20</div>
         <div><b>对象</b>：{second ? '李小红｜20250102' : '王小明｜20250101'}</div>
         <div><b>指标</b>：劳育-劳动习惯-主动劳动</div>
-        <div><b>加减分</b>：加分 {second ? '+1' : '+2'}</div>
+        <div><b>表扬/待改进</b>：表扬 {second ? '+1' : '+2'}</div>
         <div><b>评语</b>：主动参与班级劳动，表现积极。</div>
       </div>
     </button>
@@ -7047,7 +7047,7 @@ const TeacherCMobileLowFi: React.FC = () => {
             <div className="absolute inset-x-8 bottom-40 rounded-2xl bg-white p-3 text-center text-xs font-black shadow-[0_12px_32px_rgba(0,0,0,0.12)]">
               {recordStage === 'recording' && '录音中：松手提交，上滑取消'}
               {recordStage === 'transcribing' && '语音转文字中...'}
-              {recordStage === 'identifying' && 'AI识别时间、对象、指标、加减分...'}
+              {recordStage === 'identifying' && 'AI识别时间、对象、指标、表扬/待改进...'}
               {recordStage === 'saved' && '已入库'}
               {recordStage === 'recording' && <button onClick={cancelVoice} className="ml-2 underline">取消</button>}
             </div>
@@ -7103,7 +7103,7 @@ const TeacherCMobileLowFi: React.FC = () => {
         <>
           <ScreenHeader title="编辑识别结果" sub="修改立即生效" />
           <div className="space-y-3 p-5">
-            {['事件时间：今天 10:20', '识别对象：王小明｜20250101', '五育指标：劳育-劳动习惯-主动劳动', '加分/减分：加分 +2', 'AI评语：主动参与班级劳动'].map((item) => (
+            {['事件时间：今天 10:20', '识别对象：王小明｜20250101', '五育指标：劳育-劳动习惯-主动劳动', '表扬/待改进：表扬 +2', 'AI评语：主动参与班级劳动'].map((item) => (
               <button key={item} type="button" className="flex w-full items-center justify-between rounded-2xl bg-gray-50 p-3 text-left text-xs font-black">
                 {item}<ChevronRight size={16} />
               </button>
@@ -7635,7 +7635,7 @@ const TeacherCMobileLowFi: React.FC = () => {
         <>
           <ScreenHeader title="王小明" sub={`20250101｜男｜${demoPrimaryClassName}`} />
           <div className="space-y-3 p-5">
-            <div className="grid grid-cols-3 gap-2 text-center text-xs font-black"><div className="rounded-2xl bg-gray-50 p-3">总记录<br />12</div><div className="rounded-2xl bg-gray-50 p-3">加分<br />10</div><div className="rounded-2xl bg-gray-50 p-3">减分<br />2</div></div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs font-black"><div className="rounded-2xl bg-gray-50 p-3">总记录<br />12</div><div className="rounded-2xl bg-gray-50 p-3">表扬<br />10</div><div className="rounded-2xl bg-gray-50 p-3">待改进<br />2</div></div>
             <button onClick={() => navigate('record')} className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">为该学生记录</button>
             <button onClick={() => navigate('termReport')} className="h-11 w-full rounded-2xl border border-gray-200 bg-white text-xs font-black">生成月度报告</button>
           </div>
@@ -7648,7 +7648,7 @@ const TeacherCMobileLowFi: React.FC = () => {
         <>
           <ScreenHeader title="班级统计报告" sub="有记录即可统计" />
           <div className="space-y-3 p-5">
-            <div className="grid grid-cols-2 gap-2 text-center text-xs font-black"><div className="rounded-2xl bg-gray-50 p-3">记录总数<br />{recordCount}</div><div className="rounded-2xl bg-gray-50 p-3">覆盖学生<br />2</div><div className="rounded-2xl bg-gray-50 p-3">加分记录<br />2</div><div className="rounded-2xl bg-gray-50 p-3">减分记录<br />0</div></div>
+            <div className="grid grid-cols-2 gap-2 text-center text-xs font-black"><div className="rounded-2xl bg-gray-50 p-3">记录总数<br />{recordCount}</div><div className="rounded-2xl bg-gray-50 p-3">覆盖学生<br />2</div><div className="rounded-2xl bg-gray-50 p-3">表扬记录<br />2</div><div className="rounded-2xl bg-gray-50 p-3">待改进记录<br />0</div></div>
             <div className="rounded-2xl bg-gray-50 p-3 text-xs">五育指标分布：劳育 2 / 德育 0 / 智育 0 / 体育 0 / 美育 0</div>
             <button type="button" onClick={() => navigate('termReport')} className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-900 text-sm font-black text-white">生成月度/期末AI报告</button>
           </div>

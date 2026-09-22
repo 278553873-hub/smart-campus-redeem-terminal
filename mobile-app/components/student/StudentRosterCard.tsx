@@ -81,10 +81,10 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
     contextLabel ?? '',
     displaySettings.showLevel ? `等级分值${shownLevelNetScore}分` : '',
     showPraise
-      ? (displaySettings.valueMode === 'score' ? `累计加分${performance.praiseScore}分` : `被表扬${performance.praiseCount}次`)
+      ? `累计表扬${performance.praiseScore}分`
       : '',
     showCriticism
-      ? (displaySettings.valueMode === 'score' ? `累计扣分${performance.criticismScore}分` : `被批评${performance.criticismCount}次`)
+      ? `累计待改进${performance.criticismScore}分`
       : '',
     selectionStatus ?? '',
   ].filter(Boolean).join('，');
@@ -95,7 +95,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
       onClick={onClick}
       aria-pressed={showSelection ? selected : undefined}
       aria-label={accessibilityDetails}
-      className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-1 text-center [box-shadow:var(--tm-shadow-card)] ${contextLabel ? contextHeightClass : baseHeightClass}`}
+      className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-[3px] text-center [box-shadow:var(--tm-shadow-card)] ${contextLabel ? contextHeightClass : baseHeightClass}`}
     >
       {showSelection && (
         <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`}>
@@ -109,7 +109,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
           {contextLabel}
         </span>
       )}
-      <span className="flex min-h-0 w-full flex-1 -translate-y-0.5 flex-col items-center justify-center gap-0.5">
+      <span className="flex min-h-0 w-full flex-1 flex-col items-center justify-start gap-[3px]">
         {showLevelIcons && <StudentPerformanceLevelIcons level={level} iconSize="student-card" />}
         {showLevelScore && <StudentPerformanceLevelScore netScore={shownLevelNetScore} />}
         <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
@@ -128,7 +128,6 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
             variant="student-card"
             showPraise={showPraise}
             showCriticism={showCriticism}
-            valueMode={displaySettings.valueMode}
           />
         )}
         <span className="flex h-[var(--tm-student-card-identity-height)] w-full shrink-0 items-center justify-center px-0.5">

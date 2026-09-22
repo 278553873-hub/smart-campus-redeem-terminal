@@ -144,15 +144,12 @@ export interface CampusCoinDetail {
 
 export type StudentLevelDisplayMode = 'term' | 'cumulative';
 
-export type EvaluationCardValueMode = 'count' | 'score';
-
 export type StudentLevelForm = 'icon' | 'score';
 
 export interface EvaluationCardDisplaySettings {
   showEvaluation: boolean;
   showPraise: boolean;
   showCriticism: boolean;
-  valueMode: EvaluationCardValueMode;
 }
 
 export interface StudentCardDisplaySettings extends EvaluationCardDisplaySettings {
@@ -160,7 +157,10 @@ export interface StudentCardDisplaySettings extends EvaluationCardDisplaySetting
   levelForm: StudentLevelForm;
 }
 
-export interface GroupCardDisplaySettings extends EvaluationCardDisplaySettings {}
+export interface GroupCardDisplaySettings extends EvaluationCardDisplaySettings {
+  showLevel: boolean;
+  levelForm: StudentLevelForm;
+}
 
 export interface ClassInfo {
   id: string;

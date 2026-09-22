@@ -93,7 +93,7 @@ const RecordResultView: React.FC<RecordResultViewProps> = ({ initialResult, onSa
                     </div>
 
                     <div className="p-4 border-b border-slate-50 flex items-center justify-between">
-                        <label className="block text-sm font-bold text-slate-700">加减分值</label>
+                        <label className="block text-sm font-bold text-slate-700">表扬/待改进分值</label>
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setScore(s => s - 1)}

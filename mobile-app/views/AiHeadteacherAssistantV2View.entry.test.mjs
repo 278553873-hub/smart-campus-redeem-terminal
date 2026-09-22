@@ -92,7 +92,7 @@ assert.ok(!viewSource.includes('Camera'), '班主任 Agent 对话不应提供拍
 assert.ok(!viewSource.includes('Plus'), '对话输入栏不应提供添加入口。');
 requireText(viewSource, '数据概览', '完整周报应先展示确定性数据统计。');
 requireText(viewSource, '本周整体表现', '完整周报应包含整体表现分析。');
-requireText(viewSource, '主要扣分问题', '完整周报应包含扣分问题分析。');
+requireText(viewSource, '主要待改进问题', '完整周报应包含待改进问题分析。');
 assert.equal((viewSource.match(/--tm-score-negative/g) ?? []).length, 5, '班主任助理中的扣分指标、拆分和明细应统一使用扣分业务色。');
 assert.ok(!viewSource.includes('--tm-status-negative'), '班主任助理不得将扣分数据误用为系统危险状态。');
 requireText(viewSource, '下周关注重点', '完整周报应包含下周指导建议。');
@@ -141,7 +141,7 @@ requireText(viewSource, "'\u6253\u5f00\u5468\u6570\u636e\u9875\u9762\uff0c\u5f53
 requireText(viewSource, 'OVERVIEW_RECOMMENDED_QUESTIONS', '首页应提供紧凑的推荐问题。');
 assert.ok(!viewSource.includes('可以这样问'), '快捷问题上方不应增加说明文案。');
 // 班级评比快捷问题属于班级评价领域文案，统一收敛在领域层，页面只负责渲染。
-for (const question of ['班级评比主要扣在哪？', '班级评比较上周哪项变化最大？', '根据班级评比，下周优先关注什么？']) {
+for (const question of ['班级评比主要在哪些方面待改进？', '班级评比较上周哪项变化最大？', '根据班级评比，下周优先关注什么？']) {
   requireText(classAssistantDomainSource, question, `班级评比快捷问题应使用明确且自然的文案：${question}`);
 }
 requireText(viewSource, 'getInitialSuggestedQuestions', '页面应按学校开通能力取新会话建议问题。');
@@ -222,8 +222,8 @@ requireText(viewSource, "record.indicatorPath?.join(' / ')", '每笔扣分明细
 requireText(viewSource, '>原文</div>', '每笔扣分明细应展示评价原文。');
 assert.ok(!viewSource.includes('selectedDeduction'), '多笔扣分明细不应汇总扣分合计。');
 assert.ok(!viewSource.includes('>扣分依据</dt>'), '扣分明细不应展示扣分依据。');
-requireText(viewSource, '该周此指标暂无扣分', '周数据页应处理一级指标无扣分记录的状态。');
-requireText(viewSource, '扣分明细', '周数据页应展示所选一级指标的完整扣分明细。');
+requireText(viewSource, '该周此指标暂无待改进', '周数据页应处理一级指标无待改进记录的状态。');
+requireText(viewSource, '待改进明细', '周数据页应展示所选一级指标的完整待改进明细。');
 requireText(viewSource, 'ClassEvaluationHistoryPage', '历史报告应使用独立页面展示。');
 requireText(viewSource, 'groupReportsByMonth', '往期报告应按月份组织周报列表。');
 requireText(viewSource, 'findSavedClassEvaluationReport', '点击周报任务后应先查询同版本缓存。');
@@ -231,7 +231,7 @@ requireText(viewSource, 'saveClassEvaluationReport', '首次生成完整周报�
 requireText(viewSource, 'CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION', '缓存身份应包含整份周报的提示词版本。');
 requireText(viewSource, 'dataSnapshotId: snapshot.id', '缓存身份应包含当前数据快照。');
 requireText(viewSource, 'REPORT_GENERATION_STEPS', '首次生成应展示 Agent 分析过程。');
-for (const step of ['正在汇总本周班级评比数据', '正在分析得分与扣分情况', '正在对比指标表现与周变化', '正在生成本周分析与指导建议']) {
+for (const step of ['正在汇总本周班级评比数据', '正在分析得分与待改进情况', '正在对比指标表现与周变化', '正在生成本周分析与指导建议']) {
   requireText(viewSource, step, `Agent 生成过程缺少阶段：${step}`);
 }
 assert.ok(!viewSource.includes('activeReport.evidenceRecords'), '历史报告也不应提供查看依据入口。');

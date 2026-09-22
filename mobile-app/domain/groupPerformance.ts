@@ -5,6 +5,7 @@ export interface GroupEvaluationRecord {
 }
 
 export interface GroupPerformanceSummary {
+  netScore: number;
   praiseCount: number;
   criticismCount: number;
   praiseScore: number;
@@ -17,12 +18,14 @@ export const summarizeGroupPerformance = (
 ): GroupPerformanceSummary => records.reduce<GroupPerformanceSummary>((summary, record) => {
   if (record.groupId !== groupId) return summary;
   return {
+    netScore: summary.netScore + record.scoreChange,
     praiseCount: summary.praiseCount + (record.scoreChange > 0 ? 1 : 0),
     criticismCount: summary.criticismCount + (record.scoreChange < 0 ? 1 : 0),
     praiseScore: summary.praiseScore + (record.scoreChange > 0 ? record.scoreChange : 0),
     criticismScore: summary.criticismScore + (record.scoreChange < 0 ? Math.abs(record.scoreChange) : 0),
   };
 }, {
+  netScore: 0,
   praiseCount: 0,
   criticismCount: 0,
   praiseScore: 0,
@@ -39,5 +42,6 @@ export const createDemoGroupPerformanceSummary = (groupId: string): GroupPerform
     criticismCount,
     praiseScore: praiseCount * (1 + (seed % 4)),
     criticismScore: criticismCount * (1 + (seed % 3)),
+    netScore: praiseCount * (1 + (seed % 4)) - criticismCount * (1 + (seed % 3)),
   };
 };

@@ -221,7 +221,7 @@ if (donut.includes('{selectedDonutItem && (')) {
   throw new Error('五育事件分布图不应在图表下方追加说明条，应在主环图表内显示黑色浮层');
 }
 
-for (const required of ['>加分</span>', '>减分</span>']) {
+for (const required of ['>表扬</span>', '>待改进</span>']) {
   if (!fullScoreSheet.includes(required)) throw new Error(`教师赋分完整榜单表头文案需要和外部一致，缺少：${required}`);
 }
 if (fullScoreSheet.includes('累计加分') || fullScoreSheet.includes('累计减分')) {

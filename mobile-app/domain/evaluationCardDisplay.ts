@@ -9,7 +9,6 @@ export const DEFAULT_EVALUATION_CARD_DISPLAY_SETTINGS: EvaluationCardDisplaySett
   showEvaluation: true,
   showPraise: true,
   showCriticism: true,
-  valueMode: 'count',
 };
 
 export const getEvaluationCardDisplaySettings = (
@@ -27,6 +26,5 @@ export const getEvaluationCardDisplaySettings = (
     showEvaluation: settings?.showEvaluation ?? hasSelectedContent,
     showPraise: hasSelectedContent ? migratedShowPraise : true,
     showCriticism: hasSelectedContent ? migratedShowCriticism : true,
-    valueMode: settings?.valueMode ?? DEFAULT_EVALUATION_CARD_DISPLAY_SETTINGS.valueMode,
   };
 };

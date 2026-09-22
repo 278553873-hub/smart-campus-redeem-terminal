@@ -68,7 +68,7 @@ for (const record of CLASS_EVALUATION_RECORDS) {
 
 assert.deepEqual(
   CLASS_EVALUATION_FIXED_QUESTIONS.map(question => question.label),
-  ['本周班级评比表现怎么样？', '本周扣分反映出哪些主要问题？', '下周应该重点关注什么？'],
+  ['本周班级评比表现怎么样？', '本周待改进主要集中在哪些方面？', '下周应该重点关注什么？'],
   '完整周报仍应复用三类稳定分析章节。',
 );
 
@@ -142,8 +142,8 @@ const eyeExerciseRule = askClassEvaluationQuestion({
 });
 assert.equal(eyeExerciseRule.answerType, 'deduction_patterns', '自由问法应识别具体扣分意图。');
 assert.equal(eyeExerciseRule.evidenceRefs.length, 1, '具体场景问题应只引用匹配的本周记录。');
-assert.match(eyeExerciseRule.message, /教师组织管理共1笔扣分/);
-assert.equal(eyeExerciseRule.analysis.at(-1)?.title, '扣分依据');
+assert.match(eyeExerciseRule.message, /教师组织管理共1笔待改进/);
+assert.equal(eyeExerciseRule.analysis.at(-1)?.title, '待改进依据');
 
 const contextualFollowUp = askClassEvaluationQuestion({
   ...assistantInput,
@@ -168,7 +168,7 @@ const unsupportedQuestion = askClassEvaluationQuestion({
   question: '这是谁的责任，整改完成了吗？',
 });
 assert.equal(unsupportedQuestion.answerType, 'clarification');
-assert.match(unsupportedQuestion.message, /得分、年级排名、扣分记录/);
+assert.match(unsupportedQuestion.message, /得分、年级排名、待改进记录/);
 assert.deepEqual(unsupportedQuestion.evidenceRefs, []);
 
 const snapshotOnly = getClassEvaluationSnapshot('c_2025_1');
@@ -180,7 +180,7 @@ const unavailable = askClassEvaluationQuestion({
   rankings: currentWeek.dimensionRankings,
 });
 assert.equal(unavailable.answerType, 'unavailable');
-assert.match(unavailable.message, /没有对应扣分明细/);
+assert.match(unavailable.message, /没有对应待改进明细/);
 assert.deepEqual(unavailable.evidenceRefs, []);
 assert.deepEqual(unavailable.analysis, []);
 assert.deepEqual(unavailable.suggestions, []);

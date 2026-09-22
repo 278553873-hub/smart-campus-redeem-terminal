@@ -222,7 +222,7 @@ for (const combination of [
       if (combination.showStudentEvaluation && !combination.showClassEvaluation && !html.includes('哪些学生需要我重点关注？')) {
         throw new Error('仅开通学生评价时应给出学生评价建议问题');
       }
-      if (combination.showClassEvaluation && !html.includes('班级评比主要扣在哪？')) {
+      if (combination.showClassEvaluation && !html.includes('班级评比主要在哪些方面待改进？')) {
         throw new Error('开通班级评价时应给出班级评比建议问题');
       }
     },
@@ -253,7 +253,10 @@ await renderPage('校长助理页', () => import('../mobile-app/views/AiPrincipa
   if (!html.includes('assistant-context-card')) {
     throw new Error('校长助理三个报告入口应放在助理玻璃卡里');
   }
-  for (const entry of ['本周管理建议', '上月学校复盘', '学期学校报告']) {
+  if (html.includes('学期学校报告')) {
+    throw new Error('期末报告入口当前应隐藏');
+  }
+  for (const entry of ['本周管理建议', '上月学校复盘']) {
     if (!html.includes(entry)) throw new Error('校长助理缺少报告入口：' + entry);
   }
 });
@@ -317,7 +320,10 @@ await renderPage('本周管理建议页', () => import('../mobile-app/views/Prin
   if (text.includes('生成时间')) throw new Error('校长报告底部不应出现生成时间');
   if (text.includes('仅供教育管理与工作复盘参考')) throw new Error('校长报告底部不应出现AI声明');
   if (text.includes('AI周度管理分析')) throw new Error('校长报告页不应展示AI来源徽章');
-  if (!text.includes('本周学校管理建议')) throw new Error('校长报告页应保留报告标题');
+  if (text.includes('本周学校管理建议')) throw new Error('校长报告页不应再展示固定的报告标题文案');
+  if (text.includes('示范小学')) throw new Error('校长报告页不应再展示学校名字');
+  if (text.includes('用于指导')) throw new Error('校长报告页不应再展示周期说明文案');
+  if (!text.includes('根据7月13日-19日评价记录生成')) throw new Error('校长报告页应只保留一句数据来源');
 });
 
 await renderPage('上月学校复盘页', () => import('../mobile-app/views/PrincipalPeriodicReportView'), {
@@ -342,8 +348,29 @@ await renderPage('学期学校报告页', () => import('../mobile-app/views/Prin
   const text = plainText(html);
   if (text.includes('生成时间')) throw new Error('学期报告不应出现生成时间');
   if (text.includes('AI学期综合分析')) throw new Error('学期报告不应展示AI来源徽章');
+  if (text.includes('学生综合素质评价系统学期运营报告')) throw new Error('学期报告不应再展示固定的报告标题文案');
+  if (!text.includes('根据2025-2026学年上学期评价记录生成')) throw new Error('学期报告应只保留一句数据来源');
 });
 
+await renderPage('往期学校复盘页', () => import('../mobile-app/views/PrincipalReportHistoryView'), {
+  kind: 'monthly',
+  schoolName: '示范小学',
+  onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (text.includes('2026年5月')) throw new Error('月度卡片标题不应重复分组标签里的年份');
+  if (!text.includes('5月学校复盘')) throw new Error('月度卡片应展示x月复盘');
+});
+
+await renderPage('往期学期报告页', () => import('../mobile-app/views/PrincipalReportHistoryView'), {
+  kind: 'term',
+  schoolName: '示范小学',
+  onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (text.includes('2025-2026学年上学期报告')) throw new Error('学期卡片标题不应重复分组标签里的学年');
+  if (!text.includes('上学期报告')) throw new Error('学期卡片应展示学期名称');
+});
 await renderPage('往期学校报告页', () => import('../mobile-app/views/PrincipalReportHistoryView'), {
   kind: 'weekly',
   schoolName: '示范小学',
@@ -351,6 +378,7 @@ await renderPage('往期学校报告页', () => import('../mobile-app/views/Prin
 }, html => {
   const text = plainText(html);
   if (text.includes('生成于')) throw new Error('往期学校报告不应展示生成日期');
+  if (text.includes('基于')) throw new Error('往期列表不应展示基于xx数据一类的周期副文本');
   if (!text.includes('往期管理建议')) throw new Error('往期学校报告页应保留列表标题');
 });
 

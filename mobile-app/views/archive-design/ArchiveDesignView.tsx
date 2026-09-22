@@ -11,9 +11,11 @@ import {
   PowerOff,
   CircleDot,
   ListChecks,
+  ListPlus,
   Hash,
   ImageOff,
   MessageSquareText,
+  Star,
   ListTree,
   Palette,
   Settings,
@@ -91,9 +93,11 @@ type PageMode = 'root' | 'template-editor';
 type TemplateEditorMode = 'create' | 'edit' | 'preview' | 'detail';
 
 const archiveFieldTypes: Array<FormFieldTypeOption<ArchiveFieldType>> = [
+  { value: 'single', label: '单选', icon: CircleDot, choice: true },
+  { value: 'multiple', label: '多选', icon: ListChecks, choice: true },
+  { value: 'rating', label: '评分', icon: Star, rating: true },
+  { value: 'multi_fill', label: '多项填空', icon: ListPlus, subFields: true },
   { value: 'text', label: '文字', icon: MessageSquareText },
-  { value: 'single-select', label: '单选', icon: CircleDot, choice: true },
-  { value: 'multiple-select', label: '多选', icon: ListChecks, choice: true },
   { value: 'date', label: '日期', icon: CalendarDays },
   { value: 'number', label: '数字', icon: Hash },
 ];
@@ -136,6 +140,7 @@ const cloneTemplateForEditor = (template: ArchiveTemplate): ArchiveTemplate => (
     ...item,
     options: [...item.options],
     customAnswerOptions: [...(item.customAnswerOptions ?? [])],
+    subFields: (item.subFields ?? []).map(subField => ({ ...subField })),
     settings: item.settings ? { ...item.settings } : undefined,
   })),
 });
@@ -151,7 +156,7 @@ const getGrowthBuilderField = (
   const type: ArchiveFieldType = definition?.valueType === 'number'
     ? 'number'
     : definition?.valueType === 'single-select'
-      ? 'single-select'
+      ? 'single'
       : 'text';
   return {
     id: growthBuilderFieldId(config.key),
@@ -335,10 +340,30 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       return false;
     }
     if (template.fields.some(field => (
-      (field.type === 'single-select' || field.type === 'multiple-select')
+      (field.type === 'single' || field.type === 'multiple')
       && field.options.filter(option => option.trim()).length < 2
     ))) {
       setToast('单选和多选字段请至少填写2个选项');
+      window.setTimeout(() => setToast(''), 1800);
+      return false;
+    }
+    const invalidMultiFill = template.fields.find(field => {
+      if (field.type !== 'multi_fill') return false;
+      const subFields = field.subFields ?? [];
+      const labels = subFields.map(subField => subField.label.trim());
+      return subFields.length < 2 || subFields.length > 6 || labels.some(label => !label) || new Set(labels).size !== labels.length;
+    });
+    if (invalidMultiFill) {
+      const subFields = invalidMultiFill.subFields ?? [];
+      const labels = subFields.map(subField => subField.label.trim());
+      const message = subFields.length < 2
+        ? '多项填空请至少添加2个填空项'
+        : subFields.length > 6
+          ? '多项填空最多添加6个填空项'
+          : labels.some(label => !label)
+            ? '请填写所有填空项名称'
+            : '填空项名称不能重复';
+      setToast(message);
       window.setTimeout(() => setToast(''), 1800);
       return false;
     }
@@ -551,6 +576,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
           options: field.options,
           sectionId: field.sectionId || fallbackSectionId,
           customAnswerOptions: field.customAnswerOptions,
+          subFields: field.subFields,
           settings: field.settings,
         },
       })),
@@ -600,6 +626,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
           required: field.required,
           options: field.options,
           customAnswerOptions: field.customAnswerOptions,
+          subFields: field.subFields,
           settings: field.settings,
         });
       });

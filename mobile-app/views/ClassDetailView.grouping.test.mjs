@@ -373,14 +373,14 @@ if (addStudentGroupNameSheet.includes('<StudentRosterCard')) failures.push('添�
 requireText(viewSource, '<GroupPerformanceMeta', '小组列表卡片应展示小组正负向评价次数。');
 requireText(viewSource, 'showPraise={groupCardDisplaySettings.showEvaluation && groupCardDisplaySettings.showPraise}', '小组列表加分应同时受总开关和显示内容控制。');
 requireText(viewSource, 'showCriticism={groupCardDisplaySettings.showEvaluation && groupCardDisplaySettings.showCriticism}', '小组列表扣分应同时受总开关和显示内容控制。');
-requireText(viewSource, 'valueMode={groupCardDisplaySettings.valueMode}', '小组加分与扣分应共用同一数值类型。');
+if (viewSource.includes('valueMode')) failures.push('小组加分与扣分固定按分值展示，不应再传递次数或分值模式。');
 requireText(viewSource, 'orientation="vertical"', '小组列表评价次数应使用竖排。');
-requireText(viewSource, 'className="w-6 shrink-0"', '小组列表评价次数应使用24像素窄列。');
+requireText(viewSource, 'flex min-w-0 items-center gap-1', '小组等级应与组名同行展示。');
 if (viewSource.includes('ChevronRightIcon')) failures.push('小组卡片整卡可点击，不应继续显示右侧箭头。');
-requireText(viewSource, 'min-h-[76px]', '去掉等级后应收紧小组卡片高度。');
+requireText(viewSource, 'min-h-[76px]', '小组卡片应以76像素为最小高度。');
 requireText(groupPerformanceSource, '<StudentPerformanceValues', '小组表现应复用正负向评价数值色片。');
 if (groupPerformanceSource.includes('StudentPerformanceLevelIcons')) failures.push('小组表现不得展示学生等级图标。');
-if (groupPerformanceDomainSource.includes('netScore')) failures.push('小组表现数据不应继续包含等级分值。');
+requireText(groupPerformanceDomainSource, 'netScore:', '小组表现应包含净得分以派生等级。');
 requireText(groupPerformanceDomainSource, 'if (record.groupId !== groupId) return summary;', '小组表现只应汇总直接指向该小组的原始评价事件。');
 if (groupPerformanceDomainSource.includes('memberIds')) failures.push('小组表现汇总不得依赖当前成员名单。');
 requireText(rosterCardSource, '<StudentPerformanceAvatar', '共享学生卡应展示带进度环的学生头像。');
@@ -406,8 +406,8 @@ requireText(teacherMobileGuidelines, '头像与组名右侧并列展示轻量`�
 requireText(teacherMobileGuidelines, '危险确认是唯一允许叠加在小组详情上的临时决策浮层', '教师手机端规范应明确危险确认是弹窗叠加的唯一例外。');
 requireText(teacherMobileGuidelines, '只统计评价对象明确为该小组 ID 的原始评价事件', '教师手机端规范应明确小组表现数据口径。');
 requireText(teacherMobileGuidelines, '不因学生移入、移出、调整或解散而回算历史', '教师手机端规范应明确成员变化不影响小组历史表现。');
-requireText(teacherMobileGuidelines, '小组只在分组列表卡片展示正向次数和负向次数，不展示等级', '教师手机端规范应明确小组次数只在列表展示且不展示等级。');
-requireText(teacherMobileGuidelines, '正向次数在上、负向次数在下', '教师手机端规范应明确列表卡片的评价次数竖排顺序。');
+requireText(teacherMobileGuidelines, '小组在分组列表卡片展示等级和表扬/待改进数据', '教师手机端规范应明确小组卡片展示等级与表扬/待改进。');
+requireText(teacherMobileGuidelines, '卡片第一行展示小组名称与等级（图标或分值）', '教师手机端规范应明确小组等级与组名同行展示。');
 requireText(viewSource, 'MobileBottomSheet', '分组浮层应复用教师端公共底部抽屉。');
 if (viewSource.includes('Math.random')) {
   failures.push('分组创建不得随机安排学生。');

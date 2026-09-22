@@ -71,8 +71,8 @@ requireText('const showPraise = displaySettings.showEvaluation && displaySetting
 requireText('const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;', '扣分应同时受总开关和显示内容控制。');
 requireText('showPraise={showPraise}', '学生卡片应使用总开关处理后的加分状态。');
 requireText('showCriticism={showCriticism}', '学生卡片应使用总开关处理后的扣分状态。');
-requireText('valueMode={displaySettings.valueMode}', '可见的加分和扣分应共用次数或分值模式。');
-requireText('flex min-h-0 w-full flex-1 -translate-y-0.5 flex-col items-center justify-center gap-0.5', '等级图标、头像、表现数据和姓名应保持统一间距并整体上移。');
+if (source.includes('valueMode')) throw new Error('可见的加分和扣分固定按分值展示，不应再传递次数或分值模式。');
+requireText('flex min-h-0 w-full flex-1 flex-col items-center justify-start gap-[3px]', '等级图标、头像、表现数据和姓名应保持统一间距并整体上移。');
 if (!avatarSource.includes('stroke="var(--tm-student-level-progress)"')) {
   throw new Error('头像进度环应统一使用奖励进度色。');
 }
@@ -81,6 +81,9 @@ if ((avatarSource.match(/strokeWidth="2"/g) ?? []).length !== 2) {
 }
 if (!avatarSource.includes('showLevelProgress && (')) {
   throw new Error('头像进度环应受等级显示设置控制。');
+}
+if (!avatarSource.includes("showLevelProgress ? 'inset-1' : 'inset-0'")) {
+  throw new Error('分值形式隐藏进度环时头像应填满58像素盒子，避免上下间距不一致。');
 }
 if (avatarSource.includes('MaleIcon') || avatarSource.includes('FemaleIcon') || avatarSource.includes('student.gender')) {
   throw new Error('普通花名册头像不应常驻展示性别角标。');
@@ -113,8 +116,8 @@ if (!tokenSource.includes("'--tm-student-card-level-icon-size': '16px'")) {
 if (!metaSource.includes("level.iconCount === 0") || !metaSource.includes('student-level-icons/sprout.png')) {
   throw new Error('尚未点亮等级图标时应展示一株18像素小豆苗作为成长起步状态。');
 }
-if (!metaSource.includes("formatSignedCount(summary.praiseCount, '+')") || !metaSource.includes("formatSignedCount(summary.criticismCount, '-')")) {
-  throw new Error('奖惩次数应通过正负号与颜色共同表达语义。');
+if (!metaSource.includes("formatSignedScore(summary.praiseScore, '+')") || !metaSource.includes("formatSignedScore(summary.criticismScore, '-')")) {
+  throw new Error('加扣分分值应通过正负号与颜色共同表达语义。');
 }
 if (!metaSource.includes('showPraise && (') || !metaSource.includes('showCriticism && (')) {
   throw new Error('加分和扣分必须支持独立显示。');

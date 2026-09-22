@@ -8,6 +8,16 @@ export interface FormSection {
 export type FormDateFormat = 'ymd' | 'ym' | 'year';
 export type FormNumberFormat = 'integer' | 'decimal-1' | 'decimal-2';
 
+export type FormFieldType =
+  | 'text'
+  | 'short_text'
+  | 'single'
+  | 'multiple'
+  | 'rating'
+  | 'multi_fill'
+  | 'number'
+  | 'date';
+
 export interface FormFieldSettings {
   minSelections?: number;
   maxSelections?: number;

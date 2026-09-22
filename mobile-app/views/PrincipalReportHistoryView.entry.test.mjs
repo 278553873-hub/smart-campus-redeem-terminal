@@ -64,12 +64,14 @@ for (const required of [
   'principal-term-2025-2026-1',
   'principal-term-2024-2025-2',
   'PRINCIPAL_REPORT_HISTORY',
+  "title: '5月学校复盘',",
+  "title: '上学期报告',",
 ]) {
   requireText(historyDataSource, required, `校长报告历史数据缺少演示周期：${required}`);
 }
 
 for (const required of [
-  '学校上下文行右侧展示“历史图标＋短文案”入口',
+  '正式报告首屏右上角展示“历史图标＋短文案”入口',
   '三类历史报告分别展示，不混在同一列表',
   '历史详情 → 历史列表 → 当前报告',
   '历史报告始终读取生成时保存的内容和数据快照',
@@ -79,6 +81,9 @@ for (const required of [
 }
 
 forbidText(historyViewSource, '生成于', '校长报告历史列表不应展示生成日期。');
+forbidText(historyDataSource, '2026年5月学校复盘', '月度标题不应重复分组标签里的年份。');
+forbidText(historyDataSource, '2025-2026学年上学期报告', '学期标题不应重复分组标签里的学年。');
+forbidText(historyViewSource, 'report.periodLabel', '往期列表不应展示基于xx数据一类的周期副文本。');
 forbidText(historyViewSource, '重新生成', '历史报告页不应提供重新生成。');
 forbidText(historyViewSource, '报告摘要', '历史列表不应展示报告摘要。');
 

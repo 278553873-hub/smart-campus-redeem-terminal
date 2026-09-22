@@ -77,6 +77,9 @@ requireText(viewSource, '上月学校复盘', '第二个选项应提供月度学
 requireText(viewSource, '学期学校报告', '第三个选项应提供学期学校报告。');
 requireText(viewSource, 'onOpenWeeklyReport();', '周管理建议入口应直接进入可用页面。');
 requireText(viewSource, 'onOpenMonthlyReport();', '月度学校复盘入口应直接进入可用页面。');
+requireText(viewSource, 'const TERM_REPORT_ENTRY_ENABLED = false;', '期末报告入口当前应处于隐藏状态。');
+requireText(viewSource, '{visibleAssistantOptions.map(item => (', '入口卡只应渲染当前可见的报告入口。');
+forbidText(viewSource, '{assistantOptions.map(item => (', '入口卡不应无条件渲染全部入口，否则隐藏开关会失效。');
 requireText(viewSource, 'getPrincipalTermReportAvailability(termConfig)', '学期报告点击前应按后台学期配置判断生成资格。');
 requireText(viewSource, "hasTermReportTask || availability.status === 'available'", '已有任务应可直接查看，未创建任务仅在窗口内生成。');
 requireText(viewSource, '<MobileNoticeSheet', '未到生成时间时应使用统一手机端提示浮层。');
@@ -114,7 +117,8 @@ for (const required of [
   '哪些班级需要重点关注？',
   '每次回答后按该回答的口径重新给出三条建议问题',
   '要点名到具体班级，而不是只给统计',
-  '三个入口均可点击进入生成或报告阅读页',
+  '入口均可点击进入生成或报告阅读页',
+  '当前版本先隐藏`学期学校报告`入口',
   '每天更新学校数据快照、统计指标和异常候选，但不每天调用大模型生成报告',
 ]) {
   requireText(prdSource, required, `校长助理PRD缺少关键规则：${required}`);

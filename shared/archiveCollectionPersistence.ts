@@ -1,12 +1,14 @@
 import {
   getQuestionnaireRespondentRole,
   isQuestionnaireChoiceAnswer,
+  isQuestionnaireMultiFillAnswer,
   type QuestionnaireAnswer,
   type QuestionnaireRecord,
 } from './questionnaireStore';
 import {
   buildArchiveGrowthModuleSnapshots,
   isArchiveChoiceAnswer,
+  isArchiveMultiFillAnswer,
   persistArchiveWorkspace,
   readArchiveWorkspace,
   resolveArchivePeriod,
@@ -24,17 +26,24 @@ const toArchiveAnswer = (answer: QuestionnaireAnswer | undefined): ArchiveAnswer
       customText: { ...answer.customText },
     };
   }
+  if (isQuestionnaireMultiFillAnswer(answer)) {
+    return { fillValues: { ...answer.fillValues } };
+  }
   return undefined;
 };
 
-const toQuestionnaireAnswer = (answer: ArchiveAnswer): QuestionnaireAnswer => (
-  isArchiveChoiceAnswer(answer)
-    ? {
-        selectedOptions: [...answer.selectedOptions],
-        customText: { ...answer.customText },
-      }
-    : answer
-);
+const toQuestionnaireAnswer = (answer: ArchiveAnswer): QuestionnaireAnswer => {
+  if (isArchiveChoiceAnswer(answer)) {
+    return {
+      selectedOptions: [...answer.selectedOptions],
+      customText: { ...answer.customText },
+    };
+  }
+  if (isArchiveMultiFillAnswer(answer)) {
+    return { fillValues: { ...answer.fillValues } };
+  }
+  return answer;
+};
 
 const getQuestionnaireArchivePeriod = (questionnaire: QuestionnaireRecord) => {
   const fallback = questionnaire.archiveTemplateSnapshot
@@ -160,7 +169,8 @@ export const persistArchiveCollectionAnswers = (
     const answer = toArchiveAnswer(answers[question.id]);
     const empty = answer === undefined
       || typeof answer === 'string' && !answer.trim()
-      || isArchiveChoiceAnswer(answer) && answer.selectedOptions.length === 0;
+      || isArchiveChoiceAnswer(answer) && answer.selectedOptions.length === 0
+      || isArchiveMultiFillAnswer(answer) && Object.values(answer.fillValues).every(value => !value.trim());
     return empty ? [] : [[question.archiveFieldSemanticKey, answer] as const];
   }));
   const workspace = readQuestionnaireArchiveWorkspace(questionnaire);

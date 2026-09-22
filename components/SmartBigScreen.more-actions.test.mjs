@@ -10,15 +10,14 @@ for (const text of [
   'aria-label="课堂大屏更多操作"',
   'title="更多操作"',
   '显示学生等级',
-  '显示学生加扣分',
+  '显示学生表扬/待改进',
   '显示内容',
-  "label: '加分'",
-  "label: '扣分'",
-  '数值形式',
+  "label: '表扬'",
+  "label: '待改进'",
   '次数',
   '分值',
   '等级形式',
-  '从现在开始重新统计表扬次数和批评次数',
+  '从现在开始重新统计表扬次数和待改进次数',
   '重新计数',
   '重置后不可恢复，我已知晓',
   '秒后可确认',
@@ -49,15 +48,17 @@ assert.match(screenSource, /shell\.classMenuWidth[\s\S]*shell\.classMenuItemHeig
 assert.match(screenSource, /classroom-display-input[\s\S]*classroomDisplayInputStyle/, 'Arco 输入框内部文字应通过局部样式跟随展示档位');
 assert.match(screenSource, /min-h-0 flex-1 overflow-y-auto custom-scrollbar/, '随机点名结果区应在弹窗内独立滚动');
 assert.match(screenSource, /gridTemplateColumns: `repeat\(auto-fill, minmax\(\$\{classroomDisplay\.modal\.avatarOptionMinWidth\}px, 1fr\)\)`/, '头像选择网格应按展示档位自适应列数');
-assert.match(screenSource, /checked=\{studentCardDisplaySettings\.showLevel\}[\s\S]*aria-label="显示学生等级"/, '等级开关应由公共组件提供状态与无障碍语义');
-assert.match(screenSource, /studentCardDisplaySettings\.showLevel && \([\s\S]*等级形式[\s\S]*label: '图标'[\s\S]*label: '分值'/, '等级形式应作为显示学生等级的渐进披露子配置');
+assert.match(screenSource, /checked=\{activeCardDisplaySettings\.showLevel\}[\s\S]*aria-label=\{viewMode === 'group' \? '显示小组等级' : '显示学生等级'\}/, '等级开关应使用公共状态并区分学生与小组');
+assert.match(screenSource, /activeCardDisplaySettings\.showLevel && \([\s\S]*等级形式[\s\S]*label: '图标'[\s\S]*label: '分值'/, '等级形式应作为显示等级的渐进披露子配置');
 assert.doesNotMatch(screenSource, /relative h-7 w-12[\s\S]*translate-x-6/, '课堂大屏不应手写开关轨道、圆点和位移');
-assert.match(screenSource, /checked=\{activeCardDisplaySettings\.showEvaluation\}[\s\S]*aria-label=\{viewMode === 'group' \? '显示小组加扣分' : '显示学生加扣分'\}/, '加扣分应先使用公共开关控制整体显示');
-assert.match(screenSource, /activeCardDisplaySettings\.showEvaluation && \([\s\S]*aria-label="加扣分显示内容"[\s\S]*\{ value: 'all' as const, label: '全部' \}[\s\S]*\{ value: 'praise' as const, label: '加分' \}[\s\S]*\{ value: 'criticism' as const, label: '扣分' \}/, '开启加扣分后应渐进展示全部、加分、扣分三种互斥内容模式');
+assert.match(screenSource, /checked=\{activeCardDisplaySettings\.showEvaluation\}[\s\S]*aria-label=\{viewMode === 'group' \? '显示小组表扬\/待改进' : '显示学生表扬\/待改进'\}/, '表扬/待改进应先使用公共开关控制整体显示');
+assert.match(screenSource, /activeCardDisplaySettings\.showEvaluation && \([\s\S]*aria-label="表扬\/待改进显示内容"[\s\S]*\{ value: 'all' as const, label: '全部' \}[\s\S]*\{ value: 'praise' as const, label: '表扬' \}[\s\S]*\{ value: 'criticism' as const, label: '待改进' \}/, '开启后应渐进展示全部、表扬、待改进三种互斥内容模式');
 assert.match(screenSource, /displaySettings=\{studentCardDisplaySettings\}/, '学生卡片应接收统一展示设置');
-assert.match(performanceValuesSource, /showPraise\?\: boolean[\s\S]*showCriticism\?\: boolean[\s\S]*valueMode\?\: EvaluationCardValueMode/, '通用卡片统计组件应支持加扣分独立显示与共用数值类型');
+assert.match(performanceValuesSource, /showPraise\?\: boolean[\s\S]*showCriticism\?\: boolean/, '通用卡片统计组件应支持加扣分独立显示。');
+assert.doesNotMatch(performanceValuesSource, /valueMode|EvaluationCardValueMode/, '课堂大屏加扣分固定按分值展示，不再提供数值类型选项。');
 assert.match(performanceValuesSource, /if \(visibleValueLabels\.length === 0\) return null/, '关闭全部统计后不应渲染空统计容器');
-assert.match(screenSource, /activeCardDisplaySettings\.showEvaluation && \([\s\S]*显示内容[\s\S]*数值形式/, '关闭加扣分时应同时隐藏内容和数值形式配置');
+assert.match(screenSource, /activeCardDisplaySettings\.showEvaluation && \([\s\S]*显示内容/, '关闭加扣分时应同时隐藏显示内容配置');
+assert.doesNotMatch(screenSource, /数值形式|加扣分显示方式/, '加扣分不再提供次数或分值选择');
 assert.match(screenSource, /const \[recountTarget, setRecountTarget\] = useState<'student' \| 'group' \| null>\(null\)/, '学生与小组重新计数应共享明确的目标状态');
 assert.match(screenSource, /const \[recountSelectedIds, setRecountSelectedIds\] = useState<Set<string>>\(new Set\(\)\)/, '重新计数应使用独立的对象选择集合');
 assert.match(screenSource, /recountSelectedCount > 0[\s\S]*重新计数（\$\{recountSelectedCount\}）/, '重新计数主操作应在有选择时显示已选择人数');

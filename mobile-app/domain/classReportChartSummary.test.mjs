@@ -172,7 +172,7 @@ const closeScores = getEducationScoreAnalysis([
 ]);
 assert.deepEqual(closeScores, {
     summary: '各维度累计净分接近',
-    supplement: '各维度累计扣分接近',
+    supplement: '各维度累计待改进接近',
 });
 assertTwoPartAnalysis(closeScores, '累计净分处于容差内');
 
@@ -182,7 +182,7 @@ const differentScores = getEducationScoreAnalysis([
 ]);
 assert.deepEqual(differentScores, {
     summary: '崇德累计净分最高，求知最低',
-    supplement: '各维度累计扣分接近',
+    supplement: '各维度累计待改进接近',
 });
 
 assert.deepEqual(getEducationScoreAnalysis([
@@ -210,12 +210,12 @@ const allNegativeScores = getEducationScoreAnalysis([
     scoreItem('b', '求知', 15, 0, 30),
 ]);
 assert.equal(allNegativeScores.summary, '求知累计净分最高，崇德最低', '全负净分应按真实数值排序');
-assert.equal(allNegativeScores.supplement, '崇德累计扣分最多，可查看对应评价事件');
+assert.equal(allNegativeScores.supplement, '崇德累计待改进最多，可查看对应评价事件');
 
 assert.equal(getEducationScoreAnalysis([
     scoreItem('a', '崇德', 15, 100, 0),
     scoreItem('b', '求知', 15, 90, 0),
-]).supplement, '各维度暂无扣分记录');
+]).supplement, '各维度暂无待改进记录');
 
 assert.equal(getEducationScoreAnalysis([
     scoreItem('same', '崇德', 15, 20, 2),

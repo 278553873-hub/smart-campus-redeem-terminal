@@ -82,7 +82,7 @@ const getDisplaySnapshot = (
 
 const trendMetricOptions: Array<{ key: TrendMetric; label: string }> = [
     { key: 'averageScore', label: '平均得分' },
-    { key: 'deduction', label: '累计扣分' },
+    { key: 'deduction', label: '累计待改进' },
 ];
 
 const trendMetricConfig: Record<TrendMetric, {
@@ -91,7 +91,7 @@ const trendMetricConfig: Record<TrendMetric, {
     color: TeacherReportChartColor;
 }> = {
     averageScore: { label: '平均得分', suffix: '分', color: 'data' },
-    deduction: { label: '累计扣分', suffix: '分', color: 'negative' },
+    deduction: { label: '累计待改进', suffix: '分', color: 'negative' },
 };
 
 const indicatorChartColors: TeacherReportChartColor[] = [
@@ -541,11 +541,11 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                                 onChange={setProblemCategoryId}
                                                 ariaLabel={`${selectedProblemDimension.name}下的二级指标筛选`}
                                             />
-                                            <div className="mt-[var(--tm-space-3)]" role="table" aria-label={`${selectedProblemDimension.name}下${selectedProblemCategory.name}三级指标扣分明细`}>
+                                            <div className="mt-[var(--tm-space-3)]" role="table" aria-label={`${selectedProblemDimension.name}下${selectedProblemCategory.name}三级指标待改进明细`}>
                                                 <div className="grid min-h-9 grid-cols-[minmax(0,1fr)_72px_64px] items-center gap-2 text-[11px] text-[var(--tm-text-secondary)]" role="row">
                                                     <span role="columnheader">指标名称</span>
-                                                    <span className="text-right" role="columnheader">总扣分</span>
-                                                    <span className="text-right" role="columnheader">扣分笔数</span>
+                                                    <span className="text-right" role="columnheader">总待改进</span>
+                                                    <span className="text-right" role="columnheader">待改进笔数</span>
                                                 </div>
                                                 {selectedProblemCategory.details.map(detail => (
                                                     <div

@@ -50,9 +50,10 @@ assert.match(performanceValuesSource, /bg-emerald-50[\s\S]*text-emerald-700/, '�
 assert.match(performanceValuesSource, /bg-rose-50[\s\S]*text-rose-700/, '扣分数据应使用高对比度红色轻色片');
 assert.match(performanceValuesSource, /font-sans font-bold tabular-nums/, '学生和小组加扣分应统一使用系统无衬线字体和700字重');
 assert.match(performanceValuesSource, /itemHeight\?: number[\s\S]*itemMinWidth\?: number[\s\S]*gap\?: number/, '加扣分色块尺寸与间距应支持课堂展示档位');
-assert.match(performanceValuesSource, /valueMode === 'score' \? formatSignedScore\(summary\.praiseScore, '\+'\) : formatSignedCount/, '课堂大屏应支持把加分数据切换为累计分值');
+assert.match(performanceValuesSource, /formatSignedScore\(summary\.praiseScore, '\+'\)/, '课堂大屏加扣分固定按分值展示。');
+assert.doesNotMatch(performanceValuesSource, /valueMode|formatSignedCount|被表扬/, '课堂大屏不再保留次数模式。');
 assert.match(performanceValuesSource, /const formatSignedScore = \(score: number, sign: '\+' \| '-'\) => score === 0 \? '0' : `\$\{sign\}\$\{formatScore\(score\)\}`/, '课堂大屏学生卡片分值不应重复显示“分”单位');
-assert.match(performanceValuesSource, /累计加分\$\{summary\.praiseScore\}分/, '课堂大屏卡片读屏文案应继续保留分值单位');
+assert.match(performanceValuesSource, /累计表扬\$\{summary\.praiseScore\}分/, '课堂大屏卡片读屏文案应继续保留分值单位');
 assert.match(studentCardSource, /itemHeight=\{layout\.countItemHeight\}[\s\S]*itemMinWidth=\{layout\.countItemMinWidth\}[\s\S]*gap=\{layout\.countGap\}/, '学生卡片统计色块应读取统一展示档位');
 assert.match(screenSource, /<ClassroomPerformanceValues[\s\S]*ariaLabelPrefix="小组"[\s\S]*fontSize=\{layout\.countFontSize\}[\s\S]*itemHeight=\{layout\.countItemHeight\}[\s\S]*itemMinWidth=\{layout\.countItemMinWidth\}[\s\S]*gap=\{layout\.countGap\}/, '小组卡片统计应复用PC公共组件并读取统一展示档位');
 assert.doesNotMatch(screenSource, /!isSelectable && \(displaySettings\.showPraise/, '小组卡片在选择状态下也应保留统计信息');
