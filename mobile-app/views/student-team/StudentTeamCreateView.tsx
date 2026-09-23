@@ -12,6 +12,7 @@ import MobileRadioOptionCard from '../../components/ui/MobileRadioOptionCard';
 import { ASSETS } from '../../assets/images';
 import { getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import type { StudentTeamSearchResult } from './StudentTeamEditorView';
+import StudentTeamSelectedList from './StudentTeamSelectedList';
 
 export type StudentTeamCreateValue = {
   name: string;
@@ -23,6 +24,7 @@ interface StudentTeamCreateViewProps {
   classes: ClassInfo[];
   getStudentsForClass: (classId: string) => Student[];
   searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
+  getStudentLabelById: (studentId: string) => { name: string; classLabel: string } | undefined;
   onBack: () => void;
   onSave: (value: StudentTeamCreateValue) => void;
   getClassLabel?: (classInfo: ClassInfo) => string;
@@ -36,6 +38,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
   classes,
   getStudentsForClass,
   searchStudentsByExactName,
+  getStudentLabelById,
   onBack,
   onSave,
   getClassLabel = classInfo => classInfo.name,
@@ -231,6 +234,13 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
                   <MobileSearchInput value={exactName} onChange={event => { setExactName(event.target.value); setSubmittedExactName(''); setExactSearchResults([]); }} onKeyDown={event => { if (event.key === 'Enter') handleExactSearch(); }} placeholder="输入完整姓名" aria-label="输入其他班级学生完整姓名" className="min-w-0 flex-1" containerClassName="flex min-h-11 min-w-0 flex-1 items-center" density="compact" appearance="filled" fillTone="soft" />
                   <button type="button" disabled={!exactName.trim()} onClick={handleExactSearch} className="min-h-11 shrink-0 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] disabled:text-[var(--tm-text-disabled)]">查找</button>
                 </div>
+              )}
+              {selectedIds.size > 0 && (
+                <StudentTeamSelectedList
+                  selectedIds={selectedIds}
+                  getStudentLabelById={getStudentLabelById}
+                  onRemove={toggleStudent}
+                />
               )}
             </div>
 

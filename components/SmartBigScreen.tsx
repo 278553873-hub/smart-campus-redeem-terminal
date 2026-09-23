@@ -2179,20 +2179,20 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         <section className={`flex-1 overflow-y-auto px-10 pb-10 custom-scrollbar flex flex-col items-center scroll-stable pt-6`}>
           <div className="max-w-[1920px] w-full flex flex-col items-center">
             <div ref={deckContainerRef} className="w-full relative">
-              <div className={`mx-auto flex max-w-full flex-col ${embedded ? 'gap-6' : 'gap-0'}`} style={deckShellStyle}>
-                {embedded && (
-                  <div className="grid grid-cols-[minmax(220px,260px)_1fr_minmax(220px,320px)] items-center gap-6">
-                    <div className="flex justify-start">
-                      {classSwitcher}
-                    </div>
-                    <div className="flex justify-center">
-                      {viewModeSwitcher}
-                    </div>
-                    <div className="flex justify-end">
-                      {modeUtilityControl}
-                    </div>
+              {embedded && (
+                <div className="mb-6 grid grid-cols-[minmax(220px,260px)_1fr_minmax(220px,320px)] items-center gap-6">
+                  <div className="flex justify-start">
+                    {classSwitcher}
                   </div>
-                )}
+                  <div className="flex justify-center">
+                    {viewModeSwitcher}
+                  </div>
+                  <div className="flex justify-end">
+                    {modeUtilityControl}
+                  </div>
+                </div>
+              )}
+              <div className="mx-auto flex max-w-full flex-col" style={deckShellStyle}>
                 <div
                   className={`${viewMode === 'group' ? 'grid justify-start' : 'grid justify-center'} gap-3 pb-20 relative`}
                   style={{
@@ -3278,7 +3278,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
               >
                 <Dices size={classroomDisplay.toolbar.iconSize} />
                 随机点{viewMode === 'student' ? '名' : '组'}
-                <span className={`px-2.5 py-1 rounded-xl font-black ${maxRandomSelectableCount > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400'}`} style={{ fontSize: classroomDisplay.toolbar.countFontSize }}>
+                <span className={`px-2.5 py-0.5 rounded-xl font-black leading-none ${maxRandomSelectableCount > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400'}`} style={{ fontSize: classroomDisplay.toolbar.countFontSize }}>
                   {randomCount}{viewMode === 'student' ? '人' : '组'}
                 </span>
               </button>

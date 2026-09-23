@@ -56,7 +56,7 @@ const StudentPerformanceAvatar: React.FC<StudentPerformanceAvatarProps> = ({
         </svg>
       )}
 
-      <div className={`absolute ${showLevelProgress ? 'inset-1' : 'inset-0'} overflow-hidden rounded-full ${fallbackClassName}`}>
+      <div className={`absolute inset-1 overflow-hidden rounded-full ${student.avatar ? '' : fallbackClassName}`}>
         {student.avatar ? (
           <img src={student.avatar} alt="" className="h-full w-full object-cover" />
         ) : (

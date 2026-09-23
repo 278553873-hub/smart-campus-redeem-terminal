@@ -34,7 +34,6 @@ import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/C
 import ParentEvaluationVisibilitySettings from '../components/class/ParentEvaluationVisibilitySettings';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
-import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSlidingSegmentedControl from '../components/ui/MobileSlidingSegmentedControl';
 import StudentTeamEditorView, { type StudentTeamEditorMode, type StudentTeamEditorValue, type StudentTeamSearchResult } from './student-team/StudentTeamEditorView';
@@ -81,14 +80,16 @@ interface ClassListViewProps {
     studentTeams: SchoolStudentTeam[];
     studentTeamEditableClasses: ClassInfo[];
     searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
+    getStudentLabelById: (studentId: string) => { name: string; classLabel: string } | undefined;
     currentTeacherId: string;
     isSchoolManager: boolean;
     canCreateStudentTeam: boolean;
     onCreateStudentTeam: (value: StudentTeamEditorValue) => void;
     onTeamCreateModeChange?: (open: boolean) => void;
     onUpdateStudentTeam: (teamId: string, value: StudentTeamEditorValue) => void;
-    onArchiveStudentTeam: (teamId: string) => void;
     onSelectStudentTeam: (teamId: string) => void;
+    onSelectStudentTeamInfo: (teamId: string) => void;
+    onSelectStudentTeamReport: (teamId: string) => void;
 }
 
 type ClassActionGroupTone = 'daily' | 'student' | 'collaboration';
@@ -144,14 +145,16 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     studentTeams,
     studentTeamEditableClasses,
     searchStudentsByExactName,
+    getStudentLabelById,
     currentTeacherId,
     isSchoolManager,
     canCreateStudentTeam,
     onCreateStudentTeam,
     onTeamCreateModeChange,
     onUpdateStudentTeam,
-    onArchiveStudentTeam,
     onSelectStudentTeam,
+    onSelectStudentTeamInfo,
+    onSelectStudentTeamReport,
 }) => {
     const [activeActionClassId, setActiveActionClassId] = useState<string | null>(null);
     const [showTeachingOnly, setShowTeachingOnly] = useState(false);
@@ -168,7 +171,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const [teamEditor, setTeamEditor] = useState<{ mode: StudentTeamEditorMode; teamId?: string } | null>(null);
     const [teamCreateOpen, setTeamCreateOpen] = useState(false);
     const [studentTeamInviteId, setStudentTeamInviteId] = useState<string | null>(null);
-    const [archiveStudentTeamId, setArchiveStudentTeamId] = useState<string | null>(null);
     const [parentVisibilityClassId, setParentVisibilityClassId] = useState<string | null>(null);
     const [parentVisibilityRevision, setParentVisibilityRevision] = useState(0);
 
@@ -224,7 +226,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const activeActionTeam = useMemo(() => studentTeams.find(team => team.id === activeActionTeamId) || null, [activeActionTeamId, studentTeams]);
     const editingStudentTeam = useMemo(() => studentTeams.find(team => team.id === teamEditor?.teamId), [studentTeams, teamEditor?.teamId]);
     const invitedStudentTeam = useMemo(() => studentTeams.find(team => team.id === studentTeamInviteId), [studentTeamInviteId, studentTeams]);
-    const archivedStudentTeam = useMemo(() => studentTeams.find(team => team.id === archiveStudentTeamId), [archiveStudentTeamId, studentTeams]);
     const parentVisibilityClass = useMemo(() => classes.find(classInfo => classInfo.id === parentVisibilityClassId) ?? null, [classes, parentVisibilityClassId]);
 
     useEffect(() => {
@@ -240,7 +241,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         setTeamCreateOpen(false);
         setTeamEditor(null);
         setStudentTeamInviteId(null);
-        setArchiveStudentTeamId(null);
         setParentVisibilityClassId(null);
     }, [currentSpace.id]);
 
@@ -283,12 +283,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     const openStudentTeamInvite = () => {
         if (!activeActionTeam) return;
         setStudentTeamInviteId(activeActionTeam.id);
-        closeTeamActionSheet();
-    };
-
-    const openArchiveStudentTeam = () => {
-        if (!activeActionTeam) return;
-        setArchiveStudentTeamId(activeActionTeam.id);
         closeTeamActionSheet();
     };
 
@@ -528,7 +522,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     </button>
                     <button
                         type="button"
-                        onClick={() => onSelectStudentTeam(team.id)}
+                        onClick={() => onSelectStudentTeamReport(team.id)}
                         className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
                     >
                         <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
@@ -547,6 +541,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 classes={studentTeamEditableClasses}
                 getStudentsForClass={getStudentsForClass}
                 searchStudentsByExactName={searchStudentsByExactName}
+                getStudentLabelById={getStudentLabelById}
                 getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, currentSpace)}
                 currentSpace={currentSpace}
                 onBack={() => setTeamCreateOpen(false)}
@@ -670,7 +665,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 aria-live="polite"
                                 aria-atomic="true"
                             >
-                                共{visibleClasses.length}个班级
+                                共{visibleClasses.length}个
                             </span>
                         </div>
                     )}
@@ -734,18 +729,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                     title={isSchoolSpace ? '没有符合条件的班级' : classes.length === 0 ? '暂无班级' : '暂无显示班级'}
                                     imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
                                 />
-                                {isSchoolSpace ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setGradeFilter('全部');
-                                            setShowTeachingOnly(false);
-                                        }}
-                                        className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]"
-                                    >
-                                        清除筛选
-                                    </button>
-                                ) : classes.length === 0 ? (
+                                {!isSchoolSpace && (classes.length === 0 ? (
                                     <div className="mt-3 grid gap-1.5">
                                         <button type="button" onClick={onCreateClass} className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-3 text-sm font-semibold text-[var(--tm-brand-primary)]">
                                             <Plus className="h-4 w-4" aria-hidden="true" />
@@ -758,7 +742,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                     </div>
                                 ) : (
                                     <button type="button" onClick={() => setShowDisplaySettings(true)} className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]">调整显示</button>
-                                )}
+                                ))}
                             </section>
                         )}
                     </>
@@ -768,14 +752,9 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     <section className="px-2 py-6 text-center">
                         <MobileEmptyState
                             imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
-                            title={showParticipatingTeamsOnly ? '还没有参与社团或团队' : '暂无社团或团队'}
+                            title={showParticipatingTeamsOnly && studentTeams.length > 0 ? '还没有参与社团或团队' : '暂无社团或团队'}
                             imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
                         />
-                        {showParticipatingTeamsOnly && (
-                            <button type="button" onClick={() => setShowParticipatingTeamsOnly(false)} className="mt-3 min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-4 text-sm font-semibold text-[var(--tm-brand-primary)]">
-                                查看全部
-                            </button>
-                        )}
                     </section>
                 )}
                 </div>
@@ -799,13 +778,46 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 ariaLabel="班级列表年级筛选"
             />
 
-            <MobileBottomSheet open={Boolean(activeActionTeam)} title="更多操作" onClose={closeTeamActionSheet}>
+            <MobileBottomSheet
+                open={Boolean(activeActionTeam)}
+                title="团队更多操作"
+                onClose={closeTeamActionSheet}
+                showHandle={false}
+                header={activeActionTeam ? (
+                    <header className="shrink-0 px-[var(--tm-space-4)] pb-[var(--tm-class-action-header-bottom-space)] pt-[var(--tm-space-5)]">
+                        <div>
+                            <div className="flex items-center gap-[var(--tm-space-2)]">
+                                <button
+                                    type="button"
+                                    onClick={() => { closeTeamActionSheet(); onSelectStudentTeamInfo(activeActionTeam.id); }}
+                                    className="flex min-h-[var(--tm-size-touch)] min-w-0 flex-1 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] text-left"
+                                    aria-label={`查看${activeActionTeam.name}详情`}
+                                >
+                                    <span className="flex min-w-0 items-baseline gap-[var(--tm-space-2)]">
+                                        <span className="min-w-0 truncate text-[length:var(--tm-font-size-group-title)] font-semibold text-[var(--tm-text-primary)]">{activeActionTeam.name}</span>
+                                        <span className="flex shrink-0 items-center gap-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]">
+                                            详情
+                                            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                                        </span>
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeTeamActionSheet}
+                                    className="-mr-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)]"
+                                    aria-label="关闭团队更多操作"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+                ) : undefined}
+            >
                 {activeActionTeam && (
                     <StudentTeamManagementActions
                         onEditMembers={() => openTeamEditor('members', activeActionTeam.id)}
-                        onEditSettings={() => openTeamEditor('settings', activeActionTeam.id)}
                         onInvite={openStudentTeamInvite}
-                        onArchive={openArchiveStudentTeam}
                     />
                 )}
             </MobileBottomSheet>
@@ -817,6 +829,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 classes={studentTeamEditableClasses}
                 getStudentsForClass={getStudentsForClass}
                 searchStudentsByExactName={searchStudentsByExactName}
+                getStudentLabelById={getStudentLabelById}
                 getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, currentSpace)}
                 onClose={() => setTeamEditor(null)}
                 onSave={value => {
@@ -829,19 +842,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             {invitedStudentTeam && (
                 <ClassInviteFlow open audience="teacher" studentTeam={{ id: invitedStudentTeam.id, name: invitedStudentTeam.name }} inviterName={teacherProfile.name} schoolName={currentSpace.title} onClose={() => setStudentTeamInviteId(null)} />
             )}
-
-            <MobileConfirmSheet
-                open={Boolean(archivedStudentTeam)}
-                title={archivedStudentTeam ? `解散${archivedStudentTeam.name}` : '解散社团或团队'}
-                description="解散后不再显示该团队，已有学生评价记录不受影响。"
-                confirmLabel="确认解散"
-                tone="danger"
-                onClose={() => setArchiveStudentTeamId(null)}
-                onConfirm={() => {
-                    if (archiveStudentTeamId) onArchiveStudentTeam(archiveStudentTeamId);
-                    setArchiveStudentTeamId(null);
-                }}
-            />
 
             <MobileBottomSheet open={canManagePersonal && showClassManagement} title="班级管理" onClose={() => setShowClassManagement(false)}>
                 <div className="space-y-[var(--tm-space-2)]">

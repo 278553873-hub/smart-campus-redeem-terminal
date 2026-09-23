@@ -382,6 +382,13 @@ await renderPage('往期学校报告页', () => import('../mobile-app/views/Prin
   if (!text.includes('往期管理建议')) throw new Error('往期学校报告页应保留列表标题');
 });
 
+await renderPage('团队报告页', () => import('../mobile-app/views/ClassReportView'), {
+  classInfo: { id: 'team-report-smoke', name: '篮球社', classCode: '', gradeLevel: '', studentCount: 6, tags: [] },
+  students: demoStudents,
+  currentTeacherName: '演示老师',
+  onSelectStudent: noop,
+});
+
 
 // 渲染结束后主动退出：个别模块会留下常驻定时器，让进程一直挂着不返回。
 process.exit(0);

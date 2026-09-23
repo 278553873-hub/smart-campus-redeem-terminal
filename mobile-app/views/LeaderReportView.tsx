@@ -1,14 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import {
     CalendarRange,
     ChevronLeft,
     ChevronRight,
     ClipboardList,
+    FileText,
     Info,
     PencilLine,
     Trophy,
-    UserCheck,
     Users,
     X,
 } from 'lucide-react';
@@ -203,6 +203,8 @@ const MetricUnit = ({
     icon: Icon,
     tone,
     animationKey,
+    hint,
+    hintAlign = 'left',
 }: {
     label: string;
     percent?: number;
@@ -211,7 +213,11 @@ const MetricUnit = ({
     icon: React.ElementType;
     tone: 'brand' | 'secondary' | 'reward';
     animationKey?: string;
+    hint?: string;
+    hintAlign?: 'left' | 'right';
 }) => {
+    const [hintOpen, setHintOpen] = useState(false);
+    const hintId = useId();
     const theme = {
         brand: {
             icon: 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]',
@@ -232,13 +238,41 @@ const MetricUnit = ({
     const numberReplayKey = showProgress ? animationKey : `${animationKey ?? label}-value`;
 
     return (
-        <div className="min-w-0 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-3.5">
+        <div className="relative min-w-0 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-3.5">
             <div className="flex items-center justify-between gap-2">
-                <div className="truncate text-xs font-medium text-[var(--tm-text-secondary)]">{label}</div>
+                <div className="flex min-w-0 items-center gap-1">
+                    <span className="truncate text-xs font-medium text-[var(--tm-text-secondary)]">{label}</span>
+                    {hint && (
+                        <button
+                            type="button"
+                            aria-label={`查看${label}定义`}
+                            aria-expanded={hintOpen}
+                            aria-controls={hintOpen ? hintId : undefined}
+                            aria-describedby={hintOpen ? hintId : undefined}
+                            onClick={() => setHintOpen(current => !current)}
+                            onBlur={() => setHintOpen(false)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Escape') setHintOpen(false);
+                            }}
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-tertiary)] transition-colors active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
+                        >
+                            <Info aria-hidden="true" className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                </div>
                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${theme.icon}`}>
                     <Icon className="h-4 w-4" />
                 </div>
             </div>
+            {hintOpen && hint && (
+                <div
+                    id={hintId}
+                    role="tooltip"
+                    className={`absolute top-9 z-20 w-52 rounded-2xl bg-[var(--tm-text-primary)] px-3 py-2 text-xs font-medium leading-relaxed text-white shadow-xl ${hintAlign === 'right' ? 'right-0' : 'left-0'}`}
+                >
+                    {hint}
+                </div>
+            )}
             <div className="mt-3">
                 <div className="flex items-end justify-between gap-2">
                     <div className="text-3xl font-bold leading-none tracking-normal text-[var(--tm-text-primary)]">
@@ -260,18 +294,20 @@ const MetricUnit = ({
     );
 };
 
+const overviewMetricHints = {
+    evaluationCount: '老师发起评价行为的次数。发起 1 次评价计 1 次，无论评价对象是 1 人还是多人。示例：评价全班 50 人 = 1 次。',
+    recordCount: '评价后生成的成长记录数。1 名学生 = 1 条。示例：评价全班 50 人 = 50 条。',
+} as const;
+
 const OverviewCard = ({ snapshot, animationKey }: { snapshot: LeaderReportSnapshot | null; animationKey: string }) => (
     <section className={reportCardClassName}>
         <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">数据总览</h2>
         <div className="mt-3 grid grid-cols-1 gap-3">
             <div className="grid grid-cols-2 gap-3">
-                <MetricUnit label="使用教师" percent={snapshot?.summary.teacherPercent ?? 0} fraction={`${snapshot?.summary.activeTeachers ?? 0} / ${snapshot?.summary.totalTeachers ?? 0}`} icon={UserCheck} tone="brand" animationKey={`${animationKey}-teacher`} />
-                <MetricUnit label="覆盖学生" percent={snapshot?.summary.studentPercent ?? 0} fraction={`${snapshot?.summary.totalCoveredStudents ?? 0} / ${snapshot?.summary.totalStudents ?? 0}`} icon={Users} tone="secondary" animationKey={`${animationKey}-student`} />
+                <MetricUnit label="评价次数" value={`${snapshot?.summary.totalEvaluationCount ?? 0}`} icon={ClipboardList} tone="reward" hint={overviewMetricHints.evaluationCount} hintAlign="left" animationKey={`${animationKey}-evaluation-count`} />
+                <MetricUnit label="记录条数" value={`${snapshot?.summary.totalRecords ?? 0}`} icon={FileText} tone="brand" hint={overviewMetricHints.recordCount} hintAlign="right" animationKey={`${animationKey}-records`} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-                <MetricUnit label="评价次数" value={`${snapshot?.summary.totalRecords ?? 0}`} icon={ClipboardList} tone="reward" animationKey={`${animationKey}-records`} />
-                <MetricUnit label="评价条数" value={`${snapshot?.summary.totalEvaluationCount ?? 0}`} icon={ClipboardList} tone="secondary" animationKey={`${animationKey}-evaluation-count`} />
-            </div>
+            <MetricUnit label="覆盖学生" percent={snapshot?.summary.studentPercent ?? 0} fraction={`${snapshot?.summary.totalCoveredStudents ?? 0} / ${snapshot?.summary.totalStudents ?? 0}`} icon={Users} tone="secondary" animationKey={`${animationKey}-student`} />
         </div>
     </section>
 );

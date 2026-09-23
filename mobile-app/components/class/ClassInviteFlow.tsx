@@ -40,7 +40,7 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
   const targetName = studentTeam?.name ?? (classInfo ? getClassLabel(classInfo) : '');
   const targetCode = studentTeam?.id ?? classInfo?.classCode ?? '';
   const isStudentTeamInvite = Boolean(studentTeam);
-  const title = isStudentTeamInvite ? '邀请协作老师' : audience === 'teacher' ? '邀请老师加入' : '邀请家长加入';
+  const title = isStudentTeamInvite ? '邀请老师' : audience === 'teacher' ? '邀请老师加入' : '邀请家长加入';
   const qrAsset = audience === 'teacher' ? '/assets/ai_literacy_qr.png' : '/assets/compass_qr.png';
   const inviteText = isStudentTeamInvite
     ? `${inviter}邀请你成为「${targetName}」的协作老师，共同评价团队学生。点击链接 ai-literacy://join-team?code=${targetCode}，直接加入。`

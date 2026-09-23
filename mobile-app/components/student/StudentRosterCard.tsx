@@ -111,8 +111,8 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
       )}
       <span className="flex min-h-0 w-full flex-1 flex-col items-center justify-start gap-[3px]">
         {showLevelIcons && <StudentPerformanceLevelIcons level={level} iconSize="student-card" />}
-        {showLevelScore && <StudentPerformanceLevelScore netScore={shownLevelNetScore} />}
-        <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
+        {showLevelScore && <StudentPerformanceLevelScore netScore={shownLevelNetScore} className="mt-[2px]" />}
+        <span className={`relative flex h-[58px] w-[58px] shrink-0 items-center justify-center ${showLevelScore ? '-mt-[2px]' : ''}`}>
           <StudentPerformanceAvatar
             compact
             student={{ ...student, avatar: student.avatar || (student.gender === 'female' ? ASSETS.AVATAR.STUDENT_GIRL_DEFAULT : undefined) }}

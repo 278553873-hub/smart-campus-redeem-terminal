@@ -17,6 +17,7 @@ import {
   PiggyBank,
   Plus,
   ShieldCheck,
+  Sparkles,
   Star,
   UserRound,
   X,
@@ -40,6 +41,7 @@ import {
 } from './parent-app/ParentUI';
 import AssignedQuestionnaireView from './parent-app/AssignedQuestionnaireView';
 import { ParentExchangePasswordSheet } from './parent-app/ParentExchangePasswordSheet';
+import HoloCardViewer from './parent-app/HoloCardViewer';
 import {
   parentMobileCssVariables,
   parentSegmentTone,
@@ -84,7 +86,7 @@ interface ParentAppProps {
   onActiveClassIdChange?: (classId: string) => void;
 }
 
-type Screen = 'binding' | 'growth' | 'reports' | 'archiveList' | 'archiveDetail' | 'questionnaireForm' | 'questionnaireDetail' | 'reportDetail' | 'bank' | 'growthRecords' | 'todo' | 'mine';
+type Screen = 'binding' | 'growth' | 'reports' | 'archiveList' | 'archiveDetail' | 'questionnaireForm' | 'questionnaireDetail' | 'reportDetail' | 'bank' | 'growthRecords' | 'todo' | 'mine' | 'cardCollection' | 'cardDetail';
 type ReportType = 'month' | 'term';
 type BankTab = 'deposit' | 'list';
 type GrowthRangeMode = 'day' | 'week' | 'month' | 'term';
@@ -1836,6 +1838,25 @@ const ParentApp: React.FC<ParentAppProps> = ({
     );
   };
 
+  const CardCollection = () => {
+    if (!activeChild) return <Binding />;
+    return (
+      <ParentPageShell className="pb-8">
+        <Header title="我的卡册" showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />
+        <section className="flex justify-center px-5 pt-6" aria-label="已收藏卡片">
+          <button
+            type="button"
+            onClick={() => setScreen('cardDetail')}
+            className={`block w-full max-w-[330px] overflow-hidden rounded-[20px] shadow-[0_18px_42px_rgba(42,55,49,.18)] ${PARENT_PRESSABLE_CLASS}`}
+            aria-label="查看锦鲤守护者全息卡"
+          >
+            <img src="/cards/koi-guardian/card-preview.png" alt="锦鲤守护者全息卡" className="block h-auto w-full" />
+          </button>
+        </section>
+      </ParentPageShell>
+    );
+  };
+
   const Binding = () => (
     <ParentPageShell className="pb-12">
       <Header title="绑定孩子" showBack={bindingReturnTarget === 'switcher'} backLabel="返回切换孩子" onBack={returnToChildSwitcher} />
@@ -1879,6 +1900,23 @@ const ParentApp: React.FC<ParentAppProps> = ({
         <GrowthChildProfileCard />
         <GrowthBankEntry />
         <GrowthSummaryCards />
+        <ParentCard as="section" className="mx-5 mt-3 overflow-hidden p-0">
+          <button
+            type="button"
+            onClick={() => setScreen('cardCollection')}
+            className={`flex min-h-[82px] w-full items-center gap-3 px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS}`}
+            aria-label="打开我的卡册，已收藏1张卡片"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] bg-[linear-gradient(145deg,#e5f2e7,#f4e5c5)] text-[#8b5d20]">
+              <Sparkles size={20} strokeWidth={2.1} aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">我的卡册</span>
+              <span className="mt-1 block text-[length:var(--pm-font-size-meta)] text-[var(--pm-text-tertiary)]">已收藏 1 张成长卡片</span>
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-[var(--pm-text-disabled)]" aria-hidden="true" />
+          </button>
+        </ParentCard>
       </ParentPageShell>
     );
   };
@@ -2808,6 +2846,8 @@ const ParentApp: React.FC<ParentAppProps> = ({
     if (inviteCandidateIds.length > 1) return InviteChildSelect();
     if (screen === 'binding') return Binding();
     if (screen === 'growthRecords') return GrowthRecords();
+    if (screen === 'cardCollection') return CardCollection();
+    if (screen === 'cardDetail') return <HoloCardViewer onClose={() => setScreen('cardCollection')} />;
     if (screen === 'todo') return TodoPage();
     if (screen === 'reports') return Reports();
     if (screen === 'archiveList') return ArchiveList();

@@ -8,6 +8,7 @@ const inputSource = fs.readFileSync(new URL('./RecordInputView.tsx', import.meta
 const detailSource = fs.readFileSync(new URL('./student-team/StudentTeamDetailView.tsx', import.meta.url), 'utf8');
 const editorSource = fs.readFileSync(new URL('./student-team/StudentTeamEditorView.tsx', import.meta.url), 'utf8');
 const createSource = fs.readFileSync(new URL('./student-team/StudentTeamCreateView.tsx', import.meta.url), 'utf8');
+const infoSource = fs.readFileSync(new URL('./student-team/StudentTeamInfoView.tsx', import.meta.url), 'utf8');
 const managementActionsSource = fs.readFileSync(new URL('./student-team/StudentTeamManagementActions.tsx', import.meta.url), 'utf8');
 const radioOptionSource = fs.readFileSync(new URL('../components/ui/MobileRadioOptionCard.tsx', import.meta.url), 'utf8');
 const compactStudentSource = fs.readFileSync(new URL('../components/student/StudentCompactSelectItem.tsx', import.meta.url), 'utf8');
@@ -127,15 +128,15 @@ requireText(detailSource, '全选', '团队成员页必须沿用班级列表的�
 requireText(detailSource, '反选', '团队成员页必须沿用班级列表的反选工具。');
 requireText(detailSource, '学生卡片展示', '团队成员页必须沿用学生卡片展示设置。');
 requireText(managementActionsSource, '调整学生', '创建人的成员维护必须使用独立入口。');
-requireText(managementActionsSource, '团队设置', '创建人的基础信息维护必须使用独立入口。');
+requireText(infoSource, '编辑社团信息', '创建人的基础信息维护必须使用独立入口。');
 assert.ok(!detailSource.includes('编辑名称与成员'), '团队更多操作不得继续进入混合编辑长页面。');
-requireText(managementActionsSource, '邀请协作老师', '只有创建人应获得协作评价邀请入口。');
+requireText(managementActionsSource, '邀请老师', '只有创建人应获得协作评价邀请入口。');
 requireText(detailSource, '<MenuIcon className="h-5 w-5" />', '团队详情更多操作必须放在多选旁边并复用班级工具栏图标。');
 assert.ok(!detailSource.includes('MoreHorizontal'), '团队详情标题栏不得放置另一套更多操作。');
 requireText(classListSource, 'aria-label={`${team.name}更多操作`}', '团队卡片必须使用独立的三点更多入口。');
 requireText(classListSource, '<WechatMoreIcon className="h-5 w-5" />', '团队卡片必须与班级卡片复用微信三点图标。');
-requireText(appSource, 'canManageSelectedStudentTeam', '团队编辑、邀请和解散必须按创建人权限控制。');
-requireText(appSource, 'onUpdate={handleUpdateStudentTeam}', '团队设置与调整学生必须在当前页面弹窗内保存。');
+requireText(classListSource, 'team.ownerId === currentTeacherId &&', '团队编辑、邀请和解散必须按创建人权限控制。');
+requireText(appSource, 'onUpdateStudentTeam={handleUpdateStudentTeam}', '团队设置与调整学生必须在列表弹窗内保存。');
 assert.ok(!appSource.includes("'student_team_editor'"), '团队创建与维护不得保留独立页面路由。');
 requireText(appSource, "isSchoolManager && team.visibility === 'management'", '管理人员只能看到明确向管理人员公开的团队。');
 requireText(appSource, "const selectedStudentTeamCandidateIds = selectedStudentTeamStudents.map(student => student.id);", '团队录入候选范围必须等于当前有效成员。');
@@ -147,7 +148,7 @@ requireText(appSource, "setCurrentView('student_team_detail');", '团队录入�
 assert.ok(!recordSource.includes('社团与团队'), '记录页不得增加社团与团队入口。');
 assert.ok(!recordSource.includes('candidateStudentIds'), '记录页展示流程不得承担团队候选范围识别。');
 
-const featureSources = [appSource, classListSource, detailSource, editorSource, managementActionsSource].join('\n');
+const featureSources = [appSource, classListSource, detailSource, infoSource, editorSource, managementActionsSource].join('\n');
 for (const forbiddenCopy of ['特殊群体', '群组类型', '可评价学生名单', '行政班']) {
   assert.ok(!featureSources.includes(forbiddenCopy), `页面不得出现“${forbiddenCopy}”。`);
 }

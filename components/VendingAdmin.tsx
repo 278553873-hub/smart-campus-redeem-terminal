@@ -399,7 +399,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
                 )}
 
                 {/* 硬件调试内容区：全屏自适应 6 排货架 */}
-                <div className="flex-1 flex flex-col overflow-hidden p-2">
+                <div className="flex-1 flex flex-col overflow-hidden px-2 pb-2">
                     <div className="flex-1 flex flex-col justify-between bg-slate-900/5 border border-slate-200/80 rounded-2xl p-1.5 gap-1.5 overflow-hidden">
                         {rows.map(rowNum => {
                             const rowChannels = activeChannels.filter(c => c.row === rowNum);
@@ -563,7 +563,7 @@ const VendingAdmin: React.FC<VendingAdminProps> = ({
             )}
 
             {/* 内容区：全屏自适应 540x960 视口 (现场补货专一工作台，无冗余控制条) */}
-            <div className="flex-1 flex flex-col overflow-hidden p-2">
+            <div className="flex-1 flex flex-col overflow-hidden px-2 pb-2">
                 <div className="flex-1 flex flex-col justify-between overflow-hidden">
                     {/* 拟真机柜展示区：6排自适应垂直均分，彻底无内部滚动 */}
                     <div className="flex-1 flex flex-col justify-between bg-slate-900/5 border border-slate-200/80 rounded-2xl p-1.5 gap-1.5 overflow-hidden">

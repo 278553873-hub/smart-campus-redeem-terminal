@@ -1,22 +1,33 @@
 import React from 'react';
-import { Settings, Trash2, UserPlus, UsersRound } from 'lucide-react';
+import { UserPlus, UsersRound } from 'lucide-react';
 
 interface StudentTeamManagementActionsProps {
   onEditMembers: () => void;
-  onEditSettings: () => void;
   onInvite: () => void;
-  onArchive: () => void;
 }
 
-const actionClassName = 'flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[14px] font-semibold text-[var(--tm-text-primary)]';
+const gridItemClass = 'group flex min-h-[var(--tm-action-grid-item-height)] min-w-0 flex-col items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] px-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]';
 
-const StudentTeamManagementActions: React.FC<StudentTeamManagementActionsProps> = ({ onEditMembers, onEditSettings, onInvite, onArchive }) => (
-  <div className="space-y-1 pb-2">
-    <button type="button" onClick={onEditMembers} className={actionClassName}><UsersRound className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />调整学生</button>
-    <button type="button" onClick={onEditSettings} className={actionClassName}><Settings className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />团队设置</button>
-    <button type="button" onClick={onInvite} className={actionClassName}><UserPlus className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />邀请协作老师</button>
-    <button type="button" onClick={onArchive} className={`${actionClassName} text-[var(--tm-status-negative)]`}><Trash2 className="h-5 w-5 text-[var(--tm-action-icon-danger)]" />解散社团或团队</button>
-  </div>
-);
+const StudentTeamManagementActions: React.FC<StudentTeamManagementActionsProps> = ({ onEditMembers, onInvite }) => {
+  const items = [
+    { label: '调整学生', icon: UsersRound, onClick: onEditMembers },
+    { label: '邀请老师', icon: UserPlus, onClick: onInvite },
+  ];
+  return (
+    <div className="grid grid-cols-4 gap-x-[var(--tm-space-3)] gap-y-[var(--tm-space-3)]">
+      {items.map(item => {
+        const Icon = item.icon;
+        return (
+          <button key={item.label} type="button" onClick={item.onClick} className={gridItemClass}>
+            <span className="relative flex h-[var(--tm-action-grid-icon-bg-size)] w-[var(--tm-action-grid-icon-bg-size)] shrink-0 items-center justify-center rounded-[var(--tm-action-grid-icon-radius)] bg-[var(--tm-class-action-collaboration-bg)]">
+              <Icon className={`h-[var(--tm-action-grid-icon-size)] w-[var(--tm-action-grid-icon-size)] text-[var(--tm-class-action-collaboration-icon)]`} />
+            </span>
+            <span className="h-[var(--tm-action-grid-label-height)] max-w-full truncate whitespace-nowrap text-[length:var(--tm-font-size-meta)] font-medium leading-[18px] text-[var(--tm-text-primary)]">{item.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 export default StudentTeamManagementActions;

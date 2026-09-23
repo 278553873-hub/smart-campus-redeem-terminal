@@ -3,6 +3,7 @@ import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ClassListView from './views/ClassListView';
 import StudentTeamDetailView from './views/student-team/StudentTeamDetailView';
+import StudentTeamInfoView from './views/student-team/StudentTeamInfoView';
 import type { StudentTeamEditorValue, StudentTeamSearchResult } from './views/student-team/StudentTeamEditorView';
 import ClassInfoView, { type ClassInfoRole } from './views/ClassInfoView';
 import ClassDetailView from './views/ClassDetailView';
@@ -55,6 +56,7 @@ import TeacherMobileScreenBackground from './components/TeacherMobileScreenBackg
 import TeacherBottomNavigation, { type TeacherBottomTab } from './components/TeacherBottomNavigation';
 import TeacherRecordInputBar from './components/TeacherRecordInputBar';
 import MobileGradePickerSheet from './components/ui/MobileGradePickerSheet';
+import MobileConfirmSheet from './components/ui/MobileConfirmSheet';
 import { teacherBrandCssVariables } from './styles/teacherMobileTokens';
 import type { TeacherGradientPreviewConfig } from './styles/teacherGradientPreview';
 import { DeviceWrapper } from '../components/DeviceWrapper';
@@ -272,7 +274,8 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
         name: '篮球社',
         ownerId: 'teacher-liufei',
         ownerName: '刘飞',
-        collaboratorIds: [],
+        collaboratorIds: ['teacher-zhoutingting'],
+        collaboratorNames: ['周婷婷'],
         visibility: 'collaborators',
         memberIds: [
             ...getDemoStudentIds('c_2025_1', [1, 4, 8, 12]),
@@ -288,6 +291,7 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
         ownerId: 'teacher-zhoutingting',
         ownerName: '周婷婷',
         collaboratorIds: [],
+        collaboratorNames: [],
         visibility: 'management',
         memberIds: [
             ...getDemoStudentIds('c_2025_2', [0, 3, 6, 9, 12]),
@@ -302,6 +306,7 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
         ownerId: 'teacher-liufei',
         ownerName: '刘飞',
         collaboratorIds: [],
+        collaboratorNames: [],
         visibility: 'management',
         memberIds: [
             ...getDemoStudentIds('c_2025_4', [0, 1, 2]),
@@ -310,7 +315,28 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
         ],
         status: 'active',
     },
+    {
+        id: 'team-track',
+        spaceId: 'school-star',
+        name: '田径队',
+        ownerId: 'teacher-zhoutingting',
+        ownerName: '周婷婷',
+        collaboratorIds: [],
+        collaboratorNames: [],
+        visibility: 'collaborators',
+        memberIds: [
+            ...getDemoStudentIds('c_2025_3', [0, 3, 7]),
+            ...getDemoStudentIds('c_2024_5', [1, 6, 12]),
+        ],
+        status: 'active',
+    },
 ];
+
+const DEMO_STUDENT_TEAM_INVITE = {
+    teamId: 'team-track',
+    teamName: '田径队',
+    inviterName: '周婷婷',
+};
 
 const createInitialStudentEvaluationRecords = (): StudentEvaluationRecord[] => (
     (MOCK_BEHAVIOR_RECORDS as StudentEvaluationRecord[]).map(record => ({
@@ -386,7 +412,7 @@ const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '�
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'indicator_catalog' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'parent_evaluation_visibility' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'class_exchange_records' | 'medal_issuance' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'indicator_catalog' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_team_info' | 'student_team_report' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'weekly_duty_schedule' | 'parent_evaluation_visibility' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'class_exchange_records' | 'medal_issuance' | 'face_update' | 'bank_password' | 'homework_entry';
 
 const PRINCIPAL_REPORT_VIEWS: ViewState[] = [
     'principal_weekly_report',
@@ -411,6 +437,8 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
     'student_add',
     'class_report',
     'student_team_detail',
+    'student_team_info',
+    'student_team_report',
     'class_evaluation_records',
     'student_batch_edit',
     'reward_verification',
@@ -448,6 +476,11 @@ interface MobileAppProps {
     gradientPreview?: TeacherGradientPreviewConfig;
     onGradientPreviewChange?: (config: TeacherGradientPreviewConfig) => void;
     campaignPreviewEveryEntry?: boolean;
+    /** 演示开关：模拟当前老师收到一条协作邀请，打开「确认加入」弹窗 */
+    studentTeamInvitePreview?: boolean;
+    onStudentTeamInvitePreviewChange?: (active: boolean) => void;
+    /** 当前是否处于班级/社团列表页，供预览浮层按页面显示邀请开关 */
+    onStudentTeamListViewChange?: (active: boolean) => void;
     screenRef?: React.Ref<HTMLDivElement>;
 }
 
@@ -460,6 +493,9 @@ const App: React.FC<MobileAppProps> = ({
     gradientPreview,
     onGradientPreviewChange,
     campaignPreviewEveryEntry = false,
+    studentTeamInvitePreview = false,
+    onStudentTeamInvitePreviewChange,
+    onStudentTeamListViewChange,
     screenRef,
 }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -471,7 +507,7 @@ const App: React.FC<MobileAppProps> = ({
 
     const getActiveTabIndex = (view: ViewState): number => {
         if (view === 'home_log' || view === 'indicator_catalog' || view === 'record_input') return 0;
-        if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'student_add' || view === 'class_report' || view === 'student_team_detail' || view === 'student_batch_edit' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'class_exchange_records' || view === 'medal_issuance' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
+        if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'student_add' || view === 'class_report' || view === 'student_team_detail' || view === 'student_team_info' || view === 'student_team_report' || view === 'student_batch_edit' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'class_exchange_records' || view === 'medal_issuance' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
         if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'weekly_duty_schedule' || view === 'parent_evaluation_visibility' || view === 'homework_batch_import' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
         return 0;
     };
@@ -570,6 +606,14 @@ const App: React.FC<MobileAppProps> = ({
         // 手机端切走时同步收回预览卡片，避免下一个应用沿用上一次的显示状态。
         return () => onHeadteacherAssistantViewChange?.(false);
     }, [isHeadteacherAssistantView, onHeadteacherAssistantViewChange]);
+    const isStudentTeamListView = currentView === 'class_list';
+    useEffect(() => {
+        onStudentTeamListViewChange?.(isStudentTeamListView);
+        return () => onStudentTeamListViewChange?.(false);
+    }, [isStudentTeamListView, onStudentTeamListViewChange]);
+    useEffect(() => {
+        if (studentTeamInvitePreview) setClassListTab('team');
+    }, [studentTeamInvitePreview]);
     const canRecordClassForActiveSpace = canTeacherSpaceRecordClass(activeTeacherSpace);
     const teacherProfile = teacherProfilesBySpace[activeTeacherSpace.id] ?? DEFAULT_TEACHER_PROFILE;
     const activeTeacherId = teacherProfile.id;
@@ -1081,8 +1125,16 @@ const App: React.FC<MobileAppProps> = ({
         ? activeSpaceClasses
         : activeSpaceClasses.filter(classInfo => activeTeacherClassIds.has(classInfo.id));
     const activeSpaceStudentById = new Map(activeSpaceStudents.map(student => [student.id, student]));
+    const getStudentLabelById = (studentId: string): { name: string; classLabel: string } | undefined => {
+        const student = activeSpaceStudentById.get(studentId);
+        if (!student) return undefined;
+        const classInfo = activeSpaceClasses.find(item => item.name === student.class);
+        return {
+            name: student.name,
+            classLabel: classInfo ? getTeacherClassDisplayName(classInfo, activeTeacherSpace) : student.class,
+        };
+    };
     const selectedStudentTeam = activeSpaceStudentTeams.find(team => team.id === selectedStudentTeamId);
-    const canManageSelectedStudentTeam = selectedStudentTeam?.ownerId === activeTeacherId;
     const selectedStudentTeamStudents = selectedStudentTeam
         ? selectedStudentTeam.memberIds
             .map(studentId => activeSpaceStudentById.get(studentId))
@@ -1096,6 +1148,16 @@ const App: React.FC<MobileAppProps> = ({
         navigateTo('student_team_detail');
     };
 
+    const handleSelectStudentTeamInfo = (teamId: string) => {
+        setSelectedStudentTeamId(teamId);
+        navigateTo('student_team_info');
+    };
+
+    const handleSelectStudentTeamReport = (teamId: string) => {
+        setSelectedStudentTeamId(teamId);
+        navigateTo('student_team_report');
+    };
+
     const handleCreateStudentTeam = (value: StudentTeamEditorValue) => {
         const teamId = `team-${Date.now()}`;
         setStudentTeams(current => [...current, {
@@ -1105,6 +1167,7 @@ const App: React.FC<MobileAppProps> = ({
             ownerId: activeTeacherId,
             ownerName: teacherProfile.name,
             collaboratorIds: [],
+            collaboratorNames: [],
             visibility: value.visibility,
             memberIds: value.memberIds,
             status: 'active',
@@ -1127,7 +1190,51 @@ const App: React.FC<MobileAppProps> = ({
         setStudentTeams(current => current.map(item => item.id === teamId
             ? { ...item, status: 'archived' }
             : item));
-        if (currentView === 'student_team_detail' && selectedStudentTeamId === teamId) goBack();
+        if ((currentView === 'student_team_detail' || currentView === 'student_team_info') && selectedStudentTeamId === teamId) goBack();
+    };
+
+    const handleJoinStudentTeam = (teamId: string) => {
+        const team = studentTeams.find(item => item.id === teamId);
+        if (!team || team.ownerId === activeTeacherId || team.collaboratorIds.includes(activeTeacherId)) return;
+        setStudentTeams(current => current.map(item => item.id === teamId
+            ? {
+                ...item,
+                collaboratorIds: [...item.collaboratorIds, activeTeacherId],
+                collaboratorNames: [...item.collaboratorNames, teacherProfile.name],
+            }
+            : item));
+    };
+
+    const handleRemoveStudentTeamCollaborator = (teamId: string, collaboratorId: string) => {
+        const team = studentTeams.find(item => item.id === teamId);
+        if (!team || team.ownerId !== activeTeacherId) return;
+        setStudentTeams(current => current.map(item => {
+            if (item.id !== teamId) return item;
+            const index = item.collaboratorIds.indexOf(collaboratorId);
+            if (index < 0) return item;
+            return {
+                ...item,
+                collaboratorIds: item.collaboratorIds.filter(id => id !== collaboratorId),
+                collaboratorNames: item.collaboratorNames.filter((_, nameIndex) => nameIndex !== index),
+            };
+        }));
+    };
+
+    const handleTransferStudentTeamOwner = (teamId: string, nextOwnerId: string) => {
+        const team = studentTeams.find(item => item.id === teamId);
+        if (!team || team.ownerId !== activeTeacherId || !team.collaboratorIds.includes(nextOwnerId)) return;
+        const nextOwnerIndex = team.collaboratorIds.indexOf(nextOwnerId);
+        const nextOwnerName = team.collaboratorNames[nextOwnerIndex] ?? '';
+        setStudentTeams(current => current.map(item => {
+            if (item.id !== teamId) return item;
+            return {
+                ...item,
+                ownerId: nextOwnerId,
+                ownerName: nextOwnerName,
+                collaboratorIds: [...item.collaboratorIds.filter(id => id !== nextOwnerId), activeTeacherId],
+                collaboratorNames: [...item.collaboratorNames.filter((_, index) => index !== nextOwnerIndex), teacherProfile.name],
+            };
+        }));
     };
 
     const handleChangeStudentBasicInfo = (student: Student) => {
@@ -1627,6 +1734,8 @@ const App: React.FC<MobileAppProps> = ({
             case 'class_list': return '我的班级';
             case 'class_report': return '班级报告';
             case 'student_team_detail': return selectedStudentTeam?.name ?? '社团与团队';
+            case 'student_team_info': return '社团详情';
+            case 'student_team_report': return '团队报告';
             case 'student_detail': return '学生详情';
             case 'student_archive': return '学生成长档案';
             case 'student_collection_detail': return '采集详情';
@@ -1740,11 +1849,11 @@ const App: React.FC<MobileAppProps> = ({
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     // 助理各页面（含入口页与报告页）的标题栏必须承接屏幕级角色背景，所以由子页面自己持有滚动容器，
     // 避免透明标题栏与滚动正文互相压盖；滚动记忆与恢复通过 [data-view-scroll-root] 识别该容器。
-    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'class_exchange_records', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground;
+    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'student_team_info', 'student_team_report', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'class_exchange_records', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground;
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView) || isStudentTeamCreateView;
     const hasPlainPageOwnHeader = currentView === 'class_exchange_records';
     const hasStudentDetailBackground = currentView === 'student_detail';
-    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
+    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const activeBottomTab: TeacherBottomTab = activeIndex === 1 ? 'class' : activeIndex === 2 ? 'me' : 'record';
 
     const getPhoneScreenBackground = () => {
@@ -1854,7 +1963,7 @@ const App: React.FC<MobileAppProps> = ({
                             <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-11 bg-[var(--tm-page-plain-header-bg)]" aria-hidden="true" />
                         )}
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
-                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'indicator_catalog' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_add' && currentView !== 'student_team_detail' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'medal_issuance' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && !hasPlainPageOwnHeader && (
+                        {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'indicator_catalog' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_add' && currentView !== 'student_team_detail' && currentView !== 'student_team_info' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'medal_issuance' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && !hasPlainPageOwnHeader && (
                             <LocalHeader
                                 title={getHeaderTitle()}
                                 onBack={history.length > 0 ? goBack : undefined}
@@ -1934,14 +2043,16 @@ const App: React.FC<MobileAppProps> = ({
                                     studentTeams={activeSpaceStudentTeams}
                                     studentTeamEditableClasses={studentTeamEditableClasses}
                                     searchStudentsByExactName={searchStudentsByExactName}
+                                    getStudentLabelById={getStudentLabelById}
                                     currentTeacherId={activeTeacherId}
                                     isSchoolManager={isSchoolManager}
                                     canCreateStudentTeam={activeTeacherSpace.type === 'school'}
                                     onCreateStudentTeam={handleCreateStudentTeam}
                                     onTeamCreateModeChange={setIsStudentTeamCreateOpen}
                                     onUpdateStudentTeam={handleUpdateStudentTeam}
-                                    onArchiveStudentTeam={handleArchiveStudentTeam}
                                     onSelectStudentTeam={handleSelectStudentTeam}
+                                    onSelectStudentTeamInfo={handleSelectStudentTeamInfo}
+                                    onSelectStudentTeamReport={handleSelectStudentTeamReport}
                                 />
                             )}
 
@@ -2018,17 +2129,8 @@ const App: React.FC<MobileAppProps> = ({
                                 <StudentTeamDetailView
                                     team={selectedStudentTeam}
                                     students={selectedStudentTeamStudents}
-                                    currentTeacherName={teacherProfile.name}
-                                    schoolName={teacherProfile.schoolName}
-                                    currentSpace={activeTeacherSpace}
-                                    canManage={canManageSelectedStudentTeam}
-                                    classes={studentTeamEditableClasses}
-                                    getStudentsForClass={getMergedStudentsForClass}
-                                    searchStudentsByExactName={searchStudentsByExactName}
                                     onBack={goBack}
                                     onSelectStudent={handleSelectStudent}
-                                    onUpdate={handleUpdateStudentTeam}
-                                    onArchive={handleArchiveStudentTeam}
                                     isSelectionMode={isMultiSelectMode}
                                     onToggleSelectionMode={handleToggleMultiSelect}
                                     selectedIds={multiSelectIds}
@@ -2039,6 +2141,23 @@ const App: React.FC<MobileAppProps> = ({
                                             summarizeStudentPerformance(records),
                                         ]),
                                     )}
+                                />
+                            )}
+
+                            {currentView === 'student_team_info' && selectedStudentTeam && (
+                                <StudentTeamInfoView
+                                    team={selectedStudentTeam}
+                                    classes={studentTeamEditableClasses}
+                                    getStudentsForClass={getMergedStudentsForClass}
+                                    searchStudentsByExactName={searchStudentsByExactName}
+                                    getStudentLabelById={getStudentLabelById}
+                                    currentSpace={activeTeacherSpace}
+                                    canManage={selectedStudentTeam.ownerId === activeTeacherId}
+                                    onBack={goBack}
+                                    onUpdate={handleUpdateStudentTeam}
+                                    onRemoveCollaborator={handleRemoveStudentTeamCollaborator}
+                                    onTransferOwner={handleTransferStudentTeamOwner}
+                                    onArchive={handleArchiveStudentTeam}
                                 />
                             )}
 
@@ -2054,6 +2173,22 @@ const App: React.FC<MobileAppProps> = ({
                                 <ClassReportView
                                     classInfo={classes.find(c => c.id === selectedClassId)!}
                                     students={getMergedStudentsForClass(selectedClassId).filter(student => (student.status ?? 'active') === 'active')}
+                                    currentTeacherName={teacherProfile.name}
+                                    onSelectStudent={handleSelectStudent}
+                                />
+                            )}
+
+                            {currentView === 'student_team_report' && selectedStudentTeam && (
+                                <ClassReportView
+                                    classInfo={{
+                                        id: selectedStudentTeam.id,
+                                        name: selectedStudentTeam.name,
+                                        classCode: '',
+                                        gradeLevel: '',
+                                        studentCount: selectedStudentTeamStudents.length,
+                                        tags: [],
+                                    }}
+                                    students={selectedStudentTeamStudents}
                                     currentTeacherName={teacherProfile.name}
                                     onSelectStudent={handleSelectStudent}
                                 />
@@ -2668,7 +2803,7 @@ const App: React.FC<MobileAppProps> = ({
                             />
                         )}
 
-                        {(currentView === 'home_log' || currentView === 'student_team_detail') && recordContextToast && (
+                        {(currentView === 'home_log' || currentView === 'student_team_detail' || currentView === 'class_list') && recordContextToast && (
                             <div
                                 className="pointer-events-none absolute inset-x-5 bottom-[150px] z-[65] flex justify-center"
                                 role="status"
@@ -2679,6 +2814,20 @@ const App: React.FC<MobileAppProps> = ({
                                 </div>
                             </div>
                         )}
+
+                        <MobileConfirmSheet
+                            open={studentTeamInvitePreview}
+                            title="收到协作邀请"
+                            description={`${DEMO_STUDENT_TEAM_INVITE.inviterName}邀请你成为「${DEMO_STUDENT_TEAM_INVITE.teamName}」的协作老师，共同评价团队学生。`}
+                            confirmLabel="确认加入"
+                            cancelLabel="暂不"
+                            onClose={() => onStudentTeamInvitePreviewChange?.(false)}
+                            onConfirm={() => {
+                                handleJoinStudentTeam(DEMO_STUDENT_TEAM_INVITE.teamId);
+                                setRecordContextToast(`已加入${DEMO_STUDENT_TEAM_INVITE.teamName}，可在社团与团队中查看`);
+                                onStudentTeamInvitePreviewChange?.(false);
+                            }}
+                        />
 
 
                         {/* ================= MODALS & OVERLAYS (GLASS) ================= */}

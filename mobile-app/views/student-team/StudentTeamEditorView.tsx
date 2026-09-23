@@ -11,6 +11,7 @@ import MobileClassCascadePicker, { type MobileClassCascadeGroup } from '../../co
 import MobileRadioOptionCard from '../../components/ui/MobileRadioOptionCard';
 import { ASSETS } from '../../assets/images';
 import { getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
+import StudentTeamSelectedList from './StudentTeamSelectedList';
 
 export type StudentTeamEditorMode = 'create' | 'settings' | 'members';
 export type StudentTeamSearchResult = Pick<Student, 'id' | 'name' | 'gender' | 'grade' | 'class' | 'avatar'> & {
@@ -29,6 +30,7 @@ interface StudentTeamEditorViewProps {
   classes: ClassInfo[];
   getStudentsForClass: (classId: string) => Student[];
   searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
+  getStudentLabelById: (studentId: string) => { name: string; classLabel: string } | undefined;
   onClose: () => void;
   onSave: (value: StudentTeamEditorValue) => void;
   getClassLabel?: (classInfo: ClassInfo) => string;
@@ -46,6 +48,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
   classes,
   getStudentsForClass,
   searchStudentsByExactName,
+  getStudentLabelById,
   onClose,
   onSave,
   getClassLabel = classInfo => classInfo.name,
@@ -317,6 +320,13 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
                   <MobileSearchInput value={exactName} onChange={event => { setExactName(event.target.value); setSubmittedExactName(''); setExactSearchResults([]); }} onKeyDown={event => { if (event.key === 'Enter') handleExactSearch(); }} placeholder="输入完整姓名" aria-label="输入其他班级学生完整姓名" className="min-w-0 flex-1" containerClassName="flex min-h-11 min-w-0 flex-1 items-center" density="compact" appearance="filled" fillTone="soft" />
                   <button type="button" disabled={!exactName.trim()} onClick={handleExactSearch} className="min-h-11 shrink-0 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] disabled:text-[var(--tm-text-disabled)]">查找</button>
                 </div>
+              )}
+              {selectedIds.size > 0 && (
+                <StudentTeamSelectedList
+                  selectedIds={selectedIds}
+                  getStudentLabelById={getStudentLabelById}
+                  onRemove={toggleStudent}
+                />
               )}
             </div>
 

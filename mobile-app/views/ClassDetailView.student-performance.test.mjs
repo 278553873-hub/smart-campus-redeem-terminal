@@ -82,14 +82,23 @@ if ((avatarSource.match(/strokeWidth="2"/g) ?? []).length !== 2) {
 if (!avatarSource.includes('showLevelProgress && (')) {
   throw new Error('头像进度环应受等级显示设置控制。');
 }
-if (!avatarSource.includes("showLevelProgress ? 'inset-1' : 'inset-0'")) {
-  throw new Error('分值形式隐藏进度环时头像应填满58像素盒子，避免上下间距不一致。');
+if (!avatarSource.includes('absolute inset-1 overflow-hidden rounded-full')) {
+  throw new Error('头像应固定使用50×50有效尺寸，切换等级形式时不缩放。');
+}
+if (!avatarSource.includes("student.avatar ? '' : fallbackClassName")) {
+  throw new Error('点缀色边框只应作用于无真实头像图片的兜底头像。');
 }
 if (avatarSource.includes('MaleIcon') || avatarSource.includes('FemaleIcon') || avatarSource.includes('student.gender')) {
   throw new Error('普通花名册头像不应常驻展示性别角标。');
 }
 if (!avatarSource.includes("compact ? 'h-[58px] w-[58px]'")) {
   throw new Error('手机花名册紧凑卡片的头像进度环应使用58像素尺寸。');
+}
+if (!cardSource.includes('className="mt-[2px]"')) {
+  throw new Error('分值色卡应上移2像素，在卡片上边与头像之间居中。');
+}
+if (!cardSource.includes("showLevelScore ? '-mt-[2px]' : ''")) {
+  throw new Error('分值形式的头像应反向补偿色卡上移，避免切换等级形式时卡片跳动。');
 }
 if (metaSource.includes('ThumbsUp') || metaSource.includes('ThumbsDown')) {
   throw new Error('奖惩次数应只通过双色数字展示，不增加常驻图标。');

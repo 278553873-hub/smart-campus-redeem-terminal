@@ -1,0 +1,32 @@
+{
+  "mode": "holographic",
+  "title": "锦鲤守护者",
+  "subtitle": "青金水墨 · 全息典藏",
+  "technique": "跃水成金",
+  "tagline": "守一池清澜，护万象生长",
+  "edition": "No.001",
+  "collection": "锦鲤守护者系列",
+  "description": "青金色浮世绘与水墨动漫勾勒的全息收藏卡。",
+  "parameters": {
+    "subjectScale": 1.25,
+    "subjectDepth": 0.4,
+    "backgroundDepth": -0.25,
+    "foil": 1.0,
+    "particles": 1.0,
+    "glow": 0.85
+  },
+  "safeArea": {
+    "scale": 1.12,
+    "offset": [
+      -0.06,
+      -0.085
+    ]
+  },
+  "assets": {
+    "subject": "./assets/subject.png",
+    "background": "./assets/background.png",
+    "text": "./assets/text.png",
+    "lineart": "./assets/lineart.png",
+    "model": "./assets/card.glb"
+  }
+}

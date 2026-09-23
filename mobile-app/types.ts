@@ -65,6 +65,7 @@ export interface SchoolStudentTeam {
   ownerId: string;
   ownerName: string;
   collaboratorIds: string[];
+  collaboratorNames: string[];
   visibility: 'collaborators' | 'management';
   memberIds: string[];
   status: 'active' | 'archived';

@@ -86,7 +86,7 @@ assert.doesNotMatch(appSource, /onUpdateStudentLevelDisplayMode|canConfigureLeve
 assert.match(appSource, /getStudentLevelNetScore\([\s\S]*'term'[\s\S]*CURRENT_PRINCIPAL_TERM/, '花名册等级应固定按本学期净得分计算。');
 assert.match(rosterCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'icon'/, '只有图标形式才展示星级图标。');
 assert.match(rosterCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'score'/, '只有分值形式才展示净得分。');
-assert.match(rosterCardSource, /<StudentPerformanceLevelScore netScore=\{shownLevelNetScore\} \/>/, '分值形式应在等级行展示净得分。');
+assert.match(rosterCardSource, /<StudentPerformanceLevelScore netScore=\{shownLevelNetScore\} className="mt-\[2px\]" \/>/, '分值形式应在等级行展示净得分，并上移2像素居中。');
 assert.match(rosterCardSource, /showLevelProgress=\{showLevelIcons\}/, '分值形式不应展示头像等级进度环。');
 assert.match(performanceMetaSource, /isNegative \? 'bg-\[var\(--tm-student-criticism-soft\)\] text-\[var\(--tm-student-criticism\)\]' : 'bg-\[var\(--tm-student-level-score-soft\)\] text-\[var\(--tm-student-level-score\)\]'/, '等级总分应使用蓝色圆角色片，负分切换为负向色片。');
 assert.match(performanceMetaSource, /rounded-\[5px\]/, '等级总分色片应与加扣分色片共用圆角规格。');

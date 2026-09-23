@@ -295,6 +295,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [recordFilterMonthStart, setRecordFilterMonthStart] = useState('');
     const [recordFilterMonthEnd, setRecordFilterMonthEnd] = useState('');
     const [recordFilterType, setRecordFilterType] = useState('全部类型');
+    const [recordPage, setRecordPage] = useState(1);
+    const recordPageSize = 10;
 
     const allRecords = [
         {
@@ -328,6 +330,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         }
         return true;
     });
+
+    const pagedRecords = filteredRecords.slice((recordPage - 1) * recordPageSize, recordPage * recordPageSize);
 
     // 考试数据 demo 数据：仅用于前端静态展示，后续再接入真实考试与成绩流程。
     const currentGradeTerm = '2025-2026学年 下学期';
@@ -3029,7 +3033,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                     {/* 页面主标题 */}
                     {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && activeMenu !== '终端设备管理' && activeMenu !== '终端设备' && activeMenu !== '成长数据设置' && activeMenu !== '成长数据导入' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
-                    <div className={`transform animate-in fade-in slide-in-from-left-4 duration-500 ${activeMenu === '考试数据' ? 'mb-4' : (activeMenu === '货柜超市' || activeMenu === '货柜超市管理') ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
+                    <div className={`transform ${activeMenu === '考试数据' ? 'mb-4' : (activeMenu === '货柜超市' || activeMenu === '货柜超市管理') ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
                         <div>
                             {activeMenu === '考试数据' ? (
                                 <div className="mb-2 flex items-center gap-2 font-['PingFang_SC'] text-[14px] font-normal leading-none">
@@ -3050,7 +3054,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     <span className="text-slate-500">{activeMenu}</span>
                                 </div>
                             )}
-                            <h2 className={activeMenu === '考试数据' ? "font-['PingFang_SC'] text-[18px] font-semibold leading-none text-[#333333]" : `${embedded ? 'text-[20px]' : 'text-2xl'} font-[900] text-slate-800 tracking-tight`}>
+                            <h2 className={activeMenu === '考试数据' ? "font-['PingFang_SC'] text-[18px] font-semibold leading-none text-[#333333]" : `${embedded ? 'text-[20px]' : 'text-2xl'} font-bold text-slate-800 tracking-tight`}>
                                 {activeMenu === '考试数据' && gradePageMode === 'create' ? '新建考试' : activeMenu}
                             </h2>
                             {activeMenu !== '考试数据' && activeMenu !== '货柜超市' && activeMenu !== '货柜超市管理' && <div className="h-1 w-12 bg-blue-600 rounded-full mt-1.5"></div>}
@@ -3094,7 +3098,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                     {/* 货币发放管理 - 增加标签页切换以分离自动模型和手动发币 */}
                     {(activeMenu === '货币发放' || activeMenu === '货币发放管理') && (
-                        <div className="w-full overflow-hidden rounded border border-[#E5E6EB] bg-white transform animate-in fade-in slide-in-from-bottom-6 duration-700">
+                        <div className="w-full overflow-hidden rounded border border-[#E5E6EB] bg-white transform">
                             <div className="border-b border-[#E5E6EB] bg-white px-6 py-4">
                                 {/* 内部 Tab 切换器 */}
                                 <div className="flex" role="tablist" aria-label="校园币发放方式">
@@ -3131,9 +3135,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 {/* 手动定向发放区段 */}
                                 {issuanceTab === 'manual' && (
                                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden max-w-4xl">
-                                        <div className="px-8 py-6 border-b border-slate-200 bg-orange-50/50 flex items-center justify-between">
+                                        <div className="px-8 py-6 border-b border-slate-200 bg-[#F7F8FA] flex items-center justify-between">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
+                                                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
                                                     <Sparkles size={24} />
                                                 </div>
                                                 <div>
@@ -3154,7 +3158,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                         <select
                                                             value={manualClass}
                                                             onChange={(e) => setManualClass(e.target.value)}
-                                                            className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-3 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                                                            className="w-full bg-white border border-[#E5E6EB] rounded-lg px-4 py-3 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                                         >
                                                             <option value="" disabled>请选择班级...</option>
                                                             {Object.keys(classData).map(cName => (
@@ -3162,7 +3166,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                             ))}
                                                         </select>
                                                         {manualClass && (
-                                                            <div className="text-xs text-orange-600 font-bold bg-orange-50 w-max px-2.5 py-1 rounded inline-flex items-center gap-1.5 mt-1">
+                                                            <div className="text-xs text-blue-600 font-bold bg-blue-50 w-max px-2.5 py-1 rounded inline-flex items-center gap-1.5 mt-1">
                                                                 <Users size={14} /> 当前班级总人数：{selectedClassStudentCount} 人
                                                             </div>
                                                         )}
@@ -3181,24 +3185,24 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                                     type="number"
                                                                     value={manualPerStudent}
                                                                     onChange={(e) => setManualPerStudent(Math.max(0, Number(e.target.value)))}
-                                                                    className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-12 pr-4 py-3 text-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                                                                    className="w-full bg-white border border-[#E5E6EB] rounded-lg pl-12 pr-4 py-3 text-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                                                 />
                                                             </div>
                                                             <span className="text-slate-500 font-medium whitespace-nowrap">校园币 / 人</span>
                                                         </div>
                                                     </div>
 
-                                                    <div className="p-5 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl text-white shadow-md relative overflow-hidden">
+                                                    <div className="p-5 bg-blue-50 border border-blue-100 rounded-xl relative overflow-hidden">
                                                         <div className="absolute right-0 top-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
                                                             <Coins size={100} />
                                                         </div>
                                                         <div className="relative z-10">
-                                                            <div className="text-orange-100 text-xs font-bold uppercase tracking-widest mb-1">本次发放总计</div>
+                                                            <div className="text-blue-600 text-xs font-bold mb-1">本次发放总计</div>
                                                             <div className="flex items-baseline gap-2">
-                                                                <span className="text-4xl font-black">{totalManualIssuance.toLocaleString()}</span>
-                                                                <span className="font-medium text-orange-100">校园币</span>
+                                                                <span className="text-3xl font-bold text-slate-800">{totalManualIssuance.toLocaleString()}</span>
+                                                                <span className="font-medium text-slate-500">校园币</span>
                                                             </div>
-                                                            <div className="mt-2 text-xs text-orange-100 opacity-90">
+                                                            <div className="mt-2 text-xs text-slate-500">
                                                                 计算方式: {selectedClassStudentCount} 人 × {manualPerStudent} 币/人
                                                             </div>
                                                         </div>
@@ -3220,7 +3224,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                                         setCustomReason('');
                                                                     }}
                                                                     className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${manualReason === reason
-                                                                        ? 'bg-orange-50 border-orange-400 text-orange-700 font-bold'
+                                                                        ? 'bg-blue-50 border-blue-500 text-blue-600 font-bold'
                                                                         : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                                                                         }`}
                                                                 >
@@ -3230,7 +3234,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                             <button
                                                                 onClick={() => setManualReason('custom')}
                                                                 className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${manualReason === 'custom'
-                                                                    ? 'bg-orange-50 border-orange-400 text-orange-700 font-bold'
+                                                                    ? 'bg-blue-50 border-blue-500 text-blue-600 font-bold'
                                                                     : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                                                                     }`}
                                                             >
@@ -3244,7 +3248,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                                 onChange={(e) => setCustomReason(e.target.value)}
                                                                 placeholder="请输入具体奖励事由..."
                                                                 rows={3}
-                                                                className="w-full mt-3 bg-white border border-slate-300 rounded-lg p-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all resize-none"
+                                                                className="w-full mt-3 bg-white border border-slate-300 rounded-lg p-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
                                                             ></textarea>
                                                         )}
                                                     </div>
@@ -3262,7 +3266,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             <div className="pt-6 border-t border-slate-200 flex justify-end gap-4">
                                                 <button
                                                     className={`px-8 py-3 rounded-lg font-bold shadow-sm transition-all flex items-center gap-2 ${manualClass && manualPerStudent > 0
-                                                        ? 'bg-orange-500 text-white hover:bg-orange-600 active:scale-95'
+                                                        ? 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
                                                         : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                                                         }`}
                                                     disabled={!manualClass || manualPerStudent <= 0}
@@ -3823,125 +3827,116 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                     {/* 历次发币记录 - 任务历史 */}
                     {(activeMenu === '发币记录' || activeMenu === '历次发币记录') && (
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            {/* 头部标题区域 */}
-                            <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
-                                        <Database size={24} />
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-600 font-medium tracking-wide">以发放任务（Task）为维度，展示系统历次执行的批量发币记录</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
-                                    <div className="flex items-center border border-slate-300 rounded-lg bg-white shadow-sm overflow-hidden hover:border-blue-400 focus-within:border-blue-500 focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.2)] transition-all">
-                                        <div className="flex items-center px-3 py-1.5 gap-2">
-                                            <span className="text-slate-400">
-                                                <svg viewBox="64 64 896 896" focusable="false" data-icon="calendar" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M880 184H712v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H384v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H144c-17.7 0-32 14.3-32 32v664c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V216c0-17.7-14.3-32-32-32zm-40 656H184V460h656v380zM184 392V256h128v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h256v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h128v136H184z"></path></svg>
-                                            </span>
-                                            <input
-                                                type="month"
-                                                value={recordFilterMonthStart}
-                                                onChange={e => setRecordFilterMonthStart(e.target.value)}
-                                                className="text-sm text-slate-700 outline-none bg-transparent w-28 cursor-pointer placeholder:text-slate-300"
-                                                placeholder="开始月份"
-                                            />
-                                            <span className="text-slate-300 px-1">~</span>
-                                            <input
-                                                type="month"
-                                                value={recordFilterMonthEnd}
-                                                onChange={e => setRecordFilterMonthEnd(e.target.value)}
-                                                className="text-sm text-slate-700 outline-none bg-transparent w-28 cursor-pointer placeholder:text-slate-300"
-                                                placeholder="结束月份"
-                                            />
-                                        </div>
-                                    </div>
-                                    <select value={recordFilterType} onChange={e => setRecordFilterType(e.target.value)} className="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-3 py-2 outline-none shadow-sm cursor-pointer hover:border-blue-400 transition-all">
-                                        <option value="全部类型">全部类型</option>
-                                        <option value="自动发放">自动发放</option>
-                                        <option value="手动发放">手动发放</option>
-                                    </select>
-                                </div>
+                        <div className="overflow-hidden rounded border border-[#E5E6EB] bg-white">
+                            <div className="pc-filter-bar flex items-center gap-3 border-b border-[#F2F3F5] px-6 py-4" aria-label="发币记录筛选栏">
+                                <span className="text-sm text-[#4E5969]">发币时间</span>
+                                <DatePicker.RangePicker
+                                    picker="month"
+                                    value={(recordFilterMonthStart && recordFilterMonthEnd) ? [recordFilterMonthStart, recordFilterMonthEnd] : undefined}
+                                    onChange={(dateString) => {
+                                        const [start = '', end = ''] = dateString || [];
+                                        setRecordFilterMonthStart(start);
+                                        setRecordFilterMonthEnd(end);
+                                        setRecordPage(1);
+                                    }}
+                                    allowClear
+                                    placeholder={['开始月份', '结束月份']}
+                                    style={{ width: 260 }}
+                                    aria-label="发币时间筛选"
+                                />
+                                <span className="text-sm text-[#4E5969]">类型</span>
+                                <ArcoSelect
+                                    allowClear
+                                    placeholder="全部类型"
+                                    value={recordFilterType === '全部类型' ? undefined : recordFilterType}
+                                    options={[{ label: '自动发放', value: '自动发放' }, { label: '手动发放', value: '手动发放' }]}
+                                    onChange={(value) => {
+                                        setRecordFilterType(value ? String(value) : '全部类型');
+                                        setRecordPage(1);
+                                    }}
+                                    style={{ width: 140 }}
+                                    aria-label="发币类型筛选"
+                                />
                             </div>
 
-                            {/* 报表主体 - 任务列表 */}
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left min-w-[1000px]">
-                                    <thead>
-                                        <tr className="bg-slate-50 text-slate-500 text-[13px]">
-                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币任务</th>
-                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">类型</th>
-                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币时间</th>
-                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币考核方式</th>
-                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币对象</th>
-                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币标准</th>
-                                            <th className="py-4 px-6 border-b border-slate-200 font-normal">发币总量</th>
-                                            <th className="py-4 px-6 border-b border-slate-200 text-right font-normal">操作人</th>
+                                <table className="w-full min-w-[1000px] text-left text-sm">
+                                    <thead className="bg-[#F7F8FA] text-xs font-semibold text-[#4E5969]">
+                                        <tr>
+                                            <th className="px-6 py-3">发币任务</th>
+                                            <th className="px-4 py-3">类型</th>
+                                            <th className="px-4 py-3">发币时间</th>
+                                            <th className="px-4 py-3">发币考核方式</th>
+                                            <th className="px-4 py-3">发币对象</th>
+                                            <th className="px-4 py-3">发币标准</th>
+                                            <th className="px-4 py-3 text-right">发币总量</th>
+                                            <th className="px-6 py-3 text-right">操作人</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {filteredRecords.map((item, index) => (
-                                            <tr key={index} className="hover:bg-slate-50 transition-colors">
-                                                <td className="py-4 px-6">
-                                                    <div className="text-sm text-slate-700">{item.title}</div>
+                                    <tbody className="divide-y divide-[#F2F3F5]">
+                                        {pagedRecords.map((item, index) => (
+                                            <tr key={index} className="transition-colors hover:bg-[#F7F8FA]">
+                                                <td className="px-6 py-4">
+                                                    <div className="font-medium text-[#1D2129]">{item.title}</div>
                                                 </td>
-                                                <td className="py-4 px-6 text-sm text-slate-700">
-                                                    {item.type}
-                                                </td>
-                                                <td className="py-4 px-6 text-sm text-slate-700">{item.time}</td>
-                                                <td className="py-4 px-6 text-sm text-slate-700">{item.cycle}</td>
-                                                <td className="py-4 px-6 text-sm text-slate-700 truncate max-w-[150px]" title={item.targets}>
-                                                    {item.targets}
-                                                </td>
-                                                <td className="py-4 px-6">
+                                                <td className="px-4 py-4 text-[#4E5969]">{item.type}</td>
+                                                <td className="px-4 py-4 text-[#4E5969]">{item.time}</td>
+                                                <td className="px-4 py-4 text-[#4E5969]">{item.cycle}</td>
+                                                <td className="px-4 py-4 text-[#4E5969] truncate max-w-[150px]" title={item.targets}>{item.targets}</td>
+                                                <td className="px-4 py-4">
                                                     <div className="flex flex-col gap-1">
-                                                        <div className="flex items-center gap-1.5 text-sm text-slate-700">
-                                                            <Coins size={16} className="text-indigo-400" />
+                                                        <div className="flex items-center gap-1.5 font-medium tabular-nums text-[#1D2129]">
+                                                            <Coins size={16} className="text-[#FF7D00]" />
                                                             <span>{item.rateValue} / {item.rateUnit}</span>
                                                         </div>
-                                                        {item.rateReason && <div className="text-xs text-slate-400">（原因：{item.rateReason}）</div>}
+                                                        {item.rateReason && <div className="text-xs text-[#86909C]">（原因：{item.rateReason}）</div>}
                                                     </div>
                                                 </td>
-                                                <td className="py-4 px-6">
-                                                    <div className="text-sm text-slate-700 flex items-center gap-1.5">
-                                                        <Coins size={16} className="text-indigo-400" />
+                                                <td className="px-4 py-4 text-right">
+                                                    <div className="inline-flex items-center gap-1.5 font-medium tabular-nums text-[#1D2129]">
+                                                        <Coins size={16} className="text-[#FF7D00]" />
                                                         {item.total.toLocaleString()}
                                                     </div>
                                                 </td>
-                                                <td className="py-4 px-6 text-right text-sm text-slate-700">
-                                                    {item.operator}
-                                                </td>
+                                                <td className="px-6 py-4 text-right text-[#4E5969]">{item.operator}</td>
                                             </tr>
                                         ))}
+                                        {filteredRecords.length === 0 && (
+                                            <tr>
+                                                <td colSpan={8} className="px-6 py-12 text-center text-sm text-[#86909C]">暂无符合条件的发币记录</td>
+                                            </tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
 
-                            {/* 分页区 */}
-                            <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between text-sm text-slate-500">
-                                <div>共计 {filteredRecords.length} 条记录</div>
-                                <div className="flex items-center gap-2">
-                                    <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 opacity-50 cursor-not-allowed">上一页</button>
-                                    <button className="px-3 py-1.5 border border-slate-300 rounded bg-blue-50 text-blue-600">1</button>
-                                    <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 opacity-50 cursor-not-allowed">下一页</button>
-                                </div>
+                            <div className="flex items-center justify-between gap-4 border-t border-[#F2F3F5] px-6 py-4">
+                                <span className="text-sm text-[#86909C]">共 {filteredRecords.length} 条</span>
+                                {filteredRecords.length > 0 && (
+                                    <Pagination
+                                        current={recordPage}
+                                        pageSize={recordPageSize}
+                                        total={filteredRecords.length}
+                                        showTotal={false}
+                                        showJumper={filteredRecords.length > recordPageSize}
+                                        onChange={setRecordPage}
+                                    />
+                                )}
                             </div>
                         </div>
                     )}
 
                     {/* 储蓄银行配置 */}
                     {(activeMenu === '储蓄银行' || activeMenu === '储蓄银行配置') && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                        <div className="space-y-6">
                             {/* 活期存款配置卡片 */}
-                            <div className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] border border-slate-100 p-10 relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-2 h-full bg-green-400"></div>
+                            <div className="bg-white rounded-lg border border-[#E5E6EB] p-6">
                                 <div className="mb-6">
-                                    <h3 className="text-2xl font-black text-slate-800 flex items-center gap-3">
+                                    <h3 className="text-base font-semibold text-[#1D2129] flex items-center gap-2">
                                         活期存款设置
-                                        <span className="bg-green-100 text-green-700 text-[12px] px-2.5 py-1 rounded font-bold tracking-wider">随存随取</span>
+                                        <span className="bg-green-50 text-green-600 text-[12px] px-2 py-0.5 rounded font-medium">随存随取</span>
                                     </h3>
-                                    <p className="text-slate-400 font-bold mt-2 text-sm">设置基础活期日利率</p>
+                                    <p className="text-slate-500 mt-2 text-sm">设置基础活期日利率</p>
                                 </div>
                                 <div className="flex flex-col xl:flex-row gap-8 xl:items-end p-2">
                                     <div className="flex items-end gap-6 shrink-0">
@@ -3953,50 +3948,50 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     step="0.01"
                                                     value={currentDailyRate}
                                                     onChange={(e) => setCurrentDailyRate(Number(e.target.value))}
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-3 text-lg font-black text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                                                    className="w-full bg-white border border-[#E5E6EB] rounded-lg pl-4 pr-10 py-3 text-sm font-medium text-slate-800 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
                                                 />
                                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <label className="text-xs font-bold text-slate-500">折合年利率 (约)</label>
-                                            <div className="text-2xl font-black text-green-600 pb-2">{(currentDailyRate * 365).toFixed(2)}%</div>
+                                            <div className="text-xl font-bold text-green-600 pb-2">{(currentDailyRate * 365).toFixed(2)}%</div>
                                         </div>
                                     </div>
 
-                                    <div className="flex-1 bg-blue-50/50 p-5 rounded-2xl border border-blue-100 flex flex-col gap-4">
+                                    <div className="flex-1 bg-[#F7F8FA] p-5 rounded-lg border border-[#E5E6EB] flex flex-col gap-4">
                                         <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                            <Info size={16} className="text-blue-500" /> 收益体验试算 <span className="text-slate-400 font-normal">（假设存入 1000 校园币）</span>
+                                            <Info size={16} className="text-green-600" /> 收益体验试算 <span className="text-slate-400 font-normal">（假设存入 1000 校园币）</span>
                                         </div>
                                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 text-center">
-                                            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
-                                                <div className="text-xs text-slate-400 font-bold mb-1">一天</div>
-                                                <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 1).toFixed(2)}</span>
+                                            <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
+                                                <div className="text-xs text-slate-500 mb-1">一天</div>
+                                                <div className="text-sm font-bold text-slate-800">
+                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 1).toFixed(2)}</span>
                                                 </div>
                                             </div>
-                                            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
-                                                <div className="text-xs text-slate-400 font-bold mb-1">一周</div>
-                                                <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 7).toFixed(2)}</span>
+                                            <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
+                                                <div className="text-xs text-slate-500 mb-1">一周</div>
+                                                <div className="text-sm font-bold text-slate-800">
+                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 7).toFixed(2)}</span>
                                                 </div>
                                             </div>
-                                            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
-                                                <div className="text-xs text-slate-400 font-bold mb-1">一个月</div>
-                                                <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 30).toFixed(2)}</span>
+                                            <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
+                                                <div className="text-xs text-slate-500 mb-1">一个月</div>
+                                                <div className="text-sm font-bold text-slate-800">
+                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 30).toFixed(2)}</span>
                                                 </div>
                                             </div>
-                                            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
-                                                <div className="text-xs text-slate-400 font-bold mb-1">半年</div>
-                                                <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 180).toFixed(2)}</span>
+                                            <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
+                                                <div className="text-xs text-slate-500 mb-1">半年</div>
+                                                <div className="text-sm font-bold text-slate-800">
+                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 180).toFixed(2)}</span>
                                                 </div>
                                             </div>
-                                            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
-                                                <div className="text-xs text-slate-400 font-bold mb-1">一年</div>
-                                                <div className="text-sm font-black text-slate-800">
-                                                    <span className="text-blue-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 365).toFixed(2)}</span>
+                                            <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
+                                                <div className="text-xs text-slate-500 mb-1">一年</div>
+                                                <div className="text-sm font-bold text-slate-800">
+                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 365).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -4005,62 +4000,61 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             </div>
 
                             {/* 定期存单产品卡片 */}
-                            <div className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] border border-slate-100 p-10 relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500"></div>
+                            <div className="bg-white rounded-lg border border-[#E5E6EB] p-6">
                                 <div>
                                     <div className="flex justify-between items-center mb-8">
                                         <div>
-                                            <h3 className="text-2xl font-black text-slate-800 flex items-center gap-3"><Landmark className="text-indigo-500" size={28} /> 定期存单设置</h3>
-                                            <p className="text-slate-400 font-bold mt-2 text-sm">管理定期存单的利率、存期等参数</p>
+                                            <h3 className="text-base font-semibold text-[#1D2129] flex items-center gap-2"><Landmark className="text-green-600" size={28} /> 定期存单设置</h3>
+                                            <p className="text-slate-500 mt-2 text-sm">管理定期存单的利率、存期等参数</p>
                                         </div>
                                         <button
                                             onClick={() => handleOpenProductModal()}
-                                            className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all active:scale-95 flex items-center gap-2"
+                                            className="px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-all active:scale-95 flex items-center gap-2"
                                         >
                                             <Plus size={16} /> 添加存单产品
                                         </button>
                                     </div>
                                     <div className="flex flex-col gap-3">
                                         {bankProducts.map((plan) => (
-                                            <div key={plan.id} className={`flex items-center justify-between bg-white border ${plan.active ? 'border-slate-200 shadow-sm hover:shadow-md' : 'border-slate-100 opacity-60 bg-slate-50/50'} rounded-2xl p-5 transition-all relative`}>
+                                            <div key={plan.id} className={`flex items-center justify-between bg-white border ${plan.active ? 'border-[#E5E6EB]' : 'border-[#E5E6EB] opacity-60 bg-slate-50/50'} rounded-lg p-5 transition-all relative`}>
                                                 {/* 左侧信息 */}
                                                 <div className="flex items-center gap-5">
-                                                    <div className={`w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0 ${plan.active ? 'text-indigo-500' : 'text-slate-300'} transition-colors`}>
+                                                    <div className={`w-12 h-12 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0 ${plan.active ? 'text-green-600' : 'text-slate-300'} transition-colors`}>
                                                         <FileText size={24} />
                                                     </div>
                                                     <div>
-                                                        <h5 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                                                        <h5 className="text-sm font-semibold text-[#1D2129] flex items-center gap-2">
                                                             {plan.label}
-                                                            {!plan.active && <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded shadow-inner border border-slate-200">进入未展示状态</span>}
+                                                            {!plan.active && <span className="bg-slate-100 text-slate-500 text-[10px] font-medium px-2 py-0.5 rounded border border-slate-200">进入未展示状态</span>}
                                                         </h5>
-                                                        <p className="text-slate-400 text-xs font-bold mt-1">需存满 {plan.days} 天 <span className="mx-2 text-slate-300">|</span> {plan.desc}</p>
+                                                        <p className="text-slate-500 text-xs mt-1">需存满 {plan.days} 天 <span className="mx-2 text-slate-300">|</span> {plan.desc}</p>
                                                     </div>
                                                 </div>
 
                                                 {/* 中间信息区 */}
                                                 <div className="flex items-center gap-10 mr-8">
                                                     <div className="flex flex-col">
-                                                        <span className="text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-widest">满期收益率</span>
+                                                        <span className="text-[11px] text-slate-500 mb-1">满期收益率</span>
                                                         <div className="flex items-baseline gap-2">
-                                                            <span className={`text-xl font-black ${plan.active ? 'text-indigo-600' : 'text-slate-500'}`}>{(plan.rate * 100).toFixed(1)}%</span>
-                                                            <span className="text-xs text-slate-400 font-bold">
+                                                            <span className={`text-base font-bold ${plan.active ? 'text-green-600' : 'text-slate-400'}`}>{(plan.rate * 100).toFixed(1)}%</span>
+                                                            <span className="text-xs text-slate-500">
                                                                 (年化 {((plan.rate / plan.days) * 365 * 100).toFixed(1)}%)
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[11px] text-slate-400 font-bold mb-1 uppercase tracking-widest">起存金额</span>
+                                                        <span className="text-[11px] text-slate-500 mb-1">起存金额</span>
                                                         <div className="flex items-center gap-1.5 h-7">
-                                                            <Coins size={16} className={plan.active ? 'text-orange-400' : 'text-slate-400'} />
-                                                            <span className={`text-lg font-black ${plan.active ? 'text-slate-700' : 'text-slate-400'}`}>{plan.min}</span>
+                                                            <Coins size={16} className={plan.active ? 'text-green-600' : 'text-slate-400'} />
+                                                            <span className={`text-base font-bold ${plan.active ? 'text-slate-700' : 'text-slate-400'}`}>{plan.min}</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`flex flex-col justify-center px-4 py-2 rounded-xl border ${plan.active ? 'bg-emerald-50/50 border-emerald-100' : 'bg-slate-50 border-slate-100'} min-w-[130px]`}>
+                                                    <div className={`flex flex-col justify-center px-4 py-2 rounded-lg border ${plan.active ? 'bg-green-50/50 border-green-100' : 'bg-slate-50 border-[#E5E6EB]'} min-w-[130px]`}>
                                                         <span className="text-[10px] text-slate-500 font-bold mb-0.5">存1000币收益试算</span>
                                                         <div className="flex items-baseline gap-1">
-                                                            <span className={`text-lg font-black ${plan.active ? 'text-emerald-600' : 'text-slate-400'}`}>+</span>
+                                                            <span className={`text-base font-bold ${plan.active ? 'text-green-600' : 'text-slate-400'}`}>+</span>
                                                             <img src="/assets/coin.png" className="w-[1em] h-[1em] mb-[1px] opacity-80" alt="coin" />
-                                                            <span className={`text-lg font-black ${plan.active ? 'text-emerald-600' : 'text-slate-400'}`}>{parseFloat((1000 * plan.rate).toFixed(2))}</span>
+                                                            <span className={`text-base font-bold ${plan.active ? 'text-green-600' : 'text-slate-400'}`}>{parseFloat((1000 * plan.rate).toFixed(2))}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -4069,13 +4063,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 <div className="flex gap-3 flex-shrink-0">
                                                     <button
                                                         onClick={() => handleOpenProductModal(plan)}
-                                                        className={`px-5 py-2 rounded-xl border border-slate-200 ${plan.active ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white'} font-bold text-sm transition-colors flex items-center justify-center gap-1.5`}
+                                                        className={`px-5 py-2 rounded-lg border border-[#E5E6EB] ${plan.active ? 'text-slate-600 hover:bg-slate-50' : 'text-slate-400 hover:bg-white'} font-medium text-sm transition-colors flex items-center justify-center gap-1.5`}
                                                     >
                                                         <PenTool size={14} /> 编辑
                                                     </button>
                                                     <button
                                                         onClick={() => handleToggleProductStatus(plan.id)}
-                                                        className={`px-5 py-2 rounded-xl font-bold text-sm transition-colors ${plan.active ? 'bg-slate-100 text-slate-400 hover:bg-orange-50 hover:text-orange-500' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                                                        className={`px-5 py-2 rounded-lg font-medium text-sm transition-colors ${plan.active ? 'bg-slate-100 text-slate-400 hover:bg-slate-200' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
                                                     >
                                                         {plan.active ? '不展示(停止新签)' : '重新展示并可签署'}
                                                     </button>
@@ -4403,7 +4397,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                     {/* 角色管理 */}
                     {activeMenu === '角色管理' && (
-                        <div className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden transform animate-in fade-in slide-in-from-bottom-6 duration-700">
+                        <div className="bg-white rounded-lg border border-[#E5E6EB] overflow-hidden">
                             <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center gap-3">
                                 <div className="relative w-64">
                                     <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -4426,7 +4420,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 </select>
                                 <button
                                     onClick={() => handleOpenRoleModal()}
-                                    className="ml-auto px-5 py-2.5 bg-blue-600 text-white rounded-xl font-black text-sm hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95 flex items-center gap-2"
+                                    className="ml-auto px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95 flex items-center gap-2"
                                 >
                                     <Plus size={18} />
                                     新增角色
@@ -4436,7 +4430,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             <div className="overflow-x-auto custom-scrollbar">
                                 <table className="w-full text-left border-separate border-spacing-0">
                                     <thead>
-                                        <tr className="text-slate-400 text-[11px] font-black tracking-[0.12em] bg-white">
+                                        <tr className="text-slate-400 text-[11px] font-bold tracking-[0.12em] bg-white">
                                             <th className="py-5 px-6">角色名称</th>
                                             <th className="py-5 px-6">角色类型</th>
                                             <th className="py-5 px-6">功能权限</th>
@@ -4450,16 +4444,16 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         {roleRows.map(role => (
                                             <tr key={role.name} className="hover:bg-slate-50/80 transition-colors">
                                                 <td className="py-5 px-6">
-                                                    <div className="font-black text-slate-800">{role.name}</div>
+                                                    <div className="font-bold text-slate-800">{role.name}</div>
                                                 </td>
                                                 <td className="py-5 px-6">
-                                                    <span className={`px-3 py-1.5 rounded-xl text-xs font-black ${role.type === '默认' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                    <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${role.type === '默认' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
                                                         {role.type}
                                                     </span>
                                                 </td>
                                                 <td className="py-5 px-6 text-sm font-bold text-slate-700 whitespace-nowrap">{formatFeatureScope(role.featureScope)}</td>
                                                 <td className="py-5 px-6 text-sm font-bold text-slate-600 max-w-[260px]">{role.dataPolicy}</td>
-                                                <td className="py-5 px-6 text-sm font-black text-slate-700">{role.users} 人</td>
+                                                <td className="py-5 px-6 text-sm font-bold text-slate-700">{role.users} 人</td>
                                                 <td className="py-5 px-6">
                                                     <button
                                                         onClick={() => handleToggleRoleStatus(role.name)}
@@ -5772,7 +5766,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-200 mb-6">
                                 <Settings size={40} />
                             </div>
-                            <h4 className="text-xl font-black text-slate-400">【{activeMenu}】模块打磨中</h4>
+                            <h4 className="text-xl font-bold text-slate-400">【{activeMenu}】模块打磨中</h4>
                             <p className="text-slate-300 font-bold mt-2 text-center max-w-xs">正在为您设计极致的交互体验，请稍后体验...</p>
                         </div>
                     )}
@@ -5892,7 +5886,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[100] animate-in fade-in duration-200">
                     <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
                         <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
-                            <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
                                 <KeyRound size={20} className="text-blue-600" />
                                 {roleModalMode === 'config' ? '配置权限' : roleModalMode === 'editName' ? '编辑角色' : '新增角色'}
                             </h3>
@@ -5928,7 +5922,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         name="name"
                                         defaultValue={editingRole?.name || ''}
                                         required
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                        className="w-full bg-white border border-[#E5E6EB] rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                                         placeholder="例如：德育主任"
                                     />
                                 </div>
@@ -5938,14 +5932,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 <>
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">状态</label>
-                                        <select name="status" defaultValue="启用" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                        <select name="status" defaultValue="启用" className="w-full bg-white border border-[#E5E6EB] rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                                             <option>启用</option>
                                             <option>禁用</option>
                                         </select>
                                     </div>
                                     <div className="flex bg-slate-100 rounded-xl p-1 self-start">
-                                        <button type="button" onClick={() => setRoleConfigTab('feature')} className={`px-5 py-2 rounded-lg text-sm font-black transition-all ${roleConfigTab === 'feature' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>功能权限</button>
-                                        <button type="button" onClick={() => setRoleConfigTab('data')} className={`px-5 py-2 rounded-lg text-sm font-black transition-all ${roleConfigTab === 'data' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>数据权限</button>
+                                        <button type="button" onClick={() => setRoleConfigTab('feature')} className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${roleConfigTab === 'feature' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>功能权限</button>
+                                        <button type="button" onClick={() => setRoleConfigTab('data')} className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${roleConfigTab === 'data' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>数据权限</button>
                                     </div>
                                     {roleConfigTab === 'feature' && (
                                         <div className="border border-slate-100 rounded-2xl overflow-hidden">
@@ -5959,7 +5953,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                                 {expandedPermissionMenus[menu.menu] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                                             </button>
                                                             <input type="checkbox" checked={menuChecked} onChange={(e) => togglePermissionValues(menuValues, e.target.checked)} className="accent-blue-600" />
-                                                            <span className="font-black text-sm text-slate-800">{menu.menu}</span>
+                                                            <span className="font-bold text-sm text-slate-800">{menu.menu}</span>
                                                         </div>
                                                         {expandedPermissionMenus[menu.menu] && (
                                                             <div>
@@ -5996,7 +5990,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     {roleConfigTab === 'data' && (
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-2">数据权限</label>
-                                            <select name="dataPolicy" defaultValue="任教与管理范围" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                            <select name="dataPolicy" defaultValue="任教与管理范围" className="w-full bg-white border border-[#E5E6EB] rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                                                 <option>全校数据</option>
                                                 <option>任教与管理范围</option>
                                             </select>
@@ -6009,8 +6003,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             {roleModalMode === 'config' && (
                                 <>
                                     <div className="flex bg-slate-100 rounded-xl p-1 self-start">
-                                        <button type="button" onClick={() => setRoleConfigTab('feature')} className={`px-5 py-2 rounded-lg text-sm font-black transition-all ${roleConfigTab === 'feature' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>功能权限</button>
-                                        <button type="button" onClick={() => setRoleConfigTab('data')} className={`px-5 py-2 rounded-lg text-sm font-black transition-all ${roleConfigTab === 'data' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>数据权限</button>
+                                        <button type="button" onClick={() => setRoleConfigTab('feature')} className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${roleConfigTab === 'feature' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>功能权限</button>
+                                        <button type="button" onClick={() => setRoleConfigTab('data')} className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${roleConfigTab === 'data' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>数据权限</button>
                                     </div>
 
                                     {roleConfigTab === 'feature' && (
@@ -6025,7 +6019,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                                 {expandedPermissionMenus[menu.menu] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                                             </button>
                                                             <input type="checkbox" checked={menuChecked} onChange={(e) => togglePermissionValues(menuValues, e.target.checked)} className="accent-blue-600" />
-                                                            <span className="font-black text-sm text-slate-800">{menu.menu}</span>
+                                                            <span className="font-bold text-sm text-slate-800">{menu.menu}</span>
                                                         </div>
                                                         {expandedPermissionMenus[menu.menu] && (
                                                             <div>
@@ -6063,7 +6057,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     {roleConfigTab === 'data' && (
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-2">数据权限</label>
-                                            <select name="dataPolicy" defaultValue={editingRole?.dataPolicy || '任教与管理范围'} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                            <select name="dataPolicy" defaultValue={editingRole?.dataPolicy || '任教与管理范围'} className="w-full bg-white border border-[#E5E6EB] rounded-xl px-4 py-3 text-slate-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                                                 <option>全校数据</option>
                                                 <option>任教与管理范围</option>
                                             </select>
@@ -6091,7 +6085,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[100] animate-in fade-in duration-200">
                     <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
-                            <h3 className="font-black text-slate-800 text-lg">分配人员</h3>
+                            <h3 className="font-bold text-slate-800 text-lg">分配人员</h3>
                             <button onClick={() => setAssignRole(null)} className="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors active:scale-95">
                                 <Plus size={20} className="rotate-45" />
                             </button>
@@ -6099,8 +6093,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
                             <div className="border border-slate-100 rounded-2xl overflow-hidden">
                                 <div className="h-11 px-4 bg-slate-50 flex items-center justify-between">
-                                    <span className="text-sm font-black text-slate-800">已分配成员</span>
-                                    <span className="text-xs font-black text-slate-400">{assignedTeacherPhones.length} 人</span>
+                                    <span className="text-sm font-bold text-slate-800">已分配成员</span>
+                                    <span className="text-xs font-bold text-slate-400">{assignedTeacherPhones.length} 人</span>
                                 </div>
                                 <div className="max-h-52 overflow-y-auto custom-scrollbar">
                                     {teacherAccounts
@@ -6108,7 +6102,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         .slice((assignedPage - 1) * assignPageSize, assignedPage * assignPageSize)
                                         .map(teacher => (
                                             <div key={teacher.phone} className="grid grid-cols-[1fr_150px_130px_80px] items-center px-4 py-3 border-t border-slate-50">
-                                                <div className="font-black text-slate-800">{teacher.name}</div>
+                                                <div className="font-bold text-slate-800">{teacher.name}</div>
                                                 <div className="text-sm font-bold text-slate-500">{teacher.phone}</div>
                                                 <div className="text-sm font-bold text-slate-500">{teacher.dept}</div>
                                                 <button
@@ -6118,7 +6112,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                         setAssignedPage(Math.min(assignedPage, Math.max(1, Math.ceil(next.length / assignPageSize))));
                                                         return next;
                                                     })}
-                                                    className="justify-self-end px-3 py-1.5 rounded-lg border border-red-100 text-xs font-black text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+                                                    className="justify-self-end px-3 py-1.5 rounded-lg border border-red-100 text-xs font-bold text-red-500 hover:bg-red-50 active:scale-95 transition-all"
                                                 >
                                                     取消
                                                 </button>
@@ -6140,13 +6134,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             <div className="flex gap-3">
                                 <div className="relative flex-1">
                                     <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                    <input value={assignSearch} onChange={(e) => setAssignSearch(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="搜索教师姓名、手机号、部门" />
+                                    <input value={assignSearch} onChange={(e) => setAssignSearch(e.target.value)} className="w-full bg-white border border-[#E5E6EB] rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="搜索教师姓名、手机号、部门" />
                                 </div>
-                                <button type="button" onClick={handleSearchAssignableTeachers} className="px-6 py-3 bg-blue-600 text-white rounded-2xl text-sm font-black hover:bg-blue-700 active:scale-95 transition-all">搜索</button>
+                                <button type="button" onClick={handleSearchAssignableTeachers} className="px-6 py-3 bg-blue-600 text-white rounded-2xl text-sm font-bold hover:bg-blue-700 active:scale-95 transition-all">搜索</button>
                             </div>
 
                             <div className="border border-slate-100 rounded-2xl overflow-hidden">
-                                <div className="grid grid-cols-[1fr_150px_130px_80px] px-4 py-3 bg-slate-50 text-[11px] font-black text-slate-400 tracking-[0.12em]">
+                                <div className="grid grid-cols-[1fr_150px_130px_80px] px-4 py-3 bg-slate-50 text-[11px] font-bold text-slate-400 tracking-[0.12em]">
                                     <div>搜索结果</div>
                                     <div>手机号</div>
                                     <div>部门</div>
@@ -6158,7 +6152,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         .slice((assignSearchPage - 1) * assignPageSize, assignSearchPage * assignPageSize)
                                         .map(teacher => (
                                             <div key={teacher.phone} className="grid grid-cols-[1fr_150px_130px_80px] items-center px-4 py-3 border-t border-slate-50 hover:bg-slate-50">
-                                                <div className="font-black text-slate-800">{teacher.name}</div>
+                                                <div className="font-bold text-slate-800">{teacher.name}</div>
                                                 <div className="text-sm font-bold text-slate-500">{teacher.phone}</div>
                                                 <div className="text-sm font-bold text-slate-500">{teacher.dept}</div>
                                                 <button
@@ -6167,7 +6161,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                         setAssignedTeacherPhones(prev => [...prev, teacher.phone]);
                                                         setAssignSearchResults(prev => prev.filter(item => item.phone !== teacher.phone));
                                                     }}
-                                                    className="justify-self-end px-3 py-1.5 rounded-lg border border-blue-100 text-xs font-black text-blue-600 hover:bg-blue-50 active:scale-95 transition-all"
+                                                    className="justify-self-end px-3 py-1.5 rounded-lg border border-blue-100 text-xs font-bold text-blue-600 hover:bg-blue-50 active:scale-95 transition-all"
                                                 >
                                                     分配
                                                 </button>
@@ -6684,7 +6678,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             }} className="p-6 space-y-5">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1.5">产品名称 <span className="text-red-500">*</span></label>
-                                    <input name="label" required defaultValue={editingProduct?.label || ''} placeholder="例如：定期存单-1周" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" />
+                                    <input name="label" required defaultValue={editingProduct?.label || ''} placeholder="例如：定期存单-1周" className="w-full bg-white border border-[#E5E6EB] rounded-xl px-4 py-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -6694,7 +6688,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             name="days" type="number" required min="1"
                                             value={modalDays}
                                             onChange={(e) => setModalDays(Math.max(1, Number(e.target.value)))}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-right"
+                                            className="w-full bg-white border border-[#E5E6EB] rounded-xl px-4 py-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-right"
                                         />
                                     </div>
                                     <div>
@@ -6708,7 +6702,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             name="rate" type="number" step="0.01" required min="0"
                                             value={modalRate}
                                             onChange={(e) => setModalRate(Math.max(0, Number(e.target.value)))}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-right"
+                                            className="w-full bg-white border border-[#E5E6EB] rounded-xl px-4 py-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-right"
                                         />
                                     </div>
                                 </div>
@@ -6717,7 +6711,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     <label className="block text-sm font-bold text-slate-700 mb-1.5">起存金额 (校园币) <span className="text-red-500">*</span></label>
                                     <div className="relative">
                                         <Coins size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input name="min" type="number" required min="1" defaultValue={editingProduct?.min || 1} className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" />
+                                        <input name="min" type="number" required min="1" defaultValue={editingProduct?.min || 1} className="w-full bg-white border border-[#E5E6EB] rounded-xl pl-10 pr-4 py-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" />
                                     </div>
                                 </div>
 

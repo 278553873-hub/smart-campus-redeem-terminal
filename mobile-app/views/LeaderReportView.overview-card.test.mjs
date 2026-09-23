@@ -50,13 +50,14 @@ for (const required of [
   'tone="reward"',
 ]) {
   if (!overviewSource.includes(required)) {
-    throw new Error(`数据总览需要区分使用教师、覆盖学生和评价次数的类型色，缺少：${required}`);
+    throw new Error(`数据总览需要区分评价次数、记录条数和覆盖学生的类型色，缺少：${required}`);
   }
 }
 
 for (const required of [
   'animationKey: string',
-  'animationKey={`${animationKey}-teacher`}',
+  'animationKey={`${animationKey}-evaluation-count`}',
+  'animationKey={`${animationKey}-records`}',
   'animationKey={`${animationKey}-student`}',
   'animationKey={`${reportAnimationKey}-overview`}',
 ]) {
@@ -67,4 +68,36 @@ for (const required of [
 
 if (metricSource.includes('text-[26px]') || metricSource.includes('font-extrabold') || metricSource.includes('font-black')) {
   throw new Error('数据总览百分比数字不应降低字号，也不应使用过粗字重');
+}
+
+
+for (const required of [
+  'const overviewMetricHints',
+  '老师发起评价行为的次数。发起 1 次评价计 1 次，无论评价对象是 1 人还是多人。示例：评价全班 50 人 = 1 次。',
+  '评价后生成的成长记录数。1 名学生 = 1 条。示例：评价全班 50 人 = 50 条。',
+  'aria-label={`查看${label}定义`}',
+  'aria-expanded={hintOpen}',
+  'role="tooltip"',
+]) {
+  if (!source.includes(required)) {
+    throw new Error(`数据总览需要为评价次数和记录条数提供可查看的定义说明，缺少：${required}`);
+  }
+}
+
+for (const forbidden of ['label="使用教师"', 'label="评价条数"']) {
+  if (overviewSource.includes(forbidden)) {
+    throw new Error(`数据总览应固定为评价次数、记录条数和覆盖学生三项，不应再出现：${forbidden}`);
+  }
+}
+
+for (const required of [
+  'label="评价次数"',
+  'label="记录条数"',
+  'label="覆盖学生"',
+  'value={`${snapshot?.summary.totalEvaluationCount ?? 0}`}',
+  'value={`${snapshot?.summary.totalRecords ?? 0}`}',
+]) {
+  if (!overviewSource.includes(required)) {
+    throw new Error(`数据总览三项统计的标签或数据字段不正确，缺少：${required}`);
+  }
 }
