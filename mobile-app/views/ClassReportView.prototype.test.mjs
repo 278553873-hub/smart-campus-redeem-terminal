@@ -337,4 +337,31 @@ assert.ok(appSource.includes("'class_report'") && appSource.includes("'student_d
 const plainBackgroundList = appSource.match(/const PLAIN_BACKGROUND_VIEWS: ViewState\[\] = \[([^\]]+)\]/)?.[1] ?? '';
 assert.ok(plainBackgroundList.includes("'class_report'"), '班级报告应使用纯白标题栏、浅灰内容区背景。');
 
+
+// 概况固定展示三项统计，评价次数与记录条数通过小图标查看定义。
+for (const required of [
+  'const reportOverviewHints',
+  '老师发起评价行为的次数。发起 1 次评价计 1 次，无论评价对象是 1 人还是多人。示例：评价全班 50 人 = 1 次。',
+  '评价后生成的成长记录数。1 名学生 = 1 条。示例：评价全班 50 人 = 50 条。',
+  'aria-label={`查看${label}定义`}',
+  'aria-expanded={hintOpen}',
+  'role="tooltip"',
+]) {
+  assert.ok(viewSource.includes(required), `班级报告概况缺少可查看的指标定义说明：${required}`);
+}
+for (const required of [
+  'label="评价次数"',
+  'label="记录条数"',
+  'label="覆盖学生"',
+  'value={reportData.evaluationCount}',
+  'value={reportData.totalRecords}',
+  'value={reportData.coveredStudents}',
+]) {
+  assert.ok(viewSource.includes(required), `班级报告概况应固定展示评价次数、记录条数和覆盖学生，缺少：${required}`);
+}
+assert.ok(viewSource.includes('const evaluationCount = totalRecords === 0') && viewSource.includes('Math.ceil(totalRecords / 2)'), '班级报告概况的评价次数应由记录条数按每次评价覆盖人数折算。');
+for (const removedOverviewCopy of ['上周期 {reportData.previousRecords}条', '上周期 {reportData.previousCovered}人', '>评价记录</div>']) {
+  assert.ok(!viewSource.includes(removedOverviewCopy), `班级报告概况不应保留旧的两项统计与上周期副文案：${removedOverviewCopy}`);
+}
+
 console.log('ClassReportView prototype functionality and token assertions passed');

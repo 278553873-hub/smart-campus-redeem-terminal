@@ -37,7 +37,7 @@ const StudentCompactSelectItem: React.FC<StudentCompactSelectItemProps> = ({
         <img src={avatar} alt="" className="h-full w-full rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" decoding="async" />
       </span>
       <span className="flex h-4 w-full min-w-0 items-center justify-center gap-0.5">
-        {showRosterNumber && <StudentRosterNumber studentNo={studentNo} ariaHidden />}
+        {showRosterNumber && <StudentRosterNumber studentNo={studentNo} ariaHidden variant="student-card" />}
         <span className="min-w-0 truncate text-[12px] font-medium leading-4 text-[var(--tm-text-primary)]">
           {student.name}
         </span>

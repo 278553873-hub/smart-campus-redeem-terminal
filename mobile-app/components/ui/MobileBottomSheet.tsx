@@ -19,6 +19,7 @@ interface MobileBottomSheetProps {
     disabled?: boolean;
   };
   showHandle?: boolean;
+  flushContentBottom?: boolean;
 }
 
 const SHEET_EXIT_DURATION = 220;
@@ -42,6 +43,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   header,
   headerAction,
   showHandle = true,
+  flushContentBottom = false,
 }) => {
   const dialogRef = useRef<HTMLElement>(null);
   const onCloseRef = useRef(onClose);
@@ -193,7 +195,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
             </header>
           )}
         </div>
-        <div className={`relative z-0 isolate min-h-0 flex-1 overflow-y-auto overscroll-contain [clip-path:inset(0)] no-scrollbar ${contentTone === 'plain' ? 'bg-[var(--tm-page-plain-content-bg)]' : 'bg-[var(--tm-bg-surface)]'} ${contentInset === 'none' ? '' : contentInset === 'compact' ? 'px-3' : 'px-[var(--tm-space-4)]'} ${footer ? 'pb-[var(--tm-space-4)]' : 'pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))]'}`}>{children}</div>
+        <div className={`relative z-0 isolate min-h-0 flex-1 overflow-y-auto overscroll-contain [clip-path:inset(0)] no-scrollbar ${contentTone === 'plain' ? 'bg-[var(--tm-page-plain-content-bg)]' : 'bg-[var(--tm-bg-surface)]'} ${contentInset === 'none' ? '' : contentInset === 'compact' ? 'px-3' : 'px-[var(--tm-space-4)]'} ${footer ? 'pb-[var(--tm-space-4)]' : flushContentBottom ? 'pb-0' : 'pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))]'}`}>{children}</div>
         {footer && (
           <footer className={`relative z-20 shrink-0 bg-[var(--tm-bg-surface-glass)] px-4 pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-3 ${footerDivider ? 'border-solid border-[var(--tm-border-subtle)] [border-top-width:var(--tm-sheet-footer-divider-width)]' : ''}`}>
             {footer}

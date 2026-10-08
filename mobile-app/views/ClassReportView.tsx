@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useId, useMemo, useRef, useState } from 'react';
 import {
     ArrowDownNarrowWide,
     ArrowUpDown,
@@ -7,6 +7,7 @@ import {
     ChevronDown,
     ChevronRight,
     ChevronUp,
+    Info,
     PencilLine,
     Quote,
     Triangle,
@@ -136,6 +137,66 @@ const ChartAnalysis = ({ summary, supplement }: ClassReportChartAnalysis) => (
         </div>
     </div>
 );
+
+const reportOverviewHints = {
+    evaluationCount: '老师发起评价行为的次数。发起 1 次评价计 1 次，无论评价对象是 1 人还是多人。示例：评价全班 50 人 = 1 次。',
+    recordCount: '评价后生成的成长记录数。1 名学生 = 1 条。示例：评价全班 50 人 = 50 条。',
+} as const;
+
+const StatCell = ({
+    label,
+    value,
+    unit,
+    hint,
+    hintAlign = 'left',
+}: {
+    label: string;
+    value: number;
+    unit: string;
+    hint?: string;
+    hintAlign?: 'left' | 'center';
+}) => {
+    const [hintOpen, setHintOpen] = useState(false);
+    const hintId = useId();
+
+    return (
+        <div className="relative">
+            <div className="flex items-center gap-1">
+                <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{label}</span>
+                {hint && (
+                    <button
+                        type="button"
+                        aria-label={`查看${label}定义`}
+                        aria-expanded={hintOpen}
+                        aria-controls={hintOpen ? hintId : undefined}
+                        aria-describedby={hintOpen ? hintId : undefined}
+                        onClick={() => setHintOpen(current => !current)}
+                        onBlur={() => setHintOpen(false)}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Escape') setHintOpen(false);
+                        }}
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-tertiary)] transition-colors active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
+                    >
+                        <Info aria-hidden="true" className="h-3.5 w-3.5" />
+                    </button>
+                )}
+            </div>
+            <div className="mt-2 flex items-baseline gap-1">
+                <strong className="text-[var(--tm-font-size-metric)] leading-none">{value}</strong>
+                <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{unit}</span>
+            </div>
+            {hintOpen && hint && (
+                <div
+                    id={hintId}
+                    role="tooltip"
+                    className={`absolute top-10 z-20 w-56 rounded-2xl bg-[var(--tm-text-primary)] px-3 py-2 text-xs font-medium leading-relaxed text-white shadow-xl ${hintAlign === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-0'}`}
+                >
+                    {hint}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const rankingCrownToneClasses = [
     'text-[var(--tm-brand-reward-strong)]',
@@ -381,6 +442,10 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         const totalRecords = activeReportSource.key === 'all'
             ? currentPeriodRecordCount
             : activeReportSource.recordCount;
+        // 评价次数按“1 次评价平均覆盖 2 名学生”从记录条数折算，保证评价次数不超过记录条数。
+        const evaluationCount = totalRecords === 0
+            ? 0
+            : Math.max(1, Math.ceil(totalRecords / 2));
         const positiveRecords = Math.round(totalRecords * 0.84);
         const negativeRecords = totalRecords - positiveRecords;
         const coverageBase = activeReportSource.key === 'all'
@@ -425,6 +490,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
 
         return {
             totalRecords,
+            evaluationCount,
             positiveRecords,
             negativeRecords,
             previousPositiveRecords,
@@ -744,27 +810,26 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                 className="space-y-[var(--tm-report-card-gap)] px-[var(--tm-report-page-inline)] pt-[var(--tm-report-card-gap)]"
             >
                 <ReportSection id="class-report-overview-title" title="概况">
-                    <div className="grid grid-cols-2">
-                        <div className="border-r border-[var(--tm-border-subtle)] pr-4">
-                            <div className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">评价记录</div>
-                            <div className="mt-2 flex items-baseline gap-1">
-                                <strong className="text-[var(--tm-font-size-metric)] leading-none">{reportData.totalRecords}</strong>
-                                <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">条</span>
-                            </div>
-                            <div className="mt-2 text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">
-                                上周期 {reportData.previousRecords}条
-                            </div>
-                        </div>
-                        <div className="pl-4">
-                            <div className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">覆盖学生</div>
-                            <div className="mt-2 flex items-baseline gap-1">
-                                <strong className="text-[var(--tm-font-size-metric)] leading-none">{reportData.coveredStudents}</strong>
-                                <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">人</span>
-                            </div>
-                            <div className="mt-2 text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">
-                                上周期 {reportData.previousCovered}人
-                            </div>
-                        </div>
+                    <div className="grid grid-cols-3 gap-3">
+                        <StatCell
+                            label="评价次数"
+                            value={reportData.evaluationCount}
+                            unit="次"
+                            hint={reportOverviewHints.evaluationCount}
+                            hintAlign="left"
+                        />
+                        <StatCell
+                            label="记录条数"
+                            value={reportData.totalRecords}
+                            unit="条"
+                            hint={reportOverviewHints.recordCount}
+                            hintAlign="center"
+                        />
+                        <StatCell
+                            label="覆盖学生"
+                            value={reportData.coveredStudents}
+                            unit="人"
+                        />
                     </div>
                 </ReportSection>
 

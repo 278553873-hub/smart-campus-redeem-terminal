@@ -1450,6 +1450,7 @@ const AppSwitcher: React.FC = () => {
   const [parentBankFeatureEnabled, setParentBankFeatureEnabled] = useState(() => (
     readParentBankFeatureEnabled(DEFAULT_PARENT_PREVIEW_CLASS_ID)
   ));
+  const [parentScreen, setParentScreen] = useState('growth');
   const [showAdvancedApps, setShowAdvancedApps] = useState(false);
   const [teacherScreenshotStatus, setTeacherScreenshotStatus] = useState<'idle' | 'capturing' | 'success' | 'error'>('idle');
   const [showTeacherDeveloperNotes, setShowTeacherDeveloperNotes] = useState(false);
@@ -1832,8 +1833,8 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && (questionnaireInviteCode
-          ? <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} defaultLoggedIn={false} defaultHasBoundChild={false} initialQuestionnaireInviteCode={questionnaireInviteCode} parentEvaluationVisibility={parentEvaluationVisibility} parentBankFeatureEnabled={parentBankFeatureEnabled} onActiveClassIdChange={setParentPreviewClassId} />
-          : <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} parentEvaluationVisibility={parentEvaluationVisibility} parentBankFeatureEnabled={parentBankFeatureEnabled} onActiveClassIdChange={setParentPreviewClassId} />
+          ? <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} defaultLoggedIn={false} defaultHasBoundChild={false} initialQuestionnaireInviteCode={questionnaireInviteCode} parentEvaluationVisibility={parentEvaluationVisibility} parentBankFeatureEnabled={parentBankFeatureEnabled} onActiveClassIdChange={setParentPreviewClassId} onScreenChange={setParentScreen} />
+          : <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} parentEvaluationVisibility={parentEvaluationVisibility} parentBankFeatureEnabled={parentBankFeatureEnabled} onActiveClassIdChange={setParentPreviewClassId} onScreenChange={setParentScreen} />
         )}
       </div>
 
@@ -1868,48 +1869,54 @@ const AppSwitcher: React.FC = () => {
       {currentApp === 'parent' && !questionnaireInviteCode && (
         <div className="fixed left-1/2 top-1/2 z-[9998] ml-[230px] -translate-y-1/2 max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
           <div className="flex flex-col gap-3">
-            <div className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl" aria-label="家长端渐变预览配置">
-              <label className="flex min-h-11 items-center gap-2">
-                <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">配色方案</span>
-                <span className="relative min-w-0 flex-1">
-                  <select
-                    aria-label="家长端选择渐变配色方案"
-                    value={parentGradientScheme}
-                    onChange={event => setParentGradientScheme(event.target.value as TeacherGradientSchemeId)}
-                    className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
-                  >
-                    {teacherGradientSchemeOptions.map(option => (
-                      <option key={option.id} value={option.id}>{option.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                </span>
-              </label>
-              <label className="flex min-h-11 items-center gap-2">
-                <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">渐变样式</span>
-                <span className="relative min-w-0 flex-1">
-                  <select
-                    aria-label="家长端选择渐变样式"
-                    value={parentGradientStyle}
-                    onChange={event => setParentGradientStyle(event.target.value as TeacherGradientStyleId)}
-                    className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
-                  >
-                    {teacherGradientStyleOptions.map(option => (
-                      <option key={option.id} value={option.id}>{option.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                </span>
-              </label>
-            </div>
-            <ParentEvaluationVisibilityPreviewControls
-              settings={parentEvaluationVisibility}
-              onChange={updateParentEvaluationVisibility}
-            />
-            <ParentBankFeaturePreviewControls
-              enabled={parentBankFeatureEnabled}
-              onChange={updateParentBankFeature}
-            />
+            {['growth', 'reports', 'mine'].includes(parentScreen) && (
+              <div className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl" aria-label="家长端渐变预览配置">
+                <label className="flex min-h-11 items-center gap-2">
+                  <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">配色方案</span>
+                  <span className="relative min-w-0 flex-1">
+                    <select
+                      aria-label="家长端选择渐变配色方案"
+                      value={parentGradientScheme}
+                      onChange={event => setParentGradientScheme(event.target.value as TeacherGradientSchemeId)}
+                      className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
+                    >
+                      {teacherGradientSchemeOptions.map(option => (
+                        <option key={option.id} value={option.id}>{option.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                  </span>
+                </label>
+                <label className="flex min-h-11 items-center gap-2">
+                  <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">渐变样式</span>
+                  <span className="relative min-w-0 flex-1">
+                    <select
+                      aria-label="家长端选择渐变样式"
+                      value={parentGradientStyle}
+                      onChange={event => setParentGradientStyle(event.target.value as TeacherGradientStyleId)}
+                      className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
+                    >
+                      {teacherGradientStyleOptions.map(option => (
+                        <option key={option.id} value={option.id}>{option.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                  </span>
+                </label>
+              </div>
+            )}
+            {['growth', 'growthRecords'].includes(parentScreen) && (
+              <ParentEvaluationVisibilityPreviewControls
+                settings={parentEvaluationVisibility}
+                onChange={updateParentEvaluationVisibility}
+              />
+            )}
+            {parentScreen === 'growth' && (
+              <ParentBankFeaturePreviewControls
+                enabled={parentBankFeatureEnabled}
+                onChange={updateParentBankFeature}
+              />
+            )}
           </div>
         </div>
       )}

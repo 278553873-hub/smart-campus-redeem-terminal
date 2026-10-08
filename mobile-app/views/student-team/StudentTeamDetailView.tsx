@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Eye } from 'lucide-react';
-import type { SchoolStudentTeam, Student, StudentCardDisplaySettings } from '../../types';
+import type { ClassInfo, SchoolStudentTeam, Student, StudentCardDisplaySettings, StudentTeamLabel } from '../../types';
 import { BackIcon, FemaleIcon, MaleIcon, MenuIcon, SearchIcon } from '../../components/Icons';
-import StudentRosterCard from '../../components/student/StudentRosterCard';
+import StudentRosterCard, { StudentRosterAddCard } from '../../components/student/StudentRosterCard';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
@@ -11,6 +11,8 @@ import CardEvaluationDisplaySettings from '../../components/student-performance/
 import { ASSETS } from '../../assets/images';
 import { createDemoStudentPerformanceSummary, type StudentPerformanceSummary } from '../../domain/studentPerformance';
 import { getStudentCardDisplaySettings } from '../../domain/studentCardDisplay';
+import type { TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
+import StudentTeamEditorView, { type StudentTeamEditorValue, type StudentTeamSearchResult } from './StudentTeamEditorView';
 
 interface StudentTeamDetailViewProps {
   team: SchoolStudentTeam;
@@ -22,6 +24,14 @@ interface StudentTeamDetailViewProps {
   selectedIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
   performanceByStudentId?: Record<string, StudentPerformanceSummary>;
+  canManage: boolean;
+  classes: ClassInfo[];
+  getStudentsForClass: (classId: string) => Student[];
+  searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
+  getStudentLabelById: (studentId: string) => StudentTeamLabel | undefined;
+  getClassLabel: (classInfo: ClassInfo) => string;
+  currentSpace: TeacherSpaceOption;
+  onUpdateTeam: (teamId: string, value: StudentTeamEditorValue) => void;
 }
 
 const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
@@ -34,10 +44,19 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
   selectedIds,
   onSelectionChange,
   performanceByStudentId = {},
+  canManage,
+  classes,
+  getStudentsForClass,
+  searchStudentsByExactName,
+  getStudentLabelById,
+  getClassLabel,
+  currentSpace,
+  onUpdateTeam,
 }) => {
   const [query, setQuery] = useState('');
   const [showMore, setShowMore] = useState(false);
   const [showCardSettings, setShowCardSettings] = useState(false);
+  const [showMemberEditor, setShowMemberEditor] = useState(false);
   const [displaySettings, setDisplaySettings] = useState<StudentCardDisplaySettings>(() => getStudentCardDisplaySettings());
   const normalizedQuery = query.trim().replace(/\s+/g, '').toLowerCase();
   const visibleStudents = useMemo(() => students.filter(student => (
@@ -142,9 +161,15 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
               onClick={() => isSelectionMode ? toggleStudent(student.id) : onSelectStudent(student)}
             />
           ))}
+          {canManage && !isSelectionMode && !normalizedQuery && (
+            <StudentRosterAddCard
+              displaySettings={displaySettings}
+              onClick={() => setShowMemberEditor(true)}
+            />
+          )}
         </div>
 
-        {visibleStudents.length === 0 && (
+        {visibleStudents.length === 0 && (normalizedQuery || !canManage) && (
           <MobileEmptyState imageSrc={normalizedQuery ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR} title={normalizedQuery ? '没有匹配的学生' : '暂无成员'} className="min-h-[420px]" />
         )}
       </main>
@@ -168,6 +193,23 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
           />
         </div>
       </MobileBottomSheet>
+
+      <StudentTeamEditorView
+        open={showMemberEditor}
+        mode="members"
+        team={team}
+        classes={classes}
+        getStudentsForClass={getStudentsForClass}
+        searchStudentsByExactName={searchStudentsByExactName}
+        getStudentLabelById={getStudentLabelById}
+        getClassLabel={getClassLabel}
+        currentSpace={currentSpace}
+        onClose={() => setShowMemberEditor(false)}
+        onSave={value => {
+          onUpdateTeam(team.id, value);
+          setShowMemberEditor(false);
+        }}
+      />
 
     </div>
   );

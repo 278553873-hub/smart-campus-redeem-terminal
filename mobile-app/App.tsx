@@ -120,7 +120,7 @@ import {
     GET_MOCK_CAMPUS_COIN_DETAIL,
     MOCK_BEHAVIOR_RECORDS,
 } from './constants';
-import { ClassInfo, Student, TeacherDepartment, TeacherProfile, type CoinIssuanceConfig, type GroupCardDisplaySettings, type SchoolStudentTeam, type StudentCardDisplaySettings } from './types';
+import { ClassInfo, Student, TeacherDepartment, TeacherProfile, type CoinIssuanceConfig, type GroupCardDisplaySettings, type SchoolStudentTeam, type StudentCardDisplaySettings, type StudentTeamLabel } from './types';
 import {
     QUESTIONNAIRE_STORE_EVENT,
     getCompletedStudentCollectionHistory,
@@ -282,6 +282,7 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
             ...getDemoStudentIds('c_2024_3', [0, 5, 11, 17]),
             ...getDemoStudentIds('c_2023_2', [2, 7, 14, 20]),
         ],
+        avatarKey: 'sports-basketball',
         status: 'active',
     },
     {
@@ -297,6 +298,7 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
             ...getDemoStudentIds('c_2025_2', [0, 3, 6, 9, 12]),
             ...getDemoStudentIds('c_2024_1', [2, 5, 8, 11, 14]),
         ],
+        avatarKey: 'dance-music-note',
         status: 'active',
     },
     {
@@ -313,6 +315,7 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
             ...getDemoStudentIds('c_2024_2', [0, 1, 2]),
             ...getDemoStudentIds('c_2023_1', [0, 1, 2]),
         ],
+        avatarKey: 'growth-handshake',
         status: 'active',
     },
     {
@@ -328,6 +331,7 @@ const INITIAL_SCHOOL_STUDENT_TEAMS: SchoolStudentTeam[] = [
             ...getDemoStudentIds('c_2025_3', [0, 3, 7]),
             ...getDemoStudentIds('c_2024_5', [1, 6, 12]),
         ],
+        avatarKey: 'sports-basketball',
         status: 'active',
     },
 ];
@@ -1125,13 +1129,15 @@ const App: React.FC<MobileAppProps> = ({
         ? activeSpaceClasses
         : activeSpaceClasses.filter(classInfo => activeTeacherClassIds.has(classInfo.id));
     const activeSpaceStudentById = new Map(activeSpaceStudents.map(student => [student.id, student]));
-    const getStudentLabelById = (studentId: string): { name: string; classLabel: string } | undefined => {
+    const getStudentLabelById = (studentId: string): StudentTeamLabel | undefined => {
         const student = activeSpaceStudentById.get(studentId);
         if (!student) return undefined;
         const classInfo = activeSpaceClasses.find(item => item.name === student.class);
         return {
             name: student.name,
             classLabel: classInfo ? getTeacherClassDisplayName(classInfo, activeTeacherSpace) : student.class,
+            avatar: student.avatar || (student.gender === 'female' ? ASSETS.AVATAR.GENERIC_GIRL : ASSETS.AVATAR.GENERIC_BOY),
+            studentNo: student.studentNo || student.id,
         };
     };
     const selectedStudentTeam = activeSpaceStudentTeams.find(team => team.id === selectedStudentTeamId);
@@ -1170,6 +1176,7 @@ const App: React.FC<MobileAppProps> = ({
             collaboratorNames: [],
             visibility: value.visibility,
             memberIds: value.memberIds,
+            avatarKey: value.avatarKey ?? 'sports-basketball',
             status: 'active',
         }]);
         setSelectedStudentTeamId(teamId);
@@ -1180,7 +1187,7 @@ const App: React.FC<MobileAppProps> = ({
         const team = studentTeams.find(item => item.id === teamId);
         if (!team || team.ownerId !== activeTeacherId) return;
         setStudentTeams(current => current.map(item => item.id === teamId
-            ? { ...item, name: value.name, memberIds: value.memberIds, visibility: value.visibility }
+            ? { ...item, name: value.name, memberIds: value.memberIds, visibility: value.visibility, avatarKey: value.avatarKey ?? item.avatarKey ?? 'sports-basketball' }
             : item));
     };
 
@@ -2135,6 +2142,14 @@ const App: React.FC<MobileAppProps> = ({
                                     onToggleSelectionMode={handleToggleMultiSelect}
                                     selectedIds={multiSelectIds}
                                     onSelectionChange={handleMultiSelectionChange}
+                                    canManage={selectedStudentTeam.ownerId === activeTeacherId}
+                                    classes={studentTeamEditableClasses}
+                                    getStudentsForClass={getMergedStudentsForClass}
+                                    searchStudentsByExactName={searchStudentsByExactName}
+                                    getStudentLabelById={getStudentLabelById}
+                                    getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, activeTeacherSpace)}
+                                    currentSpace={activeTeacherSpace}
+                                    onUpdateTeam={handleUpdateStudentTeam}
                                     performanceByStudentId={Object.fromEntries(
                                         Object.entries(evaluationRecordsByStudentId).map(([studentId, records]) => [
                                             studentId,

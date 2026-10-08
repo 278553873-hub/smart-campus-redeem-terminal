@@ -47,8 +47,8 @@ const educationStagePrefix: Record<ReturnType<typeof inferEducationStage>, strin
   high: '高',
 };
 const classSelectionOptionClass = (selected: boolean) => selected
-  ? 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] font-semibold text-[var(--tm-brand-primary)]'
-  : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] font-medium text-[var(--tm-text-primary)]';
+  ? 'font-medium text-[var(--tm-text-primary)]'
+  : 'font-medium text-[var(--tm-text-secondary)]';
 
 const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props => {
   const {
@@ -103,9 +103,9 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
   );
 
   return (
-    <div className={`grid h-full min-h-0 ${showGradeRail ? 'grid-cols-[92px_1fr]' : 'grid-cols-1'}`} aria-label={ariaLabel}>
+    <div className={`grid h-full min-h-0 ${showGradeRail ? 'grid-cols-[110px_1fr]' : 'grid-cols-1'}`} aria-label={ariaLabel}>
       {showGradeRail && (
-        <div className="min-h-0 overflow-y-auto overscroll-contain border-r border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] py-1 no-scrollbar" aria-label="左侧先选年级">
+        <div className="min-h-0 overflow-y-auto overscroll-contain bg-[var(--tm-bg-surface-muted)] py-0 no-scrollbar" aria-label="左侧先选年级">
           {groups.map(group => {
             const active = activeGroup?.gradeLabel === group.gradeLabel;
             return (
@@ -114,8 +114,8 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
                 type="button"
                 onClick={() => onActiveGradeChange(group.gradeLabel)}
                 aria-pressed={active}
-                className={`relative mb-1 flex h-[var(--tm-choice-pill-touch-height)] w-full items-center justify-start rounded-none px-3 text-left text-[length:var(--tm-font-size-body)] font-medium ${optionFocusClass} ${active
-                  ? 'font-semibold text-[var(--tm-brand-primary)] before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[var(--tm-brand-primary)]'
+                className={`relative flex h-[var(--tm-choice-pill-touch-height)] w-full items-center justify-start px-3 text-left text-[length:var(--tm-font-size-body)] font-medium ${optionFocusClass} ${active
+                  ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:bg-[var(--tm-brand-primary)]'
                   : 'text-[var(--tm-text-secondary)]'}`}
               >
                 <span className="min-w-0 truncate">{group.displayLabel ?? group.gradeLabel}</span>
@@ -126,38 +126,30 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
       )}
 
       <div className="flex min-h-0 min-w-0 flex-col bg-[var(--tm-bg-surface)] px-4" aria-label="右侧再选该年级下的班级">
-        {!singleSelection && (
-          <div className="flex min-h-[60px] shrink-0 items-center justify-between gap-2 border-b border-[var(--tm-border-subtle)]">
-            <div className="min-w-0">
-              <h3 className="truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{activeGroup?.displayLabel ?? activeGroup?.gradeLabel ?? '选择年级'}</h3>
-              <p className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">已选 {activeSelectedCount} / {activeClasses.length} 个班</p>
-            </div>
-            {props.onToggleGrade && activeGroup && (
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={allActiveClassesSelected ? true : hasActiveClassSelected ? 'mixed' : false}
-                onClick={() => props.onToggleGrade?.(activeClasses.map(classInfo => classInfo.id))}
-                className={`flex h-[var(--tm-choice-pill-touch-height)] shrink-0 items-center gap-2 px-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] ${optionFocusClass}`}
-              >
-                {renderSelectionMark(allActiveClassesSelected, hasActiveClassSelected && !allActiveClassesSelected)}
-                全选本年级
-              </button>
-            )}
-          </div>
-        )}
-
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar">
-          {multipleProps?.showAllClassesOption && (
+          <div className="pb-1">
+          {!singleSelection && props.onToggleGrade && activeGroup && (
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={allActiveClassesSelected ? true : hasActiveClassSelected ? 'mixed' : false}
+              onClick={() => props.onToggleGrade?.(activeClasses.map(classInfo => classInfo.id))}
+              className={`flex min-h-[48px] w-full items-center gap-3 px-2 text-left text-[length:var(--tm-font-size-body)] ${optionFocusClass} ${classSelectionOptionClass(allActiveClassesSelected)}`}
+            >
+              <span className="min-w-0 flex-1 truncate">全选</span>
+              {renderSelectionMark(allActiveClassesSelected, hasActiveClassSelected && !allActiveClassesSelected)}
+            </button>
+          )}
+          {multipleProps?.showAllClassesOption && !props.onToggleGrade && (
             <button
               type="button"
               role="checkbox"
               aria-checked={multipleProps.allClassesSelected ? true : multipleProps.allClassesMixed ? 'mixed' : false}
               onClick={multipleProps.onToggleAllClasses}
-              className={`flex min-h-[52px] w-full items-center gap-3 border-b text-left text-[length:var(--tm-font-size-body)] ${optionFocusClass} ${classSelectionOptionClass(Boolean(multipleProps.allClassesSelected))}`}
+              className={`flex min-h-[48px] w-full items-center gap-3 px-2 text-left text-[length:var(--tm-font-size-body)] ${optionFocusClass} ${classSelectionOptionClass(Boolean(multipleProps.allClassesSelected))}`}
             >
-              {renderSelectionMark(Boolean(multipleProps.allClassesSelected), Boolean(multipleProps.allClassesMixed))}
               <span className="min-w-0 flex-1 truncate">{multipleProps.allClassesLabel ?? '全部班级'}</span>
+              {renderSelectionMark(Boolean(multipleProps.allClassesSelected), Boolean(multipleProps.allClassesMixed))}
             </button>
           )}
 
@@ -172,14 +164,15 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
                 onClick={() => singleSelection ? props.onSelectClass(classInfo.id) : props.onToggleClass(classInfo.id)}
                 aria-pressed={selected}
                 aria-label={`${selected && !singleSelection ? '取消选择' : '选择'}${classLabel}`}
-                className={`flex min-h-[52px] w-full items-center gap-3 border-b text-left text-[length:var(--tm-font-size-body)] last:border-b-0 ${optionFocusClass} ${classSelectionOptionClass(selected)}`}
+              className={`flex min-h-[48px] w-full items-center gap-3 px-2 text-left text-[length:var(--tm-font-size-body)] ${optionFocusClass} ${classSelectionOptionClass(selected)}`}
               >
-                {renderSelectionMark(selected)}
                 <span className="min-w-0 flex-1 truncate">{classLabel}</span>
                 {meta != null && <span className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">{meta}</span>}
+                {renderSelectionMark(selected)}
               </button>
             );
           })}
+          </div>
         </div>
       </div>
     </div>

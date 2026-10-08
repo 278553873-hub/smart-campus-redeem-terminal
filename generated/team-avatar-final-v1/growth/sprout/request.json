@@ -1,0 +1,8 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Simple centered icon asset, bold silhouette, minimal detail, high contrast, readable at small sizes. A single production-ready square avatar icon for a Chinese school teacher mobile app. Subject: small sprout. The subject is a bold, simple white flat vector sprout symbol centered inside one perfectly circular badge. Use a coral red and warm pink gradient inside the circle. Outside the circle must be fully transparent. Match the approved basketball avatar style: exact 1:1 square canvas, perfect circle, smooth clean edge, thick rounded symbol geometry, generous safe padding, high contrast, calm polished educational app icon, no perspective, no tilt, no 3D material. The icon must remain clear at 64px. Avoid: oval, ellipse, vertical badge, horizontal badge, rounded rectangle, square background, black background, checkerboard, soft clay, 3D render, photorealistic, texture, heavy shadow, glossy plastic, thin line art, text, letters, logo, watermark, extra objects, cropped circle, rough edge, noise.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "high",
+  "background": "transparent"
+}

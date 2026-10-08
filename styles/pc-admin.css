@@ -197,3 +197,40 @@
   margin: 0;
   transition: none;
 }
+
+/* PC 后台全局：Arco 可编辑控件默认白底激活态，仅真实禁用态灰底，避免空值 placeholder 被误看成禁用。 */
+.arco-input-inner-wrapper,
+.arco-select-view,
+.arco-picker,
+.arco-cascader-view,
+.arco-textarea {
+  background: #fff !important;
+  border-color: #e5e6eb !important;
+}
+
+.arco-input-inner-wrapper:hover,
+.arco-select:not(.arco-select-disabled) .arco-select-view:hover,
+.arco-picker:hover,
+.arco-cascader-view:hover,
+.arco-textarea:not(.arco-textarea-disabled):hover {
+  border-color: #165dff !important;
+}
+
+.arco-input-inner-wrapper-focus,
+.arco-select-focused .arco-select-view,
+.arco-picker-focused,
+.arco-cascader-view-focus,
+.arco-textarea-focus {
+  border-color: #165dff !important;
+  box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.12) !important;
+}
+
+.arco-input-inner-wrapper-disabled,
+.arco-select-disabled .arco-select-view,
+.arco-picker-disabled,
+.arco-textarea-disabled {
+  background: #f7f8fa !important;
+  border-color: #e5e6eb !important;
+  color: #86909c !important;
+  cursor: not-allowed;
+}

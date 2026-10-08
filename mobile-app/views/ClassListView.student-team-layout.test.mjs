@@ -5,7 +5,7 @@ const classListSource = fs.readFileSync(new URL('./ClassListView.tsx', import.me
 const guidelinesSource = fs.readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', import.meta.url), 'utf8');
 
 assert.ok(
-  classListSource.includes('共{visibleStudentTeams.length}个社团或团队'),
+  classListSource.includes('共{visibleStudentTeams.length}个'),
   '社团与团队数量应使用与班级页一致的“共x个”文案。',
 );
 assert.ok(

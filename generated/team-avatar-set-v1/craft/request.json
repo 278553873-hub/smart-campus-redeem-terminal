@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Simple centered icon asset, bold silhouette, minimal detail, high contrast, readable at small sizes. A horizontal strip containing three separate square circular avatar icons for a Chinese school teacher mobile app. Subjects from left to right: a paintbrush, a yarn ball with knitting needles, a simple palette. Use a soft warm yellow and apricot gradient background, white rounded flat vector symbols, matching the approved basketball avatar style: complete circular gradient badge, bold white icon, clean rounded geometry, centered composition, generous padding, simple polished app icon, consistent scale and lighting. No text, no letters, no logos, no faces. Three clearly separated self-contained tiles for cropping into individual 256px avatars. Avoid: soft clay, 3D render, photorealistic, realistic texture, heavy shadow, glossy plastic, dark background, multicolor palette, text, letters, watermark, overlapping tiles, extra objects.",
+  "size": "1536x864",
+  "n": 1,
+  "quality": "low"
+}

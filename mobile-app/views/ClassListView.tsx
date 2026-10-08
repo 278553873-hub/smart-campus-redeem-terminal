@@ -4,8 +4,6 @@ import {
     ChevronDown,
     ChevronRight,
     Copy,
-    Globe2,
-    LockKeyhole,
     LogIn,
     MessageCircle,
     MonitorSmartphone,
@@ -13,7 +11,8 @@ import {
     SlidersHorizontal,
     X,
 } from 'lucide-react';
-import { ClassInfo, Student, TeacherProfile, type ParentEvaluationVisibilitySettings as ParentVisibilitySettings, type SchoolStudentTeam } from '../types';
+import { ClassInfo, Student, TeacherProfile, type ParentEvaluationVisibilitySettings as ParentVisibilitySettings, type SchoolStudentTeam, type StudentTeamLabel } from '../types';
+import { getStudentTeamAvatarImage } from '../assets/teamAvatarCatalog';
 import {
     getEffectiveParentEvaluationVisibility,
     SCHOOL_PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT,
@@ -80,7 +79,7 @@ interface ClassListViewProps {
     studentTeams: SchoolStudentTeam[];
     studentTeamEditableClasses: ClassInfo[];
     searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
-    getStudentLabelById: (studentId: string) => { name: string; classLabel: string } | undefined;
+    getStudentLabelById: (studentId: string) => StudentTeamLabel | undefined;
     currentTeacherId: string;
     isSchoolManager: boolean;
     canCreateStudentTeam: boolean;
@@ -482,7 +481,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
 
     const renderStudentTeamCard = (team: SchoolStudentTeam) => {
         const isPublicTeam = team.visibility === 'management';
-        const VisibilityIcon = isPublicTeam ? Globe2 : LockKeyhole;
+        const avatarSrc = getStudentTeamAvatarImage(team.avatarKey, team.avatarColorKey, team.id.length);
         return (
         <article key={team.id} className="relative flex min-h-[var(--tm-class-list-card-compact-min-height)] flex-col rounded-[var(--tm-class-list-card-radius)] bg-[var(--tm-bg-surface)] px-4 pb-1 pt-3 [box-shadow:var(--tm-shadow-card)]">
             <button
@@ -491,8 +490,8 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 className="flex min-h-[74px] min-w-0 flex-1 items-center gap-3 rounded-[var(--tm-class-list-card-radius)] px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                 aria-label={`${team.name}，${team.ownerName}负责，${team.memberIds.length}人`}
             >
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${isPublicTeam ? 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]'}`}>
-                    <VisibilityIcon className="h-5 w-5" aria-hidden="true" />
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
+                    <img src={avatarSrc} alt="" className="h-full w-full object-cover" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
                     <span className="block truncate text-lg font-[550] text-[var(--tm-text-primary)]">{team.name}</span>
@@ -702,7 +701,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 aria-live="polite"
                                 aria-atomic="true"
                             >
-                                共{visibleStudentTeams.length}个社团或团队
+                                共{visibleStudentTeams.length}个
                             </span>
                         </div>
                     )}

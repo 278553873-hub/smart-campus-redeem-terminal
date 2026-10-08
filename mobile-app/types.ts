@@ -68,7 +68,38 @@ export interface SchoolStudentTeam {
   collaboratorNames: string[];
   visibility: 'collaborators' | 'management';
   memberIds: string[];
+  avatarKey?: StudentTeamAvatarKey;
+  avatarColorKey?: StudentTeamAvatarColorKey;
   status: 'active' | 'archived';
+}
+
+export type StudentTeamAvatarKey =
+  | 'sports-basketball'
+  | 'sports-volleyball'
+  | 'sports-table-tennis'
+  | 'dance-shoe'
+  | 'dance-music-note'
+  | 'dance-microphone'
+  | 'technology-rocket'
+  | 'technology-robot'
+  | 'technology-code'
+  | 'reading-open-book'
+  | 'reading-speech-bubble'
+  | 'reading-storybook'
+  | 'craft-paintbrush'
+  | 'craft-knitting'
+  | 'craft-palette'
+  | 'growth-heart'
+  | 'growth-handshake'
+  | 'growth-sprout';
+
+export type StudentTeamAvatarColorKey = 'blue' | 'jade' | 'orange' | 'violet';
+
+export interface StudentTeamLabel {
+  name: string;
+  classLabel: string;
+  avatar: string;
+  studentNo: string;
 }
 
 export interface GroupPlan {

@@ -13,6 +13,7 @@ const managementActionsSource = fs.readFileSync(new URL('./student-team/StudentT
 const radioOptionSource = fs.readFileSync(new URL('../components/ui/MobileRadioOptionCard.tsx', import.meta.url), 'utf8');
 const compactStudentSource = fs.readFileSync(new URL('../components/student/StudentCompactSelectItem.tsx', import.meta.url), 'utf8');
 const typeSource = fs.readFileSync(new URL('../types.ts', import.meta.url), 'utf8');
+const selectedListSource = fs.readFileSync(new URL('./student-team/StudentTeamSelectedList.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   assert.ok(source.includes(needle), message);
@@ -63,6 +64,13 @@ requireText(createSource, 'min-h-[52px] w-full', '创建页底部主按钮必须
 requireText(createSource, 'sticky top-0 z-30 bg-[var(--tm-bg-surface)]', '创建页选人工具栏必须高于滚动中的学生卡片。');
 assert.ok(!createSource.includes('已选 {selectedIds.size} 人'), '创建页面不应在顶部重复展示已选人数。');
 assert.ok(!editorSource.includes('已选 {selectedIds.size} 人'), '调整学生弹窗不应在顶部重复展示已选人数。');
+requireText(createSource.slice(0, createSource.indexOf('<footer')), '<StudentTeamSelectedList', '已选人数摘要应位于完成按钮板块上方。');
+assert.ok(!createSource.slice(createSource.indexOf('<footer')).includes('<StudentTeamSelectedList'), '完成按钮板块高度应固定，不随已选人数变化。');
+requireText(createSource, 'h-9 bg-[var(--tm-bg-surface)]', '已选人数摘要应为36像素高的白色长条。');
+requireText(selectedListSource, 'src={student.avatar}', '已选名单应渲染学生真实头像图片。');
+requireText(selectedListSource, '<StudentRosterNumber studentNo={student.studentNo} ariaHidden variant="student-card" />', '已选名单学号应与班级学生卡片一致的11像素、800字重班内号。');
+requireText(selectedListSource, 'text-[length:var(--tm-student-card-name-font-size)] [font-weight:var(--tm-student-card-name-font-weight)]', '已选名单姓名应与班级学生卡片一致的12像素、500字重。');
+assert.ok(!selectedListSource.includes('{student.name.slice(0, 1)}'), '已选名单头像不得回退为文字首字。');
 requireText(editorSource, '<MobileClassCascadePicker', '学生选择中的班级筛选应复用公共级联选择内容。');
 assert.ok(!editorSource.includes('MobileClassPickerSheet'), '学生选择弹窗内不得再嵌套公共班级底部弹窗。');
 requireText(editorSource, "type MemberPickerView = 'students' | 'classes';", '班级筛选应在同一个学生选择弹窗内切换视图。');

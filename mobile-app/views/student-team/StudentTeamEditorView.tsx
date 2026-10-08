@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import type { ClassInfo, SchoolStudentTeam, Student } from '../../types';
+import { Check, ChevronDown } from 'lucide-react';
+import type { ClassInfo, SchoolStudentTeam, Student, StudentTeamAvatarColorKey, StudentTeamAvatarKey, StudentTeamLabel } from '../../types';
 import { BackIcon, CloseIcon } from '../../components/Icons';
 import StudentCompactSelectGrid from '../../components/student/StudentCompactSelectGrid';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
@@ -10,8 +10,10 @@ import CompactSegmentedControl from '../../components/ui/CompactSegmentedControl
 import MobileClassCascadePicker, { type MobileClassCascadeGroup } from '../../components/ui/MobileClassCascadePicker';
 import MobileRadioOptionCard from '../../components/ui/MobileRadioOptionCard';
 import { ASSETS } from '../../assets/images';
+import { getStudentTeamAvatarImage, getStudentTeamAvatarOption, studentTeamAvatarOptions } from '../../assets/teamAvatarCatalog';
 import { getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import StudentTeamSelectedList from './StudentTeamSelectedList';
+import StudentTeamScanFlow, { StudentTeamScanButton } from './StudentTeamScanFlow';
 
 export type StudentTeamEditorMode = 'create' | 'settings' | 'members';
 export type StudentTeamSearchResult = Pick<Student, 'id' | 'name' | 'gender' | 'grade' | 'class' | 'avatar'> & {
@@ -21,6 +23,8 @@ export type StudentTeamEditorValue = {
   name: string;
   memberIds: string[];
   visibility: SchoolStudentTeam['visibility'];
+  avatarKey?: StudentTeamAvatarKey;
+  avatarColorKey?: StudentTeamAvatarColorKey;
 };
 
 interface StudentTeamEditorViewProps {
@@ -30,7 +34,7 @@ interface StudentTeamEditorViewProps {
   classes: ClassInfo[];
   getStudentsForClass: (classId: string) => Student[];
   searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
-  getStudentLabelById: (studentId: string) => { name: string; classLabel: string } | undefined;
+  getStudentLabelById: (studentId: string) => StudentTeamLabel | undefined;
   onClose: () => void;
   onSave: (value: StudentTeamEditorValue) => void;
   getClassLabel?: (classInfo: ClassInfo) => string;
@@ -59,9 +63,11 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
       ?? Array.from(new Set(classes.map(item => item.gradeLevel)))
   ), [classes, currentSpace]);
   const classScopeKey = classes.map(item => `${item.id}:${item.gradeLevel}`).join('|');
-  const teamDraftKey = team ? `${team.id}:${team.name}:${team.visibility}:${team.memberIds.join(',')}` : '';
+  const teamDraftKey = team ? `${team.id}:${team.name}:${team.visibility}:${team.avatarKey ?? ''}:${team.memberIds.join(',')}` : '';
   const [page, setPage] = useState<EditorPage>('details');
   const [name, setName] = useState('');
+  const [avatarKey, setAvatarKey] = useState<StudentTeamAvatarKey>('sports-basketball');
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [visibility, setVisibility] = useState<SchoolStudentTeam['visibility'] | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeGrade, setActiveGrade] = useState('');
@@ -72,6 +78,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
   const [exactSearchResults, setExactSearchResults] = useState<StudentTeamSearchResult[]>([]);
   const [memberScope, setMemberScope] = useState<MemberScope>('authorized');
   const [memberPickerView, setMemberPickerView] = useState<MemberPickerView>('students');
+  const [scanOpen, setScanOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -79,6 +86,8 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
     const initialClassId = classes.find(item => item.gradeLevel === initialGrade)?.id ?? classes[0]?.id ?? '';
     setPage(mode === 'members' ? 'members' : 'details');
     setName(team?.name ?? '');
+    setAvatarKey(team?.avatarKey ?? 'sports-basketball');
+    setAvatarPickerOpen(false);
     setVisibility(team?.visibility ?? null);
     setSelectedIds(new Set(team?.memberIds ?? []));
     setActiveGrade(initialGrade);
@@ -127,11 +136,21 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
     return next;
   });
 
+  const addScannedStudents = (studentIds: string[]) => setSelectedIds(current => {
+    const next = new Set(current);
+    studentIds.forEach(studentId => next.add(studentId));
+    return next;
+  });
+
   const requestClose = () => {
     onClose();
   };
 
   const handleBack = () => {
+    if (avatarPickerOpen) {
+      setAvatarPickerOpen(false);
+      return;
+    }
     if (memberPickerView === 'classes') {
       setMemberPickerView('students');
       return;
@@ -173,7 +192,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
       return;
     }
     if (!visibility) return;
-    onSave({ name: name.trim(), memberIds: Array.from(selectedIds), visibility });
+    onSave({ name: name.trim(), memberIds: Array.from(selectedIds), visibility, avatarKey });
   };
 
   const isMemberPage = page === 'members';
@@ -225,6 +244,20 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
               <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">名称</span>
               <input value={name} onChange={event => setName(event.target.value)} maxLength={30} placeholder="例如：篮球社" aria-label="名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
             </label>
+
+            <fieldset className="m-0 min-w-0 border-0 p-0">
+              <legend className="mb-2 block p-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">头像</legend>
+              <button type="button" onClick={() => setAvatarPickerOpen(true)} className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+                <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
+                  <img src={getStudentTeamAvatarImage(avatarKey)} alt="" className="h-full w-full object-cover" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{getStudentTeamAvatarOption(avatarKey).label}</span>
+                  <span className="mt-1 block text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">选择系统头像</span>
+                </span>
+                <span className="shrink-0 px-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]">更换</span>
+              </button>
+            </fieldset>
 
             <fieldset className="m-0 min-w-0 border-0 p-0">
               <legend className="mb-2 block p-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">谁可以看到</legend>
@@ -284,18 +317,22 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
         {page === 'members' && !isClassPickerPage && (
           <div className="min-h-full">
             <div className="sticky top-0 z-30 -mx-3 bg-[var(--tm-bg-surface)] px-3 py-2">
-              <CompactSegmentedControl
-                value={memberScope}
-                items={[
-                  { value: 'authorized', label: '我的班级' },
-                  { value: 'other', label: '其他班级' },
-                ]}
-                onChange={handleMemberScopeChange}
-                ariaLabel="学生来源"
-                fullWidth
-                motion="sliding"
-                className="mt-[var(--tm-space-2)]"
-              />
+              <div className="mt-[var(--tm-space-2)] flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <CompactSegmentedControl
+                    value={memberScope}
+                    items={[
+                      { value: 'authorized', label: '我的班级' },
+                      { value: 'other', label: '其他班级' },
+                    ]}
+                    onChange={handleMemberScopeChange}
+                    ariaLabel="学生来源"
+                    fullWidth
+                    motion="sliding"
+                  />
+                </div>
+                <StudentTeamScanButton onClick={() => setScanOpen(true)} />
+              </div>
 
               {memberScope === 'authorized' && classes.length > 0 && (
                 <>
@@ -357,6 +394,33 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
           </div>
         )}
       </MobileBottomSheet>
+
+      <MobileBottomSheet open={avatarPickerOpen} title="选择头像" onClose={() => setAvatarPickerOpen(false)}>
+        <div className="space-y-4 pb-2">
+          {Array.from(new Set(studentTeamAvatarOptions.map(option => option.category))).map(category => (
+            <fieldset key={category} className="m-0 border-0 p-0">
+              <legend className="mb-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{category}</legend>
+              <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label={`${category}头像`}>
+                {studentTeamAvatarOptions.filter(option => option.category === category).map(option => (
+                  <button key={option.key} type="button" role="radio" aria-checked={avatarKey === option.key} aria-label={`选择${option.label}头像`} onClick={() => { setAvatarKey(option.key); setAvatarPickerOpen(false); }} className="relative flex min-h-20 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+                    <img src={option.src} alt={option.label} className="h-16 w-16 rounded-full object-cover" />
+                    {avatarKey === option.key && <span className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]"><Check className="h-3.5 w-3.5" aria-hidden="true" /></span>}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          ))}
+        </div>
+      </MobileBottomSheet>
+
+      <StudentTeamScanFlow
+        open={scanOpen}
+        classes={classes}
+        getStudentsForClass={getStudentsForClass}
+        getClassLabel={getClassLabel}
+        onClose={() => setScanOpen(false)}
+        onConfirm={addScannedStudents}
+      />
 
     </>
   );

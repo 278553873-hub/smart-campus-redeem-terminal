@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, LogOut, Pencil, Repeat2 } from 'lucide-react';
-import type { ClassInfo, SchoolStudentTeam, Student } from '../../types';
+import type { ClassInfo, SchoolStudentTeam, Student, StudentTeamLabel } from '../../types';
 import { MobileCard } from '../../components/ui/MobileCard';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import MobileConfirmSheet from '../../components/ui/MobileConfirmSheet';
@@ -21,7 +21,7 @@ interface StudentTeamInfoViewProps {
   classes: ClassInfo[];
   getStudentsForClass: (classId: string) => Student[];
   searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
-  getStudentLabelById: (studentId: string) => { name: string; classLabel: string } | undefined;
+  getStudentLabelById: (studentId: string) => StudentTeamLabel | undefined;
   currentSpace: TeacherSpaceOption;
   onBack: () => void;
   onUpdate: (teamId: string, value: StudentTeamEditorValue) => void;

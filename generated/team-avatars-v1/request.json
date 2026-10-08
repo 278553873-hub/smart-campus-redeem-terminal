@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Simple centered icon asset, bold silhouette, minimal detail, high contrast, readable at small sizes. A clean 4x2 contact sheet of eight separate square avatar illustrations for school clubs and student teams, consistent with an existing set of soft clay 3D educational object icons: pastel solid backgrounds, rounded toy-like forms, centered composition, gentle studio lighting, vivid but friendly colors, no text, no letters, no logos, no people, each tile visually self-contained with generous padding. Eight subjects in order left-to-right top-to-bottom: basketball, soccer ball, musical note, microphone, paintbrush, camera, open book, microscope. Designed to remain recognizable when cropped into a circular 48px mobile avatar. Keep all eight tiles consistent in scale, perspective, material, lighting and visual weight. Avoid: photorealistic, flat vector icon, emoji, gradients with harsh glow, tiny details, overlapping tiles, labels, words, letters, watermark, border, cropped objects.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "low"
+}

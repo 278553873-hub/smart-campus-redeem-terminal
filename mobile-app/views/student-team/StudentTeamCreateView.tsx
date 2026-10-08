@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Check } from 'lucide-react';
 import { ChevronDown } from 'lucide-react';
-import type { ClassInfo, SchoolStudentTeam, Student } from '../../types';
+import type { ClassInfo, SchoolStudentTeam, Student, StudentTeamAvatarKey, StudentTeamLabel } from '../../types';
 import { BackIcon } from '../../components/Icons';
 import StudentCompactSelectGrid from '../../components/student/StudentCompactSelectGrid';
 import CompactSegmentedControl from '../../components/ui/CompactSegmentedControl';
@@ -9,22 +10,26 @@ import type { MobileClassCascadeGroup } from '../../components/ui/MobileClassCas
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
 import MobileRadioOptionCard from '../../components/ui/MobileRadioOptionCard';
+import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import { ASSETS } from '../../assets/images';
+import { getStudentTeamAvatarImage, getStudentTeamAvatarOption, studentTeamAvatarOptions } from '../../assets/teamAvatarCatalog';
 import { getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import type { StudentTeamSearchResult } from './StudentTeamEditorView';
 import StudentTeamSelectedList from './StudentTeamSelectedList';
+import StudentTeamScanFlow, { StudentTeamScanButton } from './StudentTeamScanFlow';
 
 export type StudentTeamCreateValue = {
   name: string;
   memberIds: string[];
   visibility: SchoolStudentTeam['visibility'];
+  avatarKey?: StudentTeamAvatarKey;
 };
 
 interface StudentTeamCreateViewProps {
   classes: ClassInfo[];
   getStudentsForClass: (classId: string) => Student[];
   searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
-  getStudentLabelById: (studentId: string) => { name: string; classLabel: string } | undefined;
+  getStudentLabelById: (studentId: string) => StudentTeamLabel | undefined;
   onBack: () => void;
   onSave: (value: StudentTeamCreateValue) => void;
   getClassLabel?: (classInfo: ClassInfo) => string;
@@ -51,6 +56,8 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
   const [page, setPage] = useState<CreatePage>('details');
   const [classPickerOpen, setClassPickerOpen] = useState(false);
   const [name, setName] = useState('');
+  const [avatarKey, setAvatarKey] = useState<StudentTeamAvatarKey>('sports-basketball');
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [visibility, setVisibility] = useState<SchoolStudentTeam['visibility'] | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeGrade, setActiveGrade] = useState(gradeOptions[0] ?? '');
@@ -60,6 +67,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
   const [exactName, setExactName] = useState('');
   const [submittedExactName, setSubmittedExactName] = useState('');
   const [exactSearchResults, setExactSearchResults] = useState<StudentTeamSearchResult[]>([]);
+  const [scanOpen, setScanOpen] = useState(false);
 
   const gradeClasses = useMemo(() => classes.filter(item => item.gradeLevel === activeGrade), [activeGrade, classes]);
   const classGroups = useMemo<MobileClassCascadeGroup[]>(() => gradeOptions.map(grade => ({
@@ -98,6 +106,12 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
     return next;
   });
 
+  const addScannedStudents = (studentIds: string[]) => setSelectedIds(current => {
+    const next = new Set(current);
+    studentIds.forEach(studentId => next.add(studentId));
+    return next;
+  });
+
   const handleMemberScopeChange = (scope: MemberScope) => {
     setMemberScope(scope);
     setClassQuery('');
@@ -121,6 +135,10 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
   };
 
   const handleBack = () => {
+    if (avatarPickerOpen) {
+      setAvatarPickerOpen(false);
+      return;
+    }
     if (classPickerOpen) {
       setClassPickerOpen(false);
       return;
@@ -138,12 +156,14 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
       return;
     }
     if (!visibility || selectedIds.size === 0) return;
-    onSave({ name: name.trim(), memberIds: Array.from(selectedIds), visibility });
+    onSave({ name: name.trim(), memberIds: Array.from(selectedIds), visibility, avatarKey });
   };
 
   const title = page === 'details' ? '新建社团或团队' : '选择学生';
   const primaryDisabled = page === 'details' ? !hasValidDetails : selectedIds.size === 0;
   const primaryLabel = page === 'details' ? '选择学生' : `完成（${selectedIds.size}人）`;
+  const selectedAvatar = getStudentTeamAvatarOption(avatarKey);
+  const selectedAvatarSrc = getStudentTeamAvatarImage(avatarKey);
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-[var(--tm-page-plain-content-bg)]">
@@ -156,11 +176,25 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
 
       <main className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
         {page === 'details' && (
-          <div className="space-y-[var(--tm-space-5)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] py-[var(--tm-space-4)]">
-            <label className="block">
+          <div className="space-y-[var(--tm-space-4)] bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] py-[var(--tm-space-4)]">
+            <label className="block rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
               <span className="mb-[var(--tm-space-2)] block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">名称</span>
               <input value={name} onChange={event => setName(event.target.value)} maxLength={30} placeholder="例如：篮球社" aria-label="名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-standard)] placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]" />
             </label>
+
+            <fieldset className="m-0 min-w-0 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
+              <legend className="mb-[var(--tm-space-2)] block p-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">头像</legend>
+              <button type="button" onClick={() => setAvatarPickerOpen(true)} className="flex min-h-[72px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+                <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
+                  <img src={selectedAvatarSrc} alt="" className="h-full w-full object-cover" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{selectedAvatar.label}</span>
+                  <span className="mt-1 block text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">选择系统头像</span>
+                </span>
+                <span className="shrink-0 px-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]">更换</span>
+              </button>
+            </fieldset>
 
             <fieldset className="m-0 min-w-0 border-0 p-0">
               <legend className="mb-[var(--tm-space-2)] block p-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">谁可以看到</legend>
@@ -202,17 +236,22 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
         {page === 'members' && (
           <div className="min-h-full">
             <div className="sticky top-0 z-30 bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] py-[var(--tm-space-2)]">
-              <CompactSegmentedControl
-                value={memberScope}
-                items={[
-                  { value: 'authorized', label: '我的班级' },
-                  { value: 'other', label: '其他班级' },
-                ]}
-                onChange={handleMemberScopeChange}
-                ariaLabel="学生来源"
-                fullWidth
-                motion="sliding"
-              />
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <CompactSegmentedControl
+                    value={memberScope}
+                    items={[
+                      { value: 'authorized', label: '我的班级' },
+                      { value: 'other', label: '其他班级' },
+                    ]}
+                    onChange={handleMemberScopeChange}
+                    ariaLabel="学生来源"
+                    fullWidth
+                    motion="sliding"
+                  />
+                </div>
+                <StudentTeamScanButton onClick={() => setScanOpen(true)} />
+              </div>
 
               {memberScope === 'authorized' && classes.length > 0 && (
                 <>
@@ -234,13 +273,6 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
                   <MobileSearchInput value={exactName} onChange={event => { setExactName(event.target.value); setSubmittedExactName(''); setExactSearchResults([]); }} onKeyDown={event => { if (event.key === 'Enter') handleExactSearch(); }} placeholder="输入完整姓名" aria-label="输入其他班级学生完整姓名" className="min-w-0 flex-1" containerClassName="flex min-h-11 min-w-0 flex-1 items-center" density="compact" appearance="filled" fillTone="soft" />
                   <button type="button" disabled={!exactName.trim()} onClick={handleExactSearch} className="min-h-11 shrink-0 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] disabled:text-[var(--tm-text-disabled)]">查找</button>
                 </div>
-              )}
-              {selectedIds.size > 0 && (
-                <StudentTeamSelectedList
-                  selectedIds={selectedIds}
-                  getStudentLabelById={getStudentLabelById}
-                  onRemove={toggleStudent}
-                />
               )}
             </div>
 
@@ -272,6 +304,24 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
         )}
       </main>
 
+      <MobileBottomSheet open={avatarPickerOpen} title="选择头像" onClose={() => setAvatarPickerOpen(false)}>
+        <div className="space-y-4 pb-2">
+          {Array.from(new Set(studentTeamAvatarOptions.map(option => option.category))).map(category => (
+            <fieldset key={category} className="m-0 border-0 p-0">
+              <legend className="mb-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{category}</legend>
+              <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label={`${category}头像`}>
+                {studentTeamAvatarOptions.filter(option => option.category === category).map(option => (
+                  <button key={option.key} type="button" role="radio" aria-checked={avatarKey === option.key} aria-label={`选择${option.label}头像`} onClick={() => { setAvatarKey(option.key); setAvatarPickerOpen(false); }} className="relative flex min-h-20 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+                    <img src={option.src} alt={option.label} className="h-16 w-16 rounded-full object-cover" />
+                    {avatarKey === option.key && <span className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]"><Check className="h-3.5 w-3.5" aria-hidden="true" /></span>}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          ))}
+        </div>
+      </MobileBottomSheet>
+
       {page === 'members' && (
         <MobileClassPickerSheet
           open={classPickerOpen}
@@ -290,11 +340,31 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
         />
       )}
 
+      {page === 'members' && selectedIds.size > 0 && (
+        <div className="shrink-0">
+          <StudentTeamSelectedList
+            selectedIds={selectedIds}
+            getStudentLabelById={getStudentLabelById}
+            onRemove={toggleStudent}
+            className="h-9 bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)]"
+          />
+        </div>
+      )}
+
       <footer className="shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]">
         <button type="button" disabled={primaryDisabled} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[background-color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2">
           {primaryLabel}
         </button>
       </footer>
+
+      <StudentTeamScanFlow
+        open={scanOpen}
+        classes={classes}
+        getStudentsForClass={getStudentsForClass}
+        getClassLabel={getClassLabel}
+        onClose={() => setScanOpen(false)}
+        onConfirm={addScannedStudents}
+      />
     </div>
   );
 };

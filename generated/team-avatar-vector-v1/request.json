@@ -1,0 +1,7 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Simple centered icon asset, bold silhouette, minimal detail, high contrast, readable at small sizes. A single square avatar icon for a school basketball club, matching a clean mobile education app reference style: a simple flat vector basketball symbol centered inside a soft circular badge, pale blue to slightly deeper blue gradient background, white and light blue geometric basketball lines, minimal rounded shapes, generous negative space, crisp silhouette, calm and friendly, designed to remain recognizable at 48px in a circular list avatar. The image should feel like a polished app icon, not an illustration. Avoid: soft clay, 3D render, photorealistic, realistic texture, heavy shadows, glossy plastic, multicolor background, noisy details, text, letters, logo, watermark, border, square frame, dramatic lighting.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "low"
+}

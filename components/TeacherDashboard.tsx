@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Checkbox, Popconfirm, Upload as ArcoUpload } from '@arco-design/web-react';
+import { Alert, Breadcrumb, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Typography, Checkbox, Popconfirm, Upload as ArcoUpload } from '@arco-design/web-react';
 import {
     LayoutDashboard, FileText, ClipboardList, PenTool,
     Settings, Users, BookOpen, Database, Download,
@@ -235,7 +235,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
             children: ['资料文件', '考试数据', '作业数据', '成长数据设置', '成长数据导入']
         }
     ];
-    const activeMenuGroup = menus.find(menu => menu.children.includes(activeMenu))?.title || '货柜机配置中心';
+    const activeMenuGroupObj = menus.find(menu => menu.children.includes(activeMenu));
+    const activeMenuGroup = activeMenuGroupObj?.title || '货柜机配置中心';
+    const activeMenuGroupIcon = activeMenuGroupObj?.icon;
 
     // 学校自动发放规则，与教师手机端共用同一份配置语义。
     const [coinIssuanceConfig, setCoinIssuanceConfig] = useState<CoinIssuanceConfig>({
@@ -3031,33 +3033,18 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                 {/* 内容区 - 采用精致的高端设计 */}
                 <main className={`flex-1 overflow-y-auto bg-[#f5f7fa] custom-scrollbar ${activeMenu === '考试数据' || activeMenu === '作业数据' || activeMenu === '设备基础配置' || activeMenu === '终端设备管理' || activeMenu === '终端设备' || activeMenu === '成长数据设置' || activeMenu === '成长数据导入' || activeMenu === '考试等级管理' || activeMenu === '期末报告配置' || activeMenu === '学生得分明细表' ? 'px-0 pt-0 pb-8' : embedded ? 'px-6 pt-4 pb-6' : 'p-8'}`}>
 
-                    {/* 页面主标题 */}
+                    {/* 页面面包屑 */}
                     {activeMenu !== '考试数据' && activeMenu !== '作业数据' && activeMenu !== '设备基础配置' && activeMenu !== '终端设备管理' && activeMenu !== '终端设备' && activeMenu !== '成长数据设置' && activeMenu !== '成长数据导入' && activeMenu !== '考试等级管理' && activeMenu !== '期末报告配置' && activeMenu !== '学生得分明细表' && (
-                    <div className={`transform ${activeMenu === '考试数据' ? 'mb-4' : (activeMenu === '货柜超市' || activeMenu === '货柜超市管理') ? 'mb-4' : embedded ? 'mb-5' : 'mb-8'}`}>
-                        <div>
-                            {activeMenu === '考试数据' ? (
-                                <div className="mb-2 flex items-center gap-2 font-['PingFang_SC'] text-[14px] font-normal leading-none">
-                                    <span className="text-[#AAAAAA]">数据中心</span>
-                                    <span className="text-[#AAAAAA]">/</span>
-                                    <span className={gradePageMode === 'create' ? 'text-[#AAAAAA]' : 'text-[#333333]'}>考试数据</span>
-                                    {gradePageMode === 'create' && (
-                                        <>
-                                            <span className="text-[#AAAAAA]">/</span>
-                                            <span className="text-[#333333]">新建考试</span>
-                                        </>
-                                    )}
-                                </div>
-                            ) : embedded && (
-                                <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold mb-1.5">
-                                    <span>{activeMenuGroup}</span>
-                                    <span>/</span>
-                                    <span className="text-slate-500">{activeMenu}</span>
-                                </div>
-                            )}
-                            <h2 className={activeMenu === '考试数据' ? "font-['PingFang_SC'] text-[18px] font-semibold leading-none text-[#333333]" : `${embedded ? 'text-[20px]' : 'text-2xl'} font-bold text-slate-800 tracking-tight`}>
-                                {activeMenu === '考试数据' && gradePageMode === 'create' ? '新建考试' : activeMenu}
-                            </h2>
-                            {activeMenu !== '考试数据' && activeMenu !== '货柜超市' && activeMenu !== '货柜超市管理' && <div className="h-1 w-12 bg-blue-600 rounded-full mt-1.5"></div>}
+                        <div className="mb-4">
+                            <Breadcrumb>
+                                <Breadcrumb.Item>
+                                    <span className="inline-flex items-center gap-2">
+                                        <span className="text-[#86909C]">{activeMenuGroupIcon}</span>
+                                        <span>{activeMenuGroup}</span>
+                                    </span>
+                                </Breadcrumb.Item>
+                                <Breadcrumb.Item>{activeMenu}</Breadcrumb.Item>
+                            </Breadcrumb>
                             {(activeMenu === '货柜超市' || activeMenu === '货柜超市管理') && (
                                 <div className="mt-4 flex items-end gap-8 border-b border-[#E5E6EB]" role="tablist" aria-label="货柜超市视图">
                                     <button
@@ -3093,7 +3080,6 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 </div>
                             )}
                         </div>
-                    </div>
                     )}
 
                     {/* 货币发放管理 - 增加标签页切换以分离自动模型和手动发币 */}
@@ -3134,152 +3120,97 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                                 {/* 手动定向发放区段 */}
                                 {issuanceTab === 'manual' && (
-                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden max-w-4xl">
-                                        <div className="px-8 py-6 border-b border-slate-200 bg-[#F7F8FA] flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                                                    <Sparkles size={24} />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-xl font-bold text-slate-800">班级定向校园币发放</h3>
-                                                    <p className="text-slate-500 text-sm mt-1">适用于流动红旗、运动会获奖等临时性集体奖励</p>
-                                                </div>
-                                            </div>
+                                    <div className="pc-form">
+                                        <div className="px-6 pt-4">
+                                            <Typography.Title heading={6} style={{ margin: 0 }}>班级定向发放</Typography.Title>
                                         </div>
 
-                                        <div className="p-8 space-y-10">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                {/* 左侧：选择与计算 */}
-                                                <div className="space-y-6">
-                                                    <div className="space-y-2">
-                                                        <label className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
-                                                            1. 选择目标班级
-                                                        </label>
-                                                        <select
-                                                            value={manualClass}
-                                                            onChange={(e) => setManualClass(e.target.value)}
-                                                            className="w-full bg-white border border-[#E5E6EB] rounded-lg px-4 py-3 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                                        >
-                                                            <option value="" disabled>请选择班级...</option>
-                                                            {Object.keys(classData).map(cName => (
-                                                                <option key={cName} value={cName}>{cName}</option>
-                                                            ))}
-                                                        </select>
+                                        <div className="px-6">
+                                            <section className="border-b border-[#F2F3F5] py-6">
+                                                <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-y-5">
+                                                    <span className="text-sm text-[#4E5969]">目标班级</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <ArcoSelect
+                                                            placeholder="请选择班级"
+                                                            value={manualClass || undefined}
+                                                            options={Object.keys(classData).map(cName => ({ label: cName, value: cName }))}
+                                                            onChange={(value) => setManualClass(value ? String(value) : '')}
+                                                            style={{ width: 260 }}
+                                                            aria-label="选择目标班级"
+                                                        />
                                                         {manualClass && (
-                                                            <div className="text-xs text-blue-600 font-bold bg-blue-50 w-max px-2.5 py-1 rounded inline-flex items-center gap-1.5 mt-1">
-                                                                <Users size={14} /> 当前班级总人数：{selectedClassStudentCount} 人
-                                                            </div>
+                                                            <span className="text-xs text-[#86909C]">当前班级 {selectedClassStudentCount} 人</span>
                                                         )}
                                                     </div>
 
-                                                    <div className="space-y-2">
-                                                        <label className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
-                                                            2. 每人发放数量
-                                                        </label>
-                                                        <div className="flex items-center gap-3 relative">
-                                                            <div className="relative flex-1">
-                                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                                                                    <Coins size={18} />
-                                                                </span>
-                                                                <input
-                                                                    type="number"
-                                                                    value={manualPerStudent}
-                                                                    onChange={(e) => setManualPerStudent(Math.max(0, Number(e.target.value)))}
-                                                                    className="w-full bg-white border border-[#E5E6EB] rounded-lg pl-12 pr-4 py-3 text-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                                                />
-                                                            </div>
-                                                            <span className="text-slate-500 font-medium whitespace-nowrap">校园币 / 人</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="p-5 bg-blue-50 border border-blue-100 rounded-xl relative overflow-hidden">
-                                                        <div className="absolute right-0 top-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-                                                            <Coins size={100} />
-                                                        </div>
-                                                        <div className="relative z-10">
-                                                            <div className="text-blue-600 text-xs font-bold mb-1">本次发放总计</div>
-                                                            <div className="flex items-baseline gap-2">
-                                                                <span className="text-3xl font-bold text-slate-800">{totalManualIssuance.toLocaleString()}</span>
-                                                                <span className="font-medium text-slate-500">校园币</span>
-                                                            </div>
-                                                            <div className="mt-2 text-xs text-slate-500">
-                                                                计算方式: {selectedClassStudentCount} 人 × {manualPerStudent} 币/人
-                                                            </div>
-                                                        </div>
+                                                    <span className="text-sm text-[#4E5969]">每人发放数量</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <InputNumber
+                                                            min={0}
+                                                            precision={0}
+                                                            value={manualPerStudent}
+                                                            onChange={(count) => setManualPerStudent(Math.max(0, Number(count) || 0))}
+                                                            style={{ width: 160 }}
+                                                            aria-label="每人发放数量"
+                                                        />
+                                                        <span className="text-sm text-[#4E5969]">校园币 / 人</span>
                                                     </div>
                                                 </div>
-
-                                                {/* 右侧：理由与确认 */}
-                                                <div className="space-y-6">
-                                                    <div className="space-y-3">
-                                                        <label className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
-                                                            3. 选择发放原因
-                                                        </label>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {['流动红旗', '运动会奖励', '文明班级', '劳动实践优秀'].map(reason => (
-                                                                <button
-                                                                    key={reason}
-                                                                    onClick={() => {
-                                                                        setManualReason(reason);
-                                                                        setCustomReason('');
-                                                                    }}
-                                                                    className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${manualReason === reason
-                                                                        ? 'bg-blue-50 border-blue-500 text-blue-600 font-bold'
-                                                                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                                                                        }`}
-                                                                >
-                                                                    {reason}
-                                                                </button>
-                                                            ))}
-                                                            <button
-                                                                onClick={() => setManualReason('custom')}
-                                                                className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${manualReason === 'custom'
-                                                                    ? 'bg-blue-50 border-blue-500 text-blue-600 font-bold'
-                                                                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                                                                    }`}
-                                                            >
-                                                                自定义输入
-                                                            </button>
-                                                        </div>
-
-                                                        {manualReason === 'custom' && (
-                                                            <textarea
-                                                                value={customReason}
-                                                                onChange={(e) => setCustomReason(e.target.value)}
-                                                                placeholder="请输入具体奖励事由..."
-                                                                rows={3}
-                                                                className="w-full mt-3 bg-white border border-slate-300 rounded-lg p-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-                                                            ></textarea>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 leading-relaxed">
-                                                        <div className="font-bold text-slate-700 mb-1 flex items-center gap-1">
-                                                            <AlertCircle size={16} className="text-blue-500" /> 操作提示
-                                                        </div>
-                                                        发放操作确认后，相应的校园币将实时打入对应班级每位学生的可用余额账户中，并在「成长足迹中心」产生流水记录。此操作无法撤销。
-                                                    </div>
+                                                <div className="mt-5 flex flex-wrap items-baseline gap-x-2 border-t border-[#F2F3F5] pt-4 text-sm text-[#4E5969]">
+                                                    <span>本次发放总计</span>
+                                                    <span className="text-base font-semibold tabular-nums text-[#1D2129]">{totalManualIssuance.toLocaleString()}</span>
+                                                    <span>校园币</span>
+                                                    <span className="text-xs text-[#86909C]">（{selectedClassStudentCount} 人 × {manualPerStudent} 币/人）</span>
                                                 </div>
-                                            </div>
+                                            </section>
 
-                                            {/* 底部操作栏 */}
-                                            <div className="pt-6 border-t border-slate-200 flex justify-end gap-4">
-                                                <button
-                                                    className={`px-8 py-3 rounded-lg font-bold shadow-sm transition-all flex items-center gap-2 ${manualClass && manualPerStudent > 0
-                                                        ? 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                                                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                                        }`}
-                                                    disabled={!manualClass || manualPerStudent <= 0}
-                                                    onClick={() => {
-                                                        if (!manualClass || manualPerStudent <= 0) return;
-                                                        alert(`已成功发放 ${totalManualIssuance} 校园币至 ${manualClass}`);
-                                                        setManualClass('');
-                                                        setManualPerStudent(0);
-                                                    }}
-                                                >
-                                                    确认确认，立即发放
-                                                </button>
-                                            </div>
+                                            <section className="py-6">
+                                                <span className="text-sm text-[#4E5969]">发放原因</span>
+                                                <div className="mt-3">
+                                                    <Radio.Group
+                                                        type="button"
+                                                        value={manualReason}
+                                                        onChange={(value) => {
+                                                            const next = String(value);
+                                                            setManualReason(next);
+                                                            if (next !== 'custom') setCustomReason('');
+                                                        }}
+                                                    >
+                                                        {['流动红旗', '运动会奖励', '文明班级', '劳动实践优秀', 'custom'].map(reason => (
+                                                            <Radio key={reason} value={reason}>{reason === 'custom' ? '自定义输入' : reason}</Radio>
+                                                        ))}
+                                                    </Radio.Group>
+                                                </div>
+                                                {manualReason === 'custom' && (
+                                                    <Input.TextArea
+                                                        value={customReason}
+                                                        onChange={(value) => setCustomReason(value)}
+                                                        placeholder="请输入具体奖励事由"
+                                                        style={{ marginTop: 12, maxWidth: 520 }}
+                                                        autoSize={{ minRows: 3, maxRows: 5 }}
+                                                        aria-label="自定义发放原因"
+                                                    />
+                                                )}
+                                                <div className="mt-5 flex items-start gap-2 border-t border-[#F2F3F5] pt-4 text-xs leading-5 text-[#86909C]">
+                                                    <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                                                    <span>发放确认后，校园币将实时打入对应班级每位学生的可用余额，并产生流水记录，此操作无法撤销。</span>
+                                                </div>
+                                            </section>
+                                        </div>
+
+                                        <div className="flex justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
+                                            <Button
+                                                type="primary"
+                                                disabled={!manualClass || manualPerStudent <= 0}
+                                                onClick={() => {
+                                                    if (!manualClass || manualPerStudent <= 0) return;
+                                                    alert('已成功发放 ' + totalManualIssuance + ' 校园币至 ' + manualClass);
+                                                    setManualClass('');
+                                                    setManualPerStudent(0);
+                                                }}
+                                            >
+                                                立即发放
+                                            </Button>
                                         </div>
                                     </div>
                                 )}
@@ -3828,40 +3759,47 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     {/* 历次发币记录 - 任务历史 */}
                     {(activeMenu === '发币记录' || activeMenu === '历次发币记录') && (
                         <div className="overflow-hidden rounded border border-[#E5E6EB] bg-white">
-                            <div className="pc-filter-bar flex items-center gap-3 border-b border-[#F2F3F5] px-6 py-4" aria-label="发币记录筛选栏">
-                                <span className="text-sm text-[#4E5969]">发币时间</span>
-                                <DatePicker.RangePicker
-                                    picker="month"
-                                    value={(recordFilterMonthStart && recordFilterMonthEnd) ? [recordFilterMonthStart, recordFilterMonthEnd] : undefined}
-                                    onChange={(dateString) => {
-                                        const [start = '', end = ''] = dateString || [];
-                                        setRecordFilterMonthStart(start);
-                                        setRecordFilterMonthEnd(end);
-                                        setRecordPage(1);
-                                    }}
-                                    allowClear
-                                    placeholder={['开始月份', '结束月份']}
-                                    style={{ width: 260 }}
-                                    aria-label="发币时间筛选"
-                                />
-                                <span className="text-sm text-[#4E5969]">类型</span>
-                                <ArcoSelect
-                                    allowClear
-                                    placeholder="全部类型"
-                                    value={recordFilterType === '全部类型' ? undefined : recordFilterType}
-                                    options={[{ label: '自动发放', value: '自动发放' }, { label: '手动发放', value: '手动发放' }]}
-                                    onChange={(value) => {
-                                        setRecordFilterType(value ? String(value) : '全部类型');
-                                        setRecordPage(1);
-                                    }}
-                                    style={{ width: 140 }}
-                                    aria-label="发币类型筛选"
-                                />
+                            <div className="px-6 pt-4">
+                                <Typography.Title heading={6} style={{ margin: 0 }}>发币记录</Typography.Title>
+                            </div>
+                            <div className="pc-filter-bar mb-4 flex items-center gap-10 border-b border-[#F2F3F5] px-6 py-4" aria-label="发币记录筛选栏">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-[#4E5969]">发币时间</span>
+                                    <DatePicker.RangePicker
+                                        picker="month"
+                                        value={(recordFilterMonthStart && recordFilterMonthEnd) ? [recordFilterMonthStart, recordFilterMonthEnd] : undefined}
+                                        onChange={(dateString) => {
+                                            const [start = '', end = ''] = dateString || [];
+                                            setRecordFilterMonthStart(start);
+                                            setRecordFilterMonthEnd(end);
+                                            setRecordPage(1);
+                                        }}
+                                        allowClear
+                                        placeholder={['开始月份', '结束月份']}
+                                        style={{ width: 260 }}
+                                        aria-label="发币时间筛选"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-[#4E5969]">类型</span>
+                                    <ArcoSelect
+                                        allowClear
+                                        placeholder="全部类型"
+                                        value={recordFilterType === '全部类型' ? undefined : recordFilterType}
+                                        options={[{ label: '自动发放', value: '自动发放' }, { label: '手动发放', value: '手动发放' }]}
+                                        onChange={(value) => {
+                                            setRecordFilterType(value ? String(value) : '全部类型');
+                                            setRecordPage(1);
+                                        }}
+                                        style={{ width: 140 }}
+                                        aria-label="发币类型筛选"
+                                    />
+                                </div>
                             </div>
 
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[1000px] text-left text-sm">
-                                    <thead className="bg-[#F7F8FA] text-xs font-semibold text-[#4E5969]">
+                                    <thead className="bg-[#F7F8FA] text-sm font-semibold text-[#4E5969]">
                                         <tr>
                                             <th className="px-6 py-3">发币任务</th>
                                             <th className="px-4 py-3">类型</th>
@@ -3928,70 +3866,63 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                     {/* 储蓄银行配置 */}
                     {(activeMenu === '储蓄银行' || activeMenu === '储蓄银行配置') && (
-                        <div className="space-y-6">
+                        <div className="pc-form space-y-6">
                             {/* 活期存款配置卡片 */}
                             <div className="bg-white rounded-lg border border-[#E5E6EB] p-6">
-                                <div className="mb-6">
-                                    <h3 className="text-base font-semibold text-[#1D2129] flex items-center gap-2">
-                                        活期存款设置
-                                        <span className="bg-green-50 text-green-600 text-[12px] px-2 py-0.5 rounded font-medium">随存随取</span>
-                                    </h3>
-                                    <p className="text-slate-500 mt-2 text-sm">设置基础活期日利率</p>
-                                </div>
+                                <Typography.Title heading={6} style={{ margin: 0, marginBottom: 16 }}>活期存款设置</Typography.Title>
                                 <div className="flex flex-col xl:flex-row gap-8 xl:items-end p-2">
                                     <div className="flex items-end gap-6 shrink-0">
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-bold text-slate-500">活期日利率</label>
-                                            <div className="relative w-48">
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={currentDailyRate}
-                                                    onChange={(e) => setCurrentDailyRate(Number(e.target.value))}
-                                                    className="w-full bg-white border border-[#E5E6EB] rounded-lg pl-4 pr-10 py-3 text-sm font-medium text-slate-800 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
-                                                />
-                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
-                                            </div>
+                                            <label className="text-sm text-[#4E5969]">活期日利率</label>
+                                            <InputNumber
+                                                min={0}
+                                                precision={2}
+                                                value={currentDailyRate}
+                                                onChange={(count) => setCurrentDailyRate(Number(count) || 0)}
+                                                suffix="%"
+                                                style={{ width: 160 }}
+                                                aria-label="活期日利率"
+                                            />
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <label className="text-xs font-bold text-slate-500">折合年利率 (约)</label>
-                                            <div className="text-xl font-bold text-green-600 pb-2">{(currentDailyRate * 365).toFixed(2)}%</div>
+                                            <div className="text-xl font-bold text-[#1D2129] pb-2">{(currentDailyRate * 365).toFixed(2)}%</div>
                                         </div>
                                     </div>
 
                                     <div className="flex-1 bg-[#F7F8FA] p-5 rounded-lg border border-[#E5E6EB] flex flex-col gap-4">
                                         <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                            <Info size={16} className="text-green-600" /> 收益体验试算 <span className="text-slate-400 font-normal">（假设存入 1000 校园币）</span>
+                                            <Info size={16} className="text-[#86909C]" /> 收益体验试算 <span className="text-slate-400 font-normal">（假设存入 1000 校园币）</span>
                                         </div>
                                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 text-center">
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">一天</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 1).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 1).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">一周</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 7).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 7).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">一个月</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 30).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 30).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">半年</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 180).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 180).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">一年</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-green-600 flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 365).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 365).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -4002,24 +3933,16 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                             {/* 定期存单产品卡片 */}
                             <div className="bg-white rounded-lg border border-[#E5E6EB] p-6">
                                 <div>
-                                    <div className="flex justify-between items-center mb-8">
-                                        <div>
-                                            <h3 className="text-base font-semibold text-[#1D2129] flex items-center gap-2"><Landmark className="text-green-600" size={28} /> 定期存单设置</h3>
-                                            <p className="text-slate-500 mt-2 text-sm">管理定期存单的利率、存期等参数</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleOpenProductModal()}
-                                            className="px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-all active:scale-95 flex items-center gap-2"
-                                        >
-                                            <Plus size={16} /> 添加存单产品
-                                        </button>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <Typography.Title heading={6} style={{ margin: 0 }}>定期存单设置</Typography.Title>
+                                        <Button type="primary" icon={<Plus size={14} />} onClick={() => handleOpenProductModal()}>添加存单产品</Button>
                                     </div>
                                     <div className="flex flex-col gap-3">
                                         {bankProducts.map((plan) => (
                                             <div key={plan.id} className={`flex items-center justify-between bg-white border ${plan.active ? 'border-[#E5E6EB]' : 'border-[#E5E6EB] opacity-60 bg-slate-50/50'} rounded-lg p-5 transition-all relative`}>
                                                 {/* 左侧信息 */}
                                                 <div className="flex items-center gap-5">
-                                                    <div className={`w-12 h-12 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0 ${plan.active ? 'text-green-600' : 'text-slate-300'} transition-colors`}>
+                                                    <div className={`w-12 h-12 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0 ${plan.active ? 'text-[#1D2129]' : 'text-slate-300'} transition-colors`}>
                                                         <FileText size={24} />
                                                     </div>
                                                     <div>
@@ -4036,7 +3959,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     <div className="flex flex-col">
                                                         <span className="text-[11px] text-slate-500 mb-1">满期收益率</span>
                                                         <div className="flex items-baseline gap-2">
-                                                            <span className={`text-base font-bold ${plan.active ? 'text-green-600' : 'text-slate-400'}`}>{(plan.rate * 100).toFixed(1)}%</span>
+                                                            <span className={`text-base font-bold ${plan.active ? 'text-[#1D2129]' : 'text-slate-400'}`}>{(plan.rate * 100).toFixed(1)}%</span>
                                                             <span className="text-xs text-slate-500">
                                                                 (年化 {((plan.rate / plan.days) * 365 * 100).toFixed(1)}%)
                                                             </span>
@@ -4045,16 +3968,16 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     <div className="flex flex-col">
                                                         <span className="text-[11px] text-slate-500 mb-1">起存金额</span>
                                                         <div className="flex items-center gap-1.5 h-7">
-                                                            <Coins size={16} className={plan.active ? 'text-green-600' : 'text-slate-400'} />
+                                                            <Coins size={16} className={plan.active ? 'text-[#FF7D00]' : 'text-[#C9CDD4]'} />
                                                             <span className={`text-base font-bold ${plan.active ? 'text-slate-700' : 'text-slate-400'}`}>{plan.min}</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`flex flex-col justify-center px-4 py-2 rounded-lg border ${plan.active ? 'bg-green-50/50 border-green-100' : 'bg-slate-50 border-[#E5E6EB]'} min-w-[130px]`}>
+                                                    <div className={`flex flex-col justify-center px-4 py-2 rounded-lg border ${plan.active ? 'bg-[#F7F8FA] border-[#E5E6EB]' : 'bg-slate-50 border-[#E5E6EB]'} min-w-[130px]`}>
                                                         <span className="text-[10px] text-slate-500 font-bold mb-0.5">存1000币收益试算</span>
                                                         <div className="flex items-baseline gap-1">
-                                                            <span className={`text-base font-bold ${plan.active ? 'text-green-600' : 'text-slate-400'}`}>+</span>
+                                                            <span className={`text-base font-bold ${plan.active ? 'text-[#1D2129]' : 'text-slate-400'}`}>+</span>
                                                             <img src="/assets/coin.png" className="w-[1em] h-[1em] mb-[1px] opacity-80" alt="coin" />
-                                                            <span className={`text-base font-bold ${plan.active ? 'text-green-600' : 'text-slate-400'}`}>{parseFloat((1000 * plan.rate).toFixed(2))}</span>
+                                                            <span className={`text-base font-bold ${plan.active ? 'text-[#1D2129]' : 'text-slate-400'}`}>{parseFloat((1000 * plan.rate).toFixed(2))}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -4069,7 +3992,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                     </button>
                                                     <button
                                                         onClick={() => handleToggleProductStatus(plan.id)}
-                                                        className={`px-5 py-2 rounded-lg font-medium text-sm transition-colors ${plan.active ? 'bg-slate-100 text-slate-400 hover:bg-slate-200' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                                                        className={`px-5 py-2 rounded-lg font-medium text-sm transition-colors ${plan.active ? 'bg-slate-100 text-slate-400 hover:bg-slate-200' : 'bg-[#F7F8FA] text-[#1D2129] hover:bg-[#E5E6EB]'}`}
                                                     >
                                                         {plan.active ? '不展示(停止新签)' : '重新展示并可签署'}
                                                     </button>

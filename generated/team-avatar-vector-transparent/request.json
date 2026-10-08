@@ -1,0 +1,8 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Simple centered icon asset, bold silhouette, minimal detail, high contrast, readable at small sizes. A single centered white flat vector basketball icon for a school mobile app avatar, transparent background, simple rounded geometric shape, clean thick blue linework, no circle badge, no colored background, no shadow, no texture, no text, no letters, no logo, generous transparent padding, designed to sit on top of selectable pastel gradient circular backgrounds and remain clear at 48px. Avoid: background, colored square, colored circle, gradient behind the icon, 3D, clay, photorealistic, glossy, realistic texture, drop shadow, text, watermark, border.",
+  "size": "1024x1024",
+  "n": 1,
+  "quality": "low",
+  "background": "transparent"
+}

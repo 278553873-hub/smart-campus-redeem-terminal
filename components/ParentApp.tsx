@@ -84,6 +84,7 @@ interface ParentAppProps {
   parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;
   parentBankFeatureEnabled?: boolean;
   onActiveClassIdChange?: (classId: string) => void;
+  onScreenChange?: (screen: Screen) => void;
 }
 
 type Screen = 'binding' | 'growth' | 'reports' | 'archiveList' | 'archiveDetail' | 'questionnaireForm' | 'questionnaireDetail' | 'reportDetail' | 'bank' | 'growthRecords' | 'todo' | 'mine' | 'cardCollection' | 'cardDetail';
@@ -683,8 +684,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
   parentEvaluationVisibility: parentEvaluationVisibilityInput,
   parentBankFeatureEnabled = true,
   onActiveClassIdChange,
+  onScreenChange,
 }) => {
   const [screen, setScreen] = useState<Screen>(() => defaultHasBoundChild ? 'growth' : 'binding');
+  useEffect(() => {
+    onScreenChange?.(screen);
+  }, [onScreenChange, screen]);
   const [childrenList, setChildrenList] = useState<ChildProfile[]>(() => (
     defaultHasBoundChild ? [
       createDemoChild('郑小磊', 'BS2024', '20250101', 0),

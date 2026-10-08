@@ -279,7 +279,7 @@ requireText(compactSelectSource, 'bg-[var(--tm-bg-surface)]', '紧凑学生选�
 requireText(compactSelectSource, 'absolute -right-1 -top-1 z-20', '紧凑选择项的勾选角标应与学生列表一致，附着在卡片右上角并向外偏移4像素。');
 requireText(compactSelectSource, 'h-12 w-12', '紧凑学生选择项应使用48像素真实头像。');
 requireText(compactSelectSource, 'text-[12px] font-medium', '紧凑学生姓名应使用12像素、500字重。');
-requireText(compactSelectSource, '<StudentRosterNumber studentNo={studentNo} ariaHidden />', '所有学生姓名前应显示统一的两位班内号。');
+requireText(compactSelectSource, '<StudentRosterNumber studentNo={studentNo} ariaHidden variant="student-card" />', '所有学生姓名前应显示与班级学生卡片一致的11像素、800字重班内号。');
 requireText(rosterNumberSource, 'bg-[var(--tm-student-roster-number-bg)] font-[NumberFont]', '两位班内号应与加扣分数字统一使用NumberFont字体。');
 if (compactSelectSource.includes('duplicateRosterNumber')) failures.push('学生头像上不得再按同名条件显示01、02数字角标。');
 if (compactSelectSource.includes('StudentPerformance') || compactSelectSource.includes('praiseCount') || compactSelectSource.includes('criticismCount')) {
