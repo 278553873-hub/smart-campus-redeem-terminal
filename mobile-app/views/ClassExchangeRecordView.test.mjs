@@ -79,9 +79,10 @@ assert.ok(!rewardSource.includes('Landmark'), '可用与已存都是成长币，
 assert.ok(!rewardSource.includes('CompactSegmentedControl'), '清空口径不应使用分段控件表达危险级别，避免嵌套圆角与 tab 语义。');
 has(dangerSheetSource, 'children?: React.ReactNode;', '危险确认浮层应提供内容插槽承载口径选择。');
 assert.ok(!rewardSource.includes('showBankBalanceOnCard'), '学生卡不应随清空口径改变布局，避免网格抖动。');
-has(studentCoinSource, 'manual_clear', '学生成长币明细应支持清空可用分类。');
-has(studentCoinSource, 'bank_clear', '学生成长币明细应支持清空已存分类。');
-has(studentCoinSource, '清空已存', '清空已存的分类名称应清晰可读。');
+has(studentCoinSource, 'manual_clear', '学生成长币明细应支持手动清空分类。');
+has(studentCoinSource, "manual_clear: '手动清空'", '手动清空的分类名称应清晰可读。');
+assert.ok(!studentCoinSource.includes('bank_clear'), '清空可用与清空已存不应再拆成两个支出分类。');
+has(ledgerSource, 'formatCoinClearDetail', '领域层应把一次清空合并成一条学生流水，并在明细里写清清掉了哪部分资产。');
 has(viewSource, 'share.bankAmount', '记录详情应按学生展示被扣的已存金额。');
 
 has(viewSource, '兑换详情', '点击记录应打开详情抽屉。');

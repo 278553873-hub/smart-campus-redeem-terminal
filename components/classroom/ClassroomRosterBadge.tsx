@@ -44,7 +44,7 @@ const ClassroomRosterBadge: React.FC<ClassroomRosterBadgeProps> = ({
       }}
       aria-hidden={ariaHidden || undefined}
     >
-      {formatClassroomRosterNumber(studentNo)}
+      <span className="block w-fit [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">{formatClassroomRosterNumber(studentNo)}</span>
     </span>
   );
 };

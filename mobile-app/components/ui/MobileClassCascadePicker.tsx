@@ -17,7 +17,6 @@ interface MobileClassCascadePickerBaseProps {
   getClassLabel?: (classInfo: ClassInfo) => string;
   showEducationStagePrefix?: boolean;
   ariaLabel?: string;
-  hideGradeRailWhenSingleGroup?: boolean;
 }
 
 interface MobileClassCascadeMultipleProps extends MobileClassCascadePickerBaseProps {
@@ -59,7 +58,6 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
     getClassLabel = classInfo => classInfo.name,
     showEducationStagePrefix = false,
     ariaLabel = '班级级联选择',
-    hideGradeRailWhenSingleGroup = true,
   } = props;
   const singleSelection = props.selectionMode === 'single';
   const multipleProps = props.selectionMode === 'single' ? null : props;
@@ -74,7 +72,6 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
   const activeSelectedCount = activeClasses.filter(classInfo => selectedClassIds.has(classInfo.id)).length;
   const allActiveClassesSelected = activeClasses.length > 0 && activeSelectedCount === activeClasses.length;
   const hasActiveClassSelected = activeSelectedCount > 0;
-  const showGradeRail = groups.length > 1 || !hideGradeRailWhenSingleGroup;
   const getDisplayClassLabel = (classInfo: ClassInfo) => {
     const label = getClassLabel(classInfo);
     if (!showEducationStagePrefix) return label;
@@ -103,32 +100,33 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
   );
 
   return (
-    <div className={`grid h-full min-h-0 ${showGradeRail ? 'grid-cols-[110px_1fr]' : 'grid-cols-1'}`} aria-label={ariaLabel}>
-      {showGradeRail && (
-        <div className="min-h-0 overflow-y-auto overscroll-contain bg-[var(--tm-bg-surface-muted)] py-0 no-scrollbar" aria-label="左侧先选年级">
-          {groups.map(group => {
-            const active = activeGroup?.gradeLabel === group.gradeLabel;
-            return (
-              <button
-                key={group.gradeLabel}
-                type="button"
-                onClick={() => onActiveGradeChange(group.gradeLabel)}
-                aria-pressed={active}
-                className={`relative flex h-[var(--tm-choice-pill-touch-height)] w-full items-center justify-start px-3 text-left text-[length:var(--tm-font-size-body)] font-medium ${optionFocusClass} ${active
-                  ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:bg-[var(--tm-brand-primary)]'
-                  : 'text-[var(--tm-text-secondary)]'}`}
-              >
-                <span className="min-w-0 truncate">{group.displayLabel ?? group.gradeLabel}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+    <div className="grid h-full min-h-0 grid-cols-[110px_1fr]" aria-label={ariaLabel}>
+      <div className="min-h-0 overflow-y-auto overscroll-contain bg-[var(--tm-bg-surface-muted)] py-0 no-scrollbar" aria-label="左侧先选年级">
+        {groups.map(group => {
+          const active = activeGroup?.gradeLabel === group.gradeLabel;
+          return (
+            <button
+              key={group.gradeLabel}
+              type="button"
+              onClick={() => onActiveGradeChange(group.gradeLabel)}
+              aria-pressed={active}
+              className={`relative flex h-[var(--tm-choice-pill-touch-height)] w-full items-center justify-start px-3 text-left text-[length:var(--tm-font-size-body)] font-medium ${optionFocusClass} ${active
+                ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:bg-[var(--tm-brand-primary)]'
+                : 'text-[var(--tm-text-secondary)]'}`}
+            >
+              <span className="min-w-0 truncate">{group.displayLabel ?? group.gradeLabel}</span>
+            </button>
+          );
+        })}
+      </div>
 
       <div className="flex min-h-0 min-w-0 flex-col bg-[var(--tm-bg-surface)] px-4" aria-label="右侧再选该年级下的班级">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar">
           <div className="pb-1">
-          {!singleSelection && props.onToggleGrade && activeGroup && (
+          {activeClasses.length === 0 && (
+            <div className="flex items-center justify-center py-16 text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">暂无可选班级</div>
+          )}
+          {!singleSelection && props.onToggleGrade && activeGroup && activeClasses.length > 0 && (
             <button
               type="button"
               role="checkbox"
@@ -140,7 +138,7 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
               {renderSelectionMark(allActiveClassesSelected, hasActiveClassSelected && !allActiveClassesSelected)}
             </button>
           )}
-          {multipleProps?.showAllClassesOption && !props.onToggleGrade && (
+          {multipleProps?.showAllClassesOption && !props.onToggleGrade && activeClasses.length > 0 && (
             <button
               type="button"
               role="checkbox"

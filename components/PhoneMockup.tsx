@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MoreHorizontal, Wifi, Signal } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
+import SimulatedIosStatusBar from './SimulatedIosStatusBar';
 
 interface PhoneMockupProps {
   children: React.ReactNode;
@@ -31,17 +32,8 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   const simulatedCapsuleTop = 60;
   const simulatedCapsuleHeight = 32;
   const simulatedTitleBarHeight = (simulatedCapsuleTop - simulatedStatusBarHeightValue) * 2 + simulatedCapsuleHeight;
-  const [currentTime, setCurrentTime] = useState("09:41");
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
@@ -116,19 +108,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
         )}
 
         {/* iOS 状态栏 (Overlay) */}
-        <div className={`absolute top-0 left-0 w-full h-[54px] flex justify-between items-end px-8 pb-3 text-[12px] font-bold text-black z-[90] pointer-events-none ${nativeChromeVisibility}`} aria-hidden={!shouldShowNativeChrome}>
-            <div className="flex-1 text-left"><span>{currentTime}</span></div>
-            <div className="flex-1 flex justify-end items-center gap-1.5 opacity-60">
-                <Signal size={13} />
-                <Wifi size={13} />
-                <div className="flex items-center ml-0.5">
-                  <div className="w-[22px] h-[11px] border-[1.2px] border-black/20 rounded-[3px] relative p-[1.5px]">
-                    <div className="h-full bg-black rounded-[0.5px]" style={{ width: '92%' }}></div>
-                    <div className="absolute right-[-3px] top-[2px] w-[1.5px] h-[4px] bg-black/30 rounded-r-full"></div>
-                  </div>
-                </div>
-            </div>
-        </div>
+        <SimulatedIosStatusBar visible={shouldShowNativeChrome} />
 
         {/* 微信胶囊仿真 (Overlay) */}
         <div className={`absolute top-[60px] right-4 z-[99] flex items-center bg-white/60 backdrop-blur-md border border-black/5 rounded-full h-8 px-3 gap-3 pointer-events-none ${nativeChromeVisibility}`} aria-hidden={!shouldShowNativeChrome}>

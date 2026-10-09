@@ -50,7 +50,8 @@ requireText(constantsSource, 'rankingPool', '校园币预估应读取积分排�
 requireText(constantsSource, "category: 'growth_award'", '成长嘉奖流水应使用明确分类，不根据文案猜测。');
 requireText(constantsSource, "startDate: '2025-12-29', endDate: '2026-01-04'", 'Mock 数据应直接展示跨年成长嘉奖边界。');
 requireText(coinFlowSource, "start.year !== end.year", '成长嘉奖跨年时应展示完整年份。');
-requireText(coinFlowSource, "`${start.month}月${start.day}日-${end.month}月${end.day}日奖励`", '同年周奖励应省略年份并保留完整月日。');
+requireText(coinFlowSource, "`每周奖励（${start.month}月${start.day}日-${end.month}月${end.day}日）`", '同年周奖励应标明每周发放、省略年份并保留完整月日。');
+requireText(coinFlowSource, "`每月奖励（${month}月）`", '月奖励应标明每月发放并展示所属月份。');
 requireText(coinDetailSource, 'item.categoryLabel', '校园币流水第一层应展示分类。');
 requireText(coinDetailSource, 'item.detail', '校园币流水第二层应展示明细。');
 requireText(coinDetailSource, 'formatCampusCoinFlowTime(item.time)', '校园币流水第三层应独立展示时间。');

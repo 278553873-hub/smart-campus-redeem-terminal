@@ -8,15 +8,15 @@ const parseDateKey = (value: string) => {
 export const formatGrowthAwardDetail = (period: CampusCoinGrowthAwardPeriod) => {
   if (period.type === 'monthly') {
     const { month } = parseDateKey(`${period.month}-01`);
-    return `${month}月奖励`;
+    return `每月奖励（${month}月）`;
   }
 
   const start = parseDateKey(period.startDate);
   const end = parseDateKey(period.endDate);
   if (start.year !== end.year) {
-    return `${start.year}年${start.month}月${start.day}日-${end.year}年${end.month}月${end.day}日奖励`;
+    return `每周奖励（${start.year}年${start.month}月${start.day}日-${end.year}年${end.month}月${end.day}日）`;
   }
-  return `${start.month}月${start.day}日-${end.month}月${end.day}日奖励`;
+  return `每周奖励（${start.month}月${start.day}日-${end.month}月${end.day}日）`;
 };
 
 export const getCampusCoinIssueDetail = (record: CampusCoinIssueRecord) => (

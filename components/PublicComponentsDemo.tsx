@@ -122,7 +122,7 @@ const classParameterRows = [
   ['groups', 'MobileClassCascadeGroup[]', '当前操作人可见的年级及班级，由调用方完成权限过滤。'],
   ['selectionMode', 'single | multiple', '控制单选圆点或多选复选框。'],
   ['value / values', 'object / string[]', '单选同时保存年级与班级，多选保存班级编号集合。'],
-  ['commitMode', 'immediate | confirm', '单选可点击即生效，也可通过底部“完成”统一提交。'],
+  ['commitMode', 'immediate | confirm', '仅选择班级时，单选点击即生效；选择班级和学科时统一通过底部“完成”提交。'],
   ['showEducationStagePrefix', 'boolean', '是否在班级名称前显示“小 / 初 / 高”学段前缀，例如“小2025级1班”。'],
   ['showGradeSelectAll', 'boolean', '多选场景是否提供“全选本年级”。'],
   ['getClassMeta', 'function', '按需在班级右侧展示学生人数等辅助信息。'],
@@ -130,7 +130,14 @@ const classParameterRows = [
   ['subjectSelectionMode', 'single | multiple', '任教学科使用单选或多选。'],
   ['subjectValue', 'string | string[]', '当前任教学科，随班级选择结果一起提交。'],
   ['showClearButton', 'boolean', '开启后始终占位，无内容可清空时进入禁用态。'],
-  ['requireSelection', 'boolean', '是否必须至少选择一个班级后才能完成。'],
+  ['requireSelection', 'boolean', '使用底部“完成”提交时必须先选班级；带任教学科时还要选学科。点击即生效的单选不需要。'],
+  ['title / ariaLabel', 'string', '弹窗标题与级联区域的读屏名称。'],
+  ['getClassLabel', 'function', '按需改写班级名称的展示文案。'],
+  ['showAllClassesOption / allClassesLabel', 'boolean / ReactNode', '多选时在首位展示“全部班级”，作用于权限范围内的全部班级。'],
+  ['subjectLabel', 'string', '任教学科分组的标题，默认“任教学科”。'],
+  ['confirmLabel / clearLabel', 'string', '底部“完成”与“清空已选”的文案。'],
+  ['onSelectionChange / onSubjectSelectionChange', 'function', '临时值变化回调，用于实时同步尚未提交的选择。'],
+  ['onClear / onClose', 'function', '清空已选与关闭弹窗的回调，遮罩和关闭按钮共用 onClose。'],
 ] as const;
 
 const gradeUsageExample = `<MobileGradePickerSheet
@@ -149,6 +156,7 @@ const classUsageExample = `<MobileClassPickerSheet
   groups={visibleClassGroups}
   selectionMode="multiple"
   values={selectedClassIds}
+  onSelectionChange={setDraftClassIds}
   showEducationStagePrefix={showEducationStagePrefix}
   subjectSelectionMode="multiple"
   subjectOptions={canEditSubject ? subjects : undefined}
@@ -206,6 +214,7 @@ const PublicComponentsDemo: React.FC = () => {
   const [showGradeStage, setShowGradeStage] = useState(true);
   const [showGradeClear, setShowGradeClear] = useState(true);
   const [showAllGradesOption, setShowAllGradesOption] = useState(true);
+  const [classSheetVisible, setClassSheetVisible] = useState(true);
   const [classPreviewMode, setClassPreviewMode] = useState<ClassPreviewMode>('multiple');
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([
     classGroups[0].classes[0].id,
@@ -218,9 +227,6 @@ const PublicComponentsDemo: React.FC = () => {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['语文']);
   const [showSubjectPicker, setShowSubjectPicker] = useState(true);
   const [subjectSelectionMode, setSubjectSelectionMode] = useState<'single' | 'multiple'>('single');
-  const [classCommitMode, setClassCommitMode] = useState<'immediate' | 'confirm'>('confirm');
-  const [requireClassSelection, setRequireClassSelection] = useState(true);
-  const [showEducationStagePrefix, setShowEducationStagePrefix] = useState(false);
  const [showGradeSelectAll, setShowGradeSelectAll] = useState(true);
  const [showClassClear, setShowClassClear] = useState(true);
   const [showClassMeta, setShowClassMeta] = useState(false);
@@ -239,6 +245,8 @@ const PublicComponentsDemo: React.FC = () => {
     setSelectedSubjects(Array.isArray(value) ? value : value ? [value] : []);
   };
   const previewGroups = classGroups;
+  const classCommitMode: 'immediate' | 'confirm' = showSubjectPicker ? 'confirm' : 'immediate';
+  const classRequiresConfirm = classPreviewMode === 'multiple' || showSubjectPicker;
   const studentCardDisplaySettings = getStudentCardDisplaySettings({
     showLevel: studentCardShowLevel,
     levelForm: studentCardLevelForm,
@@ -282,6 +290,7 @@ const PublicComponentsDemo: React.FC = () => {
                 onClick={() => {
                   setActiveComponent(id);
                   if (id === 'grade-picker') updateGradeSheetVisible(true);
+                  if (id === 'class-picker') setClassSheetVisible(true);
                 }}
                 aria-current={active ? 'page' : undefined}
                 className={`flex min-h-11 w-full items-center rounded-[var(--tm-radius-control)] px-3 text-left text-sm font-semibold ${active
@@ -337,14 +346,14 @@ const PublicComponentsDemo: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  isGradePicker && !gradeSheetVisible && (
+                  ((isGradePicker && !gradeSheetVisible) || (isClassPicker && !classSheetVisible)) && (
                     <div className="flex flex-1 items-center justify-center px-8">
                       <button
                         type="button"
-                        onClick={() => updateGradeSheetVisible(true)}
+                        onClick={() => (isGradePicker ? updateGradeSheetVisible(true) : setClassSheetVisible(true))}
                         className="flex h-11 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-sm font-semibold text-[var(--tm-text-inverse)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                       >
-                        打开年级选择器
+                        {isGradePicker ? '打开年级选择器' : '打开班级选择器'}
                       </button>
                     </div>
                   )
@@ -439,7 +448,21 @@ const PublicComponentsDemo: React.FC = () => {
               </>
             ) : isClassPicker ? (
               <>
-              <span className="text-xs font-medium text-slate-500">班级选择</span>
+              <span className="text-xs font-medium text-slate-500">选择内容</span>
+              <div className="mt-2 flex h-9 w-fit rounded-[var(--tm-radius-control)] bg-slate-100 p-1" role="group" aria-label="选择预览内容">
+                {([[false, '仅选择班级'], [true, '选择班级和学科']] as const).map(([withSubject, label]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setShowSubjectPicker(withSubject)}
+                    aria-pressed={showSubjectPicker === withSubject}
+                    className={`min-w-24 rounded-[6px] px-3 text-xs font-semibold ${showSubjectPicker === withSubject ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <span className="mt-4 block text-xs font-medium text-slate-500">班级选择</span>
               <div className="mt-3 flex h-9 w-fit rounded-[var(--tm-radius-control)] bg-slate-100 p-1" role="group" aria-label="选择预览模式">
                 {(['single', 'multiple'] as const).map(mode => (
                   <button
@@ -453,38 +476,12 @@ const PublicComponentsDemo: React.FC = () => {
                  </button>
                 ))}
               </div>
-             {classPreviewMode === 'single' && !showSubjectPicker && (
-                <div className="mt-3">
-                  <span className="text-xs font-medium text-slate-500">单选提交方式</span>
-                  <div className="mt-2 flex h-9 w-fit rounded-[var(--tm-radius-control)] bg-slate-100 p-1" role="group" aria-label="选择单选提交方式">
-                    {(['immediate', 'confirm'] as const).map(mode => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => setClassCommitMode(mode)}
-                        aria-pressed={classCommitMode === mode}
-                        className={`min-w-24 rounded-[6px] px-3 text-xs font-semibold ${classCommitMode === mode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-                      >
-                        {mode === 'immediate' ? '点击即生效' : '点击完成提交'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div className="mt-3 grid grid-cols-2 gap-x-5 max-[620px]:grid-cols-1">
-               <PreviewToggle checked={showEducationStagePrefix} label="显示小初高学段前缀" onChange={setShowEducationStagePrefix} />
-               <PreviewToggle checked={showClassClear} label="显示清空已选" onChange={setShowClassClear} />
+              <div className="mt-3 flex flex-col gap-1">
+                <PreviewToggle checked={showClassClear} label="显示清空已选" onChange={setShowClassClear} />
                 <PreviewToggle checked={showClassMeta} label="显示班级人数统计" onChange={setShowClassMeta} />
-               <PreviewToggle checked={requireClassSelection} label="完成前必须选择班级" onChange={setRequireClassSelection} />
                 {classPreviewMode === 'multiple' && (
-                  <>
-                    <PreviewToggle checked={showGradeSelectAll} label="显示全选本年级" onChange={setShowGradeSelectAll} />
-                  </>
+                  <PreviewToggle checked={showGradeSelectAll} label="显示全选本年级" onChange={setShowGradeSelectAll} />
                 )}
-              </div>
-              <span className="text-xs font-medium text-slate-500">班级任教信息选择</span>
-              <div className="mt-2 grid grid-cols-2 gap-x-5 max-[620px]:grid-cols-1">
-                <PreviewToggle checked={showSubjectPicker} label="显示任教学科" onChange={setShowSubjectPicker} />
                 {showSubjectPicker && (
                   <PreviewToggle checked={subjectSelectionMode === 'multiple'} label="任教学科支持多选" onChange={checked => setSubjectSelectionMode(checked ? 'multiple' : 'single')} />
                 )}
@@ -557,9 +554,11 @@ const PublicComponentsDemo: React.FC = () => {
               <ul className="mt-2 space-y-2 text-sm leading-6 text-slate-600">
                 <li>左侧年级只负责导航，使用浅表面和主题色侧边标识；右侧班级才是最终选择结果。</li>
                 <li>单选只允许选择具体班级；多选可按需开启“全部班级”和“全选本年级”。</li>
+                <li>单选在只选择班级时点击即生效并关闭；带任教学科时统一通过底部“完成”提交。</li>
+                <li>底部“完成”提交前必须先选班级；带任教学科时还要选学科，两项都选齐才可完成。</li>
                 <li>班级行保持白色表面和浅分隔线，单选使用圆点，多选使用复选框，不增加整行红色背景。</li>
-                <li>班级名称默认显示“2025级1班”，通过 <code className="font-mono text-xs">showEducationStagePrefix</code> 可显示为“小2025级1班”。</li>
-                <li>只有一个可见年级时自动隐藏左栏；学生人数等辅助信息通过 <code className="font-mono text-xs">getClassMeta</code> 按需提供。</li>
+                <li>弹窗高度随内容变化：任教学科区始终完整展示，班级列表占用剩余高度并在内部滚动，关闭任教学科后弹窗同步变矮。</li>
+                <li>左栏始终展示，只有一个可见年级时也不隐藏；学生人数等辅助信息通过 <code className="font-mono text-xs">getClassMeta</code> 按需提供。</li>
                 <li>任教学科由 <code className="font-mono text-xs">subjectOptions</code> 和 <code className="font-mono text-xs">subjectSelectionMode</code> 控制，不传入时不保留空白区域。</li>
                 <li>完成和清空操作不提供按压变色或缩放；开启清空后始终占位，以保持弹窗高度稳定。</li>
               </ul>
@@ -577,17 +576,16 @@ const PublicComponentsDemo: React.FC = () => {
 
       {isStudentCard ? null : isClassPicker ? classPreviewMode === 'multiple' ? (
         <MobileClassPickerSheet
-          open
+          open={classSheetVisible}
           groups={previewGroups}
           selectionMode="multiple"
           values={selectedClassIds}
-          showEducationStagePrefix={showEducationStagePrefix}
           subjectOptions={showSubjectPicker ? subjectOptions : undefined}
           subjectSelectionMode={subjectSelectionMode}
           subjectValue={selectedSubjectValue}
          showGradeSelectAll={showGradeSelectAll}
          showClearButton={showClassClear}
-         requireSelection={requireClassSelection}
+         requireSelection={classRequiresConfirm}
           getClassMeta={showClassMeta ? (classInfo => `${classInfo.studentCount}人`) : undefined}
          onSelectionChange={setSelectedClassIds}
           onSubjectSelectionChange={handlePreviewSubjectChange}
@@ -599,21 +597,20 @@ const PublicComponentsDemo: React.FC = () => {
             setSelectedClassIds([]);
             setSelectedSubjects([]);
           }}
-          onClose={() => undefined}
+          onClose={() => setClassSheetVisible(false)}
         />
       ) : (
         <MobileClassPickerSheet
-          open
+          open={classSheetVisible}
           groups={previewGroups}
           selectionMode="single"
           value={singleClassValue}
           commitMode={classCommitMode}
-          showEducationStagePrefix={showEducationStagePrefix}
           subjectOptions={showSubjectPicker ? subjectOptions : undefined}
           subjectSelectionMode={subjectSelectionMode}
           subjectValue={selectedSubjectValue}
          showClearButton={showClassClear}
-         requireSelection={requireClassSelection}
+         requireSelection={classRequiresConfirm}
           getClassMeta={showClassMeta ? (classInfo => `${classInfo.studentCount}人`) : undefined}
          onSubjectSelectionChange={handlePreviewSubjectChange}
           onChange={(value, subject) => {
@@ -624,7 +621,7 @@ const PublicComponentsDemo: React.FC = () => {
             setSingleClassValue({ gradeValue: '三年级', classId: '' });
             setSelectedSubjects([]);
           }}
-          onClose={() => undefined}
+          onClose={() => setClassSheetVisible(false)}
         />
       ) : gradePreviewMode === 'multiple' ? (
         <MobileGradePickerSheet

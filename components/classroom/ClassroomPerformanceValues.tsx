@@ -60,7 +60,7 @@ const ClassroomPerformanceValues: React.FC<ClassroomPerformanceValuesProps> = ({
           className="flex items-center justify-center rounded-md bg-emerald-50 px-1 text-emerald-700"
           style={{ height: itemHeight, minWidth: itemMinWidth }}
         >
-          {formatSignedScore(summary.praiseScore, '+')}
+          <span className="block w-fit [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">{formatSignedScore(summary.praiseScore, '+')}</span>
         </span>
       )}
       {showCriticism && (
@@ -69,7 +69,7 @@ const ClassroomPerformanceValues: React.FC<ClassroomPerformanceValuesProps> = ({
           className="flex items-center justify-center rounded-md bg-rose-50 px-1 text-rose-700"
           style={{ height: itemHeight, minWidth: itemMinWidth }}
         >
-          {formatSignedScore(summary.criticismScore, '-')}
+          <span className="block w-fit [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">{formatSignedScore(summary.criticismScore, '-')}</span>
         </span>
       )}
     </div>

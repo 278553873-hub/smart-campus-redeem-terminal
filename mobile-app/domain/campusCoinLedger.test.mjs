@@ -107,8 +107,9 @@ assert.equal(expandCoinLedgerForStudent(mergedLedger, 's3')[0].amount, 500, '同
 
 const clearExpansion = expandCoinLedgerForStudent(applyCoinLedgerPatch([], recordCoinLedgerEntry(EMPTY_COIN_LEDGER_PATCH, clearEntry)), 's1');
 assert.equal(clearExpansion.length, 1, '清空成长币也应进入学生成长币明细。');
-assert.equal(clearExpansion[0].category, 'manual_clear', '清空成长币使用独立的支出分类。');
+assert.equal(clearExpansion[0].category, 'manual_clear', '清空成长币统一使用「手动清空」支出分类。');
 assert.equal(clearExpansion[0].amount, 260, '清空记录金额取该学生被清空的余额。');
+assert.equal(clearExpansion[0].productName, '可用成长币', '只清可用时明细只写可用成长币。');
 
 // 清空口径：默认清空全部（可用 + 已存），也允许老师只清可用。
 const clearTargets = [
@@ -146,16 +147,13 @@ const clearAllExpansion = expandCoinLedgerForStudent(
   applyCoinLedgerPatch([], recordCoinLedgerEntry(EMPTY_COIN_LEDGER_PATCH, clearAllEntry)),
   's1',
 );
-assert.equal(clearAllExpansion.length, 2, '清空全部应拆成可用与已存两条学生流水。');
+assert.equal(clearAllExpansion.length, 1, '一次清空只落一条学生流水，可用与已存不再拆成两条。');
+assert.equal(clearAllExpansion[0].category, 'manual_clear', '清空全部同样落在「手动清空」分类。');
+assert.equal(clearAllExpansion[0].amount, 1460, '手动清空金额应为可用与已存之和。');
 assert.equal(
-  clearAllExpansion.map(record => record.category).sort().join(','),
-  'bank_clear,manual_clear',
-  '已存扣减使用独立的清空已存分类。',
-);
-assert.equal(
-  clearAllExpansion.find(record => record.category === 'bank_clear').amount,
-  1200,
-  '清空已存流水取该学生被清掉的已存金额。',
+  clearAllExpansion[0].productName,
+  '可用成长币、已存成长币',
+  '手动清空明细要写清这次清掉了可用与已存两部分资产。',
 );
 
 console.log('campusCoinLedger assertions passed');

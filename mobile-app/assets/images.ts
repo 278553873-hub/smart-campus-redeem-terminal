@@ -40,6 +40,7 @@ import defaultStateWorriedClipboardImg from './resources/default-states/default-
 import defaultStateChairImg from './resources/default-states/default-state-giraffe-chair-3d-color-v1.png';
 import defaultStateMagnifierImg from './resources/default-states/default-state-giraffe-magnifier-3d-color-v1.png';
 import defaultStateBoxClipboardImg from './resources/default-states/default-state-giraffe-box-clipboard-3d-color-v1.png';
+import defaultStateBoardImg from './resources/default-states/default-state-giraffe-board-3d-color-v1.png';
 import awardCertificateDefaultMobileImg from './resources/highlight-defaults/award-certificate-default.png';
 import dailyDefaultGrowthMobileImg from './resources/highlight-defaults/daily-default-growth.png';
 import dailyKindnessCollaborationMobileImg from './resources/highlight-defaults/daily-kindness-collaboration.png';
@@ -63,6 +64,10 @@ import {
   studentGirlAvatarGroups,
   studentGirlAvatars,
 } from './studentAvatarCatalog';
+import {
+  studentFaceSampleBoys,
+  studentFaceSampleGirls,
+} from './studentFaceSampleCatalog';
 
 // Resource file for project images
 // Using Base64 SVGs to ensure images always load without external dependencies or local file setup.
@@ -150,8 +155,11 @@ export const ASSETS = {
     SYSTEM_BOYS: studentBoyAvatars,
     SYSTEM_GIRL_GROUPS: studentGirlAvatarGroups,
     SYSTEM_GIRLS: studentGirlAvatars,
+    FACE_SAMPLE_BOYS: studentFaceSampleBoys,
+    FACE_SAMPLE_GIRLS: studentFaceSampleGirls,
     TEACHER_WANG: encodeSVG(teacherWangSVG),
     TEACHER_LIN: encodeSVG(teacherLinSVG),
+    TEACHER_LIU: encodeSVG(teacherLiuSVG),
     TEACHER_DEFAULT: teacherDefaultAvatarImg,
   },
   COVER: {
@@ -222,6 +230,7 @@ export const ASSETS = {
     CHAIR: defaultStateChairImg,
     MAGNIFIER: defaultStateMagnifierImg,
     BOX_CLIPBOARD: defaultStateBoxClipboardImg,
+    BOARD: defaultStateBoardImg,
   },
   HIGHLIGHTS: {
     CERTIFICATE: certificateImg,

@@ -153,7 +153,7 @@ export const ClassroomStudentLevelScore: React.FC<ClassroomStudentLevelScoreProp
       className={`flex min-w-[24px] items-center justify-center rounded-md px-1 font-bold tabular-nums ${isNegative ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700'}`}
       style={{ height, fontSize, lineHeight: 1 }}
     >
-      {formatScore(normalizedScore)}
+      <span className="block w-fit [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">{formatScore(normalizedScore)}</span>
     </div>
   );
 };

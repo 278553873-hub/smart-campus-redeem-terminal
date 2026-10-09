@@ -105,6 +105,7 @@ const demoStudents = Array.from({ length: 6 }, (_, index) => ({
 
 const { createDemoCoinLedger } = await import('../mobile-app/data/campusCoinLedger');
 const { expandCoinLedgerForStudent } = await import('../mobile-app/domain/campusCoinLedger');
+const { DEFAULT_COIN_ISSUANCE_CONFIG, GET_MOCK_CAMPUS_COIN_DETAIL } = await import('../mobile-app/constants');
 
 // 用真实演示流水渲染，才能覆盖到列表、批次、撤回等分支，而不只是空状态。
 const ledgerEntries = createDemoCoinLedger({
@@ -137,11 +138,28 @@ await renderPage('学生成长币明细页', () => import('../mobile-app/views/S
   student: demoStudents[0],
   coinDetail: {
     balance: 100,
-    issueRecords: [],
+    issueRecords: GET_MOCK_CAMPUS_COIN_DETAIL(demoStudents[0]).issueRecords,
     consumeRecords: expandCoinLedgerForStudent(ledgerEntries, demoStudents[0].id),
     settlementEstimate: { period: 'weekly', amount: 0 },
   },
   onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('成长嘉奖')) throw new Error('成长嘉奖应作为收入分类展示');
+  if (!text.includes('每周奖励（2月16日-2月22日）')) throw new Error('按周发放时成长嘉奖应展示每周奖励与所属周期');
+});
+
+await renderPage('学生成长币明细页（按月发放）', () => import('../mobile-app/views/StudentCoinDetailView'), {
+  student: demoStudents[0],
+  coinDetail: {
+    balance: 100,
+    issueRecords: GET_MOCK_CAMPUS_COIN_DETAIL(demoStudents[0], { ...DEFAULT_COIN_ISSUANCE_CONFIG, period: 'monthly' }).issueRecords,
+    consumeRecords: expandCoinLedgerForStudent(ledgerEntries, demoStudents[0].id),
+    settlementEstimate: { period: 'monthly', amount: 0 },
+  },
+  onBack: noop,
+}, html => {
+  if (!plainText(html).includes('每月奖励（2月）')) throw new Error('按月发放时成长嘉奖应展示每月奖励与所属月份');
 });
 
 const { MOCK_BEHAVIOR_RECORDS } = await import('../mobile-app/constants');
@@ -185,6 +203,40 @@ await renderPage('设置兑换密码页', () => import('../mobile-app/views/bank
   const doubleQuote = String.fromCharCode(34);
   const revealLabel = 'aria-label=' + doubleQuote + '查看演示学生1兑换密码' + doubleQuote;
   if (!html.includes(revealLabel)) throw new Error('密码掩码时显隐按钮的无障碍名称应为查看加学生姓名加兑换密码。');
+});
+
+const faceStudentsWithAvatar = demoStudents.map((student, index) => ({
+  ...student,
+  avatar: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  studentNo: '0' + (index + 1),
+}));
+
+// 人脸页按待录入和已录入分页：默认停在待录入、标签带人数、待录入用卡通头像、已录入用采集照头像。
+await renderPage('更新人脸数据页（部分已录入）', () => import('../mobile-app/views/face-update/FaceUpdateView'), {
+  classInfo: { id: 'render-smoke-class', name: '三年级1班', gradeLevel: '三年级' },
+  currentSpace: { id: 'render-smoke-space', name: '示范学校' },
+  students: faceStudentsWithAvatar,
+  onBack: noop,
+}, html => {
+  const text = html.replace(/<!--[\s\S]*?-->/g, '');
+  if (!text.includes('待录入（2）')) throw new Error('待录入标签应显示还剩多少待录入人数。');
+  if (!text.includes('已录入（4）')) throw new Error('已录入标签应显示已录入人数。');
+  if (!text.includes('录入演示学生5人脸')) throw new Error('默认应停在待录入页，并给出未录入学生的录入入口。');
+  if (html.includes('更新演示学生1人脸')) throw new Error('默认待录入页不应渲染已录入学生。');
+  if (html.includes('data:image/jpeg')) throw new Error('待录入学生应继续使用默认卡通头像，不使用采集照。');
+  if (text.includes('还剩')) throw new Error('已取消顶部统计和进度条，不应再出现剩余人数。');
+});
+
+await renderPage('更新人脸数据页（全班已录入）', () => import('../mobile-app/views/face-update/FaceUpdateView'), {
+  classInfo: { id: 'render-smoke-class-recorded', name: '三年级2班', gradeLevel: '三年级' },
+  currentSpace: { id: 'render-smoke-space', name: '示范学校' },
+  students: faceStudentsWithAvatar.slice(0, 2),
+  onBack: noop,
+}, html => {
+  const text = html.replace(/<!--[\s\S]*?-->/g, '');
+  if (!text.includes('待录入（0）')) throw new Error('全班录完后待录入标签应显示 0。');
+  if (!text.includes('更新演示学生1人脸')) throw new Error('待录入为空时应直接展示已录入名单。');
+  if (!html.includes('data:image/jpeg')) throw new Error('已录入学生应展示采集照风格头像。');
 });
 
 await renderPage('教师手机端登录页', () => import('../mobile-app/views/TeacherLoginView'), {

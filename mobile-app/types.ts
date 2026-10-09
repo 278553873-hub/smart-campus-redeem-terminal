@@ -127,8 +127,8 @@ export type CampusCoinIssueRecord = CampusCoinIssueRecordBase & (
   | { category: 'class_reward' | 'bank_interest'; detail: string }
 );
 
-// manual_clear = 手动清空可用成长币；bank_clear = 手动清空已存（银行）成长币；两者都计入支出流水，便于学生和家长追溯。
-export type CampusCoinExpenseCategory = 'vending_exchange' | 'class_exchange' | 'manual_clear' | 'bank_clear';
+// manual_clear = 老师手动清空成长币（一次清空计一条，可用与已存的金额合并展示），计入支出流水，便于学生和家长追溯。
+export type CampusCoinExpenseCategory = 'vending_exchange' | 'class_exchange' | 'manual_clear';
 
 export interface CampusCoinConsumeRecord {
   id: string;

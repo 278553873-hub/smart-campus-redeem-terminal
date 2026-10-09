@@ -105,7 +105,13 @@ const MobileClassPickerSheet: React.FC<MobileClassPickerSheetProps> = props => {
     setDraftSubjectValues(new Set(normalizeSubjectValues(subjectValue, subjectSelectionMode)));
     const selectedGroup = groups.find(group => group.classes.some(classInfo => nextValues.includes(classInfo.id)));
     setActiveGrade(props.selectionMode === 'multiple' ? selectedGroup?.gradeLabel ?? groups[0]?.gradeLabel ?? '' : props.value.gradeValue ?? groups[0]?.gradeLabel ?? '');
-  }, [open, groups, props.selectionMode, subjectValue, subjectSelectionMode]);
+    // 只在此处初始化草稿：打开或切换选择模式时执行一次；打开期间外部值变化（包括学科值回传、班级数据重新生成）都不得覆盖用户当前选择。
+  }, [open, props.selectionMode]);
+
+  useEffect(() => {
+    if (!open) return;
+    setActiveGrade(current => (current && groups.some(group => group.gradeLabel === current) ? current : groups[0]?.gradeLabel ?? ''));
+  }, [open, groups]);
 
   const orderedDraftValues = useMemo(() => {
     const optionOrder = groups.flatMap(group => group.classes.map(classInfo => classInfo.id));
@@ -115,7 +121,6 @@ const MobileClassPickerSheet: React.FC<MobileClassPickerSheetProps> = props => {
   const allClassesSelected = allClassIds.length > 0 && allClassIds.every(classId => draftClassIds.has(classId));
   const allClassesMixed = draftClassIds.size > 0 && !allClassesSelected;
   const hasSubjectPicker = subjectOptions.length > 0;
-  const isImmediateSingle = Boolean(singleProps && singleProps.commitMode === 'immediate' && !hasSubjectPicker);
   const requiresConfirm = Boolean(multipleProps || singleProps?.commitMode === 'confirm' || hasSubjectPicker);
   const selectedClassCount = multipleProps ? draftClassIds.size : draftSingleClassId ? 1 : 0;
   const orderedSubjectValues = useMemo(() => {
@@ -203,8 +208,8 @@ const MobileClassPickerSheet: React.FC<MobileClassPickerSheetProps> = props => {
       open={open}
       title={title}
       onClose={onClose}
-      size={isImmediateSingle ? 'tall' : 'content'}
-      flushContentBottom={isImmediateSingle && !showClearButton}
+      size="content"
+      contentLayout="fill"
       contentInset="none"
       footerDivider={false}
       showHandle={false}
@@ -233,9 +238,8 @@ const MobileClassPickerSheet: React.FC<MobileClassPickerSheetProps> = props => {
         </div>
       ) : undefined}
     >
-      <div className={`flex min-h-0 flex-col ${isImmediateSingle ? 'h-full' : ''}`}>
-        {/* 兼容旧断言：hasSubjectPicker ? 'h-[280px]' : 'h-[min(420px,56dvh)]'；实际高度提升至 600px。 */}
-        <div className={isImmediateSingle ? 'min-h-0 flex-1' : `${hasSubjectPicker ? 'h-[384px]' : 'h-[min(600px,78dvh)]'} shrink-0`}>
+      <div className="grid min-h-0 flex-1 grid-rows-[1fr_auto]">
+        <div className="min-h-0">
           {multipleProps ? (
             <MobileClassCascadePicker
               groups={groups}
@@ -271,8 +275,8 @@ const MobileClassPickerSheet: React.FC<MobileClassPickerSheetProps> = props => {
         </div>
 
         {hasSubjectPicker && (
-          <section className="shrink-0 px-4 pb-1 pt-4" aria-labelledby="mobile-class-picker-subject-label">
-            <h3 id="mobile-class-picker-subject-label" className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{subjectLabel}</h3>
+          <section className="px-4 pb-1 pt-4" aria-labelledby="mobile-class-picker-subject-label">
+            <h3 id="mobile-class-picker-subject-label" className="text-[length:var(--tm-font-size-form-group-label)] font-semibold text-[var(--tm-text-primary)]">{subjectLabel}</h3>
             <div className="mt-2 grid grid-cols-4 gap-2">
               {subjectOptions.map(option => {
                 const selected = draftSubjectValues.has(option.value);

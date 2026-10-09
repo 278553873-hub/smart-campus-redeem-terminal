@@ -20,6 +20,7 @@ import RewardVerificationView from './views/reward-verification/RewardVerificati
 import ClassExchangeRecordView from './views/ClassExchangeRecordView';
 import MedalIssuanceView from './views/MedalIssuanceView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
+import { applyFaceAvatars, seedClassFaceLibrary, useStudentFaceLibrary } from './domain/studentFaceLibrary';
 import { BankPasswordView } from './views/bank-password/BankPasswordView';
 import HomeworkEntryView from './views/HomeworkEntryView';
 import HomeworkBatchImportView from './views/HomeworkBatchImportView';
@@ -1000,6 +1001,9 @@ const App: React.FC<MobileAppProps> = ({
         navigateTo('student_detail');
     };
 
+    // 订阅共享人脸库：老师录入人脸后，所有展示学生头像的页面一起刷新。
+    useStudentFaceLibrary();
+
     const getMergedStudentsForClass = (classId: string) => {
         const sourceClassInfo = MOCK_CLASSES.find(classInfo => classInfo.id === classId);
         const currentClassInfo = classes.find(classInfo => classInfo.id === classId) ?? sourceClassInfo;
@@ -1019,7 +1023,8 @@ const App: React.FC<MobileAppProps> = ({
         const sourceStudentIds = new Set(sourceStudents.map(student => student.id));
         const addedStudents = (studentAdditionsByClassId[classId] ?? [])
             .filter(student => !sourceStudentIds.has(student.id));
-        return [...sourceStudents, ...addedStudents].map(student => {
+        // 演示规则：班级首次取用时预置人脸库，并把已录入的采集照合并到学生头像上。
+        const mergedStudents = [...sourceStudents, ...addedStudents].map(student => {
             const mergedStudent = studentOverrides[student.id] ?? student;
             if (!sourceClassInfo || !currentClassInfo || mergedStudent.class !== sourceClassInfo.name) return mergedStudent;
             return {
@@ -1028,6 +1033,8 @@ const App: React.FC<MobileAppProps> = ({
                 grade: currentClassInfo.gradeLevel,
             };
         });
+        seedClassFaceLibrary(classId, mergedStudents);
+        return applyFaceAvatars(mergedStudents);
     };
 
     const coinLedgerToday = useMemo(() => new Date(), []);
@@ -1783,7 +1790,7 @@ const App: React.FC<MobileAppProps> = ({
             case 'reward_verification': return '班级奖励兑换';
             case 'class_exchange_records': return '成长币记录';
             case 'medal_issuance': return '颁发奖章';
-            case 'face_update': return '更新人脸数据';
+            case 'face_update': return '更新人脸';
             case 'bank_password': return '设置兑换密码';
             case 'homework_entry': {
                 const classInfo = classes.find(c => c.id === selectedClassId);

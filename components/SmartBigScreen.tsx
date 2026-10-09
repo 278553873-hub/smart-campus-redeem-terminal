@@ -513,8 +513,8 @@ const StudentCard: React.FC<{
     <div
       onClick={onClick}
       aria-label={ariaLabel}
-      className={`relative flex h-auto w-auto flex-col items-center justify-center rounded-lg border-2 bg-white px-1 pb-1 pt-0.5 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
-      style={{ width: layout.width, height: cardHeight }}
+      className={`relative flex h-auto w-auto flex-col items-center justify-center rounded-lg border-2 bg-white px-1 pb-1 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+      style={{ width: layout.width, height: cardHeight, paddingTop: layout.cardPaddingTop }}
     >
       {isSelectable && (
         <div className={`absolute right-0 top-0 z-20 flex items-center justify-center rounded-md border shadow-sm transition-all ${selected ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-200 bg-white/90 text-slate-300'}`} style={{ width: Math.max(20, Math.round(layout.rosterFontSize * 2)), height: Math.max(20, Math.round(layout.rosterFontSize * 2)) }}>

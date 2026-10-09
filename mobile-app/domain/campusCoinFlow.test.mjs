@@ -7,23 +7,23 @@ import {
 
 assert.equal(
   formatGrowthAwardDetail({ type: 'weekly', startDate: '2026-08-17', endDate: '2026-08-23' }),
-  '8月17日-8月23日奖励',
-  '同月周奖励应完整展示两端月日，不显示年份。',
+  '每周奖励（8月17日-8月23日）',
+  '同月周奖励应标明每周发放并完整展示两端月日，不显示年份。',
 );
 assert.equal(
   formatGrowthAwardDetail({ type: 'weekly', startDate: '2026-08-31', endDate: '2026-09-06' }),
-  '8月31日-9月6日奖励',
+  '每周奖励（8月31日-9月6日）',
   '跨月周奖励应完整展示两端月份。',
 );
 assert.equal(
   formatGrowthAwardDetail({ type: 'weekly', startDate: '2025-12-29', endDate: '2026-01-04' }),
-  '2025年12月29日-2026年1月4日奖励',
+  '每周奖励（2025年12月29日-2026年1月4日）',
   '跨年周奖励应完整展示两端年份。',
 );
 assert.equal(
   formatGrowthAwardDetail({ type: 'monthly', month: '2026-08' }),
-  '8月奖励',
-  '月奖励已有年份筛选，应只展示月份。',
+  '每月奖励（8月）',
+  '月奖励应标明每月发放，且已有年份筛选所以只展示月份。',
 );
 assert.equal(
   getCampusCoinIssueDetail({

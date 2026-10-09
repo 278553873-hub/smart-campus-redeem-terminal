@@ -21,8 +21,8 @@ assert.match(studentCardSource, /showLevelProgress=\{showLevelIcons\}/, '分值�
 assert.match(studentCardSource, /layout\.fullHeight[\s\S]*layout\.countsHeight[\s\S]*layout\.identityOnlyHeight/, '学生卡片应根据可见信息使用三档高度');
 assert.match(studentCardSource, /displaySettings\.showEvaluation && displaySettings\.showPraise/, '关闭加扣分总开关后学生卡片不应继续展示加分');
 assert.match(studentCardSource, /displaySettings\.showEvaluation && displaySettings\.showCriticism/, '关闭加扣分总开关后学生卡片不应继续展示扣分');
-assert.match(studentCardSource, /style=\{\{ width: layout\.width, height: cardHeight \}\}/, '学生卡片宽高应来自统一课堂展示配置');
-assert.match(screenSource, /px-1 pb-1 pt-0\.5/, '学生卡片应使用紧凑外边距，把空间留给身份信息与内容间距');
+assert.match(studentCardSource, /style=\{\{ width: layout\.width, height: cardHeight, paddingTop: layout\.cardPaddingTop \}\}/, '学生卡片宽高与顶部留白应来自统一课堂展示配置');
+assert.match(screenSource, /px-1 pb-1/, '学生卡片应使用紧凑外边距，把空间留给身份信息与内容间距');
 assert.match(screenSource, /gap: `\$\{deckGap\}px`/, '学生单元间距应来自当前展示档位');
 assert.match(screenSource, /rounded-lg border-2 bg-white/, '学生单元应保留清晰的白色卡片形状');
 assert.match(screenSource, /updateStudentPerformance\(targetStudentIds, scoreChange\)/, '点选评价应立即更新目标学生表现');
@@ -62,6 +62,9 @@ assert.match(displaySource, /Array\.from\(\{ length: level\.iconCount \}/, '课�
 assert.match(displaySource, /level\.iconCount === 0[\s\S]*?src=\{sproutLevelIcon\}/, '课堂大屏未点亮等级图标时应展示一株小豆苗');
 assert.match(displaySource, /style=\{\{ width: iconSize, height: iconSize \}\}/, '紧凑等级图标应随展示档位动态放大');
 assert.match(displaySource, /bg-blue-50 text-blue-700/, '等级总分应使用浅蓝底色与深蓝文字');
+assert.match(displaySource, /ClassroomStudentLevelScore[\s\S]*?\[text-box-trim:trim-both\][\s\S]*?\[text-box-edge:cap_alphabetic\]/, '等级分值色片内的数字应按字面高上下居中，避免字体回退后整体偏上或偏下');
+assert.match(performanceValuesSource, /\[text-box-trim:trim-both\][\s\S]*?\[text-box-edge:cap_alphabetic\]/, '加扣分色片内的数字应与等级分值共用同一套上下居中处理');
+assert.match(rosterBadgeSource, /\[text-box-trim:trim-both\][\s\S]*?\[text-box-edge:cap_alphabetic\]/, '学号色片内的数字应与等级分值共用同一套上下居中处理');
 assert.match(displaySource, /compact \? 'h-5 min-w-20 gap-0'/, '四枚紧凑等级图标应保持居中并与学号留出间隙');
 assert.doesNotMatch(displaySource, /×\{level\.iconCount\}/, '等级图标不应使用乘号加数量的缩写方式');
 assert.match(rosterBadgeSource, /trailingDigits\.slice\(-2\)\.padStart\(2, '0'\)/, '课堂大屏编号组件应只展示学号后两位');
@@ -85,9 +88,23 @@ assert.match(studentCardSource, /flex h-\[18px\] w-full shrink-0 items-center ju
 assert.match(screenSource, /layout\.levelAvatarGap[\s\S]*marginTop: layout\.avatarCountGap[\s\S]*marginTop: layout\.countIdentityGap/, '等级、头像、加扣分和身份行应使用三段独立档位间距');
 assert.doesNotMatch(screenSource, /w-\[112px\].*bg-white\/95/, '正负向统计不应使用遮挡头像的白色背景条');
 
+const studentCardLayouts = [...classroomDisplaySource.matchAll(/studentCard: \{([\s\S]*?)\n    \},/g)].map(match => match[1]);
+assert.equal(studentCardLayouts.length, 3, '应读取到标准、课堂、远距三档学生卡片配置');
+
+for (const layout of studentCardLayouts) {
+  const readNumber = (token) => Number(layout.match(new RegExp(`${token}: (\\d+)`))[1]);
+  const avatarSize = readNumber('avatarSize');
+  const avatarInset = Math.max(4, Math.round(avatarSize * 0.088));
+  assert.equal(
+    readNumber('levelAvatarGap') + avatarInset,
+    readNumber('cardPaddingTop') + 2,
+    '色片到卡片上边缘的留白应等于色片到头像圆形最高点的留白（卡片边框按 2px 计入上边缘）',
+  );
+}
+
 for (const expectedScale of [
-  ['小档', 'countFontSize: 11', 'rosterFontSize: 15', 'rosterWidth: 24', 'fullHeight: 152'],
-  ['标准档', 'countFontSize: 13', 'rosterFontSize: 17', 'rosterWidth: 26', 'fullHeight: 180'],
+  ['小档', 'countFontSize: 11', 'rosterFontSize: 15', 'rosterWidth: 24', 'fullHeight: 155'],
+  ['标准档', 'countFontSize: 13', 'rosterFontSize: 17', 'rosterWidth: 26', 'fullHeight: 179'],
   ['大档', 'countFontSize: 15', 'rosterFontSize: 19', 'rosterWidth: 30', 'fullHeight: 204'],
 ]) {
   const [label, ...tokens] = expectedScale;

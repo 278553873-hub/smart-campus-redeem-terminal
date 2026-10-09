@@ -54,6 +54,14 @@ export const COIN_CLEAR_DETAIL = {
   bank: `已存${GROWTH_COIN_TERMS.name}`,
 } as const;
 
+/** 一次清空只落一条学生流水，明细里并列写清这次清掉了哪部分资产（可用 / 可用、已存）。 */
+export const formatCoinClearDetail = (share: CampusCoinLedgerShare) => {
+  const parts: string[] = [];
+  if (share.amount > 0) parts.push(COIN_CLEAR_DETAIL.available);
+  if ((share.bankAmount ?? 0) > 0) parts.push(COIN_CLEAR_DETAIL.bank);
+  return parts.join('、');
+};
+
 /**
  * 一次兑换或一次清空操作 = 一条成长币记录。
  * 老师多选学生一起兑换同一件商品时，多名学生共享同一条记录，各自扣减金额放在 shares 里，
@@ -223,7 +231,7 @@ export const formatCoinLedgerFullTime = (time: string) => {
 
 /**
  * 学生侧成长币明细：把批次记录展开成该学生自己的支出。
- * 兑换只落一条班级兑换；清空按口径拆成「清空可用」和「清空已存」两条，学生和家长能看清钱从哪来、到哪去。
+ * 一次兑换落一条班级兑换，一次清空也落一条「手动清空」（可用与已存合并计一条，明细写清清掉了哪部分资产）。
  * 已撤回的记录不产生支出，因此不进学生流水。
  */
 export const expandCoinLedgerForStudent = (
@@ -245,28 +253,15 @@ export const expandCoinLedgerForStudent = (
             time: entry.time,
           }];
         }
-        const bankAmount = share.bankAmount ?? 0;
-        const records: CampusCoinConsumeRecord[] = [];
-        if (share.amount > 0) {
-          records.push({
-            id: `${entry.id}-${studentId}-available`,
-            category: 'manual_clear',
-            productName: COIN_CLEAR_DETAIL.available,
-            quantity: 1,
-            amount: share.amount,
-            time: entry.time,
-          });
-        }
-        if (bankAmount > 0) {
-          records.push({
-            id: `${entry.id}-${studentId}-bank`,
-            category: 'bank_clear',
-            productName: COIN_CLEAR_DETAIL.bank,
-            quantity: 1,
-            amount: bankAmount,
-            time: entry.time,
-          });
-        }
-        return records;
+        const clearedTotal = getCoinLedgerShareTotal(share);
+        if (clearedTotal <= 0) return [];
+        return [{
+          id: `${entry.id}-${studentId}`,
+          category: 'manual_clear' as const,
+          productName: formatCoinClearDetail(share),
+          quantity: 1,
+          amount: clearedTotal,
+          time: entry.time,
+        }];
       }))
 );

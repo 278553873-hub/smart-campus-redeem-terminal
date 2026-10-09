@@ -7,6 +7,7 @@ const tokens = read('../styles/teacherMobileTokens.ts');
 const app = read('../App.tsx');
 const batchEdit = read('./StudentBatchEditView.tsx');
 const inviteFlow = read('../components/class/ClassInviteFlow.tsx');
+const wechatShareFlow = read('../components/class/WechatInviteShareFlow.tsx');
 const bottomSheet = read('../components/ui/MobileBottomSheet.tsx');
 const childViews = [
   read('./reward-verification/RewardVerificationView.tsx'),
@@ -52,7 +53,10 @@ assert.match(classList, /text-\[var\(--tm-brand-primary\)\][\s\S]*详情[\s\S]*<
 assert.match(classList, /items-baseline gap-\[var\(--tm-space-2\)\]/, '班级名称与详情应使用8像素 Token 间距并按文字基线对齐。');
 assert.doesNotMatch(classList, /mb-\[var\(--tm-space-4\)\] rounded-\[var\(--tm-radius-card\)\] bg-\[var\(--tm-bg-surface-soft\)\]/, '班级信息不应再被包进浅灰卡片。');
 assert.match(inviteFlow, /audience === 'teacher'/, '邀请方式应区分老师与家长。');
-assert.match(inviteFlow, /wechat-select/, '老师邀请应支持微信。');
+assert.match(inviteFlow, /<WechatInviteShareFlow/, '老师邀请应跳转到微信原生分享流程。');
+assert.match(inviteFlow, /<MobileBottomSheet open=\{open && !wechatShareOpen\}/, '跳转微信时不应同时停留在地邀请方式弹窗里。');
+assert.match(wechatShareFlow, /选择聊天/, '微信分享应还原微信「选择聊天」页。');
+assert.match(wechatShareFlow, /发送给/, '微信分享应还原微信「发送给」半屏。');
 assert.match(inviteFlow, /二维码邀请/, '邀请应支持二维码。');
 assert.match(inviteFlow, /通过链接邀请/, '邀请应支持链接。');
 assert.match(inviteFlow, /copyText\(inviteText\)/, '链接邀请应支持复制文案。');
