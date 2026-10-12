@@ -72,6 +72,8 @@ import {
 import ClassroomPerformanceValues from './classroom/ClassroomPerformanceValues';
 import ClassroomQuickActionDock from './classroom/ClassroomQuickActionDock';
 import ClassroomRosterBadge, { ClassroomFullStudentNumber } from './classroom/ClassroomRosterBadge';
+import ClassroomStudentCard from './classroom/ClassroomStudentCard';
+import ClassroomStudentSelectCard from './classroom/ClassroomStudentSelectCard';
 import { resolveStudentsBySpokenNumbers } from './classroom/classroomVoiceTargets.mjs';
 import {
   CLASSROOM_DISPLAY_MODE_OPTIONS,
@@ -434,133 +436,6 @@ const GroupDrawerBody: React.FC<{ children: React.ReactNode; layout?: ClassroomD
   <div className="min-h-full bg-white" style={{ padding: layout ? `${Math.round(layout.modal.bodyFontSize * 1.5)}px` : undefined }}>{children}</div>
 );
 
-const GroupMemberSelectCard: React.FC<{
-  student: StudentData;
-  selected: boolean;
-  onClick: () => void;
-  layout: ClassroomDisplayConfig['memberSelect'];
-}> = ({ student, selected, onClick, layout }) => (
-  <button
-    type="button"
-    aria-pressed={selected}
-    aria-label={`${student.name}，学号${student.studentNo}`}
-    onClick={onClick}
-    className={`relative flex min-h-[96px] min-w-0 flex-col items-center justify-start gap-2 rounded-lg border px-2 py-2 text-center transition-[transform,border-color,background-color,box-shadow] active:scale-[0.97] ${selected ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-slate-100 bg-white hover:border-blue-300 hover:bg-blue-50/40'}`}
-    style={{ minHeight: layout.minHeight, gap: layout.gap }}
-  >
-    <span className={`absolute right-2 top-2 flex items-center justify-center rounded-full border ${selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-transparent'}`} style={{ width: Math.max(20, Math.round(layout.nameFontSize * 1.7)), height: Math.max(20, Math.round(layout.nameFontSize * 1.7)) }} aria-hidden="true">
-      <Check size={Math.max(12, Math.round(layout.nameFontSize * 0.9))} strokeWidth={3} />
-    </span>
-    <img src={student.avatar} alt="" className="h-12 w-12 shrink-0 rounded-full bg-slate-100 object-cover" style={{ width: layout.avatarSize, height: layout.avatarSize }} decoding="async" />
-    <span className="flex w-full min-w-0 items-center justify-center gap-1" style={{ minHeight: Math.max(20, layout.studentNoFontSize + 4) }}>
-      <ClassroomRosterBadge studentNo={student.studentNo} fontSize={layout.studentNoFontSize} lineHeight={16} variant="select" ariaHidden />
-      <span className="min-w-0 truncate text-xs font-semibold leading-4 text-slate-700" style={{ fontSize: layout.nameFontSize }}>{student.name}</span>
-    </span>
-  </button>
-);
-
-const StudentCard: React.FC<{
-  student: StudentData;
-  performance: StudentPerformanceSummary;
-  levelNetScore?: number;
-  displaySettings?: StudentCardDisplaySettings;
-  selected?: boolean;
-  isSelectable?: boolean;
-  isFocused?: boolean;
-  isRolling?: boolean;
-  onClick?: () => void;
-  layout?: ClassroomDisplayConfig['studentCard'];
-}> = ({
-  student,
-  performance,
-  levelNetScore,
-  displaySettings = getStudentCardDisplaySettings(),
-  selected = false,
-  isSelectable = false,
-  isFocused = false,
-  isRolling = false,
-  onClick,
-  layout = getClassroomDisplayConfig('standard').studentCard,
-}) => {
-  const resolvedLevelNetScore = levelNetScore ?? performance.netScore;
-  const level = getStudentPerformanceLevel(resolvedLevelNetScore);
-  const showPraise = displaySettings.showEvaluation && displaySettings.showPraise;
-  const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;
-  const showLevelIcons = displaySettings.showLevel && displaySettings.levelForm === 'icon';
-  const showLevelScore = displaySettings.showLevel && displaySettings.levelForm === 'score';
-  const visiblePerformanceLabels = [
-    showPraise
-      ? `累计表扬${performance.praiseScore}分`
-      : '',
-    showCriticism
-      ? `累计待改进${performance.criticismScore}分`
-      : '',
-  ].filter(Boolean);
-  const ariaLabel = [
-    `${student.name}，学号${student.studentNo}`,
-    displaySettings.showLevel ? `等级分值${resolvedLevelNetScore}分` : '',
-    ...visiblePerformanceLabels,
-  ].filter(Boolean).join('，');
-  const hasVisibleValues = showPraise || showCriticism;
-  const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(hasVisibleValues);
-  const cardHeight = visiblePerformanceRowCount === 2
-    ? layout.fullHeight
-    : visiblePerformanceRowCount === 1
-      ? layout.countsHeight
-      : layout.identityOnlyHeight;
-
-  return (
-    <div
-      onClick={onClick}
-      aria-label={ariaLabel}
-      className={`relative flex h-auto w-auto flex-col items-center justify-center rounded-lg border-2 bg-white px-1 pb-1 shadow-[0_6px_18px_rgba(50,85,120,0.07)] transition-[transform,border-color,background-color,box-shadow] ${isFocused ? 'border-blue-400 bg-blue-50/80 shadow-md' : 'border-white hover:border-blue-300 hover:shadow-[0_10px_24px_rgba(50,85,120,0.12)]'} ${selected ? 'z-10 border-blue-500 bg-blue-50 shadow-md' : ''} ${isRolling ? 'animate-random-card-shuffle' : ''} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
-      style={{ width: layout.width, height: cardHeight, paddingTop: layout.cardPaddingTop }}
-    >
-      {isSelectable && (
-        <div className={`absolute right-0 top-0 z-20 flex items-center justify-center rounded-md border shadow-sm transition-all ${selected ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-200 bg-white/90 text-slate-300'}`} style={{ width: Math.max(20, Math.round(layout.rosterFontSize * 2)), height: Math.max(20, Math.round(layout.rosterFontSize * 2)) }}>
-          <Check size={Math.max(12, Math.round(layout.rosterFontSize * 0.9))} strokeWidth={3} />
-        </div>
-      )}
-      {displaySettings.showLevel && (
-        <div className="flex w-full shrink-0 items-center justify-center" style={{ height: layout.levelHeight }}>
-          {showLevelIcons && <ClassroomStudentLevelIcons level={level} compact iconSize={layout.levelIconSize} />}
-          {showLevelScore && (
-            <ClassroomStudentLevelScore netScore={resolvedLevelNetScore} fontSize={layout.levelScoreFontSize} height={layout.levelHeight} />
-          )}
-        </div>
-      )}
-      <div className="flex w-full shrink-0 items-center justify-center" style={{ height: layout.avatarSize, marginTop: displaySettings.showLevel ? layout.levelAvatarGap : 0 }}>
-        <ClassroomStudentAvatar
-          name={student.name}
-          avatar={student.avatar}
-          level={level}
-          compact
-          size={layout.avatarSize}
-          showLevelProgress={showLevelIcons}
-        />
-      </div>
-      {hasVisibleValues && (
-        <div className="flex h-[18px] w-full shrink-0 items-center justify-center" style={{ height: layout.countHeight, marginTop: layout.avatarCountGap }}>
-          <ClassroomPerformanceValues
-            summary={performance}
-            showPraise={showPraise}
-            showCriticism={showCriticism}
-            fontSize={layout.countFontSize}
-            itemHeight={layout.countItemHeight}
-            itemMinWidth={layout.countItemMinWidth}
-            gap={layout.countGap}
-          />
-        </div>
-      )}
-      <div className="flex h-[18px] w-full shrink-0 items-center justify-center text-center" style={{ height: layout.identityHeight, marginTop: layout.countIdentityGap }}>
-        <div className="inline-flex min-w-0 items-center justify-center gap-1" style={{ maxWidth: layout.width - 8 }}>
-          <ClassroomRosterBadge studentNo={student.studentNo} fontSize={layout.rosterFontSize} width={layout.rosterWidth} height={layout.rosterHeight} />
-          <h3 className={`min-w-0 truncate font-semibold tracking-normal text-slate-800 ${isRolling ? 'opacity-80' : ''}`} style={{ maxWidth: layout.width - 8 - layout.rosterWidth - 4, fontSize: layout.nameFontSize, lineHeight: `${layout.nameLineHeight}px` }}>{student.name}</h3>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = false }) => {
   const [currentClass, setCurrentClass] = useState(CLASSES[0]);
@@ -571,7 +446,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [classroomDisplayMode, setClassroomDisplayMode] = useState<ClassroomDisplayMode>('auto');
-  const [studentCardDisplaySettings, setStudentCardDisplaySettings] = useState<StudentCardDisplaySettings>(() => getStudentCardDisplaySettings());
+  const [studentCardDisplaySettings, setStudentCardDisplaySettings] = useState<ClassroomStudentCardDisplaySettings>(() => getStudentCardDisplaySettings());
   const [groupCardDisplaySettings, setGroupCardDisplaySettings] = useState<GroupCardDisplaySettings>(() => getGroupCardDisplaySettings());
   const activeCardDisplaySettings = viewMode === 'group' ? groupCardDisplaySettings : studentCardDisplaySettings;
   const activeCardContentMode = activeCardDisplaySettings.showPraise && activeCardDisplaySettings.showCriticism
@@ -2218,7 +2093,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                     const isFocused = feedbackEffect?.id === student.id && feedbackEffect.type === 'negative';
                     const performance = getStudentPerformance(student);
                     return (
-                      <StudentCard
+                      <ClassroomStudentCard
                         key={student.id}
                         student={student}
                         performance={performance}
@@ -2695,7 +2570,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                 if (!student) return null;
                 const performance = getStudentPerformance(student);
                 return (
-                  <StudentCard
+                  <ClassroomStudentCard
                     key={id}
                     student={student}
                     performance={performance}
@@ -2771,7 +2646,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                       }}
                     >
                       {section.students.map(student => (
-                        <GroupMemberSelectCard
+                        <ClassroomStudentSelectCard
                           key={student.id}
                           student={student}
                           selected={groupDraftMemberIds.has(student.id)}
@@ -3002,7 +2877,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                         {(viewMode === 'student' ? student : group) && (
                           <div className="absolute inset-0 flex items-center justify-center animate-in fade-in duration-300 z-10" style={{ padding: classroomDisplay.randomPicker.slotPadding }}>
                             {viewMode === 'student' ? (
-                              <StudentCard 
+                              <ClassroomStudentCard 
                                 student={student!} 
                                 performance={getStudentPerformance(student!)}
                                 levelNetScore={getStudentLevelScore(student!, getStudentPerformance(student!))}

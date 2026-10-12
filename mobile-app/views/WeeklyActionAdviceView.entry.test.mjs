@@ -5,7 +5,7 @@ const dataSource = fs.readFileSync(new URL('../data/weeklyActionAdvice.ts', impo
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const assistantSource = fs.readFileSync(new URL('./AiHeadteacherAssistantV2View.tsx', import.meta.url), 'utf8');
 const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
-const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_本周行动建议_内容生成提示词.md', import.meta.url), 'utf8');
+const promptSource = fs.readFileSync(new URL('../../prompt/student/班主任助理-周报/班主任周报.md', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const cardsSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportCards.tsx', import.meta.url), 'utf8');
 const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
@@ -82,19 +82,19 @@ forbidText(viewSource, 'AssistantReportFooter', '本周行动建议底部不应�
 requireText(assistantSource, '本周学生评价洞察与跟进建议', '统一班主任助理应以单行内容概括进入本周行动建议。');
 requireText(promptSource, '上一个完整自然周', '提示词应固定上一个完整自然周。');
 forbidText(promptSource, 'data_window_weeks', '提示词不应继续传递自适应周数。');
-requireText(promptSource, '不发送本周记录或更早历史记录', '提示词应禁止混入本周和更早数据。');
-requireText(promptSource, '【教师评价洞察】', '提示词应独立定义教师评价洞察。');
-requireText(promptSource, '不设置固定洞察条数上限', '教师评价洞察不应限制为最多2条。');
-requireText(promptSource, '只写评价次数、占比、正负向数量、覆盖人数或排名不构成洞察', '提示词应禁止把统计表象直接作为教师洞察。');
-requireText(promptSource, '原始评价事件数', '提示词应使用原始评价事件衡量教师参与度。');
-requireText(promptSource, '学生明细记录数', '提示词应区分全班评价展开后的学生明细。');
-requireText(promptSource, 'teacher_evaluation_statistics_json', '提示词应接收后端教师评价结构化统计。');
-requireText(promptSource, 'teacher_names', '评价洞察应返回涉及教师。');
-requireText(promptSource, 'insight_type', '评价洞察应返回洞察类型。');
-requireText(promptSource, 'finding', '评价洞察应返回模式判断。');
-requireText(promptSource, 'evidence', '评价洞察应返回明细证据。');
-requireText(promptSource, 'implication', '评价洞察应返回班级意义或边界。');
-forbidText(promptSource, 'evaluation_insights 最多2条', '教师评价洞察不应保留旧的2条上限。');
+requireText(promptSource, '不读取当前周补录、更早周期、其他班级、年级或学校数据', '提示词应禁止混入本周和更早数据。');
+requireText(promptSource, '一次多人或全班评价只算一次评价事件，展开的明细条数不得当作多次评价', '提示词应区分原始评价事件与学生明细。');
+requireText(promptSource, '原始评价事件数', '提示词应使用原始评价事件衡量参与度。');
+requireText(promptSource, '学生明细数', '提示词应区分全班评价展开后的学生明细。');
+requireText(promptSource, '次数、分数、正负向标签、排名、单条普通表扬或一次全班评价，不足以单独形成模式结论', '提示词应禁止把统计表象直接作为洞察。');
+for (const section of ['本周重点行动', '需要关注的学生', '班级信号', '评价视角']) {
+  requireText(promptSource, section, '提示词应固定输出板块：' + section);
+}
+requireText(promptSource, '每个 item 只能包含以下五个字符串字段', '提示词应固定 item 的五个字段。');
+requireText(promptSource, 'items 共 4 至 12 条', '提示词应约束 items 条数区间。');
+requireText(promptSource, 'summary 只概括 items 已支持的事实或数据限制', '提示词应约束 summary 只能概括已被 items 支持的事实。');
+requireText(promptSource, '四条 evidence 均为', '空数据时 evidence 必须为空字符串。');
+requireText(promptSource, '具体执行动作只放在“本周重点行动”', '执行动作只能出现在本周重点行动。');
 requireText(prdSource, '不是教师排行榜或教师考核', 'PRD 应明确教师评价洞察的使用边界。');
 requireText(prdSource, '评价参与度统一使用原始评价事件数', 'PRD 应明确教师参与度统计口径。');
 requireText(dataSource, 'export interface TeacherEvaluationInsight', '演示数据应使用结构化教师评价洞察。');
@@ -103,13 +103,13 @@ requireText(dataSource, "insightType: 'orientation'", '演示内容应包含鼓�
 requireText(dataSource, "insightType: 'target_scope'", '演示内容应包含评价对象粒度洞察。');
 requireText(adapterSource, 'report.content.evaluationInsights.map', '适配层应将结构化教师评价洞察转换为统一卡片内容。');
 
-for (const framework of ['学生投入三维框架', '控制-价值', '自我决定理论', '挑战-能力匹配框架', '功能性行为评估框架']) {
-  requireText(promptSource, framework, `生成提示词应写明研究框架：${framework}`);
+for (const framework of ['学生投入三维框架', '控制-价值', '自我决定理论', '挑战-能力匹配', '功能性行为评估']) {
+  requireText(prdSource, framework, `PRD 应写明备选解释框架：${framework}`);
 }
-requireText(promptSource, '命中德育指标不等于“德育出了问题”', '提示词应区分指标分类和原因诊断。');
+requireText(prdSource, '命中德育指标不等于“德育出了问题”', 'PRD 应区分指标分类和原因诊断。');
 requireText(prdSource, '记录数量和学生覆盖率同时达到最低要求', 'PRD 应只保留记录量和覆盖率门槛。');
 requireText(prdSource, '允许老师集中补录，不检查活跃记录天数', 'PRD 应允许老师集中补录。');
-requireText(prdSource, '学生洞察不设置独立的报告生成门槛', 'PRD 不应为学生洞察增加额外生成门槛。');
+requireText(prdSource, '需要关注的学生不设置独立的报告生成门槛', 'PRD 不应为需要关注的学生增加额外生成门槛。');
 requireText(prdSource, '系统不自动生成', 'PRD 应明确下周仍需老师主动生成。');
 
 console.log('WeeklyActionAdviceView entry assertions passed');

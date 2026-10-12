@@ -9,6 +9,7 @@ const batchEdit = read('./StudentBatchEditView.tsx');
 const inviteFlow = read('../components/class/ClassInviteFlow.tsx');
 const wechatShareFlow = read('../components/class/WechatInviteShareFlow.tsx');
 const bottomSheet = read('../components/ui/MobileBottomSheet.tsx');
+const studentHorizontalCard = read('../components/student/StudentHorizontalCard.tsx');
 const childViews = [
   read('./reward-verification/RewardVerificationView.tsx'),
   read('./face-update/FaceUpdateView.tsx'),
@@ -71,12 +72,14 @@ assert.match(bottomSheet, /safe-area-inset-bottom/, '公共底部抽屉应兼容
 
 for (const source of childViews) {
   assert.match(source, /--tm-/, '更多操作子页面必须使用教师端设计 Token。');
-  assert.match(source, /--tm-border-subtle/, '更多操作子页面普通边框必须使用浅边框 Token。');
+  assert.doesNotMatch(source, /border-(?:solid )?border-\[var\(--tm-(?!border-subtle)/, '更多操作子页面自绘边框必须使用浅边框 Token。');
   assert.doesNotMatch(source, /MOCK_STUDENTS_CLASS_1/, '更多操作子页面不得固定读取一班学生。');
   assert.doesNotMatch(source, /(?:bg|text|border|shadow)-(?:blue|indigo|violet|cyan)-/, '更多操作子页面不得残留旧蓝紫色。');
   assert.doesNotMatch(source, /#[0-9A-Fa-f]{3,8}|rgba\(/, '更多操作子页面不得硬编码颜色。');
 }
 
+assert.match(studentHorizontalCard, /--tm-/, '更多操作子页面共用的行卡片必须使用教师端设计 Token。');
+assert.match(studentHorizontalCard, /border-\[var\(--tm-border-subtle\)\]/, '更多操作子页面共用的行卡片普通边框必须使用浅边框 Token。');
 assert.match(app, /<RewardVerificationView[\s\S]*students=\{getMergedStudentsForClass\(selectedClassInfo\.id\)/, '奖励页应读取当前班级学生。');
 assert.match(app, /<FaceUpdateView[\s\S]*students=\{getMergedStudentsForClass\(selectedClassInfo\.id\)/, '人脸页应读取当前班级学生。');
 assert.match(app, /<BankPasswordView[\s\S]*students=\{getMergedStudentsForClass\(selectedClassInfo\.id\)/, '密码页应读取当前班级学生。');

@@ -3,12 +3,12 @@ import type { Student, StudentCardDisplaySettings } from '../../types';
 import type { StudentPerformanceSummary } from '../../domain/studentPerformance';
 import StudentRosterCard from './StudentRosterCard';
 import StudentCompactSelectItem from './StudentCompactSelectItem';
+import StudentHorizontalCard from './StudentHorizontalCard';
 
-export type StudentCardVariant = 'full' | 'compact';
+export type StudentCardVariant = 'full' | 'compact' | 'horizontal';
 
 interface StudentCardBaseProps {
   student: Student;
-  onClick: () => void;
 }
 
 export interface StudentCardFullProps extends StudentCardBaseProps {
@@ -21,6 +21,7 @@ export interface StudentCardFullProps extends StudentCardBaseProps {
   selected: boolean;
   selectionStatus?: string;
   contextLabel?: string;
+  onClick: () => void;
 }
 
 export interface StudentCardCompactProps extends StudentCardBaseProps {
@@ -29,13 +30,21 @@ export interface StudentCardCompactProps extends StudentCardBaseProps {
   selectionDescription?: string;
   secondaryLabel?: string;
   showRosterNumber?: boolean;
+  onClick: () => void;
 }
 
-export type StudentCardProps = StudentCardFullProps | StudentCardCompactProps;
+export interface StudentCardHorizontalProps extends StudentCardBaseProps {
+  variant: 'horizontal';
+  avatarSrc?: string;
+  action?: React.ReactNode;
+}
+
+export type StudentCardProps = StudentCardFullProps | StudentCardCompactProps | StudentCardHorizontalProps;
 
 /**
  * 教师手机端统一学生卡片入口。
- * full 对应班级列表与小组详情中的完整信息卡片；compact 对应分组、选人等弹窗中的轻量选择卡片。
+ * full 对应班级列表与小组详情中的完整信息卡片；compact 对应分组、选人等弹窗中的轻量选择卡片；
+ * horizontal 对应更新人脸等需要逐生操作的横版行卡片。
  */
 const StudentCard: React.FC<StudentCardProps> = props => {
   if (props.variant === 'full') {
@@ -55,14 +64,24 @@ const StudentCard: React.FC<StudentCardProps> = props => {
     );
   }
 
+  if (props.variant === 'compact') {
+    return (
+      <StudentCompactSelectItem
+        student={props.student}
+        selected={props.selected}
+        selectionDescription={props.selectionDescription}
+        secondaryLabel={props.secondaryLabel}
+        showRosterNumber={props.showRosterNumber}
+        onClick={props.onClick}
+      />
+    );
+  }
+
   return (
-    <StudentCompactSelectItem
+    <StudentHorizontalCard
       student={props.student}
-      selected={props.selected}
-      selectionDescription={props.selectionDescription}
-      secondaryLabel={props.secondaryLabel}
-      showRosterNumber={props.showRosterNumber}
-      onClick={props.onClick}
+      avatarSrc={props.avatarSrc}
+      action={props.action}
     />
   );
 };

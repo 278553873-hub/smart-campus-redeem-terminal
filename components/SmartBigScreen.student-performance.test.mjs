@@ -6,10 +6,7 @@ const displaySource = readFileSync(new URL('./student-performance/ClassroomStude
 const performanceValuesSource = readFileSync(new URL('./classroom/ClassroomPerformanceValues.tsx', import.meta.url), 'utf8');
 const rosterBadgeSource = readFileSync(new URL('./classroom/ClassroomRosterBadge.tsx', import.meta.url), 'utf8');
 const classroomDisplaySource = readFileSync(new URL('../shared/classroomDisplay.ts', import.meta.url), 'utf8');
-const studentCardSource = screenSource.slice(
-  screenSource.indexOf('const StudentCard'),
-  screenSource.indexOf('const SmartBigScreen')
-);
+const studentCardSource = readFileSync(new URL('./classroom/ClassroomStudentCard.tsx', import.meta.url), 'utf8');
 
 assert.match(studentCardSource, /getStudentPerformanceLevel\(resolvedLevelNetScore\)/, '卡片等级应由所选统计范围内的净得分实时派生');
 assert.match(screenSource, /createDemoStudentLevelEvaluationRecords\(student, CURRENT_CLASSROOM_TERM\)/, '课堂大屏演示数据应提供本学期与历史评价记录');
@@ -22,9 +19,9 @@ assert.match(studentCardSource, /layout\.fullHeight[\s\S]*layout\.countsHeight[\
 assert.match(studentCardSource, /displaySettings\.showEvaluation && displaySettings\.showPraise/, '关闭加扣分总开关后学生卡片不应继续展示加分');
 assert.match(studentCardSource, /displaySettings\.showEvaluation && displaySettings\.showCriticism/, '关闭加扣分总开关后学生卡片不应继续展示扣分');
 assert.match(studentCardSource, /style=\{\{ width: layout\.width, height: cardHeight, paddingTop: layout\.cardPaddingTop \}\}/, '学生卡片宽高与顶部留白应来自统一课堂展示配置');
-assert.match(screenSource, /px-1 pb-1/, '学生卡片应使用紧凑外边距，把空间留给身份信息与内容间距');
+assert.match(studentCardSource, /px-1 pb-1/, '学生卡片应使用紧凑外边距，把空间留给身份信息与内容间距');
 assert.match(screenSource, /gap: `\$\{deckGap\}px`/, '学生单元间距应来自当前展示档位');
-assert.match(screenSource, /rounded-lg border-2 bg-white/, '学生单元应保留清晰的白色卡片形状');
+assert.match(studentCardSource, /rounded-lg border-2 bg-white/, '学生单元应保留清晰的白色卡片形状');
 assert.match(screenSource, /updateStudentPerformance\(targetStudentIds, scoreChange\)/, '点选评价应立即更新目标学生表现');
 assert.match(screenSource, /updateStudentPerformance\(targets\.studentIds, scoreChange\)/, '语音评价应立即更新识别到的学生表现');
 assert.match(screenSource, /updateStudentPerformance\(record\.studentIds, record\.scoreChange, 'revert'\)/, '撤销评价应同步恢复等级和次数');
@@ -45,7 +42,7 @@ assert.doesNotMatch(displaySource, /shadow-\[/, '头像外投影不应遮挡进�
 assert.doesNotMatch(displaySource, /Mars|Venus/, '性别图标不应继续叠放在头像进度环上');
 assert.match(studentCardSource, /isSelectable && \([\s\S]*?<Check/, '批量选择时学生卡片右上角应显示勾选控件');
 assert.doesNotMatch(studentCardSource, /Mars|Venus|student\.gender/, '学生卡片不应展示或朗读性别信息');
-assert.match(screenSource, /layout\.nameFontSize[\s\S]*?>\{student\.name\}<\/h3>/, '姓名应作为身份行主体相对卡片居中，并随展示档位放大');
+assert.match(studentCardSource, /layout\.nameFontSize[\s\S]*?>\{student\.name\}<\/h3>/, '姓名应作为身份行主体相对卡片居中，并随展示档位放大');
 assert.match(performanceValuesSource, /bg-emerald-50[\s\S]*text-emerald-700/, '加分数据应使用高对比度绿色轻色片');
 assert.match(performanceValuesSource, /bg-rose-50[\s\S]*text-rose-700/, '扣分数据应使用高对比度红色轻色片');
 assert.match(performanceValuesSource, /font-sans font-bold tabular-nums/, '学生和小组加扣分应统一使用系统无衬线字体和700字重');
@@ -77,7 +74,7 @@ assert.doesNotMatch(rosterBadgeSource, /学号\{studentNo\}/, '点评弹窗完�
 assert.match(rosterBadgeSource, /whitespace-nowrap/, '点评弹窗完整学号应保持单行显示');
 assert.match(screenSource, /order-3 flex basis-full justify-center md:order-2/, '窄窗口点评弹窗应将页签换到第二行，避免挤压完整学号');
 assert.match(screenSource, /whitespace-nowrap font-black leading-none tracking-tight text-slate-700/, '点评弹窗学生姓名应保持单行显示');
-assert.match(screenSource, /inline-flex min-w-0 items-center justify-center gap-1[\s\S]*?layout\.rosterFontSize[\s\S]*?layout\.rosterWidth[\s\S]*?layout\.nameFontSize[\s\S]*?>\{student\.name\}<\/h3>/, '两位学号与姓名应组成稳定宽度的居中身份组，并随档位调整字号');
+assert.match(studentCardSource, /inline-flex min-w-0 items-center justify-center gap-1[\s\S]*?layout\.rosterFontSize[\s\S]*?layout\.rosterWidth[\s\S]*?layout\.nameFontSize[\s\S]*?>\{student\.name\}<\/h3>/, '两位学号与姓名应组成稳定宽度的居中身份组，并随档位调整字号');
 assert.match(studentCardSource, /font-semibold[\s\S]*?layout\.nameFontSize[\s\S]*?>\{student\.name\}<\/h3>/, '课堂大屏姓名应使用统一配置字号，保持远距离可读且不过重');
 assert.match(screenSource, /resolveStudentsBySpokenNumbers\(normalized, students\)/, '语音评价应使用通用学号解析模块映射当前班级学生');
 assert.match(studentCardSource, /displaySettings\.showLevel && \([\s\S]*?flex w-full shrink-0 items-center justify-center[\s\S]*?\{showLevelIcons && <ClassroomStudentLevelIcons level=\{level\} compact iconSize=\{layout\.levelIconSize\} \/>\}/, '图标形式的等级图标应独占顶部并相对整张卡片居中');
@@ -85,8 +82,8 @@ assert.match(studentCardSource, /relative flex h-auto w-auto flex-col items-cent
 assert.match(studentCardSource, /marginTop: layout\.countIdentityGap[\s\S]*?inline-flex min-w-0 items-center justify-center gap-1[\s\S]*?>\{student\.name\}<\/h3>/, '学号与姓名应作为一个完整身份组，并通过档位间距与加扣分分层');
 assert.doesNotMatch(studentCardSource, /right-\[calc\(100%\+4px\)\]/, '学号不应再使用绝对定位，避免四字姓名时越出卡片');
 assert.match(studentCardSource, /flex h-\[18px\] w-full shrink-0 items-center justify-center/, '紧凑卡片的正负向统计应在头像下方独立成行');
-assert.match(screenSource, /layout\.levelAvatarGap[\s\S]*marginTop: layout\.avatarCountGap[\s\S]*marginTop: layout\.countIdentityGap/, '等级、头像、加扣分和身份行应使用三段独立档位间距');
-assert.doesNotMatch(screenSource, /w-\[112px\].*bg-white\/95/, '正负向统计不应使用遮挡头像的白色背景条');
+assert.match(studentCardSource, /layout\.levelAvatarGap[\s\S]*marginTop: layout\.avatarCountGap[\s\S]*marginTop: layout\.countIdentityGap/, '等级、头像、加扣分和身份行应使用三段独立档位间距');
+assert.doesNotMatch(studentCardSource, /w-\[112px\].*bg-white\/95/, '正负向统计不应使用遮挡头像的白色背景条');
 
 const studentCardLayouts = [...classroomDisplaySource.matchAll(/studentCard: \{([\s\S]*?)\n    \},/g)].map(match => match[1]);
 assert.equal(studentCardLayouts.length, 3, '应读取到标准、课堂、远距三档学生卡片配置');

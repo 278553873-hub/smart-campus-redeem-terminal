@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('./SmartBigScreen.tsx', import.meta.url), 'utf8');
 const performanceSource = readFileSync(new URL('./classroom/ClassroomPerformanceValues.tsx', import.meta.url), 'utf8');
+const selectCardSource = readFileSync(new URL('./classroom/ClassroomStudentSelectCard.tsx', import.meta.url), 'utf8');
 
 const requireText = (text, message) => assert.ok(source.includes(text), message);
 
@@ -40,8 +41,8 @@ requireText('height: classroomDisplay.groupCard.fullHeight', '添加小组入口
 requireText('bodyStyle={{ padding: 0 }}', '所有小组抽屉模式必须复用同一内容内边距规则');
 requireText('const GroupDrawerBody', '小组详情、新增、调整与设置应复用统一抽屉内容容器');
 requireText('groupEditorStudentSections', '关闭仅看未分组后，学生选择结果必须按现有小组组织');
-requireText('GroupMemberSelectCard', '添加小组应使用统一的头像、学号与姓名选择卡片');
-requireText('<ClassroomRosterBadge studentNo={student.studentNo} fontSize={layout.studentNoFontSize} lineHeight={16} variant="select" ariaHidden />', '分组选人卡片应复用统一两位编号组件');
+assert.match(source, /<ClassroomStudentSelectCard/, '添加小组应使用统一的头像、学号与姓名选择卡片');
+assert.ok(selectCardSource.includes('<ClassroomRosterBadge studentNo={student.studentNo} fontSize={layout.studentNoFontSize} lineHeight={16} variant="select" ariaHidden />'), '分组选人卡片应复用统一两位编号组件');
 requireText('gridTemplateColumns: `repeat(auto-fill, minmax(${classroomDisplay.memberSelect.columnMinWidth}px, 1fr))`', 'PC抽屉内学生卡片应根据档位保持稳定列宽');
 requireText('line-clamp-2 min-w-0 font-bold leading-5 text-slate-500', '小组卡片成员姓名应使用两行摘要，提升成员可见数量');
 requireText('layout.memberFontSize', '小组卡片成员字号应随课堂展示档位调整');

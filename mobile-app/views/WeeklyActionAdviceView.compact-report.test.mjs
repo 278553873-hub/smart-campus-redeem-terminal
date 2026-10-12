@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import ts from 'typescript';
 
-const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_本周行动建议_内容生成提示词.md', import.meta.url), 'utf8');
+const promptSource = fs.readFileSync(new URL('../../prompt/student/班主任助理-周报/班主任周报.md', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const dataSource = fs.readFileSync(new URL('../data/weeklyActionAdvice.ts', import.meta.url), 'utf8');
 const viewSource = fs.readFileSync(new URL('./WeeklyActionAdviceView.tsx', import.meta.url), 'utf8');
@@ -26,8 +26,8 @@ for (const required of ['<MobileBottomSheet', '查看依据', 'min-h-11', 'var(-
   requireText(cardsSource, required, `渐进披露交互缺少：${required}`);
 }
 requireText(contractSource, "cardOrder: ['actions', 'student_insights', 'class_insights', 'evaluation_insights']", '本周报告应优先展示行动卡片。');
-requireText(promptSource, '默认展开的报告正文控制在500至700个汉字以内', '提示词应约束默认展开正文长度。');
-requireText(prdSource, '默认展开的报告正文长度', 'PRD 应记录紧凑正文指标。');
+requireText(promptSource, '不超过 120 个汉字', '提示词应约束单个模块正文字数。');
+requireText(prdSource, '不超过 120 个汉字', 'PRD 应记录模块正文字数上限。');
 
 const sourceFile = ts.createSourceFile('weeklyActionAdvice.ts', dataSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
 let reportContent;

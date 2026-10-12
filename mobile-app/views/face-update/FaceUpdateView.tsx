@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Camera, ChevronLeft, Image, UserRound } from 'lucide-react';
+import { Camera, ChevronLeft, Image } from 'lucide-react';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
+import StudentHorizontalCard from '../../components/student/StudentHorizontalCard';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import CompactSegmentedControl, { type CompactSegmentedControlItem } from '../../components/ui/CompactSegmentedControl';
 import { ASSETS } from '../../assets/images';
@@ -58,30 +59,24 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace
   const renderStudentRow = (student: FaceStudent) => {
     const faceImageSrc = resolveStudentAvatar(student);
     return (
-      <article key={student.id} className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] py-[var(--tm-space-2)] [box-shadow:var(--tm-shadow-control)]">
-        <div className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)]">
-          {faceImageSrc
-            ? <img src={faceImageSrc} alt="" className="h-10 w-10 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" />
-            : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-disabled)]" aria-hidden="true"><UserRound className="h-5 w-5" /></span>}
-          <div className="min-w-0 flex-1">
-            <strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{student.name}</strong>
-            <small className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{student.studentNo ?? student.id}</small>
-          </div>
-          {student.isUploading ? (
-            <span role="status" className="shrink-0 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">处理中</span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setActiveStudentId(student.id)}
-              className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]"
-              aria-label={`${student.hasFaceData ? '更新' : '录入'}${student.name}人脸`}
-            >
-              <Camera aria-hidden="true" className="h-[18px] w-[18px] shrink-0" />
-              {student.hasFaceData ? '更新' : '录入'}
-            </button>
-          )}
-        </div>
-      </article>
+      <StudentHorizontalCard
+        key={student.id}
+        student={student}
+        avatarSrc={faceImageSrc}
+        action={student.isUploading ? (
+          <span role="status" className="shrink-0 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">处理中</span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setActiveStudentId(student.id)}
+            className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]"
+            aria-label={`${student.hasFaceData ? '更新' : '录入'}${student.name}人脸`}
+          >
+            <Camera aria-hidden="true" className="h-[18px] w-[18px] shrink-0" />
+            {student.hasFaceData ? '更新' : '录入'}
+          </button>
+        )}
+      />
     );
   };
 

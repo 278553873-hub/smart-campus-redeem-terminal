@@ -4,7 +4,7 @@ const viewSource = fs.readFileSync(new URL('./TeacherEvaluationReviewView.tsx', 
 const historySource = fs.readFileSync(new URL('./TeacherEvaluationReviewHistoryView.tsx', import.meta.url), 'utf8');
 const dataSource = fs.readFileSync(new URL('../data/teacherEvaluationReview.ts', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
-const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_我的评价复盘_内容生成提示词.md', import.meta.url), 'utf8');
+const promptSource = fs.readFileSync(new URL('../../prompt/student/班主任助理-月报/班主任月报.md', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
 const contractSource = fs.readFileSync(new URL('../domain/assistantReport.ts', import.meta.url), 'utf8');
@@ -67,9 +67,11 @@ requireText(promptSource, '上一个完整自然月', '提示词应固定分析�
 requireText(promptSource, '班级学生名单', '识别未被关注学生必须提供完整班级名单。');
 requireText(promptSource, '学校指标体系', '提示词应接收学校完整指标体系。');
 requireText(promptSource, '结构化统计', '精确计数应由后端提供结构化统计。');
-requireText(promptSource, '不得只复述数量、占比或排名', 'AI输出必须超越统计报表。');
-requireText(promptSource, '观察事实与评价判断', 'AI应分析评价表达是否越过证据边界。');
-requireText(promptSource, 'indicator_and_expression_insights', '提示词应输出指标与表达洞察。');
+requireText(promptSource, '不逐项复述数量、占比、覆盖人数或排名', 'AI输出必须超越统计报表。');
+requireText(promptSource, '写下的内容是观察事实还是评价判断', 'AI应分析评价表达是否越过证据边界。');
+for (const section of ['下月记录建议', '本月评价画像', '关注对象', '评价视角', '指标与表达']) {
+  requireText(promptSource, section, '提示词应固定输出板块：' + section);
+}
 
 requireText(prdSource, '上一个完整自然月', 'PRD 应明确评价复盘的数据周期。');
 requireText(prdSource, '每个班级每个复盘月只生成一份', 'PRD 应定义月度报告唯一性。');

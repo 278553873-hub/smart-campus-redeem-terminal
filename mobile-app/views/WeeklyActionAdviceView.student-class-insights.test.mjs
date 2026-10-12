@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-const promptSource = fs.readFileSync(new URL('../../docs/班主任助理_本周行动建议_内容生成提示词.md', import.meta.url), 'utf8');
+const promptSource = fs.readFileSync(new URL('../../prompt/student/班主任助理-周报/班主任周报.md', import.meta.url), 'utf8');
 const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const dataSource = fs.readFileSync(new URL('../data/weeklyActionAdvice.ts', import.meta.url), 'utf8');
 const viewSource = fs.readFileSync(new URL('./WeeklyActionAdviceView.tsx', import.meta.url), 'utf8');
@@ -16,36 +16,36 @@ const forbidText = (source, needle, message) => {
 };
 
 for (const required of [
-  '【学生洞察】',
-  '连续信号',
-  '情境反差',
-  '变化轨迹',
-  '跨教师印证或差异',
-  'student_statistics_json',
-  'student_names',
-  'verification_focus',
+  '需要关注的学生',
+  '同一行为在多个独立事件中重复',
+  '不同场景出现反差',
+  '周内改善或反复',
+  '多个教师印证或呈现差异',
+  '【statistics】',
+  '数据的字段命名和取值代号不得出现在输出文本中',
+  'evidence：说明为什么生成这一条',
 ]) {
-  requireText(promptSource, required, `学生洞察规则缺少：${required}`);
+  requireText(promptSource, required, `学生信号规则缺少：${required}`);
 }
 
 for (const required of [
-  '【班级洞察】',
-  '共性信号',
-  '情境模式',
-  '班级优势机制',
-  '分化信号',
-  'class_pattern_statistics_json',
-  'condition',
+  '班级信号',
+  '多个不同学生、多个独立事件或多个教师共同支持',
+  '特定场景集中',
+  '具体优势机制',
+  '分化表现',
+  '不得从 records 重新计算',
+  'context：真实场景、观察范围、评价来源或行动对象',
 ]) {
-  requireText(promptSource, required, `班级洞察规则缺少：${required}`);
+  requireText(promptSource, required, `班级信号规则缺少：${required}`);
 }
 
-requireText(promptSource, '真正需要班主任执行的动作统一收敛到 actions', '学生洞察不应重复展开执行动作。');
-requireText(promptSource, '一次全班评价展开出的多条学生明细仍只算一个独立事件', '班级洞察应防止全班事件虚增独立证据。');
+requireText(promptSource, '具体执行动作只放在“本周重点行动”', '执行动作不应在其它板块重复展开。');
+requireText(promptSource, '全班评价展开的学生明细不等于个体观察', '班级信号应防止全班事件虚增独立证据。');
 forbidText(promptSource, '"suggestion": "1个核实动作和1个低风险跟进动作"', '学生洞察不应保留旧的建议字段。');
 
 requireText(prdSource, '全班评价展开后的学生明细不能代替个体观察', 'PRD 应约束学生个体证据口径。');
-requireText(prdSource, '单个学生的重复行为不得上升为班级共性', 'PRD 应约束班级共性证据口径。');
+requireText(prdSource, '单个学生的重复行为和一次全班评价不能证明稳定班风或普遍问题', 'PRD 应约束班级共性证据口径。');
 
 requireText(dataSource, 'export interface StudentAdviceInsight', '演示数据应定义结构化学生洞察。');
 requireText(dataSource, 'export interface ClassAdviceInsight', '演示数据应定义结构化班级洞察。');
