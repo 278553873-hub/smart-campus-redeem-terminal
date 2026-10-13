@@ -12,11 +12,12 @@ import { getStudentCardDisplaySettings } from '../mobile-app/domain/studentCardD
 import { teacherBrandCssVariables } from '../mobile-app/styles/teacherMobileTokens';
 import type { ClassInfo, Student } from '../mobile-app/types';
 import PhoneMockup from './PhoneMockup';
+import PublicLoginDemo from './PublicLoginDemo';
 import ClassroomStudentCard from './classroom/ClassroomStudentCard';
 import ClassroomStudentSelectCard from './classroom/ClassroomStudentSelectCard';
 import { getClassroomDisplayConfig } from '../shared/classroomDisplay';
 
-type PublicComponentId = 'grade-picker' | 'class-picker' | 'student-card';
+type PublicComponentId = 'grade-picker' | 'class-picker' | 'student-card' | 'login';
 type ClassPreviewMode = 'single' | 'multiple';
 
 const gradeOptions: ReadonlyArray<MobileGradePickerOption> = [
@@ -355,6 +356,7 @@ const PublicComponentsDemo: React.FC = () => {
   const isClassPicker = activeComponent === 'class-picker';
   const isStudentCard = activeComponent === 'student-card';
   const isGradePicker = activeComponent === 'grade-picker';
+  const isLogin = activeComponent === 'login';
   const selectedSubjectValue = subjectSelectionMode === 'multiple' ? selectedSubjects : selectedSubjects[0] ?? '';
   const handlePreviewSubjectChange = (value: string | string[]) => {
     setSelectedSubjects(Array.isArray(value) ? value : value ? [value] : []);
@@ -602,6 +604,7 @@ const PublicComponentsDemo: React.FC = () => {
             ['grade-picker', '年级选择弹窗'],
             ['class-picker', '班级选择弹窗'],
             ['student-card', '学生卡片'],
+            ['login', '登录页'],
           ] as const).map(([id, label]) => {
             const active = activeComponent === id;
             return (
@@ -625,6 +628,7 @@ const PublicComponentsDemo: React.FC = () => {
         </div>
       </nav>
 
+      {isLogin ? <PublicLoginDemo /> : (
       <section className={isStudentCard ? 'min-h-0 overflow-y-auto' : 'grid min-h-0 grid-cols-[440px_minmax(0,1fr)] overflow-hidden max-[1120px]:grid-cols-1 max-[1120px]:overflow-y-auto'} aria-label={isStudentCard ? '学生卡片组件说明' : isClassPicker ? '班级选择弹窗组件说明' : '年级选择弹窗组件说明'}>
         {isStudentCard ? (
           renderStudentCardGallery()
@@ -830,8 +834,9 @@ const PublicComponentsDemo: React.FC = () => {
           </section>
         </article>
       </section>
+      )}
 
-      {isStudentCard ? null : isClassPicker ? classPreviewMode === 'multiple' ? (
+      {isStudentCard || isLogin ? null : isClassPicker ? classPreviewMode === 'multiple' ? (
         <MobileClassPickerSheet
           open={classSheetVisible}
           groups={previewGroups}

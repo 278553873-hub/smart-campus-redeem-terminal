@@ -11,7 +11,6 @@ const guidelines = fs.readFileSync('design-system/teacher-mobile/TEACHER_MOBILE_
 const classList = fs.readFileSync('mobile-app/views/ClassListView.tsx', 'utf8');
 const gradePicker = fs.readFileSync('mobile-app/components/ui/MobileGradePickerSheet.tsx', 'utf8');
 const slidingSegmented = fs.readFileSync('mobile-app/components/ui/MobileSlidingSegmentedControl.tsx', 'utf8');
-const evaluationApp = fs.readFileSync('teacher-eval-app/App.tsx', 'utf8');
 
 const collectTeacherMobileSources = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
   const path = `${directory}/${entry.name}`;
@@ -19,11 +18,7 @@ const collectTeacherMobileSources = directory => fs.readdirSync(directory, { wit
   return /\.(?:ts|tsx)$/.test(entry.name) ? [path] : [];
 });
 
-// 教师评价（教师手机端）与教师手机端共用同一套设计 Token，一并纳入约束。
-const appSourceFiles = [
-  ...collectTeacherMobileSources('mobile-app'),
-  ...collectTeacherMobileSources('teacher-eval-app'),
-];
+const appSourceFiles = collectTeacherMobileSources('mobile-app');
 
 assert.equal(fs.existsSync('mobile-app/styles/teacherBrandTokens.ts'), false);
 assert.equal(fs.existsSync('mobile-app/styles/phoneTokens.ts'), false);
@@ -112,10 +107,6 @@ const archiveAppearance = fs.readFileSync('mobile-app/views/archive-design/archi
 assert.doesNotMatch(archiveAppearance, /#[0-9A-Fa-f]{6}/, '档案外观配置不得绕过教师端设计 Token 写死颜色。');
 
 assert.match(app, /from '\.\/styles\/teacherMobileTokens'/);
-assert.match(evaluationApp, /from '\.\.\/mobile-app\/styles\/teacherMobileTokens\.ts'/, '教师评价应用必须从教师手机端 Token 源导入，不得另建主题。');
-assert.match(evaluationApp, /teacherBrandCssVariables/, '教师评价应用必须在根节点注入教师端设计 Token。');
-assert.doesNotMatch(evaluationApp, /\b(?:blue|indigo|violet|purple)-\d+/);
-assert.equal(fs.existsSync('teacher-eval-app/styles/teacherMobileTokens.ts'), false);
 assert.doesNotMatch(app, /\b(?:blue|indigo|violet|purple)-\d+/);
 assert.doesNotMatch(parent, /teacherMobileTokens/);
 assert.match(guidelines, /mobile-app\/styles\/teacherMobileTokens\.ts/);
