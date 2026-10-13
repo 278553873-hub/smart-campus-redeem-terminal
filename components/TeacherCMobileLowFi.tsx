@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowLeftRight, BookOpen, Building2, CalendarDays, Camera, ChartNoAxesColumnIncreasing, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Clock, Coins, Copy, Edit3, Eye, EyeOff, FileText, Gift, GripVertical, ImagePlus, KeyRound, LogIn, LogOut, MessageCircle, Mic, MoreHorizontal, Phone, Plus, ScanFace, ScanLine, Settings, Shield, SlidersHorizontal, Sparkles, Trash2, Type, UserPlus, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, BookOpen, Building2, CalendarDays, Camera, ChartNoAxesColumnIncreasing, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Clock, Coins, Copy, DoorOpen, Edit3, Eye, EyeOff, FileText, Gift, GripVertical, HousePlus, ImagePlus, KeyRound, LogIn, LogOut, MessageCircle, Mic, MoreHorizontal, Phone, Plus, ScanFace, ScanLine, Settings, Shield, SlidersHorizontal, Sparkles, Trash2, Type, UserPen, UserPlus, Users, X } from 'lucide-react';
 import PhoneMockup from './PhoneMockup';
 import TeacherPermissionMatrix from './TeacherPermissionMatrix';
 
@@ -408,8 +408,8 @@ const termTypeOptions: SchoolTermItem['termType'][] = ['上学期', '下学期']
 const parentIdentityRelationOptions: ParentIdentityRelation[] = ['家长', '爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他'];
 
 const schoolTermItems: SchoolTermItem[] = [
-  { id: 'term-2025-2026-2', schoolYear: '2025-2026学年', termType: '下学期', start: '2026.02.17', end: '2026.07.10', status: 'current' },
-  { id: 'term-2026-2027-1', schoolYear: '2026-2027学年', termType: '上学期', start: '2026.09.01', end: '2027.01.23', status: 'draft' },
+  { id: 'term-2025-2026-2', schoolYear: '2025-2026学年', termType: '下学期', start: '2026.02.17', end: '2026.07.10', status: 'draft' },
+  { id: 'term-2026-2027-1', schoolYear: '2026-2027学年', termType: '上学期', start: '2026.09.01', end: '2027.01.23', status: 'current' },
   { id: 'term-2026-2027-2', schoolYear: '2026-2027学年', termType: '下学期', start: '2027.02.22', end: '2027.07.09', status: 'draft' },
   { id: 'term-2027-2028-1', schoolYear: '2027-2028学年', termType: '上学期', start: '2027.09.01', end: '2028.01.21', status: 'draft' },
   { id: 'term-2027-2028-2', schoolYear: '2027-2028学年', termType: '下学期', start: '2028.02.21', end: '2028.07.07', status: 'draft' },
@@ -1970,7 +1970,7 @@ const TeacherCMobileLowFi: React.FC = () => {
   const [deletedDepartmentIds, setDeletedDepartmentIds] = useState<string[]>([]);
   const [showBasicInfoEditSheet, setShowBasicInfoEditSheet] = useState(false);
   const [showTermEditSheet, setShowTermEditSheet] = useState(false);
-  const [currentTermId, setCurrentTermId] = useState('term-2025-2026-2');
+  const [currentTermId, setCurrentTermId] = useState('term-2026-2027-1');
   const [showTeachingSheet, setShowTeachingSheet] = useState(false);
   const [showInviteOptionsSheet, setShowInviteOptionsSheet] = useState(false);
   const [showWechatChatSheet, setShowWechatChatSheet] = useState(false);
@@ -3079,17 +3079,17 @@ const TeacherCMobileLowFi: React.FC = () => {
     {
       title: '学生管理',
       items: [
-        { key: 'batchStudents' as const, label: '批量修改学生', icon: Users },
+        { key: 'batchStudents' as const, label: '批量修改学生', icon: UserPen },
         { key: 'face' as const, label: '更新人脸数据', icon: ScanFace },
-        { key: 'password' as const, label: '设置兑换密码', icon: Shield },
-        { key: 'leftStudents' as const, label: '离校学生管理', icon: Users },
+        { key: 'password' as const, label: '设置兑换密码', icon: KeyRound },
+        { key: 'leftStudents' as const, label: '离校学生管理', icon: DoorOpen },
       ],
     },
     {
       title: '协同管理',
       items: [
         { key: 'inviteTeacher' as const, label: '邀请老师加入', icon: UserPlus },
-        { key: 'inviteParent' as const, label: '邀请家长加入', icon: MessageCircle },
+        { key: 'inviteParent' as const, label: '邀请家长加入', icon: HousePlus },
       ],
     },
   ].map((group) => ({

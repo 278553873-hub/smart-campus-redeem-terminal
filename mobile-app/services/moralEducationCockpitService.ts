@@ -135,19 +135,19 @@ const scaleCount = (value: number, factor: number) => Math.max(0, Math.round(val
 const sumBy = <T>(items: T[], getValue: (item: T) => number) => roundOne(items.reduce((sum, item) => sum + getValue(item), 0));
 
 const WEEK_CONFIGS: WeekConfig[] = [
-    { id: '2025-12-15_2025-12-21', startDate: '2025-12-15', endDate: '2025-12-21', averageScore: 96.4, issueScale: 0.84 },
-    { id: '2025-12-22_2025-12-28', startDate: '2025-12-22', endDate: '2025-12-28', averageScore: 96.6, issueScale: 0.82 },
-    { id: '2026-01-05_2026-01-11', startDate: '2026-01-05', endDate: '2026-01-11', averageScore: 96.5, issueScale: 0.86 },
-    { id: '2026-02-23_2026-03-01', startDate: '2026-02-23', endDate: '2026-03-01', averageScore: 96.8, issueScale: 0.78 },
-    { id: '2026-03-09_2026-03-15', startDate: '2026-03-09', endDate: '2026-03-15', averageScore: 96.7, issueScale: 0.82 },
-    { id: '2026-04-06_2026-04-12', startDate: '2026-04-06', endDate: '2026-04-12', averageScore: 96.6, issueScale: 0.86 },
-    { id: '2026-05-11_2026-05-17', startDate: '2026-05-11', endDate: '2026-05-17', averageScore: 96.4, issueScale: 0.9 },
-    { id: '2026-06-08_2026-06-14', startDate: '2026-06-08', endDate: '2026-06-14', averageScore: 96.5, issueScale: 0.88 },
-    { id: '2026-07-06_2026-07-12', startDate: '2026-07-06', endDate: '2026-07-12', averageScore: 96.9, issueScale: 0.8 },
-    { id: '2026-07-13_2026-07-19', startDate: '2026-07-13', endDate: '2026-07-19', averageScore: 96.7, issueScale: 0.86 },
-    { id: '2026-07-20_2026-07-26', startDate: '2026-07-20', endDate: '2026-07-26', averageScore: 96.5, issueScale: 0.92 },
-    { id: '2026-07-27_2026-08-02', startDate: '2026-07-27', endDate: '2026-08-02', averageScore: 96.3, issueScale: 0.96 },
-    { id: '2026-08-03_2026-08-09', startDate: '2026-08-03', endDate: '2026-08-09', averageScore: 96.1, issueScale: 1 },
+    { id: '2025-032-15_2025-032-21', startDate: '2025-032-15', endDate: '2025-032-21', averageScore: 96.4, issueScale: 0.84 },
+    { id: '2025-032-22_2025-032-28', startDate: '2025-032-22', endDate: '2025-032-28', averageScore: 96.6, issueScale: 0.82 },
+    { id: '2026-03-05_2026-03-11', startDate: '2026-03-05', endDate: '2026-03-11', averageScore: 96.5, issueScale: 0.86 },
+    { id: '2026-04-23_2026-05-01', startDate: '2026-04-23', endDate: '2026-05-01', averageScore: 96.8, issueScale: 0.78 },
+    { id: '2026-05-09_2026-05-15', startDate: '2026-05-09', endDate: '2026-05-15', averageScore: 96.7, issueScale: 0.82 },
+    { id: '2026-06-06_2026-06-12', startDate: '2026-06-06', endDate: '2026-06-12', averageScore: 96.6, issueScale: 0.86 },
+    { id: '2026-07-11_2026-07-17', startDate: '2026-07-11', endDate: '2026-07-17', averageScore: 96.4, issueScale: 0.9 },
+    { id: '2026-08-08_2026-08-14', startDate: '2026-08-08', endDate: '2026-08-14', averageScore: 96.5, issueScale: 0.88 },
+    { id: '2026-09-06_2026-09-12', startDate: '2026-09-06', endDate: '2026-09-12', averageScore: 96.9, issueScale: 0.8 },
+    { id: '2026-09-13_2026-09-19', startDate: '2026-09-13', endDate: '2026-09-19', averageScore: 96.7, issueScale: 0.86 },
+    { id: '2026-09-20_2026-09-26', startDate: '2026-09-20', endDate: '2026-09-26', averageScore: 96.5, issueScale: 0.92 },
+    { id: '2026-09-27_2026-10-02', startDate: '2026-09-27', endDate: '2026-10-02', averageScore: 96.3, issueScale: 0.96 },
+    { id: '2026-10-03_2026-10-09', startDate: '2026-10-03', endDate: '2026-10-09', averageScore: 96.1, issueScale: 1 },
 ];
 
 const BASE_DIMENSIONS = [
@@ -331,7 +331,7 @@ const createMonthDefinitions = (): PeriodDefinition[] => Array.from(
     };
 });
 
-const termKey = (config: WeekConfig) => config.startDate < '2026-02-01' ? '2025-2026-1' : '2025-2026-2';
+const termKey = (config: WeekConfig) => config.startDate < '2026-09-01' ? '2025-2026-2' : '2026-2027-1';
 
 const createTermDefinitions = (): PeriodDefinition[] => Array.from(
     groupBy(WEEK_CONFIGS, termKey),
@@ -343,7 +343,7 @@ const createTermDefinitions = (): PeriodDefinition[] => Array.from(
             type: 'term',
             startDate: weeks[0].startDate,
             endDate: weeks[weeks.length - 1].endDate,
-            label: `2025-2026学年${isFirstTerm ? '第一' : '第二'}学期`,
+            label: id === '2026-2027-1' ? `2026-2027学年第一学期` : `2025-2026学年第二学期`,
             trendLabel: isFirstTerm ? '第一学期' : '第二学期',
         },
         weeks,

@@ -76,7 +76,13 @@ const formatMonthLabel = (monthKey: string) => {
 const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, coinDetail, onBack }) => {
   const { issueRecords, consumeRecords, settlementEstimate } = coinDetail;
   const [activeFilter, setActiveFilter] = useState<FlowFilter>('income');
-  const [activeYear, setActiveYear] = useState<string>(() => String(new Date().getFullYear()));
+  const [activeYear, setActiveYear] = useState<string>(() => {
+    // 默认落在有流水的最新年份；没有流水时才回到当前年份，避免默认筛出空列表。
+    const recordYears = [...issueRecords, ...consumeRecords]
+      .map(record => Number(String(record.time).slice(0, 4)))
+      .filter(Number.isFinite);
+    return recordYears.length > 0 ? String(Math.max(...recordYears)) : String(new Date().getFullYear());
+  });
   const [activeCategory, setActiveCategory] = useState<FlowCategory>('all');
 
   const flowItems = useMemo<CoinFlowItem[]>(() => {

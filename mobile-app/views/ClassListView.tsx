@@ -5,7 +5,6 @@ import {
     ChevronRight,
     Copy,
     LogIn,
-    MessageCircle,
     MonitorSmartphone,
     Plus,
     SlidersHorizontal,
@@ -25,9 +24,12 @@ import {
     GiftIcon,
     AwardIcon,
     ScanFaceIcon,
-    ShieldIcon,
+    KeyRoundIcon,
     FileTextIcon,
     UserPlusIcon,
+    HousePlusIcon,
+    UserPenIcon,
+    DoorOpenIcon,
 } from '../components/Icons';
 import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/ClassInviteFlow';
 import ParentEvaluationVisibilitySettings from '../components/class/ParentEvaluationVisibilitySettings';
@@ -333,7 +335,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             items: [
                 ...(activeActionPolicy.canUpdateStudents ? [{
                     label: '批量修改',
-                    icon: UsersIcon,
+                    icon: UserPenIcon,
                     onClick: () => runClassAction(onBatchEditStudents),
                 },
                 {
@@ -343,14 +345,14 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 },
                 {
                     label: '兑换密码',
-                    icon: ShieldIcon,
+                    icon: KeyRoundIcon,
                     onClick: () => runClassAction(onViewBankPassword),
                 },
                 ] : []),
                 ...(activeActionPolicy.canMaintainClass ? [
                     {
                         label: '离校管理',
-                        icon: UsersIcon,
+                        icon: DoorOpenIcon,
                         onClick: () => runClassAction(setLeftStudentClassId),
                     },
                 ] : []),
@@ -369,7 +371,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 }] : []),
                 ...(activeActionPolicy.canInviteParent ? [{
                     label: '邀请家长',
-                    icon: MessageCircle,
+                    icon: HousePlusIcon,
                     onClick: () => openInviteFlow('parent'),
                 }] : []),
                 ...(activeActionPolicy.canConfigureParentEvaluationVisibility ? [{

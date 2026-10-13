@@ -442,5 +442,182 @@ await renderPage('团队报告页', () => import('../mobile-app/views/ClassRepor
 });
 
 
+const termReportStudent = {
+  id: 'term-report-student',
+  name: '演示学生',
+  gender: 'male',
+  grade: '三年级',
+  class: '三年级1班',
+  status: 'active',
+};
+const termReportClassInfo = { id: 'c_2025_3', name: '三年级1班', classCode: '20250003', gradeLevel: '三年级', studentCount: 6, tags: [], educationStage: 'primary' };
+
+const { getSchoolTermReportProfile } = await import('../mobile-app/data/schoolTermReportProfiles');
+const qingheTermReportProfile = getSchoolTermReportProfile('school-qinghe');
+if (!qingheTermReportProfile) throw new Error('青禾实验小学应配置学校期末报告画像');
+
+await renderPage('期末报告页（学校五育指标）', () => import('../mobile-app/views/TermReportView'), {
+  student: termReportStudent,
+  classInfo: termReportClassInfo,
+  currentSpace: { id: 'school-qinghe', title: '青禾实验小学', type: 'school', schoolType: 'primary' },
+  onBack: noop,
+  hiddenSections: qingheTermReportProfile.hiddenSections,
+  radarDimensions: qingheTermReportProfile.radarDimensions,
+}, html => {
+  const text = plainText(html);
+  for (const dimension of ['健康向上', '乐学善思', '实践创新', '自主担当']) {
+    if (!text.includes(dimension)) throw new Error('学校期末报告应展示一级维度：' + dimension);
+  }
+  if (text.includes('五育成长表现')) throw new Error('青禾实验小学期末报告不应展示五育成长表现');
+  if (text.includes('五育发展亮点')) throw new Error('青禾实验小学期末报告不应展示五育发展亮点');
+  if (text.includes('学科成绩分布')) throw new Error('青禾实验小学期末报告不应展示学科成绩分布');
+  if (text.includes('高光时刻')) throw new Error('青禾实验小学期末报告不应展示高光时刻');
+  if (text.includes('End of Report')) throw new Error('期末报告末尾不应再显示 End of Report 标记');
+  if (text.includes('Future Education System') || text.includes('Semester Growth Report')) throw new Error('期末报告封面不应再显示英文小字');
+});
+
+await renderPage('期末报告页（平台默认）', () => import('../mobile-app/views/TermReportView'), {
+  student: termReportStudent,
+  classInfo: termReportClassInfo,
+  currentSpace: { id: 'school-star', title: '星河实验学校', type: 'school', schoolType: 'twelveYear' },
+  onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('学科成绩分布')) throw new Error('平台默认期末报告应保留学科成绩分布');
+  if (!text.includes('高光时刻')) throw new Error('平台默认期末报告应保留高光时刻');
+  if (!text.includes('五育发展亮点')) throw new Error('平台默认期末报告应保留五育发展亮点');
+  if (text.includes('End of Report')) throw new Error('期末报告末尾不应再显示 End of Report 标记');
+  if (text.includes('Future Education System') || text.includes('Semester Growth Report')) throw new Error('期末报告封面不应再显示英文小字');
+});
+
+
+const { getSchoolStudentReportContent } = await import('../mobile-app/data/schoolTermReportProfiles');
+
+const renderStudentReport = (reportCase, content) => ({
+  student: { id: 'demo-' + reportCase.name, name: reportCase.name, gender: 'female', grade: reportCase.grade, class: reportCase.className, status: 'active' },
+  classInfo: { id: reportCase.classId, name: reportCase.className, classCode: '', gradeLevel: reportCase.grade, studentCount: 6, tags: [], educationStage: 'primary' },
+  currentSpace: { id: 'school-qinghe', title: '青禾实验小学', type: 'school', schoolType: 'primary' },
+  onBack: noop,
+  hiddenSections: qingheTermReportProfile.hiddenSections,
+  radarDimensions: content.dimensions ?? qingheTermReportProfile.radarDimensions,
+  studentReportContent: content,
+});
+
+const studentReportCases = [
+  { name: '杨悠然', className: '2024级一班', classId: 'c_2024_1', grade: '三年级', advice: '把想法讲出来', tag: '心思细腻' },
+  { name: '邹艾琳', className: '2024级一班', classId: 'c_2024_1', grade: '三年级', advice: '给阅读留固定时段', tag: '行动力强' },
+  { name: '高奕可', className: '2026级一班', classId: 'c_2026_1', grade: '一年级', advice: '举手说一说', tag: '识字小达人' },
+  { name: '廖堇汐', className: '2026级一班', classId: 'c_2026_1', grade: '一年级', advice: '每天读十分钟', tag: '运动小达人' },
+];
+
+const renderedStudentReports = new Map();
+
+for (const reportCase of studentReportCases) {
+  const content = getSchoolStudentReportContent('school-qinghe', reportCase.name);
+  if (!content) throw new Error(reportCase.name + '应配置期末报告内容');
+
+  await renderPage('期末报告页（' + reportCase.name + '）', () => import('../mobile-app/views/TermReportView'), renderStudentReport(reportCase, content), html => {
+    const text = plainText(html);
+    if (!text.includes(reportCase.advice)) throw new Error(reportCase.name + '的报告应使用自己的成长建议');
+    if (!text.includes(reportCase.tag)) throw new Error(reportCase.name + '的报告应使用自己的封面标签');
+    for (const other of studentReportCases) {
+      if (other.name === reportCase.name) continue;
+      if (text.includes(other.advice)) throw new Error(other.name + '的成长建议不应出现在' + reportCase.name + '的报告里');
+    }
+    renderedStudentReports.set(reportCase.name, html);
+  });
+}
+
+if (new Set(renderedStudentReports.values()).size !== studentReportCases.length) {
+  throw new Error('每位学生的期末报告内容应各不相同');
+}
+
+// 教师评价（教师手机端）：入口、AI 填报、档案、我的、积分规则都要能真的渲染出来。
+const { DEMO_GROWTH_RECORDS } = await import('../teacher-eval-app/domain/demoData');
+const { CURRENT_ACADEMIC_YEAR, CURRENT_TERM, PREVIOUS_ACADEMIC_YEAR, summarizeGrowth, summarizeTotalPoints } =
+  await import('../teacher-eval-app/domain/scoring');
+const { buildManualDraft } = await import('../teacher-eval-app/domain/recordDraft');
+
+await renderPage('教师评价录入页', () => import('../teacher-eval-app/App'), { showPhoneShell: false }, html => {
+  const text = plainText(html);
+  if (!text.includes('按住 说话')) throw new Error('录入页应展示悬浮录入条');
+  if (!text.includes('AI 智能解读')) throw new Error('录入页应展示 AI 智能解读记录卡');
+  if (!text.includes('内容由AI生成')) throw new Error('录入页应展示 AI 生成声明');
+});
+
+await renderPage('教师评价·待确认卡', () => import('../teacher-eval-app/components/DraftRecordCard'), {
+  draft: buildManualDraft('教学比赛', '2026-10-08', 'smoke-draft'),
+  impact: { inCurrentTerm: true, delta: 3, sameCategoryBest: 3, yearCap: 30 },
+  onChange: noop,
+  onCancel: noop,
+  onConfirm: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('填写内容')) throw new Error('手动填报应展示填写内容卡');
+  if (!text.includes('确认入档')) throw new Error('待确认卡应提供确认入档');
+  if (!text.includes('提交后本学期积分 +3 分')) throw new Error('待确认卡应展示提交后的积分变化');
+});
+
+await renderPage('教师评价成长页', () => import('../teacher-eval-app/views/GrowthView'), {
+  records: DEMO_GROWTH_RECORDS,
+  onOpenRecord: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('六大维度')) throw new Error('成长页应呈现六大维度');
+  if (!text.includes('时光轴')) throw new Error('成长页应提供时光轴视图');
+  if (!text.includes('累计积分')) throw new Error('成长页应展示累计积分');
+});
+
+await renderPage('教师评价·我的', () => import('../teacher-eval-app/views/MeView'), {
+  profile: (await import('../teacher-eval-app/domain/demoData')).DEMO_TEACHER_PROFILE,
+  termSummary: summarizeGrowth(DEMO_GROWTH_RECORDS, CURRENT_TERM),
+  totalPoints: summarizeTotalPoints(DEMO_GROWTH_RECORDS, [PREVIOUS_ACADEMIC_YEAR, CURRENT_ACADEMIC_YEAR]),
+  totalRecords: DEMO_GROWTH_RECORDS.length,
+  onOpenPointsRule: noop,
+  onOpenReviewRecords: noop,
+  onResetDemoData: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('积分规则')) throw new Error('我的页应提供积分规则入口');
+  if (!text.includes('填报与审核记录')) throw new Error('我的页应提供填报与审核记录入口');
+});
+
+await renderPage('教师评价·积分规则页', () => import('../teacher-eval-app/views/PointsRuleView'), {
+  onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('同类取最高')) throw new Error('积分规则页应说明同类取最高');
+  if (!text.includes('教学比赛')) throw new Error('积分规则页应列出各类别赋分标准');
+});
+
+await renderPage('教师评价·记录详情页', () => import('../teacher-eval-app/views/RecordDetailView'), {
+  record: DEMO_GROWTH_RECORDS[0],
+  onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('积分依据')) throw new Error('记录详情页应展示积分依据');
+  if (!text.includes(DEMO_GROWTH_RECORDS[0].issuer)) throw new Error('记录详情页应展示颁发单位');
+});
+
+
+
 // 渲染结束后主动退出：个别模块会留下常驻定时器，让进程一直挂着不返回。
+await renderPage('教师评价·PRD 内容页', () => import('../teacher-eval-app/prd/PrdView'), {}, html => {
+  const text = plainText(html);
+  if (!text.includes('角色与职责')) throw new Error('PRD 应包含角色与职责');
+  if (!text.includes('分角色业务流程')) throw new Error('PRD 应包含分角色业务流程');
+  if (!text.includes('教师评价的六个价值维度')) throw new Error('PRD 应包含价值维度');
+  if (!text.includes('一条成长记录的字段模型')) throw new Error('PRD 应包含字段模型');
+  if (!text.includes('同类取最高')) throw new Error('PRD 应包含关键计分规则');
+});
+
+await renderPage('教师评价·演示外壳', () => import('../teacher-eval-app/TeacherEvalDemo'), {
+  activeTab: 'prd',
+  onTabChange: noop,
+  showPhoneShell: false,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('原型') || !text.includes('PRD')) throw new Error('顶部页签应包含原型与 PRD');
+});
+
 process.exit(0);

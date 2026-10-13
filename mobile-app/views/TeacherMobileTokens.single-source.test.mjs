@@ -11,12 +11,19 @@ const guidelines = fs.readFileSync('design-system/teacher-mobile/TEACHER_MOBILE_
 const classList = fs.readFileSync('mobile-app/views/ClassListView.tsx', 'utf8');
 const gradePicker = fs.readFileSync('mobile-app/components/ui/MobileGradePickerSheet.tsx', 'utf8');
 const slidingSegmented = fs.readFileSync('mobile-app/components/ui/MobileSlidingSegmentedControl.tsx', 'utf8');
+const evaluationApp = fs.readFileSync('teacher-eval-app/App.tsx', 'utf8');
 
 const collectTeacherMobileSources = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
   const path = `${directory}/${entry.name}`;
   if (entry.isDirectory()) return collectTeacherMobileSources(path);
   return /\.(?:ts|tsx)$/.test(entry.name) ? [path] : [];
 });
+
+// 教师评价（教师手机端）与教师手机端共用同一套设计 Token，一并纳入约束。
+const appSourceFiles = [
+  ...collectTeacherMobileSources('mobile-app'),
+  ...collectTeacherMobileSources('teacher-eval-app'),
+];
 
 assert.equal(fs.existsSync('mobile-app/styles/teacherBrandTokens.ts'), false);
 assert.equal(fs.existsSync('mobile-app/styles/phoneTokens.ts'), false);
@@ -105,6 +112,10 @@ const archiveAppearance = fs.readFileSync('mobile-app/views/archive-design/archi
 assert.doesNotMatch(archiveAppearance, /#[0-9A-Fa-f]{6}/, '档案外观配置不得绕过教师端设计 Token 写死颜色。');
 
 assert.match(app, /from '\.\/styles\/teacherMobileTokens'/);
+assert.match(evaluationApp, /from '\.\.\/mobile-app\/styles\/teacherMobileTokens\.ts'/, '教师评价应用必须从教师手机端 Token 源导入，不得另建主题。');
+assert.match(evaluationApp, /teacherBrandCssVariables/, '教师评价应用必须在根节点注入教师端设计 Token。');
+assert.doesNotMatch(evaluationApp, /\b(?:blue|indigo|violet|purple)-\d+/);
+assert.equal(fs.existsSync('teacher-eval-app/styles/teacherMobileTokens.ts'), false);
 assert.doesNotMatch(app, /\b(?:blue|indigo|violet|purple)-\d+/);
 assert.doesNotMatch(parent, /teacherMobileTokens/);
 assert.match(guidelines, /mobile-app\/styles\/teacherMobileTokens\.ts/);
@@ -137,7 +148,7 @@ assert.match(css, /\.teacher-mobile-app\s*\{\s*font-weight: var\(--tm-font-weigh
 assert.match(css, /\.tm-font-regular\s*\{\s*font-weight: var\(--tm-font-weight-regular\);\s*\}/);
 assert.match(guidelines, /所有可见文字最低使用 500 中等字重/);
 
-for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
+for (const sourcePath of appSourceFiles) {
   const source = fs.readFileSync(sourcePath, 'utf8');
   assert.doesNotMatch(source, /\bfont-(?:thin|extralight|light|normal)\b/, `${sourcePath} 不得使用低于 500 的 Tailwind 字重。`);
   assert.doesNotMatch(source, /fontWeight\s*:[^\n,}]*(?:100|200|300|400)\b/, `${sourcePath} 的图形文字字重不得低于 500。`);
@@ -181,7 +192,7 @@ assert.match(canonical, /'--tm-shadow-card-ambient': '0 1px 3px rgba\([^']+\), 0
 assert.match(canonical, /'--tm-shadow-navigation': '0 -10px 24px -14px rgba\([^']+\)'/);
 
 const invalidFullShadowConsumer = /shadow-\[var\(--tm-shadow-(?:card|card-raised|card-on-white|card-ambient|control|icon|avatar|floating|navigation|sheet)\)\]/;
-for (const sourcePath of collectTeacherMobileSources('mobile-app')) {
+for (const sourcePath of appSourceFiles) {
   const source = fs.readFileSync(sourcePath, 'utf8');
   assert.doesNotMatch(source, invalidFullShadowConsumer, `${sourcePath} 使用了无效的完整阴影 Token 工具类。`);
 }

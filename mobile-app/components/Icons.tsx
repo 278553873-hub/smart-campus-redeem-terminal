@@ -9,7 +9,7 @@ import {
   Keyboard, StopCircle, AlertCircle, ChevronDown,
   Shield, Lock, LogOut, FileBarChart, MoreVertical, File,
   Disc, GripHorizontal, Search, Filter, Bot, Calendar, Gift, ScanFace,
-  Eye, EyeOff, UserPlus
+  Eye, EyeOff, KeyRound, HousePlus, DoorOpen, UserPlus, UserPen
 } from 'lucide-react';
 
 
@@ -65,6 +65,8 @@ export const HelpIcon = ({ className }: { className?: string }) => <HelpCircle c
 export const ActivityIcon = ({ className, fill }: { className?: string; fill?: string }) => <FileText className={className} fill={fill} />;
 export const AlertCircleIcon = ({ className }: { className?: string }) => <AlertCircle className={className} />;
 export const ShieldIcon = ({ className }: { className?: string }) => <Shield className={className} />;
+export const KeyRoundIcon = ({ className }: { className?: string }) => <KeyRound className={className} />;
+export const HousePlusIcon = ({ className }: { className?: string }) => <HousePlus className={className} />;
 export const LockIcon = ({ className }: { className?: string }) => <Lock className={className} />;
 export const LogOutIcon = ({ className }: { className?: string }) => <LogOut className={className} />;
 export const FileBarChartIcon = ({ className }: { className?: string }) => <FileBarChart className={className} />;
@@ -75,6 +77,8 @@ export const FilterIcon = ({ className }: { className?: string }) => <Filter cla
 export const GiftIcon = ({ className }: { className?: string }) => <Gift className={className} />;
 export const ScanFaceIcon = ({ className }: { className?: string }) => <ScanFace className={className} />;
 export const UserPlusIcon = ({ className }: { className?: string }) => <UserPlus className={className} />;
+export const UserPenIcon = ({ className }: { className?: string }) => <UserPen className={className} />;
+export const DoorOpenIcon = ({ className }: { className?: string }) => <DoorOpen className={className} />;
 
 // Log Specific
 export const SwapIcon = ({ className }: { className?: string }) => <ArrowLeftRight className={className} />;

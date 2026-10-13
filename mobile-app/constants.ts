@@ -4,16 +4,17 @@ import { ASSETS } from './assets/images';
 import { getSystemStudentAvatar } from './assets/studentAvatarCatalog';
 import { FIRST_GRADE_CHINESE_GENERATED_REPORT } from './data/firstGradeChineseTermReport';
 import { STUDENT_TEAM_EXACT_SEARCH_DEMO } from './data/studentTeamDemo';
+import { getDemoClassStudent } from './data/demoClassStudents';
 import { getMockClassSeed, getMockStudentNameAt } from './data/studentNamePool';
 
 const GENERATE_MOCK_CLASSES = (): ClassInfo[] => {
   const grades = [
-    { year: 2025, level: '一年级' },
-    { year: 2024, level: '二年级' },
-    { year: 2023, level: '三年级' },
-    { year: 2022, level: '四年级' },
-    { year: 2021, level: '五年级' },
-    { year: 2020, level: '六年级' },
+    { year: 2026, level: '一年级' },
+    { year: 2025, level: '二年级' },
+    { year: 2024, level: '三年级' },
+    { year: 2023, level: '四年级' },
+    { year: 2022, level: '五年级' },
+    { year: 2021, level: '六年级' },
   ];
   const classes: ClassInfo[] = [];
   const classNames = ['一班', '二班', '三班', '四班', '五班', '六班', '七班', '八班', '九班', '十班'];
@@ -49,9 +50,12 @@ export const GET_MOCK_STUDENTS_FOR_CLASS = (classId: string): Student[] => {
   const seed = getMockClassSeed(classId);
 
   return Array.from({ length: count }).map((_, i) => {
-    const nameObj = classId === STUDENT_TEAM_EXACT_SEARCH_DEMO.classId && i === STUDENT_TEAM_EXACT_SEARCH_DEMO.studentIndex
-      ? { n: STUDENT_TEAM_EXACT_SEARCH_DEMO.name, g: STUDENT_TEAM_EXACT_SEARCH_DEMO.gender }
-      : getMockStudentNameAt(classId, i);
+    const demoStudent = getDemoClassStudent(classId, i);
+    const nameObj = demoStudent
+      ? { n: demoStudent.name, g: demoStudent.gender }
+      : classId === STUDENT_TEAM_EXACT_SEARCH_DEMO.classId && i === STUDENT_TEAM_EXACT_SEARCH_DEMO.studentIndex
+        ? { n: STUDENT_TEAM_EXACT_SEARCH_DEMO.name, g: STUDENT_TEAM_EXACT_SEARCH_DEMO.gender }
+        : getMockStudentNameAt(classId, i);
     const gender = nameObj.g as Student['gender'];
 
     return {
@@ -231,8 +235,8 @@ export const MOCK_SUBJECTS: SubjectGrade[] = [
 ];
 
 export const MOCK_GROWTH_REPORTS: GrowthReportItem[] = [
-  { id: '1', title: '2026年7月-成长报告', date: '2026-07' },
-  { id: '2', title: '2026年6月-成长报告', date: '2026-06' },
+  { id: '1', title: '2026年10月-成长报告', date: '2026-10' },
+  { id: '2', title: '2026年9月-成长报告', date: '2026-09' },
 ];
 
 export const MOCK_PE_REPORT_DETAILS: DetailedReportSection[] = [

@@ -34,16 +34,16 @@ export const DUTY_TEACHERS: DutyTeacherOption[] = [
   { id: 'teacher-xie-mingyuan', name: '谢明远', avatar: ASSETS.AVATAR.TEACHER_DEFAULT },
 ];
 
-export const DUTY_TERM_WEEKS = createDutyWeeks('2026-07-27', 27);
+export const DUTY_TERM_WEEKS = createDutyWeeks('2026-09-27', 27);
 
 export const INITIAL_DUTY_SCHEDULES: Record<string, string[]> = {
-  '2026-07-27': ['teacher-chen-simin'],
-  '2026-08-03': ['teacher-li-lian', 'teacher-liu-chang'],
-  '2026-08-10': ['teacher-zhang-quanyou', 'teacher-liu-fei', 'teacher-chen-simin'],
-  '2026-08-24': ['teacher-wang-jingyi'],
-  '2026-09-07': ['teacher-zhao-zihang'],
-  '2026-09-21': ['teacher-lin-xiaoyun'],
-  '2026-10-12': ['teacher-ma-wenbo'],
+  '2026-09-27': ['teacher-chen-simin'],
+  '2026-10-03': ['teacher-li-lian', 'teacher-liu-chang'],
+  '2026-10-10': ['teacher-zhang-quanyou', 'teacher-liu-fei', 'teacher-chen-simin'],
+  '2026-10-24': ['teacher-wang-jingyi'],
+  '2026-11-07': ['teacher-zhao-zihang'],
+  '2026-11-21': ['teacher-lin-xiaoyun'],
+  '2026-030-12': ['teacher-ma-wenbo'],
 };
 
-export const CURRENT_DUTY_WEEK_ID = '2026-08-10';
+export const CURRENT_DUTY_WEEK_ID = '2026-10-10';

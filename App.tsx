@@ -21,6 +21,7 @@ import ParentEvaluationVisibilityPreviewControls from './components/ParentEvalua
 import TerminalLoginMethodPreviewControls, { type StudentLoginPreviewMode } from './components/TerminalLoginMethodPreviewControls';
 import TerminalShopLayoutPreviewControls from './components/TerminalShopLayoutPreviewControls';
 import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
+import TeacherEvalDemo, { type TeacherEvalDemoTab } from './teacher-eval-app/TeacherEvalDemo';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import RegionalPcAdmin from './components/RegionalPcAdmin';
@@ -46,7 +47,7 @@ import {
   type TeacherGradientStyleId,
 } from './mobile-app/styles/teacherGradientPreview';
 import './mobile-app/index.css';
-import { ChevronLeft, ChevronDown, Sparkles, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X, Camera, Check, LoaderCircle, ShoppingBag, KeyRound } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Sparkles, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X, Camera, Check, LoaderCircle, ShoppingBag, KeyRound, GraduationCap } from 'lucide-react';
 import { playSound } from './utils/sound';
 import { exportElementAsPng } from './utils/exportElementAsPng';
 import { GROWTH_COIN_TERMS } from './shared/growthCoinTerminology';
@@ -1415,7 +1416,7 @@ const AppSwitcher: React.FC = () => {
   const questionnaireInviteCode = useMemo(() => (
     new URLSearchParams(window.location.search).get('questionnaireInvite')?.trim() ?? ''
   ), []);
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'ui-renovation'>(() => {
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-eval' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'ui-renovation'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
     if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation') {
@@ -1431,6 +1432,7 @@ const AppSwitcher: React.FC = () => {
     readTerminalShopLayoutPresetId()
   ));
   const [showPhoneShell, setShowPhoneShell] = useState(true);
+  const [teacherEvalTab, setTeacherEvalTab] = useState<TeacherEvalDemoTab>('prototype');
   const [teacherGradientScheme, setTeacherGradientScheme] = useState<TeacherGradientSchemeId>(defaultTeacherGradientPreview.schemeId);
   const [teacherGradientStyle, setTeacherGradientStyle] = useState<TeacherGradientStyleId>(defaultTeacherGradientPreview.styleId);
   const [parentGradientScheme, setParentGradientScheme] = useState<TeacherGradientSchemeId>(defaultParentGradientPreview.schemeId);
@@ -1830,6 +1832,13 @@ const AppSwitcher: React.FC = () => {
           />
         )}
         {currentApp === 'ui-renovation' && <UiRenovationDemo />}
+        {currentApp === 'teacher-eval' && (
+          <TeacherEvalDemo
+            activeTab={teacherEvalTab}
+            onTabChange={setTeacherEvalTab}
+            showPhoneShell={showPhoneShell}
+          />
+        )}
         {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && (questionnaireInviteCode
@@ -1918,6 +1927,25 @@ const AppSwitcher: React.FC = () => {
               />
             )}
           </div>
+        </div>
+      )}
+
+      {currentApp === 'teacher-eval' && teacherEvalTab === 'prototype' && (
+        <div className="fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
+          <button
+            type="button"
+            onClick={() => setShowPhoneShell(previous => !previous)}
+            className="flex h-11 items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-colors active:bg-slate-50 max-[900px]:px-1.5"
+            aria-pressed={showPhoneShell}
+            aria-label="模拟真实手机"
+            title="模拟真实手机"
+          >
+            <Smartphone className="hidden h-4 w-4 text-slate-600 max-[900px]:block" aria-hidden="true" />
+            <span className="whitespace-nowrap text-[12px] font-semibold text-slate-700 max-[900px]:sr-only">模拟真实手机</span>
+            <span className={`relative h-[22px] w-10 shrink-0 rounded-full p-0.5 transition-colors ${showPhoneShell ? 'bg-slate-800' : 'bg-slate-300'}`} aria-hidden="true">
+              <span className={`block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform ${showPhoneShell ? 'translate-x-[18px]' : 'translate-x-0'}`} />
+            </span>
+          </button>
         </div>
       )}
 
@@ -2090,6 +2118,14 @@ const AppSwitcher: React.FC = () => {
             >
               <Smartphone size={22} className="mb-1" />
               <span className="text-[9px] font-bold leading-tight">教师-手机端</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('teacher-eval')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-eval' ? 'bg-[#E02727] text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="教师评价 - 教师-手机端"
+            >
+              <GraduationCap size={22} className="mb-1" />
+              <span className="text-[9px] font-bold leading-tight">教师评价</span>
             </button>
             <button
               onClick={() => setCurrentApp('parent')}

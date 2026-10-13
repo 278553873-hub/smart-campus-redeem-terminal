@@ -168,6 +168,7 @@ import {
     type HomeworkRosterVersion,
 } from './domain/homework';
 import { createDemoHomeworkAssignments } from './data/homeworkDemoData';
+import { getSchoolStudentReportContent, getSchoolTermReportProfile } from './data/schoolTermReportProfiles';
 
 const ClassReportView = lazy(() => import('./views/ClassReportView'));
 const TermReportView = lazy(() => import('./views/TermReportView'));
@@ -179,10 +180,10 @@ const StudentArchiveView = lazy(() => import('./views/archive-design/StudentArch
 const TeacherIndicatorCatalogView = lazy(() => import('./views/TeacherIndicatorCatalogView'));
 
 const TERMS = [
+    "2026-2027学年 上学期",
     "2025-2026学年 下学期",
     "2025-2026学年 上学期",
     "2024-2025学年 下学期",
-    "2024-2025学年 上学期",
 ];
 
 const GRADE_SCOPES = [
@@ -595,6 +596,8 @@ const App: React.FC<MobileAppProps> = ({
     const principalTermReportTask = useReportGenerationTask({ stepCount: 4, initialStatus: 'generated' });
     const [currentTeacherSpaceId, setCurrentTeacherSpaceId] = useState(DEFAULT_TEACHER_SPACE_ID);
     const activeTeacherSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === currentTeacherSpaceId) ?? TEACHER_SPACE_OPTIONS[0];
+    const activeSchoolTermReportProfile = getSchoolTermReportProfile(activeTeacherSpace.id);
+    const activeStudentReportContent = getSchoolStudentReportContent(activeTeacherSpace.id, activeStudent.name);
     const gradeScopeOptions = ['全年级', ...(getTeacherSchoolGradeOptions(activeTeacherSpace) ?? GRADE_SCOPES.slice(1))];
     const spaceHeadteacherAssistantScopes = getHeadteacherAssistantScopes(activeTeacherSpace);
     const defaultHeadteacherAssistantScopePreview = getHeadteacherAssistantScopePreviewMode(spaceHeadteacherAssistantScopes);
@@ -2405,6 +2408,9 @@ const App: React.FC<MobileAppProps> = ({
                                         classInfo={classes.find(classInfo => classInfo.id === activeStudentClassId)}
                                         currentSpace={activeTeacherSpace}
                                         onBack={goBack}
+                                        hiddenSections={activeSchoolTermReportProfile?.hiddenSections}
+                                        radarDimensions={activeStudentReportContent?.dimensions ?? activeSchoolTermReportProfile?.radarDimensions}
+                                        studentReportContent={activeStudentReportContent}
                                     />
                                 </div>
                             )}

@@ -310,7 +310,7 @@ const ReportMedalsPage: React.FC<ReportMedalsPageProps> = ({ mode, medals, onCha
       {medalContent}
     </div>
   ) : (
-    <ReportPageContainer mode={mode} id={mode === 'mobile' ? 'section-medals' : undefined} compactMobile={mode === 'mobile'}>
+    <ReportPageContainer mode={mode} id={mode === 'mobile' ? 'section-medals' : undefined}>
       {medalContent}
     </ReportPageContainer>
   );
@@ -763,8 +763,6 @@ const TermReportRedesignDemo: React.FC = () => {
                   fiveEducationDetailContent={<FiveEducationDetailCard />}
                   sectionOrder={sectionOrder}
                   showLegacyOptionalSections={false}
-                  compactConfiguredMobileSections
-                  hideEndMarker
                 />
               </div>
             </PhoneMockup>
@@ -789,7 +787,6 @@ const TermReportRedesignDemo: React.FC = () => {
                   fiveEducationDetailContent={<FiveEducationDetailCard />}
                   sectionOrder={sectionOrder}
                   showLegacyOptionalSections={false}
-                  hideEndMarker
                 />
               </div>
             </div>

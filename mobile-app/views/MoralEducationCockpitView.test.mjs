@@ -199,7 +199,7 @@ assert.equal(terms.every(period => /学年(第一|第二)学期$/.test(period.la
 const selectedWeek = weeks[weeks.length - 1];
 const snapshot = await getMoralEducationCockpitSnapshot({ periodType: 'week', periodId: selectedWeek.id });
 assert.equal(snapshot.period.id, selectedWeek.id, '驾驶舱应按所选考核周加载数据。');
-assert.equal(snapshot.period.label, '2026.08.03 - 08.09', '按周应展示明确的起止日期。');
+assert.equal(snapshot.period.label, '2026.10.03 - 10.09', '按周应展示明确的起止日期。');
 assert.equal(snapshot.grades.length, 6, '完整排名应提供年级筛选数据。');
 assert.equal(snapshot.grades.every(grade => grade.classes.length === 5), true, '每个年级应具备班级数据。');
 assert.equal(snapshot.classRanking.length, 30, '驾驶舱应提供全部班级排名。');

@@ -44,15 +44,15 @@ interface DashboardViewProps {
 }
 
 const STUDENT_TERM_OPTIONS: StudentTermOption[] = [
-    { value: '2025-spring', label: '2025-2026学年 下学期', startDate: '2026-03-01', endDate: '2026-08-31', isCurrent: true },
+    { value: '2026-fall', label: '2026-2027学年 上学期', startDate: '2026-09-01', endDate: '2027-02-28', isCurrent: true },
+    { value: '2025-spring', label: '2025-2026学年 下学期', startDate: '2026-03-01', endDate: '2026-08-31' },
     { value: '2025-fall', label: '2025-2026学年 上学期', startDate: '2025-09-01', endDate: '2026-02-28' },
-    { value: '2024-spring', label: '2024-2025学年 下学期', startDate: '2025-03-01', endDate: '2025-08-31' },
 ];
 
 const TERM_SCORE_OFFSETS: Record<string, Record<string, number>> = {
-    '2025-spring': {},
-    '2025-fall': { moral: -4, intellectual: 3, physical: 5, aesthetic: -2, labor: 6 },
-    '2024-spring': { moral: -8, intellectual: -2, physical: 2, aesthetic: 4, labor: -3 },
+    '2026-fall': {},
+    '2025-spring': { moral: -4, intellectual: 3, physical: 5, aesthetic: -2, labor: 6 },
+    '2025-fall': { moral: -8, intellectual: -2, physical: 2, aesthetic: 4, labor: -3 },
 };
 
 const FIVE_EDUCATION_CATEGORY_BY_LABEL: Record<string, string> = {
