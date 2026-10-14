@@ -13,7 +13,7 @@ assert.match(screenSource, /createDemoStudentLevelEvaluationRecords\(student, CU
 assert.match(screenSource, /getStudentLevelNetScore\(demoRecords, 'term', CURRENT_CLASSROOM_TERM\) \+ liveTermDelta/, '等级始终按本学期统计，并保留本学期实时评价变化');
 assert.match(screenSource, /levelNetScore=\{getStudentLevelScore\(student, performance\)\}/, '学生列表应把所选统计范围的等级分值传入卡片');
 assert.match(studentCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'icon'/, '图标形式才展示星级图标并保留头像进度环');
-assert.match(studentCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'score'/, '分值形式才在等级行展示净得分');
+assert.match(studentCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'score'/, '总分形式在等级行展示加分减扣分');
 assert.match(studentCardSource, /showLevelProgress=\{showLevelIcons\}/, '分值形式下不应展示头像进度环');
 assert.match(studentCardSource, /layout\.fullHeight[\s\S]*layout\.countsHeight[\s\S]*layout\.identityOnlyHeight/, '学生卡片应根据可见信息使用三档高度');
 assert.match(studentCardSource, /displaySettings\.showEvaluation && displaySettings\.showPraise/, '关闭加扣分总开关后学生卡片不应继续展示加分');

@@ -446,7 +446,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [classroomDisplayMode, setClassroomDisplayMode] = useState<ClassroomDisplayMode>('auto');
-  const [studentCardDisplaySettings, setStudentCardDisplaySettings] = useState<ClassroomStudentCardDisplaySettings>(() => getStudentCardDisplaySettings());
+  const [studentCardDisplaySettings, setStudentCardDisplaySettings] = useState<StudentCardDisplaySettings>(() => getStudentCardDisplaySettings());
   const [groupCardDisplaySettings, setGroupCardDisplaySettings] = useState<GroupCardDisplaySettings>(() => getGroupCardDisplaySettings());
   const activeCardDisplaySettings = viewMode === 'group' ? groupCardDisplaySettings : studentCardDisplaySettings;
   const activeCardContentMode = activeCardDisplaySettings.showPraise && activeCardDisplaySettings.showCriticism
@@ -454,7 +454,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     : activeCardDisplaySettings.showPraise
       ? 'praise'
       : 'criticism';
-  const updateActiveCardDisplaySettings = (updates: Partial<GroupCardDisplaySettings>) => {
+  const updateActiveCardDisplaySettings = (updates: Partial<StudentCardDisplaySettings>) => {
     if (viewMode === 'group') {
       setGroupCardDisplaySettings(current => ({ ...current, ...updates }));
       return;
@@ -2302,7 +2302,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                       <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="等级展示形式">
                         {[
                           { value: 'icon' as const, label: '图标' },
-                          { value: 'score' as const, label: '分值' },
+                          { value: 'score' as const, label: viewMode === 'student' ? '总分' : '分值' },
                         ].map(item => (
                           <button
                             key={item.value}

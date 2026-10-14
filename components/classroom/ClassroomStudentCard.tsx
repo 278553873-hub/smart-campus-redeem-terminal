@@ -60,7 +60,7 @@ const ClassroomStudentCard: React.FC<ClassroomStudentCardProps> = ({
   ].filter(Boolean);
   const ariaLabel = [
     `${student.name}，学号${student.studentNo}`,
-    displaySettings.showLevel ? `等级分值${resolvedLevelNetScore}分` : '',
+    displaySettings.showLevel ? `总分${resolvedLevelNetScore}分` : '',
     ...visiblePerformanceLabels,
   ].filter(Boolean).join('，');
   const hasVisibleValues = showPraise || showCriticism;
