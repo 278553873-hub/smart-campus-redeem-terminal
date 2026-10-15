@@ -11,6 +11,7 @@ export interface StudentCompactSelectSection {
 interface StudentCompactSelectGridProps {
   sections: StudentCompactSelectSection[];
   isSelected: (studentId: string) => boolean;
+  isDisabled?: (studentId: string) => boolean;
   getSelectionDescription?: (student: Student) => string | undefined;
   getSecondaryLabel?: (student: Student) => string | undefined;
   showRosterNumber?: boolean;
@@ -21,6 +22,7 @@ interface StudentCompactSelectGridProps {
 const StudentCompactSelectGrid: React.FC<StudentCompactSelectGridProps> = ({
   sections,
   isSelected,
+  isDisabled,
   getSelectionDescription,
   getSecondaryLabel,
   showRosterNumber,
@@ -42,6 +44,7 @@ const StudentCompactSelectGrid: React.FC<StudentCompactSelectGridProps> = ({
               key={student.id}
               student={student}
               selected={isSelected(student.id)}
+              disabled={isDisabled?.(student.id)}
               selectionDescription={getSelectionDescription?.(student)}
               secondaryLabel={getSecondaryLabel?.(student)}
               showRosterNumber={showRosterNumber}

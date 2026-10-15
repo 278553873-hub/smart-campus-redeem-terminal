@@ -16,7 +16,7 @@ import { getStudentTeamAvatarImage, getStudentTeamAvatarOption, studentTeamAvata
 import { getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import type { StudentTeamSearchResult } from './StudentTeamEditorView';
 import StudentTeamSelectedList from './StudentTeamSelectedList';
-import StudentTeamScanFlow, { StudentTeamScanButton } from './StudentTeamScanFlow';
+import StudentTeamPhotoRecognitionFlow, { StudentTeamPhotoRecognitionButton } from './StudentTeamPhotoRecognitionFlow';
 
 export type StudentTeamCreateValue = {
   name: string;
@@ -67,7 +67,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
   const [exactName, setExactName] = useState('');
   const [submittedExactName, setSubmittedExactName] = useState('');
   const [exactSearchResults, setExactSearchResults] = useState<StudentTeamSearchResult[]>([]);
-  const [scanOpen, setScanOpen] = useState(false);
+  const [recognitionOpen, setRecognitionOpen] = useState(false);
 
   const gradeClasses = useMemo(() => classes.filter(item => item.gradeLevel === activeGrade), [activeGrade, classes]);
   const classGroups = useMemo<MobileClassCascadeGroup[]>(() => gradeOptions.map(grade => ({
@@ -106,7 +106,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
     return next;
   });
 
-  const addScannedStudents = (studentIds: string[]) => setSelectedIds(current => {
+  const addRecognizedStudents = (studentIds: string[]) => setSelectedIds(current => {
     const next = new Set(current);
     studentIds.forEach(studentId => next.add(studentId));
     return next;
@@ -250,7 +250,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
                     motion="sliding"
                   />
                 </div>
-                <StudentTeamScanButton onClick={() => setScanOpen(true)} />
+                <StudentTeamPhotoRecognitionButton onClick={() => setRecognitionOpen(true)} />
               </div>
 
               {memberScope === 'authorized' && classes.length > 0 && (
@@ -357,13 +357,14 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
         </button>
       </footer>
 
-      <StudentTeamScanFlow
-        open={scanOpen}
+      <StudentTeamPhotoRecognitionFlow
+        open={recognitionOpen}
         classes={classes}
         getStudentsForClass={getStudentsForClass}
         getClassLabel={getClassLabel}
-        onClose={() => setScanOpen(false)}
-        onConfirm={addScannedStudents}
+        onClose={() => setRecognitionOpen(false)}
+        onConfirm={addRecognizedStudents}
+        existingStudentIds={selectedIds}
       />
     </div>
   );

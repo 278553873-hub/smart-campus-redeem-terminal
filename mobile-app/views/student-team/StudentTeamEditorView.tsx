@@ -13,7 +13,7 @@ import { ASSETS } from '../../assets/images';
 import { getStudentTeamAvatarImage, getStudentTeamAvatarOption, studentTeamAvatarOptions } from '../../assets/teamAvatarCatalog';
 import { getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import StudentTeamSelectedList from './StudentTeamSelectedList';
-import StudentTeamScanFlow, { StudentTeamScanButton } from './StudentTeamScanFlow';
+import StudentTeamPhotoRecognitionFlow, { StudentTeamPhotoRecognitionButton } from './StudentTeamPhotoRecognitionFlow';
 
 export type StudentTeamEditorMode = 'create' | 'settings' | 'members';
 export type StudentTeamSearchResult = Pick<Student, 'id' | 'name' | 'gender' | 'grade' | 'class' | 'avatar'> & {
@@ -78,7 +78,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
   const [exactSearchResults, setExactSearchResults] = useState<StudentTeamSearchResult[]>([]);
   const [memberScope, setMemberScope] = useState<MemberScope>('authorized');
   const [memberPickerView, setMemberPickerView] = useState<MemberPickerView>('students');
-  const [scanOpen, setScanOpen] = useState(false);
+  const [recognitionOpen, setRecognitionOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -136,7 +136,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
     return next;
   });
 
-  const addScannedStudents = (studentIds: string[]) => setSelectedIds(current => {
+  const addRecognizedStudents = (studentIds: string[]) => setSelectedIds(current => {
     const next = new Set(current);
     studentIds.forEach(studentId => next.add(studentId));
     return next;
@@ -214,7 +214,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
   return (
     <>
       <MobileBottomSheet
-        open={open}
+        open={open && !recognitionOpen}
         title={title}
         size={isMemberPage ? 'tall' : 'content'}
         contentInset={isMemberPage ? 'compact' : 'standard'}
@@ -331,7 +331,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
                     motion="sliding"
                   />
                 </div>
-                <StudentTeamScanButton onClick={() => setScanOpen(true)} />
+                <StudentTeamPhotoRecognitionButton onClick={() => setRecognitionOpen(true)} />
               </div>
 
               {memberScope === 'authorized' && classes.length > 0 && (
@@ -413,13 +413,14 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
         </div>
       </MobileBottomSheet>
 
-      <StudentTeamScanFlow
-        open={scanOpen}
+      <StudentTeamPhotoRecognitionFlow
+        open={recognitionOpen}
         classes={classes}
         getStudentsForClass={getStudentsForClass}
         getClassLabel={getClassLabel}
-        onClose={() => setScanOpen(false)}
-        onConfirm={addScannedStudents}
+        onClose={() => setRecognitionOpen(false)}
+        onConfirm={addRecognizedStudents}
+        existingStudentIds={selectedIds}
       />
 
     </>

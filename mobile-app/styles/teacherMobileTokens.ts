@@ -700,6 +700,13 @@ export const teacherBrandCssVariables = {
   '--tm-focus-ring': teacherBrandSemantic.primary,
   '--tm-input-focus-ring': 'transparent',
   '--tm-mask': teacherBrandSemantic.mask,
+  // 相机取景界面：深色操作区与高对比取景标记。
+  '--tm-camera-bg': '#080808',
+  '--tm-camera-text': '#FFFFFF',
+  '--tm-camera-preview-bg': '#817B70',
+  '--tm-camera-control-bg': 'rgba(0, 0, 0, 0.48)',
+  '--tm-camera-zoom-active': '#FFD65A',
+  '--tm-camera-viewfinder-shadow': '0 0 0 999px rgba(0, 0, 0, 0.12)',
   '--tm-shadow-brand-color': 'rgba(224, 39, 39, 0.30)',
   '--tm-shadow-neutral-color': 'rgba(64, 60, 58, 0.18)',
   '--tm-shadow-card': '0 12px 28px -20px rgba(64, 60, 58, 0.12)',

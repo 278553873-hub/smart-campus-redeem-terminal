@@ -7,6 +7,7 @@ import StudentRosterNumber from './StudentRosterNumber';
 interface StudentCompactSelectItemProps {
   student: Student;
   selected: boolean;
+  disabled?: boolean;
   selectionDescription?: string;
   secondaryLabel?: string;
   showRosterNumber?: boolean;
@@ -16,6 +17,7 @@ interface StudentCompactSelectItemProps {
 const StudentCompactSelectItem: React.FC<StudentCompactSelectItemProps> = ({
   student,
   selected,
+  disabled = false,
   selectionDescription,
   secondaryLabel,
   showRosterNumber = true,
@@ -28,11 +30,12 @@ const StudentCompactSelectItem: React.FC<StudentCompactSelectItemProps> = ({
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-pressed={selected}
       aria-label={`${student.name}${showRosterNumber ? `，学号${studentNo}` : ''}${secondaryLabel ? `，${secondaryLabel}` : ''}${selectionDescription ? `，${selectionDescription}` : ''}`}
       className={`relative isolate flex min-w-0 select-none flex-col items-center justify-start rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-0.5 py-1 text-center ${secondaryLabel ? 'h-[var(--tm-student-card-height-minimal)] gap-0.5' : 'min-h-[76px] gap-1'}`}
     >
-      <MobileSelectionIndicator selected={selected} className="absolute -right-1 -top-1 z-20 animate-in fade-in zoom-in duration-200" />
+      {!disabled && <MobileSelectionIndicator selected={selected} className="absolute -right-1 -top-1 z-20 animate-in fade-in zoom-in duration-200" />}
       <span className="relative h-12 w-12 shrink-0">
         <img src={avatar} alt="" className="h-full w-full rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" decoding="async" />
       </span>
